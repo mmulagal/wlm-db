@@ -1,6 +1,7 @@
-import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import { HeaderTypeEntities } from '../../utils/types/headerTypes';
 
-const initialHeaderState: any = {
+const initialHeaderState: HeaderTypeEntities = {
     headerSelectedCred: null,
     headerSelectedRegion: null,
     getCredentials: {
@@ -13,6 +14,12 @@ const initialHeaderState: any = {
         regionsLoading: false,
         regionsError: null
     },
+    getStatus: {
+        statusData: null,
+        statusLoading: false,
+        statusError: null
+    },
+    refreshTime: null
 };
 
 const headersSlice = createSlice({
@@ -31,6 +38,12 @@ const headersSlice = createSlice({
         addRegionsHeaderList: (state, action: PayloadAction<any>) => {
             state.getRegions = action.payload;
         },
+        addStatus: (state, action: PayloadAction<any>) => {
+            state.getStatus = action.payload;
+        },
+        setRefreshTime: (state, action: PayloadAction<any>) => {
+            state.refreshTime = action.payload;
+        }
     }
 });
 
@@ -38,7 +51,9 @@ export const {
     setHeaderSelectedCred,
     setHeaderSelectedRegion,
     addCredentialsHeaderList,
-    addRegionsHeaderList
+    addRegionsHeaderList,
+    addStatus,
+    setRefreshTime
 } = headersSlice.actions;
 
 export default headersSlice;

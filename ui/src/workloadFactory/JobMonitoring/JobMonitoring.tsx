@@ -4,23 +4,22 @@ import { optionType, SelectField } from '@netapp/design-system/dist/components/S
 import { useNavigate } from 'react-router-dom';
 import LineChart from '../DatabaseHomePage/LineChart/LineChart';
 import styles from './JobMonitoring.module.scss';
-import BreadCrumbs from '../../common/BreadCrumbs/BreadCrumbs';
 import { GENERAL } from '../../utils/appConstants';
 import JobMonitoringTable from './JobMonitoringTable/JobMonitoringTable';
 import JobDistribution from './JobDistribution/JobDistribution';
-import { generateOptionType, resetDBHomePageState } from '../../utils/utilityFunctions';
+import { generateOptionType } from '../../utils/utilityFunctions';
 import JobMonitoringApi from './JobMonitoringApi';
 import { setFromTime, setTimeInterval, setToTime } from '../../store/workloadFactory/jobMonitoringSlice';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 
 const JobMonitoring = () => {
     const dispatch = useAppDispatch();
-    const navigate = useNavigate();
 
     const timelineData = useAppSelector(state => state.jobMonitoring.jobsSummaryTimeline);
     const timelineLoading = useAppSelector(state => state.jobMonitoring.jobsSummaryTimelineLoading);
+    const refreshTime = useAppSelector(state => state.headers.refreshTime);
 
-    const [dropDownValue, setDropdownValue] = useState('Last 24 hours');
+    const [dropDownValue, setDropdownValue] = useState<any>(null);
 
     //Function to generate the options for Select Field for License
     const generateSelectFieldOptions = useMemo<optionType[]>((): optionType[] => {
@@ -30,6 +29,7 @@ const JobMonitoring = () => {
             const option = generateOptionType(val, val, '', false, '');
             options.push(option);
         });
+        // setDropdownValue(options[0]);
         return options;
     }, []);
 
@@ -54,8 +54,9 @@ const JobMonitoring = () => {
     };
 
     useEffect(() => {
+        setDropdownValue(generateSelectFieldOptions[0]);
         dispatchTimeInterval(1);
-    }, []);
+    }, [refreshTime]);
 
     JobMonitoringApi();
 
@@ -88,13 +89,13 @@ const JobMonitoring = () => {
                     <SelectField
                         isClearable={false}
                         onChange={(selectedOptions: any): void => {
-                            setDropdownValue(selectedOptions?.value);
+                            setDropdownValue(selectedOptions);
                             setTimeRange(selectedOptions?.value);
                         }}
                         isSearchable={false}
                         variant="underline"
                         options={generateSelectFieldOptions}
-                        defaultValue={[generateSelectFieldOptions[0]]}
+                        value={dropDownValue ? [dropDownValue] : [generateSelectFieldOptions[0]]}
                     />
                 </div>
             </div>
@@ -116,7 +117,7 @@ const JobMonitoring = () => {
                         <LineChart
                             startColor="#A815F3"
                             endColor="rgba(168, 21, 243, 0.00)"
-                            selectedTimeFrame={dropDownValue}
+                            selectedTimeFrame={dropDownValue?.value}
                             timelineData={timelineData}
                         />
                     </div>
