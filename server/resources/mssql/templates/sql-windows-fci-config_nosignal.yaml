@@ -6,7 +6,7 @@ Metadata:
     AWS::CloudFormation::Interface:
         ParameterGroups:
             - Label:
-                  default: Network Configuration.
+                  default: Network Configuration
               Parameters:
                   - VPCID
                   - VPCCIDR
@@ -15,7 +15,7 @@ Metadata:
                   - RouteTable1Id
                   - RouteTable2Id
             - Label:
-                  default: Microsoft Active Directory Configuration.
+                  default: Microsoft Active Directory Configuration
               Parameters:
                   - DomainDNSName
                   - DomainAdminUser
@@ -23,14 +23,14 @@ Metadata:
                   - ADDnsIpAddresses
                   - DomainMemberSGID
             - Label:
-                  default: Amazon EC2 Configuration.
+                  default: Amazon EC2 Configuration
               Parameters:
                   - SqlFSxServerNetBIOSName1
                   - SqlFSxServerNetBIOSName2
                   - KeyPairName
                   - WorkloadInstanceType
             - Label:
-                  default: Amazon FSx for ONTAP Volume Configuration.
+                  default: Amazon FSx for ONTAP Volume Configuration
               Parameters:
                   - FSxFileSystemId
                   - FsxAdminPassword
@@ -43,7 +43,7 @@ Metadata:
                   - SQLigroupname
                   - ONTAPSecurityGroupID
             - Label:
-                  default: Microsoft SQL Server FCI configurations.
+                  default: Microsoft SQL Server FCI configurations
               Parameters:
                   - MSSQLMediaBucketName
                   - MSSQLMediaPathKey

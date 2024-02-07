@@ -7,7 +7,7 @@ Metadata:
     AWS::CloudFormation::Interface:
         ParameterGroups:
             - Label:
-                  default: Amazon FSx for NetApp ONTAP file system configuration.
+                  default: Amazon FSx for NetApp ONTAP file system configuration
               Parameters:
                   - DeploymentMode
                   - FSxFileSystemName
@@ -22,7 +22,7 @@ Metadata:
               Parameters:
                   - FSxSvmName
             - Label:
-                  default: Volume configuration for the Amazon FSx for NetApp ONTAP file system.
+                  default: Volume configuration for the Amazon FSx for NetApp ONTAP file system
               Parameters:
                   - FSxDataVolumeName
                   - FSxDataVolumeSize
