@@ -22,8 +22,6 @@ const JobMonitoringApi = () => {
     const timeInterval = useAppSelector(state => state.jobMonitoring.timeInterval);
     const fromTime = useAppSelector(state => state.jobMonitoring.fromTime);
     const toTime = useAppSelector(state => state.jobMonitoring.toTime);
-    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
-    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
 
     const [jobsCursor, setJobsCursor] = useState(null);
@@ -36,7 +34,7 @@ const JobMonitoringApi = () => {
         setSkipApiCall(true);
         setSkipJobListApiCall(true);
         setTimeout(() => {
-            if (timeInterval && fromTime && toTime && headerSelectedCred && headerSelectedRegion) {
+            if (timeInterval && fromTime && toTime) {
                 dispatch(setJobsListLoading(false));
                 dispatch(setJobsList([]));
                 setTime({ startTime: fromTime, endTime: toTime });
@@ -44,12 +42,10 @@ const JobMonitoringApi = () => {
                 setSkipJobListApiCall(false);
             }
         }, 0);
-    }, [fromTime, headerSelectedCred, headerSelectedRegion, refreshTime]);
+    }, [fromTime, refreshTime]);
 
     const { data: jmJobsList, isFetching: jmJobsListLoading } = useGetJobsListQuery(
         {
-            credentialId: headerSelectedCred?.data?.credentialsId,
-            region: headerSelectedRegion?.label2,
             nextToken: jobsCursor,
             startTime: time?.startTime,
             endTime: time?.endTime
@@ -59,8 +55,6 @@ const JobMonitoringApi = () => {
 
     const { data: jmJobsSummary, isFetching: jmJobsSummaryLoading } = useGetJobsSummaryDataQuery(
         {
-            credentialId: headerSelectedCred?.data?.credentialsId,
-            region: headerSelectedRegion?.label2,
             startTime: time?.startTime,
             endTime: time?.endTime
         },
@@ -69,8 +63,6 @@ const JobMonitoringApi = () => {
 
     const { data: jobsSummaryTimeline, isFetching: jobsSummaryTimelineLoading } = useGetJobsSummaryTimelineDataQuery(
         {
-            credentialId: headerSelectedCred?.data?.credentialsId,
-            region: headerSelectedRegion?.label2,
             startTime: time?.startTime,
             endTime: time?.endTime
         },

@@ -344,7 +344,7 @@ export const databaseHomeApi = createApi({
                 }
             }),
             getJobsSummary: builder.query({
-                query: ({ credentialId, region, startTime, endTime }) =>
+                query: ({ startTime, endTime }) =>
                     `jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getTemplates: builder.mutation({
@@ -390,7 +390,7 @@ export const jobMonitoringApi = createApi({
         return {
             // getJobsList will just include first level jobs list info
             getJobsList: builder.query({
-                query: ({ credentialId, region, nextToken = null, startTime, endTime }) => {
+                query: ({ nextToken = null, startTime, endTime }) => {
                     let url = `jobs?startTime=${startTime}&endTime=${endTime}`;
                     if (nextToken) {
                         url += `&nextToken=${nextToken}`;
@@ -401,8 +401,6 @@ export const jobMonitoringApi = createApi({
             // getFullJobsList will include subtasks and task level data also
             getFullJobsList: builder.query({
                 query: ({
-                    credentialId,
-                    region,
                     nextToken = null,
                     startTime,
                     endTime,
@@ -432,11 +430,11 @@ export const jobMonitoringApi = createApi({
                 })
             }),
             getJobsSummaryData: builder.query({
-                query: ({ credentialId, region, startTime, endTime }) =>
+                query: ({ startTime, endTime }) =>
                     `jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getJobsSummaryTimelineData: builder.query({
-                query: ({ credentialId, region, startTime, endTime }) =>
+                query: ({ startTime, endTime }) =>
                     `jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}`
             })
         };

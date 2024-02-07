@@ -45,8 +45,6 @@ const JobMonitoringTable = () => {
     const fromTime = useAppSelector(state => state.jobMonitoring.fromTime);
     const toTime = useAppSelector(state => state.jobMonitoring.toTime);
     const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
-    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
-    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
@@ -106,8 +104,6 @@ const JobMonitoringTable = () => {
         isError: jmJobsListError
     } = useGetFullJobsListQuery(
         {
-            credentialId: headerSelectedCred?.data?.credentialsId, 
-            region: headerSelectedRegion?.label2,
             nextToken: jobsCursor,
             startTime: time?.startTime,
             endTime: time?.endTime,
