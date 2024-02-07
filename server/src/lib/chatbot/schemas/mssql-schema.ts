@@ -1,3 +1,4 @@
+type DeployMsSqlType = 'DeployMsSql';
 // User Intent from the query/request
 type Intent = {
     intent: FunctionToRun | Query;
@@ -52,7 +53,7 @@ type DeployMsSqlParams = {
 
 // Deploy MS SQL
 type DeployMsSql = {
-    type: 'DeployMsSql';
+    type: DeployMsSqlType;
     params: DeployMsSqlParams;
 };
 
