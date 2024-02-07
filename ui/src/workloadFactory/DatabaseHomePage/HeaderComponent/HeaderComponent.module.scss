@@ -72,7 +72,7 @@
                 }
 
                 [class*='design-system-select__control--menu-is-open'] {
-                    outline: none;
+                    outline: none !important;
                 }
 
                 [class*='design-system-select__control']:hover {
