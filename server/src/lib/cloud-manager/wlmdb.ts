@@ -4,7 +4,7 @@ import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 
-interface policyStatement {
+interface PolicyStatement {
     Sid: string;
     Effect: string;
     Action: [string];
@@ -16,15 +16,15 @@ interface policyStatement {
     };
 }
 
-interface wlmdbPolicyResponse {
+interface WlmdbPolicyResponse {
     _comment?: string;
     operate: {
         Version: string;
-        Statement: [policyStatement];
+        Statement: [PolicyStatement];
     };
     view: {
         Version: string;
-        Statement: [policyStatement];
+        Statement: [PolicyStatement];
     };
 }
 
@@ -35,8 +35,8 @@ async function getWlmdbPolicy() {
         .get('wlmdb/workload-policies.json', {
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT
         })
-        .json<wlmdbPolicyResponse>();
+        .json<WlmdbPolicyResponse>();
     return response;
 }
 
-export { policyStatement, wlmdbPolicyResponse, getWlmdbPolicy };
+export { PolicyStatement, getWlmdbPolicy };

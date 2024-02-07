@@ -90,7 +90,7 @@ import { createDeployment, createResource } from '../lib/database/db';
 import { Metadata, NetworkViolation } from '../utils/common-types';
 import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
-import { getWlmdbPolicy, policyStatement } from '../lib/cloud-manager/wlmdb';
+import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
 import { createJobs } from '../lib/database/job';
 
 const logger = getLogger();
@@ -738,7 +738,7 @@ async function deploymentStatusByName(accountId: string, deploymentName: string)
     return data;
 }
 
-function prepareResourceActionMap(statements: [policyStatement]) {
+function prepareResourceActionMap(statements: [PolicyStatement]) {
     logger.debug('Preparing resource action map', { statements });
 
     const resourcePolicyActions: {
