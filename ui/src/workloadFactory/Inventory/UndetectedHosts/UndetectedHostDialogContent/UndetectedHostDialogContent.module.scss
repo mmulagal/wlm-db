@@ -1,0 +1,19 @@
+.undetectedHostContent {
+    .firstSection {
+        margin-top: 40px;
+    }
+    .secondSection {
+        margin-top: 40px;
+        margin-bottom: 40px;
+    }
+    .textFieldContainer {
+        display: flex;
+        gap: 24px;
+        margin-top: 16px;
+
+        .textFieldStyle {
+            width: 344px;
+            margin-bottom: 0 !important;
+        }
+    }
+}

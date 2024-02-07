@@ -27,11 +27,7 @@
                         "name": "ec2-name1",
                         "ebsVolumeId": "ebs-volume1"
                     }
-                ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": true,
@@ -54,8 +50,7 @@
                 "connectivity": 100,
                 "others": 24,
                 "estimationType": "pricing"
-            },
-            "allocatedCapacity": 22122173950853
+            }
         },
         {
             "id": "resource-id-2",
@@ -75,11 +70,7 @@
                         "name": "ec2-name2",
                         "ebsVolumeId": "ebs-volume2"
                     }
-                ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": true,
@@ -102,8 +93,7 @@
                 "connectivity": 100,
                 "others": 24,
                 "estimationType": "pricing"
-            },
-            "allocatedCapacity": 22122173950853
+            }
         },
         {
             "id": "resource-id-3",
@@ -123,11 +113,7 @@
                         "name": "ec2-name3",
                         "ebsVolumeId": "ebs-volume3"
                     }
-                ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -150,8 +136,7 @@
                 "connectivity": 100,
                 "others": 24,
                 "estimationType": "pricing"
-            },
-            "allocatedCapacity": 22122173950853
+            }
         },
         {
             "id": "resource-id-4",
@@ -171,11 +156,7 @@
                         "name": "ec2-name4",
                         "ebsVolumeId": "ebs-volume4"
                     }
-                ],
-                "availability": {
-                    "type": "Single AZ",
-                    "azList": "us-east-1d"
-                }
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -198,8 +179,7 @@
                 "connectivity": 100,
                 "others": 24,
                 "estimationType": "pricing"
-            },
-            "allocatedCapacity": 22122173950853
+            }
         },
         {
             "id": "resource-id-5",
@@ -218,11 +198,7 @@
                         "name": "ec2-name5",
                         "ebsVolumeId": "ebs-volume5"
                     }
-                ],
-                "availability": {
-                    "type": "Single AZ",
-                    "azList": "us-east-2d"
-                }
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": true,
@@ -245,8 +221,7 @@
                 "connectivity": 100,
                 "others": 24,
                 "estimationType": "pricing"
-            },
-            "allocatedCapacity": 22122173950853
+            }
         },
         {
             "id": "resource-id-6",
@@ -265,11 +240,7 @@
                         "name": "ec2-name6",
                         "ebsVolumeId": "ebs-volume6"
                     }
-                ],
-                "availability": {
-                    "type": "Single AZ",
-                    "azList": "us-east-2d"
-                }
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -292,8 +263,7 @@
                 "connectivity": 100,
                 "others": 24,
                 "estimationType": "pricing"
-            },
-            "allocatedCapacity": 22122173950853
+            }
         },
         {
             "id": "resource-id-7",
@@ -312,11 +282,7 @@
                         "name": "ec2-name7",
                         "ebsVolumeId": "ebs-volume7"
                     }
-                ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -339,8 +305,7 @@
                 "connectivity": 100,
                 "others": 24,
                 "estimationType": "pricing"
-            },
-            "allocatedCapacity": 22122173950853
+            }
         },
         {
             "id": "resource-id-8",
@@ -359,11 +324,7 @@
                         "name": "ec2-name8",
                         "ebsVolumeId": "ebs-volume8"
                     }
-                ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": true,
@@ -386,8 +347,7 @@
                 "connectivity": 100,
                 "others": 24,
                 "estimationType": "pricing"
-            },
-            "allocatedCapacity": 22122173950853
+            }
         },
         {
             "id": "resource-id-9",
@@ -406,11 +366,7 @@
                         "name": "ec2-name9",
                         "ebsVolumeId": "ebs-volume9"
                     }
-                ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -433,8 +389,7 @@
                 "connectivity": 100,
                 "others": 24,
                 "estimationType": "pricing"
-            },
-            "allocatedCapacity": 22122173950853
+            }
         },
         {
             "id": "resource-id-10",
@@ -453,11 +408,7 @@
                         "name": "ec2-name10",
                         "ebsVolumeId": "ebs-volume10"
                     }
-                ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": true,
@@ -480,8 +431,7 @@
                 "connectivity": 100,
                 "others": 24,
                 "estimationType": "pricing"
-            },
-            "allocatedCapacity": 22122173950853
+            }
         },
         {
             "id": "resource-id-11",
@@ -500,11 +450,7 @@
                         "name": "ec2-name11",
                         "ebsVolumeId": "ebs-volume11"
                     }
-                ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -527,8 +473,7 @@
                 "connectivity": 100,
                 "others": 24,
                 "estimationType": "pricing"
-            },
-            "allocatedCapacity": 22122173950853
+            }
         },
         {
             "id": "resource-id-12",
@@ -547,11 +492,7 @@
                         "name": "ec2-name12",
                         "ebsVolumeId": "ebs-volume12"
                     }
-                ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": true,
@@ -574,8 +515,7 @@
                 "connectivity": 100,
                 "others": 24,
                 "estimationType": "pricing"
-            },
-            "allocatedCapacity": 22122173950853
+            }
         },
         {
             "id": "resource-id-13",
@@ -594,11 +534,7 @@
                         "name": "ec2-name13",
                         "ebsVolumeId": "ebs-volume13"
                     }
-                ],
-                "availability": {
-                    "type": "Single AZ",
-                    "azList": "us-east-2d"
-                }
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -621,8 +557,7 @@
                 "connectivity": 100,
                 "others": 24,
                 "estimationType": "pricing"
-            },
-            "allocatedCapacity": 22122173950853
+            }
         },
         {
             "id": "resource-id-14",
@@ -641,11 +576,7 @@
                         "name": "ec2-name14",
                         "ebsVolumeId": "ebs-volume14"
                     }
-                ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -668,8 +599,7 @@
                 "connectivity": 100,
                 "others": 24,
                 "estimationType": "pricing"
-            },
-            "allocatedCapacity": 22122173950853
+            }
         },
         {
             "id": "resource-id-15",
@@ -688,11 +618,7 @@
                         "name": "ec2-name15",
                         "ebsVolumeId": "ebs-volume15"
                     }
-                ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": true,
@@ -715,8 +641,7 @@
                 "connectivity": 100,
                 "others": 24,
                 "estimationType": "pricing"
-            },
-            "allocatedCapacity": 22122173950853
+            }
         },
         {
             "id": "resource-id-16",
@@ -735,11 +660,7 @@
                         "name": "ec2-name16",
                         "ebsVolumeId": "ebs-volume16"
                     }
-                ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -762,8 +683,7 @@
                 "connectivity": 100,
                 "others": 24,
                 "estimationType": "pricing"
-            },
-            "allocatedCapacity": 22122173950853
+            }
         }
     ],
     "nextToken": null

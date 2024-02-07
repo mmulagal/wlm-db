@@ -1,37 +1,14 @@
 import { useEffect, useState } from 'react';
-import { setRefetchJobSummaryApi } from '../../store/mssql/msSqlActionSlice';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
-import {
-    addAggregatedCosts,
-    addAggregatedProtectionDbCount,
-    addAggregatedStorageSavings,
-    addAggregateHostsCountData,
-    addDatabaseHosts,
-    addDatabaseHostsList,
-    addDatabaseJobs,
-    addJobsSummary
-} from '../../store/workloadFactory/databaseHomeSlice';
-import {
-    useGetDatabaseHostsQuery,
-    useGetDatabaseJobsQuery,
-    useGetJobsSummaryQuery,
-    useGetStatusQuery
-} from '../../utils/apiService';
-import {
-    getAggrCost,
-    getAggrProtection,
-    getAggrStorageSavings,
-    getHostStatusCount,
-    jobStatusPercent,
-    mergeDatabaseHostsData
-} from '../../utils/utilityFunctions';
+import { addDatabaseHosts, addDatabaseHostsList, addDatabaseJobs } from '../../store/workloadFactory/databaseHomeSlice';
+import { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery } from '../../utils/apiService';
+import { mergeDatabaseHostsData } from '../../utils/utilityFunctions';
 
-const DatabaseHomeApis = () => {
+const InventoryApis = () => {
     const dispatch = useAppDispatch();
 
     const { databaseHostsData } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsData } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
-    const refetchJobSummaryApi = useAppSelector(state => state.msSqlAction.refetchJobSummaryApi);
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
 
@@ -40,13 +17,6 @@ const DatabaseHomeApis = () => {
 
     // skipApiCall to skip APi call when isActive is not true
     const [skipApiCall, setSkipApiCall] = useState(true);
-    const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
-
-    useEffect(() => {
-        const toDate = Date.now();
-        const fromDate = toDate - 30 * (3600 * 1000 * 24);
-        setTime({ startTime: fromDate, endTime: toDate });
-    }, []);
 
     const {
         data: databaseHosts,
@@ -73,26 +43,6 @@ const DatabaseHomeApis = () => {
         },
         { skip: skipApiCall }
     );
-
-    const {
-        data: jobsSummaryData,
-        isFetching: jobsSummaryLoading,
-        isError: jobsSummaryError,
-        refetch: jobsSummaryRefetch
-    } = useGetJobsSummaryQuery(
-        {
-            startTime: time?.startTime,
-            endTime: time?.endTime
-        }
-    );
-
-    useEffect(() => {
-        if (refetchJobSummaryApi) {
-            dispatch(setRefetchJobSummaryApi(false));
-            jobsSummaryRefetch();
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [refetchJobSummaryApi]);
 
     useEffect(() => {
         if (headerSelectedCred && headerSelectedRegion) {
@@ -133,37 +83,10 @@ const DatabaseHomeApis = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseJobs, databaseJobsLoading, databaseJobsError]);
 
-    useEffect(() => {
-        if (jobsSummaryError) {
-            dispatch(addJobsSummary({ undefined, jobsSummaryLoading, jobsSummaryError }));
-        } else {
-            dispatch(
-                addJobsSummary({
-                    jobsSummaryData: jobStatusPercent(jobsSummaryData),
-                    jobsSummaryLoading,
-                    jobsSummaryError
-                })
-            );
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [jobsSummaryData, jobsSummaryLoading, jobsSummaryError]);
-
     // To merge database host and database jobs data
     useEffect(() => {
         const mergedData = mergeDatabaseHostsData(databaseHostsData, databaseJobsData);
         dispatch(addDatabaseHostsList(mergedData));
-
-        const hostStatusCount = getHostStatusCount(mergedData);
-        dispatch(addAggregateHostsCountData(hostStatusCount));
-
-        const aggrProtection = getAggrProtection(mergedData);
-        dispatch(addAggregatedProtectionDbCount(aggrProtection));
-
-        const aggrStorage = getAggrStorageSavings(mergedData);
-        dispatch(addAggregatedStorageSavings(aggrStorage));
-
-        const aggrCost = getAggrCost(mergedData);
-        dispatch(addAggregatedCosts(aggrCost));
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHostsData, databaseJobsData]);
@@ -171,4 +94,4 @@ const DatabaseHomeApis = () => {
     return <></>;
 };
 
-export default DatabaseHomeApis;
+export default InventoryApis;

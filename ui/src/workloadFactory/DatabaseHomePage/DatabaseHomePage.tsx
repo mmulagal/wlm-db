@@ -16,27 +16,11 @@ import { useAppSelector } from '../../store/storeHooks';
 
 const DatabaseHomePage = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [statusChk, setStatusChk] = useState(false);
 
-    const { statusData, statusLoading } = useAppSelector(state => state.databaseHome.getStatus);
     const hostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
     const hostCostData: any = useAppSelector(state => state.databaseHome.aggregatedCosts);
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
-
-    useEffect(() => {
-        if (statusData && statusData?.isActive) {
-            setStatusChk(true);
-        } else if (statusData && !statusData?.isActive) {
-            window.parent.postMessage(
-                { type: 'SERVICE:NAVIGATE', payload: { pathname: './marketing', replace: true } },
-                '*'
-            );
-        } else {
-            setStatusChk(false);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [statusData]);
 
     DatabaseHomeApis();
 
@@ -44,67 +28,55 @@ const DatabaseHomePage = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
 
-    return statusLoading || !statusChk ? (
-        <div className={styles.loader}>
-            <Spinner isLarge />
-        </div>
-    ) : (
-        statusChk && (
-            <div className={styles.databaseHome}>
-                <div className={styles.leftSide}>
-                    <div className={styles.topContainer}>
-                        <Typography variant="Regular_24" className={styles.heading}>
-                            {GENERAL.DATABASES}
-                        </Typography>
+    return (
+        <div className={styles.databaseHome}>
+            <div className={styles.leftSide}>
+                <div className={styles.buttonsContainer}>
+                    <TopBarButton />
+                </div>
+
+                <div className={styles.secondLevelContainer}>
+                    <DatabaseHost />
+                </div>
+
+                <div className={styles.thirdLevelContainer}>
+                    <div className={styles.ProtectionContainer}>
+                        <ProtectionSection />
                     </div>
 
-                    <div className={styles.buttonsContainer}>
-                        <TopBarButton />
-                    </div>
-
-                    <div className={styles.secondLevelContainer}>
-                        <DatabaseHost />
-                    </div>
-
-                    <div className={styles.thirdLevelContainer}>
-                        <div className={styles.ProtectionContainer}>
-                            <ProtectionSection />
-                        </div>
-
-                        {/* Job status */}
-                        <div className={styles.jobContainer}>
-                            <JobStatus />
-                        </div>
-                    </div>
-
-                    <div className={styles.fourthLevelContainer}>
-                        {/* Bar lines */}
-                        <div className={styles.barContainer}>
-                            <div className={styles.commonContainer}>
-                                <StorageSavings
-                                    hostData={hostStorageSavingsData}
-                                    jobsLoading={databaseJobsLoading}
-                                    hostsLoading={databaseHostsLoading}
-                                />
-                            </div>
-
-                            <div className={styles.commonContainer}>
-                                <EstimatedCost
-                                    hostData={hostCostData}
-                                    jobsLoading={databaseJobsLoading}
-                                    hostsLoading={databaseHostsLoading}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    <div className={styles.secondLevelContainer}>
-                        <DatabaseTable />
+                    {/* Job status */}
+                    <div className={styles.jobContainer}>
+                        <JobStatus />
                     </div>
                 </div>
 
-                <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />
+                <div className={styles.fourthLevelContainer}>
+                    {/* Bar lines */}
+                    <div className={styles.barContainer}>
+                        <div className={styles.commonContainer}>
+                            <StorageSavings
+                                hostData={hostStorageSavingsData}
+                                jobsLoading={databaseJobsLoading}
+                                hostsLoading={databaseHostsLoading}
+                            />
+                        </div>
+
+                        <div className={styles.commonContainer}>
+                            <EstimatedCost
+                                hostData={hostCostData}
+                                jobsLoading={databaseJobsLoading}
+                                hostsLoading={databaseHostsLoading}
+                            />
+                        </div>
+                    </div>
+                </div>
+                <div className={styles.secondLevelContainer}>
+                    <DatabaseTable />
+                </div>
             </div>
-        )
+
+            <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />
+        </div>
     );
 };
 

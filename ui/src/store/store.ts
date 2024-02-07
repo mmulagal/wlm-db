@@ -5,6 +5,7 @@ import {
     chatbotApi,
     configApi,
     databaseHomeApi,
+    headersApi,
     jobMonitoringApi,
     resourceApi,
     workloadFactoryResourceApi
@@ -21,6 +22,8 @@ import previewPanelSlice from './previewPanel/previewPanelSlice';
 import chatbotSlice, { setShowRetry } from './chatbot/chatbotSlice';
 import workloadFactoryResourceSlice from './workloadFactory/workloadFactoryResourceSlice';
 import jobMonitoringSlice from './workloadFactory/jobMonitoringSlice';
+import inventorySlice from './workloadFactory/inventorySlice';
+import headersSlice from './workloadFactory/headersSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -40,7 +43,10 @@ const rootReducer = combineReducers({
     [workloadFactoryResourceSlice.name]: workloadFactoryResourceSlice.reducer,
     [workloadFactoryResourceApi.reducerPath]: workloadFactoryResourceApi.reducer,
     [jobMonitoringApi.reducerPath]: jobMonitoringApi.reducer,
-    [jobMonitoringSlice.name]: jobMonitoringSlice.reducer
+    [jobMonitoringSlice.name]: jobMonitoringSlice.reducer,
+    [inventorySlice.name]: inventorySlice.reducer,
+    [headersApi.reducerPath]: headersApi.reducer,
+    [headersSlice.name]: headersSlice.reducer
 });
 
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action: any) => {
@@ -82,6 +88,7 @@ const store = configureStore({
             .concat(chatbotApi.middleware)
             .concat(workloadFactoryResourceApi.middleware)
             .concat(jobMonitoringApi.middleware)
+            .concat(headersApi.middleware)
             .concat(rtkQueryErrorLogger)
 });
 

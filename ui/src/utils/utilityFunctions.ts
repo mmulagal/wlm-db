@@ -1144,3 +1144,61 @@ export const expandTableRow = (
         isExpanded: !currentRowState?.isExpanded
     });
 };
+
+export const getCurrentDateTime = () => {
+    const currentDate = new Date();
+
+    // Format the date as "January 30, 2024, 00:00:00"
+    const formattedDate = currentDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
+    const formattedTime = currentDate.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    });
+
+    return `${formattedDate}, ${formattedTime}`;
+};
+
+export const initialColStateManagedHosts = {
+    1: {
+        isHidden: false,
+        isRemovalDisabled: true
+    },
+    2: {
+        isHidden: false
+    },
+    3: {
+        isHidden: false
+    },
+    4: {
+        isHidden: false
+    },
+    5: {
+        isHidden: false
+    },
+    6: {
+        isHidden: false
+    },
+    7: {
+        isHidden: false
+    },
+    8: {
+        isHidden: true
+    },
+    9: {
+        isHidden: true
+    },
+
+    10: {
+        isHidden: true
+    },
+    11: {
+        isHidden: true
+    }
+};

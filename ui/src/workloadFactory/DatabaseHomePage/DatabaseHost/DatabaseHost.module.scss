@@ -39,48 +39,47 @@
             margin-top: 20px;
         }
 
-        .databaseHostStatusContainer {
-            margin-left: 40px;
-            margin-top: -16px;
+        .newSection {
+            margin-left: 112px;
             display: flex;
-            flex-direction: column;
+            align-items: center;
 
-            .statusContainer {
+            .sql {
                 display: flex;
-                margin-top: 5px;
-                gap: 8px;
+                flex-direction: column;
+                width: 80px;
 
-                .layout {
-                    border-radius: 2px;
-                    background: rgba(232, 238, 253, 0.4);
-                    padding: 18px 0px 12px 24px;
-                    width: 200px;
-                    height: 84px;
+                .databaseNumber {
+                    line-height: unset;
+                }
+
+                .sqlContent {
                     display: flex;
-                    flex-direction: column;
-                    gap: 6px;
+                    gap: 4px;
 
-                    .firstRow {
-                        display: flex;
-                        gap: 8px;
-
-                        svg {
-                            position: relative;
-                            top: 2px;
-                            width: 20px;
-                            height: 20px;
-                        }
-                    }
-
-                    .secondRow {
+                    .databaseText {
                         line-height: unset;
                     }
-
-                    .secondRowContent {
-                        display: flex;
-                        gap: 8px;
-                    }
                 }
+            }
+
+            .NA {
+                display: flex;
+                flex-direction: column;
+                width: 195px;
+                margin-left: 24px;
+                position: relative;
+                top: 5px;
+
+                .naContent {
+                    display: flex;
+                    gap: 8px;
+                }
+            }
+
+            .dbHostSeparator {
+                margin-top: 0;
+                margin-left: 24px;
             }
         }
     }
