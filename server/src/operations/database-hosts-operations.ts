@@ -6,14 +6,10 @@ import { listResources } from '../lib/database/db';
 import {
     DatabaseHostSummaryResponseType,
     DatabaseHostSummaryListResponseType,
-    PerformanceResponseType,
     TopologyResponseType,
     ProtectionResponseType,
     StorageResponseType,
     UsageCostResponseType,
-    DatabaseServerMetadataResponseType,
-    UtilizationResponseType,
-    DetailedPerformanceResponseType,
     DatabasesListResponseType
 } from '../routes/types/database-hosts.types';
 import { describeInstance, getAmis } from '../lib/aws/ec2';
@@ -588,16 +584,10 @@ async function getDatabaseHostsSummary(
                     resourceId
                 );
 
-                let dbCount;
-                let topologyData: TopologyResponseType;
-                let performanceData: PerformanceResponseType | undefined;
-                let storageData: StorageResponseType | undefined;
-                let protectionData: ProtectionResponseType | undefined;
-                let usageEstimationData: UsageCostResponseType | undefined;
                 const activeNodeId = activeNodeInstanceId;
                 const standbyNodeId = standbyNodeInstanceId;
 
-                [dbCount, topologyData, performanceData, storageData, protectionData, usageEstimationData] =
+                const [dbCount, topologyData, performanceData, storageData, protectionData, usageEstimationData] =
                     await Promise.all(
                         [
                             ...(isSSMConnected
@@ -704,17 +694,8 @@ async function getDatabaseHostSummary(
         );
 
         const errormessages: { [index: string]: string } = {};
-        let dbCount;
-        let serverMetadata: DatabaseServerMetadataResponseType;
-        let topologyData: TopologyResponseType;
-        let performanceData: DetailedPerformanceResponseType | undefined;
-        let storageData: StorageResponseType | undefined;
-        let usageEstimationData: UsageCostResponseType | undefined;
-        let memoryUtilizationData: UtilizationResponseType | undefined;
-        let diskUtilizationData: UtilizationResponseType | undefined;
-        let cpuUtilizationData: UtilizationResponseType | undefined;
 
-        [
+        const [
             dbCount,
             serverMetadata,
             topologyData,

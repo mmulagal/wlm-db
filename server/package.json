@@ -19,7 +19,8 @@
         "build:dev": "npm run build && npm run start",
         "test": "cross-env NODE_ENV=simulator vitest --coverage",
         "test:nowatch": "cross-env NODE_ENV=simulator vitest --run --silent",
-        "postinstall": "patch-package"
+        "postinstall": "patch-package",
+        "apidoc": "npm run build && node --loader ./dist/src/utils/loader.js dist/src/utils/generate-documentation.js && spectral lint documentation.yaml"
     },
     "repository": {
         "type": "git",
