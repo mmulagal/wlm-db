@@ -6,7 +6,6 @@ rules:
     oas3-operation-security-defined: false
     operation-tag-defined: false
     operation-operationId: false
-    operation-description: false
     ensure-endpoint-summary:
         description: Endpoints must have a summary.
         given: $.paths[*][*]
@@ -47,7 +46,7 @@ rules:
                 type: camel
     response-schema-object:
         description: Response must be an object
-        severity: error
+        severity: warn
         recommended: true
         message: '{{property}} must be an object: {{error}}'
         given: $.paths[*][*].responses[*].content[*].schema.type

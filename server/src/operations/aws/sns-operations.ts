@@ -2,7 +2,7 @@ import Promise from 'bluebird';
 import { describeRegions } from '../../lib/aws/ec2';
 import { createTopic, listTopics, setTopicAttributes, subscribeTopic } from '../../lib/aws/sns';
 import { createQueue } from '../../lib/aws/sqs';
-import { AWS_RESOURCE_NAME_TAG, DEFAULT_AWS_REGION, WLMDB } from '../../utils/consts';
+import { AWS_RESOURCE_NAME_TAG, DEFAULT_AWS_REGION, SQS_MSG_RETENTION, WLMDB } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { derivePropertiesFromARN, getQueueArn } from '../../utils/utils';
 
@@ -51,6 +51,7 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
             const { QueueUrl } = await createQueue(DEFAULT_AWS_REGION, {
                 QueueName: queueName,
                 Attributes: {
+                    MessageRetentionPeriod: SQS_MSG_RETENTION,
                     Policy: JSON.stringify({
                         Version: '2012-10-17',
                         Statement: [
