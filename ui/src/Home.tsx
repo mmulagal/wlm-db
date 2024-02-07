@@ -15,6 +15,7 @@ import DatabaseHomePage from './workloadFactory/DatabaseHomePage/DatabaseHomePag
 import PreviewPanel from './components/PreviewPanel/PreviewPanel';
 import DatabaseHostOverview from './workloadFactory/ResourcePage/ResourceHomePage/DatabaseHostOverview';
 import JobMonitoring from './workloadFactory/JobMonitoring/JobMonitoring';
+import HeaderComponent from './workloadFactory/DatabaseHomePage/HeaderComponent/HeaderComponent';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -45,7 +46,7 @@ const Home = () => {
                         <Route path={'databases'} element={<Databases />} />
                         <Route path={'tables'} element={<Tables />} />
                     </Route>
-                    <Route path={'databases'} element={<DatabaseHomePage />} />
+                    <Route path={'databases'} element={<HeaderComponent />} />
                     <Route path={'job-monitor'} element={<JobMonitoring />} />
                     <Route path="*" element={<MainComponent />} />
                 </Routes>
