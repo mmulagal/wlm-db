@@ -4,7 +4,9 @@ const initialInventoryState: any = {
     selectedInventoryTab: 'Managed Hosts',
     selectedHeaderTab: 'Dashboard',
     detectManageUserName: '',
-    detectManagePassword: ''
+    detectManagePassword: '',
+    detectOntapUsername: '',
+    detectOntapPassword: ''
 };
 
 const inventorySlice = createSlice({
@@ -23,11 +25,23 @@ const inventorySlice = createSlice({
         },
         setDetectManagePassword: (state, action: PayloadAction<any>) => {
             state.detectManagePassword = action.payload;
+        },
+        setDetectONTAPUserName: (state, action: PayloadAction<any>) => {
+            state.detectOntapUsername = action.payload;
+        },
+        setDetectONTAPPassword: (state, action: PayloadAction<any>) => {
+            state.detectOntapPassword = action.payload;
         }
     }
 });
 
-export const { setSelectedInventoryTab, setSelectedHeaderTab, setDetectManageUserName, setDetectManagePassword } =
-    inventorySlice.actions;
+export const {
+    setSelectedInventoryTab,
+    setSelectedHeaderTab,
+    setDetectManageUserName,
+    setDetectManagePassword,
+    setDetectONTAPUserName,
+    setDetectONTAPPassword
+} = inventorySlice.actions;
 
 export default inventorySlice;

@@ -4,6 +4,7 @@ import styles from './UndetectedHosts.module.scss';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import UndetectedHostDialogContent from './UndetectedHostDialogContent/UndetectedHostDialogContent';
+import UndetectedSecondDialog from './UndetectedSecondDialog/UndetectedSecondDialog';
 
 const UndetectedHosts = () => {
     const { setDialog, closeDialog } = useDialog();
@@ -73,14 +74,37 @@ const UndetectedHosts = () => {
         }
     ];
 
+    const handleFirstDialog = () => {
+        setTimeout(() => {
+            setDialog(
+                <DialogComponent
+                    header={
+                        <div className={styles.headerDialog}>
+                            <Typography variant="Regular_20">Detect host</Typography>
+                            <Typography variant="Regular_14">Step 2/2</Typography>
+                        </div>
+                    }
+                    content={<UndetectedSecondDialog />}
+                    primaryButton="Done"
+                    callback={() => {}}
+                />
+            );
+        }, 10);
+    };
+
     const handleManageDetect = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header="Detect & manage"
+                header={
+                    <div className={styles.headerDialog}>
+                        <Typography variant="Regular_20">Detect host</Typography>
+                        <Typography variant="Regular_14">Step 1/2</Typography>
+                    </div>
+                }
                 content={<UndetectedHostDialogContent />}
-                primaryButton="Detect & manage"
+                primaryButton="Detect"
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => {}}
+                callback={handleFirstDialog}
                 closeCallback={() => {
                     closeDialog();
                 }}
@@ -97,7 +121,7 @@ const UndetectedHosts = () => {
                 return (
                     <div className={styles.detectManage} onClick={() => handleManageDetect(rowData)}>
                         <Typography variant="Regular_14" className={styles.textStyle}>
-                            Detect & manage
+                            Detect host
                         </Typography>
                     </div>
                 );

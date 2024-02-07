@@ -1,0 +1,26 @@
+.secondDialog {
+    .contentSection {
+        display: flex;
+        gap: 24px;
+        .leftSide {
+            margin-top: 16px;
+        }
+
+        .rightSide {
+            margin-top: 16px;
+        }
+    }
+    .separator {
+        width: 344px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .entry {
+        display: flex;
+        margin: 16px 0;
+    }
+
+    [class*='Dialog-module_modal'] {
+        max-width: 792px !important;
+    }
+}
