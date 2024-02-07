@@ -13,11 +13,10 @@
         margin-top: -18px;
     }
 
-    // .tableScroll {
-    //     [class*='Table-module_scroll'] {
-    //         width: 1808px !important;
-    //     }
-    // }
+    .firstColText {
+        display: flex;
+        gap: 8px;
+    }
 
     .colText {
         display: flex;
