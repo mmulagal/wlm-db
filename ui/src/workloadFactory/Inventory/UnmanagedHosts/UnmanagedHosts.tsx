@@ -73,7 +73,7 @@ const UnmanagedHosts = () => {
                 return (
                     <div>
                         <Typography variant="Semibold_14">{rowData?.name || GENERAL.NOT_AVAILABLE}</Typography>
-                        <div className={styles.colText}>
+                        <div className={styles.firstColText}>
                             {rowData?.status === STATUS_CONST.UP && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
                             )}

@@ -42,9 +42,14 @@
         margin-top: -18px;
     }
 
-    .colText {
+    .firstColText {
         display: flex;
         gap: 8px;
+    }
+
+    .colText {
+        display: flex;
+        gap: 16px;
     }
 
     .protection {
