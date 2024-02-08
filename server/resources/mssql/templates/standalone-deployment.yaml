@@ -78,8 +78,7 @@ Metadata:
             WorkloadInstanceType:
                 default: Workload Servers Instance Type for SQL EC2 Instances. For example, r4.xlarge
             DomainAdminSecretName:
-                default: Domain Admin Secret Name for the Domain Admin user in Secrets Manager
-                   . For example, 'LaunchWizard-Admin'
+                default: Domain Admin Secret Name for the Domain Admin user in Secrets Manager. For example, 'LaunchWizard-Admin'
             SQLServiceAccountSecret:
                 default: Secret Name for the SQL Admin user in Secrets Manager. For example, 'LaunchWizard-Admin'
             DomainAdminUser:
@@ -95,7 +94,7 @@ Metadata:
             FileShareThroughputCapacity:
                 default: Data throughput capacity (MB/s). For example, 16 MBps
             ADDnsIpAddresses:
-                default: Comma seperated list of DNS addresses for existing AD. For example, 10.0.0.10,10.0.16.10
+                default: Comma separated list of DNS addresses for existing AD. For example, 10.0.0.10,10.0.16.10
             SQLStorageVMName:
                 default: SQL Storage VM Name for ONTAP
             ONTAPSecurityGroupID:
@@ -130,22 +129,22 @@ Parameters:
         Type: String
     Ec2RoleName:
         Default: AmazonEC2RoleForLaunchWizard
-        Description: EC2 instance role name
+        Description: EC2 instance role name.
         Type: String
     EnableCloudWatchLogFeature:
         Default: false
-        Description: Enable AWS CloudWatch logging
+        Description: Enable AWS CloudWatch logging.
         Type: String
     LogGroupName:
         Default: SQLDLOG
-        Description: A name for the log group
+        Description: A name for the log group.
         Type: String
     UniqueID:
         Default: SQL123
         Description: Automation execution unique ID.
         Type: String
     AMIID:
-        Description: ID of the AMI to use
+        Description: ID of the AMI to use.
         Type: String
         Default: ami-06c634c2148dc0856
     BYOLAMI:
@@ -157,8 +156,7 @@ Parameters:
             this key pair.
         Type: AWS::EC2::KeyPair::KeyName
     PrivateSubnetID:
-        Description: ID of private subnet in an Availability Zone 1 for the Workload (For example,
-            subnet-a0246dcd)
+        Description: ID of private subnet in an Availability Zone 1 for the workload (For example, subnet-a0246dcd).
         Type: String
     AssetsBucketName:
         Description: S3 bucket name for WLMDB assets.
@@ -169,24 +167,23 @@ Parameters:
         Type: String
     AssetsS3KeyPrefix:
         AllowedPattern: ^[0-9a-zA-Z-/]*$
-        ConstraintDescription: Launch Wizard key prefix can include numbers, lowercase
-                                letters, uppercase letters, hyphens (-), and forward slash (/).
+        ConstraintDescription: Launch Wizard key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/).
         Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
             can include numbers, lowercase letters, uppercase letters, hyphens (-), and
             forward slash (/).
         Type: String
     VPCID:
-        Description: ID of your existing VPC for deployment
+        Description: ID of your existing VPC for deployment.
         Type: String
     VPCCIDR:
         AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
         ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
-        Description: CIDR block for the VPC
+        Description: CIDR block for the VPC.
         Type: String
     SqlFSxServerNetBIOSName:
         AllowedPattern: '[a-zA-Z0-9\-]+'
         Default: SqlFSx1
-        Description: NetBIOS name of the SQL server (up to 15 characters)
+        Description: NetBIOS name of the SQL Server (up to 15 characters).
         MaxLength: '15'
         MinLength: '1'
         Type: String
@@ -194,19 +191,19 @@ Parameters:
         Description: ARN for the secret for domain admin.
         Type: String
     SQLServiceAccountSecret:
-        Description: ARN for the secret for sql service account.
+        Description: ARN of the secret for the SQL Server service account.
         Type: String
     DomainAdminUser:
         AllowedPattern: ([a-zA-Z0-9]+(\.|_|-|@)*)+
         Default: admin
         Description: User name for the account that will be used as Domain Administrator.
-            This is separate from the default "Administrator" account
+            This is separate from the default "Administrator" account.
         MaxLength: '25'
         MinLength: '5'
         Type: String
     DomainDNSName:
         AllowedPattern: '[a-zA-Z0-9\-]+\..+'
-        Description: Fully qualified domain name (FQDN). For example, example.com
+        Description: Fully qualified domain name (FQDN). For example, example.com.
         MaxLength: '255'
         MinLength: '2'
         Type: String
@@ -216,7 +213,7 @@ Parameters:
         MinLength: '2'
         Type: String
     DomainMemberSGID:
-        Description: ID of the domain member security group (for example, sg-9cb7d0e5)
+        Description: ID of the domain member security group (for example, sg-9cb7d0e5).
         Type: String
     WorkloadInstanceType:
         Default: r5.large

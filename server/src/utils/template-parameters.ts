@@ -102,7 +102,7 @@ const PARAMETERS = [
     },
     {
         name: 'SQLAMIID',
-        description: 'SQL node AMI image id',
+        description: 'SQL node AMI image ID.',
         type: 'String',
         minLength: 1
     },
@@ -123,19 +123,19 @@ const PARAMETERS = [
     },
     {
         name: 'SQLigroupname',
-        description: 'SQL igroupname',
+        description: 'SQL igroupname.',
         type: 'String',
         minLength: 1
     },
     {
         name: 'SqlServerName',
-        description: 'SQL Server Name',
+        description: 'SQL Server Name.',
         type: 'String',
         minLength: 1
     },
     {
         name: 'SqlFSxWSFCName',
-        description: 'Windows Server Failover Cluster name',
+        description: 'Windows Server Failover Cluster name.',
         type: 'String',
         minLength: 4,
         maxLength: 15,
@@ -144,7 +144,7 @@ const PARAMETERS = [
     },
     {
         name: 'VPCCIDR',
-        description: 'CIDR Block for the VPC',
+        description: 'CIDR Block for the VPC.',
         constraintDescription: 'CIDR block parameter must be in the form x.x.x.x/16-28',
         type: 'String',
         default: '10.0.0.0/16',
@@ -177,19 +177,19 @@ const PARAMETERS = [
     },
     {
         name: 'SQLSvmName',
-        description: 'SQL Storage Machine Virtual Name',
+        description: 'SQL Storage Machine Virtual Name.',
         type: 'String',
         minLength: 1
     },
     {
         name: 'WorkloadInstanceType',
-        description: 'Amazon EC2 instance type for the WSFC Nodes',
+        description: 'Amazon EC2 instance type for the WSFC Nodes.',
         type: 'String',
         minLength: 1
     },
     {
         name: 'NodeNetBIOSNames',
-        description: 'NetBIOS name of Nodes (each one up to 15 characters)',
+        description: 'NetBIOS name of Nodes (each one up to 15 characters).',
         type: 'String',
         minLength: 1
     },
@@ -207,13 +207,13 @@ const PARAMETERS = [
     },
     {
         name: 'FSxDataVolumeName',
-        description: 'The name of the volume for SQL Server data',
+        description: 'The name of the volume for SQL Server data.',
         type: 'String',
         minLength: 1
     },
     {
         name: 'FSxLogVolumeName',
-        description: 'SQL log volume name',
+        description: 'SQL log volume name.',
         type: 'String',
         minLength: 1
     },
@@ -302,73 +302,73 @@ const PARAMETERS = [
     },
     {
         name: 'VPCID',
-        description: 'Existing VPC ID for deployment',
+        description: 'Existing VPC ID for deployment.',
         type: 'AWS::EC2::VPC::Id',
         minLength: 1
     },
     {
         name: 'ONTAPSecurityGroupID',
-        description: 'ONTAP Security Group ID',
+        description: 'ONTAP Security Group ID.',
         type: 'String'
     },
     {
         name: 'EnableCloudWatchLogFeature',
-        description: 'Enable CloudWatch Log Feature',
+        description: 'Enable CloudWatch Log Feature.',
         type: 'String',
         default: true,
         allowedValues: [true, false]
     },
     {
         name: 'NotificationARN',
-        description: ' (optional) Amazon SNS topic ARNs to publish stack related events',
+        description: ' (optional) Amazon SNS topic ARNs to publish stack related events.',
         type: 'String'
     },
     {
         name: 'ValidationAmi',
-        description: 'Validation node AMI image id',
+        description: 'Validation node AMI image ID.',
         type: 'String',
         minLength: 1
     },
     {
         name: 'RoleCredentialsId',
-        description: 'WLM account credentials id to deploy and manage resources (DO NOT EDIT)',
+        description: 'WLM account credentials ID to deploy and manage resources (DO NOT EDIT).',
         type: 'String',
         noEcho: true
     },
     {
         name: 'AccountId',
-        description: 'WLM tenancy account id (DO NOT EDIT)',
+        description: 'WLM tenancy account ID (DO NOT EDIT).',
         type: 'String',
         noEcho: true
     },
     {
         name: 'CloudProviderAccountId',
-        description: 'AWS CloudProviderAccountId id (DO NOT EDIT)',
+        description: 'AWS CloudProviderAccountId ID (DO NOT EDIT).',
         type: 'String',
         noEcho: true
     },
     {
         name: 'JwtToken',
-        description: 'JWT Token to grant access to a resource (DO NOT EDIT)',
+        description: 'JWT Token to grant access to a resource (DO NOT EDIT).',
         type: 'String',
         noEcho: true
     },
     {
         name: 'EncryptedFsxPassword',
         description:
-            'Encrypted value of FSx for ONTAP password entered in the database deployment wizard (DO NOT EDIT)',
+            'Encrypted value of FSx for ONTAP password entered in the database deployment wizard (DO NOT EDIT).',
         type: 'String',
         noEcho: true
     },
     {
         name: 'WlmdbAwsAccountId',
-        description: 'WLMDB AWS Account ID (DO NOT EDIT)',
+        description: 'WLMDB AWS Account ID (DO NOT EDIT).',
         type: 'String',
         noEcho: true
     },
     {
         name: 'Metrics',
-        description: 'Metrics used for internal audit( DO NOT EDIT) ',
+        description: 'Metrics used for internal audit( DO NOT EDIT).',
         type: 'CommaDelimitedList',
         noEcho: true
     }
