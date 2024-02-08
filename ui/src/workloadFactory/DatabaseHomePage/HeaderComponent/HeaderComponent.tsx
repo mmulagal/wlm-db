@@ -216,6 +216,7 @@ const HeaderComponent = () => {
                         </div>
                     </div>
                 </div>
+                <div className={styles.extraSpace} />
                 {selectedHeaderTab === 'Dashboard' && <DatabaseHomePage />}
                 {selectedHeaderTab === 'Inventory' && <Inventory />}
                 {selectedHeaderTab === 'Job monitoring' && <JobMonitoring />}
