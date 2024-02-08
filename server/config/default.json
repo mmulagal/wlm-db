@@ -11,7 +11,8 @@
         "local-connector": "http://127.0.0.1:8098",
         "signoz": "http://signoz-otel-collector.signoz.svc.cluster.local:4318/v1/traces",
         "workload-factory": "https://staging.api.workloads.netapp.com",
-        "wlm-db-redirect-url": "https://staging.cloudmanager.netapp.com"
+        "wlm-db-redirect-url": "https://staging.cloudmanager.netapp.com",
+        "workload-factory-console": "https://staging.console.workloads.netapp.com"
     },
     "got": {
         "internal": {

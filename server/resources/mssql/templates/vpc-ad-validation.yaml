@@ -93,21 +93,21 @@ Parameters:
         MinLength: '5'
         Type: String
     DomainDNSName:
-        Description: Fully qualified domain name (FQDN). For example, example.com
+        Description: Fully qualified domain name (FQDN). For example, example.com.
         MaxLength: '255'
         MinLength: '2'
         Type: String
     DNSIpAddresses:
         Default: ''
-        Description: Fixed private IPs for the Active Directory server
+        Description: Fixed private IPs for the Active Directory server.
         Type: String
     KeyPairName:
         Description: Public/private key pairs allow you to securely connect to your instance
-            after it launches
+            after it launches.
         Type: AWS::EC2::KeyPair::KeyName
     SubnetID:
-        Description: ID of private subnet in an Availability Zone 1 for the Workload (For example,
-            subnet-a0246dcd)
+        Description: ID of private subnet in an Availability Zone 1 for the workload (For example,
+            subnet-a0246dcd).
         Type: AWS::EC2::Subnet::Id
     AssetsBucketName:
         Description: S3 bucket name for WLMDB assets.
@@ -119,11 +119,11 @@ Parameters:
         Description: S3 region code.
         Type: String
     VPCID:
-        Description: ID of the VPC (for example, vpc-0343606e)
+        Description: ID of the VPC (for example, vpc-0343606e).
         Type: AWS::EC2::VPC::Id
     Ec2RoleName:
         Default: AmazonEC2RoleForLaunchWizard
-        Description: Role name for EC2 instance profile
+        Description: Role name for EC2 instance profile.
         Type: String
     PerformADCheck:
         AllowedValues:
@@ -134,7 +134,7 @@ Parameters:
         Type: String
     EnableCloudWatchLogFeature:
         Default: false
-        Description: Enable AWS CloudWatch logging
+        Description: Enable AWS CloudWatch logging.
         Type: String
     ParentStackName:
         Description: Stack name for the parent CloudFormation stack.

@@ -90,6 +90,7 @@ const WORKLOAD_FACTORY_ENDPOINT: string = process.env.WORKLOAD_FACTORY_ENDPOINT
 const WLMDB_ABSOLUTE_ENDPOINT: string = process.env.WLMDB_ABSOLUTE_ENDPOINT
     ? `https://${process.env.WLMDB_ABSOLUTE_ENDPOINT}`
     : config.get('urls.wlm-db-redirect-url');
+const WF_CONSOLE_ENDPOINT: string = config.get('urls.workload-factory-console');
 
 const CREDENTIALS_ENDPOINT: string = CLOUD_MANAGER_ENDPOINT || config.get<string>('urls.cloud-manager');
 
@@ -1146,6 +1147,7 @@ export {
     ACTION_BUTTON_DATABASE,
     RESOURCE_ID,
     WLMDB_ABSOLUTE_ENDPOINT,
+    WF_CONSOLE_ENDPOINT,
     SUCCESS,
     ERROR,
     MAX_READ_REQUEST_FSXN,

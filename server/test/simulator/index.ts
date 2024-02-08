@@ -26,6 +26,7 @@ async function initiateSimulator() {
     await import('./scopes/batch-scope');
     await import('./scopes/cloud-manager/cloud-manager-notification-scope');
     await import('./scopes/cloud-manager/workload-factory-credentials-scope');
+    await import('./scopes/cloud-manager/wlmdb-scope');
     await import('./scopes/aws/pricing-scope');
     await import('./scopes/cloud-manager/workload-factory-auth-scope');
     await import('./scopes/aws/cost-explorer-scope');

@@ -1,4 +1,4 @@
-import { WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts';
+import { WF_CONSOLE_ENDPOINT } from '../../utils/consts';
 import { gotInstanceForInternalRequest } from '../../utils/got';
 import getLogger from '../../utils/logger';
 
@@ -33,7 +33,7 @@ async function getWlmdbPolicy() {
 
     const response = await gotInstanceForInternalRequest
         .get('wlmdb/workload-policies.json', {
-            prefixUrl: WORKLOAD_FACTORY_ENDPOINT
+            prefixUrl: WF_CONSOLE_ENDPOINT
         })
         .json<WlmdbPolicyResponse>();
     return response;
