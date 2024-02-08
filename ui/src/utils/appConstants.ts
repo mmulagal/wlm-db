@@ -508,8 +508,7 @@ export const GENERAL = {
     JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
     DEMO_TITLE: 'Redirect to CloudFormation',
-    DEMO_CONTENT:
-        'When using a Demo account you wont be redirected to the AWS CloudFormation service.'
+    DEMO_CONTENT: `When using a Demo account you won't be redirected to the AWS CloudFormation service.`
 };
 
 export const CODE_VIEWER = {
