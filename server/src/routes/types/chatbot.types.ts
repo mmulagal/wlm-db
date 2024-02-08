@@ -1,10 +1,10 @@
 import { Type, Static } from '@fastify/type-provider-typebox';
 
 const PromptRequestBodySchema = Type.Object({
-    prompt: Type.String(),
+    prompt: Type.Optional(Type.String()), // will be present only when the user is not respoding to a question and rather asking a query
     intent: Type.Optional(Type.String()),
-    promptType: Type.Optional(Type.String({ enum: ['query', 'response'] })),
-    params: Type.Optional(Type.Any())
+    params: Type.Optional(Type.Any()), // contains valid params
+    userParams: Type.Optional(Type.Any()) // contains yet to be validated params
 });
 
 const queryBotResponse = Type.Object({

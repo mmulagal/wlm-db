@@ -8,10 +8,10 @@ export default function chatbotRoutes(fastify: FastifyInstance) {
 
     server.post('/v1/chatbot/prompt', { schema: queryBotSchema }, async (request, reply) => {
         const {
-            body: { prompt, params }
+            body: { prompt, intent, params, userParams }
         } = request;
 
-        const response = await queryBot(prompt, params);
+        const response = await queryBot(prompt, intent, params, userParams);
 
         return reply.send(response);
     });
