@@ -18,6 +18,7 @@ import {
 import { GENERAL } from '../../../utils/appConstants';
 import { resetDBHomePageState } from '../../../utils/utilityFunctions';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import DatabaseHostTile from '../DatabaseOverviewLayout/DatabaseHostTile/DatabaseHostTile';
 
 const DatabaseHostOverview = () => {
     const selectedTab = useAppSelector(state => state.databaseHome.selectedTab);
@@ -83,6 +84,10 @@ const DatabaseHostOverview = () => {
                         }
                     ]}
                 />
+            </div>
+
+            <div className={styles.hostTitle}>
+                <DatabaseHostTile />
             </div>
 
             <div className={styles.secondLevel}>

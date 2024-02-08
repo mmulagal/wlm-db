@@ -21,30 +21,30 @@ const OverviewTabs = () => {
     };
     return (
         <div
-            className={
-                selectedTab === 'Overview'
-                    ? `${styles.overviewTabs}`
-                    : `${styles.overviewTabs} ${styles.overviewTabDynamicWidth}`
-            }
+            className={styles.overviewTabs}
         >
-            <Typography
-                variant="Semibold_14"
-                className={
-                    selectedTab === 'Overview' ? `${styles.headerPart1} ${styles.active}` : `${styles.headerPart1}`
-                }
-                onClick={() => handleClick('Overview')}
-            >
-                {GENERAL.OVERVIEW}
-            </Typography>
-            <Typography
-                variant="Semibold_14"
-                className={
-                    selectedTab === 'Database list' ? `${styles.headerPart2} ${styles.active}` : `${styles.headerPart2}`
-                }
-                onClick={() => handleClick('Database list')}
-            >
-                {GENERAL.DATABASES}
-            </Typography>
+            <div className={selectedTab === 'Overview' ? `${styles.headers} ${styles.active}` : `${styles.headers}`}>
+                <Typography
+                    variant="Semibold_14"
+                    className={
+                        selectedTab === 'Overview' ? `${styles.headerPart1} ${styles.activeText}` : `${styles.headerPart1}`
+                    }
+                    onClick={() => handleClick('Overview')}
+                >
+                    {GENERAL.OVERVIEW}
+                </Typography>
+            </div>
+            <div className={selectedTab === 'Database list' ? `${styles.headers} ${styles.active}` : `${styles.headers}`}>
+                <Typography
+                    variant="Semibold_14"
+                    className={
+                        selectedTab === 'Database list' ? `${styles.headerPart2} ${styles.activeText}` : `${styles.headerPart2}`
+                    }
+                    onClick={() => handleClick('Database list')}
+                >
+                    {GENERAL.DATABASES}
+                </Typography>
+            </div>
         </div>
     );
 };
