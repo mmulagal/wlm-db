@@ -5,7 +5,8 @@
         "tenancy": "https://api.bluexp.netapp.com",
         "credentials": "https://api.bluexp.netapp.com",
         "workload-factory": "https://api.workloads.netapp.com",
-        "wlm-db-redirect-url": "https://cloudmanager.netapp.com"
+        "wlm-db-redirect-url": "https://cloudmanager.netapp.com",
+        "workload-factory-console": "https://console.workloads.netapp.com"
     },
     "kinesis": {
         "stream-name": "audit-service-prod-stream"
