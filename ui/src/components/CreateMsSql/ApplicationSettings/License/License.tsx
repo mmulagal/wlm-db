@@ -28,6 +28,7 @@ const License = () => {
     const licenseType = useAppSelector(state => state.mssqlForm.license.selectedLicenseType);
     const selectedLicenseId = useAppSelector(state => state.mssqlForm.license.selectedLicenseId);
     const selectedCustomAMI = useAppSelector(state => state.mssqlForm.license.selectedCustomAMI);
+    const [defaultValeLicense, selectedDefaultValue] = useState(selectedLicenseId);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
@@ -36,6 +37,14 @@ const License = () => {
 
     // Custom AMI list will be blank for as it is not supported in phase 1
     const customAmiId: any[] = [];
+
+    useEffect(() => {
+        const newValLicense = {
+            ...selectedLicenseId,
+            label: `${selectedLicenseId.label} | ${selectedLicenseId.label2}`
+        };
+        selectedDefaultValue(newValLicense);
+    }, [selectedLicenseId]);
 
     //Function to generate the options for Select Field
     const generateAMIId = useMemo<optionType[]>((): optionType[] => {
@@ -102,7 +111,7 @@ const License = () => {
                 isExpandDisabled={!credentialData || (credentialData && !credentialData.length)}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="9"
-                title={<div className={CommonStyles.title}>{GENERAL.LICENSE}</div>}
+                title={<div className={CommonStyles.title}>{GENERAL.SQL_SERVER_INSTALL_TYPE}</div>}
             >
                 <AccordionCardContent>
                     <Typography>
@@ -160,7 +169,8 @@ const License = () => {
                                     }
                                     placeholder={GENERAL.SELECT_AMI_ID}
                                     isClearable={false}
-                                    defaultValue={selectedLicenseId}
+                                    defaultValue={defaultValeLicense}
+                                    value={defaultValeLicense}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSelectedLicenseId(selectedOptions));
                                         dispatch(setIsWizardTouched(true));
