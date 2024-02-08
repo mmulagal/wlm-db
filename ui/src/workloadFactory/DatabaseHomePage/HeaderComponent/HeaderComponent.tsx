@@ -131,7 +131,7 @@ const HeaderComponent = () => {
                                     isSearchable={generateAWSAccounts.length > 5}
                                     options={generateAWSAccounts}
                                     variant="two-lines"
-                                    isReadOnly={selectedHeaderTab === 'Overview' ? true : false}
+                                    isReadOnly={selectedHeaderTab === 'Overview'}
                                 />
                             </div>
 
@@ -147,7 +147,7 @@ const HeaderComponent = () => {
                                     isSearchable={generateRegionsData.length > 5}
                                     options={generateRegionsData}
                                     variant="two-lines"
-                                    isReadOnly={selectedHeaderTab === 'Overview' ? true : false}
+                                    isReadOnly={selectedHeaderTab === 'Overview'}
                                 />
                             </div>
 
