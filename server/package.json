@@ -20,7 +20,7 @@
         "test": "cross-env NODE_ENV=simulator vitest --coverage",
         "test:nowatch": "cross-env NODE_ENV=simulator vitest --run --silent",
         "postinstall": "patch-package",
-        "apidoc": "npm run build && node --loader ./dist/src/utils/loader.js dist/src/utils/generate-documentation.js && spectral lint documentation.yaml"
+        "apidoc": "node --import tsx src/utils/generate-documentation.ts && spectral lint documentation.yaml"
     },
     "repository": {
         "type": "git",
@@ -85,6 +85,7 @@
         "@esbuild-kit/esm-loader": "^2.6.5",
         "@faker-js/faker": "^8.3.1",
         "@smithy/smithy-client": "^2.1.18",
+        "@stoplight/spectral-cli": "^6.11.0",
         "@types/async": "^3.2.24",
         "@types/bluebird": "^3.5.42",
         "@types/config": "^3.3.3",
@@ -101,6 +102,7 @@
         "nock": "^13.4.0",
         "prismock": "^1.24.0",
         "rimraf": "^5.0.5",
+        "tsx": "^4.7.0",
         "vitest": "^1.1.0"
     }
 }
