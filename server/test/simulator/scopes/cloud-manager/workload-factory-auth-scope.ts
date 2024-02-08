@@ -2,7 +2,9 @@ import { faker } from '@faker-js/faker';
 import nock from 'nock';
 import { WORKLOAD_FACTORY_ENDPOINT } from '../../../../src/utils/consts';
 
-nock(`${WORKLOAD_FACTORY_ENDPOINT}`)
+nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
+    allowUnmocked: process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
+})
     .persist(true)
     .post(/^\/auth\/v1\/auth\/token$/)
     .reply(() => [
