@@ -105,7 +105,6 @@ const UpdateJobResponse = Type.Object({
 });
 
 const CreateJobObject = Type.Object({
-    accountId: Type.String(),
     name: Type.String(),
     status: Type.String({
         enum: Object.values(JOBSTATUS)
