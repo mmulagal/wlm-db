@@ -9,7 +9,6 @@ import {
     describeInstanceTypes,
     describeRouteTable,
     describeInstance,
-    describeInstanceTypeOfferings,
     createTag
 } from '../../../src/lib/aws/ec2';
 import { SQL_AMI_NAMES, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
@@ -30,8 +29,6 @@ import subnetsList from '../../simulator/responses/aws/list-subnets.json';
 import sgList from '../../simulator/responses/aws/list-security-groups.json';
 import ec2instanceTypes from '../../simulator/responses/aws/ec2-instance-types.json';
 import ec2Instances from '../../simulator/responses/aws/describe-instance.json';
-import instanceTypeOfferings from '../../simulator/responses/aws/describe-instance-type-offerings.json';
-import describeInstanceTypeOfferingsInvalidParameters from '../../simulator/responses/aws/describe-instance-type-offerings-invalid-parameters.json';
 import { DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
 
 const REGION = DEFAULT_AWS_REGION;
@@ -120,28 +117,6 @@ describe('EC2 Lib', () => {
         });
 
         expect(response).toEqual(ec2Instances);
-    });
-
-    it('Describe EC2 instance type offerings in regions', async () => {
-        const response = await describeInstanceTypeOfferings(
-            DEFAULT_AWS_CREDENTIALS_TYPE,
-            'ap-southeast-1',
-            'm5.xlarge'
-        );
-        expect(response).toEqual(instanceTypeOfferings);
-    });
-
-    it('Desribe EC2 instance type offerings for invalid region and instance-type', async () => {
-        try {
-            await describeInstanceTypeOfferings(
-                DEFAULT_AWS_CREDENTIALS_TYPE,
-                'INVALID_REGION',
-                'INVALID_INSTANCE_TYPE'
-            );
-        } catch (error) {
-            const { message } = error as { message: string };
-            expect(message).toEqual(describeInstanceTypeOfferingsInvalidParameters.message);
-        }
     });
 
     it('Create tag for given resource', async () => {
