@@ -479,6 +479,9 @@ export const GENERAL = {
     HOST_NAME: 'Host name',
     NO_OF_DBS: 'Number of databases',
     TOTAL_USED_CAPACITY: 'Total used capacity',
+    SQL_VERSION: 'SQL version',
+    RESOURCE_DEPLOYMENT_MODEL: 'Deployment model',
+    RESOURCE_EDITION: 'Edition',
     TOTAL_ALLOCATED_CAPACITY: 'Total allocated capacity',
     ESTIMATED_COST_TOOLTIP:
         "Cost estimation provides an estimate of your AWS fees and doesn't include any taxes that might apply. Your actual fees depend on a variety of factors, including your actual usage of AWS services.",
