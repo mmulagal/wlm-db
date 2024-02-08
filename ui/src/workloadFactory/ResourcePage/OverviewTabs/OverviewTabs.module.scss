@@ -11,8 +11,8 @@
     .headers {
         width: 240px;
         padding-top: 16px;
-        background-color: var(--Light-Background-content-background, #FFF);
-        box-shadow: 2px 2px 6px 0px var(--grey-15);
+        background-color: var(--content-background);
+        box-shadow: 2px 2px 6px 0px var(--border);
         gap: 14px;
     }
 
