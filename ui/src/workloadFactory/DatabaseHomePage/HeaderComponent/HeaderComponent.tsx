@@ -35,8 +35,6 @@ const HeaderComponent = () => {
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
-
-    const menuSelected = useAppSelector(state => state.inventory.menuSelected);
     const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
 
     HeaderComponentApi();
@@ -133,6 +131,7 @@ const HeaderComponent = () => {
                                     isSearchable={generateAWSAccounts.length > 5}
                                     options={generateAWSAccounts}
                                     variant="two-lines"
+                                    isReadOnly={selectedHeaderTab === 'Overview'}
                                 />
                             </div>
 
@@ -148,6 +147,7 @@ const HeaderComponent = () => {
                                     isSearchable={generateRegionsData.length > 5}
                                     options={generateRegionsData}
                                     variant="two-lines"
+                                    isReadOnly={selectedHeaderTab === 'Overview'}
                                 />
                             </div>
 
