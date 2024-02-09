@@ -758,7 +758,7 @@ function prepareResourceActionMap(statements: [PolicyStatement]) {
         if (!isEmpty(Condition)) {
             Object.entries(Condition).forEach(obj => {
                 const [key, value] = obj;
-                if (key === 'StringLike') {
+                if (key === 'StringLike' || key === 'StringEquals') {
                     // TODO : revisit this implementation when the WLMDB policy has Conditions supporting Numeric/Boolean datatypes
                     Object.entries(value).forEach(([conditionKey, conditionValue]) =>
                         resourceConditions.push({
