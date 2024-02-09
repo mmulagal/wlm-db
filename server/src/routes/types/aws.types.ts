@@ -34,17 +34,19 @@ const VcpSecurityGroupParams = Type.Object({
     vpcId: Type.String()
 });
 
+const VpcSecurityGroup = Type.Array(
+    Type.Object({
+        id: Type.Optional(Type.String()),
+        description: Type.Optional(Type.String()),
+        vpcId: Type.Optional(Type.String()),
+        ipPermissions: Type.Optional(Type.Any()),
+        name: Type.Optional(Type.String()),
+        securityGroupName: Type.Optional(Type.String())
+    })
+);
+
 const VpcSecurityGroupsResponse = Type.Object({
-    securityGroups: Type.Array(
-        Type.Object({
-            id: Type.Optional(Type.String()),
-            description: Type.Optional(Type.String()),
-            vpcId: Type.Optional(Type.String()),
-            ipPermissions: Type.Optional(Type.Any()),
-            name: Type.Optional(Type.String()),
-            securityGroupName: Type.Optional(Type.String())
-        })
-    )
+    securityGroups: VpcSecurityGroup
 });
 
 // VPC list Request and Response
@@ -80,7 +82,7 @@ const VpcListResponse = Type.Object({
                     })
                 )
             ),
-            securityGroups: Type.Optional(VpcSecurityGroupsResponse)
+            securityGroups: Type.Optional(VpcSecurityGroup)
         })
     )
 });
