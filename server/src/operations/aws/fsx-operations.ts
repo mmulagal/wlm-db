@@ -214,7 +214,8 @@ async function getFSXFileSystemListForDemo(credentialsId: string, region: string
             lifecycle: status,
             networkInterfaceIds,
             vpcId: fsxVpcId,
-            subnetIds: [subnetIds?.primary, subnetIds?.secondary]
+            subnetIds: [subnetIds?.primary, subnetIds?.secondary],
+            kmsKeyId: 'test'
         })
     );
     return filteredResponse;
