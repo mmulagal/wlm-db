@@ -1,4 +1,5 @@
 import Promise from 'bluebird';
+import randomize from 'randomatic';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
 import { ListTagsForResourceCommandInput, Tag, Volume } from '@aws-sdk/client-fsx';
@@ -50,6 +51,9 @@ interface FSXDATA {
     networkInterfaceIds: any;
     vpcId: string;
     subnetIds: any;
+    region: string;
+    awsAccountId: string;
+    deploymentType: string;
 }
 
 async function getFSXDetails(credentialsId: string, region: string, fileSys: any) {
@@ -208,14 +212,26 @@ async function getFSXFileSystemListForDemo(credentialsId: string, region: string
         items
     });
     const filteredResponse = items?.map(
-        ({ id, name, status: { status }, networkInterfaceIds, vpcId: fsxVpcId, subnetIds }) => ({
+        ({
+            id,
+            name,
+            status: { status },
+            networkInterfaceIds,
+            vpcId: fsxVpcId,
+            subnetIds,
+            region: fsxRegion,
+            awsAccountId,
+            deploymentType
+        }) => ({
             fileSystemId: id,
             name,
             lifecycle: status,
             networkInterfaceIds,
             vpcId: fsxVpcId,
-            subnetIds: [subnetIds?.primary, subnetIds?.secondary],
-            kmsKeyId: 'test'
+            ...(deploymentType === 'SINGLE_AZ'
+                ? { subnetIds: [subnetIds?.primary] }
+                : { subnetIds: [subnetIds?.primary, subnetIds?.secondary] }),
+            kmsKeyId: `arn:aws:kms:${fsxRegion}:${awsAccountId}:key/${randomize('A0', 17)}`
         })
     );
     return filteredResponse;

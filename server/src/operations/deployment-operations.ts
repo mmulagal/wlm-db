@@ -741,7 +741,7 @@ async function createFSXForDemo(credentialsId: string, region: string, fsxConfig
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
 
     const { fsxDeploymentMode, fsxIOPS, fsxPassword } = fsxConfiguration;
-    const mode = fsxDeploymentMode.split('_');
+    const mode = fsxDeploymentMode.replace(/_\d+$/, '');
 
     const requestBody = {
         name: `fsx-wlmdb-${randomize('A', 5)}`,
@@ -752,9 +752,10 @@ async function createFSXForDemo(credentialsId: string, region: string, fsxConfig
             unit: 'TiB'
         },
         primarySubnetId: 'subnet-a1', // default subnet for fsx
+        ...(mode === 'MULTI_AZ' && { secondarySubnetId: 'subnet-a2' }),
         throughputCapacity: fsxIOPS,
         fsxAdminPassword: fsxPassword,
-        deploymentType: `${mode[0]}_${mode[1]}`,
+        deploymentType: mode,
         securityGroupIds: [],
         tags: [],
         svmAdminPassword: `${randomize('*', 8)}`,
