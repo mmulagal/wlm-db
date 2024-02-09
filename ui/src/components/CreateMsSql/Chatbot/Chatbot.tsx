@@ -70,7 +70,6 @@ import {
     TIMELINE_STAGE_LINK,
     USER_MANAGED_AD
 } from '../../../utils/consts';
-import MssqlApis from '../MSSqlServer/MssqlApis';
 import ChatbotHeader from './ChatbotHeader/ChatbotHeader';
 import { handleCreateSQLServer } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 import { setDeployRedirectToCfLink, setIsLoading } from '../../../store/mssql/msSqlActionSlice';
@@ -113,8 +112,6 @@ const Chatbot = () => {
 
     const [sendMsgToBot] = useSendMsgMutation();
     const [deploySqlTemplate] = useDeploySqlTemplateMutation();
-
-    MssqlApis();
 
     const handleKeyPress = async (e: any) => {
         await delay(0);
