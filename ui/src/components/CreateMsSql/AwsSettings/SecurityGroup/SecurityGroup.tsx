@@ -96,6 +96,7 @@ const SecurityGroup = () => {
                                     setSecurityGroup(GENERAL.USE_AN_EXISTING_SECURITY);
                                     dispatch(setSelectedSecurityGroup(GENERAL.USE_AN_EXISTING_SECURITY));
                                     dispatch(setIsWizardTouched(true));
+                                    dispatch(setSelectedExistingSecurityGroup(generateExistingSecurity[0]));
                                 }}
                                 children={GENERAL.USE_AN_EXISTING_SECURITY}
                                 className=""

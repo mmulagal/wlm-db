@@ -39,9 +39,8 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/vpcs`, asy
 });
 
 // Get SG mock response
-router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/vpcs/:vpcId/security-groups`, async (req: {}, res: VpcRes) => {
-    const retData = sgData;
-    generateResponse(res, 200, retData);
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/vpcs/:vpcId/security-groups`, async (req: {}, res: any) => {
+    generateResponse(res, 200, sgData);
 });
 
 // Get ADs mock response
