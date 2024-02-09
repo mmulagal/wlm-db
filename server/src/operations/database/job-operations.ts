@@ -28,6 +28,7 @@ const logger = getLogger();
 
 interface Job extends JobRecordType {
     id: string;
+    accountId: string;
 }
 interface JobWithSubJobs extends Job {
     subJobs?: Job[];
@@ -86,20 +87,8 @@ function isValidStartTime(startTime: number) {
     return Number(startTime) && !Number.isNaN(Number(startTime));
 }
 
-function formatJobDbSchema(job: JobRecordType) {
-    const {
-        accountId,
-        type,
-        status,
-        resourceName,
-        name,
-        description,
-        error,
-        startTime,
-        endTime,
-        initiator,
-        parentJobId
-    } = job;
+function formatJobDbSchema(accountId: string, job: JobRecordType) {
+    const { type, status, resourceName, name, description, error, startTime, endTime, initiator, parentJobId } = job;
     return {
         account_id: accountId,
         type: type as JOBTYPE,
@@ -123,7 +112,7 @@ async function registerJobs(accountId: string, jobs: JobRecordType[] | []) {
         logger.error(errMsg);
         throw createError(400, errMsg);
     }
-    const jobsToCreate = jobs.map(formatJobDbSchema);
+    const jobsToCreate = jobs.map(job => formatJobDbSchema(accountId, job));
     return createJobs(accountId, jobsToCreate);
 }
 
