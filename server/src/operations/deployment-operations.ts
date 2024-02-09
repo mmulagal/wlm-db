@@ -66,7 +66,10 @@ import {
     DATABASE_SIZE,
     SQL_HOST_NAME,
     OPERATE,
-    VIEW
+    VIEW,
+    USER_TOKEN,
+    WORKLOAD_FACTORY_ENDPOINT,
+    HEADERS
 } from '../utils/consts';
 import {
     createJobMockData,
@@ -78,6 +81,7 @@ import {
     isNetworkConfigurationViolated,
     sleep
 } from '../utils/utils';
+import { gotInstanceForInternalRequest } from '../utils/got';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
@@ -722,8 +726,57 @@ async function deployCloudFormationTemplate(
             sqlConfiguration?.sqlDeploymentMode,
             fsxConfiguration?.fsxFileSystemId
         );
+        if (!fsxConfiguration.fsxFileSystemId) {
+            // create a new fsx record in fsx inventory
+            createFSXForDemo(credentialsId, region, fsxConfiguration);
+        }
     }
     return { cloudFormationStackId: deployStackResponse.StackId!, cloudFormationUrl: cfUrl };
+}
+
+async function createFSXForDemo(credentialsId: string, region: string, fsxConfiguration: FSXConfigurationType) {
+    logger.info('Creating fsx for demo', credentialsId, region, fsxConfiguration);
+
+    const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
+    const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
+
+    const { fsxDeploymentMode, fsxIOPS, fsxPassword } = fsxConfiguration;
+    const mode = fsxDeploymentMode.split('_');
+
+    const requestBody = {
+        name: `fsx-wlmdb-${randomize('A', 5)}`,
+        credentialsId,
+        region,
+        storageCapacity: {
+            size: 2,
+            unit: 'TiB'
+        },
+        primarySubnetId: 'subnet-a1', // default subnet for fsx
+        throughputCapacity: fsxIOPS,
+        fsxAdminPassword: fsxPassword,
+        deploymentType: `${mode[0]}_${mode[1]}`,
+        securityGroupIds: [],
+        tags: [],
+        svmAdminPassword: `${randomize('*', 8)}`,
+        generateSecurityGroup: true,
+        haPairs: 2,
+        automaticBackupRetentionDays: 30
+    };
+
+    try {
+        return gotInstanceForInternalRequest.post(
+            `${WORKLOAD_FACTORY_ENDPOINT}/accounts/${accountId}/fsx/v2/file-systems`,
+            {
+                headers: {
+                    [HEADERS.AUTHORIZATION]: token,
+                    [HEADERS.SIMULATOR]: 'true'
+                },
+                json: requestBody
+            }
+        );
+    } catch (err) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while creating fsx ${err}.`);
+    }
 }
 
 async function deploymentStatus(accountId: string) {
