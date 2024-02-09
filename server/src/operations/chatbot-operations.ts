@@ -7,16 +7,35 @@ import getLogger from '../utils/logger';
 
 const logger = getLogger();
 
-async function queryBot(query: string, oldParams?: { [x: string]: any }) {
-    logger.debug('Querying Bot', { query, oldParams });
+interface Params {
+    [x: string]: any;
+}
+
+async function queryBot(query?: string, intentType?: string, validParams?: Params, toBeValidatedParams?: Params) {
+    logger.debug('Querying Bot', { query, validParams, toBeValidatedParams });
     try {
-        let intent;
         const chatbot = new Chatbot();
 
-        const response = await chatbot.query(query);
-        logger.info('CHATBOT RESP>>>', response);
-        if (response.success) {
-            ({ intent } = response.data);
+        let intent;
+        let response;
+        const oldParams = validParams || {};
+        if (!query) {
+            intent = {
+                type: intentType,
+                params: { ...validParams, ...toBeValidatedParams }
+            };
+        } else {
+            response = await chatbot.query(query as string);
+            logger.info('CHATBOT RESP>>>', response);
+            if (response.success) {
+                ({ intent } = response.data);
+                if (intent.type === 'DeployMsSql') {
+                    intent.params = {
+                        ...intent?.params,
+                        ...toBeValidatedParams
+                    };
+                }
+            }
         }
 
         switch (intent?.type) {
@@ -32,8 +51,6 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
                     ...MSSQL_ENV_PRE_CONFIG[intent.params[DEPLOYMENT_ENVIRONMENT] as keyof typeof MSSQL_ENV_PRE_CONFIG]
                 };
 
-                // let params: DeployMsSqlParamsType = {};
-                // delete params.complete;
                 if (oldParams) {
                     const changedKeys = findChangedKeys(params, oldParams);
                     resetNextParamsOnUpdate(CHATBOT_UI_PARAMS_FSX, params, oldParams, new Set(changedKeys));
@@ -62,7 +79,7 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
             }
             default: {
                 /**
-                 * At time the bedrock model is not able to properly format the response in a valid JSON, and therefore results into an error
+                 * At times the bedrock model is not able to properly format the response in a valid JSON, and therefore results into an error
                  * However, we still get the response in string format, here we are extracting the response from the string and sending it back to the user
                  * as the response is still valid
                  *
@@ -72,7 +89,7 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
                  *
                  *
                  */
-                if (response.success === false) {
+                if (response?.success === false) {
                     const invalidJson =
                         response?.message?.includes('Response is not JSON') ||
                         response?.message?.includes('JSON validation failed');
