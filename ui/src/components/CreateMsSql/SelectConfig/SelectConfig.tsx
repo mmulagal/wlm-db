@@ -11,73 +11,40 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { setSelectConfig } from '../../../store/mssql/mssqlFormSlice';
 import { Typography } from '@netapp/design-system';
 import { setIsWizardTouched } from '../../../store/chatbot/chatbotSlice';
+import CardComponent from '../Chatbot/Message/CardComponent/CardComponent';
+import CardComponentConfig from '../../../common/CardComponent/CardComponentConfig';
 const SelectConfig = () => {
     const dispatch = useDispatch();
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
 
+    const clickHandler = (val: string) => {
+        dispatch(setSelectConfig(val));
+        dispatch(setIsWizardTouched(true));
+    };
+
     return (
         <div className={styles['select-config']}>
             {/* Easy create section from here */}
-            <div
-                id="quick-create"
-                className={
-                    selectedConfig === SELECT_CONFIG.EASY_CREATE
-                        ? `${styles['easy-create']} ${styles['add-border']}`
-                        : styles['easy-create']
-                }
-                onClick={() => {
-                    dispatch(setSelectConfig(SELECT_CONFIG.EASY_CREATE));
-                    dispatch(setIsWizardTouched(true));
-                }}
-            >
-                <div className={styles.level}>
-                    <EasyCreate />
-                    <div className={styles['easy-create-content']}>
-                        <div className={styles['easy-create-heading']}>{SELECT_CONFIG.QUICK_CREATE}</div>
-                        <Typography variant="Regular_13" className={styles['easy-create-content-text']}>
-                            {SELECT_CONFIG.EASY_CREATE_CONTENT}
-                        </Typography>
-                    </div>
-                </div>
+            <CardComponentConfig
+                idToAdd={'quick-create'}
+                selectedConfigCondition={selectedConfig === SELECT_CONFIG.EASY_CREATE}
+                icon={<EasyCreate />}
+                tickIcon={<BlueTick />}
+                heading={SELECT_CONFIG.QUICK_CREATE}
+                content={SELECT_CONFIG.EASY_CREATE_CONTENT}
+                handleClick={() => clickHandler(SELECT_CONFIG.EASY_CREATE)}
+            />
 
-                {selectedConfig === SELECT_CONFIG.EASY_CREATE && (
-                    <div className={styles['tick-placement']}>
-                        <BlueTick />
-                    </div>
-                )}
-                {/* <div className={styles['tag']}>
-                    <Tag backgroundColor="var(--chart-9)">{SELECT_CONFIG.COMING_SOON}</Tag>
-                </div> */}
-            </div>
             {/* Standard create section here */}
-            <div
-                id="advanced-create"
-                className={
-                    selectedConfig === SELECT_CONFIG.STANDARD_CREATE
-                        ? `${styles['standard-create']} ${styles['add-border']}`
-                        : styles['standard-create']
-                }
-                onClick={() => {
-                    dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE));
-                    dispatch(setIsWizardTouched(true));
-                }}
-            >
-                <div className={styles.level}>
-                    <StandardCreate />
-                    <div className={styles['standard-create-content']}>
-                        <div className={styles['standard-create-heading']}>{SELECT_CONFIG.ADVANCED_CREATE}</div>
-                        <Typography variant="Regular_13" className={styles['standard-create-content-text']}>
-                            {SELECT_CONFIG.STANDARD_CREATE_CONTENT}
-                        </Typography>
-                    </div>
-                </div>
-
-                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
-                    <div className={styles['tick-placement']}>
-                        <BlueTick />
-                    </div>
-                )}
-            </div>
+            <CardComponentConfig
+                idToAdd={'advanced-create'}
+                selectedConfigCondition={selectedConfig === SELECT_CONFIG.STANDARD_CREATE}
+                icon={<StandardCreate />}
+                tickIcon={<BlueTick />}
+                heading={SELECT_CONFIG.ADVANCED_CREATE}
+                content={SELECT_CONFIG.STANDARD_CREATE_CONTENT}
+                handleClick={() => clickHandler(SELECT_CONFIG.STANDARD_CREATE)}
+            />
         </div>
     );
 };

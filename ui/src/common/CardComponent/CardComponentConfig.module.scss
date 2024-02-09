@@ -1,0 +1,79 @@
+.cardComponent {
+    .add-border {
+        border: 1px solid var(--light-selectors-selector-on-bg, var(--blue-70));
+    }
+
+    .tick-placement {
+        text-align: end;
+        position: relative;
+        bottom: 96px;
+        right: 16px;
+    }
+
+    .easy-create {
+        width: 520px;
+        height: 136px;
+        padding: 24px 0 24px 24px;
+        background-color: var(--content-background);
+
+        .level {
+            display: flex;
+        }
+
+        .easy-create-content {
+            display: flex;
+            flex-direction: column;
+            padding-left: 24px;
+
+            .easy-create-heading {
+                font-size: 16px;
+                font-style: normal;
+                font-weight: 590;
+                line-height: 28px;
+                text-align: left;
+                color: var(--text-primary);
+            }
+
+            .easy-create-content-text {
+                font-size: 13px;
+                font-style: normal;
+                font-weight: 400;
+                width: 319px;
+                height: 60px;
+                text-align: left;
+                color: var(--text-primary);
+            }
+        }
+
+        .tag {
+            position: relative;
+            right: 24px;
+        }
+    }
+}
+
+@media screen and (max-width: 1350px) {
+    .cardComponent {
+        .easy-create {
+            width: 504px;
+
+            .tag {
+                position: relative;
+                right: 5;
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 1351px) and (max-width: 1520px) {
+    .cardComponent {
+        .easy-create {
+            width: 385px;
+
+            .tag {
+                position: relative;
+                right: 0;
+            }
+        }
+    }
+}
