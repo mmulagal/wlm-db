@@ -14,7 +14,8 @@ import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 const SecurityGroup = () => {
     const dispatch = useDispatch();
 
-    const { vpcData } = useAppSelector(state => state.mssql.getVPCList);
+    // const { vpcData } = useAppSelector(state => state.mssql.getVPCList);
+    const { sgData, sgLoading } = useAppSelector(state => state.mssql.getSGList);
 
     // Getting selected VPC to get security groups for selected VPC
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
@@ -35,21 +36,14 @@ const SecurityGroup = () => {
     //Function to generate the options for Select Field
     const generateExistingSecurity = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        const selectedVpcId = selectedVPCData?.data?.id;
-        if (selectedVpcId) {
-            vpcData?.vpcs
-                ?.filter(pervpc => pervpc?.id === selectedVpcId)
-                .map(pervpc => {
-                    pervpc.securityGroups?.map((val: any) => {
-                        const sgValue = val?.id;
-                        const sgLabel = val?.securityGroupName || val?.name || '-';
-                        const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
-                        options.push(option);
-                    });
-                });
-        }
+        sgData?.securityGroups?.map((val: any) => {
+            const sgValue = val?.id;
+            const sgLabel = val?.securityGroupName || val?.name || '-';
+            const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
+            options.push(option);
+        });
         return options;
-    }, [selectedVPCData, vpcData]);
+    }, [sgData]);
 
     useEffect(() => {
         if (!isLoadConfig && !movingFromChatbot) {
@@ -88,6 +82,7 @@ const SecurityGroup = () => {
             <AccordionCard
                 isDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData}
                 isExpandDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData}
+                isLoading={sgLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="4"
                 title={<div className={CommonStyles.title}>{SELECT_CONFIG.SECURITY_GROUP}</div>}
@@ -120,6 +115,7 @@ const SecurityGroup = () => {
                         {securityGroup === GENERAL.USE_AN_EXISTING_SECURITY && (
                             <div className={styles.handleSelect}>
                                 <SelectField
+                                    isLoading={sgLoading}
                                     label={GENERAL.EXISTING_SECURITY_GROUP}
                                     isClearable={false}
                                     defaultValue={

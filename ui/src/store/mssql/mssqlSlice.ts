@@ -17,6 +17,11 @@ const initialState: MssqlEntities = {
         vpcLoading: false,
         vpcError: null
     },
+    getSGList: {
+        sgData: {},
+        sgLoading: false,
+        sgError: null
+    },
     getAdsList: {
         adsData: {},
         adsLoading: false,
@@ -72,6 +77,9 @@ const mssqlSlice = createSlice({
         addVpcList: (state, action: PayloadAction<any>) => {
             state.getVPCList = action.payload;
         },
+        addSGList: (state, action: PayloadAction<any>) => {
+            state.getSGList = action.payload;
+        },
         addAdsList: (state, action: PayloadAction<any>) => {
             state.getAdsList = action.payload;
         },
@@ -103,6 +111,7 @@ export const {
     addCredentials,
     addRegions,
     addVpcList,
+    addSGList,
     addAdsList,
     addAmiList,
     addSnsList,

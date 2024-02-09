@@ -19,7 +19,16 @@ export interface VPC {
         }
     ];
     subnets: [];
-    securityGroups: [];
+    securityGroups?: [];
+}
+
+export interface SG {
+    id?: string;
+    description?: string;
+    vpcId?: string;
+    name?: string;
+    securityGroupName?: string;
+    ipPermissions?: [];
 }
 
 export interface AD {
@@ -106,6 +115,11 @@ export interface MssqlEntities {
         vpcData: { vpcs?: VPC[] };
         vpcLoading: false;
         vpcError: null;
+    };
+    getSGList: {
+        sgData: { securityGroups?: SG[] };
+        sgLoading: false;
+        sgError: null;
     };
     getAdsList: {
         adsData: { directories?: AD[] };

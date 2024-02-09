@@ -166,6 +166,11 @@ export const awsApi = createApi({
                     url: `credentials/${credentialId}/regions/${region}/vpcs?fields=${fields}`
                 })
             }),
+            getSGList: builder.query({
+                query: ({ credentialId, region, vpcId }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/vpcs/${vpcId}/security-groups`
+                })
+            }),
             getAdsList: builder.query({
                 query: ({ credentialId, region }) => ({ url: `credentials/${credentialId}/regions/${region}/ads` })
             }),
@@ -479,6 +484,7 @@ export const {
     useGetCredentialsQuery,
     useGetRegionsQuery,
     useGetVPCListQuery,
+    useGetSGListQuery,
     useGetAdsListQuery,
     useGetAmiListQuery,
     useGetSnsTopicsQuery,

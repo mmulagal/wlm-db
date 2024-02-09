@@ -618,10 +618,7 @@ const Chatbot = () => {
                     if (mssqlFormData?.securityGroup?.sgValue !== value) {
                         const selectedVpcId = mssqlFormData?.regionAndVpc?.selectedVPC?.data?.id;
                         if (selectedVpcId) {
-                            const selectedVpcData = mssqlData?.getVPCList?.vpcData?.vpcs?.filter(
-                                pervpc => pervpc?.id === selectedVpcId
-                            )[0];
-                            const selectedSg: any = selectedVpcData?.securityGroups?.filter(
+                            const selectedSg: any = mssqlData?.getSGList?.sgData?.securityGroups?.filter(
                                 (item: any) => item?.id === value
                             )[0];
                             const sgValue = selectedSg?.id;
