@@ -225,8 +225,8 @@ export const awsApi = createApi({
                 })
             }),
             getEstimationCost: builder.mutation({
-                query: ({ credentialId, payload }) => ({
-                    url: `credentials/${credentialId}/pricing`,
+                query: ({ payload }) => ({
+                    url: `pricing`,
                     method: 'POST',
                     body: payload
                 })

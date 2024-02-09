@@ -200,7 +200,6 @@ export const PERMISSIONS = {
                     'ec2:DescribeKeyPairs',
                     'ec2:DescribeNetworkInterfaces',
                     'ec2:DescribeInstanceTypes',
-                    'ec2:DescribeInstanceTypeOfferings',
                     'kms:ListAliases',
                     'kms:ListKeys',
                     'kms:DescribeKey',
