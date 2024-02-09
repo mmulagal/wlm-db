@@ -10,11 +10,14 @@ import CreateMsSqlLayout from '../CreateMsSqlLayout/CreateMsSqlLayout';
 import MSSqlServer from '../MSSqlServer/MSSqlServer';
 import CodeBox from '../CodeBox/CodeBox';
 import { useState } from 'react';
+import MssqlApis from '../MSSqlServer/MssqlApis';
 
 const MainComponent = () => {
     const loading = useAppSelector(state => state.msSqlAction.isLoading);
     const showChatbot = useAppSelector(state => state.auth?.isWorkloadFactory);
     const [selectedTab, setSelectedTab] = useState<'wizard' | 'chatbot'>('wizard');
+
+    MssqlApis();
 
     return showChatbot && window.location.pathname === '/databases' ? (
         <div className={styles.mainContainer}>

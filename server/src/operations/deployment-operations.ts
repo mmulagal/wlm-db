@@ -1,9 +1,10 @@
 import createError from 'http-errors';
+import { ContextEntry } from '@aws-sdk/client-iam';
 import randomize from 'randomatic';
 import fs from 'fs';
 import path from 'path';
 import yaml from 'yaml';
-import { escapeRegExp } from 'lodash-es';
+import { escapeRegExp, isArray, isEmpty } from 'lodash-es';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
 import { randomUUID } from 'crypto';
@@ -41,13 +42,6 @@ import {
     TEMPLATE_OPTIONAL_PARAMETERS,
     TEMPLATE_WLMDB_AWS_ACCOUT_ID,
     TEMPLATE_ACCOUNT_ID,
-    AWS_RESOURCES_ACTION_MAP,
-    AWS_RESOURCES_STRICT_ACTION_MAP,
-    SECRET_MANAGER_ARN,
-    CLOUD_FORMATION_ARN,
-    EC2_TAG_CONDITION,
-    FSX_TAG_CONDITION,
-    AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
     BUCKET_NAME,
     CLOUD_FORMATION_CLI_COMMAND,
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
@@ -58,14 +52,9 @@ import {
     FSX_ADMIN_PASSWORD,
     SQL_SA_PASSWORD,
     DOMAIN_ADMIN_PASSWORD,
-    LOG_GROUP_ARN,
-    WLMDB_RESOURCE_TAG_VALUE,
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_VIOLATION_MESSAGE,
-    IAM_LINKEDROLE_CONDITION,
-    IAM_EC2_SERVICE,
-    IAM_PASSROLE_CONDITION,
     TEMPLATE_FSX_PASSWORD,
     TEMPLATE_METRICS,
     TRIGGERED_FROM,
@@ -75,7 +64,9 @@ import {
     INSTANCE_TYPE,
     SQL_VERSION,
     DATABASE_SIZE,
-    SQL_HOST_NAME
+    SQL_HOST_NAME,
+    OPERATE,
+    VIEW
 } from '../utils/consts';
 import {
     createJobMockData,
@@ -99,6 +90,7 @@ import { createDeployment, createResource } from '../lib/database/db';
 import { Metadata, NetworkViolation } from '../utils/common-types';
 import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
+import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
 import { createJobs } from '../lib/database/job';
 
 const logger = getLogger();
@@ -408,13 +400,10 @@ async function deployStackOrCreateTemplateURL(
     let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     try {
-        const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
-            credentialsId,
-            region
-        );
+        const { permissions } = await checkAllMissingPermissions(credentialsId, region, OPERATE);
 
         // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
-        if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
+        if (permissions?.length) {
             metrics += `,${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION}`;
             const response = await createCloudFormationTemplateForUserDeployment(
                 credentialsId,
@@ -429,7 +418,7 @@ async function deployStackOrCreateTemplateURL(
                 metrics,
                 tags
             );
-            const errMsg = MISSING_PERMISSIONS([...permissions, ...strictPermissions, ...strictConditionPermissions]);
+            const errMsg = MISSING_PERMISSIONS([...permissions]);
             response.missingPermissions = errMsg;
             logger.info(errMsg);
             return response;
@@ -749,53 +738,80 @@ async function deploymentStatusByName(accountId: string, deploymentName: string)
     return data;
 }
 
-async function checkAllMissingPermissions(credentialsId: string, region: string) {
-    logger.info('check all missing permissions', credentialsId, region);
-    // checking the permissions for three different times to find out with different conditions like resource arn, conditions & resource set to *
-    const { permissions } = await getMissingPermissionsList(credentialsId, region, AWS_RESOURCES_ACTION_MAP);
-    try {
-        const { permissions: strictPermissions } = await getMissingPermissionsList(
-            credentialsId,
-            region,
-            AWS_RESOURCES_STRICT_ACTION_MAP,
-            [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, LOG_GROUP_ARN]
-        );
-        const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
-            credentialsId,
-            region,
-            AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
-            undefined,
-            [
-                {
-                    // ContextEntry
-                    ContextKeyName: EC2_TAG_CONDITION,
-                    ContextKeyValues: [
-                        // ContextKeyValueListType
-                        WLMDB_RESOURCE_TAG_VALUE
-                    ],
-                    ContextKeyType: 'string'
-                },
-                {
-                    ContextKeyName: FSX_TAG_CONDITION,
-                    ContextKeyValues: [WLMDB_RESOURCE_TAG_VALUE],
-                    ContextKeyType: 'string'
-                },
-                {
-                    ContextKeyName: IAM_LINKEDROLE_CONDITION,
-                    ContextKeyValues: [IAM_EC2_SERVICE],
-                    ContextKeyType: 'string'
-                },
-                {
-                    ContextKeyName: IAM_PASSROLE_CONDITION,
-                    ContextKeyValues: [IAM_EC2_SERVICE],
-                    ContextKeyType: 'string'
+function prepareResourceActionMap(statements: [PolicyStatement]) {
+    logger.debug('Preparing resource action map', { statements });
+
+    const resourcePolicyActions: {
+        resourceArn: string[];
+        resourceActions: string[];
+        resourceConditions: ContextEntry[];
+    }[] = [];
+    statements.forEach(({ Resource, Action, Condition }) => {
+        const actionMap = [];
+        if (isArray(Action)) {
+            actionMap.push(...Action);
+        } else {
+            actionMap.push(Action);
+        }
+        const resourceConditions: ContextEntry[] = [];
+
+        if (!isEmpty(Condition)) {
+            Object.entries(Condition).forEach(obj => {
+                const [key, value] = obj;
+                if (key === 'StringLike') {
+                    // TODO : revisit this implementation when the WLMDB policy has Conditions supporting Numeric/Boolean datatypes
+                    Object.entries(value).forEach(([conditionKey, conditionValue]) =>
+                        resourceConditions.push({
+                            ContextKeyName: conditionKey,
+                            ContextKeyValues: [conditionValue],
+                            ContextKeyType: 'string'
+                        })
+                    );
                 }
-            ]
-        );
-        return { permissions, strictPermissions, strictConditionPermissions };
-    } catch (error) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while checking permissions ${error}.`);
+            });
+        }
+
+        resourcePolicyActions.push({
+            resourceArn: isArray(Resource) ? Resource : [Resource],
+            resourceActions: actionMap,
+            resourceConditions
+        });
+    });
+
+    return resourcePolicyActions;
+}
+
+async function checkAllMissingPermissions(credentialsId: string, region: string, action: string = VIEW) {
+    logger.info('Check all missing permissions', { credentialsId, region, action });
+    // checking the permissions for three different times to find out with different conditions like resource arn, conditions & resource set to *
+    let policyResourceActions;
+    const { operate, view } = await getWlmdbPolicy();
+    if (action === OPERATE) {
+        policyResourceActions = prepareResourceActionMap(operate.Statement);
+    } else {
+        policyResourceActions = prepareResourceActionMap(view.Statement);
     }
+    const missingPermissions: string[] = [];
+    await Promise.all(
+        policyResourceActions.map(async ({ resourceArn, resourceActions, resourceConditions }) => {
+            try {
+                const { permissions } = await getMissingPermissionsList(
+                    credentialsId,
+                    region,
+                    resourceActions,
+                    resourceArn,
+                    resourceConditions
+                );
+                if (permissions.length > 0) {
+                    missingPermissions.push(...permissions);
+                }
+            } catch (error) {
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while checking permissions ${error}.`);
+            }
+        })
+    );
+
+    return { permissions: missingPermissions };
 }
 
 async function createDeploymentMockDataInDB(

@@ -25,7 +25,6 @@ import SimpleNotificationService from '../InfrastructureSettings/SimpleNotificat
 
 import styles from './MSSqlAccordions.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import MssqlApis from './MssqlApis';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import CloudWatch from '../InfrastructureSettings/CloudWatch/CloudWatch';
 import EstimatedCost from '../Cost/EstimatedCost';
@@ -44,8 +43,6 @@ const MSSqlAccordions = () => {
     const [isVpcLoadingStarted, setIsVpcLoadingStarted] = useState(false);
     const state = useAppSelector(state => state);
     const dispatch = useAppDispatch();
-
-    MssqlApis();
 
     const handleViewAPIRequest = () => {
         const data = JSON.stringify(createMssqlPayload(state), null, 2);

@@ -90,6 +90,7 @@ const WORKLOAD_FACTORY_ENDPOINT: string = process.env.WORKLOAD_FACTORY_ENDPOINT
 const WLMDB_ABSOLUTE_ENDPOINT: string = process.env.WLMDB_ABSOLUTE_ENDPOINT
     ? `https://${process.env.WLMDB_ABSOLUTE_ENDPOINT}`
     : config.get('urls.wlm-db-redirect-url');
+const WF_CONSOLE_ENDPOINT: string = config.get('urls.workload-factory-console');
 
 const CREDENTIALS_ENDPOINT: string = CLOUD_MANAGER_ENDPOINT || config.get<string>('urls.cloud-manager');
 
@@ -929,6 +930,7 @@ const SQL_SOFTWARE_TYPES = new Map<string, string>([
 ]);
 const WLMDB_COST_ALLOCATION_TAG = 'wlmdb-cost-resource';
 
+const SQS_MSG_RETENTION = '7200'; // Amazon SQS automatically deletes messages that have been in a queue for more than the maximum message retention period.
 const MSSQL_SYSTEM_DATABASES = [
     'master',
     'mastlog',
@@ -960,6 +962,8 @@ const SQL_VERSION = 'sql-version';
 const DATABASE_SIZE = 'database-size';
 const SQL_HOST_NAME = 'sql-host-name';
 
+const OPERATE = 'operate';
+const VIEW = 'view';
 const JOBS_DEFAULT_TIME_RANGE = '30d';
 
 const subJobDescriptions: SubJobDescriptions = {
@@ -1143,6 +1147,7 @@ export {
     ACTION_BUTTON_DATABASE,
     RESOURCE_ID,
     WLMDB_ABSOLUTE_ENDPOINT,
+    WF_CONSOLE_ENDPOINT,
     SUCCESS,
     ERROR,
     MAX_READ_REQUEST_FSXN,
@@ -1213,6 +1218,7 @@ export {
     WLMDB_COST_ALLOCATION_TAG,
     BILLING,
     PRICING,
+    SQS_MSG_RETENTION,
     WF_TOKEN,
     BXP_TOKEN,
     IAM_LINKEDROLE_CONDITION,
@@ -1226,6 +1232,8 @@ export {
     SQL_VERSION,
     DATABASE_SIZE,
     SQL_HOST_NAME,
+    OPERATE,
+    VIEW,
     JOBS_DEFAULT_TIME_RANGE,
     subJobDescriptions,
     CF_STACK_RESOURCE_TYPE,

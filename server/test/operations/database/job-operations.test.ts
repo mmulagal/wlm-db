@@ -15,7 +15,6 @@ import { deleteJobsOfAccount, listJobs } from '../../../src/lib/database/job';
 beforeEach(async () => {
     await registerJobs(ACCOUNT_ID, [
         {
-            accountId: ACCOUNT_ID,
             name: 'test-job-ops-1',
             description: 'test-job-description',
             resourceName: 'test-resource',
@@ -25,7 +24,6 @@ beforeEach(async () => {
             type: JOBTYPE.DEPLOYMENT
         },
         {
-            accountId: ACCOUNT_ID,
             name: 'test-job-ops-2',
             description: 'test-job-description',
             resourceName: 'test-resource',
@@ -43,7 +41,6 @@ describe('Job operations', () => {
     it('Register Jobs', async () => {
         const response = await registerJobs(ACCOUNT_ID, [
             {
-                accountId: ACCOUNT_ID,
                 name: 'test-job-ops-register-1',
                 description: 'test-job-description',
                 resourceName: 'test-resource',
@@ -53,7 +50,6 @@ describe('Job operations', () => {
                 type: JOBTYPE.DEPLOYMENT
             },
             {
-                accountId: ACCOUNT_ID,
                 name: 'test-job-ops-register-2',
                 description: 'test-job-description',
                 resourceName: 'test-resource',
@@ -74,7 +70,6 @@ describe('Job operations', () => {
     it('Get Job Details', async () => {
         await registerJobs(ACCOUNT_ID, [
             {
-                accountId: ACCOUNT_ID,
                 name: 'test-job-ops-1',
                 description: 'test-filtered-job-description',
                 resourceName: 'test-resource',
@@ -113,7 +108,6 @@ describe('Job operations', () => {
         // registering level 2 jobs
         await registerJobs(ACCOUNT_ID, [
             {
-                accountId: ACCOUNT_ID,
                 name: 'test-sub-job-1',
                 description: 'test-sub-job-description',
                 resourceName: 'test-resource',
@@ -124,7 +118,6 @@ describe('Job operations', () => {
                 parentJobId: jobId
             },
             {
-                accountId: ACCOUNT_ID,
                 name: 'test-sub-job-2',
                 description: 'test-sub-job-description',
                 resourceName: 'test-resource',
@@ -144,7 +137,6 @@ describe('Job operations', () => {
             // registering level 3 jobs
             await registerJobs(ACCOUNT_ID, [
                 {
-                    accountId: ACCOUNT_ID,
                     name: 'test-level-3-job-1',
                     description: 'test-level-3-job-description',
                     resourceName: 'test-resource',
@@ -155,7 +147,6 @@ describe('Job operations', () => {
                     parentJobId: level2JobIds[0]
                 },
                 {
-                    accountId: ACCOUNT_ID,
                     name: 'test-level-3-job-2',
                     description: 'test-level-3-job-description',
                     resourceName: 'test-resource',
@@ -166,7 +157,6 @@ describe('Job operations', () => {
                     parentJobId: level2JobIds[0]
                 },
                 {
-                    accountId: ACCOUNT_ID,
                     name: 'test-level-3-job-3',
                     description: 'test-level-3-job-description',
                     resourceName: 'test-resource',
@@ -177,7 +167,6 @@ describe('Job operations', () => {
                     parentJobId: level2JobIds[1]
                 },
                 {
-                    accountId: ACCOUNT_ID,
                     name: 'test-level-3-job-4',
                     description: 'test-level-3-job-description',
                     resourceName: 'test-resource',
@@ -208,7 +197,6 @@ describe('getJobSummaryByTime', async () => {
 
     await registerJobs('ACCOUNT_ID', [
         {
-            accountId: 'ACCOUNT_ID',
             name: 'test-job-ops-1',
             resourceName: 'test-resource',
             startTime: Date.now() - THIRTY_DAYS,
@@ -217,7 +205,6 @@ describe('getJobSummaryByTime', async () => {
             type: JOBTYPE.DEPLOYMENT
         },
         {
-            accountId: 'ACCOUNT_ID',
             name: 'test-job-ops-2',
             resourceName: 'test-resource',
             startTime: Date.now(),

@@ -3,3 +3,11 @@
   padding-top: 150px;
   height: 100%;
 }
+
+[class*='Typography-module_Semibold_16'] {
+  font-weight: 500 !important;
+}
+
+[class*='Typography-module_Semibold_14'] {
+  font-weight: 500 !important;
+}

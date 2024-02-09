@@ -253,7 +253,7 @@ const MSSQL_ENV_PRE_CONFIG = {
     [DEV]: {
         [WL_INSTANCE_TYPE]: M5_XL,
         [FSX_DEPLOYMENT_MODE]: SINGLE_AZ,
-        [DB_SIZE]: 100,
+        [DB_SIZE]: 120,
         [SQL_DEPLOYMENT_MODE]: STANDALONE,
         [ENABLE_CLOUD_WATCH]: true
     },

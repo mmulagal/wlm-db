@@ -3,9 +3,6 @@ import { Button, ButtonWithDropdown } from '@netapp/design-system';
 
 import { useNavigate } from 'react-router-dom';
 import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
-import { ReactComponent as SpaceShip } from '../../../assets/ic_spaceship.svg';
-import { ReactComponent as Monitoring } from '../../../assets/ic_monitoring.svg';
-import { ReactComponent as Policy } from '../../../assets/ic_policy.svg';
 
 import styles from './TopBarButtons.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
@@ -28,33 +25,7 @@ const TopBarButton = () => {
             {/* <div className={styles.refreshIcon} onClick={() => {refreshPage()}}>
                 <RefreshIcon />                      
             </div> */}
-            <div className={styles.firstRow}>
-                <div className={styles.firstButton}>
-                    <Monitoring />
-                    <Button
-                        variant="text"
-                        onClick={() => {
-                            navigate('../job-monitor');
-                        }}
-                    >
-                        {GENERAL.JOB_MONITORING}
-                    </Button>
-                </div>
-
-                <div className={styles.firstButton}>
-                    <Policy />
-                    <Button
-                        variant="text"
-                        isDisabled
-                        title="Coming soon"
-                        onClick={() => {
-                            navigate('../job-monitor');
-                        }}
-                    >
-                        {GENERAL.POLICY_MANAGEMENT}
-                    </Button>
-                </div>
-            </div>
+            <div className={styles.firstRow}></div>
             <div className={styles.secondColumn}>
                 <Button
                     variant="primary"
@@ -63,10 +34,7 @@ const TopBarButton = () => {
                     }}
                     id={'deploy-button'}
                 >
-                    <div className={styles.buttonStyle}>
-                        <SpaceShip />
-                        {GENERAL.DEPLOY_NEW_DATABASE}
-                    </div>
+                    <div className={styles.buttonStyle}>{GENERAL.DEPLOY_NEW_DATABASE}</div>
                 </Button>
                 {/* <ButtonWithDropdown
                     variant="secondary"

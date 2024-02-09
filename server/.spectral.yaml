@@ -1,0 +1,66 @@
+extends: ['spectral:oas', 'spectral:asyncapi']
+rules:
+    # ---------------------------------------------------------------------------
+    # General OAS rules
+    # ---------------------------------------------------------------------------
+    oas3-operation-security-defined: false
+    operation-tag-defined: false
+    operation-operationId: false
+    ensure-endpoint-summary:
+        description: Endpoints must have a summary.
+        given: $.paths[*][*]
+        severity: error
+        recommended: true
+        message: '{{error}}'
+        then:
+            field: summary
+            function: truthy
+    ensure-endpoint-are-tagged:
+        description: Endpoints must be tagged.
+        given: $.paths[*][*]
+        severity: error
+        recommended: true
+        message: '{{error}}'
+        then:
+            field: summary
+            function: truthy
+    adidas-paths-kebab-case:
+        description: All YAML/JSON paths MUST follow kebab-case
+        severity: warn
+        recommended: true
+        message: '{{property}} is not kebab-case: {{error}}'
+        given: $.paths[*]~
+        then:
+            function: pattern
+            functionOptions:
+                match: "^\/([a-z0-9]+(-[a-z0-9]+)*)?(\/[a-z0-9]+(-[a-z0-9]+)*|\/{.+})*$" # doesn't allow /asasd{asdas}sadas pattern or not closed braces
+    response-parameters-camelCase-alphanumeric:
+        description: Response parameters MUST follow camelCase
+        severity: warn
+        recommended: true
+        message: '{{property}} response parameter is not camelCase: {{error}}'
+        given: $.paths[*][*].responses[*].content[*].schema.properties[*]~
+        then:
+            function: casing
+            functionOptions:
+                type: camel
+    response-schema-object:
+        description: Response must be an object
+        severity: warn
+        recommended: true
+        message: '{{property}} must be an object: {{error}}'
+        given: $.paths[*][*].responses[*].content[*].schema.type
+        then:
+            function: pattern
+            functionOptions:
+                match: '[object]'
+    adidas-oas3-request-support-json:
+        description: Every request MUST support `application/json` media type
+        formats:
+            - oas3
+        recommended: true
+        severity: error
+        message: '{{description}}: {{error}}'
+        given: $.paths.[*].requestBody.content[?(@property.indexOf('json') === -1)]^
+        then:
+            function: falsy

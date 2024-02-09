@@ -41,6 +41,7 @@ export const GENERAL = {
     DATABASE_EDITION: 'Database edition',
     DATABASE_VERSION: 'Database version',
     LICENSE: 'License',
+    SQL_SERVER_INSTALL_TYPE: 'SQL Server install type',
     DATABASE_NAME: 'Database name',
     DATABASE_CREDENTIALS: 'Database credentials',
     CONNECTIVITY: 'Connectivity',
@@ -184,7 +185,7 @@ export const GENERAL = {
         'Use an AWS AMI (which includes a license) or bring your own SQL license (BYOL) through a custom AMI.',
     LICENSE_INCLUDED_AMI: 'License included AMI',
     VIEW_THE_REQ: 'View the requirements',
-    LICENSE_ID: 'License ID',
+    LICENSE_ID: 'SQL Server AMI',
     USE_CUSTOM_AMI: 'Use custom AMI',
     AMI_ID: 'AMI ID',
     SELECT_AMI_ID: 'Select AMI ID',
@@ -393,7 +394,7 @@ export const GENERAL = {
     FSX_ONTAP_SNAPSHOTS: 'FSx for ONTAP Snapshots',
     SQL_SERVER_BACKUP: 'Native SQL server backup',
     PROTECTED_BY: 'Protected By',
-    DEPLOY_NEW_DATABASE: 'Deploy',
+    DEPLOY_NEW_DATABASE: 'Deploy new database host',
     DISCOVER: 'Discover',
     MIGRATE_DB: 'Migrate',
     CLONE_DB: 'Clone',
@@ -479,6 +480,9 @@ export const GENERAL = {
     HOST_NAME: 'Host name',
     NO_OF_DBS: 'Number of databases',
     TOTAL_USED_CAPACITY: 'Total used capacity',
+    SQL_VERSION: 'SQL version',
+    RESOURCE_DEPLOYMENT_MODEL: 'Deployment model',
+    RESOURCE_EDITION: 'Edition',
     TOTAL_ALLOCATED_CAPACITY: 'Total allocated capacity',
     ESTIMATED_COST_TOOLTIP:
         "Cost estimation provides an estimate of your AWS fees and doesn't include any taxes that might apply. Your actual fees depend on a variety of factors, including your actual usage of AWS services.",
@@ -508,8 +512,7 @@ export const GENERAL = {
     JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
     DEMO_TITLE: 'Redirect to CloudFormation',
-    DEMO_CONTENT:
-        'This is a Demo account. In every other account you may have, you will be redirected to AWS CloudFormation service to complete the operation.'
+    DEMO_CONTENT: `When using a Demo account you won't be redirected to the AWS CloudFormation service.`
 };
 
 export const CODE_VIEWER = {

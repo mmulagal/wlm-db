@@ -123,54 +123,56 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
     const { Subnets: subnets } = await describeSubnets(credentialsId, region, params);
     const subnetsList: Array<Subnet> = [];
     if (subnets?.length) {
-        for (const subnet of subnets) {
-            const {
-                SubnetId: id,
-                State: state,
-                VpcId: vpcId,
-                Tags: tags,
-                CidrBlock: cidrBlock,
-                AvailabilityZone: availabilityZone,
-                AvailableIpAddressCount: availableIps
-            } = subnet;
+        await Promise.all(
+            subnets.map(async subnet => {
+                const {
+                    SubnetId: id,
+                    State: state,
+                    VpcId: vpcId,
+                    Tags: tags,
+                    CidrBlock: cidrBlock,
+                    AvailabilityZone: availabilityZone,
+                    AvailableIpAddressCount: availableIps
+                } = subnet;
 
-            const options = {
-                Filters: [{ Name: 'vpc-id', Values: [vpcId as string] }]
-            };
+                const options = {
+                    Filters: [{ Name: 'vpc-id', Values: [vpcId as string] }]
+                };
 
-            const { RouteTables } = await describeRouteTable(credentialsId, region, options);
+                const { RouteTables } = await describeRouteTable(credentialsId, region, options);
 
-            let mainTable;
-            let subnetTable;
-            // This logic is added to know the route table id whether the subnet association is done either Explicit subnet associations or Subnets without explicit associations in aws console.
-            RouteTables?.forEach(routeTable => {
-                routeTable.Associations?.forEach(association => {
-                    if (association.Main) {
-                        mainTable = association.RouteTableId;
-                    }
+                let mainTable;
+                let subnetTable;
+                // This logic is added to know the route table id whether the subnet association is done either Explicit subnet associations or Subnets without explicit associations in aws console.
+                RouteTables?.forEach(routeTable => {
+                    routeTable.Associations?.forEach(association => {
+                        if (association.Main) {
+                            mainTable = association.RouteTableId;
+                        }
 
-                    if (association.SubnetId === id) {
-                        subnetTable = association.RouteTableId;
-                    }
+                        if (association.SubnetId === id) {
+                            subnetTable = association.RouteTableId;
+                        }
+                    });
                 });
-            });
 
-            const routeTableId = subnetTable || mainTable;
+                const routeTableId = subnetTable || mainTable;
 
-            const resourceName = findResourceNameFromTags(tags);
+                const resourceName = findResourceNameFromTags(tags);
 
-            subnetsList.push({
-                id,
-                state,
-                vpcId,
-                tags,
-                cidrBlock,
-                availabilityZone,
-                availableIps,
-                routeTableId,
-                ...(resourceName && { name: resourceName })
-            });
-        }
+                subnetsList.push({
+                    id,
+                    state,
+                    vpcId,
+                    tags,
+                    cidrBlock,
+                    availabilityZone,
+                    availableIps,
+                    routeTableId,
+                    ...(resourceName && { name: resourceName })
+                });
+            })
+        );
     }
     return subnetsList;
 }

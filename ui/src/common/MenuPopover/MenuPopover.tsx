@@ -13,6 +13,8 @@ export type MenuItemType = {
     id: string;
     onlyInfoText?: string;
     subMenu?: MenuItemType[];
+    tagAdded?: boolean;
+    tag?: any;
 };
 
 type MenuPopoverType = {
@@ -68,6 +70,7 @@ function MenuPopover({
                     }}
                 >
                     {item?.displayName}
+                    {item.tagAdded && item.tag}
                 </li>
             );
 

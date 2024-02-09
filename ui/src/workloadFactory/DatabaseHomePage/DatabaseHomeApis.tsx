@@ -1,31 +1,30 @@
-import { useEffect, useState } from "react";
-import { setRefetchJobSummaryApi } from "../../store/mssql/msSqlActionSlice";
-import { useAppDispatch, useAppSelector } from "../../store/storeHooks";
-import { 
+import { useEffect, useState } from 'react';
+import { setRefetchJobSummaryApi } from '../../store/mssql/msSqlActionSlice';
+import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
+import {
     addAggregatedCosts,
-    addAggregatedProtectionDbCount, 
-    addAggregatedStorageSavings, 
-    addAggregateHostsCountData, 
-    addDatabaseHosts, 
-    addDatabaseHostsList, 
-    addDatabaseJobs, 
-    addJobsSummary, 
-    addStatus
-} from "../../store/workloadFactory/databaseHomeSlice";
-import { 
-    useGetDatabaseHostsQuery, 
-    useGetDatabaseJobsQuery, 
-    useGetJobsSummaryQuery, 
+    addAggregatedProtectionDbCount,
+    addAggregatedStorageSavings,
+    addAggregateHostsCountData,
+    addDatabaseHosts,
+    addDatabaseHostsList,
+    addDatabaseJobs,
+    addJobsSummary
+} from '../../store/workloadFactory/databaseHomeSlice';
+import {
+    useGetDatabaseHostsQuery,
+    useGetDatabaseJobsQuery,
+    useGetJobsSummaryQuery,
     useGetStatusQuery
-} from "../../utils/apiService";
-import { 
+} from '../../utils/apiService';
+import {
     getAggrCost,
     getAggrProtection,
     getAggrStorageSavings,
-    getHostStatusCount, 
-    jobStatusPercent, 
-    mergeDatabaseHostsData 
-} from "../../utils/utilityFunctions";
+    getHostStatusCount,
+    jobStatusPercent,
+    mergeDatabaseHostsData
+} from '../../utils/utilityFunctions';
 
 const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
@@ -33,94 +32,123 @@ const DatabaseHomeApis = () => {
     const { databaseHostsData } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsData } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
     const refetchJobSummaryApi = useAppSelector(state => state.msSqlAction.refetchJobSummaryApi);
-    
+    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
+    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
+
     const [hostCursor, setHostCursor] = useState(null);
     const [jobsCursor, setJobsCursor] = useState(null);
 
     // skipApiCall to skip APi call when isActive is not true
     const [skipApiCall, setSkipApiCall] = useState(true);
-    const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
+    const [skipSummaryApiCall, setSkipSummaryApiCall] = useState(true);
+    const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
 
     useEffect(() => {
         const toDate = Date.now();
         const fromDate = toDate - 30 * (3600 * 1000 * 24);
-        setTime({startTime: fromDate, endTime: toDate});
+        setTime({ startTime: fromDate, endTime: toDate });
+        setTimeout(() => {
+            setSkipSummaryApiCall(false);
+        }, 0);
     }, []);
-
-    const {
-        data: statusData,
-        isFetching: statusLoading,
-        isError: statusError
-    } = useGetStatusQuery('');
 
     const {
         data: databaseHosts,
         isFetching: databaseHostsLoading,
         isError: databaseHostsError
-    } = useGetDatabaseHostsQuery({nextToken: hostCursor}, {skip: skipApiCall});
+    } = useGetDatabaseHostsQuery(
+        {
+            credentialId: headerSelectedCred?.data?.credentialsId,
+            region: headerSelectedRegion?.label2,
+            nextToken: hostCursor
+        },
+        { skip: skipApiCall }
+    );
 
     const {
         data: databaseJobs,
         isFetching: databaseJobsLoading,
         isError: databaseJobsError
-    } = useGetDatabaseJobsQuery({nextToken: jobsCursor}, {skip: skipApiCall});
+    } = useGetDatabaseJobsQuery(
+        {
+            credentialId: headerSelectedCred?.data?.credentialsId,
+            region: headerSelectedRegion?.label2,
+            nextToken: jobsCursor
+        },
+        { skip: skipApiCall }
+    );
 
     const {
         data: jobsSummaryData,
         isFetching: jobsSummaryLoading,
         isError: jobsSummaryError,
         refetch: jobsSummaryRefetch
-    } = useGetJobsSummaryQuery({startTime: time?.startTime, endTime: time?.endTime}, {skip: skipApiCall});
+    } = useGetJobsSummaryQuery(
+        {
+            startTime: time?.startTime,
+            endTime: time?.endTime
+        }, 
+        { skip: skipSummaryApiCall }
+    );
 
     useEffect(() => {
-        if(refetchJobSummaryApi) {
+        if (refetchJobSummaryApi) {
             dispatch(setRefetchJobSummaryApi(false));
             jobsSummaryRefetch();
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [refetchJobSummaryApi])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [refetchJobSummaryApi]);
 
     useEffect(() => {
-        if(statusError) {
-            dispatch(addStatus({undefined, statusLoading, statusError}));
-        } else {
-            dispatch(addStatus({statusData, statusLoading, statusError}));
-            if(statusData && statusData?.isActive) {
-                setSkipApiCall(false);
-            }
+        if (headerSelectedCred && headerSelectedRegion) {
+            setSkipApiCall(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [statusData, statusLoading, statusError]);
+    }, [headerSelectedCred, headerSelectedRegion]);
 
     useEffect(() => {
-        if(databaseHostsError) {
-            dispatch(addDatabaseHosts({undefined, databaseHostsLoading, databaseHostsError}));
+        if (databaseHostsError) {
+            dispatch(addDatabaseHosts({ undefined, databaseHostsLoading, databaseHostsError }));
         } else {
             let oldList = databaseHostsData || [];
             let newList = databaseHosts?.items || [];
-            dispatch(addDatabaseHosts({databaseHostsData: [...oldList, ...newList], databaseHostsLoading, databaseHostsError}));
-                setHostCursor(databaseHosts?.nextToken || null);
-        }  
+            dispatch(
+                addDatabaseHosts({
+                    databaseHostsData: [...oldList, ...newList],
+                    databaseHostsLoading,
+                    databaseHostsError
+                })
+            );
+            setHostCursor(databaseHosts?.nextToken || null);
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHosts, databaseHostsLoading, databaseHostsError]);
 
     useEffect(() => {
-        if(databaseJobsError) {
-            dispatch(addDatabaseJobs({undefined, databaseJobsLoading, databaseJobsError}));
+        if (databaseJobsError) {
+            dispatch(addDatabaseJobs({ undefined, databaseJobsLoading, databaseJobsError }));
         } else {
             let oldList = databaseJobsData || [];
             let newList = databaseJobs?.items || [];
-            dispatch(addDatabaseJobs({databaseJobsData: [...oldList, ...newList], databaseJobsLoading, databaseJobsError}));
-                setJobsCursor(databaseJobs?.nextToken || null);
-        }  
+            dispatch(
+                addDatabaseJobs({ databaseJobsData: [...oldList, ...newList], databaseJobsLoading, databaseJobsError })
+            );
+            setJobsCursor(databaseJobs?.nextToken || null);
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseJobs, databaseJobsLoading, databaseJobsError]);
 
     useEffect(() => {
-        if(jobsSummaryError) {
-            dispatch(addJobsSummary({undefined, jobsSummaryLoading, jobsSummaryError}));
+        if (jobsSummaryError) {
+            dispatch(addJobsSummary({ undefined, jobsSummaryLoading, jobsSummaryError }));
         } else {
-            dispatch(addJobsSummary({jobsSummaryData: jobStatusPercent(jobsSummaryData), jobsSummaryLoading, jobsSummaryError}));
+            dispatch(
+                addJobsSummary({
+                    jobsSummaryData: jobStatusPercent(jobsSummaryData),
+                    jobsSummaryLoading,
+                    jobsSummaryError
+                })
+            );
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [jobsSummaryData, jobsSummaryLoading, jobsSummaryError]);
@@ -146,6 +174,6 @@ const DatabaseHomeApis = () => {
     }, [databaseHostsData, databaseJobsData]);
 
     return <></>;
-}
+};
 
 export default DatabaseHomeApis;

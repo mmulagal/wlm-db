@@ -2,6 +2,10 @@
     display: flex;
     flex-direction: column;
     gap: 5px;
+
+    .valueText {
+        font-size: 14px;
+    }
     .bottomRow {
         display: flex;
         align-items: center;

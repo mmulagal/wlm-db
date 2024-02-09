@@ -719,7 +719,7 @@ function validateDeploymentEnv(key: string, value: string) {
                 data: [
                     { label: 'SQL Deployment model', value: 'Standalone' },
                     { label: 'Deployment model', value: SINGLE_AZ_SMALL },
-                    { label: 'Database size', value: '100 GiB' },
+                    { label: 'Database size', value: '120 GiB' },
                     { label: 'Instance type', value: M5_XL }
                 ]
             },

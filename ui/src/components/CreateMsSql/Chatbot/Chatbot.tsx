@@ -70,7 +70,6 @@ import {
     TIMELINE_STAGE_LINK,
     USER_MANAGED_AD
 } from '../../../utils/consts';
-import MssqlApis from '../MSSqlServer/MssqlApis';
 import ChatbotHeader from './ChatbotHeader/ChatbotHeader';
 import { handleCreateSQLServer } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 import { setDeployRedirectToCfLink, setIsLoading } from '../../../store/mssql/msSqlActionSlice';
@@ -113,8 +112,6 @@ const Chatbot = () => {
 
     const [sendMsgToBot] = useSendMsgMutation();
     const [deploySqlTemplate] = useDeploySqlTemplateMutation();
-
-    MssqlApis();
 
     const handleKeyPress = async (e: any) => {
         await delay(0);
@@ -658,7 +655,12 @@ const Chatbot = () => {
         });
     };
 
-    const sendMsg = async (msg?: string, add: boolean = true, msgs = messages) => {
+    const sendMsg = async (
+        msg?: string,
+        add: boolean = true,
+        msgs = messages,
+        paramObject: { [x: string]: { label: string; value: string } } = {}
+    ) => {
         setIsBotReplying(true);
         let updatedMessages = msgs ? [...msgs] : [];
         if (add) {
@@ -677,20 +679,30 @@ const Chatbot = () => {
             updatedMessages = [...updatedMessages, { sender: 'user', msg: msg }];
         }
 
+        const data = Object.entries(paramObject).reduce((acc: { [x: string]: string }, [key, obj]) => {
+            acc[key as string] = obj.value as string;
+            return acc;
+        }, {});
+
         sendMsgToBot({
             payload: {
-                prompt:
-                    (currentIntent?.type
-                        ? wrapContext(
-                              `${currentIntent.type} with params ${JSON.stringify({
-                                  ...currentIntent.params,
-                                  ...(currentIntent.userParams || {})
-                              })}`
-                          ) + 'Sure!'
-                        : '') + wrapContext(msg),
+                ...(msg && {
+                    prompt:
+                        (currentIntent?.type
+                            ? wrapContext(
+                                  `${currentIntent.type} with params ${JSON.stringify({
+                                      ...currentIntent.params
+                                  })}`
+                              ) + 'Sure!'
+                            : '') + wrapContext(msg)
+                }),
                 ...(currentIntent && {
                     intent: currentIntent?.type,
-                    params: currentIntent.params
+                    params: {
+                        ...currentIntent?.params,
+                        ...data
+                    },
+                    userParams: currentIntent?.userParams
                 })
             }
         })
@@ -825,10 +837,8 @@ const Chatbot = () => {
         );
     }, [currentIntent, payloadContent, isPayloadReady]);
 
-    const handleSendMsg = async (msg: string, add: boolean = true, msgs: messageType[]) => {
-        if (msg) {
-            await sendMsg(msg, add, msgs);
-        }
+    const handleSendMsg = async (msg: string, add: boolean = true, msgs: messageType[], paramObject = {}) => {
+        await sendMsg(msg, add, msgs, paramObject);
     };
 
     const handleSelectButtonClicked = async (paramObj: any, sender: string = 'user') => {
@@ -851,7 +861,7 @@ const Chatbot = () => {
             .map(key => `Use ${key} as ${typeof paramObj[key] === 'object' ? paramObj[key].value : paramObj[key]}`)
             .join(', ');
         dispatch(setLatestIntentMsg(msgToBot));
-        await handleSendMsg(msgToBot, false, updatedMessages);
+        await handleSendMsg('', false, updatedMessages, paramObj);
     };
 
     useEffect(() => {
