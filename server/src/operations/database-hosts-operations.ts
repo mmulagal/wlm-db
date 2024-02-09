@@ -473,7 +473,6 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails) {
         };
 
         const pricingResponse: PricingServiceResponseType = await calculatePrice(
-            credentialsId,
             pricingRequest.compute,
             pricingRequest.storage,
             pricingRequest.vpc
