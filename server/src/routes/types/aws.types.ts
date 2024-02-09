@@ -26,6 +26,27 @@ const InstanceTypes = Type.Object({
     )
 });
 
+// VPC Security Group Response
+const VcpSecurityGroupParams = Type.Object({
+    accountId: Type.String(),
+    credentialsId: Type.String(),
+    region: Type.String(),
+    vpcId: Type.String()
+});
+
+const VpcSecurityGroupsResponse = Type.Object({
+    securityGroups: Type.Array(
+        Type.Object({
+            id: Type.Optional(Type.String()),
+            description: Type.Optional(Type.String()),
+            vpcId: Type.Optional(Type.String()),
+            ipPermissions: Type.Optional(Type.Any()),
+            name: Type.Optional(Type.String()),
+            securityGroupName: Type.Optional(Type.String())
+        })
+    )
+});
+
 // VPC list Request and Response
 const AwsVpcQueryString = Type.Object({
     fields: Type.Optional(Type.String())
@@ -59,18 +80,7 @@ const VpcListResponse = Type.Object({
                     })
                 )
             ),
-            securityGroups: Type.Optional(
-                Type.Array(
-                    Type.Object({
-                        id: Type.Optional(Type.String()),
-                        description: Type.Optional(Type.String()),
-                        vpcId: Type.Optional(Type.String()),
-                        ipPermissions: Type.Optional(Type.Any()),
-                        name: Type.Optional(Type.String()),
-                        securityGroupName: Type.Optional(Type.String())
-                    })
-                )
-            )
+            securityGroups: Type.Optional(VpcSecurityGroupsResponse)
         })
     )
 });
@@ -280,5 +290,7 @@ export {
     FSxFileSystemsResponse,
     KmsKeysListResponse,
     KeyPairsSchema,
-    KeyPairsResponse
+    KeyPairsResponse,
+    VcpSecurityGroupParams,
+    VpcSecurityGroupsResponse
 };
