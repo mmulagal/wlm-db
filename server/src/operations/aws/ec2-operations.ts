@@ -430,6 +430,7 @@ async function getCostAllocationTagEC2Resource(resourceDetail: ResourceDetails) 
 }
 
 async function getVpcSecurityGroups(credentialsId: string, region: string, vpcId: string) {
+    logger.info('Get vpc security groups', { credentialsId, region, vpcId });
     const sgParams: DescribeSecurityGroupsRequest = {
         Filters: [
             {
