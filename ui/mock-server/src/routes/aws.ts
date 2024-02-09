@@ -89,7 +89,7 @@ router.get(
 );
 
 //Get Pricing Data
-router.post(`${BASE_URL}/v1/credentials/:credentialsId/pricing`, async (req: {}, res: any) => {
+router.post(`${BASE_URL}/v1/pricing`, async (req: {}, res: any) => {
     const retData = pricingData;
     generateResponse(res, 200, retData);
 });

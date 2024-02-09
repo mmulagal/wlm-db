@@ -55,6 +55,12 @@
                     cursor: pointer;
                 }
 
+                &.menuEnabled {
+                    svg {
+                        display: block;
+                    }
+                }
+
                 &.menuDisabled {
                     color: var(--grey-25);
                     pointer-events: none;

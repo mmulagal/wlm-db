@@ -1,8 +1,14 @@
 .jobMonitoring {
-    height: 100vh;
+    height: calc(100vh - 128px);
     width: 100vw;
     background-color: var(--main-background);
     overflow-y: auto;
+
+    .jobMenuPopover {
+        width: fit-content;
+        margin-left: -12px;
+    }
+
     .breadCrumb {
         margin-top: 16px;
         margin-left: 40px;
