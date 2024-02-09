@@ -82,6 +82,7 @@ const EstimatedCost = () => {
             validDisk = true;
         }
         if (
+            selectedCredId &&
             regionValue &&
             instanceTypeName &&
             sqlSoftwareTypeValue &&
@@ -114,7 +115,7 @@ const EstimatedCost = () => {
                 };
             }
             setIsLoading(true);
-            getEstimationCost({ credentialId: selectedCredId, payload: payload })
+            getEstimationCost({ payload: payload })
                 .then((data: any) => {
                     setTimeout(() => {
                         setIsLoading(false);
