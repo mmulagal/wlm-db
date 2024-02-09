@@ -447,7 +447,7 @@ async function deployStackOrCreateTemplateURL(
             return responseWithPermissions;
         }
         metrics += `,${DEPLOYED_FROM}:${WLMDB}`;
-        const response = await deployCloudFormationTemplate(
+        return await deployCloudFormationTemplate(
             credentialsId,
             region,
             networkConfiguration,
@@ -460,15 +460,6 @@ async function deployStackOrCreateTemplateURL(
             metrics,
             tags
         );
-        const responseWithPermissions: CloudFormationDeploymentResponseType = {
-            ...response,
-            missingPermissions: {
-                missingStatements: [],
-                blockedByOrganisation: [],
-                blockedByPermissionBoundary: []
-            }
-        };
-        return responseWithPermissions;
     } catch (err: any) {
         // missingPermissions throws exception if iam:SimulatePrincipalPolicy is not in permissions
         if (err?.message?.includes('iam:SimulatePrincipalPolicy')) {
