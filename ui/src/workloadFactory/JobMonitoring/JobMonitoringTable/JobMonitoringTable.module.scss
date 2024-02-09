@@ -2,6 +2,10 @@
     .table {
         width: 1612px;
 
+        .jobMenuPopover {
+            margin-left: -13px;
+        }
+
         .downloadButton {
             cursor: pointer;
             .downloadDisable {
