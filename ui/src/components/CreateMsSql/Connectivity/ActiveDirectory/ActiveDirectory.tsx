@@ -265,6 +265,7 @@ const ActiveDirectory = () => {
                         <div className={styles.secondContainer}>
                             <TextField
                                 label={GENERAL.USER_NAME}
+                                placeholder="Username"
                                 error={!isADNotFilled && !userName ? GENERAL.ACTION_REQUIRED : ''}
                                 ref={userNameRef}
                                 //@ts-ignore
