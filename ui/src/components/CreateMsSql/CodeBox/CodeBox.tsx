@@ -44,18 +44,16 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 const _ = require('lodash');
 
 const CodeBox = () => {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [copyText, setCopyText] = useState('');
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
     const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false);
-    const [searchInput, setSearchInput] = useState('');
+
     const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<TemplateRes | null>(null);
     const [formData, setFormData] = useState<any>(null); // Saving form data on template API call
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
     const [rightPanelResponse, setRightPanelResponse] = useState<any>('');
     const [rightPanelMaskedResponse, setRightPanelMaskedResponse] = useState<any>('');
     const [rightPanelMaskedHidePasswordResponse, setRightPanelMaskedHidePasswordResponse] = useState<any>('');
-    const [countWord, setCountWord] = useState(0);
 
     const { setDialog, closeDialog } = useDialog();
     const dispatch = useDispatch();
@@ -79,16 +77,6 @@ const CodeBox = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isLoadConfig, refetchApiCount]);
-
-    const MenuOptions = [
-        {
-            id: 'copy',
-            displayName: CODE_VIEWER.COPY,
-            // disable copy for CF till CF template issue gets resolved
-            disabled: dropDownValue === CODE_VIEWER.CLOUDFORMATION ? true : false
-        },
-        { id: 'redirect', displayName: GENERAL.SAVE_FORM_AS_CLOUD }
-    ];
 
     const copyRef = useRef<HTMLDivElement>(null);
 
@@ -152,11 +140,7 @@ const CodeBox = () => {
             return isRightPanelDataLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
             ) : (
-                <HighlighterWord
-                    highlight={searchInput}
-                    count={countDetails}
-                    apiResForSearch={rightPanelMaskedHidePasswordResponse}
-                >
+                <>
                     <CodeBoxColor
                         credID={credDetails.credId}
                         region={credDetails.region}
@@ -165,7 +149,7 @@ const CodeBox = () => {
                     {/* <pre className={styles.colorAutomation}>
                         {rightPanelMaskedResponse}
                     </pre> */}
-                </HighlighterWord>
+                </>
             );
         }
         if (dropDownValue === CODE_VIEWER.AWS_CLI) {
@@ -201,24 +185,6 @@ const CodeBox = () => {
             return rightPanelTemplateResponse?.cliCommand;
         }
     };
-
-    const countDetails = (count: any) => {
-        setCountWord(count - 1);
-    };
-
-    useEffect(() => {
-        if (countWord > 0) {
-            setTimeout(() => {
-                const occurrences = document.querySelectorAll('[class$="highlighted"]');
-                const target = occurrences[0];
-
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }, 500);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchInput]);
 
     // This will call template API to get CloudFormation and AWS CLI response for current payload.
     const getTemplateResponse = (redirect = false) => {
@@ -432,36 +398,6 @@ const CodeBox = () => {
                     {CODE_VIEWER.CREATE_DATABASE}
                 </Typography>
 
-                {/* <div className={styles.menuContainer}>
-                    <MenuPopover
-                        isMenuOpen={isMenuOpen}
-                        menuItems={MenuOptions}
-                        toggleMenu={(toggleType: string, menuId: string) => {
-                            if (toggleType === 'close') {
-                                setIsMenuOpen(false);
-                            } else if (toggleType === 'open') {
-                                setIsMenuOpen(true);
-                            } else if (toggleType === 'selectedOption') {
-                                setIsMenuOpen(false);
-                                if (menuId === 'copy') {
-                                    navigator.clipboard.writeText(copyResponseData());
-                                    setCopyText(`${dropDownValue} copied`);
-                                } else if (menuId === 'redirect') {
-                                    handleRedirectToCF();
-                                }
-                            }
-                        }}
-                        customColor="#84B0FF"
-                        isBlackLayout={true}
-                    />
-                    {copyText && (
-                        <div ref={copyRef} className={styles.copyContainer}>
-                            <Typography variant="Regular_13" className={styles.copyText}>
-                                {copyText}
-                            </Typography>
-                        </div>
-                    )}
-                </div> */}
                 <div className={styles.inputBox} style={{ color: 'var(--white)' }}>
                     <SelectField
                         id={setCssId()}
@@ -522,10 +458,6 @@ const CodeBox = () => {
                             )}
                         </div>
                     </div>
-
-                    {/* <div className={styles.searchPart}>
-                        <SearchInput onChange={e => setSearchInput(e)} className={styles.searchInput} />
-                    </div> */}
                 </div>
 
                 {/* Cloud formation button */}
