@@ -14,7 +14,6 @@ import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 const SecurityGroup = () => {
     const dispatch = useDispatch();
 
-    // const { vpcData } = useAppSelector(state => state.mssql.getVPCList);
     const { sgData, sgLoading } = useAppSelector(state => state.mssql.getSGList);
 
     // Getting selected VPC to get security groups for selected VPC
