@@ -7,11 +7,7 @@ const AwsParams = Type.Object({
 });
 
 // AWS request parameters wth region
-const AwsParamsWithRegion = Type.Object({
-    accountId: Type.String(),
-    credentialsId: Type.String(),
-    region: Type.String()
-});
+const AwsParamsWithRegion = Type.Composite([AwsParams, Type.Object({ region: Type.String() })]);
 
 // EC2 instance Types response
 const InstanceTypes = Type.Object({
@@ -24,6 +20,24 @@ const InstanceTypes = Type.Object({
             architecture: Type.Optional(Type.Array(Type.String()))
         })
     )
+});
+
+// VPC Security Group Response
+const VcpSecurityGroupParams = Type.Composite([AwsParamsWithRegion, Type.Object({ vpcId: Type.String() })]);
+
+const VpcSecurityGroup = Type.Array(
+    Type.Object({
+        id: Type.Optional(Type.String()),
+        description: Type.Optional(Type.String()),
+        vpcId: Type.Optional(Type.String()),
+        ipPermissions: Type.Optional(Type.Any()),
+        name: Type.Optional(Type.String()),
+        securityGroupName: Type.Optional(Type.String())
+    })
+);
+
+const VpcSecurityGroupsResponse = Type.Object({
+    securityGroups: VpcSecurityGroup
 });
 
 // VPC list Request and Response
@@ -59,18 +73,7 @@ const VpcListResponse = Type.Object({
                     })
                 )
             ),
-            securityGroups: Type.Optional(
-                Type.Array(
-                    Type.Object({
-                        id: Type.Optional(Type.String()),
-                        description: Type.Optional(Type.String()),
-                        vpcId: Type.Optional(Type.String()),
-                        ipPermissions: Type.Optional(Type.Any()),
-                        name: Type.Optional(Type.String()),
-                        securityGroupName: Type.Optional(Type.String())
-                    })
-                )
-            )
+            securityGroups: Type.Optional(VpcSecurityGroup)
         })
     )
 });
@@ -175,12 +178,7 @@ const KeyPairsResponse = Type.Object({
 });
 
 // GET FSx filesystems request parameters
-const FSxFileSystemParams = Type.Object({
-    accountId: Type.String(),
-    credentialsId: Type.String(),
-    region: Type.String(),
-    vpcId: Type.String()
-});
+const FSxFileSystemParams = Type.Composite([AwsParamsWithRegion, Type.Object({ vpcId: Type.String() })]);
 
 // FSx filesystem schema
 const FSxFileSystemSchema = Type.Object({
@@ -280,5 +278,7 @@ export {
     FSxFileSystemsResponse,
     KmsKeysListResponse,
     KeyPairsSchema,
-    KeyPairsResponse
+    KeyPairsResponse,
+    VcpSecurityGroupParams,
+    VpcSecurityGroupsResponse
 };

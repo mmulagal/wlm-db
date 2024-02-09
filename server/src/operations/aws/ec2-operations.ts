@@ -428,6 +428,21 @@ async function getCostAllocationTagEC2Resource(resourceDetail: ResourceDetails) 
         logger.error(`Get EC2 resources ${resourceIds} has failed with the error`, error);
     }
 }
+
+async function getVpcSecurityGroups(credentialsId: string, region: string, vpcId: string) {
+    logger.info('Get vpc security groups', { credentialsId, region, vpcId });
+    const sgParams: DescribeSecurityGroupsRequest = {
+        Filters: [
+            {
+                Name: 'vpc-id',
+                Values: [vpcId as string]
+            }
+        ]
+    };
+    const securityGroups = await getSecurityGroupsList(credentialsId, region, sgParams);
+    return { securityGroups };
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -437,5 +452,6 @@ export {
     getSecurityGroupsList,
     getNetworkInterfacesList,
     tagEc2Resource,
-    getCostAllocationTagEC2Resource
+    getCostAllocationTagEC2Resource,
+    getVpcSecurityGroups
 };
