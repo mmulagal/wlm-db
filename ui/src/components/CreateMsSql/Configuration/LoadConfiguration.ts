@@ -150,6 +150,7 @@ export const apiCallsList = (dispatch: Dispatch, loadData: any) => {
     }
     if (credId && regionId && vpcId && (!isSameRegion || !isSameCred || !isSameVpc)) {
         apis.push(API_NAME.FSXN);
+        apis.push(API_NAME.SG);
     }
     if (
         credId &&

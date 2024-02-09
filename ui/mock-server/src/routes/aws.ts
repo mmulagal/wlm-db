@@ -13,6 +13,7 @@ import {
 } from '../types/awsTypes';
 
 import vpcsData from '../data/vpcs.json';
+import sgData from '../data/securityGroups.json';
 import regionsData from '../data/regions.json';
 import adsData from '../data/ads.json';
 import amisData from '../data/amis.json';
@@ -35,6 +36,11 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/fsx/regions`, async (req: 
 router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/vpcs`, async (req: {}, res: VpcRes) => {
     const retData = vpcsData;
     generateResponse(res, 200, retData);
+});
+
+// Get SG mock response
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/vpcs/:vpcId/security-groups`, async (req: {}, res: any) => {
+    generateResponse(res, 200, sgData);
 });
 
 // Get ADs mock response
