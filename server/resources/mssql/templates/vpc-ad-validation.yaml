@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: This template creates AWS resources for validating Active Directory credentials
-    under the provided VPC. You will be billed for the AWS resources used if you create
-    a stack from this template.
+            under the provided VPC. You will be billed for the AWS resources used if you create
+            a stack from this template.
 Metadata:
     AWS::CloudFormation::Interface:
         ParameterGroups:
@@ -218,7 +218,7 @@ Resources:
                         - FetchResources
                         - LaunchWizardCFNSetup
                         - Prep
-                        - Finalize
+                        - Finalize               
                 ConfigureCWLogs:
                     files:
                         C:\Program Files\Amazon\SSM\Plugins\awsCloudWatch\AWS.EC2.Windows.CloudWatch.json:
@@ -364,23 +364,23 @@ Resources:
                             waitAfterCompletion: '0'
                         c-validate-fsx:
                             command: !Join
-                                - ''
-                                - - 'powershell.exe -Command "C:\cfn\scripts\Validate-FsxConnectivity.ps1 -PerformFSxCheck '
-                                  - !Ref 'PerformFSxCheck'
-                                  - ' -FSxFileSystemId '
-                                  - !Ref 'FSxFileSystemId'
-                                  - ' -FSxRegion '
-                                  - !Ref 'AWS::Region'
-                                  - ' -FSxAdministratorPasswordSecret '
-                                  - !Ref 'FSxAdministratorPasswordSecret'
-                                  - ' -Stackname '
-                                  - !Ref 'AWS::StackName'
-                                  - ' -ResourceID ValidationNode1'
-                                  - ' -WaitHandler '
-                                  - '"'
-                                  - Fn::Base64: !Ref 'ValidationNode1WaitHandler'
-                                  - '"'
-                                  - '"'
+                                 - ''
+                                 - - 'powershell.exe -Command "C:\cfn\scripts\Validate-FsxConnectivity.ps1 -PerformFSxCheck '
+                                   - !Ref 'PerformFSxCheck'
+                                   - ' -FSxFileSystemId '
+                                   - !Ref 'FSxFileSystemId'
+                                   - ' -FSxRegion '
+                                   - !Ref 'AWS::Region'
+                                   - ' -FSxAdministratorPasswordSecret '
+                                   - !Ref 'FSxAdministratorPasswordSecret'
+                                   - ' -Stackname '
+                                   - !Ref 'AWS::StackName'
+                                   - ' -ResourceID ValidationNode1'
+                                   - ' -WaitHandler '
+                                   - '"'
+                                   - Fn::Base64: !Ref 'ValidationNode1WaitHandler'
+                                   - '"'
+                                   - '"'
                         d-signal-resource:
                             command: !Sub 'cfn-signal.exe -e %ERRORLEVEL% --resource ValidationNode1
                                 --stack ${AWS::StackName} --region ${AWS::Region}'
@@ -415,7 +415,7 @@ Resources:
                       - "\n"
                       - "$Response = Invoke-WebRequest -Uri 'https://cloudformation."
                       - !Ref 'AWS::Region'
-                      - ".amazonaws.com' "
+                      - ".amazonaws.com' -UseBasicParsing"
                       - "\n"
                       - '$StatusCode = $Response.StatusCode'
                       - "\n"
@@ -423,16 +423,13 @@ Resources:
                       - "\n"
                       - 'catch { '
                       - "\n"
-                      - "Start-Process 'cfn-signal.exe' -ArgumentList '-e 1 -r $FailureReason "
-                      - Fn::Base64: !Ref 'ValidationNode1WaitHandler'
-                      - "' -Wait -NoNewWindow"
+                      - "Write-Output $_"
                       - "\n"
-                      - '$StatusCode = $_.Exception.Response.StatusCode.value__ '
+                      - '$StatusCode = 0'
                       - "\n"
-                      - 'shutdown /s'
                       - '}'
                       - "\n"
-                      - 'Write-Output $Response'
+                      - 'Write-Output $StatusCode'
                       - "\n"
                       - 'if ($StatusCode -eq 200) {'
                       - "\n"
@@ -629,58 +626,55 @@ Resources:
                 Fn::Join:
                     - ''
                     - - "<powershell>\n"
-                    - '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12'
-                    - "\n"
-                    - '$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token" '
-                    - "\n"
-                    - '$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id'
-                    - "\n"
-                    - '$FailureReason = "CF endpoint is not reachable. Check your subnet outbound connectivity."'
-                    - "\n"
-                    - 'try {'
-                    - "\n"
-                    - "$Response = Invoke-WebRequest -Uri 'https://cloudformation."
-                    - !Ref 'AWS::Region'
-                    - ".amazonaws.com' "
-                    - "\n"
-                    - '$StatusCode = $Response.StatusCode'
-                    - "\n"
-                    - '}'
-                    - "\n"
-                    - 'catch { '
-                    - "\n"
-                    - "Start-Process 'cfn-signal.exe' -ArgumentList '-e 1 -r $FailureReason "
-                    - Fn::Base64: !Ref 'ValidationNode2WaitHandler'
-                    - "' -Wait -NoNewWindow"
-                    - "\n"
-                    - '$StatusCode = $_.Exception.Response.StatusCode.value__ '
-                    - "\n"
-                    - 'shutdown /s'
-                    - '}'
-                    - "\n"
-                    - 'Write-Output $Response'
-                    - "\n"
-                    - 'if ($StatusCode -eq 200) {'
-                    - "\n"
-                    - 'cfn-init.exe -v -c config -s '
-                    - !Ref 'AWS::StackId'
-                    - ' -r ValidationNode2'
-                    - ' --region '
-                    - !Ref 'AWS::Region'
-                    - "\n"
-                    - 'shutdown /s'
-                    - '}'
-                    - 'else {'
-                    - "\n"
-                    - "Start-Process 'cfn-signal.exe' -ArgumentList '-e 1 -r $FailureReason "
-                    - Fn::Base64: !Ref 'ValidationNode2WaitHandler'
-                    - "' -Wait -NoNewWindow "
-                    - "\n"
-                    - 'Send-CFNResourceSignal -StackName '
-                    - !Ref 'AWS::StackId'
-                    - ' -Status FAILURE -LogicalResourceId ValidationNode2 '
-                    - '-UniqueId $instanceID'
-                    - "\n"
-                    - 'shutdown /s'
-                    - "}\n"
-                    - '</powershell>'
+                      - '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12'
+                      - "\n"
+                      - '$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token" '
+                      - "\n"
+                      - '$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id'
+                      - "\n"
+                      - '$FailureReason = "CF endpoint is not reachable. Check your subnet outbound connectivity."'
+                      - "\n"
+                      - 'try {'
+                      - "\n"
+                      - "$Response = Invoke-WebRequest -Uri 'https://cloudformation."
+                      - !Ref 'AWS::Region'
+                      - ".amazonaws.com' -UseBasicParsing"
+                      - "\n"
+                      - '$StatusCode = $Response.StatusCode'
+                      - "\n"
+                      - '}'
+                      - "\n"
+                      - 'catch { '
+                      - "\n"
+                      - "Write-Output $_"
+                      - "\n"
+                      - '$StatusCode = 0'
+                      - "\n"
+                      - '}'
+                      - "\n"
+                      - 'Write-Output $StatusCode'
+                      - "\n"
+                      - 'if ($StatusCode -eq 200) {'
+                      - "\n"
+                      - 'cfn-init.exe -v -c config -s '
+                      - !Ref 'AWS::StackId'
+                      - ' -r ValidationNode2'
+                      - ' --region '
+                      - !Ref 'AWS::Region'
+                      - "\n"
+                      - 'shutdown /s'
+                      - '}'
+                      - 'else {'
+                      - "\n"
+                      - "Start-Process 'cfn-signal.exe' -ArgumentList '-e 1 -r $FailureReason "
+                      - Fn::Base64: !Ref 'ValidationNode2WaitHandler'
+                      - "' -Wait -NoNewWindow "
+                      - "\n"
+                      - 'Send-CFNResourceSignal -StackName '
+                      - !Ref 'AWS::StackId'
+                      - ' -Status FAILURE -LogicalResourceId ValidationNode2 '
+                      - '-UniqueId $instanceID'
+                      - "\n"
+                      - 'shutdown /s'
+                      - "}\n"
+                      - '</powershell>'
