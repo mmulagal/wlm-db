@@ -7,7 +7,7 @@ import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { useEffect, useRef, useState } from 'react';
 import DatabaseEstimatedCost from './DatabaseEstimatedCost';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DB_HOME_DATA_TYPE, STATUS_CONST } from '../../../utils/consts';
+import { DB_HOME_DATA_TYPE, WLF_TABS, STATUS_CONST } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useRemoveDatabaseJobsMutation, useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
@@ -126,14 +126,14 @@ const DatabaseTable = () => {
                                     setOpenedRow(null);
 
                                     if (menuId === 'viewOverview') {
-                                        dispatch(selectedTabSelection('Overview'));
+                                        dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
                                         dispatch(updateResourceId(rowData.id));
                                         dispatch(resetWorkloadFactoryResourceData());
                                         navigate('../database-overview');
                                     }
 
                                     if (menuId === 'viewDatabaseList') {
-                                        dispatch(selectedTabSelection('Database list'));
+                                        dispatch(selectedTabSelection(WLF_TABS.DATABASE_LIST));
                                         dispatch(updateResourceId(rowData.id));
                                         dispatch(resetWorkloadFactoryResourceData());
                                         navigate('../database-overview');

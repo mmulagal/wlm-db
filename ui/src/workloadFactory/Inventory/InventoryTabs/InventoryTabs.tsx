@@ -4,11 +4,13 @@ import styles from './InventoryTabs.module.scss';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { setSelectedInventoryTab } from '../../../store/workloadFactory/inventorySlice';
+import { WLF_TABS } from '../../../utils/consts';
+import { GENERAL } from '../../../utils/appConstants';
 
 const InventoryTabs = () => {
     const dispatch = useDispatch();
     const selectedInventoryTab = useAppSelector(state => state.inventory.selectedInventoryTab);
-    const [selectedTab, setSelectedTab] = useState('Managed Hosts');
+    const [selectedTab, setSelectedTab] = useState(WLF_TABS.MANAGED_HOSTS);
 
     useEffect(() => {
         setSelectedTab(selectedInventoryTab);
@@ -20,54 +22,54 @@ const InventoryTabs = () => {
     };
 
     return (
-        <div className={selectedTab === 'Managed Hosts' ? `${styles.inventoryTabs}` : `${styles.inventoryTabs} `}>
+        <div className={styles.inventoryTabs}>
             <div
-                className={selectedTab === 'Managed Hosts' ? `${styles.headers} ${styles.active}` : `${styles.headers}`}
+                className={selectedTab === WLF_TABS.MANAGED_HOSTS ? `${styles.headers} ${styles.active}` : `${styles.headers}`}
             >
                 <Typography
                     variant="Semibold_14"
                     className={
-                        selectedTab === 'Managed Hosts'
+                        selectedTab === WLF_TABS.MANAGED_HOSTS
                             ? `${styles.headerPart1} ${styles.activeText}`
                             : `${styles.headerPart1}`
                     }
-                    onClick={() => handleClick('Managed Hosts')}
+                    onClick={() => handleClick(WLF_TABS.MANAGED_HOSTS)}
                 >
-                    Managed hosts (24)
+                    {GENERAL.TAB_MANAGED_HOSTS} (24)
                 </Typography>
             </div>
             <div
                 className={
-                    selectedTab === 'Unmanaged Hosts' ? `${styles.headers} ${styles.active}` : `${styles.headers}`
+                    selectedTab === WLF_TABS.UNMANAGED_HOSTS ? `${styles.headers} ${styles.active}` : `${styles.headers}`
                 }
             >
                 <Typography
                     variant="Semibold_14"
                     className={
-                        selectedTab === 'Unmanaged Hosts'
+                        selectedTab === WLF_TABS.UNMANAGED_HOSTS
                             ? `${styles.headerPart2} ${styles.activeText}`
                             : `${styles.headerPart2}`
                     }
-                    onClick={() => handleClick('Unmanaged Hosts')}
+                    onClick={() => handleClick(WLF_TABS.UNMANAGED_HOSTS)}
                 >
-                    Unmanaged hosts (8)
+                    {GENERAL.TAB_UNAMANGED_HOSTS} (8)
                 </Typography>
             </div>
             <div
                 className={
-                    selectedTab === 'Undetected Hosts' ? `${styles.headers} ${styles.active}` : `${styles.headers}`
+                    selectedTab === WLF_TABS.UNDETECTED_HOSTS ? `${styles.headers} ${styles.active}` : `${styles.headers}`
                 }
             >
                 <Typography
                     variant="Semibold_14"
                     className={
-                        selectedTab === 'Undetected Hosts'
+                        selectedTab === WLF_TABS.UNDETECTED_HOSTS
                             ? `${styles.headerPart3} ${styles.activeText}`
                             : `${styles.headerPart3}`
                     }
-                    onClick={() => handleClick('Undetected Hosts')}
+                    onClick={() => handleClick(WLF_TABS.UNDETECTED_HOSTS)}
                 >
-                    Unidentifiable hosts (8)
+                    {GENERAL.TAB_UNIDENTIFIABLE_HOSTS} (8)
                 </Typography>
             </div>
         </div>

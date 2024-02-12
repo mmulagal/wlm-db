@@ -6,6 +6,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import { useDispatch } from 'react-redux';
+import { WLF_TABS } from '../../../utils/consts';
 
 const JobStatus = () => {
     const { jobsSummaryData, jobsSummaryLoading } = useAppSelector(state => state.databaseHome.getJobsSummary);
@@ -25,7 +26,7 @@ const JobStatus = () => {
                     <div
                         className={styles.buttonContainer}
                         onClick={() => {
-                            dispatch(setSelectedHeaderTab('Job monitoring'));
+                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                         }}
                     >
                         <Typography variant="Regular_14" style={{ lineHeight: 'unset' }} className={styles.buttonStyle}>

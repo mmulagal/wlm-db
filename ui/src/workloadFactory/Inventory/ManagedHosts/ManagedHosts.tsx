@@ -4,9 +4,9 @@ import styles from './ManagedHosts.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-import { JSXElementConstructor, ReactElement, ReactNode, useEffect, useRef, useState } from 'react';
+import {useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DB_HOME_DATA_TYPE, STATUS_CONST } from '../../../utils/consts';
+import { DB_HOME_DATA_TYPE, WLF_TABS, STATUS_CONST } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useRemoveDatabaseJobsMutation, useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
@@ -35,8 +35,6 @@ const ManagedHosts = () => {
     const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsData, databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
-
-    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
@@ -296,7 +294,7 @@ const ManagedHosts = () => {
         },
         {
             id: '7',
-            Header: 'Allocated Capacity',
+            Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
             accessor: 'storage.size',
             isSortable: true,
             width: '212px',
@@ -306,7 +304,7 @@ const ManagedHosts = () => {
         },
         {
             id: '8',
-            Header: 'Instance name',
+            Header: GENERAL.DB_HOST_INSTANCE_NAME,
             accessor: 'topology',
             isSortable: true,
             width: '212px',
@@ -334,7 +332,7 @@ const ManagedHosts = () => {
         },
         {
             id: '9',
-            Header: 'VPC',
+            Header: GENERAL.DB_HOST_VPC,
             accessor: 'topology.vpcId',
             isSortable: true,
             width: '212px',
@@ -354,7 +352,7 @@ const ManagedHosts = () => {
         },
         {
             id: '10',
-            Header: 'Availability',
+            Header: GENERAL.DB_HOST_AVAILABILITY,
             accessor: 'topology.availability',
             isSortable: true,
             width: '212px',
@@ -412,15 +410,15 @@ const ManagedHosts = () => {
                                     setOpenedRow(null);
 
                                     if (menuId === 'viewOverview') {
-                                        dispatch(setSelectedHeaderTab('Overview'));
-                                        dispatch(selectedTabSelection('Overview'));
+                                        dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
+                                        dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
                                         dispatch(updateResourceId(rowData.id));
                                         dispatch(resetWorkloadFactoryResourceData());
                                     }
 
                                     if (menuId === 'viewDatabaseList') {
-                                        dispatch(setSelectedHeaderTab('Overview'));
-                                        dispatch(selectedTabSelection('Database list'));
+                                        dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
+                                        dispatch(selectedTabSelection(WLF_TABS.DATABASE_LIST));
                                         dispatch(updateResourceId(rowData.id));
                                         dispatch(resetWorkloadFactoryResourceData());
                                     }
@@ -464,8 +462,8 @@ const ManagedHosts = () => {
                     <TableTopBar
                         //@ts-ignore
                         tableProps={tableProps}
-                        pluralTitle="Managed hosts"
-                        singularTitle="Managed host"
+                        pluralTitle={GENERAL.MANAGED_HOSTS_HEADING}
+                        singularTitle={GENERAL.MANAGED_HOST_HEADING}
                     />
                     <Table
                         {...tableComponentProps}

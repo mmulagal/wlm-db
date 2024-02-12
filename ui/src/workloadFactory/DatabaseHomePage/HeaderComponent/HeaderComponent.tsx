@@ -21,6 +21,7 @@ import {
 import { workloadFactoryResourceApi } from '../../../utils/apiService';
 import { setJobsList } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
+import { WLF_TABS } from '../../../utils/consts';
 
 const HeaderComponent = () => {
     const dispatch = useDispatch();
@@ -28,8 +29,7 @@ const HeaderComponent = () => {
 
     const { statusData, statusLoading } = useAppSelector(state => state.headers.getStatus);
 
-    const [selectedTab, setSelectedTab] = useState('Dashboard');
-    const [currentTime, setCurrentTime] = useState('');
+    const [selectedTab, setSelectedTab] = useState(WLF_TABS.DASHBOARD);
 
     const { credentialData, credentialLoading } = useAppSelector(state => state.headers.getCredentials);
     const { regionsData, regionsLoading } = useAppSelector(state => state.headers.getRegions);
@@ -107,14 +107,14 @@ const HeaderComponent = () => {
 
     const refreshPage = () => {
         dispatch(setRefreshTime(getCurrentDateTime()));
-        if (selectedHeaderTab === 'Dashboard') {
+        if (selectedHeaderTab === WLF_TABS.DASHBOARD) {
             resetDBHomePageState(dispatch);
-        } else if (selectedHeaderTab === 'Inventory') {
+        } else if (selectedHeaderTab === WLF_TABS.INVENTORY) {
             resetDBHomePageState(dispatch); // will add for inventory once API will be available
-        } else if (selectedHeaderTab === 'Overview') {
+        } else if (selectedHeaderTab === WLF_TABS.OVERVIEW) {
             resetDBHomePageState(dispatch);
             dispatch(workloadFactoryResourceApi.util.resetApiState());
-        } else if (selectedHeaderTab === 'Job monitoring') {
+        } else if (selectedHeaderTab === WLF_TABS.JOB_MONITORING) {
             dispatch(setJobsList([]));
         }
     };
@@ -145,7 +145,7 @@ const HeaderComponent = () => {
                                     isSearchable={generateAWSAccounts.length > 5}
                                     options={generateAWSAccounts}
                                     variant="two-lines"
-                                    isReadOnly={selectedHeaderTab === 'Overview'}
+                                    isReadOnly={selectedHeaderTab === WLF_TABS.OVERVIEW}
                                 />
                             </div>
 
@@ -161,7 +161,7 @@ const HeaderComponent = () => {
                                     isSearchable={generateRegionsData.length > 5}
                                     options={generateRegionsData}
                                     variant="two-lines"
-                                    isReadOnly={selectedHeaderTab === 'Overview'}
+                                    isReadOnly={selectedHeaderTab === WLF_TABS.OVERVIEW}
                                 />
                             </div>
 
@@ -180,61 +180,59 @@ const HeaderComponent = () => {
 
                     <div className={styles.secondRow}>
                         <div
-                            className={
-                                selectedHeaderTab === 'Dashboard' ? `${styles.overviewTabs}` : `${styles.overviewTabs}`
-                            }
+                            className={styles.overviewTabs}
                         >
                             <Typography
                                 variant="Regular_14"
                                 className={
-                                    selectedHeaderTab === 'Dashboard'
+                                    selectedHeaderTab === WLF_TABS.DASHBOARD
                                         ? `${styles.headerPart1} ${styles.active}`
                                         : `${styles.headerPart1}`
                                 }
                                 onClick={() => {
-                                    handleClick('Dashboard');
+                                    handleClick(WLF_TABS.DASHBOARD);
                                     refreshPage();
                                 }}
                             >
-                                Dashboard
+                                {GENERAL.TAB_DASHBOARD}
                             </Typography>
                             <Typography
                                 variant="Regular_14"
                                 className={
-                                    selectedHeaderTab === 'Inventory' || selectedHeaderTab === 'Overview'
+                                    selectedHeaderTab === WLF_TABS.INVENTORY || selectedHeaderTab === WLF_TABS.OVERVIEW
                                         ? `${styles.headerPart2} ${styles.active}`
                                         : `${styles.headerPart2}`
                                 }
                                 onClick={() => {
-                                    handleClick('Inventory');
+                                    handleClick(WLF_TABS.INVENTORY);
                                     refreshPage();
                                 }}
                             >
-                                Inventory
+                                {GENERAL.TAB_INVENTORY}
                             </Typography>
 
                             <Typography
                                 variant="Regular_14"
                                 className={
-                                    selectedHeaderTab === 'Job monitoring'
+                                    selectedHeaderTab === WLF_TABS.JOB_MONITORING
                                         ? `${styles.headerPart3} ${styles.active}`
                                         : `${styles.headerPart3}`
                                 }
                                 onClick={() => {
-                                    handleClick('Job monitoring');
+                                    handleClick(WLF_TABS.JOB_MONITORING);
                                     refreshPage();
                                 }}
                             >
-                                Job monitoring
+                                {GENERAL.TAB_JOB_MONITORING}
                             </Typography>
                         </div>
                     </div>
                 </div>
                 <div className={styles.extraSpace} />
-                {selectedHeaderTab === 'Dashboard' && <DatabaseHomePage />}
-                {selectedHeaderTab === 'Inventory' && <Inventory />}
-                {selectedHeaderTab === 'Job monitoring' && <JobMonitoring />}
-                {selectedHeaderTab === 'Overview' && <DatabaseHostOverview />}
+                {selectedHeaderTab === WLF_TABS.DASHBOARD && <DatabaseHomePage />}
+                {selectedHeaderTab === WLF_TABS.INVENTORY && <Inventory />}
+                {selectedHeaderTab === WLF_TABS.JOB_MONITORING && <JobMonitoring />}
+                {selectedHeaderTab === WLF_TABS.OVERVIEW && <DatabaseHostOverview />}
             </div>
         )
     );

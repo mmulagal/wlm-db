@@ -1,7 +1,7 @@
 import { Button, useDialog, Typography } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
-import { FORM_TO_WLF_NAVIGATE, PRODUCTION, TIMELINE_PROD_LINK, TIMELINE_STAGE_LINK } from '../../../../utils/consts';
+import { FORM_TO_WLF_NAVIGATE, WLF_TABS, PRODUCTION, TIMELINE_PROD_LINK, TIMELINE_STAGE_LINK } from '../../../../utils/consts';
 import {
     setDeployRedirectToCfLink,
     setIsLoading,
@@ -72,7 +72,7 @@ const MSSqlFooter = () => {
                                 variant="text"
                                 onClick={() => {
                                     clearTimeout(notificationMsg);
-                                    dispatch(setSelectedHeaderTab('Job monitoring'));
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
 
                                     dispatch(clearNotifications());
                                 }}
