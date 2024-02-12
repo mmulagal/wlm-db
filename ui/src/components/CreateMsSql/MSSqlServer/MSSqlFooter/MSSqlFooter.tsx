@@ -13,6 +13,7 @@ import { navigateToCanvas } from '../../../../utils/appConfig';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { useNavigate } from 'react-router-dom';
 import { handleCreateSQLServer } from './createSqlServer';
+import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventorySlice';
 
 const MSSqlFooter = () => {
     const state = useAppSelector(state => state);
@@ -71,7 +72,8 @@ const MSSqlFooter = () => {
                                 variant="text"
                                 onClick={() => {
                                     clearTimeout(notificationMsg);
-                                    navigate('../job-monitor');
+                                    dispatch(setSelectedHeaderTab('Job monitoring'));
+
                                     dispatch(clearNotifications());
                                 }}
                             >

@@ -79,6 +79,7 @@ import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import MissingPermissionsMsg from '../AwsSettings/AwsAccount/MissingPermissionsMsg';
 import store from '../../../store/store';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 const _ = require('lodash');
 
 type optionsType = {
@@ -244,7 +245,7 @@ const Chatbot = () => {
                                 variant="text"
                                 onClick={() => {
                                     clearTimeout(notificationMsg);
-                                    navigate('../job-monitor');
+                                    dispatch(setSelectedHeaderTab('Job monitoring'));
                                     dispatch(clearNotifications());
                                 }}
                             >
