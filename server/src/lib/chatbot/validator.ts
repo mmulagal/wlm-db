@@ -579,13 +579,29 @@ function validateText(text: string, key: string, fsxType?: string) {
     if (key === SQL_SERVER_NAME && !text) {
         text = `sqldatabase${randomize('a0', 4)}`;
     }
+
+    if (key === FSX_USERNAME) {
+        if (fsxType === NEW) {
+            return { key, value: 'fsxadmin' };
+        }
+
+        if (!text) {
+            return {
+                key,
+                status: 'error',
+                message: `${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
+                type: key.toLowerCase().includes('password') ? 'password' : 'text',
+                default: 'fsxadmin'
+            };
+        }
+    }
+
     if (!text) {
         return {
             key,
             status: 'error',
             message: `${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
-            type: key.toLowerCase().includes('password') ? 'password' : 'text',
-            ...(key === FSX_USERNAME && fsxType === NEW && { disable: true, default: 'fsxadmin' })
+            type: key.toLowerCase().includes('password') ? 'password' : 'text'
         };
     }
     return { key, value: text };
