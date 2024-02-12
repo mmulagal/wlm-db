@@ -437,9 +437,9 @@ async function deployStackOrCreateTemplateURL(
             const responseWithPermissions: CloudFormationDeploymentResponseType = {
                 ...response,
                 missingPermissions: {
-                    missingStatements: [...new Set(permissions.missingStatements)],
-                    blockedByOrganisation: [...new Set(permissions.blockedByOrganisation)],
-                    blockedByPermissionBoundary: [...new Set(permissions.blockedByPermissionBoundary)]
+                    missingStatements: [...new Set(permissions.missingStatements || [])],
+                    blockedByOrganisation: [...new Set(permissions.blockedByOrganisation || [])],
+                    blockedByPermissionBoundary: [...new Set(permissions.blockedByPermissionBoundary || [])]
                 }
             };
 
