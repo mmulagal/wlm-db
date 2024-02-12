@@ -1,5 +1,4 @@
 import styles from './CodeBox.module.scss';
-import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg';
 import { ReactComponent as Download } from '../../../assets/downloadBlackBackground.svg';
 
@@ -40,6 +39,7 @@ import NoDataCodeBox from '../../../common/NoDataCodebox/NoDataCodebox';
 import ThemeProvider from '../../../common/ThemeProvider/ThemeProvider';
 import SyntaxHighlighter from '../../../common/hooks/SyntaxHighlighter';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
+import CodeBoxHeading from '../../../common/CodeBoxHeading/CodeBoxHeading';
 
 const _ = require('lodash');
 
@@ -385,14 +385,7 @@ const CodeBox = () => {
 
     return (
         <div className={styles.codebox}>
-            <div className={styles.topBar}>
-                <div className={styles.title}>
-                    <VectorIcon />
-                    <Typography variant="Regular_16" className={styles.colorAutomation}>
-                        {CODE_VIEWER.CODEBOX}
-                    </Typography>
-                </div>
-            </div>
+            <CodeBoxHeading />
             <div className={styles.createDbHeader}>
                 <Typography variant="Regular_16" className={styles.createDBText}>
                     {CODE_VIEWER.CREATE_DATABASE}
