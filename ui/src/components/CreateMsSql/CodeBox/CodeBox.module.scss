@@ -32,23 +32,6 @@
         background-color: transparent;
     }
 
-    .topBar {
-        height: 60px;
-        background-color: var(--grey-65);
-        display: flex;
-        padding: 16px 40px;
-        justify-content: space-between;
-
-        .title {
-            display: flex;
-            gap: 8px;
-
-            svg {
-                height: 28px;
-            }
-        }
-    }
-
     .createDbHeader {
         display: flex;
         flex-direction: row;
@@ -214,7 +197,7 @@
                 gap: 16px;
                 display: flex;
             }
-            
+
             .menuItemDisabled {
                 pointer-events: none;
                 svg {
@@ -251,67 +234,6 @@
             justify-content: space-between;
             width: 100%;
             position: relative;
-        }
-
-        .payloadBody {
-            height: calc(100vh - 180px);
-            background-color: var(--grey-65);
-            padding-top: 10px;
-            padding-left: 10px;
-            .scrollContainer {
-                overflow-y: auto;
-                height: calc(100% - 72px);
-                width: calc(100% - 16px);
-                padding: 0 0 0 30px;
-                white-space: nowrap;
-
-                // Disable copy from code box
-                -moz-user-select: none;
-                -webkit-user-select: none;
-                -ms-user-select: none;
-                -o-user-select: none;
-                user-select: none;
-
-                .scrollLeft {
-                    display: flex;
-                    flex-direction: column;
-                    height: 100%;
-
-                    .setHorizontalScroll {
-                        display: flex;
-                        height: calc(100% - 16px);
-                    }
-
-                    .setVerticalScroll {
-                        height: 16px;
-                        background: var(--grey-65);
-                        margin-bottom: 0;
-                    }
-
-                    .firstBlock {
-                        width: calc(100% - 16px);
-                        margin-right: 0;
-                    }
-
-                    .addMargin {
-                        position: relative;
-                        margin-right: 16px;
-                    }
-
-                    .addVerticalMargin {
-                        margin-bottom: 16px;
-                    }
-
-                    .empty {
-                        width: 16px;
-                        background: var(--grey-65);
-                    }
-                }
-            }
-        }
-
-        .payloadBodyHeight {
-            height: calc(100vh - 244px);
         }
     }
 

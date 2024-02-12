@@ -247,6 +247,7 @@ const Chatbot = () => {
                                 onClick={() => {
                                     clearTimeout(notificationMsg);
                                     dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                    navigate('../databases');
                                     dispatch(clearNotifications());
                                 }}
                             >

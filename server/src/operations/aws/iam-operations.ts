@@ -30,10 +30,31 @@ export default async function getMissingPermissionsList(
     };
 
     const { EvaluationResults: results } = await simulatePrincipalPolicy(credentialsId, region, command);
-    const permissions =
+    const missingPermissions =
         results
-            ?.filter(({ EvalDecision }) => EvalDecision === 'implicitDeny')
+            ?.filter(
+                ({ EvalDecision, OrganizationsDecisionDetail, PermissionsBoundaryDecisionDetail }) =>
+                    EvalDecision !== 'allowed' &&
+                    OrganizationsDecisionDetail?.AllowedByOrganizations &&
+                    PermissionsBoundaryDecisionDetail?.AllowedByPermissionsBoundary
+            )
+            .map(({ EvalActionName }) => EvalActionName as string) || [];
+    const blockedByOrganisation =
+        results
+            ?.filter(
+                ({ EvalDecision, OrganizationsDecisionDetail }) =>
+                    EvalDecision !== 'allowed' && !OrganizationsDecisionDetail?.AllowedByOrganizations
+            )
+            .map(({ EvalActionName }) => EvalActionName as string) || [];
+    const blockedByPermissionBoundary =
+        results
+            ?.filter(
+                ({ EvalDecision, OrganizationsDecisionDetail, PermissionsBoundaryDecisionDetail }) =>
+                    EvalDecision !== 'allowed' &&
+                    OrganizationsDecisionDetail?.AllowedByOrganizations &&
+                    !PermissionsBoundaryDecisionDetail?.AllowedByPermissionsBoundary
+            )
             .map(({ EvalActionName }) => EvalActionName as string) || [];
 
-    return { permissions };
+    return { missingPermissions, blockedByOrganisation, blockedByPermissionBoundary };
 }

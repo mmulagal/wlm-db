@@ -93,10 +93,16 @@ const CloudFormationStaticTemplateRequestBody = Type.Object({
     region: Type.Optional(Type.String())
 });
 
+const MissingPermissions = Type.Object({
+    missingStatements: Type.Optional(Type.Array(Type.String())),
+    blockedByOrganisation: Type.Optional(Type.Array(Type.String())),
+    blockedByPermissionBoundary: Type.Optional(Type.Array(Type.String()))
+});
+
 const CloudFormationDeploymentResponse = Type.Object({
     cloudFormationUrl: Type.Optional(Type.String()),
     cloudFormationStackId: Type.Optional(Type.String()),
-    missingPermissions: Type.Optional(Type.String())
+    missingPermissions: Type.Optional(MissingPermissions)
 });
 
 const CloudFormationStaticTemplateResponse = Type.Object({
