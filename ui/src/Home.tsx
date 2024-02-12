@@ -16,6 +16,7 @@ import PreviewPanel from './components/PreviewPanel/PreviewPanel';
 import DatabaseHostOverview from './workloadFactory/ResourcePage/ResourceHomePage/DatabaseHostOverview';
 import JobMonitoring from './workloadFactory/JobMonitoring/JobMonitoring';
 import HeaderComponent from './workloadFactory/DatabaseHomePage/HeaderComponent/HeaderComponent';
+import WizardComponent from './workloadFactory/CreateNewUser/WizardComponent/WizardComponent';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -47,6 +48,7 @@ const Home = () => {
                         <Route path={'tables'} element={<Tables />} />
                     </Route>
                     <Route path={'databases'} element={<HeaderComponent />} />
+                    <Route path={'create-new-user'} element={<WizardComponent />} />
                     <Route path={'job-monitor'} element={<JobMonitoring />} />
                     <Route path="*" element={<MainComponent />} />
                 </Routes>
