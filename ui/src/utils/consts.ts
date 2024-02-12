@@ -13,7 +13,7 @@ export const LOCAL = 'LOCAL';
 export const AWS_ASSUME_ROLE = 'aws_assume_role';
 
 // VPC API default query fields
-export const VPC_API_FIELDS = 'subnet,securityGroup';
+export const VPC_API_FIELDS = 'subnet';
 
 // Default query fields value for AMI API
 export const OS_TYPE = 'windows';
@@ -106,6 +106,7 @@ export const FROM_DIALOG = {
 export const API_NAME = {
     REGION: 'region',
     VPC: 'vpc',
+    SG: 'sg',
     ADS: 'ads',
     SNS: 'sns',
     KMS: 'kms',

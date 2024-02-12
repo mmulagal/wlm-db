@@ -41,7 +41,7 @@ const License = () => {
     useEffect(() => {
         const newValLicense = {
             ...selectedLicenseId,
-            label: `${selectedLicenseId.label} | ${selectedLicenseId.label2}`
+            label: `${selectedLicenseId?.label} | ${selectedLicenseId?.label2}`
         };
         selectedDefaultValue(newValLicense);
     }, [selectedLicenseId]);

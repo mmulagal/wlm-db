@@ -27,10 +27,11 @@ import {
     setSubJobsData,
     setSubJobsDataLoading
 } from '../../../store/workloadFactory/jobMonitoringSlice';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { useGetFullJobsListQuery, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
+import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 
 const JobMonitoringTable = () => {
     const { setDialog } = useDialog();
@@ -57,6 +58,27 @@ const JobMonitoringTable = () => {
     // to get sub jobs data
     const [subTaskListApi] = useLazyGetSubTaskListQuery();
 
+    const [menuOpenedRow, setOpenedRow] = useState(null);
+    const menuOpenedRowDetail: any = useRef(null);
+
+    const menuItems = (row: any) => {
+        return [
+            {
+                id: 'goToCf',
+                displayName: '',
+                customComponent:
+                    row?.name && row.name.includes('href') ? (
+                        <Button Component="text" variant="link" className={CommonStyles.buttonClass}>
+                            {GENERAL.GO_TO_CLOUDFORMATION}
+                        </Button>
+                    ) : (
+                        GENERAL.GO_TO_CLOUDFORMATION
+                    ),
+                disabled: row?.name && row.name.includes('href') ? false : true
+            }
+        ];
+    };
+
     const openDemoInfoDialog = () => {
         setDialog(
             <DialogComponent
@@ -66,6 +88,15 @@ const JobMonitoringTable = () => {
                 callback={() => {}}
             />
         );
+    };
+
+    const handleGoToCfClick = (cellData: string) => {
+        const hrefRegex = /href:(.+)/;
+        const hrefMatch = cellData.match(hrefRegex);
+        if (hrefMatch) {
+            const href = hrefMatch[1];
+            handleRedirectToCF(href);
+        }
     };
 
     const handleRedirectToCF = (href: string) => {
@@ -167,6 +198,46 @@ const JobMonitoringTable = () => {
         }
     }, [jmJobsList, jmJobsListLoading, jmJobsListError]);
 
+    const lastColDetails = () => {
+        return {
+            id: '8',
+            Header: '',
+            accessor: 'name',
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <div className={styles.jobMenuPopover}>
+                        <MenuPopover
+                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                            menuItems={menuItems(rowData)}
+                            toggleMenu={(toggleType: string, menuId: string) => {
+                                if (toggleType === 'close') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+                                } else if (toggleType === 'open') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(rowData.id);
+                                    menuOpenedRowDetail.current = rowData.id;
+                                } else if (toggleType === 'selectedOption') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+
+                                    if (menuId === 'goToCf') {
+                                        handleGoToCfClick(cellData);
+                                    }
+                                }
+                            }}
+                            CustomMenu={undefined}
+                            disabledText={undefined}
+                        />
+                    </div>
+                );
+            },
+            showHide: true,
+            width: '57px',
+            isSticky: true
+        };
+    };
+
     const ExpandedRow = ({ rowData }: any) => {
         const statusType = rowData?.status.toLowerCase();
         return <SubJobTable jobId={rowData?.id} statusType={statusType} />;
@@ -212,7 +283,7 @@ const JobMonitoringTable = () => {
             id: '2',
             Header: 'Type',
             accessor: 'type',
-            width: '158px',
+            width: '160px',
             filterOptions: 'auto',
             renderCell: (cellData: any) => {
                 if (cellData) {
@@ -226,7 +297,7 @@ const JobMonitoringTable = () => {
             id: '3',
             Header: 'Status',
             accessor: 'status',
-            width: '158px',
+            width: '160px',
             filterOptions: [
                 { value: JOB_MONITORING_STATUS.IN_PROGRESS, label: GENERAL.JM_RUNNING },
                 { value: JOB_MONITORING_STATUS.COMPLETED, label: GENERAL.JM_COMPLETED },
@@ -257,41 +328,21 @@ const JobMonitoringTable = () => {
             Header: 'Resource name',
             accessor: 'resourceName',
             isSortable: true,
-            width: '167px'
+            width: '168px'
         },
         {
             id: '5',
             Header: 'Job name',
             accessor: 'name',
             isSortable: true,
-            width: '355px',
+            width: '325px',
             renderCell: (cellData: any) => {
-                // This is to accomadate the hyperlink in job name for only deployment cases.
-                // For other job hyperlink is not required and it will display the job name as is
-                const jobNameRegex = /(Microsoft SQL server deployment with stack) (.*?);/;
-                const hrefRegex = /href:(.+)/;
-
-                const jobNameMatch = cellData.match(jobNameRegex);
-                const hrefMatch = cellData.match(hrefRegex);
-                if (jobNameMatch && hrefMatch) {
-                    const jobName = `${jobNameMatch[1]} ${jobNameMatch[2]}`;
-                    const href = hrefMatch[1];
-
-                    return (
-                        <div className={CommonStyles.wrapTextIn2Line} title={jobName}>
-                            {jobNameMatch[1]}
-                            <Button Component="button" variant="link" onClick={() => handleRedirectToCF(href)}>
-                                {jobNameMatch[2]}
-                            </Button>
-                        </div>
-                    );
-                } else {
-                    return (
-                        <div className={CommonStyles.wrapTextIn2Line} title={cellData}>
-                            {cellData}
-                        </div>
-                    );
-                }
+                let jobName = cellData ? cellData.split(';href')[0] : '';
+                return (
+                    <div className={CommonStyles.wrapTextIn2Line} title={cellData}>
+                        {jobName}
+                    </div>
+                );
             }
         },
         {
@@ -324,12 +375,7 @@ const JobMonitoringTable = () => {
                 );
             }
         },
-        {
-            id: '8',
-            Header: '',
-            accessor: '',
-            width: '32px'
-        }
+        lastColDetails()
     ];
 
     const tableProps = useTable({

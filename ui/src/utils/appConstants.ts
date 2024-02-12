@@ -61,6 +61,7 @@ export const GENERAL = {
     TAG: 'Tag',
     SIMPLE_NOTIFICATION_SERVICE: 'Simple Notification Service',
     SAVE_FORM_AS_CLOUD: 'Redirect to CloudFormation',
+    GO_TO_CLOUDFORMATION: 'Go to CloudFormation',
     DEPLOYMENT_MODEL: 'Deployment Model',
     AWS_SETTINGS: 'AWS settings',
     VIEW_API_REQUEST: 'View API request',

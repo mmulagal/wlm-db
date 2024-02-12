@@ -9,6 +9,7 @@ import {
     useGetKeyPairsQuery,
     useGetKmsKeysQuery,
     useGetRegionsQuery,
+    useGetSGListQuery,
     useGetSnsTopicsQuery,
     useGetVPCListQuery
 } from '../../../utils/apiService';
@@ -21,6 +22,7 @@ import {
     addKeyPairList,
     addKmsKeysList,
     addRegions,
+    addSGList,
     addSavedConfigList,
     addSnsList,
     addVpcList
@@ -57,7 +59,7 @@ const MssqlApis = () => {
     const [licenseAmiSkip, setLicenseAmiSkip] = useState(true);
 
     // fsxnSkip to skip FSxN API call when credentialId, regionCode, vpcId is not defined
-    const [fsxnSkip, setFsxnSkip] = useState(true);
+    const [vpcDependentApiSkip, setVpcDependentApiSkip] = useState(true);
 
     //Getting the Data from state
     const selectedCredentialData = useAppSelector(state => state.mssqlForm.awsAccount.selectedCredential);
@@ -97,6 +99,18 @@ const MssqlApis = () => {
         { credentialId: selectedCredId, region: selectedRegionCode, fields: VPC_API_FIELDS },
         {
             skip: credAndRegionSkip
+        }
+    );
+
+    // API call to get VPC list for selected credentials and region
+    const {
+        data: sgData,
+        isFetching: sgLoading,
+        isError: sgError
+    } = useGetSGListQuery(
+        { credentialId: selectedCredId, region: selectedRegionCode, vpcId: selectedVpcId },
+        {
+            skip: vpcDependentApiSkip
         }
     );
 
@@ -189,7 +203,7 @@ const MssqlApis = () => {
     } = useGetFsxnListQuery(
         { credentialId: selectedCredId, region: selectedRegionCode, vpcId: selectedVpcId },
         {
-            skip: fsxnSkip
+            skip: vpcDependentApiSkip
         }
     );
 
@@ -230,9 +244,9 @@ const MssqlApis = () => {
             setLicenseAmiSkip(true);
         }
         if (vpcId && regionCode && credId) {
-            setFsxnSkip(false);
+            setVpcDependentApiSkip(false);
         } else {
-            setFsxnSkip(true);
+            setVpcDependentApiSkip(true);
         }
     }, [selectedCredentialData, selectedRegionData, selectedVpcData, osVersion, dbEdition, dbVersion]);
 
@@ -271,6 +285,24 @@ const MssqlApis = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [vpcData, vpcLoading, vpcError]);
+
+    // To add VPC information in MssqlEntities
+    useEffect(() => {
+        if (sgError) {
+            dispatch(addSGList({ undefined, sgLoading, sgError }));
+        } else {
+            dispatch(addSGList({ sgData, sgLoading, sgError }));
+        }
+        if (
+            !sgLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.SG)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.SG));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sgData, sgLoading, sgError]);
 
     // To add Ads information in MssqlEntities
     useEffect(() => {

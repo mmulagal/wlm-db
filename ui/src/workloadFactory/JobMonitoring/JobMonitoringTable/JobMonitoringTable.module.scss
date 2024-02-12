@@ -1,6 +1,11 @@
 .jobMonitoringTable {
     .table {
         width: 1612px;
+        margin-bottom: 40px;
+
+        .jobMenuPopover {
+            margin-left: -13px;
+        }
 
         .downloadButton {
             cursor: pointer;
