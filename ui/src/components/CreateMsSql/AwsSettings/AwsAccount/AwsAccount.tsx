@@ -31,6 +31,7 @@ import { ReactComponent as ErrorIcon } from '../../../../assets/error-icon.svg';
 import { PERMISSIONS } from '../../../../utils/permissions';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 import MissingPermissionsMsg from './MissingPermissionsMsg';
+import { setHeaderSelectedCred } from '../../../../store/workloadFactory/headersSlice';
 
 const AwsAccount = () => {
     const { setDialog } = useDialog();
@@ -157,6 +158,13 @@ const AwsAccount = () => {
             dispatch(setSelectedCredentials(generateAWSAccounts[0]));
         }
     }, [dispatch, generateAWSAccounts, selectedCredential]);
+
+    useEffect(() => {
+        const credValue = selectedCredential?.data?.name;
+        const label2 = `Account ID: ${selectedCredential?.data?.providerAccountId}`;
+        const option = generateOptionType(credValue, credValue, label2, false, '', selectedCredential?.data);
+        dispatch(setHeaderSelectedCred(option));
+    }, [selectedCredential]);
 
     //Set the Header text here
     const setHeader = () => {
