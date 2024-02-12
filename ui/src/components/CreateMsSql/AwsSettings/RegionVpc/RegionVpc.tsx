@@ -24,6 +24,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
+import { setHeaderSelectedRegion } from '../../../../store/workloadFactory/headersSlice';
 
 const RegionVpc = () => {
     const dispatch = useDispatch();
@@ -64,6 +65,13 @@ const RegionVpc = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateRegionsData]);
+
+    useEffect(() => {
+        const regionValue = selectedRegionData?.data?.regionName;
+        const label2 = selectedRegionData?.data?.regionCode;
+        const option = generateOptionType(regionValue, regionValue, label2, false, '', selectedRegionData?.data);
+        dispatch(setHeaderSelectedRegion(option));
+    }, [selectedRegionData]);
 
     useEffect(() => {
         if (!isVPCNotFilled && isCreateHit) {

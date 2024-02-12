@@ -5,7 +5,7 @@ import { SelectField, Spinner, Typography } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
-import { generateOptionType, getCurrentDateTime, resetDBHomePageState } from '../../../utils/utilityFunctions';
+import { generateOptionType, getCurrentDateTime, regionsSort, resetDBHomePageState } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import Inventory from '../../Inventory/Inventory';
@@ -20,6 +20,7 @@ import {
 } from '../../../store/workloadFactory/headersSlice';
 import { workloadFactoryResourceApi } from '../../../utils/apiService';
 import { setJobsList } from '../../../store/workloadFactory/jobMonitoringSlice';
+import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
 
 const HeaderComponent = () => {
     const dispatch = useDispatch();
@@ -70,7 +71,8 @@ const HeaderComponent = () => {
 
     const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        regionsData?.regions?.map((val: any, idx: number) => {
+        const sortedRegionsData = regionsSort(regionsData?.regions || []);
+        sortedRegionsData?.map((val: any, idx: number) => {
             const regionValue = val.regionName;
             const label2 = val.regionCode;
             const option = generateOptionType(regionValue, regionValue, label2, false, '', val);
@@ -81,6 +83,18 @@ const HeaderComponent = () => {
         }
         return options;
     }, [regionsData]);
+
+    useEffect(() => {
+        const credValue = headerSelectedCred?.data?.name + ' | Account: ' + headerSelectedCred?.data?.providerAccountId;
+        const option = generateOptionType(credValue, credValue, '', false, '', headerSelectedCred?.data);
+        dispatch(setSelectedCredentials(option));
+    }, [headerSelectedCred]);
+
+    useEffect(() => {
+        const regionValue = headerSelectedRegion?.data?.regionCode + ' | ' + headerSelectedRegion?.data?.regionName;
+        const option = generateOptionType(regionValue, regionValue, '', false, '', headerSelectedRegion?.data);
+        dispatch(setSelectedRegionData(option));
+    }, [headerSelectedRegion]);
 
     const handleClick = (value: string) => {
         setSelectedTab(value);
