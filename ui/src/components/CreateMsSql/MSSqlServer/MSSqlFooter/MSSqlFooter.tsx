@@ -73,7 +73,7 @@ const MSSqlFooter = () => {
                                 onClick={() => {
                                     clearTimeout(notificationMsg);
                                     dispatch(setSelectedHeaderTab('Job monitoring'));
-
+                                    navigate('../databases');
                                     dispatch(clearNotifications());
                                 }}
                             >

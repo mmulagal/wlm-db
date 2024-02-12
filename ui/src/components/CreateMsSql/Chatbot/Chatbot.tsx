@@ -246,6 +246,7 @@ const Chatbot = () => {
                                 onClick={() => {
                                     clearTimeout(notificationMsg);
                                     dispatch(setSelectedHeaderTab('Job monitoring'));
+                                    navigate('../databases');
                                     dispatch(clearNotifications());
                                 }}
                             >
