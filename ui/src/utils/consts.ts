@@ -249,3 +249,14 @@ export const UI_IDS = {
     WIZARD_CODEBOX_CF: 'wizard-codebox-cf',
     DBP_CODEBOX_CF: 'dbp-codebox-cf'
 };
+
+export const WLF_TABS = {
+    DASHBOARD: 'Dashboard',
+    INVENTORY: 'Inventory',
+    OVERVIEW: 'Overview',
+    JOB_MONITORING: 'Job monitoring',
+    DATABASE_LIST: 'Database list',
+    MANAGED_HOSTS: 'Managed hosts',
+    UNMANAGED_HOSTS: 'Unmanaged hosts',
+    UNDETECTED_HOSTS: 'Undetected hosts',
+};

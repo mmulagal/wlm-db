@@ -64,6 +64,7 @@ import {
     AWS_MANAGED_AD,
     CHATBOT_WELCOME_CARDS,
     FORM_TO_WLF_NAVIGATE,
+    WLF_TABS,
     PRODUCTION,
     SQL_DEPLOYMENT_MODE,
     TIMELINE_PROD_LINK,
@@ -245,7 +246,7 @@ const Chatbot = () => {
                                 variant="text"
                                 onClick={() => {
                                     clearTimeout(notificationMsg);
-                                    dispatch(setSelectedHeaderTab('Job monitoring'));
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                                     navigate('../databases');
                                     dispatch(clearNotifications());
                                 }}

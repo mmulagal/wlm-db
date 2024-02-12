@@ -1,8 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { DatabaseHostsEntities } from '../../utils/types/databaseHomeTypes';
+import { WLF_TABS } from '../../utils/consts';
 
 export const initialDBHomepageState: DatabaseHostsEntities = {
-    selectedTab: 'Overview',
+    selectedTab: WLF_TABS.OVERVIEW,
     getDatabaseHosts: {
         databaseHostsData: null,
         databaseHostsLoading: false,
