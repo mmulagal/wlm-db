@@ -32,23 +32,6 @@
         background-color: transparent;
     }
 
-    .topBar {
-        height: 60px;
-        background-color: var(--grey-65);
-        display: flex;
-        padding: 16px 40px;
-        justify-content: space-between;
-
-        .title {
-            display: flex;
-            gap: 8px;
-
-            svg {
-                height: 28px;
-            }
-        }
-    }
-
     .createDbHeader {
         display: flex;
         flex-direction: row;
@@ -214,7 +197,7 @@
                 gap: 16px;
                 display: flex;
             }
-            
+
             .menuItemDisabled {
                 pointer-events: none;
                 svg {
