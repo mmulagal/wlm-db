@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
-
 import {
     AccordionCard,
     AccordionCardContent,
@@ -12,7 +11,7 @@ import {
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { GENERAL } from '../../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
-import { fsxPassVal, generateOptionType } from '../../../../utils/utilityFunctions';
+import { fsxPassVal, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -55,47 +54,69 @@ const FSxNSystem = () => {
 
     const fsxNameRef = useRef(null);
 
-    const fsxCheck = (val: any) => {
+    const fsxCheck = (fsxId: any) => {
+        if (isDemoMode) {
+            return '';
+        }
+        let selectedFsx = fsxnData?.filesystems?.filter((perRow: any) => perRow?.fileSystemId === fsxId);
+        let val: any = {};
+        if (selectedFsx && selectedFsx.length === 1) {
+            val = selectedFsx[0];
+        }
         const svmCount = val?.storageVirtualMachines ? val.storageVirtualMachines.length : 0;
-        const throughputCapacity = val?.ontapConfiguration?.throughputCapacity;
+        const throughputCapacity = val?.ontapConfiguration?.throughputCapacity || 0;
         const fsxType = val?.ontapConfiguration?.deploymentType;
         const lifecycle = val?.lifecycle;
         const fsxSubnets = val?.subnetIds || [];
         const node1SubnetsList = selectedZone1?.data?.subnets || [];
         const node2SubnetsList = selectedZone2?.data?.subnets || [];
         const primarySubnet = val?.ontapConfiguration?.preferredSubnetId;
-        let svmCheck = false;
-        if (throughputCapacity === 128 || throughputCapacity === 256) {
-            svmCheck = svmCount < 6 ? true : false;
-        } else if (throughputCapacity === 512 || throughputCapacity === 1024) {
-            svmCheck = svmCount < 14 ? true : false;
-        } else if (throughputCapacity === 2048 || throughputCapacity === 4096) {
-            svmCheck = svmCount < 24 ? true : false;
-        } else {
-            svmCheck = true;
-        }
+
         if (lifecycle && lifecycle === 'AVAILABLE') {
+            let svmCheck = false;
+            let expectedSvmCount = 0;
+            if (throughputCapacity === 128 || throughputCapacity === 256) {
+                svmCheck = svmCount < 6 ? true : false;
+                expectedSvmCount = 6;
+            } else if (throughputCapacity === 512 || throughputCapacity === 1024) {
+                svmCheck = svmCount < 14 ? true : false;
+                expectedSvmCount = 14;
+            } else if (throughputCapacity === 2048 || throughputCapacity === 4096) {
+                svmCheck = svmCount < 24 ? true : false;
+                expectedSvmCount = 24;
+            } else {
+                svmCheck = true;
+            }
+            if (!svmCheck) {
+                return `${GENERAL.FSXN_SVM_ERROR[0]} ${expectedSvmCount} ${GENERAL.FSXN_SVM_ERROR[1]} ${expectedSvmCount} ${GENERAL.FSXN_SVM_ERROR[2]}  ${throughputCapacity} ${GENERAL.FSXN_SVM_ERROR[3]} `;
+            }
+
+            if (!node1SubnetsList.includes(primarySubnet)) {
+                return GENERAL.FSXN_PRIMARY_SUBNET_ERROR;
+            }
             if (
                 deploymentMode?.label === GENERAL.FAILOVER_CLUSTER &&
                 fsxType &&
                 fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
             ) {
-                return (
-                    svmCheck &&
-                    node1SubnetsList.includes(primarySubnet) &&
+                if (
                     fsxSubnets.every((val: string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val))
-                );
+                ) {
+                    return '';
+                } else {
+                    return GENERAL.FSXN_SECONDARY_SUBNET_ERROR;
+                }
             } else if (deploymentMode?.label === GENERAL.SINGLE_INSTANCE) {
-                return (
-                    svmCheck &&
-                    node1SubnetsList.includes(primarySubnet) &&
-                    fsxSubnets.some((val: string) => node1SubnetsList.includes(val))
-                );
+                if (fsxSubnets.some((val: string) => node1SubnetsList.includes(val))) {
+                    return '';
+                } else {
+                    return GENERAL.FSXN_PRIMARY_SUBNET_ERROR;
+                }
             } else {
-                return false;
+                return GENERAL.FSXN_DEPLOYMENT_MODE_ERROR;
             }
         } else {
-            return false;
+            return GENERAL.FSXN_NOT_AVAILABLE;
         }
     };
 
@@ -103,33 +124,40 @@ const FSxNSystem = () => {
     const generateExistingFsx = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         fsxnData?.filesystems?.map((val, idx: number) => {
-            if (isDemoMode || fsxCheck(val)) {
-                const value = (val?.name ? val.name + ' | ' : '') + val?.fileSystemId;
-                const data = {
-                    fileSystemId: val?.fileSystemId,
-                    fileSystemName: val?.name,
-                    securityGroups: val?.securityGroups,
-                    throughput: val?.ontapConfiguration?.throughputCapacity,
-                    iops: val?.ontapConfiguration?.diskIopsConfiguration?.iops,
-                    preferredSubnetId: val?.ontapConfiguration?.preferredSubnetId,
-                    kmsKeyId: val?.kmsKeyId
-                };
-                const option = generateOptionType(value, value, '', false, '', data);
-                options.push(option);
-            }
+            const value = (val?.name ? val.name + ' | ' : '') + val?.fileSystemId;
+            const data = {
+                fileSystemId: val?.fileSystemId,
+                fileSystemName: val?.name,
+                securityGroups: val?.securityGroups,
+                throughput: val?.ontapConfiguration?.throughputCapacity,
+                iops: val?.ontapConfiguration?.diskIopsConfiguration?.iops,
+                preferredSubnetId: val?.ontapConfiguration?.preferredSubnetId,
+                kmsKeyId: val?.kmsKeyId
+            };
+            const disabledMsg = fsxCheck(val?.fileSystemId);
+            const option = generateOptionType(value, value, '', disabledMsg !== '', disabledMsg, data);
+            options.push(option);
         });
-
-        return options;
+        return sortListOfDict(options, 'isDisabled');
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fsxnData, selectedZone1, selectedZone2, deploymentMode]);
 
     useEffect(() => {
         if (!isLoadConfig && !movingFromChatbot) {
-            dispatch(setExistingFsxnName(generateExistingFsx[0]));
+            const firstVal = generateExistingFsx[0];
+            firstRowSelection(firstVal);
             dispatch(setFsxNExistingUserName(FSXADMIN));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateExistingFsx]);
+
+    const firstRowSelection = (row: any) => {
+        if (!row?.isDisabled) {
+            dispatch(setExistingFsxnName(row));
+        } else {
+            dispatch(setExistingFsxnName(null));
+        }
+    };
 
     //FSX Name check to highlight the field
     useEffect(() => {
@@ -235,7 +263,9 @@ const FSxNSystem = () => {
                                     label={GENERAL.FSXN_NAME}
                                     isClearable={false}
                                     defaultValue={
-                                        selectedExistingFsxnName ? [selectedExistingFsxnName] : [generateExistingFsx[0]]
+                                        selectedExistingFsxnName
+                                            ? [selectedExistingFsxnName]
+                                            : [firstRowSelection(generateExistingFsx[0])]
                                     }
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setExistingFsxnName(selectedOptions));
