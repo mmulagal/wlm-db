@@ -25,6 +25,7 @@ import {
 } from '../../utils/consts';
 import {
     checkAndRetrieveJsonObject,
+    convertMetricsIntoJson,
     deployedStackUrl,
     derivePropertiesFromARN,
     getDescriptionForMatchingName,
@@ -352,6 +353,8 @@ async function processCloudFormationMessages() {
                                         Metrics: trackMetrics
                                     } = resourceProperties;
 
+                                    const trackMetricsJson = convertMetricsIntoJson(trackMetrics);
+
                                     logger.debug('>>JWT TOKEN', jwtToken);
                                     try {
                                         verifyAuthToken(jwtToken);
@@ -385,7 +388,7 @@ async function processCloudFormationMessages() {
                                                         databaseType: trackdatabaseType,
                                                         resourceName: trackresourceName,
                                                         fileSystemType: trackfileSystemType,
-                                                        Metrics: trackMetrics
+                                                        Metrics: trackMetricsJson
                                                     }
                                                 });
 
