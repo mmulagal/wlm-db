@@ -3,7 +3,11 @@ import nock from 'nock';
 async function initiateSimulator() {
     nock.disableNetConnect();
     nock.enableNetConnect(
-        host => host.includes('0.0.0.0') || host.includes('bedrock-runtime') || host.includes('sts.')
+        host =>
+            host.includes('0.0.0.0') ||
+            host.includes('bedrock-runtime') ||
+            host.includes('sts.') ||
+            host.includes('pricing.')
     );
 
     await import('./scopes/jwt-scope');
@@ -27,7 +31,6 @@ async function initiateSimulator() {
     await import('./scopes/cloud-manager/cloud-manager-notification-scope');
     await import('./scopes/cloud-manager/workload-factory-credentials-scope');
     await import('./scopes/cloud-manager/wlmdb-scope');
-    await import('./scopes/aws/pricing-scope');
     await import('./scopes/cloud-manager/workload-factory-auth-scope');
     await import('./scopes/aws/cost-explorer-scope');
     await import('./scopes/aws/tags-scope');
