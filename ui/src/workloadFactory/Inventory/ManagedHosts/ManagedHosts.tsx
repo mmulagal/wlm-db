@@ -4,8 +4,7 @@ import styles from './ManagedHosts.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-import { useEffect, useRef, useState } from 'react';
-import DatabaseEstimatedCost from '../../DatabaseHomePage/DatabaseTable/DatabaseEstimatedCost';
+import { JSXElementConstructor, ReactElement, ReactNode, useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DB_HOME_DATA_TYPE, STATUS_CONST } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
@@ -28,6 +27,7 @@ import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
 
 const ManagedHosts = () => {
     const dispatch = useDispatch();
@@ -281,7 +281,7 @@ const ManagedHosts = () => {
                         {costData && (
                             <div className={styles.cost}>
                                 <TooltipInfo className={styles.tooltipClass} onVisibleChange={function noRefCheck() {}}>
-                                    {DatabaseEstimatedCost({ ...costData, totalCost: totalCost })}
+                                    {EstimatedCostPopover({ ...costData, totalCost: totalCost })}
                                 </TooltipInfo>
                                 <Typography variant="Regular_14">{`$ ${formatFractionalNumber(
                                     totalCost,
@@ -297,7 +297,7 @@ const ManagedHosts = () => {
         {
             id: '7',
             Header: 'Allocated Capacity',
-            accessor: 'allocatedCapacity',
+            accessor: 'storage.size',
             isSortable: true,
             width: '212px',
             renderCell: (cellData: string) => {
@@ -307,20 +307,27 @@ const ManagedHosts = () => {
         {
             id: '8',
             Header: 'Instance name',
-            accessor: 'topology.ec2Details',
+            accessor: 'topology',
             isSortable: true,
             width: '212px',
             renderCell: (cellData: any) => {
-                const instance = cellData ? cellData[0] : null;
+                let instanceIds: any = [];
+                let instanceNames: any = [];
+                cellData?.ec2Details?.map((row: any) => {
+                    instanceIds.push(row?.id);
+                    instanceNames.push(row?.name);
+                });
                 return (
                     <>
-                        {instance && (
+                        {cellData?.ec2Details && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>ID: {instance?.id}</TooltipInfo>
-                                <Typography variant="Regular_14">{instance?.name}</Typography>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>
+                                    ID: {instanceIds.join(',')}
+                                </TooltipInfo>
+                                <Typography variant="Regular_14">{instanceNames.join(',')}</Typography>
                             </div>
                         )}
-                        {!instance && notAvailable()}
+                        {!cellData?.ec2Details && notAvailable()}
                     </>
                 );
             }
