@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: This workload template deploys a SQL FCI instance using FSxN in an existing VPC.
-    **WARNING** This template creates EC2 instances and related resources. You will
-    be billed for the AWS resources used if you create a stack from this template.
+Description: This template deploys SQL Server failover cluster instances using NetApp FSx for ONTAP in an existing VPC.
+            This template creates EC2 instances and related resources. 
+            You will be billed for the AWS resources used if you create a stack from this template.
 Metadata:
     AWS::CloudFormation::Interface:
         ParameterGroups:
@@ -69,9 +69,9 @@ Metadata:
             PrivateSubnet2ID:
                 default: Private Subnet 2 ID for the second SQL Node existing VPC e.g subnet-000dc866d93550eb0
             RouteTable1Id:
-                default: Route Table ID of private subnet 1
+                default: ID of the route table for private subnet 1.
             RouteTable2Id:
-                default: Route Table ID of private subnet 2
+                default: ID of the route table for private subnet 2.
             AssetsBucketName:
                 default: S3 Bucket Name hosting WLMDB Assets. e.g LaunchWizard-Assets.
             AssetsS3RegionCode:
@@ -103,7 +103,7 @@ Metadata:
             SqlFSxServerNetBIOSName2:
                 default: Server2 NetBIOS Name e.g SQLFSX02
             FileShareVolumeSize:
-                default: FSx capacity in GB e.g 1024
+                default: FSx for ONTAP capacity in GiB e.g 1024
             FileShareThroughputCapacity:
                 default: Data throughput capacity (MB/s) e.g 16 MBps
             ADDnsIpAddresses:
@@ -135,53 +135,50 @@ Metadata:
             EnableCloudWatchLogFeature:
                 default: (optional) Enable monitoring by CloudWatch Logging
             ParentStackName:
-                default: Stack name for parent cloud formation stack
+                default: Name of the parent CloudFormation stack
 Parameters:
     ParentStackName:
-        Description: Stack name for parent cloud formation stack
+        Description: Name of the parent CloudFormation stack.
         Type: String
     Ec2RoleName:
         Default: AmazonEC2RoleForLaunchWizard
-        Description: EC2 instance role name
+        Description: EC2 instance role name.
         Type: String
     EnableCloudWatchLogFeature:
         Default: false
-        Description: Enable Logs
+        Description: Enable AWS CloudWatch logging.
         Type: String
     LogGroupName:
         Default: SQLDLOG
-        Description: A name for the log group
+        Description: A name for the SQL Server log group.
         Type: String
     UniqueID:
         Default: SQL123
-        Description: Automation Execution Unique Id.
+        Description: Automation execution unique ID.
         Type: String
     AMIID:
-        Description: AMI ID of the AMI to use
+        Description: ID of the AMI to use.
         Type: String
         Default: ami-06c634c2148dc0856
     BYOLAMI:
         Default: 'false'
-        Description: Whether the AMI is LI or BYOL
+        Description: Whether the AMI is license included or bring your own license.
         Type: String
     KeyPairName:
         Description: Name of an existing EC2 key pair. All instances will launch with
             this key pair.
         Type: AWS::EC2::KeyPair::KeyName
     PrivateSubnet1ID:
-        Description: ID of private subnet 1 in Availability Zone 1 for the Workload (e.g.,
-            subnet-a0246dcd)
+        Description: ID of the private subnet 1 in Availability Zone 1 for the SQL Server (for example, subnet-a0246dcd).
         Type: String
     PrivateSubnet2ID:
-        Description: ID of private subnet 2 in Availability Zone 2 for the Workload (e.g.,
-            subnet-a0246dcd)
+        Description: ID of the private subnet 2 in Availability Zone 2 for the SQL Server (for example, subnet-a0246dcd). This field is required for SQL Server failover instances, but not required for standalone instances.
         Type: String
     AssetsBucketName:
         Description: S3 bucket name for WLMDB assets.
         Type: String
     AssetsS3RegionCode:
-        Description: The AWS Region where the WLMDB S3 bucket (AssetsBucketName)
-            is hosted.
+        Description: The AWS region where the WLMDB S3 bucket (AssetsBucketName) is hosted.
         Type: String
     AssetsS3KeyPrefix:
         AllowedPattern: ^[0-9a-zA-Z-/]*$
@@ -192,84 +189,83 @@ Parameters:
             forward slash (/).
         Type: String
     VPCID:
-        Description: ID of your existing VPC for deployment
+        Description: ID of your existing VPC for deployment.
         Type: String
     VPCCIDR:
         AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
         ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
-        Description: CIDR Block for the VPC
+        Description: CIDR Block for the VPC.
         Type: String
     SqlFSxServerNetBIOSName1:
         AllowedPattern: '[a-zA-Z0-9\-]+'
         Default: SqlFSx1
-        Description: NetBIOS name of the SQL server (up to 15 characters)
+        Description: NetBIOS name of the SQL Server (up to 15 characters).
         MaxLength: '15'
         MinLength: '1'
         Type: String
     SqlFSxServerNetBIOSName2:
         AllowedPattern: '[a-zA-Z0-9\-]+'
         Default: SqlFSx2
-        Description: NetBIOS name of the SQL server (up to 15 characters)
+        Description: NetBIOS name of the SQL Server (up to 15 characters).
         MaxLength: '15'
         MinLength: '1'
         Type: String
     SqlFSxWSFCName:
         AllowedPattern: '[a-zA-Z0-9\-]+'
         Default: WSFC
-        Description: Windows Server failover cluster name
+        Description: Windows Server failover cluster name.
         MaxLength: '15'
         MinLength: '1'
         Type: String
     SqlFSxFCIName:
         AllowedPattern: '[a-zA-Z0-9\-]+'
         Default: DBSFCI
-        Description: SQL Failover Cluster Instance Name
+        Description: Name for the SQL Server failover cluster instance.
         MaxLength: '15'
         MinLength: '1'
         Type: String
     DomainAdminSecretName:
-        Description: arn for the secret for domain admin.
+        Description: ARN for the secret for domain admin.
         Type: String
     SQLServiceAccountSecret:
-        Description: arn for the secret for SQL service account.
+        Description: ARN of the secret for the SQL Server service account.
         Type: String
     DomainAdminUser:
         AllowedPattern: ([a-zA-Z0-9]+(\.|_|-|@)*)+
         Default: admin
         Description: User name for the account that will be used as Domain Administrator.
-            This is separate from the default "Administrator" account
+            This is separate from the default "Administrator" account.
         MaxLength: '25'
         MinLength: '5'
         Type: String
     DomainDNSName:
         AllowedPattern: '[a-zA-Z0-9\-]+\..+'
-        Description: Fully qualified domain name (FQDN) e.g. example.com
+        Description: Fully qualified domain name (FQDN). For example, example.com.
         MaxLength: '255'
         MinLength: '2'
         Type: String
     ADDnsIpAddresses:
-        Description: DNS IP addresses. Comma-separated.
+        Description: Comma separated list of DNS IP addresses.
         MaxLength: '255'
         MinLength: '2'
         Type: String
     DomainMemberSGID:
-        Description: ID of the Domain Member Security Group (e.g., sg-9cb7d0e5)
+        Description: ID of the Domain Member Security Group (e.g., sg-9cb7d0e5).
         Type: String
     WorkloadInstanceType:
         Default: r5.large
-        Description: Type of EC2 instance for the Workload instances
+        Description: EC2 instance type for the workload instances.
         Type: String
     MSSQLMediaBucketName:
         Default: LaunchWizard-sqlha
-        Description: The S3 bucket name wherefrom MSSQL media can be downloaded. This
-            string can include numbers, lowercase letters, uppercase letters, and hyphens
-            (-). It cannot start or end with a hyphen (-).
+        Description:  The S3 bucket name from where SQL Server media can be downloaded. 
+                    This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). 
+                    It cannot start or end with a hyphen (-).
         Type: String
     MSSQLMediaPathKey:
         Default: launchwizardscripts/sqlmedia/sqlserver.iso
-        Description: The S3 bucket key wherefrom MSSQL media can be downloaded. This string
-            can include numbers, lowercase letters, uppercase letters, hyphens (-), and
-            forward slash (/).
+        Description: User name for the service account administrator on the SQL Server. 
+                    It can be the Active Directory domain admin or other local or domain users.
         Type: String
     SQLAdminAccounts:
         Default: sqlsa
@@ -280,49 +276,49 @@ Parameters:
         Type: String
     NumberOfNodes:
         Default: '2'
-        Description: Enter the number of SQLServer nodes to create
+        Description: The number of SQL Server instances to create.
         Type: String
     RouteTable1Id:
-        Description: Comma seperated list of all route table ids' for SQL subnets.
+        Description: A comma separated list of all route table IDs for primary SQL subnet.
         Type: String
     RouteTable2Id:
-        Description: Comma seperated list of all route table ids' for SQL subnets.
+        Description: A comma separated list of all route table IDs for standby SQL subnet.
         Type: String
     SQLSvmName:
-        Description: SQL Storage Machine Virtual Name
+        Description: Name of the storage virtual machine (SVM) that will host the SQL Server workload.
         Type: String
         Default: SQLVM
     SQLigroupname:
-        Description: SQL igroupname
+        Description: igroup name for the SQL Server.
         Type: String
         Default: SQLIQN
     FSxDataVolumeName:
-        Description: SQL data volume name
+        Description: The name of the volume for SQL Server data.
         Type: String
         Default: SQLData
     FSxLogVolumeName:
-        Description: SQL Log volume name
+        Description: The name of the volume for the SQL Server log.
         Type: String
         Default: SQLLog
     FSxTempDbVolumeName:
-        Description: SQL TempDb volume name
+        Description: The name of the volume for the tempdb system database.
         Type: String
         Default: SQLTempDb
     FSxQuorumVolumeName:
-        Description: Windows Failover cluster quorum volume name
+        Description: The quorum volume name for the Windows Failover cluster.
         Type: String
         Default: WFCQuorum
     FSxDataLunSize:
-        Description: SQL data LUN size for ONTAP(in MiB)
+        Description: The size of the SQL Server data LUN in megabytes (MiB).
         Type: String
     ONTAPSecurityGroupID:
-        Description: ONTAP Security Group ID
+        Description: Security group ID for FSx for ONTAP.
         Type: String
     FSxFileSystemId:
-        Description: FSx Filesystem ID
+        Description: ID of the FSx for ONTAP file system.
         Type: String
     FsxAdminPassword:
-        Description: Secret arn for Fsx Admin Password
+        Description: ARN of the secret for the FSx for ONTAP admin password.
         Type: String
 Conditions:
     ADSGNotSelected: !Equals

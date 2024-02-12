@@ -7,7 +7,8 @@ import {
     WF_USER_CRED_TYPE,
     WF_SVC_TOKEN_TYPE,
     BXP_SVC_TOKEN_TYPE,
-    REQUEST_IN_PROGRESS_TYPE
+    REQUEST_IN_PROGRESS_TYPE,
+    AWS_PRICING_TYPE
 } from './consts.js';
 import getLogger from './logger.js';
 
@@ -46,6 +47,11 @@ const REQUEST_IN_PROGRESS_CACHE = new LRUCache({
     ttl: ms('30s')
 });
 
+const AWS_PRICING_CACHE = new LRUCache({
+    max: 1000,
+    ttl: ms('10d')
+});
+
 function getCacheByType(type: string) {
     logger.debug('Getting cache by type:', type);
 
@@ -64,6 +70,8 @@ function getCacheByType(type: string) {
             return SSM_COMMAND_CACHE;
         case REQUEST_IN_PROGRESS_TYPE:
             return REQUEST_IN_PROGRESS_CACHE;
+        case AWS_PRICING_TYPE:
+            return AWS_PRICING_CACHE;
         default:
             logger.error('Could not found compatible cache');
     }

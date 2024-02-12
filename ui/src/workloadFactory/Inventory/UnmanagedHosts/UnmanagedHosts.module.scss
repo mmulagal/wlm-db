@@ -1,0 +1,146 @@
+.unmanagedHosts {
+    display: flex;
+    gap: 24px;
+    padding: 0 120px;
+
+    .manageHostCol {
+        width: 182px;
+        height: 32px;
+        border-radius: 32px;
+        border: 1px solid var(--blue-70);
+        cursor: pointer;
+
+        .textStyle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2px;
+            color: var(--blue-70);
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 20px;
+            height: 20px;
+            margin-top: 5px;
+            margin-left: 40%;
+        }
+    }
+
+    .manageHostCol:hover {
+        border: 1px solid var(--blue-80);
+
+        .textStyle {
+            color: var(--blue-80);
+        }
+    }
+
+    .table {
+        width: 1607px;
+        margin-top: -18px;
+        margin-bottom: 40px;
+    }
+
+    .firstColText {
+        display: flex;
+        gap: 8px;
+    }
+
+    .colText {
+        display: flex;
+        gap: 16px;
+    }
+
+    .protection {
+        display: flex;
+        gap: 17px;
+    }
+
+    .cost {
+        display: flex;
+        gap: 16px;
+
+        .tooltipClass {
+            [class*='TooltipInfo-module_tooltip-base'] {
+                max-width: 462px !important;
+                padding: 16px 24px;
+                box-shadow: 2px 2px 6px 0px var(--border);
+            }
+        }
+    }
+
+    .statusIcon {
+        width: 10px;
+        height: 10px;
+        align-self: center;
+        &.circle {
+            border-radius: 50%;
+            margin-top: 2px;
+        }
+        &.up {
+            background-color: var(--green-60);
+        }
+        &.down {
+            background-color: var(--orange-60);
+        }
+        &.initializing {
+            background-color: var(--cyan-30);
+        }
+        &.failed {
+            background-color: var(--red-30);
+        }
+    }
+
+    .protectionTooltip {
+        width: 184px;
+        gap: 8px;
+        .textHeight {
+            line-height: 28px;
+        }
+    }
+
+    .costContainer {
+        width: 332px;
+        gap: 8px;
+        .costContainerHeader {
+            gap: 48px;
+            display: flex;
+            justify-content: space-between;
+            height: 36px;
+            padding: 8px 0px 0px 8px;
+        }
+
+        .middleContainer {
+            margin-top: 1px;
+            background-color: var(--loader-skeleton-bg);
+            height: 36px;
+            display: flex;
+            gap: 48px;
+        }
+
+        .middle {
+            width: 159px;
+            padding: 6px 0 0 24px;
+        }
+
+        .lastContainer {
+            height: 36px;
+            margin-top: 8px;
+            background-color: var(--table-header-background);
+            display: flex;
+            gap: 20px;
+
+            .totalCost {
+                padding: 6px 0 0 24px;
+            }
+        }
+    }
+
+    [class*='ManageColumns-module_base'] {
+        margin-left: 115px;
+        width: 24px !important;
+        height: 24px !important;
+    }
+}

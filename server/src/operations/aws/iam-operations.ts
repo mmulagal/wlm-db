@@ -1,8 +1,7 @@
 import { ContextEntry, SimulatePrincipalPolicyCommandInput } from '@aws-sdk/client-iam'; // ES Modules import
 import { getRoleDetails } from '../cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
-import { AWS_RESOURCES_ACTION_MAP } from '../../utils/consts';
-import getPermissionsList from '../../lib/aws/iam';
+import simulatePrincipalPolicy from '../../lib/aws/iam';
 
 const logger = getLogger();
 
@@ -23,18 +22,39 @@ export default async function getMissingPermissionsList(
         PolicySourceArn: roleArn,
         ...(resourceArn && { ResourceArns: resourceArn }), // A list of ARNs of Amazon Web Services resources to include in the simulation. If this parameter is not provided, then the value defaults to * (all resources)
         ...(conditionMap && { ContextEntries: conditionMap }), // this needs to be provided when the resource is allowed with the condition in iam policy
-        ActionNames: Object.keys(actionMap)
-            .filter(key => !skipResources?.includes(key))
-            .map(key => actionMap[key as keyof typeof AWS_RESOURCES_ACTION_MAP])
-            .flat(),
+        ActionNames: Object.entries(actionMap)
+            .filter(([key]) => !skipResources?.includes(key))
+            .map(([, value]) => value)
+            .flat() as string[],
         MaxItems: 500
     };
 
-    const { EvaluationResults: results } = await getPermissionsList(credentialsId, region, command);
-    const permissions =
+    const { EvaluationResults: results } = await simulatePrincipalPolicy(credentialsId, region, command);
+    const missingPermissions =
         results
-            ?.filter(({ EvalDecision }) => EvalDecision === 'implicitDeny')
+            ?.filter(
+                ({ EvalDecision, OrganizationsDecisionDetail, PermissionsBoundaryDecisionDetail }) =>
+                    EvalDecision !== 'allowed' &&
+                    OrganizationsDecisionDetail?.AllowedByOrganizations &&
+                    PermissionsBoundaryDecisionDetail?.AllowedByPermissionsBoundary
+            )
+            .map(({ EvalActionName }) => EvalActionName as string) || [];
+    const blockedByOrganisation =
+        results
+            ?.filter(
+                ({ EvalDecision, OrganizationsDecisionDetail }) =>
+                    EvalDecision !== 'allowed' && !OrganizationsDecisionDetail?.AllowedByOrganizations
+            )
+            .map(({ EvalActionName }) => EvalActionName as string) || [];
+    const blockedByPermissionBoundary =
+        results
+            ?.filter(
+                ({ EvalDecision, OrganizationsDecisionDetail, PermissionsBoundaryDecisionDetail }) =>
+                    EvalDecision !== 'allowed' &&
+                    OrganizationsDecisionDetail?.AllowedByOrganizations &&
+                    !PermissionsBoundaryDecisionDetail?.AllowedByPermissionsBoundary
+            )
             .map(({ EvalActionName }) => EvalActionName as string) || [];
 
-    return { permissions };
+    return { missingPermissions, blockedByOrganisation, blockedByPermissionBoundary };
 }

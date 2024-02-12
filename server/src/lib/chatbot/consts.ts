@@ -99,12 +99,14 @@ const CHATBOT_UI_PARAMS_FSX = [
 
     {
         [PRIVATE_SUBNET_1]: {
-            required: true
+            required: true,
+            dependsOn: AZ_1
         }
     },
     {
         [ROUTE_TABLE_1]: {
-            required: true
+            required: true,
+            dependsOn: PRIVATE_SUBNET_1
         }
     },
     {
@@ -115,12 +117,14 @@ const CHATBOT_UI_PARAMS_FSX = [
     },
     {
         [PRIVATE_SUBNET_2]: {
-            required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI }
+            required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI },
+            dependsOn: AZ_2
         }
     },
     {
         [ROUTE_TABLE_2]: {
-            required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI }
+            required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI },
+            dependsOn: PRIVATE_SUBNET_2
         }
     },
     {
@@ -243,15 +247,17 @@ const MSSQL_ENV_PRE_CONFIG = {
         [WL_INSTANCE_TYPE]: M5_2XL,
         [FSX_DEPLOYMENT_MODE]: MULTI_AZ,
         [DB_SIZE]: 500,
-        [SQL_DEPLOYMENT_MODE]: FCI
+        [SQL_DEPLOYMENT_MODE]: FCI,
+        [ENABLE_CLOUD_WATCH]: true
     },
     [DEV]: {
         [WL_INSTANCE_TYPE]: M5_XL,
         [FSX_DEPLOYMENT_MODE]: SINGLE_AZ,
-        [DB_SIZE]: 100,
-        [SQL_DEPLOYMENT_MODE]: STANDALONE
+        [DB_SIZE]: 120,
+        [SQL_DEPLOYMENT_MODE]: STANDALONE,
+        [ENABLE_CLOUD_WATCH]: true
     },
-    [CUSTOM]: {}
+    [CUSTOM]: { [ENABLE_CLOUD_WATCH]: true }
 };
 
 const KEY_LABEL_MAP = {
@@ -274,7 +280,7 @@ const KEY_LABEL_MAP = {
     [DOMAIN_USERNAME]: 'Enter a user name for Active Directory', // extra value needed for suggesstion
     [DOMAIN_PASS]: 'Enter a password for Active Directory',
     [FSX_USERNAME]: 'Enter a user name for the file system', // suggestion
-    [FSX_PASS]: 'Enter a password for the user', // suggestion
+    [FSX_PASS]: 'Enter a password for the file system user', // suggestion
     [SERVICE_ACCOUNT_NAME]: 'Enter a user name for the database credentials',
     [SERVICE_ACCOUNT_PASS]: 'Enter a password for database credentials.',
     [FSX_DEPLOYMENT_MODE]: 'fsx deployment mode',
@@ -287,6 +293,13 @@ const KEY_LABEL_MAP = {
     [FSX_FILE_SYSTEM_ID]: 'fsx file system id',
     [SQL_SERVER_NAME]: 'Enter a value for database cluster name',
     [TAGS]: 'tags'
+};
+
+const BACKTRACE_MESSAGES = {
+    [VPC_ID]:
+        'We could not found any VPC that supports FCI deployment, please select a different region that has valid VPC',
+    [AZ_1]: 'The VPC that you selected does not contain required availability zones, please select a different VPC',
+    [AZ_2]: 'The VPC that you selected does not contain required availability zones, please select a different VPC'
 };
 
 export {
@@ -347,5 +360,6 @@ export {
     SINGLE_AZ_SMALL,
     M5_XL,
     ENCRYPTION_KEY,
-    THROUGHPUT
+    THROUGHPUT,
+    BACKTRACE_MESSAGES
 };

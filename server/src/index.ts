@@ -15,7 +15,7 @@ import {
     ACCOUNT_ID,
     API_PATH_HEALTH,
     API_TITLE,
-    AUDIT_EXCLUDE_LIST,
+    // AUDIT_EXCLUDE_LIST,
     HEADERS,
     REQUEST_ID,
     USER_TOKEN,
@@ -38,11 +38,11 @@ import pricingRoutes from './routes/pricing';
 import databaseHostsRoutes from './routes/database-hosts';
 import deploymentJobsRoutes from './routes/jobs';
 import serviceStatusRoutes from './routes/service-status';
-import {
-    createAuditGroup,
-    updateAuditGroup,
-    updateAuditGroupResponse
-} from './operations/cloud-manager/audit-operations';
+// import {
+//     createAuditGroup,
+//     updateAuditGroup,
+//     updateAuditGroupResponse
+// } from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
 import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
@@ -224,10 +224,11 @@ const app = fastify({
                         accessLogger.info(`[${method}] [${url}]`);
                     }
 
-                    const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
-                    if (!requestUrl) {
-                        createAuditGroup(request, reply);
-                    }
+                    // Don't update audit record until BXP integration decision is made.
+                    // const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
+                    // if (!requestUrl) {
+                    //     createAuditGroup(request, reply);
+                    // }
                     done();
                 });
             } else {
@@ -244,15 +245,17 @@ const app = fastify({
     .setErrorHandler((error, request, reply) => errorHandler(error, request, reply))
     .addHook('onSend', async (request: FastifyRequest, reply: FastifyReply, payload) => {
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
-        const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
-        // Don't update audit record on invalid route
-        if (!request.is404) {
-            if (!requestUrl && reply.statusCode !== 202) {
-                updateAuditGroup(request, reply, payload);
-            } else if (request.url.includes('cloudformation/stack')) {
-                updateAuditGroupResponse(request, payload);
-            }
-        }
+
+        // Don't update audit record until BXP integration decision is made.
+        // const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
+        // // Don't update audit record on invalid route
+        // if (!request.is404) {
+        //     if (!requestUrl && reply.statusCode !== 202) {
+        //         updateAuditGroup(request, reply, payload);
+        //     } else if (request.url.includes('cloudformation/stack')) {
+        //         updateAuditGroupResponse(request, payload);
+        //     }
+        // }
         return payload;
     });
 
@@ -293,3 +296,5 @@ app.listen({ port, host }, err => {
     logger.info(`Server version: ${VERSION}, node-version: ${process.version}, mode: ${process.env.NODE_ENV}`);
     validateSchema();
 });
+
+export { app };

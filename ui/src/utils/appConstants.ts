@@ -41,6 +41,7 @@ export const GENERAL = {
     DATABASE_EDITION: 'Database edition',
     DATABASE_VERSION: 'Database version',
     LICENSE: 'License',
+    SQL_SERVER_INSTALL_TYPE: 'SQL Server install type',
     DATABASE_NAME: 'Database name',
     DATABASE_CREDENTIALS: 'Database credentials',
     CONNECTIVITY: 'Connectivity',
@@ -60,6 +61,7 @@ export const GENERAL = {
     TAG: 'Tag',
     SIMPLE_NOTIFICATION_SERVICE: 'Simple Notification Service',
     SAVE_FORM_AS_CLOUD: 'Redirect to CloudFormation',
+    GO_TO_CLOUDFORMATION: 'Go to CloudFormation',
     DEPLOYMENT_MODEL: 'Deployment Model',
     AWS_SETTINGS: 'AWS settings',
     VIEW_API_REQUEST: 'View API request',
@@ -93,7 +95,12 @@ export const GENERAL = {
     STEP_TWO: 'Option 2:',
     ERROR: 'Error:',
     NO_CRED: 'No Credentials.',
-    CREATE_PERMISSION_ERROR:
+    CREATE_PERMISSION_ERROR: [
+        'Workload Factory is unable to validate sufficient permissions. Redirect to ',
+        'AWS CloudFormation',
+        ' to complete this task. Ensure that you have the CloudFormation '
+    ],
+    CREATE_PERMISSION_ERROR_CHATBOT:
         'Workload Factory is unable to validate sufficient permissions. Redirect to AWS CloudFormation through the Codebox on the right to complete this task. Ensure that you have the CloudFormation ',
     NAVIGATE_TO: ['Go to the', ' and add the required credentials.'],
     STEP_TWO_TEXT: [
@@ -179,7 +186,7 @@ export const GENERAL = {
         'Use an AWS AMI (which includes a license) or bring your own SQL license (BYOL) through a custom AMI.',
     LICENSE_INCLUDED_AMI: 'License included AMI',
     VIEW_THE_REQ: 'View the requirements',
-    LICENSE_ID: 'License ID',
+    LICENSE_ID: 'SQL Server AMI',
     USE_CUSTOM_AMI: 'Use custom AMI',
     AMI_ID: 'AMI ID',
     SELECT_AMI_ID: 'Select AMI ID',
@@ -253,7 +260,9 @@ export const GENERAL = {
         'The user name must contain at least 5 alphanumeric characters. The user name can\'t be "admin" or "administrator".',
     USERNAME_TOOLTIP1: 'The user name must contain at least 5 alphanumeric characters.',
     USERNAME_TOOLTIP2: 'The user name can\'t be "admin" or "administrator".',
-    USERNAME_TOOLTIP3: 'The user name must be enclosed in quotation marks. For example: "John Doe"',
+    USERNAME_TOOLTIP3: 'The user name must be enclosed in quotation marks. For example:',
+    USERNAME_EXAMPLE: '"johnDoe"',
+    USERNAME_TOOLTIP4: 'The user name must contain at most 20 alphanumeric characters.',
 
     PASSWORD_MIN_LENGTH_8: 'Password must be atleast 8 characters long',
     PASSWORD_CRED_1:
@@ -383,10 +392,10 @@ export const GENERAL = {
     NOT_PROTECTED: 'Not protected',
     PROTECTION_TOOLTIP: [' out of ', ' databases are protected'],
     AWS_BACKUP: 'AWS backup',
-    FSX_ONTAP_SNAPSHOTS: 'FSx ONTAP Snapshots',
+    FSX_ONTAP_SNAPSHOTS: 'FSx for ONTAP Snapshots',
     SQL_SERVER_BACKUP: 'Native SQL server backup',
     PROTECTED_BY: 'Protected By',
-    DEPLOY_NEW_DATABASE: 'Deploy',
+    DEPLOY_NEW_DATABASE: 'Deploy new database host',
     DISCOVER: 'Discover',
     MIGRATE_DB: 'Migrate',
     CLONE_DB: 'Clone',
@@ -399,7 +408,7 @@ export const GENERAL = {
     DB_HOST_STORAGE_SAVINGS: 'Storage savings',
     DB_SS_TT_1:
         'Shows cumulative storage savings across Primary storage achieved as a result of Dedupe, Compression, Snapshots and thin Clones. ',
-    DB_SS_TT_2: 'Calculation is based on unique FSx ONTAP instance',
+    DB_SS_TT_2: 'Calculation is based on unique FSx for ONTAP instance',
     DB_HOST_ESTIMATED_COST: 'Estimated Cost',
     DB_HOST_TYPE: 'Type',
     DB_HOST_DEPLOYMENT_MODEL: 'Deployment model',
@@ -409,9 +418,9 @@ export const GENERAL = {
     JOB_STATUS: 'Job status',
     JOB_STATUS_DAYS: '(Last 30 days)',
     VIEW_JOB_MONITORING: 'View job monitoring',
-    JOB_STATUS_SUCCESS: 'Success',
+    JOB_STATUS_COMPLETED: 'Completed',
     JOB_STATUS_FAILED: 'Failed',
-    JOB_STATUS_INITIALIZING: 'In Progress',
+    JOB_STATUS_RUNNING: 'Running',
     JOB_STATUS_JOBS: ' Jobs',
     JOBS_DISTRIBUTION: 'Jobs distribution',
     JOB_DISTRIBUTION: 'Job distribution',
@@ -472,6 +481,9 @@ export const GENERAL = {
     HOST_NAME: 'Host name',
     NO_OF_DBS: 'Number of databases',
     TOTAL_USED_CAPACITY: 'Total used capacity',
+    SQL_VERSION: 'SQL version',
+    RESOURCE_DEPLOYMENT_MODEL: 'Deployment model',
+    RESOURCE_EDITION: 'Edition',
     TOTAL_ALLOCATED_CAPACITY: 'Total allocated capacity',
     ESTIMATED_COST_TOOLTIP:
         "Cost estimation provides an estimate of your AWS fees and doesn't include any taxes that might apply. Your actual fees depend on a variety of factors, including your actual usage of AWS services.",
@@ -501,8 +513,7 @@ export const GENERAL = {
     JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
     DEMO_TITLE: 'Redirect to CloudFormation',
-    DEMO_CONTENT:
-        'This is a Demo account. In every other account you may have, you will be redirected to AWS CloudFormation service to complete the operation.'
+    DEMO_CONTENT: `When using a Demo account you won't be redirected to the AWS CloudFormation service.`
 };
 
 export const CODE_VIEWER = {
@@ -576,7 +587,7 @@ export const CHATBOT = {
         RESUME_DEPLOYMENT_MSG:
             'Hi, we see that you already initiated values for deployment. How would you like to proceed?',
         ADVANCED_CREATE_MSG:
-            'Deployment via chatbot is supported only for Easy Create flow, Would you like to deploy with an Easy flow?',
+            'Deployment via chatbot is supported only with the easy create option, which provides some predefined configuration settings based on recommended best practices. Would you like to continue?',
         START_NEW_CHAT: 'Start new chat'
     },
     HEADER: {

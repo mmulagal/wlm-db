@@ -15,8 +15,6 @@ const DatabaseOverviewLayout = () => {
     return (
         <div className={styles.databaseOverview}>
             <div className={styles.leftSidePart}>
-                <DatabaseHostTile />
-
                 <div className={styles.secondLevel}>
                     <DBOverviewProtection />
                     <DBDistributionSection />

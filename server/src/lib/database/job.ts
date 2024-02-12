@@ -88,9 +88,14 @@ async function listJobs(
                 lte: new Date(endTime)
             }
         },
-        orderBy: {
-            [sort]: `${sortOrder}`
-        },
+        orderBy: [
+            {
+                [sort]: `${sortOrder}`
+            },
+            {
+                id: 'desc'
+            }
+        ],
         take: pageSize,
         ...(nextToken && {
             skip: 1,

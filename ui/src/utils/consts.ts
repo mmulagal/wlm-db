@@ -13,7 +13,7 @@ export const LOCAL = 'LOCAL';
 export const AWS_ASSUME_ROLE = 'aws_assume_role';
 
 // VPC API default query fields
-export const VPC_API_FIELDS = 'subnet,securityGroup';
+export const VPC_API_FIELDS = 'subnet';
 
 // Default query fields value for AMI API
 export const OS_TYPE = 'windows';
@@ -106,6 +106,7 @@ export const FROM_DIALOG = {
 export const API_NAME = {
     REGION: 'region',
     VPC: 'vpc',
+    SG: 'sg',
     ADS: 'ads',
     SNS: 'sns',
     KMS: 'kms',
@@ -199,8 +200,8 @@ export const COSTING_TYPES = {
 export const JM_DOWNLOAD = {
     MAIN_JOBS_KEYS: ['id', 'type', 'status', 'resourceName', 'name', 'startTime', 'endTime'],
     MAIN_JOBS_CSV_HEADERS: 'Job ID,Type,Status,Resource name,Job name,Start time,End time',
-    SUB_JOBS_KEYS: ['name', 'description', 'status', 'startTime', 'endTime'],
-    SUB_JOBS_CSV_HEADERS: 'Name,Description,Status,Start time,End time'
+    SUB_JOBS_KEYS: ['description', 'status', 'startTime', 'endTime'],
+    SUB_JOBS_CSV_HEADERS: 'Name,Status,Start time,End time'
 };
 
 export const AWS_CLI_HIGHLIGHT_STRINGS = [
@@ -215,10 +216,13 @@ export const AWS_CLI_HIGHLIGHT_STRINGS = [
 export const CREATE_DATABASE_YAML = 'Create_Database';
 
 export const CHATBOT_WELCOME_CARDS = [
-    'Help me deploy Microsoft SQL Server on FSx for ONTAP.',
-    'What are the key features of Amazon FSx for NetApp ONTAP for databases?',
-    'What are the key benefits of Amazon FSx for NetApp ONTAP for databases?',
-    'What is the FSx for ONTAP best practice for Microsoft SQL Server?'
+    { label: 'Help me deploy Microsoft SQL Server on FSx for ONTAP.' },
+    { label: 'What are the key features of Amazon FSx for NetApp ONTAP for databases?' },
+    { label: 'What are the key benefits of Amazon FSx for NetApp ONTAP for databases?' },
+    {
+        label: 'What is the FSx for ONTAP best practice for Microsoft SQL Server?',
+        value: 'What are some best practices for using FSx for ONTAP with Microsoft SQL Server?'
+    }
 ];
 
 export const CHATBOT_SUGGESTION_BUBBLES = [
@@ -227,8 +231,21 @@ export const CHATBOT_SUGGESTION_BUBBLES = [
 ];
 
 export const ADV_CREATE_SUGGESTION_BUBBLES = [
-    { label: 'Yes, I would like to deploy an Easy flow via chat', value: 'resume' },
-    { label: 'No, I want to explore the chat', value: 'explore' }
+    { label: 'Yes, I would like to continue with deployment', value: 'resume' },
+    { label: "No, I'd like to start a new conversation", value: 'explore' }
 ];
 
 export const JOBS_REPORT = 'jobs_report_';
+
+export const UI_IDS = {
+    WIZARD_REDIRECT_TO_CF: 'wizard-redirect-to-cf',
+    DBP_REDIRECT_TO_CF: 'dbp-redirect-to-cf',
+    WIZARD_CODEBOX_COPY: 'wizard-codebox-copy',
+    DBP_CODEBOX_COPY: 'dbp-codebox-copy',
+    WIZARD_CODEBOX_REST_API: 'wizard-codebox-rest-api',
+    DBP_CODEBOX_REST_API: 'dbp-codebox-rest-api',
+    WIZARD_CODEBOX_AWS_CLI: 'wizard-codebox-aws-cli',
+    DBP_CODEBOX_AWS_CLI: 'dbp-codebox-aws-cli',
+    WIZARD_CODEBOX_CF: 'wizard-codebox-cf',
+    DBP_CODEBOX_CF: 'dbp-codebox-cf'
+};

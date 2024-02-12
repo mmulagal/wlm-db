@@ -1,3 +1,4 @@
+type DeployMsSqlType = 'DeployMsSql';
 // User Intent from the query/request
 type Intent = {
     intent: FunctionToRun | Query;
@@ -15,13 +16,13 @@ type DeployMsSqlParams = {
     deploymentEnvironment?: string;
     credentialsId?: string;
     sqlDeploymentMode?: string;
-    region?: string; // region name or code as provided by the user
-    vpcId?: string; // VPC id for the instance
-    vpcCidr?: string; // VPC CIDR block
-    availabilityZone1?: string; // Availability Zone 1
-    privateSubnet1Id?: string; // Private Subnet 1 Id
-    availabilityZone2?: string; // Availability Zone 2
-    privateSubnet2Id?: string; // Private Subnet 2 Id
+    region?: string;
+    vpcId?: string;
+    vpcCidr?: string;
+    availabilityZone1?: string;
+    privateSubnet1Id?: string;
+    availabilityZone2?: string;
+    privateSubnet2Id?: string;
     routeTable1Id?: string;
     routeTable2Id?: string;
     fsxType?: string;
@@ -52,7 +53,7 @@ type DeployMsSqlParams = {
 
 // Deploy MS SQL
 type DeployMsSql = {
-    type: 'DeployMsSql';
+    type: DeployMsSqlType;
     params: DeployMsSqlParams;
 };
 

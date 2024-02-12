@@ -25,48 +25,9 @@ import {
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
-import { ResourceDetails } from '../../utils/common-types';
+import { ResourceDetails, SecurityGroup, Subnet, VPC, NetworkInterface } from '../../utils/common-types';
 
 const logger = getLogger();
-
-interface VPC {
-    id?: string;
-    state?: string;
-    cidrBlock?: any;
-    tags?: Array<{ Key?: string; Value?: string }>;
-    isDefault?: boolean;
-    subnets?: Array<Subnet>;
-    securityGroups?: Array<SecurityGroup>;
-    name?: string;
-}
-interface Subnet {
-    id?: string;
-    name?: string;
-    state?: string;
-    vpcId?: string;
-    tags?: Array<{ Key?: string; Value?: string }>;
-    cidrBlock?: string;
-    availabilityZone?: string;
-    availableIps?: number;
-    routeTableId?: string;
-}
-interface SecurityGroup {
-    id?: string;
-    description?: string;
-    vpcId?: string;
-    ipPermissions?: any;
-    name?: string;
-    securityGroupName?: string;
-}
-
-interface NetworkInterface {
-    id?: string;
-    description?: string;
-    vpcId?: string;
-    subnetId?: string;
-    securityGroups?: Array<string>;
-    availabilityZone?: string;
-}
 
 type KeyPairType = Static<typeof KeyPairsSchema>;
 
@@ -164,54 +125,56 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
     const { Subnets: subnets } = await describeSubnets(credentialsId, region, params);
     const subnetsList: Array<Subnet> = [];
     if (subnets?.length) {
-        for (const subnet of subnets) {
-            const {
-                SubnetId: id,
-                State: state,
-                VpcId: vpcId,
-                Tags: tags,
-                CidrBlock: cidrBlock,
-                AvailabilityZone: availabilityZone,
-                AvailableIpAddressCount: availableIps
-            } = subnet;
+        await Promise.all(
+            subnets.map(async subnet => {
+                const {
+                    SubnetId: id,
+                    State: state,
+                    VpcId: vpcId,
+                    Tags: tags,
+                    CidrBlock: cidrBlock,
+                    AvailabilityZone: availabilityZone,
+                    AvailableIpAddressCount: availableIps
+                } = subnet;
 
-            const options = {
-                Filters: [{ Name: 'vpc-id', Values: [vpcId as string] }]
-            };
+                const options = {
+                    Filters: [{ Name: 'vpc-id', Values: [vpcId as string] }]
+                };
 
-            const { RouteTables } = await describeRouteTable(credentialsId, region, options);
+                const { RouteTables } = await describeRouteTable(credentialsId, region, options);
 
-            let mainTable;
-            let subnetTable;
-            // This logic is added to know the route table id whether the subnet association is done either Explicit subnet associations or Subnets without explicit associations in aws console.
-            RouteTables?.forEach(routeTable => {
-                routeTable.Associations?.forEach(association => {
-                    if (association.Main) {
-                        mainTable = association.RouteTableId;
-                    }
+                let mainTable;
+                let subnetTable;
+                // This logic is added to know the route table id whether the subnet association is done either Explicit subnet associations or Subnets without explicit associations in aws console.
+                RouteTables?.forEach(routeTable => {
+                    routeTable.Associations?.forEach(association => {
+                        if (association.Main) {
+                            mainTable = association.RouteTableId;
+                        }
 
-                    if (association.SubnetId === id) {
-                        subnetTable = association.RouteTableId;
-                    }
+                        if (association.SubnetId === id) {
+                            subnetTable = association.RouteTableId;
+                        }
+                    });
                 });
-            });
 
-            const routeTableId = subnetTable || mainTable;
+                const routeTableId = subnetTable || mainTable;
 
-            const resourceName = findResourceNameFromTags(tags);
+                const resourceName = findResourceNameFromTags(tags);
 
-            subnetsList.push({
-                id,
-                state,
-                vpcId,
-                tags,
-                cidrBlock,
-                availabilityZone,
-                availableIps,
-                routeTableId,
-                ...(resourceName && { name: resourceName })
-            });
-        }
+                subnetsList.push({
+                    id,
+                    state,
+                    vpcId,
+                    tags,
+                    cidrBlock,
+                    availabilityZone,
+                    availableIps,
+                    routeTableId,
+                    ...(resourceName && { name: resourceName })
+                });
+            })
+        );
     }
     return subnetsList;
 }
@@ -494,6 +457,20 @@ async function getVpcEndpoints(credentialsId: string, region: string, vpcId: str
     return response;
 }
 
+async function getVpcSecurityGroups(credentialsId: string, region: string, vpcId: string) {
+    logger.info('Get vpc security groups', { credentialsId, region, vpcId });
+    const sgParams: DescribeSecurityGroupsRequest = {
+        Filters: [
+            {
+                Name: 'vpc-id',
+                Values: [vpcId as string]
+            }
+        ]
+    };
+    const securityGroups = await getSecurityGroupsList(credentialsId, region, sgParams);
+    return { securityGroups };
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -504,5 +481,6 @@ export {
     getNetworkInterfacesList,
     tagEc2Resource,
     getCostAllocationTagEC2Resource,
-    getVpcEndpoints
+    getVpcEndpoints,
+    getVpcSecurityGroups
 };

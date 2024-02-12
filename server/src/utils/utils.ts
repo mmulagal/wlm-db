@@ -19,7 +19,9 @@ import {
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
-    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE
+    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
+    subJobDescriptions,
+    SqlServerDeploymentModel
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -34,6 +36,9 @@ import {
 } from './job-monitoring-mockdata';
 
 const logger = getLogger();
+
+const subJobRegex = /-([^-\s]+)-[^-\s]+$/;
+const subJobNames = ['SQLStandaloneStack', 'SQLServerStack', 'NewFSxStack', 'ExistingFSxStack'];
 
 function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: string) {
     logger.debug({ osVersion, dbEdition, dbVersion });
@@ -304,9 +309,7 @@ async function createJobMockData(
     resourceName: string,
     stackName: string,
     sqlDeploymentMode: string,
-    fsxFileSystemId: string | undefined,
-    cloudProviderId: string,
-    region: string
+    fsxFileSystemId: string | undefined
 ) {
     logger.info('Generate mock data for job table', accountId, resourceName, stackName);
     accountId = checkAccount(accountId);
@@ -322,51 +325,23 @@ async function createJobMockData(
 
     data.push(
         ...masterStackData(accountId, resourceName, stackName, masterStackId),
-        ...fsxStackData(
-            accountId,
-            resourceName,
-            stackName,
-            fsxStackId,
-            masterStackId,
-            cloudProviderId,
-            fsxType,
-            region
-        ),
+        ...fsxStackData(accountId, resourceName, stackName, fsxStackId, masterStackId, fsxType),
         ...validationStack1Data(
             accountId,
             resourceName,
             stackName,
             validationStack1Id,
             masterStackId,
-            cloudProviderId,
-            region
+            sqlDeploymentMode
         )
     );
     if (sqlDeploymentMode.toLowerCase() === 'fci') {
         data.push(
-            ...sqlFciServerStackData(accountId, resourceName, stackName, serverStackId, masterStackId),
-            ...validationStack2Data(
-                accountId,
-                resourceName,
-                stackName,
-                validationStack2Id,
-                masterStackId,
-                cloudProviderId,
-                region
-            )
+            ...sqlFciServerStackData(accountId, resourceName, serverStackId, masterStackId),
+            ...validationStack2Data(accountId, resourceName, stackName, validationStack2Id, masterStackId)
         );
     } else {
-        data.push(
-            ...sqlStandaloneStackData(
-                accountId,
-                resourceName,
-                stackName,
-                serverStackId,
-                masterStackId,
-                cloudProviderId,
-                region
-            )
-        );
+        data.push(...sqlStandaloneStackData(accountId, resourceName, stackName, serverStackId, masterStackId));
     }
     return data;
 }
@@ -387,6 +362,35 @@ function calculateSQLandWindowsVersion(sqlAmiName: string) {
     const sqlVersionType = sqlVersionMatch ? sqlVersionMatch[2] : '';
 
     return [windowsVersion, sqlVersion, sqlVersionType];
+}
+
+// Return job decription for corresponding Job name
+function getDescriptionForMatchingName(jobName: string, stackSqlDeploymentType: string) {
+    logger.info('Return job decription for job name:', jobName);
+    // ValidationStack1 is the only common stack between FCI and Standalone Deployment that has different description.
+    // Diffrentiating between the deployment type to provide appropriate description.
+    if (jobName.includes('ValidationStack1')) {
+        const match = jobName.match(subJobRegex);
+        jobName = match ? match[1] : '';
+        jobName =
+            stackSqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT
+                ? jobName.concat('-fci')
+                : jobName.concat('-standalone');
+        return subJobDescriptions[jobName];
+    }
+    if (subJobNames.some(subJobName => jobName.indexOf(subJobName) !== -1)) {
+        const match = jobName.match(subJobRegex);
+        jobName = match ? match[1] : '';
+        return subJobDescriptions[jobName];
+    }
+
+    let jobDescription = '';
+    Object.keys(subJobDescriptions).forEach(key => {
+        if (jobName.includes(key)) {
+            jobDescription = subJobDescriptions[key];
+        }
+    });
+    return jobDescription;
 }
 
 export {
@@ -411,5 +415,6 @@ export {
     isActiveInstance,
     checkAccount,
     createJobMockData,
-    calculateSQLandWindowsVersion
+    calculateSQLandWindowsVersion,
+    getDescriptionForMatchingName
 };

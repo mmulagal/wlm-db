@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash-es';
 import {
     validateDbSize,
     validateDomain,
@@ -57,13 +58,17 @@ import {
     MULTI_AZ,
     TAGS,
     DEPLOYMENT_ENVIRONMENT,
-    ENCRYPTION_KEY
+    ENCRYPTION_KEY,
+    KEY_LABEL_MAP,
+    CHATBOT_UI_PARAMS_FSX,
+    BACKTRACE_MESSAGES
 } from './consts';
 
 const logger = getLogger();
 
 type ValidationResponse = {
     key?: string;
+    label?: string;
     status?: string;
     message?: string;
     allowedValues?: any;
@@ -101,13 +106,15 @@ interface Params {
 async function validateParams(
     params: Params,
     oldParams: Params,
-    schemaParams: any
-): Promise<{ errors: Array<ValidationResponse>; params: Params }> {
+    schemaParams: any,
+    backtraceMessage: string = ''
+): Promise<{ error: ValidationResponse; params: Params }> {
     // let errors: { [x: string]: any } = {};
     logger.info('Validate Params', { params, oldParams });
     const validatedParams: Params = {};
     // const promises = [];
-    const errors: Array<ValidationResponse> = [];
+    let error: ValidationResponse = {};
+
     for (const reqParam of schemaParams) {
         // if (reqParam.required !== false) {
         const keys = Object.keys(reqParam);
@@ -121,8 +128,9 @@ async function validateParams(
                     delete params[currKey];
                     delete oldParams[currKey];
                     delete validatedParams[currKey];
-                    errors.push(resp as ValidationResponse);
-                    return { errors, params: validatedParams };
+                    error = resp as ValidationResponse;
+                    error.label = KEY_LABEL_MAP[currKey as keyof typeof KEY_LABEL_MAP];
+                    break;
                 }
 
                 if (resp?.value !== null && resp?.value !== undefined) {
@@ -133,8 +141,35 @@ async function validateParams(
                 }
             }
         }
+
+        if (!isEmpty(error)) {
+            break;
+        }
     }
-    return { errors, params: validatedParams };
+
+    if (error.allowedValues?.length === 0 && !backtraceMessage) {
+        const { key } = error;
+        for (const obj of CHATBOT_UI_PARAMS_FSX) {
+            if (obj.hasOwnProperty(key as string)) {
+                const { dependsOn } = obj[key as keyof typeof obj] as any;
+                if (dependsOn) {
+                    delete params[dependsOn];
+                    return validateParams(
+                        params,
+                        oldParams,
+                        schemaParams,
+                        BACKTRACE_MESSAGES[key as keyof typeof BACKTRACE_MESSAGES] || ''
+                    );
+                }
+            }
+        }
+    }
+
+    if (backtraceMessage) {
+        error.message = backtraceMessage;
+    }
+
+    return { error, params: validatedParams };
 }
 
 function wrapContext(question: string) {
@@ -180,6 +215,7 @@ async function validate(key: string, params: Params, oldParams: Params) {
             case ROUTE_TABLE_2: {
                 response = await validateVpcId(
                     params[CREDENTIALS_ID],
+                    params[SQL_DEPLOYMENT_MODE],
                     params[REGION],
                     params[VPC_ID],
                     params[AZ_1],

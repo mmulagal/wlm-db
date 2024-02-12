@@ -73,29 +73,6 @@
           "name": "HCL-CC-2",
           "routeTableId": "rtb-0252de162c006de12"
         }
-      ],
-      "securityGroups": [
-        {
-          "id": "sg-ad2b38d1",
-          "description": "default VPC security group",
-          "vpcId": "vpc-62720a04",
-          "ipPermissions": [
-            {
-              "FromPort": 22,
-              "IpProtocol": "tcp",
-              "IpRanges": [
-                {
-                  "CidrIp": "0.0.0.0/0"
-                }
-              ],
-              "Ipv6Ranges": [],
-              "PrefixListIds": [],
-              "ToPort": 22,
-              "UserIdGroupPairs": []
-            }
-          ],
-          "name": "-"
-        }
       ]
     },
     {
@@ -170,29 +147,6 @@
           ],
           "name": "HCL-CC-2",
           "routeTableId": "rtb-0252de162c006de11"
-        }
-      ],
-      "securityGroups": [
-        {
-          "id": "sg-ad2b38d1",
-          "description": "default VPC security group",
-          "vpcId": "vpc-62720a04",
-          "ipPermissions": [
-            {
-              "FromPort": 22,
-              "IpProtocol": "tcp",
-              "IpRanges": [
-                {
-                  "CidrIp": "0.0.0.0/0"
-                }
-              ],
-              "Ipv6Ranges": [],
-              "PrefixListIds": [],
-              "ToPort": 22,
-              "UserIdGroupPairs": []
-            }
-          ],
-          "name": "-"
         }
       ]
     },
@@ -269,29 +223,6 @@
           "name": "HCL-CC-2",
           "routeTableId": "rtb-0252de162c006de11"
         }
-      ],
-      "securityGroups": [
-        {
-          "id": "sg-ad2b38d1",
-          "description": "default VPC security group",
-          "vpcId": "vpc-62720a04",
-          "ipPermissions": [
-            {
-              "FromPort": 22,
-              "IpProtocol": "tcp",
-              "IpRanges": [
-                {
-                  "CidrIp": "0.0.0.0/0"
-                }
-              ],
-              "Ipv6Ranges": [],
-              "PrefixListIds": [],
-              "ToPort": 22,
-              "UserIdGroupPairs": []
-            }
-          ],
-          "name": "-"
-        }
       ]
     },
     {
@@ -366,29 +297,6 @@
           ],
           "name": "HCL-CC-2",
           "routeTableId": "rtb-0252de162c006de11"
-        }
-      ],
-      "securityGroups": [
-        {
-          "id": "sg-ad2b38d1",
-          "description": "default VPC security group",
-          "vpcId": "vpc-62720a04",
-          "ipPermissions": [
-            {
-              "FromPort": 22,
-              "IpProtocol": "tcp",
-              "IpRanges": [
-                {
-                  "CidrIp": "0.0.0.0/0"
-                }
-              ],
-              "Ipv6Ranges": [],
-              "PrefixListIds": [],
-              "ToPort": 22,
-              "UserIdGroupPairs": []
-            }
-          ],
-          "name": "-"
         }
       ]
     }

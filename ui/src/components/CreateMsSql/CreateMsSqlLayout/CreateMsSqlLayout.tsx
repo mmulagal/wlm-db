@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import styles from './CreateMsSqlLayout.module.scss';
 import DeploymentTabs from './DeploymentTabs/DeploymentTabs';
 import MSSqlServer from '../MSSqlServer/MSSqlServer';
 import Chatbot from '../Chatbot/Chatbot';
-import { setIsShow } from '../../../store/chatbot/chatbotSlice';
+import { setIsShow, setMovingFromChatbot } from '../../../store/chatbot/chatbotSlice';
 import { useDispatch } from 'react-redux';
+import { setSelectConfig } from '../../../store/mssql/mssqlFormSlice';
+import { SELECT_CONFIG } from '../../../utils/appConstants';
 
 type CreateMsSqlLayoutProps = {
     selectedTab: 'chatbot' | 'wizard';
@@ -22,7 +24,13 @@ const CreateMsSqlLayout = ({ selectedTab, setSelectedTab }: CreateMsSqlLayoutPro
         <div className={styles['create-mssql-layout']}>
             <DeploymentTabs
                 selectedTab={selectedTab}
-                onTabChange={(tab: 'wizard' | 'chatbot') => setSelectedTab(tab)}
+                onTabChange={(tab: 'wizard' | 'chatbot') => {
+                    if (tab === 'wizard' && selectedTab === 'chatbot') {
+                        dispatch(setMovingFromChatbot(true));
+                        dispatch(setSelectConfig(SELECT_CONFIG.EASY_CREATE));
+                    }
+                    setSelectedTab(tab);
+                }}
             />
             {selectedTab === 'wizard' ? <MSSqlServer /> : <Chatbot />}
         </div>

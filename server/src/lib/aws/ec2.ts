@@ -1,4 +1,3 @@
-import createError from 'http-errors';
 import config from 'config';
 import {
     EC2Client,
@@ -25,21 +24,18 @@ import {
     DescribeNetworkInterfacesCommand,
     DescribeInstancesCommand,
     DescribeInstancesCommandInput,
-    DescribeInstanceTypeOfferingsCommand,
     CreateTagsCommand,
     CreateTagsCommandOutput,
     Tag,
     DescribeInstancesCommandOutput,
     DescribeTagsCommandInput,
     DescribeTagsCommand,
-    DescribeInstanceTypeOfferingsCommandInput,
-    LocationType,
     DescribeVpcEndpointsCommandInput,
     DescribeVpcEndpointsCommand
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
-import { DEFAULT_AWS_REGION, HttpErrorCodes } from '../../utils/consts';
+import { DEFAULT_AWS_REGION } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -220,42 +216,6 @@ async function describeNetworkInterfaces(
     return response;
 }
 
-async function describeInstanceTypeOfferings(credentialsId: string, region: string, instanceType: string) {
-    logger.info('Describe EC2 instance offerings:', { region, instanceType });
-
-    const input: DescribeInstanceTypeOfferingsCommandInput = {
-        DryRun: false,
-        LocationType: LocationType.region,
-        Filters: [
-            {
-                Name: 'location',
-                Values: [region]
-            },
-            {
-                Name: 'instance-type',
-                Values: [instanceType]
-            }
-        ]
-    };
-
-    const client = await getEC2Client(region, credentialsId);
-    const command = new DescribeInstanceTypeOfferingsCommand(input);
-    const response = await client.send(command);
-    logger.info('EC2 instance type offerings response:', response);
-
-    if (
-        response.InstanceTypeOfferings?.length !== 1 ||
-        response.InstanceTypeOfferings?.[0].InstanceType !== instanceType
-    ) {
-        logger.error('EC2 instance type offerings failure response:', response?.InstanceTypeOfferings);
-        throw createError(
-            HttpErrorCodes.BAD_REQUEST,
-            `Instance type '${instanceType}' is not available in region '${region}'.`
-        );
-    }
-    return response;
-}
-
 async function createTag(credentialsId: string, region: string, accountId: string, resourceId: string[], tags: Tag[]) {
     logger.info('Adding tags to resource', credentialsId, region, accountId, resourceId, tags);
     try {
@@ -311,7 +271,6 @@ export {
     describeRouteTable,
     describeKeyPairs,
     describeNetworkInterfaces,
-    describeInstanceTypeOfferings,
     createTag,
     describeTags,
     describeEndpoints

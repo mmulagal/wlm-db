@@ -18,6 +18,7 @@ import '../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../simulator/scopes/aws/service-quota-scope';
 import '../simulator/scopes/opentelemetry-scope';
 import '../simulator/scopes/jwt-scope';
+import '../simulator/scopes/cloud-manager/wlmdb-scope';
 import {
     DEFAULT_AWS_REGION,
     SQL_CONFIGURATION,

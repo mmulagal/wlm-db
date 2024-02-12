@@ -7,7 +7,7 @@ import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, JOBSTATUS, JOBTYPE, job } from '@p
 import { inspect } from 'util';
 import { JSONObject } from '@fastify/swagger';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
-import { deleteMessage, getQueueAttribute, receiveMessage } from '../../lib/aws/sqs';
+import { deleteMessage, receiveMessage } from '../../lib/aws/sqs';
 import {
     CF_CUSTOM_RESOURCE_CODES,
     CF_NOTIFICATION,
@@ -23,7 +23,13 @@ import {
     WLMDB_COST_ALLOCATION_TAG,
     CF_STACK_RESOURCE_TYPE
 } from '../../utils/consts';
-import { checkAndRetrieveJsonObject, deployedStackUrl, derivePropertiesFromARN, getQueueUrl } from '../../utils/utils';
+import {
+    checkAndRetrieveJsonObject,
+    deployedStackUrl,
+    derivePropertiesFromARN,
+    getDescriptionForMatchingName,
+    getQueueUrl
+} from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
 import {
@@ -48,6 +54,9 @@ import { createJobs, listJobs } from '../../lib/database/job';
 import { updateJobDetails } from '../database/job-operations';
 
 const logger = getLogger();
+
+const MASTER_STACK_NAME_PATTERN =
+    /(.*)-(?=TrackStackDeployment|ValidationStack1|ValidationStack2|NewFSxStack|ExistingFSxStack|SQLServerStack|SQLStandaloneStack|PostStackDeployment.*)/;
 
 async function getSqsMessages(region: string, queueUrl: string) {
     logger.info('Get SQS messages', { region, queueUrl });
@@ -80,29 +89,32 @@ async function getSqsMessages(region: string, queueUrl: string) {
 }
 
 async function getMatchingMasterStackDeployment(stackName: string) {
-    const MASTER_STACK_NAME_PATTERN = /WLMDB-(.+[a-zA-Z])-(\d{13})/;
     const matchingMasterStack = stackName.match(MASTER_STACK_NAME_PATTERN);
     if (matchingMasterStack) {
-        const [masterStackName] = matchingMasterStack;
+        const [, masterStackName] = matchingMasterStack;
         const [masterStackDeployment] = await getDeployments(undefined, undefined, masterStackName);
         return masterStackDeployment;
     }
+    const [masterStackDeployment] = await getDeployments(undefined, undefined, stackName);
+    if (masterStackDeployment) {
+        return masterStackDeployment;
+    }
+    logger.info('No matching master stack found for stack ', stackName);
 }
 
 async function getMatchingMasterJob(accountId: string, stackName: string) {
-    let [masterJob] = await listJobs(accountId, undefined, 'start_time', 'desc', (stackName += ';href:'));
+    let [masterJob] = await listJobs(accountId, undefined, 'start_time', 'desc', `${stackName};href:`);
     if (masterJob) {
         return masterJob;
     }
-    const MASTER_JOB_NAME_PATTERN =
-        /(.*)-([TrackStackDeployment|ValidationStack1|ValidationStack2|NewFSxStack|ExistingFSxStack|SQLServerStack|SQLStandaloneStack|PostStackDeployment].*)/;
-    const matchingMasterJob = stackName.match(MASTER_JOB_NAME_PATTERN);
+    const matchingMasterJob = stackName.match(MASTER_STACK_NAME_PATTERN);
     if (matchingMasterJob) {
         let [, masterJobName] = matchingMasterJob;
         masterJobName += ';href:';
         [masterJob] = await listJobs(accountId, undefined, 'start_time', 'desc', masterJobName);
         return masterJob;
     }
+    logger.info('No matching master job found for stack ', stackName);
 }
 async function handleResourceAssociation(
     accountId: string,
@@ -122,7 +134,7 @@ async function handleResourceAssociation(
     });
 
     try {
-        const { source } = await lookupCredentials(credentialsId);
+        const { source } = await lookupCredentials(credentialsId, accountId);
         if (source === WF) {
             const resourcesToAssociate = [
                 {
@@ -201,7 +213,7 @@ async function modifyMasterJobStatus(
         }
     }
 
-    logger.info('Update job to status failed:', masterJob?.id, masterJobName);
+    logger.info('Update job to status :', masterJob?.id, masterJobName, jobStatus);
     const response = await updateJobDetails(accountId, masterJob.id, {
         status: jobStatus,
         endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined,
@@ -217,10 +229,11 @@ async function createOrUpdateChildJobs(
     jobStatus: JOBSTATUS,
     timestamp: number,
     resourceStatusReason: string,
-    physicalResourceId: string,
     logicalResourceId: string,
     checkEventsOrder: boolean = false,
-    stackName?: string
+    stackSqlDeploymentType: string,
+    stackName?: string,
+    resourceStatus?: string
 ) {
     // DBS-1775 Parent job is failed but tasks and subjobs shows in progress
     /** Messages in the queue are unordered. For resources that are created within milliseconds, messages
@@ -256,7 +269,7 @@ async function createOrUpdateChildJobs(
                 resource_name: parentJob.resource_name,
                 name: childJobName,
                 parent_job_id: parentJob.id,
-                description: physicalResourceId ? `Creating resource ${physicalResourceId}` : '',
+                description: getDescriptionForMatchingName(childJobName, stackSqlDeploymentType!),
                 start_time: new Date(timestamp)
             }
         ]);
@@ -264,29 +277,33 @@ async function createOrUpdateChildJobs(
         (childJob && parentJob.name !== `Deploying ${logicalResourceId}`) ||
         (childJob && childJobName === childJob.name)
     ) {
-        try {
-            logger.info('Update child job:', {
-                parentJobId: parentJob.id,
-                parentJobName: parentJob.name,
-                childJobId: childJob.id,
-                childJobName: childJob.name,
-                jobStatus
-            });
-            const response = await updateJobDetails(accountId, childJob.id, {
-                status: jobStatus,
-                error: jobStatus === JOBSTATUS.FAILED ? resourceStatusReason : undefined,
-                endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined
-            });
-            logger.debug('Update child job response:', response);
-        } catch (error) {
-            logger.error('Error while updating child job with status:', {
-                parentJobId: parentJob.id,
-                parentJobName: parentJob.name,
-                childJobId: childJob.id,
-                childJobName,
-                jobStatus,
-                error
-            });
+        // https://jira.ngage.netapp.com/browse/DBS-1942
+        // If nested job is marked failed and stack is rolled back or deleted, dont change the state
+        if (!resourceStatus?.includes('DELETE') && childJob.status !== JOBSTATUS.FAILED) {
+            try {
+                logger.info('Update child job:', {
+                    parentJobId: parentJob.id,
+                    parentJobName: parentJob.name,
+                    childJobId: childJob.id,
+                    childJobName: childJob.name,
+                    jobStatus
+                });
+                const response = await updateJobDetails(accountId, childJob.id, {
+                    status: jobStatus,
+                    error: jobStatus === JOBSTATUS.FAILED ? resourceStatusReason : undefined,
+                    endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined
+                });
+                logger.debug('Update child job response:', response);
+            } catch (error) {
+                logger.error('Error while updating child job with status:', {
+                    parentJobId: parentJob.id,
+                    parentJobName: parentJob.name,
+                    childJobId: childJob.id,
+                    childJobName,
+                    jobStatus,
+                    error
+                });
+            }
         }
     }
 }
@@ -298,18 +315,9 @@ async function processCloudFormationMessages() {
         const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
 
         try {
-            const queueAttributes = await getQueueAttribute(DEFAULT_AWS_REGION, {
-                QueueUrl: queueUrl,
-                AttributeNames: ['All']
-            });
-            logger.info(`Queue attributes: ${JSON.stringify(queueAttributes)}`);
-        } catch (e) {
-            logger.error(`Queue attributes error: ${e}`);
-        }
-        try {
             const sqsMessages = await getSqsMessages(DEFAULT_AWS_REGION, queueUrl);
-            logger.info(`>>>SQS MESSAGES @ ${Date.now()}`, { sqsMessages }); // TODO : REMOVE ME, i print a lot of logs
             if (!isEmpty(sqsMessages)) {
+                logger.info(`>>>SQS MESSAGES @ ${Date.now()}`, { sqsMessages }); // TODO : REMOVE ME, i print a lot of logs
                 await Promise.all(
                     sqsMessages.map(async sqsMessage => {
                         const {
@@ -341,7 +349,7 @@ async function processCloudFormationMessages() {
                                         DatabaseType: trackdatabaseType,
                                         ResourceName: trackresourceName,
                                         FileSystemType: trackfileSystemType,
-                                        MetadataParam: trackMetadataParam
+                                        Metrics: trackMetrics
                                     } = resourceProperties;
 
                                     logger.debug('>>JWT TOKEN', jwtToken);
@@ -377,7 +385,7 @@ async function processCloudFormationMessages() {
                                                         databaseType: trackdatabaseType,
                                                         resourceName: trackresourceName,
                                                         fileSystemType: trackfileSystemType,
-                                                        metadataParam: trackMetadataParam
+                                                        Metrics: trackMetrics
                                                     }
                                                 });
 
@@ -476,26 +484,34 @@ async function processCloudFormationMessages() {
                                                             credentials_id: deploymentCredentialId,
                                                             region: deploymentRegion
                                                         } = masterStackDeployment;
-                                                        const decryptedPassword = await decryptString(
-                                                            encryptedFsxPassword
-                                                        );
-                                                        if (decryptedPassword) {
-                                                            await registerFsxOntapCredentials(
-                                                                accountId,
-                                                                deploymentCredentialId,
-                                                                deploymentRegion,
-                                                                fsxId,
-                                                                decryptedPassword
+                                                        try {
+                                                            const decryptedPassword = await decryptString(
+                                                                encryptedFsxPassword
                                                             );
-                                                        } else {
+
+                                                            if (decryptedPassword) {
+                                                                await registerFsxOntapCredentials(
+                                                                    accountId,
+                                                                    deploymentCredentialId,
+                                                                    deploymentRegion,
+                                                                    fsxId,
+                                                                    decryptedPassword
+                                                                );
+                                                            } else {
+                                                                logger.error(
+                                                                    'Failed to register FSx for ONTAP credentials with FSX core module. Could not decrypt the credentials from custom resource notification',
+                                                                    { encryptedFsxPassword, decryptedPassword }
+                                                                );
+                                                            }
+                                                        } catch (error) {
                                                             logger.error(
-                                                                'Failed to register FSX Ontap credentials with FSX core module. Could not decrypt the credentials from custom resource notification',
-                                                                { encryptedFsxPassword, decryptedPassword }
+                                                                'Failed to register FSx for ONTAP credentials with FSX core module. Could not decrypt the credentials from custom resource notification',
+                                                                { encryptedFsxPassword }
                                                             );
                                                         }
                                                     } else {
                                                         logger.error(
-                                                            'Failed to register FSX Ontap credentials with FSX core module as no credentials found in Cloud Formation custom resource notification'
+                                                            'Failed to register FSx for ONTAP credentials with FSX core module as no credentials found in Cloud Formation custom resource notification'
                                                         );
                                                     }
 
@@ -579,19 +595,46 @@ async function processCloudFormationMessages() {
                                                 masterStackDeployment.deployment_status !==
                                                     DEPLOYMENT_STATUS.CREATE_FAILED
                                             ) {
-                                                await updateDeployment(accountId, masterStackDeployment.id, {
-                                                    deploymentStatus: DEPLOYMENT_STATUS.CREATE_FAILED,
-                                                    endTime: Date.now()
-                                                });
+                                                // If parent stack is not already marked CREATE_FAILED, it could be that
+                                                // user has initiated stack deletion
 
-                                                // Update master job with failed status
-                                                await modifyMasterJobStatus(
-                                                    accountId,
-                                                    trackdatabaseType,
-                                                    stackName,
-                                                    JOBSTATUS.FAILED,
-                                                    messageTimestamp
-                                                );
+                                                // DBS-1929 : Job monitoring says "COMPLETE", eventough the STACK is failed and rolledback
+                                                let masterJobStatus: JOBSTATUS =
+                                                    logicalResourceId === TRACK_STATUS_CUSTOM_RESOURCE
+                                                        ? JOBSTATUS.COMPLETED
+                                                        : JOBSTATUS.IN_PROGRESS;
+                                                const masterJobName = `${trackdatabaseType} deployment with stack ${stackName}`;
+                                                const masterJob = await getMatchingMasterJob(accountId, masterJobName);
+                                                if (masterJob && masterJob.status !== JOBSTATUS.FAILED) {
+                                                    const subJobs = await listJobs(
+                                                        accountId,
+                                                        masterJob.id,
+                                                        undefined,
+                                                        undefined
+                                                    );
+                                                    if (isEmpty(subJobs)) {
+                                                        masterJobStatus = JOBSTATUS.FAILED;
+                                                    }
+                                                    // Update master job with failed status
+                                                    await modifyMasterJobStatus(
+                                                        accountId,
+                                                        trackdatabaseType,
+                                                        stackName,
+                                                        masterJobStatus,
+                                                        messageTimestamp
+                                                    );
+                                                }
+
+                                                if (logicalResourceId === TRACK_STATUS_CUSTOM_RESOURCE) {
+                                                    await updateDeployment(accountId, masterStackDeployment.id, {
+                                                        deploymentStatus: DEPLOYMENT_STATUS.DELETE_COMPLETE,
+                                                        endTime: Date.now()
+                                                    });
+                                                } else {
+                                                    await updateDeployment(accountId, masterStackDeployment.id, {
+                                                        deploymentStatus: DEPLOYMENT_STATUS.DELETE_IN_PROGRESS
+                                                    });
+                                                }
 
                                                 // commented for now until we fix the queue issue of getting triggered multiple times for the same stack status
                                                 // const notificationData = {
@@ -667,7 +710,6 @@ async function processCloudFormationMessages() {
                             const {
                                 StackId: stackId,
                                 StackName: stackName,
-                                PhysicalResourceId: physicalResourceId,
                                 LogicalResourceId: logicalResourceId,
                                 ResourceType: resourceType,
                                 Timestamp: timestamp,
@@ -705,8 +747,12 @@ async function processCloudFormationMessages() {
                                     const masterJob = await getMatchingMasterJob(accountId, masterJobName);
                                     if (!masterJob) {
                                         logger.error('No entry found in database for job with name', masterJobName);
-                                    } else if (resourceType === CF_STACK_RESOURCE_TYPE) {
+                                    } else if (
+                                        resourceType === CF_STACK_RESOURCE_TYPE ||
+                                        resourceStatus === DEPLOYMENT_STATUS.CREATE_FAILED
+                                    ) {
                                         // For level 3 (resource) messages, level 2 (nested stack) jobs should not be updated
+                                        // If level 3 is CREATE_FAILED, then mark level 2 as FAILED
                                         const level2JobName = `Deploying ${stackName}`;
                                         await createOrUpdateChildJobs(
                                             accountId,
@@ -715,8 +761,10 @@ async function processCloudFormationMessages() {
                                             jobStatus,
                                             messageTimestamp,
                                             resourceStatusReason,
-                                            physicalResourceId,
-                                            logicalResourceId
+                                            logicalResourceId,
+                                            false,
+                                            stackSqlDeploymentType!,
+                                            resourceStatus
                                         );
                                     }
                                     /**
@@ -780,13 +828,24 @@ async function processCloudFormationMessages() {
                                             );
                                         }
 
-                                        // Update master job for retry scenarios
-                                        if (masterJob) {
+                                        // https://jira.ngage.netapp.com/browse/DBS-1942
+                                        // If master job is marked failed and stack is rolled back or deleted, dont change the state
+                                        if (
+                                            masterJob &&
+                                            !resourceStatus?.includes('DELETE') &&
+                                            masterJob.status !== JOBSTATUS.FAILED
+                                        ) {
+                                            const subJobs =
+                                                (await listJobs(accountId, masterJob.id, undefined, undefined)) || [];
+                                            const subJobStatus = subJobs.map(subJob => subJob.status);
+                                            const masterJobStatus = subJobStatus.includes(JOBSTATUS.IN_PROGRESS)
+                                                ? JOBSTATUS.IN_PROGRESS
+                                                : jobStatus;
                                             await modifyMasterJobStatus(
                                                 accountId,
                                                 String(databaseType),
                                                 stackName,
-                                                jobStatus,
+                                                masterJobStatus,
                                                 messageTimestamp,
                                                 masterJob,
                                                 resourceStatusReason
@@ -809,8 +868,13 @@ async function processCloudFormationMessages() {
                                             );
                                         }
 
-                                        // Update master job for retry scenarios
-                                        if (masterJob) {
+                                        // https://jira.ngage.netapp.com/browse/DBS-1942
+                                        // If master job is marked failed and stack is rolled back or deleted, dont change the state
+                                        if (
+                                            masterJob &&
+                                            !resourceStatus?.includes('DELETE') &&
+                                            masterJob.status !== JOBSTATUS.FAILED
+                                        ) {
                                             await modifyMasterJobStatus(
                                                 accountId,
                                                 String(databaseType),
@@ -859,10 +923,11 @@ async function processCloudFormationMessages() {
                                             jobStatus,
                                             messageTimestamp,
                                             resourceStatusReason,
-                                            physicalResourceId,
                                             logicalResourceId,
                                             true,
-                                            stackName
+                                            stackSqlDeploymentType!,
+                                            stackName,
+                                            resourceStatus
                                         );
                                     }
                                 }

@@ -10,9 +10,16 @@ import {
     GetFSxRegionsSchema,
     GetInstanceTypesSchema,
     GetKeyPairsSchema,
-    GetFSxFileSystemsSchema
+    GetFSxFileSystemsSchema,
+    GetVpcSecurityGroupsSchema
 } from './schemas/aws-schemas';
-import { getAmiList, getVpcsList, getKeyPairsList, getInstanceTypes } from '../operations/aws/ec2-operations';
+import {
+    getAmiList,
+    getVpcsList,
+    getKeyPairsList,
+    getInstanceTypes,
+    getVpcSecurityGroups
+} from '../operations/aws/ec2-operations';
 import { getSnsTopics } from '../operations/aws/sns-operations';
 import { getAdsList } from '../operations/aws/directory-service-operations';
 import { getFSxFileSystemsList } from '../operations/aws/fsx-operations';
@@ -34,6 +41,18 @@ export default function awsRoutes(fastify: FastifyInstance) {
         const response = await getVpcsList(credentialsId, region, fields);
         return reply.send(response);
     });
+
+    server.get(
+        `${API_PREFIX_PATH}/vpcs/:vpcId/security-groups`,
+        { schema: GetVpcSecurityGroupsSchema },
+        async (request, reply) => {
+            const {
+                params: { credentialsId, region, vpcId }
+            } = request;
+            const response = await getVpcSecurityGroups(credentialsId, region, vpcId);
+            return reply.send(response);
+        }
+    );
 
     server.get(`${API_PREFIX_PATH}/amis`, { schema: GetAmiSchema }, async (request, reply) => {
         const {

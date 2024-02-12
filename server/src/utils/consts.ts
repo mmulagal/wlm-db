@@ -4,6 +4,10 @@ import { join } from 'path';
 import moment from 'moment';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 
+type SubJobDescriptions = {
+    [key: string]: string;
+};
+
 // General
 const APP_NAME = 'Workload Manager for DB';
 const API_TITLE = 'Workload Manager for DB API';
@@ -67,7 +71,7 @@ const API_PATH_HEALTH: string = '/health';
 const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
-const AUDIT_EXCLUDE_LIST = ['/batch', '/prompt'];
+const AUDIT_EXCLUDE_LIST = ['/batch', '/prompt', '/pricing'];
 const DEFAULT_AWS_REGION = process.env.REGION || 'us-east-1';
 
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
@@ -86,6 +90,7 @@ const WORKLOAD_FACTORY_ENDPOINT: string = process.env.WORKLOAD_FACTORY_ENDPOINT
 const WLMDB_ABSOLUTE_ENDPOINT: string = process.env.WLMDB_ABSOLUTE_ENDPOINT
     ? `https://${process.env.WLMDB_ABSOLUTE_ENDPOINT}`
     : config.get('urls.wlm-db-redirect-url');
+const WF_CONSOLE_ENDPOINT: string = config.get('urls.workload-factory-console');
 
 const CREDENTIALS_ENDPOINT: string = CLOUD_MANAGER_ENDPOINT || config.get<string>('urls.cloud-manager');
 
@@ -559,7 +564,7 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
 
     topicArn: 'NotificationARN',
     enableCloudWatch: 'EnableCloudWatchLogFeature',
-    metadataParam: 'MetadataParam'
+    metrics: 'Metrics'
 };
 
 const TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
@@ -580,8 +585,8 @@ const WLM_ASSETS: Record<string, string> = {
 };
 
 // Template error messages
-const MISSING_PERMISSIONS = (permissions: Array<string>) =>
-    `Required permissions are not available to deploy cloud formation template. Missing permissions: ${permissions}.`;
+const MISSING_PERMISSIONS = (permissions: Array<string>, blockedByOrganisation: Array<string>, blockedByPermissionBoundary: Array<string>) =>
+    `Required permissions are not available to deploy cloud formation template. Missing permissions: ${permissions}. Blocked by organisation: ${blockedByOrganisation}. Blocked by permission boundary: ${blockedByPermissionBoundary}`;
 
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
 const STANDALONE_NETWORK_VIOLATION_MESSAGE =
@@ -627,7 +632,7 @@ const TEMPLATE_ACCOUNT_ID = 'AccountId';
 const TEMPLATE_SNS_SERVICE_TOKEN = 'SnsServiceToken';
 const TEMPLATE_WLMDB_AWS_ACCOUT_ID = 'WlmdbAwsAccountId';
 const TEMPLATE_FSX_PASSWORD = 'EncryptedFsxPassword';
-const TEMPLATE_METADATA_PARAM = 'MetadataParam';
+const TEMPLATE_METRICS = 'Metrics';
 
 const SQL_RESOURCE_ASSETS = [
     {
@@ -863,6 +868,7 @@ const WF_SVC_TOKEN_TYPE = 'WF_SVC_TOKEN';
 const BXP_SVC_TOKEN_TYPE = 'BXP_SVC_TOKEN';
 const SSM_COMMAND_CACHE_TYPE = 'SSM_COMMAND';
 const REQUEST_IN_PROGRESS_TYPE = 'REQUEST_IN_PROGRESS';
+const AWS_PRICING_TYPE = 'AWS_PRICING';
 
 const ADMIN_ROLE = 'Role-1';
 const USER_ROLE = 'Role-2';
@@ -924,6 +930,7 @@ const SQL_SOFTWARE_TYPES = new Map<string, string>([
 ]);
 const WLMDB_COST_ALLOCATION_TAG = 'wlmdb-cost-resource';
 
+const SQS_MSG_RETENTION = '7200'; // Amazon SQS automatically deletes messages that have been in a queue for more than the maximum message retention period.
 const MSSQL_SYSTEM_DATABASES = [
     'master',
     'mastlog',
@@ -955,8 +962,53 @@ const SQL_VERSION = 'sql-version';
 const DATABASE_SIZE = 'database-size';
 const SQL_HOST_NAME = 'sql-host-name';
 
+const OPERATE = 'operate';
+const VIEW = 'view';
 const JOBS_DEFAULT_TIME_RANGE = '30d';
 
+const subJobDescriptions: SubJobDescriptions = {
+    SQLStandaloneStack: 'Deploying an SQL Server standalone instance with recommended best practices',
+    SQLServerStack: 'Deploying an SQL Server FCI with recommended best practices',
+    NewFSxStack: 'Deploying new FSx for ONTAP file system for SQL Server workload',
+    ExistingFSxStack:
+        'Deploying a storage virtual machine for the SQL Server workload on the FSx for ONTAP file system',
+    'ValidationStack1-standalone': 'Subnet Validation for deployment',
+    'ValidationStack1-fci': 'Primary subnet validation for SQL Server FCI deployment',
+    ValidationStack2: 'Standby subnet validation for SQL Server FCI deployment',
+    'SqlNode(AWS::EC2::Instance)': 'Configuring SQL Server standalone on an EC2 instance',
+    'NetworkInterface(AWS::EC2::NetworkInterface)': 'Creating network interfaces for the EC2 instance',
+    'WorkloadSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating a security group for SQL Server workloads',
+    'LaunchWizardSqlFSxProfile(AWS::IAM::InstanceProfile)':
+        'Attaching an instance profile to EC2 instances for SQL Server nodes',
+    'DisableIMDSv1(AWS::EC2::LaunchTemplate)': 'Disabling instance metadata service v1 to use more secure v2',
+    'FSxTempDbVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host tempdb',
+    'FSxClusterQuorumVolumeConfiguration(AWS::FSx::Volume)':
+        'Creating a volume to host witness disk for Windows Cluster',
+    'FSxDataVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host data files',
+    'FSxLogVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host log files',
+    'FSxSvmConfiguration(AWS::FSx::StorageVirtualMachine)':
+        'Creating a dedicated storage virtual machine (SVM) for the database workload',
+    'FSxFileSystemConfiguration(AWS::FSx::FileSystem)': 'Creating a new FSx for ONTAP file system',
+    'ONTAPSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating a security group for FSx for ONTAP',
+    'ValidationNode1(AWS::EC2::Instance)':
+        'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
+    'ValidationNode1WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
+    'DomainMemberSG(AWS::EC2::SecurityGroup)': 'Creating a security group for the validation instance',
+    'ValidationInstanceProfile(AWS::IAM::InstanceProfile)': 'Attaching an instance profile to the validation instance',
+    'ValidationNode1WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
+        'Signaling wait condition to resume next steps',
+    'SqlFSxInstanceMAD1(AWS::EC2::Instance)': 'Configuring Windows Cluster and SQL FCI instance on primary node',
+    'SqlFSxInstanceMAD2(AWS::EC2::Instance)': 'Configuring Windows Cluster and SQL FCI instance on standby node',
+    'NetworkInterface2(AWS::EC2::NetworkInterface)':
+        'Creating network interfaces for the EC2 instance in standby subnet',
+    'NetworkInterface1(AWS::EC2::NetworkInterface)':
+        'Creating network interfaces for the EC2 instance in primary subnet',
+    'ValidationNode2(AWS::EC2::Instance)':
+        'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
+    'ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
+    'ValidationNode2WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
+        'Signaling wait condition to resume next steps'
+};
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
 
 export {
@@ -1095,6 +1147,7 @@ export {
     ACTION_BUTTON_DATABASE,
     RESOURCE_ID,
     WLMDB_ABSOLUTE_ENDPOINT,
+    WF_CONSOLE_ENDPOINT,
     SUCCESS,
     ERROR,
     MAX_READ_REQUEST_FSXN,
@@ -1165,19 +1218,24 @@ export {
     WLMDB_COST_ALLOCATION_TAG,
     BILLING,
     PRICING,
+    SQS_MSG_RETENTION,
     WF_TOKEN,
     BXP_TOKEN,
     IAM_LINKEDROLE_CONDITION,
     IAM_PASSROLE_CONDITION,
     IAM_EC2_SERVICE,
     KMS_KEY_ALIAS,
-    TEMPLATE_METADATA_PARAM,
+    TEMPLATE_METRICS,
     TRIGGERED_FROM,
     DEPLOYED_FROM,
     INSTANCE_TYPE,
     SQL_VERSION,
     DATABASE_SIZE,
     SQL_HOST_NAME,
+    OPERATE,
+    VIEW,
     JOBS_DEFAULT_TIME_RANGE,
-    CF_STACK_RESOURCE_TYPE
+    subJobDescriptions,
+    CF_STACK_RESOURCE_TYPE,
+    AWS_PRICING_TYPE
 };

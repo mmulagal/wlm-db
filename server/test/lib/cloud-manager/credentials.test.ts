@@ -40,7 +40,8 @@ describe('Get Blue XP credentials ', () => {
 });
 
 describe('Get workload factory credentials ', () => {
-    it('should return a list of all AWS credentials stored in workload factory', async () => {
+    // Its not mocked as we are making actual api call
+    it.skip('should return a list of all AWS credentials stored in workload factory', async () => {
         const credentialsType = 'AWS_ASSUME_ROLE';
         const resp = await getAllWfCredentials(credentialsType);
         expect(resp).toEqual(allCredentials);

@@ -16,7 +16,11 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedCredentials } from '../../../../store/mssql/mssqlFormSlice';
-import { setCreatePressed, setPermissionWarning } from '../../../../store/mssql/msSqlActionSlice';
+import {
+    setCreatePressed,
+    setDeployRedirectToCfLink,
+    setPermissionWarning
+} from '../../../../store/mssql/msSqlActionSlice';
 import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PRODUCTION } from '../../../../utils/consts';
 
 import styles from './AwsAccount.module.scss';
@@ -26,6 +30,7 @@ import ViewDialog from '../../../../common/ViewDialog/ViewDialog';
 import { ReactComponent as ErrorIcon } from '../../../../assets/error-icon.svg';
 import { PERMISSIONS } from '../../../../utils/permissions';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
+import MissingPermissionsMsg from './MissingPermissionsMsg';
 
 const AwsAccount = () => {
     const { setDialog } = useDialog();
@@ -147,6 +152,7 @@ const AwsAccount = () => {
     // Update selected region in form data store
     useEffect(() => {
         dispatch(setPermissionWarning(false));
+        dispatch(setDeployRedirectToCfLink(null));
         if (!selectedCredential) {
             dispatch(setSelectedCredentials(generateAWSAccounts[0]));
         }
@@ -316,14 +322,7 @@ const AwsAccount = () => {
                                         <div className={styles.noaccount_options}>
                                             <Typography variant="Semibold_14">{GENERAL.ERROR}</Typography>
                                             <Typography variant="Regular_14" className={styles.noteText}>
-                                                {GENERAL.CREATE_PERMISSION_ERROR}
-                                                <Button
-                                                    Component="button"
-                                                    variant="text"
-                                                    onClick={() => openDialog('operate')}
-                                                >
-                                                    {GENERAL.REQUIRED_PERMISSIONS}
-                                                </Button>
+                                                <MissingPermissionsMsg />
                                             </Typography>
                                         </div>
                                     </div>

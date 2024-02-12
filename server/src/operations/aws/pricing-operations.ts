@@ -1,4 +1,3 @@
-import createError from 'http-errors';
 import { Filter, FilterType, GetProductsCommandInput, GetProductsCommandOutput } from '@aws-sdk/client-pricing';
 import { LazyJsonString } from '@smithy/smithy-client';
 import { compact, isEmpty } from 'lodash-es';
@@ -8,7 +7,6 @@ import { calculateFsxStorageCapacity, sizeInGigaBytes } from '../../utils/utils'
 import {
     DEFAULT_AWS_REGION,
     FCI,
-    INVALID_PARAMETER_VALUE,
     MAX_READ_REQUEST_FSXN,
     MAX_WRITE_REQUEST_FSXN,
     MIN_DISKSIZE,
@@ -17,7 +15,6 @@ import {
     SQL_SOFTWARE_TYPES
 } from '../../utils/consts';
 import getProducts from '../../lib/aws/pricing';
-import { describeRegions, describeInstanceTypeOfferings } from '../../lib/aws/ec2';
 
 const logger = getLogger();
 
@@ -482,50 +479,7 @@ function getInputs(
     ];
 }
 
-async function validatePricingParameters(
-    credentialsId: string,
-    compute: PricingServiceRequestType['compute'],
-    storage: PricingServiceRequestType['storage'],
-    vpc: PricingServiceRequestType['vpc']
-) {
-    logger.debug('Validating pricing parameters:', { compute, storage, vpc });
-
-    // AWS regions MUST be validated before describeInstanceTypeOfferings(),
-    // without that invalid regions can get passed to latter.
-    await validatePricingRegionParameters(credentialsId, compute, storage, vpc);
-    await describeInstanceTypeOfferings(credentialsId, compute.regionCode, compute.instanceType);
-}
-
-async function validatePricingRegionParameters(
-    credentialsId: string,
-    compute: PricingServiceRequestType['compute'],
-    storage: PricingServiceRequestType['storage'],
-    vpc: PricingServiceRequestType['vpc']
-) {
-    logger.debug('Validating pricing parameters:', { compute, storage, vpc });
-
-    try {
-        const regions = compact([...new Set([compute.regionCode, storage?.regionCode, vpc?.regionCode])]);
-        const regionsInput = {
-            DryRun: false,
-            AllRegions: true,
-            RegionNames: regions
-        };
-        await describeRegions(regionsInput, credentialsId);
-    } catch (error) {
-        logger.error('Failed to describe regions:', JSON.stringify(error));
-        const { Code, message, $metadata } = error as { Code: string; message: string; $metadata: unknown };
-        const { httpStatusCode } = $metadata as { httpStatusCode: number };
-
-        if (Code === INVALID_PARAMETER_VALUE) {
-            throw createError(httpStatusCode, message);
-        }
-        throw error;
-    }
-}
-
 async function calculatePrice(
-    credentialsId: string,
     compute: PricingServiceRequestType['compute'],
     storage: PricingServiceRequestType['storage'],
     vpc: PricingServiceRequestType['vpc']
@@ -535,8 +489,6 @@ async function calculatePrice(
         storage,
         vpc
     });
-
-    await validatePricingParameters(credentialsId, compute, storage, vpc);
 
     const inputList: ProductInput[] = compact(getInputs(compute, storage, vpc));
 

@@ -2,14 +2,22 @@
     margin-top: 40px;
     margin-bottom: 40px;
     margin-left: 120px;
-    width: 1605px;
-    height: 34px;
-    border-bottom: 1px solid #a7a7a7;
+    width: 1607px;
+    height: 56px;
+    border-bottom: 1px solid var(--grey-30);
     display: flex;
+    gap: 4px;
+
+    .headers {
+        width: 240px;
+        padding-top: 16px;
+        background-color: var(--content-background);
+        box-shadow: 2px 2px 6px 0px var(--border);
+        gap: 14px;
+    }
 
     .headerPart1 {
         color: var(--text-primary);
-        width: 160px;
         display: flex;
         justify-content: center;
         cursor: pointer;
@@ -17,17 +25,17 @@
 
     .headerPart2 {
         color: var(--text-primary);
-        width: 191px;
         display: flex;
         justify-content: center;
         cursor: pointer;
     }
+    
     .active {
-        border-bottom: 1px solid var(--blue-70);
+        border-bottom: 2px solid var(--blue-70);
+    }
+
+    .activeText {
         color: var(--blue-70);
     }
 }
 
-.overviewTabDynamicWidth {
-    width: 84%;
-}

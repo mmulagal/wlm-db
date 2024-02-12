@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
 
-Description: 'CloudFormation template for FSx for ONTAP deployment. **WARNING**: This template creates a FSx for ONTAP file system, which incurs cost.'
+Description: 'A CloudFormation template to use with an existing Amazon FSx for NetApp ONTAP file system. This template creates a storage virtual machine (SVM) with the required volumes for SQL Server workloads.'
 
 Metadata:
     AWS::CloudFormation::Interface:
@@ -34,9 +34,9 @@ Metadata:
             FSxLogVolumeSize:
                 default: Log volume size
             FSxTempDbVolumeName:
-                default: TempDB volume name
+                default: tempdb volume name
             FSxTempDbVolumeSize:
-                default: TempDB volume size
+                default: tempdb volume size
             FSxClusterQuorumVolumeName:
                 default: Cluster quorum volume name
             FSxClusterQuorumVolumeSize:
@@ -44,13 +44,13 @@ Metadata:
 
 Parameters:
     DeploymentMode:
-        Description: File system deployment mode
+        Description: The deployment mode for the FSx for ONTAP file system.
         Type: String
         Default: MULTI_AZ_1
         AllowedValues: [SINGLE_AZ_1, MULTI_AZ_1]
 
     FSxFileSystemId:
-        Description: FSx Filesystem ID
+        Description: ID of the FSx for ONTAP file system.
         Type: String
 
     FSxSvmName:
@@ -59,42 +59,42 @@ Parameters:
         MaxLength: 47
 
     FSxDataVolumeName:
-        Description: The name of volume for SQL Server data.
+        Description: The name of the volume for SQL Server data.
         Type: String
         Default: wlmdb_fsx_data_volume
 
     FSxDataVolumeSize:
-        Description: Size of the data volume, in megabytes (MiB).
+        Description: The size of the data volume in megabytes (MiB).
         Type: Number
         Default: 200
 
     FSxLogVolumeName:
-        Description: The name of volume for SQL Server log.
+        Description: The name of the volume for the SQL Server log.
         Type: String
         Default: wlmdb_fsx_log_volume
 
     FSxLogVolumeSize:
-        Description: Size of the log volume, in megabytes (MiB).
+        Description: The size of the log volume in megabytes (MiB).
         Type: Number
         Default: 100
 
     FSxTempDbVolumeName:
-        Description: The name of volume for SQL Server TempDB.
+        Description: The name of the volume for the tempdb system database.
         Type: String
         Default: wlmdb_fsx_tempdb_volume
 
     FSxTempDbVolumeSize:
-        Description: Size of the tempDB volume, in megabytes (MiB).
+        Description: The size of the tempdb volume in megabytes (MiB).
         Type: Number
         Default: 200
 
     FSxClusterQuorumVolumeName:
-        Description: The name of volume for cluster quorum.
+        Description: The name of the volume for cluster quorum.
         Type: String
         Default: wlmdb_fsx_cluster_quorum_volume
 
     FSxClusterQuorumVolumeSize:
-        Description: Size of the cluster quorum volume, in megabytes (MiB).
+        Description: The size of the cluster quorum volume in megabytes (MiB).
         Type: Number
         Default: 2048
 
@@ -181,15 +181,15 @@ Resources:
 
 Outputs:
     FSxFileSystemId:
-        Description: FSx file system ID
+        Description: ID of the FSx for ONTAP file system
         Value: !Ref FSxFileSystemId
     FSxDataVolumeLogicalId:
-        Description: FSx data volume logical ID
+        Description: Logical ID of the FSx for ONTAP data volume
         Value: !Ref FSxDataVolumeConfiguration
         Export:
             Name: !Sub ${AWS::StackName}-FSxDataVolumeLogicalId
     FSxDataVolumeArn:
-        Description: ARN of FSx data volume
+        Description: ARN of the FSx for ONTAP data volume
         Value: !GetAtt FSxDataVolumeConfiguration.ResourceARN
         Export:
             Name: !Sub ${AWS::StackName}-FSxDataVolumeArn
@@ -205,12 +205,12 @@ Outputs:
             Name: !Sub ${AWS::StackName}-FSxDataVolumeUuid
 
     FSxLogVolumeLogicalId:
-        Description: FSx log volume logical ID
+        Description: Logical ID of FSx for ONTAP log volume
         Value: !Ref FSxLogVolumeConfiguration
         Export:
             Name: !Sub ${AWS::StackName}-FSxLogVolumeLogicalId
     FSxLogVolumeArn:
-        Description: ARN of FSx data volume
+        Description: ARN of FSx for ONTAP data volume
         Value: !GetAtt FSxLogVolumeConfiguration.ResourceARN
         Export:
             Name: !Sub ${AWS::StackName}-FSxLogVolumeArn
@@ -226,12 +226,12 @@ Outputs:
             Name: !Sub ${AWS::StackName}-FSxLogVolumeUuid
 
     FSxTempDbVolumeLogicalId:
-        Description: FSx tempDb volume logical ID
+        Description: Logical ID of FSx for ONTAP tempdb volume
         Value: !Ref FSxTempDbVolumeConfiguration
         Export:
             Name: !Sub ${AWS::StackName}-FSxTempDbVolumeLogicalId
     FSxTempDbVolumeArn:
-        Description: ARN of FSx data volume
+        Description: ARN of FSx for ONTAP data volume
         Value: !GetAtt FSxTempDbVolumeConfiguration.ResourceARN
         Export:
             Name: !Sub ${AWS::StackName}-FSxTempDbVolumeArn
@@ -247,13 +247,13 @@ Outputs:
             Name: !Sub ${AWS::StackName}-FSxTempDbVolumeUuid
 
     FSxClusterQuorumVolumeLogicalId:
-        Description: FSx cluster quorum volume logical ID
+        Description: Logical ID for the FSx for ONTAP cluster quorum volume
         Value: !Ref FSxClusterQuorumVolumeConfiguration
         Export:
             Name: !Sub ${AWS::StackName}-FSxClusterQuorumVolumeLogicalId
         Condition: FSxIsMultiZoneDeployment
     FSxClusterQuorumVolumeArn:
-        Description: ARN of FSx data volume
+        Description: ARN of FSx for ONTAP data volume
         Value: !GetAtt FSxClusterQuorumVolumeConfiguration.ResourceARN
         Export:
             Name: !Sub ${AWS::StackName}-FSxClusterQuorumVolumeArn

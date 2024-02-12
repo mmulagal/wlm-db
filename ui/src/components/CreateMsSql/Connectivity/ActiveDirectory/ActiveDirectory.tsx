@@ -41,6 +41,7 @@ const ActiveDirectory = () => {
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const userName = useAppSelector(state => state.mssqlForm.activeDirectory.userName);
     const password = useAppSelector(state => state.mssqlForm.activeDirectory.password);
@@ -113,7 +114,7 @@ const ActiveDirectory = () => {
     }, [versions]);
 
     useEffect(() => {
-        if (!isLoadConfig) {
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setSelectedADDomainName(null));
             dispatch(setSelectedADDomainAddress(''));
             dispatch(setSelectedADScenarioType(''));
@@ -264,6 +265,7 @@ const ActiveDirectory = () => {
                         <div className={styles.secondContainer}>
                             <TextField
                                 label={GENERAL.USER_NAME}
+                                placeholder="Username"
                                 error={!isADNotFilled && !userName ? GENERAL.ACTION_REQUIRED : ''}
                                 ref={userNameRef}
                                 //@ts-ignore

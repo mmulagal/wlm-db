@@ -1,8 +1,14 @@
 .jobMonitoring {
-    height: 100vh;
+    height: calc(100vh - 128px);
     width: 100vw;
     background-color: var(--main-background);
     overflow-y: auto;
+
+    .jobMenuPopover {
+        width: fit-content;
+        margin-left: -12px;
+    }
+
     .breadCrumb {
         margin-top: 16px;
         margin-left: 40px;
@@ -12,7 +18,7 @@
         display: flex;
         width: 1612px;
         justify-content: space-between;
-        margin-top: 38px;
+        margin-top: 24px;
         margin-left: 120px;
         margin-right: 40px;
         .heading {
@@ -67,7 +73,7 @@
     }
 }
 
-@media screen and (min-width: 1351px) and (max-width: 1520px) {
+@media screen and (max-width: 1520px) {
     .jobMonitoring {
         .headingContainer {
             width: 1124px;

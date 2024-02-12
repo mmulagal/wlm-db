@@ -4,6 +4,7 @@ import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
+import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 import styles from './DatabaseHost.module.scss';
 import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -26,9 +27,7 @@ const DatabaseHost = () => {
                         <Typography variant="Regular_14" className={styles.databaseText}>
                             {GENERAL.HOSTS}
                         </Typography>
-                        {(databaseHostsLoading || databaseJobsLoading) && 
-                            <FlashingDotsLoader />
-                        }
+                        {(databaseHostsLoading || databaseJobsLoading) && <FlashingDotsLoader />}
                     </div>
                 </div>
                 <div className={styles.dbHostSeparator} />
@@ -40,73 +39,49 @@ const DatabaseHost = () => {
                         <Typography variant="Regular_14" className={styles.databaseText}>
                             {GENERAL.DATABASES}
                         </Typography>
-                        {(databaseHostsLoading || databaseJobsLoading) && 
-                            <FlashingDotsLoader />
-                        }
+                        {(databaseHostsLoading || databaseJobsLoading) && <FlashingDotsLoader />}
                     </div>
                 </div>
 
-                <div className={styles.databaseHostStatusContainer}>
-                    <Typography variant="Semibold_14" className={styles.dbHostStatusHeading}>
-                        {GENERAL.DATABASE_HOST_STATUS}
-                    </Typography>
-                    <div className={styles.statusContainer}>
-                        <div className={styles.layout}>
-                            <div className={styles.firstRow}>
-                                <Success />
-                                <Typography variant="Semibold_14">{hostData?.totalUpHosts}</Typography>
-                            </div>
-                            <div className={styles.secondRowContent}>
-                                <Typography variant="Regular_14" className={styles.secondRow}>
-                                    {GENERAL.DB_HOST_UP}
-                                </Typography>
-                                {(databaseHostsLoading || databaseJobsLoading) && 
-                                    <FlashingDotsLoader />
-                                }
-                            </div>
+                <div className={styles.newSection}>
+                    <div className={styles.sql}>
+                        <Typography variant="Regular_32" className={styles.databaseNumber}>
+                            40
+                        </Typography>
+                        <div className={styles.sqlContent}>
+                            <Typography variant="Regular_14" className={styles.databaseText}>
+                                SQL
+                            </Typography>
+                            {(databaseHostsLoading || databaseJobsLoading) && <FlashingDotsLoader />}
                         </div>
-                        <div className={styles.layout}>
-                            <div className={styles.firstRow}>
-                                <InProgress />
-                                <Typography variant="Semibold_14">{hostData?.totalInitializingHosts}</Typography>
-                            </div>
-                            <div className={styles.secondRowContent}>
-                                <Typography variant="Regular_14" className={styles.secondRow}>
-                                    {GENERAL.DB_HOST_INITIALIZING}
-                                </Typography>
-                                {(databaseHostsLoading || databaseJobsLoading) && 
-                                    <FlashingDotsLoader />
-                                }
-                            </div>
+                    </div>
+
+                    <div className={styles.dbHostSeparator} />
+
+                    <div className={styles.NA}>
+                        <Typography variant="Regular_16" className={styles.databaseNumber}>
+                            N/A
+                        </Typography>
+                        <div className={styles.naContent}>
+                            <Typography variant="Regular_14" className={styles.databaseText}>
+                                PostgreSQL
+                            </Typography>
+                            <ComingSoon />
                         </div>
-                        <div className={styles.layout}>
-                            <div className={styles.firstRow}>
-                                <Warning />
-                                <Typography variant="Semibold_14">{hostData?.totalDownHosts}</Typography>
-                            </div>
-                            <div className={styles.secondRowContent}>
-                                <Typography variant="Regular_14" className={styles.secondRow}>
-                                    {GENERAL.DB_HOST_DOWN}
-                                </Typography>
-                                {(databaseHostsLoading || databaseJobsLoading) && 
-                                    <FlashingDotsLoader />
-                                }
-                            </div>
+                    </div>
+
+                    <div className={styles.dbHostSeparator} />
+
+                    <div className={styles.NA}>
+                        <Typography variant="Regular_16" className={styles.databaseNumber}>
+                            N/A
+                        </Typography>
+                        <div className={styles.naContent}>
+                            <Typography variant="Regular_14" className={styles.databaseText}>
+                                MySQL
+                            </Typography>
+                            <ComingSoon />
                         </div>
-                        {/* <div className={styles.layout}>
-                            <div className={styles.firstRow}>
-                                <ErrorIcon />
-                                <Typography variant="Semibold_14">{hostData?.totalFailedHosts}</Typography>
-                            </div>
-                            <div className={styles.secondRowContent}>
-                                <Typography variant="Regular_14" className={styles.secondRow}>
-                                    {GENERAL.DB_HOST_FAILED}
-                                </Typography>
-                                {(databaseHostsLoading || databaseJobsLoading) && 
-                                    <FlashingDotsLoader />
-                                }
-                            </div>
-                        </div> */}
                     </div>
                 </div>
             </div>

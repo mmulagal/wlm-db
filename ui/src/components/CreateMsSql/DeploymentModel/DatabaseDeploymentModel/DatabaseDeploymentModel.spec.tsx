@@ -16,7 +16,7 @@ jest.mock('@json2csv/plainjs', () => {
 
 describe('Database Deployment Model accordion test', () => {
     const wrapper = () => {
-        const store = mockStore({ mssqlForm: {} });
+        const store = mockStore({ mssqlForm: {dbDeploymentModel: {label: 'Failover cluster instance (FCI)'}} });
 
         return render(
             <>

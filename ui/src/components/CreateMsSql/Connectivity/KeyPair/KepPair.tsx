@@ -20,6 +20,7 @@ const KeyPair = () => {
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     //Function to generate the options for Select Field
     const generateKey = useMemo<optionType[]>((): optionType[] => {
@@ -34,7 +35,7 @@ const KeyPair = () => {
     }, [keyPairData]);
 
     useEffect(() => {
-        if (!isLoadConfig) {
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setSelectedKeyPair(generateKey[0]));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps

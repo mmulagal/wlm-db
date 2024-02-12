@@ -17,7 +17,7 @@ const Bubbles = ({ bubbleList, onBubbleClick }: BubblesPropsType) => {
             {bubbleList.map((bubble: bubbleItemType) => {
                 return (
                     <div
-                        className={styles['bubble-item']}
+                        className={`${"chatbot-select-msg"} ${styles['bubble-item']}`}
                         onClick={() => onBubbleClick(bubble?.label, bubble?.value)}
                         id={bubble.value === 'deploy' ? 'chatbot-deploy-btn' : ''}
                     >

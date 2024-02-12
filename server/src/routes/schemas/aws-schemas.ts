@@ -13,7 +13,9 @@ import {
     KmsKeysListResponse,
     AmiQueryString,
     InstanceTypes,
-    KeyPairsResponse
+    KeyPairsResponse,
+    VpcSecurityGroupsResponse,
+    VcpSecurityGroupParams
 } from '../types/aws.types';
 
 // Base Request for AWS Routes
@@ -112,6 +114,18 @@ const GetKeyPairsSchema = {
         200: KeyPairsResponse
     }
 };
+
+// GET VPC Security Group Schema
+const GetVpcSecurityGroupsSchema = {
+    ...baseRequest,
+    params: VcpSecurityGroupParams,
+    summary: 'Get vpc security groups',
+    description: 'Get security groups for a vpc',
+    response: {
+        200: VpcSecurityGroupsResponse
+    }
+};
+
 export {
     GetVpcsListSchema,
     GetAmiSchema,
@@ -121,5 +135,6 @@ export {
     GetFsxKmsKeysListSchema,
     GetInstanceTypesSchema,
     GetKeyPairsSchema,
-    GetFSxFileSystemsSchema
+    GetFSxFileSystemsSchema,
+    GetVpcSecurityGroupsSchema
 };

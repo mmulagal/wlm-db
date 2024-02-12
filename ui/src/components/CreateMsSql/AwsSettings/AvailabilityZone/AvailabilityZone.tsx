@@ -34,6 +34,7 @@ const AvailabilityZone = () => {
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const [routeTable1, setRouteTable1] = useState(undefined);
     const [routeTable2, setRouteTable2] = useState(undefined);
@@ -50,7 +51,7 @@ const AvailabilityZone = () => {
     const sub2Ref = useRef(null);
 
     useEffect(() => {
-        if (!isLoadConfig) {
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setSelectedAzNode1(null));
             dispatch(setSelectedAzNode2(null));
             dispatch(setSelectedSubnetNode1(null));
@@ -150,7 +151,7 @@ const AvailabilityZone = () => {
     }, [selectedVPCData, selectedZone1]);
 
     useEffect(() => {
-        if (!isLoadConfig) {
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setSelectedSubnetNode1(generateSubnet1Options[0]));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -206,7 +207,7 @@ const AvailabilityZone = () => {
     }, [selectedVPCData, selectedZone2]);
 
     useEffect(() => {
-        if (!isLoadConfig) {
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setSelectedSubnetNode2(generateSubnet2Options[0]));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps

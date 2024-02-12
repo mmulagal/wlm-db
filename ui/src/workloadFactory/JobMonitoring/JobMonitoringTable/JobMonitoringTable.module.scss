@@ -1,6 +1,11 @@
 .jobMonitoringTable {
     .table {
         width: 1612px;
+        margin-bottom: 40px;
+
+        .jobMenuPopover {
+            margin-left: -13px;
+        }
 
         .downloadButton {
             cursor: pointer;
@@ -14,7 +19,7 @@
         }
 
         .topBarStyle {
-            z-index: 3 !important;
+            z-index: 2 !important;
         }
 
         [class*='Table-module_highlighted-row'] {
@@ -26,7 +31,7 @@
                 }
             }
             span {
-                background-color: white !important;
+                background-color: var(--content-background) !important;
             }
         }
 
@@ -114,7 +119,7 @@
     }
 }
 
-@media screen and (min-width: 1351px) and (max-width: 1520px) {
+@media screen and (max-width: 1520px) {
     .jobMonitoringTable {
         .table {
             width: 1127px;

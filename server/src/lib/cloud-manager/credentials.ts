@@ -123,7 +123,17 @@ async function getAllWfCredentials(credentialsType: string, nextToken?: string):
 
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
 
-    const { token } = await getWfServiceToken();
+    let authToken;
+    let isDemo = false;
+    // In Demo credential service is using the user token itself to make the api call, not the service token
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        isDemo = true;
+        credentialsType = credentialsType.toUpperCase();
+        authToken = getAsyncLocalStorageResource(USER_TOKEN) as string;
+    } else {
+        const { token } = await getWfServiceToken();
+        authToken = token as string;
+    }
 
     const filterString = encodeURIComponent(`type eq '${credentialsType}'`);
 
@@ -131,7 +141,8 @@ async function getAllWfCredentials(credentialsType: string, nextToken?: string):
         .get(`accounts/${accountId}/credentials/v1/credentials?filter=${filterString}`, {
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
             headers: {
-                [HEADERS.AUTHORIZATION]: token
+                [HEADERS.AUTHORIZATION]: authToken,
+                ...(isDemo && { [HEADERS.SIMULATOR]: 'true' })
             },
             ...(nextToken && {
                 searchParams: {

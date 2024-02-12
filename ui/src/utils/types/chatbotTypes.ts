@@ -16,4 +16,5 @@ export interface ChatbotEntities {
     };
     latestIntentMsg: string;
     resumeCount: number;
+    movingFromChatbot: boolean;
 }

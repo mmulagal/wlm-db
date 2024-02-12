@@ -13,6 +13,9 @@ export type MenuItemType = {
     id: string;
     onlyInfoText?: string;
     subMenu?: MenuItemType[];
+    tagAdded?: boolean;
+    tag?: any;
+    customComponent?: any;
 };
 
 type MenuPopoverType = {
@@ -60,7 +63,7 @@ function MenuPopover({
             const menuItem = (
                 <li
                     key={`menu-item-${index}`}
-                    className={item.disabled ? styles.menuDisabled : ''}
+                    className={item.disabled ? styles.menuDisabled : styles.menuEnabled}
                     onClick={() => {
                         if (!item.disabled) {
                             toggleMenu('selectedOption', item.id);
@@ -68,6 +71,8 @@ function MenuPopover({
                     }}
                 >
                     {item?.displayName}
+                    {item.tagAdded && item.tag}
+                    {item?.customComponent}
                 </li>
             );
 

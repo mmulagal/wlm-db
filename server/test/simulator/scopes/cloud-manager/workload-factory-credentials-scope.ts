@@ -52,10 +52,10 @@ const genericCredentials = {
     credentials: 'arn:aws:iam::718273455463:role/test-assume-role',
     numAssociatedResources: 0
 };
-nock(`${WORKLOAD_FACTORY_ENDPOINT}`)
+nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
+    allowUnmocked: process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
+})
     .persist(true)
-    .get(/^\/accounts\/(.+)\/credentials\/v1\/credentials/)
-    .reply(() => [200, allCredentials])
     .get(/^\/accounts\/(.+)\/credentials\/v1\/generic\/(.+)/)
     .query(queryObj => Boolean(queryObj?.decrypt) === true)
     .reply(() => [200, genericDecryptedCredentials])

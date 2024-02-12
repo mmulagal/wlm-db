@@ -16,6 +16,8 @@ import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import { useDeploySqlTemplateMutation, useSendMsgMutation } from '../../../utils/apiService';
 import {
     setCurrentIntent,
+    setExpectingResponse,
+    setIsWizardTouched,
     setLatestIntentMsg,
     setLoadConfigClicked,
     setMessages,
@@ -68,15 +70,15 @@ import {
     TIMELINE_STAGE_LINK,
     USER_MANAGED_AD
 } from '../../../utils/consts';
-import MssqlApis from '../MSSqlServer/MssqlApis';
 import ChatbotHeader from './ChatbotHeader/ChatbotHeader';
 import { handleCreateSQLServer } from '../MSSqlServer/MSSqlFooter/createSqlServer';
-import { setIsLoading, setPermissionWarning } from '../../../store/mssql/msSqlActionSlice';
-import { Button, Typography, useDialog } from '@netapp/design-system';
-import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import { setDeployRedirectToCfLink, setIsLoading } from '../../../store/mssql/msSqlActionSlice';
+import { Button } from '@netapp/design-system';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
-import DialogComponent from '../../../common/Dialog/DialogComponent';
+import MissingPermissionsMsg from '../AwsSettings/AwsAccount/MissingPermissionsMsg';
+import store from '../../../store/store';
 const _ = require('lodash');
 
 type optionsType = {
@@ -92,7 +94,7 @@ type messageType = {
     intent?: any;
     type?: string;
     active?: boolean;
-    errors?: any;
+    error?: any;
 };
 
 const Chatbot = () => {
@@ -107,12 +109,9 @@ const Chatbot = () => {
     const [activeField, setActiveField] = useState<any>('');
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const { setDialog } = useDialog();
 
     const [sendMsgToBot] = useSendMsgMutation();
     const [deploySqlTemplate] = useDeploySqlTemplateMutation();
-
-    MssqlApis();
 
     const handleKeyPress = async (e: any) => {
         await delay(0);
@@ -142,6 +141,22 @@ const Chatbot = () => {
     });
 
     useEffect(() => {
+        if (isPayloadReady) {
+            dispatch(
+                setSuggestionBubbles({
+                    list: [{ label: 'Deploy', value: 'deploy' }],
+                    onBubbleClick: (label?: string, value?: string) => {
+                        if (value === 'deploy') {
+                            handleCreate();
+                            dispatch(setExpectingResponse({ type: 'none', fieldname: '' }));
+                        }
+                    }
+                })
+            );
+        }
+    }, [isPayloadReady]);
+
+    useEffect(() => {
         if (loadConfigClicked) {
             setIsBotReplying(true);
             sendMsgToBot({
@@ -158,7 +173,7 @@ const Chatbot = () => {
             })
                 .then((res: any) => {
                     if (res.data) {
-                        const { message, key, allowedValues, allowCreate, intent, type, errors, status } = res.data;
+                        const { message, key, allowedValues, allowCreate, intent, type, error, status } = res.data;
                         if (intent) {
                             dispatch(setCurrentIntent(intent));
                             if (!intent.complete) {
@@ -167,16 +182,6 @@ const Chatbot = () => {
                             } else {
                                 setPayloadContent(intent.validatedJson);
                                 mapParamsToPayload(intent.params);
-                                dispatch(
-                                    setSuggestionBubbles({
-                                        list: [{ label: 'Deploy', value: 'deploy' }],
-                                        onBubbleClick: (label?: string, value?: string) => {
-                                            if (value === 'deploy') {
-                                                handleCreate();
-                                            }
-                                        }
-                                    })
-                                );
                             }
                             setIsPayloadReady(intent.complete);
                         }
@@ -191,7 +196,7 @@ const Chatbot = () => {
                                 intent: intent,
                                 type: type,
                                 active: true,
-                                errors: errors,
+                                error: error,
                                 status: status
                             }
                         ];
@@ -240,6 +245,7 @@ const Chatbot = () => {
                                 onClick={() => {
                                     clearTimeout(notificationMsg);
                                     navigate('../job-monitor');
+                                    dispatch(clearNotifications());
                                 }}
                             >
                                 {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
@@ -287,11 +293,13 @@ const Chatbot = () => {
     };
 
     const handleCreate = () => {
+        const state = store.getState();
         const payload = handleCreateSQLServer(state, dispatch);
         const selectedCredId = state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId;
         const selectedRegionCode = state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode;
         if (payload) {
             dispatch(setIsLoading(true));
+            dispatch(setDeployRedirectToCfLink(null));
             deploySqlTemplate({ credentialId: selectedCredId, region: selectedRegionCode, payload: payload })
                 .then((data: any) => {
                     dispatch(setIsLoading(false));
@@ -302,9 +310,30 @@ const Chatbot = () => {
                         if (stackName && !warning) {
                             // If stackname is present than goes to fullPermissionFlow
                             fullPermissionFlow(stackName, url);
+                            let defaultParams = getChatbotParamsFromPayload(mssqlFormData);
+                            let defaultObj: any = {};
+                            Object.keys(defaultParams).map((key: string) => {
+                                defaultObj[key] = null;
+                            });
+                            mapParamsToPayload(defaultObj);
+                            dispatch(setCurrentIntent(''));
+                            dispatch(setIsWizardTouched(false));
+                            dispatch(setMessages([]));
+                            dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
                         } else if (url) {
+                            dispatch(setDeployRedirectToCfLink(url));
                             // If url comes it means it has view permissions so it will open AWS account accordion
-                            dispatch(setPermissionWarning(true));
+                            dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
+                            dispatch(
+                                setMessages([
+                                    ...messages,
+                                    {
+                                        sender: 'bot',
+                                        msg: '',
+                                        customComponent: <MissingPermissionsMsg />
+                                    }
+                                ])
+                            );
                         }
                     }
                 })
@@ -589,10 +618,7 @@ const Chatbot = () => {
                     if (mssqlFormData?.securityGroup?.sgValue !== value) {
                         const selectedVpcId = mssqlFormData?.regionAndVpc?.selectedVPC?.data?.id;
                         if (selectedVpcId) {
-                            const selectedVpcData = mssqlData?.getVPCList?.vpcData.vpcs?.filter(
-                                pervpc => pervpc?.id === selectedVpcId
-                            )[0];
-                            const selectedSg: any = selectedVpcData?.securityGroups?.filter(
+                            const selectedSg: any = mssqlData?.getSGList?.sgData?.securityGroups?.filter(
                                 (item: any) => item?.id === value
                             )[0];
                             const sgValue = selectedSg?.id;
@@ -614,7 +640,7 @@ const Chatbot = () => {
                     break;
                 case 'enableCloudWatch':
                     if (mssqlFormData.cloudWatch !== value) {
-                        dispatch(setCloudWatch(value || null));
+                        dispatch(setCloudWatch(value || true));
                     }
                     break;
                 case 'tags':
@@ -626,12 +652,17 @@ const Chatbot = () => {
         });
     };
 
-    const sendMsg = async (msg?: string, add: boolean = true, msgs = messages) => {
+    const sendMsg = async (
+        msg?: string,
+        add: boolean = true,
+        msgs = messages,
+        paramObject: { [x: string]: { label: string; value: string } } = {}
+    ) => {
         setIsBotReplying(true);
         let updatedMessages = msgs ? [...msgs] : [];
         if (add) {
             let preResponseMsg = msgs || [];
-            if (preResponseMsg.length && preResponseMsg[preResponseMsg.length - 1].errors) {
+            if (preResponseMsg.length && preResponseMsg[preResponseMsg.length - 1].error) {
                 const lastMsg = preResponseMsg[preResponseMsg.length - 1];
                 preResponseMsg = [
                     ...preResponseMsg.slice(0, preResponseMsg.length - 1),
@@ -645,26 +676,36 @@ const Chatbot = () => {
             updatedMessages = [...updatedMessages, { sender: 'user', msg: msg }];
         }
 
+        const data = Object.entries(paramObject).reduce((acc: { [x: string]: string }, [key, obj]) => {
+            acc[key as string] = obj.value as string;
+            return acc;
+        }, {});
+
         sendMsgToBot({
             payload: {
-                prompt:
-                    (currentIntent?.type
-                        ? wrapContext(
-                              `${currentIntent.type} with params ${JSON.stringify({
-                                  ...currentIntent.params,
-                                  ...(currentIntent.userParams || {})
-                              })}`
-                          ) + 'Sure!'
-                        : '') + wrapContext(msg),
+                ...(msg && {
+                    prompt:
+                        (currentIntent?.type
+                            ? wrapContext(
+                                  `${currentIntent.type} with params ${JSON.stringify({
+                                      ...currentIntent.params
+                                  })}`
+                              ) + 'Sure!'
+                            : '') + wrapContext(msg)
+                }),
                 ...(currentIntent && {
                     intent: currentIntent?.type,
-                    params: currentIntent.params
+                    params: {
+                        ...currentIntent?.params,
+                        ...data
+                    },
+                    userParams: currentIntent?.userParams
                 })
             }
         })
             .then((res: any) => {
                 if (res.data) {
-                    const { message, key, allowedValues, allowCreate, intent, type, errors, status } = res.data;
+                    const { message, key, allowedValues, allowCreate, intent, type, error, status } = res.data;
                     if (intent) {
                         dispatch(setCurrentIntent(intent));
                         if (!intent.complete) {
@@ -673,16 +714,6 @@ const Chatbot = () => {
                         } else {
                             setPayloadContent(intent.validatedJson);
                             mapParamsToPayload(intent.params);
-                            dispatch(
-                                setSuggestionBubbles({
-                                    list: [{ label: 'Deploy', value: 'deploy' }],
-                                    onBubbleClick: (label?: string, value?: string) => {
-                                        if (value === 'deploy') {
-                                            handleCreate();
-                                        }
-                                    }
-                                })
-                            );
                         }
                         setIsPayloadReady(intent.complete);
                     }
@@ -698,7 +729,7 @@ const Chatbot = () => {
                             intent: intent,
                             type: type,
                             active: true,
-                            errors: errors,
+                            error: error,
                             status: status
                         }
                     ];
@@ -743,7 +774,7 @@ const Chatbot = () => {
         })
             .then((res: any) => {
                 if (res.data) {
-                    const { message, key, allowedValues, allowCreate, intent, type, errors, status } = res.data;
+                    const { message, key, allowedValues, allowCreate, intent, type, error, status } = res.data;
                     if (intent) {
                         dispatch(setCurrentIntent(intent));
                         if (!intent.complete) {
@@ -752,16 +783,6 @@ const Chatbot = () => {
                         } else {
                             setPayloadContent(intent.validatedJson);
                             mapParamsToPayload(intent.params);
-                            dispatch(
-                                setSuggestionBubbles({
-                                    list: [{ label: 'Deploy', value: 'deploy' }],
-                                    onBubbleClick: (label?: string, value?: string) => {
-                                        if (value === 'deploy') {
-                                            handleCreate();
-                                        }
-                                    }
-                                })
-                            );
                         }
                         setIsPayloadReady(intent.complete);
                     }
@@ -776,7 +797,7 @@ const Chatbot = () => {
                             intent: intent,
                             type: type,
                             active: true,
-                            errors: errors,
+                            error: error,
                             status: status
                         }
                     ];
@@ -813,10 +834,8 @@ const Chatbot = () => {
         );
     }, [currentIntent, payloadContent, isPayloadReady]);
 
-    const handleSendMsg = async (msg: string, add: boolean = true, msgs: messageType[]) => {
-        if (msg) {
-            await sendMsg(msg, add, msgs);
-        }
+    const handleSendMsg = async (msg: string, add: boolean = true, msgs: messageType[], paramObject = {}) => {
+        await sendMsg(msg, add, msgs, paramObject);
     };
 
     const handleSelectButtonClicked = async (paramObj: any, sender: string = 'user') => {
@@ -824,9 +843,9 @@ const Chatbot = () => {
         if (updatedMessages.length) {
             updatedMessages[updatedMessages.length - 1] = {
                 ...updatedMessages[updatedMessages.length - 1],
-                errors: null,
+                error: null,
                 msg:
-                    updatedMessages[updatedMessages.length - 1]?.errors?.[0]?.message ||
+                    updatedMessages[updatedMessages.length - 1]?.error?.message ||
                     updatedMessages[updatedMessages.length - 1].msg
             };
         }
@@ -839,7 +858,7 @@ const Chatbot = () => {
             .map(key => `Use ${key} as ${typeof paramObj[key] === 'object' ? paramObj[key].value : paramObj[key]}`)
             .join(', ');
         dispatch(setLatestIntentMsg(msgToBot));
-        await handleSendMsg(msgToBot, false, updatedMessages);
+        await handleSendMsg('', false, updatedMessages, paramObj);
     };
 
     useEffect(() => {
@@ -987,7 +1006,7 @@ const Chatbot = () => {
                             dispatch(
                                 setSuggestionBubbles({
                                     list: CHATBOT_WELCOME_CARDS.map(item => {
-                                        return { label: item, value: item };
+                                        return { label: item.label, value: item.value || item.label };
                                     }),
                                     onBubbleClick: async (label?: string, value?: string) => {
                                         dispatch(

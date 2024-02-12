@@ -163,7 +163,7 @@ export const adPassVal = (password: string) => {
 };
 
 export const fsxPassVal = (password: string) => {
-    if (password.length) {
+    if (password?.length) {
         const state = store.getState();
         if (state.auth.isDemoMode) {
             return '';
@@ -744,7 +744,7 @@ export const validateChatbotField = (fieldName: string, value: any) => {
         case 'fsxPassword':
             return fsxPassVal(val) || '';
         case 'serviceAccountName':
-            return isValidUserName(val) || '';
+            return isValidUserName(val) || (val && val.length && val.length > 20 && GENERAL.PASSWORD_ERROR_CHECK) || '';
         case 'serviceAccountPassword':
             return dbPassVal(val) || '';
         case 'databaseSize':
@@ -855,7 +855,8 @@ export const getChatbotParamsFromPayload = (payload: any) => {
         params.fsxPassword = payload.fsxN.fsxNPassword;
     }
     if (payload?.throughput?.value) {
-        params.fsxVolThroughput = payload.throughput.value.split(' ')[0];
+        const throughputVal = payload.throughput.value.split(' ')[0];
+        params.fsxVolThroughput = throughputVal ? parseInt(throughputVal) : '';
     }
     if (payload?.securityGroup?.selectedExistingSecurityGroup?.value) {
         params.ontapSgGroupId = payload.securityGroup.selectedExistingSecurityGroup.value;
@@ -882,7 +883,7 @@ export const getChatbotParamsFromPayload = (payload: any) => {
     if (payload?.activeDirectory?.scenarioType) {
         params.adScenarioType = payload.activeDirectory.scenarioType;
     }
-    params.enableCloudWatch = payload.cloudWatch || false;
+    params.enableCloudWatch = true;
     return params;
 };
 
@@ -973,11 +974,19 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
         keys.map((key: string) => {
             //Goes Through Each Object value
             if (key && key !== '') {
+                let value = item[key] ? String(item[key]) : '';
+                if (value && value.includes(',')) {
+                    value = '"' + value + '"';
+                }
                 if (key === 'startTime' || key === 'endTime') {
-                    result += item[key] ? formatDateWithTime(item[key]).replace(',', '') + ',' : 'N/A,';
+                    result += value ? formatDateWithTime(value).replace(',', '') + ',' : 'N/A,';
+                } else if (key === 'name' && value) {
+                    result += value.split(';href')[0] + ',';
+                } else if (key === 'status' && value) {
+                    result += jobMonitoringStatusMapping(value) + ',';
                 } else {
-                    if (item[key]) {
-                        result += item[key] + ',';
+                    if (value) {
+                        result += value + ',';
                     } else {
                         result += ' ,';
                     }
@@ -1134,4 +1143,62 @@ export const expandTableRow = (
     updateRowState(rowData.id)({
         isExpanded: !currentRowState?.isExpanded
     });
+};
+
+export const getCurrentDateTime = () => {
+    const currentDate = new Date();
+
+    // Format the date as "January 30, 2024, 00:00:00"
+    const formattedDate = currentDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
+    const formattedTime = currentDate.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    });
+
+    return `${formattedDate}, ${formattedTime}`;
+};
+
+export const initialColStateManagedHosts = {
+    1: {
+        isHidden: false,
+        isRemovalDisabled: true
+    },
+    2: {
+        isHidden: false
+    },
+    3: {
+        isHidden: false
+    },
+    4: {
+        isHidden: false
+    },
+    5: {
+        isHidden: false
+    },
+    6: {
+        isHidden: false
+    },
+    7: {
+        isHidden: false
+    },
+    8: {
+        isHidden: true
+    },
+    9: {
+        isHidden: true
+    },
+
+    10: {
+        isHidden: true
+    },
+    11: {
+        isHidden: true
+    }
 };
