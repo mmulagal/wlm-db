@@ -19,19 +19,14 @@ import {
     FSX_STORAGE_TYPE,
     AWS_RESOURCE_NAME_TAG,
     FSX_BATCH_CONCURRENCY_VALUE,
-    SSM_COMMAND_CACHE_TYPE,
-    WORKLOAD_FACTORY_ENDPOINT,
-    HEADERS,
-    USER_TOKEN,
-    ACCOUNT_ID
+    SSM_COMMAND_CACHE_TYPE
 } from '../../utils/consts';
-import { gotInstanceForInternalRequest } from '../../utils/got.js';
 import { getNetworkInterfacesList } from './ec2-operations';
 import { callSsmExecution } from '../workloads/mssql/mssql-operations';
 import { Metadata, ResourceDetails } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { getFsxArn } from '../../utils/utils';
-import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
+import { listFSXFileSystemForDemo } from '../../lib/cloud-manager/fsx-core';
 
 const logger = getLogger();
 
@@ -39,22 +34,6 @@ type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
 
 const TWENTYFOUR_HOURS = '24h';
 const SIX_HOURS = '6h';
-
-interface FSXRESPONSE {
-    items: Array<FSXDATA>;
-}
-
-interface FSXDATA {
-    id: string;
-    name: string;
-    status: { status: string };
-    networkInterfaceIds: any;
-    vpcId: string;
-    subnetIds: any;
-    region: string;
-    awsAccountId: string;
-    deploymentType: string;
-}
 
 async function getFSXDetails(credentialsId: string, region: string, fileSys: any) {
     const enetInterfaceIds = fileSys.NetworkInterfaceIds;
@@ -195,19 +174,7 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
 async function getFSXFileSystemListForDemo(credentialsId: string, region: string, vpcId: string) {
     logger.info('Get FSX file systems list for demo', { credentialsId, region, vpcId });
 
-    const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
-    const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
-    const { items } = await gotInstanceForInternalRequest
-        .get(
-            `${WORKLOAD_FACTORY_ENDPOINT}/accounts/${accountId}/fsx/v2/credentials/${credentialsId}/regions/${region}/file-systems`,
-            {
-                headers: {
-                    [HEADERS.AUTHORIZATION]: token,
-                    [HEADERS.SIMULATOR]: 'true'
-                }
-            }
-        )
-        .json<FSXRESPONSE>();
+    const items = await listFSXFileSystemForDemo(credentialsId, region);
     logger.debug('file system list api response', {
         items
     });

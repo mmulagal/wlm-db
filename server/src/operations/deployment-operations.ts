@@ -66,10 +66,7 @@ import {
     DATABASE_SIZE,
     SQL_HOST_NAME,
     OPERATE,
-    VIEW,
-    USER_TOKEN,
-    WORKLOAD_FACTORY_ENDPOINT,
-    HEADERS
+    VIEW
 } from '../utils/consts';
 import {
     createJobMockData,
@@ -81,7 +78,6 @@ import {
     isNetworkConfigurationViolated,
     sleep
 } from '../utils/utils';
-import { gotInstanceForInternalRequest } from '../utils/got';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
@@ -96,6 +92,7 @@ import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
 import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
 import { createJobs } from '../lib/database/job';
+import { createFSXForDemo } from '../lib/cloud-manager/fsx-core';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -728,17 +725,14 @@ async function deployCloudFormationTemplate(
         );
         if (!fsxConfiguration.fsxFileSystemId) {
             // create a new fsx record in fsx inventory
-            createFSXForDemo(credentialsId, region, fsxConfiguration);
+            createFileSystemForDemo(credentialsId, region, fsxConfiguration);
         }
     }
     return { cloudFormationStackId: deployStackResponse.StackId!, cloudFormationUrl: cfUrl };
 }
 
-async function createFSXForDemo(credentialsId: string, region: string, fsxConfiguration: FSXConfigurationType) {
+async function createFileSystemForDemo(credentialsId: string, region: string, fsxConfiguration: FSXConfigurationType) {
     logger.info('Creating fsx for demo', credentialsId, region, fsxConfiguration);
-
-    const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
-    const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
 
     const { fsxDeploymentMode, fsxIOPS, fsxPassword } = fsxConfiguration;
     const mode = fsxDeploymentMode.replace(/_\d+$/, '');
@@ -764,20 +758,7 @@ async function createFSXForDemo(credentialsId: string, region: string, fsxConfig
         automaticBackupRetentionDays: 30
     };
 
-    try {
-        return gotInstanceForInternalRequest.post(
-            `${WORKLOAD_FACTORY_ENDPOINT}/accounts/${accountId}/fsx/v2/file-systems`,
-            {
-                headers: {
-                    [HEADERS.AUTHORIZATION]: token,
-                    [HEADERS.SIMULATOR]: 'true'
-                },
-                json: requestBody
-            }
-        );
-    } catch (err) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while creating fsx ${err}.`);
-    }
+    return createFSXForDemo(requestBody);
 }
 
 async function deploymentStatus(accountId: string) {
