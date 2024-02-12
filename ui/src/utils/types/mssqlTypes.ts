@@ -91,13 +91,14 @@ export interface FSxN {
     kmsKeyId?: string;
     ontapConfiguration?: {
         deploymentType?: string;
-        throughputCapacity?: string;
+        throughputCapacity?: number;
         preferredSubnetId?: string;
         diskIopsConfiguration?: {
             iops: string;
             mode: string;
         }
-    }
+    };
+    storageVirtualMachines?: [];
 }
 
 export interface MssqlEntities {

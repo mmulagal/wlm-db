@@ -513,7 +513,17 @@ export const GENERAL = {
     JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
     DEMO_TITLE: 'Redirect to CloudFormation',
-    DEMO_CONTENT: `When using a Demo account you won't be redirected to the AWS CloudFormation service.`
+    DEMO_CONTENT: `When using a Demo account you won't be redirected to the AWS CloudFormation service.`,
+    FSXN_SVM_ERROR: [
+        'Selected FSX has more than ',
+        ' SVMs. Amazon FSx does not support having more than ',
+        ' storage virtual machines for an ONTAP file system with ',
+        ' MBps of throughput capacity.'
+    ],
+    FSXN_SECONDARY_SUBNET_ERROR: 'The primary and secondary subnets of FSx for ONTAP file system does not reside in the selected availability zones.',
+    FSXN_PRIMARY_SUBNET_ERROR: 'The subnet for node 1 must be in the primary Availability Zone for the FSx for ONTAP file system.',
+    FSXN_DEPLOYMENT_MODE_ERROR: 'Deployment mode not found.',
+    FSXN_NOT_AVAILABLE: 'FSx for ONTAP file system is not in available state.'
 };
 
 export const CODE_VIEWER = {
