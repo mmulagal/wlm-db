@@ -1,22 +1,25 @@
-import { useState } from 'react';
+import { useAppSelector } from '../../../store/storeHooks';
+import { useDispatch } from 'react-redux';
 
 import CardComponentConfig from '../../../common/CardComponent/CardComponentConfig';
-
 import { ReactComponent as BlueTick } from '../../../assets/blue-tick.svg';
 import { ReactComponent as EasyCreate } from '../../../assets/Quick create.svg';
-import styles from './CreateStyle.module.scss';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
+import { setSelectedNewUserConfig } from '../../../store/workloadFactory/createNewUserSlice';
+
+import styles from './CreateStyle.module.scss';
 
 const CreateStyle = () => {
-    const [selectedNewUserConfig, setSelectedNewUserConfig] = useState('Quick Create');
+    const selectedConfigNewUser = useAppSelector(state => state.createNewUser.selectedNewUserConfig);
+    const dispatch = useDispatch();
     const clickHandler = (val: string) => {
-        setSelectedNewUserConfig(val);
+        dispatch(setSelectedNewUserConfig(val));
     };
     return (
         <div className={styles.createStyle}>
             <CardComponentConfig
                 idToAdd="new-user-quick-create"
-                selectedConfigCondition={selectedNewUserConfig === 'Quick Create'}
+                selectedConfigCondition={selectedConfigNewUser === 'Quick Create'}
                 icon={<EasyCreate />}
                 tickIcon={<BlueTick />}
                 heading={SELECT_CONFIG.QUICK_CREATE}
@@ -26,7 +29,7 @@ const CreateStyle = () => {
 
             <CardComponentConfig
                 idToAdd="new-user-standard-create"
-                selectedConfigCondition={selectedNewUserConfig === 'Standard Create'}
+                selectedConfigCondition={selectedConfigNewUser === 'Standard Create'}
                 icon={<EasyCreate />}
                 tickIcon={<BlueTick />}
                 heading={SELECT_CONFIG.QUICK_CREATE}
