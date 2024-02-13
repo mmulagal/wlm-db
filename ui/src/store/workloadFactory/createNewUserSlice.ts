@@ -1,14 +1,16 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 const initialCreateNewUserState: any = {
-    selectedNewUserConfig: 'Quick Create',
+    selectedNewUserConfig: 'Quick create',
     newUserDBName: '',
     newUserDataSize: '',
     newUserDataSizeUnit: '',
     newUserDBFileName: '',
     newUserLogFileName: '',
     newUserLogFileSize: '',
-    newUserLogFileSizeUnit: ''
+    newUserLogFileSizeUnit: '',
+    driveLetter: '',
+    driveLetterLogFile: ''
 };
 
 const createNewUserSlice = createSlice({
@@ -38,6 +40,12 @@ const createNewUserSlice = createSlice({
         },
         setNewUserLogFileSizeUnit: (state, action: PayloadAction<any>) => {
             state.newUserLogFileSizeUnit = action.payload;
+        },
+        setDriveLetter: (state, action: PayloadAction<any>) => {
+            state.driveLetter = action.payload;
+        },
+        setDriveLetterForLogFile: (state, action: PayloadAction<any>) => {
+            state.driveLetterLogFile = action.payload;
         }
     }
 });
@@ -50,7 +58,9 @@ export const {
     setNewDBFileName,
     setNewUserLogFileName,
     setNewUserLogFileSize,
-    setNewUserLogFileSizeUnit
+    setNewUserLogFileSizeUnit,
+    setDriveLetter,
+    setDriveLetterForLogFile
 } = createNewUserSlice.actions;
 
 export default createNewUserSlice;

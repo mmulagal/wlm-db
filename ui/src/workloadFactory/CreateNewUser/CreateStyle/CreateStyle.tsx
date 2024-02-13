@@ -19,22 +19,22 @@ const CreateStyle = () => {
         <div className={styles.createStyle}>
             <CardComponentConfig
                 idToAdd="new-user-quick-create"
-                selectedConfigCondition={selectedConfigNewUser === 'Quick Create'}
+                selectedConfigCondition={selectedConfigNewUser === 'Quick create'}
                 icon={<EasyCreate />}
                 tickIcon={<BlueTick />}
                 heading={SELECT_CONFIG.QUICK_CREATE}
                 content={SELECT_CONFIG.EASY_CREATE_CONTENT}
-                handleClick={() => clickHandler('Quick Create')}
+                handleClick={() => clickHandler('Quick create')}
             />
 
             <CardComponentConfig
                 idToAdd="new-user-standard-create"
-                selectedConfigCondition={selectedConfigNewUser === 'Standard Create'}
+                selectedConfigCondition={selectedConfigNewUser === 'Standard create'}
                 icon={<EasyCreate />}
                 tickIcon={<BlueTick />}
-                heading={SELECT_CONFIG.QUICK_CREATE}
+                heading={'Standard create'}
                 content={SELECT_CONFIG.EASY_CREATE_CONTENT}
-                handleClick={() => clickHandler('Standard Create')}
+                handleClick={() => clickHandler('Standard create')}
             />
         </div>
     );

@@ -1,4 +1,5 @@
 .fileSettings {
+    margin-bottom: 40px;
     .firstRow {
         display: flex;
         gap: 24px;
@@ -48,6 +49,33 @@
             [class*='design-system-select__value-container'] {
                 padding: 2px 0 2px 46px !important;
             }
+        }
+    }
+
+    .dataFileSection {
+        .dataFileSeparator {
+            margin-top: 8px;
+            width: 984px;
+            border-bottom: 1px solid var(--grey-25);
+        }
+
+        .inputSection {
+            margin-top: 24px;
+            display: flex;
+            gap: 24px;
+        }
+
+        .driveSelectField {
+            width: 229px;
+        }
+
+        .pathSection {
+            height: 48px;
+            width: 984px;
+            background-color: var(--main-background);
+            margin-top: -10px;
+            margin-bottom: 64px;
+            padding: 12px 40px;
         }
     }
 }
