@@ -1,4 +1,5 @@
 import Promise from 'bluebird';
+import randomize from 'randomatic';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
 import { ListTagsForResourceCommandInput, Tag, Volume } from '@aws-sdk/client-fsx';
@@ -25,6 +26,7 @@ import { callSsmExecution } from '../workloads/mssql/mssql-operations';
 import { Metadata, ResourceDetails } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { getFsxArn } from '../../utils/utils';
+import { listFSXFileSystemForDemo } from '../../lib/cloud-manager/fsx-core';
 
 const logger = getLogger();
 
@@ -125,11 +127,17 @@ async function getFSXDetails(credentialsId: string, region: string, fileSys: any
  * Return Amazon FSx for NetApp ONTAP filesystems in the given AWS region
  * and also available from the given VPC.
  */
+
 async function getFSxFileSystemsList(credentialsId: string, region: string, vpcId: string) {
     logger.info('List FSx for ONTAP of type SSD', { credentialsId, region, vpcId });
+    let allFSxFilesystems;
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        // Call the internal fsx service to get the list of fsx details
+        allFSxFilesystems = await getFSXFileSystemListForDemo(credentialsId, region, vpcId);
+        return { filesystems: allFSxFilesystems };
+    }
 
-    let allFSxFilesystems = await describeFSxFileSystems(credentialsId, region);
-
+    allFSxFilesystems = await describeFSxFileSystems(credentialsId, region);
     // 1. We are supporting only Amazon FSx for NetApp ONTAP filesystems, which
     //    are always of storageType == SSD and fileSystemType == ONTAP.
     // 2. The returned FileSystemIds need to be always defined and unique, so
@@ -161,6 +169,39 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
     );
 
     return { filesystems: ontapFSxFilesystems };
+}
+
+async function getFSXFileSystemListForDemo(credentialsId: string, region: string, vpcId: string) {
+    logger.info('Get FSX file systems list for demo', { credentialsId, region, vpcId });
+
+    const items = await listFSXFileSystemForDemo(credentialsId, region);
+    logger.debug('file system list api response', {
+        items
+    });
+    const filteredResponse = items?.map(
+        ({
+            id,
+            name,
+            status: { status },
+            networkInterfaceIds,
+            vpcId: fsxVpcId,
+            subnetIds,
+            region: fsxRegion,
+            awsAccountId,
+            deploymentType
+        }) => ({
+            fileSystemId: id,
+            name,
+            lifecycle: status,
+            networkInterfaceIds,
+            vpcId: fsxVpcId,
+            ...(deploymentType === 'SINGLE_AZ'
+                ? { subnetIds: [subnetIds?.primary] }
+                : { subnetIds: [subnetIds?.primary, subnetIds?.secondary] }),
+            kmsKeyId: `arn:aws:kms:${fsxRegion}:${awsAccountId}:key/${randomize('A0', 17)}`
+        })
+    );
+    return filteredResponse;
 }
 
 async function getStorageDataUsingSSM(
