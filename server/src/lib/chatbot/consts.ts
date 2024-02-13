@@ -302,6 +302,8 @@ const BACKTRACE_MESSAGES = {
     [AZ_2]: 'The VPC that you selected does not contain required availability zones, please select a different VPC'
 };
 
+const FSX_ADMIN = 'fsxadmin';
+
 export {
     MODEL,
     SERVICE,
@@ -361,5 +363,6 @@ export {
     M5_XL,
     ENCRYPTION_KEY,
     THROUGHPUT,
-    BACKTRACE_MESSAGES
+    BACKTRACE_MESSAGES,
+    FSX_ADMIN
 };
