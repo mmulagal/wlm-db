@@ -4,6 +4,7 @@ import { registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import styles from './InventoryChart.module.scss';
 import { Typography } from '@netapp/design-system';
+import { GENERAL } from '../../../utils/appConstants';
 
 Chart.register(...registerables);
 
@@ -54,7 +55,7 @@ const InventoryChart = () => {
                 <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
                     20
                 </Typography>
-                <Typography variant="Regular_14">Database hosts</Typography>
+                <Typography variant="Regular_14">{GENERAL.DATABASE_HOSTS}</Typography>
             </div>
             <canvas ref={ref} id="chart-area" width={196} height={196}></canvas>
         </div>

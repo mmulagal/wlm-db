@@ -34,7 +34,8 @@ import {
     M5_XL,
     SQL_SERVER_NAME,
     ENCRYPTION_KEY,
-    THROUGHPUT
+    THROUGHPUT,
+    FSX_ADMIN
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
@@ -579,15 +580,31 @@ function validateText(text: string, key: string, fsxType?: string) {
     if (key === SQL_SERVER_NAME && !text) {
         text = `sqldatabase${randomize('a0', 4)}`;
     }
-    if (!text) {
-        return {
-            key,
-            status: 'error',
-            message: `${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
-            type: key.toLowerCase().includes('password') ? 'password' : 'text',
-            ...(key === FSX_USERNAME && fsxType === NEW && { disable: true, default: 'fsxadmin' })
-        };
+
+    const errorObj = {
+        key,
+        status: 'error',
+        message: `${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
+        type: key.toLowerCase().includes('password') ? 'password' : 'text'
+    };
+
+    if (key === FSX_USERNAME) {
+        if (fsxType === NEW) {
+            return { key, value: FSX_ADMIN };
+        }
+
+        if (!text) {
+            return {
+                ...errorObj,
+                default: FSX_ADMIN
+            };
+        }
     }
+
+    if (!text) {
+        return errorObj;
+    }
+
     return { key, value: text };
 }
 

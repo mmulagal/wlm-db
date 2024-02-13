@@ -1,8 +1,9 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import { WLF_TABS } from '../../utils/consts';
 
 const initialInventoryState: any = {
-    selectedInventoryTab: 'Managed Hosts',
-    selectedHeaderTab: 'Dashboard',
+    selectedInventoryTab: WLF_TABS.MANAGED_HOSTS,
+    selectedHeaderTab: WLF_TABS.DASHBOARD,
     detectManageUserName: '',
     detectManagePassword: '',
     detectOntapUsername: '',

@@ -5,11 +5,12 @@ import { selectedTabSelection } from '../../../store/workloadFactory/databaseHom
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
+import { WLF_TABS } from '../../../utils/consts';
 
 const OverviewTabs = () => {
     const dispatch = useDispatch();
     const selectedTabOverview = useAppSelector(state => state.databaseHome.selectedTab);
-    const [selectedTab, setSelectedTab] = useState('Overview');
+    const [selectedTab, setSelectedTab] = useState(WLF_TABS.OVERVIEW);
 
     useEffect(() => {
         setSelectedTab(selectedTabOverview);
@@ -23,24 +24,24 @@ const OverviewTabs = () => {
         <div
             className={styles.overviewTabs}
         >
-            <div className={selectedTab === 'Overview' ? `${styles.headers} ${styles.active}` : `${styles.headers}`}>
+            <div className={selectedTab === WLF_TABS.OVERVIEW ? `${styles.headers} ${styles.active}` : `${styles.headers}`}>
                 <Typography
                     variant="Semibold_14"
                     className={
-                        selectedTab === 'Overview' ? `${styles.headerPart1} ${styles.activeText}` : `${styles.headerPart1}`
+                        selectedTab === WLF_TABS.OVERVIEW ? `${styles.headerPart1} ${styles.activeText}` : `${styles.headerPart1}`
                     }
-                    onClick={() => handleClick('Overview')}
+                    onClick={() => handleClick(WLF_TABS.OVERVIEW)}
                 >
                     {GENERAL.OVERVIEW}
                 </Typography>
             </div>
-            <div className={selectedTab === 'Database list' ? `${styles.headers} ${styles.active}` : `${styles.headers}`}>
+            <div className={selectedTab === WLF_TABS.DATABASE_LIST ? `${styles.headers} ${styles.active}` : `${styles.headers}`}>
                 <Typography
                     variant="Semibold_14"
                     className={
-                        selectedTab === 'Database list' ? `${styles.headerPart2} ${styles.activeText}` : `${styles.headerPart2}`
+                        selectedTab === WLF_TABS.DATABASE_LIST ? `${styles.headerPart2} ${styles.activeText}` : `${styles.headerPart2}`
                     }
-                    onClick={() => handleClick('Database list')}
+                    onClick={() => handleClick(WLF_TABS.DATABASE_LIST)}
                 >
                     {GENERAL.DATABASES}
                 </Typography>

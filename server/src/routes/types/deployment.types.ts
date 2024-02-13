@@ -102,7 +102,7 @@ const MissingPermissions = Type.Object({
 const CloudFormationDeploymentResponse = Type.Object({
     cloudFormationUrl: Type.Optional(Type.String()),
     cloudFormationStackId: Type.Optional(Type.String()),
-    missingPermissions: MissingPermissions
+    missingPermissions: Type.Optional(MissingPermissions)
 });
 
 const CloudFormationStaticTemplateResponse = Type.Object({

@@ -64,6 +64,7 @@ import {
     AWS_MANAGED_AD,
     CHATBOT_WELCOME_CARDS,
     FORM_TO_WLF_NAVIGATE,
+    WLF_TABS,
     PRODUCTION,
     SQL_DEPLOYMENT_MODE,
     TIMELINE_PROD_LINK,
@@ -79,6 +80,7 @@ import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import MissingPermissionsMsg from '../AwsSettings/AwsAccount/MissingPermissionsMsg';
 import store from '../../../store/store';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 const _ = require('lodash');
 
 type optionsType = {
@@ -244,7 +246,8 @@ const Chatbot = () => {
                                 variant="text"
                                 onClick={() => {
                                     clearTimeout(notificationMsg);
-                                    navigate('../job-monitor');
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                    navigate('../databases');
                                     dispatch(clearNotifications());
                                 }}
                             >

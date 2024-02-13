@@ -1,4 +1,5 @@
 import { useAppSelector } from '../../store/storeHooks';
+import { WLF_TABS } from '../../utils/consts';
 import styles from './Inventory.module.scss';
 import InventoryApis from './InventoryApis';
 import InventoryHeaderSection from './InventoryHeaderSection/InventoryHeaderSection';
@@ -18,9 +19,9 @@ const Inventory = () => {
             <div className={styles.tabs}>
                 <InventoryTabs />
             </div>
-            {selectedInventoryTab === 'Managed Hosts' && <ManagedHosts />}
-            {selectedInventoryTab === 'Unmanaged Hosts' && <UnmanagedHosts />}
-            {selectedInventoryTab === 'Undetected Hosts' && <UndetectedHosts />}
+            {selectedInventoryTab === WLF_TABS.MANAGED_HOSTS && <ManagedHosts />}
+            {selectedInventoryTab === WLF_TABS.UNMANAGED_HOSTS && <UnmanagedHosts />}
+            {selectedInventoryTab === WLF_TABS.UNDETECTED_HOSTS && <UndetectedHosts />}
         </div>
     );
 };

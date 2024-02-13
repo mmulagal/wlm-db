@@ -6,6 +6,10 @@
 
     .firstContainer {
         margin-top: 16px;
+        
+        [class*='design-system-select__single-value'] {
+            max-width: 326px !important;
+        }
     }
 
     .textField {
