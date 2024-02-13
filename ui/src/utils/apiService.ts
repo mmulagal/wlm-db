@@ -480,6 +480,20 @@ export const headersApi = createApi({
     }
 });
 
+export const policiesApi = createApi({
+    reducerPath: 'policiesApi',
+    baseQuery: fetchBaseQuery({ 
+        baseUrl: 'https://staging.console.workloads.netapp.com'
+    }),
+    endpoints: builder => {
+        return {
+            getWlmdbPolicies: builder.query({
+                query: () => ({ url: `/wlmdb/workload-policies.json` })
+            })
+        };
+    }
+});
+
 export const {
     useGetCredentialsQuery,
     useGetRegionsQuery,
@@ -536,3 +550,5 @@ export const {
 export const { useSendMsgMutation } = chatbotApi;
 
 export const { useGetHeadersCredentialsQuery, useGetHeadersRegionsQuery, useGetStatusQuery } = headersApi;
+
+export const { useGetWlmdbPoliciesQuery } = policiesApi;
