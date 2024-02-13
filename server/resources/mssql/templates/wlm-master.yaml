@@ -15,6 +15,11 @@ Metadata:
           - RouteTable1Id
           - PrivateSubnet2ID
           - RouteTable2Id
+          - S3EndpointExists
+          - CloudformationEndpointExists
+          - SsmEndpointExists
+          - SqsEndpointExists
+          - CloudwatchEndpointExists
       - Label:
           default: Amazon EC2 Configuration
         Parameters:
@@ -158,6 +163,16 @@ Metadata:
        default: Validation node AMI image ID
       SQLDeploymentMode:
         default: SQL server deployment mode
+      S3EndpointExists:
+        default: Boolean to check if an S3 endpoint exists in the vpc.
+      CloudformationEndpointExists:
+        default: Boolean to check if a Cloudformation endpoint exists in the vpc.
+      SsmEndpointExists:
+        default: Boolean to check if a SSM endpoint exists in the vpc.
+      SqsEndpointExists:
+        default: Boolean to check if a SQS endpoint exists in the vpc.
+      CloudwatchEndpointExists:
+        default: Boolean to check if a Cloudwatch endpoint exists in the vpc.
 Parameters: 
   UniqueID:
     Description: Automation execution unique ID.
@@ -280,6 +295,16 @@ Parameters:
   {{WlmdbAwsAccountId}}
   
   {{Metrics}}
+
+  {{S3EndpointExists}}
+
+  {{CloudformationEndpointExists}}
+
+  {{SsmEndpointExists}}
+
+  {{SqsEndpointExists}}
+
+  {{CloudwatchEndpointExists}}
        
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -472,10 +497,40 @@ Resources:
       FileSystemType: 'FSx for ONTAP'
       DatabaseType: 'Microsoft SQL server'
       Metrics: !Ref Metrics
-  ValidationStack1:
+  VpcEndpointStack:
     Type: AWS::CloudFormation::Stack
     DependsOn:
       - TrackStackDeployment
+    Properties:
+      TemplateURL: {{VpcEndpointTemplate}}
+      Parameters:
+        VPCId:
+          Ref: VPCID
+        VPCCIDR:
+          Ref: VPCCIDR
+        PreferredSubnetId:
+          Ref: PrivateSubnet1ID
+        StandbySubnetId: !If [IsFailoverCluster, !Ref PrivateSubnet2ID, !Ref AWS::NoValue]
+        S3EndpointExists:
+          Ref: S3EndpointExists
+        CloudformationEndpointExists:
+          Ref: CloudformationEndpointExists
+        SsmEndpointExists:
+          Ref: SsmEndpointExists
+        SqsEndpointExists:
+          Ref: SqsEndpointExists
+        CloudwatchEndpointExists:
+          Ref: CloudwatchEndpointExists
+      NotificationARNs:
+        Fn::If:
+        - IncludeNotification
+        - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+        - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+      {{Tags}}
+  ValidationStack1:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - VpcEndpointStack
       - EC2IAMRole
     Properties:
       TemplateURL: {{ValidationTemplate}}
@@ -531,7 +586,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: IsFailoverCluster
     DependsOn:
-      - TrackStackDeployment
+      - VpcEndpointStack
       - EC2IAMRole
     Properties:
       TemplateURL: {{ValidationTemplate}}

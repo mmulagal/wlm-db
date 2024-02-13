@@ -633,6 +633,14 @@ const TEMPLATE_SNS_SERVICE_TOKEN = 'SnsServiceToken';
 const TEMPLATE_WLMDB_AWS_ACCOUT_ID = 'WlmdbAwsAccountId';
 const TEMPLATE_FSX_PASSWORD = 'EncryptedFsxPassword';
 const TEMPLATE_METRICS = 'Metrics';
+const TEMPLATE_S3_ENDPOINT = 'S3EndpointExists'
+const TEMPLATE_CLOUDFORMATION_ENDPOINT = 'CloudformationEndpointExists'
+const TEMPLATE_SSM_ENDPOINT = 'SsmEndpointExists'
+const TEMPLATE_SQS_ENDPOINT = 'SqsEndpointExists'
+const TEMPLATE_CLOUDWATCH_ENDPOINT = 'CloudwatchEndpointExists'
+
+const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string,string> = {'s3': TEMPLATE_S3_ENDPOINT, 'cloudformation': TEMPLATE_CLOUDFORMATION_ENDPOINT, 
+'ssm': TEMPLATE_SSM_ENDPOINT, 'sqs': TEMPLATE_SQS_ENDPOINT, 'monitoring': TEMPLATE_CLOUDWATCH_ENDPOINT}
 
 const SQL_RESOURCE_ASSETS = [
     {
@@ -764,6 +772,10 @@ const SQL_TEMPLATES_ASSETS = [
     {
         name: 'SQLStandaloneTemplate',
         url: 'templates/standalone-deployment.yaml'
+    },
+    {
+        name: 'VpcEndpointTemplate',
+        url: 'templates/vpc-endpoints.yaml'
     }
 ];
 
@@ -779,7 +791,8 @@ enum TEMPLATE_TYPES {
     MASTER = 'master',
     SQLSTACK = 'sqlstack',
     VALIDATION = 'validation',
-    SQLSTANDALONE = 'sqlstandalone'
+    SQLSTANDALONE = 'sqlstandalone',
+    ENDPOINT = 'endpoint'
 }
 
 const SQL_TEMPLATES_DISTRIBUTION = [
@@ -794,6 +807,10 @@ const SQL_TEMPLATES_DISTRIBUTION = [
     {
         name: TEMPLATE_TYPES.SQLSTANDALONE,
         location: './resources/mssql/templates/standalone-deployment.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.ENDPOINT,
+        location: './resources/mssql/templates/vpc-endpoints.yaml'
     }
 ];
 
@@ -1010,6 +1027,8 @@ const subJobDescriptions: SubJobDescriptions = {
         'Signaling wait condition to resume next steps'
 };
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
+
+const ENDPOINTS_DEPLOYMENT = ['s3', 'cloudformation', 'sqs', 'ssm', 'ssmmessages', 'ec2messages', 'monitoring']
 
 export {
     WLMDB,
@@ -1237,5 +1256,12 @@ export {
     JOBS_DEFAULT_TIME_RANGE,
     subJobDescriptions,
     CF_STACK_RESOURCE_TYPE,
-    AWS_PRICING_TYPE
+    AWS_PRICING_TYPE,
+    ENDPOINTS_DEPLOYMENT,
+    TEMPLATE_S3_ENDPOINT,
+    TEMPLATE_CLOUDFORMATION_ENDPOINT,
+    TEMPLATE_SSM_ENDPOINT, 
+    TEMPLATE_SQS_ENDPOINT,
+    TEMPLATE_CLOUDWATCH_ENDPOINT,
+    MAP_SERVICE_TEMPLATE_PARAMETER
 };

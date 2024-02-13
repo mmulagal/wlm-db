@@ -75,9 +75,11 @@ async function updateTemplateUrls(
     if (templateType === TEMPLATE_TYPES.MASTER) {
         const fsxNewTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXNewTemplate');
         const fsxExistingTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXExistingTemplate');
-        const [fsxNewTemplatesignedUrl, fsxExistingTemplatesignedUrl] = await Promise.all([
+        const vpcEndpointsTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'VpcEndpointTemplate');
+        const [fsxNewTemplatesignedUrl, fsxExistingTemplatesignedUrl, vpcEndpointsTemplateSignedUrl] = await Promise.all([
             getPreSignedUrl(region, fsxNewTemplatePath!.url),
-            getPreSignedUrl(region, fsxExistingTemplatePath!.url)
+            getPreSignedUrl(region, fsxExistingTemplatePath!.url),
+            getPreSignedUrl(region, vpcEndpointsTemplatePath!.url)
         ]);
 
         signedUrls.set(fsxNewTemplatePath!.name, {
@@ -89,6 +91,11 @@ async function updateTemplateUrls(
             name: fsxExistingTemplatePath!.name,
             url: fsxExistingTemplatesignedUrl,
             location: fsxNewTemplatePath!.url
+        });
+        signedUrls.set(vpcEndpointsTemplatePath!.name, {
+            name: vpcEndpointsTemplatePath!.name,
+            url: vpcEndpointsTemplateSignedUrl,
+            location: vpcEndpointsTemplatePath!.url
         });
         tags = tags ? tags.concat(DEFAULT_TAGS) : DEFAULT_TAGS;
 
@@ -107,6 +114,7 @@ async function updateTemplateUrls(
             SQLTemplate: decodeURI(signedUrls.get('SQLTemplate')?.url || ''),
             Tags: tags?.length ? yamlStr : '',
             SQLStandaloneTemplate: decodeURI(signedUrls.get('SQLStandaloneTemplate')?.url || ''),
+            VpcEndpointTemplate: decodeURI(signedUrls.get('VpcEndpointTemplate')?.url || ''),
             ...templateParameters
         });
         await putObjectBucket(region, BUCKET_NAME, templatePath!, contents);

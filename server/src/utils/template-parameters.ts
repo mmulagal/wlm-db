@@ -371,6 +371,36 @@ const PARAMETERS = [
         description: 'Metrics used for internal audit( DO NOT EDIT).',
         type: 'CommaDelimitedList',
         noEcho: true
+    },
+    {
+        name: 'S3EndpointExists',
+        description: 'Boolean to convey if an S3 endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
+    },
+    {
+        name: 'CloudformationEndpointExists',
+        description: 'Boolean to convey if a Cloudformation endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
+    },
+    {
+        name: 'SsmEndpointExists',
+        description: 'Boolean to convey if a SSM endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
+    },
+    {
+        name: 'SqsEndpointExists',
+        description: 'Boolean to convey if a SQS endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
+    },
+    {
+        name: 'CloudwatchEndpointExists',
+        description: 'Boolean to convey if a Cloudwatch endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
     }
 ];
 

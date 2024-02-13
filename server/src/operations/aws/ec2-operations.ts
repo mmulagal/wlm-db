@@ -8,7 +8,7 @@ import {
     DescribeVpcEndpointsCommandInput
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
-import { AWSQueryFields, WLMDB_COST_ALLOCATION_TAG } from '../../utils/consts';
+import { AWSQueryFields, ENDPOINTS_DEPLOYMENT, WLMDB_COST_ALLOCATION_TAG } from '../../utils/consts';
 import {
     describeVpc,
     describeSecurityGroups,
@@ -26,6 +26,7 @@ import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
 import { ResourceDetails, SecurityGroup, Subnet, VPC, NetworkInterface } from '../../utils/common-types';
+import { isEmpty } from 'lodash-es';
 
 const logger = getLogger();
 
@@ -445,16 +446,23 @@ async function getVpcEndpoints(credentialsId: string, region: string, vpcId: str
                 Values: [
                     `com.amazonaws.${region}.s3`,
                     `com.amazonaws.${region}.cloudformation`,
-                    `com.amazonaws.${region}.ssm`
+                    `com.amazonaws.${region}.ssm`,
+                    `com.amazonaws.${region}.ssmmessages`,
+                    `com.amazonaws.${region}.ec2messages`,
+                    `com.amazonaws.${region}.monitoring`,
+                    `com.amazonaws.${region}.sqs`
                 ]
+            },
+            {
+
             }
         ]
     };
     const response = await describeEndpoints(credentialsId, region, input);
 
     logger.debug('Get vpc endpoints response:', response);
-
-    return response;
+    
+    return response?.VpcEndpoints
 }
 
 async function getVpcSecurityGroups(credentialsId: string, region: string, vpcId: string) {
@@ -471,6 +479,16 @@ async function getVpcSecurityGroups(credentialsId: string, region: string, vpcId
     return { securityGroups };
 }
 
+async function getServicesWithNoEndpoint(credentialsId: string, region: string, vpcId: string) {
+    logger.info('Get services wit no endpoint ', credentialsId, region, vpcId);
+
+    const endpoints = await getVpcEndpoints(credentialsId!, region!, vpcId)
+    const availableEndpoints =  Object.assign({}, ...endpoints!.map((x) => ({[x.ServiceName as string]: x.PrivateDnsEnabled})))
+    const servicesWithNoEndpoint = !isEmpty(endpoints) ? ENDPOINTS_DEPLOYMENT.filter(e => e && Object.keys(availableEndpoints).indexOf(`com.amazonaws.${region}.${e}`) < 0) : ENDPOINTS_DEPLOYMENT
+
+    return servicesWithNoEndpoint
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -482,5 +500,6 @@ export {
     tagEc2Resource,
     getCostAllocationTagEC2Resource,
     getVpcEndpoints,
-    getVpcSecurityGroups
+    getVpcSecurityGroups,
+    getServicesWithNoEndpoint
 };

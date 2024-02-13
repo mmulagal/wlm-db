@@ -6,7 +6,9 @@ import {
     getKeyPairsList,
     getWindowsServerBaseAmi,
     tagEc2Resource,
-    getVpcSecurityGroups
+    getVpcSecurityGroups,
+    getVpcEndpoints,
+    getServicesWithNoEndpoint
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -57,6 +59,16 @@ describe('EC2 Operations', () => {
 
     it('Get Vpc Security Groups', async () => {
         const response = await getVpcSecurityGroups(credentialsId, DEFAULT_AWS_REGION, 'vpc-123445');
+        expect(response).toBeDefined();
+    });
+
+    it('Get Vpc endpoints', async () => {
+        const response = await getVpcEndpoints(credentialsId, DEFAULT_AWS_REGION, 'vpc-123445');
+        expect(response).toBeDefined();
+    });
+
+    it('Get Vpc endpoints', async () => {
+        const response = await getServicesWithNoEndpoint(credentialsId, DEFAULT_AWS_REGION, 'vpc-123445');
         expect(response).toBeDefined();
     });
 });

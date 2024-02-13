@@ -253,6 +253,7 @@ async function describeEndpoints(credentialsId: string, region: string, input: D
         const client = await getEC2Client(region, credentialsId);
         const command = new DescribeVpcEndpointsCommand(input);
         const response = await client.send(command);
+
         return response;
     } catch (error) {
         logger.error('Describe vpc endpoints command failed with the error', error);
