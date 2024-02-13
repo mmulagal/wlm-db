@@ -1,0 +1,318 @@
+#Requires -Version 7.0
+#Requires -Module AWS.Tools.FSX,AWS.Tools.secretsmanager
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory=$true)]
+    [string]$FileSystemId,
+
+    [Parameter(Mandatory=$true)]
+    [string]$AdminSecret,
+
+    [Parameter(Mandatory=$true)]
+    [string]$SQLVMName,
+
+    [Parameter(Mandatory=$true)]
+    [string]$FSxDataLunSize,
+
+    [Parameter(Mandatory=$true)]
+    [string]$FSxLogLunSize
+
+)
+Start-Transcript -Path C:\cfn\log\Configure_luns.log.txt -Append
+
+$ErrorActionPreference = "Stop"
+
+$AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret).SecretString
+$username = $AdminUser.username
+$password = $AdminUser.password
+$fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
+$MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
+$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+$region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token" = $token} -ErrorAction Stop -UseBasicParsing).Content
+$pair = "$($username):$($password)"
+$bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
+$base64 = [System.Convert]::ToBase64String($bytes)
+
+$epoch = (Get-Date -Date ((Get-Date).DateTime) -UFormat %s)
+
+$FSxDataVolumeName = "wlmdb_sqldata_"+$epoch
+$FSxDataVolumeSize = [math]::Round([int]$FSxDataLunSize*1.3)
+$FSxLogVolumeName = "wlmdb_sqllog_"+$epoch
+$FSxLogVolumeSize = [math]::Round([int]$FSxLogLunSize*1.3)
+
+$LOGLUN = 'sqllog'
+$DATALUN = 'sqldata'
+
+#get initiator address
+$nodeiqn = (Get-InitiatorPort).NodeAddress
+
+##Create Volume with ONTAP RestAPI via PowerShell 7.0
+
+
+function returncert{
+    param(
+    [Parameter(Mandatory=$true)]
+    [string]$region
+    )
+    $certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
+    Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
+    $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
+    return Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
+
+}
+
+function callGetApi{
+    param(
+    [Parameter(Mandatory=$true)]
+    [string]$uri,
+    [Parameter(Mandatory=$true)]
+    [string]$region,
+    [Parameter(Mandatory=$true)]
+    [string]$creds
+    )
+    try{
+        $restcert = returncert -region $region
+        $Params = @{
+            "URI"     = "$uri"
+            "Method"  = "GET"
+            "Headers" = @{"Authorization" = "Basic $creds"}
+            "ContentType" = "application/json"
+        }
+        Invoke-RestMethod @Params -Certificate $restcert
+    }catch{
+        Write-Error "REST API call to Fsx for ONTAP failed." $_
+    }
+}
+
+function callrestapi{
+    param(
+    [Parameter(Mandatory=$true)]
+    [string]$MgmtDNS,
+    [Parameter(Mandatory=$true)]
+    [string]$uri,
+    [Parameter(Mandatory=$true)]
+    [string]$region,
+    [Parameter(Mandatory=$true)]
+    [Hashtable]$parambody,
+    [Parameter(Mandatory=$true)]
+    [string]$creds
+    )
+    try{
+        $restcert = returncert -region $region
+        $resturi = "https://$MgmtDNS/api/$uri"
+        $JsonBody = $Body | ConvertTo-Json
+        $Params = @{
+            "URI"     = "$resturi"
+            "Method"  = "POST"
+            "Headers" = @{"Authorization" = "Basic $creds"}
+            "Body" =  "$JsonBody"
+            "ContentType" = "application/json"
+        }
+        Invoke-RestMethod @Params -Certificate $restcert
+    }catch{
+        Write-Error "REST API call to Fsx for ONTAP failed." $_
+    }
+}
+
+$LOGLUN = 'sqllog'
+$DATALUN = 'sqldata'
+
+
+Start-Sleep 2
+
+
+#Start ONTAP configuration
+
+##create volumes
+$volUriDynamicPart='storage/volumes'
+$URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
+$DVOLSIZE = $FSxDataVolumeSize.ToString()+"M"
+$Body = @{
+    "name" = "$FSxDataVolumeName"
+    "state" = "online"
+    "type" = "RW"
+    "svm" = @{"name" = "$SQLVMName"} 
+    "aggregates.name" = @("aggr1")
+    "snapshot_policy" = @{"name" = "none"} 
+    "style" = "flexvol"
+    "nas" = @{"security_style" = "NTFS"}
+    "size" = "$DVOLSIZE"      
+}
+callrestapi -MgmtDNS $MgmtDNS -uri $volUriDynamicPart -region $region -parambody $Body -creds $base64
+
+$LVOLSIZE = $FSxLogVolumeSize.ToString()+"M"
+$Body = @{
+    "name" = "$FSxLogVolumeName"
+    "state" = "online"
+    "type" = "RW"
+    "svm" = @{"name" = "$SQLVMName"} 
+    "aggregates.name" = @("aggr1")
+    "snapshot_policy" = @{"name" = "none"} 
+    "style" = "flexvol"
+    "nas" = @{"security_style" = "NTFS"}
+    "size" = "$LVOLSIZE"      
+}
+callrestapi -MgmtDNS $MgmtDNS -uri $volUriDynamicPart -region $region -parambody $Body -creds $base64
+
+##modify volumes
+$VolUriDynamicPart='private/cli/volume'
+
+$vollist = @($FSxDataVolumeName,$FSxLogVolumeName)
+
+foreach ($vol in $vollist) {
+$URI=@"
+https://$($MgmtDNS)/api/$($VolUriDynamicPart)?vserver=$($SQLVMName)&volume=$($vol)
+"@
+$Body = @{
+    "fractional-reserve" = "0"
+    "space-guarantee" = "none"
+    "space-mgmt-try-first"= "volume_grow"
+    "percent-snapshot-space" = "0"
+    "read-realloc" = "on"
+    "tiering-policy" = "snapshot-only"
+    "tiering-minimum-cooling-days" = "7"
+    "snapshot-policy" = "none"
+    "autosize-mode" = "grow"
+    "min-readahead" = "true"
+}
+
+$JsonBody = $Body | ConvertTo-Json
+$Params = @{
+    "URI"     = "$URI"
+    "Method"  = "PATCH"
+    "Headers" = @{"Authorization" = "Basic $base64"}
+    "Body" =  "$JsonBody"
+    "ContentType" = "application/json"
+}
+try{
+    $restcert = returncert -region $region
+    Invoke-RestMethod @Params -Certificate $restcert
+}catch{
+    Write-Error "Volume modification to set best practise parameters failed." $_
+}
+Start-Sleep 2
+}
+
+
+##Get the existing igroup for the initiator
+
+$IGUriDynamicPart='protocols/san/igroups'
+$URI=@"
+https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($nodeiqn)&protocol=iscsi
+"@
+$igroups = (callGetApi -uri $URI -region $region -creds $base64).records
+$IGROUP = $igroups[0].name
+if ([string]::IsNullOrEmpty($IGROUP)) {
+  $found = $nodeiqn -match '(.*\:.+?)\.'
+  if ($found) {$baseiqn = $matches[1]}
+  $URI=@"
+  https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($baseiqn)&protocol=iscsi
+"@
+
+  $igroups = (callGetApi -uri $URI -region $region -creds $base64).records
+  $IGROUP = $igroups[0].name
+  if ([string]::IsNullOrEmpty($IGROUP)) {
+    Write-Error "Unable to fetch igroup for the Node IQN address"
+  }
+
+}
+Start-Sleep 2
+
+ 
+##create data and log LUNs
+$lunUriDynamicPart='storage/luns'
+$URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
+$DSIZE = $FSxDataLunSize+"M"
+$LUN_PATH = "/vol/$FSxDataVolumeName/$DATALUN"
+$Body = @{
+    "name" = "$LUN_PATH"
+    "os_type" = "windows_2008"
+    "location"= @{"volume"=@{"name" = "$FSxDataVolumeName"}}
+    "svm" = @{"name" = "$SQLVMName"} 
+    "space" = @{"size" = "$DSIZE"}       
+}
+callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64
+
+Start-Sleep 2
+
+$URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
+$LUN_PATH = "/vol/$FSxLogVolumeName/$LOGLUN"
+$LSIZE = $FSxLogLunSize+"M"
+$Body = @{
+    "name" = "$LUN_PATH"
+    "os_type" = "windows_2008"       
+    "location"= @{"volume"=@{"name" = "$FSxLogVolumeName"}}
+    "svm" = @{"name" = "$SQLVMName"} 
+    "space" = @{"size" = "$LSIZE"}   
+}
+callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64
+
+Start-Sleep 2
+
+
+##mapping data and log LUNs
+$pathlist =@("/vol/$FSxDataVolumeName/$DATALUN","/vol/$FSxLogVolumeName/$LOGLUN")
+$lunmapsUriDynamicPart = 'protocols/san/lun-maps'
+foreach ($path in $pathlist) {
+$URI = "https://$MgmtDNS/api/$lunmapsUriDynamicPart"
+$Body = @{
+    "svm" = @{"name" = "$SQLVMName"}
+    "lun" = @{"name" = "$path"}
+    "igroup" = @{"name" = "$IGROUP"}
+}
+callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64
+}
+
+Start-Sleep 2
+
+
+ 
+##modify luns. PATCH api on LUNs allow to update only one parameter at a time
+
+$lunUriDynamicPart='private/cli/lun'
+
+$lunPathList = @("/vol/$FSxLogVolumeName/$LOGLUN", "/vol/$FSxDataVolumeName/$DATALUN")
+foreach ($perlun in $lunPathlist) {
+        $UpdateLUNURI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($SQLVMName)&path=$($perlun)"
+        $Body = @{
+         "space-reserve" = "enabled"
+          }
+          $JsonBody = $Body | ConvertTo-Json
+        $Params = @{
+        "URI"     = "$UpdateLUNURI"
+        "Method"  = "PATCH"
+        "Headers" = @{"Authorization" = "Basic $base64"}
+        "Body" =  "$JsonBody"
+        "ContentType" = "application/json"
+        }
+        try{
+        $restcert = returncert -region $region
+        Invoke-RestMethod @Params -Certificate $restcert
+        }
+        catch{
+        Write-Error "LUN modification to set space-reserve failed." $_
+        }
+        Start-Sleep 2
+        $Body = @{
+         "space-allocation" = "enabled"
+          }
+          $JsonBody = $Body | ConvertTo-Json
+        $Params = @{
+        "URI"     = "$UpdateLUNURI"
+        "Method"  = "PATCH"
+        "Headers" = @{"Authorization" = "Basic $base64"}
+        "Body" =  "$JsonBody"
+        "ContentType" = "application/json"
+        }
+        try{
+        $restcert = returncert -region $region
+        Invoke-RestMethod @Params -Certificate $restcert
+        }
+        catch{
+        Write-Error "LUN modification to set space-allocation failed." $_
+        }
+        Start-Sleep 3
+    }
+ 
+ 
+ 
