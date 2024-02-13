@@ -51,6 +51,10 @@ export const CREDENTIAL_PROD_LINK = 'https://cloudmanager.netapp.com/credentials
 export const TIMELINE_STAGE_LINK = 'https://staging.cloudmanager.netapp.com/timeline';
 export const TIMELINE_PROD_LINK = 'https://cloudmanager.netapp.com/timeline';
 
+// Add workload policies
+export const WLMDB_POLICIES_STAGE_LINK = 'https://staging.console.workloads.netapp.com';
+export const WLMDB_POLICIES_PROD_LINK = 'https://console.workloads.netapp.com';
+
 //Retry API on gateway timeout
 export const API_MAX_RETRIES = 2;
 
