@@ -15,7 +15,8 @@ const initialState: ChatbotEntities = {
     },
     expectingResponse: {
         type: 'none',
-        fieldName: ''
+        fieldName: '',
+        default: ''
     },
     latestIntentMsg: '',
     resumeCount: 0,

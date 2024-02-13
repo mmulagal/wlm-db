@@ -11,6 +11,7 @@ export interface ChatbotEntities {
         onBubbleClick: (label?: string, value?: string) => void;
     };
     expectingResponse: {
+        default?: any;
         type: 'none' | 'text' | 'password' | 'number';
         fieldName: string;
     };

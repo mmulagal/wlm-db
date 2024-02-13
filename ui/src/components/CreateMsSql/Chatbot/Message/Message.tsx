@@ -59,11 +59,13 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
     useEffect(() => {
         if (Object.keys(fieldObj)?.length) {
             if (fieldObj?.type === 'text') {
-                dispatch(setExpectingResponse({ type: 'text', fieldName: fieldObj.key }));
+                dispatch(setExpectingResponse({ type: 'text', fieldName: fieldObj.key, default: fieldObj.default }));
             } else if (fieldObj?.type === 'password') {
-                dispatch(setExpectingResponse({ type: 'password', fieldName: fieldObj.key }));
+                dispatch(
+                    setExpectingResponse({ type: 'password', fieldName: fieldObj.key, default: fieldObj.default })
+                );
             } else if (fieldObj?.type === 'number') {
-                dispatch(setExpectingResponse({ type: 'number', fieldName: fieldObj.key }));
+                dispatch(setExpectingResponse({ type: 'number', fieldName: fieldObj.key, default: fieldObj.default }));
             } else {
                 dispatch(setExpectingResponse({ type: 'none', fieldname: '' }));
             }

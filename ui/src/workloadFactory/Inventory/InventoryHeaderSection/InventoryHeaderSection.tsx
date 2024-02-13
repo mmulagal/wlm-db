@@ -35,36 +35,36 @@ const InventoryHeaderSection = () => {
 
                 <div className={styles.secondPart}>
                     <Typography variant="Semibold_16" className={styles.heading}>
-                        Database hosts distribution
+                        {GENERAL.DB_HOSTS_DISTRIBUTION}
                     </Typography>
 
                     <div className={styles.valueArea}>
                         <div className={styles.firstBlock}>
-                            <SquareComponent value={'15'} color="var(--chart-4)" text={'Detected hosts'} />
+                            <SquareComponent value={'15'} color="var(--chart-4)" text={GENERAL.DETECTED_HOSTS} />
                         </div>
 
                         <div className={styles.separator} />
 
                         <div className={styles.secondBlock}>
-                            <SquareComponent value={'5'} color="var(--chart-2)" text={'Undetected hosts'} />
+                            <SquareComponent value={'5'} color="var(--chart-2)" text={GENERAL.UNDETECTED_HOSTS} />
                         </div>
                     </div>
                 </div>
 
                 <div className={styles.secondPart}>
                     <Typography variant="Semibold_16" className={styles.heading}>
-                        Detected database hosts distribution
+                        {GENERAL.DETECTED_DB_HOSTS_DISTRIBUTION}
                     </Typography>
 
                     <div className={styles.valueArea}>
                         <div className={styles.thirdBlock}>
-                            <SquareComponent value={'10'} color="var(--chart-9)" text={'Managed by Workload Factory'} />
+                            <SquareComponent value={'10'} color="var(--chart-9)" text={GENERAL.MANAGED_BY_WLF} />
                         </div>
 
                         <div className={styles.separator} />
 
                         <div className={styles.secondBlock}>
-                            <SquareComponent value={'5'} color="#DE9EFF" text={'Unmanaged hosts'} />
+                            <SquareComponent value={'5'} color="#DE9EFF" text={GENERAL.UNMANAGED_HOSTS} />
                         </div>
                     </div>
                 </div>

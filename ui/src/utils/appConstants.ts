@@ -409,7 +409,11 @@ export const GENERAL = {
     DB_SS_TT_1:
         'Shows cumulative storage savings across Primary storage achieved as a result of Dedupe, Compression, Snapshots and thin Clones. ',
     DB_SS_TT_2: 'Calculation is based on unique FSx for ONTAP instance',
-    DB_HOST_ESTIMATED_COST: 'Estimated Cost',
+    DB_HOST_ESTIMATED_COST: 'Estimated cost',
+    DB_HOST_ALLOCATED_CAPACITY: 'Allocated capacity',
+    DB_HOST_INSTANCE_NAME: 'Instance name',
+    DB_HOST_VPC: 'VPC',
+    DB_HOST_AVAILABILITY: 'Availability',
     DB_HOST_TYPE: 'Type',
     DB_HOST_DEPLOYMENT_MODEL: 'Deployment model',
     DB_HOST_REGION: 'Region',
@@ -513,7 +517,31 @@ export const GENERAL = {
     JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
     DEMO_TITLE: 'Redirect to CloudFormation',
-    DEMO_CONTENT: `When using a Demo account you won't be redirected to the AWS CloudFormation service.`
+    DEMO_CONTENT: `When using a Demo account you won't be redirected to the AWS CloudFormation service.`,
+    FSXN_SVM_ERROR: [
+        'Selected FSX has more than ',
+        ' SVMs. Amazon FSx does not support having more than ',
+        ' storage virtual machines for an ONTAP file system with ',
+        ' MBps of throughput capacity.'
+    ],
+    FSXN_SECONDARY_SUBNET_ERROR: 'The primary and secondary subnets of FSx for ONTAP file system does not reside in the selected availability zones.',
+    FSXN_PRIMARY_SUBNET_ERROR: 'The subnet for node 1 must be in the primary Availability Zone for the FSx for ONTAP file system.',
+    FSXN_DEPLOYMENT_MODE_ERROR: 'Deployment mode not found.',
+    FSXN_NOT_AVAILABLE: 'FSx for ONTAP file system is not in available state.',
+    TAB_DASHBOARD: 'Dashboard',
+    TAB_INVENTORY: 'Inventory',
+    TAB_JOB_MONITORING: 'Job monitoring',
+    TAB_MANAGED_HOSTS: 'Managed hosts',
+    TAB_UNAMANGED_HOSTS: 'Unmanaged hosts',
+    TAB_UNIDENTIFIABLE_HOSTS: 'Unidentifiable hosts',
+    DB_HOSTS_DISTRIBUTION: 'Database hosts distribution',
+    DETECTED_DB_HOSTS_DISTRIBUTION: 'Detected database hosts distribution',
+    DETECTED_HOSTS: 'Detected hosts',
+    UNDETECTED_HOSTS: 'Undetected hosts',
+    UNMANAGED_HOSTS: 'Unmanaged hosts',
+    MANAGED_BY_WLF: 'Managed by Workload Factory',
+    MANAGED_HOSTS_HEADING: 'Managed hosts',
+    MANAGED_HOST_HEADING: 'Managed host'
 };
 
 export const CODE_VIEWER = {

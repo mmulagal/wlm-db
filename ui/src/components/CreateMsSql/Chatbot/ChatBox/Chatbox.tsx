@@ -129,6 +129,14 @@ const ChatBox = ({
     });
 
     useEffect(() => {
+        if (expectingResponse?.default) {
+            setUserInput(expectingResponse.default);
+        } else {
+            setUserInput('');
+        }
+    }, [expectingResponse]);
+
+    useEffect(() => {
         if ((currentIntent?.type || isWizardTouched) && !messagesToShow.length) {
             const comingFromAdvCreate = mssqlFormData.selectConfig === 'Standard create';
             dispatch(

@@ -393,6 +393,16 @@ function getDescriptionForMatchingName(jobName: string, stackSqlDeploymentType: 
     return jobDescription;
 }
 
+function convertMetricsIntoJson(input: Array<string>) {
+    const metrics: { [key: string]: string } = {};
+
+    for (const metric of input) {
+        const [key, value] = metric.split(':');
+        metrics[key] = value;
+    }
+    return metrics;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -416,5 +426,6 @@ export {
     checkAccount,
     createJobMockData,
     calculateSQLandWindowsVersion,
-    getDescriptionForMatchingName
+    getDescriptionForMatchingName,
+    convertMetricsIntoJson
 };

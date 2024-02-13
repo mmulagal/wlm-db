@@ -15,10 +15,10 @@ import {
     setResourceDetails,
     setResourceLoading
 } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
-import { GENERAL } from '../../../utils/appConstants';
 import { resetDBHomePageState } from '../../../utils/utilityFunctions';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import DatabaseHostTile from '../DatabaseOverviewLayout/DatabaseHostTile/DatabaseHostTile';
+import { WLF_TABS } from '../../../utils/consts';
 
 const DatabaseHostOverview = () => {
     const selectedTab = useAppSelector(state => state.databaseHome.selectedTab);
@@ -76,7 +76,7 @@ const DatabaseHostOverview = () => {
                             title: 'Inventory managed hosts',
                             onClick: () => {
                                 resetDBHomePageState(dispatch);
-                                dispatch(setSelectedHeaderTab('Inventory'));
+                                dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
                             }
                         },
                         {
@@ -92,8 +92,8 @@ const DatabaseHostOverview = () => {
 
             <div className={styles.secondLevel}>
                 <OverviewTabs />
-                {selectedTab === 'Overview' && <DatabaseOverviewLayout />}
-                {selectedTab === 'Database list' && <DatabaseListTable />}
+                {selectedTab === WLF_TABS.OVERVIEW && <DatabaseOverviewLayout />}
+                {selectedTab === WLF_TABS.DATABASE_LIST && <DatabaseListTable />}
             </div>
         </div>
     );
