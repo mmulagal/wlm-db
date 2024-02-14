@@ -1,5 +1,6 @@
 import createError from 'http-errors';
 import { ContextEntry } from '@aws-sdk/client-iam';
+import randomize from 'randomatic';
 import fs from 'fs';
 import path from 'path';
 import yaml from 'yaml';
