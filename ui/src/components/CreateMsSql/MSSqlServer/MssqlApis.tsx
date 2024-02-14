@@ -22,6 +22,7 @@ import {
     addInstanceTypeList,
     addKeyPairList,
     addKmsKeysList,
+    addPolicies,
     addRegions,
     addSGList,
     addSavedConfigList,
@@ -216,6 +217,12 @@ const MssqlApis = () => {
 
     // API call to get saved configuration list
     const { data: configData, isFetching: configLoading, isError: configError } = useGetConfigListQuery({});
+
+    // To add policies information in MssqlEntities
+    useEffect(() => {
+        dispatch(addPolicies({ policiesList, policiesLoading, policiesError }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [policiesList, policiesLoading, policiesError]);
 
     // To add credentials information in MssqlEntities
     useEffect(() => {
