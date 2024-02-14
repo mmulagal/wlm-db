@@ -6,7 +6,7 @@ import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { useState } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
-import { setNewUserDBName } from '../../../../store/workloadFactory/createNewUserSlice';
+import { setNewUserDBName } from '../../../../store/workloadFactory/createNewDBSlice';
 
 const DatabaseName = () => {
     const dispatch = useDispatch();

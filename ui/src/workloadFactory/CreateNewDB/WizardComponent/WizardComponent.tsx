@@ -1,10 +1,10 @@
 import { StepLayout, WizardContent, WizardFooter } from '@netapp/design-system';
 
 import styles from './WizardComponent.module.scss';
-import CreateNewUserHeader from '../CreateNewUserHeader/CreateNewUserHeader';
-import CreateNewUserFooter from '../CreateNewUserFooter/CreateNewUserFooter';
+import CreateNewUserHeader from '../CreateNewDBHeader/CreateNewDBHeader';
+import CreateNewUserFooter from '../CreateNewDBFooter/CreateNewDBFooter';
 import ContentComponent from '../ContentComponent/ContentComponent';
-import CreateNewUserCodeBox from '../CreateNewUserCodeBox/CreateNewUserCodeBox';
+import CreateNewUserCodeBox from '../CreateNewDBCodeBox/CreateNewUserCodeBox';
 
 const WizardComponent = () => {
     return (
