@@ -53,16 +53,26 @@ New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $Lo
 New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel
 
 Start-Service -Name ShellHWDetection
+}catch{
+    Write-Error "Error initializing drives"
+    
+} 
 
+try{
 if ($IsClustered -ne "false") {
 # Add new disks to Cluster Storage
-$logdisk = (Get-Disk -Number $disklist[0]).Number | Add-ClusterDisk
-$datadisk = (Get-Disk -Number $disklist[1]).Number | Add-ClusterDisk
+$logdisk = (Get-Disk -Number $disklist[0].Number | Add-ClusterDisk)
+$datadisk = (Get-Disk -Number $disklist[1].Number | Add-ClusterDisk)
 #Rename Cluster Volumes
 $logdisk.Name = $loglabel
 $datadisk.Name = $datalabel 
-
-
+}
+}catch{
+    Write-Error "Error adding disks to Cluster Storage"
+    
+} 
+try{
+if ($IsClustered -ne "false") {
 #Fetch the SQL Server role from the WSFC. In discovered instances the instance name could be anything other than MSSQLSERVER, this handles that.
 $SQLRoleGroup =  (Get-ClusterGroup).Name -match ('SQl Server*')
 $SQLGroup = $SQLRoleGroup[0]
@@ -70,12 +80,13 @@ $SQLGroup = $SQLRoleGroup[0]
 #Add  new cluster disks added to SQL Server Role dependency
 Move-ClusterResource -Name $loglabel -Group $SQLGroup
 Move-ClusterResource -Name $datalabel -Group $SQLGroup 
-
 }
- 
-
 }catch{
-    Write-Error "Error initializing drives"
+    Write-Error "Error adding disks to SQL Server Role dependency"
     
 } 
+
+ 
+
+
  
