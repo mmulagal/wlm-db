@@ -56,8 +56,8 @@ Start-Service -Name ShellHWDetection
 
 if ($IsClustered -ne "false")) {
 # Add new disks to Cluster Storage
-$logdisk = Get-Disk -Number $disklist[0]).Number | Add-ClusterDisk
-$datadisk = Get-Disk -Number $disklist[1]).Number | Add-ClusterDisk
+$logdisk = (Get-Disk -Number $disklist[0]).Number | Add-ClusterDisk
+$datadisk = (Get-Disk -Number $disklist[1]).Number | Add-ClusterDisk
 #Rename Cluster Volumes
 $logdisk.Name = $loglabel
 $datadisk.Name = $datalabel 
