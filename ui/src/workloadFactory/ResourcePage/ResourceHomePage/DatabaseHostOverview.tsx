@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@netapp/design-system';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { useAppSelector } from '../../../store/storeHooks';
 import DatabaseListTable from '../DatabaseListTable/DatabaseListTable';
@@ -84,6 +85,15 @@ const DatabaseHostOverview = () => {
                         }
                     ]}
                 />
+                <Button
+                    variant="primary"
+                    onClick={() => {
+                        navigate('../create-new-user');
+                    }}
+                    id={'create-new-user-button'}
+                >
+                    {'Create new user database'}
+                </Button>
             </div>
 
             <div className={styles.hostTitle}>

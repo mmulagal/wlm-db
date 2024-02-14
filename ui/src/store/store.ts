@@ -25,6 +25,7 @@ import workloadFactoryResourceSlice from './workloadFactory/workloadFactoryResou
 import jobMonitoringSlice from './workloadFactory/jobMonitoringSlice';
 import inventorySlice from './workloadFactory/inventorySlice';
 import headersSlice from './workloadFactory/headersSlice';
+import createNewUserSlice from './workloadFactory/createNewUserSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -48,6 +49,7 @@ const rootReducer = combineReducers({
     [inventorySlice.name]: inventorySlice.reducer,
     [headersApi.reducerPath]: headersApi.reducer,
     [headersSlice.name]: headersSlice.reducer,
+    [createNewUserSlice.name]: createNewUserSlice.reducer,
     [policiesApi.reducerPath]: policiesApi.reducer
 });
 
