@@ -82,6 +82,7 @@ import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
 import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
 import createDeploymentMockDataInDB from './demo-operations';
+import { createFSXForDemo } from '../lib/cloud-manager/fsx-core';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -748,8 +749,42 @@ async function deployCloudFormationTemplate(
             sqlConfiguration?.sqlDeploymentMode,
             fsxConfiguration?.fsxFileSystemId
         );
+        if (!fsxConfiguration.fsxFileSystemId) {
+            // create a new fsx record in fsx inventory
+            createFileSystemForDemo(credentialsId, region, fsxConfiguration);
+        }
     }
     return { cloudFormationStackId: deployStackResponse.StackId!, cloudFormationUrl: cfUrl };
+}
+
+async function createFileSystemForDemo(credentialsId: string, region: string, fsxConfiguration: FSXConfigurationType) {
+    logger.info('Creating fsx for demo', credentialsId, region, fsxConfiguration);
+
+    const { fsxDeploymentMode, fsxIOPS, fsxPassword } = fsxConfiguration;
+    const mode = fsxDeploymentMode.replace(/_\d+$/, '');
+
+    const requestBody = {
+        name: `fsx-wlmdb-${randomize('A', 5)}`,
+        credentialsId,
+        region,
+        storageCapacity: {
+            size: 2,
+            unit: 'TiB'
+        },
+        primarySubnetId: 'subnet-a1', // default subnet for fsx
+        ...(mode === 'MULTI_AZ' && { secondarySubnetId: 'subnet-a2' }),
+        throughputCapacity: fsxIOPS,
+        fsxAdminPassword: fsxPassword,
+        deploymentType: mode,
+        securityGroupIds: [],
+        tags: [],
+        svmAdminPassword: `${randomize('*', 8)}`,
+        generateSecurityGroup: true,
+        haPairs: 2,
+        automaticBackupRetentionDays: 30
+    };
+
+    return createFSXForDemo(requestBody);
 }
 
 async function deploymentStatus(accountId: string) {

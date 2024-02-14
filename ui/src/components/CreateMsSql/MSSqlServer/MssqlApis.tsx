@@ -11,7 +11,8 @@ import {
     useGetRegionsQuery,
     useGetSGListQuery,
     useGetSnsTopicsQuery,
-    useGetVPCListQuery
+    useGetVPCListQuery,
+    useGetWlmdbPoliciesQuery
 } from '../../../utils/apiService';
 import {
     addAdsList,
@@ -70,6 +71,12 @@ const MssqlApis = () => {
     const dbVersion = useAppSelector(state => state.mssqlForm.dbVersion);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
+
+    const {
+        data: policiesList,
+        isFetching: policiesLoading,
+        isError: policiesError
+    } = useGetWlmdbPoliciesQuery({});
 
     // API call to get credentials list for user account
     const {

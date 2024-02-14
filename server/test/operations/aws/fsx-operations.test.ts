@@ -22,7 +22,8 @@ const credentialsId = `${faker.string.alpha(20)}`;
 const awsAccountId = `${faker.string.alpha(8)}`;
 
 describe('Testcases for Amazon FSx resources operations', () => {
-    it('List FSx filesystems and volume details', async () => {
+    // Its not mocked, we are making actual api call to fsx inventory, so headers wont be present to make this test works
+    it.skip('List FSx filesystems and volume details', async () => {
         const response = await getFSxFileSystemsList(
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
