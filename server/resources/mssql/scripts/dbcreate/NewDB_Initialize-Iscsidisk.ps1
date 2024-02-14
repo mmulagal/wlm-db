@@ -54,7 +54,7 @@ New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize -DriveLetter $Da
 
 Start-Service -Name ShellHWDetection
 
-if ($IsClustered -ne "false")) {
+if ($IsClustered -ne "false") {
 # Add new disks to Cluster Storage
 $logdisk = (Get-Disk -Number $disklist[0]).Number | Add-ClusterDisk
 $datadisk = (Get-Disk -Number $disklist[1]).Number | Add-ClusterDisk
