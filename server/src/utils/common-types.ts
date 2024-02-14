@@ -1,11 +1,9 @@
 interface Metadata {
-    credentialsId: string;
-    activeNodeInstanceId: string;
-    activeNodeInstanceName?: string;
-    standbyNodeInstanceId?: string;
-    standbyNodeInstanceName?: string;
+    node1InstanceId: string;
+    node1InstanceName?: string;
+    node2InstanceId?: string;
+    node2InstanceName?: string;
     sqlDeploymentType?: string;
-    fileSystemType?: string;
     fsxSecret?: string;
     activeDirectoryName?: string;
     activeDirectoryAddress?: string;
@@ -22,6 +20,8 @@ interface ResourceDetails {
     cloud_provider_account_id: string | null;
     cloud_provider_name: string | null;
     region: string | null;
+    credentials_id: string;
+    storage_type: string;
     metadata: unknown;
 }
 

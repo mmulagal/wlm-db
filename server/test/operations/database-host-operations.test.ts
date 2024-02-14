@@ -23,23 +23,14 @@ beforeAll(async () => {
         cloudProviderAccountId: 'test-aws-account',
         cloudProviderName: 'AWS',
         region: 'ap-southeast-1',
+        credentialsId: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+        storageType: 'FSXN',
         metadata: {
-            credentialsId: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
-            activeNodeInstanceId: 'i-07e76a4b916548dc0',
-            activeNodeInstanceName: 'node1',
-            standbyNodeInstanceId: 'i-0880a21327284f67c',
-            standbyNodeInstanceName: 'node2',
-            activeNodeInstanceIp: '10.0.0.0',
-            standbyNodeInstanceIp: '10.0.0.1'
+            node1InstanceId: 'i-07e76a4b916548dc0',
+            node1InstanceName: 'node1',
+            node2InstanceId: 'i-0880a21327284f67c',
+            node2InstanceName: 'node2'
         }
-    });
-    await createResource(ACCOUNT_ID, {
-        resourceId: 'fs-f6082f35c1db',
-        resourceName: 'test-fsx-resource',
-        resourceType: 'FSX',
-        cloudProviderAccountId: 'test-aws-account',
-        cloudProviderName: 'AWS',
-        region: 'ap-southeast-1'
     });
 });
 

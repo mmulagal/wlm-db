@@ -1,4 +1,4 @@
-import { DEPLOYMENT_STATUS, DEPLOYMENT_MODEL } from '@prisma/client';
+import { DEPLOYMENT_STATUS, DEPLOYMENT_MODEL, STORAGE_TYPE } from '@prisma/client';
 import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
@@ -36,6 +36,8 @@ interface Event {
 
 interface Resource {
     resourceId: string;
+    credentialsId: string;
+    storageType: STORAGE_TYPE;
     resourceName?: string;
     resourceType: string;
     coRelationId?: string;
@@ -300,6 +302,8 @@ async function createResource(accountId: string, params: Resource) {
     const {
         resourceId,
         resourceName,
+        credentialsId,
+        storageType,
         resourceType,
         coRelationId,
         cloudProviderAccountId,
@@ -314,6 +318,8 @@ async function createResource(accountId: string, params: Resource) {
         data: {
             account_id: accountId,
             resource_id: resourceId,
+            credentials_id: credentialsId,
+            storage_type: storageType,
             ...(coRelationId && {
                 co_relation_id: coRelationId
             }),

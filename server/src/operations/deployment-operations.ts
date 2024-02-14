@@ -1,13 +1,10 @@
 import createError from 'http-errors';
 import { ContextEntry } from '@aws-sdk/client-iam';
-import randomize from 'randomatic';
 import fs from 'fs';
 import path from 'path';
 import yaml from 'yaml';
 import { escapeRegExp, isArray, isEmpty } from 'lodash-es';
 import { Parameter } from '@aws-sdk/client-cloudformation';
-import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
-import { randomUUID } from 'crypto';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getObjectBucket, preSignedUrl } from '../lib/aws/s3';
@@ -45,10 +42,6 @@ import {
     BUCKET_NAME,
     CLOUD_FORMATION_CLI_COMMAND,
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
-    CloudProviders,
-    RESOURCESTYPE,
-    FileSystemTypes,
-    DATABASE_TYPE,
     FSX_ADMIN_PASSWORD,
     SQL_SA_PASSWORD,
     DOMAIN_ADMIN_PASSWORD,
@@ -69,12 +62,10 @@ import {
     VIEW
 } from '../utils/consts';
 import {
-    createJobMockData,
     calculateSQLandWindowsVersion,
     deployedStackUrl,
     derivePropertiesFromARN,
     generateDeploymentParams,
-    generateRandomIP,
     isNetworkConfigurationViolated,
     sleep
 } from '../utils/utils';
@@ -86,12 +77,11 @@ import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
 // import { handleNotification } from './cloud-manager/notification-operations';
-import { createDeployment, createResource } from '../lib/database/db';
-import { Metadata, NetworkViolation } from '../utils/common-types';
+import { NetworkViolation } from '../utils/common-types';
 import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
 import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
-import { createJobs } from '../lib/database/job';
+import createDeploymentMockDataInDB from './demo-operations';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -861,80 +851,6 @@ async function checkAllMissingPermissions(credentialsId: string, region: string,
     );
 
     return { permissions: missedPermissions };
-}
-
-async function createDeploymentMockDataInDB(
-    accountId: string,
-    stackId: string,
-    stackName: string,
-    region: string,
-    credentialId: string,
-    sqlDeploymentMode: string,
-    fsxFileSystemId: string | undefined
-) {
-    logger.info('create deployment, resource and job table mock data in database', {
-        accountId,
-        stackId,
-        stackName,
-        region,
-        credentialId,
-        sqlDeploymentMode,
-        fsxFileSystemId
-    });
-
-    const cloudProviderId = randomize('0', 8);
-    const resourceName = `sqlnode-${randomize('0', 5)}`;
-    if (sqlDeploymentMode.toLowerCase() === 'fci') {
-        sqlDeploymentMode = 'FCI';
-    } else if (sqlDeploymentMode.toLowerCase() === 'standalone') {
-        sqlDeploymentMode = 'Standalone';
-    }
-    await createDeployment(accountId, {
-        deploymentId: stackId,
-        cloudProviderAccountId: cloudProviderId,
-        cloudProviderName: CloudProviders.AWS,
-        credentialsId: credentialId,
-        deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
-        startTime: new Date().valueOf(),
-        region,
-        deploymentName: stackName,
-        deploymentModel: sqlDeploymentMode as DEPLOYMENT_MODEL,
-        endTime: new Date().valueOf(),
-        data: {
-            databaseType: DATABASE_TYPE,
-            resourceName,
-            fileSystemType: FileSystemTypes.FSXONTAP
-        }
-    });
-    const metadata: Metadata = {
-        credentialsId: credentialId,
-        sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
-        fileSystemType: FileSystemTypes.FSXONTAP,
-        activeNodeInstanceId: `i-${randomize('A0', 17)}`,
-        activeNodeInstanceName: `sqlnode1-${randomize('0', 5)}`,
-        creationDate: new Date().getTime().toString(),
-        activeDirectoryName: 'wlm.com',
-        activeDirectoryAddress: generateRandomIP()
-    };
-
-    if (sqlDeploymentMode === 'FCI') {
-        metadata.standbyNodeInstanceId = `i-${randomize('A0', 17)}`;
-        metadata.standbyNodeInstanceName = `sqlnode2-${randomize('0', 5)}`;
-        metadata.activeDirectoryAddress = `${generateRandomIP()}, ${generateRandomIP()}`;
-    }
-    await createResource(accountId, {
-        resourceId: randomUUID(),
-        resourceName,
-        cloudProviderAccountId: cloudProviderId,
-        cloudProviderName: CloudProviders.AWS,
-        resourceType: RESOURCESTYPE.MSSQL,
-        coRelationId: `fs-${randomize('A0', 17)}`,
-        region,
-        metadata
-    });
-
-    const data = await createJobMockData(accountId, resourceName, stackName, sqlDeploymentMode, fsxFileSystemId);
-    await createJobs(accountId, data);
 }
 
 export {

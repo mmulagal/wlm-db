@@ -1,5 +1,7 @@
+import { STORAGE_TYPE } from '@prisma/client';
 import { createResource, deleteResource } from '../../src/lib/database/db';
 import getSystemStatus from '../../src/operations/system-operations';
+import { DEFAULT_AWS_CREDENTIALS_ID } from '../utils/consts';
 
 describe('System Operations', () => {
     it('Get system status- no resource', async () => {
@@ -16,7 +18,9 @@ describe('System Operations', () => {
             cloudProviderAccountId: '464262061435',
             cloudProviderName: 'AWS',
             coRelationId: 'fsx-1234',
-            region: 'DEFAULT_AWS_REGION'
+            region: 'DEFAULT_AWS_REGION',
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            storageType: STORAGE_TYPE.FSXN
         });
         const resp = await getSystemStatus('account-with-resource');
         expect(resp.isActive).toEqual(true);

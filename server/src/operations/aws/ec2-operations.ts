@@ -390,15 +390,14 @@ async function tagEc2Resource(credentialsId: string, region: string, accountId: 
 
 async function getCostAllocationTagEC2Resource(resourceDetail: ResourceDetails) {
     logger.info('Get EC2 Resources which has cost allocation tag attached');
-    const { region, metadata } = resourceDetail;
-    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as {
-        credentialsId: string;
-        activeNodeInstanceId: string;
-        standbyNodeInstanceId: string;
+    const { region, credentials_id: credentialsId, metadata } = resourceDetail;
+    const { node1InstanceId, node2InstanceId } = metadata as {
+        node1InstanceId: string;
+        node2InstanceId: string;
     };
-    const resourceIds = [activeNodeInstanceId];
-    if (standbyNodeInstanceId) {
-        resourceIds.push(standbyNodeInstanceId);
+    const resourceIds = [node1InstanceId];
+    if (node2InstanceId) {
+        resourceIds.push(node2InstanceId);
     }
     const input: DescribeTagsCommandInput = {
         Filters: [

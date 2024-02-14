@@ -469,7 +469,7 @@ Resources:
             - IsFailoverCluster
             - 'FCI'
             - 'Standalone'
-      FileSystemType: 'FSx for ONTAP'
+      FileSystemType: 'FSXN'
       DatabaseType: 'Microsoft SQL server'
       Metrics: !Ref Metrics
   ValidationStack1:
@@ -920,9 +920,7 @@ Resources:
       JWToken: !Ref JwtToken
       Region: !Ref 'AWS::Region' 
       StackName: !Ref 'AWS::StackName'
-      DomainAdminSecretName: !Sub ${AWS::StackName}-domain
       FSxNSecret: !Sub ${AWS::StackName}-fsx
-      SQLServiceAccountSecret: !Sub ${AWS::StackName}-sql
       DatabaseType: 'Microsoft SQL server'
       Metrics: !Ref Metrics
 
@@ -931,33 +929,23 @@ Resources:
             - NewOntapFsx
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
-      ActiveInstanceIp: 
-          !If
-            - IsFailoverCluster
-            - !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceIPMAD"
-            - !GetAtt "SQLStandaloneStack.Outputs.SqlNodeIp"
-      ActiveInstanceId: 
+      Node1InstanceId: 
           !If
             - IsFailoverCluster
             - !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceId"
             - !GetAtt "SQLStandaloneStack.Outputs.SqlNodeId"
-      ActiveInstanceName: 
+      Node1InstanceName: 
           Fn::Select:
             - "0"
             - Fn::Split:
               - ","
               - Ref: NodeNetBIOSNames
-      StandbyInstanceIp: 
-          !If
-            - IsFailoverCluster
-            - !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceIPMAD"
-            - !Ref AWS::NoValue
-      StandbyInstanceId: 
+      Node2InstanceId: 
           !If
             - IsFailoverCluster
             - !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceId"
             - !Ref AWS::NoValue
-      StandbyInstanceName: 
+      Node2InstanceName: 
           !If
             - IsFailoverCluster
             - Fn::Select:
@@ -972,7 +960,7 @@ Resources:
             - IsFailoverCluster
             - 'FCI'
             - 'Standalone'
-      FileSystemType: 'FSx for ONTAP'
+      FileSystemType: 'FSXN'
       ActiveDirectoryName: !Ref DomainDNSName
       ActiveDirectoryAddress: !Ref DNSIpAddresses
       EncryptedFsxPassword: !Ref 'EncryptedFsxPassword'

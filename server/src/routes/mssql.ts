@@ -1,5 +1,6 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
+import { STORAGE_TYPE } from '@prisma/client';
 import {
     DatabaseCpuUtilisationResponseSchema,
     DatabaseMemoryUtilisationResponseSchema,
@@ -43,6 +44,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
             credentialsId,
             region,
             DatabaseTypes.MS_SQL_SERVER,
+            STORAGE_TYPE.FSXN,
             activeNodeInstanceId,
             activeNodeInstanceName,
             standbyNodeInstanceId, // FIXME: To conclude whether this has to be user input or programmatically detected.

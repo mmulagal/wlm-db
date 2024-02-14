@@ -7,16 +7,15 @@ const logger = getLogger();
 async function getCostAllocationTagResources(resourceDetail: ResourceDetails) {
     logger.debug(' Get Resources which has cost allocation tag attached', resourceDetail);
     try {
-        const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
-        const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as {
-            credentialsId: string;
-            activeNodeInstanceId: string;
-            standbyNodeInstanceId: string;
+        const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
+        const { node1InstanceId, node2InstanceId } = metadata as {
+            node1InstanceId: string;
+            node2InstanceId: string;
         };
 
-        const tagValues: Array<string> = [fileSystemId!, activeNodeInstanceId];
-        if (standbyNodeInstanceId !== undefined) {
-            tagValues.push(standbyNodeInstanceId);
+        const tagValues: Array<string> = [fileSystemId!, node1InstanceId];
+        if (node2InstanceId !== undefined) {
+            tagValues.push(node2InstanceId);
         }
         const resources = await getResourcesWithCostAllocationTag(credentialsId, region!, tagValues);
         return resources;

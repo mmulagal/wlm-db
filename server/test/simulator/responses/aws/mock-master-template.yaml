@@ -1424,29 +1424,21 @@ Resources:
         - NewOntapFsx
         - NewFSxStack.Outputs.FSxFileSystemLogicalId
         - ExistingFSxStack.Outputs.FSxFileSystemId
-      ActiveInstanceIp:
-        - IsFailoverCluster
-        - SQLServerStack.Outputs.SQLFSx1InstanceIPMAD
-        - SQLStandaloneStack.Outputs.SqlNodeIp
-      ActiveInstanceId:
+      Node1InstanceId:
         - IsFailoverCluster
         - SQLServerStack.Outputs.SQLFSx1InstanceId
         - SQLStandaloneStack.Outputs.SqlNodeId
-      ActiveInstanceName:
+      Node1InstanceName:
         Fn::Select:
           - "0"
           - Fn::Split:
               - ","
               - Ref: NodeNetBIOSNames
-      StandbyInstanceIp:
-        - IsFailoverCluster
-        - SQLServerStack.Outputs.SQLFSx2InstanceIPMAD
-        - AWS::NoValue
-      StandbyInstanceId:
+      Node2InstanceId:
         - IsFailoverCluster
         - SQLServerStack.Outputs.SQLFSx2InstanceId
         - AWS::NoValue
-      StandbyInstanceName:
+      Node2InstanceName:
         - IsFailoverCluster
         - Fn::Select:
             - "1"
