@@ -855,7 +855,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                         isSearchable={false}
                                         variant="underline"
                                         options={generateCLIOptions}
-                                        defaultValue={[generateCLIOptions[2]]}
+                                        defaultValue={
+                                            dropDownValue
+                                                ? [generateOptionType(dropDownValue, dropDownValue, '', false, '')]
+                                                : [generateCLIOptions[2]]
+                                        }
                                     />
                                 </div>
                             </div>
@@ -934,7 +938,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                 !isRightPanelTemplateLoading &&
                                 getRightPanelTemplateResponse(openKey)?.template && (
                                     <div className={styles.cloudFormationButtonContainer}>
-                                        <Button variant="secondary" onClick={() => handleViewInAwsCloudFormation()} id={UI_IDS.DBP_REDIRECT_TO_CF}>
+                                        <Button
+                                            variant="secondary"
+                                            onClick={() => handleViewInAwsCloudFormation()}
+                                            id={UI_IDS.DBP_REDIRECT_TO_CF}
+                                        >
                                             {GENERAL.SAVE_FORM_AS_CLOUD}
                                         </Button>
                                     </div>
