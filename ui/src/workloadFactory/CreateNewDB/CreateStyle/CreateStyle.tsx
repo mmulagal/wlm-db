@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux';
 import CardComponentConfig from '../../../common/CardComponent/CardComponentConfig';
 import { ReactComponent as BlueTick } from '../../../assets/blue-tick.svg';
 import { ReactComponent as EasyCreate } from '../../../assets/Quick create.svg';
+import { ReactComponent as StandardCreate } from '../../../assets/Advanced create.svg';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
 import { setSelectedNewUserConfig } from '../../../store/workloadFactory/createNewDBSlice';
 
@@ -30,7 +31,7 @@ const CreateStyle = () => {
             <CardComponentConfig
                 idToAdd="new-user-standard-create"
                 selectedConfigCondition={selectedConfigNewUser === 'Advanced create'}
-                icon={<EasyCreate />}
+                icon={<StandardCreate />}
                 tickIcon={<BlueTick />}
                 heading={'Advanced create'}
                 content={SELECT_CONFIG.STANDARD_CREATE_CONTENT}

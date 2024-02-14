@@ -33,10 +33,20 @@ const FileSettings = () => {
         newUserLogFileSizeUnit,
         selectedNewUserConfig,
         driveLetter,
-        driveLetterLogFile
+        driveLetterLogFile,
+        newUserDBName
     } = useAppSelector(state => state.createNewUser);
 
     const units = ['GiB', 'TiB'];
+
+    useEffect(() => {
+        if (newUserDBName) {
+            const newDBName = `${newUserDBName}_data`;
+            const newLogName = `${newUserDBName}_log`;
+            dispatch(setNewDBFileName(newDBName));
+            dispatch(setNewUserLogFileName(newLogName));
+        }
+    }, [newUserDBName]);
 
     //Function to generate the options for Select Field
     const generateUnitsForStorage = useMemo<optionType[]>((): optionType[] => {
@@ -222,7 +232,7 @@ const FileSettings = () => {
                                 </div>
                             </>
                         )}
-                        {selectedNewUserConfig === 'Standard create' && (
+                        {selectedNewUserConfig === 'Advanced create' && (
                             <>
                                 <div className={styles.dataFileSection}>
                                     <DsTypography variant="Regular_14">Data file</DsTypography>
