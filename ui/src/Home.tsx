@@ -11,12 +11,12 @@ import Tables from './components/Resource/Tables/Tables';
 
 import styles from './Home.module.scss';
 import { clearNotifications, removeNotification } from './store/notificationSlice';
-import DatabaseHomePage from './workloadFactory/DatabaseHomePage/DatabaseHomePage';
+
 import PreviewPanel from './components/PreviewPanel/PreviewPanel';
 import DatabaseHostOverview from './workloadFactory/ResourcePage/ResourceHomePage/DatabaseHostOverview';
 import JobMonitoring from './workloadFactory/JobMonitoring/JobMonitoring';
 import HeaderComponent from './workloadFactory/DatabaseHomePage/HeaderComponent/HeaderComponent';
-import WizardComponent from './workloadFactory/CreateNewUser/WizardComponent/WizardComponent';
+import WizardComponent from './workloadFactory/CreateNewDB/WizardComponent/WizardComponent';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);

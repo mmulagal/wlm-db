@@ -1,6 +1,6 @@
 import { DsTypography, Header } from '@netapp/design-system';
 
-import styles from './CreateNewUserHeader.module.scss';
+import styles from './CreateNewDBHeader.module.scss';
 import { useNavigate } from 'react-router-dom';
 const CreateNewUserHeader = () => {
     const navigate = useNavigate();

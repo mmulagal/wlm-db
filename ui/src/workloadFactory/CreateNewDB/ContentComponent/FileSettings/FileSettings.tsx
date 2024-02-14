@@ -13,7 +13,7 @@ import {
     setNewUserLogFileSizeUnit,
     setDriveLetter,
     setDriveLetterForLogFile
-} from '../../../../store/workloadFactory/createNewUserSlice';
+} from '../../../../store/workloadFactory/createNewDBSlice';
 import { useEffect, useMemo } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { generateOptionType } from '../../../../utils/utilityFunctions';

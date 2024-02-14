@@ -5,7 +5,7 @@ import CardComponentConfig from '../../../common/CardComponent/CardComponentConf
 import { ReactComponent as BlueTick } from '../../../assets/blue-tick.svg';
 import { ReactComponent as EasyCreate } from '../../../assets/Quick create.svg';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
-import { setSelectedNewUserConfig } from '../../../store/workloadFactory/createNewUserSlice';
+import { setSelectedNewUserConfig } from '../../../store/workloadFactory/createNewDBSlice';
 
 import styles from './CreateStyle.module.scss';
 
@@ -29,12 +29,12 @@ const CreateStyle = () => {
 
             <CardComponentConfig
                 idToAdd="new-user-standard-create"
-                selectedConfigCondition={selectedConfigNewUser === 'Standard create'}
+                selectedConfigCondition={selectedConfigNewUser === 'Advanced create'}
                 icon={<EasyCreate />}
                 tickIcon={<BlueTick />}
-                heading={'Standard create'}
-                content={SELECT_CONFIG.EASY_CREATE_CONTENT}
-                handleClick={() => clickHandler('Standard create')}
+                heading={'Advanced create'}
+                content={SELECT_CONFIG.STANDARD_CREATE_CONTENT}
+                handleClick={() => clickHandler('Advanced create')}
             />
         </div>
     );

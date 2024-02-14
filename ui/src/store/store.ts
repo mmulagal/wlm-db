@@ -25,7 +25,7 @@ import workloadFactoryResourceSlice from './workloadFactory/workloadFactoryResou
 import jobMonitoringSlice from './workloadFactory/jobMonitoringSlice';
 import inventorySlice from './workloadFactory/inventorySlice';
 import headersSlice from './workloadFactory/headersSlice';
-import createNewUserSlice from './workloadFactory/createNewUserSlice';
+import createNewUserSlice from './workloadFactory/createNewDBSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
