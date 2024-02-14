@@ -1000,11 +1000,4 @@ function modifyStackAck(
     };
 }
 
-async function main() {
-    const msg = await getSqsMessages('us-east-1', '');
-    logger.info(msg);
-}
-
-main();
-
 export { processCloudFormationMessages };
