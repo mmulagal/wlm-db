@@ -26,20 +26,6 @@ const CreateNewUserCodeBox = () => {
                 <DsTypography variant="Regular_16" className={styles.createDBText}>
                     {'Create new user database'}
                 </DsTypography>
-
-                <div className={styles.inputBox} style={{ color: 'var(--white)' }}>
-                    <SelectField
-                        isClearable={false}
-                        value={generateOptionType(dropDownValue, dropDownValue, '', false, '')}
-                        onChange={(selectedOptions: any): void => {
-                            setDropdownValue(selectedOptions?.value);
-                        }}
-                        isSearchable={false}
-                        variant="underline"
-                        options={generateCLIOptions}
-                        defaultValue={[generateCLIOptions[0]]}
-                    />
-                </div>
             </div>
 
             <div className={styles.payloadContainer}>

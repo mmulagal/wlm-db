@@ -18,59 +18,6 @@
         .createDBText {
             color: var(--white);
         }
-
-        .inputBox {
-            width: 146px;
-
-            --menu-max-height: 245px;
-
-            // Select box CSS
-
-            [class*='Select-module_base'] {
-                margin-bottom: 0 !important;
-            }
-
-            [class*='design-system-select__single-value'] {
-                color: var(--white) !important;
-            }
-            [class*='design-system-select__menu'] {
-                box-shadow: none;
-                width: 240px;
-                right: 1px !important;
-            }
-
-            [class*='design-system-select__option'] {
-                background-color: var(--grey-70) !important;
-                color: var(--white) !important;
-            }
-
-            [class*='Select-module_multiselect-menu'] {
-                background-color: var(--grey-70) !important;
-            }
-            [class*='design-system-select__option--is-focused'] {
-                color: var(--blue-40) !important;
-                background-color: var(--grey-60);
-            }
-            [class*='design-system-select__control']:hover {
-                box-shadow: 0 1px 0 var(--header-netapp-text-hover);
-                border-bottom: 2px solid var(--field-border-selected) !important;
-
-                div {
-                    color: var(--header-netapp-text-hover);
-                }
-
-                svg {
-                    --icon-primary-color: var(--field-border-selected) !important;
-                }
-            }
-
-            [class*='design-system-select__control'] {
-                border-bottom: 2px solid var(--field-border) !important;
-                svg {
-                    --icon-primary-color: var(--field-icon) !important;
-                }
-            }
-        }
     }
 
     .payloadContainer {

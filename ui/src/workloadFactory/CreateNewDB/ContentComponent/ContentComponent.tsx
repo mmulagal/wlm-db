@@ -4,7 +4,9 @@ import CreateStyle from '../CreateStyle/CreateStyle';
 import styles from './ContentComponent.module.scss';
 import DatabaseName from './DatabaseName/DatabaseName';
 import FileSettings from './FileSettings/FileSettings';
+import { useAppSelector } from '../../../store/storeHooks';
 const ContentComponent = () => {
+    const { selectedNewUserConfig } = useAppSelector(state => state.createNewUser);
     return (
         <div className={styles.contentComponent}>
             <CreateStyle />
@@ -17,7 +19,8 @@ const ContentComponent = () => {
                         }}
                         variant="Semibold_16"
                     >
-                        Database quick create
+                        {selectedNewUserConfig === 'Quick create' && 'Database quick create'}
+                        {selectedNewUserConfig === 'Advanced create' && 'Database advanced create'}
                     </DsTypography>
                     <DatabaseName />
                     <FileSettings />
