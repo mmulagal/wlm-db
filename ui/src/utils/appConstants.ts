@@ -554,7 +554,7 @@ export const GENERAL = {
         'Names should not be Transact-SQL reserved words.'
     ],
     LOG_SIZE_TOOLTIP: [
-        'The minimum value of log size is 1 GiB.', 
+        'The minimum value of log size is 1 GiB.',
         'If the default data size is change the log size will automatically set to 25% of the data size.'
     ],
     DATA_SIZE_TOOLTIP: 'The default value of data size is 1 GiB.'

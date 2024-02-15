@@ -86,16 +86,22 @@ const FileSettings = () => {
     //Function to generate the options for Select Field
     const generateDataDriveLetters = useMemo<optionType[]>((): optionType[] => {
         const letters = [
-            { drive: 'a', existing: true},
-            { drive: 'b', existing: true},
-            { drive: 'c', existing: true},
-            { drive: 'd'},
-            { drive: 'e'},
-            { drive: 'f'}
+            { drive: 'a', existing: true },
+            { drive: 'b', existing: true },
+            { drive: 'c', existing: true },
+            { drive: 'd' },
+            { drive: 'e' },
+            { drive: 'f' }
         ];
         const options: optionType[] = [];
         letters?.map((val, idx: number) => {
-            const option = generateOptionType(val.drive, val.drive, val?.existing ? 'Existing drive letter': 'New drive letter', false, '');
+            const option = generateOptionType(
+                val.drive,
+                val.drive,
+                val?.existing ? 'Existing drive letter' : 'New drive letter',
+                false,
+                ''
+            );
             options.push(option);
         });
         return options;
@@ -104,16 +110,22 @@ const FileSettings = () => {
     //Function to generate the options for Select Field
     const generateLogDriveLetters = useMemo<optionType[]>((): optionType[] => {
         const letters = [
-            { drive: 'a', existing: true},
-            { drive: 'b', existing: true},
-            { drive: 'c', existing: true},
-            { drive: 'd'},
-            { drive: 'e'},
-            { drive: 'f'}
+            { drive: 'a', existing: true },
+            { drive: 'b', existing: true },
+            { drive: 'c', existing: true },
+            { drive: 'd' },
+            { drive: 'e' },
+            { drive: 'f' }
         ];
         const options: optionType[] = [];
         letters?.map((val, idx: number) => {
-            const option = generateOptionType(val.drive, val.drive, val?.existing ? 'Existing drive letter': 'New drive letter', false, '');
+            const option = generateOptionType(
+                val.drive,
+                val.drive,
+                val?.existing ? 'Existing drive letter' : 'New drive letter',
+                false,
+                ''
+            );
             options.push(option);
         });
         return options;
@@ -216,8 +228,10 @@ const FileSettings = () => {
                                             label={'select'}
                                             info={
                                                 <div className={styles.dataSizeTooltip}>
-                                                    <DsTypography variant='Regular_13'>{GENERAL.DATA_SIZE_TOOLTIP}</DsTypography>
-                                                    <DsTypography variant='Regular_13'>{`Host hostname data size name is 1 GiB - ${maxSize} TiB.`}</DsTypography>
+                                                    <DsTypography variant="Regular_13">
+                                                        {GENERAL.DATA_SIZE_TOOLTIP}
+                                                    </DsTypography>
+                                                    <DsTypography variant="Regular_13">{`Host hostname data size name is 1 GiB - ${maxSize} TiB.`}</DsTypography>
                                                 </div>
                                             }
                                             isClearable={false}
@@ -263,8 +277,12 @@ const FileSettings = () => {
                                             isClearable={false}
                                             info={
                                                 <div className={styles.logSizeTooltip}>
-                                                    <DsTypography variant='Regular_13'>{GENERAL.LOG_SIZE_TOOLTIP[0]}</DsTypography>
-                                                    <DsTypography variant='Regular_13'>{GENERAL.LOG_SIZE_TOOLTIP[1]}</DsTypography>
+                                                    <DsTypography variant="Regular_13">
+                                                        {GENERAL.LOG_SIZE_TOOLTIP[0]}
+                                                    </DsTypography>
+                                                    <DsTypography variant="Regular_13">
+                                                        {GENERAL.LOG_SIZE_TOOLTIP[1]}
+                                                    </DsTypography>
                                                 </div>
                                             }
                                             defaultValue={
@@ -352,8 +370,10 @@ const FileSettings = () => {
                                                     isClearable={false}
                                                     info={
                                                         <div className={styles.dataSizeTooltip}>
-                                                            <DsTypography variant='Regular_13'>{GENERAL.DATA_SIZE_TOOLTIP}</DsTypography>
-                                                            <DsTypography variant='Regular_13'>{`Host hostname data size name is 1 GiB - ${maxSize} TiB.`}</DsTypography>
+                                                            <DsTypography variant="Regular_13">
+                                                                {GENERAL.DATA_SIZE_TOOLTIP}
+                                                            </DsTypography>
+                                                            <DsTypography variant="Regular_13">{`Host hostname data size name is 1 GiB - ${maxSize} TiB.`}</DsTypography>
                                                         </div>
                                                     }
                                                     defaultValue={
@@ -421,8 +441,12 @@ const FileSettings = () => {
                                                     isClearable={false}
                                                     info={
                                                         <div className={styles.logSizeTooltip}>
-                                                            <DsTypography variant='Regular_13'>{GENERAL.LOG_SIZE_TOOLTIP[0]}</DsTypography>
-                                                            <DsTypography variant='Regular_13'>{GENERAL.LOG_SIZE_TOOLTIP[1]}</DsTypography>
+                                                            <DsTypography variant="Regular_13">
+                                                                {GENERAL.LOG_SIZE_TOOLTIP[0]}
+                                                            </DsTypography>
+                                                            <DsTypography variant="Regular_13">
+                                                                {GENERAL.LOG_SIZE_TOOLTIP[1]}
+                                                            </DsTypography>
                                                         </div>
                                                     }
                                                     defaultValue={

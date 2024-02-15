@@ -22,7 +22,7 @@ const DatabaseName = () => {
             return <AccordionError />;
         } else if (newUserDBName) {
             return <DsTypography variant="Regular_14">{newUserDBName}</DsTypography>;
-        } 
+        }
         return <ActionRequired error={false} />;
     };
 
@@ -54,15 +54,21 @@ const DatabaseName = () => {
                                     <div className={styles.dbNameTooltip}>
                                         <div className={styles.listItem}>
                                             <Bullet />
-                                            <DsTypography variant='Regular_13' className={styles.textWidth}>{GENERAL.CREATE_DB_NAME_TOOLTIP[0]}</DsTypography>
+                                            <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                {GENERAL.CREATE_DB_NAME_TOOLTIP[0]}
+                                            </DsTypography>
                                         </div>
                                         <div className={styles.listItem}>
                                             <Bullet />
-                                            <DsTypography variant='Regular_13' className={styles.textWidth}>{GENERAL.CREATE_DB_NAME_TOOLTIP[1]}</DsTypography>
+                                            <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                {GENERAL.CREATE_DB_NAME_TOOLTIP[1]}
+                                            </DsTypography>
                                         </div>
                                         <div className={styles.listItem}>
                                             <Bullet />
-                                            <DsTypography variant='Regular_13' className={styles.textWidth}>{GENERAL.CREATE_DB_NAME_TOOLTIP[2]}</DsTypography>
+                                            <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                {GENERAL.CREATE_DB_NAME_TOOLTIP[2]}
+                                            </DsTypography>
                                         </div>
                                     </div>
                                 }

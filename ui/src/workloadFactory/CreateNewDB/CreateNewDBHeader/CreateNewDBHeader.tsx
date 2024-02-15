@@ -6,7 +6,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 const CreateNewUserHeader = () => {
     const navigate = useNavigate();
     const dbHostName = useAppSelector(state => state.createNewUser.dbHostName);
-    
+
     return (
         <div className={styles.createNewUserHeader}>
             <Header
