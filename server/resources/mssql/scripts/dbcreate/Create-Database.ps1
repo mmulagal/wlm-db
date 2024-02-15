@@ -1,4 +1,4 @@
-﻿   
+﻿    
 param(
   [Parameter(Mandatory = $true)]
   [string]$SQLServer,
@@ -12,12 +12,6 @@ param(
   [Parameter(Mandatory = $true)]
   [string]$LogPath,
 
-  [Parameter(Mandatory = $true)]
-  [string]$DataFileName,  
-
-  [Parameter(Mandatory = $true)]
-  [string]$LogFileName,
-
   [Parameter(Mandatory = $false)]
   [string]$SQLPass,  
 
@@ -25,11 +19,28 @@ param(
   [string]$SQLUser
 )
 
+New-Item -ItemType Directory -Path C:\cfn\log -Force
 Start-Transcript -Path C:\cfn\log\Create_Database.log.txt -Append
 $ErrorActionPreference = "Stop"
 
 $FileExists1 = Test-Path -Path $DataPath
 $FileExists2 = Test-Path -Path $LogPath
+
+#Fetch Data and Log file names
+
+$DataFile= Split-Path $DataPath -leaf
+$LogFile= Split-Path $LogPath -leaf
+$found1 = $DataFile -match '(.+?)\.'
+if ($found1) {$DataFileName = $matches[1]}
+$found2 = $LogFile -match '(.+?)\.'
+if ($found2) {$LogFileName = $matches[1]}
+
+#Decrypt SSM Parameter for SQL Username and password
+if ($SQLUser -ne "" -And $SQLPass -ne "") { 
+  $Dbuser = ( Get-SSMParameter -Name $SQLUser -WithDecryption $true).Value
+  $Dbpass = ( Get-SSMParameter -Name $SQLPass -WithDecryption $true).Value
+
+}
 
 #In case of reusing existing drives check if data/log file name exists in path already
 
@@ -39,10 +50,10 @@ if ($FileExists1 -Or $FileExists2) {
 
 #Check if database name already exists
 if ($SQLUser -ne "" -And $SQLPass -ne "") { 
-  $dblist =(Invoke-Sqlcmd  -ConnectionString "Data Source=$SqlServer; User Id=$SQLUser; Password =$SQLPass;TrustServerCertificate=True" -Query "SELECT name FROM sys. databases").name
+  $dblist =(Invoke-Sqlcmd  -ConnectionString "Data Source=$SqlServer; User Id=$Dbuser; Password =$Dbpass;TrustServerCertificate=True" -Query "SELECT name FROM sys.databases").name
 }
 else {
-  $dblist = (Invoke-Sqlcmd -ConnectionString "Data Source=$SQLServer; Integrated Security=True; TrustServerCertificate=True" -Query "SELECT name FROM sys. databases").name
+  $dblist = (Invoke-Sqlcmd -ConnectionString "Data Source=$SQLServer; Integrated Security=True; TrustServerCertificate=True" -Query "SELECT name FROM sys.databases").name
 }
 
 if ($dblist -Contains $DBName) {
@@ -63,7 +74,7 @@ try {
   if ($SQLUser -ne "" -And $SQLPass -ne "") {
     Write-Output "Connecting with SQL User Authentication"
     #Execute a query with SQL credentials
-    Invoke-Sqlcmd  -ConnectionString "Data Source=$SqlServer; User Id=$SQLUser; Password =$SQLPass;TrustServerCertificate=True" -Query "$Query"
+    Invoke-Sqlcmd  -ConnectionString "Data Source=$SqlServer; User Id=$Dbuser; Password =$Dbpass;TrustServerCertificate=True" -Query "$Query"
     Write-Output "Created database $DBName with SQL user credentials"
 
   }
@@ -84,5 +95,6 @@ catch {
 
   
 
+ 
  
  
