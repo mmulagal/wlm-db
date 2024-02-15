@@ -2,8 +2,11 @@ import { DsTypography, Header } from '@netapp/design-system';
 
 import styles from './CreateNewDBHeader.module.scss';
 import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '../../../store/storeHooks';
 const CreateNewUserHeader = () => {
     const navigate = useNavigate();
+    const dbHostName = useAppSelector(state => state.createNewUser.dbHostName);
+    
     return (
         <div className={styles.createNewUserHeader}>
             <Header
@@ -18,7 +21,7 @@ const CreateNewUserHeader = () => {
                 <div className={styles.leftSideStyle}>
                     <div className={styles.separator} />
                     <DsTypography variant="Semibold_14" className={styles.hostName}>
-                        Host: host name
+                        {`Host: ${dbHostName}`}
                     </DsTypography>
                 </div>
             </Header>
