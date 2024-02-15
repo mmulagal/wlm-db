@@ -471,11 +471,7 @@ async function getFsxStorageCapacity(credentialsId: string, region: string, fsxI
     const { FileSystems: fileSystems } = await describeFSxN(credentialsId, region!, {
         FileSystemIds: [fsxId]
     });
-    try {
-        return fileSystems![0].StorageCapacity;
-    } catch (error) {
-        logger.error(`No FSx file system was found with FSx Id ${fsxId}`);
-    }
+    return fileSystems![0].StorageCapacity!;
 }
 
 export {
