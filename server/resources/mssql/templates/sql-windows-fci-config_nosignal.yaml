@@ -1057,7 +1057,7 @@ Resources:
                         C:\cfn\DSC.zip:
                             source: {{ DSC }}
                         C:\cfn\Installer\powershell.zip:
-                            source: { { PowerShell } }
+                            source: {{ PowerShell }}
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
                             source: {{ AmazonLaunchWizardForCFN }}
                         C:\cfn\modules\AWSLaunchWizardForSSM.zip:
