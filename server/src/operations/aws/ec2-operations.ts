@@ -23,7 +23,7 @@ import {
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
-import { ResourceDetails, SecurityGroup, Subnet, VPC, NetworkInterface } from '../../utils/common-types';
+import { ResourceDetails, SecurityGroup, Subnet, VPC, NetworkInterface, Metadata } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -391,10 +391,7 @@ async function tagEc2Resource(credentialsId: string, region: string, accountId: 
 async function getCostAllocationTagEC2Resource(resourceDetail: ResourceDetails) {
     logger.info('Get EC2 Resources which has cost allocation tag attached');
     const { region, credentials_id: credentialsId, metadata } = resourceDetail;
-    const { node1InstanceId, node2InstanceId } = metadata as {
-        node1InstanceId: string;
-        node2InstanceId: string;
-    };
+    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
     const resourceIds = [node1InstanceId];
     if (node2InstanceId) {
         resourceIds.push(node2InstanceId);

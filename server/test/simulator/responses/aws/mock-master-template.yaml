@@ -919,35 +919,13 @@ Resources:
                 - NewOntapFsx
                 - NewFSxStack.Outputs.FSxFileSystemLogicalId
                 - ExistingFSxStack.Outputs.FSxFileSystemId
-            ActiveInstanceIp:
-                - IsFailoverCluster
-                - SQLServerStack.Outputs.SQLFSx1InstanceIPMAD
-                - SQLStandaloneStack.Outputs.SqlNodeIp
-            ActiveInstanceId:
+            Node1InstanceId:
                 - IsFailoverCluster
                 - SQLServerStack.Outputs.SQLFSx1InstanceId
                 - SQLStandaloneStack.Outputs.SqlNodeId
-            ActiveInstanceName:
-                Fn::Select:
-                    - '0'
-                    - Fn::Split:
-                          - ','
-                          - Ref: NodeNetBIOSNames
-            StandbyInstanceIp:
-                - IsFailoverCluster
-                - SQLServerStack.Outputs.SQLFSx2InstanceIPMAD
-                - AWS::NoValue
-            StandbyInstanceId:
+            Node2InstanceId:
                 - IsFailoverCluster
                 - SQLServerStack.Outputs.SQLFSx2InstanceId
-                - AWS::NoValue
-            StandbyInstanceName:
-                - IsFailoverCluster
-                - Fn::Select:
-                      - '1'
-                      - Fn::Split:
-                            - ','
-                            - Ref: NodeNetBIOSNames
                 - AWS::NoValue
             ResourceName: SqlServerName
             SQLDeploymentType:
@@ -1428,23 +1406,9 @@ Resources:
         - IsFailoverCluster
         - SQLServerStack.Outputs.SQLFSx1InstanceId
         - SQLStandaloneStack.Outputs.SqlNodeId
-      Node1InstanceName:
-        Fn::Select:
-          - "0"
-          - Fn::Split:
-              - ","
-              - Ref: NodeNetBIOSNames
       Node2InstanceId:
         - IsFailoverCluster
         - SQLServerStack.Outputs.SQLFSx2InstanceId
-        - AWS::NoValue
-      Node2InstanceName:
-        - IsFailoverCluster
-        - Fn::Select:
-            - "1"
-            - Fn::Split:
-                - ","
-                - Ref: NodeNetBIOSNames
         - AWS::NoValue
       ResourceName: SqlServerName
       SQLDeploymentType:

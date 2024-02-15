@@ -126,15 +126,7 @@ async function getTopology(
         metadata
     } = resourceData;
     const { node1InstanceId, node2InstanceId, activeDirectoryName, activeDirectoryAddress, sqlDeploymentType } =
-        metadata as {
-            node1InstanceId: string;
-            node2InstanceId: string;
-            node1InstanceName: string;
-            node2InstanceName: string;
-            activeDirectoryName: string;
-            activeDirectoryAddress: string;
-            sqlDeploymentType: string;
-        };
+        metadata as unknown as Metadata;
 
     let topologyData: TopologyResponseType = {
         awsAccount: '',
@@ -288,9 +280,7 @@ async function getStorageData(
     try {
         const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
 
-        const { fsxSecret } = metadata as {
-            fsxSecret: string;
-        };
+        const { fsxSecret } = metadata as unknown as Metadata;
 
         // DeploymentID is same as AWS CloudFormation stack name.  We retrieve
         // deploymentID from the fsxSecret, which has an additional '-fsx'
@@ -303,7 +293,7 @@ async function getStorageData(
             credentialsId,
             region!,
             fileSystemId!,
-            fsxSecret,
+            fsxSecret!,
             'storage/volumes',
             `tiering.object_tags="wlmDeploymentId=${deploymentId}"`,
             'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
@@ -383,17 +373,24 @@ async function getProtectionStatus(
     }
 }
 
-async function getBillingOrPriceEstimation(resourceDetail: ResourceDetails, activeNodeInstanceId: string) {
+async function getBillingOrPriceEstimation(resourceDetail: ResourceDetails, activeNodeInstanceId?: string) {
     logger.info('Get AWS resources billing or cost data:', resourceDetail);
-
-    const [billingResponse, pricingResponse] = await Promise.all([
+    const promises = [
         getBilling(resourceDetail).catch(error => {
             logger.error('Failed to get billing data for resource: :', JSON.stringify(error));
-        }),
-        getUsageEstimationData(resourceDetail, activeNodeInstanceId).catch(error => {
-            logger.error('Failed to get pricing estimation data for resource:', JSON.stringify(error));
         })
-    ]);
+    ];
+    if (activeNodeInstanceId) {
+        promises.push(
+            getUsageEstimationData(resourceDetail, activeNodeInstanceId).catch(error => {
+                logger.error('Failed to get pricing estimation data for resource:', JSON.stringify(error));
+            })
+        );
+    } else {
+        promises.push(Promise.resolve());
+    }
+
+    const [billingResponse, pricingResponse] = await Promise.all(promises);
 
     return billingResponse || pricingResponse;
 }
@@ -402,10 +399,7 @@ async function getBilling(resourceDetail: ResourceDetails) {
     logger.info('Get AWS resources billing data:', resourceDetail);
     try {
         const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
-        const { node1InstanceId, node2InstanceId } = metadata as {
-            node1InstanceId: string;
-            node2InstanceId: string;
-        };
+        const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
         // Need to validate before proceeding for billing
         await validationForCostExplorer(resourceDetail);
         const billingResponse: UsageCostResponseType = await calculateBilling(
@@ -458,10 +452,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
 
     try {
         const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
-        const { sqlDeploymentType } = metadata as {
-            sqlDeploymentType: string;
-            node1InstanceId: string;
-        };
+        const { sqlDeploymentType } = metadata as unknown as Metadata;
 
         const [ec2ResourceInfo, fsxResourceInfo] = await Promise.all([
             getEc2ResourceInfo(credentialsId, region!, activeNodeInstanceId),
@@ -472,7 +463,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             compute: {
                 regionCode: region!,
                 instanceType: ec2ResourceInfo.resourceType,
-                sqlDeploymentMode: sqlDeploymentType.toLowerCase() === FCI ? FCI : STANDALONE,
+                sqlDeploymentMode: sqlDeploymentType?.toLowerCase() === FCI ? FCI : STANDALONE,
                 sqlSoftwareType: ec2ResourceInfo.sqlSoftwareType
             },
             storage: {
@@ -604,41 +595,39 @@ async function getDatabaseHostsSummary(
                     node2InstanceId,
                     resourceId
                 );
-                if (isSSMConnected && activeNodeInstanceId) {
-                    const [dbCount, topologyData, performanceData, storageData, protectionData, usageEstimationData] =
-                        await Promise.all(
-                            [
-                                ...(isSSMConnected
-                                    ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId)]
-                                    : [Promise.resolve()]),
-                                getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
-                                ...(isSSMConnected && getPerformance && activeNodeInstanceId
-                                    ? [getServerIOLatency(resourceId, activeNodeInstanceId)]
-                                    : [Promise.resolve()]), // Fetch io latency data
-                                ...(isSSMConnected && getStorageSavings && activeNodeInstanceId
-                                    ? [getStorageData(resourceDetail, activeNodeInstanceId)]
-                                    : [Promise.resolve()]), // Fetch storage savings data
-                                ...(isSSMConnected && getProtection && activeNodeInstanceId
-                                    ? [getProtectionStatus(resourceDetail, activeNodeInstanceId)]
-                                    : [Promise.resolve()]), // Fetch protection status
-                                ...(getUsageEstimation && activeNodeInstanceId
-                                    ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId)]
-                                    : [Promise.resolve()]) // Fetch billing or pricing estimate data
-                            ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
-                        );
+                const [dbCount, topologyData, performanceData, storageData, protectionData, usageEstimationData] =
+                    await Promise.all(
+                        [
+                            ...(isSSMConnected && activeNodeInstanceId
+                                ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId)]
+                                : [Promise.resolve()]),
+                            getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
+                            ...(isSSMConnected && getPerformance && activeNodeInstanceId
+                                ? [getServerIOLatency(resourceId, activeNodeInstanceId)]
+                                : [Promise.resolve()]), // Fetch io latency data
+                            ...(isSSMConnected && getStorageSavings && activeNodeInstanceId
+                                ? [getStorageData(resourceDetail, activeNodeInstanceId)]
+                                : [Promise.resolve()]), // Fetch storage savings data
+                            ...(isSSMConnected && getProtection && activeNodeInstanceId
+                                ? [getProtectionStatus(resourceDetail, activeNodeInstanceId)]
+                                : [Promise.resolve()]), // Fetch protection status
+                            ...(getUsageEstimation
+                                ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId)]
+                                : [Promise.resolve()]) // Fetch billing or pricing estimate data
+                        ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
+                    );
 
-                    databaseHosts.push({
-                        id: resourceId,
-                        name: resourceName || '',
-                        status: dbCount ? ServerState.UP : ServerState.DOWN,
-                        databaseCount: dbCount?.totalCount || 0,
-                        topology: topologyData!,
-                        ...(performanceData && { performance: performanceData }),
-                        ...(storageData && { storage: storageData }),
-                        ...(protectionData && { protection: protectionData }),
-                        ...(usageEstimationData && { estimatedUsageCost: usageEstimationData })
-                    });
-                }
+                databaseHosts.push({
+                    id: resourceId,
+                    name: resourceName || '',
+                    status: dbCount ? ServerState.UP : ServerState.DOWN,
+                    databaseCount: dbCount?.totalCount || 0,
+                    topology: topologyData!,
+                    ...(performanceData && { performance: performanceData }),
+                    ...(storageData && { storage: storageData }),
+                    ...(protectionData && { protection: protectionData }),
+                    ...(usageEstimationData && { estimatedUsageCost: usageEstimationData })
+                });
             })
         );
     } catch (error) {
@@ -742,7 +731,7 @@ async function getDatabaseHostSummary(
                 ...(isSSMConnected && getStorageSavings && activeNodeInstanceId
                     ? [getStorageData(resourceDetail, activeNodeInstanceId)]
                     : [Promise.resolve()]), // Fetch storage savings data
-                ...(getUsageEstimation && activeNodeInstanceId
+                ...(getUsageEstimation
                     ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId)]
                     : [Promise.resolve()]), // Fetch pricing estimate data
                 ...(isSSMConnected && getResourceutilization && activeNodeInstanceId

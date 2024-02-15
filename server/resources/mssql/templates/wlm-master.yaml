@@ -934,25 +934,10 @@ Resources:
             - IsFailoverCluster
             - !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceId"
             - !GetAtt "SQLStandaloneStack.Outputs.SqlNodeId"
-      Node1InstanceName: 
-          Fn::Select:
-            - "0"
-            - Fn::Split:
-              - ","
-              - Ref: NodeNetBIOSNames
       Node2InstanceId: 
           !If
             - IsFailoverCluster
             - !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceId"
-            - !Ref AWS::NoValue
-      Node2InstanceName: 
-          !If
-            - IsFailoverCluster
-            - Fn::Select:
-              - "1"
-              - Fn::Split:
-                - ","
-                - Ref: NodeNetBIOSNames
             - !Ref AWS::NoValue
       ResourceName: !Ref 'SqlServerName'
       SQLDeploymentType: 

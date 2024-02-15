@@ -30,8 +30,6 @@ const MsSqlServerDiscoveryResponse = Type.Object({
 const MsSqlServerDiscoverRequestBody = Type.Object({
     activeNodeInstanceId: Type.String(),
     standbyNodeInstanceId: Type.Optional(Type.String()),
-    activeNodeInstanceName: Type.String(),
-    standbyNodeInstanceName: Type.Optional(Type.String()),
     fsxId: Type.String()
 });
 

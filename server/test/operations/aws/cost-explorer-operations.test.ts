@@ -6,6 +6,7 @@ import '../../simulator/scopes/aws/cost-explorer-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import { calculateBilling } from '../../../src/operations/aws/cost-explorer-operations';
 import { UsageCostResponseType } from '../../../src/routes/types/database-hosts.types';
+import { Metadata } from '../../../src/utils/common-types';
 
 describe('Cost explorer Operations', () => {
     it('calculate billing using cost explorer', async () => {
@@ -28,17 +29,12 @@ describe('Cost explorer Operations', () => {
                 sqlDeploymentType: 'FCI',
                 node1InstanceId: 'i-07a29eb681ba37679',
                 node2InstanceId: 'i-0c267a9f8a4d3008e',
-                node1InstanceName: 'sqlnode1-56317',
-                sqlServiceAccountSecret: 'WLMDB-SqlFciStack-1700643938368-sql',
-                node2InstanceName: 'sqlnode2-56317'
+                sqlServiceAccountSecret: 'WLMDB-SqlFciStack-1700643938368-sql'
             }
         };
 
         const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resource;
-        const { node1InstanceId, node2InstanceId } = metadata as {
-            node1InstanceId: string;
-            node2InstanceId: string;
-        };
+        const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
         const costExplorerResponse: UsageCostResponseType = {
             compute: 118.7759587606,

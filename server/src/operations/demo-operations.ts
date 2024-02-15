@@ -57,7 +57,6 @@ export default async function createDeploymentMockDataInDB(
     const metadata: Metadata = {
         sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
         node1InstanceId: `i-${randomize('A0', 17)}`,
-        node1InstanceName: `sqlnode1-${randomize('0', 5)}`,
         creationDate: new Date().getTime().toString(),
         activeDirectoryName: 'wlm.com',
         activeDirectoryAddress: generateRandomIP()
@@ -65,7 +64,6 @@ export default async function createDeploymentMockDataInDB(
 
     if (sqlDeploymentMode === 'FCI') {
         metadata.node2InstanceId = `i-${randomize('A0', 17)}`;
-        metadata.node2InstanceName = `sqlnode2-${randomize('0', 5)}`;
         metadata.activeDirectoryAddress = `${generateRandomIP()}, ${generateRandomIP()}`;
     }
     await createResource(accountId, {

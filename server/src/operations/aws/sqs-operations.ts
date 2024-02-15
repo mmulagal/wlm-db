@@ -455,8 +455,6 @@ async function processCloudFormationMessages() {
                                                     const {
                                                         Node1InstanceId: node1InstanceId,
                                                         Node2InstanceId: node2InstanceId,
-                                                        Node1InstanceName: node1InstanceName,
-                                                        Node2InstanceName: node2InstanceName,
                                                         FSxFileSystemId: fsxId,
                                                         FSxFileSystemName: fsxName,
                                                         SQLDeploymentType: sqlDeploymentType,
@@ -523,8 +521,6 @@ async function processCloudFormationMessages() {
                                                             creationDate: Date.now(),
                                                             node1InstanceId,
                                                             node2InstanceId,
-                                                            node1InstanceName, // TODO: check if this can be removed as well
-                                                            node2InstanceName,
                                                             sqlDeploymentType,
                                                             fsxSecret,
                                                             activeDirectoryName,

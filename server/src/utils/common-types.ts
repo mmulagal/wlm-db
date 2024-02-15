@@ -1,8 +1,6 @@
 interface Metadata {
     node1InstanceId: string;
-    node1InstanceName?: string;
     node2InstanceId?: string;
-    node2InstanceName?: string;
     sqlDeploymentType?: string;
     fsxSecret?: string;
     activeDirectoryName?: string;

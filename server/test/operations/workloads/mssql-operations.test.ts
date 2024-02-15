@@ -43,9 +43,7 @@ beforeAll(async () => {
         storageType: STORAGE_TYPE.FSXN,
         metadata: {
             node1InstanceId: 'i-07e76a4b916548dc0',
-            node1InstanceName: 'node1',
             node2InstanceId: 'i-0880a21327284f67c',
-            node2InstanceName: 'node2',
             fsxSecret: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
         }
     });
@@ -119,9 +117,7 @@ describe('MSSQL Resource methods', () => {
             'mssql',
             STORAGE_TYPE.FSXN,
             ACTIVE_INSTANCE_ID,
-            'test-active-instance-name',
-            STANDBY_INSTANCE_ID,
-            'test-standby-instance-name'
+            STANDBY_INSTANCE_ID
         );
         expect(resp.resourceName).toEqual(mssqlResponse.mssqlRegistrationResponse.resourceName);
 

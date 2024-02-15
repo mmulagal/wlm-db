@@ -50,6 +50,7 @@ import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
+import { Metadata } from '../../../utils/common-types';
 
 const logger = getLogger();
 
@@ -83,10 +84,7 @@ async function getResourceDetails(resourceId: string) {
     let node1InstanceId;
     let node2InstanceId;
     if (!isEmpty(metadata)) {
-        ({ node1InstanceId, node2InstanceId } = metadata as {
-            node1InstanceId: string;
-            node2InstanceId?: string;
-        });
+        ({ node1InstanceId, node2InstanceId } = metadata as unknown as Metadata);
     }
     return [credentialsId, region, node1InstanceId, node2InstanceId];
 }
@@ -473,9 +471,7 @@ async function discoverMsSqlServer(
     resourceType: string,
     storageType: STORAGE_TYPE,
     activeNodeInstanceId: string,
-    activeNodeInstanceName: string,
     standbyNodeInstanceId?: string,
-    standbyNodeInstanceName?: string,
     fsxId?: string
 ) {
     logger.info('Save SQL Server details in database:', {
@@ -511,9 +507,7 @@ async function discoverMsSqlServer(
         region,
         metadata: {
             node1InstanceId: activeNodeInstanceId,
-            node2InstanceId: standbyNodeInstanceId,
-            node1InstanceName: activeNodeInstanceName,
-            node2InstanceName: standbyNodeInstanceName
+            node2InstanceId: standbyNodeInstanceId
         }
     });
     const { source } = await lookupCredentials(credentialsId);
