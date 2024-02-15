@@ -1,0 +1,373 @@
+import { AccordionCard, AccordionCardContent, DsTypography, TextField } from '@netapp/design-system';
+
+import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
+
+import { useAppSelector } from '../../../../store/storeHooks';
+import { useDispatch } from 'react-redux';
+import {
+    setNewUserDataSize,
+    setNewUserDataSizeUnit,
+    setNewDBFileName,
+    setNewUserLogFileName,
+    setNewUserLogFileSize,
+    setNewUserLogFileSizeUnit,
+    setDriveLetter,
+    setDriveLetterForLogFile
+} from '../../../../store/workloadFactory/createNewDBSlice';
+import { useEffect, useMemo } from 'react';
+import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
+import { generateOptionType } from '../../../../utils/utilityFunctions';
+
+import styles from './FileSettings.module.scss';
+import CommonStyles from '../../../../utils/CommonStyles.module.scss';
+
+const FileSettings = () => {
+    const dispatch = useDispatch();
+
+    const {
+        newUserDataSize,
+        newUserDataSizeUnit,
+        newUserDBFileName,
+        newUserLogFileName,
+        newUserLogFileSize,
+        newUserLogFileSizeUnit,
+        selectedNewUserConfig,
+        driveLetter,
+        driveLetterLogFile,
+        newUserDBName
+    } = useAppSelector(state => state.createNewUser);
+
+    const units = ['GiB', 'TiB'];
+
+    useEffect(() => {
+        if (newUserDBName) {
+            const newDBName = `${newUserDBName}_data`;
+            const newLogName = `${newUserDBName}_log`;
+            dispatch(setNewDBFileName(newDBName));
+            dispatch(setNewUserLogFileName(newLogName));
+        }
+    }, [newUserDBName]);
+
+    //Function to generate the options for Select Field
+    const generateUnitsForStorage = useMemo<optionType[]>((): optionType[] => {
+        const options: optionType[] = [];
+        units?.map((val, idx: number) => {
+            const option = generateOptionType(val, val, '', false, '');
+            options.push(option);
+        });
+        return options;
+    }, []);
+
+    //Function to generate the options for Select Field
+    const generateDriveLetters = useMemo<optionType[]>((): optionType[] => {
+        const letters = [
+            { drive: '(a:)', existingLetter: '/mssql/data' },
+            { drive: '(b:)', existingLetter: '/mssql/data' },
+            { drive: '(c:)', existingLetter: '/mssql/data' },
+            { drive: '(d:)', existingLetter: '/mssql/data' },
+            { drive: '(e:)', existingLetter: '/mssql/data' },
+            { drive: '(f:)', existingLetter: '/mssql/data' }
+        ];
+        const options: optionType[] = [];
+        letters?.map((val, idx: number) => {
+            const option = generateOptionType(val.drive, val.drive, val.existingLetter, false, '');
+            options.push(option);
+        });
+        return options;
+    }, []);
+
+    useEffect(() => {
+        dispatch(setNewUserDataSizeUnit(generateUnitsForStorage[0]));
+        dispatch(setNewUserLogFileSizeUnit(generateUnitsForStorage[0]));
+    }, [generateUnitsForStorage]);
+
+    useEffect(() => {
+        if (newUserDataSize) {
+            if (newUserDataSizeUnit?.label === 'GiB' && newUserDataSize > 120) {
+                const logFileSize = newUserDataSize / 4;
+                dispatch(setNewUserLogFileSize(logFileSize));
+                dispatch(setNewUserLogFileSizeUnit(generateOptionType('GiB', 'GiB', '', false, '')));
+            }
+
+            if (newUserDataSizeUnit?.label === 'TiB' && newUserDataSize < 130) {
+                const logFileSize = newUserDataSize / 4;
+                dispatch(setNewUserLogFileSize(logFileSize));
+                dispatch(setNewUserLogFileSizeUnit(generateOptionType('TiB', 'TiB', '', false, '')));
+            }
+        }
+    }, [newUserDataSize]);
+    //Set the Header text here
+    const setHeader = () => {
+        if (
+            newUserDataSize &&
+            newUserDataSizeUnit?.label &&
+            newUserDBFileName &&
+            newUserLogFileName &&
+            newUserLogFileSize &&
+            newUserLogFileSizeUnit?.label
+        ) {
+            return (
+                <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
+                    <DsTypography variant="Regular_14">
+                        {`Data file name: ${newUserDBFileName} (${newUserDataSize} ${newUserDataSizeUnit?.label})`}{' '}
+                    </DsTypography>
+                    <div className={CommonStyles.separator} />
+                    <DsTypography variant="Regular_14">
+                        {`Log file name: ${newUserLogFileName} (${newUserLogFileSize} ${newUserLogFileSizeUnit?.label})`}{' '}
+                    </DsTypography>
+                </DsTypography>
+            );
+        }
+        return <ActionRequired error={false} />;
+    };
+
+    const errorCheckForDataSize = () => {
+        if (newUserDataSizeUnit?.label === 'GiB') {
+            if (newUserDataSize && newUserDataSize < 120) {
+                return 'The valid range is 120 GiB - 130 TiB';
+            }
+        } else if (newUserLogFileSizeUnit?.label === 'TiB') {
+            if (newUserLogFileSize && newUserLogFileSize > 130) {
+                return 'The valid range is 120 GiB - 130 TiB';
+            }
+        }
+    };
+
+    return (
+        <div className={styles.fileSettings}>
+            <AccordionCard
+                ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
+                id="2"
+                title={<div className={CommonStyles.title}>{'File  settings'}</div>}
+            >
+                <AccordionCardContent>
+                    <DsTypography>
+                        {selectedNewUserConfig === 'Quick create' && (
+                            <>
+                                <div className={styles.firstRow}>
+                                    <TextField
+                                        label="Data file name"
+                                        placeholder="Database file name"
+                                        value={newUserDBFileName}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            dispatch(setNewDBFileName(e.target.value));
+                                        }}
+                                        className={styles.fileNameText}
+                                    />
+                                    <div className={styles.dataSizeField}>
+                                        <TextField
+                                            label="Data size"
+                                            placeholder="120 GiB - 130 TiB"
+                                            value={newUserDataSize}
+                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                const numSize = e.target.value.replace(/\D/g, '');
+                                                dispatch(setNewUserDataSize(numSize));
+                                            }}
+                                            error={errorCheckForDataSize()}
+                                            className={styles.textFieldNewUSer}
+                                        />
+
+                                        <SelectField
+                                            label={'select'}
+                                            isClearable={false}
+                                            defaultValue={
+                                                newUserDataSizeUnit
+                                                    ? [newUserDataSizeUnit]
+                                                    : [generateUnitsForStorage[0]]
+                                            }
+                                            onChange={(selectedOptions: any): void => {
+                                                dispatch(setNewUserDataSizeUnit(selectedOptions));
+                                            }}
+                                            isSearchable={generateUnitsForStorage.length > 5}
+                                            error={errorCheckForDataSize()}
+                                            options={generateUnitsForStorage}
+                                            className={styles.selectField}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className={styles.firstRow}>
+                                    <TextField
+                                        label="Log file name"
+                                        placeholder="Log file name"
+                                        value={newUserLogFileName}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            dispatch(setNewUserLogFileName(e.target.value));
+                                        }}
+                                        className={styles.fileNameText}
+                                    />
+                                    <div className={styles.dataSizeField}>
+                                        <TextField
+                                            label="Log size"
+                                            placeholder="25% of the data size"
+                                            value={newUserLogFileSize}
+                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                dispatch(setNewUserLogFileSize(e.target.value));
+                                            }}
+                                            className={styles.textFieldNewUSer}
+                                        />
+
+                                        <SelectField
+                                            label={'select'}
+                                            isClearable={false}
+                                            info="Log size is automatically set to be 25% of the data size. "
+                                            defaultValue={
+                                                newUserLogFileSizeUnit
+                                                    ? [newUserLogFileSizeUnit]
+                                                    : [generateUnitsForStorage[0]]
+                                            }
+                                            value={
+                                                newUserLogFileSizeUnit
+                                                    ? [newUserLogFileSizeUnit]
+                                                    : [generateUnitsForStorage[0]]
+                                            }
+                                            onChange={(selectedOptions: any): void => {
+                                                dispatch(setNewUserLogFileSizeUnit(selectedOptions));
+                                            }}
+                                            isSearchable={generateUnitsForStorage.length > 5}
+                                            options={generateUnitsForStorage}
+                                            className={styles.selectField}
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                        {selectedNewUserConfig === 'Advanced create' && (
+                            <>
+                                <div className={styles.dataFileSection}>
+                                    <DsTypography variant="Regular_14">Data file</DsTypography>
+                                    <div className={styles.dataFileSeparator} />
+                                    <div className={styles.inputSection}>
+                                        <SelectField
+                                            label="Select drive letter"
+                                            isClearable={false}
+                                            placeholder="Select drive letter"
+                                            onChange={(selectedOptions: any): void => {
+                                                dispatch(setDriveLetter(selectedOptions));
+                                            }}
+                                            value={driveLetter ? driveLetter : null}
+                                            isSearchable={generateDriveLetters.length > 5}
+                                            options={generateDriveLetters}
+                                            variant="two-lines"
+                                            className={styles.driveSelectField}
+                                        />
+
+                                        <div className={styles.firstRow}>
+                                            <TextField
+                                                label="Data file name"
+                                                placeholder="Database file name"
+                                                value={newUserDBFileName}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                    dispatch(setNewDBFileName(e.target.value));
+                                                }}
+                                                className={styles.fileNameText}
+                                            />
+                                            <div className={styles.dataSizeField}>
+                                                <TextField
+                                                    label="Data size"
+                                                    placeholder="120 GiB - 130 TiB"
+                                                    value={newUserDataSize}
+                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                        const numSize = e.target.value.replace(/\D/g, '');
+                                                        dispatch(setNewUserDataSize(numSize));
+                                                    }}
+                                                    error={errorCheckForDataSize()}
+                                                    className={styles.textFieldNewUSer}
+                                                />
+
+                                                <SelectField
+                                                    label={'select'}
+                                                    isClearable={false}
+                                                    defaultValue={
+                                                        newUserDataSizeUnit
+                                                            ? [newUserDataSizeUnit]
+                                                            : [generateUnitsForStorage[0]]
+                                                    }
+                                                    onChange={(selectedOptions: any): void => {
+                                                        dispatch(setNewUserDataSizeUnit(selectedOptions));
+                                                    }}
+                                                    isSearchable={generateUnitsForStorage.length > 5}
+                                                    error={errorCheckForDataSize()}
+                                                    options={generateUnitsForStorage}
+                                                    className={styles.selectField}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className={styles.pathSection}>
+                                        <DsTypography variant="Semibold_14">Data file path:</DsTypography>
+                                    </div>
+                                </div>
+
+                                <div className={styles.dataFileSection}>
+                                    <DsTypography variant="Regular_14">Log file</DsTypography>
+                                    <div className={styles.dataFileSeparator} />
+                                    <div className={styles.inputSection}>
+                                        <SelectField
+                                            label="Select drive letter"
+                                            isClearable={false}
+                                            placeholder="Select drive letter"
+                                            onChange={(selectedOptions: any): void => {
+                                                dispatch(setDriveLetterForLogFile(selectedOptions));
+                                            }}
+                                            value={driveLetterLogFile ? driveLetterLogFile : null}
+                                            isSearchable={generateDriveLetters.length > 5}
+                                            options={generateDriveLetters}
+                                            variant="two-lines"
+                                            className={styles.driveSelectField}
+                                        />
+
+                                        <div className={styles.firstRow}>
+                                            <TextField
+                                                label="Log file name"
+                                                placeholder="Log file name"
+                                                value={newUserLogFileName}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                    dispatch(setNewUserLogFileName(e.target.value));
+                                                }}
+                                                className={styles.fileNameText}
+                                            />
+                                            <div className={styles.dataSizeField}>
+                                                <TextField
+                                                    label="Log size"
+                                                    placeholder="25% of the data size"
+                                                    value={newUserLogFileSize}
+                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                        dispatch(setNewUserLogFileSize(e.target.value));
+                                                    }}
+                                                    className={styles.textFieldNewUSer}
+                                                />
+
+                                                <SelectField
+                                                    label={'select'}
+                                                    isClearable={false}
+                                                    info="Log size is automatically set to be 25% of the data size. "
+                                                    defaultValue={
+                                                        newUserLogFileSizeUnit
+                                                            ? [newUserLogFileSizeUnit]
+                                                            : [generateUnitsForStorage[0]]
+                                                    }
+                                                    onChange={(selectedOptions: any): void => {
+                                                        dispatch(setNewUserLogFileSizeUnit(selectedOptions));
+                                                    }}
+                                                    isSearchable={generateUnitsForStorage.length > 5}
+                                                    options={generateUnitsForStorage}
+                                                    className={styles.selectField}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className={styles.pathSection}>
+                                        <DsTypography variant="Semibold_14">Log file path:</DsTypography>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </DsTypography>
+                </AccordionCardContent>
+            </AccordionCard>
+        </div>
+    );
+};
+
+export default FileSettings;

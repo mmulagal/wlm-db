@@ -1,0 +1,20 @@
+.createNewUserHeader {
+    [class*='Header-module_left'] {
+        padding-left: 40px !important;
+    }
+
+    .leftSideStyle {
+        display: flex;
+        gap: 12px;
+        padding-right: 72%;
+        align-items: center;
+        .separator {
+            border-right: 1px solid var(--field-border-disabled);
+            height: 24px;
+        }
+
+        .hostName {
+            color: var(--text-title);
+        }
+    }
+}

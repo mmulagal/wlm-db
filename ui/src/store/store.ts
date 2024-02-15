@@ -7,6 +7,7 @@ import {
     databaseHomeApi,
     headersApi,
     jobMonitoringApi,
+    policiesApi,
     resourceApi,
     workloadFactoryResourceApi
 } from '../utils/apiService';
@@ -24,6 +25,7 @@ import workloadFactoryResourceSlice from './workloadFactory/workloadFactoryResou
 import jobMonitoringSlice from './workloadFactory/jobMonitoringSlice';
 import inventorySlice from './workloadFactory/inventorySlice';
 import headersSlice from './workloadFactory/headersSlice';
+import createNewUserSlice from './workloadFactory/createNewDBSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -46,7 +48,9 @@ const rootReducer = combineReducers({
     [jobMonitoringSlice.name]: jobMonitoringSlice.reducer,
     [inventorySlice.name]: inventorySlice.reducer,
     [headersApi.reducerPath]: headersApi.reducer,
-    [headersSlice.name]: headersSlice.reducer
+    [headersSlice.name]: headersSlice.reducer,
+    [createNewUserSlice.name]: createNewUserSlice.reducer,
+    [policiesApi.reducerPath]: policiesApi.reducer
 });
 
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action: any) => {
@@ -89,6 +93,7 @@ const store = configureStore({
             .concat(workloadFactoryResourceApi.middleware)
             .concat(jobMonitoringApi.middleware)
             .concat(headersApi.middleware)
+            .concat(policiesApi.middleware)
             .concat(rtkQueryErrorLogger)
 });
 
