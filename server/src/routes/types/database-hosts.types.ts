@@ -168,19 +168,17 @@ const DatabasesListResponse = Type.Object({
 type DatabasesListResponseType = Static<typeof DatabasesListResponse>;
 
 const DriveInfoResponseBody = Type.Object({
-    existingDriveInfo: Type.Optional(
-        Type.Array(
-            Type.Object({
-                driveLetter: Type.String(),
-                availableSize: Type.Number(),
-                defaultDataDrive: Type.Optional(Type.Boolean()),
-                defaultLogDrive: Type.Optional(Type.Boolean()),
-                isNetappDrive: Type.Boolean()
-            })
-        )
+    existingDriveInfo: Type.Array(
+        Type.Object({
+            driveLetter: Type.String(),
+            availableSize: Type.Number(),
+            defaultDataDrive: Type.Boolean(),
+            defaultLogDrive: Type.Boolean(),
+            isNetappDrive: Type.Boolean()
+        })
     ),
-    availableDriveLetters: Type.Optional(Type.Array(Type.String())),
-    FsxStorageCapacity: Type.Optional(Type.Number())
+    availableDriveLetters: Type.Array(Type.String()),
+    FsxStorageCapacity: Type.Number()
 });
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
 
