@@ -15,16 +15,17 @@ const CreateNewUserHeader = () => {
                         navigate('../databases');
                     }
                 }}
-                title={'Create new user database'}
+                title={
+                    <div className={styles.leftSideStyle}>
+                        <div>Create new user database</div>
+                        <div className={styles.separator} />
+                        <DsTypography variant="Semibold_14" className={styles.hostName}>
+                            Host: host name
+                        </DsTypography>
+                    </div>
+                }
                 style={{ width: '100vw' }}
-            >
-                <div className={styles.leftSideStyle}>
-                    <div className={styles.separator} />
-                    <DsTypography variant="Semibold_14" className={styles.hostName}>
-                        {`Host: ${dbHostName}`}
-                    </DsTypography>
-                </div>
-            </Header>
+            ></Header>
         </div>
     );
 };
