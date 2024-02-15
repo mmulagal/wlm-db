@@ -870,7 +870,7 @@ export const getChatbotParamsFromPayload = (payload: any) => {
     if (payload?.dbDeploymentModel?.value) {
         params.sqlDeploymentMode = payload.dbDeploymentModel.value;
     }
-    if (payload?.storageCapacity?.capacity) {
+    if (payload?.storageCapacity?.capacity && payload?.storageCapacity?.unit) {
         params.databaseSize =
             parseInt(payload.storageCapacity.capacity) * (payload.storageCapacity.unit.value === 'GiB' ? 1 : 1024);
     }

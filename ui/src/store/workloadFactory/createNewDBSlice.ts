@@ -10,7 +10,8 @@ const initialCreateNewUserState: any = {
     newUserLogFileSize: '',
     newUserLogFileSizeUnit: '',
     driveLetter: '',
-    driveLetterLogFile: ''
+    driveLetterLogFile: '',
+    dbHostName: ''
 };
 
 const createNewUserSlice = createSlice({
@@ -46,6 +47,9 @@ const createNewUserSlice = createSlice({
         },
         setDriveLetterForLogFile: (state, action: PayloadAction<any>) => {
             state.driveLetterLogFile = action.payload;
+        },
+        setDBHostName: (state, action: PayloadAction<any>) => {
+            state.dbHostName = action.payload;
         }
     }
 });
@@ -60,7 +64,8 @@ export const {
     setNewUserLogFileSize,
     setNewUserLogFileSizeUnit,
     setDriveLetter,
-    setDriveLetterForLogFile
+    setDriveLetterForLogFile,
+    setDBHostName
 } = createNewUserSlice.actions;
 
 export default createNewUserSlice;

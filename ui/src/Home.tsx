@@ -12,7 +12,6 @@ import Tables from './components/Resource/Tables/Tables';
 import styles from './Home.module.scss';
 import { clearNotifications, removeNotification } from './store/notificationSlice';
 
-import PreviewPanel from './components/PreviewPanel/PreviewPanel';
 import DatabaseHostOverview from './workloadFactory/ResourcePage/ResourceHomePage/DatabaseHostOverview';
 import JobMonitoring from './workloadFactory/JobMonitoring/JobMonitoring';
 import HeaderComponent from './workloadFactory/DatabaseHomePage/HeaderComponent/HeaderComponent';
@@ -20,8 +19,6 @@ import WizardComponent from './workloadFactory/CreateNewDB/WizardComponent/Wizar
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
-    const showPanel = useSelector((state: any) => state.previewPanel.showPanel);
-    const showChatbot = useSelector((state: any) => state.auth?.isWorkloadFactory);
     const dispatch = useDispatch();
 
     //@ts-ignore
@@ -31,7 +28,7 @@ const Home = () => {
 
     return (
         <div className={styles['app-layout']}>
-            <div style={{ height: '100%' }} className={`${showPanel && showChatbot ? styles['left-pane'] : ''}`}>
+            <div style={{ height: '100%' }}>
                 <Routes>
                     <Route
                         path={`add-working-environment/database-services/:storage/create`}
@@ -70,7 +67,6 @@ const Home = () => {
                     }}
                 ></AppNotification>
             )}
-            {showPanel && showChatbot && <PreviewPanel />}
         </div>
     );
 };

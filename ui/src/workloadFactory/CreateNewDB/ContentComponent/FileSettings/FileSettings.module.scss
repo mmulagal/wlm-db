@@ -1,5 +1,17 @@
 .fileSettings {
     margin-bottom: 40px;
+
+    .textSection {
+        margin-top: 16px;
+        margin-bottom: 64px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        .firstSection {
+            display: flex;
+            gap: 16px;
+        }
+    }
     .firstRow {
         display: flex;
         gap: 24px;
@@ -77,5 +89,13 @@
             margin-bottom: 64px;
             padding: 12px 40px;
         }
+    }
+
+    .dataSizeTooltip {
+        width: 300px;
+    }
+
+    .logSizeTooltip {
+        width: 280px;
     }
 }
