@@ -1,6 +1,7 @@
 import { AccordionCard, AccordionCardContent, DsTypography, TextField } from '@netapp/design-system';
 
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
+import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
@@ -20,6 +21,7 @@ import { generateOptionType } from '../../../../utils/utilityFunctions';
 
 import styles from './FileSettings.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const FileSettings = () => {
     const dispatch = useDispatch();
@@ -232,8 +234,24 @@ const FileSettings = () => {
                                 </div>
                             </>
                         )}
+
+                        {/* Advanced Create Logic */}
                         {selectedNewUserConfig === 'Advanced create' && (
                             <>
+                                <div className={styles.textSection}>
+                                    <div className={styles.firstSection}>
+                                        <Bullet />
+                                        <DsTypography variant="Regular_14">
+                                            {GENERAL.FILE_SETTINGS_FIRST_TEXT}
+                                        </DsTypography>
+                                    </div>
+                                    <div className={styles.firstSection}>
+                                        <Bullet />
+                                        <DsTypography variant="Regular_14">
+                                            {GENERAL.FILE_SETTINGS_SECOND_TEXT}
+                                        </DsTypography>
+                                    </div>
+                                </div>
                                 <div className={styles.dataFileSection}>
                                     <DsTypography variant="Regular_14">Data file</DsTypography>
                                     <div className={styles.dataFileSeparator} />
