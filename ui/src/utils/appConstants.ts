@@ -524,8 +524,10 @@ export const GENERAL = {
         ' storage virtual machines for an ONTAP file system with ',
         ' MBps of throughput capacity.'
     ],
-    FSXN_SECONDARY_SUBNET_ERROR: 'The primary and secondary subnets of FSx for ONTAP file system does not reside in the selected availability zones.',
-    FSXN_PRIMARY_SUBNET_ERROR: 'The subnet for node 1 must be in the primary Availability Zone for the FSx for ONTAP file system.',
+    FSXN_SECONDARY_SUBNET_ERROR:
+        'The primary and secondary subnets of FSx for ONTAP file system does not reside in the selected availability zones.',
+    FSXN_PRIMARY_SUBNET_ERROR:
+        'The subnet for node 1 must be in the primary Availability Zone for the FSx for ONTAP file system.',
     FSXN_DEPLOYMENT_MODE_ERROR: 'Deployment mode not found.',
     FSXN_NOT_AVAILABLE: 'FSx for ONTAP file system is not in available state.',
     TAB_DASHBOARD: 'Dashboard',
@@ -541,7 +543,11 @@ export const GENERAL = {
     UNMANAGED_HOSTS: 'Unmanaged hosts',
     MANAGED_BY_WLF: 'Managed by Workload Factory',
     MANAGED_HOSTS_HEADING: 'Managed hosts',
-    MANAGED_HOST_HEADING: 'Managed host'
+    MANAGED_HOST_HEADING: 'Managed host',
+    FILE_SETTINGS_FIRST_TEXT:
+        'In case existing drive letter is selected for Data file it will automatically filled for Log file (recommended practice)',
+    FILE_SETTINGS_SECOND_TEXT:
+        'In case new drive letter is selected for Data file it is recommended to select different new drive letter for the Log file'
 };
 
 export const CODE_VIEWER = {
