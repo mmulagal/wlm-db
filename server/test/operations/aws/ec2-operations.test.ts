@@ -67,7 +67,7 @@ describe('EC2 Operations', () => {
         expect(response).toBeDefined();
     });
 
-    it('Get Vpc endpoints', async () => {
+    it('Get services without endpoints', async () => {
         const response = await getServicesWithNoEndpoint(credentialsId, DEFAULT_AWS_REGION, 'vpc-123445');
         expect(response).toBeDefined();
     });

@@ -31,7 +31,6 @@ import {
     HttpErrorCodes,
     WLM_ASSETS,
     VALIDATION_AMI,
-    ASSETS_BUCKET_REGION,
     CF_DEPLOY_ROLE_NAME,
     DatabaseTypes,
     ACCOUNT_ID,
@@ -42,7 +41,6 @@ import {
     TEMPLATE_OPTIONAL_PARAMETERS,
     TEMPLATE_WLMDB_AWS_ACCOUT_ID,
     TEMPLATE_ACCOUNT_ID,
-    BUCKET_NAME,
     CLOUD_FORMATION_CLI_COMMAND,
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     CloudProviders,
@@ -67,7 +65,8 @@ import {
     SQL_HOST_NAME,
     OPERATE,
     VIEW,
-    MAP_SERVICE_TEMPLATE_PARAMETER
+    MAP_SERVICE_TEMPLATE_PARAMETER,
+    SIGNED_TEMPLATES_BUCKET_NAME
 } from '../utils/consts';
 import {
     createJobMockData,
@@ -292,9 +291,9 @@ async function getCloudformationTemplate(
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
 
-    const customMasterTemplatePath: string = `${stackName}/${MASTER_TEMPLATE_PATH}`;
+    const customMasterTemplatePath: string = `${WLMDB}/${stackName}/${MASTER_TEMPLATE_PATH}`;
 
-    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, customMasterTemplatePath);
+    const signedMasterTemplateUrl = await getPreSignedUrl(region!, SIGNED_TEMPLATES_BUCKET_NAME, customMasterTemplatePath);
 
     logger.info('Signed master url ', signedMasterTemplateUrl);
 
@@ -340,8 +339,7 @@ async function getCloudformationTemplate(
     } else {
         // Sleep for 2 seconds for master template to be uploaded
         await sleep(2000);
-
-        const response = await getObjectBucket(ASSETS_BUCKET_REGION, BUCKET_NAME, customMasterTemplatePath);
+        const response = await getObjectBucket(region!, SIGNED_TEMPLATES_BUCKET_NAME, customMasterTemplatePath);
         masterTemplateContents = await response.Body?.transformToString();
     }
 
@@ -566,9 +564,9 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const { roleName, providerAccountId } = await getRoleDetails(credentialsId);
 
-    const customMasterTemplatePath: string = `${derivedParams.StackName}/${MASTER_TEMPLATE_PATH}`;
+    const customMasterTemplatePath: string = `${WLMDB}/${derivedParams.StackName}/${MASTER_TEMPLATE_PATH}`;
 
-    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, customMasterTemplatePath);
+    const signedMasterTemplateUrl = await getPreSignedUrl(region, SIGNED_TEMPLATES_BUCKET_NAME, customMasterTemplatePath);
 
     const encodedSignedMasterTemplateURL = encodeURIComponent(signedMasterTemplateUrl);
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
@@ -724,9 +722,9 @@ async function deployCloudFormationTemplate(
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
 
-    const customMasterTemplatePath: string = `${stackName}/${MASTER_TEMPLATE_PATH}`;
+    const customMasterTemplatePath: string = `${WLMDB}/${stackName}/${MASTER_TEMPLATE_PATH}`;
 
-    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, customMasterTemplatePath);
+    const signedMasterTemplateUrl = await getPreSignedUrl(region, SIGNED_TEMPLATES_BUCKET_NAME, customMasterTemplatePath);
 
     logger.info('Signed master url ', signedMasterTemplateUrl);
 

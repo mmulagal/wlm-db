@@ -79,9 +79,6 @@ Metadata:
       - Label:
           default: WLM SQL Assets Configuration
         Parameters:
-          - AssetsBucketName
-          - AssetsS3KeyPrefix
-          - AssetsS3RegionCode
           - MSSQLMediaBucketName
           - MSSQLMediaPathKey
       - Label:
@@ -115,10 +112,6 @@ Metadata:
         default: Windows Server Failover Cluster name
       KeyPairName:
         default: Key pair name
-      AssetsBucketName:
-        default: WLMDB S3 bucket name
-      AssetsS3KeyPrefix:
-        default: WLMDB S3 key prefix
       SQLAMIID:
         default: SQL server version
       SQLServiceAccountName:
@@ -197,12 +190,6 @@ Parameters:
   {{DomainMemberSGID}}
 
   {{KeyPairName}}
-
-  {{AssetsBucketName}}
-
-  {{AssetsS3RegionCode}}
-
-  {{AssetsS3KeyPrefix}}
 
   {{MSSQLMediaBucketName}}
 
@@ -552,12 +539,6 @@ Resources:
         Ec2RoleName:
           Ref: AWS::StackName
         PerformADCheck: "true"
-        AssetsBucketName:
-          Ref: AssetsBucketName
-        AssetsS3KeyPrefix:
-          Ref: AssetsS3KeyPrefix
-        AssetsS3RegionCode:
-          Ref: AssetsS3RegionCode
         AMI:
           Ref: ValidationAmi
         EnableCloudWatchLogFeature:
@@ -608,12 +589,6 @@ Resources:
         Ec2RoleName:
           Ref: AWS::StackName
         PerformADCheck: "false"  
-        AssetsBucketName:
-          Ref: AssetsBucketName
-        AssetsS3KeyPrefix:
-          Ref: AssetsS3KeyPrefix
-        AssetsS3RegionCode:
-          Ref: AssetsS3RegionCode
         AMI:
           Ref: ValidationAmi
         EnableCloudWatchLogFeature:
@@ -790,14 +765,8 @@ Resources:
           Ref: RouteTable2Id
         PrivateSubnet2ID:
           Ref: PrivateSubnet2ID
-        AssetsBucketName:
-          Ref: AssetsBucketName
         FSxDataLunSize:
           Ref: FSxDataLunSize
-        AssetsS3RegionCode:
-          Ref: AssetsS3RegionCode
-        AssetsS3KeyPrefix:
-          Ref: AssetsS3KeyPrefix
         MSSQLMediaBucketName:
           Ref: MSSQLMediaBucketName
         MSSQLMediaPathKey:
@@ -898,14 +867,8 @@ Resources:
           Ref: PrivateSubnet1ID
         RouteTableId:
           Ref: RouteTable1Id
-        AssetsBucketName:
-          Ref: AssetsBucketName
         FSxDataLunSize:
           Ref: FSxDataLunSize
-        AssetsS3RegionCode:
-          Ref: AssetsS3RegionCode
-        AssetsS3KeyPrefix:
-          Ref: AssetsS3KeyPrefix
         MSSQLMediaBucketName:
           Ref: MSSQLMediaBucketName
         MSSQLMediaPathKey:
