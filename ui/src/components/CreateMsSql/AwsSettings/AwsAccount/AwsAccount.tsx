@@ -28,7 +28,6 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import ViewDialog from '../../../../common/ViewDialog/ViewDialog';
 import { ReactComponent as ErrorIcon } from '../../../../assets/error-icon.svg';
-import { PERMISSIONS } from '../../../../utils/permissions';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 import MissingPermissionsMsg from './MissingPermissionsMsg';
 import { setHeaderSelectedCred } from '../../../../store/workloadFactory/headersSlice';
@@ -47,6 +46,7 @@ const AwsAccount = () => {
     const isWorkloadFactoryStatus = useAppSelector(state => state.auth.isWorkloadFactory);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
     const permissionWarning = useAppSelector(state => state.msSqlAction.permissionWarning);
+    const { policiesList } = useAppSelector(state => state.mssql.getPolicies);
 
     // To check whether account present or not
     const [noAccount, setNoAccount] = useState(true);
@@ -188,7 +188,7 @@ const AwsAccount = () => {
     };
 
     const openDialog = (type: string) => {
-        const data = JSON.stringify(type === 'view' ? PERMISSIONS.view : PERMISSIONS.operate, null, 2);
+        const data = JSON.stringify(type === 'view' ? policiesList?.view : policiesList?.operate, null, 2);
         setDialog(
             <DialogComponent
                 header={type === 'view' ? GENERAL.REQUIRED_VIEW_PERMISSIONS : GENERAL.REQUIRED_OPERATE_PERMISSIONS}

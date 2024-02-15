@@ -1,6 +1,5 @@
 import { Button, Typography, useDialog } from '@netapp/design-system';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { PERMISSIONS } from '../../../../utils/permissions';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../../utils/appConstants';
 import ViewDialog from '../../../../common/ViewDialog/ViewDialog';
@@ -11,9 +10,10 @@ const MissingPermissionsMsg = () => {
     const { setDialog } = useDialog();
     const deployRedirectToCfLink = useAppSelector(state => state.msSqlAction.deployRedirectToCfLink);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const { policiesList } = useAppSelector(state => state.mssql.getPolicies);
 
     const openDialog = (type: string) => {
-        const data = JSON.stringify(type === 'view' ? PERMISSIONS.view : PERMISSIONS.operate, null, 2);
+        const data = JSON.stringify(type === 'view' ? policiesList?.view : policiesList?.operate, null, 2);
         setDialog(
             <DialogComponent
                 header={type === 'view' ? GENERAL.REQUIRED_VIEW_PERMISSIONS : GENERAL.REQUIRED_OPERATE_PERMISSIONS}

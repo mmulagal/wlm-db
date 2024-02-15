@@ -19,12 +19,12 @@ import resourceSlice from './resource/resourceSlice';
 import { GENERAL } from '../utils/appConstants';
 import { customErrorMessages, requiredFieldError } from '../utils/utilityFunctions';
 import databaseHomeSlice from './workloadFactory/databaseHomeSlice';
-import previewPanelSlice from './previewPanel/previewPanelSlice';
 import chatbotSlice, { setShowRetry } from './chatbot/chatbotSlice';
 import workloadFactoryResourceSlice from './workloadFactory/workloadFactoryResourceSlice';
 import jobMonitoringSlice from './workloadFactory/jobMonitoringSlice';
 import inventorySlice from './workloadFactory/inventorySlice';
 import headersSlice from './workloadFactory/headersSlice';
+import createNewUserSlice from './workloadFactory/createNewDBSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -39,7 +39,6 @@ const rootReducer = combineReducers({
     [databaseHomeApi.reducerPath]: databaseHomeApi.reducer,
     [chatbotApi.reducerPath]: chatbotApi.reducer,
     [databaseHomeSlice.name]: databaseHomeSlice.reducer,
-    [previewPanelSlice.name]: previewPanelSlice.reducer,
     [chatbotSlice.name]: chatbotSlice.reducer,
     [workloadFactoryResourceSlice.name]: workloadFactoryResourceSlice.reducer,
     [workloadFactoryResourceApi.reducerPath]: workloadFactoryResourceApi.reducer,
@@ -48,6 +47,7 @@ const rootReducer = combineReducers({
     [inventorySlice.name]: inventorySlice.reducer,
     [headersApi.reducerPath]: headersApi.reducer,
     [headersSlice.name]: headersSlice.reducer,
+    [createNewUserSlice.name]: createNewUserSlice.reducer,
     [policiesApi.reducerPath]: policiesApi.reducer
 });
 

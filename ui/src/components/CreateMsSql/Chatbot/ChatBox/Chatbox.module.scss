@@ -12,7 +12,7 @@
         display: flex;
         align-items: center;
         flex-direction: column;
-        height: calc(100vh - 361px);
+        height: calc(100vh - 366px);
         padding: 0 125px 0 125px;
 
         .chat-window {
@@ -36,7 +36,8 @@
         width: 100%;
 
         .current-msg {
-            width: 646px;
+            width: 100%;
+            max-width: 752px;
             display: flex;
             flex-direction: row;
             align-items: center;

@@ -1,0 +1,101 @@
+.fileSettings {
+    margin-bottom: 40px;
+
+    .textSection {
+        margin-top: 16px;
+        margin-bottom: 64px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        .firstSection {
+            display: flex;
+            gap: 16px;
+        }
+    }
+    .firstRow {
+        display: flex;
+        gap: 24px;
+        .fileNameText {
+            width: 394px;
+        }
+    }
+    .dataSizeField {
+        display: flex;
+
+        .textFieldNewUSer {
+            width: 200px;
+
+            [class*='TextField-module_base-input'] {
+                border-top-right-radius: 0px !important;
+                border-bottom-right-radius: 0px !important;
+            }
+        }
+
+        [class*='FieldErrorWarning-module_base'] {
+            width: 300px !important;
+
+            [class*='TooltipInfo-module_base'] {
+                display: none;
+            }
+        }
+
+        .selectField {
+            width: 110px;
+
+            [class*='Select-module_error-warning'] {
+                display: none;
+            }
+
+            [class*='Select-module_select-top'] {
+                label {
+                    visibility: hidden;
+                }
+            }
+
+            [class*='design-system-select__control'] {
+                border-left: none !important;
+                border-top-left-radius: 0px !important;
+                border-bottom-left-radius: 0px !important;
+            }
+
+            [class*='design-system-select__value-container'] {
+                padding: 2px 0 2px 46px !important;
+            }
+        }
+    }
+
+    .dataFileSection {
+        .dataFileSeparator {
+            margin-top: 8px;
+            width: 984px;
+            border-bottom: 1px solid var(--grey-25);
+        }
+
+        .inputSection {
+            margin-top: 24px;
+            display: flex;
+            gap: 24px;
+        }
+
+        .driveSelectField {
+            width: 229px;
+        }
+
+        .pathSection {
+            height: 48px;
+            width: 984px;
+            background-color: var(--main-background);
+            margin-top: -10px;
+            margin-bottom: 64px;
+            padding: 12px 40px;
+        }
+    }
+
+    .dataSizeTooltip {
+        width: 300px;
+    }
+
+    .logSizeTooltip {
+        width: 280px;
+    }
+}

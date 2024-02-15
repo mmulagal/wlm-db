@@ -1,10 +1,11 @@
 import { Table, TableTopBar, TooltipInfo, Typography, useDialog, useTable } from '@netapp/design-system';
+import { useNavigate } from 'react-router-dom';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './ManagedHosts.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-import {useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DB_HOME_DATA_TYPE, WLF_TABS, STATUS_CONST } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
@@ -28,9 +29,11 @@ import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory
 
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
+import { setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
 
 const ManagedHosts = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsData, databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
@@ -56,6 +59,11 @@ const ManagedHosts = () => {
             {
                 id: 'viewDatabaseList',
                 displayName: 'View databases list',
+                disabled: row?.status === STATUS_CONST.UP ? false : true
+            },
+            {
+                id: 'createNewUserDatabase',
+                displayName: 'Create new user database',
                 disabled: row?.status === STATUS_CONST.UP ? false : true
             },
             {
@@ -421,6 +429,11 @@ const ManagedHosts = () => {
                                         dispatch(selectedTabSelection(WLF_TABS.DATABASE_LIST));
                                         dispatch(updateResourceId(rowData.id));
                                         dispatch(resetWorkloadFactoryResourceData());
+                                    }
+
+                                    if (menuId === 'createNewUserDatabase') {
+                                        dispatch(setDBHostName(rowData?.name));
+                                        navigate('../create-new-user');
                                     }
 
                                     if (menuId === 'remove') {

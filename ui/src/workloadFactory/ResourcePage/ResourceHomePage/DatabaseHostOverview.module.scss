@@ -7,6 +7,18 @@
     .breadCrumb {
         margin-top: 16px;
         margin-left: 40px;
+        width: 1687px;
+        display: flex;
+        justify-content: space-between;
+
+        [class*='BreadCrumbs_bread-crumbs'] {
+            position: relative;
+            top: -3px;
+        }
+
+        button {
+            height: 32px !important;
+        }
     }
 
     .hostTitle {

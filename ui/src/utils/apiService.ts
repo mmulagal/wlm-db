@@ -8,7 +8,7 @@ import {
 } from '@reduxjs/toolkit/query/react';
 import { BaseQueryApi } from '@reduxjs/toolkit/dist/query/baseQueryTypes';
 import store, { RootState } from '../store/store';
-import { API_MAX_RETRIES } from './consts';
+import { API_MAX_RETRIES, PRODUCTION, WLMDB_POLICIES_PROD_LINK, WLMDB_POLICIES_STAGE_LINK } from './consts';
 import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
 import { generateRandomDBName, sortListOfDict } from './utilityFunctions';
@@ -483,7 +483,7 @@ export const headersApi = createApi({
 export const policiesApi = createApi({
     reducerPath: 'policiesApi',
     baseQuery: fetchBaseQuery({ 
-        baseUrl: 'https://staging.console.workloads.netapp.com'
+        baseUrl: process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? WLMDB_POLICIES_PROD_LINK : WLMDB_POLICIES_STAGE_LINK
     }),
     endpoints: builder => {
         return {

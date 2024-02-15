@@ -2,7 +2,7 @@ import ms from 'ms';
 import { isEmpty } from 'lodash-es';
 import config from 'config';
 import { randomUUID } from 'crypto';
-import { Message, ReceiveMessageCommandInput } from '@aws-sdk/client-sqs';
+import { Message, QueueAttributeName, ReceiveMessageCommandInput } from '@aws-sdk/client-sqs';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, JOBSTATUS, JOBTYPE, STORAGE_TYPE, job } from '@prisma/client';
 import { inspect } from 'util';
 import { JSONObject } from '@fastify/swagger';
@@ -63,7 +63,7 @@ async function getSqsMessages(region: string, queueUrl: string) {
     logger.info('Get SQS messages', { region, queueUrl });
     const sqsMessages: (Message[] | undefined)[] = [];
     const input: ReceiveMessageCommandInput = {
-        AttributeNames: ['SentTimestamp'], // We should remove this property and use MessageSystemAttributeName.SentTimestamponce once aws resolves this bug https://github.com/aws/aws-sdk-js-v3/issues/5403 in latest sqs client
+        AttributeNames: ['SentTimestamp' as keyof typeof QueueAttributeName], // We should remove this property and use MessageSystemAttributeName.SentTimestamponce once aws resolves this bug https://github.com/aws/aws-sdk-js-v3/issues/5403 in latest sqs client
         MaxNumberOfMessages: 10,
         MessageAttributeNames: ['All'],
         QueueUrl: queueUrl,
@@ -978,4 +978,5 @@ function modifyStackAck(
         PhysicalResourceId
     };
 }
+
 export { processCloudFormationMessages };
