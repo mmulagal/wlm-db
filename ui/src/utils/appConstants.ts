@@ -5,7 +5,7 @@ export const SELECT_CONFIG = {
     QUICK_CREATE: 'Quick create',
     STANDARD_CREATE_CONTENT: `You set all of the configuration options, including availability, security, backups, and maintenance.`,
     EASY_CREATE_CONTENT:
-        'Use a recommended best-practice configuration. You can change most configuration options after you create an FSx for ONTAP file system.',
+        'Use a recommended best-practice configuration. You can change most configuration options after you create the database.',
     COMING_SOON: 'Coming soon',
     CREATE: 'Create',
     CANCEL: 'Cancel',
@@ -524,8 +524,10 @@ export const GENERAL = {
         ' storage virtual machines for an ONTAP file system with ',
         ' MBps of throughput capacity.'
     ],
-    FSXN_SECONDARY_SUBNET_ERROR: 'The primary and secondary subnets of FSx for ONTAP file system does not reside in the selected availability zones.',
-    FSXN_PRIMARY_SUBNET_ERROR: 'The subnet for node 1 must be in the primary Availability Zone for the FSx for ONTAP file system.',
+    FSXN_SECONDARY_SUBNET_ERROR:
+        'The primary and secondary subnets of FSx for ONTAP file system does not reside in the selected availability zones.',
+    FSXN_PRIMARY_SUBNET_ERROR:
+        'The subnet for node 1 must be in the primary Availability Zone for the FSx for ONTAP file system.',
     FSXN_DEPLOYMENT_MODE_ERROR: 'Deployment mode not found.',
     FSXN_NOT_AVAILABLE: 'FSx for ONTAP file system is not in available state.',
     TAB_DASHBOARD: 'Dashboard',
@@ -541,7 +543,21 @@ export const GENERAL = {
     UNMANAGED_HOSTS: 'Unmanaged hosts',
     MANAGED_BY_WLF: 'Managed by Workload Factory',
     MANAGED_HOSTS_HEADING: 'Managed hosts',
-    MANAGED_HOST_HEADING: 'Managed host'
+    MANAGED_HOST_HEADING: 'Managed host',
+    FILE_SETTINGS_FIRST_TEXT:
+        'In case existing drive letter is selected for Data file it will automatically filled for Log file (recommended practice)',
+    FILE_SETTINGS_SECOND_TEXT:
+        'In case new drive letter is selected for Data file it is recommended to select different new drive letter for the Log file',
+    CREATE_DB_NAME_TOOLTIP: [
+        'SQL databases should have names that are no more than 30 characters long.',
+        'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
+        'Names should not be Transact-SQL reserved words.'
+    ],
+    LOG_SIZE_TOOLTIP: [
+        'The minimum value of log size is 1 GiB.',
+        'If the default data size is change the log size will automatically set to 25% of the data size.'
+    ],
+    DATA_SIZE_TOOLTIP: 'The default value of data size is 1 GiB.'
 };
 
 export const CODE_VIEWER = {

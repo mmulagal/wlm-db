@@ -1,5 +1,5 @@
 {
-    "_comment": "If any change in operate and view permission than that has to be updated in src/utils/permissions.ts file also.",
+    "_comment": "",
     "operate": {
         "Version": "2012-10-17",
         "Statement": [

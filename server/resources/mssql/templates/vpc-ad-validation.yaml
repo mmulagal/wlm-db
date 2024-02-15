@@ -203,7 +203,7 @@ Resources:
                         - FetchResources
                         - LaunchWizardCFNSetup
                         - Prep
-                        - Finalize
+                        - Finalize               
                 ConfigureCWLogs:
                     files:
                         C:\Program Files\Amazon\SSM\Plugins\awsCloudWatch\AWS.EC2.Windows.CloudWatch.json:
@@ -387,7 +387,37 @@ Resources:
             UserData: !Base64
                 Fn::Join:
                     - ''
-                    - - "<script>\n"
+                    - - "<powershell>\n"
+                      - '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12'
+                      - "\n"
+                      - '$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token" '
+                      - "\n"
+                      - '$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id'
+                      - "\n"
+                      - '$FailureReason = "CF endpoint is not reachable. Check your subnet outbound connectivity."'
+                      - "\n"
+                      - 'try {'
+                      - "\n"
+                      - "$Response = Invoke-WebRequest -Uri 'https://cloudformation."
+                      - !Ref 'AWS::Region'
+                      - ".amazonaws.com' -UseBasicParsing"
+                      - "\n"
+                      - '$StatusCode = $Response.StatusCode'
+                      - "\n"
+                      - '}'
+                      - "\n"
+                      - 'catch { '
+                      - "\n"
+                      - "Write-Output $_"
+                      - "\n"
+                      - '$StatusCode = 0'
+                      - "\n"
+                      - '}'
+                      - "\n"
+                      - 'Write-Output $StatusCode'
+                      - "\n"
+                      - 'if ($StatusCode -eq 200) {'
+                      - "\n"
                       - 'cfn-init.exe -v -c config -s '
                       - !Ref 'AWS::StackId'
                       - ' -r ValidationNode1'
@@ -395,8 +425,21 @@ Resources:
                       - !Ref 'AWS::Region'
                       - "\n"
                       - 'shutdown /s'
-                      - ''
-                      - </script>
+                      - '}'
+                      - 'else {'
+                      - "\n"
+                      - "Start-Process 'cfn-signal.exe' -ArgumentList '-e 1 -r $FailureReason "
+                      - Fn::Base64: !Ref 'ValidationNode1WaitHandler'
+                      - "' -Wait -NoNewWindow "
+                      - "\n"
+                      - 'Send-CFNResourceSignal -StackName '
+                      - !Ref 'AWS::StackId'
+                      - ' -Status FAILURE -LogicalResourceId ValidationNode1 '
+                      - '-UniqueId $instanceID'
+                      - "\n"
+                      - 'shutdown /s'
+                      - "}\n"
+                      - '</powershell>'
     ValidationNode2WaitHandler:
         Type: AWS::CloudFormation::WaitConditionHandle
         Condition: ADCheckNotEnabled
@@ -567,7 +610,37 @@ Resources:
             UserData: !Base64
                 Fn::Join:
                     - ''
-                    - - "<script>\n"
+                    - - "<powershell>\n"
+                      - '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12'
+                      - "\n"
+                      - '$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token" '
+                      - "\n"
+                      - '$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id'
+                      - "\n"
+                      - '$FailureReason = "CF endpoint is not reachable. Check your subnet outbound connectivity."'
+                      - "\n"
+                      - 'try {'
+                      - "\n"
+                      - "$Response = Invoke-WebRequest -Uri 'https://cloudformation."
+                      - !Ref 'AWS::Region'
+                      - ".amazonaws.com' -UseBasicParsing"
+                      - "\n"
+                      - '$StatusCode = $Response.StatusCode'
+                      - "\n"
+                      - '}'
+                      - "\n"
+                      - 'catch { '
+                      - "\n"
+                      - "Write-Output $_"
+                      - "\n"
+                      - '$StatusCode = 0'
+                      - "\n"
+                      - '}'
+                      - "\n"
+                      - 'Write-Output $StatusCode'
+                      - "\n"
+                      - 'if ($StatusCode -eq 200) {'
+                      - "\n"
                       - 'cfn-init.exe -v -c config -s '
                       - !Ref 'AWS::StackId'
                       - ' -r ValidationNode2'
@@ -575,5 +648,18 @@ Resources:
                       - !Ref 'AWS::Region'
                       - "\n"
                       - 'shutdown /s'
-                      - ''
-                      - </script>
+                      - '}'
+                      - 'else {'
+                      - "\n"
+                      - "Start-Process 'cfn-signal.exe' -ArgumentList '-e 1 -r $FailureReason "
+                      - Fn::Base64: !Ref 'ValidationNode2WaitHandler'
+                      - "' -Wait -NoNewWindow "
+                      - "\n"
+                      - 'Send-CFNResourceSignal -StackName '
+                      - !Ref 'AWS::StackId'
+                      - ' -Status FAILURE -LogicalResourceId ValidationNode2 '
+                      - '-UniqueId $instanceID'
+                      - "\n"
+                      - 'shutdown /s'
+                      - "}\n"
+                      - '</powershell>'

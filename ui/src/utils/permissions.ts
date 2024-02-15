@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // This Permissions should be in sync with workload-policies.json file. Copy workload-policies.json data and replace in PERMISSIONS below.
 
 export const PERMISSIONS = {
@@ -223,6 +224,8 @@ export const PERMISSIONS = {
         ]
     }
 };
+=======
+>>>>>>> master
 
 export const COST_PERMISSION = [
     'ce:GetCostAndUsage',

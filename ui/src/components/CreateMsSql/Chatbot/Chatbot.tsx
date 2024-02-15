@@ -11,7 +11,6 @@ import {
 
 import styles from './Chatbot.module.scss';
 import ChatBox from './ChatBox/Chatbox';
-import { setPanelData, setPanelType, setShowPreviewPanel } from '../../../store/previewPanel/previewPanelSlice';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import { useDeploySqlTemplateMutation, useSendMsgMutation } from '../../../utils/apiService';
 import {
@@ -220,10 +219,6 @@ const Chatbot = () => {
                     console.log('Error while fetching data - ', error);
                     dispatch(setLoadConfigClicked(false));
                 });
-            return () => {
-                dispatch(setShowPreviewPanel(false));
-                dispatch(setPanelType(''));
-            };
         }
     }, [loadConfigClicked]);
 
@@ -758,8 +753,6 @@ const Chatbot = () => {
 
     const setContext = () => {
         setIsBotReplying(true);
-        dispatch(setShowPreviewPanel(true));
-        dispatch(setPanelType('chatbot'));
         sendMsgToBot({
             payload: {
                 prompt: wrapContext(
@@ -820,22 +813,7 @@ const Chatbot = () => {
                 setIsBotReplying(false);
                 console.log('Error while fetching data - ', error);
             });
-        return () => {
-            dispatch(setShowPreviewPanel(false));
-            dispatch(setPanelType(''));
-        };
     };
-
-    useEffect(() => {
-        dispatch(
-            setPanelData({
-                heading: currentIntent?.type === 'DeployMsSql' ? 'Deployment of MS SQL' : '',
-                payloadContent: payloadContent,
-                footerButton: currentIntent?.type === 'DeployMsSql' ? 'Deploy MsSql' : '',
-                isPayloadReady: isPayloadReady
-            })
-        );
-    }, [currentIntent, payloadContent, isPayloadReady]);
 
     const handleSendMsg = async (msg: string, add: boolean = true, msgs: messageType[], paramObject = {}) => {
         await sendMsg(msg, add, msgs, paramObject);
@@ -959,15 +937,15 @@ const Chatbot = () => {
                 setSuggestionBubbles({
                     list: [{ label: 'Resume deployment', value: 'resume' }],
                     onBubbleClick: async (label?: string, value?: string) => {
-                        if (value === 'resume') {
-                            await sendMsg(latestIntentMsg, false);
-                        }
                         dispatch(
                             setSuggestionBubbles({
                                 list: [],
                                 onBubbleClick: () => {}
                             })
                         );
+                        if (value === 'resume') {
+                            await sendMsg(latestIntentMsg, false);
+                        }
                     }
                 })
             );

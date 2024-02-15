@@ -10,40 +10,42 @@ import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
 import { GENERAL } from '../../../utils/appConstants';
 
 const TaskTable = ({ taskList = [] }: any) => {
-    
     return (
         <div className={styles.taskTable}>
-            {!taskList || taskList.length === 0 && 
-                <Typography variant="Regular_14" className={styles.emptyTable}>
-                    <NoDataIcon />
-                    <div>{GENERAL.NO_DATA}</div>
-                </Typography>
-            }
+            {!taskList ||
+                (taskList.length === 0 && (
+                    <Typography variant="Regular_14" className={styles.emptyTable}>
+                        <NoDataIcon />
+                        <div>{GENERAL.NO_DATA}</div>
+                    </Typography>
+                ))}
             {taskList.map((task: any) => {
                 return (
                     <div className={styles.taskRow}>
                         <Typography variant="Regular_14" className={styles.firstItem}>
-                            <div className={CommonStyles.wrapTextIn2Line} title={task.description}>{task.description}</div>
+                            <div className={CommonStyles.wrapTextIn2Line} title={task.description}>
+                                {task.description}
+                            </div>
                         </Typography>
                         {/* <Typography variant="Regular_14" className={styles.secondItem}>
                             <div className={CommonStyles.wrapTextIn2Line} title={task.description}>{task.description}</div>
                         </Typography> */}
                         <div className={styles.thirdItem}>
-                            <div>
+                            <div className={styles.popOverClass}>
                                 {task.status === JOB_MONITORING_STATUS.COMPLETED && <Success />}
-                                {task.status === JOB_MONITORING_STATUS.FAILED && 
+                                {task.status === JOB_MONITORING_STATUS.FAILED && (
                                     <Popover
                                         popoverClass={CommonStyles['popover']}
                                         children={<Typography variant="Regular_14">{task?.error}</Typography>}
                                         trigger="hover"
-                                        container={
-                                            <ErrorIcon className={styles.statusIcon}/>
-                                        }
+                                        container={<ErrorIcon className={styles.statusIcon} />}
                                     />
-                                }
+                                )}
                                 {task.status === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
                             </div>
-                            <Typography variant="Regular_14">{jobMonitoringStatusMapping(task?.status)}</Typography>
+                            <Typography variant="Regular_14" className={styles.statusColor}>
+                                {jobMonitoringStatusMapping(task?.status)}
+                            </Typography>
                         </div>
                         <Typography variant="Regular_14" className={styles.fourthItem}>
                             {task?.startTime ? formatDateWithTime(task?.startTime) : 'N/A'}

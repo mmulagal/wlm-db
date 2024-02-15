@@ -2,6 +2,11 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { MssqlEntities } from '../../utils/types/mssqlTypes';
 
 const initialState: MssqlEntities = {
+    getPolicies: {
+        policiesList: null,
+        policiesLoading: false,
+        policiesError: null
+    },
     getCredentials: {
         credentialData: null,
         credentialLoading: false,
@@ -68,6 +73,9 @@ const mssqlSlice = createSlice({
     name: 'mssql',
     initialState,
     reducers: {
+        addPolicies: (state, action: PayloadAction<any>) => {
+            state.getPolicies = action.payload;
+        },
         addCredentials: (state, action: PayloadAction<any>) => {
             state.getCredentials = action.payload;
         },
@@ -108,6 +116,7 @@ const mssqlSlice = createSlice({
 });
 
 export const {
+    addPolicies,
     addCredentials,
     addRegions,
     addVpcList,

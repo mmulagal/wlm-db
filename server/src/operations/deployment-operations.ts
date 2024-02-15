@@ -8,6 +8,7 @@ import { escapeRegExp, isArray, isEmpty } from 'lodash-es';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
 import { randomUUID } from 'crypto';
+import throat from 'throat';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getObjectBucket, preSignedUrl } from '../lib/aws/s3';
@@ -889,29 +890,36 @@ async function checkAllMissingPermissions(credentialsId: string, region: string,
     };
 
     await Promise.all(
-        policyResourceActions.map(async ({ resourceArn, resourceActions, resourceConditions }) => {
-            try {
-                const { missingPermissions, blockedByOrganisation, blockedByPermissionBoundary } =
-                    await getMissingPermissionsList(
-                        credentialsId,
-                        region,
-                        resourceActions,
-                        resourceArn,
-                        resourceConditions
+        // 'throat' is used to limit the number of concurrent requests
+        // Limit of 3 is tested for 10 requests, 4 sometimes throws - rate execeeded error
+        policyResourceActions.map(
+            throat(3, async ({ resourceArn, resourceActions, resourceConditions }) => {
+                try {
+                    const { missingPermissions, blockedByOrganisation, blockedByPermissionBoundary } =
+                        await getMissingPermissionsList(
+                            credentialsId,
+                            region,
+                            resourceActions,
+                            resourceArn,
+                            resourceConditions
+                        );
+                    if (missingPermissions.length > 0) {
+                        missedPermissions.missingStatements.push(...missingPermissions);
+                    }
+                    if (blockedByOrganisation.length > 0) {
+                        missedPermissions.blockedByOrganisation.push(...blockedByOrganisation);
+                    }
+                    if (blockedByPermissionBoundary.length > 0) {
+                        missedPermissions.blockedByPermissionBoundary.push(...blockedByPermissionBoundary);
+                    }
+                } catch (error) {
+                    throw createError(
+                        HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                        `Error while checking permissions ${error}.`
                     );
-                if (missingPermissions.length > 0) {
-                    missedPermissions.missingStatements.push(...missingPermissions);
                 }
-                if (blockedByOrganisation.length > 0) {
-                    missedPermissions.blockedByOrganisation.push(...blockedByOrganisation);
-                }
-                if (blockedByPermissionBoundary.length > 0) {
-                    missedPermissions.blockedByPermissionBoundary.push(...blockedByPermissionBoundary);
-                }
-            } catch (error) {
-                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while checking permissions ${error}.`);
-            }
-        })
+            })
+        )
     );
 
     return { permissions: missedPermissions };
