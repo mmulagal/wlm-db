@@ -374,7 +374,7 @@ async function getProtectionStatus(
 }
 
 async function getBillingOrPriceEstimation(resourceDetail: ResourceDetails, activeNodeInstanceId?: string) {
-    logger.info('Get AWS resources billing or cost data:', resourceDetail);
+    logger.info('Get AWS resources billing or cost data:', { resourceDetail, activeNodeInstanceId });
     const promises = [
         getBilling(resourceDetail).catch(error => {
             logger.error('Failed to get billing data for resource: :', JSON.stringify(error));
