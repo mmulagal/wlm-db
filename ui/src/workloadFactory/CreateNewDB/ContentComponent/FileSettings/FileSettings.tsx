@@ -15,7 +15,7 @@ import {
     setDriveLetter,
     setDriveLetterForLogFile
 } from '../../../../store/workloadFactory/createNewDBSlice';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 
@@ -40,6 +40,29 @@ const FileSettings = () => {
     } = useAppSelector(state => state.createNewUser);
 
     const units = ['GiB', 'TiB'];
+    const [maxSize, setMaxSize] = useState(130);
+    const [dataFilePath, setDataFilePath] = useState('');
+    const [logFilePath, setLogFilePath] = useState('');
+
+    useEffect(() => {
+        if (driveLetter && newUserDBFileName) {
+            setDataFilePath(`${driveLetter?.value}:\\mssql\\data\\${newUserDBFileName}.mdf`);
+        } else if (driveLetter) {
+            setDataFilePath(`${driveLetter?.value}:\\mssql\\data\\<db_data>.mdf`);
+        } else {
+            setDataFilePath('');
+        }
+    }, [driveLetter, newUserDBFileName]);
+
+    useEffect(() => {
+        if (driveLetterLogFile && newUserLogFileName) {
+            setLogFilePath(`${driveLetterLogFile?.value}:\\mssql\\log\\${newUserLogFileName}.ldf`);
+        } else if (driveLetterLogFile) {
+            setLogFilePath(`${driveLetterLogFile?.value}:\\mssql\\log\\<db_log>.ldf`);
+        } else {
+            setLogFilePath('');
+        }
+    }, [driveLetterLogFile, newUserLogFileName]);
 
     useEffect(() => {
         if (newUserDBName) {
@@ -61,37 +84,69 @@ const FileSettings = () => {
     }, []);
 
     //Function to generate the options for Select Field
-    const generateDriveLetters = useMemo<optionType[]>((): optionType[] => {
+    const generateDataDriveLetters = useMemo<optionType[]>((): optionType[] => {
         const letters = [
-            { drive: '(a:)', existingLetter: '/mssql/data' },
-            { drive: '(b:)', existingLetter: '/mssql/data' },
-            { drive: '(c:)', existingLetter: '/mssql/data' },
-            { drive: '(d:)', existingLetter: '/mssql/data' },
-            { drive: '(e:)', existingLetter: '/mssql/data' },
-            { drive: '(f:)', existingLetter: '/mssql/data' }
+            { drive: 'a', existing: true },
+            { drive: 'b', existing: true },
+            { drive: 'c', existing: true },
+            { drive: 'd' },
+            { drive: 'e' },
+            { drive: 'f' }
         ];
         const options: optionType[] = [];
         letters?.map((val, idx: number) => {
-            const option = generateOptionType(val.drive, val.drive, val.existingLetter, false, '');
+            const option = generateOptionType(
+                val.drive,
+                val.drive,
+                val?.existing ? 'Existing drive letter' : 'New drive letter',
+                false,
+                ''
+            );
+            options.push(option);
+        });
+        return options;
+    }, []);
+
+    //Function to generate the options for Select Field
+    const generateLogDriveLetters = useMemo<optionType[]>((): optionType[] => {
+        const letters = [
+            { drive: 'a', existing: true },
+            { drive: 'b', existing: true },
+            { drive: 'c', existing: true },
+            { drive: 'd' },
+            { drive: 'e' },
+            { drive: 'f' }
+        ];
+        const options: optionType[] = [];
+        letters?.map((val, idx: number) => {
+            const option = generateOptionType(
+                val.drive,
+                val.drive,
+                val?.existing ? 'Existing drive letter' : 'New drive letter',
+                false,
+                ''
+            );
             options.push(option);
         });
         return options;
     }, []);
 
     useEffect(() => {
+        dispatch(setNewUserDataSize(1));
+        dispatch(setNewUserLogFileSize(1));
         dispatch(setNewUserDataSizeUnit(generateUnitsForStorage[0]));
         dispatch(setNewUserLogFileSizeUnit(generateUnitsForStorage[0]));
     }, [generateUnitsForStorage]);
 
     useEffect(() => {
         if (newUserDataSize) {
-            if (newUserDataSizeUnit?.label === 'GiB' && newUserDataSize > 120) {
+            if (newUserDataSizeUnit?.label === 'GiB' && newUserDataSize > 0) {
                 const logFileSize = newUserDataSize / 4;
-                dispatch(setNewUserLogFileSize(logFileSize));
+                dispatch(setNewUserLogFileSize(logFileSize > 1 ? logFileSize : 1));
                 dispatch(setNewUserLogFileSizeUnit(generateOptionType('GiB', 'GiB', '', false, '')));
             }
 
-            if (newUserDataSizeUnit?.label === 'TiB' && newUserDataSize < 130) {
+            if (newUserDataSizeUnit?.label === 'TiB' && newUserDataSize < maxSize) {
                 const logFileSize = newUserDataSize / 4;
                 dispatch(setNewUserLogFileSize(logFileSize));
                 dispatch(setNewUserLogFileSizeUnit(generateOptionType('TiB', 'TiB', '', false, '')));
@@ -125,12 +180,12 @@ const FileSettings = () => {
 
     const errorCheckForDataSize = () => {
         if (newUserDataSizeUnit?.label === 'GiB') {
-            if (newUserDataSize && newUserDataSize < 120) {
-                return 'The valid range is 120 GiB - 130 TiB';
+            if (newUserDataSize && (newUserDataSize < 0 || newUserDataSize > maxSize * 1024)) {
+                return `The valid range is 1 GiB - ${maxSize} TiB`;
             }
-        } else if (newUserLogFileSizeUnit?.label === 'TiB') {
-            if (newUserLogFileSize && newUserLogFileSize > 130) {
-                return 'The valid range is 120 GiB - 130 TiB';
+        } else if (newUserDataSizeUnit?.label === 'TiB') {
+            if (newUserDataSize && newUserDataSize > maxSize) {
+                return `The valid range is 1 GiB - ${maxSize} TiB`;
             }
         }
     };
@@ -159,7 +214,7 @@ const FileSettings = () => {
                                     <div className={styles.dataSizeField}>
                                         <TextField
                                             label="Data size"
-                                            placeholder="120 GiB - 130 TiB"
+                                            placeholder={`1 GiB -  ${maxSize} TiB`}
                                             value={newUserDataSize}
                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                                 const numSize = e.target.value.replace(/\D/g, '');
@@ -171,6 +226,14 @@ const FileSettings = () => {
 
                                         <SelectField
                                             label={'select'}
+                                            info={
+                                                <div className={styles.dataSizeTooltip}>
+                                                    <DsTypography variant="Regular_13">
+                                                        {GENERAL.DATA_SIZE_TOOLTIP}
+                                                    </DsTypography>
+                                                    <DsTypography variant="Regular_13">{`Host hostname data size name is 1 GiB - ${maxSize} TiB.`}</DsTypography>
+                                                </div>
+                                            }
                                             isClearable={false}
                                             defaultValue={
                                                 newUserDataSizeUnit
@@ -212,7 +275,16 @@ const FileSettings = () => {
                                         <SelectField
                                             label={'select'}
                                             isClearable={false}
-                                            info="Log size is automatically set to be 25% of the data size. "
+                                            info={
+                                                <div className={styles.logSizeTooltip}>
+                                                    <DsTypography variant="Regular_13">
+                                                        {GENERAL.LOG_SIZE_TOOLTIP[0]}
+                                                    </DsTypography>
+                                                    <DsTypography variant="Regular_13">
+                                                        {GENERAL.LOG_SIZE_TOOLTIP[1]}
+                                                    </DsTypography>
+                                                </div>
+                                            }
                                             defaultValue={
                                                 newUserLogFileSizeUnit
                                                     ? [newUserLogFileSizeUnit]
@@ -264,8 +336,8 @@ const FileSettings = () => {
                                                 dispatch(setDriveLetter(selectedOptions));
                                             }}
                                             value={driveLetter ? driveLetter : null}
-                                            isSearchable={generateDriveLetters.length > 5}
-                                            options={generateDriveLetters}
+                                            isSearchable={generateDataDriveLetters.length > 5}
+                                            options={generateDataDriveLetters}
                                             variant="two-lines"
                                             className={styles.driveSelectField}
                                         />
@@ -283,7 +355,7 @@ const FileSettings = () => {
                                             <div className={styles.dataSizeField}>
                                                 <TextField
                                                     label="Data size"
-                                                    placeholder="120 GiB - 130 TiB"
+                                                    placeholder={`1 GiB - ${maxSize} TiB`}
                                                     value={newUserDataSize}
                                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                                         const numSize = e.target.value.replace(/\D/g, '');
@@ -296,6 +368,14 @@ const FileSettings = () => {
                                                 <SelectField
                                                     label={'select'}
                                                     isClearable={false}
+                                                    info={
+                                                        <div className={styles.dataSizeTooltip}>
+                                                            <DsTypography variant="Regular_13">
+                                                                {GENERAL.DATA_SIZE_TOOLTIP}
+                                                            </DsTypography>
+                                                            <DsTypography variant="Regular_13">{`Host hostname data size name is 1 GiB - ${maxSize} TiB.`}</DsTypography>
+                                                        </div>
+                                                    }
                                                     defaultValue={
                                                         newUserDataSizeUnit
                                                             ? [newUserDataSizeUnit]
@@ -313,7 +393,7 @@ const FileSettings = () => {
                                         </div>
                                     </div>
                                     <div className={styles.pathSection}>
-                                        <DsTypography variant="Semibold_14">Data file path:</DsTypography>
+                                        <DsTypography variant="Semibold_14">{`Data file path: ${dataFilePath}`}</DsTypography>
                                     </div>
                                 </div>
 
@@ -329,8 +409,8 @@ const FileSettings = () => {
                                                 dispatch(setDriveLetterForLogFile(selectedOptions));
                                             }}
                                             value={driveLetterLogFile ? driveLetterLogFile : null}
-                                            isSearchable={generateDriveLetters.length > 5}
-                                            options={generateDriveLetters}
+                                            isSearchable={generateLogDriveLetters.length > 5}
+                                            options={generateLogDriveLetters}
                                             variant="two-lines"
                                             className={styles.driveSelectField}
                                         />
@@ -359,7 +439,16 @@ const FileSettings = () => {
                                                 <SelectField
                                                     label={'select'}
                                                     isClearable={false}
-                                                    info="Log size is automatically set to be 25% of the data size. "
+                                                    info={
+                                                        <div className={styles.logSizeTooltip}>
+                                                            <DsTypography variant="Regular_13">
+                                                                {GENERAL.LOG_SIZE_TOOLTIP[0]}
+                                                            </DsTypography>
+                                                            <DsTypography variant="Regular_13">
+                                                                {GENERAL.LOG_SIZE_TOOLTIP[1]}
+                                                            </DsTypography>
+                                                        </div>
+                                                    }
                                                     defaultValue={
                                                         newUserLogFileSizeUnit
                                                             ? [newUserLogFileSizeUnit]
@@ -376,7 +465,7 @@ const FileSettings = () => {
                                         </div>
                                     </div>
                                     <div className={styles.pathSection}>
-                                        <DsTypography variant="Semibold_14">Log file path:</DsTypography>
+                                        <DsTypography variant="Semibold_14">{`Log file path: ${logFilePath}`}</DsTypography>
                                     </div>
                                 </div>
                             </>

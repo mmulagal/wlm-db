@@ -20,6 +20,7 @@ import { resetDBHomePageState } from '../../../utils/utilityFunctions';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import DatabaseHostTile from '../DatabaseOverviewLayout/DatabaseHostTile/DatabaseHostTile';
 import { WLF_TABS } from '../../../utils/consts';
+import { setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
 
 const DatabaseHostOverview = () => {
     const selectedTab = useAppSelector(state => state.databaseHome.selectedTab);
@@ -88,6 +89,7 @@ const DatabaseHostOverview = () => {
                 <Button
                     variant="primary"
                     onClick={() => {
+                        dispatch(setDBHostName(resourceDetails?.name));
                         navigate('../create-new-user');
                     }}
                     id={'create-new-user-button'}
