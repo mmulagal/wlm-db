@@ -10,7 +10,8 @@ import {
     ProtectionResponseType,
     StorageResponseType,
     UsageCostResponseType,
-    DatabasesListResponseType
+    DatabasesListResponseType,
+    DriveInfoResponseBodyType
 } from '../routes/types/database-hosts.types';
 import { describeInstance, getAmis } from '../lib/aws/ec2';
 import { describeFSxN } from '../lib/aws/fsx';
@@ -45,13 +46,15 @@ import {
     getResourceUtilisation,
     getPerformanceMetrics,
     getDataBasesSummary,
-    getNativeSQLBackedupDatabases
+    getNativeSQLBackedupDatabases,
+    callSsmExecution
 } from './workloads/mssql/mssql-operations';
 import {
     getStorageDataUsingSSM,
     isAWSBackupEnabled,
     getOntapVolumesSnapshotCount,
-    getCostAllocationTagFsxResource
+    getCostAllocationTagFsxResource,
+    getFsxStorageCapacity
 } from './aws/fsx-operations';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
@@ -82,6 +85,13 @@ interface Topology {
     fileSystemType?: string;
 }
 
+interface DriveInfo {
+    driveLetter: string;
+    availableSize: number;
+    defaultDataDrive: boolean;
+    defaultLogDrive: boolean;
+    isNetappDrive: boolean;
+}
 type VolumeSpaceRecord = {
     uuid: string;
     name: string;
@@ -846,4 +856,93 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
     }
 }
 
-export { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases };
+async function getDriveInfoFromSSM(
+    accountId: string,
+    databaseHostId: string,
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId?: string
+) {
+    // Check SSM Connection status
+    const isSSMConnected = await isSSMConnectionSuccessful(
+        credentialsId,
+        region!,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
+
+    if (!isSSMConnected) {
+        const errorMessage = `Error while fetching drive details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+    }
+    const commands = ['C:\\SSM\\GetDriveInfo.ps1'];
+    const response = await callSsmExecution(
+        credentialsId,
+        region!,
+        commands,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
+
+    const cleanResponse = response?.replaceAll('\r\n', '');
+    const jsonResponse = JSON.parse(cleanResponse!);
+
+    const {
+        ExistingDriveInfo: existingDriveInfo,
+        AvailableDriveLetters: availableDriveLetters,
+        DefaultDriveLetters: defaultDriveLetters
+    } = jsonResponse;
+    const UpdatedExistingDriveInfo: DriveInfo[] = [];
+
+    const currentDataDrive = defaultDriveLetters.value[0].CurrentDataDrive;
+    const currentLogDrive = defaultDriveLetters.value[0].CurrentLogDrive;
+
+    existingDriveInfo.forEach((element: { DriveLetter: any; FreeSpace: any; manufacturer: string }) => {
+        const updatedDriveInfo: DriveInfo = {
+            driveLetter: element.DriveLetter,
+            availableSize: element.FreeSpace,
+            defaultDataDrive: element.DriveLetter === currentDataDrive,
+            defaultLogDrive: element.DriveLetter === currentLogDrive,
+            isNetappDrive: element.manufacturer === 'NETAPP'
+        };
+
+        UpdatedExistingDriveInfo.push(updatedDriveInfo);
+    });
+    return { UpdatedExistingDriveInfo, availableDriveLetters };
+}
+
+async function getDriveInfo(accountId: string, databaseHostId: string): Promise<DriveInfoResponseBodyType> {
+    logger.info('Fetching drive details of the database host  ', accountId, databaseHostId);
+
+    const [resourceDetail] = await listResources(accountId, databaseHostId);
+
+    if (isEmpty(resourceDetail)) {
+        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+    }
+
+    const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
+    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
+
+    const [FsxStorageCapacity, driveResponse] = await Promise.all([
+        getFsxStorageCapacity(credentialsId, region!, fileSystemId!),
+        getDriveInfoFromSSM(
+            accountId,
+            databaseHostId,
+            credentialsId,
+            region!,
+            activeNodeInstanceId,
+            standbyNodeInstanceId
+        )
+    ]);
+
+    return {
+        existingDriveInfo: driveResponse.UpdatedExistingDriveInfo,
+        availableDriveLetters: driveResponse.availableDriveLetters,
+        FsxStorageCapacity
+    };
+}
+
+export { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases, getDriveInfo };

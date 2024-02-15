@@ -10,7 +10,8 @@ import {
     describeFSxStorageVirtualMachines,
     describeFSxBackups,
     listResourceTags,
-    createTag
+    createTag,
+    describeFSxN
 } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
@@ -466,6 +467,17 @@ async function getCostAllocationTagFsxResource(resourceDetail: ResourceDetails) 
     }
 }
 
+async function getFsxStorageCapacity(credentialsId: string, region: string, fsxId: string) {
+    const { FileSystems: fileSystems } = await describeFSxN(credentialsId, region!, {
+        FileSystemIds: [fsxId]
+    });
+    try {
+        return fileSystems![0].StorageCapacity;
+    } catch (error) {
+        logger.error(`No FSx file system was found with FSx Id ${fsxId}`);
+    }
+}
+
 export {
     getFSxFileSystemsList,
     isAWSBackupEnabled,
@@ -473,5 +485,6 @@ export {
     getStorageDataUsingSSM,
     getMappedOntapVolumes,
     tagFsxResource,
-    getCostAllocationTagFsxResource
+    getCostAllocationTagFsxResource,
+    getFsxStorageCapacity
 };

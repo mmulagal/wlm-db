@@ -549,7 +549,9 @@ Resources:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
                         o-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
-                        p-hide-ssm:
+                        p-move-driveinfoscript:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\GetDriveInfo.ps1 -Destination C:\SSM\
+                        q-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                 InitialSetup:
                     commands:
@@ -1055,7 +1057,7 @@ Resources:
                         C:\cfn\DSC.zip:
                             source: {{ DSC }}
                         C:\cfn\Installer\powershell.zip:
-                            source: {{ PowerShell }}
+                            source: { { PowerShell } }
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
                             source: {{ AmazonLaunchWizardForCFN }}
                         C:\cfn\modules\AWSLaunchWizardForSSM.zip:
@@ -1094,7 +1096,9 @@ Resources:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
                         o-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
-                        p-hide-ssm:
+                        p-move-driveinfoscript:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\GetDriveInfo.ps1 -Destination C:\SSM\
+                        q-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                 InitialSetup:
                     commands:

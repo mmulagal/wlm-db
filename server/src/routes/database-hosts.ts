@@ -1,10 +1,16 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases } from '../operations/database-hosts-operations';
+import {
+    getDatabaseHostsSummary,
+    getDatabaseHostSummary,
+    getDatabases,
+    getDriveInfo
+} from '../operations/database-hosts-operations';
 import {
     DatabaseHostDetailsSchema,
     DatabasesListSchema,
-    DatabaseHostsSummarySchema
+    DatabaseHostsSummarySchema,
+    GetDriveInfoSchema
 } from './schemas/database-hosts-schemas';
 
 const DATABASE_HOSTS_API_PATH: string = '/v1/database-hosts';
@@ -41,6 +47,17 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     params: { accountId, databaseHostId }
                 } = request;
                 const response = await getDatabases(accountId, databaseHostId);
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${DATABASE_HOSTS_API_PATH}/:databaseHostId/driveInfo`,
+            { schema: GetDriveInfoSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId }
+                } = request;
+                const response = await getDriveInfo(accountId, databaseHostId);
                 return reply.send(response);
             }
         );
