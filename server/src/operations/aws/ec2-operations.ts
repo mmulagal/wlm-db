@@ -482,9 +482,9 @@ async function getVpcSecurityGroups(credentialsId: string, region: string, vpcId
 async function getServicesWithNoEndpoint(credentialsId: string, region: string, vpcId: string) {
     logger.info('Get services wit no endpoint ', credentialsId, region, vpcId);
 
-    const endpoints = await getVpcEndpoints(credentialsId!, region!, vpcId)
+    const endpoints = await getVpcEndpoints(credentialsId, region, vpcId)
     const availableEndpoints =  Object.assign({}, ...endpoints!.map((x) => ({[x.ServiceName as string]: x.PrivateDnsEnabled})))
-    const servicesWithNoEndpoint = !isEmpty(endpoints) ? ENDPOINTS_DEPLOYMENT.filter(e => e && Object.keys(availableEndpoints).indexOf(`com.amazonaws.${region}.${e}`) < 0) : ENDPOINTS_DEPLOYMENT
+    const servicesWithNoEndpoint = !isEmpty(endpoints) ? ENDPOINTS_DEPLOYMENT.filter(e =>Object.keys(availableEndpoints).includes(e)) : ENDPOINTS_DEPLOYMENT
 
     return servicesWithNoEndpoint
 }
