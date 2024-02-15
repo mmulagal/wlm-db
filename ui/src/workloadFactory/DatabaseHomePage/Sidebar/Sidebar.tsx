@@ -185,6 +185,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
+        isOpen,
         dropDownValue,
         rightPanelData,
         isRightPanelDataLoading,
