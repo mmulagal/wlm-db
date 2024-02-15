@@ -20,7 +20,7 @@ const CreateNewUserHeader = () => {
                         <div>Create new user database</div>
                         <div className={styles.separator} />
                         <DsTypography variant="Semibold_14" className={styles.hostName}>
-                            Host: host name
+                            Host: {dbHostName}
                         </DsTypography>
                     </div>
                 }
