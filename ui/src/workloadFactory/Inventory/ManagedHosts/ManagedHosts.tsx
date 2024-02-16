@@ -324,19 +324,19 @@ const ManagedHosts = () => {
         {
             id: '9',
             Header: GENERAL.DB_HOST_VPC,
-            accessor: 'topology.vpcId',
+            accessor: 'topology',
             isSortable: true,
             width: '212px',
             renderCell: (cellData: any) => {
                 return (
                     <>
-                        {cellData && (
+                        {cellData?.vpcId && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData}</TooltipInfo>
-                                <Typography variant="Regular_14">{cellData}</Typography>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData?.vpcId}</TooltipInfo>
+                                <Typography variant="Regular_14">{cellData?.vpcName}</Typography>
                             </div>
                         )}
-                        {!cellData && notAvailable()}
+                        {!cellData?.vpcId && notAvailable()}
                     </>
                 );
             }
@@ -344,19 +344,20 @@ const ManagedHosts = () => {
         {
             id: '10',
             Header: GENERAL.DB_HOST_AVAILABILITY,
-            accessor: 'topology.availability',
+            accessor: 'topology',
             isSortable: true,
             width: '212px',
             renderCell: (cellData: any) => {
+                const azList = cellData?.availabilityZones ? cellData.availabilityZones.join(',') : '';
                 return (
                     <>
-                        {cellData && (
+                        {cellData?.fileSystemDeploymentMode && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData?.azList}</TooltipInfo>
-                                <Typography variant="Regular_14">{cellData?.type}</Typography>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
+                                <Typography variant="Regular_14">{cellData?.fileSystemDeploymentMode}</Typography>
                             </div>
                         )}
-                        {!cellData && notAvailable()}
+                        {!cellData?.fileSystemDeploymentMode && notAvailable()}
                     </>
                 );
             }
