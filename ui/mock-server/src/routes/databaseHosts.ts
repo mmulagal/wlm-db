@@ -13,7 +13,7 @@ import JobMonitoringSubTask from '../data/JobMonitoringSubTask.json';
 
 const router = require('express').Router();
 
-router.get(`${BASE_URL}/v1/database-hosts`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/database-hosts`, async (req: {}, res: any) => {
     generateResponse(res, 200, DatabaseHosts);
 });
 
