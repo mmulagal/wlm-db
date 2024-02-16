@@ -333,9 +333,9 @@ export const databaseHomeApi = createApi({
             getDatabaseHosts: builder.query({
                 query: ({ credentialId, region, nextToken = null }) => {
                     if (nextToken) {
-                        return `database-hosts?fields=performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
                     } else {
-                        return `database-hosts?fields=performance,storage,protection,usageEstimation`;
+                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=performance,storage,protection,usageEstimation`;
                     }
                 }
             }),
