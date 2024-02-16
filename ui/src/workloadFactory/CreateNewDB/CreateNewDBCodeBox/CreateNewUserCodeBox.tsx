@@ -13,7 +13,7 @@ const CreateNewUserCodeBox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
 
     const createNewUser = useAppSelector(state => state.createNewUser);
-    
+
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
         const arr = [CODE_VIEWER.REST_API];
         const options: optionType[] = [];
@@ -25,12 +25,8 @@ const CreateNewUserCodeBox = () => {
     }, []);
 
     const setDisplayedDataInCodeBox = () => {
-        const payload = createUserDbPayload(createNewUser); 
-        return (
-            <pre>
-                {JSON.stringify(payload)}
-            </pre>
-        )
+        const payload = createUserDbPayload(createNewUser);
+        return <pre>{JSON.stringify(payload)}</pre>;
     };
 
     return (

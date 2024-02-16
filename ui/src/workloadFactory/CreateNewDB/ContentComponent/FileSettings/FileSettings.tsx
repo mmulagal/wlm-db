@@ -46,10 +46,7 @@ const FileSettings = () => {
     const [logFilePath, setLogFilePath] = useState('');
     const resourceId = useAppSelector(state => state.auth.resourceId);
 
-    const {
-        data: driveInfoList,
-        isFetching: driveInfoListLoading
-    } = useGetDriveInfoQuery({id: resourceId});
+    const { data: driveInfoList, isFetching: driveInfoListLoading } = useGetDriveInfoQuery({ id: resourceId });
 
     useEffect(() => {
         if (driveLetter && newUserDBFileName) {
@@ -110,13 +107,7 @@ const FileSettings = () => {
             options.push(option);
         });
         driveInfoList?.availableDriveLetters?.map((val: any, idx: number) => {
-            const option = generateOptionType(
-                val,
-                val,
-                'New drive letter',
-                false,
-                ''
-            );
+            const option = generateOptionType(val, val, 'New drive letter', false, '');
             options.push(option);
         });
         return options;
