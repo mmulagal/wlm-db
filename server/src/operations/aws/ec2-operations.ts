@@ -452,9 +452,6 @@ async function getVpcEndpoints(credentialsId: string, region: string, vpcId: str
                     `com.amazonaws.${region}.monitoring`,
                     `com.amazonaws.${region}.sqs`
                 ]
-            },
-            {
-
             }
         ]
     };

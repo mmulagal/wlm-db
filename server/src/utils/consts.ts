@@ -512,7 +512,7 @@ const AWS_REGIONS = new Map<string, string>([
 const WLMDB = 'wlmdb';
 
 const ARTIFACT_BUCKET_NAME = process.env.ARTIFACT_BUCKET_NAME || config.get<string>('bucket.artifacts');
-const SIGNED_TEMPLATES_BUCKET_NAME = process.env.ARTIFACT_BUCKET_NAME || config.get<string>('bucket.signedTemplates');
+const SIGNED_TEMPLATES_BUCKET_NAME = process.env.TEMPLATE_BUCKET_NAME || config.get<string>('bucket.signedTemplates');
 const CF_DEPLOY_ROLE_NAME = 'CfDeployRoleName';
 const VALIDATION_AMI = 'ValidationAmi';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
