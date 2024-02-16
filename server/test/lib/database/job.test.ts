@@ -12,12 +12,14 @@ import {
     listUniqueJob,
     updateJob
 } from '../../../src/lib/database/job';
-import { ACCOUNT_ID, THIRTY_DAYS } from '../../utils/consts';
+import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, THIRTY_DAYS } from '../../utils/consts';
 
 beforeEach(async () => {
     await createJobs(ACCOUNT_ID, [
         {
             account_id: ACCOUNT_ID,
+            credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
             name: 'test-job',
             description: 'test-job-description',
             resource_name: 'test-resource',
@@ -36,6 +38,8 @@ describe('Create jobs', () => {
         const response = await createJobs(ACCOUNT_ID, [
             {
                 account_id: ACCOUNT_ID,
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
                 name: 'test-job-1',
                 description: 'test-job-description',
                 resource_name: 'test-resource',
@@ -52,6 +56,8 @@ describe('Create jobs', () => {
         const response = await createJobs(ACCOUNT_ID, [
             {
                 account_id: ACCOUNT_ID,
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
                 name: 'test-job-2',
                 description: 'test-job-description',
                 resource_name: 'test-resource',
@@ -62,6 +68,8 @@ describe('Create jobs', () => {
             },
             {
                 account_id: ACCOUNT_ID,
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
                 name: 'test-job-3',
                 description: 'test-job-description',
                 resource_name: 'test-resource',
@@ -81,6 +89,8 @@ describe('Create jobs', () => {
         const response = await createJobs(ACCOUNT_ID, [
             {
                 account_id: ACCOUNT_ID,
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
                 name: 'test-job',
                 description: 'test-job-description',
                 resource_name: 'test-resource',
@@ -91,6 +101,8 @@ describe('Create jobs', () => {
             },
             {
                 account_id: ACCOUNT_ID,
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
                 name: 'test-job',
                 description: 'test-job-description',
                 resource_name: 'test-resource',
@@ -107,7 +119,7 @@ describe('Create jobs', () => {
 
 describe('Delete jobs', () => {
     it('should delete a job', async () => {
-        const jobs = await listJobs(ACCOUNT_ID);
+        const jobs = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
         const jobIds = jobs.map(({ id }) => id);
         const response = await deleteJobs(ACCOUNT_ID, [jobIds[0]]);
         expect(response.count).equal(1);
@@ -117,6 +129,8 @@ describe('Delete jobs', () => {
         await createJobs(ACCOUNT_ID, [
             {
                 account_id: ACCOUNT_ID,
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
                 name: 'test-job-4',
                 description: 'test-job-description',
                 resource_name: 'test-resource',
@@ -126,10 +140,12 @@ describe('Delete jobs', () => {
                 type: JOBTYPE.DEPLOYMENT
             }
         ]);
-        const [jobs] = await listJobs(ACCOUNT_ID);
+        const [jobs] = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
         await createJobs(ACCOUNT_ID, [
             {
                 account_id: ACCOUNT_ID,
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
                 name: 'test-job-5',
                 description: 'test-job-description',
                 resource_name: 'test-resource',
@@ -153,17 +169,32 @@ describe('Delete jobs', () => {
 
 describe('Modify jobs', () => {
     it('should modify a job', async () => {
-        const jobs = await listJobs(ACCOUNT_ID);
+        const jobs = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
         const [jobIds] = jobs.map(({ id }) => id);
         const endTime = moment(new Date()).valueOf();
-        const response = await updateJob(ACCOUNT_ID, jobIds, 'modified-description', JOBSTATUS.COMPLETED, endTime);
+        const response = await updateJob(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            jobIds,
+            'modified-description',
+            JOBSTATUS.COMPLETED,
+            endTime
+        );
         expect(response.description).equal('modified-description');
         expect(response.status, JOBSTATUS.COMPLETED);
     });
 
     it('should fail to modify a job invalid Job Id', async () => {
         try {
-            await updateJob(ACCOUNT_ID, 'a', 'modified-description', JOBSTATUS.COMPLETED);
+            await updateJob(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                'a',
+                'modified-description',
+                JOBSTATUS.COMPLETED
+            );
         } catch (error: any) {
             expect(error?.meta?.cause).toEqual('Record to update not found.');
         }
@@ -179,16 +210,18 @@ describe('List jobs', () => {
     });
 
     it('should list all jobs in an account', async () => {
-        const jobs = await listJobs(ACCOUNT_ID);
+        const jobs = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
         expect(jobs.length).toBeGreaterThan(0);
     });
 
     it('should list all sub jobs of a parent job with sort', async () => {
-        const jobs = await listJobs(ACCOUNT_ID);
+        const jobs = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
         const [jobId] = jobs.map(({ id }) => id);
         await createJobs(ACCOUNT_ID, [
             {
                 account_id: ACCOUNT_ID,
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
                 name: 'a-test-sub-job-1',
                 description: 'test-sub-job-description',
                 resource_name: 'test-resource',
@@ -200,6 +233,8 @@ describe('List jobs', () => {
             },
             {
                 account_id: ACCOUNT_ID,
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
                 name: 'b-test-sub-job-2',
                 description: 'test-sub-job-description',
                 resource_name: 'test-resource',
@@ -210,20 +245,27 @@ describe('List jobs', () => {
                 parent_job_id: jobId
             }
         ]);
-        const subJobs = await listJobs(ACCOUNT_ID, jobId, 'name', 'desc');
+        const subJobs = await listJobs(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            jobId,
+            'name',
+            'desc'
+        );
         expect(subJobs.length).equal(2);
         expect(subJobs[0].name).equal('b-test-sub-job-2');
     });
 
     it('should list an individual job', async () => {
-        const [jobs] = await listJobs(ACCOUNT_ID);
-        const response = await listUniqueJob(ACCOUNT_ID, jobs.id);
+        const [jobs] = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
+        const response = await listUniqueJob(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, jobs.id);
         expect(response.id).toEqual(jobs.id);
     });
 
     it('fail to list a job invalid job Id', async () => {
         try {
-            await listUniqueJob(ACCOUNT_ID, 'a');
+            await listUniqueJob(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, 'a');
         } catch (error) {
             // expect(error.code).toEqual('P2025')
             expect(error).toBeDefined(); // prismock returns undefined instead of actual error code
@@ -235,6 +277,8 @@ describe('Group jobs', async () => {
     await createJobs(ACCOUNT_ID, [
         {
             account_id: ACCOUNT_ID,
+            credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
             name: 'test-job',
             resource_name: 'test-resource',
             start_time: new Date(Date.now() - THIRTY_DAYS),
@@ -245,13 +289,25 @@ describe('Group jobs', async () => {
     ]);
 
     it('should group jobs by status', async () => {
-        const response = await getJobCountByStatus(ACCOUNT_ID, new Date('2024-01-01').valueOf(), Date.now());
+        const response = await getJobCountByStatus(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            new Date('2024-01-01').valueOf(),
+            Date.now()
+        );
         expect(response[0]).toHaveProperty(['status']);
         expect(response[0]).toHaveProperty(['_count']);
     });
 
     it('should group jobs by status and time', async () => {
-        const response = await groupJobsByTimeAndStatus(ACCOUNT_ID, Date.now() - THIRTY_DAYS, Date.now());
+        const response = await groupJobsByTimeAndStatus(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            Date.now() - THIRTY_DAYS,
+            Date.now()
+        );
         expect(response[0]).toHaveProperty(['status']);
         expect(response[0]).toHaveProperty(['_count']);
         expect(response[0]).toHaveProperty(['end_time']);
@@ -261,6 +317,6 @@ describe('Group jobs', async () => {
 // This test case should be the last one in this file
 it('should delete jobs lesser than a time', async () => {
     await deleteOlderJobs(Date.now() + 1000);
-    const jobs = await listJobs(ACCOUNT_ID);
+    const jobs = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
     expect(jobs.length).toBe(0);
 });
