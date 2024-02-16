@@ -94,6 +94,9 @@
         color: #fff !important;
 
         ul {
+            li {
+                color: var(--white);
+            }
             li:hover {
                 background-color: #3a4454;
             }
