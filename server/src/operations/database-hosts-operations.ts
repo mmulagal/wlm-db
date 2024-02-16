@@ -864,6 +864,7 @@ async function getDriveInfoFromSSM(
     activeNodeInstanceId: string,
     standbyNodeInstanceId?: string
 ) {
+    logger.info('Getting drive information from SSM');
     // Check SSM Connection status
     const isSSMConnected = await isSSMConnectionSuccessful(
         credentialsId,
@@ -913,7 +914,7 @@ async function getDriveInfoFromSSM(
 }
 
 async function getDriveInfo(accountId: string, databaseHostId: string): Promise<DriveInfoResponseBodyType> {
-    logger.info('Fetching drive details of the database host  ', accountId, databaseHostId);
+    logger.info('Fetching drive details and storage capacity of the database host  ', accountId, databaseHostId);
 
     const [resourceDetail] = await listResources(accountId, databaseHostId);
 
@@ -926,7 +927,7 @@ async function getDriveInfo(accountId: string, databaseHostId: string): Promise<
     const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
     const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
 
-    const [FsxStorageCapacity, driveResponse] = await Promise.all([
+    const [fsxStorageCapacity, driveResponse] = await Promise.all([
         getFsxStorageCapacity(credentialsId, region!, fileSystemId!),
         getDriveInfoFromSSM(
             accountId,
@@ -941,7 +942,7 @@ async function getDriveInfo(accountId: string, databaseHostId: string): Promise<
     return {
         existingDriveInfo: driveResponse.UpdatedExistingDriveInfo,
         availableDriveLetters: driveResponse.availableDriveLetters,
-        FsxStorageCapacity
+        fsxStorageCapacity
     };
 }
 

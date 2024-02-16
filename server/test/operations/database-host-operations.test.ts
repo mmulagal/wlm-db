@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { getDatabases } from '../../src/operations/database-hosts-operations';
+import { getDatabases, getDriveInfo } from '../../src/operations/database-hosts-operations';
 import '../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../simulator/scopes/aws/fsx-scope';
@@ -48,9 +48,13 @@ afterAll(async () => {
     await deleteResource(ACCOUNT_ID, 'fs-f6082f35c1db');
 });
 
-describe('Get databases in a server', () => {
+describe('Database host operations', () => {
     it('Get databases in a server', async () => {
         const resp = await getDatabases(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
+        expect(resp).toBeDefined();
+    });
+    it('Get drive info for a database host', async () => {
+        const resp = await getDriveInfo(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
         expect(resp).toBeDefined();
     });
 });

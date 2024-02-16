@@ -178,7 +178,7 @@ const DriveInfoResponseBody = Type.Object({
         })
     ),
     availableDriveLetters: Type.Array(Type.String()),
-    FsxStorageCapacity: Type.Number()
+    fsxStorageCapacity: Type.Number()
 });
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
 

@@ -468,6 +468,7 @@ async function getCostAllocationTagFsxResource(resourceDetail: ResourceDetails) 
 }
 
 async function getFsxStorageCapacity(credentialsId: string, region: string, fsxId: string) {
+    logger.info('Get FSx Storage capacity');
     const { FileSystems: fileSystems } = await describeFSxN(credentialsId, region!, {
         FileSystemIds: [fsxId]
     });
