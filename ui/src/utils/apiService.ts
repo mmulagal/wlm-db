@@ -349,8 +349,7 @@ export const databaseHomeApi = createApi({
                 }
             }),
             getJobsSummary: builder.query({
-                query: ({ startTime, endTime }) =>
-                    `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+                query: ({ startTime, endTime }) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getTemplates: builder.mutation({
                 query: ({ payload }) => ({
@@ -435,12 +434,10 @@ export const jobMonitoringApi = createApi({
                 })
             }),
             getJobsSummaryData: builder.query({
-                query: ({ startTime, endTime }) =>
-                    `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+                query: ({ startTime, endTime }) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getJobsSummaryTimelineData: builder.query({
-                query: ({ startTime, endTime }) =>
-                    `jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}`
+                query: ({ startTime, endTime }) => `jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}`
             })
         };
     }
@@ -482,7 +479,7 @@ export const headersApi = createApi({
 
 export const policiesApi = createApi({
     reducerPath: 'policiesApi',
-    baseQuery: fetchBaseQuery({ 
+    baseQuery: fetchBaseQuery({
         baseUrl: process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? WLMDB_POLICIES_PROD_LINK : WLMDB_POLICIES_STAGE_LINK
     }),
     endpoints: builder => {
@@ -508,7 +505,7 @@ export const createUserDbApi = createApi({
                     method: 'POST',
                     body: payload
                 })
-            }),
+            })
         };
     }
 });

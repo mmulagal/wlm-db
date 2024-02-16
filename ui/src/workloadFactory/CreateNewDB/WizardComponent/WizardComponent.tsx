@@ -9,7 +9,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 
 const WizardComponent = () => {
     const loading = useAppSelector(state => state.msSqlAction.isLoading);
-    
+
     return (
         <div className={styles.wizardComponent}>
             {loading && (

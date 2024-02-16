@@ -28,20 +28,19 @@ const CreateNewUserFooter = () => {
         const payload = createUserDbPayload(createNewUser);
         if (payload) {
             dispatch(setIsLoading(true));
-            createNewUserDb(
-                { 
-                    credentialId: selectedCredId?.data?.credentialsId, 
-                    region: selectedRegionCode?.data?.regionCode, 
-                    id: resourceId, 
-                    payload: payload 
-                })
+            createNewUserDb({
+                credentialId: selectedCredId?.data?.credentialsId,
+                region: selectedRegionCode?.data?.regionCode,
+                id: resourceId,
+                payload: payload
+            })
                 .then((data: any) => {
                     dispatch(setIsLoading(false));
                     if (!data?.error) {
                         let jobId = data?.data?.jobId;
-                        dispatch(addNotification(
-                            { 
-                                notificationType: NOTIFICATION_TYPES.INFO, 
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.INFO,
                                 message: (
                                     <>
                                         {`Database ${createNewUser?.newUserDBName} in host ${createNewUser?.dbHostName} is in deployment status.`}
@@ -57,9 +56,10 @@ const CreateNewUserFooter = () => {
                                             View job monitoring
                                         </Button>
                                     </>
-                                ) 
-                            }));
-                            navigate('../databases');
+                                )
+                            })
+                        );
+                        navigate('../databases');
                     }
                 })
                 .catch((error: any) => {
