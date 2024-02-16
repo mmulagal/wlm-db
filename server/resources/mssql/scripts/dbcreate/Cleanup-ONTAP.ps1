@@ -27,8 +27,8 @@ $ErrorActionPreference = "Stop"
 
 $userfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="String"}
 $pwdfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="SecureString"}
-$username = (Get-SSMParametersByPath -Path $SQLStore -WithDecryption $true -Recursive $true -ParameterFilter $userfilter).Value
-$password = (Get-SSMParametersByPath -Path $SQLStore -WithDecryption $true -Recursive $true -ParameterFilter $pwdfilter).Value
+$username = (Get-SSMParametersByPath -Path $FSxCredStore -WithDecryption $true -Recursive $true -ParameterFilter $userfilter).Value
+$password = (Get-SSMParametersByPath -Path $FSxCredStore -WithDecryption $true -Recursive $true -ParameterFilter $pwdfilter).Value
 
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
