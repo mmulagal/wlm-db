@@ -1,6 +1,12 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 
+const JobsGenericParams = Type.Object({
+    accountId: Type.String(),
+    credentialsId: Type.String(),
+    region: Type.String()
+});
+
 const JobSummaryQueryString = Type.Object({
     startTime: Type.Optional(Type.Number()),
     endTime: Type.Optional(Type.Number())
@@ -106,6 +112,8 @@ const UpdateJobResponse = Type.Object({
 
 const CreateJobObject = Type.Object({
     name: Type.String(),
+    credentialsId: Type.String(),
+    region: Type.String(),
     status: Type.String({
         enum: Object.values(JOBSTATUS)
     }),
@@ -130,12 +138,10 @@ const CreateJobResponse = Type.Object({
     count: Type.Number()
 });
 
-const JobsParams = Type.Object({
-    accountId: Type.String({ minLength: 1 }),
-    jobId: Type.String({ minLength: 1 })
-});
+const JobsParams = Type.Composite([JobsGenericParams, Type.Object({ jobId: Type.String({ minLength: 1 }) })]);
 
 export {
+    JobsGenericParams,
     ListJobsQueryString,
     ListJobsQueryType,
     ListJobsResponse,
