@@ -349,8 +349,7 @@ export const databaseHomeApi = createApi({
                 }
             }),
             getJobsSummary: builder.query({
-                query: ({ startTime, endTime }) =>
-                    `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+                query: ({ startTime, endTime }) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getTemplates: builder.mutation({
                 query: ({ payload }) => ({
@@ -435,12 +434,10 @@ export const jobMonitoringApi = createApi({
                 })
             }),
             getJobsSummaryData: builder.query({
-                query: ({ startTime, endTime }) =>
-                    `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+                query: ({ startTime, endTime }) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getJobsSummaryTimelineData: builder.query({
-                query: ({ startTime, endTime }) =>
-                    `jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}`
+                query: ({ startTime, endTime }) => `jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}`
             })
         };
     }
@@ -482,13 +479,32 @@ export const headersApi = createApi({
 
 export const policiesApi = createApi({
     reducerPath: 'policiesApi',
-    baseQuery: fetchBaseQuery({ 
+    baseQuery: fetchBaseQuery({
         baseUrl: process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? WLMDB_POLICIES_PROD_LINK : WLMDB_POLICIES_STAGE_LINK
     }),
     endpoints: builder => {
         return {
             getWlmdbPolicies: builder.query({
                 query: () => ({ url: `/wlmdb/workload-policies.json` })
+            })
+        };
+    }
+});
+
+export const createUserDbApi = createApi({
+    reducerPath: 'createUserDbApi',
+    baseQuery: dynamicBaseQuery,
+    endpoints: builder => {
+        return {
+            getDriveInfo: builder.query({
+                query: ({ id }) => ({ url: `database-hosts/${id}/driveInfo` })
+            }),
+            createUserDB: builder.mutation({
+                query: ({ credentialId, region, id, payload }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/database/${id}/create`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -552,3 +568,5 @@ export const { useSendMsgMutation } = chatbotApi;
 export const { useGetHeadersCredentialsQuery, useGetHeadersRegionsQuery, useGetStatusQuery } = headersApi;
 
 export const { useGetWlmdbPoliciesQuery } = policiesApi;
+
+export const { useGetDriveInfoQuery, useCreateUserDBMutation } = createUserDbApi;

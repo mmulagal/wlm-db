@@ -4,6 +4,7 @@ import {
     awsApi,
     chatbotApi,
     configApi,
+    createUserDbApi,
     databaseHomeApi,
     headersApi,
     jobMonitoringApi,
@@ -48,7 +49,8 @@ const rootReducer = combineReducers({
     [headersApi.reducerPath]: headersApi.reducer,
     [headersSlice.name]: headersSlice.reducer,
     [createNewUserSlice.name]: createNewUserSlice.reducer,
-    [policiesApi.reducerPath]: policiesApi.reducer
+    [policiesApi.reducerPath]: policiesApi.reducer,
+    [createUserDbApi.reducerPath]: createUserDbApi.reducer
 });
 
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action: any) => {
@@ -92,6 +94,7 @@ const store = configureStore({
             .concat(jobMonitoringApi.middleware)
             .concat(headersApi.middleware)
             .concat(policiesApi.middleware)
+            .concat(createUserDbApi.middleware)
             .concat(rtkQueryErrorLogger)
 });
 

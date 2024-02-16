@@ -22,6 +22,7 @@ import { generateOptionType } from '../../../../utils/utilityFunctions';
 import styles from './FileSettings.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
+import { useGetDriveInfoQuery } from '../../../../utils/apiService';
 
 const FileSettings = () => {
     const dispatch = useDispatch();
@@ -43,6 +44,9 @@ const FileSettings = () => {
     const [maxSize, setMaxSize] = useState(130);
     const [dataFilePath, setDataFilePath] = useState('');
     const [logFilePath, setLogFilePath] = useState('');
+    const resourceId = useAppSelector(state => state.auth.resourceId);
+
+    const { data: driveInfoList, isFetching: driveInfoListLoading } = useGetDriveInfoQuery({ id: resourceId });
 
     useEffect(() => {
         if (driveLetter && newUserDBFileName) {
@@ -84,52 +88,30 @@ const FileSettings = () => {
     }, []);
 
     //Function to generate the options for Select Field
-    const generateDataDriveLetters = useMemo<optionType[]>((): optionType[] => {
-        const letters = [
-            { drive: 'a', existing: true },
-            { drive: 'b', existing: true },
-            { drive: 'c', existing: true },
-            { drive: 'd' },
-            { drive: 'e' },
-            { drive: 'f' }
-        ];
+    const generateDriveLetters = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        letters?.map((val, idx: number) => {
+        driveInfoList?.existingDriveInfo?.map((val: any, idx: number) => {
             const option = generateOptionType(
-                val.drive,
-                val.drive,
-                val?.existing ? 'Existing drive letter' : 'New drive letter',
-                false,
+                val?.driveLetter,
+                val?.driveLetter,
+                'Existing drive letter',
+                !val?.isNetappDrive,
                 ''
             );
+            if (val?.defaultDataDrive) {
+                dispatch(setDriveLetter(option));
+            }
+            if (val?.defaultLogDrive) {
+                dispatch(setDriveLetterForLogFile(option));
+            }
+            options.push(option);
+        });
+        driveInfoList?.availableDriveLetters?.map((val: any, idx: number) => {
+            const option = generateOptionType(val, val, 'New drive letter', false, '');
             options.push(option);
         });
         return options;
-    }, []);
-
-    //Function to generate the options for Select Field
-    const generateLogDriveLetters = useMemo<optionType[]>((): optionType[] => {
-        const letters = [
-            { drive: 'a', existing: true },
-            { drive: 'b', existing: true },
-            { drive: 'c', existing: true },
-            { drive: 'd' },
-            { drive: 'e' },
-            { drive: 'f' }
-        ];
-        const options: optionType[] = [];
-        letters?.map((val, idx: number) => {
-            const option = generateOptionType(
-                val.drive,
-                val.drive,
-                val?.existing ? 'Existing drive letter' : 'New drive letter',
-                false,
-                ''
-            );
-            options.push(option);
-        });
-        return options;
-    }, []);
+    }, [driveInfoList]);
 
     useEffect(() => {
         dispatch(setNewUserDataSize(1));
@@ -329,6 +311,7 @@ const FileSettings = () => {
                                     <div className={styles.dataFileSeparator} />
                                     <div className={styles.inputSection}>
                                         <SelectField
+                                            isLoading={driveInfoListLoading}
                                             label="Select drive letter"
                                             isClearable={false}
                                             placeholder="Select drive letter"
@@ -336,8 +319,8 @@ const FileSettings = () => {
                                                 dispatch(setDriveLetter(selectedOptions));
                                             }}
                                             value={driveLetter ? driveLetter : null}
-                                            isSearchable={generateDataDriveLetters.length > 5}
-                                            options={generateDataDriveLetters}
+                                            isSearchable={generateDriveLetters.length > 5}
+                                            options={generateDriveLetters}
                                             variant="two-lines"
                                             className={styles.driveSelectField}
                                         />
@@ -402,6 +385,7 @@ const FileSettings = () => {
                                     <div className={styles.dataFileSeparator} />
                                     <div className={styles.inputSection}>
                                         <SelectField
+                                            isLoading={driveInfoListLoading}
                                             label="Select drive letter"
                                             isClearable={false}
                                             placeholder="Select drive letter"
@@ -409,8 +393,8 @@ const FileSettings = () => {
                                                 dispatch(setDriveLetterForLogFile(selectedOptions));
                                             }}
                                             value={driveLetterLogFile ? driveLetterLogFile : null}
-                                            isSearchable={generateLogDriveLetters.length > 5}
-                                            options={generateLogDriveLetters}
+                                            isSearchable={generateDriveLetters.length > 5}
+                                            options={generateDriveLetters}
                                             variant="two-lines"
                                             className={styles.driveSelectField}
                                         />
