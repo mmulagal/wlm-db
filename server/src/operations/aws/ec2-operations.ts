@@ -498,5 +498,6 @@ export {
     getCostAllocationTagEC2Resource,
     getVpcEndpoints,
     getVpcSecurityGroups,
-    getServicesWithNoEndpoint
+    getServicesWithNoEndpoint,
+    findResourceNameFromTags
 };

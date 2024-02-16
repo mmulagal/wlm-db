@@ -11,14 +11,14 @@ import {
     JobDetailsResponse,
     JobSummaryQueryString,
     JobSummaryResponse,
-    JobSummaryByTimeResponse
+    JobSummaryByTimeResponse,
+    JobsGenericParams
 } from '../types/jobs.types';
-import { AccountIdParams } from '../types/generic.types';
 
 // Base Request for Deployment Routes
 const baseRequest = {
     tags: [RouteTags.JOB_MONITORING],
-    params: AccountIdParams
+    params: JobsGenericParams
 };
 
 // Get all jobs

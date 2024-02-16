@@ -40,16 +40,15 @@ const DatabaseHomeApis = () => {
 
     // skipApiCall to skip APi call when isActive is not true
     const [skipApiCall, setSkipApiCall] = useState(true);
-    const [skipSummaryApiCall, setSkipSummaryApiCall] = useState(true);
     const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
+
+    const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
+    const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
 
     useEffect(() => {
         const toDate = Date.now();
         const fromDate = toDate - 30 * (3600 * 1000 * 24);
         setTime({ startTime: fromDate, endTime: toDate });
-        setTimeout(() => {
-            setSkipSummaryApiCall(false);
-        }, 0);
     }, []);
 
     const {
@@ -58,8 +57,8 @@ const DatabaseHomeApis = () => {
         isError: databaseHostsError
     } = useGetDatabaseHostsQuery(
         {
-            credentialId: headerSelectedCred?.data?.credentialsId,
-            region: headerSelectedRegion?.label2,
+            credentialId: credId,
+            region: regionId,
             nextToken: hostCursor
         },
         { skip: skipApiCall }
@@ -71,8 +70,8 @@ const DatabaseHomeApis = () => {
         isError: databaseJobsError
     } = useGetDatabaseJobsQuery(
         {
-            credentialId: headerSelectedCred?.data?.credentialsId,
-            region: headerSelectedRegion?.label2,
+            credentialId: credId,
+            region: regionId,
             nextToken: jobsCursor
         },
         { skip: skipApiCall }
@@ -85,10 +84,12 @@ const DatabaseHomeApis = () => {
         refetch: jobsSummaryRefetch
     } = useGetJobsSummaryQuery(
         {
+            credentialId: headerSelectedCred?.data?.credentialsId,
+            region: headerSelectedRegion?.label2,
             startTime: time?.startTime,
             endTime: time?.endTime
-        }, 
-        { skip: skipSummaryApiCall }
+        },
+        { skip: skipApiCall }
     );
 
     useEffect(() => {
@@ -101,7 +102,11 @@ const DatabaseHomeApis = () => {
 
     useEffect(() => {
         if (headerSelectedCred && headerSelectedRegion) {
-            setSkipApiCall(false);
+            setCredId(headerSelectedCred?.data?.credentialsId);
+            setRegionId(headerSelectedRegion?.label2);
+            setTimeout(() => {
+                setSkipApiCall(false);
+            }, 0);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [headerSelectedCred, headerSelectedRegion]);

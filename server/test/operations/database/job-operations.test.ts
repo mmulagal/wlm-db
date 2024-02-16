@@ -9,13 +9,15 @@ import {
     getJobSummary,
     getJobSummaryByTime
 } from '../../../src/operations/database/job-operations';
-import { ACCOUNT_ID, THIRTY_DAYS } from '../../utils/consts';
+import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, THIRTY_DAYS } from '../../utils/consts';
 import { deleteJobsOfAccount, listJobs } from '../../../src/lib/database/job';
 
 beforeEach(async () => {
-    await registerJobs(ACCOUNT_ID, [
+    await registerJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
         {
             name: 'test-job-ops-1',
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
             description: 'test-job-description',
             resourceName: 'test-resource',
             initiator: 'test-user',
@@ -25,6 +27,8 @@ beforeEach(async () => {
         },
         {
             name: 'test-job-ops-2',
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
             description: 'test-job-description',
             resourceName: 'test-resource',
             initiator: 'test-user',
@@ -39,9 +43,11 @@ afterAll(async () => {
 });
 describe('Job operations', () => {
     it('Register Jobs', async () => {
-        const response = await registerJobs(ACCOUNT_ID, [
+        const response = await registerJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
             {
                 name: 'test-job-ops-register-1',
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
                 description: 'test-job-description',
                 resourceName: 'test-resource',
                 initiator: 'test-user',
@@ -51,6 +57,8 @@ describe('Job operations', () => {
             },
             {
                 name: 'test-job-ops-register-2',
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
                 description: 'test-job-description',
                 resourceName: 'test-resource',
                 initiator: 'test-user',
@@ -63,14 +71,16 @@ describe('Job operations', () => {
     });
 
     it('Get Jobs', async () => {
-        const response = await getJobs(ACCOUNT_ID);
+        const response = await getJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
         expect(response.count).toBeGreaterThanOrEqual(2);
     });
 
     it('Get Job Details', async () => {
-        await registerJobs(ACCOUNT_ID, [
+        await registerJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
             {
                 name: 'test-job-ops-1',
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
                 description: 'test-filtered-job-description',
                 resourceName: 'test-resource',
                 initiator: 'filterMe',
@@ -79,15 +89,24 @@ describe('Job operations', () => {
                 type: JOBTYPE.DEPLOYMENT
             }
         ]);
-        const [jobDetails] = await listJobs(ACCOUNT_ID, undefined, undefined, undefined, undefined, 'filterMe');
-        const response = await getJobDetails(ACCOUNT_ID, jobDetails.id);
+        const [jobDetails] = await listJobs(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            'filterMe'
+        );
+        const response = await getJobDetails(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, jobDetails.id);
         expect(response.description).toEqual('test-filtered-job-description');
     });
 
     it('Modify Job Details', async () => {
-        const [job] = await listJobs(ACCOUNT_ID);
-        const jobDetails = await getJobDetails(ACCOUNT_ID, job.id);
-        const response = await updateJobDetails(ACCOUNT_ID, job.id, {
+        const [job] = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
+        const jobDetails = await getJobDetails(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, job.id);
+        const response = await updateJobDetails(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, job.id, {
             description: 'modified-description',
             status: JOBSTATUS.COMPLETED,
             endTime: Date.now()
@@ -102,13 +121,15 @@ describe('Job operations', () => {
     });
 
     it('Delete all jobs with sub jobs', async () => {
-        const jobs = await listJobs(ACCOUNT_ID);
+        const jobs = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
         const [jobId] = jobs.map(({ id }) => id);
 
         // registering level 2 jobs
-        await registerJobs(ACCOUNT_ID, [
+        await registerJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
             {
                 name: 'test-sub-job-1',
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
                 description: 'test-sub-job-description',
                 resourceName: 'test-resource',
                 initiator: 'test-user',
@@ -119,6 +140,8 @@ describe('Job operations', () => {
             },
             {
                 name: 'test-sub-job-2',
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
                 description: 'test-sub-job-description',
                 resourceName: 'test-resource',
                 initiator: 'test-user',
@@ -128,16 +151,18 @@ describe('Job operations', () => {
                 parentJobId: jobId
             }
         ]);
-        const jobDetails = await getJobDetails(ACCOUNT_ID, jobId);
+        const jobDetails = await getJobDetails(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, jobId);
         expect(jobDetails.subJobs?.length).toEqual(2);
 
         const level2Jobs = jobDetails.subJobs as Job[];
         const level2JobIds = level2Jobs?.map(({ id }) => id);
         if (level2JobIds) {
             // registering level 3 jobs
-            await registerJobs(ACCOUNT_ID, [
+            await registerJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
                 {
                     name: 'test-level-3-job-1',
+                    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                    region: DEFAULT_AWS_REGION,
                     description: 'test-level-3-job-description',
                     resourceName: 'test-resource',
                     initiator: 'test-user',
@@ -148,6 +173,8 @@ describe('Job operations', () => {
                 },
                 {
                     name: 'test-level-3-job-2',
+                    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                    region: DEFAULT_AWS_REGION,
                     description: 'test-level-3-job-description',
                     resourceName: 'test-resource',
                     initiator: 'test-user',
@@ -158,6 +185,8 @@ describe('Job operations', () => {
                 },
                 {
                     name: 'test-level-3-job-3',
+                    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                    region: DEFAULT_AWS_REGION,
                     description: 'test-level-3-job-description',
                     resourceName: 'test-resource',
                     initiator: 'test-user',
@@ -168,6 +197,8 @@ describe('Job operations', () => {
                 },
                 {
                     name: 'test-level-3-job-4',
+                    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                    region: DEFAULT_AWS_REGION,
                     description: 'test-level-3-job-description',
                     resourceName: 'test-resource',
                     initiator: 'test-user',
@@ -179,12 +210,23 @@ describe('Job operations', () => {
             ]);
         }
 
-        const response = await deleteJobsWithAllSubJobs(ACCOUNT_ID, jobId);
+        const response = await deleteJobsWithAllSubJobs(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            jobId
+        );
         expect(response.count).toEqual(7);
     });
 
     it('should get job summary', async () => {
-        const response = await getJobSummary(ACCOUNT_ID, new Date('2024-01-01').valueOf(), Date.now());
+        const response = await getJobSummary(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            new Date('2024-01-01').valueOf(),
+            Date.now()
+        );
         expect(response).toHaveProperty('inProgress');
         expect(response).toHaveProperty('completed');
         expect(response).toHaveProperty('failed');
@@ -195,9 +237,11 @@ describe('getJobSummaryByTime', async () => {
     const mockStartTime = Date.now() - THIRTY_DAYS;
     const mockEndTime = Date.now();
 
-    await registerJobs('ACCOUNT_ID', [
+    await registerJobs('ACCOUNT_ID', DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
         {
             name: 'test-job-ops-1',
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
             resourceName: 'test-resource',
             startTime: Date.now() - THIRTY_DAYS,
             endTime: Date.now() - THIRTY_DAYS,
@@ -206,6 +250,8 @@ describe('getJobSummaryByTime', async () => {
         },
         {
             name: 'test-job-ops-2',
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
             resourceName: 'test-resource',
             startTime: Date.now(),
             endTime: Date.now(),
@@ -215,7 +261,13 @@ describe('getJobSummaryByTime', async () => {
     ]);
 
     it('should return job summary by time', async () => {
-        const result = await getJobSummaryByTime('ACCOUNT_ID', mockStartTime, mockEndTime);
+        const result = await getJobSummaryByTime(
+            'ACCOUNT_ID',
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            mockStartTime,
+            mockEndTime
+        );
 
         expect(result.length).toEqual(2);
     });
@@ -223,7 +275,13 @@ describe('getJobSummaryByTime', async () => {
     it('should handle error and throw an error', async () => {
         await deleteJobsOfAccount('ACCOUNT_ID');
 
-        const result = await getJobSummaryByTime('ACCOUNT_ID', mockStartTime, mockEndTime);
+        const result = await getJobSummaryByTime(
+            'ACCOUNT_ID',
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            mockStartTime,
+            mockEndTime
+        );
 
         expect(result.length).toEqual(0);
     });
