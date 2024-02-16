@@ -29,6 +29,7 @@ import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory
 
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
+import { setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
 
 const ManagedHosts = () => {
     const dispatch = useDispatch();
@@ -62,7 +63,8 @@ const ManagedHosts = () => {
             },
             {
                 id: 'createNewUserDatabase',
-                displayName: 'Create new user database'
+                displayName: 'Create new user database',
+                disabled: row?.status === STATUS_CONST.UP ? false : true
             },
             {
                 id: 'observe',
@@ -430,6 +432,8 @@ const ManagedHosts = () => {
                                     }
 
                                     if (menuId === 'createNewUserDatabase') {
+                                        dispatch(updateResourceId(rowData.id));
+                                        dispatch(setDBHostName(rowData?.name));
                                         navigate('../create-new-user');
                                     }
 

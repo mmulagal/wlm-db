@@ -547,7 +547,17 @@ export const GENERAL = {
     FILE_SETTINGS_FIRST_TEXT:
         'In case existing drive letter is selected for Data file it will automatically filled for Log file (recommended practice)',
     FILE_SETTINGS_SECOND_TEXT:
-        'In case new drive letter is selected for Data file it is recommended to select different new drive letter for the Log file'
+        'In case new drive letter is selected for Data file it is recommended to select different new drive letter for the Log file',
+    CREATE_DB_NAME_TOOLTIP: [
+        'SQL databases should have names that are no more than 30 characters long.',
+        'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
+        'Names should not be Transact-SQL reserved words.'
+    ],
+    LOG_SIZE_TOOLTIP: [
+        'The minimum value of log size is 1 GiB.',
+        'If the default data size is change the log size will automatically set to 25% of the data size.'
+    ],
+    DATA_SIZE_TOOLTIP: 'The default value of data size is 1 GiB.'
 };
 
 export const CODE_VIEWER = {

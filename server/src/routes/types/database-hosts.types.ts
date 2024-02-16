@@ -47,6 +47,8 @@ const TopologyResponse = Type.Object({
     fileSystemStorageCapacity: Type.Optional(Type.Number()),
     fileSystemThroughputCapacity: Type.Optional(Type.Number()),
     vpcId: Type.Optional(Type.String()),
+    vpcName: Type.Optional(Type.String()),
+    availabilityZones: Type.Optional(Type.Array(Type.String())),
     keyPairName: Type.Optional(Type.String()),
     ec2Details: Type.Array(EC2InstanceDetailsResponse),
     activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse)
@@ -182,6 +184,12 @@ const DriveInfoResponseBody = Type.Object({
 });
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
 
+const DatabaseHostsParamsWithRegion = Type.Object({
+    accountId: Type.String(),
+    credentialsId: Type.String(),
+    region: Type.String()
+});
+
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -218,5 +226,6 @@ export {
     RWPerformanceResponse,
     RWPerformanceResponseType,
     DriveInfoResponseBody,
-    DriveInfoResponseBodyType
+    DriveInfoResponseBodyType,
+    DatabaseHostsParamsWithRegion
 };

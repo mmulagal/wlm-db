@@ -1,0 +1,18 @@
+import { BASE_URL, generateResponse } from '../utils/appUtils';
+import driveInfo from '../data/driveInfo.json';
+
+const router = require('express').Router();
+
+router.get(`${BASE_URL}/v1/database-hosts/:id/driveInfo`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, driveInfo);
+    }, 2000);  
+});
+
+router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/database/:id/create`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, { jobId: 'jobId' });
+    }, 2000);
+});
+
+export default router;

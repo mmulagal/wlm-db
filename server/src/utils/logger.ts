@@ -30,8 +30,8 @@ function hideSecretsValues(obj: any) {
 }
 
 function getActiveTraceId() {
-    const activeCtx = context.active();
-    const span = trace.getSpan(activeCtx);
+    const activeCtx = context?.active();
+    const span = trace?.getSpan(activeCtx);
     return span?.spanContext().traceId;
 }
 

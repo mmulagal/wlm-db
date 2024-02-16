@@ -13,7 +13,7 @@ import {
     DatabasesListResponseType,
     DriveInfoResponseBodyType
 } from '../routes/types/database-hosts.types';
-import { describeInstance, getAmis } from '../lib/aws/ec2';
+import { describeInstance, describeSubnets, describeVpc, getAmis } from '../lib/aws/ec2';
 import { describeFSxN } from '../lib/aws/fsx';
 import { PricingServiceRequestType, PricingServiceResponseType } from '../routes/types/pricing.types';
 
@@ -59,7 +59,7 @@ import {
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { isSSMConnectionSuccessful } from './aws/ssm-operations';
-import { getCostAllocationTagEC2Resource } from './aws/ec2-operations';
+import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
 
 const logger = getLogger();
 
@@ -160,26 +160,23 @@ async function getTopology(
 
     let activeNodeInstanceId: string;
     let standbyNodeInstanceId;
-    let activeNodeInstanceName: string;
-    let standbyNodeInstanceName;
+    let activeNodeInstanceName: string | undefined;
+    let standbyNodeInstanceName: string | undefined;
     let sqlDeploymentType;
     let fileSystemType;
     if (!isEmpty(metadata)) {
-        ({
-            activeNodeInstanceId,
-            activeNodeInstanceName,
-            standbyNodeInstanceId,
-            standbyNodeInstanceName,
-            sqlDeploymentType,
-            fileSystemType
-        } = metadata as unknown as Topology);
+        ({ activeNodeInstanceId, standbyNodeInstanceId, sqlDeploymentType, fileSystemType } =
+            metadata as unknown as Topology);
 
-        let vpcId;
+        let vpcId: string | undefined;
         let fileSystemStatus;
         let fileSystemName;
         let fileSystemDeploymentMode;
         let fileSystemStorageCapacity;
         let fileSystemThroughputCapacity;
+        let subnetIds: Array<string> | undefined;
+        let availabilityZones: Array<string> | undefined;
+
         if (additionalFields?.allTopology || additionalFields?.vpc) {
             try {
                 const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
@@ -193,6 +190,13 @@ async function getTopology(
                 fileSystemStatus = fsxInfo?.FileSystems?.[0].Lifecycle;
                 fileSystemStorageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity;
                 fileSystemThroughputCapacity = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
+                subnetIds = fsxInfo?.FileSystems?.[0].SubnetIds;
+
+                const { Subnets: subnets } = await describeSubnets(credentialsId, region, {
+                    SubnetIds: subnetIds
+                });
+                availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
+                logger.info('availabilityZones', availabilityZones);
             } catch (error) {
                 logger.error(`Error while fetching details for fsx. Error: ${error}`);
             }
@@ -219,6 +223,9 @@ async function getTopology(
                 ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
                 keyPairName = ec2InstanceDetails.Reservations?.[0].Instances?.[0].KeyName;
                 activeInstanceType = ec2InstanceDetails.Reservations?.[0].Instances?.[0].InstanceType;
+                activeNodeInstanceName = findResourceNameFromTags(
+                    ec2InstanceDetails.Reservations?.[0].Instances?.[0].Tags
+                );
                 activeAvailabilityZone =
                     ec2InstanceDetails.Reservations?.[0].Instances?.[0].Placement?.AvailabilityZone;
                 activeSubnetId = ec2InstanceDetails.Reservations?.[0].Instances?.[0].SubnetId;
@@ -226,6 +233,9 @@ async function getTopology(
                     ec2InstanceDetails.Reservations?.[0].Instances?.[0].BlockDeviceMappings?.[0].Ebs?.VolumeId;
                 if (standbyNodeInstanceId) {
                     standbyInstanceType = ec2InstanceDetails.Reservations?.[1].Instances?.[0].InstanceType;
+                    standbyNodeInstanceName = findResourceNameFromTags(
+                        ec2InstanceDetails.Reservations?.[1].Instances?.[0].Tags
+                    );
                     standbyAvailabilityZone =
                         ec2InstanceDetails.Reservations?.[1].Instances?.[0].Placement?.AvailabilityZone;
                     standbySubnetId = ec2InstanceDetails.Reservations?.[1].Instances?.[0].SubnetId;
@@ -240,7 +250,13 @@ async function getTopology(
                 address: activeDirectoryAddress || ''
             };
         }
-
+        let vpcName;
+        if (vpcId) {
+            const { Vpcs } = await describeVpc(credentialsId, region, {
+                VpcIds: [vpcId!]
+            });
+            vpcName = findResourceNameFromTags(Vpcs![0]?.Tags);
+        }
         // Fetch topology data
         topologyData = {
             awsAccount: awsAccountId || '',
@@ -256,6 +272,8 @@ async function getTopology(
             ...(fileSystemStorageCapacity && { fileSystemStorageCapacity }),
             ...(fileSystemThroughputCapacity && { fileSystemThroughputCapacity }),
             ...(vpcId && { vpcId }),
+            ...(vpcName && { vpcName }),
+            ...(availabilityZones && { availabilityZones }),
             ...(keyPairName && { keyPairName }),
             ec2Details: [
                 {
@@ -550,11 +568,28 @@ async function getFsxResourceInfo(
 async function getDatabaseHostsSummary(
     accountId: string,
     fields?: string,
-    nextToken?: string
+    nextToken?: string,
+    awsRegion?: string,
+    customerCredentialsId?: string
 ): Promise<DatabaseHostSummaryListResponseType> {
-    logger.info('Fetching all database hosts deployed in account ', accountId, fields, nextToken);
+    logger.info(
+        'Fetching all database hosts deployed in account ',
+        accountId,
+        fields,
+        nextToken,
+        awsRegion,
+        customerCredentialsId
+    );
 
-    const resourceDetails = await listResources(accountId, undefined, RESOURCESTYPE.MSSQL, API_PAGE_SIZE, nextToken);
+    const resourceDetails = await listResources(
+        accountId,
+        undefined,
+        RESOURCESTYPE.MSSQL,
+        API_PAGE_SIZE,
+        nextToken,
+        awsRegion,
+        customerCredentialsId
+    );
 
     if (isEmpty(resourceDetails)) {
         logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
