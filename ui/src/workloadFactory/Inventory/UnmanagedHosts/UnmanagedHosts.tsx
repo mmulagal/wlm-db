@@ -21,7 +21,6 @@ const UnmanagedHosts = () => {
     const dispatch = useDispatch();
 
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
 
     const [resetPage, setResetPage] = useState(false);
@@ -339,7 +338,7 @@ const UnmanagedHosts = () => {
             }
         },
         initialColumnState: initialColStateManagedHosts,
-        isLazyLoading: databaseHostsLoading || databaseJobsLoading
+        isLazyLoading: databaseHostsLoading
     });
 
     useEffect(() => {

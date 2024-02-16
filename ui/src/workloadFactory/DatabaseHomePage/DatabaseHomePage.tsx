@@ -20,7 +20,6 @@ const DatabaseHomePage = () => {
     const hostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
     const hostCostData: any = useAppSelector(state => state.databaseHome.aggregatedCosts);
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
 
     DatabaseHomeApis();
 
@@ -54,19 +53,11 @@ const DatabaseHomePage = () => {
                     {/* Bar lines */}
                     <div className={styles.barContainer}>
                         <div className={styles.commonContainer}>
-                            <StorageSavings
-                                hostData={hostStorageSavingsData}
-                                jobsLoading={databaseJobsLoading}
-                                hostsLoading={databaseHostsLoading}
-                            />
+                            <StorageSavings hostData={hostStorageSavingsData} hostsLoading={databaseHostsLoading} />
                         </div>
 
                         <div className={styles.commonContainer}>
-                            <EstimatedCost
-                                hostData={hostCostData}
-                                jobsLoading={databaseJobsLoading}
-                                hostsLoading={databaseHostsLoading}
-                            />
+                            <EstimatedCost hostData={hostCostData} hostsLoading={databaseHostsLoading} />
                         </div>
                     </div>
                 </div>
