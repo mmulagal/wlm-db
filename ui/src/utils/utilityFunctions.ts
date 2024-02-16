@@ -651,7 +651,7 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
         };
         //Data drive Size
         result.storageCapacity = {
-            capacity: '100',
+            capacity: '120',
             unit: 'GiB'
         };
         //Throughput value
