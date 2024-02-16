@@ -8,6 +8,7 @@ import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import { navigateToCanvas } from '../../../utils/appConfig';
 
 const CreateNewUserFooter = () => {
     const navigate = useNavigate();
@@ -24,47 +25,46 @@ const CreateNewUserFooter = () => {
 
     const [createNewUserDb] = useCreateUserDBMutation();
 
-    const handleCreate = () => {
+    const handleCreate = async () => {
         const payload = createUserDbPayload(createNewUser);
         if (payload) {
             dispatch(setIsLoading(true));
-            createNewUserDb({
-                credentialId: selectedCredId?.data?.credentialsId,
-                region: selectedRegionCode?.data?.regionCode,
-                id: resourceId,
-                payload: payload
-            })
-                .then((data: any) => {
-                    dispatch(setIsLoading(false));
-                    if (!data?.error) {
-                        let jobId = data?.data?.jobId;
-                        dispatch(
-                            addNotification({
-                                notificationType: NOTIFICATION_TYPES.INFO,
-                                message: (
-                                    <>
-                                        {`Database ${createNewUser?.newUserDBName} in host ${createNewUser?.dbHostName} is in deployment status.`}
-                                        <Button
-                                            Component="button"
-                                            variant="text"
-                                            onClick={() => {
-                                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                                                navigate('../databases');
-                                                dispatch(clearNotifications());
-                                            }}
-                                        >
-                                            View job monitoring
-                                        </Button>
-                                    </>
-                                )
-                            })
-                        );
-                        navigate('../databases');
-                    }
+            try {
+                const result = await createNewUserDb({
+                    credentialId: selectedCredId?.data?.credentialsId,
+                    region: selectedRegionCode?.data?.regionCode,
+                    id: resourceId,
+                    payload: payload
                 })
-                .catch((error: any) => {
+                if (result) {
                     dispatch(setIsLoading(false));
-                });
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.INFO,
+                            message: (
+                                <>
+                                    {`Database ${createNewUser?.newUserDBName} in host ${createNewUser?.dbHostName} is in deployment status.`}
+                                    <Button
+                                        Component="button"
+                                        variant="text"
+                                        onClick={() => {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                            navigate('../databases');
+                                            dispatch(clearNotifications());
+                                        }}
+                                    >
+                                        View job monitoring
+                                    </Button>
+                                </>
+                            )
+                        })
+                    );
+                    navigate('../databases');
+                }
+                navigateToCanvas('/');
+            } catch (error) {
+                dispatch(addNotification({ message: error, notificationType: NOTIFICATION_TYPES.ERROR }));
+            }
         }
     };
 
