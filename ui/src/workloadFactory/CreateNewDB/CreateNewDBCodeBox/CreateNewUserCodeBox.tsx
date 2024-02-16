@@ -6,9 +6,14 @@ import CodeBoxHeading from '../../../common/CodeBoxHeading/CodeBoxHeading';
 import styles from './CreateNewUserCodeBox.module.scss';
 import { CODE_VIEWER } from '../../../utils/appConstants';
 import CodeBoxScroll from '../../../common/CodeBoxScroll/CodeBoxScroll';
+import { useAppSelector } from '../../../store/storeHooks';
+import { createUserDbPayload } from '../CreateNewDBFooter/createUserDBPayload';
 
 const CreateNewUserCodeBox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
+
+    const createNewUser = useAppSelector(state => state.createNewUser);
+    
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
         const arr = [CODE_VIEWER.REST_API];
         const options: optionType[] = [];
@@ -18,6 +23,16 @@ const CreateNewUserCodeBox = () => {
         });
         return options;
     }, []);
+
+    const setDisplayedDataInCodeBox = () => {
+        const payload = createUserDbPayload(createNewUser); 
+        return (
+            <pre>
+                {JSON.stringify(payload)}
+            </pre>
+        )
+    };
+
     return (
         <div className={styles.createNewUserCodeBox}>
             <CodeBoxHeading />
@@ -37,7 +52,7 @@ const CreateNewUserCodeBox = () => {
                     </div>
                 </div>
 
-                <CodeBoxScroll dropDownValue={dropDownValue} setDisplayedDataInCodeBox={''} />
+                <CodeBoxScroll dropDownValue={dropDownValue} setDisplayedDataInCodeBox={setDisplayedDataInCodeBox()} />
             </div>
         </div>
     );

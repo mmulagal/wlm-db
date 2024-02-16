@@ -432,6 +432,7 @@ const ManagedHosts = () => {
                                     }
 
                                     if (menuId === 'createNewUserDatabase') {
+                                        dispatch(updateResourceId(rowData.id));
                                         dispatch(setDBHostName(rowData?.name));
                                         navigate('../create-new-user');
                                     }
