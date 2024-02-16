@@ -1,4 +1,4 @@
- [CmdletBinding()]
+[CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
     [string]$DBName,
@@ -75,10 +75,19 @@ if ($IsClustered -ne "false") {
 $SQLRoleGroup =  (Get-ClusterGroup).Name -match ('SQl Server*')
 $SQLGroup = $SQLRoleGroup[0]
 
-#Add  new cluster disks added to SQL Server Role dependency
-Move-ClusterResource -Name $logdisk.Name -Group $SQLGroup
-Move-ClusterResource -Name $datadisk.Name -Group $SQLGroup 
+#Add  new cluster disks added to SQL Server Group
+$datavol = $datadisk.Name
+$logvol = $logdisk.Name
+Move-ClusterResource -Name $logvol -Group $SQLGroup
+Move-ClusterResource -Name $datavol -Group $SQLGroup 
 
+#Add dependency on new disks in SQL Server Resource
+Add-ClusterResourceDependency -Resource "SQL Server" -Provider $datavol
+Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol
+
+#Rename new cluster disks to user friendly name
+(Get-ClusterResource -Name $datavol).name = $datalabel
+(Get-ClusterResource -Name $logvol).name = $loglabel
 
 }
 }catch{

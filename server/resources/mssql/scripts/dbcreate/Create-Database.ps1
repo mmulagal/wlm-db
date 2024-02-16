@@ -1,4 +1,4 @@
-﻿    
+﻿     
 param(
   [Parameter(Mandatory = $true)]
   [string]$SQLServer,
@@ -13,18 +13,15 @@ param(
   [string]$LogPath,
 
   [Parameter(Mandatory = $false)]
-  [string]$SQLPass,  
-
-  [Parameter(Mandatory = $false)]
-  [string]$SQLUser
+  [string]$SQLCredStore
 )
 
 New-Item -ItemType Directory -Path C:\cfn\log -Force
 Start-Transcript -Path C:\cfn\log\Create_Database.log.txt -Append
 $ErrorActionPreference = "Stop"
 
-$FileExists1 = Test-Path -Path $DataPath
-$FileExists2 = Test-Path -Path $LogPath
+$DataPathExists = Test-Path -Path $DataPath
+$LogPathExists = Test-Path -Path $LogPath
 
 #Fetch Data and Log file names
 
@@ -36,20 +33,22 @@ $found2 = $LogFile -match '(.+?)\.'
 if ($found2) {$LogFileName = $matches[1]}
 
 #Decrypt SSM Parameter for SQL Username and password
-if ($SQLUser -ne "" -And $SQLPass -ne "") { 
-  $Dbuser = ( Get-SSMParameter -Name $SQLUser -WithDecryption $true).Value
-  $Dbpass = ( Get-SSMParameter -Name $SQLPass -WithDecryption $true).Value
+if ($SQLCredStore -ne "") { 
+  $userfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="String"}
+  $pwdfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="SecureString"}
+  $Dbuser = ( Get-SSMParametersByPath -Path $SQLCredStore -WithDecryption $true -Recursive $true -ParameterFilter $userfilter).Value
+  $Dbpass = ( Get-SSMParametersByPath -Path $SQLCredStore -WithDecryption $true -Recursive $true -ParameterFilter $pwdfilter).Value
 
 }
 
 #In case of reusing existing drives check if data/log file name exists in path already
 
-if ($FileExists1 -Or $FileExists2) {
+if ($DataPathExists -Or $LogPathExists) {
     Write-Error "{Message:Data or Log file with provided name already exists,Exception:$_}"
 }
 
 #Check if database name already exists
-if ($SQLUser -ne "" -And $SQLPass -ne "") { 
+if ($SQLCredStore -ne "") { 
   $dblist =(Invoke-Sqlcmd  -ConnectionString "Data Source=$SqlServer; User Id=$Dbuser; Password =$Dbpass;TrustServerCertificate=True" -Query "SELECT name FROM sys.databases").name
 }
 else {
@@ -71,7 +70,7 @@ try {
   #Query to create database with required data and log path
   $Query = 'CREATE DATABASE '+$DBName+' ON (NAME = '+$DataFileName+',FILENAME = '''+$DataPath+''') LOG ON (NAME = '+$LogFileName+',FILENAME = '''+$LogPath+''')'
   
-  if ($SQLUser -ne "" -And $SQLPass -ne "") {
+  if ($SQLCredStore -ne "") {
     Write-Output "Connecting with SQL User Authentication"
     #Execute a query with SQL credentials
     Invoke-Sqlcmd  -ConnectionString "Data Source=$SqlServer; User Id=$Dbuser; Password =$Dbpass;TrustServerCertificate=True" -Query "$Query"
@@ -94,6 +93,7 @@ catch {
 
   
 
+ 
  
  
  

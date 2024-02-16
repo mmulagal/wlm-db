@@ -1,12 +1,12 @@
-#Requires -Version 7.0
-#Requires -Module AWS.Tools.FSX,AWS.Tools.secretsmanager
+ #Requires -Version 7.0
+#Requires -Module AWS.Tools.FSX,AWS.Tools.secretsmanager,AWS.Tools.SimpleSystemsManagement
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
     [string]$FileSystemId,
 
     [Parameter(Mandatory=$true)]
-    [string]$AdminSecret,
+    [string]$FSxCredStore,
 
     [Parameter(Mandatory=$true)]
     [string]$SQLVMName,
@@ -22,9 +22,10 @@ Start-Transcript -Path C:\cfn\log\Configure_luns.log.txt -Append
 
 $ErrorActionPreference = "Stop"
 
-$AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret).SecretString
-$username = $AdminUser.username
-$password = $AdminUser.password
+$userfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="String"}
+$pwdfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="SecureString"}
+$username = (Get-SSMParametersByPath -Path $FsxCredStore -WithDecryption $true -Recursive $true -ParameterFilter $userfilter).Value
+$password = (Get-SSMParametersByPath -Path $FsxCredStore -WithDecryption $true -Recursive $true -ParameterFilter $pwdfilter).Value
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
@@ -61,6 +62,8 @@ function returncert{
 
 }
 
+$restcert = returncert -region $region
+
 function callGetApi{
     param(
     [Parameter(Mandatory=$true)]
@@ -71,7 +74,6 @@ function callGetApi{
     [string]$creds
     )
     try{
-        $restcert = returncert -region $region
         $Params = @{
             "URI"     = "$uri"
             "Method"  = "GET"
@@ -320,5 +322,6 @@ foreach ($perlun in $lunPathlist) {
         Start-Sleep 3
     }
  Write-Output "{FSxDataVolumeName:$FSxDataVolumeName,FSxLogVolumeName:$FSxLogVolumeName,Igroup:$IGROUP,SQLVMName:$SQLVMName}"
+ 
  
  

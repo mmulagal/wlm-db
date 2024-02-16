@@ -6,7 +6,7 @@ param(
     [string]$FileSystemId,
 
     [Parameter(Mandatory=$true)]
-    [string]$AdminSecret,
+    [string]$FSxCredStore,
 
     [Parameter(Mandatory=$true)]
     [string]$SQLVMName,
@@ -25,9 +25,11 @@ Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Append
 
 $ErrorActionPreference = "Stop"
 
-$AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret).SecretString
-$username = $AdminUser.username
-$password = $AdminUser.password
+$userfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="String"}
+$pwdfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="SecureString"}
+$username = (Get-SSMParametersByPath -Path $SQLStore -WithDecryption $true -Recursive $true -ParameterFilter $userfilter).Value
+$password = (Get-SSMParametersByPath -Path $SQLStore -WithDecryption $true -Recursive $true -ParameterFilter $pwdfilter).Value
+
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
