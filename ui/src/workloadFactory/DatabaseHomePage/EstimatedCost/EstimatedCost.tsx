@@ -10,29 +10,28 @@ import { useEffect, useState } from 'react';
 type EstimatedCostProps = {
     hostData: any;
     hostsLoading?: boolean;
-    jobsLoading?: boolean;
 };
 
-const EstimatedCost = ({ hostData, hostsLoading, jobsLoading }: EstimatedCostProps) => {
+const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
     const { setDialog } = useDialog();
 
     const [linkChk, setLinkChk] = useState(true);
 
     useEffect(() => {
-        if(hostData) {
+        if (hostData) {
             setLinkChk(hostData?.requireBillingPerm || false);
         }
     }, [hostData]);
-    
+
     const ToolTipContainer = () => {
         return (
             <div className={styles.tooltipContainerClass}>
                 <Typography variant="Regular_13">{GENERAL.ESTIMATED_COST_TOOLTIP}</Typography>
-                {linkChk && 
+                {linkChk && (
                     <Button variant="text" onClick={() => costDialog()}>
                         {GENERAL.LEARN_HOW_ESTIMATED_COST}
                     </Button>
-                }
+                )}
             </div>
         );
     };
@@ -61,7 +60,7 @@ const EstimatedCost = ({ hostData, hostsLoading, jobsLoading }: EstimatedCostPro
                     </TooltipInfo>
                 </div>
 
-                {hostsLoading || jobsLoading ? (
+                {hostsLoading ? (
                     <FlashingDotsLoader />
                 ) : (
                     <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>

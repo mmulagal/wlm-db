@@ -339,15 +339,6 @@ export const databaseHomeApi = createApi({
                     }
                 }
             }),
-            getDatabaseJobs: builder.query({
-                query: ({ credentialId, region, nextToken = null }) => {
-                    if (nextToken) {
-                        return `deployments?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS&nextToken=${nextToken}`;
-                    } else {
-                        return `deployments?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS`;
-                    }
-                }
-            }),
             getJobsSummary: builder.query({
                 query: ({ credentialId, region, startTime, endTime }) =>
                     `credentials/${credentialId}/regions/${region}/jobs/summary?startTime=${startTime}&endTime=${endTime}`
@@ -358,11 +349,6 @@ export const databaseHomeApi = createApi({
                     method: 'POST',
                     body: payload
                 })
-            }),
-            removeDatabaseJobs: builder.mutation({
-                async queryFn(id, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
-                    return await handleRemoveWE(`jobs/jobId/${id}`, baseQuery, queryApi);
-                }
             })
         };
     }
@@ -550,13 +536,7 @@ export const {
     useUpdateConfigMutation
 } = configApi;
 
-export const {
-    useGetDatabaseHostsQuery,
-    useGetDatabaseJobsQuery,
-    useGetJobsSummaryQuery,
-    useGetTemplatesMutation,
-    useRemoveDatabaseJobsMutation
-} = databaseHomeApi;
+export const { useGetDatabaseHostsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation } = databaseHomeApi;
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
