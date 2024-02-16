@@ -1,4 +1,4 @@
-[CmdletBinding()]
+ [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
     [string]$DBName,
@@ -54,7 +54,7 @@ New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize -DriveLetter $Da
 
 Start-Service -Name ShellHWDetection
 }catch{
-    Write-Error "Error initializing drives"
+    Write-Error "{Message:Error initializing drives,Exception:$_}"
     
 } 
 
@@ -63,12 +63,10 @@ if ($IsClustered -ne "false") {
 # Add new disks to Cluster Storage
 $logdisk = (Get-Disk -Number $disklist[0].Number | Add-ClusterDisk)
 $datadisk = (Get-Disk -Number $disklist[1].Number | Add-ClusterDisk)
-#Rename Cluster Volumes
-$logdisk.Name = $loglabel
-$datadisk.Name = $datalabel 
+
 }
 }catch{
-    Write-Error "Error adding disks to Cluster Storage"
+    Write-Error "{Message:Error adding disks to Cluster Storage,Exception:$_}"
     
 } 
 try{
@@ -78,15 +76,18 @@ $SQLRoleGroup =  (Get-ClusterGroup).Name -match ('SQl Server*')
 $SQLGroup = $SQLRoleGroup[0]
 
 #Add  new cluster disks added to SQL Server Role dependency
-Move-ClusterResource -Name $loglabel -Group $SQLGroup
-Move-ClusterResource -Name $datalabel -Group $SQLGroup 
+Move-ClusterResource -Name $logdisk.Name -Group $SQLGroup
+Move-ClusterResource -Name $datadisk.Name -Group $SQLGroup 
+
+
 }
 }catch{
-    Write-Error "Error adding disks to SQL Server Role dependency"
+    Write-Error "{Message:Error adding disks to SQL Server Role dependency,Exception:$_}"
     
 } 
 
  
 
 
+ 
  

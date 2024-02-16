@@ -80,7 +80,8 @@ function callGetApi{
         }
         Invoke-RestMethod @Params -Certificate $restcert
     }catch{
-        Write-Error "REST API call to Fsx for ONTAP failed." $_
+        Write-Output "{FSxDataVolumeName:$FSxDataVolumeName,FSxLogVolumeName:$FSxLogVolumeName,Igroup:$IGROUP,SQLVMName:$SQLVMName}"
+        Write-Error "{Message:REST API call to Fsx for ONTAP failed,Exception:$_}"
     }
 }
 
@@ -110,15 +111,14 @@ function callrestapi{
         }
         Invoke-RestMethod @Params -Certificate $restcert
     }catch{
-        Write-Error "REST API call to Fsx for ONTAP failed." $_
+        Write-Output "{FSxDataVolumeName:$FSxDataVolumeName,FSxLogVolumeName:$FSxLogVolumeName,Igroup:$IGROUP,SQLVMName:$SQLVMName}"
+        Write-Error "{Message:REST API call to Fsx for ONTAP failed,Exception:$_ }"
     }
 }
 
 $LOGLUN = 'sqllog'
 $DATALUN = 'sqldata'
 
-
-Start-Sleep 2
 
 
 #Start ONTAP configuration
@@ -154,6 +154,9 @@ $Body = @{
 }
 callrestapi -MgmtDNS $MgmtDNS -uri $volUriDynamicPart -region $region -parambody $Body -creds $base64
 
+
+Start-Sleep 5
+
 ##modify volumes
 $VolUriDynamicPart='private/cli/volume'
 
@@ -188,7 +191,8 @@ try{
     $restcert = returncert -region $region
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
-    Write-Error "Volume modification to set best practise parameters failed." $_
+    Write-Output "{FSxDataVolumeName:$FSxDataVolumeName,FSxLogVolumeName:$FSxLogVolumeName,Igroup:$IGROUP,SQLVMName:$SQLVMName}"
+    Write-Error "{Message:Volume modification to set best practise parameters failed, Exception:$_ }"
 }
 Start-Sleep 2
 }
@@ -212,7 +216,8 @@ if ([string]::IsNullOrEmpty($IGROUP)) {
   $igroups = (callGetApi -uri $URI -region $region -creds $base64).records
   $IGROUP = $igroups[0].name
   if ([string]::IsNullOrEmpty($IGROUP)) {
-    Write-Error "Unable to fetch igroup for the Node IQN address"
+    Write-Output "{FSxDataVolumeName:$FSxDataVolumeName,FSxLogVolumeName:$FSxLogVolumeName,Igroup:$IGROUP,SQLVMName:$SQLVMName}"
+    Write-Error "{Message:Unable to fetch igroup for the Node IQN address,Exception:$_}"
   }
 
 }
@@ -290,7 +295,7 @@ foreach ($perlun in $lunPathlist) {
         Invoke-RestMethod @Params -Certificate $restcert
         }
         catch{
-        Write-Error "LUN modification to set space-reserve failed." $_
+        Write-Error "{Message:LUN modification to set space-reserve failed,Exception: $_}"
         }
         Start-Sleep 2
         $Body = @{
@@ -309,10 +314,11 @@ foreach ($perlun in $lunPathlist) {
         Invoke-RestMethod @Params -Certificate $restcert
         }
         catch{
-        Write-Error "LUN modification to set space-allocation failed." $_
+        Write-Output "{FSxDataVolumeName:$FSxDataVolumeName,FSxLogVolumeName:$FSxLogVolumeName,Igroup:$IGROUP,SQLVMName:$SQLVMName}"
+        Write-Error "{Message:LUN modification to set space-allocation failed,Exception:$_}"
         }
         Start-Sleep 3
     }
- 
+ Write-Output "{FSxDataVolumeName:$FSxDataVolumeName,FSxLogVolumeName:$FSxLogVolumeName,Igroup:$IGROUP,SQLVMName:$SQLVMName}"
  
  

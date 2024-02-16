@@ -45,7 +45,7 @@ if ($SQLUser -ne "" -And $SQLPass -ne "") {
 #In case of reusing existing drives check if data/log file name exists in path already
 
 if ($FileExists1 -Or $FileExists2) {
-    Write-Error "Data or Log file with provided name already exists"
+    Write-Error "{Message:Data or Log file with provided name already exists,Exception:$_}"
 }
 
 #Check if database name already exists
@@ -57,7 +57,7 @@ else {
 }
 
 if ($dblist -Contains $DBName) {
-    Write-Error "Database name $DBName already exists on Server"
+    Write-Error "{Message: Database name $DBName already exists on Server,Exception:$_}"
 }
 #create directory structure required
 $DataDir = [System.IO.Path]::GetDirectoryName($DataPath) 
@@ -87,8 +87,7 @@ try {
   
     }
 catch {
-  Write-Error "A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not 
-        found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow connections. "
+  Write-Error "{Message:A network-related or instance-specific error occurred while creating database in SQL Server, Error: $_ }"
       }
      
 

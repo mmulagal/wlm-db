@@ -21,7 +21,7 @@ param(
     [string]$IGROUP
 
 )
-Start-Transcript -Path C:\cfn\log\configureontap.ps1.txt -Append
+Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Append
 
 $ErrorActionPreference = "Stop"
 
@@ -40,8 +40,6 @@ $base64 = [System.Convert]::ToBase64String($bytes)
 #get management IP
 $nodeiqn = (Get-InitiatorPort).NodeAddress
 
-#get Instance ID
-$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 
 function returncert{
     param(
@@ -76,47 +74,10 @@ function callGetOrDeleteApi{
         }
         Invoke-RestMethod @Params -Certificate $restcert
     }catch{
-        Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
-        $_ | Write-AWSLaunchWizardException
+        Write-Error "{Message:Failed to run the API command,Exception: $_"
     }
 }
 
-function callrestapi{
-    param(
-    [Parameter(Mandatory=$true)]
-    [string]$MgmtDNS,
-    [Parameter(Mandatory=$true)]
-    [string]$uri,
-    [Parameter(Mandatory=$true)]
-    [string]$region,
-    [Parameter(Mandatory=$true)]
-    [Hashtable]$parambody,
-    [Parameter(Mandatory=$true)]
-    [string]$creds,
-    [Parameter(Mandatory=$true)]
-    [string]$resource,    
-    [Parameter(Mandatory=$true)]
-    [string]$stack,
-    [Parameter(Mandatory=$true)]
-    [string]$instanceId
-    )
-    try{
-        $restcert = returncert -region $region
-        $resturi = "https://$MgmtDNS/api/$uri"
-        $JsonBody = $Body | ConvertTo-Json
-        $Params = @{
-            "URI"     = "$resturi"
-            "Method"  = "POST"
-            "Headers" = @{"Authorization" = "Basic $creds"}
-            "Body" =  "$JsonBody"
-            "ContentType" = "application/json"
-        }
-        Invoke-RestMethod @Params -Certificate $restcert
-    }catch{
-        Send-CFNResourceSignal -StackName $stack -Status FAILURE -LogicalResourceId $resource -UniqueId $instanceId
-        $_ | Write-AWSLaunchWizardException
-    }
-}
 
 $LOGLUN = 'sqllog'
 $DATALUN = 'sqldata'
@@ -140,6 +101,7 @@ foreach ($perlunmap in $lunmappingdata) {
 }
 
 # delete created luns 
+try{
 $lunUriDynamicPart='private/cli/lun'
 $URI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($SQLVMName)"
 $lunlist = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records
@@ -151,9 +113,13 @@ foreach ($perlun in $lunlist) {
         Write-Output ("Deleted LUN {0}" -f $perlun.path)
     }
 }
+}catch{
+        Write-Error "{Message:Failed to cleanup LUNs,Exception: $_}"
+    }
 
 
 # delete volumes created
+try{
 $volUriDynamicPart = 'storage/volumes'
 foreach ($volume in $vollist) {
 $URI = "https://$($MgmtDNS)/api/$($volUriDynamicPart)?name=$($volume)"
@@ -164,6 +130,8 @@ if ($voluri) {
     Write-Output "Deleted volume $volume"
 }
 else {Write-Output "Volume $volume not present"}
-
 }
+}catch{
+        Write-Error "{Message:Failed to cleanup volumes,Exception: $_}"
+    }
  
