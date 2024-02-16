@@ -339,8 +339,8 @@ export const formatFractionalNumber = (value: number | undefined, precision: num
     return value;
 };
 
-export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, jobsData: DatabaseJobsItem[] | null) => {
-    if (!hostsData && !jobsData) {
+export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null) => {
+    if (!hostsData) {
         return [];
     }
     let uniqueIds: Array<String> = [];
@@ -380,26 +380,6 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
                         '% (' +
                         formatSizeOnePrecision(val.storage?.spaceSavings) +
                         ')'
-            };
-            mergedList.push(val);
-            uniqueIds.push(val?.id);
-        }
-    });
-    jobsData?.map(val => {
-        if (!uniqueIds.includes(val?.id)) {
-            // To map status
-            let status = val?.status;
-            if (val?.status && (val.status === 'CREATE_IN_PROGRESS' || val.status === 'UPDATE_IN_PROGRESS')) {
-                status = STATUS_CONST.INITIALIZING;
-            } else if (val?.status && (val.status === 'CREATE_FAILED' || val.status === 'UPDATE_FAILED')) {
-                status = STATUS_CONST.FAILED;
-            }
-            val = {
-                ...val,
-                type: DB_HOME_DATA_TYPE.JOBS,
-                databaseHostname: (val?.name || '') + (status || ''),
-                status: status,
-                topology: val?.metadata
             };
             mergedList.push(val);
             uniqueIds.push(val?.id);

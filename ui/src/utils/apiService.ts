@@ -339,17 +339,9 @@ export const databaseHomeApi = createApi({
                     }
                 }
             }),
-            getDatabaseJobs: builder.query({
-                query: ({ credentialId, region, nextToken = null }) => {
-                    if (nextToken) {
-                        return `deployments?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS&nextToken=${nextToken}`;
-                    } else {
-                        return `deployments?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS`;
-                    }
-                }
-            }),
             getJobsSummary: builder.query({
-                query: ({ startTime, endTime }) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+                query: ({ credentialId, region, startTime, endTime }) =>
+                    `credentials/${credentialId}/regions/${region}/jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getTemplates: builder.mutation({
                 query: ({ payload }) => ({
@@ -357,11 +349,6 @@ export const databaseHomeApi = createApi({
                     method: 'POST',
                     body: payload
                 })
-            }),
-            removeDatabaseJobs: builder.mutation({
-                async queryFn(id, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
-                    return await handleRemoveWE(`jobs/jobId/${id}`, baseQuery, queryApi);
-                }
             })
         };
     }
@@ -394,8 +381,8 @@ export const jobMonitoringApi = createApi({
         return {
             // getJobsList will just include first level jobs list info
             getJobsList: builder.query({
-                query: ({ nextToken = null, startTime, endTime }) => {
-                    let url = `jobs?startTime=${startTime}&endTime=${endTime}`;
+                query: ({ credentialId, region, nextToken = null, startTime, endTime }) => {
+                    let url = `credentials/${credentialId}/regions/${region}/jobs?startTime=${startTime}&endTime=${endTime}`;
                     if (nextToken) {
                         url += `&nextToken=${nextToken}`;
                     }
@@ -405,6 +392,8 @@ export const jobMonitoringApi = createApi({
             // getFullJobsList will include subtasks and task level data also
             getFullJobsList: builder.query({
                 query: ({
+                    credentialId,
+                    region,
                     nextToken = null,
                     startTime,
                     endTime,
@@ -412,7 +401,7 @@ export const jobMonitoringApi = createApi({
                     type = null,
                     status = null
                 }) => {
-                    let url = `jobs?startTime=${startTime}&endTime=${endTime}`;
+                    let url = `credentials/${credentialId}/regions/${region}/jobs?startTime=${startTime}&endTime=${endTime}`;
                     if (nextToken) {
                         url += `&nextToken=${nextToken}`;
                     }
@@ -429,15 +418,17 @@ export const jobMonitoringApi = createApi({
                 }
             }),
             getSubTaskList: builder.query({
-                query: id => ({
-                    url: `jobs/${id}`
+                query: ({ credentialId, region, id }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/jobs/${id}`
                 })
             }),
             getJobsSummaryData: builder.query({
-                query: ({ startTime, endTime }) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+                query: ({ credentialId, region, startTime, endTime }) =>
+                    `credentials/${credentialId}/regions/${region}/jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getJobsSummaryTimelineData: builder.query({
-                query: ({ startTime, endTime }) => `jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}`
+                query: ({ credentialId, region, startTime, endTime }) =>
+                    `credentials/${credentialId}/regions/${region}/jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}`
             })
         };
     }
@@ -545,13 +536,7 @@ export const {
     useUpdateConfigMutation
 } = configApi;
 
-export const {
-    useGetDatabaseHostsQuery,
-    useGetDatabaseJobsQuery,
-    useGetJobsSummaryQuery,
-    useGetTemplatesMutation,
-    useRemoveDatabaseJobsMutation
-} = databaseHomeApi;
+export const { useGetDatabaseHostsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation } = databaseHomeApi;
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 

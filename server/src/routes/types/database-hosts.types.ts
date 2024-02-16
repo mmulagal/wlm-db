@@ -20,7 +20,7 @@ const DatabaseHostQueryString = Type.Object({
 
 const EC2InstanceDetailsResponse = Type.Object({
     id: Type.String(),
-    name: Type.String(),
+    name: Type.Optional(Type.String()),
     ebsVolumeId: Type.String(),
     instanceType: Type.Optional(Type.String()),
     availabilityZone: Type.Optional(Type.String()),

@@ -46,10 +46,14 @@ const JobMonitoringTable = () => {
     const fromTime = useAppSelector(state => state.jobMonitoring.fromTime);
     const toTime = useAppSelector(state => state.jobMonitoring.toTime);
     const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
+    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
+    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
     const [skipApiCall, setSkipApiCall] = useState(true);
+    const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
+    const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
 
     // Filter options to use while downloading
     const [typeFilter, setTypeFilter] = useState<string | null>(null);
@@ -60,6 +64,13 @@ const JobMonitoringTable = () => {
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
+
+    useEffect(() => {
+        if (headerSelectedCred && headerSelectedRegion) {
+            setCredId(headerSelectedCred?.data?.credentialsId);
+            setRegionId(headerSelectedRegion?.label2);
+        }
+    }, [headerSelectedCred, headerSelectedRegion]);
 
     const menuItems = (row: any) => {
         return [
@@ -112,7 +123,11 @@ const JobMonitoringTable = () => {
         if (subJobsData && subJobsData?.subJobs && subJobsData?.id === jobId) {
             dispatch(setSubJobsDataLoading(false));
         } else {
-            subTaskListApi(jobId)
+            subTaskListApi({
+                credentialId: credId,
+                region: regionId,
+                id: jobId
+            })
                 .then(data => {
                     dispatch(setSubJobsData(data?.data || {}));
                     dispatch(setSubJobsDataLoading(false));
@@ -135,6 +150,8 @@ const JobMonitoringTable = () => {
         isError: jmJobsListError
     } = useGetFullJobsListQuery(
         {
+            credentialId: credId,
+            region: regionId,
             nextToken: jobsCursor,
             startTime: time?.startTime,
             endTime: time?.endTime,
