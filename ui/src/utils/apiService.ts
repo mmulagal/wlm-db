@@ -494,6 +494,25 @@ export const policiesApi = createApi({
     }
 });
 
+export const createUserDbApi = createApi({
+    reducerPath: 'createUserDbApi',
+    baseQuery: dynamicBaseQuery,
+    endpoints: builder => {
+        return {
+            getDriveInfo: builder.query({
+                query: ({ id }) => ({ url: `database-hosts/${id}/driveInfo` })
+            }),
+            createUserDB: builder.mutation({
+                query: ({ credentialId, region, id, payload }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/database/${id}/create`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
+        };
+    }
+});
+
 export const {
     useGetCredentialsQuery,
     useGetRegionsQuery,
@@ -552,3 +571,5 @@ export const { useSendMsgMutation } = chatbotApi;
 export const { useGetHeadersCredentialsQuery, useGetHeadersRegionsQuery, useGetStatusQuery } = headersApi;
 
 export const { useGetWlmdbPoliciesQuery } = policiesApi;
+
+export const { useGetDriveInfoQuery, useCreateUserDBMutation } = createUserDbApi;
