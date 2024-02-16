@@ -5,6 +5,7 @@
 import { attempt, trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 import crypto, { randomUUID } from 'crypto';
+import { Tag } from '@aws-sdk/client-ec2';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
 import {
@@ -403,6 +404,15 @@ function convertMetricsIntoJson(input: Array<string>) {
     return metrics;
 }
 
+function getResourceNameFromTags(tags?: Tag[]) {
+    const { Value: name } = tags?.find(tag => tag?.Key === 'Name') || {};
+    return name;
+}
+
+function DEBUG_RR(...args: any[]): void {
+    logger.info('\x1b[0;31m', ...args, '\x1b[0m');
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -427,5 +437,7 @@ export {
     createJobMockData,
     calculateSQLandWindowsVersion,
     getDescriptionForMatchingName,
-    convertMetricsIntoJson
+    convertMetricsIntoJson,
+    getResourceNameFromTags,
+    DEBUG_RR
 };

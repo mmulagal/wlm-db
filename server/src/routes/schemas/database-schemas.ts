@@ -10,7 +10,10 @@ import {
     DatabaseDeleteResponseBody,
     MsSqlServerDiscoveryParams,
     MsSqlServerDiscoveryResponse,
-    MsSqlServerDiscoverRequestBody
+    MsSqlServerDiscoverRequestBody,
+    DiscoverMsSqlParams,
+    DiscoverMsSqlResponseBody,
+    DiscoverMsSqlQuery
 } from '../types/database.types';
 import { GenericHeaders } from '../types/generic.types';
 
@@ -95,6 +98,22 @@ const GetTablesSchema = {
     }
 };
 
+const DiscoverMsSqlSchema = {
+    Headers: GenericHeaders,
+    tags: [RouteTags.DISCOVER],
+    params: DiscoverMsSqlParams,
+    querystring: DiscoverMsSqlQuery,
+    description: `Discover AWS EC2 instances hosting Microsoft SQL Server.
+                  Only EC2s with Microsoft Windows as host operating system,
+                  in running state, and x86_64 architecture are considered.
+                  If SSM connectivity is available, only those EC2 running
+                  SQL Server 2016 and above are returned. If SSM connectivity
+                  is unavailable, SQL Server edition constraint is not applicable.`,
+    response: {
+        200: DiscoverMsSqlResponseBody
+    }
+};
+
 export {
     GetDatabasesSchema,
     DatabaseCpuUtilisationResponseSchema,
@@ -103,5 +122,6 @@ export {
     PostSqlServerSchema,
     DeleteDatabaseSchema,
     GetServerSummarySchema,
-    GetTablesSchema
+    GetTablesSchema,
+    DiscoverMsSqlSchema
 };
