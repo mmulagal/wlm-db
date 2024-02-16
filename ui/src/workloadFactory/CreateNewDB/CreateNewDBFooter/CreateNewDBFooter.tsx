@@ -8,10 +8,6 @@ import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
-<<<<<<< HEAD
-import { navigateToCanvas } from '../../../utils/appConfig';
-=======
->>>>>>> 0a249f56742550f93eaf53073832461aaee91a11
 
 const CreateNewUserFooter = () => {
     const navigate = useNavigate();
@@ -64,7 +60,6 @@ const CreateNewUserFooter = () => {
                     );
                     navigate('../databases');
                 }
-                navigateToCanvas('/');
             } catch (error) {
                 dispatch(setIsLoading(false));
                 dispatch(addNotification({ message: error, notificationType: NOTIFICATION_TYPES.ERROR }));
