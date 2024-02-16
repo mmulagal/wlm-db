@@ -5,7 +5,8 @@ import {
     Tag,
     DescribeNetworkInterfacesCommandInput,
     DescribeTagsCommandInput,
-    DescribeVpcEndpointsCommandInput
+    DescribeVpcEndpointsCommandInput,
+    VpcEndpoint
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
 import { AWSQueryFields, ENDPOINTS_DEPLOYMENT, WLMDB_COST_ALLOCATION_TAG } from '../../utils/consts';
@@ -26,7 +27,6 @@ import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
 import { ResourceDetails, SecurityGroup, Subnet, VPC, NetworkInterface } from '../../utils/common-types';
-import { isEmpty } from 'lodash-es';
 
 const logger = getLogger();
 
@@ -483,8 +483,8 @@ async function getServicesWithNoEndpoint(credentialsId: string, region: string, 
     logger.info('Get services wit no endpoint ', credentialsId, region, vpcId);
 
     const endpoints = await getVpcEndpoints(credentialsId, region, vpcId)
-    const availableEndpoints =  Object.assign({}, ...endpoints!.map((x) => ({[x.ServiceName as string]: x.PrivateDnsEnabled})))
-    const servicesWithNoEndpoint = !isEmpty(endpoints) ? ENDPOINTS_DEPLOYMENT.filter(e =>Object.keys(availableEndpoints).includes(e)) : ENDPOINTS_DEPLOYMENT
+    const availableEndpoints = [...new Set(endpoints!.map(({ServiceName}: VpcEndpoint)  => ServiceName?.split('.')[3]))];
+    const servicesWithNoEndpoint = ENDPOINTS_DEPLOYMENT.filter(endpoint => !availableEndpoints.includes(endpoint));
 
     return servicesWithNoEndpoint
 }

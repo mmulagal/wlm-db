@@ -12,8 +12,8 @@
         "stream-name": "audit-service-prod-stream"
     },
     "bucket": {
-        "artifacts": "artifacts.REGION.workloads.netapp.com",
-        "signedTemplates": "templates.workloads.netapp.com",
+        "artifacts": "production.artifacts.REGION.workloads.netapp.com",
+        "signedTemplates": "production.templates.workloads.netapp.com",
         "region": "us-east-1"
     },
     "ec2": {
