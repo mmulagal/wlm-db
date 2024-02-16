@@ -21,6 +21,7 @@
                 "fileSystemType": "FSx for Windows",
                 "fileSystemId": "fsx-id-1",
                 "vpcId": "vpc1",
+                "vpcName": "test1-vpc",
                 "ec2Details": [
                     {
                         "id": "id1",
@@ -28,10 +29,10 @@
                         "ebsVolumeId": "ebs-volume1"
                     }
                 ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                "fileSystemDeploymentMode": "SINGLE_AZ_1",
+                "availabilityZones": [
+                    "ap-southeast-1a"
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": true,
@@ -69,6 +70,7 @@
                 "fileSystemType": "FSx for ONTAP",
                 "fileSystemId": "fsx-id-2",
                 "vpcId": "vpc1",
+                "vpcName": "test1-vpc",
                 "ec2Details": [
                     {
                         "id": "id1",
@@ -81,10 +83,11 @@
                         "ebsVolumeId": "ebs-volume2"
                     }
                 ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                "fileSystemDeploymentMode": "MULTI_AZ_1",
+                "availabilityZones": [
+                    "ap-southeast-1a",
+                    "ap-southeast-1c"
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": true,
@@ -122,6 +125,7 @@
                 "fileSystemType": "EBS",
                 "fileSystemId": "fsx-id-3",
                 "vpcId": "vpc1",
+                "vpcName": "test1-vpc",
                 "ec2Details": [
                     {
                         "id": "id3",
@@ -129,10 +133,11 @@
                         "ebsVolumeId": "ebs-volume3"
                     }
                 ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                "fileSystemDeploymentMode": "MULTI_AZ_1",
+                "availabilityZones": [
+                    "ap-southeast-1a",
+                    "ap-southeast-1c"
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -170,6 +175,7 @@
                 "fileSystemType": "EBS",
                 "fileSystemId": "fsx-id-4",
                 "vpcId": "vpc1",
+                "vpcName": "test1-vpc",
                 "ec2Details": [
                     {
                         "id": "id4",
@@ -177,10 +183,11 @@
                         "ebsVolumeId": "ebs-volume4"
                     }
                 ],
-                "availability": {
-                    "type": "Single AZ",
-                    "azList": "us-east-1d"
-                }
+                "fileSystemDeploymentMode": "MULTI_AZ_1",
+                "availabilityZones": [
+                    "ap-southeast-1a",
+                    "ap-southeast-1c"
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -224,10 +231,10 @@
                         "ebsVolumeId": "ebs-volume5"
                     }
                 ],
-                "availability": {
-                    "type": "Single AZ",
-                    "azList": "us-east-2d"
-                }
+                "fileSystemDeploymentMode": "SINGLE_AZ_1",
+                "availabilityZones": [
+                    "ap-southeast-1a"
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": true,
@@ -271,10 +278,10 @@
                         "ebsVolumeId": "ebs-volume6"
                     }
                 ],
-                "availability": {
-                    "type": "Single AZ",
-                    "azList": "us-east-2d"
-                }
+                "fileSystemDeploymentMode": "SINGLE_AZ_1",
+                "availabilityZones": [
+                    "ap-southeast-1a"
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -318,10 +325,11 @@
                         "ebsVolumeId": "ebs-volume7"
                     }
                 ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                "fileSystemDeploymentMode": "MULTI_AZ_1",
+                "availabilityZones": [
+                    "ap-southeast-1a",
+                    "ap-southeast-1c"
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -365,10 +373,11 @@
                         "ebsVolumeId": "ebs-volume8"
                     }
                 ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                "fileSystemDeploymentMode": "MULTI_AZ_1",
+                "availabilityZones": [
+                    "ap-southeast-1a",
+                    "ap-southeast-1c"
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": true,
@@ -412,10 +421,11 @@
                         "ebsVolumeId": "ebs-volume9"
                     }
                 ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                "fileSystemDeploymentMode": "MULTI_AZ_1",
+                "availabilityZones": [
+                    "ap-southeast-1a",
+                    "ap-southeast-1c"
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -459,10 +469,11 @@
                         "ebsVolumeId": "ebs-volume10"
                     }
                 ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                "fileSystemDeploymentMode": "MULTI_AZ_1",
+                "availabilityZones": [
+                    "ap-southeast-1a",
+                    "ap-southeast-1c"
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": true,
@@ -506,10 +517,11 @@
                         "ebsVolumeId": "ebs-volume11"
                     }
                 ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                "fileSystemDeploymentMode": "MULTI_AZ_1",
+                "availabilityZones": [
+                    "ap-southeast-1a",
+                    "ap-southeast-1c"
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -553,10 +565,11 @@
                         "ebsVolumeId": "ebs-volume12"
                     }
                 ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                "fileSystemDeploymentMode": "MULTI_AZ_1",
+                "availabilityZones": [
+                    "ap-southeast-1a",
+                    "ap-southeast-1c"
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": true,
@@ -600,10 +613,11 @@
                         "ebsVolumeId": "ebs-volume13"
                     }
                 ],
-                "availability": {
-                    "type": "Single AZ",
-                    "azList": "us-east-2d"
-                }
+                "fileSystemDeploymentMode": "MULTI_AZ_1",
+                "availabilityZones": [
+                    "ap-southeast-1a",
+                    "ap-southeast-1c"
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -647,10 +661,11 @@
                         "ebsVolumeId": "ebs-volume14"
                     }
                 ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                "fileSystemDeploymentMode": "MULTI_AZ_1",
+                "availabilityZones": [
+                    "ap-southeast-1a",
+                    "ap-southeast-1c"
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
@@ -694,10 +709,11 @@
                         "ebsVolumeId": "ebs-volume15"
                     }
                 ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                "fileSystemDeploymentMode": "MULTI_AZ_1",
+                "availabilityZones": [
+                    "ap-southeast-1a",
+                    "ap-southeast-1c"
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": true,
@@ -741,10 +757,11 @@
                         "ebsVolumeId": "ebs-volume16"
                     }
                 ],
-                "availability": {
-                    "type": "Multi AZ",
-                    "azList": "us-east-1d,us-east-2d"
-                }
+                "fileSystemDeploymentMode": "MULTI_AZ_1",
+                "availabilityZones": [
+                    "ap-southeast-1a",
+                    "ap-southeast-1c"
+                ]
             },
             "protection": {
                 "isAwsBackUpEnabled": false,
