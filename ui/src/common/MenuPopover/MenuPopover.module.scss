@@ -86,7 +86,7 @@
     }
 
     .blackContent {
-        background: var(--dark-background-main-background, #111925);
+        background: var(--grey-70);
 
         /* Dark/Drop shadow/level 2 */
         box-shadow: 4px 4px 12px 0px rgba(17, 25, 37, 0.3);
@@ -98,7 +98,7 @@
                 color: var(--white);
             }
             li:hover {
-                background-color: #3a4454;
+                background-color: var(--grey-60);
             }
         }
     }
