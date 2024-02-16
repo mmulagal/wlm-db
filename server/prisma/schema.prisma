@@ -87,6 +87,8 @@ model config {
 model job {
   id                        String    @id @default(uuid())@db.VarChar(40)
   account_id                String    @db.VarChar(30)
+  credentials_id            String    @db.VarChar(80)
+  region                    String    @db.VarChar(30)
   type                      JOBTYPE
   status                    JOBSTATUS
   resource_name             String    @db.VarChar(255)
