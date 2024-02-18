@@ -502,5 +502,24 @@
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
-    }
+    },
+    "getHostAndSqlServerInfoResponse": {
+        "$metadata": {
+          "httpStatusCode": 200,
+          "requestId": "17601055-7787-4476-8450-2abb4851432a",
+          "attempts": 1,
+          "totalRetryDelay": 0
+        },
+        "CommandId": "7f937c8c-3f95-460b-ad99-788b354bffa8",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-006dfc76b11ef264e",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[\r\n    {\r\n        \"sqlServerInstance\":  \"A_LONG_INST_NAME\",\r\n        \"sqlServerState\":  \"Running\",\r\n        \"windowsAuthentication\":  true,\r\n        \"sqlServerEdition\":  2022,\r\n        \"sqlServerVersion\":  \"16.0.1000.6\"\r\n    },\r\n    {\r\n        \"sqlServerVersion\":  \"16.0.1000.6\",\r\n        \"sqlServerInstance\":  \"INSTANCE_1\",\r\n        \"sqlServerState\":  \"Running\",\r\n        \"sqlServerEdition\":  2022,\r\n        \"windowsAuthentication\":  true\r\n    },\r\n    {\r\n        \"sqlServerVersion\":  \"16.0.4095.4\",\r\n        \"sqlServerInstance\":  \"MSSQLSERVER\",\r\n        \"sqlServerState\":  \"Running\",\r\n        \"sqlServerEdition\":  2022,\r\n        \"windowsAuthentication\":  true\r\n    }\r\n]\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+      }
 }

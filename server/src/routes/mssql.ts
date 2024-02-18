@@ -8,8 +8,7 @@ import {
     GetServerSummarySchema,
     GetTablesSchema,
     DeleteDatabaseSchema,
-    PostSqlServerSchema,
-    DiscoverMsSqlSchema
+    PostSqlServerSchema
 } from './schemas/database-schemas';
 import {
     getDataBasesSummary,
@@ -19,8 +18,6 @@ import {
     discoverMsSqlServer,
     deleteResourceById
 } from '../operations/workloads/mssql/mssql-operations';
-import { getHostAndSqlServerInfo } from '../operations/workloads/mssql/discovery-operations';
-import { DEBUG_RR } from '../utils/utils';
 import { DATABASE_METRIC_TYPE /* DatabaseTypes */, DatabaseTypes } from '../utils/consts';
 
 const MSSQL_DISCOVER_API_PATH: string = '/v1/mssql/credentials/:credentialsId/regions/:region';
@@ -28,19 +25,6 @@ const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';
 
 export default function msSqlServerRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
-
-    server.get(`${MSSQL_DISCOVER_API_PATH}/discover`, { schema: DiscoverMsSqlSchema }, async request => {
-        const {
-            params: { accountId, credentialsId, region },
-            query: { nextToken }
-        } = request;
-
-        const startTime = performance.now();
-        const apiInfo = await getHostAndSqlServerInfo(accountId, credentialsId, region, nextToken);
-        const endTime = performance.now();
-        DEBUG_RR(`Time taken to collect information for ${apiInfo.count} records: ${endTime - startTime}ms`);
-        return apiInfo;
-    });
 
     server.post(`${MSSQL_DISCOVER_API_PATH}`, { schema: PostSqlServerSchema }, async request => {
         const {

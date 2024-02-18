@@ -4,13 +4,13 @@ import config from 'config';
 import { DescribeInstancesCommandInput, DescribeInstancesCommandOutput, InstanceStateName } from '@aws-sdk/client-ec2';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
-import { describeInstance } from '../../../lib/aws/ec2';
-import { DEBUG_RR, getResourceNameFromTags, sleep } from '../../../utils/utils';
-import { getSSMConnectionStatus, pollCommandStatus } from '../../aws/ssm-operations';
-import { HttpErrorCodes } from '../../../utils/consts';
-import { sendSSMCommand } from '../../../lib/aws/ssm';
-import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './const';
-import getLogger from '../../../utils/logger';
+import { describeInstance } from '../lib/aws/ec2';
+import { getResourceNameFromTags, sleep } from '../utils/utils';
+import { getSSMConnectionStatus, pollCommandStatus } from './aws/ssm-operations';
+import { HttpErrorCodes } from '../utils/consts';
+import { sendSSMCommand } from '../lib/aws/ssm';
+import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
+import getLogger from '../utils/logger';
 
 const logger = getLogger();
 
@@ -76,7 +76,7 @@ async function getHostAndSqlServerInfo(
     nextToken: string = '',
     instances: string[] = []
 ) {
-    DEBUG_RR('getHostAndSqlServerInfo():', { accountId, credentialsId, region, nextToken });
+    logger.info('getHostAndSqlServerInfo():', { accountId, credentialsId, region, nextToken });
 
     const responseInfo: ResponseInfo[] = [];
     const ssmTargets: SsmTargetInfo[] = [];
@@ -163,7 +163,7 @@ async function getPowershellScriptOutput(
 
     const response = await pollCommandStatus(credentialsId, region, commandInvocationParam);
     if (response?.StandardErrorContent) {
-        DEBUG_RR('Failed to collect info using SSM. Reason: ', response?.StandardErrorContent);
+        logger.error('Failed to collect info using SSM. Reason: ', response?.StandardErrorContent);
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             `Failed to get details from EC2 instance ${ssmTarget}. Reason: ${response?.StandardErrorContent}`
@@ -212,7 +212,7 @@ async function makeSsmCall(
         commandId = await sendSSMCommand(credentialsId, region, params, accountId);
         logger.info('SSM command ID:', commandId);
     } catch (error) {
-        DEBUG_RR(`Failed to start EC2 instance information retrieval using sendSSMCommand. Reason: ${error}`);
+        logger.error(`Failed to start EC2 instance information retrieval using sendSSMCommand. Reason: ${error}`);
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             `Failed to start information retrieval from EC2 instances. Reason: ${error}`
@@ -221,5 +221,4 @@ async function makeSsmCall(
     return commandId;
 }
 
-// eslint-disable-next-line import/prefer-default-export
-export { getHostAndSqlServerInfo };
+export { getHostAndSqlServerInfo, powerShellScript };

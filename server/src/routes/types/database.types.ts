@@ -35,38 +35,6 @@ const MsSqlServerDiscoverRequestBody = Type.Object({
     fsxId: Type.String()
 });
 
-const DiscoverMsSqlParams = Type.Object({
-    accountId: Type.String(),
-    credentialsId: Type.String(),
-    region: Type.String()
-});
-
-const DiscoverMsSqlQuery = Type.Object({
-    nextToken: Type.Optional(Type.String())
-});
-
-const DiscoverMsSqlResponseBody = Type.Object({
-    count: Type.Number(),
-
-    items: Type.Array(
-        Type.Object({
-            instanceId: Type.String(),
-            instanceName: Type.Optional(Type.String()),
-            ssmState: Type.String(),
-            sqlServerInstances: Type.Array(
-                Type.Object({
-                    sqlServerEdition: Type.Number(),
-                    sqlServerInstance: Type.String(),
-                    sqlServerState: Type.String(),
-                    sqlServerVersion: Type.String(),
-                    windowsAuthentication: Type.Boolean()
-                })
-            )
-        })
-    ),
-    nextToken: Type.Optional(Type.String())
-});
-
 const DatabasesResponseBody = Type.Object({
     databases: Type.Array(
         Type.Object({
@@ -129,8 +97,5 @@ export {
     DatabaseHeaders,
     MsSqlServerDiscoveryParams,
     MsSqlServerDiscoveryResponse,
-    MsSqlServerDiscoverRequestBody,
-    DiscoverMsSqlParams,
-    DiscoverMsSqlQuery,
-    DiscoverMsSqlResponseBody
+    MsSqlServerDiscoverRequestBody
 };

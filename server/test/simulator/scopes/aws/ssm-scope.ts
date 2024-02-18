@@ -11,6 +11,7 @@ import {
     GetConnectionStatusCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
+import { powerShellScript } from '../../../../src/operations/discover-operations';
 import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands-response.json';
 import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
 import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
@@ -176,6 +177,10 @@ const getServerEdition = {
     ]
 };
 
+const getHostAndSqlServerInfo = {
+    commands: powerShellScript
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -236,7 +241,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getServerInstallDate })
     .resolves(listSendCommandCommandResponse.getServerInstallDateCommandResponse)
     .on(SendCommandCommand, { Parameters: getServerEdition })
-    .resolves(listSendCommandCommandResponse.getServerEdition);
+    .resolves(listSendCommandCommandResponse.getServerEdition)
+    .on(SendCommandCommand, { Parameters: getHostAndSqlServerInfo })
+    .resolves(listSendCommandCommandResponse.getHostAndSqlServerInfoResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -294,7 +301,10 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-installDate' })
     .resolves(getCommandInvocationResponse.serverInstallDateInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ServerEdition' })
-    .resolves(getCommandInvocationResponse.serverEditionResponse);
+    .resolves(getCommandInvocationResponse.serverEditionResponse)
+    .on(GetCommandInvocationCommand, { Parameters: '7f937c8c-3f95-460b-ad99-788b354bffa8' })
+    .resolves(getCommandInvocationResponse.getHostAndSqlServerInfoResponse);
+
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

@@ -409,10 +409,6 @@ function getResourceNameFromTags(tags?: Tag[]) {
     return name;
 }
 
-function DEBUG_RR(...args: any[]): void {
-    logger.info('\x1b[0;31m', ...args, '\x1b[0m');
-}
-
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -438,6 +434,5 @@ export {
     calculateSQLandWindowsVersion,
     getDescriptionForMatchingName,
     convertMetricsIntoJson,
-    getResourceNameFromTags,
-    DEBUG_RR
+    getResourceNameFromTags
 };
