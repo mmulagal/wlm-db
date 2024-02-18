@@ -1,5 +1,6 @@
 import Promise from 'bluebird';
 import randomize from 'randomatic';
+import createError from 'http-errors';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
 import { ListTagsForResourceCommandInput, Tag, Volume } from '@aws-sdk/client-fsx';
@@ -469,10 +470,16 @@ async function getCostAllocationTagFsxResource(resourceDetail: ResourceDetails) 
 
 async function getFsxStorageCapacity(credentialsId: string, region: string, fsxId: string) {
     logger.info('Get FSx Storage capacity');
-    const { FileSystems: fileSystems } = await describeFSxN(credentialsId, region!, {
-        FileSystemIds: [fsxId]
-    });
-    return fileSystems![0].StorageCapacity!;
+    try {
+        const { FileSystems: fileSystems } = await describeFSxN(credentialsId, region!, {
+            FileSystemIds: [fsxId]
+        });
+        return fileSystems![0].StorageCapacity!;
+    } catch (error) {
+        const errorMessage = `Error fetching FSx storage capacity , ${error}`;
+        logger.error(errorMessage);
+        throw createError(500, errorMessage);
+    }
 }
 
 export {

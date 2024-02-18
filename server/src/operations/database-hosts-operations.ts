@@ -47,7 +47,8 @@ import {
     getPerformanceMetrics,
     getDataBasesSummary,
     getNativeSQLBackedupDatabases,
-    callSsmExecution
+    callSsmExecution,
+    sqlResponseParsing
 } from './workloads/mssql/mssql-operations';
 import {
     getStorageDataUsingSSM,
@@ -55,11 +56,15 @@ import {
     getOntapVolumesSnapshotCount,
     getCostAllocationTagFsxResource,
     getFsxStorageCapacity
+    // getFsxStorageCapacity
 } from './aws/fsx-operations';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { isSSMConnectionSuccessful } from './aws/ssm-operations';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
+import { PSSCRIPT } from './workloads/mssql/const';
+import { DEFAULT_SQL_DRIVES } from './workloads/mssql/queries';
+import { getResources } from './database/database-operations';
 
 const logger = getLogger();
 
@@ -912,27 +917,28 @@ async function getDriveInfoFromSSM(
         const errorMessage = `Error while fetching drive details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
-    const commands = ['C:\\SSM\\GetDriveInfo.ps1'];
-    const response = await callSsmExecution(
-        credentialsId,
-        region!,
-        commands,
-        activeNodeInstanceId,
-        standbyNodeInstanceId
-    );
+    const driveCommand = ['C:\\SSM\\GetDriveInfo.ps1'];
+    const defaultDriveCommand = [`${PSSCRIPT} -Query "${DEFAULT_SQL_DRIVES}"`];
 
-    const cleanResponse = response?.replaceAll('\r\n', '');
-    const jsonResponse = JSON.parse(cleanResponse!);
+    const [driveResponse, defaultDriveResponse] = await Promise.all([
+        callSsmExecution(credentialsId, region!, driveCommand, activeNodeInstanceId, standbyNodeInstanceId),
+        callSsmExecution(credentialsId, region!, defaultDriveCommand, activeNodeInstanceId, standbyNodeInstanceId)
+    ]);
 
-    const {
-        ExistingDriveInfo: existingDriveInfo,
-        AvailableDriveLetters: availableDriveLetters,
-        DefaultDriveLetters: defaultDriveLetters
-    } = jsonResponse;
+    const finalDriveResponse = driveResponse ? sqlResponseParsing(driveResponse) : {};
+    const finalDefaulDriveResponse =
+        defaultDriveResponse && !defaultDriveResponse?.includes('error')
+            ? sqlResponseParsing(defaultDriveResponse)[0]
+            : {};
+
+    const currentDataDrive: string =
+        Object.keys(finalDefaulDriveResponse).length !== 0 ? finalDefaulDriveResponse?.value[0].CurrentDataDrive : '';
+
+    const currentLogDrive: string =
+        Object.keys(finalDefaulDriveResponse).length !== 0 ? finalDefaulDriveResponse?.value[0].CurrentLogDrive : '';
+
+    const { ExistingDriveInfo: existingDriveInfo, AvailableDriveLetters: availableDriveLetters } = finalDriveResponse;
     const UpdatedExistingDriveInfo: DriveInfo[] = [];
-
-    const currentDataDrive = defaultDriveLetters.value[0].CurrentDataDrive;
-    const currentLogDrive = defaultDriveLetters.value[0].CurrentLogDrive;
 
     existingDriveInfo.forEach((element: { DriveLetter: any; FreeSpace: any; manufacturer: string }) => {
         const updatedDriveInfo: DriveInfo = {
@@ -951,7 +957,7 @@ async function getDriveInfoFromSSM(
 async function getDriveInfo(accountId: string, databaseHostId: string): Promise<DriveInfoResponseBodyType> {
     logger.info('Fetching drive details and storage capacity of the database host  ', accountId, databaseHostId);
 
-    const [resourceDetail] = await listResources(accountId, databaseHostId);
+    const [resourceDetail] = await getResources(accountId, databaseHostId);
 
     if (isEmpty(resourceDetail)) {
         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;

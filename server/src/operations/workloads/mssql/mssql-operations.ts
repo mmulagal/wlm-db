@@ -764,5 +764,6 @@ export {
     getServerState,
     getNativeSQLProtection,
     getPerformanceMetrics,
-    getNativeSQLBackedupDatabases
+    getNativeSQLBackedupDatabases,
+    sqlResponseParsing
 };
