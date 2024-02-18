@@ -283,7 +283,7 @@ async function getTopology(
             ec2Details: [
                 {
                     id: activeNodeInstanceId!,
-                    name: activeNodeInstanceName!,
+                    name: activeNodeInstanceName,
                     ebsVolumeId: activeVolumeId || '',
                     ...(activeInstanceType && { instanceType: activeInstanceType }),
                     ...(activeAvailabilityZone && { availabilityZone: activeAvailabilityZone }),
@@ -295,7 +295,7 @@ async function getTopology(
         if (standbyNodeInstanceId) {
             topologyData.ec2Details.push({
                 id: standbyNodeInstanceId!,
-                name: standbyNodeInstanceName!,
+                name: standbyNodeInstanceName,
                 ebsVolumeId: standbyVolumeId || '',
                 ...(standbyInstanceType && { instanceType: standbyInstanceType }),
                 ...(standbyAvailabilityZone && { availabilityZone: standbyAvailabilityZone }),
@@ -621,6 +621,7 @@ async function getDatabaseHostsSummary(
         await Promise.all(
             resourceDetails.map(async resourceDetail => {
                 const { resource_id: resourceId, resource_name: resourceName, region, metadata } = resourceDetail;
+                logger.info(' resourceName', resourceName);
 
                 const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
 

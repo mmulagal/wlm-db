@@ -121,7 +121,7 @@ Resources:
                 StorageVirtualMachineId: !Ref FSxSvmConfiguration
                 JunctionPath: !Join ['', [/, !Ref FSxDataVolumeName]]
                 OntapVolumeType: RW
-                SnapshotPolicy: default
+                SnapshotPolicy: none
                 StorageEfficiencyEnabled: true
                 TieringPolicy:
                     Name: SNAPSHOT_ONLY
@@ -138,7 +138,7 @@ Resources:
                 StorageVirtualMachineId: !Ref FSxSvmConfiguration
                 JunctionPath: !Join ['', [/, !Ref FSxLogVolumeName]]
                 OntapVolumeType: RW
-                SnapshotPolicy: default
+                SnapshotPolicy: none
                 StorageEfficiencyEnabled: true
                 TieringPolicy:
                     Name: SNAPSHOT_ONLY
@@ -155,7 +155,7 @@ Resources:
                 StorageVirtualMachineId: !Ref FSxSvmConfiguration
                 JunctionPath: !Join ['', [/, !Ref FSxTempDbVolumeName]]
                 OntapVolumeType: RW
-                SnapshotPolicy: default
+                SnapshotPolicy: none
                 StorageEfficiencyEnabled: true
                 TieringPolicy:
                     Name: SNAPSHOT_ONLY
@@ -173,7 +173,7 @@ Resources:
                 StorageVirtualMachineId: !Ref FSxSvmConfiguration
                 JunctionPath: !Join ['', [/, !Ref FSxClusterQuorumVolumeName]]
                 OntapVolumeType: RW
-                SnapshotPolicy: default
+                SnapshotPolicy: none
                 StorageEfficiencyEnabled: true
                 TieringPolicy:
                     Name: SNAPSHOT_ONLY

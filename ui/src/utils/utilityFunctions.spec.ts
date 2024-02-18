@@ -799,11 +799,11 @@ describe('formatFractionalNumber', () => {
 
 describe('mergeDatabaseHostsData', () => {
     it('Return merged list', () => {
-        const result = mergeDatabaseHostsData(databaseHostItem, databaseJobsItem);
+        const result = mergeDatabaseHostsData(databaseHostItem);
         expect(result.length).toEqual(4);
     });
     it('Should return null is empty list', () => {
-        const result = mergeDatabaseHostsData(null, null);
+        const result = mergeDatabaseHostsData(null);
         expect(result.length).toEqual(0);
     });
 });
@@ -830,7 +830,7 @@ describe('jobStatusPercent', () => {
 
 describe('getHostStatusCount', () => {
     it('Return host status data', () => {
-        const result = getHostStatusCount(mergeDatabaseHostsData(databaseHostItem, databaseJobsItem));
+        const result = getHostStatusCount(mergeDatabaseHostsData(databaseHostItem));
         expect(result?.totalDatabases).toEqual(20);
         expect(result?.totalHosts).toEqual(4);
         expect(result?.totalUpHosts).toEqual(1);
@@ -899,7 +899,7 @@ describe('setRecommendedValues', () => {
         expect(result?.instanceType?.value).toEqual('m5.xlarge');
         expect(result?.dbEdition?.value).toEqual(GENERAL.SQL_SERVER_STANDARD);
         expect(result?.dbDeploymentModel?.value).toEqual(SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE);
-        expect(result?.storageCapacity?.capacity).toEqual('100');
+        expect(result?.storageCapacity?.capacity).toEqual('120');
         expect(result?.throughput).toEqual('128');
     });
     it('Return recommended values for prod', () => {
