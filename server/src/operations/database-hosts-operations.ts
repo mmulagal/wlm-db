@@ -63,7 +63,7 @@ import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-ope
 import { isSSMConnectionSuccessful } from './aws/ssm-operations';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
 import { PSSCRIPT } from './workloads/mssql/const';
-import { DEFAULT_SQL_DRIVES } from './workloads/mssql/queries';
+import { DEFAULT_SQL_DATA_DRIVE, DEFAULT_SQL_LOG_DRIVE } from './workloads/mssql/queries';
 import { getResources } from './database/database-operations';
 
 const logger = getLogger();
@@ -918,24 +918,30 @@ async function getDriveInfoFromSSM(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
     const driveCommand = ['C:\\SSM\\GetDriveInfo.ps1'];
-    const defaultDriveCommand = [`${PSSCRIPT} -Query "${DEFAULT_SQL_DRIVES}"`];
+    const defaultDataDriveCommand = [`${PSSCRIPT} -Query "${DEFAULT_SQL_DATA_DRIVE}"`];
+    const defaultLogDriveCommand = [`${PSSCRIPT} -Query "${DEFAULT_SQL_LOG_DRIVE}"`];
 
-    const [driveResponse, defaultDriveResponse] = await Promise.all([
+    const [driveResponse, defaultDataDriveResponse, defaultLogDriveResponse] = await Promise.all([
         callSsmExecution(credentialsId, region!, driveCommand, activeNodeInstanceId, standbyNodeInstanceId),
-        callSsmExecution(credentialsId, region!, defaultDriveCommand, activeNodeInstanceId, standbyNodeInstanceId)
+        callSsmExecution(credentialsId, region!, defaultDataDriveCommand, activeNodeInstanceId, standbyNodeInstanceId),
+        callSsmExecution(credentialsId, region!, defaultLogDriveCommand, activeNodeInstanceId, standbyNodeInstanceId)
     ]);
 
     const finalDriveResponse = driveResponse ? sqlResponseParsing(driveResponse) : {};
-    const finalDefaulDriveResponse =
-        defaultDriveResponse && !defaultDriveResponse?.includes('error')
-            ? sqlResponseParsing(defaultDriveResponse)[0]
+    const finalDefaultDataDriveResponse =
+        defaultDataDriveResponse && !defaultDataDriveResponse?.includes('error')
+            ? sqlResponseParsing(defaultDataDriveResponse)[0]
+            : {};
+    const finalDefaultLogDriveResponse =
+        defaultLogDriveResponse && !defaultLogDriveResponse?.includes('error')
+            ? sqlResponseParsing(defaultLogDriveResponse)[0]
             : {};
 
     const currentDataDrive: string =
-        Object.keys(finalDefaulDriveResponse).length !== 0 ? finalDefaulDriveResponse?.value[0].CurrentDataDrive : '';
+        Object.keys(finalDefaultDataDriveResponse).length !== 0 ? finalDefaultDataDriveResponse?.CurrentDataDrive : '';
 
     const currentLogDrive: string =
-        Object.keys(finalDefaulDriveResponse).length !== 0 ? finalDefaulDriveResponse?.value[0].CurrentLogDrive : '';
+        Object.keys(finalDefaultLogDriveResponse).length !== 0 ? finalDefaultLogDriveResponse?.CurrentLogDrive : '';
 
     const { ExistingDriveInfo: existingDriveInfo, AvailableDriveLetters: availableDriveLetters } = finalDriveResponse;
     const UpdatedExistingDriveInfo: DriveInfo[] = [];

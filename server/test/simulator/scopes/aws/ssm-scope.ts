@@ -178,9 +178,19 @@ const getServerEdition = {
 };
 
 const getDriveInfo = {
+    commands: ['C:\\SSM\\GetDriveInfo.ps1']
+};
+
+const getDefaultDataDrive = {
     commands: [
-        "C:\\SSM\\GetDriveInfo.ps1",
-      ]
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; DECLARE @DataPath NVARCHAR(500);\nEXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultData', @DataPath OUTPUT;\nSELECT LEFT(@DataPath,1) AS CurrentDataDrive\nFOR JSON PATH\""
+    ]
+};
+
+const getDefaultLogDrive = {
+    commands: [
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; DECLARE @LogPath NVARCHAR(500);\nEXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultLog', @LogPath OUTPUT;\nSELECT LEFT(@LogPath,1) AS CurrentLogDrive \nFOR JSON PATH\""
+    ]
 };
 
 ssmMock
@@ -245,7 +255,11 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getServerEdition })
     .resolves(listSendCommandCommandResponse.getServerEdition)
     .on(SendCommandCommand, { Parameters: getDriveInfo })
-    .resolves(listSendCommandCommandResponse.getDriveInfoCommandResponse);
+    .resolves(listSendCommandCommandResponse.getDriveInfoCommandResponse)
+    .on(SendCommandCommand, { Parameters: getDefaultDataDrive })
+    .resolves(listSendCommandCommandResponse.getDefaultDataDriveCommandResponse)
+    .on(SendCommandCommand, { Parameters: getDefaultDataDrive })
+    .resolves(listSendCommandCommandResponse.getDefaultLogDriveCommandResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -305,7 +319,11 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ServerEdition' })
     .resolves(getCommandInvocationResponse.serverEditionResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getDriveInfo' })
-    .resolves(getCommandInvocationResponse.getDriveInfoResponse);
+    .resolves(getCommandInvocationResponse.getDriveInfoResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getDefaultDataDrive' })
+    .resolves(getCommandInvocationResponse.getDefaultDataDrivesInfoResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getDefaultLogDrive' })
+    .resolves(getCommandInvocationResponse.getDefaultLogDrivesInfoResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
