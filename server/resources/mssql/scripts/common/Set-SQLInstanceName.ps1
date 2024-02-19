@@ -27,7 +27,8 @@ try
     #$DomainAdminSecurePassword = ConvertTo-SecureString $DomainAdminPassword -AsPlainText -Force
     #$DomainAdminCreds = New-Object System.Management.Automation.PSCredential($DomainAdminFullUser, $DomainAdminSecurePassword)
     $DomainAdminFullUser = $DomainNetBIOSName + '\' + $DomainAdminUser
-    $pass = (Get-SSMParameter -Name "/$Parentstackname/domain/password" -WithDecryption $True).Value
+    $DomainPassword = (Get-SSMParameter -Name "/$Parentstackname/domain/password" -WithDecryption $True).Value
+    $pass = ConvertTo-SecureString $DomainPassword -AsPlainText -Force
     $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,$pass))
     $renameinstance = {
         $query = "

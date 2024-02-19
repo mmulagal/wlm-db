@@ -30,8 +30,6 @@ Metadata:
             - Label:
                   default: AWS Launch Wizard Configuration
               Parameters:
-                  - AssetsBucketName
-                  - AssetsS3KeyPrefix
                   - EnableCloudWatchLogFeature
                   - ParentStackName
         ParameterLabels:
@@ -51,10 +49,6 @@ Metadata:
                 default: Subnet ID
             PurposeTag:
                 default: Tag your instances with purpose
-            AssetsBucketName:
-                default: Launch Wizard S3 bucket name
-            AssetsS3KeyPrefix:
-                default: Launch Wizard S3 key prefix
             VPCID:
                 default: VPC ID
             Ec2RoleName:
@@ -100,15 +94,6 @@ Parameters:
         Description: ID of private subnet in an Availability Zone 1 for the workload (For example,
             subnet-a0246dcd).
         Type: AWS::EC2::Subnet::Id
-    AssetsBucketName:
-        Description: S3 bucket name for WLMDB assets.
-        Type: String
-    AssetsS3KeyPrefix:
-        Description: S3 key prefix for the  WLMDB assets.
-        Type: String
-    AssetsS3RegionCode:
-        Description: S3 region code.
-        Type: String
     VPCID:
         Description: ID of the VPC (for example, vpc-0343606e).
         Type: AWS::EC2::VPC::Id

@@ -44,7 +44,7 @@ try {
     $DomainAdminFullUser = $DomainNetBIOSName + '\' + $DomainAdminUser
     $DomainAdminPassword = (Get-SSMParameter -Name "/$Parentstackname/domain/password" -WithDecryption $True).Value
     $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,(ConvertTo-SecureString $DomainAdminPassword -AsPlainText -Force)))
-    $SQLServiceAccountPassword = (Get-SSMParameter -Name "/$Stackname/sql/password" -WithDecryption $True).Value
+    $SQLServiceAccountPassword = (Get-SSMParameter -Name "/$Parentstackname/sql/password" -WithDecryption $True).Value
 
     $SQLFullUser = $DomainNetBIOSName + '\' + $SQLServiceAccount
 

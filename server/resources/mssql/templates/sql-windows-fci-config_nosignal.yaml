@@ -54,8 +54,6 @@ Metadata:
             - Label:
                   default: AWS Configuration
               Parameters:
-                  - AssetsBucketName
-                  - AssetsS3KeyPrefix
                   - EnableCloudWatchLogFeature
                   - ParentStackName
         ParameterLabels:
@@ -69,12 +67,6 @@ Metadata:
                 default: ID of the route table for private subnet 1.
             RouteTable2Id:
                 default: ID of the route table for private subnet 2.
-            AssetsBucketName:
-                default: S3 Bucket Name hosting WLMDB Assets. e.g LaunchWizard-Assets.
-            AssetsS3RegionCode:
-                default: S3 bucket region for the bucket hosting WLMDB Assets e.g s3.us-east-1
-            AssetsS3KeyPrefix:
-                default: S3 Key Prefix for WLMDB assets e.g launchwizardprefix/
             AMIID:
                 default: AMI ID of the AMI used to launch Instances e.g ami-0b8aa9827ffff6e39
             VPCID:
@@ -163,20 +155,6 @@ Parameters:
         Type: String
     PrivateSubnet2ID:
         Description: ID of the private subnet 2 in Availability Zone 2 for the SQL Server (for example, subnet-a0246dcd). This field is required for SQL Server failover instances, but not required for standalone instances.
-        Type: String
-    AssetsBucketName:
-        Description: S3 bucket name for WLMDB assets.
-        Type: String
-    AssetsS3RegionCode:
-        Description: The AWS region where the WLMDB S3 bucket (AssetsBucketName) is hosted.
-        Type: String
-    AssetsS3KeyPrefix:
-        AllowedPattern: ^[0-9a-zA-Z-/]*$
-        ConstraintDescription: Launch Wizard key prefix can include numbers, lowercase
-            letters, uppercase letters, hyphens (-), and forward slash (/).
-        Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
-            can include numbers, lowercase letters, uppercase letters, hyphens (-), and
-            forward slash (/).
         Type: String
     VPCID:
         Description: ID of your existing VPC for deployment.
@@ -308,9 +286,6 @@ Conditions:
     LogFeatureEnabled: !Equals
         - !Ref 'EnableCloudWatchLogFeature'
         - 'true'
-    UsingDefaultBucket: !Equals
-        - !Ref 'AssetsBucketName'
-        - LaunchWizard-sqlha-templates
 Rules:
     KeyPairsNotEmpty:
         Assertions:
