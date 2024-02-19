@@ -1,10 +1,4 @@
-import { Type } from '@fastify/type-provider-typebox';
-
-const DiscoverMsSqlParams = Type.Object({
-    accountId: Type.String({ description: 'Workload Factory account ID', minLength: 1 }),
-    credentialsId: Type.String({ description: 'Workload Factory credentials ID', minLength: 1 }),
-    region: Type.String({ description: 'AWS region hosting EC2 instances', minLength: 1 })
-});
+import { Static, Type } from '@fastify/type-provider-typebox';
 
 const DiscoverMsSqlQuery = Type.Object({
     nextToken: Type.Optional(
@@ -15,50 +9,40 @@ const DiscoverMsSqlQuery = Type.Object({
     )
 });
 
+const SqlServerInstanceInfo = Type.Object({
+    sqlServerEdition: Type.Number({ description: 'MS SQL Server edition' }),
+    sqlServerInstance: Type.String({ description: 'MS SQL Server instance name' }),
+    sqlServerState: Type.String({
+        // Reference: https://learn.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicecontrollerstatus?view=dotnet-plat-ext-8.0
+        description: `State of MS SQL Server instance.<br>
+        <ul>
+        <li>ContinuePending - The service continue is pending.
+        <li>Paused - The service is paused.
+        <li>PausePending - The service pause is pending.
+        <li>Running - The service is running. 
+        <li>StartPending - The service is starting.
+        <li>Stopped - The service is not running.
+        <li>StopPending - The service is stopping.
+        </ul>
+        `,
+        enum: ['ContinuePending', 'Paused', 'PausePending', 'Running', 'StartPending', 'Stopped', 'StopPending']
+    }),
+    sqlServerVersion: Type.String({ description: 'MS SQL Server version' }),
+    windowsAuthentication: Type.Boolean({
+        description: 'Is Windows Authentication used for SQL Server?'
+    })
+});
+
+const DiscoverResponseInfo = Type.Object({
+    instanceId: Type.String({ description: 'AWS EC2 instance ID' }),
+    instanceName: Type.Optional(Type.String({ description: 'EC2 tag with key "Name".' })),
+    ssmState: Type.String({ description: 'SSM connection status', enum: ['connected', 'notconnected'] }),
+    sqlServerInstances: Type.Array(SqlServerInstanceInfo)
+});
+
 const DiscoverMsSqlResponseBody = Type.Object({
     count: Type.Number({ description: 'Number of discovered items' }),
-
-    items: Type.Array(
-        Type.Object({
-            instanceId: Type.String({ description: 'AWS EC2 instance ID' }),
-            instanceName: Type.Optional(Type.String({ description: 'EC2 tag with key "Name".' })),
-            ssmState: Type.String({ description: 'SSM connection status', enum: ['connected', 'notconnected'] }),
-            sqlServerInstances: Type.Array(
-                Type.Object({
-                    sqlServerEdition: Type.Number({ description: 'MS SQL Server edition' }),
-                    sqlServerInstance: Type.String({ description: 'MS SQL Server version' }),
-                    sqlServerState: Type.String({
-                        // Reference: https://learn.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicecontrollerstatus?view=dotnet-plat-ext-8.0
-                        description: `State of MS SQL Server instance.<br>
-                        <ul>
-                        <li>ContinuePending - The service continue is pending.
-                        <li>Paused - The service is paused.
-                        <li>PausePending - The service pause is pending.
-                        <li>Running - The service is running. 
-                        <li>StartPending - The service is starting.
-                        <li>Stopped - The service is not running.
-                        <li>StopPending - The service is stopping.
-                        </ul>
-                        `,
-                        enum: [
-                            'ContinuePending',
-                            'Paused',
-                            'PausePending',
-                            'Running',
-                            'StartPending',
-                            'Stopped',
-                            'StopPending'
-                        ]
-                    }),
-                    sqlServerVersion: Type.String({ description: 'MS SQL Server version' }),
-                    windowsAuthentication: Type.Boolean({
-                        description: 'Is Windows Authentication used for SQL Server?'
-                    })
-                })
-            )
-        })
-    ),
-
+    items: Type.Array(DiscoverResponseInfo),
     nextToken: Type.Optional(
         Type.String({
             description: 'Pagination token for each page.  A non-empty token indicates more more results are available.'
@@ -66,4 +50,7 @@ const DiscoverMsSqlResponseBody = Type.Object({
     )
 });
 
-export { DiscoverMsSqlParams, DiscoverMsSqlQuery, DiscoverMsSqlResponseBody };
+type SqlServerInstanceInfoType = Static<typeof SqlServerInstanceInfo>;
+type DiscoverResponseInfoType = Static<typeof DiscoverResponseInfo>;
+
+export { DiscoverMsSqlQuery, DiscoverMsSqlResponseBody, SqlServerInstanceInfoType, DiscoverResponseInfoType };

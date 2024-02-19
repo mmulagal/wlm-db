@@ -10,25 +10,12 @@ import { getSSMConnectionStatus, pollCommandStatus } from './aws/ssm-operations'
 import { HttpErrorCodes } from '../utils/consts';
 import { sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
+import { SqlServerInstanceInfoType, DiscoverResponseInfoType } from '../routes/types/discover.types';
 import getLogger from '../utils/logger';
 
 const logger = getLogger();
 
-interface SqlServerInstanceInfo {
-    sqlServerEdition: number;
-    sqlServerInstance: string;
-    sqlServerState: string;
-    sqlServerVersion: string;
-    windowsAuthentication: boolean;
-}
-
-interface ResponseInfo {
-    instanceId: string;
-    instanceName: string;
-    ssmState: string;
-    sqlServerInstances: SqlServerInstanceInfo[];
-}
-interface SsmTargetInfo {
+interface SsmTargetsInfo {
     ec2InstanceId: string;
     ec2Name: string;
     ssmState: string;
@@ -36,6 +23,7 @@ interface SsmTargetInfo {
 
 const MAX_DESCRIBE_INSTANCES_COUNT = 10;
 const MAX_SSM_COMMANDS_POLL_COUNT = 10;
+const MINIMUM_SQL_SERVER_EDITION_SUPPORTED = 2016;
 
 const hostAndSqlInfoPowerShellScript = [
     `
@@ -78,8 +66,8 @@ async function getHostAndSqlServerInfo(
 ) {
     logger.info('getHostAndSqlServerInfo():', { accountId, credentialsId, region, nextToken });
 
-    const responseInfo: ResponseInfo[] = [];
-    const ssmTargets: SsmTargetInfo[] = [];
+    const responseInfo: DiscoverResponseInfoType[] = [];
+    const ssmTargets: SsmTargetsInfo[] = [];
 
     const describeInstanceParams: DescribeInstancesCommandInput = {
         Filters: [
@@ -127,10 +115,15 @@ async function getHostAndSqlServerInfo(
 
     await Promise.all(
         ssmTargets.map(
-            throat(MAX_SSM_COMMANDS_POLL_COUNT, async (target: SsmTargetInfo) => {
-                let dbInfo: SqlServerInstanceInfo[] = [];
+            throat(MAX_SSM_COMMANDS_POLL_COUNT, async (target: SsmTargetsInfo) => {
+                let dbInfo: SqlServerInstanceInfoType[] = [];
                 if (target.ssmState === ConnectionStatus.CONNECTED) {
-                    dbInfo = await getPowershellScriptOutput(credentialsId, region, target.ec2InstanceId, commandId!);
+                    dbInfo = await getHostAndSqlInfoFromPsOutput(
+                        credentialsId,
+                        region,
+                        target.ec2InstanceId,
+                        commandId!
+                    );
                 }
 
                 responseInfo.push({
@@ -150,12 +143,12 @@ async function getHostAndSqlServerInfo(
     };
 }
 
-async function getPowershellScriptOutput(
+async function getHostAndSqlInfoFromPsOutput(
     credentialsId: string,
     region: string,
     ssmTarget: string,
     commandId: string
-): Promise<SqlServerInstanceInfo[]> {
+): Promise<SqlServerInstanceInfoType[]> {
     const commandInvocationParam = {
         CommandId: commandId,
         InstanceId: ssmTarget
@@ -170,7 +163,7 @@ async function getPowershellScriptOutput(
         );
     }
 
-    const dbInfo: SqlServerInstanceInfo[] = [];
+    const dbInfo: SqlServerInstanceInfoType[] = [];
     const powerShellScriptOutput = response?.StandardOutputContent || '';
     if (powerShellScriptOutput.length > 0) {
         let responseInJson = JSON.parse(response?.StandardOutputContent || '');
@@ -179,7 +172,7 @@ async function getPowershellScriptOutput(
         }
 
         for (const dbInstanceInfo of responseInJson) {
-            if (dbInstanceInfo.sqlServerEdition >= 2016) {
+            if (dbInstanceInfo.sqlServerEdition >= MINIMUM_SQL_SERVER_EDITION_SUPPORTED) {
                 dbInfo.push(dbInstanceInfo);
             }
         }

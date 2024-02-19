@@ -1,11 +1,11 @@
 import { RouteTags } from '../../utils/consts';
-import { DiscoverMsSqlParams, DiscoverMsSqlResponseBody, DiscoverMsSqlQuery } from '../types/discover.types';
-import { GenericHeaders } from '../types/generic.types';
+import { DiscoverMsSqlResponseBody, DiscoverMsSqlQuery } from '../types/discover.types';
+import { GenericHeaders, ManagedHostParams } from '../types/generic.types';
 
 const DiscoverMsSqlSchema = {
     Headers: GenericHeaders,
     tags: [RouteTags.DISCOVER],
-    params: DiscoverMsSqlParams,
+    params: ManagedHostParams,
     querystring: DiscoverMsSqlQuery,
     summary: 'Discover EC2 instances running on Microsoft Windows platform and hosting Microsoft SQL Server.',
     description: `Discover AWS EC2 instances hosting Microsoft SQL Server.
