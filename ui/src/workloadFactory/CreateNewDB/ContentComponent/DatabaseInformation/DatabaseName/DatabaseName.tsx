@@ -1,15 +1,15 @@
 import { AccordionCard, AccordionCardContent, DsTypography, TextField, Typography } from '@netapp/design-system';
 
 import styles from './DatabaseName.module.scss';
-import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
-import { useAppSelector } from '../../../../store/storeHooks';
+import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
+import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
+import { useAppSelector } from '../../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
-import { setNewUserDBName } from '../../../../store/workloadFactory/createNewDBSlice';
-import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
-import { GENERAL } from '../../../../utils/appConstants';
-import { useDelayedError } from '../../../../common/hooks/useDelayedError';
-import AccordionError from '../../../../common/AccordionError/AccordionError';
+import { setNewUserDBName } from '../../../../../store/workloadFactory/createNewDBSlice';
+import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
+import { GENERAL } from '../../../../../utils/appConstants';
+import { useDelayedError } from '../../../../../common/hooks/useDelayedError';
+import AccordionError from '../../../../../common/AccordionError/AccordionError';
 
 const DatabaseName = () => {
     const dispatch = useDispatch();
@@ -44,7 +44,7 @@ const DatabaseName = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="1"
-                title={<div className={CommonStyles.title}>{'Database name'}</div>}
+                title={<div className={CommonStyles.title}>{GENERAL.DB_CREATE_DATABASE_NAME}</div>}
             >
                 <AccordionCardContent>
                     <DsTypography>

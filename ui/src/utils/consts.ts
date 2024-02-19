@@ -262,5 +262,10 @@ export const WLF_TABS = {
     DATABASE_LIST: 'Database list',
     MANAGED_HOSTS: 'Managed hosts',
     UNMANAGED_HOSTS: 'Unmanaged hosts',
-    UNDETECTED_HOSTS: 'Undetected hosts',
+    UNDETECTED_HOSTS: 'Undetected hosts'
+};
+
+export const DRIVE_LETTER_TYPE = {
+    NEW: 'New drive letter',
+    EXISTING: 'Existing drive letter'
 };

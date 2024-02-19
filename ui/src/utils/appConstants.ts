@@ -544,20 +544,43 @@ export const GENERAL = {
     MANAGED_BY_WLF: 'Managed by Workload Factory',
     MANAGED_HOSTS_HEADING: 'Managed hosts',
     MANAGED_HOST_HEADING: 'Managed host',
-    FILE_SETTINGS_FIRST_TEXT:
-        'In case existing drive letter is selected for Data file it will automatically filled for Log file (recommended practice)',
+    // Create USER DB
+    FILE_SETTINGS_FIRST_TEXT: 'Select between new drive letter or existing drive letter per file.',
     FILE_SETTINGS_SECOND_TEXT:
-        'In case new drive letter is selected for Data file it is recommended to select different new drive letter for the Log file',
+        'When selecting new drive letter for Data file it is recommended to select a different new drive letter for the Log file.',
     CREATE_DB_NAME_TOOLTIP: [
         'SQL databases should have names that are no more than 30 characters long.',
         'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
         'Names should not be Transact-SQL reserved words.'
     ],
-    LOG_SIZE_TOOLTIP: [
-        'The minimum value of log size is 1 GiB.',
-        'If the default data size is change the log size will automatically set to 25% of the data size.'
-    ],
-    DATA_SIZE_TOOLTIP: 'The default value of data size is 1 GiB.'
+    DB_ADVANCED_CREATE: 'Advanced create',
+    DB_QUICK_CREATE: 'Quick create',
+    QUICK_DB_CREATE_CONTENT:
+        'Use a recommended best-practice configuration. Quick mode enhance performance and restore time by allocating new drive letters for you, segregating the user database layout into distinct volumes and LUNs per data and log files and optimize performance. Particularly recommended for large databases.',
+    ADVANCED_DB_CREATE_CONTENT:
+        'You set your storage layout configuration by precisely configuring drive letter options for database data and log files. Allocating new drive letters, segregates the user database layout into distinct volumes and LUNs per data and log files and optimize performance. Alternatively, select existing drive letters  (hosting multiple user data and log files on the same drive), recommended for small-medium databases.',
+    FILE_SIZE_TEXT:
+        'The Log size minimum value is 1 GiB.  Recommended size (default) is approximately 25% of data size.',
+    CREATE_USER_DB_TITLE: 'Create user database',
+    DB_CREATE_HOST: 'Host:',
+    CREATE: 'Create',
+    DB_CREATE_NOTIFICATION: ['Database ', ' in host ', ' is in deployment status.'],
+    DATABASE_INFORMATION: 'Database information',
+    FILE_SETTINGS: 'File settings',
+    DB_CREATE_DATABASE_NAME: 'Database name',
+    DB_CREATE_FILES_SIZE: 'Files size',
+    DB_CREATE_FILE_SETTINGS_MODE: 'File settings mode',
+    DB_CREATE_FILE_NAMES: 'File names',
+    DB_CREATE_FILE_NAMES_AND_DRIVES: 'File names & drives',
+    DATA_FILE_SIZE: 'Data file size:',
+    LOG_FILE_SIZE: 'Log file size:',
+    DATA_FILE_NAME: 'Data file name',
+    LOG_FILE_NAME: 'Log file name',
+    DATA_FILE: 'Data file',
+    LOG_FILE: 'Log file',
+    DATA_FILE_PATH: 'Data file path:',
+    LOG_FILE_PATH: 'Log file path:',
+    SELECT_DRIVE_LETTER: 'Select drive letter'
 };
 
 export const CODE_VIEWER = {
