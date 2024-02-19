@@ -516,6 +516,7 @@ const WLMDB = 'wlmdb';
 
 const ARTIFACT_BUCKET_NAME = process.env.ARTIFACT_BUCKET_NAME || config.get<string>('bucket.artifacts');
 const SIGNED_TEMPLATES_BUCKET_NAME = process.env.TEMPLATE_BUCKET_NAME || config.get<string>('bucket.signedTemplates');
+const TEMPLATE_BUCKET_REGION = process.env.WLMDB_BUCKET_REGION || config.get<string>('bucket.region');
 const CF_DEPLOY_ROLE_NAME = 'CfDeployRoleName';
 const VALIDATION_AMI = 'ValidationAmi';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
@@ -1268,5 +1269,6 @@ export {
     TEMPLATE_CLOUDWATCH_ENDPOINT,
     MAP_SERVICE_TEMPLATE_PARAMETER,
     ARTIFACT_BUCKET_NAME,
-    SIGNED_TEMPLATES_BUCKET_NAME
+    SIGNED_TEMPLATES_BUCKET_NAME,
+    TEMPLATE_BUCKET_REGION
 };
