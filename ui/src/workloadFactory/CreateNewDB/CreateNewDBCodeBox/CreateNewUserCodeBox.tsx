@@ -1,7 +1,7 @@
 import { DsTypography, Popover } from '@netapp/design-system';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { generateOptionType } from '../../../utils/utilityFunctions';
 import CodeBoxHeading from '../../../common/CodeBoxHeading/CodeBoxHeading';
@@ -17,7 +17,6 @@ import { getBaseUrl } from '../../../utils/apiService';
 
 const CreateNewUserCodeBox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
-    const [restApiData, setRestApiData] = useState('');
 
     const resourceId = useAppSelector(state => state.auth.resourceId);
     const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
@@ -37,16 +36,6 @@ const CreateNewUserCodeBox = () => {
 
     const setDisplayedDataInCodeBox = () => {
         const payload = createUserDbPayload(createNewUser);
-        const baseUrl = getBaseUrl();
-        const restApiPayload = CREATE_DB_CURL_REQ_TEMPLATE(
-            baseUrl,
-            selectedCredId?.data?.credentialsId || CRED_PLACEHOLDERS.CRED_ID,
-            selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION,
-            resourceId,
-            CRED_PLACEHOLDERS.TOKEN,
-            payload
-        );
-        setRestApiData(restApiPayload);
         return (
             <>
                 <CodeBoxColor
@@ -59,10 +48,22 @@ const CreateNewUserCodeBox = () => {
         );
     };
 
+    useEffect(() => {}, [createNewUser]);
+
     // To copy response based on dropdown selection
     const copyResponseData = () => {
         if (dropDownValue === CODE_VIEWER.REST_API) {
-            return restApiData;
+            const payload = createUserDbPayload(createNewUser);
+            const baseUrl = getBaseUrl();
+            const restApiPayload = CREATE_DB_CURL_REQ_TEMPLATE(
+                baseUrl,
+                selectedCredId?.data?.credentialsId || CRED_PLACEHOLDERS.CRED_ID,
+                selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION,
+                resourceId || CRED_PLACEHOLDERS.DATABASE_HOST_ID,
+                CRED_PLACEHOLDERS.TOKEN,
+                JSON.stringify(payload, null, 2)
+            );
+            return restApiPayload;
         } else {
             return '';
         }

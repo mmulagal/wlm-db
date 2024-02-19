@@ -179,7 +179,8 @@ export const CRED_PLACEHOLDERS = {
     ACCOUNT_ID: '<AccountId>',
     CRED_ID: '<CredentialId>',
     REGION: '<Region>',
-    TOKEN: '<Token>'
+    TOKEN: '<Token>',
+    DATABASE_HOST_ID: '<databaseHostId>'
 };
 
 export const MARKETING_PAGE_URL = 'https://workloads.netapp.com/database-workloads';
