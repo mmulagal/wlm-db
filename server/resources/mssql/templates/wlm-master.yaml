@@ -924,6 +924,7 @@ Resources:
       FSxNSecret: !Sub ${AWS::StackName}-fsx
       SQLServiceAccountSecret: !Sub ${AWS::StackName}-sql
       DatabaseType: 'Microsoft SQL server'
+      FsxSvmName: !Ref FSxSvmName
       Metrics: !Ref Metrics
 
       FSxFileSystemId:
