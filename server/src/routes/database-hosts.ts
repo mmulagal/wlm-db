@@ -1,13 +1,21 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases } from '../operations/database-hosts-operations';
+import {
+    getDatabaseHostsSummary,
+    getDatabaseHostSummary,
+    getDatabases,
+    deployDatabase
+} from '../operations/database-hosts-operations';
 import {
     DatabaseHostDetailsSchema,
     DatabasesListSchema,
-    DatabaseHostsSummarySchema
+    DatabaseHostsSummarySchema,
+    DatabasesCreateSchema
 } from './schemas/database-hosts-schemas';
 
 const DATABASE_HOSTS_API_PATH: string = '/v1/database-hosts';
+const MSSQL_DATABASE_HOSTS_API_PATH: string =
+    '/v1/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId';
 
 export default function databaseHostsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -41,6 +49,40 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     params: { accountId, databaseHostId }
                 } = request;
                 const response = await getDatabases(accountId, databaseHostId);
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_DATABASE_HOSTS_API_PATH}/database`,
+            { schema: DatabasesCreateSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region },
+                    body: {
+                        databaseName,
+                        dataFileName,
+                        dataVolumeSize,
+                        dataDrive,
+                        logFileName,
+                        logVolumeSize,
+                        logDrive,
+                        isExisting
+                    }
+                } = request;
+                const response = await deployDatabase(
+                    accountId,
+                    databaseHostId,
+                    credentialsId,
+                    region,
+                    databaseName,
+                    dataFileName,
+                    dataVolumeSize,
+                    dataDrive,
+                    logFileName,
+                    logVolumeSize,
+                    logDrive,
+                    isExisting
+                );
                 return reply.send(response);
             }
         );

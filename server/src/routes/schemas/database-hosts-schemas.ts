@@ -5,7 +5,10 @@ import {
     DatabaseHostSummaryListResponse,
     DatabaseHostSummaryParams,
     DatabaseHostSummaryResponse,
-    DatabasesListResponse
+    DatabasesListResponse,
+    CreateDatabseRequestBody,
+    DatabasesCreateResponse,
+    MSSQLCREATEDATABASEPARAMS
 } from '../types/database-hosts.types';
 import { AccountIdParams } from '../types/generic.types';
 
@@ -52,4 +55,16 @@ const DatabasesListSchema = {
     }
 };
 
-export { DatabaseHostsSummarySchema, DatabaseHostDetailsSchema, DatabasesListSchema };
+// Create database in a database server
+const DatabasesCreateSchema = {
+    tags: [RouteTags.DEPLOYMENT],
+    params: MSSQLCREATEDATABASEPARAMS,
+    summary: 'Create a new user databases in a server ',
+    description: 'Create a new user database in a server',
+    body: CreateDatabseRequestBody,
+    response: {
+        200: DatabasesCreateResponse
+    }
+};
+
+export { DatabaseHostsSummarySchema, DatabaseHostDetailsSchema, DatabasesListSchema, DatabasesCreateSchema };

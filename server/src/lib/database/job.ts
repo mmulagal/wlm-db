@@ -128,6 +128,14 @@ async function createJobs(accountId: string, jobs: readOnlyJob[]) {
     });
 }
 
+async function createJob(accountId: string, job: readOnlyJob) {
+    logger.info('Creating job', { accountId, job });
+
+    return prisma.client.job.create({
+        data: job
+    });
+}
+
 async function updateJob(
     accountId: string,
     jobId: string,
@@ -247,5 +255,6 @@ export {
     deleteJobsOfAccount,
     deleteOlderJobs,
     getJobCountByStatus,
-    groupJobsByTimeAndStatus
+    groupJobsByTimeAndStatus,
+    createJob
 };

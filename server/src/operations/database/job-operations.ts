@@ -11,7 +11,8 @@ import {
     groupJobsByTimeAndStatus,
     listJobs,
     listUniqueJob,
-    updateJob
+    updateJob,
+    createJob
 } from '../../lib/database/job';
 import getLogger from '../../utils/logger';
 import { trimAccountIdForDemo } from './database-operations';
@@ -114,6 +115,13 @@ async function registerJobs(accountId: string, jobs: JobRecordType[] | []) {
     }
     const jobsToCreate = jobs.map(job => formatJobDbSchema(accountId, job));
     return createJobs(accountId, jobsToCreate);
+}
+
+async function registerJob(accountId: string, job: JobRecordType) {
+    logger.info('Registering job', { accountId, job });
+
+    const jobToCreate = formatJobDbSchema(accountId, job);
+    return createJob(accountId, jobToCreate);
 }
 
 async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) {
@@ -316,5 +324,6 @@ export {
     updateJobDetails,
     deleteJobsWithAllSubJobs,
     getJobSummary,
-    getJobSummaryByTime
+    getJobSummaryByTime,
+    registerJob
 };

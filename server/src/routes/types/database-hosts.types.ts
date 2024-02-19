@@ -12,6 +12,13 @@ const DatabaseHostSummaryParams = Type.Object({
 });
 type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
 
+const MSSQLCREATEDATABASEPARAMS = Type.Object({
+    accountId: Type.String({ minLength: 1 }),
+    databaseHostId: Type.String({ minLength: 1 }),
+    credentialsId: Type.String(),
+    region: Type.String()
+});
+
 // Query parameter to fetch protection, performance, storage and cost details
 const DatabaseHostQueryString = Type.Object({
     fields: Type.Optional(Type.String()),
@@ -167,6 +174,24 @@ const DatabasesListResponse = Type.Object({
 });
 type DatabasesListResponseType = Static<typeof DatabasesListResponse>;
 
+// Cloud formation template creation Request and Response
+const CreateDatabseRequestBody = Type.Object({
+    databaseName: Type.String(),
+    dataFileName: Type.String(),
+    dataVolumeSize: Type.Number(),
+    dataDrive: Type.String(),
+    logFileName: Type.String(),
+    logVolumeSize: Type.Number(),
+    logDrive: Type.String(),
+    isExisting: Type.Boolean()
+});
+
+const DatabasesCreateResponse = Type.Object({
+    jobId: Type.String()
+});
+
+type DatabaseCreateResponseType = Static<typeof DatabasesCreateResponse>;
+
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -201,5 +226,9 @@ export {
     DetailedPerformanceResponse,
     DetailedPerformanceResponseType,
     RWPerformanceResponse,
-    RWPerformanceResponseType
+    RWPerformanceResponseType,
+    CreateDatabseRequestBody,
+    DatabasesCreateResponse,
+    DatabaseCreateResponseType,
+    MSSQLCREATEDATABASEPARAMS
 };
