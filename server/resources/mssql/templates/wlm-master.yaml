@@ -917,6 +917,11 @@ Resources:
       Region: !Ref 'AWS::Region' 
       StackName: !Ref 'AWS::StackName'
       DatabaseType: 'Microsoft SQL server'
+      FSxSvmId:
+          !If
+            - NewOntapFsx
+            - !GetAtt "NewFSxStack.Outputs.FSxSvmId"
+            - !GetAtt "ExistingFSxStack.Outputs.FSxSvmId"
       Metrics: !Ref Metrics
 
       FSxFileSystemId:

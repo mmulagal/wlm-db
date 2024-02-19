@@ -4,13 +4,13 @@ export const createUserDbPayload = (newUserDb: any) => {
         dataFileName: newUserDb?.newUserDBFileName,
         dataVolumeSize:
             newUserDb?.newUserDataSizeUnit === 'TiB' ? newUserDb?.newUserDataSize * 1024 : newUserDb?.newUserDataSize,
-        dataDrive: newUserDb?.driveLetter,
+        dataDrive: newUserDb?.driveLetter?.value,
         logFileName: newUserDb?.newUserLogFileName,
         logVolumeSize:
             newUserDb?.newUserLogFileSizeUnit === 'TiB'
                 ? newUserDb?.newUserLogFileSize * 1024
                 : newUserDb?.newUserLogFileSize,
-        logDrive: newUserDb?.driveLetterLogFile
+        logDrive: newUserDb?.driveLetterLogFile?.value
     };
     return payload;
 };

@@ -494,7 +494,8 @@ async function processCloudFormationMessages() {
                                                         ParameterStorePath: parameterStorePath,
                                                         ActiveDirectoryName: activeDirectoryName,
                                                         ActiveDirectoryAddress: activeDirectoryAddress,
-                                                        EncryptedFsxPassword: encryptedFsxPassword
+                                                        EncryptedFsxPassword: encryptedFsxPassword,
+                                                        FSxSvmId: fsxSvmId
                                                     } = resourceProperties;
                                                     const [resourceDetails] = await getResources(
                                                         accountId,
@@ -575,6 +576,7 @@ async function processCloudFormationMessages() {
                                                             parameterStorePath,
                                                             activeDirectoryName,
                                                             activeDirectoryAddress,
+                                                            fsxSvmId,
                                                             source:RESOURCE_SOURCE.DEPLOY
                                                         }
                                                     });
