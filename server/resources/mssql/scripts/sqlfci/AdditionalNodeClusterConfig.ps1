@@ -8,10 +8,13 @@ param(
     [string]$ClusterName,
 
     [Parameter(Mandatory=$true)]
-    [string]$AdminSecret,
+    [string]$Stackname,
 
     [Parameter(Mandatory=$true)]
-    [string]$DomainAdminUser
+    [string]$DomainAdminUser,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Parentstackname
 
 )
 try{
@@ -21,10 +24,10 @@ $ErrorActionPreference = "Stop"
 $DscCertThumbprint = (get-childitem -path cert:\LocalMachine\My | where { $_.subject -eq "CN=AWSLWDscEncryptCert" }).Thumbprint
 $DomainNetBIOSName = $env:USERDOMAIN
 # Getting Password from Secrets Manager for AD Admin User
-$AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret).SecretString
+$AdminPassword = (Get-SSMParameter -Name "/$Parentstackname/domain/password" -WithDecryption $True).Value
 $ClusterAdminUser = $DomainNetBIOSName + '\' + $DomainAdminUser
 # Creating Credential Object for Administrator
-$Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminUser.Password -AsPlainText -Force)))
+$Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminPassword -AsPlainText -Force)))
 
 $ConfigurationData = @{
     AllNodes = @(

@@ -1014,6 +1014,9 @@ const subJobDescriptions: SubJobDescriptions = {
         'Signaling wait condition to resume next steps'
 };
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
+const RESOURCE_SOURCE = { 
+    DEPLOY: 'deployment',
+    DISCOVER: 'discovery'}
 
 export {
     WLMDB,
@@ -1241,5 +1244,6 @@ export {
     JOBS_DEFAULT_TIME_RANGE,
     subJobDescriptions,
     CF_STACK_RESOURCE_TYPE,
-    AWS_PRICING_TYPE
+    AWS_PRICING_TYPE,
+    RESOURCE_SOURCE
 };

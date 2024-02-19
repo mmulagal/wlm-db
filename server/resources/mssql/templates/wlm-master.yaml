@@ -295,27 +295,54 @@ Conditions:
   IsStandalone: !Equals [!Ref SQLDeploymentMode, 'standalone']
   IsFailoverCluster: !Not [Condition: IsStandalone]
 Resources:
-  DomainAdminSecretName:
-    Type: AWS::SecretsManager::Secret
+  DomainAdminSsmUsername:
+    Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub ${AWS::StackName}-domain
-      Description: Secret for Domain Account
-      SecretString: !Sub '{ "username": "${DomainAdminUser}", "password": "${DomainAdminPassword}" }'
+      Name: !Sub /${AWS::StackName}/domain/username
+      Description: SSM Paramter for domain username
+      Type: String
+      Value: !Ref DomainAdminUser
 
-  FSxNSecret:
-    Type: AWS::SecretsManager::Secret
+  DomainAdminSsmPassword:
+    Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub ${AWS::StackName}-fsx
-      Description: Secret for FSxN filesystem
-      SecretString: !Sub '{ "username": "${FSxAdminUsername}", "password": "${FSxAdminPassword}" }'
-
-  SQLServiceAccountSecret:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Name: !Sub ${AWS::StackName}-sql
-      Description: Secret for SQL Service Account
-      SecretString: !Sub '{ "username": "${SQLServiceAccountName}", "password": "${SQLServiceAccountPassword}" }'
+      Name: !Sub /${AWS::StackName}/domain/password
+      Description: SSM Paramter for domain password
+      Type: String
+      Value: !Ref DomainAdminPassword
   
+  FSxNAdminSsmUsername:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/fsx/username
+      Description: SSM Paramter for FSxN username
+      Type: String
+      Value: !Ref FSxAdminUsername
+
+  FSxNAdminSsmPassword:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/fsx/password
+      Description: SSM Paramter for FSxN password
+      Type: String
+      Value: !Ref FSxAdminPassword
+  
+  SQLServiceAccountSsmUsername:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/sql/username
+      Description: SSM Paramter for SQL service account username
+      Type: String
+      Value: !Ref SQLServiceAccountName
+
+  SQLServiceAccountSsmPassword:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${AWS::StackName}/sql/password
+      Description: SSM Paramter for SQL service account password
+      Type: String
+      Value: !Ref SQLServiceAccountPassword
+
   EC2IAMRole:
     Type: AWS::IAM::Role
     Properties:
@@ -333,12 +360,6 @@ Resources:
       Policies:
         - PolicyDocument:
             Statement:
-              - Sid: SecretManagerListStatement
-                Effect: Allow
-                Action:
-                  - secretsmanager:ListSecrets
-                  - secretsmanager:GetSecretValue
-                Resource: '*'
               - Sid: CloudWatchDeploymentStatement
                 Effect: Allow
                 Action:
@@ -416,6 +437,7 @@ Resources:
                   - ssm:UpdateInstanceAssociationStatus
                   - ssm:UpdateInstanceInformation
                   - ssm:SendCommand
+                  - ssm:PutParameter
                 Resource: '*'
               - Sid: EC2MessagesStatement
                 Effect: Allow
@@ -480,8 +502,6 @@ Resources:
     Properties:
       TemplateURL: {{ValidationTemplate}}
       Parameters:
-        DomainAdminSecretName:
-          Ref: DomainAdminSecretName
         DomainAdminUser:
           Ref: DomainAdminUser
         DomainDNSName:
@@ -519,8 +539,6 @@ Resources:
           - ExistingOntapFsx
           - Ref: FSxFileSystemId
           - 'fs-id'
-        FSxAdministratorPasswordSecret:
-          Ref: FSxNSecret
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -536,8 +554,6 @@ Resources:
     Properties:
       TemplateURL: {{ValidationTemplate}}
       Parameters:
-        DomainAdminSecretName:
-          Ref: DomainAdminSecretName
         DomainAdminUser:
           Ref: DomainAdminUser
         DomainDNSName:
@@ -575,8 +591,6 @@ Resources:
           - ExistingOntapFsx
           - Ref: FSxFileSystemId
           - 'fs-id'
-        FSxAdministratorPasswordSecret:
-          Ref: FSxNSecret
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -602,12 +616,6 @@ Resources:
       Handle: !If [IsFailoverCluster, !Ref FCIWaitHandler, !Ref SIWaitHandler]
       Timeout: '7200'
       Count: 0
-  FSxNSecret:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Name: !Sub ${AWS::StackName}-fsx
-      Description: Secret for FSxN filesystem
-      SecretString: !Sub '{ "username": "${FSxAdminUsername}", "password": "${FSxAdminPassword}" }'
   NewFSxStack:
     Type: AWS::CloudFormation::Stack
     Condition: NewOntapFsx
@@ -619,8 +627,6 @@ Resources:
           Ref: DeploymentMode
         FSxFileSystemName:
           Ref: FSxFileSystemName
-        FSxAdministratorPasswordSecret:
-          Ref: FSxNSecret
         FSxVolumeThroughputCapacity:
           Ref: FSxVolumeThroughputCapacity
         FSxStorageCapacity:
@@ -659,6 +665,8 @@ Resources:
           Ref: FileSystemEncryptionKeyId
         FSxDiskIops:
           Ref: FSxDiskIops 
+        ParentStackName:
+          Ref: AWS::StackName
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -717,8 +725,6 @@ Resources:
             - Fn::Split:
                 - ","
                 - Ref: DNSIpAddresses
-        DomainAdminSecretName:
-          Ref: DomainAdminSecretName
         DomainAdminUser:
           Ref: DomainAdminUser
         DomainDNSName:
@@ -755,8 +761,6 @@ Resources:
           Ref: SqlServerName
         SQLAdminAccounts:
           Ref: SQLServiceAccountName
-        SQLServiceAccountSecret:
-          Ref: SQLServiceAccountSecret
         VPCID:
           Ref: VPCID
         VPCCIDR:
@@ -780,8 +784,6 @@ Resources:
             - NewOntapFsx
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
-        FsxAdminPassword:
-          Ref: FSxNSecret
         SQLSvmName:
           Ref: SQLSvmName
         FSxDataVolumeName:
@@ -829,8 +831,6 @@ Resources:
             - Fn::Split:
                 - ","
                 - Ref: DNSIpAddresses
-        DomainAdminSecretName:
-          Ref: DomainAdminSecretName
         DomainAdminUser:
           Ref: DomainAdminUser
         DomainDNSName:
@@ -859,8 +859,6 @@ Resources:
           Ref: SQLAMIID
         SQLAdminAccounts:
           Ref: SQLServiceAccountName
-        SQLServiceAccountSecret:
-          Ref: SQLServiceAccountSecret
         VPCID:
           Ref: VPCID
         VPCCIDR:
@@ -878,8 +876,6 @@ Resources:
             - NewOntapFsx
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
-        FsxAdminPassword:
-          Ref: FSxNSecret
         SQLSvmName:
           Ref: SQLSvmName
         FSxDataVolumeName:
@@ -920,9 +916,6 @@ Resources:
       JWToken: !Ref JwtToken
       Region: !Ref 'AWS::Region' 
       StackName: !Ref 'AWS::StackName'
-      DomainAdminSecretName: !Sub ${AWS::StackName}-domain
-      FSxNSecret: !Sub ${AWS::StackName}-fsx
-      SQLServiceAccountSecret: !Sub ${AWS::StackName}-sql
       DatabaseType: 'Microsoft SQL server'
       Metrics: !Ref Metrics
 
@@ -976,3 +969,4 @@ Resources:
       ActiveDirectoryName: !Ref DomainDNSName
       ActiveDirectoryAddress: !Ref DNSIpAddresses
       EncryptedFsxPassword: !Ref 'EncryptedFsxPassword'
+      ParameterStorePath: !Ref 'AWS::StackName'

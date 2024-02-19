@@ -1,12 +1,5 @@
  [CmdletBinding()]
 param(
-
-    [Parameter(Mandatory=$true)]
-    [string]$AdminSecret,
-
-	[Parameter(Mandatory=$true)]
-    [string]$SqlUserSecret,
-
 	[Parameter(Mandatory=$true)]
     [string]$MSSQLMediaBucket,
 
@@ -26,7 +19,10 @@ param(
     [string]$ResourceID,   
 
     [Parameter(Mandatory=$true)]
-    [string]$Stackname
+    [string]$Stackname,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Parentstackname
 )
 
 #get Instance ID
@@ -40,14 +36,13 @@ $HostName = hostname
 
 $DomainNetBIOSName = $env:USERDOMAIN
 # Creating Credential Object for Administrator
-$AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret).SecretString
+$AdminPassword = (Get-SSMParameter -Name "/$Parentstackname/domain/password" -WithDecryption $True).Value
 $ClusterAdminUser = $DomainNetBIOSName+'\'+$DomainAdminUser
-$Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminUser.Password -AsPlainText -Force)))
+$Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminPassword -AsPlainText -Force)))
 
 #Retrieving MSSQL service account
-$SqlUserAccount = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $SqlUserSecret).SecretString
 $SqlUserName = $DomainNetBIOSName + '\' + $SqlUser
-$SqlUserPassword = $SqlUserAccount.Password
+$SqlUserPassword = (Get-SSMParameter -Name "/$Parentstackname/sql/password" -WithDecryption $True).Value
 
 if((get-ec2image $AMIID).UsageOperation -eq 'RunInstances:0002')
 {

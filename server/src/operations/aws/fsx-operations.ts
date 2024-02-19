@@ -208,7 +208,7 @@ async function getStorageDataUsingSSM(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    fsxSecret: string,
+    parameterStorePath: string,
     apiEndpoint: string,
     apiFilter: string,
     apiQuery: string,
@@ -221,11 +221,11 @@ async function getStorageDataUsingSSM(
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         commands = [
-            `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+            `C:\\SSM\\OntapRestGet.ps1 -ParameterStorePath ${parameterStorePath} -FSxID test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
         ];
     } else {
         commands = [
-            `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+            `C:\\SSM\\OntapRestGet.ps1 -ParameterStorePath ${parameterStorePath} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
         ];
     }
 
@@ -292,7 +292,7 @@ async function getOntapVolumesSnapshotCount(
         metadata
     });
 
-    const { activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata as unknown as Metadata;
+    const { activeNodeInstanceId, standbyNodeInstanceId, parameterStorePath } = metadata as unknown as Metadata;
 
     const cacheKey = `${activeNodeInstanceId || standbyNodeInstanceId}-snapshot-count`;
     if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheKey)) {
@@ -309,7 +309,7 @@ async function getOntapVolumesSnapshotCount(
             const apiQuery = 'fields=snapshot_count';
 
             const commands = [
-                `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+                `C:\\SSM\\OntapRestGet.ps1 -ParameterStorePath ${parameterStorePath} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
             ];
 
             const response = await callSsmExecution(
@@ -397,7 +397,7 @@ async function getMappedOntapVolumes(credentialsId: string, region: string, file
         metadata
     });
 
-    const { activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata;
+    const { activeNodeInstanceId, standbyNodeInstanceId, parameterStorePath } = metadata;
 
     const cacheKey = `${activeNodeInstanceId || standbyNodeInstanceId}-mapped-volumes`;
     if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheKey)) {
@@ -407,7 +407,7 @@ async function getMappedOntapVolumes(credentialsId: string, region: string, file
 
     try {
         const commands = [
-            `C:\\SSM\\Get-MappedOntapVolumes.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region}`
+            `C:\\SSM\\Get-MappedOntapVolumes.ps1 -ParameterStorePath ${parameterStorePath} -FSxID ${fileSystemId} -FSxRegion ${region}`
         ];
 
         const response = await callSsmExecution(

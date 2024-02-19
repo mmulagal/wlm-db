@@ -19,7 +19,6 @@ Metadata:
               Parameters:
                   - DomainDNSName
                   - DomainAdminUser
-                  - DomainAdminSecretName
                   - ADDnsIpAddresses
                   - DomainMemberSGID
             - Label:
@@ -33,7 +32,6 @@ Metadata:
                   default: Amazon FSx for ONTAP Volume Configuration
               Parameters:
                   - FSxFileSystemId
-                  - FsxAdminPassword
                   - SQLSvmName
                   - FSxDataLunSize
                   - FSxDataVolumeName
@@ -51,7 +49,6 @@ Metadata:
                   - SqlFSxWSFCName
                   - SqlFSxFCIName
                   - SQLAdminAccounts
-                  - SQLServiceAccountSecret
                   - AMIID
                   - BYOLAMI
             - Label:
@@ -87,11 +84,6 @@ Metadata:
                     up security groups. e.g 10.0.0.8/16
             WorkloadInstanceType:
                 default: Workload Servers Instance Type for SQL EC2 Instances e.g r4.xlarge
-            DomainAdminSecretName:
-                default: Domain Admin Secret Name for the Domain Admin user in Secrets Manager
-                    e.g 'LaunchWizard-Admin'
-            SQLServiceAccountSecret:
-                default: Secret Name for the SQL Admin user in Secrets Manager e.g 'WLMDB-Admin'
             DomainAdminUser:
                 default: Domain Admin User Name e.g Administrator
             DomainDNSName:
@@ -124,8 +116,6 @@ Metadata:
                 default: SQL log volume name
             FSxTempDbVolumeName:
                 default: SQL tempDb volume name
-            FsxAdminPassword:
-                default: Secret name for FSxN Admin password in Secrets Manager
             FSxFileSystemId:
                 default: File system ID for FSxN
             SQLSvmName:
@@ -224,12 +214,6 @@ Parameters:
         MaxLength: '15'
         MinLength: '1'
         Type: String
-    DomainAdminSecretName:
-        Description: ARN for the secret for domain admin.
-        Type: String
-    SQLServiceAccountSecret:
-        Description: ARN of the secret for the SQL Server service account.
-        Type: String
     DomainAdminUser:
         AllowedPattern: ([a-zA-Z0-9]+(\.|_|-|@)*)+
         Default: admin
@@ -316,9 +300,6 @@ Parameters:
         Type: String
     FSxFileSystemId:
         Description: ID of the FSx for ONTAP file system.
-        Type: String
-    FsxAdminPassword:
-        Description: ARN of the secret for the FSx for ONTAP admin password.
         Type: String
 Conditions:
     ADSGNotSelected: !Equals
@@ -601,9 +582,7 @@ Resources:
                         d-configure-ontap:
                             command: !Join
                                 - ''
-                                - - pwsh -Command "C:\cfn\scripts\sqlontap\Configure-ONTAP.ps1 -AdminSecret
-                                    '
-                                  - !Ref 'FsxAdminPassword'
+                                - - pwsh -Command "C:\cfn\scripts\sqlontap\Configure-ONTAP.ps1 
                                   - "' -SQLVMName '"
                                   - !Ref 'SQLSvmName'
                                   - "' -FSxDataVolumeName '"
@@ -622,6 +601,8 @@ Resources:
                                   - !Ref 'SQLigroupname'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - '''"'
                         e-connect-ontap-instance:
                             command: !Join
@@ -671,8 +652,8 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
                                     -DomainDNSName '
                                   - !Ref 'DomainDNSName'
-                                  - "' -AdminSecret '"
-                                  - !Ref 'DomainAdminSecretName'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
                                   - '''"'
@@ -704,14 +685,12 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Create-ADServiceAccount.ps1
                                     -DomainAdminUser '
                                   - !Ref 'DomainAdminUser'
-                                  - "' -AdminSecret '"
-                                  - !Ref 'DomainAdminSecretName'
                                   - "' -DomainDNSName '"
                                   - !Ref 'DomainDNSName'
                                   - "' -ServiceAccountUser '"
                                   - !Ref 'SQLAdminAccounts'
-                                  - "' -SqlUserSecret '"
-                                  - !Ref 'SQLServiceAccountSecret'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: '0'
                         j-wait-for-ad-replication:
@@ -742,8 +721,8 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Node1AddCluster.ps1
                                     -DomainDNSName '
                                   - !Ref 'DomainDNSName'
-                                  - "' -AdminSecret '"
-                                  - !Ref 'DomainAdminSecretName'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - "' -FileSystemId '"
                                   - !Ref 'FSxFileSystemId'
                                   - "' -DomainAdminUser '"
@@ -765,8 +744,8 @@ Resources:
                                     - !GetAtt 'NetworkInterface1.SecondaryPrivateIpAddresses'
                                   - "' -ClusterName '"
                                   - !Ref 'SqlFSxWSFCName'
-                                  - "' -AdminSecret '"
-                                  - !Ref 'DomainAdminSecretName'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
@@ -777,14 +756,12 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Configure-MAD-Permissions.ps1
-                                    -AdminSecret '
-                                  - !Ref 'DomainAdminSecretName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
                                   - "' -wsfcName '"
                                   - !Ref 'SqlFSxWSFCName'
-                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
-                                  - !Ref 'AWS::StackName'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 0
                 FCIConfigure:
@@ -804,10 +781,6 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\prepare-fci.ps1
-                                    -AdminSecret '
-                                  - !Ref 'DomainAdminSecretName'
-                                  - "' -SqlUserSecret '"
-                                  - !Ref 'SQLServiceAccountSecret'
                                   - "' -MSSQLMediaBucket '"
                                   - !Ref 'MSSQLMediaBucketName'
                                   - "' -MSSQLMediaKey '"
@@ -820,6 +793,8 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 0
                         d-restart-computer:
@@ -838,8 +813,6 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlontap\completeONTAP-fci.ps1
-                                    -AdminSecret '
-                                  - !Ref 'DomainAdminSecretName'
                                   - "' -Node1FciIp '"
                                   - !Select
                                     - '1'
@@ -858,14 +831,14 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 0
                         j-validate-FCI-Cluster:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Validate-FCICluster.ps1
-                                    -AdminSecret '
-                                  - !Ref 'DomainAdminSecretName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
                                   - "' -WFCName '"
@@ -876,6 +849,8 @@ Resources:
                                   - !Ref 'SqlFSxServerNetBIOSName2'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 0
                         k-validate-SQL-Login:
@@ -1147,8 +1122,6 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Add-node2initiator.ps1
-                                    -AdminSecret '
-                                  - !Ref 'FsxAdminPassword'
                                   - "' -SQLVMName '"
                                   - !Ref 'SQLSvmName'
                                   - "' -igroup '"
@@ -1157,6 +1130,8 @@ Resources:
                                   - !Ref 'FSxFileSystemId'
                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - '''"'
                         e-connect-ontap-instance:
                             command: !Join
@@ -1196,8 +1171,8 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
                                     -DomainDNSName '
                                   - !Ref 'DomainDNSName'
-                                  - "' -AdminSecret '"
-                                  - !Ref 'DomainAdminSecretName'
+                                   - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
                                   - '''"'
@@ -1247,12 +1222,12 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\AdditionalNodeAddCluster.ps1
-                                    -AdminSecret '
-                                  - !Ref 'DomainAdminSecretName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 60
                         b-restart-computer:
@@ -1268,8 +1243,8 @@ Resources:
                                     - !GetAtt 'NetworkInterface2.SecondaryPrivateIpAddresses'
                                   - "' -ClusterName '"
                                   - !Ref 'SqlFSxWSFCName'
-                                  - "' -AdminSecret '"
-                                  - !Ref 'DomainAdminSecretName'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
                                   - '''"'
@@ -1287,12 +1262,12 @@ Resources:
                                     - !GetAtt 'NetworkInterface2.SecondaryPrivateIpAddresses'
                                   - "' -ClusterName '"
                                   - !Ref 'SqlFSxWSFCName'
-                                  - "' -AdminSecret '"
-                                  - !Ref 'DomainAdminSecretName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 0
                 ConfigureFCI:
@@ -1312,10 +1287,6 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\prepare-fci.ps1
-                                    -AdminSecret '
-                                  - !Ref 'DomainAdminSecretName'
-                                  - "' -SqlUserSecret '"
-                                  - !Ref 'SQLServiceAccountSecret'
                                   - "' -MSSQLMediaBucket '"
                                   - !Ref 'MSSQLMediaBucketName'
                                   - "' -MSSQLMediaKey '"
@@ -1328,6 +1299,8 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 0
                         d-restart-computer:

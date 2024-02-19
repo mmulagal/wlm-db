@@ -6,11 +6,14 @@ param(
 
     [Parameter(Mandatory=$true)]
     [string]
-    $DomainAdminPasswordKey,
+    $Stackname,
 
     [Parameter(Mandatory=$true)]
     [string]
-    $NetBIOSName
+    $NetBIOSName,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Parentstackname
 )
 
 try
@@ -23,9 +26,8 @@ try
     #$DomainAdminPassword = (Get-SSMParameterValue -Names $DomainAdminPasswordKey -WithDecryption $True).Parameters[0].Value
     #$DomainAdminSecurePassword = ConvertTo-SecureString $DomainAdminPassword -AsPlainText -Force
     #$DomainAdminCreds = New-Object System.Management.Automation.PSCredential($DomainAdminFullUser, $DomainAdminSecurePassword)
-    $AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $DomainAdminPasswordKey).SecretString
     $DomainAdminFullUser = $DomainNetBIOSName + '\' + $DomainAdminUser
-    $pass = ConvertTo-SecureString $AdminUser.Password -AsPlainText -Force
+    $pass = (Get-SSMParameter -Name "/$Parentstackname/domain/password" -WithDecryption $True).Value
     $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,$pass))
     $renameinstance = {
         $query = "

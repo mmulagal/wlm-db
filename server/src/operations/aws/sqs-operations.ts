@@ -21,7 +21,8 @@ import {
     WF,
     DEPLOYMENT_JOBS_FAILED_STATUS,
     WLMDB_COST_ALLOCATION_TAG,
-    CF_STACK_RESOURCE_TYPE
+    CF_STACK_RESOURCE_TYPE,
+    RESOURCE_SOURCE
 } from '../../utils/consts';
 import {
     checkAndRetrieveJsonObject,
@@ -490,9 +491,7 @@ async function processCloudFormationMessages() {
                                                         SQLDeploymentType: sqlDeploymentType,
                                                         ResourceName: resourceName,
                                                         FileSystemType: fileSystemType,
-                                                        FSxNSecret: fsxSecret,
-                                                        DomainAdminSecretName: domainAdminSecret,
-                                                        SQLServiceAccountSecret: sqlServiceAccountSecret,
+                                                        ParameterStorePath: parameterStorePath,
                                                         ActiveDirectoryName: activeDirectoryName,
                                                         ActiveDirectoryAddress: activeDirectoryAddress,
                                                         EncryptedFsxPassword: encryptedFsxPassword
@@ -573,11 +572,10 @@ async function processCloudFormationMessages() {
                                                             standbyNodeInstanceIp,
                                                             sqlDeploymentType,
                                                             fileSystemType,
-                                                            fsxSecret,
-                                                            domainAdminSecret,
-                                                            sqlServiceAccountSecret,
+                                                            parameterStorePath,
                                                             activeDirectoryName,
-                                                            activeDirectoryAddress
+                                                            activeDirectoryAddress,
+                                                            source:RESOURCE_SOURCE.DEPLOY
                                                         }
                                                     });
 

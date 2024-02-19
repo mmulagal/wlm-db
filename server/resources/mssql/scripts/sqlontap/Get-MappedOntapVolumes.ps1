@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [string]$FSxSecretName,
+    [string]$ParameterStorePath,
 
     [Parameter(Mandatory = $true)]
     [string]$FSxID,
@@ -11,9 +11,8 @@ param(
 )
 
 # Read fsxadmin password from secrets and encode the username:password with base64String
-$SecretInfo = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId ${FSxSecretName}).SecretString
-$FSxUserName = $SecretInfo.username
-$FSxPassword = $SecretInfo.password
+$FSxUserName = (Get-SSMParameter -Name "/$ParameterStorePath/fsx/username" -WithDecryption $True).Value
+$FSxPassword = (Get-SSMParameter -Name "/$ParameterStorePath/fsx/password" -WithDecryption $True).Value
 $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${FSxUserName}:${FSxPassword}"))
 $FSxHostName = "management.${FSxID}.fsx.${FSxRegion}.amazonaws.com"
 

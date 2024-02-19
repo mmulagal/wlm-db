@@ -11,10 +11,10 @@ param(
     [string]$FSxRegion,
 
     [Parameter(Mandatory=$true)]
-    [string]$FSxAdministratorPasswordSecret,
+    [string]$Stackname,
 
     [Parameter(Mandatory=$true)]
-    [string]$Stackname,
+    [string]$Parentstackname,
 
     [Parameter(Mandatory=$true)]
     [string]$ResourceID,
@@ -37,17 +37,16 @@ $InstanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} 
 
 $ErrorActionPreference = "Stop"
 try {
-$AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $FSxAdministratorPasswordSecret).SecretString
+$Username = (Get-SSMParameter -Name "/$Parentstackname/fsx/username" -WithDecryption $True).Value
+$Password = (Get-SSMParameter -Name "/$Parentstackname/fsx/password" -WithDecryption $True).Value
 }catch{
     $Failed = $true
-    $FailureReason = '"{0}"' -f "Unable to fetch secret, check secret name $FSxAdministratorPasswordSecret and access to Secrets Manager."
+    $FailureReason = '"{0}"' -f "Unable to fetch SSM parameter, /$Parentstackname/fsx and access to SSM parameter store"
     Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
     exit(1)
 }
-$Username = $AdminUser.username
-$Password = $AdminUser.password
 $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${Username}:${Password}"))
 $FSxHostName = "management.${FSxFileSystemId}.fsx.${FSxRegion}.amazonaws.com"
 

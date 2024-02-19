@@ -57,6 +57,11 @@ const accessLogger = getLogger('access');
 
 const { verifyToken, authorizeJwt } = jwtOperation;
 
+// logger.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+// const resp = await getparamater('6aba106b-eb0a-4842-973e-7a2190dd3679','ap-southeast-1', {Name:'DomainAdmin', WithDecryption:true})
+// logger.info(JSON.parse(resp.Parameter?.Value!))
+// logger.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+
 const port = config.get<number>('app-port');
 const host = '0.0.0.0';
 

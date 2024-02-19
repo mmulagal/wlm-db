@@ -10,15 +10,15 @@ param(
 
     [Parameter(Mandatory=$true)]
     [string]
-    $SQLServiceAccountPasswordKey,
-
-    [Parameter(Mandatory=$true)]
-    [string]
     $DomainAdminUser,
 
     [Parameter(Mandatory=$true)]
     [string]
-    $DomainAdminPasswordKey
+    $Stackname,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Parentstackname
+
 )
 
 try {
@@ -42,10 +42,9 @@ try {
     Write-Host $paths
     $params = "-d$dataPath\master.mdf;-e$sqlpath\ERRORLOG;-l$logPath\mastlog.ldf"
     $DomainAdminFullUser = $DomainNetBIOSName + '\' + $DomainAdminUser
-    $AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $DomainAdminPasswordKey).SecretString
-    $DomainAdminPassword = (ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $DomainAdminPasswordKey).SecretString).password
-    $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,(ConvertTo-SecureString $AdminUser.Password -AsPlainText -Force)))
-    $SQLServiceAccountPassword = (ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $SQLServiceAccountPasswordKey).SecretString).password
+    $DomainAdminPassword = (Get-SSMParameter -Name "/$Parentstackname/domain/password" -WithDecryption $True).Value
+    $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,(ConvertTo-SecureString $DomainAdminPassword -AsPlainText -Force)))
+    $SQLServiceAccountPassword = (Get-SSMParameter -Name "/$Stackname/sql/password" -WithDecryption $True).Value
 
     $SQLFullUser = $DomainNetBIOSName + '\' + $SQLServiceAccount
 

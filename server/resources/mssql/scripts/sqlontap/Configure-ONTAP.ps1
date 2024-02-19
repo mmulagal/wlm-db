@@ -6,9 +6,6 @@ param(
     [string]$FileSystemId,
 
     [Parameter(Mandatory=$true)]
-    [string]$AdminSecret,
-
-    [Parameter(Mandatory=$true)]
     [string]$SQLVMName,
 
     [Parameter(Mandatory=$true)]
@@ -33,16 +30,18 @@ param(
     [string]$ResourceID,   
 
     [Parameter(Mandatory=$true)]
-    [string]$Stackname
+    [string]$Stackname,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Parentstackname 
 
 )
 Start-Transcript -Path C:\cfn\log\configureontap.ps1.txt -Append
 
 $ErrorActionPreference = "Stop"
 
-$AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret).SecretString
-$username = $AdminUser.username
-$password = $AdminUser.password
+$username = (Get-SSMParameter -Name "/$Parentstackname/fsx/username" -WithDecryption $True).Value
+$password = (Get-SSMParameter -Name "/$Parentstackname/fsx/password" -WithDecryption $True).Value
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName

@@ -11,7 +11,10 @@ param(
 
     [Parameter(Mandatory=$true)]
     [string]
-    $DomainAdminPasswordKey,
+    $Stackname,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Parentstackname
 
     [Parameter(Mandatory=$false)]
     [string]
@@ -26,9 +29,8 @@ try {
     #$DomainAdminPassword = (Get-SSMParameterValue -Names $DomainAdminPasswordKey -WithDecryption $True).Parameters[0].Value
     #$DomainAdminSecurePassword = ConvertTo-SecureString $DomainAdminPassword -AsPlainText -Force
     #$DomainAdminCreds = New-Object System.Management.Automation.PSCredential($DomainAdminFullUser, $DomainAdminSecurePassword)
-    $AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $DomainAdminPasswordKey).SecretString
     $DomainAdminFullUser = $DomainNetBIOSName + '\' + $DomainAdminUser
-    $pass = ConvertTo-SecureString $AdminUser.Password -AsPlainText -Force
+    $pass = (Get-SSMParameter -Name "/$Parentstackname/domain/password" -WithDecryption $True).Value
     $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,$pass))
     $SetupMaxDOPPs={
         $sql = "EXEC sp_configure 'show advanced options', 1; RECONFIGURE WITH OVERRIDE; EXEC sp_configure 'max degree of parallelism', " + $Using:dop + "; RECONFIGURE WITH OVERRIDE; "

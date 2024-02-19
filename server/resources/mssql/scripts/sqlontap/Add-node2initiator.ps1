@@ -3,9 +3,6 @@
 param(
 
     [Parameter(Mandatory=$true)]
-    [string]$AdminSecret,
-
-    [Parameter(Mandatory=$true)]
     [string]$sqlvmname,
 
     [Parameter(Mandatory=$true)]
@@ -18,7 +15,10 @@ param(
     [string]$ResourceID,   
 
     [Parameter(Mandatory=$true)]
-    [string]$Stackname    
+    [string]$Stackname,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Parentstackname    
 )
 Start-Transcript -Path C:\cfn\log\ontapconfig.ps1.txt -Append
 
@@ -27,9 +27,8 @@ $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "
 $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 
 $ErrorActionPreference = "Stop"
-$AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret).SecretString
-$username = $AdminUser.username
-$password = $AdminUser.Password
+$username = (Get-SSMParameter -Name "/$Parentstackname/fsx/username" -WithDecryption $True).Value
+$password = (Get-SSMParameter -Name "/$Parentstackname/fsx/password" -WithDecryption $True).Value
 $fsxadmincreds = (New-Object PSCredential($username,(ConvertTo-SecureString $password -AsPlainText -Force)))
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName

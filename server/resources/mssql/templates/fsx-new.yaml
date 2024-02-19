@@ -41,6 +41,7 @@ Metadata:
                   - StandbySubnetId
                   - PreferredRouteTableId
                   - StandbyRouteTableId
+                  - ParentStackName
         ParameterLabels:
             DeploymentMode:
                 default: File system deployment mode
@@ -88,6 +89,8 @@ Metadata:
                 default: Preferred VPC route table
             StandbyRouteTableId:
                 default: Standby VPC route table
+            ParentStackName:
+                default: Name of the parent CloudFormation stack
 
 Parameters:
     DeploymentMode:
@@ -206,6 +209,10 @@ Parameters:
         Description: Standby VPC route tables to associate with your file system.
         Type: String
         Default: rtb-123456
+    
+    ParentStackName:
+        Description: Name of the parent CloudFormation stack.
+        Type: String
 
 Conditions:
     FSxIsProvisionModeAutomatic: !Equals [!Ref FSxDiskIops, '3']
@@ -343,7 +350,7 @@ Resources:
                 DiskIopsConfiguration:
                     Iops: !If [FSxIsProvisionModeAutomatic, !Ref AWS::NoValue, !Ref FSxDiskIops]
                     Mode: !If [FSxIsProvisionModeAutomatic, AUTOMATIC, USER_PROVISIONED]
-                FsxAdminPassword: !Sub '{{resolve:secretsmanager:${FSxAdministratorPasswordSecret}:SecretString:password}}'
+                FsxAdminPassword: !Sub '{{resolve:ssm-secure:/${ParentStackName}/fsx/password:2}}'
                 PreferredSubnetId: !Ref PreferredSubnetId
                 RouteTableIds:
                     !If [

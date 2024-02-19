@@ -6,7 +6,7 @@ interface Metadata {
     standbyNodeInstanceName?: string;
     sqlDeploymentType?: string;
     fileSystemType?: string;
-    fsxSecret?: string;
+    parameterStorePath?: string;
     activeDirectoryName?: string;
     activeDirectoryAddress?: string;
     creationDate?: string;
