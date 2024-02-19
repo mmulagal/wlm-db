@@ -549,9 +549,7 @@ Resources:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
                         o-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
-                        p-move-driveinfoscript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\GetDriveInfo.ps1 -Destination C:\SSM\
-                        q-hide-ssm:
+                        p-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                 InitialSetup:
                     commands:
@@ -1096,9 +1094,7 @@ Resources:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
                         o-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
-                        p-move-driveinfoscript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\GetDriveInfo.ps1 -Destination C:\SSM\
-                        q-hide-ssm:
+                        p-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                 InitialSetup:
                     commands:

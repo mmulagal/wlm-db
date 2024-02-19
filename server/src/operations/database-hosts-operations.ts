@@ -62,7 +62,7 @@ import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { isSSMConnectionSuccessful } from './aws/ssm-operations';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
-import { PSSCRIPT } from './workloads/mssql/const';
+import { GET_DIVE_INFO, EXECUTE_QUERY } from './workloads/mssql/utils';
 import { DEFAULT_SQL_DATA_DRIVE, DEFAULT_SQL_LOG_DRIVE } from './workloads/mssql/queries';
 import { getResources } from './database/database-operations';
 
@@ -918,9 +918,9 @@ async function getDriveInfoFromSSM(
         const errorMessage = `Error while fetching drive details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
-    const driveCommand = ['C:\\SSM\\GetDriveInfo.ps1'];
-    const defaultDataDriveCommand = [`${PSSCRIPT} -Query "${DEFAULT_SQL_DATA_DRIVE}"`];
-    const defaultLogDriveCommand = [`${PSSCRIPT} -Query "${DEFAULT_SQL_LOG_DRIVE}"`];
+    const driveCommand = [GET_DIVE_INFO];
+    const defaultDataDriveCommand = [EXECUTE_QUERY(DEFAULT_SQL_DATA_DRIVE, 0)];
+    const defaultLogDriveCommand = [EXECUTE_QUERY(DEFAULT_SQL_LOG_DRIVE, 0)];
 
     const [driveResponse, defaultDataDriveResponse, defaultLogDriveResponse] = await Promise.all([
         callSsmExecution(credentialsId, region!, driveCommand, activeNodeInstanceId, standbyNodeInstanceId),
