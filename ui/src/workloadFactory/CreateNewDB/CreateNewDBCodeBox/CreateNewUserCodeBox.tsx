@@ -4,7 +4,7 @@ import { optionType, SelectField } from '@netapp/design-system/dist/components/S
 import { generateOptionType } from '../../../utils/utilityFunctions';
 import CodeBoxHeading from '../../../common/CodeBoxHeading/CodeBoxHeading';
 import styles from './CreateNewUserCodeBox.module.scss';
-import { CODE_VIEWER } from '../../../utils/appConstants';
+import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import CodeBoxScroll from '../../../common/CodeBoxScroll/CodeBoxScroll';
 import { useAppSelector } from '../../../store/storeHooks';
 import { createUserDbPayload } from '../CreateNewDBFooter/createUserDBPayload';
@@ -35,7 +35,7 @@ const CreateNewUserCodeBox = () => {
 
             <div className={styles.createDbHeader}>
                 <DsTypography variant="Regular_16" className={styles.createDBText}>
-                    {'Create new user database'}
+                    {GENERAL.CREATE_USER_DB_TITLE}
                 </DsTypography>
             </div>
 
