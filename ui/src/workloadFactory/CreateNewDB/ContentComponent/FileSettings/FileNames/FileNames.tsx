@@ -183,9 +183,9 @@ const FileNames = () => {
                                     <div className={styles.inputSection}>
                                         <SelectField
                                             isLoading={driveInfoListLoading}
-                                            label="Select drive letter"
+                                            label={GENERAL.SELECT_DRIVE_LETTER}
                                             isClearable={false}
-                                            placeholder="Select drive letter"
+                                            placeholder={GENERAL.SELECT_DRIVE_LETTER}
                                             onChange={(selectedOptions: any): void => {
                                                 dispatch(setDriveLetter(selectedOptions));
                                             }}
@@ -221,9 +221,9 @@ const FileNames = () => {
                                     <div className={styles.inputSection}>
                                         <SelectField
                                             isLoading={driveInfoListLoading}
-                                            label="Select drive letter"
+                                            label={GENERAL.SELECT_DRIVE_LETTER}
                                             isClearable={false}
-                                            placeholder="Select drive letter"
+                                            placeholder={GENERAL.SELECT_DRIVE_LETTER}
                                             onChange={(selectedOptions: any): void => {
                                                 dispatch(setDriveLetterForLogFile(selectedOptions));
                                             }}

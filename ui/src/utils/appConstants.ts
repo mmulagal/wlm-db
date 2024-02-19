@@ -579,7 +579,8 @@ export const GENERAL = {
     DATA_FILE: 'Data file',
     LOG_FILE: 'Log file',
     DATA_FILE_PATH: 'Data file path:',
-    LOG_FILE_PATH: 'Log file path:'
+    LOG_FILE_PATH: 'Log file path:',
+    SELECT_DRIVE_LETTER: 'Select drive letter'
 };
 
 export const CODE_VIEWER = {
