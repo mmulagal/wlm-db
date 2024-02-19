@@ -56,7 +56,6 @@ import {
     getOntapVolumesSnapshotCount,
     getCostAllocationTagFsxResource,
     getFsxStorageCapacity
-    // getFsxStorageCapacity
 } from './aws/fsx-operations';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';

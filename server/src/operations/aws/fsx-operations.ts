@@ -21,7 +21,8 @@ import {
     FSX_STORAGE_TYPE,
     AWS_RESOURCE_NAME_TAG,
     FSX_BATCH_CONCURRENCY_VALUE,
-    SSM_COMMAND_CACHE_TYPE
+    SSM_COMMAND_CACHE_TYPE,
+    HttpErrorCodes
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
 import { callSsmExecution } from '../workloads/mssql/mssql-operations';
@@ -478,7 +479,7 @@ async function getFsxStorageCapacity(credentialsId: string, region: string, fsxI
     } catch (error) {
         const errorMessage = `Error fetching FSx storage capacity , ${error}`;
         logger.error(errorMessage);
-        throw createError(500, errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 }
 
