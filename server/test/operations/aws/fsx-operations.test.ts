@@ -15,7 +15,7 @@ import {
     getMappedOntapVolumes,
     tagFsxResource
 } from '../../../src/operations/aws/fsx-operations';
-import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_VPC_ID, ACCOUNT_ID } from '../../utils/consts';
+import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_VPC_ID, ACCOUNT_ID } from '../../utils/consts';
 
 const FSX_FILESYSTEM_ID = 'fs-03773e21b2f0e39b4';
 const credentialsId = `${faker.string.alpha(20)}`;
@@ -25,7 +25,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
     // Its not mocked, we are making actual api call to fsx inventory, so headers wont be present to make this test works
     it.skip('List FSx filesystems and volume details', async () => {
         const response = await getFSxFileSystemsList(
-            DEFAULT_AWS_CREDENTIALS_TYPE,
+            DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             DEFAULT_AWS_VPC_ID
         );
@@ -34,24 +34,28 @@ describe('Testcases for Amazon FSx resources operations', () => {
     });
 
     it('AWS backup enabled check', async () => {
-        const response = await isAWSBackupEnabled(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, FSX_FILESYSTEM_ID, {
-            credentialsId: `${faker.string.alpha(20)}`,
-            activeNodeInstanceId: `i-${faker.string.alpha(17)}`,
-            standbyNodeInstanceId: `i-${faker.string.alpha(17)}`,
-            fsxSecret: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
-        });
+        const response = await isAWSBackupEnabled(
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            FSX_FILESYSTEM_ID,
+            {
+                node1InstanceId: `i-${faker.string.alpha(17)}`,
+                node2InstanceId: `i-${faker.string.alpha(17)}`,
+                fsxSecret: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
+            },
+            `i-${faker.string.alpha(17)}`
+        );
         expect(response).toEqual(true);
     });
 
     it('Get Ontap volume snapshots count', async () => {
         const response = await getOntapVolumesSnapshotCount(
-            DEFAULT_AWS_CREDENTIALS_TYPE,
+            DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID,
             {
-                credentialsId: `${faker.string.alpha(20)}`,
-                activeNodeInstanceId: `i-${faker.string.alpha(17)}`,
-                standbyNodeInstanceId: `i-${faker.string.alpha(17)}`,
+                node1InstanceId: `i-${faker.string.alpha(17)}`,
+                node2InstanceId: `i-${faker.string.alpha(17)}`,
                 fsxSecret: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
             }
         );
@@ -60,13 +64,12 @@ describe('Testcases for Amazon FSx resources operations', () => {
 
     it('Get Ontap mapped volumes', async () => {
         const response = await getMappedOntapVolumes(
-            DEFAULT_AWS_CREDENTIALS_TYPE,
+            DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID,
             {
-                credentialsId: `${faker.string.alpha(20)}`,
-                activeNodeInstanceId: `i-${faker.string.alpha(17)}`,
-                standbyNodeInstanceId: `i-${faker.string.alpha(17)}`,
+                node1InstanceId: `i-${faker.string.alpha(17)}`,
+                node2InstanceId: `i-${faker.string.alpha(17)}`,
                 fsxSecret: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
             }
         );
