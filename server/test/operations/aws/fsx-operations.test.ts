@@ -38,7 +38,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             credentialsId: `${faker.string.alpha(20)}`,
             activeNodeInstanceId: `i-${faker.string.alpha(17)}`,
             standbyNodeInstanceId: `i-${faker.string.alpha(17)}`,
-            fsxSecret: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
+            parameterStorePath: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
         });
         expect(response).toEqual(true);
     });
@@ -52,7 +52,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
                 credentialsId: `${faker.string.alpha(20)}`,
                 activeNodeInstanceId: `i-${faker.string.alpha(17)}`,
                 standbyNodeInstanceId: `i-${faker.string.alpha(17)}`,
-                fsxSecret: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
+                parameterStorePath: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
             }
         );
         expect(response).toBeDefined();
@@ -67,7 +67,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
                 credentialsId: `${faker.string.alpha(20)}`,
                 activeNodeInstanceId: `i-${faker.string.alpha(17)}`,
                 standbyNodeInstanceId: `i-${faker.string.alpha(17)}`,
-                fsxSecret: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
+                parameterStorePath: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
             }
         );
         expect(response).toBeDefined();
