@@ -24,9 +24,6 @@ const ContentComponent = () => {
             <div className={styles.accordionContainer}>
                 <AccordionController isGrouped>
                     <DsTypography
-                        style={{
-                            padding: '0 0 8px'
-                        }}
                         variant="Semibold_16"
                         className={styles.accordionContainer}
                     >
@@ -34,9 +31,6 @@ const ContentComponent = () => {
                     </DsTypography>
                     <DatabaseName />
                     <DsTypography
-                        style={{
-                            padding: '0 0 8px'
-                        }}
                         variant="Semibold_16"
                         className={styles.accordionContainer}
                     >
