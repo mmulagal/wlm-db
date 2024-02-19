@@ -228,7 +228,10 @@ const SECRET_WORDS = [
     'domainPassword',
     'fsxPassword',
     'serviceAccountPassword',
-    'fsxNPassword'
+    'fsxNPassword',
+    'fsxSecret',
+    'domainAdminSecret',
+    'sqlServiceAccountSecret'
 ];
 
 const SECRET_STRING_WORDS = [
