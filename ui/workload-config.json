@@ -21,7 +21,7 @@
         "description": "Deploy databases end-to-end with built-in best practices for optimization. Automate thin cloning, enable application aware backup and disaster recovery, monitor and resolve database health issues.",
         "primaryCtaLabel": "Deploy database",
         "primaryCtaTo": "/databases/add-working-environment/database-services/mssql/create",
-        "secondaryCtaLabel": "Manage workload",
+        "secondaryCtaLabel": "Go to databases Inventory",
         "secondaryCtaTo": "/databases",
         "isComingSoon": false,
         "dataUrl": "/wlmdb/v1/status"
