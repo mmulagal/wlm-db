@@ -57,7 +57,7 @@ const ManagedHosts = () => {
             },
             {
                 id: 'createNewUserDatabase',
-                displayName: 'Create new user database',
+                displayName: GENERAL.CREATE_USER_DB_TITLE,
                 disabled: row?.status === STATUS_CONST.UP ? false : true
             },
             {

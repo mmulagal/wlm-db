@@ -9,7 +9,7 @@ router.get(`${BASE_URL}/v1/database-hosts/:id/driveInfo`, async (req: {}, res: a
     }, 2000);  
 });
 
-router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/database/:id/create`, async (req: {}, res: any) => {
+router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/database-hosts/:id/database`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, { jobId: 'jobId' });
     }, 2000);
