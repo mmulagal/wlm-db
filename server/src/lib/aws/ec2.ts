@@ -29,7 +29,9 @@ import {
     Tag,
     DescribeInstancesCommandOutput,
     DescribeTagsCommandInput,
-    DescribeTagsCommand
+    DescribeTagsCommand,
+    DescribeVpcEndpointsCommandInput,
+    DescribeVpcEndpointsCommand
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -244,6 +246,20 @@ async function describeTags(credentialsId: string, region: string, input: Descri
     }
 }
 
+async function describeEndpoints(credentialsId: string, region: string, input: DescribeVpcEndpointsCommandInput) {
+    logger.info('Describe vpc endpoints command ', credentialsId, region, input);
+
+    try {
+        const client = await getEC2Client(region, credentialsId);
+        const command = new DescribeVpcEndpointsCommand(input);
+        const response = await client.send(command);
+
+        return response;
+    } catch (error) {
+        logger.error('Describe vpc endpoints command failed with the error', error);
+    }
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -257,5 +273,6 @@ export {
     describeKeyPairs,
     describeNetworkInterfaces,
     createTag,
-    describeTags
+    describeTags,
+    describeEndpoints
 };

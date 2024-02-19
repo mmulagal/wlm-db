@@ -1,7 +1,7 @@
 import { LifecycleRule } from '@aws-sdk/client-s3';
 import { getBucketLifecycleConfiguration, putBucketLifecycleConfiguration } from '../../lib/aws/s3';
 import getLogger from '../../utils/logger';
-import { BUCKET_NAME, ASSETS_BUCKET_REGION } from '../../utils/consts';
+import { DEFAULT_AWS_REGION, ARTIFACT_BUCKET_NAME } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -21,7 +21,7 @@ const newRule: LifecycleRule = {
 
 async function checkAndCreateBucketLifecycleConfiguration() {
     logger.info('Checking and creating life cycle rule');
-    const configurations = await getBucketLifecycleConfiguration(ASSETS_BUCKET_REGION, BUCKET_NAME);
+    const configurations = await getBucketLifecycleConfiguration(DEFAULT_AWS_REGION, ARTIFACT_BUCKET_NAME);
     logger.debug('Existing configurations', configurations);
     const { Rules: currentLifecycleRules = [] } = configurations || {};
     const deletewlmdbRuleExists = currentLifecycleRules.some(
@@ -34,11 +34,11 @@ async function checkAndCreateBucketLifecycleConfiguration() {
     }
 
     const updatedLifecycleConfig = {
-        Bucket: BUCKET_NAME,
+        Bucket: ARTIFACT_BUCKET_NAME,
         LifecycleConfiguration: { Rules: [...(currentLifecycleRules || []), newRule] }
     };
 
-    const response = await putBucketLifecycleConfiguration(ASSETS_BUCKET_REGION, updatedLifecycleConfig);
+    const response = await putBucketLifecycleConfiguration(DEFAULT_AWS_REGION, updatedLifecycleConfig);
     logger.debug('Created lifecycle configuration', response);
 }
 export { checkAndCreateBucketLifecycleConfiguration };

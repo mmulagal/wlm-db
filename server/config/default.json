@@ -47,8 +47,9 @@
     "sqs-poll-interval": "30s",
     "jwt-token-expiry": "168h",
     "signed-url-expiry-hours": "168",
-    "templates": {
-        "bucket": "staging.wlmdb.workloads.netapp.com",
+    "bucket": {
+        "artifacts": "staging.artifacts.REGION.workloads.netapp.com",
+        "signedTemplates": "staging.templates.workloads.netapp.com",
         "region": "us-east-1"
     },
     "ec2": {
