@@ -924,7 +924,11 @@ Resources:
       FSxNSecret: !Sub ${AWS::StackName}-fsx
       SQLServiceAccountSecret: !Sub ${AWS::StackName}-sql
       DatabaseType: 'Microsoft SQL server'
-      FSxSvmId: !Ref FSxSvmId
+      FSxSvmId:
+          !If
+            - NewOntapFsx
+            - !GetAtt "NewFSxStack.Outputs.FSxSvmId"
+            - !GetAtt "ExistingFSxStack.Outputs.FSxSvmId"
       Metrics: !Ref Metrics
 
       FSxFileSystemId:
