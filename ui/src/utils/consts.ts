@@ -269,3 +269,6 @@ export const DRIVE_LETTER_TYPE = {
     NEW: 'New drive letter',
     EXISTING: 'Existing drive letter'
 };
+
+export const DEPLOY_ENDPOINT = '/cloudformation/deploy';
+export const CREATE_DB_ENDPOINT = (databaseHostId: any) => `/database-hosts/${databaseHostId}/database`;

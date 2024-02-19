@@ -8,9 +8,14 @@ import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import CodeBoxScroll from '../../../common/CodeBoxScroll/CodeBoxScroll';
 import { useAppSelector } from '../../../store/storeHooks';
 import { createUserDbPayload } from '../CreateNewDBFooter/createUserDBPayload';
+import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
+import { CREATE_DB_ENDPOINT } from '../../../utils/consts';
 
 const CreateNewUserCodeBox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
+    const resourceId = useAppSelector(state => state.auth.resourceId);
+    const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
+    const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
 
     const createNewUser = useAppSelector(state => state.createNewUser);
 
@@ -26,7 +31,16 @@ const CreateNewUserCodeBox = () => {
 
     const setDisplayedDataInCodeBox = () => {
         const payload = createUserDbPayload(createNewUser);
-        return <pre>{JSON.stringify(payload)}</pre>;
+        return (
+            <>
+                <CodeBoxColor
+                    credID={selectedCredId?.data?.credentialsId}
+                    region={selectedRegionCode?.data?.regionCode}
+                    actualData={payload}
+                    endpoint={CREATE_DB_ENDPOINT(resourceId)}
+                />
+            </>
+        );
     };
 
     return (
