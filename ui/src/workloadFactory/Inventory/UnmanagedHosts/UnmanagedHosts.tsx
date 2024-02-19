@@ -4,7 +4,6 @@ import styles from './UnmanagedHosts.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useEffect, useState } from 'react';
-import DatabaseEstimatedCost from '../../DatabaseHomePage/DatabaseTable/DatabaseEstimatedCost';
 import { useAppSelector } from '../../../store/storeHooks';
 import { STATUS_CONST } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
@@ -16,12 +15,12 @@ import {
     initialColStateManagedHosts
 } from '../../../utils/utilityFunctions';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
 
 const UnmanagedHosts = () => {
     const dispatch = useDispatch();
 
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
 
     const [resetPage, setResetPage] = useState(false);
@@ -217,7 +216,7 @@ const UnmanagedHosts = () => {
                         {costData && (
                             <div className={styles.cost}>
                                 <TooltipInfo className={styles.tooltipClass} onVisibleChange={function noRefCheck() {}}>
-                                    {DatabaseEstimatedCost({ ...costData, totalCost: totalCost })}
+                                    {EstimatedCostPopover({ ...costData, totalCost: totalCost })}
                                 </TooltipInfo>
                                 <Typography variant="Regular_14">{`$ ${formatFractionalNumber(
                                     totalCost,
@@ -232,8 +231,8 @@ const UnmanagedHosts = () => {
         },
         {
             id: '7',
-            Header: 'Allocated Capacity',
-            accessor: 'allocatedCapacity',
+            Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
+            accessor: 'storage.size',
             isSortable: true,
             width: '194px',
             renderCell: (cellData: string) => {
@@ -242,61 +241,69 @@ const UnmanagedHosts = () => {
         },
         {
             id: '8',
-            Header: 'Instance name',
-            accessor: 'topology.ec2Details',
+            Header: GENERAL.DB_HOST_INSTANCE_NAME,
+            accessor: 'topology',
             isSortable: true,
             width: '235px',
             renderCell: (cellData: any) => {
-                const instance = cellData ? cellData[0] : null;
+                let instanceIds: any = [];
+                let instanceNames: any = [];
+                cellData?.ec2Details?.map((row: any) => {
+                    instanceIds.push(row?.id);
+                    instanceNames.push(row?.name);
+                });
                 return (
                     <>
-                        {instance && (
+                        {cellData?.ec2Details && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>ID: {instance?.id}</TooltipInfo>
-                                <Typography variant="Regular_14">{instance?.name}</Typography>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>
+                                    ID: {instanceIds.join(',')}
+                                </TooltipInfo>
+                                <Typography variant="Regular_14">{instanceNames.join(',')}</Typography>
                             </div>
                         )}
-                        {!instance && notAvailable()}
+                        {!cellData?.ec2Details && notAvailable()}
                     </>
                 );
             }
         },
         {
             id: '9',
-            Header: 'VPC',
-            accessor: 'topology.vpcId',
+            Header: GENERAL.DB_HOST_VPC,
+            accessor: 'topology',
             isSortable: true,
             width: '235px',
             renderCell: (cellData: any) => {
                 return (
                     <>
-                        {cellData && (
+                        {cellData?.vpcId && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData}</TooltipInfo>
-                                <Typography variant="Regular_14">{cellData}</Typography>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData?.vpcId}</TooltipInfo>
+                                <Typography variant="Regular_14">{cellData?.vpcName}</Typography>
                             </div>
                         )}
-                        {!cellData && notAvailable()}
+                        {!cellData?.vpcId && notAvailable()}
                     </>
                 );
             }
         },
         {
             id: '10',
-            Header: 'Availability',
-            accessor: 'topology.availability',
+            Header: GENERAL.DB_HOST_AVAILABILITY,
+            accessor: 'topology',
             isSortable: true,
             width: '235px',
             renderCell: (cellData: any) => {
+                const azList = cellData?.availabilityZones ? cellData.availabilityZones.join(',') : '';
                 return (
                     <>
-                        {cellData && (
+                        {cellData?.fileSystemDeploymentMode && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData?.azList}</TooltipInfo>
-                                <Typography variant="Regular_14">{cellData?.type}</Typography>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
+                                <Typography variant="Regular_14">{cellData?.fileSystemDeploymentMode}</Typography>
                             </div>
                         )}
-                        {!cellData && notAvailable()}
+                        {!cellData?.fileSystemDeploymentMode && notAvailable()}
                     </>
                 );
             }
@@ -339,7 +346,7 @@ const UnmanagedHosts = () => {
             }
         },
         initialColumnState: initialColStateManagedHosts,
-        isLazyLoading: databaseHostsLoading || databaseJobsLoading
+        isLazyLoading: databaseHostsLoading
     });
 
     useEffect(() => {

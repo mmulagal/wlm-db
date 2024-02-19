@@ -123,7 +123,11 @@ const JobMonitoringTable = () => {
         if (subJobsData && subJobsData?.subJobs && subJobsData?.id === jobId) {
             dispatch(setSubJobsDataLoading(false));
         } else {
-            subTaskListApi({ credId, regionId, jobId })
+            subTaskListApi({
+                credentialId: credId,
+                region: regionId,
+                id: jobId
+            })
                 .then(data => {
                     dispatch(setSubJobsData(data?.data || {}));
                     dispatch(setSubJobsDataLoading(false));
