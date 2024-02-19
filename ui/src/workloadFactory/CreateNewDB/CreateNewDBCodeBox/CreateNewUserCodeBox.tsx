@@ -1,4 +1,6 @@
 import { DsTypography, Popover } from '@netapp/design-system';
+//@ts-ignore
+import CopyToClipboard from 'react-copy-to-clipboard';
 import { useMemo, useState } from 'react';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { generateOptionType } from '../../../utils/utilityFunctions';
@@ -10,7 +12,6 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { createUserDbPayload } from '../CreateNewDBFooter/createUserDBPayload';
 import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
 import { CREATE_DB_CURL_REQ_TEMPLATE, CREATE_DB_ENDPOINT, CRED_PLACEHOLDERS, UI_IDS } from '../../../utils/consts';
-import CopyToClipboard from 'react-copy-to-clipboard';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg';
 import { getBaseUrl } from '../../../utils/apiService';
 
