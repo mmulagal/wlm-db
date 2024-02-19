@@ -54,7 +54,12 @@ describe('Database host operations', () => {
         expect(resp).toBeDefined();
     });
     it('Get drive info for a database host', async () => {
-        const resp = await getDriveInfo(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
+        const resp = await getDriveInfo(
+            ACCOUNT_ID,
+            '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1'
+        );
         expect(resp).toBeDefined();
     });
 });

@@ -180,7 +180,7 @@ const DriveInfoResponseBody = Type.Object({
         })
     ),
     availableDriveLetters: Type.Array(Type.String()),
-    fsxStorageCapacity: Type.Number()
+    fsxStorageCapacity: Type.Optional(Type.Number())
 });
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
 
@@ -189,6 +189,14 @@ const DatabaseHostsParamsWithRegion = Type.Object({
     credentialsId: Type.String(),
     region: Type.String()
 });
+
+const DatabaseHostSummaryParamsWithRegion = Type.Object({
+    accountId: Type.String({ minLength: 1 }),
+    databaseHostId: Type.String({ minLength: 1 }),
+    credentialsId: Type.String(),
+    region: Type.String()
+});
+type DatabaseHostSummaryParamsWithRegionType = Static<typeof DatabaseHostSummaryParamsWithRegion>;
 
 export {
     DatabaseHostObjectParams,
@@ -227,5 +235,7 @@ export {
     RWPerformanceResponseType,
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
-    DatabaseHostsParamsWithRegion
+    DatabaseHostsParamsWithRegion,
+    DatabaseHostSummaryParamsWithRegion,
+    DatabaseHostSummaryParamsWithRegionType
 };

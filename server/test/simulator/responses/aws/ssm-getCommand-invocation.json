@@ -516,43 +516,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\r\n    \"ExistingDriveInfo\":  [\r\n                              {\r\n                                  \"DriveLetter\":  \"C\",\r\n                                  \"FreeSpace\":  69049806848,\r\n                                  \"manufacturer\":  \"NVMe\"\r\n                              },\r\n                              {\r\n                                  \"DriveLetter\":  \"L\",\r\n                                  \"FreeSpace\":  274732548096,\r\n                                  \"manufacturer\":  \"NETAPP\"\r\n                              },\r\n                              {\r\n                                  \"DriveLetter\":  \"Q\",\r\n                                  \"FreeSpace\":  10653343744,\r\n                                  \"manufacturer\":  \"NETAPP\"\r\n                              },\r\n                              {\r\n                                  \"DriveLetter\":  \"S\",\r\n                                  \"FreeSpace\":  1099159437312,\r\n                                  \"manufacturer\":  \"NETAPP\"\r\n                              },\r\n                              {\r\n                                  \"DriveLetter\":  \"T\",\r\n                                  \"FreeSpace\":  109786562560,\r\n                                  \"manufacturer\":  \"NETAPP\"\r\n                              }\r\n                          ],\r\n    \"AvailableDriveLetters\":  [\r\n                                  \"D\",\r\n                                  \"E\",\r\n                                  \"F\",\r\n                                  \"G\",\r\n                                  \"H\",\r\n                                  \"I\",\r\n                                  \"J\",\r\n                                  \"K\",\r\n                                  \"M\",\r\n                                  \"N\",\r\n                                  \"O\",\r\n                                  \"P\",\r\n                                  \"R\",\r\n                                  \"U\",\r\n                                  \"V\",\r\n                                  \"W\",\r\n                                  \"X\",\r\n                                  \"Y\",\r\n                                  \"Z\"\r\n                              ]\r\n}\r\n",
-        "StandardOutputUrl": "",
-        "Status": "Success",
-        "StatusDetails": "Success"
-    },
-    "getDefaultDataDrivesInfoResponse": {
-        "$metadata": {
-            "httpStatusCode": 200,
-            "requestId": "17601055-7787-4476-8450-2abb4851432a",
-            "attempts": 1,
-            "totalRetryDelay": 0
-        },
-        "DocumentName": "AWS-RunPowerShellScript",
-        "InstanceId": "i-0880a21327284f67c",
-        "PluginName": "aws:runPowerShellScript",
-        "ResponseCode": 0,
-        "StandardErrorContent": "",
-        "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"CurrentDataDrive\":\"S\"}]\r\n",
-        "StandardOutputUrl": "",
-        "Status": "Success",
-        "StatusDetails": "Success"
-    },
-    "getDefaultLogDrivesInfoResponse": {
-        "$metadata": {
-            "httpStatusCode": 200,
-            "requestId": "17601055-7787-4476-8450-2abb4851432a",
-            "attempts": 1,
-            "totalRetryDelay": 0
-        },
-        "DocumentName": "AWS-RunPowerShellScript",
-        "InstanceId": "i-0880a21327284f67c",
-        "PluginName": "aws:runPowerShellScript",
-        "ResponseCode": 0,
-        "StandardErrorContent": "",
-        "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"CurrentLogDrive\":\"L\"}]\r\n",
+        "StandardOutputContent": "{\r\n    \"DefaultLogDrive\":  \"[{\\\"CurrentLogDrive\\\":\\\"L\\\"}]\",\r\n    \"AvailableDriveLetters\":  [\r\n                                  \"D\",\r\n                                  \"E\",\r\n                                  \"F\",\r\n                                  \"G\",\r\n                                  \"H\",\r\n                                  \"I\",\r\n                                  \"J\",\r\n                                  \"K\",\r\n                                  \"M\",\r\n                                  \"N\",\r\n                                  \"O\",\r\n                                  \"P\",\r\n                                  \"R\",\r\n                                  \"U\",\r\n                                  \"V\",\r\n                                  \"W\",\r\n                                  \"X\",\r\n                                  \"Y\",\r\n                                  \"Z\"\r\n                              ],\r\n    \"DefaultDataDrive\":  \"[{\\\"CurrentDataDrive\\\":\\\"S\\\"}]\",\r\n    \"ExistingDriveInfo\":  [\r\n                              {\r\n                                  \"DriveLetter\":  \"C\",\r\n                                  \"FreeSpace\":  69291675648,\r\n                                  \"manufacturer\":  \"NVMe\"\r\n                              },\r\n                              {\r\n                                  \"DriveLetter\":  \"L\",\r\n                                  \"FreeSpace\":  274715705344,\r\n                                  \"manufacturer\":  \"NETAPP\"\r\n                              },\r\n                              {\r\n                                  \"DriveLetter\":  \"Q\",\r\n                                  \"FreeSpace\":  10653323264,\r\n                                  \"manufacturer\":  \"NETAPP\"\r\n                              },\r\n                              {\r\n                                  \"DriveLetter\":  \"S\",\r\n                                  \"FreeSpace\":  1099143512064,\r\n                                  \"manufacturer\":  \"NETAPP\"\r\n                              },\r\n                              {\r\n                                  \"DriveLetter\":  \"T\",\r\n                                  \"FreeSpace\":  109786497024,\r\n                                  \"manufacturer\":  \"NETAPP\"\r\n                              }\r\n                          ]\r\n}\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"

@@ -61,8 +61,7 @@ import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { isSSMConnectionSuccessful } from './aws/ssm-operations';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
-import { GET_DIVE_INFO, EXECUTE_QUERY } from './workloads/mssql/utils';
-import { DEFAULT_SQL_DATA_DRIVE, DEFAULT_SQL_LOG_DRIVE } from './workloads/mssql/queries';
+import { GET_DIVE_INFO } from './workloads/mssql/ssm-script-utils';
 import { getResources } from './database/database-operations';
 
 const logger = getLogger();
@@ -89,13 +88,6 @@ interface Topology {
     fileSystemType?: string;
 }
 
-interface DriveInfo {
-    driveLetter: string;
-    availableSize: number;
-    defaultDataDrive: boolean;
-    defaultLogDrive: boolean;
-    isNetappDrive: boolean;
-}
 type VolumeSpaceRecord = {
     uuid: string;
     name: string;
@@ -917,53 +909,69 @@ async function getDriveInfoFromSSM(
         const errorMessage = `Error while fetching drive details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
-    const driveCommand = [GET_DIVE_INFO];
-    const defaultDataDriveCommand = [EXECUTE_QUERY(DEFAULT_SQL_DATA_DRIVE)];
-    const defaultLogDriveCommand = [EXECUTE_QUERY(DEFAULT_SQL_LOG_DRIVE)];
+    const driveInfoCommand = [GET_DIVE_INFO];
 
-    const [driveResponse, defaultDataDriveResponse, defaultLogDriveResponse] = await Promise.all([
-        callSsmExecution(credentialsId, region!, driveCommand, activeNodeInstanceId, standbyNodeInstanceId),
-        callSsmExecution(credentialsId, region!, defaultDataDriveCommand, activeNodeInstanceId, standbyNodeInstanceId),
-        callSsmExecution(credentialsId, region!, defaultLogDriveCommand, activeNodeInstanceId, standbyNodeInstanceId)
-    ]);
+    const driveInfoResponse = await callSsmExecution(
+        credentialsId,
+        region!,
+        driveInfoCommand,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
 
-    const finalDriveResponse = driveResponse ? sqlResponseParsing(driveResponse) : {};
-    const finalDefaultDataDriveResponse =
-        defaultDataDriveResponse && !defaultDataDriveResponse?.includes('error')
-            ? sqlResponseParsing(defaultDataDriveResponse)[0]
-            : {};
-    const finalDefaultLogDriveResponse =
-        defaultLogDriveResponse && !defaultLogDriveResponse?.includes('error')
-            ? sqlResponseParsing(defaultLogDriveResponse)[0]
-            : {};
+    const parsedDriveResponse = driveInfoResponse ? sqlResponseParsing(driveInfoResponse) : {};
 
-    const currentDataDrive: string =
-        Object.keys(finalDefaultDataDriveResponse).length !== 0 ? finalDefaultDataDriveResponse?.CurrentDataDrive : '';
+    const {
+        DefaultDataDrive: defaultDataDrive,
+        DefaultLogDrive: defaultLogDrive,
+        ExistingDriveInfo: existingDriveInfo,
+        AvailableDriveLetters: availableDriveLetters
+    } = parsedDriveResponse;
 
-    const currentLogDrive: string =
-        Object.keys(finalDefaultLogDriveResponse).length !== 0 ? finalDefaultLogDriveResponse?.CurrentLogDrive : '';
+    const parsedDefaultDataDrive =
+        defaultDataDrive && !defaultDataDrive[0].includes('error') ? sqlResponseParsing(defaultDataDrive)[0] : {};
+    const parsedDefaultLogDrive =
+        defaultLogDrive && !defaultLogDrive[0].includes('error') ? sqlResponseParsing(defaultLogDrive)[0] : {};
 
-    const { ExistingDriveInfo: existingDriveInfo, AvailableDriveLetters: availableDriveLetters } = finalDriveResponse;
-    const UpdatedExistingDriveInfo: DriveInfo[] = [];
+    const currentDataDrive = parsedDefaultDataDrive.CurrentDataDrive;
+    const currentLogDrive = parsedDefaultLogDrive.CurrentLogDrive;
 
-    existingDriveInfo.forEach((element: { DriveLetter: any; FreeSpace: any; manufacturer: string }) => {
-        const updatedDriveInfo: DriveInfo = {
-            driveLetter: element.DriveLetter,
-            availableSize: element.FreeSpace,
-            defaultDataDrive: element.DriveLetter === currentDataDrive,
-            defaultLogDrive: element.DriveLetter === currentLogDrive,
-            isNetappDrive: element.manufacturer === 'NETAPP'
-        };
-
-        UpdatedExistingDriveInfo.push(updatedDriveInfo);
-    });
+    const UpdatedExistingDriveInfo = existingDriveInfo.map(
+        (element: { DriveLetter: any; FreeSpace: any; manufacturer: any }) => {
+            const { DriveLetter, FreeSpace, manufacturer } = element;
+            return {
+                driveLetter: DriveLetter,
+                availableSize: FreeSpace,
+                defaultDataDrive: DriveLetter === currentDataDrive,
+                defaultLogDrive: DriveLetter === currentLogDrive,
+                isNetappDrive: manufacturer === 'NETAPP'
+            };
+        }
+    );
     return { UpdatedExistingDriveInfo, availableDriveLetters };
 }
 
-async function getDriveInfo(accountId: string, databaseHostId: string): Promise<DriveInfoResponseBodyType> {
-    logger.info('Fetching drive details and storage capacity of the database host  ', accountId, databaseHostId);
+async function getDriveInfo(
+    accountId: string,
+    databaseHostId: string,
+    wlmCredentialsId: string,
+    awsRegion: string
+): Promise<DriveInfoResponseBodyType> {
+    logger.info(
+        'Fetching drive details and storage capacity of the database host  ',
+        accountId,
+        databaseHostId,
+        wlmCredentialsId,
+        awsRegion
+    );
 
-    const [resourceDetail] = await getResources(accountId, databaseHostId);
+    const [resourceDetail] = await getResources(
+        accountId,
+        databaseHostId,
+        RESOURCESTYPE.MSSQL,
+        wlmCredentialsId,
+        awsRegion
+    );
 
     if (isEmpty(resourceDetail)) {
         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
@@ -986,10 +994,11 @@ async function getDriveInfo(accountId: string, databaseHostId: string): Promise<
         )
     ]);
 
+    const finalStorage = fsxStorageCapacity?.storage;
     return {
         existingDriveInfo: driveResponse.UpdatedExistingDriveInfo,
         availableDriveLetters: driveResponse.availableDriveLetters,
-        fsxStorageCapacity
+        fsxStorageCapacity: finalStorage
     };
 }
 

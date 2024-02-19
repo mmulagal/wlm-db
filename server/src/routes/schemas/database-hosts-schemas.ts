@@ -5,7 +5,8 @@ import {
     DatabaseHostSummaryParams,
     DatabaseHostSummaryResponse,
     DatabasesListResponse,
-    DriveInfoResponseBody
+    DriveInfoResponseBody,
+    DatabaseHostSummaryParamsWithRegion
 } from '../types/database-hosts.types';
 import { AccountIdParams, ManagedHostParams } from '../types/generic.types';
 
@@ -61,7 +62,7 @@ const GetDriveInfoSchema = {
     ...baseRequest,
     summary: 'Get database host drive information',
     description: 'Fetch drive info about the database host',
-    params: DatabaseHostSummaryParams,
+    params: DatabaseHostSummaryParamsWithRegion,
     response: {
         200: DriveInfoResponseBody
     }

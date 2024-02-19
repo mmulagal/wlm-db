@@ -51,15 +51,11 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
-        .get(
-            `${DATABASE_HOSTS_API_PATH}/:databaseHostId/driveInfo`,
-            { schema: GetDriveInfoSchema },
-            async (request, reply) => {
-                const {
-                    params: { accountId, databaseHostId }
-                } = request;
-                const response = await getDriveInfo(accountId, databaseHostId);
-                return reply.send(response);
-            }
-        );
+        .get(`${API_PREFIX_PATH}/:databaseHostId/driveInfo`, { schema: GetDriveInfoSchema }, async (request, reply) => {
+            const {
+                params: { accountId, databaseHostId, credentialsId, region }
+            } = request;
+            const response = await getDriveInfo(accountId, databaseHostId, credentialsId, region);
+            return reply.send(response);
+        });
 }

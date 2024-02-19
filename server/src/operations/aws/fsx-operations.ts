@@ -22,6 +22,7 @@ import {
     AWS_RESOURCE_NAME_TAG,
     FSX_BATCH_CONCURRENCY_VALUE,
     SSM_COMMAND_CACHE_TYPE,
+    AWS_FSX_TYPE,
     HttpErrorCodes
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
@@ -32,6 +33,10 @@ import { getFsxArn } from '../../utils/utils';
 import { listFSXFileSystemForDemo } from '../../lib/cloud-manager/fsx-core';
 
 const logger = getLogger();
+
+interface FsxStorage {
+    storage: number;
+}
 
 type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
 
@@ -471,13 +476,25 @@ async function getCostAllocationTagFsxResource(resourceDetail: ResourceDetails) 
 
 async function getFsxStorageCapacity(credentialsId: string, region: string, fsxId: string) {
     logger.info('Get FSx Storage capacity');
+    const cacheKey = `${fsxId}-storage-capacity`;
+    if (hasCache(AWS_FSX_TYPE, cacheKey)) {
+        const response = readFromCacheByKey(AWS_FSX_TYPE, cacheKey) as FsxStorage;
+        return response;
+    }
+
     try {
         const { FileSystems: fileSystems } = await describeFSxN(credentialsId, region!, {
             FileSystemIds: [fsxId]
         });
-        return fileSystems![0].StorageCapacity!;
+
+        const fsxStorage: FsxStorage = {
+            storage: fileSystems![0].StorageCapacity!
+        };
+
+        writeToCache(AWS_FSX_TYPE, cacheKey, fsxStorage);
+        return fsxStorage;
     } catch (error) {
-        const errorMessage = `Error fetching FSx storage capacity , ${error}`;
+        const errorMessage = `Error fetching FSx storage capacity: ${error}`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
