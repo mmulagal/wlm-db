@@ -30,7 +30,6 @@ import {
     HttpErrorCodes,
     WLM_ASSETS,
     VALIDATION_AMI,
-    ASSETS_BUCKET_REGION,
     CF_DEPLOY_ROLE_NAME,
     DatabaseTypes,
     ACCOUNT_ID,
@@ -41,7 +40,6 @@ import {
     TEMPLATE_OPTIONAL_PARAMETERS,
     TEMPLATE_WLMDB_AWS_ACCOUT_ID,
     TEMPLATE_ACCOUNT_ID,
-    BUCKET_NAME,
     CLOUD_FORMATION_CLI_COMMAND,
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     FSX_ADMIN_PASSWORD,
@@ -61,7 +59,9 @@ import {
     DATABASE_SIZE,
     SQL_HOST_NAME,
     OPERATE,
-    VIEW
+    VIEW,
+    MAP_SERVICE_TEMPLATE_PARAMETER,
+    SIGNED_TEMPLATES_BUCKET_NAME
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -73,7 +73,7 @@ import {
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
-import { getWindowsServerBaseAmi } from './aws/ec2-operations';
+import { getServicesWithNoEndpoint, getWindowsServerBaseAmi } from './aws/ec2-operations';
 import uploadTemplates from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
@@ -132,6 +132,7 @@ async function formatTemplateParameters(
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
         { ParameterKey: TEMPLATE_METRICS, ParameterValue: metrics }
     ];
+
     if (fsxConfiguration.fsxPassword) {
         try {
             const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
@@ -142,6 +143,16 @@ async function formatTemplateParameters(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
         }
     }
+
+    const missingServices = await getServicesWithNoEndpoint(credentialsId!, region!, networkConfiguration.vpcId);
+    Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
+        if (!missingServices.includes(key)) {
+            templateParams.push({
+                ParameterKey: value,
+                ParameterValue: 'true'
+            });
+        }
+    });
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
@@ -272,9 +283,13 @@ async function getCloudformationTemplate(
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
 
-    const customMasterTemplatePath: string = `${stackName}/${MASTER_TEMPLATE_PATH}`;
+    const customMasterTemplatePath: string = `${WLMDB}/${stackName}/${MASTER_TEMPLATE_PATH}`;
 
-    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, customMasterTemplatePath);
+    const signedMasterTemplateUrl = await getPreSignedUrl(
+        region!,
+        SIGNED_TEMPLATES_BUCKET_NAME,
+        customMasterTemplatePath
+    );
 
     logger.info('Signed master url ', signedMasterTemplateUrl);
 
@@ -283,7 +298,7 @@ async function getCloudformationTemplate(
 
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
-        ASSETS_BUCKET_REGION,
+        region!,
         DatabaseTypes.MS_SQL_SERVER,
         stackName,
         tags?.map(({ key, value }) => ({ Key: key, Value: value })),
@@ -320,10 +335,10 @@ async function getCloudformationTemplate(
     } else {
         // Sleep for 2 seconds for master template to be uploaded
         await sleep(2000);
-
-        const response = await getObjectBucket(ASSETS_BUCKET_REGION, BUCKET_NAME, customMasterTemplatePath);
+        const response = await getObjectBucket(region!, SIGNED_TEMPLATES_BUCKET_NAME, customMasterTemplatePath);
         masterTemplateContents = await response.Body?.transformToString();
     }
+
     // Generate parameters list for cli command
     const specialCharacters = ['!', '&'];
     let cliParams: string = '';
@@ -355,6 +370,7 @@ async function getCloudformationTemplate(
             e.ParameterValue ? encodeURIComponent(e.ParameterValue) : e.ParameterValue
         }`;
     });
+
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${
         region || undefined // explicitly needs to be send if the region is empty string -- cloudformation would not take an empty string
     }#/stacks/create/review?templateURL=${encodeURIComponent(signedMasterTemplateUrl)}&${urlParams}`;
@@ -544,9 +560,13 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const { roleName, providerAccountId } = await getRoleDetails(credentialsId);
 
-    const customMasterTemplatePath: string = `${derivedParams.StackName}/${MASTER_TEMPLATE_PATH}`;
+    const customMasterTemplatePath: string = `${WLMDB}/${derivedParams.StackName}/${MASTER_TEMPLATE_PATH}`;
 
-    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, customMasterTemplatePath);
+    const signedMasterTemplateUrl = await getPreSignedUrl(
+        region,
+        SIGNED_TEMPLATES_BUCKET_NAME,
+        customMasterTemplatePath
+    );
 
     const encodedSignedMasterTemplateURL = encodeURIComponent(signedMasterTemplateUrl);
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
@@ -578,6 +598,13 @@ async function createCloudFormationTemplateForUserDeployment(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
         }
     }
+
+    const missingServices = await getServicesWithNoEndpoint(credentialsId!, region!, networkConfiguration.vpcId);
+    Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
+        if (!missingServices.includes(key)) {
+            templateParams += `&param_${value}='true'`;
+        }
+    });
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
@@ -625,7 +652,7 @@ async function createCloudFormationTemplateForUserDeployment(
 
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
-        ASSETS_BUCKET_REGION,
+        region!,
         DatabaseTypes.MS_SQL_SERVER,
         derivedParams.StackName,
         tags?.map(({ key, value }) => ({ Key: key, Value: value })),
@@ -695,9 +722,13 @@ async function deployCloudFormationTemplate(
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
 
-    const customMasterTemplatePath: string = `${stackName}/${MASTER_TEMPLATE_PATH}`;
+    const customMasterTemplatePath: string = `${WLMDB}/${stackName}/${MASTER_TEMPLATE_PATH}`;
 
-    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, customMasterTemplatePath);
+    const signedMasterTemplateUrl = await getPreSignedUrl(
+        region,
+        SIGNED_TEMPLATES_BUCKET_NAME,
+        customMasterTemplatePath
+    );
 
     logger.info('Signed master url ', signedMasterTemplateUrl);
 
@@ -706,7 +737,7 @@ async function deployCloudFormationTemplate(
 
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
-        ASSETS_BUCKET_REGION,
+        region,
         DatabaseTypes.MS_SQL_SERVER,
         stackName,
         tags?.map(({ key, value }) => ({ Key: key, Value: value })),

@@ -129,11 +129,6 @@ export interface DatabaseHostsEntities {
         databaseHostsLoading: false;
         databaseHostsError: null;
     };
-    getDatabaseJobs: {
-        databaseJobsData: DatabaseJobsItem[] | null;
-        databaseJobsLoading: false;
-        databaseJobsError: null;
-    };
     getJobsSummary: {
         jobsSummaryData: JobsSummaryRes | null;
         jobsSummaryLoading: false;

@@ -8,15 +8,9 @@ import {
     addAggregateHostsCountData,
     addDatabaseHosts,
     addDatabaseHostsList,
-    addDatabaseJobs,
     addJobsSummary
 } from '../../store/workloadFactory/databaseHomeSlice';
-import {
-    useGetDatabaseHostsQuery,
-    useGetDatabaseJobsQuery,
-    useGetJobsSummaryQuery,
-    useGetStatusQuery
-} from '../../utils/apiService';
+import { useGetDatabaseHostsQuery, useGetJobsSummaryQuery } from '../../utils/apiService';
 import {
     getAggrCost,
     getAggrProtection,
@@ -30,26 +24,23 @@ const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
 
     const { databaseHostsData } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const { databaseJobsData } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
     const refetchJobSummaryApi = useAppSelector(state => state.msSqlAction.refetchJobSummaryApi);
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
 
     const [hostCursor, setHostCursor] = useState(null);
-    const [jobsCursor, setJobsCursor] = useState(null);
 
     // skipApiCall to skip APi call when isActive is not true
     const [skipApiCall, setSkipApiCall] = useState(true);
-    const [skipSummaryApiCall, setSkipSummaryApiCall] = useState(true);
     const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
+
+    const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
+    const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
 
     useEffect(() => {
         const toDate = Date.now();
         const fromDate = toDate - 30 * (3600 * 1000 * 24);
         setTime({ startTime: fromDate, endTime: toDate });
-        setTimeout(() => {
-            setSkipSummaryApiCall(false);
-        }, 0);
     }, []);
 
     const {
@@ -58,22 +49,9 @@ const DatabaseHomeApis = () => {
         isError: databaseHostsError
     } = useGetDatabaseHostsQuery(
         {
-            credentialId: headerSelectedCred?.data?.credentialsId,
-            region: headerSelectedRegion?.label2,
+            credentialId: credId,
+            region: regionId,
             nextToken: hostCursor
-        },
-        { skip: skipApiCall }
-    );
-
-    const {
-        data: databaseJobs,
-        isFetching: databaseJobsLoading,
-        isError: databaseJobsError
-    } = useGetDatabaseJobsQuery(
-        {
-            credentialId: headerSelectedCred?.data?.credentialsId,
-            region: headerSelectedRegion?.label2,
-            nextToken: jobsCursor
         },
         { skip: skipApiCall }
     );
@@ -85,10 +63,12 @@ const DatabaseHomeApis = () => {
         refetch: jobsSummaryRefetch
     } = useGetJobsSummaryQuery(
         {
+            credentialId: headerSelectedCred?.data?.credentialsId,
+            region: headerSelectedRegion?.label2,
             startTime: time?.startTime,
             endTime: time?.endTime
-        }, 
-        { skip: skipSummaryApiCall }
+        },
+        { skip: skipApiCall }
     );
 
     useEffect(() => {
@@ -101,7 +81,11 @@ const DatabaseHomeApis = () => {
 
     useEffect(() => {
         if (headerSelectedCred && headerSelectedRegion) {
-            setSkipApiCall(false);
+            setCredId(headerSelectedCred?.data?.credentialsId);
+            setRegionId(headerSelectedRegion?.label2);
+            setTimeout(() => {
+                setSkipApiCall(false);
+            }, 0);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [headerSelectedCred, headerSelectedRegion]);
@@ -125,20 +109,6 @@ const DatabaseHomeApis = () => {
     }, [databaseHosts, databaseHostsLoading, databaseHostsError]);
 
     useEffect(() => {
-        if (databaseJobsError) {
-            dispatch(addDatabaseJobs({ undefined, databaseJobsLoading, databaseJobsError }));
-        } else {
-            let oldList = databaseJobsData || [];
-            let newList = databaseJobs?.items || [];
-            dispatch(
-                addDatabaseJobs({ databaseJobsData: [...oldList, ...newList], databaseJobsLoading, databaseJobsError })
-            );
-            setJobsCursor(databaseJobs?.nextToken || null);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [databaseJobs, databaseJobsLoading, databaseJobsError]);
-
-    useEffect(() => {
         if (jobsSummaryError) {
             dispatch(addJobsSummary({ undefined, jobsSummaryLoading, jobsSummaryError }));
         } else {
@@ -155,7 +125,7 @@ const DatabaseHomeApis = () => {
 
     // To merge database host and database jobs data
     useEffect(() => {
-        const mergedData = mergeDatabaseHostsData(databaseHostsData, databaseJobsData);
+        const mergedData = mergeDatabaseHostsData(databaseHostsData);
         dispatch(addDatabaseHostsList(mergedData));
 
         const hostStatusCount = getHostStatusCount(mergedData);
@@ -171,7 +141,7 @@ const DatabaseHomeApis = () => {
         dispatch(addAggregatedCosts(aggrCost));
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [databaseHostsData, databaseJobsData]);
+    }, [databaseHostsData]);
 
     return <></>;
 };

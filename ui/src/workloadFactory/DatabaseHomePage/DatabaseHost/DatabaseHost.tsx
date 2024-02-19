@@ -1,9 +1,5 @@
 import React from 'react';
 import { ReactComponent as DatabaseIllustration } from '../../../assets/Database Illustration 2.svg';
-import { ReactComponent as Warning } from '../../../assets/warning.svg';
-import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
-import { ReactComponent as Success } from '../../../assets/success.svg';
-import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 import styles from './DatabaseHost.module.scss';
 import { FlashingDotsLoader, Typography } from '@netapp/design-system';
@@ -13,7 +9,6 @@ import { GENERAL } from '../../../utils/appConstants';
 const DatabaseHost = () => {
     const hostData = useAppSelector(state => state.databaseHome.aggregatedHostsCount);
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
 
     return (
         <div className={styles.databaseHost}>
@@ -27,7 +22,7 @@ const DatabaseHost = () => {
                         <Typography variant="Regular_14" className={styles.databaseText}>
                             {GENERAL.HOSTS}
                         </Typography>
-                        {(databaseHostsLoading || databaseJobsLoading) && <FlashingDotsLoader />}
+                        {databaseHostsLoading && <FlashingDotsLoader />}
                     </div>
                 </div>
                 <div className={styles.dbHostSeparator} />
@@ -39,20 +34,20 @@ const DatabaseHost = () => {
                         <Typography variant="Regular_14" className={styles.databaseText}>
                             {GENERAL.DATABASES}
                         </Typography>
-                        {(databaseHostsLoading || databaseJobsLoading) && <FlashingDotsLoader />}
+                        {databaseHostsLoading && <FlashingDotsLoader />}
                     </div>
                 </div>
 
                 <div className={styles.newSection}>
                     <div className={styles.sql}>
                         <Typography variant="Regular_32" className={styles.databaseNumber}>
-                            40
+                            {hostData?.totalHosts}
                         </Typography>
                         <div className={styles.sqlContent}>
                             <Typography variant="Regular_14" className={styles.databaseText}>
                                 SQL
                             </Typography>
-                            {(databaseHostsLoading || databaseJobsLoading) && <FlashingDotsLoader />}
+                            {databaseHostsLoading && <FlashingDotsLoader />}
                         </div>
                     </div>
 
