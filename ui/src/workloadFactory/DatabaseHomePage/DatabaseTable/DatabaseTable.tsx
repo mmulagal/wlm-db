@@ -7,16 +7,12 @@ import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { useEffect, useRef, useState } from 'react';
 import DatabaseEstimatedCost from './DatabaseEstimatedCost';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DB_HOME_DATA_TYPE, WLF_TABS, STATUS_CONST } from '../../../utils/consts';
+import { WLF_TABS, STATUS_CONST } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
-import { useRemoveDatabaseJobsMutation, useRemoveMSSQLMutation } from '../../../utils/apiService';
+import { useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
-import {
-    addDatabaseHosts,
-    addDatabaseJobs,
-    selectedTabSelection
-} from '../../../store/workloadFactory/databaseHomeSlice';
+import { addDatabaseHosts, selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
 import { databaseTableSort, formatFractionalNumber } from '../../../utils/utilityFunctions';
 import { useNavigate } from 'react-router-dom';
 import { updateResourceId } from '../../../store/authSlice';
@@ -27,7 +23,6 @@ const DatabaseTable = () => {
     const navigate = useNavigate();
 
     const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const { databaseJobsData, databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
@@ -36,7 +31,6 @@ const DatabaseTable = () => {
     const { setDialog, closeDialog } = useDialog();
 
     const [removeDatabaseHosts] = useRemoveMSSQLMutation();
-    const [removeDatabaseJobs] = useRemoveDatabaseJobsMutation();
 
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
@@ -64,25 +58,14 @@ const DatabaseTable = () => {
     // To delete MSSQL Resources
     const deleteMssqlResource = (id: string, type: string) => {
         setResetPage(true);
-        if (type === DB_HOME_DATA_TYPE.JOBS) {
-            // removeDatabaseJobs delete API call when data getting from jobs API
-            removeDatabaseJobs(id).then((data: any) => {
-                if (!data?.error) {
-                    dispatch(setRefetchJobSummaryApi(true));
-                    const newList = databaseJobsData?.filter((val: any) => val?.id !== id);
-                    dispatch(addDatabaseJobs({ databaseJobsData: newList, databaseJobsLoading: false, undefined }));
-                }
-            });
-        } else {
-            // removeDatabaseHosts delete API call when data getting from database-hosts API
-            removeDatabaseHosts(id).then((data: any) => {
-                if (!data?.error) {
-                    dispatch(setRefetchJobSummaryApi(true));
-                    const newList = databaseHostsData?.filter((val: any) => val?.id !== id);
-                    dispatch(addDatabaseHosts({ databaseHostsData: newList, databaseHostsLoading: false, undefined }));
-                }
-            });
-        }
+        // removeDatabaseHosts delete API call when data getting from database-hosts API
+        removeDatabaseHosts(id).then((data: any) => {
+            if (!data?.error) {
+                dispatch(setRefetchJobSummaryApi(true));
+                const newList = databaseHostsData?.filter((val: any) => val?.id !== id);
+                dispatch(addDatabaseHosts({ databaseHostsData: newList, databaseHostsLoading: false, undefined }));
+            }
+        });
     };
 
     const handleRemoveDialog = (row: any) => {
@@ -222,17 +205,17 @@ const DatabaseTable = () => {
                     protectedChk = true;
                 }
 
-                let protectionDbCount = 0
+                let protectionDbCount = 0;
                 let protectionPercent = 0;
-                if (
-                    protectionData?.isAwsBackUpEnabled ||
-                    protectionData?.isFsxOntapSnapshotsEnabled
-                ) {
+                if (protectionData?.isAwsBackUpEnabled || protectionData?.isFsxOntapSnapshotsEnabled) {
                     protectionDbCount = totalDbCount;
                     protectionPercent = 100;
                 } else if (protectionData?.isSqlNativeEnabled) {
                     protectionDbCount = protectionData?.protectedDatabases || 0;
-                    protectionPercent = (totalDbCount > 0 && protectionDbCount <= totalDbCount) ? (protectionDbCount/totalDbCount) * 100 : 0;
+                    protectionPercent =
+                        totalDbCount > 0 && protectionDbCount <= totalDbCount
+                            ? (protectionDbCount / totalDbCount) * 100
+                            : 0;
                 }
 
                 return (
@@ -241,12 +224,17 @@ const DatabaseTable = () => {
                             <div className={styles.colText}>
                                 <div className={styles.protection}>
                                     <Typography variant="Regular_14">
-                                        {protectedChk ? formatFractionalNumber(protectionPercent) + '% ' + GENERAL.PROTECTION : GENERAL.NOT_PROTECTED}
+                                        {protectedChk
+                                            ? formatFractionalNumber(protectionPercent) + '% ' + GENERAL.PROTECTION
+                                            : GENERAL.NOT_PROTECTED}
                                     </Typography>
                                 </div>
                                 {protectedChk && (
                                     <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                        {protectionDbCount + GENERAL.PROTECTION_TOOLTIP[0] + totalDbCount + GENERAL.PROTECTION_TOOLTIP[1]}
+                                        {protectionDbCount +
+                                            GENERAL.PROTECTION_TOOLTIP[0] +
+                                            totalDbCount +
+                                            GENERAL.PROTECTION_TOOLTIP[1]}
                                     </TooltipInfo>
                                 )}
                             </div>
@@ -376,7 +364,7 @@ const DatabaseTable = () => {
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
-        isLazyLoading: databaseHostsLoading || databaseJobsLoading
+        isLazyLoading: databaseHostsLoading
     });
 
     useEffect(() => {

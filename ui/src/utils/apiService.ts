@@ -8,7 +8,7 @@ import {
 } from '@reduxjs/toolkit/query/react';
 import { BaseQueryApi } from '@reduxjs/toolkit/dist/query/baseQueryTypes';
 import store, { RootState } from '../store/store';
-import { API_MAX_RETRIES } from './consts';
+import { API_MAX_RETRIES, PRODUCTION, WLMDB_POLICIES_PROD_LINK, WLMDB_POLICIES_STAGE_LINK } from './consts';
 import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
 import { generateRandomDBName, sortListOfDict } from './utilityFunctions';
@@ -333,24 +333,15 @@ export const databaseHomeApi = createApi({
             getDatabaseHosts: builder.query({
                 query: ({ credentialId, region, nextToken = null }) => {
                     if (nextToken) {
-                        return `database-hosts?fields=performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
                     } else {
-                        return `database-hosts?fields=performance,storage,protection,usageEstimation`;
-                    }
-                }
-            }),
-            getDatabaseJobs: builder.query({
-                query: ({ credentialId, region, nextToken = null }) => {
-                    if (nextToken) {
-                        return `deployments?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS&nextToken=${nextToken}`;
-                    } else {
-                        return `deployments?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS`;
+                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=performance,storage,protection,usageEstimation`;
                     }
                 }
             }),
             getJobsSummary: builder.query({
-                query: ({ startTime, endTime }) =>
-                    `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+                query: ({ credentialId, region, startTime, endTime }) =>
+                    `credentials/${credentialId}/regions/${region}/jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getTemplates: builder.mutation({
                 query: ({ payload }) => ({
@@ -358,11 +349,6 @@ export const databaseHomeApi = createApi({
                     method: 'POST',
                     body: payload
                 })
-            }),
-            removeDatabaseJobs: builder.mutation({
-                async queryFn(id, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
-                    return await handleRemoveWE(`jobs/jobId/${id}`, baseQuery, queryApi);
-                }
             })
         };
     }
@@ -395,8 +381,8 @@ export const jobMonitoringApi = createApi({
         return {
             // getJobsList will just include first level jobs list info
             getJobsList: builder.query({
-                query: ({ nextToken = null, startTime, endTime }) => {
-                    let url = `jobs?startTime=${startTime}&endTime=${endTime}`;
+                query: ({ credentialId, region, nextToken = null, startTime, endTime }) => {
+                    let url = `credentials/${credentialId}/regions/${region}/jobs?startTime=${startTime}&endTime=${endTime}`;
                     if (nextToken) {
                         url += `&nextToken=${nextToken}`;
                     }
@@ -406,6 +392,8 @@ export const jobMonitoringApi = createApi({
             // getFullJobsList will include subtasks and task level data also
             getFullJobsList: builder.query({
                 query: ({
+                    credentialId,
+                    region,
                     nextToken = null,
                     startTime,
                     endTime,
@@ -413,7 +401,7 @@ export const jobMonitoringApi = createApi({
                     type = null,
                     status = null
                 }) => {
-                    let url = `jobs?startTime=${startTime}&endTime=${endTime}`;
+                    let url = `credentials/${credentialId}/regions/${region}/jobs?startTime=${startTime}&endTime=${endTime}`;
                     if (nextToken) {
                         url += `&nextToken=${nextToken}`;
                     }
@@ -430,17 +418,17 @@ export const jobMonitoringApi = createApi({
                 }
             }),
             getSubTaskList: builder.query({
-                query: id => ({
-                    url: `jobs/${id}`
+                query: ({ credentialId, region, id }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/jobs/${id}`
                 })
             }),
             getJobsSummaryData: builder.query({
-                query: ({ startTime, endTime }) =>
-                    `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+                query: ({ credentialId, region, startTime, endTime }) =>
+                    `credentials/${credentialId}/regions/${region}/jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getJobsSummaryTimelineData: builder.query({
-                query: ({ startTime, endTime }) =>
-                    `jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}`
+                query: ({ credentialId, region, startTime, endTime }) =>
+                    `credentials/${credentialId}/regions/${region}/jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}`
             })
         };
     }
@@ -475,6 +463,39 @@ export const headersApi = createApi({
             }),
             getStatus: builder.query({
                 query: () => `status`
+            })
+        };
+    }
+});
+
+export const policiesApi = createApi({
+    reducerPath: 'policiesApi',
+    baseQuery: fetchBaseQuery({
+        baseUrl: process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? WLMDB_POLICIES_PROD_LINK : WLMDB_POLICIES_STAGE_LINK
+    }),
+    endpoints: builder => {
+        return {
+            getWlmdbPolicies: builder.query({
+                query: () => ({ url: `/wlmdb/workload-policies.json` })
+            })
+        };
+    }
+});
+
+export const createUserDbApi = createApi({
+    reducerPath: 'createUserDbApi',
+    baseQuery: dynamicBaseQuery,
+    endpoints: builder => {
+        return {
+            getDriveInfo: builder.query({
+                query: ({ id }) => ({ url: `database-hosts/${id}/driveInfo` })
+            }),
+            createUserDB: builder.mutation({
+                query: ({ credentialId, region, id, payload }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}/database`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -515,13 +536,7 @@ export const {
     useUpdateConfigMutation
 } = configApi;
 
-export const {
-    useGetDatabaseHostsQuery,
-    useGetDatabaseJobsQuery,
-    useGetJobsSummaryQuery,
-    useGetTemplatesMutation,
-    useRemoveDatabaseJobsMutation
-} = databaseHomeApi;
+export const { useGetDatabaseHostsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation } = databaseHomeApi;
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
@@ -536,3 +551,7 @@ export const {
 export const { useSendMsgMutation } = chatbotApi;
 
 export const { useGetHeadersCredentialsQuery, useGetHeadersRegionsQuery, useGetStatusQuery } = headersApi;
+
+export const { useGetWlmdbPoliciesQuery } = policiesApi;
+
+export const { useGetDriveInfoQuery, useCreateUserDBMutation } = createUserDbApi;

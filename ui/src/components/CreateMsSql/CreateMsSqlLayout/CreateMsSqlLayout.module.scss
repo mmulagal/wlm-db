@@ -1,1 +1,10 @@
+.create-mssql-layout {
+    width: 100%;
+    overflow-x: auto;
+    max-width: 1069px;
 
+    &::-webkit-scrollbar {
+        height: 0px;
+        width: 0px;
+    }
+}

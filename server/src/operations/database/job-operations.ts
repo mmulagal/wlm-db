@@ -54,6 +54,8 @@ function formatJob(job: JobWithSubJobsDbSchema): JobWithSubJobs {
     const {
         id,
         account_id: accountId,
+        credentials_id: credentialsId,
+        region,
         type,
         status,
         resource_name: resourceName,
@@ -69,6 +71,8 @@ function formatJob(job: JobWithSubJobsDbSchema): JobWithSubJobs {
     return {
         id,
         accountId,
+        credentialsId,
+        region,
         type,
         status,
         resourceName,
@@ -87,10 +91,12 @@ function isValidStartTime(startTime: number) {
     return Number(startTime) && !Number.isNaN(Number(startTime));
 }
 
-function formatJobDbSchema(accountId: string, job: JobRecordType) {
+function formatJobDbSchema(accountId: string, credentialsId: string, region: string, job: JobRecordType) {
     const { type, status, resourceName, name, description, error, startTime, endTime, initiator, parentJobId } = job;
     return {
         account_id: accountId,
+        credentials_id: credentialsId,
+        region,
         type: type as JOBTYPE,
         status: status as JOBSTATUS,
         resource_name: resourceName,
@@ -104,20 +110,20 @@ function formatJobDbSchema(accountId: string, job: JobRecordType) {
     };
 }
 
-async function registerJobs(accountId: string, jobs: JobRecordType[] | []) {
-    logger.info('Registering jobs', { accountId, jobs: jobs?.length });
+async function registerJobs(accountId: string, credentialsId: string, region: string, jobs: JobRecordType[] | []) {
+    logger.info('Registering jobs', { accountId, credentialsId, region, jobs: jobs?.length });
     logger.debug('Bulk creating jobs', jobs);
     if (isEmpty(jobs)) {
         const errMsg = 'No jobs to register';
         logger.error(errMsg);
         throw createError(400, errMsg);
     }
-    const jobsToCreate = jobs.map(job => formatJobDbSchema(accountId, job));
+    const jobsToCreate = jobs.map(job => formatJobDbSchema(accountId, credentialsId, region, job));
     return createJobs(accountId, jobsToCreate);
 }
 
-async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) {
-    logger.info(' Get jobs', { accountId, filterParams });
+async function getJobs(accountId: string, credentialsId: string, region: string, filterParams: ListJobsQueryType = {}) {
+    logger.info(' Get jobs', { accountId, credentialsId, region, filterParams });
     const {
         parentJobId,
         sort,
@@ -145,6 +151,8 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
     const countPromise = countParentJobs(accountId);
     const listPromise = listJobs(
         accountId,
+        credentialsId,
+        region,
         parentJobId,
         sort,
         sortOrder,
@@ -166,7 +174,7 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
     if (includeSubJobs) {
         await Promise.all(
             (records || []).map(async (record: JobWithSubJobsDbSchema) => {
-                const allLevelSubJobs = await getSubJobs(accountId, record.id);
+                const allLevelSubJobs = await getSubJobs(accountId, credentialsId, region, record.id);
                 record.subJobs = allLevelSubJobs;
             })
         );
@@ -181,15 +189,15 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
     };
 }
 
-async function getJobDetails(accountId: string, jobId: string) {
-    logger.info(' Get job details', { accountId, jobId });
+async function getJobDetails(accountId: string, credentialsId: string, region: string, jobId: string) {
+    logger.info(' Get job details', { accountId, credentialsId, region, jobId });
 
-    const record = await listUniqueJob(accountId, jobId);
+    const record = await listUniqueJob(accountId, credentialsId, region, jobId);
     const [job] = trimAccountIdForDemo([record]);
     job.subJobs = [];
 
     const formattedJob = formatJob(job);
-    const subJobsDbSchema = await getSubJobs(accountId, jobId); // 2nd arg in listJobs is parentJObId, the idea here is to list all subs of a jobId in context. Hence passing down jobId as parentJobId
+    const subJobsDbSchema = await getSubJobs(accountId, credentialsId, region, jobId); // 2nd arg in listJobs is parentJObId, the idea here is to list all subs of a jobId in context. Hence passing down jobId as parentJobId
     let subJobs = trimAccountIdForDemo(subJobsDbSchema);
     subJobs = isEmpty(subJobsDbSchema) ? [] : subJobsDbSchema.map(formatJob);
 
@@ -201,32 +209,56 @@ async function getJobDetails(accountId: string, jobId: string) {
     return response;
 }
 
-async function getSubJobs(accountId: string, jobId: string) {
-    logger.info('Get subjobs', { accountId, jobId });
+async function getSubJobs(accountId: string, credentialsId: string, region: string, jobId: string) {
+    logger.info('Get subjobs', { accountId, credentialsId, region, jobId });
 
-    const subJobs = await listJobs(accountId, jobId);
+    const subJobs = await listJobs(accountId, credentialsId, region, jobId);
     await Promise.all(
         (subJobs || []).map(async (subJob: JobWithSubJobsDbSchema) => {
             const { id } = subJob;
-            subJob.subJobs = await getSubJobs(accountId, id);
+            subJob.subJobs = await getSubJobs(accountId, credentialsId, region, id);
         })
     );
     return subJobs;
 }
 
-async function updateJobDetails(accountId: string, jobId: string, params: UpdateJobRecordType) {
+async function updateJobDetails(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    jobId: string,
+    params: UpdateJobRecordType
+) {
     const { description, status, endTime, error } = params;
-    logger.info(' Modifying job details', { accountId, jobId, description, status, endTime, error });
-    const response = await updateJob(accountId, jobId, description, status as JOBSTATUS, endTime, error);
+    logger.info(' Modifying job details', {
+        accountId,
+        credentialsId,
+        region,
+        jobId,
+        description,
+        status,
+        endTime,
+        error
+    });
+    const response = await updateJob(
+        accountId,
+        credentialsId,
+        region,
+        jobId,
+        description,
+        status as JOBSTATUS,
+        endTime,
+        error
+    );
     if (response) {
         return formatJob(response);
     }
     throw createError(`Failed to modify job with ID ${jobId} in ${accountId}. Please ensure the Job ID is correct.`);
 }
 
-async function deleteJobsWithAllSubJobs(accountId: string, jobId: string) {
-    logger.info(' Deleting jobs with all its subjobs', { accountId, jobId });
-    const level2Jobs = await getSubJobs(accountId, jobId);
+async function deleteJobsWithAllSubJobs(accountId: string, credentialsId: string, region: string, jobId: string) {
+    logger.info(' Deleting jobs with all its subjobs', { accountId, credentialsId, region, jobId });
+    const level2Jobs = await getSubJobs(accountId, credentialsId, region, jobId);
     let jobIdsToDelete = [jobId];
     if (level2Jobs.length > 0) {
         level2Jobs.forEach((level2Job: JobWithSubJobsDbSchema) => {
@@ -242,10 +274,12 @@ async function deleteJobsWithAllSubJobs(accountId: string, jobId: string) {
 
 async function getJobSummary(
     accountId: string,
+    credentialsId: string,
+    region: string,
     startTime: number | undefined,
     endTime: number | undefined
 ): Promise<JobSummaryResponseType> {
-    logger.info('Getting job summary', { accountId, startTime, endTime });
+    logger.info('Getting job summary', { accountId, credentialsId, region, startTime, endTime });
 
     if (startTime && endTime && startTime > endTime) {
         throw createError(400, 'Start time cannot be greater than end time');
@@ -255,7 +289,7 @@ async function getJobSummary(
     startTime = startTime || Date.now() - ms(JOBS_DEFAULT_TIME_RANGE);
     endTime = endTime || Date.now();
 
-    const groups = await getJobCountByStatus(accountId, startTime, endTime);
+    const groups = await getJobCountByStatus(accountId, credentialsId, region, startTime, endTime);
 
     const defaultSummary = Object.values(JOBSTATUS).reduce(
         (summary: JobSummary, status: string) => ({
@@ -277,10 +311,12 @@ async function getJobSummary(
 
 async function getJobSummaryByTime(
     accountId: string,
+    credentialsId: string,
+    region: string,
     startTime: number | undefined,
     endTime: number | undefined
 ): Promise<JobSummaryByTimeRecordType[]> {
-    logger.info('Getting job summary by time', { accountId, startTime, endTime });
+    logger.info('Getting job summary by time', { accountId, credentialsId, region, startTime, endTime });
 
     if (startTime && endTime && startTime > endTime) {
         throw createError(400, 'Start time cannot be greater than end time');
@@ -290,7 +326,7 @@ async function getJobSummaryByTime(
     startTime = startTime || Date.now() - ms(JOBS_DEFAULT_TIME_RANGE);
     endTime = endTime || Date.now();
 
-    const groups = (await groupJobsByTimeAndStatus(accountId, startTime, endTime)) as JobGroup[];
+    const groups = (await groupJobsByTimeAndStatus(accountId, credentialsId, region, startTime, endTime)) as JobGroup[];
 
     return groups.reduce((acc: JobSummaryByTime[], group: JobGroup) => {
         const status = camelCase(group?.status?.toLowerCase());

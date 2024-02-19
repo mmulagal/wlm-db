@@ -274,15 +274,19 @@ async function listResources(
     resourceId?: string,
     resourceType?: string,
     pageSize?: number,
-    nextToken?: string
+    nextToken?: string,
+    region?: string,
+    credentialsId?: string
 ) {
-    logger.info('Listing resources', { accountId, resourceId, resourceType });
+    logger.info('Listing resources', { accountId, resourceId, resourceType, region, credentialsId });
     accountId = checkAccount(accountId);
     return prisma.client.resource.findMany({
         where: {
             account_id: accountId,
             ...(resourceId && { resource_id: resourceId }),
             ...(resourceType && { resource_type: resourceType })
+            // ...(region && { region }),
+            // ...(credentialsId && { credentials_id: credentialsId }) // Note: This is on assumption that we have column credentials
         },
         orderBy: {
             id: 'asc'

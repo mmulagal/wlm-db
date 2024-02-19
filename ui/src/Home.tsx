@@ -11,16 +11,14 @@ import Tables from './components/Resource/Tables/Tables';
 
 import styles from './Home.module.scss';
 import { clearNotifications, removeNotification } from './store/notificationSlice';
-import DatabaseHomePage from './workloadFactory/DatabaseHomePage/DatabaseHomePage';
-import PreviewPanel from './components/PreviewPanel/PreviewPanel';
+
 import DatabaseHostOverview from './workloadFactory/ResourcePage/ResourceHomePage/DatabaseHostOverview';
 import JobMonitoring from './workloadFactory/JobMonitoring/JobMonitoring';
 import HeaderComponent from './workloadFactory/DatabaseHomePage/HeaderComponent/HeaderComponent';
+import WizardComponent from './workloadFactory/CreateNewDB/WizardComponent/WizardComponent';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
-    const showPanel = useSelector((state: any) => state.previewPanel.showPanel);
-    const showChatbot = useSelector((state: any) => state.auth?.isWorkloadFactory);
     const dispatch = useDispatch();
 
     //@ts-ignore
@@ -30,7 +28,7 @@ const Home = () => {
 
     return (
         <div className={styles['app-layout']}>
-            <div style={{ height: '100%' }} className={`${showPanel && showChatbot ? styles['left-pane'] : ''}`}>
+            <div style={{ height: '100%' }}>
                 <Routes>
                     <Route
                         path={`add-working-environment/database-services/:storage/create`}
@@ -47,6 +45,7 @@ const Home = () => {
                         <Route path={'tables'} element={<Tables />} />
                     </Route>
                     <Route path={'databases'} element={<HeaderComponent />} />
+                    <Route path={'create-new-user'} element={<WizardComponent />} />
                     <Route path={'job-monitor'} element={<JobMonitoring />} />
                     <Route path="*" element={<MainComponent />} />
                 </Routes>
@@ -68,7 +67,6 @@ const Home = () => {
                     }}
                 ></AppNotification>
             )}
-            {showPanel && showChatbot && <PreviewPanel />}
         </div>
     );
 };

@@ -11,7 +11,8 @@ import {
     useGetRegionsQuery,
     useGetSGListQuery,
     useGetSnsTopicsQuery,
-    useGetVPCListQuery
+    useGetVPCListQuery,
+    useGetWlmdbPoliciesQuery
 } from '../../../utils/apiService';
 import {
     addAdsList,
@@ -21,6 +22,7 @@ import {
     addInstanceTypeList,
     addKeyPairList,
     addKmsKeysList,
+    addPolicies,
     addRegions,
     addSGList,
     addSavedConfigList,
@@ -70,6 +72,12 @@ const MssqlApis = () => {
     const dbVersion = useAppSelector(state => state.mssqlForm.dbVersion);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
+
+    const {
+        data: policiesList,
+        isFetching: policiesLoading,
+        isError: policiesError
+    } = useGetWlmdbPoliciesQuery({});
 
     // API call to get credentials list for user account
     const {
@@ -209,6 +217,12 @@ const MssqlApis = () => {
 
     // API call to get saved configuration list
     const { data: configData, isFetching: configLoading, isError: configError } = useGetConfigListQuery({});
+
+    // To add policies information in MssqlEntities
+    useEffect(() => {
+        dispatch(addPolicies({ policiesList, policiesLoading, policiesError }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [policiesList, policiesLoading, policiesError]);
 
     // To add credentials information in MssqlEntities
     useEffect(() => {

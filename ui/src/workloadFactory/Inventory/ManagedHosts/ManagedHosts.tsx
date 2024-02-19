@@ -1,21 +1,18 @@
 import { Table, TableTopBar, TooltipInfo, Typography, useDialog, useTable } from '@netapp/design-system';
+import { useNavigate } from 'react-router-dom';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './ManagedHosts.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-import {useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DB_HOME_DATA_TYPE, WLF_TABS, STATUS_CONST } from '../../../utils/consts';
+import { WLF_TABS, STATUS_CONST } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
-import { useRemoveDatabaseJobsMutation, useRemoveMSSQLMutation } from '../../../utils/apiService';
+import { useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
-import {
-    addDatabaseHosts,
-    addDatabaseJobs,
-    selectedTabSelection
-} from '../../../store/workloadFactory/databaseHomeSlice';
+import { addDatabaseHosts, selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
 import {
     databaseTableSort,
     formatFractionalNumber,
@@ -28,12 +25,13 @@ import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory
 
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
+import { setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
 
 const ManagedHosts = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const { databaseJobsData, databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
@@ -41,7 +39,6 @@ const ManagedHosts = () => {
     const { setDialog, closeDialog } = useDialog();
 
     const [removeDatabaseHosts] = useRemoveMSSQLMutation();
-    const [removeDatabaseJobs] = useRemoveDatabaseJobsMutation();
 
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
@@ -56,6 +53,11 @@ const ManagedHosts = () => {
             {
                 id: 'viewDatabaseList',
                 displayName: 'View databases list',
+                disabled: row?.status === STATUS_CONST.UP ? false : true
+            },
+            {
+                id: 'createNewUserDatabase',
+                displayName: GENERAL.CREATE_USER_DB_TITLE,
                 disabled: row?.status === STATUS_CONST.UP ? false : true
             },
             {
@@ -76,25 +78,14 @@ const ManagedHosts = () => {
     // To delete MSSQL Resources
     const deleteMssqlResource = (id: string, type: string) => {
         setResetPage(true);
-        if (type === DB_HOME_DATA_TYPE.JOBS) {
-            // removeDatabaseJobs delete API call when data getting from jobs API
-            removeDatabaseJobs(id).then((data: any) => {
-                if (!data?.error) {
-                    dispatch(setRefetchJobSummaryApi(true));
-                    const newList = databaseJobsData?.filter((val: any) => val?.id !== id);
-                    dispatch(addDatabaseJobs({ databaseJobsData: newList, databaseJobsLoading: false, undefined }));
-                }
-            });
-        } else {
-            // removeDatabaseHosts delete API call when data getting from database-hosts API
-            removeDatabaseHosts(id).then((data: any) => {
-                if (!data?.error) {
-                    dispatch(setRefetchJobSummaryApi(true));
-                    const newList = databaseHostsData?.filter((val: any) => val?.id !== id);
-                    dispatch(addDatabaseHosts({ databaseHostsData: newList, databaseHostsLoading: false, undefined }));
-                }
-            });
-        }
+        // removeDatabaseHosts delete API call when data getting from database-hosts API
+        removeDatabaseHosts(id).then((data: any) => {
+            if (!data?.error) {
+                dispatch(setRefetchJobSummaryApi(true));
+                const newList = databaseHostsData?.filter((val: any) => val?.id !== id);
+                dispatch(addDatabaseHosts({ databaseHostsData: newList, databaseHostsLoading: false, undefined }));
+            }
+        });
     };
 
     const handleRemoveDialog = (row: any) => {
@@ -333,19 +324,19 @@ const ManagedHosts = () => {
         {
             id: '9',
             Header: GENERAL.DB_HOST_VPC,
-            accessor: 'topology.vpcId',
+            accessor: 'topology',
             isSortable: true,
             width: '212px',
             renderCell: (cellData: any) => {
                 return (
                     <>
-                        {cellData && (
+                        {cellData?.vpcId && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData}</TooltipInfo>
-                                <Typography variant="Regular_14">{cellData}</Typography>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData?.vpcId}</TooltipInfo>
+                                <Typography variant="Regular_14">{cellData?.vpcName}</Typography>
                             </div>
                         )}
-                        {!cellData && notAvailable()}
+                        {!cellData?.vpcId && notAvailable()}
                     </>
                 );
             }
@@ -353,19 +344,20 @@ const ManagedHosts = () => {
         {
             id: '10',
             Header: GENERAL.DB_HOST_AVAILABILITY,
-            accessor: 'topology.availability',
+            accessor: 'topology',
             isSortable: true,
             width: '212px',
             renderCell: (cellData: any) => {
+                const azList = cellData?.availabilityZones ? cellData.availabilityZones.join(',') : '';
                 return (
                     <>
-                        {cellData && (
+                        {cellData?.fileSystemDeploymentMode && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData?.azList}</TooltipInfo>
-                                <Typography variant="Regular_14">{cellData?.type}</Typography>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
+                                <Typography variant="Regular_14">{cellData?.fileSystemDeploymentMode}</Typography>
                             </div>
                         )}
-                        {!cellData && notAvailable()}
+                        {!cellData?.fileSystemDeploymentMode && notAvailable()}
                     </>
                 );
             }
@@ -423,6 +415,12 @@ const ManagedHosts = () => {
                                         dispatch(resetWorkloadFactoryResourceData());
                                     }
 
+                                    if (menuId === 'createNewUserDatabase') {
+                                        dispatch(updateResourceId(rowData.id));
+                                        dispatch(setDBHostName(rowData?.name));
+                                        navigate('../create-new-user');
+                                    }
+
                                     if (menuId === 'remove') {
                                         handleRemoveDialog(rowData);
                                     }
@@ -436,7 +434,7 @@ const ManagedHosts = () => {
             }
         },
         initialColumnState: initialColStateManagedHosts,
-        isLazyLoading: databaseHostsLoading || databaseJobsLoading
+        isLazyLoading: databaseHostsLoading
     });
 
     useEffect(() => {

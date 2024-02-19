@@ -45,7 +45,8 @@ import {
     CRED_PLACEHOLDERS,
     CODEBOX_REST_RES,
     AWS_CLI_HIGHLIGHT_STRINGS,
-    UI_IDS
+    UI_IDS,
+    DEPLOY_ENDPOINT
 } from '../../../utils/consts';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
@@ -185,6 +186,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
+        isOpen,
         dropDownValue,
         rightPanelData,
         isRightPanelDataLoading,
@@ -500,6 +502,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                             credID={credDetails.credId || CRED_PLACEHOLDERS.CRED_ID}
                             region={credDetails.region || CRED_PLACEHOLDERS.REGION}
                             actualData={getRightPanelRestResponse(openKey, CODEBOX_REST_RES.ORIGINAL_DATA)}
+                            endpoint={DEPLOY_ENDPOINT}
                         />
                     ) : (
                         <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
@@ -855,7 +858,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                         isSearchable={false}
                                         variant="underline"
                                         options={generateCLIOptions}
-                                        defaultValue={[generateCLIOptions[2]]}
+                                        defaultValue={
+                                            dropDownValue
+                                                ? [generateOptionType(dropDownValue, dropDownValue, '', false, '')]
+                                                : [generateCLIOptions[2]]
+                                        }
                                     />
                                 </div>
                             </div>
@@ -934,7 +941,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                 !isRightPanelTemplateLoading &&
                                 getRightPanelTemplateResponse(openKey)?.template && (
                                     <div className={styles.cloudFormationButtonContainer}>
-                                        <Button variant="secondary" onClick={() => handleViewInAwsCloudFormation()} id={UI_IDS.DBP_REDIRECT_TO_CF}>
+                                        <Button
+                                            variant="secondary"
+                                            onClick={() => handleViewInAwsCloudFormation()}
+                                            id={UI_IDS.DBP_REDIRECT_TO_CF}
+                                        >
                                             {GENERAL.SAVE_FORM_AS_CLOUD}
                                         </Button>
                                     </div>

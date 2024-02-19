@@ -10,10 +10,9 @@ import { ReactComponent as Bullet } from '../../../assets/ic_bullet.svg';
 type StorageSavingsProps = {
     hostData: any;
     hostsLoading?: boolean;
-    jobsLoading?: boolean;
 };
 
-const StorageSavings = ({ hostData, hostsLoading, jobsLoading }: StorageSavingsProps) => {
+const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
     const handleProgressBar = () => {
         if (
             hostData?.storageSavingsPercent !== 0 &&
@@ -98,7 +97,7 @@ const StorageSavings = ({ hostData, hostsLoading, jobsLoading }: StorageSavingsP
                     </TooltipInfo>
                 </div>
 
-                {hostsLoading || jobsLoading ? (
+                {hostsLoading ? (
                     <FlashingDotsLoader />
                 ) : (
                     <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>

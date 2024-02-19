@@ -5,7 +5,7 @@ export const SELECT_CONFIG = {
     QUICK_CREATE: 'Quick create',
     STANDARD_CREATE_CONTENT: `You set all of the configuration options, including availability, security, backups, and maintenance.`,
     EASY_CREATE_CONTENT:
-        'Use a recommended best-practice configuration. You can change most configuration options after you create an FSx for ONTAP file system.',
+        'Use a recommended best-practice configuration. You can change most configuration options after you create the database.',
     COMING_SOON: 'Coming soon',
     CREATE: 'Create',
     CANCEL: 'Cancel',
@@ -524,8 +524,10 @@ export const GENERAL = {
         ' storage virtual machines for an ONTAP file system with ',
         ' MBps of throughput capacity.'
     ],
-    FSXN_SECONDARY_SUBNET_ERROR: 'The primary and secondary subnets of FSx for ONTAP file system does not reside in the selected availability zones.',
-    FSXN_PRIMARY_SUBNET_ERROR: 'The subnet for node 1 must be in the primary Availability Zone for the FSx for ONTAP file system.',
+    FSXN_SECONDARY_SUBNET_ERROR:
+        'The primary and secondary subnets of FSx for ONTAP file system does not reside in the selected availability zones.',
+    FSXN_PRIMARY_SUBNET_ERROR:
+        'The subnet for node 1 must be in the primary Availability Zone for the FSx for ONTAP file system.',
     FSXN_DEPLOYMENT_MODE_ERROR: 'Deployment mode not found.',
     FSXN_NOT_AVAILABLE: 'FSx for ONTAP file system is not in available state.',
     TAB_DASHBOARD: 'Dashboard',
@@ -541,7 +543,44 @@ export const GENERAL = {
     UNMANAGED_HOSTS: 'Unmanaged hosts',
     MANAGED_BY_WLF: 'Managed by Workload Factory',
     MANAGED_HOSTS_HEADING: 'Managed hosts',
-    MANAGED_HOST_HEADING: 'Managed host'
+    MANAGED_HOST_HEADING: 'Managed host',
+    // Create USER DB
+    FILE_SETTINGS_FIRST_TEXT: 'Select between new drive letter or existing drive letter per file.',
+    FILE_SETTINGS_SECOND_TEXT:
+        'When selecting new drive letter for Data file it is recommended to select a different new drive letter for the Log file.',
+    CREATE_DB_NAME_TOOLTIP: [
+        'SQL databases should have names that are no more than 30 characters long.',
+        'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
+        'Names should not be Transact-SQL reserved words.'
+    ],
+    DB_ADVANCED_CREATE: 'Advanced create',
+    DB_QUICK_CREATE: 'Quick create',
+    QUICK_DB_CREATE_CONTENT:
+        'Use a recommended best-practice configuration. Quick mode enhance performance and restore time by allocating new drive letters for you, segregating the user database layout into distinct volumes and LUNs per data and log files and optimize performance. Particularly recommended for large databases.',
+    ADVANCED_DB_CREATE_CONTENT:
+        'You set your storage layout configuration by precisely configuring drive letter options for database data and log files. Allocating new drive letters, segregates the user database layout into distinct volumes and LUNs per data and log files and optimize performance. Alternatively, select existing drive letters  (hosting multiple user data and log files on the same drive), recommended for small-medium databases.',
+    FILE_SIZE_TEXT:
+        'The Log size minimum value is 1 GiB.  Recommended size (default) is approximately 25% of data size.',
+    CREATE_USER_DB_TITLE: 'Create user database',
+    DB_CREATE_HOST: 'Host:',
+    CREATE: 'Create',
+    DB_CREATE_NOTIFICATION: ['Database ', ' in host ', ' is in deployment status.'],
+    DATABASE_INFORMATION: 'Database information',
+    FILE_SETTINGS: 'File settings',
+    DB_CREATE_DATABASE_NAME: 'Database name',
+    DB_CREATE_FILES_SIZE: 'Files size',
+    DB_CREATE_FILE_SETTINGS_MODE: 'File settings mode',
+    DB_CREATE_FILE_NAMES: 'File names',
+    DB_CREATE_FILE_NAMES_AND_DRIVES: 'File names & drives',
+    DATA_FILE_SIZE: 'Data file size:',
+    LOG_FILE_SIZE: 'Log file size:',
+    DATA_FILE_NAME: 'Data file name',
+    LOG_FILE_NAME: 'Log file name',
+    DATA_FILE: 'Data file',
+    LOG_FILE: 'Log file',
+    DATA_FILE_PATH: 'Data file path:',
+    LOG_FILE_PATH: 'Log file path:',
+    SELECT_DRIVE_LETTER: 'Select drive letter'
 };
 
 export const CODE_VIEWER = {

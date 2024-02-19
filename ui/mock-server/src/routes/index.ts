@@ -5,6 +5,7 @@ import resource from './resource';
 import config from './config';
 import databaseHosts from './databaseHosts';
 import chatbot from './chatbot';
+import createUserDb from './createUserDb';
 
 const routes = {
     credentials,
@@ -13,6 +14,7 @@ const routes = {
     resource,
     config,
     databaseHosts,
-    chatbot
+    chatbot,
+    createUserDb
 };
 export default routes;
