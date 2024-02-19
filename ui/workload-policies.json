@@ -110,6 +110,7 @@
                     "ssm:Describe*",
                     "ssm:Get*",
                     "ssm:List*",
+                    "ssm:PutParameter",
                     "ssm:PutComplianceItems",
                     "ssm:PutConfigurePackageResult",
                     "ssm:PutInventory",
