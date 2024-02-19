@@ -7,7 +7,12 @@ $driveInfo = $usedDriveLetters | ForEach-Object {
     $driveLetter = $_
     $drive = Get-PSDrive -Name $driveLetter
     $diskNumber = (Get-Partition -DriveLetter $driveLetter).DiskNumber
-    $manufacturer =  (Get-PhysicalDisk    | Where {$_.DeviceId -eq $diskNumber}).Manufacturer
+    try{
+        $manufacturer = (Get-PhysicalDisk | Where-Object { $_.DeviceId -eq $diskNumber }).Manufacturer
+    }
+    catch {
+        $manufacturer = 'N/A'
+    }
     $freeSpace = $drive.Free
     [PSCustomObject]@{
         DriveLetter = $driveLetter
