@@ -1,0 +1,190 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: 'A CloudFormation template to create VPC endpoints for AWS services like s3, cloudformation, ssm, sqs and cloudwatch.'
+
+Metadata:
+    AWS::CloudFormation::Interface:
+        ParameterGroups:
+            - Label:
+                  default: VPC endpoint configuration
+              Parameters:
+                  - VPCId
+                  - VPCCIDR
+                  - PreferredSubnetId
+                  - StandbySubnetId
+                  - S3EndpointExists
+                  - CloudformationEndpointExists
+                  - SsmEndpointExists
+                  - SqsEndpointExists
+                  - CloudwatchEndpointExists
+        ParameterLabels:
+            VPCId:
+                default: Existing VPC ID for deployment.
+            VPCCIDR:
+                default: VPCCIDR for instances launched in existing VPC. Also used for setting up security groups. For example, 10.0.0.8/16
+            PreferredSubnetId:
+                default: Preferred subnet.
+            StandbySubnetId:
+                default: Standby subnet.
+            S3EndpointExists:
+                default: Boolean to check if an S3 endpoint exists in the vpc.
+            CloudformationEndpointExists:
+                default: Boolean to check if a Cloudformation endpoint exists in the vpc.
+            SsmEndpointExists:
+                default: Boolean to check if a SSM endpoint exists in the vpc.
+            SqsEndpointExists:
+                default: Boolean to check if a SQS endpoint exists in the vpc.
+            CloudwatchEndpointExists:
+                default: Boolean to check if a Cloudwatch endpoint exists in the vpc.
+
+Parameters:
+    VPCId:
+        Description: Existing VPC ID for deployment.
+        Type: AWS::EC2::VPC::Id
+    
+    VPCCIDR:
+        AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+        ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+        Description: CIDR block for the VPC.
+        Type: String
+
+    PreferredSubnetId:
+        Description: Specify the preferred subnet for your file system.
+        Type: AWS::EC2::Subnet::Id
+
+    StandbySubnetId:
+        Description: Specify the standby subnet for your file system.
+        Type: String
+        Default: subnet-123456
+    
+    S3EndpointExists:
+        Description: Boolean to convey if an S3 endpoint exists in the vpc.
+        Type: String
+        Default: 'false'
+    
+    CloudformationEndpointExists:
+        Description: Boolean to convey if a Cloudformation endpoint exists in the vpc.
+        Type: String
+        Default: 'false'
+    
+    SsmEndpointExists:
+        Description: Boolean to convey if a SSM endpoint exists in the vpc.
+        Type: String
+        Default: 'false'
+    
+    SqsEndpointExists:
+        Description: Boolean to convey if a SQS endpoint exists in the vpc.
+        Type: String
+        Default: 'false'
+    
+    CloudwatchEndpointExists:
+        Description: Boolean to convey if a Cloudwatch endpoint exists in the vpc.
+        Type: String
+        Default: 'false'
+
+Conditions:
+    SingleZone: !Equals [!Ref StandbySubnetId, 'subnet-123456']
+    CreateCloudformationEndpoint: !Equals [!Ref CloudformationEndpointExists, 'false']
+    CreateSsmEndpoint: !Equals [!Ref SsmEndpointExists, 'false']
+    CreateSqsEndpoint: !Equals [!Ref SqsEndpointExists, 'false']
+    CreateS3Endpoint: !Equals [!Ref S3EndpointExists, 'false']
+    CreateCloudwatchEndpoint: !Equals [!Ref CloudwatchEndpointExists, 'false']
+
+Resources:
+    HttpsSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: 'Allow HTTPS traffic from the VPC'
+        VpcId: !Ref VPCId
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+            CidrIp: !Ref VPCCIDR
+
+    S3Endpoint:
+      Condition: CreateS3Endpoint
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        VpcId: !Ref VPCId
+        VpcEndpointType: Gateway
+        ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+    
+    CloudformationEndpoint:
+      Condition: CreateCloudformationEndpoint
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        VpcId: !Ref VPCId
+        VpcEndpointType: Interface
+        ServiceName: !Sub 'com.amazonaws.${AWS::Region}.cloudformation'
+        SubnetIds:
+            !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
+        PrivateDnsEnabled: true
+        SecurityGroupIds: 
+          - !Ref HttpsSecurityGroup
+    
+    SqsEndpoint:
+      Condition: CreateSqsEndpoint
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        VpcId: !Ref VPCId
+        VpcEndpointType: Interface
+        ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.sqs'
+        SubnetIds:
+            !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
+        PrivateDnsEnabled: true
+        SecurityGroupIds: 
+          - !Ref HttpsSecurityGroup
+    
+    SsmEndpoint:
+      Condition: CreateSsmEndpoint
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        VpcId: !Ref VPCId
+        VpcEndpointType: Interface
+        ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.ssm'
+        SubnetIds:
+            !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
+        PrivateDnsEnabled: true
+        SecurityGroupIds: 
+          - !Ref HttpsSecurityGroup
+    
+    SsmMessagesEndpoint:
+      Condition: CreateSsmEndpoint
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        VpcId: !Ref VPCId
+        VpcEndpointType: Interface
+        ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.ssmmessages'
+        SubnetIds:
+            !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
+        PrivateDnsEnabled: true
+        SecurityGroupIds: 
+          - !Ref HttpsSecurityGroup
+    
+    Ec2MessagesEndpoint:
+      Condition: CreateSsmEndpoint
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        VpcId: !Ref VPCId
+        VpcEndpointType: Interface
+        ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.ec2messages'
+        SubnetIds:
+            !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
+        PrivateDnsEnabled: true
+        SecurityGroupIds: 
+          - !Ref HttpsSecurityGroup
+    
+    CloudwatchEndpoint:
+      Condition: CreateCloudwatchEndpoint
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        VpcId: !Ref VPCId
+        VpcEndpointType: Interface
+        ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.monitoring'
+        SubnetIds:
+            !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
+        PrivateDnsEnabled: true
+        SecurityGroupIds: 
+          - !Ref HttpsSecurityGroup
