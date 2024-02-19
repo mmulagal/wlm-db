@@ -11,7 +11,7 @@ import {
     GetConnectionStatusCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
-import { powerShellScript } from '../../../../src/operations/discover-operations';
+import { hostAndSqlInfoPowerShellScript } from '../../../../src/operations/discover-operations';
 import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands-response.json';
 import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
 import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
@@ -178,7 +178,7 @@ const getServerEdition = {
 };
 
 const getHostAndSqlServerInfo = {
-    commands: powerShellScript
+    commands: hostAndSqlInfoPowerShellScript
 };
 
 ssmMock

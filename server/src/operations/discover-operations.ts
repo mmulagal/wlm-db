@@ -34,10 +34,10 @@ interface SsmTargetInfo {
     ssmState: string;
 }
 
-const MAX_DESCRIBE_INSTANCES_COUNT = 50;
+const MAX_DESCRIBE_INSTANCES_COUNT = 10;
 const MAX_SSM_COMMANDS_POLL_COUNT = 10;
 
-const powerShellScript = [
+const hostAndSqlInfoPowerShellScript = [
     `
     $body = @{}
 
@@ -117,7 +117,7 @@ async function getHostAndSqlServerInfo(
     const commandId = await makeSsmCall(
         credentialsId,
         region,
-        powerShellScript,
+        hostAndSqlInfoPowerShellScript,
         ssmTargets.filter(target => target.ssmState === ConnectionStatus.CONNECTED).map(target => target.ec2InstanceId),
         accountId
     );
@@ -221,4 +221,4 @@ async function makeSsmCall(
     return commandId;
 }
 
-export { getHostAndSqlServerInfo, powerShellScript };
+export { getHostAndSqlServerInfo, hostAndSqlInfoPowerShellScript };
