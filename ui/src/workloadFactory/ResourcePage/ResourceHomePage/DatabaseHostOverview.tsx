@@ -21,6 +21,7 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySl
 import DatabaseHostTile from '../DatabaseOverviewLayout/DatabaseHostTile/DatabaseHostTile';
 import { WLF_TABS } from '../../../utils/consts';
 import { setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
+import { GENERAL } from '../../../utils/appConstants';
 
 const DatabaseHostOverview = () => {
     const selectedTab = useAppSelector(state => state.databaseHome.selectedTab);
@@ -94,7 +95,7 @@ const DatabaseHostOverview = () => {
                     }}
                     id={'create-new-user-button'}
                 >
-                    {'Create new user database'}
+                    {GENERAL.CREATE_USER_DB_TITLE}
                 </Button>
             </div>
 

@@ -8,6 +8,7 @@ import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import { GENERAL } from '../../../utils/appConstants';
 
 const CreateNewUserFooter = () => {
     const navigate = useNavigate();
@@ -34,7 +35,7 @@ const CreateNewUserFooter = () => {
                     region: selectedRegionCode?.data?.regionCode,
                     id: resourceId,
                     payload: payload
-                })
+                });
                 dispatch(setIsLoading(false));
                 if (result) {
                     dispatch(
@@ -42,7 +43,7 @@ const CreateNewUserFooter = () => {
                             notificationType: NOTIFICATION_TYPES.INFO,
                             message: (
                                 <>
-                                    {`Database ${createNewUser?.newUserDBName} in host ${createNewUser?.dbHostName} is in deployment status.`}
+                                    {`${GENERAL.DB_CREATE_NOTIFICATION[0]} ${createNewUser?.newUserDBName} ${GENERAL.DB_CREATE_NOTIFICATION[1]} ${createNewUser?.dbHostName} ${GENERAL.DB_CREATE_NOTIFICATION[2]}`}
                                     <Button
                                         Component="button"
                                         variant="text"
@@ -52,7 +53,7 @@ const CreateNewUserFooter = () => {
                                             dispatch(clearNotifications());
                                         }}
                                     >
-                                        View job monitoring
+                                        {GENERAL.VIEW_JOB_MONITORING}
                                     </Button>
                                 </>
                             )
@@ -70,10 +71,10 @@ const CreateNewUserFooter = () => {
     return (
         <>
             <Button isThin onClick={handleCreate}>
-                {'Create'}
+                {GENERAL.CREATE}
             </Button>
             <Button isThin variant="secondary" onClick={closeHandler}>
-                {'Close'}
+                {GENERAL.CLOSE}
             </Button>
         </>
     );

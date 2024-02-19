@@ -9,7 +9,8 @@ import {
     describeInstanceTypes,
     describeRouteTable,
     describeInstance,
-    createTag
+    createTag,
+    describeEndpoints
 } from '../../../src/lib/aws/ec2';
 import { SQL_AMI_NAMES, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
@@ -29,6 +30,7 @@ import subnetsList from '../../simulator/responses/aws/list-subnets.json';
 import sgList from '../../simulator/responses/aws/list-security-groups.json';
 import ec2instanceTypes from '../../simulator/responses/aws/ec2-instance-types.json';
 import ec2Instances from '../../simulator/responses/aws/describe-instance.json';
+import vpcEndpoints from '../../simulator/responses/aws/describe-endpoints.json'
 import { DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
 
 const REGION = DEFAULT_AWS_REGION;
@@ -122,5 +124,20 @@ describe('EC2 Lib', () => {
     it('Create tag for given resource', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
         await expect(createTag(credentialsId, REGION, ACCOUNT_ID, [ec2Id], tag)).resolves.not.toThrow();
+    });
+
+    it('Describe vpc endpoints', async () => {
+        const params = {
+            Filters: [
+                {
+                    Name: 'vpc-id',
+                    Values: ['vpc-7d4a2818']
+                }
+            ]
+        };
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const response = await describeEndpoints(credentialsId, DEFAULT_AWS_REGION, params);
+
+        expect(response).toEqual(vpcEndpoints);
     });
 });

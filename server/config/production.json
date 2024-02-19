@@ -11,8 +11,9 @@
     "kinesis": {
         "stream-name": "audit-service-prod-stream"
     },
-    "templates": {
-        "bucket": "production.wlmdb.workloads.netapp.com",
+    "bucket": {
+        "artifacts": "production.artifacts.REGION.workloads.netapp.com",
+        "signedTemplates": "production.templates.workloads.netapp.com",
         "region": "us-east-1"
     },
     "ec2": {

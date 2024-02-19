@@ -22,7 +22,13 @@ import { resetChecksAfterLoad } from '../Configuration/LoadConfiguration';
 import { useDispatch } from 'react-redux';
 import { getBaseUrl, useGetTemplatesMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
-import { AWS_CLI_HIGHLIGHT_STRINGS, CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE, UI_IDS } from '../../../utils/consts';
+import {
+    AWS_CLI_HIGHLIGHT_STRINGS,
+    CRED_PLACEHOLDERS,
+    CURL_REQ_TEMPLATE,
+    DEPLOY_ENDPOINT,
+    UI_IDS
+} from '../../../utils/consts';
 
 import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 //@ts-ignore
@@ -146,6 +152,7 @@ const CodeBox = () => {
                         credID={credDetails.credId}
                         region={credDetails.region}
                         actualData={rightPanelMaskedResponse}
+                        endpoint={DEPLOY_ENDPOINT}
                     />
                     {/* <pre className={styles.colorAutomation}>
                         {rightPanelMaskedResponse}

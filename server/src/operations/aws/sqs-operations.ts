@@ -57,7 +57,7 @@ import { updateJobDetails } from '../database/job-operations';
 const logger = getLogger();
 
 const MASTER_STACK_NAME_PATTERN =
-    /(.*)-(?=TrackStackDeployment|ValidationStack1|ValidationStack2|NewFSxStack|ExistingFSxStack|SQLServerStack|SQLStandaloneStack|PostStackDeployment.*)/;
+    /(.*)-(?=TrackStackDeployment|ValidationStack1|ValidationStack2|NewFSxStack|ExistingFSxStack|SQLServerStack|SQLStandaloneStack|PostStackDeployment|VpcEndpointStack.*)/;
 
 async function getSqsMessages(region: string, queueUrl: string) {
     logger.info('Get SQS messages', { region, queueUrl });
@@ -495,7 +495,8 @@ async function processCloudFormationMessages() {
                                                         SQLServiceAccountSecret: sqlServiceAccountSecret,
                                                         ActiveDirectoryName: activeDirectoryName,
                                                         ActiveDirectoryAddress: activeDirectoryAddress,
-                                                        EncryptedFsxPassword: encryptedFsxPassword
+                                                        EncryptedFsxPassword: encryptedFsxPassword,
+                                                        FSxSvmId: fsxSvmId
                                                     } = resourceProperties;
                                                     const [resourceDetails] = await getResources(
                                                         accountId,
@@ -577,7 +578,8 @@ async function processCloudFormationMessages() {
                                                             domainAdminSecret,
                                                             sqlServiceAccountSecret,
                                                             activeDirectoryName,
-                                                            activeDirectoryAddress
+                                                            activeDirectoryAddress,
+                                                            fsxSvmId
                                                         }
                                                     });
 
