@@ -31,8 +31,7 @@ Write-Output $jsonObject
 `;
 
 // Execute a query through SSM
-// Database accepts string if no database is present we need to send 0 to fail the if condition
-const EXECUTE_QUERY = (Query: string, Database: string | number) => `
+const EXECUTE_QUERY = (Query: string, Database: string = '$false') => `
     if(${Database}){
     $results = sqlcmd -d "${Database}" -Q "${Query}" -y 0
     }

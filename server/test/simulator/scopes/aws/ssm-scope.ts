@@ -178,18 +178,20 @@ const getServerEdition = {
 };
 
 const getDriveInfo = {
-    commands: ['C:\\SSM\\GetDriveInfo.ps1']
+    commands: [
+        "#Get the list of all used and available drive letters\n$usedDriveLetters = Get-PSDrive -PSProvider FileSystem | Select-Object -ExpandProperty Name\n$availableDriveLetters = [char[]]([int][char]'D'..[int][char]'Z') | Where-Object { $_ -notin $usedDriveLetters }\n\n#Updating manufacturer detail and availabble space of each existing drives\n$driveInfo = $usedDriveLetters | ForEach-Object {\n    $driveLetter = $_\n    $drive = Get-PSDrive -Name $driveLetter\n    $diskNumber = (Get-Partition -DriveLetter $driveLetter).DiskNumber\n    try{\n        $manufacturer = (Get-PhysicalDisk | Where-Object { $_.DeviceId -eq $diskNumber }).Manufacturer\n    }\n    catch {\n        $manufacturer = 'N/A'\n    }\n    $freeSpace = $drive.Free\n    [PSCustomObject]@{\n        DriveLetter = $driveLetter\n        FreeSpace = $freeSpace\n        manufacturer = $manufacturer \n    }\n}\n\n$jsonObject = @{\n    AvailableDriveLetters = $availableDriveLetters\n    ExistingDriveInfo = $driveInfo\n} | ConvertTo-Json\n\nWrite-Output $jsonObject\n \n"
+    ]
 };
 
 const getDefaultDataDrive = {
     commands: [
-        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; DECLARE @DataPath NVARCHAR(500);\nEXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultData', @DataPath OUTPUT;\nSELECT LEFT(@DataPath,1) AS CurrentDataDrive\nFOR JSON PATH\""
+        "\n    if($false){\n    $results = sqlcmd -d \"$false\" -Q \"SET NOCOUNT ON; DECLARE @DataPath NVARCHAR(500);\nEXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultData', @DataPath OUTPUT;\nSELECT LEFT(@DataPath,1) AS CurrentDataDrive\nFOR JSON PATH\" -y 0\n    }\n    else{\n    $results = sqlcmd -Q \"SET NOCOUNT ON; DECLARE @DataPath NVARCHAR(500);\nEXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultData', @DataPath OUTPUT;\nSELECT LEFT(@DataPath,1) AS CurrentDataDrive\nFOR JSON PATH\" -y 0\n    }\n    Write-Output $results "
     ]
 };
 
 const getDefaultLogDrive = {
     commands: [
-        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; DECLARE @LogPath NVARCHAR(500);\nEXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultLog', @LogPath OUTPUT;\nSELECT LEFT(@LogPath,1) AS CurrentLogDrive \nFOR JSON PATH\""
+        "\n    if($false){\n    $results = sqlcmd -d \"$false\" -Q \"SET NOCOUNT ON; DECLARE @LogPath NVARCHAR(500);\nEXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultLog', @LogPath OUTPUT;\nSELECT LEFT(@LogPath,1) AS CurrentLogDrive \nFOR JSON PATH\" -y 0\n    }\n    else{\n    $results = sqlcmd -Q \"SET NOCOUNT ON; DECLARE @LogPath NVARCHAR(500);\nEXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultLog', @LogPath OUTPUT;\nSELECT LEFT(@LogPath,1) AS CurrentLogDrive \nFOR JSON PATH\" -y 0\n    }\n    Write-Output $results "
     ]
 };
 

@@ -919,8 +919,8 @@ async function getDriveInfoFromSSM(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
     const driveCommand = [GET_DIVE_INFO];
-    const defaultDataDriveCommand = [EXECUTE_QUERY(DEFAULT_SQL_DATA_DRIVE, 0)];
-    const defaultLogDriveCommand = [EXECUTE_QUERY(DEFAULT_SQL_LOG_DRIVE, 0)];
+    const defaultDataDriveCommand = [EXECUTE_QUERY(DEFAULT_SQL_DATA_DRIVE)];
+    const defaultLogDriveCommand = [EXECUTE_QUERY(DEFAULT_SQL_LOG_DRIVE)];
 
     const [driveResponse, defaultDataDriveResponse, defaultLogDriveResponse] = await Promise.all([
         callSsmExecution(credentialsId, region!, driveCommand, activeNodeInstanceId, standbyNodeInstanceId),
