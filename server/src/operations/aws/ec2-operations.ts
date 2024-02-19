@@ -26,7 +26,7 @@ import {
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
-import { ResourceDetails, SecurityGroup, Subnet, VPC, NetworkInterface } from '../../utils/common-types';
+import { ResourceDetails, SecurityGroup, Subnet, VPC, NetworkInterface, Metadata } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -393,15 +393,11 @@ async function tagEc2Resource(credentialsId: string, region: string, accountId: 
 
 async function getCostAllocationTagEC2Resource(resourceDetail: ResourceDetails) {
     logger.info('Get EC2 Resources which has cost allocation tag attached');
-    const { region, metadata } = resourceDetail;
-    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as {
-        credentialsId: string;
-        activeNodeInstanceId: string;
-        standbyNodeInstanceId: string;
-    };
-    const resourceIds = [activeNodeInstanceId];
-    if (standbyNodeInstanceId) {
-        resourceIds.push(standbyNodeInstanceId);
+    const { region, credentials_id: credentialsId, metadata } = resourceDetail;
+    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+    const resourceIds = [node1InstanceId];
+    if (node2InstanceId) {
+        resourceIds.push(node2InstanceId);
     }
     const input: DescribeTagsCommandInput = {
         Filters: [
@@ -458,8 +454,8 @@ async function getVpcEndpoints(credentialsId: string, region: string, vpcId: str
     const response = await describeEndpoints(credentialsId, region, input);
 
     logger.debug('Get vpc endpoints response:', response);
-    
-    return response?.VpcEndpoints
+
+    return response?.VpcEndpoints;
 }
 
 async function getVpcSecurityGroups(credentialsId: string, region: string, vpcId: string) {
@@ -479,11 +475,13 @@ async function getVpcSecurityGroups(credentialsId: string, region: string, vpcId
 async function getServicesWithNoEndpoint(credentialsId: string, region: string, vpcId: string) {
     logger.info('Get services wit no endpoint ', credentialsId, region, vpcId);
 
-    const endpoints = await getVpcEndpoints(credentialsId, region, vpcId)
-    const availableEndpoints = [...new Set(endpoints!.map(({ServiceName}: VpcEndpoint)  => ServiceName?.split('.')[3]))];
+    const endpoints = await getVpcEndpoints(credentialsId, region, vpcId);
+    const availableEndpoints = [
+        ...new Set(endpoints!.map(({ ServiceName }: VpcEndpoint) => ServiceName?.split('.')[3]))
+    ];
     const servicesWithNoEndpoint = ENDPOINTS_DEPLOYMENT.filter(endpoint => !availableEndpoints.includes(endpoint));
 
-    return servicesWithNoEndpoint
+    return servicesWithNoEndpoint;
 }
 
 export {

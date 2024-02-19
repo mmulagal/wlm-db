@@ -578,8 +578,7 @@ const TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
 
 const WLM_ASSETS: Record<string, string> = {
     MSSQLMediaBucketName: MSSQL_MEDIA_BUCKET_NAME,
-    MSSQLMediaPathKey: MSSQL_MEDIA_PATH_KEY,
-
+    MSSQLMediaPathKey: MSSQL_MEDIA_PATH_KEY
 };
 
 // Template error messages
@@ -635,14 +634,19 @@ const TEMPLATE_SNS_SERVICE_TOKEN = 'SnsServiceToken';
 const TEMPLATE_WLMDB_AWS_ACCOUT_ID = 'WlmdbAwsAccountId';
 const TEMPLATE_FSX_PASSWORD = 'EncryptedFsxPassword';
 const TEMPLATE_METRICS = 'Metrics';
-const TEMPLATE_S3_ENDPOINT = 'S3EndpointExists'
-const TEMPLATE_CLOUDFORMATION_ENDPOINT = 'CloudformationEndpointExists'
-const TEMPLATE_SSM_ENDPOINT = 'SsmEndpointExists'
-const TEMPLATE_SQS_ENDPOINT = 'SqsEndpointExists'
-const TEMPLATE_CLOUDWATCH_ENDPOINT = 'CloudwatchEndpointExists'
+const TEMPLATE_S3_ENDPOINT = 'S3EndpointExists';
+const TEMPLATE_CLOUDFORMATION_ENDPOINT = 'CloudformationEndpointExists';
+const TEMPLATE_SSM_ENDPOINT = 'SsmEndpointExists';
+const TEMPLATE_SQS_ENDPOINT = 'SqsEndpointExists';
+const TEMPLATE_CLOUDWATCH_ENDPOINT = 'CloudwatchEndpointExists';
 
-const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string,string> = {'s3': TEMPLATE_S3_ENDPOINT, 'cloudformation': TEMPLATE_CLOUDFORMATION_ENDPOINT, 
-'ssm': TEMPLATE_SSM_ENDPOINT, 'sqs': TEMPLATE_SQS_ENDPOINT, 'monitoring': TEMPLATE_CLOUDWATCH_ENDPOINT}
+const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
+    s3: TEMPLATE_S3_ENDPOINT,
+    cloudformation: TEMPLATE_CLOUDFORMATION_ENDPOINT,
+    ssm: TEMPLATE_SSM_ENDPOINT,
+    sqs: TEMPLATE_SQS_ENDPOINT,
+    monitoring: TEMPLATE_CLOUDWATCH_ENDPOINT
+};
 
 const SQL_RESOURCE_ASSETS = [
     {
@@ -1030,7 +1034,7 @@ const subJobDescriptions: SubJobDescriptions = {
 };
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
 
-const ENDPOINTS_DEPLOYMENT = ['s3', 'cloudformation', 'sqs', 'ssm', 'ssmmessages', 'ec2messages', 'monitoring']
+const ENDPOINTS_DEPLOYMENT = ['s3', 'cloudformation', 'sqs', 'ssm', 'ssmmessages', 'ec2messages', 'monitoring'];
 
 export {
     WLMDB,
@@ -1259,7 +1263,7 @@ export {
     ENDPOINTS_DEPLOYMENT,
     TEMPLATE_S3_ENDPOINT,
     TEMPLATE_CLOUDFORMATION_ENDPOINT,
-    TEMPLATE_SSM_ENDPOINT, 
+    TEMPLATE_SSM_ENDPOINT,
     TEMPLATE_SQS_ENDPOINT,
     TEMPLATE_CLOUDWATCH_ENDPOINT,
     MAP_SERVICE_TEMPLATE_PARAMETER,

@@ -40,7 +40,7 @@ async function generateSignedUrls(region: string, resourceType: DatabaseTypes) {
         assets = SQL_RESOURCE_ASSETS;
     }
 
-    const bucketname = getArtifactsRegionBucketName(region)
+    const bucketname = getArtifactsRegionBucketName(region);
     if (assets?.length) {
         await Promise.all(
             SQL_RESOURCE_ASSETS.map(async resource => {
@@ -75,16 +75,17 @@ async function updateTemplateUrls(
     logger.info('Updating templates and uploading to bucket', region, templateFilepath, templateType);
     const source = readFileSync(templateFilepath).toString();
     const template = Handlebars.compile(source, { noEscape: true });
-    const artifactsBucketName = getArtifactsRegionBucketName(region)
+    const artifactsBucketName = getArtifactsRegionBucketName(region);
     if (templateType === TEMPLATE_TYPES.MASTER) {
         const fsxNewTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXNewTemplate');
         const fsxExistingTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXExistingTemplate');
         const vpcEndpointsTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'VpcEndpointTemplate');
-        const [fsxNewTemplatesignedUrl, fsxExistingTemplatesignedUrl, vpcEndpointsTemplateSignedUrl] = await Promise.all([
-            getPreSignedUrl(region, artifactsBucketName, `${WLMDB}/${fsxNewTemplatePath!.url}`),
-            getPreSignedUrl(region, artifactsBucketName, `${WLMDB}/${fsxExistingTemplatePath!.url}`),
-            getPreSignedUrl(region, artifactsBucketName, `${WLMDB}/${vpcEndpointsTemplatePath!.url}`)
-        ]);
+        const [fsxNewTemplatesignedUrl, fsxExistingTemplatesignedUrl, vpcEndpointsTemplateSignedUrl] =
+            await Promise.all([
+                getPreSignedUrl(region, artifactsBucketName, `${WLMDB}/${fsxNewTemplatePath!.url}`),
+                getPreSignedUrl(region, artifactsBucketName, `${WLMDB}/${fsxExistingTemplatePath!.url}`),
+                getPreSignedUrl(region, artifactsBucketName, `${WLMDB}/${vpcEndpointsTemplatePath!.url}`)
+            ]);
 
         signedUrls.set(fsxNewTemplatePath!.name, {
             name: fsxNewTemplatePath!.name,
@@ -220,7 +221,11 @@ async function updateTemplateUrls(
         const standAloneTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLStandaloneTemplate');
         const customStandAloneTemplatePath: string = `${WLMDB}/${stackName}/${standAloneTemplatePath!.url}`;
         await putObjectBucket(region, SIGNED_TEMPLATES_BUCKET_NAME, customStandAloneTemplatePath, contents);
-        const standAloneSignedUrl = await getPreSignedUrl(region, SIGNED_TEMPLATES_BUCKET_NAME, customStandAloneTemplatePath);
+        const standAloneSignedUrl = await getPreSignedUrl(
+            region,
+            SIGNED_TEMPLATES_BUCKET_NAME,
+            customStandAloneTemplatePath
+        );
         signedUrls.set(standAloneTemplatePath!.name, {
             name: standAloneTemplatePath!.name,
             url: standAloneSignedUrl,
