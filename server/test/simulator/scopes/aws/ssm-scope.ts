@@ -305,6 +305,5 @@ ssmMock
     .on(GetCommandInvocationCommand, { Parameters: '7f937c8c-3f95-460b-ad99-788b354bffa8' })
     .resolves(getCommandInvocationResponse.getHostAndSqlServerInfoResponse);
 
-
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

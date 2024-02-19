@@ -515,17 +515,14 @@ const AWS_REGIONS = new Map<string, string>([
 
 const WLMDB = 'wlmdb';
 
-const BUCKET_NAME = process.env.WLMDB_BUCKET_NAME || config.get<string>('templates.bucket');
-const ASSETS_BUCKET_REGION = process.env.WLMDB_BUCKET_REGION || config.get<string>('templates.region');
-const BUCKET_PREFIX = 'templates';
+const ARTIFACT_BUCKET_NAME = process.env.ARTIFACT_BUCKET_NAME || config.get<string>('bucket.artifacts');
+const SIGNED_TEMPLATES_BUCKET_NAME = process.env.TEMPLATE_BUCKET_NAME || config.get<string>('bucket.signedTemplates');
 const CF_DEPLOY_ROLE_NAME = 'CfDeployRoleName';
 const VALIDATION_AMI = 'ValidationAmi';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
-const ASSETS_REGION_CODE = `s3.${ASSETS_BUCKET_REGION}`;
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
-const CLOUD_FORMATION_STACK_URL = `https://${ASSETS_BUCKET_REGION}.console.aws.amazon.com/cloudformation/home`;
-const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.${ASSETS_REGION_CODE}.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
+const CLOUD_FORMATION_STACK_URL = `https://${DEFAULT_AWS_REGION}.console.aws.amazon.com/cloudformation/home`;
 const CLOUD_FORMATION_CLI_COMMAND = 'aws cloudformation create-stack';
 const DISABLE_ROLLBACK = true;
 const MASTER_STACK_TIMEOUT_MINUTES = 180;
@@ -581,11 +578,8 @@ const TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
 };
 
 const WLM_ASSETS: Record<string, string> = {
-    AssetsBucketName: BUCKET_NAME,
-    AssetsS3KeyPrefix: BUCKET_PREFIX,
     MSSQLMediaBucketName: MSSQL_MEDIA_BUCKET_NAME,
-    MSSQLMediaPathKey: MSSQL_MEDIA_PATH_KEY,
-    AssetsS3RegionCode: ASSETS_REGION_CODE
+    MSSQLMediaPathKey: MSSQL_MEDIA_PATH_KEY
 };
 
 // Template error messages
@@ -641,11 +635,24 @@ const TEMPLATE_SNS_SERVICE_TOKEN = 'SnsServiceToken';
 const TEMPLATE_WLMDB_AWS_ACCOUT_ID = 'WlmdbAwsAccountId';
 const TEMPLATE_FSX_PASSWORD = 'EncryptedFsxPassword';
 const TEMPLATE_METRICS = 'Metrics';
+const TEMPLATE_S3_ENDPOINT = 'S3EndpointExists';
+const TEMPLATE_CLOUDFORMATION_ENDPOINT = 'CloudformationEndpointExists';
+const TEMPLATE_SSM_ENDPOINT = 'SsmEndpointExists';
+const TEMPLATE_SQS_ENDPOINT = 'SqsEndpointExists';
+const TEMPLATE_CLOUDWATCH_ENDPOINT = 'CloudwatchEndpointExists';
+
+const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
+    s3: TEMPLATE_S3_ENDPOINT,
+    cloudformation: TEMPLATE_CLOUDFORMATION_ENDPOINT,
+    ssm: TEMPLATE_SSM_ENDPOINT,
+    sqs: TEMPLATE_SQS_ENDPOINT,
+    monitoring: TEMPLATE_CLOUDWATCH_ENDPOINT
+};
 
 const SQL_RESOURCE_ASSETS = [
     {
         name: 'DSC',
-        url: 'DSC.zip'
+        url: `${WLMDB}/DSC.zip`
     },
     // {
     //     name: 'DSCSignature',
@@ -653,7 +660,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'PowerShell',
-        url: 'Installer/powershell.zip'
+        url: `${WLMDB}/Installer/powershell.zip`
     },
     // {
     //     name: 'PowerShellSignature',
@@ -661,7 +668,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'Sqlspcu',
-        url: 'Installer/sqlspcu.zip'
+        url: `${WLMDB}/Installer/sqlspcu.zip`
     },
     // {
     //     name: 'SqlspcuSignature',
@@ -669,7 +676,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'AmazonFailoverCluster',
-        url: 'modules/AmznFailoverCluster.zip'
+        url: `${WLMDB}/modules/AmznFailoverCluster.zip`
     },
     // {
     //     name: 'AmazonFailoverClusterSignature',
@@ -677,7 +684,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'AmazonLaunchWizardForCFN',
-        url: 'modules/AWSLaunchWizardForCFN.zip'
+        url: `${WLMDB}/modules/AWSLaunchWizardForCFN.zip`
     },
     // {
     //     name: 'AmazonLaunchWizardForCFNSignature',
@@ -685,7 +692,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'AmazonLaunchWizardForSSM',
-        url: 'modules/AWSLaunchWizardForSSM.zip'
+        url: `${WLMDB}/modules/AWSLaunchWizardForSSM.zip`
     },
     // {
     //     name: 'AmazonLaunchWizardForSSMSignature',
@@ -693,15 +700,15 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'ScriptVerifySignature',
-        url: 'scripts/Verify-Signature.ps1'
+        url: `${WLMDB}/scripts/Verify-Signature.ps1`
     },
     {
         name: 'ScriptUnzipArchive',
-        url: 'scripts/Unzip-Archive.ps1'
+        url: `${WLMDB}/scripts/Unzip-Archive.ps1`
     },
     {
         name: 'ScriptCommon',
-        url: 'scripts/common.zip'
+        url: `${WLMDB}/scripts/common.zip`
     },
     // {
     //     name: 'ScriptCommonSignature',
@@ -709,7 +716,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'ScriptSQLFCI',
-        url: 'scripts/sqlfci.zip'
+        url: `${WLMDB}/scripts/sqlfci.zip`
     },
     // {
     //     name: 'ScriptSQLFCISignature',
@@ -717,7 +724,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'ScriptSQLONTAP',
-        url: 'scripts/sqlontap.zip'
+        url: `${WLMDB}/scripts/sqlontap.zip`
     },
     // {
     //     name: 'ScriptSQLONTAPSignature',
@@ -725,27 +732,27 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'ScriptVpcCheck',
-        url: 'validation/Validate-VPCConnectivity.ps1'
+        url: `${WLMDB}/validation/Validate-VPCConnectivity.ps1`
     },
     {
         name: 'ScriptUpdateDnsServers',
-        url: 'validation/Update-DNSServers.ps1'
+        url: `${WLMDB}/validation/Update-DNSServers.ps1`
     },
     {
         name: 'ScriptRenameComputer',
-        url: 'validation/Rename-Computer.ps1'
+        url: `${WLMDB}/validation/Rename-Computer.ps1`
     },
     {
         name: 'ScriptRestartComputer',
-        url: 'validation/Restart-Computer.ps1'
+        url: `${WLMDB}/validation/Restart-Computer.ps1`
     },
     {
         name: 'ScriptAdValidation',
-        url: 'validation/Validate-Credentials.ps1'
+        url: `${WLMDB}/validation/Validate-Credentials.ps1`
     },
     {
         name: 'ScriptFSxValidation',
-        url: 'validation/Validate-FsxConnectivity.ps1'
+        url: `${WLMDB}/validation/Validate-FsxConnectivity.ps1`
     }
 ];
 
@@ -772,6 +779,10 @@ const SQL_TEMPLATES_ASSETS = [
     {
         name: 'SQLStandaloneTemplate',
         url: 'templates/standalone-deployment.yaml'
+    },
+    {
+        name: 'VpcEndpointTemplate',
+        url: 'templates/vpc-endpoints.yaml'
     }
 ];
 
@@ -787,7 +798,8 @@ enum TEMPLATE_TYPES {
     MASTER = 'master',
     SQLSTACK = 'sqlstack',
     VALIDATION = 'validation',
-    SQLSTANDALONE = 'sqlstandalone'
+    SQLSTANDALONE = 'sqlstandalone',
+    ENDPOINT = 'endpoint'
 }
 
 const SQL_TEMPLATES_DISTRIBUTION = [
@@ -802,6 +814,10 @@ const SQL_TEMPLATES_DISTRIBUTION = [
     {
         name: TEMPLATE_TYPES.SQLSTANDALONE,
         location: './resources/mssql/templates/standalone-deployment.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.ENDPOINT,
+        location: './resources/mssql/templates/vpc-endpoints.yaml'
     }
 ];
 
@@ -1019,6 +1035,8 @@ const subJobDescriptions: SubJobDescriptions = {
 };
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
 
+const ENDPOINTS_DEPLOYMENT = ['s3', 'cloudformation', 'sqs', 'ssm', 'ssmmessages', 'ec2messages', 'monitoring'];
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1080,12 +1098,10 @@ export {
     WORKSPACE_ID,
     API_TITLE,
     APP_NAME,
-    BUCKET_NAME,
     MASTER_TEMPLATE_PATH,
     CLOUD_FORMATION_STACK_URL,
     TEMPLATE_CONFIGURATION_MAPPING,
     WLM_ASSETS,
-    MASTER_TEMPLATE_URL,
     CF_DEPLOY_ROLE_NAME,
     MISSING_PERMISSIONS,
     CF_QUOTA_REACHED,
@@ -1116,7 +1132,6 @@ export {
     FSX_SSD_MIN_SIZE,
     FSX_SSD_MAX_SIZE,
     VALIDATION_AMI,
-    ASSETS_BUCKET_REGION,
     DatabaseTypes,
     WLMDB_RESOURCE_CLASS,
     TEMPLATE_TYPES,
@@ -1245,5 +1260,14 @@ export {
     JOBS_DEFAULT_TIME_RANGE,
     subJobDescriptions,
     CF_STACK_RESOURCE_TYPE,
-    AWS_PRICING_TYPE
+    AWS_PRICING_TYPE,
+    ENDPOINTS_DEPLOYMENT,
+    TEMPLATE_S3_ENDPOINT,
+    TEMPLATE_CLOUDFORMATION_ENDPOINT,
+    TEMPLATE_SSM_ENDPOINT,
+    TEMPLATE_SQS_ENDPOINT,
+    TEMPLATE_CLOUDWATCH_ENDPOINT,
+    MAP_SERVICE_TEMPLATE_PARAMETER,
+    ARTIFACT_BUCKET_NAME,
+    SIGNED_TEMPLATES_BUCKET_NAME
 };

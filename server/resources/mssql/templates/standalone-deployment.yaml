@@ -51,8 +51,6 @@ Metadata:
             - Label:
                   default: AWS Configuration
               Parameters:
-                  - AssetsBucketName
-                  - AssetsS3KeyPrefix
                   - EnableCloudWatchLogFeature
                   - ParentStackName
         ParameterLabels:
@@ -62,12 +60,6 @@ Metadata:
                 default: Private Subnet ID for the SQL node for existing VPC. For example, subnet-000dc866d93550eb0
             RouteTableId:
                 default: Route Table ID of private subnet
-            AssetsBucketName:
-                default: S3 Bucket Name hosting WLMDB Assets.
-            AssetsS3RegionCode:
-                default: S3 bucket region for the bucket hosting WLMDB Assets. For example, s3.us-east-1
-            AssetsS3KeyPrefix:
-                default: S3 Key Prefix for WLMDB assets
             AMIID:
                 default: ID of the AMI used to launch Instances
             VPCID:
@@ -157,20 +149,6 @@ Parameters:
         Type: AWS::EC2::KeyPair::KeyName
     PrivateSubnetID:
         Description: ID of private subnet in an Availability Zone 1 for the workload (For example, subnet-a0246dcd).
-        Type: String
-    AssetsBucketName:
-        Description: S3 bucket name for WLMDB assets.
-        Type: String
-    AssetsS3RegionCode:
-        Description: The AWS Region where the WLMDB S3 bucket (AssetsBucketName)
-            is hosted. When using your own bucket, you must specify this value.
-        Type: String
-    AssetsS3KeyPrefix:
-        AllowedPattern: ^[0-9a-zA-Z-/]*$
-        ConstraintDescription: Launch Wizard key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/).
-        Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
-            can include numbers, lowercase letters, uppercase letters, hyphens (-), and
-            forward slash (/).
         Type: String
     VPCID:
         Description: ID of your existing VPC for deployment.
@@ -285,9 +263,6 @@ Conditions:
     LogFeatureEnabled: !Equals
         - !Ref 'EnableCloudWatchLogFeature'
         - 'true'
-    UsingDefaultBucket: !Equals
-        - !Ref 'AssetsBucketName'
-        - LaunchWizard-sqlha-templates
 Rules:
     KeyPairsNotEmpty:
         Assertions:

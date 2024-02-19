@@ -22,7 +22,8 @@ import {
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
     FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
     subJobDescriptions,
-    SqlServerDeploymentModel
+    SqlServerDeploymentModel,
+    ARTIFACT_BUCKET_NAME
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -409,6 +410,10 @@ function getResourceNameFromTags(tags?: Tag[]) {
     return name;
 }
 
+function getArtifactsRegionBucketName(region: string) {
+    return `${ARTIFACT_BUCKET_NAME.replace('REGION', region)}`;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -434,5 +439,6 @@ export {
     calculateSQLandWindowsVersion,
     getDescriptionForMatchingName,
     convertMetricsIntoJson,
-    getResourceNameFromTags
+    getResourceNameFromTags,
+    getArtifactsRegionBucketName
 };
