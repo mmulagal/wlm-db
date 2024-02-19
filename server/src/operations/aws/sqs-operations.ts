@@ -496,7 +496,7 @@ async function processCloudFormationMessages() {
                                                         ActiveDirectoryName: activeDirectoryName,
                                                         ActiveDirectoryAddress: activeDirectoryAddress,
                                                         EncryptedFsxPassword: encryptedFsxPassword,
-                                                        FsxSvmName: fsxSvmName
+                                                        FSxSvmId: fsxSvmId
                                                     } = resourceProperties;
                                                     const [resourceDetails] = await getResources(
                                                         accountId,
@@ -579,7 +579,7 @@ async function processCloudFormationMessages() {
                                                             sqlServiceAccountSecret,
                                                             activeDirectoryName,
                                                             activeDirectoryAddress,
-                                                            fsxSvmName
+                                                            fsxSvmId
                                                         }
                                                     });
 
