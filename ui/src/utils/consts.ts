@@ -272,3 +272,17 @@ export const DRIVE_LETTER_TYPE = {
 
 export const DEPLOY_ENDPOINT = '/cloudformation/deploy';
 export const CREATE_DB_ENDPOINT = (databaseHostId: any) => `/database-hosts/${databaseHostId}/database`;
+
+export const CREATE_DB_CURL_REQ_TEMPLATE = (
+    baseUrl: string,
+    credentialId: string,
+    region: string,
+    databaseHostId: any,
+    token: string,
+    payload: any
+) => `
+curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
+--header 'Authorization: Bearer ${token}' \\
+--header 'Content-Type: application/json' \\
+--data-raw '${payload}'
+`;
