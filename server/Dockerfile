@@ -20,7 +20,7 @@ COPY package-lock.json ./
 COPY config/default.json ./config/default.json
 COPY config/production.json ./config/production.json
 COPY config/log4js.json ./config/log4js.json
-COPY resources/mssql/templates/ ./resources/mssql/templates/
+COPY resources/mssql/templates/* ./resources/mssql/templates
 COPY dist/src ./
 
 COPY src/lib/chatbot/schemas/* ./lib/chatbot/schemas
