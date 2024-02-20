@@ -48,7 +48,12 @@ async function generateSignedUrls(region: string, resourceType: DatabaseTypes) {
                 logger.info(`Creating signed url for ${resource.url} in region ${region}.`);
                 try {
                     signedUrl = await getPreSignedUrl(region, bucketname, resource.url);
-                    signedUrls.set(resource.name, { name: resource.name, url: signedUrl, location: resource.url });
+                    const url = new URL(signedUrl)
+                    const updatedHost = `https://${bucketname}.${url.hostname}`
+                    const updatedPath = `${url.pathname.replace(bucketname,'')}${url.search}`
+                    const updatedUrl = new URL(updatedHost, updatedPath)
+                    logger.info(`Updated ${resource.url} in region ${region}: ${updatedUrl}`)
+                    signedUrls.set(resource.name, { name: resource.name, url: updatedUrl.href, location: resource.url });
                 } catch (error) {
                     const errorMessage = SIGNED_URL_ERROR_MESSAGE(resource.url, region, error as string);
                     logger.error(errorMessage);
