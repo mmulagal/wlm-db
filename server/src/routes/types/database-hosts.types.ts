@@ -174,11 +174,11 @@ const DriveInfoResponseBody = Type.Object({
         Type.Object({
             driveLetter: Type.String(),
             availableSize: Type.Number(),
-            defaultDataDrive: Type.Boolean(),
-            defaultLogDrive: Type.Boolean(),
             isNetappDrive: Type.Boolean()
         })
     ),
+    defaultDataDrive: Type.Optional(Type.String()),
+    defaultLogDrive: Type.Optional(Type.String()),
     availableDriveLetters: Type.Array(Type.String()),
     fsxStorageCapacity: Type.Optional(Type.Number())
 });

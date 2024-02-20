@@ -45,7 +45,7 @@ import {
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import { createResource, deleteResource, listRelationshipsResources } from '../../../lib/database/db';
-import { generateHash } from '../../../utils/utils';
+import { generateHash, sqlResponseParsing } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
@@ -53,17 +53,6 @@ import { hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache
 import { Metadata } from '../../../utils/common-types';
 
 const logger = getLogger();
-
-function sqlResponseParsing(response: string) {
-    try {
-        const cleanResponse = response.replaceAll('\r\n', '');
-        const jsonResponse = JSON.parse(cleanResponse);
-        return jsonResponse;
-    } catch (error) {
-        logger.error('Error parsing query response:', error);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing query response, ${error}`);
-    }
-}
 
 async function getResourceDetails(resourceId: string) {
     logger.info('Gettng resource details of resource', resourceId);
@@ -694,6 +683,5 @@ export {
     getServerState,
     getNativeSQLProtection,
     getPerformanceMetrics,
-    getNativeSQLBackedupDatabases,
-    sqlResponseParsing
+    getNativeSQLBackedupDatabases
 };

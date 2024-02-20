@@ -48,8 +48,7 @@ import {
     getPerformanceMetrics,
     getDataBasesSummary,
     getNativeSQLBackedupDatabases,
-    callSsmExecution,
-    sqlResponseParsing
+    callSsmExecution
 } from './workloads/mssql/mssql-operations';
 import {
     getStorageDataUsingSSM,
@@ -62,8 +61,9 @@ import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { isSSMConnectionSuccessful } from './aws/ssm-operations';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
-import { GET_DIVE_INFO } from './workloads/mssql/ssm-script-utils';
+import { GET_DRIVE_INFO } from './workloads/mssql/ssm-script-utils';
 import { getResources } from './database/database-operations';
+import { sqlResponseParsing } from '../utils/utils';
 
 const logger = getLogger();
 
@@ -934,7 +934,7 @@ async function getDriveInfoFromSSM(
         const errorMessage = `Error while fetching drive details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
-    const driveInfoCommand = [GET_DIVE_INFO];
+    const driveInfoCommand = [GET_DRIVE_INFO];
 
     // Not caching the response as multiple creation will require real time data
     const driveInfoResponse = await callSsmExecution(
@@ -969,13 +969,11 @@ async function getDriveInfoFromSSM(
             return {
                 driveLetter: DriveLetter,
                 availableSize: FreeSpace,
-                defaultDataDrive: DriveLetter === currentDataDrive,
-                defaultLogDrive: DriveLetter === currentLogDrive,
                 isNetappDrive: manufacturer === 'NETAPP'
             };
         }
     );
-    return { UpdatedExistingDriveInfo, availableDriveLetters };
+    return { UpdatedExistingDriveInfo, availableDriveLetters, currentDataDrive, currentLogDrive };
 }
 
 async function getDriveInfo(
@@ -1008,12 +1006,18 @@ async function getDriveInfo(
         getDriveInfoFromSSM(accountId, databaseHostId, credentialsId, region, node1InstanceId, node2InstanceId)
     ]);
 
-    const finalStorage = fsxStorageCapacity?.storage;
-    return {
-        existingDriveInfo: driveResponse.UpdatedExistingDriveInfo,
-        availableDriveLetters: driveResponse.availableDriveLetters,
-        fsxStorageCapacity: finalStorage
+    const { UpdatedExistingDriveInfo, availableDriveLetters, currentDataDrive, currentLogDrive } = driveResponse;
+    const { storage } = fsxStorageCapacity ?? {};
+
+    const response: DriveInfoResponseBodyType = {
+        existingDriveInfo: UpdatedExistingDriveInfo,
+        availableDriveLetters,
+        ...(storage !== undefined && { fsxStorageCapacity: storage * 1024 * 1024 * 1024 }),
+        ...(currentDataDrive !== undefined && { defaultDataDrive: currentDataDrive }),
+        ...(currentLogDrive !== undefined && { defaultLogDrive: currentLogDrive })
     };
+
+    return response;
 }
 
 export { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases, getDriveInfo };

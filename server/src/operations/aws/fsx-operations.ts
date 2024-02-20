@@ -496,10 +496,12 @@ async function getFsxStorageCapacity(credentialsId: string, region: string, fsxI
 
         writeToCache(AWS_FSX_TYPE, cacheKey, fsxStorage);
         return fsxStorage;
-    } catch (error) {
+    } catch (error: any) {
         const errorMessage = `Error fetching FSx storage capacity: ${error}`;
         logger.error(errorMessage);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        if (error.name === 'FileSystemNotFound') {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
     }
 }
 
