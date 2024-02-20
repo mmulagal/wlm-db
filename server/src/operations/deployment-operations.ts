@@ -62,7 +62,8 @@ import {
     VIEW,
     MAP_SERVICE_TEMPLATE_PARAMETER,
     SIGNED_TEMPLATES_BUCKET_NAME,
-    TEMPLATE_BUCKET_REGION
+    TEMPLATE_BUCKET_REGION,
+    DEFAULT_AWS_REGION
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -292,6 +293,8 @@ async function getCloudformationTemplate(
         customMasterTemplatePath
     );
 
+    region = region ? region : DEFAULT_AWS_REGION
+
     logger.info('Signed master url ', signedMasterTemplateUrl);
 
     // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
@@ -336,7 +339,7 @@ async function getCloudformationTemplate(
     } else {
         // Sleep for 2 seconds for master template to be uploaded
         await sleep(2000);
-        const response = await getObjectBucket(region!, SIGNED_TEMPLATES_BUCKET_NAME, customMasterTemplatePath);
+        const response = await getObjectBucket(TEMPLATE_BUCKET_REGION, SIGNED_TEMPLATES_BUCKET_NAME, customMasterTemplatePath);
         masterTemplateContents = await response.Body?.transformToString();
     }
 
