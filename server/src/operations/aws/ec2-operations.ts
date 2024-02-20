@@ -1,4 +1,5 @@
 import createError from 'http-errors';
+import { isEmpty } from 'lodash-es';
 import {
     DescribeSubnetsRequest,
     DescribeSecurityGroupsRequest,
@@ -9,7 +10,6 @@ import {
     VpcEndpoint
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
-import { isEmpty } from 'lodash-es';
 import { AWSQueryFields, ENDPOINTS_DEPLOYMENT, WLMDB_COST_ALLOCATION_TAG } from '../../utils/consts';
 import {
     describeVpc,
@@ -476,8 +476,10 @@ async function getVpcSecurityGroups(credentialsId: string, region: string, vpcId
 async function getServicesWithNoEndpoint(credentialsId: string, region: string, vpcId: string) {
     logger.info('Get services with no endpoint ', credentialsId, region, vpcId);
 
-    const endpoints = await getVpcEndpoints(credentialsId, region, vpcId)
-    const availableEndpoints = !isEmpty(endpoints) ? [...new Set(endpoints!.map(({ServiceName}: VpcEndpoint)  => ServiceName?.split('.')[3]))] : [];
+    const endpoints = await getVpcEndpoints(credentialsId, region, vpcId);
+    const availableEndpoints = !isEmpty(endpoints)
+        ? [...new Set(endpoints!.map(({ ServiceName }: VpcEndpoint) => ServiceName?.split('.')[3]))]
+        : [];
     const servicesWithNoEndpoint = ENDPOINTS_DEPLOYMENT.filter(endpoint => !availableEndpoints.includes(endpoint));
 
     return servicesWithNoEndpoint;

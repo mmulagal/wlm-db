@@ -5,11 +5,13 @@
     }
 
     .heading {
-        margin-left: 40%;
+        display: flex;
+        justify-content: center;
     }
 
     .headingHost {
         margin-top: 8px;
-        margin-left: 40%
+        display: flex;
+        justify-content: center;
     }
 }

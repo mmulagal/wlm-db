@@ -1,5 +1,6 @@
 import Promise from 'bluebird';
 import randomize from 'randomatic';
+import createError from 'http-errors';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
 import { ListTagsForResourceCommandInput, Tag, Volume } from '@aws-sdk/client-fsx';
@@ -10,7 +11,8 @@ import {
     describeFSxStorageVirtualMachines,
     describeFSxBackups,
     listResourceTags,
-    createTag
+    createTag,
+    describeFSxN
 } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
@@ -19,7 +21,9 @@ import {
     FSX_STORAGE_TYPE,
     AWS_RESOURCE_NAME_TAG,
     FSX_BATCH_CONCURRENCY_VALUE,
-    SSM_COMMAND_CACHE_TYPE
+    SSM_COMMAND_CACHE_TYPE,
+    AWS_FSX_TYPE,
+    HttpErrorCodes
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
 import { callSsmExecution } from '../workloads/mssql/mssql-operations';
@@ -29,6 +33,10 @@ import { getFsxArn } from '../../utils/utils';
 import { listFSXFileSystemForDemo } from '../../lib/cloud-manager/fsx-core';
 
 const logger = getLogger();
+
+interface FsxStorage {
+    storage: number;
+}
 
 type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
 
@@ -469,6 +477,34 @@ async function getCostAllocationTagFsxResource(resourceDetail: ResourceDetails) 
     }
 }
 
+async function getFsxStorageCapacity(credentialsId: string, region: string, fsxId: string) {
+    logger.info('Get FSx Storage capacity');
+    const cacheKey = `${fsxId}-storage-capacity`;
+    if (hasCache(AWS_FSX_TYPE, cacheKey)) {
+        const response = readFromCacheByKey(AWS_FSX_TYPE, cacheKey) as FsxStorage;
+        return response;
+    }
+
+    try {
+        const { FileSystems: fileSystems } = await describeFSxN(credentialsId, region!, {
+            FileSystemIds: [fsxId]
+        });
+
+        const fsxStorage: FsxStorage = {
+            storage: fileSystems![0].StorageCapacity!
+        };
+
+        writeToCache(AWS_FSX_TYPE, cacheKey, fsxStorage);
+        return fsxStorage;
+    } catch (error: any) {
+        const errorMessage = `Error fetching FSx storage capacity: ${error}`;
+        logger.error(errorMessage);
+        if (error.name === 'FileSystemNotFound') {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
+    }
+}
+
 export {
     getFSxFileSystemsList,
     isAWSBackupEnabled,
@@ -476,5 +512,6 @@ export {
     getStorageDataUsingSSM,
     getMappedOntapVolumes,
     tagFsxResource,
-    getCostAllocationTagFsxResource
+    getCostAllocationTagFsxResource,
+    getFsxStorageCapacity
 };

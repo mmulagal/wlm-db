@@ -6,6 +6,7 @@ import { attempt, trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 import crypto, { randomUUID } from 'crypto';
 import { Tag } from '@aws-sdk/client-ec2';
+import createError from 'http-errors';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
 import {
@@ -23,7 +24,8 @@ import {
     FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
     subJobDescriptions,
     SqlServerDeploymentModel,
-    ARTIFACT_BUCKET_NAME
+    ARTIFACT_BUCKET_NAME,
+    HttpErrorCodes
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -414,6 +416,17 @@ function getArtifactsRegionBucketName(region: string) {
     return `${ARTIFACT_BUCKET_NAME.replace('REGION', region)}`;
 }
 
+function sqlResponseParsing(response: string) {
+    try {
+        const cleanResponse = response.replaceAll('\r\n', '');
+        const jsonResponse = JSON.parse(cleanResponse);
+        return jsonResponse;
+    } catch (error) {
+        logger.error('Error parsing query response:', error);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing query response, ${error}`);
+    }
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -440,5 +453,6 @@ export {
     getDescriptionForMatchingName,
     convertMetricsIntoJson,
     getResourceNameFromTags,
-    getArtifactsRegionBucketName
+    getArtifactsRegionBucketName,
+    sqlResponseParsing
 };
