@@ -9,7 +9,6 @@ const ProtectionSection = () => {
     const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
 
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
 
     return (
         <div className={styles.protectionSection}>
@@ -18,13 +17,11 @@ const ProtectionSection = () => {
                     {GENERAL.DB_HOST_PROTECTION}
                 </Typography>
 
-                {(databaseHostsLoading || databaseJobsLoading) && <FlashingDotsLoader />}
+                {databaseHostsLoading && <FlashingDotsLoader />}
             </div>
 
             <div className={styles.secondContainer}>
-                <MultiRingDoughnut
-                    hostData={hostData}
-                />
+                <MultiRingDoughnut hostData={hostData} />
 
                 <div className={styles.secondLevel}>
                     <div className={styles.headerPart}>

@@ -32,7 +32,7 @@
         box-shadow: 2px 2px 6px 0 var(--drop-shadow);
         border: solid 1px var(--grey-15);
         border-radius: 2px;
-        background-color: var(--white);
+        background-color: var(--content-background);
 
         ul {
             margin-block-start: 0;
@@ -49,9 +49,10 @@
                 display: flex;
                 gap: 16px;
                 align-items: center;
+                color: var(--text-primary);
 
                 &:hover {
-                    background-color: var(--blue-10);
+                    background-color: var(--hover-background);
                     cursor: pointer;
                 }
 
@@ -85,7 +86,7 @@
     }
 
     .blackContent {
-        background: var(--dark-background-main-background, #111925);
+        background: var(--grey-70);
 
         /* Dark/Drop shadow/level 2 */
         box-shadow: 4px 4px 12px 0px rgba(17, 25, 37, 0.3);
@@ -93,8 +94,11 @@
         color: #fff !important;
 
         ul {
+            li {
+                color: var(--white);
+            }
             li:hover {
-                background-color: #3a4454;
+                background-color: var(--grey-60);
             }
         }
     }

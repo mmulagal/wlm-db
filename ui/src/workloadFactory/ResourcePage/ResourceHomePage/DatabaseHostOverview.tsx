@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@netapp/design-system';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { useAppSelector } from '../../../store/storeHooks';
 import DatabaseListTable from '../DatabaseListTable/DatabaseListTable';
@@ -19,6 +20,7 @@ import { resetDBHomePageState } from '../../../utils/utilityFunctions';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import DatabaseHostTile from '../DatabaseOverviewLayout/DatabaseHostTile/DatabaseHostTile';
 import { WLF_TABS } from '../../../utils/consts';
+import { setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
 
 const DatabaseHostOverview = () => {
     const selectedTab = useAppSelector(state => state.databaseHome.selectedTab);
@@ -84,6 +86,16 @@ const DatabaseHostOverview = () => {
                         }
                     ]}
                 />
+                <Button
+                    variant="primary"
+                    onClick={() => {
+                        dispatch(setDBHostName(resourceDetails?.name));
+                        navigate('../create-new-user');
+                    }}
+                    id={'create-new-user-button'}
+                >
+                    {'Create new user database'}
+                </Button>
             </div>
 
             <div className={styles.hostTitle}>

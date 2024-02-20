@@ -1,6 +1,5 @@
 import { RouteTags } from '../../utils/consts';
 import {
-    DatabaseHostObjectParams,
     DatabaseHostQueryString,
     DatabaseHostSummaryListResponse,
     DatabaseHostSummaryParams,
@@ -10,7 +9,7 @@ import {
     DatabasesCreateResponse,
     MSSQLCREATEDATABASEPARAMS
 } from '../types/database-hosts.types';
-import { AccountIdParams } from '../types/generic.types';
+import { AccountIdParams, ManagedHostParams } from '../types/generic.types';
 
 // Base Request for Deployment Routes
 const baseRequest = {
@@ -18,12 +17,17 @@ const baseRequest = {
     params: AccountIdParams
 };
 
+// Base Request for Deployment with credential and region Routes
+const databaseHostsRequest = {
+    tags: [RouteTags.DEPLOYMENT],
+    params: ManagedHostParams
+};
+
 // Get Database hosts summary details
 const DatabaseHostsSummarySchema = {
-    ...baseRequest,
+    ...databaseHostsRequest,
     summary: 'Get databse hosts details',
     description: 'Get database hosts summary details',
-    params: DatabaseHostObjectParams,
     querystring: DatabaseHostQueryString,
     response: {
         200: DatabaseHostSummaryListResponse

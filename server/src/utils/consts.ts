@@ -228,7 +228,10 @@ const SECRET_WORDS = [
     'domainPassword',
     'fsxPassword',
     'serviceAccountPassword',
-    'fsxNPassword'
+    'fsxNPassword',
+    'fsxSecret',
+    'domainAdminSecret',
+    'sqlServiceAccountSecret'
 ];
 
 const SECRET_STRING_WORDS = [
@@ -585,7 +588,11 @@ const WLM_ASSETS: Record<string, string> = {
 };
 
 // Template error messages
-const MISSING_PERMISSIONS = (permissions: Array<string>, blockedByOrganisation: Array<string>, blockedByPermissionBoundary: Array<string>) =>
+const MISSING_PERMISSIONS = (
+    permissions: Array<string>,
+    blockedByOrganisation: Array<string>,
+    blockedByPermissionBoundary: Array<string>
+) =>
     `Required permissions are not available to deploy cloud formation template. Missing permissions: ${permissions}. Blocked by organisation: ${blockedByOrganisation}. Blocked by permission boundary: ${blockedByPermissionBoundary}`;
 
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;

@@ -102,6 +102,14 @@ export interface FSxN {
 }
 
 export interface MssqlEntities {
+    getPolicies: {
+        policiesList: {
+            view?: {},
+            operate?: {}
+        } | null;
+        policiesLoading: false;
+        policiesError: null;
+    };
     getCredentials: {
         credentialData: Credentials[] | null;
         credentialLoading: false;

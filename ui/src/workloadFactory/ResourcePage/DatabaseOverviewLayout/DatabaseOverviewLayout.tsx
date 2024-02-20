@@ -26,17 +26,12 @@ const DatabaseOverviewLayout = () => {
                         <div className={styles.commonContainer}>
                             <StorageSavings
                                 hostData={getAggrStorageSavings([resourceDetails])}
-                                jobsLoading={false}
                                 hostsLoading={resourceLoading}
                             />
                         </div>
 
                         <div className={styles.commonContainer}>
-                            <EstimatedCost
-                                hostData={getAggrCost([resourceDetails])}
-                                jobsLoading={false}
-                                hostsLoading={resourceLoading}
-                            />
+                            <EstimatedCost hostData={getAggrCost([resourceDetails])} hostsLoading={resourceLoading} />
                         </div>
                     </div>
                 </div>

@@ -4,9 +4,11 @@ import {
     awsApi,
     chatbotApi,
     configApi,
+    createUserDbApi,
     databaseHomeApi,
     headersApi,
     jobMonitoringApi,
+    policiesApi,
     resourceApi,
     workloadFactoryResourceApi
 } from '../utils/apiService';
@@ -18,12 +20,12 @@ import resourceSlice from './resource/resourceSlice';
 import { GENERAL } from '../utils/appConstants';
 import { customErrorMessages, requiredFieldError } from '../utils/utilityFunctions';
 import databaseHomeSlice from './workloadFactory/databaseHomeSlice';
-import previewPanelSlice from './previewPanel/previewPanelSlice';
 import chatbotSlice, { setShowRetry } from './chatbot/chatbotSlice';
 import workloadFactoryResourceSlice from './workloadFactory/workloadFactoryResourceSlice';
 import jobMonitoringSlice from './workloadFactory/jobMonitoringSlice';
 import inventorySlice from './workloadFactory/inventorySlice';
 import headersSlice from './workloadFactory/headersSlice';
+import createNewUserSlice from './workloadFactory/createNewDBSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -38,7 +40,6 @@ const rootReducer = combineReducers({
     [databaseHomeApi.reducerPath]: databaseHomeApi.reducer,
     [chatbotApi.reducerPath]: chatbotApi.reducer,
     [databaseHomeSlice.name]: databaseHomeSlice.reducer,
-    [previewPanelSlice.name]: previewPanelSlice.reducer,
     [chatbotSlice.name]: chatbotSlice.reducer,
     [workloadFactoryResourceSlice.name]: workloadFactoryResourceSlice.reducer,
     [workloadFactoryResourceApi.reducerPath]: workloadFactoryResourceApi.reducer,
@@ -46,7 +47,10 @@ const rootReducer = combineReducers({
     [jobMonitoringSlice.name]: jobMonitoringSlice.reducer,
     [inventorySlice.name]: inventorySlice.reducer,
     [headersApi.reducerPath]: headersApi.reducer,
-    [headersSlice.name]: headersSlice.reducer
+    [headersSlice.name]: headersSlice.reducer,
+    [createNewUserSlice.name]: createNewUserSlice.reducer,
+    [policiesApi.reducerPath]: policiesApi.reducer,
+    [createUserDbApi.reducerPath]: createUserDbApi.reducer
 });
 
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action: any) => {
@@ -89,6 +93,8 @@ const store = configureStore({
             .concat(workloadFactoryResourceApi.middleware)
             .concat(jobMonitoringApi.middleware)
             .concat(headersApi.middleware)
+            .concat(policiesApi.middleware)
+            .concat(createUserDbApi.middleware)
             .concat(rtkQueryErrorLogger)
 });
 

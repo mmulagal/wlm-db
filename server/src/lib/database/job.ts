@@ -9,6 +9,8 @@ const logger = getLogger();
 
 interface readOnlyJob {
     account_id: string;
+    credentials_id: string;
+    region: string;
     type: JOBTYPE;
     status: JOBSTATUS;
     resource_name: string;
@@ -39,6 +41,8 @@ async function countParentJobs(accountId: string) {
 
 async function listJobs(
     accountId: string,
+    credentialsId: string,
+    region: string,
     parentJobId: string | null = null,
     sort: string = 'start_time',
     sortOrder: string = 'desc',
@@ -53,6 +57,8 @@ async function listJobs(
 ) {
     logger.info('Listing jobs', {
         accountId,
+        credentialsId,
+        region,
         parentJobId,
         sort,
         sortOrder,
@@ -74,6 +80,8 @@ async function listJobs(
     return prisma.client.job.findMany({
         where: {
             account_id: accountId,
+            credentials_id: credentialsId,
+            region,
             parent_job_id: parentJobId,
             ...(type && { type: { in: type } }),
             ...(status && { status: { in: status } }),
@@ -106,13 +114,15 @@ async function listJobs(
     });
 }
 
-async function listUniqueJob(accountId: string, jobId: string) {
-    logger.info('List unique job', { accountId, jobId });
+async function listUniqueJob(accountId: string, credentialsId: string, region: string, jobId: string) {
+    logger.info('List unique job', { accountId, credentialsId, region, jobId });
     accountId = checkAccount(accountId);
 
     return prisma.client.job.findUniqueOrThrow({
         where: {
-            id: jobId
+            id: jobId,
+            credentials_id: credentialsId,
+            region
         }
     });
 }
@@ -138,19 +148,23 @@ async function createJob(accountId: string, job: readOnlyJob) {
 
 async function updateJob(
     accountId: string,
+    credentialsId: string,
+    region: string,
     jobId: string,
     description?: string,
     status?: JOBSTATUS,
     endTime?: number,
     error?: string
 ) {
-    logger.info('Updating a job', { accountId, jobId, description, status, endTime, error });
+    logger.info('Updating a job', { accountId, credentialsId, region, jobId, description, status, endTime, error });
 
     accountId = checkAccount(accountId);
 
     return prisma.client.job.update({
         where: {
-            id: jobId
+            id: jobId,
+            credentials_id: credentialsId,
+            region
         },
         data: {
             ...(description && { description }),
@@ -200,14 +214,22 @@ async function deleteOlderJobs(olderDate: number) {
     });
 }
 
-async function getJobCountByStatus(accountId: string, startTime: number, endTime: number) {
-    logger.info('Getting Job Count By Status', { accountId, startTime, endTime });
+async function getJobCountByStatus(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    startTime: number,
+    endTime: number
+) {
+    logger.info('Getting Job Count By Status', { accountId, credentialsId, region, startTime, endTime });
 
     accountId = checkAccount(accountId);
 
     return prisma.client.job.groupBy({
         where: {
             account_id: accountId,
+            credentials_id: credentialsId,
+            region,
             parent_job_id: null,
             start_time: {
                 gte: new Date(startTime),
@@ -221,14 +243,22 @@ async function getJobCountByStatus(accountId: string, startTime: number, endTime
     });
 }
 
-async function groupJobsByTimeAndStatus(accountId: string, startTime: number, endTime: number) {
-    logger.info('Group Jobs By Time And Status', { accountId, startTime, endTime });
+async function groupJobsByTimeAndStatus(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    startTime: number,
+    endTime: number
+) {
+    logger.info('Group Jobs By Time And Status', { accountId, credentialsId, region, startTime, endTime });
 
     accountId = checkAccount(accountId);
 
     return prisma.client.job.groupBy({
         where: {
             account_id: accountId,
+            credentials_id: credentialsId,
+            region,
             parent_job_id: null,
             end_time: {
                 not: null

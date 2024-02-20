@@ -13,7 +13,9 @@ import {
     DatabasesCreateSchema
 } from './schemas/database-hosts-schemas';
 
-const DATABASE_HOSTS_API_PATH: string = '/v1/database-hosts';
+const DATABASE_HOSTS_API_PATH = '/v1/database-hosts';
+const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
+
 const MSSQL_DATABASE_HOSTS_API_PATH: string =
     '/v1/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId';
 
@@ -21,12 +23,12 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
     server
-        .get(`${DATABASE_HOSTS_API_PATH}`, { schema: DatabaseHostsSummarySchema }, async (request, reply) => {
+        .get(`${API_PREFIX_PATH}/database-hosts`, { schema: DatabaseHostsSummarySchema }, async (request, reply) => {
             const {
-                params: { accountId },
+                params: { accountId, credentialsId, region },
                 query: { fields, nextToken }
             } = request;
-            const response = await getDatabaseHostsSummary(accountId, fields, nextToken);
+            const response = await getDatabaseHostsSummary(accountId, fields, nextToken, region, credentialsId);
             return reply.send(response);
         })
         .get(

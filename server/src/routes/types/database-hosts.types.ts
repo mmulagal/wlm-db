@@ -27,7 +27,7 @@ const DatabaseHostQueryString = Type.Object({
 
 const EC2InstanceDetailsResponse = Type.Object({
     id: Type.String(),
-    name: Type.String(),
+    name: Type.Optional(Type.String()),
     ebsVolumeId: Type.String(),
     instanceType: Type.Optional(Type.String()),
     availabilityZone: Type.Optional(Type.String()),
@@ -54,6 +54,8 @@ const TopologyResponse = Type.Object({
     fileSystemStorageCapacity: Type.Optional(Type.Number()),
     fileSystemThroughputCapacity: Type.Optional(Type.Number()),
     vpcId: Type.Optional(Type.String()),
+    vpcName: Type.Optional(Type.String()),
+    availabilityZones: Type.Optional(Type.Array(Type.String())),
     keyPairName: Type.Optional(Type.String()),
     ec2Details: Type.Array(EC2InstanceDetailsResponse),
     activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse)
@@ -192,6 +194,12 @@ const DatabasesCreateResponse = Type.Object({
 
 type DatabaseCreateResponseType = Static<typeof DatabasesCreateResponse>;
 
+const DatabaseHostsParamsWithRegion = Type.Object({
+    accountId: Type.String(),
+    credentialsId: Type.String(),
+    region: Type.String()
+});
+
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -230,5 +238,6 @@ export {
     CreateDatabseRequestBody,
     DatabasesCreateResponse,
     DatabaseCreateResponseType,
-    MSSQLCREATEDATABASEPARAMS
+    MSSQLCREATEDATABASEPARAMS,
+    DatabaseHostsParamsWithRegion
 };
