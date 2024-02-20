@@ -919,31 +919,24 @@ async function getDriveInfoFromSSM(
     databaseHostId: string,
     credentialsId: string,
     region: string,
-    activeNodeInstanceId: string,
-    standbyNodeInstanceId?: string
+    node1InstanceId: string,
+    node2InstanceId?: string
 ) {
     logger.info('Getting drive information from SSM');
     // Check SSM Connection status
-    const isSSMConnected = await isSSMConnectionSuccessful(
+    const { isSSMConnected, activeNodeInstanceId } = await isSSMConnectionSuccessful(
         credentialsId,
         region!,
-        activeNodeInstanceId,
-        standbyNodeInstanceId
+        node1InstanceId,
+        node2InstanceId
     );
-
-    if (!isSSMConnected) {
+    if (!isSSMConnected && activeNodeInstanceId === undefined) {
         const errorMessage = `Error while fetching drive details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
     const driveInfoCommand = [GET_DIVE_INFO];
 
-    const driveInfoResponse = await callSsmExecution(
-        credentialsId,
-        region!,
-        driveInfoCommand,
-        activeNodeInstanceId,
-        standbyNodeInstanceId
-    );
+    const driveInfoResponse = await callSsmExecution(credentialsId, region, driveInfoCommand, activeNodeInstanceId!);
 
     const parsedDriveResponse = driveInfoResponse ? sqlResponseParsing(driveInfoResponse) : {};
 
@@ -980,24 +973,18 @@ async function getDriveInfoFromSSM(
 async function getDriveInfo(
     accountId: string,
     databaseHostId: string,
-    wlmCredentialsId: string,
-    awsRegion: string
+    credentialsId: string,
+    region: string
 ): Promise<DriveInfoResponseBodyType> {
     logger.info(
         'Fetching drive details and storage capacity of the database host  ',
         accountId,
         databaseHostId,
-        wlmCredentialsId,
-        awsRegion
+        credentialsId,
+        region
     );
 
-    const [resourceDetail] = await getResources(
-        accountId,
-        databaseHostId,
-        RESOURCESTYPE.MSSQL,
-        wlmCredentialsId,
-        awsRegion
-    );
+    const [resourceDetail] = await getResources(accountId, databaseHostId, RESOURCESTYPE.MSSQL, credentialsId, region);
 
     if (isEmpty(resourceDetail)) {
         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
@@ -1005,19 +992,12 @@ async function getDriveInfo(
         throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
     }
 
-    const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
-    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
+    const { co_relation_id: fileSystemId, metadata } = resourceDetail;
+    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
     const [fsxStorageCapacity, driveResponse] = await Promise.all([
         getFsxStorageCapacity(credentialsId, region!, fileSystemId!),
-        getDriveInfoFromSSM(
-            accountId,
-            databaseHostId,
-            credentialsId,
-            region!,
-            activeNodeInstanceId,
-            standbyNodeInstanceId
-        )
+        getDriveInfoFromSSM(accountId, databaseHostId, credentialsId, region, node1InstanceId, node2InstanceId)
     ]);
 
     const finalStorage = fsxStorageCapacity?.storage;
