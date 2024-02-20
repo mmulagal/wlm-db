@@ -771,7 +771,6 @@ const SQL_TEMPLATES_ASSETS = [
         name: 'ValidationTemplate',
         url: 'templates/vpc-ad-validation.yaml'
     },
-
     {
         name: 'SQLTemplate',
         url: 'templates/sql-windows-fci-config_nosignal.yaml'
@@ -799,7 +798,9 @@ enum TEMPLATE_TYPES {
     SQLSTACK = 'sqlstack',
     VALIDATION = 'validation',
     SQLSTANDALONE = 'sqlstandalone',
-    ENDPOINT = 'endpoint'
+    ENDPOINT = 'endpoint',
+    NEWFSX = 'newfsx',
+    EXISTINGFSX = 'existingfsx'
 }
 
 const SQL_TEMPLATES_DISTRIBUTION = [
@@ -818,6 +819,14 @@ const SQL_TEMPLATES_DISTRIBUTION = [
     {
         name: TEMPLATE_TYPES.ENDPOINT,
         location: './resources/mssql/templates/vpc-endpoints.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.NEWFSX,
+        location: './resources/mssql/templates/fsx-new.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.EXISTINGFSX,
+        location: './resources/mssql/templates/fsx-existing.yaml'
     }
 ];
 
