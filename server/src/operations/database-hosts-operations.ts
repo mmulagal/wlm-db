@@ -902,7 +902,8 @@ async function deployDatabase(
     logFileName: string,
     logVolumeSize: number,
     logDrive: string,
-    isExisting: boolean
+    isDataDriveExists: boolean,
+    isLogDriveExists: boolean
 ): Promise<DatabaseCreateResponseType> {
     logger.info('Deploy new database', {
         accountId,
@@ -915,7 +916,9 @@ async function deployDatabase(
         dataDrive,
         logFileName,
         logVolumeSize,
-        logDrive
+        logDrive,
+        isDataDriveExists,
+        isLogDriveExists
     });
 
     await validateTheParams();
@@ -934,9 +937,11 @@ async function deployDatabase(
     }
 
     // create the parent job for database deployment
-    const { id: jobId } = await registerJob(accountId, {
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.DEPLOYMENT,
+        credentialsId,
         status: JOBSTATUS.IN_PROGRESS,
+        region,
         resourceName: databaseName,
         name: databaseName,
         startTime: new Date().valueOf()
@@ -952,7 +957,8 @@ async function deployDatabase(
         logFileName,
         logVolumeSize,
         logDrive,
-        isExisting,
+        isDataDriveExists,
+        isLogDriveExists,
         fileSystemId,
         sqlVMName,
         isClustered,
@@ -974,7 +980,8 @@ async function invokeSSMForDatabaseDeployment(
     logFileName: string,
     logVolumeSize: number,
     logDrive: string,
-    isExisting: boolean,
+    isDataDriveExists: boolean,
+    isLogDriveExists: boolean,
     fileSystemId: string | null,
     sqlVMName: string | undefined,
     isClustered: boolean,
@@ -994,7 +1001,8 @@ async function invokeSSMForDatabaseDeployment(
         logFileName,
         logVolumeSize,
         logDrive,
-        isExisting,
+        isDataDriveExists,
+        isLogDriveExists,
         activeNodeInstanceId,
         standbyNodeInstanceId,
         fileSystemId,
@@ -1017,7 +1025,7 @@ async function invokeSSMForDatabaseDeployment(
         `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath}  -SQLCredStore ${sqlCredStore}`
     ];
 
-    if (isExisting) {
+    if (isDataDriveExists) {
         // When the user selected drive as existing, we will only execute the create database script on the drive
         try {
             const createDatabaseresponse = await callSsmExecution(
@@ -1107,7 +1115,7 @@ async function invokeSSMForDatabaseDeployment(
 
     const jobStatus = 'COMPLETED';
 
-    await updateJobDetails(accountId, jobId, {
+    await updateJobDetails(accountId, credentialsId, region, jobId, {
         status: jobStatus,
         endTime: new Date().valueOf(),
         error: undefined

@@ -16,9 +16,6 @@ import {
 const DATABASE_HOSTS_API_PATH = '/v1/database-hosts';
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 
-const MSSQL_DATABASE_HOSTS_API_PATH: string =
-    '/v1/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId';
-
 export default function databaseHostsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
@@ -55,20 +52,25 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${MSSQL_DATABASE_HOSTS_API_PATH}/database`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database`,
             { schema: DatabasesCreateSchema },
             async (request, reply) => {
                 const {
                     params: { accountId, databaseHostId, credentialsId, region },
                     body: {
                         databaseName,
-                        dataFileName,
-                        dataVolumeSize,
-                        dataDrive,
-                        logFileName,
-                        logVolumeSize,
-                        logDrive,
-                        isExisting
+                        dataFileConfig: {
+                            fileName: dataFileName,
+                            volumeSize: dataVolumeSize,
+                            drive: dataDrive,
+                            isExisting: isDataDriveExists
+                        },
+                        logFileConfig: {
+                            fileName: logFileName,
+                            volumeSize: logVolumeSize,
+                            drive: logDrive,
+                            isExisting: isLogDriveExists
+                        }
                     }
                 } = request;
                 const response = await deployDatabase(
@@ -83,7 +85,8 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     logFileName,
                     logVolumeSize,
                     logDrive,
-                    isExisting
+                    isDataDriveExists,
+                    isLogDriveExists
                 );
                 return reply.send(response);
             }

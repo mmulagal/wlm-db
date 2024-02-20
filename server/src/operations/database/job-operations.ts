@@ -123,10 +123,10 @@ async function registerJobs(accountId: string, credentialsId: string, region: st
     return createJobs(accountId, jobsToCreate);
 }
 
-async function registerJob(accountId: string, job: JobRecordType) {
-    logger.info('Registering job', { accountId, job });
+async function registerJob(accountId: string, credentialsId: string, region: string, job: JobRecordType) {
+    logger.info('Registering job', { accountId, credentialsId, region, job });
 
-    const jobToCreate = formatJobDbSchema(accountId, job);
+    const jobToCreate = formatJobDbSchema(accountId, credentialsId, region, job);
     return createJob(accountId, jobToCreate);
 }
 

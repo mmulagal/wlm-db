@@ -177,15 +177,18 @@ const DatabasesListResponse = Type.Object({
 type DatabasesListResponseType = Static<typeof DatabasesListResponse>;
 
 // Cloud formation template creation Request and Response
+
+const FileConfig = Type.Object({
+    fileName: Type.String(),
+    volumeSize: Type.Number(),
+    drive: Type.String(),
+    isExisting: Type.Boolean()
+});
+
 const CreateDatabseRequestBody = Type.Object({
     databaseName: Type.String(),
-    dataFileName: Type.String(),
-    dataVolumeSize: Type.Number(),
-    dataDrive: Type.String(),
-    logFileName: Type.String(),
-    logVolumeSize: Type.Number(),
-    logDrive: Type.String(),
-    isExisting: Type.Boolean()
+    dataFileConfig: FileConfig,
+    logFileConfig: FileConfig
 });
 
 const DatabasesCreateResponse = Type.Object({
