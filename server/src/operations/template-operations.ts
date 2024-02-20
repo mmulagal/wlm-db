@@ -51,7 +51,7 @@ async function generateSignedUrls(region: string, resourceType: DatabaseTypes) {
                     const url = new URL(signedUrl)
                     const updatedHost = `https://${bucketname}.${url.hostname}`
                     const updatedPath = `${url.pathname.replace(bucketname,'')}${url.search}`
-                    const updatedUrl = new URL(updatedHost, updatedPath)
+                    const updatedUrl = new URL(updatedPath, updatedHost)
                     logger.info(`Updated ${resource.url} in region ${region}: ${updatedUrl}`)
                     signedUrls.set(resource.name, { name: resource.name, url: updatedUrl.href, location: resource.url });
                 } catch (error) {
