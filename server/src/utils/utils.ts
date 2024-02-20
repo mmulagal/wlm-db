@@ -5,6 +5,7 @@
 import { attempt, trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 import crypto, { randomUUID } from 'crypto';
+import { Tag } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
@@ -406,6 +407,11 @@ function convertMetricsIntoJson(input: Array<string>) {
     return metrics;
 }
 
+function getResourceNameFromTags(tags?: Tag[]) {
+    const { Value: name } = tags?.find(tag => tag?.Key === 'Name') || {};
+    return name;
+}
+
 function getArtifactsRegionBucketName(region: string) {
     return `${ARTIFACT_BUCKET_NAME.replace('REGION', region)}`;
 }
@@ -446,6 +452,7 @@ export {
     calculateSQLandWindowsVersion,
     getDescriptionForMatchingName,
     convertMetricsIntoJson,
+    getResourceNameFromTags,
     getArtifactsRegionBucketName,
     sqlResponseParsing
 };
