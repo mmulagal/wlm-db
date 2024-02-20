@@ -474,7 +474,7 @@ async function getVpcSecurityGroups(credentialsId: string, region: string, vpcId
 }
 
 async function getServicesWithNoEndpoint(credentialsId: string, region: string, vpcId: string) {
-    logger.info('Get services wit no endpoint ', credentialsId, region, vpcId);
+    logger.info('Get services with no endpoint ', credentialsId, region, vpcId);
 
     const endpoints = await getVpcEndpoints(credentialsId, region, vpcId)
     const availableEndpoints = !isEmpty(endpoints) ? [...new Set(endpoints!.map(({ServiceName}: VpcEndpoint)  => ServiceName?.split('.')[3]))] : [];
