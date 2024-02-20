@@ -37,11 +37,12 @@ const HeaderComponent = () => {
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
+    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
     HeaderComponentApi();
 
     useEffect(() => {
-        if (statusData && statusData?.isActive) {
+        if (isDemoMode || (statusData && statusData?.isActive)) {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
             window.parent.postMessage(
