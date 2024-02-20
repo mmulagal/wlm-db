@@ -84,13 +84,13 @@ async function getHostAndSqlServerInfo(
         describeInstanceParams.Filters?.push({ Name: 'instance-id', Values: instances });
     }
 
-    const allEc2Instances: DescribeInstancesCommandOutput = await describeInstance(
+    const paginatedEc2Instances: DescribeInstancesCommandOutput = await describeInstance(
         credentialsId,
         region,
         describeInstanceParams
     );
 
-    for (const reservation of allEc2Instances.Reservations!) {
+    for (const reservation of paginatedEc2Instances.Reservations!) {
         for (const ec2Instance of reservation.Instances!) {
             const name = getResourceNameFromTags(ec2Instance.Tags);
             const ssmStatus = await getSSMConnectionStatus(credentialsId, region, ec2Instance.InstanceId!);
@@ -102,11 +102,26 @@ async function getHostAndSqlServerInfo(
         }
     }
 
+    // Populate details for EC2 hosts having no SSM connectivity. Since it
+    // wont't be possible to get SQL Server details without SSM, the attribute
+    // 'sqlServerInstances' will not be available for those hosts in API response.
+    ssmTargets
+        .filter(target => target.ssmState === ConnectionStatus.NOT_CONNECTED)
+        .forEach(target => {
+            responseInfo.push({
+                instanceId: target.ec2InstanceId,
+                instanceName: target.ec2Name,
+                ssmState: target.ssmState
+            });
+        });
+
+    const ssmConnectedNodes = ssmTargets.filter(target => target.ssmState === ConnectionStatus.CONNECTED);
+
     const commandId = await makeSsmCall(
         credentialsId,
         region,
         hostAndSqlInfoPowerShellScript,
-        ssmTargets.filter(target => target.ssmState === ConnectionStatus.CONNECTED).map(target => target.ec2InstanceId),
+        ssmConnectedNodes.map(target => target.ec2InstanceId),
         accountId
     );
 
@@ -114,18 +129,10 @@ async function getHostAndSqlServerInfo(
     await sleep(1000);
 
     await Promise.all(
-        ssmTargets.map(
+        ssmConnectedNodes.map(
             throat(MAX_SSM_COMMANDS_POLL_COUNT, async (target: SsmTargetsInfo) => {
                 let dbInfo: SqlServerInstanceInfoType[] = [];
-                if (target.ssmState === ConnectionStatus.CONNECTED) {
-                    dbInfo = await getHostAndSqlInfoFromPsOutput(
-                        credentialsId,
-                        region,
-                        target.ec2InstanceId,
-                        commandId!
-                    );
-                }
-
+                dbInfo = await getHostAndSqlInfoFromPsOutput(credentialsId, region, target.ec2InstanceId, commandId!);
                 responseInfo.push({
                     instanceId: target.ec2InstanceId,
                     instanceName: target.ec2Name,
@@ -138,7 +145,7 @@ async function getHostAndSqlServerInfo(
 
     return {
         count: responseInfo.length,
-        nextToken: allEc2Instances.NextToken,
+        nextToken: paginatedEc2Instances.NextToken,
         items: responseInfo
     };
 }
@@ -193,11 +200,16 @@ async function makeSsmCall(
     const params = {
         DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
         Documentversion: '1',
+        Targets: [
+            {
+                Key: 'InstanceIds',
+                Values: targets
+            }
+        ],
         Parameters: {
             executionTimeout: [config.get<string>('ssm.execution-timeout')],
             commands
-        },
-        InstanceIds: targets
+        }
     };
 
     let commandId;
