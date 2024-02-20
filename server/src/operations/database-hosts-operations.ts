@@ -936,7 +936,15 @@ async function getDriveInfoFromSSM(
     }
     const driveInfoCommand = [GET_DIVE_INFO];
 
-    const driveInfoResponse = await callSsmExecution(credentialsId, region, driveInfoCommand, activeNodeInstanceId!);
+    // Not caching the response as multiple creation will require real time data
+    const driveInfoResponse = await callSsmExecution(
+        credentialsId,
+        region,
+        driveInfoCommand,
+        activeNodeInstanceId!,
+        undefined,
+        false
+    );
 
     const parsedDriveResponse = driveInfoResponse ? sqlResponseParsing(driveInfoResponse) : {};
 
