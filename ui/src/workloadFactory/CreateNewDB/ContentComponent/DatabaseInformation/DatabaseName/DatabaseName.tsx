@@ -35,7 +35,7 @@ const DatabaseName = () => {
             newUserDBName.length > 0 &&
             (newUserDBName.length > 30 || !/^[a-zA-Z0-9/_]+$/.test(newUserDBName))
         ) {
-            return GENERAL.CREATE_DB_NAME_TOOLTIP.join('');
+            return GENERAL.DB_NAME_ERROR_CHECK;
         }
     }
 
