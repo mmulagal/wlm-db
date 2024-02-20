@@ -123,8 +123,7 @@ async function formatTemplateParameters(
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
 
-    // const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
-    const awsAccountId = '464262061435'
+    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
     const templateParams: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
@@ -133,20 +132,19 @@ async function formatTemplateParameters(
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
-        { ParameterKey: TEMPLATE_METRICS, ParameterValue: metrics },
-        { ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: 'encryptedFsxPassword' }
+        { ParameterKey: TEMPLATE_METRICS, ParameterValue: metrics }
     ];
 
-    // if (fsxConfiguration.fsxPassword) {
-    //     try {
-    //         const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
-    //         if (encryptedFsxPassword) {
-    //             templateParams.push({ ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: encryptedFsxPassword });
-    //         }
-    //     } catch (error) {
-    //         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
-    //     }
-    // }
+    if (fsxConfiguration.fsxPassword) {
+        try {
+            const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
+            if (encryptedFsxPassword) {
+                templateParams.push({ ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: encryptedFsxPassword });
+            }
+        } catch (error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
+        }
+    }
 
     const missingServices = await getServicesWithNoEndpoint(credentialsId!, region!, networkConfiguration.vpcId);
     Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {

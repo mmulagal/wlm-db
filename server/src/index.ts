@@ -60,18 +60,6 @@ const { verifyToken, authorizeJwt } = jwtOperation;
 const port = config.get<number>('app-port');
 const host = '0.0.0.0';
 
-logger.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-const signedUrl = "https://s3.ap-southeast-1.amazonaws.com/staging.artifacts.ap-southeast-1.workloads.netapp.com/wlmdb/modules/AWSLaunchWizardForCFN.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20240220%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20240220T125350Z&X-Amz-Expires=604800&X-Amz-Signature=03b2afb750f4bd7938679752b2065af11d8ed8b878da58d51ceb72e0a80d426d&X-Amz-SignedHeaders=host&x-id=GetObject"
-const url = new URL(signedUrl)
-logger.info(url.hostname)
-logger.info(url.pathname)
-logger.info(url.search)
-const newhost = `https://staging.artifacts.ap-southeast-1.workloads.netapp.com.${url.hostname}`
-const newpath = url.pathname.replace('/staging.artifacts.ap-southeast-1.workloads.netapp.com','')
-const newUrl = new URL(newpath, newhost)
-logger.info(newUrl.href)
-logger.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-
 const API_PREFIX_PATH = '/accounts/:accountId/wlmdb';
 
 process.on('unhandledRejection', (reason, p) => logger.error('Unhandled Rejection at:', p, 'reason:', reason));

@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import config from 'config';
 import createError from 'http-errors';
 import { gotInstanceForInternalRequest, gotInstanceForTextResponse } from '../../utils/got';
-import { ACCOUNT_ID, CLOUD_MANAGER_ENDPOINT, HEADERS, WORKSPACE_ID, HttpErrorCodes } from '../../utils/consts';
+import { ACCOUNT_ID, CLOUD_MANAGER_ENDPOINT, HEADERS, WORKSPACE_ID, SECRETS, HttpErrorCodes } from '../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import getLogger from '../../utils/logger';
 import { getBxpServiceToken } from './auth';
@@ -26,7 +26,7 @@ interface MetaData {
 
 function generateAuthToken(user: object) {
     logger.info('Generating auth token');
-    const token = jwt.sign({ user }, 'SECRETS.AUTH_CLIENT_ID' as string, {
+    const token = jwt.sign({ user }, SECRETS.AUTH_CLIENT_ID as string, {
         expiresIn: config.get('jwt-token-expiry')
     });
 
@@ -36,7 +36,7 @@ function generateAuthToken(user: object) {
 function verifyAuthToken(token: string) {
     logger.info('Verifying auth token');
     try {
-        return jwt.verify(token, 'SECRETS.AUTH_CLIENT_ID' as string);
+        return jwt.verify(token, SECRETS.AUTH_CLIENT_ID as string);
     } catch (err) {
         const errMsg = 'Invalid token.';
         logger.error(errMsg, err);

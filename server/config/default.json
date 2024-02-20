@@ -48,9 +48,9 @@
     "jwt-token-expiry": "168h",
     "signed-url-expiry-hours": "168",
     "bucket": {
-        "artifacts": "bucketkrithi",
-        "signedTemplates": "bucketkrithi",
-        "region": "ap-southeast-1"
+        "artifacts": "staging.artifacts.REGION.workloads.netapp.com",
+        "signedTemplates": "staging.templates.workloads.netapp.com",
+        "region": "us-east-1"
     },
     "ec2": {
         "vcpu-filter": ["2", "4", "8", "16", "32", "64", "72"]
