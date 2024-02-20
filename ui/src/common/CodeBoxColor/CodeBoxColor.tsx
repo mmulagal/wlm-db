@@ -6,9 +6,10 @@ type codeBoxTypes = {
     credID: string;
     region: string;
     actualData: any;
+    endpoint: string;
 };
 
-const CodeBoxColor = ({ credID, region, actualData }: codeBoxTypes) => {
+const CodeBoxColor = ({ credID, region, actualData, endpoint }: codeBoxTypes) => {
     const baseUrl = getBaseUrl();
 
     const valueCheckColor = (value: string | any) => {
@@ -105,7 +106,7 @@ const CodeBoxColor = ({ credID, region, actualData }: codeBoxTypes) => {
                     <span className={credID === '<CredentialId>' ? `${styles.highlightWord}` : ''}>{`${credID}`}</span>
                     <span>{`/regions/`}</span>
                     <span className={region === '<Region>' ? `${styles.highlightWord}` : ''}>{`${region}`}</span>
-                    <span>/cloudformation/deploy' \\</span>
+                    <span>{endpoint}' \\</span>
                 </div>
                 <div>
                     <span>--header 'Authorization: Bearer </span>

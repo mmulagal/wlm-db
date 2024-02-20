@@ -4,13 +4,15 @@ import {
     getDatabaseHostsSummary,
     getDatabaseHostSummary,
     getDatabases,
-    deployDatabase
+    deployDatabase,
+    getDriveInfo
 } from '../operations/database-hosts-operations';
 import {
     DatabaseHostDetailsSchema,
     DatabasesListSchema,
     DatabaseHostsSummarySchema,
-    DatabasesCreateSchema
+    DatabasesCreateSchema,
+    GetDriveInfoSchema
 } from './schemas/database-hosts-schemas';
 
 const DATABASE_HOSTS_API_PATH = '/v1/database-hosts';
@@ -90,5 +92,12 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 );
                 return reply.send(response);
             }
-        );
+        )
+        .get(`${API_PREFIX_PATH}/:databaseHostId/driveInfo`, { schema: GetDriveInfoSchema }, async (request, reply) => {
+            const {
+                params: { accountId, databaseHostId, credentialsId, region }
+            } = request;
+            const response = await getDriveInfo(accountId, databaseHostId, credentialsId, region);
+            return reply.send(response);
+        });
 }

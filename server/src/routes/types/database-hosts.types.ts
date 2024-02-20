@@ -197,11 +197,34 @@ const DatabasesCreateResponse = Type.Object({
 
 type DatabaseCreateResponseType = Static<typeof DatabasesCreateResponse>;
 
+const DriveInfoResponseBody = Type.Object({
+    existingDriveInfo: Type.Array(
+        Type.Object({
+            driveLetter: Type.String(),
+            availableSize: Type.Number(),
+            isNetappDrive: Type.Boolean()
+        })
+    ),
+    defaultDataDrive: Type.Optional(Type.String()),
+    defaultLogDrive: Type.Optional(Type.String()),
+    availableDriveLetters: Type.Array(Type.String()),
+    fsxStorageCapacity: Type.Optional(Type.Number())
+});
+type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
+
 const DatabaseHostsParamsWithRegion = Type.Object({
     accountId: Type.String(),
     credentialsId: Type.String(),
     region: Type.String()
 });
+
+const DatabaseHostSummaryParamsWithRegion = Type.Object({
+    accountId: Type.String({ minLength: 1 }),
+    databaseHostId: Type.String({ minLength: 1 }),
+    credentialsId: Type.String(),
+    region: Type.String()
+});
+type DatabaseHostSummaryParamsWithRegionType = Static<typeof DatabaseHostSummaryParamsWithRegion>;
 
 export {
     DatabaseHostObjectParams,
@@ -242,5 +265,9 @@ export {
     DatabasesCreateResponse,
     DatabaseCreateResponseType,
     MSSQLCREATEDATABASEPARAMS,
-    DatabaseHostsParamsWithRegion
+    DriveInfoResponseBody,
+    DriveInfoResponseBodyType,
+    DatabaseHostsParamsWithRegion,
+    DatabaseHostSummaryParamsWithRegion,
+    DatabaseHostSummaryParamsWithRegionType
 };

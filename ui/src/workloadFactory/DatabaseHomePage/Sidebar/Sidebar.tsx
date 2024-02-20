@@ -45,7 +45,8 @@ import {
     CRED_PLACEHOLDERS,
     CODEBOX_REST_RES,
     AWS_CLI_HIGHLIGHT_STRINGS,
-    UI_IDS
+    UI_IDS,
+    DEPLOY_ENDPOINT
 } from '../../../utils/consts';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
@@ -501,6 +502,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                             credID={credDetails.credId || CRED_PLACEHOLDERS.CRED_ID}
                             region={credDetails.region || CRED_PLACEHOLDERS.REGION}
                             actualData={getRightPanelRestResponse(openKey, CODEBOX_REST_RES.ORIGINAL_DATA)}
+                            endpoint={DEPLOY_ENDPOINT}
                         />
                     ) : (
                         <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />

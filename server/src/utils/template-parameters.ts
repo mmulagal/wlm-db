@@ -71,24 +71,6 @@ const PARAMETERS = [
         type: 'AWS::EC2::KeyPair::KeyName'
     },
     {
-        name: 'AssetsBucketName',
-        description: 'S3 bucket name for WLMDB assets',
-        type: 'String',
-        default: 'staging.wlmdb.workloads.netapp.com'
-    },
-    {
-        name: 'AssetsS3RegionCode',
-        description: 'S3 region code',
-        type: 'String',
-        default: 's3.us-east-1'
-    },
-    {
-        name: 'AssetsS3KeyPrefix',
-        description: 'S3 key prefix for WLMDB assets.',
-        type: 'String',
-        default: 'templates'
-    },
-    {
         name: 'MSSQLMediaBucketName',
         description: 'S3 bucket name for SQL Server resources.',
         type: 'String',
@@ -371,6 +353,36 @@ const PARAMETERS = [
         description: 'Metrics used for internal audit( DO NOT EDIT).',
         type: 'CommaDelimitedList',
         noEcho: true
+    },
+    {
+        name: 'S3EndpointExists',
+        description: 'Boolean to convey if an S3 endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
+    },
+    {
+        name: 'CloudformationEndpointExists',
+        description: 'Boolean to convey if a Cloudformation endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
+    },
+    {
+        name: 'SsmEndpointExists',
+        description: 'Boolean to convey if a SSM endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
+    },
+    {
+        name: 'SqsEndpointExists',
+        description: 'Boolean to convey if a SQS endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
+    },
+    {
+        name: 'CloudwatchEndpointExists',
+        description: 'Boolean to convey if a Cloudwatch endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
     }
 ];
 

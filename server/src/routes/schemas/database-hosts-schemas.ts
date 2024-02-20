@@ -7,7 +7,9 @@ import {
     DatabasesListResponse,
     CreateDatabseRequestBody,
     DatabasesCreateResponse,
-    MSSQLCREATEDATABASEPARAMS
+    MSSQLCREATEDATABASEPARAMS,
+    DriveInfoResponseBody,
+    DatabaseHostSummaryParamsWithRegion
 } from '../types/database-hosts.types';
 import { AccountIdParams, ManagedHostParams } from '../types/generic.types';
 
@@ -71,4 +73,20 @@ const DatabasesCreateSchema = {
     }
 };
 
-export { DatabaseHostsSummarySchema, DatabaseHostDetailsSchema, DatabasesListSchema, DatabasesCreateSchema };
+const GetDriveInfoSchema = {
+    ...baseRequest,
+    summary: 'Get database host drive information',
+    description: 'Fetch drive info about the database host',
+    params: DatabaseHostSummaryParamsWithRegion,
+    response: {
+        200: DriveInfoResponseBody
+    }
+};
+
+export {
+    DatabaseHostsSummarySchema,
+    DatabaseHostDetailsSchema,
+    DatabasesListSchema,
+    GetDriveInfoSchema,
+    DatabasesCreateSchema
+};

@@ -492,7 +492,7 @@ export const createUserDbApi = createApi({
             }),
             createUserDB: builder.mutation({
                 query: ({ credentialId, region, id, payload }) => ({
-                    url: `credentials/${credentialId}/regions/${region}/database/${id}/create`,
+                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}/database`,
                     method: 'POST',
                     body: payload
                 })

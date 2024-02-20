@@ -5,6 +5,7 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/aws/ssm-scope';
+import { STORAGE_TYPE } from '@prisma/client';
 import mssqlResponse from '../../simulator/responses/workload/mssql-operations-response.json';
 import {
     ACCOUNT_ID,
@@ -38,23 +39,13 @@ beforeAll(async () => {
         cloudProviderAccountId: 'test-aws-account',
         cloudProviderName: 'AWS',
         region: 'ap-southeast-1',
+        credentialsId: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+        storageType: STORAGE_TYPE.FSXN,
         metadata: {
-            credentialsId: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
-            activeNodeInstanceId: 'i-07e76a4b916548dc0',
-            activeNodeInstanceName: 'node1',
-            standbyNodeInstanceId: 'i-0880a21327284f67c',
-            standbyNodeInstanceName: 'node2',
-            activeNodeInstanceIp: '10.0.0.0',
-            standbyNodeInstanceIp: '10.0.0.1'
+            node1InstanceId: 'i-07e76a4b916548dc0',
+            node2InstanceId: 'i-0880a21327284f67c',
+            fsxSecret: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
         }
-    });
-    await createResource(ACCOUNT_ID, {
-        resourceId: 'fs-f6082f35c1db',
-        resourceName: 'test-fsx-resource',
-        resourceType: 'FSX',
-        cloudProviderAccountId: 'test-aws-account',
-        cloudProviderName: 'AWS',
-        region: 'ap-southeast-1'
     });
 });
 
@@ -84,12 +75,7 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get databases count', async () => {
-        const resp = await getDatabasesCount(
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            ACTIVE_INSTANCE_ID,
-            STANDBY_INSTANCE_ID
-        );
+        const resp = await getDatabasesCount(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID);
         expect(resp.totalCount).toEqual(252);
     });
 
@@ -99,13 +85,7 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get tables count', async () => {
-        const resp = await getTablesCount(
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            'Aaronview',
-            ACTIVE_INSTANCE_ID,
-            STANDBY_INSTANCE_ID
-        );
+        const resp = await getTablesCount(CREDENTIALS_ID, DEFAULT_AWS_REGION, 'Aaronview', ACTIVE_INSTANCE_ID);
         expect(resp.totalCount).toEqual(7);
     });
 
@@ -120,12 +100,12 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get Server IO Latency ', async () => {
-        const resp = await getServerIOLatency('36E53042-04E8-40C9-AE69-26E56CB0D216');
+        const resp = await getServerIOLatency('36E53042-04E8-40C9-AE69-26E56CB0D216', ACTIVE_INSTANCE_ID);
         expect(resp).toEqual(mssqlResponse.mssqlIOLatencyResponse);
     });
 
     it('Get MSSQL native backups count ', async () => {
-        const resp = await getNativeSQLProtection('36E53042-04E8-40C9-AE69-26E56CB0D216');
+        const resp = await getNativeSQLProtection('36E53042-04E8-40C9-AE69-26E56CB0D216', ACTIVE_INSTANCE_ID);
         expect(resp).toEqual(1);
     });
 
@@ -135,10 +115,9 @@ describe('MSSQL Resource methods', () => {
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             'mssql',
+            STORAGE_TYPE.FSXN,
             ACTIVE_INSTANCE_ID,
-            'test-active-instance-name',
-            STANDBY_INSTANCE_ID,
-            'test-standby-instance-name'
+            STANDBY_INSTANCE_ID
         );
         expect(resp.resourceName).toEqual(mssqlResponse.mssqlRegistrationResponse.resourceName);
 

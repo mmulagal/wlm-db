@@ -179,7 +179,8 @@ export const CRED_PLACEHOLDERS = {
     ACCOUNT_ID: '<AccountId>',
     CRED_ID: '<CredentialId>',
     REGION: '<Region>',
-    TOKEN: '<Token>'
+    TOKEN: '<Token>',
+    DATABASE_HOST_ID: '<databaseHostId>'
 };
 
 export const MARKETING_PAGE_URL = 'https://workloads.netapp.com/database-workloads';
@@ -269,3 +270,20 @@ export const DRIVE_LETTER_TYPE = {
     NEW: 'New drive letter',
     EXISTING: 'Existing drive letter'
 };
+
+export const DEPLOY_ENDPOINT = '/cloudformation/deploy';
+export const CREATE_DB_ENDPOINT = (databaseHostId: any) => `/database-hosts/${databaseHostId}/database`;
+
+export const CREATE_DB_CURL_REQ_TEMPLATE = (
+    baseUrl: string,
+    credentialId: string,
+    region: string,
+    databaseHostId: any,
+    token: string,
+    payload: any
+) => `
+curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
+--header 'Authorization: Bearer ${token}' \\
+--header 'Content-Type: application/json' \\
+--data-raw '${payload}'
+`;

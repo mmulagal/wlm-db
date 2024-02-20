@@ -24,6 +24,7 @@ COPY resources/mssql/templates/wlm-master.yaml ./resources/mssql/templates/wlm-m
 COPY resources/mssql/templates/vpc-ad-validation.yaml ./resources/mssql/templates/vpc-ad-validation.yaml
 COPY resources/mssql/templates/sql-windows-fci-config_nosignal.yaml ./resources/mssql/templates/sql-windows-fci-config_nosignal.yaml
 COPY resources/mssql/templates/standalone-deployment.yaml ./resources/mssql/templates/standalone-deployment.yaml
+COPY resources/mssql/templates/vpc-endpoints.yaml ./resources/mssql/templates/vpc-endpoints.yaml
 COPY dist/src ./
 
 COPY src/lib/chatbot/schemas/* ./lib/chatbot/schemas

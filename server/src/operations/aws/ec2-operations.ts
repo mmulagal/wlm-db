@@ -1,13 +1,16 @@
 import createError from 'http-errors';
+import { isEmpty } from 'lodash-es';
 import {
     DescribeSubnetsRequest,
     DescribeSecurityGroupsRequest,
     Tag,
     DescribeNetworkInterfacesCommandInput,
-    DescribeTagsCommandInput
+    DescribeTagsCommandInput,
+    DescribeVpcEndpointsCommandInput,
+    VpcEndpoint
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
-import { AWSQueryFields, WLMDB_COST_ALLOCATION_TAG } from '../../utils/consts';
+import { AWSQueryFields, ENDPOINTS_DEPLOYMENT, WLMDB_COST_ALLOCATION_TAG } from '../../utils/consts';
 import {
     describeVpc,
     describeSecurityGroups,
@@ -18,12 +21,13 @@ import {
     describeInstanceTypes,
     describeNetworkInterfaces,
     createTag,
-    describeTags
+    describeTags,
+    describeEndpoints
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
-import { ResourceDetails, SecurityGroup, Subnet, VPC, NetworkInterface } from '../../utils/common-types';
+import { ResourceDetails, SecurityGroup, Subnet, VPC, NetworkInterface, Metadata } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -390,15 +394,11 @@ async function tagEc2Resource(credentialsId: string, region: string, accountId: 
 
 async function getCostAllocationTagEC2Resource(resourceDetail: ResourceDetails) {
     logger.info('Get EC2 Resources which has cost allocation tag attached');
-    const { region, metadata } = resourceDetail;
-    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as {
-        credentialsId: string;
-        activeNodeInstanceId: string;
-        standbyNodeInstanceId: string;
-    };
-    const resourceIds = [activeNodeInstanceId];
-    if (standbyNodeInstanceId) {
-        resourceIds.push(standbyNodeInstanceId);
+    const { region, credentials_id: credentialsId, metadata } = resourceDetail;
+    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+    const resourceIds = [node1InstanceId];
+    if (node2InstanceId) {
+        resourceIds.push(node2InstanceId);
     }
     const input: DescribeTagsCommandInput = {
         Filters: [
@@ -429,6 +429,36 @@ async function getCostAllocationTagEC2Resource(resourceDetail: ResourceDetails) 
     }
 }
 
+async function getVpcEndpoints(credentialsId: string, region: string, vpcId: string) {
+    logger.info('Get vpc endpoints ', credentialsId, region, vpcId);
+
+    const input: DescribeVpcEndpointsCommandInput = {
+        Filters: [
+            {
+                Name: 'vpc-id',
+                Values: [vpcId]
+            },
+            {
+                Name: 'service-name',
+                Values: [
+                    `com.amazonaws.${region}.s3`,
+                    `com.amazonaws.${region}.cloudformation`,
+                    `com.amazonaws.${region}.ssm`,
+                    `com.amazonaws.${region}.ssmmessages`,
+                    `com.amazonaws.${region}.ec2messages`,
+                    `com.amazonaws.${region}.monitoring`,
+                    `com.amazonaws.${region}.sqs`
+                ]
+            }
+        ]
+    };
+    const response = await describeEndpoints(credentialsId, region, input);
+
+    logger.debug('Get vpc endpoints response:', response);
+
+    return response?.VpcEndpoints;
+}
+
 async function getVpcSecurityGroups(credentialsId: string, region: string, vpcId: string) {
     logger.info('Get vpc security groups', { credentialsId, region, vpcId });
     const sgParams: DescribeSecurityGroupsRequest = {
@@ -443,6 +473,18 @@ async function getVpcSecurityGroups(credentialsId: string, region: string, vpcId
     return { securityGroups };
 }
 
+async function getServicesWithNoEndpoint(credentialsId: string, region: string, vpcId: string) {
+    logger.info('Get services with no endpoint ', credentialsId, region, vpcId);
+
+    const endpoints = await getVpcEndpoints(credentialsId, region, vpcId);
+    const availableEndpoints = !isEmpty(endpoints)
+        ? [...new Set(endpoints!.map(({ ServiceName }: VpcEndpoint) => ServiceName?.split('.')[3]))]
+        : [];
+    const servicesWithNoEndpoint = ENDPOINTS_DEPLOYMENT.filter(endpoint => !availableEndpoints.includes(endpoint));
+
+    return servicesWithNoEndpoint;
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -453,6 +495,8 @@ export {
     getNetworkInterfacesList,
     tagEc2Resource,
     getCostAllocationTagEC2Resource,
-    findResourceNameFromTags,
-    getVpcSecurityGroups
+    getVpcEndpoints,
+    getVpcSecurityGroups,
+    getServicesWithNoEndpoint,
+    findResourceNameFromTags
 };

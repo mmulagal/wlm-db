@@ -142,6 +142,18 @@ const SQL_BACKUPS = `${SET_NOCOUNT} SELECT
     AND backupset.type = 'D' ${FOR_JSON_PATH}
 `;
 
+// Fetching the default data and log drives of the SQL server
+const DEFAULT_SQL_DATA_DRIVE = `${SET_NOCOUNT} DECLARE @DataPath NVARCHAR(500);
+EXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultData', @DataPath OUTPUT;
+SELECT LEFT(@DataPath,1) AS CurrentDataDrive
+${FOR_JSON_PATH}`;
+
+// Fetching the default data and log drives of the SQL server
+const DEFAULT_SQL_LOG_DRIVE = `${SET_NOCOUNT} DECLARE @LogPath NVARCHAR(500);
+EXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultLog', @LogPath OUTPUT;
+SELECT LEFT(@LogPath,1) AS CurrentLogDrive 
+${FOR_JSON_PATH}`;
+
 export {
     DATABASES,
     DATABASES_COUNT,
@@ -164,5 +176,7 @@ export {
     NATIVE_SQL_BACKUPS,
     SERVER_INSTALL_DATE,
     PERFORMANCE_METRICS,
-    SQL_BACKUPS
+    SQL_BACKUPS,
+    DEFAULT_SQL_DATA_DRIVE,
+    DEFAULT_SQL_LOG_DRIVE
 };
