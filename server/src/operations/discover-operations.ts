@@ -8,6 +8,7 @@ import { describeInstance } from '../lib/aws/ec2';
 import { getResourceNameFromTags, sleep } from '../utils/utils';
 import { getSSMConnectionStatus, pollCommandStatus } from './aws/ssm-operations';
 import { HttpErrorCodes } from '../utils/consts';
+import { hostAndSqlInfoPowerShellScript } from '../utils/discover-consts';
 import { sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
 import { SqlServerInstanceInfoType, DiscoverResponseInfoType } from '../routes/types/discover.types';
@@ -24,38 +25,6 @@ interface SsmTargetsInfo {
 const MAX_DESCRIBE_INSTANCES_COUNT = 10;
 const MAX_SSM_COMMANDS_POLL_COUNT = 10;
 const MINIMUM_SQL_SERVER_EDITION_SUPPORTED = 2016;
-
-const hostAndSqlInfoPowerShellScript = [
-    `
-    $body = @{}
-
-    (Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}) | SELECT Name, State, PathName | ForEach {
-    
-        $instance = $_.Name -Replace "MSSQL\\$", ""
-        $state = $_.State
-        $path = $_.PathName  -Replace "-s.*",""
-    
-        If (Get-Command sqlcmd) {
-            $serverInstance = If ($instance -ne "MSSQLSERVER") { "$Env:ComputerName\\$instance" } Else { "$Env:ComputerName" }
-            sqlcmd -Q "SELECT @@serviceName" -C -S $serverInstance -l 1 2> Out-Null | Out-Null
-            $body['windowsAuthentication'] = $?
-        } else {
-            $body['windowsAuthentication'] = $False
-        }
-
-        $info = Invoke-Expression -Command "(dir $path).VersionInfo"
-        $productversion = $info.ProductVersion
-        $sqlversion = $info.FileVersionRaw.Major
-    
-        $body['sqlServerInstance'] = $instance
-        $body['sqlServerState'] = $state
-        $body['sqlServerVersion'] = $productversion
-        $body['sqlServerEdition'] = $sqlversion
-    
-        Echo $body | ConvertTo-Json
-    } | ConvertFrom-Json | ConvertTo-Json
-    `
-];
 
 async function getHostAndSqlServerInfo(
     accountId: string,

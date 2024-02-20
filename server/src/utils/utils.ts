@@ -410,8 +410,8 @@ function getResourceNameFromTags(tags?: Tag[]) {
     return name;
 }
 
-function getArtifactsRegionBucketName(region:  string)  {
-    return `${ARTIFACT_BUCKET_NAME.replace('REGION', region)}`;;
+function getArtifactsRegionBucketName(region: string) {
+    return `${ARTIFACT_BUCKET_NAME.replace('REGION', region)}`;
 }
 
 export {
