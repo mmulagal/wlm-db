@@ -6,6 +6,7 @@ interface Metadata {
     activeDirectoryName?: string;
     activeDirectoryAddress?: string;
     creationDate?: string;
+    fsxSvmId?: string;
 }
 
 interface ResourceDetails {
