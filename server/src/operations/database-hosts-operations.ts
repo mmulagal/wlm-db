@@ -112,9 +112,19 @@ async function getTopology(
     region: string,
     resourceId: string,
     resourceData: resource,
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId?: string,
     additionalFields?: { [key: string]: boolean }
 ): Promise<TopologyResponseType> {
-    logger.info('Fetching topology data', accountId, region, resourceId, resourceData);
+    logger.info('Fetching topology data', {
+        accountId,
+        region,
+        resourceId,
+        resourceData,
+        activeNodeInstanceId,
+        standbyNodeInstanceId,
+        additionalFields
+    });
 
     if (isEmpty(resourceData)) {
         throw createError(
@@ -145,15 +155,7 @@ async function getTopology(
         ec2Details: []
     };
 
-    let activeNodeInstanceId: string | undefined;
-    let standbyNodeInstanceId;
     if (!isEmpty(node1InstanceId)) {
-        ({ activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
-            credentialsId,
-            region,
-            node1InstanceId,
-            node2InstanceId
-        ));
         let vpcId;
         let fileSystemStatus;
         let fileSystemName;
@@ -624,7 +626,7 @@ async function getDatabaseHostsSummary(
                 const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
                 // Check SSM Connection status
-                const { isSSMConnected, activeNodeInstanceId } = await isSSMConnectionSuccessful(
+                const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
                     credentialsId,
                     region!,
                     node1InstanceId,
@@ -637,7 +639,21 @@ async function getDatabaseHostsSummary(
                             ...(isSSMConnected && activeNodeInstanceId
                                 ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId)]
                                 : [Promise.resolve()]),
-                            getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
+                            /* eslint-disable indent */
+                            ...(activeNodeInstanceId
+                                ? [
+                                      getTopology(
+                                          accountId,
+                                          region!,
+                                          resourceId,
+                                          resourceDetail,
+                                          activeNodeInstanceId,
+                                          standbyNodeInstanceId,
+                                          additionalFields
+                                      )
+                                  ]
+                                : [Promise.resolve()]),
+                            /* eslint-enable indent */
                             ...(isSSMConnected && getPerformance && activeNodeInstanceId
                                 ? [getServerIOLatency(resourceId, activeNodeInstanceId)]
                                 : [Promise.resolve()]), // Fetch io latency data
@@ -734,7 +750,7 @@ async function getDatabaseHostSummary(
         const { node1InstanceId, node2InstanceId, creationDate } = metadata as unknown as Metadata;
 
         // Check SSM Connection status
-        const { isSSMConnected, activeNodeInstanceId } = await isSSMConnectionSuccessful(
+        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
             credentialsId,
             region!,
             node1InstanceId,
@@ -760,7 +776,21 @@ async function getDatabaseHostSummary(
                     ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId)]
                     : [Promise.resolve()]),
                 ...(isSSMConnected ? [getServerSummary(resourceId)] : [Promise.resolve()]), // Fetch server metadata
-                getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
+                /* eslint-disable indent */
+                ...(activeNodeInstanceId
+                    ? [
+                          getTopology(
+                              accountId,
+                              region!,
+                              resourceId,
+                              resourceDetail,
+                              activeNodeInstanceId,
+                              standbyNodeInstanceId,
+                              additionalFields
+                          )
+                      ]
+                    : [Promise.resolve()]),
+                /* eslint-enable indent */
                 ...(isSSMConnected && getPerformance && activeNodeInstanceId
                     ? [getPerformanceMetrics(resourceId, activeNodeInstanceId)]
                     : [Promise.resolve()]), // Fetch io latency data
