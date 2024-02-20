@@ -123,7 +123,7 @@ async function updateTemplateUrls(
             VpcEndpointTemplate: decodeURI(signedUrls.get('VpcEndpointTemplate')?.url || ''),
             ...templateParameters
         });
-        await putObjectBucket(region, SIGNED_TEMPLATES_BUCKET_NAME, templatePath!, contents);
+        await putObjectBucket(TEMPLATE_BUCKET_REGION, SIGNED_TEMPLATES_BUCKET_NAME, templatePath!, contents);
     } else if (templateType === TEMPLATE_TYPES.SQLSTACK) {
         const contents = template({
             DSC: decodeURI(signedUrls.get('DSC')?.url || ''),
