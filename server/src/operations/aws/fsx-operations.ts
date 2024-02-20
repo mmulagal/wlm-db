@@ -220,8 +220,7 @@ async function getStorageDataUsingSSM(
     apiEndpoint: string,
     apiFilter: string,
     apiQuery: string,
-    activeNodeInstanceId: string,
-    standbyNodeInstanceId?: string
+    activeNodeInstanceId: string
 ) {
     logger.info('Fetching storage savings details', credentialsId, region, activeNodeInstanceId);
 
@@ -237,13 +236,7 @@ async function getStorageDataUsingSSM(
         ];
     }
 
-    const response = await callSsmExecution(
-        credentialsId,
-        region,
-        commands,
-        activeNodeInstanceId,
-        standbyNodeInstanceId
-    );
+    const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId);
 
     const cleanResponse = response?.replaceAll('\r\n', '');
     const jsonResponse = JSON.parse(cleanResponse!);
@@ -269,7 +262,13 @@ async function getVolumeIdsFromUuids(credentialsId: string, region: string, fsxI
     return volumeIds;
 }
 
-async function isAWSBackupEnabled(credentialsId: string, region: string, fileSystemId: string, metadata: Metadata) {
+async function isAWSBackupEnabled(
+    credentialsId: string,
+    region: string,
+    fileSystemId: string,
+    metadata: Metadata,
+    activeNodeInstanceId?: string
+) {
     logger.info('Check if AWS backup is enabled', {
         credentialsId,
         region,
@@ -277,7 +276,7 @@ async function isAWSBackupEnabled(credentialsId: string, region: string, fileSys
         metadata
     });
 
-    const volumeUuids = await getDataVolumes(credentialsId, region, fileSystemId, metadata);
+    const volumeUuids = await getDataVolumes(credentialsId, region, fileSystemId, metadata, activeNodeInstanceId);
 
     if (!isEmpty(volumeUuids)) {
         const volumeIds = await getVolumeIdsFromUuids(credentialsId, region, fileSystemId, volumeUuids);
@@ -291,7 +290,8 @@ async function getOntapVolumesSnapshotCount(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    metadata: Metadata
+    metadata: Metadata,
+    activeNodeInstanceId?: string
 ) {
     logger.info('Fetching ontap snapshots count ', {
         credentialsId,
@@ -300,16 +300,16 @@ async function getOntapVolumesSnapshotCount(
         metadata
     });
 
-    const { activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata as unknown as Metadata;
+    const { fsxSecret } = metadata as unknown as Metadata;
 
-    const cacheKey = `${activeNodeInstanceId || standbyNodeInstanceId}-snapshot-count`;
+    const cacheKey = `${activeNodeInstanceId}-snapshot-count`;
     if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheKey)) {
         const response = readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheKey);
         return response;
     }
 
     try {
-        const volumeUuids = await getDataVolumes(credentialsId, region, fileSystemId, metadata);
+        const volumeUuids = await getDataVolumes(credentialsId, region, fileSystemId, metadata, activeNodeInstanceId);
 
         if (!isEmpty(volumeUuids)) {
             const apiEndpoint = 'storage/volumes';
@@ -320,13 +320,7 @@ async function getOntapVolumesSnapshotCount(
                 `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
             ];
 
-            const response = await callSsmExecution(
-                credentialsId,
-                region,
-                commands,
-                activeNodeInstanceId,
-                standbyNodeInstanceId
-            );
+            const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId!);
 
             const cleanResponse = response?.replaceAll('\r\n', '');
             let parsedResponse = attempt(JSON.parse, cleanResponse);
@@ -350,7 +344,13 @@ async function getOntapVolumesSnapshotCount(
     }
 }
 
-async function getDataVolumes(credentialsId: string, region: string, fileSystemId: string, metadata: Metadata) {
+async function getDataVolumes(
+    credentialsId: string,
+    region: string,
+    fileSystemId: string,
+    metadata: Metadata,
+    activeNodeInstanceId?: string
+) {
     logger.info('Get data volumes', {
         credentialsId,
         region,
@@ -391,23 +391,30 @@ async function getDataVolumes(credentialsId: string, region: string, fileSystemI
     const filteredVolumes = dataVolumes?.map(({ OntapConfiguration: { UUID = '' } = {} }) => UUID);
 
     if (isEmpty(filteredVolumes)) {
-        return getMappedOntapVolumes(credentialsId, region, fileSystemId, metadata);
+        return getMappedOntapVolumes(credentialsId, region, fileSystemId, metadata, activeNodeInstanceId);
     }
 
     return filteredVolumes;
 }
 
-async function getMappedOntapVolumes(credentialsId: string, region: string, fileSystemId: string, metadata: Metadata) {
+async function getMappedOntapVolumes(
+    credentialsId: string,
+    region: string,
+    fileSystemId: string,
+    metadata: Metadata,
+    activeNodeInstanceId?: string
+) {
     logger.info('Get ontap volumes mapped to data drive of all databases in a server', {
         credentialsId,
         region,
         fileSystemId,
-        metadata
+        metadata,
+        activeNodeInstanceId
     });
 
-    const { activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata;
+    const { fsxSecret } = metadata;
 
-    const cacheKey = `${activeNodeInstanceId || standbyNodeInstanceId}-mapped-volumes`;
+    const cacheKey = `${activeNodeInstanceId}-mapped-volumes`;
     if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheKey)) {
         const response = readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheKey);
         return response;
@@ -418,13 +425,7 @@ async function getMappedOntapVolumes(credentialsId: string, region: string, file
             `C:\\SSM\\Get-MappedOntapVolumes.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region}`
         ];
 
-        const response = await callSsmExecution(
-            credentialsId,
-            region!,
-            commands,
-            activeNodeInstanceId,
-            standbyNodeInstanceId
-        );
+        const response = await callSsmExecution(credentialsId, region!, commands, activeNodeInstanceId!);
 
         const cleanResponse = response?.replaceAll('\r\n', '');
         let parsedResponse = attempt(JSON.parse, cleanResponse);
@@ -458,10 +459,12 @@ async function tagFsxResource(
 }
 async function getCostAllocationTagFsxResource(resourceDetail: ResourceDetails) {
     logger.info('Get Fsx Resources which has cost allocation tag attached');
-    const { region, co_relation_id: fileSystemId, cloud_provider_account_id: awsAccountId, metadata } = resourceDetail;
-    const { credentialsId } = metadata as {
-        credentialsId: string;
-    };
+    const {
+        region,
+        co_relation_id: fileSystemId,
+        cloud_provider_account_id: awsAccountId,
+        credentials_id: credentialsId
+    } = resourceDetail;
     try {
         const resourceArn = getFsxArn(awsAccountId!, region!, fileSystemId!);
         const input: ListTagsForResourceCommandInput = {

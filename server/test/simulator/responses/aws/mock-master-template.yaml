@@ -1291,9 +1291,7 @@ Resources:
       JWToken: !Ref JwtToken
       Region: !Ref 'AWS::Region' 
       StackName: !Ref 'AWS::StackName'
-      DomainAdminSecretName: !Sub ${AWS::StackName}-domain
       FSxNSecret: !Sub ${AWS::StackName}-fsx
-      SQLServiceAccountSecret: !Sub ${AWS::StackName}-sql
       DatabaseType: 'Microsoft SQL server'
       Metrics: !Ref Metrics
 
@@ -1302,40 +1300,15 @@ Resources:
             - NewOntapFsx
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
-      ActiveInstanceIp: 
-          !If
-            - IsFailoverCluster
-            - !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceIPMAD"
-            - !GetAtt "SQLStandaloneStack.Outputs.SqlNodeIp"
-      ActiveInstanceId: 
+      Node1InstanceId: 
           !If
             - IsFailoverCluster
             - !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceId"
             - !GetAtt "SQLStandaloneStack.Outputs.SqlNodeId"
-      ActiveInstanceName: 
-          Fn::Select:
-            - "0"
-            - Fn::Split:
-              - ","
-              - Ref: NodeNetBIOSNames
-      StandbyInstanceIp: 
-          !If
-            - IsFailoverCluster
-            - !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceIPMAD"
-            - !Ref AWS::NoValue
-      StandbyInstanceId: 
+      Node2InstanceId: 
           !If
             - IsFailoverCluster
             - !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceId"
-            - !Ref AWS::NoValue
-      StandbyInstanceName: 
-          !If
-            - IsFailoverCluster
-            - Fn::Select:
-              - "1"
-              - Fn::Split:
-                - ","
-                - Ref: NodeNetBIOSNames
             - !Ref AWS::NoValue
       ResourceName: !Ref 'SqlServerName'
       SQLDeploymentType: 
