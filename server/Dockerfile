@@ -20,7 +20,14 @@ COPY package-lock.json ./
 COPY config/default.json ./config/default.json
 COPY config/production.json ./config/production.json
 COPY config/log4js.json ./config/log4js.json
-COPY resources/mssql/templates/* ./resources/mssql/templates
+COPY resources/mssql/templates/wlm-master.yaml ./resources/mssql/templates/wlm-master.yaml
+COPY resources/mssql/templates/vpc-ad-validation.yaml ./resources/mssql/templates/vpc-ad-validation.yaml
+COPY resources/mssql/templates/sql-windows-fci-config_nosignal.yaml ./resources/mssql/templates/sql-windows-fci-config_nosignal.yaml
+COPY resources/mssql/templates/standalone-deployment.yaml ./resources/mssql/templates/standalone-deployment.yaml
+COPY resources/mssql/templates/vpc-endpoints.yaml ./resources/mssql/templates/vpc-endpoints.yaml
+COPY resources/mssql/templates/fsx-new.yaml ./resources/mssql/templates/fsx-new.yaml
+COPY resources/mssql/templates/fsx-existing.yaml ./resources/mssql/templates/fsx-existing.yaml
+
 COPY dist/src ./
 
 COPY src/lib/chatbot/schemas/* ./lib/chatbot/schemas
