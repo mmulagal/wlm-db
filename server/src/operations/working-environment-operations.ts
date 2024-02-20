@@ -6,6 +6,8 @@ import { getDatabasesCount, getResourceDetails } from './workloads/mssql/mssql-o
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { listRelationshipsResources } from '../lib/database/db';
 import { getResources } from './database/database-operations';
+import { isSSMConnectionSuccessful } from './aws/ssm-operations';
+import { describeInstance } from '../lib/aws/ec2';
 
 interface WorkingEnvironment {
     id: string;
@@ -40,24 +42,29 @@ async function getWorkingEnvironments() {
 
 async function getMSSQLEnvData(resourceDetails: any, resourceId: string) {
     logger.info('Getting MSSQL working environment data for resource:', resourceId);
-    const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
-    if (!credentialsId || !region || !activeNodeInstanceId) {
+    const [credentialsId, region, node1InstanceId] = await getResourceDetails(resourceId);
+    if (!credentialsId || !region || !node1InstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Unable to get mssql env data');
     }
-    const dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId!);
-    const { resource_name: serverName, metadata, cloud_provider_name: location } = resourceDetails || {};
-    const deploymentState = 'SUCCESS';
-    let domain = '';
-    if (metadata) {
-        domain = metadata.activeNodeInstanceIp || '';
+    const { activeNodeInstanceId } = await isSSMConnectionSuccessful(credentialsId, region!, node1InstanceId);
+    let activeNodeInstanceIp;
+    if (activeNodeInstanceId) {
+        const activeInstanceDetails = await describeInstance(credentialsId, region, {
+            InstanceIds: [activeNodeInstanceId]
+        });
+        activeNodeInstanceIp =
+            activeInstanceDetails?.Reservations?.[0]?.Instances?.[0]?.NetworkInterfaces?.[0]?.PrivateIpAddress;
     }
+    const dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId!);
+    const { resource_name: serverName, cloud_provider_name: location } = resourceDetails || {};
+    const deploymentState = 'SUCCESS';
     return {
         id: resourceId,
         serverName,
         location,
         deploymentState,
         databasesCount: dbCount?.totalCount,
-        domain
+        domain: activeNodeInstanceIp || ''
     };
 }
 

@@ -15,22 +15,22 @@ async function calculateBilling(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    activeInstanceId: string,
-    standbyNodeInstanceId?: string
+    node1InstanceId: string,
+    node2InstanceId?: string
 ): Promise<UsageCostResponseType> {
     logger.info('Calculating billing for AWS resources', {
         credentialsId,
         region,
         fileSystemId,
-        activeInstanceId,
-        standbyNodeInstanceId
+        node1InstanceId,
+        node2InstanceId
     });
 
     const [startTimeFormat, currenTimeFormat] = getCostExplorerTimeRange();
-    const tagValue = [activeInstanceId];
+    const tagValue = [node1InstanceId];
 
-    if (standbyNodeInstanceId) {
-        tagValue.push(standbyNodeInstanceId);
+    if (node2InstanceId) {
+        tagValue.push(node2InstanceId);
     }
 
     const ec2Input = ec2InputForCostExplorer(region, startTimeFormat, currenTimeFormat, tagValue);
@@ -162,10 +162,8 @@ function calculateCostfromCostExplorerResponse(costExplorerResponse: GetCostAndU
 async function getCostAllocationTags(resourceDetail: ResourceDetails) {
     logger.info(' Get cost allocation tag at account level');
 
-    const { region, metadata } = resourceDetail;
-    const { credentialsId } = metadata as {
-        credentialsId: string;
-    };
+    const { region, credentials_id: credentialsId } = resourceDetail;
+
     try {
         const [startTimeFormat, currenTimeFormat] = getCostExplorerTimeRange();
         const input: GetTagsCommandInput = {
