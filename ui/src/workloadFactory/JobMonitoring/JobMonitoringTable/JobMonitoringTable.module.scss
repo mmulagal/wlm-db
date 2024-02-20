@@ -5,6 +5,9 @@
 
         .jobMenuPopover {
             margin-left: -13px;
+            [class*='MenuPopover_menuPointer'] {
+                background: none !important;
+            }
         }
 
         .downloadButton {
