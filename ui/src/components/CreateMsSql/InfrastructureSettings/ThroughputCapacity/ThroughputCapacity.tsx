@@ -17,7 +17,7 @@ const ThroughputCapacity = () => {
     const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
     const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
 
-    const units = ['128 MBps', '256 MBps', '512 MBps', '1 GBps', '2 GBps', '3 GBps', '4 GBps'];
+    const units = ['128 MBps', '256 MBps', '512 MBps', '1 GBps', '2 GBps', '4 GBps'];
 
     const [isDisable, setIsDisable] = useState(false);
 

@@ -81,7 +81,7 @@ export const selectFsxThroughput = (selectedFsxnType: string, selectedExistingFs
         if(throughput <= 512){
             val = throughput + ' MBps';
         } else {
-            val = (throughput/1000) + ' GBps';
+            val = (throughput/1024) + ' GBps';
         }
         const option = generateOptionType(val, val, '', false, '');
         dispatch(setThroughputValue(option));
