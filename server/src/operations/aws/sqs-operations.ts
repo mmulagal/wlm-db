@@ -3,7 +3,7 @@ import { isEmpty } from 'lodash-es';
 import config from 'config';
 import { randomUUID } from 'crypto';
 import { Message, QueueAttributeName, ReceiveMessageCommandInput } from '@aws-sdk/client-sqs';
-import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, JOBSTATUS, JOBTYPE, job } from '@prisma/client';
+import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, JOBSTATUS, JOBTYPE, STORAGE_TYPE, job } from '@prisma/client';
 import { inspect } from 'util';
 import { JSONObject } from '@fastify/swagger';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
@@ -47,7 +47,7 @@ import { getMsSqlResourceId } from '../workloads/mssql/mssql-operations';
 // import { handleNotification } from '../cloud-manager/notification-operations';
 import { lookupCredentials } from '../cloud-manager/credentials-operations';
 import { associateResource } from '../../lib/cloud-manager/credentials';
-import { getDeployments, getResources } from '../database/database-operations';
+import { getDeployments } from '../database/database-operations';
 import { tagEc2Resource } from './ec2-operations';
 import { tagFsxResource } from './fsx-operations';
 import { decryptString } from './kms-operations';
@@ -447,7 +447,13 @@ async function processCloudFormationMessages() {
                                                     await updateDeployment(accountId, masterStackDeployment.id, {
                                                         deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
                                                         endTime: new Date(messageTimestamp).valueOf(),
-                                                        data: resourceProperties
+
+                                                        data: {
+                                                            databaseType: trackdatabaseType,
+                                                            resourceName: trackresourceName,
+                                                            fileSystemType: trackfileSystemType,
+                                                            Metrics: trackMetricsJson
+                                                        }
                                                     });
 
                                                     // Update master job with completion status
@@ -480,14 +486,10 @@ async function processCloudFormationMessages() {
                                                     logger.debug('Update master job response:', response);
 
                                                     const {
-                                                        ActiveInstanceId: activeNodeInstanceId,
-                                                        StandbyInstanceId: standbyNodeInstanceId,
-                                                        ActiveInstanceName: activeNodeInstanceName,
-                                                        StandbyInstanceName: standbyNodeInstanceName,
+                                                        Node1InstanceId: node1InstanceId,
+                                                        Node2InstanceId: node2InstanceId,
                                                         FSxFileSystemId: fsxId,
                                                         FSxFileSystemName: fsxName,
-                                                        ActiveInstanceIp: activeNodeInstanceIp,
-                                                        StandbyInstanceIp: standbyNodeInstanceIp,
                                                         SQLDeploymentType: sqlDeploymentType,
                                                         ResourceName: resourceName,
                                                         FileSystemType: fileSystemType,
@@ -497,22 +499,6 @@ async function processCloudFormationMessages() {
                                                         EncryptedFsxPassword: encryptedFsxPassword,
                                                         FSxSvmId: fsxSvmId
                                                     } = resourceProperties;
-                                                    const [resourceDetails] = await getResources(
-                                                        accountId,
-                                                        fsxId,
-                                                        RESOURCESTYPE.FSX
-                                                    );
-                                                    if (isEmpty(resourceDetails)) {
-                                                        // same fsx can be used in multiple SQL deployments, avoid creating multiple FSX resources.. Keep fsx resource unique per tenancy account
-                                                        await createResource(accountId, {
-                                                            resourceId: fsxId,
-                                                            resourceName: fsxName,
-                                                            cloudProviderAccountId,
-                                                            cloudProviderName: CloudProviders.AWS,
-                                                            resourceType: RESOURCESTYPE.FSX,
-                                                            region
-                                                        });
-                                                    }
 
                                                     if (encryptedFsxPassword) {
                                                         const {
@@ -540,8 +526,8 @@ async function processCloudFormationMessages() {
                                                             }
                                                         } catch (error) {
                                                             logger.error(
-                                                                'Failed to register FSx for ONTAP credentials with FSX core module. Could not decrypt the credentials from custom resource notification',
-                                                                { encryptedFsxPassword }
+                                                                'Failed to register FSx for ONTAP credentials with FSX core module. Something went wrong while processing the encrypted FSX password',
+                                                                { encryptedFsxPassword, error }
                                                             );
                                                         }
                                                     } else {
@@ -551,11 +537,14 @@ async function processCloudFormationMessages() {
                                                     }
 
                                                     const resourceId = getMsSqlResourceId(
-                                                        activeNodeInstanceId,
-                                                        standbyNodeInstanceId
+                                                        node2InstanceId,
+                                                        node2InstanceId
                                                     );
+
                                                     await createResource(accountId, {
                                                         resourceId,
+                                                        credentialsId,
+                                                        storageType: fileSystemType as STORAGE_TYPE,
                                                         resourceName,
                                                         cloudProviderAccountId,
                                                         cloudProviderName: CloudProviders.AWS,
@@ -564,15 +553,9 @@ async function processCloudFormationMessages() {
                                                         region,
                                                         metadata: {
                                                             creationDate: Date.now(),
-                                                            credentialsId,
-                                                            activeNodeInstanceId,
-                                                            standbyNodeInstanceId,
-                                                            activeNodeInstanceName,
-                                                            standbyNodeInstanceName,
-                                                            activeNodeInstanceIp,
-                                                            standbyNodeInstanceIp,
+                                                            node1InstanceId,
+                                                            node2InstanceId,
                                                             sqlDeploymentType,
-                                                            fileSystemType,
                                                             parameterStorePath,
                                                             activeDirectoryName,
                                                             activeDirectoryAddress,
@@ -596,8 +579,8 @@ async function processCloudFormationMessages() {
                                                             cloudProviderAccountId,
                                                             accountId,
                                                             fsxId,
-                                                            activeNodeInstanceId,
-                                                            standbyNodeInstanceId
+                                                            node1InstanceId,
+                                                            node2InstanceId
                                                         );
                                                     } catch (error) {
                                                         logger.error('Error while tagging resource', error);

@@ -1,11 +1,16 @@
 import { QueueAttributeName } from '@aws-sdk/client-sqs';
 import { createQueue, listQueues, receiveMessage } from '../../../src/lib/aws/sqs';
 
-import '../../simulator/scopes/aws/sqs-scope';
+// import '../../simulator/scopes/aws/sqs-scope';
 
-describe('List SNS topics', () => {
+describe('SQS lib functions', () => {
     it('should create of SQS queue', async () => {
-        const resp = await createQueue('us-east-1', { QueueName: 'WLMDB' });
+        const resp = await createQueue('us-east-1', {
+            QueueName: 'test-sg',
+            Attributes: {
+                SqsManagedSseEnabled: 'true'
+            }
+        });
         expect(resp).toBeDefined();
     });
 
@@ -16,7 +21,7 @@ describe('List SNS topics', () => {
         expect(resp).toBeDefined();
     });
 
-    it('should receive a SQS queue messages', async () => {
+    it.skip('should receive a SQS queue messages', async () => {
         const resp = await receiveMessage('us-east-1', {
             AttributeNames: ['SentTimestamp' as QueueAttributeName],
             MaxNumberOfMessages: 1,

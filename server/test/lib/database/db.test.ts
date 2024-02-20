@@ -1,3 +1,4 @@
+import { STORAGE_TYPE } from '@prisma/client';
 import {
     listDeployments,
     createDeployment,
@@ -53,6 +54,8 @@ describe('List deployments', () => {
             resourceType: 'MSSQL',
             cloudProviderAccountId: '464262061435',
             cloudProviderName: 'AWS',
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            storageType: STORAGE_TYPE.FSXN,
             region: DEFAULT_AWS_REGION
         });
         const resp = await listResources(ACCOUNT_ID);
@@ -107,6 +110,8 @@ describe('List deployments', () => {
             cloudProviderAccountId: '464262061435',
             cloudProviderName: 'AWS',
             coRelationId: 'fsx-1234',
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            storageType: STORAGE_TYPE.FSXN,
             region: DEFAULT_AWS_REGION
         });
 

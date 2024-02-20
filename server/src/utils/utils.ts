@@ -404,8 +404,8 @@ function convertMetricsIntoJson(input: Array<string>) {
     return metrics;
 }
 
-function getArtifactsRegionBucketName(region:string){
-    return `${ARTIFACT_BUCKET_NAME.replace('REGION', region)}`
+function getArtifactsRegionBucketName(region: string) {
+    return `${ARTIFACT_BUCKET_NAME.replace('REGION', region)}`;
 }
 
 export {

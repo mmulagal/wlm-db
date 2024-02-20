@@ -503,7 +503,7 @@ Resources:
             - IsFailoverCluster
             - 'FCI'
             - 'Standalone'
-      FileSystemType: 'FSx for ONTAP'
+      FileSystemType: 'FSXN'
       DatabaseType: 'Microsoft SQL server'
       Metrics: !Ref Metrics
   VpcEndpointStack:
@@ -947,40 +947,15 @@ Resources:
             - NewOntapFsx
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
-      ActiveInstanceIp: 
-          !If
-            - IsFailoverCluster
-            - !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceIPMAD"
-            - !GetAtt "SQLStandaloneStack.Outputs.SqlNodeIp"
-      ActiveInstanceId: 
+      Node1InstanceId: 
           !If
             - IsFailoverCluster
             - !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceId"
             - !GetAtt "SQLStandaloneStack.Outputs.SqlNodeId"
-      ActiveInstanceName: 
-          Fn::Select:
-            - "0"
-            - Fn::Split:
-              - ","
-              - Ref: NodeNetBIOSNames
-      StandbyInstanceIp: 
-          !If
-            - IsFailoverCluster
-            - !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceIPMAD"
-            - !Ref AWS::NoValue
-      StandbyInstanceId: 
+      Node2InstanceId: 
           !If
             - IsFailoverCluster
             - !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceId"
-            - !Ref AWS::NoValue
-      StandbyInstanceName: 
-          !If
-            - IsFailoverCluster
-            - Fn::Select:
-              - "1"
-              - Fn::Split:
-                - ","
-                - Ref: NodeNetBIOSNames
             - !Ref AWS::NoValue
       ResourceName: !Ref 'SqlServerName'
       SQLDeploymentType: 
@@ -988,7 +963,7 @@ Resources:
             - IsFailoverCluster
             - 'FCI'
             - 'Standalone'
-      FileSystemType: 'FSx for ONTAP'
+      FileSystemType: 'FSXN'
       ActiveDirectoryName: !Ref DomainDNSName
       ActiveDirectoryAddress: !Ref DNSIpAddresses
       EncryptedFsxPassword: !Ref 'EncryptedFsxPassword'

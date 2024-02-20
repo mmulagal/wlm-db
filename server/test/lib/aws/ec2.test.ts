@@ -30,7 +30,7 @@ import subnetsList from '../../simulator/responses/aws/list-subnets.json';
 import sgList from '../../simulator/responses/aws/list-security-groups.json';
 import ec2instanceTypes from '../../simulator/responses/aws/ec2-instance-types.json';
 import ec2Instances from '../../simulator/responses/aws/describe-instance.json';
-import vpcEndpoints from '../../simulator/responses/aws/describe-endpoints.json'
+import vpcEndpoints from '../../simulator/responses/aws/describe-endpoints.json';
 import { DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
 
 const REGION = DEFAULT_AWS_REGION;
