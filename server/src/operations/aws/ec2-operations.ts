@@ -27,6 +27,7 @@ import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
 import { ResourceDetails, SecurityGroup, Subnet, VPC, NetworkInterface } from '../../utils/common-types';
+import { isEmpty } from 'lodash-es';
 
 const logger = getLogger();
 
@@ -480,7 +481,7 @@ async function getServicesWithNoEndpoint(credentialsId: string, region: string, 
     logger.info('Get services wit no endpoint ', credentialsId, region, vpcId);
 
     const endpoints = await getVpcEndpoints(credentialsId, region, vpcId)
-    const availableEndpoints = [...new Set(endpoints!.map(({ServiceName}: VpcEndpoint)  => ServiceName?.split('.')[3]))];
+    const availableEndpoints = !isEmpty(endpoints) ? [...new Set(endpoints!.map(({ServiceName}: VpcEndpoint)  => ServiceName?.split('.')[3]))] : [];
     const servicesWithNoEndpoint = ENDPOINTS_DEPLOYMENT.filter(endpoint => !availableEndpoints.includes(endpoint));
 
     return servicesWithNoEndpoint
