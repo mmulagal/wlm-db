@@ -226,6 +226,7 @@ $IGROUP = $igroups[0].name
 if ([string]::IsNullOrEmpty($IGROUP)) {
   $found = $nodeiqn -match '(.*\:.+?)\.'
   if ($found) {$baseiqn = $matches[1]}
+  else {Write-Error "{Message:Unable to find igroup containing the node IQN,Exception:$_}"}
   $URI=@"
   https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($baseiqn)&protocol=iscsi
 "@
