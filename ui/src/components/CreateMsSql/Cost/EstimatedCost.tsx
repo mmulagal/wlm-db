@@ -53,7 +53,7 @@ const EstimatedCost = () => {
         const value = (throughputValue || '').split(' ');
         if (value.length === 2) {
             if (value[1] === 'GBps') {
-                return value[0] * 1000;
+                return value[0] * 1024;
             } else {
                 return Number(value[0]);
             }

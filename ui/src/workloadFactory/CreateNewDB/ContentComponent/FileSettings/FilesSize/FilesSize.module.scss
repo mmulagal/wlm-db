@@ -1,9 +1,9 @@
-.fileSettings {
+.filesSize {
     margin-bottom: 40px;
 
     .textSection {
         margin-top: 16px;
-        margin-bottom: 64px;
+        margin-bottom: 32px;
         display: flex;
         flex-direction: column;
         gap: 8px;
@@ -12,13 +12,12 @@
             gap: 16px;
         }
     }
-    .firstRow {
+
+    .dataSizeRow {
         display: flex;
         gap: 24px;
-        .fileNameText {
-            width: 394px;
-        }
     }
+
     .dataSizeField {
         display: flex;
 
@@ -64,38 +63,7 @@
         }
     }
 
-    .dataFileSection {
-        .dataFileSeparator {
-            margin-top: 8px;
-            width: 984px;
-            border-bottom: 1px solid var(--grey-25);
-        }
-
-        .inputSection {
-            margin-top: 24px;
-            display: flex;
-            gap: 24px;
-        }
-
-        .driveSelectField {
-            width: 229px;
-        }
-
-        .pathSection {
-            height: 48px;
-            width: 984px;
-            background-color: var(--main-background);
-            margin-top: -10px;
-            margin-bottom: 64px;
-            padding: 12px 40px;
-        }
-    }
-
     .dataSizeTooltip {
         width: 300px;
-    }
-
-    .logSizeTooltip {
-        width: 280px;
     }
 }

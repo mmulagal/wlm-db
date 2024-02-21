@@ -203,12 +203,22 @@ async function getDeployments(
 async function getResources(
     accountId: string,
     resourceId?: string,
-    resourceType?: string
+    resourceType?: string,
+    credentialsId?: string,
+    region?: string
 ): Promise<Array<ResourceDetails>> {
-    logger.info(' Get the Resources', { accountId, resourceId, resourceType });
+    logger.info(' Get the Resources', { accountId, resourceId, resourceType, credentialsId, region });
 
     try {
-        const records = await listResources(accountId, resourceId, resourceType);
+        const records = await listResources(
+            accountId,
+            resourceId,
+            resourceType,
+            undefined,
+            undefined,
+            region,
+            credentialsId
+        );
         return trimAccountIdForDemo(records);
     } catch (error) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to list the resources');

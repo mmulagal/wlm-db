@@ -4,7 +4,7 @@
     "homepage": "./",
     "private": true,
     "dependencies": {
-        "@netapp/design-system": "1.0.15",
+        "@netapp/design-system": "1.1.3",
         "@netapp/icons": "^1.0.8",
         "@reduxjs/toolkit": "2.1.0",
         "auth0-js": "^9.24.1",

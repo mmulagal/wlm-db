@@ -899,7 +899,7 @@ describe('setRecommendedValues', () => {
         expect(result?.instanceType?.value).toEqual('m5.xlarge');
         expect(result?.dbEdition?.value).toEqual(GENERAL.SQL_SERVER_STANDARD);
         expect(result?.dbDeploymentModel?.value).toEqual(SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE);
-        expect(result?.storageCapacity?.capacity).toEqual('100');
+        expect(result?.storageCapacity?.capacity).toEqual('120');
         expect(result?.throughput).toEqual('128');
     });
     it('Return recommended values for prod', () => {

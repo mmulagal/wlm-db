@@ -13,17 +13,12 @@ import { useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
 import { addDatabaseHosts, selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
-import {
-    databaseTableSort,
-    formatFractionalNumber,
-    formatSizeOnePrecision,
-    initialColStateManagedHosts
-} from '../../../utils/utilityFunctions';
+import { databaseTableSort, formatFractionalNumber, formatSizeOnePrecision } from '../../../utils/utilityFunctions';
 import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import { setManagedHostColState, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
 import { setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
 
@@ -33,6 +28,7 @@ const ManagedHosts = () => {
 
     const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
+    const { managedHostInitialColumns } = useAppSelector(state => state.inventory);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
@@ -57,7 +53,7 @@ const ManagedHosts = () => {
             },
             {
                 id: 'createNewUserDatabase',
-                displayName: 'Create new user database',
+                displayName: GENERAL.CREATE_USER_DB_TITLE,
                 disabled: row?.status === STATUS_CONST.UP ? false : true
             },
             {
@@ -324,19 +320,19 @@ const ManagedHosts = () => {
         {
             id: '9',
             Header: GENERAL.DB_HOST_VPC,
-            accessor: 'topology.vpcId',
+            accessor: 'topology',
             isSortable: true,
             width: '212px',
             renderCell: (cellData: any) => {
                 return (
                     <>
-                        {cellData && (
+                        {cellData?.vpcId && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData}</TooltipInfo>
-                                <Typography variant="Regular_14">{cellData}</Typography>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData?.vpcId}</TooltipInfo>
+                                <Typography variant="Regular_14">{cellData?.vpcName}</Typography>
                             </div>
                         )}
-                        {!cellData && notAvailable()}
+                        {!cellData?.vpcId && notAvailable()}
                     </>
                 );
             }
@@ -344,19 +340,20 @@ const ManagedHosts = () => {
         {
             id: '10',
             Header: GENERAL.DB_HOST_AVAILABILITY,
-            accessor: 'topology.availability',
+            accessor: 'topology',
             isSortable: true,
             width: '212px',
             renderCell: (cellData: any) => {
+                const azList = cellData?.availabilityZones ? cellData.availabilityZones.join(',') : '';
                 return (
                     <>
-                        {cellData && (
+                        {cellData?.fileSystemDeploymentMode && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData?.azList}</TooltipInfo>
-                                <Typography variant="Regular_14">{cellData?.type}</Typography>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
+                                <Typography variant="Regular_14">{cellData?.fileSystemDeploymentMode}</Typography>
                             </div>
                         )}
-                        {!cellData && notAvailable()}
+                        {!cellData?.fileSystemDeploymentMode && notAvailable()}
                     </>
                 );
             }
@@ -432,9 +429,13 @@ const ManagedHosts = () => {
                 );
             }
         },
-        initialColumnState: initialColStateManagedHosts,
+        initialColumnState: managedHostInitialColumns,
         isLazyLoading: databaseHostsLoading
     });
+
+    useEffect(() => {
+        dispatch(setManagedHostColState(tableProps.columnsState));
+    }, [tableProps.columnsState]);
 
     useEffect(() => {
         if (resetPage) {

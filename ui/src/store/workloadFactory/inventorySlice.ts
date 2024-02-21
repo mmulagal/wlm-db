@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { WLF_TABS } from '../../utils/consts';
+import { initialColStateManagedHosts } from '../../utils/utilityFunctions';
 
 const initialInventoryState: any = {
     selectedInventoryTab: WLF_TABS.MANAGED_HOSTS,
@@ -8,13 +9,21 @@ const initialInventoryState: any = {
     detectManagePassword: '',
     detectOntapUsername: '',
     detectOntapPassword: '',
-    detectHostRadio: 'Yes, Manage host via workload factory'
+    detectHostRadio: 'Yes, Manage host via workload factory',
+    managedHostInitialColumns: initialColStateManagedHosts,
+    unManagedHostInitialColumns: initialColStateManagedHosts
 };
 
 const inventorySlice = createSlice({
     name: 'inventory',
     initialState: initialInventoryState,
     reducers: {
+        setManagedHostColState: (state, action: PayloadAction<any>) => {
+            state.managedHostInitialColumns = action.payload;
+        },
+        setUnManagedHostColState: (state, action: PayloadAction<any>) => {
+            state.unManagedHostInitialColumns = action.payload;
+        },
         setSelectedInventoryTab: (state, action: PayloadAction<any>) => {
             state.selectedInventoryTab = action.payload;
         },
@@ -47,7 +56,9 @@ export const {
     setDetectManagePassword,
     setDetectONTAPUserName,
     setDetectONTAPPassword,
-    setRadioValueDetect
+    setRadioValueDetect,
+    setManagedHostColState,
+    setUnManagedHostColState
 } = inventorySlice.actions;
 
 export default inventorySlice;

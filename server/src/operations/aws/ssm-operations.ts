@@ -78,6 +78,8 @@ async function executeSSMDocument(
         CommandId: commandId,
         InstanceId: instanceIds
     };
+
+    await sleep(1000);
     const response = await pollCommandStatus(credentialsId, region, pollParams);
 
     logger.debug('SSM command Response:', response);
@@ -114,49 +116,63 @@ async function getSSMConnectionStatus(credentialId: string, region: string, inst
 async function isSSMConnectionSuccessful(
     credentialsId: string,
     region: string,
-    activeNodeInstanceId: string,
-    standbyNodeInstanceId?: string,
+    node1InstanceId: string,
+    node2InstanceId?: string,
     resourceId?: string
 ) {
     logger.info(
         'Check if SSM connection is a success',
         credentialsId,
         region,
-        activeNodeInstanceId,
-        standbyNodeInstanceId,
+        node1InstanceId,
+        node2InstanceId,
         resourceId
     );
     try {
-        let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId);
+        let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node1InstanceId);
         const resourceError = `for resource ID ${resourceId}`;
         // Connection to activenode is successful
         if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-            return true;
+            return {
+                isSSMConnected: true,
+                activeNodeInstanceId: node1InstanceId,
+                standbyNodeInstanceId: node2InstanceId
+            };
         }
 
-        let errorMessage = `SSM connection to node ${activeNodeInstanceId} has failed.`;
+        let errorMessage = `SSM connection to node ${node1InstanceId} has failed.`;
         errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
         logger.error(errorMessage);
 
         // Check for connection to standby node
-        if (standbyNodeInstanceId) {
-            connectionStatus = await getSSMConnectionStatus(credentialsId, region!, standbyNodeInstanceId);
+        if (node2InstanceId) {
+            connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-                return true;
+                return {
+                    isSSMConnected: true,
+                    activeNodeInstanceId: node2InstanceId,
+                    standbyNodeInstanceId: node1InstanceId
+                };
             }
 
-            errorMessage = `SSM connection to nodes ${activeNodeInstanceId} and ${standbyNodeInstanceId} has failed.`;
+            errorMessage = `SSM connection to nodes ${node1InstanceId} and ${node2InstanceId} has failed.`;
             errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
             logger.error(errorMessage);
         }
     } catch (error) {
         logger.error(
-            `Error while checking SSM connection ${credentialsId}, ${region}, ${activeNodeInstanceId}, ${standbyNodeInstanceId} for resource ID ${resourceId}`
+            `Error while checking SSM connection ${credentialsId}, ${region}, ${node1InstanceId}, ${node2InstanceId} for resource ID ${resourceId}`
         );
-        return false;
+        return { isSSMConnected: false };
     }
 
-    return false;
+    return { isSSMConnected: false };
 }
 
-export { executeSSMDocument, getFSxOntapRegionsList, getSSMConnectionStatus, isSSMConnectionSuccessful };
+export {
+    executeSSMDocument,
+    getFSxOntapRegionsList,
+    getSSMConnectionStatus,
+    isSSMConnectionSuccessful,
+    pollCommandStatus
+};

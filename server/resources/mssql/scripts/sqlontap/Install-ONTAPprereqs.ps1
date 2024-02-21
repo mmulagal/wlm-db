@@ -30,6 +30,7 @@ Install-Module -Name AWS.Tools.FSX -Force -AllowClobber
 Install-Module -Name AWS.Tools.SecretsManager -Force -AllowClobber
 Install-Module -Name AWS.Tools.EC2 -Force -AllowClobber
 Install-Module -Name AWS.Tools.CloudFormation -Force -AllowClobber
+Install-Module -Name AWS.Tools.SimpleSystemsManagement -AllowClobber
 Install-Module -Name SqlServer -Force -AllowClobber
 Install-Module -Name netapp.ontap
 
