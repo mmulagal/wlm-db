@@ -5,7 +5,12 @@ import { SelectField, Spinner, Typography } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
-import { generateOptionType, getCurrentDateTime, regionsSort, resetDBHomePageState } from '../../../utils/utilityFunctions';
+import {
+    generateOptionType,
+    getCurrentDateTime,
+    regionsSort,
+    resetDBHomePageState
+} from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import Inventory from '../../Inventory/Inventory';
@@ -22,6 +27,7 @@ import { workloadFactoryResourceApi } from '../../../utils/apiService';
 import { setJobsList } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
 import { WLF_TABS } from '../../../utils/consts';
+import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
 
 const HeaderComponent = () => {
     const dispatch = useDispatch();
@@ -122,7 +128,7 @@ const HeaderComponent = () => {
 
     return statusLoading || !statusChk ? (
         <div className={styles.loader}>
-            <Spinner isLarge />
+            <ComponentLoader style={{ margin: '0 auto' }} />
         </div>
     ) : (
         statusChk && (
@@ -180,9 +186,7 @@ const HeaderComponent = () => {
                     </div>
 
                     <div className={styles.secondRow}>
-                        <div
-                            className={styles.overviewTabs}
-                        >
+                        <div className={styles.overviewTabs}>
                             <Typography
                                 variant="Regular_14"
                                 className={
