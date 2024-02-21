@@ -400,11 +400,8 @@ Resources:
                   - ssm:GetDocument
                   - ssm:DescribeDocument
                   - ssm:GetManifest
-                  - ssm:GetParameter
-                  - ssm:GetParameters
                   - ssm:ListAssociations
                   - ssm:ListInstanceAssociations
-                  - ssm:GetParametersByPath
                   - ssm:GetCommandInvocation
                   - ec2messages:GetEndpoint
                   - ec2messages:GetMessages
@@ -423,7 +420,6 @@ Resources:
                   - ssm:UpdateInstanceAssociationStatus
                   - ssm:UpdateInstanceInformation
                   - ssm:SendCommand
-                  - ssm:PutParameter
                 Resource: '*'
               - Sid: EC2MessagesStatement
                 Effect: Allow
@@ -456,6 +452,14 @@ Resources:
                   StringLike:
                     aws:ResourceTag/aws:cloudformation:stack-name:
                       - WLMDB*
+              - Sid: SSMGetPutParameter
+                Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                  - ssm:PutParameter
+                  - ssm:GetParametersByPath
+                Resource: 'arn:aws:ssm:*:*:parameter/netapp/wlmdb/*'
           PolicyName: !Join
             - ''
             - - !Ref 'AWS::StackName'
