@@ -8,7 +8,7 @@ import {
     DriveInfoResponseBody,
     DatabaseHostSummaryParamsWithRegion
 } from '../types/database-hosts.types';
-import { AccountIdParams, ManagedHostParams } from '../types/generic.types';
+import { AccountIdParams, CredentialsIdParams } from '../types/generic.types';
 
 // Base Request for Deployment Routes
 const baseRequest = {
@@ -19,7 +19,7 @@ const baseRequest = {
 // Base Request for Deployment with credential and region Routes
 const databaseHostsRequest = {
     tags: [RouteTags.DEPLOYMENT],
-    params: ManagedHostParams
+    params: CredentialsIdParams
 };
 
 // Get Database hosts summary details

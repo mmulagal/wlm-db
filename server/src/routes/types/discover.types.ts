@@ -1,4 +1,6 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
+import { RESOURCESTYPE } from '../../utils/consts';
+import { CredentialsIdParams } from './generic.types';
 
 const DiscoverMsSqlQuery = Type.Object({
     nextToken: Type.Optional(
@@ -53,4 +55,32 @@ const DiscoverMsSqlResponseBody = Type.Object({
 type SqlServerInstanceInfoType = Static<typeof SqlServerInstanceInfo>;
 type DiscoverResponseInfoType = Static<typeof DiscoverResponseInfo>;
 
-export { DiscoverMsSqlQuery, DiscoverMsSqlResponseBody, SqlServerInstanceInfoType, DiscoverResponseInfoType };
+const DiscoverCredentials = Type.Object({
+    resourceId: Type.String({ minLength: 1, description: 'SQL server instance id or FSxN file-system id' }),
+    resourceType: Type.String({ enum: [RESOURCESTYPE.FSX, RESOURCESTYPE.MSSQL] }),
+    username: Type.String({ minLength: 1 }),
+    password: Type.String({ minLength: 1 })
+});
+
+const DiscoverCredentialsRequestBody = Type.Object({
+    credentials: Type.Array(DiscoverCredentials)
+});
+
+type DiscoverCredentialsType = Static<typeof DiscoverCredentials>;
+
+const DiscoverInstanceParams = Type.Composite([
+    CredentialsIdParams,
+    Type.Object({
+        instanceId: Type.String()
+    })
+]);
+
+export {
+    DiscoverMsSqlQuery,
+    DiscoverMsSqlResponseBody,
+    SqlServerInstanceInfoType,
+    DiscoverResponseInfoType,
+    DiscoverCredentialsRequestBody,
+    DiscoverInstanceParams,
+    DiscoverCredentialsType
+};

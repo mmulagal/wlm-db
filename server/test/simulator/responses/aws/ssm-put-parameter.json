@@ -1,0 +1,12 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "c27c8540-ebc8-46da-a958-2ed3d1f27770",
+        "extendedRequestId": null,
+        "cfId": null,
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "Tier": "Standard",
+    "Version": 2
+}
