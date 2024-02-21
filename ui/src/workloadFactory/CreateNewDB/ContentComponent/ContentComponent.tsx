@@ -17,8 +17,14 @@ const ContentComponent = () => {
     const dispatch = useDispatch();
     const dbHostName = useAppSelector(state => state.createNewUser.dbHostName);
     const resourceId = useAppSelector(state => state.auth.resourceId);
+    const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
+    const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
 
-    const { data: driveInfoList, isFetching: driveInfoListLoading } = useGetDriveInfoQuery({ id: resourceId });
+    const { data: driveInfoList, isFetching: driveInfoListLoading } = useGetDriveInfoQuery({ 
+        credentialId: selectedCredId?.data?.credentialsId,
+        region: selectedRegionCode?.data?.regionCode,
+        id: resourceId 
+    });
 
     useEffect(() => {
         dispatch(setDriveInfoList(driveInfoList));
