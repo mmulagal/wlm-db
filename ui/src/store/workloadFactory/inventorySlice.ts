@@ -10,7 +10,8 @@ const initialInventoryState: any = {
     detectOntapUsername: '',
     detectOntapPassword: '',
     detectHostRadio: 'Yes, Manage host via workload factory',
-    managedHostInitialColumns: initialColStateManagedHosts
+    managedHostInitialColumns: initialColStateManagedHosts,
+    unManagedHostInitialColumns: initialColStateManagedHosts
 };
 
 const inventorySlice = createSlice({
@@ -19,6 +20,9 @@ const inventorySlice = createSlice({
     reducers: {
         setManagedHostColState: (state, action: PayloadAction<any>) => {
             state.managedHostInitialColumns = action.payload;
+        },
+        setUnManagedHostColState: (state, action: PayloadAction<any>) => {
+            state.unManagedHostInitialColumns = action.payload;
         },
         setSelectedInventoryTab: (state, action: PayloadAction<any>) => {
             state.selectedInventoryTab = action.payload;
@@ -53,7 +57,8 @@ export const {
     setDetectONTAPUserName,
     setDetectONTAPPassword,
     setRadioValueDetect,
-    setManagedHostColState
+    setManagedHostColState,
+    setUnManagedHostColState
 } = inventorySlice.actions;
 
 export default inventorySlice;
