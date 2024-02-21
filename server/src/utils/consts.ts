@@ -30,7 +30,8 @@ const FSX_BATCH_CONCURRENCY_VALUE = 10;
 
 enum FileSystemDeploymentType {
     SINGLE_AZ_1,
-    MULTI_AZ_1
+    MULTI_AZ_1,
+    SINGLE_AZ_2
 }
 
 // version
@@ -944,6 +945,12 @@ const DEPLOYMENT_JOBS_LIST_FILTER: Array<DEPLOYMENT_STATUS> = [
     'UPDATE_FAILED'
 ];
 
+enum FILE_SYSTEM_TYPES {
+    EBS = 'ebs',
+    FSXN = 'fsxn',
+    FSXW = 'fsxw'
+}
+
 const NOT_AVAILABLE = 'N/A';
 
 const DOMAIN_ADMIN_PASSWORD = 'DomainAdminPassword';
@@ -1282,5 +1289,6 @@ export {
     MAP_SERVICE_TEMPLATE_PARAMETER,
     ARTIFACT_BUCKET_NAME,
     SIGNED_TEMPLATES_BUCKET_NAME,
-    TEMPLATE_BUCKET_REGION
+    TEMPLATE_BUCKET_REGION,
+    FILE_SYSTEM_TYPES
 };

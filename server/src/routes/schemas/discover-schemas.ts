@@ -1,5 +1,11 @@
 import { RouteTags } from '../../utils/consts';
-import { DiscoverMsSqlResponseBody, DiscoverMsSqlQuery } from '../types/discover.types';
+import {
+    DiscoverMsSqlResponseBody,
+    DiscoverMsSqlQuery,
+    DiscoverMsSqlSummarySuccessResponse,
+    DiscoveryMsSqlFailureResponse,
+    DiscoverMsSqlSummaryParams
+} from '../types/discover.types';
 import { GenericHeaders, ManagedHostParams } from '../types/generic.types';
 
 const DiscoverMsSqlSchema = {
@@ -24,5 +30,16 @@ const DiscoverMsSqlSchema = {
     }
 };
 
-// eslint-disable-next-line import/prefer-default-export
-export { DiscoverMsSqlSchema };
+const DiscoverMsSqlSummarySchema = {
+    Headers: GenericHeaders,
+    tags: [RouteTags.DISCOVER],
+    params: DiscoverMsSqlSummaryParams,
+    querystring: DiscoverMsSqlQuery,
+    summary: 'Discover details of MS SQL Server instances and their associated resources',
+    response: {
+        200: DiscoverMsSqlSummarySuccessResponse,
+        500: DiscoveryMsSqlFailureResponse
+    }
+};
+
+export { DiscoverMsSqlSchema, DiscoverMsSqlSummarySchema };

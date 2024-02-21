@@ -1,4 +1,5 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
+import { ManagedHostParams } from './generic.types';
 
 const DiscoverMsSqlQuery = Type.Object({
     nextToken: Type.Optional(
@@ -50,7 +51,42 @@ const DiscoverMsSqlResponseBody = Type.Object({
     )
 });
 
+const DiscoverMsSqlSummarySuccessResponse = Type.Object({
+    instanceId: Type.String({ description: 'AWS EC2 instance ID' }),
+    instanceName: Type.Optional(Type.String({ description: 'EC2 tab with key Name.' })),
+
+    vpc: Type.Object({
+        vpcId: Type.Optional(Type.String({ description: 'AWS VPC ID on which EC2 instance is running' })),
+        vpcName: Type.Optional(Type.String({ description: 'AWS VPC name on which EC2 instance is running' })),
+        cidr: Type.Optional(Type.String({ description: 'AWS VPC CIDR on which EC2 instance is running' }))
+    }),
+
+    nextToken: Type.Optional(
+        Type.String({
+            description: 'Pagination token for each page.  A non-empty token indicates more more results are available.'
+        })
+    )
+});
+
+const DiscoveryMsSqlFailureResponse = Type.Object({
+    message: Type.String()
+});
+
+const DiscoverMsSqlSummaryParams = Type.Composite([ManagedHostParams, Type.Object({ instanceId: Type.String() })]);
+
 type SqlServerInstanceInfoType = Static<typeof SqlServerInstanceInfo>;
 type DiscoverResponseInfoType = Static<typeof DiscoverResponseInfo>;
+type DiscoverMsSqlSummarySuccessResponseType = Static<typeof DiscoverMsSqlSummarySuccessResponse>;
+type DiscoveryMsSqlFailureResponseType = Static<typeof DiscoveryMsSqlFailureResponse>;
 
-export { DiscoverMsSqlQuery, DiscoverMsSqlResponseBody, SqlServerInstanceInfoType, DiscoverResponseInfoType };
+export {
+    DiscoverMsSqlQuery,
+    DiscoverMsSqlResponseBody,
+    SqlServerInstanceInfoType,
+    DiscoverResponseInfoType,
+    DiscoverMsSqlSummarySuccessResponse,
+    DiscoveryMsSqlFailureResponse,
+    DiscoverMsSqlSummarySuccessResponseType,
+    DiscoverMsSqlSummaryParams,
+    DiscoveryMsSqlFailureResponseType
+};
