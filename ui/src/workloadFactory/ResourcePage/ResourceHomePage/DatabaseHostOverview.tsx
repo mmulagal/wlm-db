@@ -8,7 +8,7 @@ import OverviewTabs from '../OverviewTabs/OverviewTabs';
 
 import styles from './DatabaseHostOverview.module.scss';
 import { useGetDatabaseListQuery, useGetResourceDetailsQuery } from '../../../utils/apiService';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import {
     setDatabaseList,
@@ -24,25 +24,40 @@ import { setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
 import { GENERAL } from '../../../utils/appConstants';
 
 const DatabaseHostOverview = () => {
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    
     const selectedTab = useAppSelector(state => state.databaseHome.selectedTab);
     const resourceId = useAppSelector(state => state.auth.resourceId);
     const stateResourceDetails = useAppSelector(state => state.workloadFactoryResource.resourceDetails);
-    const navigate = useNavigate();
-    const dispatch = useDispatch();
+    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
+    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
 
     const {
         data: resourceDetails,
         isLoading: resourceLoading,
         refetch: resourceRefetch,
         isFetching: resourceFetching
-    } = useGetResourceDetailsQuery(resourceId);
+    } = useGetResourceDetailsQuery(
+        {
+            credentialId: headerSelectedCred?.data?.credentialsId,
+            region: headerSelectedRegion?.label2,
+            id: resourceId
+        }
+    );
 
     const {
         data: databaseList,
         isLoading: databaseListLoading,
         refetch: databaseListRefetch,
         isFetching: databaseListFetching
-    } = useGetDatabaseListQuery(resourceId);
+    } = useGetDatabaseListQuery(
+        {
+            credentialId: headerSelectedCred?.data?.credentialsId,
+            region: headerSelectedRegion?.label2,
+            id: resourceId
+        }
+    );
 
     useEffect(() => {
         dispatch(setResourceLoading(resourceLoading));
