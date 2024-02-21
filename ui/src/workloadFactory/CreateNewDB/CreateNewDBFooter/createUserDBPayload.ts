@@ -47,8 +47,10 @@ export const handleCreateUserDb = (state: any, dispatch: any) => {
     dispatch(setDbCreatePressed(true));
     dispatch(setDbCreateHit(Math.random()));
     if (state.auth.isDemoMode) {
+        // For demo mode no need to have validations
         payload = createUserDbPayload(state?.createNewUser);
     } else {
+        // Fields validation checks
         const dbNameStateValue =
             !state?.createNewUser?.newUserDBName || !isValidDatabaseName(state?.createNewUser?.newUserDBName);
         const dbDataNameStateValue = !state?.createNewUser?.newUserDBFileName;
@@ -69,35 +71,41 @@ export const handleCreateUserDb = (state: any, dispatch: any) => {
             return false;
         };
 
-        //Check for Create DB username values
+        //Check for Create DB username value
         if (dbNameStateValue) {
             dispatch(setDbCreateNameAdded(false));
         } else {
             dispatch(setDbCreateNameAdded(true));
         }
+        //Check for Create DB data file name value
         if (dbDataNameStateValue) {
             dispatch(setDbCreateDataNameAdded(false));
         } else {
             dispatch(setDbCreateDataNameAdded(true));
         }
+        //Check for Create DB log file name value
         if (dbLogNameStateValue) {
             dispatch(setDbCreateLogNameAdded(false));
         } else {
             dispatch(setDbCreateLogNameAdded(true));
         }
+        //Check for Create DB data size value
         if (dbDataSizeState) {
             dispatch(setDbCreateDataSizeValid(false));
         } else {
             dispatch(setDbCreateDataSizeValid(true));
         }
+        //Check for Create DB log size value
         if (dbLogSizeState) {
             dispatch(setDbCreateLogSizeValid(false));
         } else {
             dispatch(setDbCreateLogSizeValid(true));
         }
 
+        // If any of below fields check are true it means data is not valid. It will open respective accordion with action required error.
         if (!dbNameStateValue && !dbDataNameStateValue && !dbLogNameStateValue && !dbDataSizeState && !dbLogSizeState) {
             if (newDriveLettersState()) {
+                // In case of quick create if new drive letters list has less than 2 drives than it will not proceed for DB creation.
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
@@ -105,6 +113,7 @@ export const handleCreateUserDb = (state: any, dispatch: any) => {
                     })
                 );
             } else if (driveLettersState) {
+                // If data and log drive letters are not selected than it will throw below error
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,

@@ -155,10 +155,11 @@ const FileNames = () => {
 
     //Set the Header text here
     const setHeader = () => {
+        // For quick create it will just show file name. For advanced it will show path also.
         if (
             newUserDBFileName &&
             newUserLogFileName &&
-            (selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE ? driveLetter && driveLetterLogFile : true)
+            (selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE ? (driveLetter && driveLetterLogFile) : true)
         ) {
             return (
                 <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
