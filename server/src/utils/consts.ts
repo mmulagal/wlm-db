@@ -1042,7 +1042,16 @@ const subJobDescriptions: SubJobDescriptions = {
         'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
     'ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
     'ValidationNode2WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
-        'Signaling wait condition to resume next steps'
+        'Signaling wait condition to resume next steps',
+    VpcEndpointStack: 'Creating VPC endpoints for S3 CloudFormation, SQS, SSM, CloudWatch services',
+    'HttpsSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating security group to allow HTTPs access',
+    'S3Endpoint(AWS::EC2::VPCEndpoint)': 'Creating S3 gateway endpoint',
+    'CloudformationEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudFormation endpoint',
+    'CloudwatchEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch endpoint',
+    'Ec2MessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2Messages endpoint',
+    'SqsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SQS endpoint',
+    'SsmEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSM endpoint',
+    'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint'
 };
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
 
