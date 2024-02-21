@@ -4,12 +4,14 @@ import ActionRequired from '../../../../../common/ActionRequired/ActionRequired'
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import {
+    setIsDataSizeValid,
+    setIsLogSizeValid,
     setNewUserDataSize,
     setNewUserDataSizeUnit,
     setNewUserLogFileSize,
     setNewUserLogFileSizeUnit
 } from '../../../../../store/workloadFactory/createNewDBSlice';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { formatSize, generateOptionType } from '../../../../../utils/utilityFunctions';
 
@@ -22,6 +24,9 @@ import AccordionError from '../../../../../common/AccordionError/AccordionError'
 const FilesSize = () => {
     const dispatch = useDispatch();
 
+    const dataSizeRef = useRef(null);
+    const logSizeRef = useRef(null);
+
     const {
         newUserDataSize,
         newUserDataSizeUnit,
@@ -30,11 +35,31 @@ const FilesSize = () => {
         driveInfoList,
         driveLetter
     } = useAppSelector(state => state.createNewUser);
+    const isDbCreateHit = useAppSelector(state => state.msSqlAction.isDbCreateHit);
+    const dbCreateDataSizeValid = useAppSelector(state => state.msSqlAction.dbCreateDataSizeValid);
+    const dbCreateLogSizeValid = useAppSelector(state => state.msSqlAction.dbCreateLogSizeValid);
 
     const dbHostName = useAppSelector(state => state.createNewUser.dbHostName);
 
     const units = ['GiB', 'TiB'];
     const [maxSize, setMaxSize] = useState(undefined);
+
+    useEffect(() => {
+        if (isDbCreateHit) {
+            if (!dbCreateDataSizeValid) {
+                setTimeout(() => {
+                    //@ts-ignore
+                    dataSizeRef?.current?.focus();
+                }, 80);
+            }
+            if (!dbCreateLogSizeValid) {
+                setTimeout(() => {
+                    //@ts-ignore
+                    logSizeRef?.current?.focus();
+                }, 70);
+            }
+        }
+    }, [dbCreateDataSizeValid, dbCreateLogSizeValid, isDbCreateHit]);
 
     useEffect(() => {
         if (driveLetter?.label2 === DRIVE_LETTER_TYPE.EXISTING && driveLetter?.data?.availableSize) {
@@ -97,7 +122,7 @@ const FilesSize = () => {
                 );
             }
         }
-        return <ActionRequired error={false} />;
+        return <ActionRequired error={!dbCreateDataSizeValid || !dbCreateLogSizeValid ? true : false} />;
     };
 
     const errorCheckForDataSize = () => {
@@ -109,13 +134,37 @@ const FilesSize = () => {
         }
 
         if (maxSize && currentSize && (currentSize < 0 || currentSize > maxSize)) {
+            dispatch(setIsDataSizeValid(false));
             return `${GENERAL.DATA_SIZE_ERROR} ${formatSize(maxSize)}`;
+        } else {
+            dispatch(setIsDataSizeValid(true));
         }
     };
 
     const errorCheckForLogSize = () => {
-        if (newUserDataSize < newUserLogFileSize) {
+        let logSizeValid = true;
+        if (newUserDataSize && newUserLogFileSize) {
+            if (newUserDataSizeUnit?.value === newUserLogFileSizeUnit?.value) {
+                if (newUserLogFileSize > newUserDataSize) {
+                    logSizeValid = false;
+                }
+            } else {
+                if (newUserDataSizeUnit?.value === 'TiB') {
+                    if (newUserLogFileSize > newUserDataSize * 1024) {
+                        logSizeValid = false;
+                    }
+                } else {
+                    if (newUserLogFileSize * 1024 > newUserDataSize) {
+                        logSizeValid = false;
+                    }
+                }
+            }
+        }
+        if (!logSizeValid) {
+            dispatch(setIsLogSizeValid(false));
             return GENERAL.LOG_SIZE_ERROR;
+        } else {
+            dispatch(setIsLogSizeValid(true));
         }
     };
 
@@ -137,6 +186,7 @@ const FilesSize = () => {
                         <div className={styles.dataSizeRow}>
                             <div className={styles.dataSizeField}>
                                 <TextField
+                                    ref={dataSizeRef}
                                     label="Data size"
                                     placeholder={maxSize ? `1 GiB - ${formatSize(maxSize)}` : ''}
                                     value={newUserDataSize}
@@ -175,6 +225,7 @@ const FilesSize = () => {
 
                             <div className={styles.dataSizeField}>
                                 <TextField
+                                    ref={logSizeRef}
                                     label="Log size"
                                     placeholder="25% of the data size"
                                     value={newUserLogFileSize}
