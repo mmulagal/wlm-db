@@ -11,6 +11,7 @@ import {
     GetConnectionStatusCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
+import { hostAndSqlInfoPowerShellScript } from '../../../../src/operations/workloads/mssql/discover-consts';
 import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands-response.json';
 import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
 import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
@@ -177,6 +178,10 @@ const getServerEdition = {
     ]
 };
 
+const getHostAndSqlServerInfo = {
+    commands: hostAndSqlInfoPowerShellScript
+};
+
 const getDriveInfo = {
     commands: [
         "\n#Get the list of all used and available drive letters\n$usedDriveLetters = Get-PSDrive -PSProvider FileSystem | Select-Object -ExpandProperty Name\n$availableDriveLetters = [char[]]([int][char]'D'..[int][char]'Z') | Where-Object { $_ -notin $usedDriveLetters }\n\n#Updating manufacturer detail and availabble space of each existing drives\n$driveInfo = $usedDriveLetters | ForEach-Object {\n    $driveLetter = $_\n    $drive = Get-PSDrive -Name $driveLetter\n    $diskNumber = (Get-Partition -DriveLetter $driveLetter).DiskNumber\n    try{\n        $manufacturer = (Get-PhysicalDisk | Where-Object { $_.DeviceId -eq $diskNumber }).Manufacturer\n    }\n    catch {\n        $manufacturer = 'N/A'\n    }\n    $freeSpace = $drive.Free\n    [PSCustomObject]@{\n        DriveLetter = $driveLetter\n        FreeSpace = $freeSpace\n        manufacturer = $manufacturer \n    }\n}\n\n#Get default data drive of SQL server\n$defaultDataDrive = sqlcmd -Q @\"\n    SET NOCOUNT ON;\n    DECLARE @DataPath NVARCHAR(500);\n    EXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultData', @DataPath OUTPUT;\n    SELECT LEFT(@DataPath,1) AS CurrentDataDrive FOR JSON PATH;\n\"@ -y 0\n\n#Get default log drive of SQL server\n$defaultLogDrive = sqlcmd -Q @\"\n    SET NOCOUNT ON;\n    DECLARE @LogPath NVARCHAR(500);\n    EXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultLog', @LogPath OUTPUT;\n    SELECT LEFT(@LogPath,1) AS CurrentLogDrive FOR JSON PATH;\n\"@ -y 0\n\n$jsonObject = @{\n    AvailableDriveLetters = $availableDriveLetters\n    ExistingDriveInfo = $driveInfo\n    DefaultDataDrive = $defaultDataDrive\n    DefaultLogDrive = $defaultLogDrive\n} | ConvertTo-Json\n\nWrite-Output $jsonObject\n"
@@ -256,6 +261,8 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getServerInstallDateCommandResponse)
     .on(SendCommandCommand, { Parameters: getServerEdition })
     .resolves(listSendCommandCommandResponse.getServerEdition)
+    .on(SendCommandCommand, { Parameters: getHostAndSqlServerInfo })
+    .resolves(listSendCommandCommandResponse.getHostAndSqlServerInfoResponse)
     .on(SendCommandCommand, { Parameters: getDriveInfo })
     .resolves(listSendCommandCommandResponse.getDriveInfoCommandResponse)
     .on(SendCommandCommand, { Parameters: getDefaultDataDrive });
@@ -317,6 +324,8 @@ ssmMock
     .resolves(getCommandInvocationResponse.serverInstallDateInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ServerEdition' })
     .resolves(getCommandInvocationResponse.serverEditionResponse)
+    .on(GetCommandInvocationCommand, { Parameters: '7f937c8c-3f95-460b-ad99-788b354bffa8' })
+    .resolves(getCommandInvocationResponse.getHostAndSqlServerInfoResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getDriveInfo' })
     .resolves(getCommandInvocationResponse.getDriveInfoResponse);
 

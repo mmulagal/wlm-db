@@ -169,4 +169,10 @@ async function isSSMConnectionSuccessful(
     return { isSSMConnected: false };
 }
 
-export { executeSSMDocument, getFSxOntapRegionsList, getSSMConnectionStatus, isSSMConnectionSuccessful };
+export {
+    executeSSMDocument,
+    getFSxOntapRegionsList,
+    getSSMConnectionStatus,
+    isSSMConnectionSuccessful,
+    pollCommandStatus
+};

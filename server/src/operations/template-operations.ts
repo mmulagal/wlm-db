@@ -76,33 +76,7 @@ async function updateTemplateUrls(
     logger.info('Updating templates and uploading to bucket', region, templateFilepath, templateType);
     const source = readFileSync(templateFilepath).toString();
     const template = Handlebars.compile(source, { noEscape: true });
-    const artifactsBucketName = getArtifactsRegionBucketName(region);
     if (templateType === TEMPLATE_TYPES.MASTER) {
-        const fsxNewTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXNewTemplate');
-        const fsxExistingTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXExistingTemplate');
-        const vpcEndpointsTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'VpcEndpointTemplate');
-        const [fsxNewTemplatesignedUrl, fsxExistingTemplatesignedUrl, vpcEndpointsTemplateSignedUrl] =
-            await Promise.all([
-                getPreSignedUrl(region, artifactsBucketName, `${WLMDB}/${fsxNewTemplatePath!.url}`),
-                getPreSignedUrl(region, artifactsBucketName, `${WLMDB}/${fsxExistingTemplatePath!.url}`),
-                getPreSignedUrl(region, artifactsBucketName, `${WLMDB}/${vpcEndpointsTemplatePath!.url}`)
-            ]);
-
-        signedUrls.set(fsxNewTemplatePath!.name, {
-            name: fsxNewTemplatePath!.name,
-            url: fsxNewTemplatesignedUrl,
-            location: fsxNewTemplatePath!.url
-        });
-        signedUrls.set(fsxExistingTemplatePath!.name, {
-            name: fsxExistingTemplatePath!.name,
-            url: fsxExistingTemplatesignedUrl,
-            location: fsxNewTemplatePath!.url
-        });
-        signedUrls.set(vpcEndpointsTemplatePath!.name, {
-            name: vpcEndpointsTemplatePath!.name,
-            url: vpcEndpointsTemplateSignedUrl,
-            location: vpcEndpointsTemplatePath!.url
-        });
         tags = tags ? tags.concat(DEFAULT_TAGS) : DEFAULT_TAGS;
 
         const yamlStr = yaml.stringify(
@@ -249,6 +223,31 @@ async function updateTemplateUrls(
             name: standAloneTemplatePath!.name,
             url: standAloneSignedUrl,
             location: customStandAloneTemplatePath
+        });
+    } else if (templateType === TEMPLATE_TYPES.ENDPOINT || templateType === TEMPLATE_TYPES.NEWFSX || templateType === TEMPLATE_TYPES.EXISTINGFSX) {
+        let templatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'VpcEndpointTemplate');
+        if(templateType === TEMPLATE_TYPES.NEWFSX) {
+            templatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXNewTemplate');
+        }
+        else if (templateType === TEMPLATE_TYPES.EXISTINGFSX){
+            templatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXExistingTemplate');
+        }
+        const customTemplatePath: string = `${WLMDB}/${stackName}/${templatePath!.url}`;
+        await putObjectBucket(
+            TEMPLATE_BUCKET_REGION,
+            SIGNED_TEMPLATES_BUCKET_NAME,
+            customTemplatePath,
+            source
+        );
+        const signedUrl = await getPreSignedUrl(
+            TEMPLATE_BUCKET_REGION,
+            SIGNED_TEMPLATES_BUCKET_NAME,
+            customTemplatePath
+        );
+        signedUrls.set(templatePath!.name, {
+            name: templatePath!.name,
+            url: signedUrl,
+            location: customTemplatePath
         });
     }
 }
