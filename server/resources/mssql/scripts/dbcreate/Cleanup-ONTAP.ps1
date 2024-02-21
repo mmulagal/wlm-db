@@ -11,24 +11,24 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$SQLVMName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$FSxDataVolumeName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$FSxLogVolumeName,
 
     [Parameter(Mandatory=$true)]
-    [string]$IGROUP
+    [string]$IGROUP    
 
 )
 Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Append
 
 $ErrorActionPreference = "Stop"
 
-$userfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="String"}
-$pwdfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="SecureString"}
-$username = (Get-SSMParametersByPath -Path $FSxCredStore -WithDecryption $true -Recursive $true -ParameterFilter $userfilter).Value
-$password = (Get-SSMParametersByPath -Path $FSxCredStore -WithDecryption $true -Recursive $true -ParameterFilter $pwdfilter).Value
+$credobject =  (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
+
+$username = $credobject.fsx.username
+$password = $credobject.fsx.password
 
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
@@ -83,8 +83,19 @@ function callGetOrDeleteApi{
 
 $LOGLUN = 'sqllog'
 $DATALUN = 'sqldata'
+if ($FSxDataVolumeName -And $FsxLogVolume){
 $vollist = @($FSxDataVolumeName,$FSxLogVolumeName)
 $pathlist =@("/vol/$FSxDataVolumeName/$DATALUN","/vol/$FSxLogVolumeName/$LOGLUN")
+}  elseif($FSxDataVolumeName) {
+    $vollist = @($FSxDataVolumeName)
+    $pathlist =@("/vol/$FSxDataVolumeName/$DATALUN")
+}
+elseif($FSxLogVolumeName){
+    $vollist = @($FSxLogVolumeName)
+    $pathlist =@("/vol/$FSxLogVolumeName/$LOGLUN")
+} else {
+    Write-Error "{Message:No volumes passed for cleanup,Exception:$_}"
+}
 
 # delete created lun mapping 
 $lunmapsUriDynamicPart = 'private/cli/lun/mapping'

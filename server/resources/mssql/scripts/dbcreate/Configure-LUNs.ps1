@@ -1,4 +1,4 @@
- #Requires -Version 7.0
+#Requires -Version 7.0
 #Requires -Module AWS.Tools.FSX,AWS.Tools.secretsmanager,AWS.Tools.SimpleSystemsManagement
 [CmdletBinding()]
 param(
@@ -15,17 +15,23 @@ param(
     [string]$FSxDataLunSize,
 
     [Parameter(Mandatory=$true)]
-    [string]$FSxLogLunSize
+    [string]$FSxLogLunSize,
+
+    [Parameter(Mandatory=$true)]
+    [string]$LogNew,
+
+    [Parameter(Mandatory=$true)]
+    [string]$DataNew   
 
 )
 Start-Transcript -Path C:\cfn\log\Configure_luns.log.txt -Append
 
 $ErrorActionPreference = "Stop"
 
-$userfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="String"}
-$pwdfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="SecureString"}
-$username = (Get-SSMParametersByPath -Path $FsxCredStore -WithDecryption $true -Recursive $true -ParameterFilter $userfilter).Value
-$password = (Get-SSMParametersByPath -Path $FsxCredStore -WithDecryption $true -Recursive $true -ParameterFilter $pwdfilter).Value
+$credobject =  (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
+
+$username = $credobject.fsx.username
+$password = $credobject.fsx.password
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
@@ -37,9 +43,9 @@ $base64 = [System.Convert]::ToBase64String($bytes)
 $epoch = (Get-Date -Date ((Get-Date).DateTime) -UFormat %s)
 
 $FSxDataVolumeName = "wlmdb_sqldata_"+$epoch
-$FSxDataVolumeSize = [math]::Round([int]$FSxDataLunSize*1.3)
+$FSxDataVolumeSize = [math]::Round([int]$FSxDataLunSize*1.3,2)
 $FSxLogVolumeName = "wlmdb_sqllog_"+$epoch
-$FSxLogVolumeSize = [math]::Round([int]$FSxLogLunSize*1.3)
+$FSxLogVolumeSize = [math]::Round([int]$FSxLogLunSize*1.3,2)
 
 $LOGLUN = 'sqllog'
 $DATALUN = 'sqldata'
@@ -128,6 +134,7 @@ $DATALUN = 'sqldata'
 ##create volumes
 $volUriDynamicPart='storage/volumes'
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
+if($DataNew -ne "false") {
 $DVOLSIZE = $FSxDataVolumeSize.ToString()+"M"
 $Body = @{
     "name" = "$FSxDataVolumeName"
@@ -141,7 +148,9 @@ $Body = @{
     "size" = "$DVOLSIZE"      
 }
 callrestapi -MgmtDNS $MgmtDNS -uri $volUriDynamicPart -region $region -parambody $Body -creds $base64
+}
 
+if($LogNew -ne "false") {
 $LVOLSIZE = $FSxLogVolumeSize.ToString()+"M"
 $Body = @{
     "name" = "$FSxLogVolumeName"
@@ -155,14 +164,20 @@ $Body = @{
     "size" = "$LVOLSIZE"      
 }
 callrestapi -MgmtDNS $MgmtDNS -uri $volUriDynamicPart -region $region -parambody $Body -creds $base64
-
+}
 
 Start-Sleep 5
 
 ##modify volumes
 $VolUriDynamicPart='private/cli/volume'
-
-$vollist = @($FSxDataVolumeName,$FSxLogVolumeName)
+if(($LogNew -ne "false")-And ($DataNew -ne "false")) {
+    $vollist = @($FSxDataVolumeName,$FSxLogVolumeName) 
+} elseif($DataNew -ne "false") {
+    $vollist = @($FSxDataVolumeName) 
+}
+else {
+  $vollist = @($FSxLogVolumeName) 
+}
 
 foreach ($vol in $vollist) {
 $URI=@"
@@ -228,6 +243,7 @@ Start-Sleep 2
  
 ##create data and log LUNs
 $lunUriDynamicPart='storage/luns'
+if ($DataNew -ne "false") {
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
 $DSIZE = $FSxDataLunSize+"M"
 $LUN_PATH = "/vol/$FSxDataVolumeName/$DATALUN"
@@ -239,9 +255,10 @@ $Body = @{
     "space" = @{"size" = "$DSIZE"}       
 }
 callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64
-
 Start-Sleep 2
+}
 
+if ($LogNew -ne "false") {
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
 $LUN_PATH = "/vol/$FSxLogVolumeName/$LOGLUN"
 $LSIZE = $FSxLogLunSize+"M"
@@ -253,12 +270,18 @@ $Body = @{
     "space" = @{"size" = "$LSIZE"}   
 }
 callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64
-
 Start-Sleep 2
-
+}
 
 ##mapping data and log LUNs
+if (($LogNew -ne "false")-And ($DataNew -ne "false")) {
 $pathlist =@("/vol/$FSxDataVolumeName/$DATALUN","/vol/$FSxLogVolumeName/$LOGLUN")
+} elseif ($DataNew -ne "false") {
+    $pathlist =@("/vol/$FSxDataVolumeName/$DATALUN")
+}
+else {
+   $pathlist =@("/vol/$FSxLogVolumeName/$LOGLUN")
+}
 $lunmapsUriDynamicPart = 'protocols/san/lun-maps'
 foreach ($path in $pathlist) {
 $URI = "https://$MgmtDNS/api/$lunmapsUriDynamicPart"
@@ -278,8 +301,7 @@ Start-Sleep 2
 
 $lunUriDynamicPart='private/cli/lun'
 
-$lunPathList = @("/vol/$FSxLogVolumeName/$LOGLUN", "/vol/$FSxDataVolumeName/$DATALUN")
-foreach ($perlun in $lunPathlist) {
+foreach ($perlun in $pathlist) {
         $UpdateLUNURI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($SQLVMName)&path=$($perlun)"
         $Body = @{
          "space-reserve" = "enabled"
@@ -321,7 +343,8 @@ foreach ($perlun in $lunPathlist) {
         }
         Start-Sleep 3
     }
- Write-Output "{FSxDataVolumeName:$FSxDataVolumeName,FSxLogVolumeName:$FSxLogVolumeName,Igroup:$IGROUP,SQLVMName:$SQLVMName}"
+    Write-Output "{FSxDataVolumeName:$FSxDataVolumeName,FSxLogVolumeName:$FSxLogVolumeName,Igroup:$IGROUP,SQLVMName:$SQLVMName}"
+ 
  
  
  
