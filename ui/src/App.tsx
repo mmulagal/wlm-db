@@ -1,10 +1,11 @@
 import { useAppSelector } from './store/storeHooks';
 import './App.css';
 import Home from './Home';
-import { Spinner, ThemeProvider } from '@netapp/design-system';
+import { ThemeProvider } from '@netapp/design-system';
 import ErrorPage from './common/ErrorPage/ErrorPage';
 import { useInitialize } from './utils/appConfig';
 import FullStoryComp from './common/FullStoryComp';
+import ComponentLoader from './common/ComponentLoader/ComponentLoader';
 
 function App() {
     const { loading, accountId } = useAppSelector(state => state.auth);
@@ -20,7 +21,7 @@ function App() {
                 <FullStoryComp />
                 {loading && (
                     <div className="App">
-                        <Spinner isLarge />
+                        <ComponentLoader style={{ margin: '0 auto' }} />
                     </div>
                 )}
                 {!loading && (accountId ? <Home /> : <ErrorPage message={'Account Id required'} />)}

@@ -107,7 +107,7 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
 }
 
 async function getSSMConnectionStatus(credentialId: string, region: string, instanceId: string) {
-    logger.info('Check for successful SSM connection', credentialId, region, instanceId);
+    logger.info('Check for successful SSM connection', { credentialId, region, instanceId });
     return getConnectionStatus(credentialId, region, {
         Target: instanceId
     });
@@ -120,14 +120,13 @@ async function isSSMConnectionSuccessful(
     node2InstanceId?: string,
     resourceId?: string
 ) {
-    logger.info(
-        'Check if SSM connection is a success',
+    logger.info('Check if SSM connection is a success', {
         credentialsId,
         region,
         node1InstanceId,
         node2InstanceId,
         resourceId
-    );
+    });
     try {
         let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node1InstanceId);
         const resourceError = `for resource ID ${resourceId}`;
