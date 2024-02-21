@@ -6,13 +6,21 @@ import {
     GetCommandInvocationCommandInput,
     GetCommandInvocationCommandOutput,
     InvocationDoesNotExist,
+    PutParameterCommandInput,
     SendCommandCommandInput
 } from '@aws-sdk/client-ssm';
-import { sendSSMCommand, getCommandInvocation, describeFSxOntapRegions, getConnectionStatus } from '../../lib/aws/ssm';
+import {
+    sendSSMCommand,
+    getCommandInvocation,
+    describeFSxOntapRegions,
+    getConnectionStatus,
+    putParameter
+} from '../../lib/aws/ssm';
 import { sleep } from '../../utils/utils';
 import { AWS_REGIONS } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
+import { SSMParamterObject } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -168,10 +176,29 @@ async function isSSMConnectionSuccessful(
     return { isSSMConnected: false };
 }
 
+async function ssmPutParameters(credentialsId: string, region: string, credentials: SSMParamterObject[]) {
+    logger.info('Put SSM parameters', { credentialsId, region });
+
+    const inputList = credentials.map(({ path, value }) => ({
+        Name: path,
+        Value: JSON.stringify(value),
+        Overwrite: true,
+        Type: 'SecureString',
+        Tier: 'Standard'
+    }));
+
+    logger.debug('Put SSM parameters', inputList);
+
+    await Promise.all(
+        inputList.map(async input => putParameter(credentialsId, region, input as PutParameterCommandInput))
+    );
+}
+
 export {
     executeSSMDocument,
     getFSxOntapRegionsList,
     getSSMConnectionStatus,
     isSSMConnectionSuccessful,
+    ssmPutParameters,
     pollCommandStatus
 };

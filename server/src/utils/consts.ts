@@ -1057,6 +1057,8 @@ const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
 
 const ENDPOINTS_DEPLOYMENT = ['s3', 'cloudformation', 'sqs', 'ssm', 'ssmmessages', 'ec2messages', 'monitoring'];
 
+const SSM_PARAMETERS_BASE_PATH = '/netapp/wlmdb';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1291,5 +1293,6 @@ export {
     MAP_SERVICE_TEMPLATE_PARAMETER,
     ARTIFACT_BUCKET_NAME,
     SIGNED_TEMPLATES_BUCKET_NAME,
-    TEMPLATE_BUCKET_REGION
+    TEMPLATE_BUCKET_REGION,
+    SSM_PARAMETERS_BASE_PATH
 };

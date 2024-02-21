@@ -1,10 +1,12 @@
 import { faker } from '@faker-js/faker';
 
+import { PutParameterCommandInput } from '@aws-sdk/client-ssm';
 import {
     sendSSMCommand,
     getCommandInvocation,
     describeFSxOntapRegions,
-    getConnectionStatus
+    getConnectionStatus,
+    putParameter
 } from '../../../src/lib/aws/ssm';
 import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 import ssmCommandOutput from '../../simulator/responses/aws/ssm-sendcommands-response.json';
@@ -17,6 +19,7 @@ import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
+import putParameterResponse from '../../simulator/responses/aws/ssm-put-parameter.json';
 
 const credentialsId = `${faker.string.alpha(20)}`;
 
@@ -44,5 +47,19 @@ describe('sendSSMCommand', () => {
         const params = { Target: 'i-07e76a4b916548dc0' };
         const response = await getConnectionStatus(credentialsId, 'us-east-1', params);
         expect(response).toEqual(getConnectionStatusResponse);
+    });
+
+    it('Put parameters in ssm parameter store', async () => {
+        const params: PutParameterCommandInput = {
+            // PutParameterRequest
+            Name: '/i-0e5af83448e1b83ef/instanceId/username', // required
+            Value: 'SQLdev', // required
+            Type: 'SecureString',
+            Tier: 'Standard',
+            Overwrite: true
+        };
+
+        const response = await putParameter(credentialsId, 'us-east-1', params);
+        expect(response).toEqual(putParameterResponse);
     });
 });
