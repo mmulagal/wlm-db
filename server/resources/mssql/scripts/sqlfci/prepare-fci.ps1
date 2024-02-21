@@ -36,13 +36,14 @@ $HostName = hostname
 
 $DomainNetBIOSName = $env:USERDOMAIN
 # Creating Credential Object for Administrator
-$AdminPassword = (Get-SSMParameter -Name "/$Parentstackname/domain/password" -WithDecryption $True).Value
+$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | ConvertFrom-Json
+$AdminPassword = $SsmParameter.domain.password
 $ClusterAdminUser = $DomainNetBIOSName+'\'+$DomainAdminUser
 $Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminPassword -AsPlainText -Force)))
 
 #Retrieving MSSQL service account
 $SqlUserName = $DomainNetBIOSName + '\' + $SqlUser
-$SqlUserPassword = (Get-SSMParameter -Name "/$Parentstackname/sql/password" -WithDecryption $True).Value
+$SqlUserPassword = $SsmParameter.sql[0].password
 
 if((get-ec2image $AMIID).UsageOperation -eq 'RunInstances:0002')
 {

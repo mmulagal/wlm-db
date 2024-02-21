@@ -28,7 +28,6 @@ Metadata:
                   default: Amazon FSx for ONTAP Volume Configuration
               Parameters:
                   - FSxFileSystemId
-                  - FsxAdminPassword
                   - SQLSvmName
                   - FSxDataLunSize
                   - FSxDataVolumeName
@@ -666,7 +665,17 @@ Resources:
                             waitAfterCompletion: '0'
                 Finalize:
                     commands:
-                        a-signal-resource:
+                        a-create-fsxparameter:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Create-FsxParameter.ps1
+                                  - ' -FSxID '
+                                  - !Ref 'FSxFileSystemId'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
+                                  - '"'
+                            waitAfterCompletion: 0
+                        b-signal-resource:
                             command: !Sub "cfn-signal.exe -e %ERRORLEVEL% --resource SqlNode\
                                 \ --stack ${AWS::StackName} --region ${AWS::Region}\n"
                             waitAfterCompletion: 0

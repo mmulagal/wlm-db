@@ -11,7 +11,7 @@ Metadata:
               Parameters:
                   - DeploymentMode
                   - FSxFileSystemName
-                  - FSxAdministratorPasswordSecret
+                  - FSxAdministratorPassword
                   - FSxDiskIops
                   - FSxStorageCapacity
                   - FSxVolumeThroughputCapacity
@@ -47,7 +47,7 @@ Metadata:
                 default: File system deployment mode
             FSxFileSystemName:
                 default: File system name
-            FSxAdministratorPasswordSecret:
+            FSxAdministratorPassword:
                 default: File system administrative password
             FSxDiskIops:
                 default: Provisioned SSD IOPS
@@ -104,8 +104,8 @@ Parameters:
         Type: String
         Default: wlmdb-fsx
 
-    FSxAdministratorPasswordSecret:
-        Description: Secret string for the "fsxadmin" administrator account.
+    FSxAdministratorPassword:
+        Description: Password for the "fsxadmin" administrator account.
         Type: String
 
     FSxDiskIops:
@@ -350,7 +350,7 @@ Resources:
                 DiskIopsConfiguration:
                     Iops: !If [FSxIsProvisionModeAutomatic, !Ref AWS::NoValue, !Ref FSxDiskIops]
                     Mode: !If [FSxIsProvisionModeAutomatic, AUTOMATIC, USER_PROVISIONED]
-                FsxAdminPassword: !Sub '{{resolve:ssm-secure:/${ParentStackName}/fsx/password:2}}'
+                FsxAdminPassword: !Ref FSxAdministratorPassword
                 PreferredSubnetId: !Ref PreferredSubnetId
                 RouteTableIds:
                     !If [

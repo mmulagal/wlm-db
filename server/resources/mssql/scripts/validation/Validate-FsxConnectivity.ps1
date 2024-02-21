@@ -37,11 +37,12 @@ $InstanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} 
 
 $ErrorActionPreference = "Stop"
 try {
-$Username = (Get-SSMParameter -Name "/$Parentstackname/fsx/username" -WithDecryption $True).Value
-$Password = (Get-SSMParameter -Name "/$Parentstackname/fsx/password" -WithDecryption $True).Value
+$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | ConvertFrom-Json
+$Username = $SsmParameter.fsx.username
+$Password = $SsmParameter.fsx.password
 }catch{
     $Failed = $true
-    $FailureReason = '"{0}"' -f "Unable to fetch SSM parameter, /$Parentstackname/fsx and access to SSM parameter store"
+    $FailureReason = '"{0}"' -f "Unable to fetch SSM parameter, /netapp/wlmdb/$Parentstackname and access to SSM parameter store"
     Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId

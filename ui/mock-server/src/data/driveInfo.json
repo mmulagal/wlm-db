@@ -1,34 +1,53 @@
 {
     "existingDriveInfo": [
-        {
-            "driveLetter": "A",
-            "availableSize": 142936511610880,
-            "defaultDataDrive": true,
-            "defaultLogDrive": false,
-            "isNetappDrive": true
-        },
-        {
-            "driveLetter": "B",
-            "availableSize": 142936511610880,
-            "defaultDataDrive": false,
-            "defaultLogDrive": true,
-            "isNetappDrive": true
-        },
-        {
-            "driveLetter": "C",
-            "availableSize": 142936511610880,
-            "defaultDataDrive": false,
-            "defaultLogDrive": false,
-            "isNetappDrive": true
-        },
-        {
-            "driveLetter": "D",
-            "availableSize": 142936511610880,
-            "defaultDataDrive": false,
-            "defaultLogDrive": false,
-            "isNetappDrive": false
-        }
+      {
+        "driveLetter": "C",
+        "availableSize": 66841804800,
+        "isNetappDrive": false
+      },
+      {
+        "driveLetter": "L",
+        "availableSize": 61426892800,
+        "isNetappDrive": true
+      },
+      {
+        "driveLetter": "Q",
+        "availableSize": 10653175808,
+        "isNetappDrive": true
+      },
+      {
+        "driveLetter": "S",
+        "availableSize": 244765622272,
+        "isNetappDrive": true
+      },
+      {
+        "driveLetter": "T",
+        "availableSize": 24556404736,
+        "isNetappDrive": true
+      }
     ],
-    "availableDriveLetters": ["E", "F", "G"],
-    "availableFsxSize": 142936511610880
-}
+    "availableDriveLetters": [
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J",
+      "K",
+      "M",
+      "N",
+      "O",
+      "P",
+      "R",
+      "U",
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z"
+    ],
+    "defaultDataDrive": "S",
+    "defaultLogDrive": "L",
+    "fsxStorageCapacity": 1099511627776
+  }

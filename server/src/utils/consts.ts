@@ -133,7 +133,8 @@ enum RouteTags {
     DATABASE = 'Database',
     BATCH = 'Batch',
     PRICING = 'Pricing',
-    CHATBOT = 'Chatbot'
+    CHATBOT = 'Chatbot',
+    DISCOVER = 'Discover'
 }
 
 enum HttpErrorCodes {
@@ -652,7 +653,7 @@ const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
 const SQL_RESOURCE_ASSETS = [
     {
         name: 'DSC',
-        url: `${WLMDB}/DSC.zip`
+        url: `DSC.zip`
     },
     // {
     //     name: 'DSCSignature',
@@ -660,7 +661,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'PowerShell',
-        url: `${WLMDB}/Installer/powershell.zip`
+        url: `Installer/powershell.zip`
     },
     // {
     //     name: 'PowerShellSignature',
@@ -668,7 +669,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'Sqlspcu',
-        url: `${WLMDB}/Installer/sqlspcu.zip`
+        url: `Installer/sqlspcu.zip`
     },
     // {
     //     name: 'SqlspcuSignature',
@@ -676,7 +677,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'AmazonFailoverCluster',
-        url: `${WLMDB}/modules/AmznFailoverCluster.zip`
+        url: `modules/AmznFailoverCluster.zip`
     },
     // {
     //     name: 'AmazonFailoverClusterSignature',
@@ -684,7 +685,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'AmazonLaunchWizardForCFN',
-        url: `${WLMDB}/modules/AWSLaunchWizardForCFN.zip`
+        url: `modules/AWSLaunchWizardForCFN.zip`
     },
     // {
     //     name: 'AmazonLaunchWizardForCFNSignature',
@@ -692,7 +693,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'AmazonLaunchWizardForSSM',
-        url: `${WLMDB}/modules/AWSLaunchWizardForSSM.zip`
+        url: `modules/AWSLaunchWizardForSSM.zip`
     },
     // {
     //     name: 'AmazonLaunchWizardForSSMSignature',
@@ -700,15 +701,15 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'ScriptVerifySignature',
-        url: `${WLMDB}/scripts/Verify-Signature.ps1`
+        url: `scripts/Verify-Signature.ps1`
     },
     {
         name: 'ScriptUnzipArchive',
-        url: `${WLMDB}/scripts/Unzip-Archive.ps1`
+        url: `scripts/Unzip-Archive.ps1`
     },
     {
         name: 'ScriptCommon',
-        url: `${WLMDB}/scripts/common.zip`
+        url: `scripts/common.zip`
     },
     // {
     //     name: 'ScriptCommonSignature',
@@ -716,7 +717,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'ScriptSQLFCI',
-        url: `${WLMDB}/scripts/sqlfci.zip`
+        url: `scripts/sqlfci.zip`
     },
     // {
     //     name: 'ScriptSQLFCISignature',
@@ -724,7 +725,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'ScriptSQLONTAP',
-        url: `${WLMDB}/scripts/sqlontap.zip`
+        url: `scripts/sqlontap.zip`
     },
     // {
     //     name: 'ScriptSQLONTAPSignature',
@@ -732,27 +733,27 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'ScriptVpcCheck',
-        url: `${WLMDB}/validation/Validate-VPCConnectivity.ps1`
+        url: `validation/Validate-VPCConnectivity.ps1`
     },
     {
         name: 'ScriptUpdateDnsServers',
-        url: `${WLMDB}/validation/Update-DNSServers.ps1`
+        url: `validation/Update-DNSServers.ps1`
     },
     {
         name: 'ScriptRenameComputer',
-        url: `${WLMDB}/validation/Rename-Computer.ps1`
+        url: `validation/Rename-Computer.ps1`
     },
     {
         name: 'ScriptRestartComputer',
-        url: `${WLMDB}/validation/Restart-Computer.ps1`
+        url: `validation/Restart-Computer.ps1`
     },
     {
         name: 'ScriptAdValidation',
-        url: `${WLMDB}/validation/Validate-Credentials.ps1`
+        url: `validation/Validate-Credentials.ps1`
     },
     {
         name: 'ScriptFSxValidation',
-        url: `${WLMDB}/validation/Validate-FsxConnectivity.ps1`
+        url: `validation/Validate-FsxConnectivity.ps1`
     }
 ];
 
@@ -771,7 +772,6 @@ const SQL_TEMPLATES_ASSETS = [
         name: 'ValidationTemplate',
         url: 'templates/vpc-ad-validation.yaml'
     },
-
     {
         name: 'SQLTemplate',
         url: 'templates/sql-windows-fci-config_nosignal.yaml'
@@ -799,7 +799,9 @@ enum TEMPLATE_TYPES {
     SQLSTACK = 'sqlstack',
     VALIDATION = 'validation',
     SQLSTANDALONE = 'sqlstandalone',
-    ENDPOINT = 'endpoint'
+    ENDPOINT = 'endpoint',
+    NEWFSX = 'newfsx',
+    EXISTINGFSX = 'existingfsx'
 }
 
 const SQL_TEMPLATES_DISTRIBUTION = [
@@ -818,6 +820,14 @@ const SQL_TEMPLATES_DISTRIBUTION = [
     {
         name: TEMPLATE_TYPES.ENDPOINT,
         location: './resources/mssql/templates/vpc-endpoints.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.NEWFSX,
+        location: './resources/mssql/templates/fsx-new.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.EXISTINGFSX,
+        location: './resources/mssql/templates/fsx-existing.yaml'
     }
 ];
 
@@ -893,6 +903,7 @@ const BXP_SVC_TOKEN_TYPE = 'BXP_SVC_TOKEN';
 const SSM_COMMAND_CACHE_TYPE = 'SSM_COMMAND';
 const REQUEST_IN_PROGRESS_TYPE = 'REQUEST_IN_PROGRESS';
 const AWS_PRICING_TYPE = 'AWS_PRICING';
+const AWS_FSX_TYPE = 'AWS_FSX';
 
 const ADMIN_ROLE = 'Role-1';
 const USER_ROLE = 'Role-2';
@@ -1031,7 +1042,16 @@ const subJobDescriptions: SubJobDescriptions = {
         'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
     'ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
     'ValidationNode2WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
-        'Signaling wait condition to resume next steps'
+        'Signaling wait condition to resume next steps',
+    VpcEndpointStack: 'Creating VPC endpoints for S3 CloudFormation, SQS, SSM, CloudWatch services',
+    'HttpsSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating security group to allow HTTPs access',
+    'S3Endpoint(AWS::EC2::VPCEndpoint)': 'Creating S3 gateway endpoint',
+    'CloudformationEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudFormation endpoint',
+    'CloudwatchEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch endpoint',
+    'Ec2MessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2Messages endpoint',
+    'SqsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SQS endpoint',
+    'SsmEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSM endpoint',
+    'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint'
 };
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
 const RESOURCE_SOURCE = { 
@@ -1265,6 +1285,7 @@ export {
     CF_STACK_RESOURCE_TYPE,
     AWS_PRICING_TYPE,
     RESOURCE_SOURCE,
+    AWS_FSX_TYPE,
     ENDPOINTS_DEPLOYMENT,
     TEMPLATE_S3_ENDPOINT,
     TEMPLATE_CLOUDFORMATION_ENDPOINT,

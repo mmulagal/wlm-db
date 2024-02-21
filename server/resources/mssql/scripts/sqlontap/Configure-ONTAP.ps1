@@ -40,8 +40,9 @@ Start-Transcript -Path C:\cfn\log\configureontap.ps1.txt -Append
 
 $ErrorActionPreference = "Stop"
 
-$username = (Get-SSMParameter -Name "/$Parentstackname/fsx/username" -WithDecryption $True).Value
-$password = (Get-SSMParameter -Name "/$Parentstackname/fsx/password" -WithDecryption $True).Value
+$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | ConvertFrom-Json
+$username = $SsmParameter.fsx.username
+$password = $SsmParameter.fsx.password
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName

@@ -307,53 +307,27 @@ Conditions:
   IsStandalone: !Equals [!Ref SQLDeploymentMode, 'standalone']
   IsFailoverCluster: !Not [Condition: IsStandalone]
 Resources:
-  DomainAdminSsmUsername:
+  CredentialsSsmParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub /${AWS::StackName}/domain/username
-      Description: SSM Paramter for domain username
+      Name: !Sub /netapp/wlmdb/${AWS::StackName}
+      Description: SSM Paramter for active directory, FSxN and SQL service account credentials
       Type: String
-      Value: !Ref DomainAdminUser
-
-  DomainAdminSsmPassword:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: !Sub /${AWS::StackName}/domain/password
-      Description: SSM Paramter for domain password
-      Type: String
-      Value: !Ref DomainAdminPassword
-  
-  FSxNAdminSsmUsername:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: !Sub /${AWS::StackName}/fsx/username
-      Description: SSM Paramter for FSxN username
-      Type: String
-      Value: !Ref FSxAdminUsername
-
-  FSxNAdminSsmPassword:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: !Sub /${AWS::StackName}/fsx/password
-      Description: SSM Paramter for FSxN password
-      Type: String
-      Value: !Ref FSxAdminPassword
-  
-  SQLServiceAccountSsmUsername:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: !Sub /${AWS::StackName}/sql/username
-      Description: SSM Paramter for SQL service account username
-      Type: String
-      Value: !Ref SQLServiceAccountName
-
-  SQLServiceAccountSsmPassword:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: !Sub /${AWS::StackName}/sql/password
-      Description: SSM Paramter for SQL service account password
-      Type: String
-      Value: !Ref SQLServiceAccountPassword
+      Value: !Sub '{
+                        fsx: {
+                            username: "${FSxAdminUsername}",
+                            password: "${FSxAdminPassword}"
+                        },
+                        domain: {
+                            username: "${DomainAdminUser}",
+                            password: "${DomainAdminPassword}"
+                        },
+                        sql: [{
+                            username: "${SQLServiceAccountName}",
+                            password: "${SQLServiceAccountPassword}",
+                            sqlinstancename: "MSSQL"
+                        }]
+                    }'
 
   EC2IAMRole:
     Type: AWS::IAM::Role
@@ -677,6 +651,8 @@ Resources:
           Ref: FSxQuorumVolumeName
         FSxClusterQuorumVolumeSize:
           Ref: FSxQuorumVolumeSize
+        FSxAdministratorPassword:
+          Ref: FSxAdminPassword
         FSxSvmName:
           Ref: SQLSvmName
         VPCID:

@@ -78,6 +78,8 @@ async function executeSSMDocument(
         CommandId: commandId,
         InstanceId: instanceIds
     };
+
+    await sleep(1000);
     const response = await pollCommandStatus(credentialsId, region, pollParams);
 
     logger.debug('SSM command Response:', response);
@@ -167,4 +169,10 @@ async function isSSMConnectionSuccessful(
     return { isSSMConnected: false };
 }
 
-export { executeSSMDocument, getFSxOntapRegionsList, getSSMConnectionStatus, isSSMConnectionSuccessful };
+export {
+    executeSSMDocument,
+    getFSxOntapRegionsList,
+    getSSMConnectionStatus,
+    isSSMConnectionSuccessful,
+    pollCommandStatus
+};

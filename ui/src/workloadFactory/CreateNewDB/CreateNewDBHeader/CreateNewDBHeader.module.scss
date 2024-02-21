@@ -6,6 +6,7 @@
     .leftSideStyle {
         display: flex;
         gap: 24px;
+        color: var(--text-button-primary);
 
         align-items: center;
         .separator {
@@ -14,7 +15,7 @@
         }
 
         .hostName {
-            color: var(--text-title);
+            color: var(--text-button-primary);
         }
     }
 }

@@ -42,9 +42,10 @@ try {
     Write-Host $paths
     $params = "-d$dataPath\master.mdf;-e$sqlpath\ERRORLOG;-l$logPath\mastlog.ldf"
     $DomainAdminFullUser = $DomainNetBIOSName + '\' + $DomainAdminUser
-    $DomainAdminPassword = (Get-SSMParameter -Name "/$Parentstackname/domain/password" -WithDecryption $True).Value
+    $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | ConvertFrom-Json
+    $DomainAdminPassword =  $SsmParameter.domain.password
     $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,(ConvertTo-SecureString $DomainAdminPassword -AsPlainText -Force)))
-    $SQLServiceAccountPassword = (Get-SSMParameter -Name "/$Parentstackname/sql/password" -WithDecryption $True).Value
+    $SQLServiceAccountPassword = $SsmParameter.sql[0].password
 
     $SQLFullUser = $DomainNetBIOSName + '\' + $SQLServiceAccount
 

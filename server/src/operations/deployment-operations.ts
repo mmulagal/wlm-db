@@ -285,6 +285,8 @@ async function getCloudformationTemplate(
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
 
+    region = region ? region : DEFAULT_AWS_REGION
+
     const customMasterTemplatePath: string = `${WLMDB}/${stackName}/${MASTER_TEMPLATE_PATH}`;
 
     const signedMasterTemplateUrl = await getPreSignedUrl(

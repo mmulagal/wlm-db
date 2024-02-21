@@ -410,11 +410,7 @@ Resources:
                       - !Ref 'ParentStackName'
                       - '"'
                       - "\n"
-                      - 'Write-SSMParameter  -Name "/$stackname/domain/password" -Value (Get-SSMParameter -Name "/$stackname/domain/password").Value -Type "SecureString" -Overwrite $true'
-                      - "\n"
-                      - 'Write-SSMParameter  -Name "/$stackname/fsx/password" -Value (Get-SSMParameter -Name "/$stackname/domain/password").Value -Type "SecureString" -Overwrite $true'
-                      - "\n"
-                      - 'Write-SSMParameter  -Name "/$stackname/sql/password" -Value (Get-SSMParameter -Name "/$stackname/domain/password").Value -Type "SecureString" -Overwrite $true'
+                      - 'Write-SSMParameter  -Name "/netapp/wlmdb/$stackname" -Value (Get-SSMParameter -Name "/netapp/wlmdb/$stackname").Value -Type "SecureString" -Overwrite $true'
                       - "\n"
                       - 'cfn-init.exe -v -c config -s '
                       - !Ref 'AWS::StackId'

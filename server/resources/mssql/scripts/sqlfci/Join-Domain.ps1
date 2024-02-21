@@ -15,7 +15,8 @@ $ErrorActionPreference = "Stop"
 Start-Transcript -Path C:\cfn\log\$($MyInvocation.MyCommand.Name).log -Append
 
 # Getting Password from SSM parameter store for AD Admin User
-$ADAdminPassword = (Get-SSMParameter -Name "/$Parentstackname/domain/password" -WithDecryption $True).Value
+$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | ConvertFrom-Json
+$ADAdminPassword = $SsmParameter.domain.password
 # Creating Credential Object for Administrator
 $AdminUserName = $DomainNetBIOSName+"\"+$DomainAdminUser
 $AdminUserPW = ConvertTo-SecureString ($ADAdminPassword.Password) -AsPlainText -Force

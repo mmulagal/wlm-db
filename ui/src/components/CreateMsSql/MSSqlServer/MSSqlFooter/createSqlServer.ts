@@ -78,7 +78,7 @@ const createMssqlPayload = (state: any) => {
         const value1 = value.split(' ');
         if (value1?.length === 2) {
             if (value1[1] === 'GBps') {
-                return value1[0] * 1000;
+                return value1[0] * 1024;
             } else {
                 return value1[0];
             }

@@ -11,9 +11,9 @@ const AccountIdParams = Type.Object({
 });
 
 const ManagedHostParams = Type.Object({
-    accountId: Type.String(),
-    credentialsId: Type.String(),
-    region: Type.String()
+    accountId: Type.String({ description: 'Workload Factory account ID', minLength: 1 }),
+    credentialsId: Type.String({ description: 'Workload Factory credentials ID', minLength: 1 }),
+    region: Type.String({ description: 'AWS region hosting EC2 instances', minLength: 1 })
 });
 type AccountIdParamsType = Static<typeof AccountIdParams>;
 

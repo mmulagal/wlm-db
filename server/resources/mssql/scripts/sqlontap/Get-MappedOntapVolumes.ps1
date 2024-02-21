@@ -11,8 +11,9 @@ param(
 )
 
 # Read fsxadmin password from secrets and encode the username:password with base64String
-$FSxUserName = (Get-SSMParameter -Name "/$ParameterStorePath/fsx/username" -WithDecryption $True).Value
-$FSxPassword = (Get-SSMParameter -Name "/$ParameterStorePath/fsx/password" -WithDecryption $True).Value
+$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | ConvertFrom-Json
+$FSxUserName = $SsmParameter.fsx.username
+$FSxPassword = $SsmParameter.fsx.password
 $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${FSxUserName}:${FSxPassword}"))
 $FSxHostName = "management.${FSxID}.fsx.${FSxRegion}.amazonaws.com"
 

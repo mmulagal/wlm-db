@@ -1,6 +1,6 @@
 import { Button } from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
-import { createUserDbPayload } from './createUserDBPayload';
+import { handleCreateUserDb } from './createUserDBPayload';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import { useCreateUserDBMutation } from '../../../utils/apiService';
@@ -26,7 +26,7 @@ const CreateNewUserFooter = () => {
     const [createNewUserDb] = useCreateUserDBMutation();
 
     const handleCreate = async () => {
-        const payload = createUserDbPayload(createNewUser);
+        const payload = handleCreateUserDb(createNewUser);
         if (payload) {
             dispatch(setIsLoading(true));
             try {
