@@ -1,5 +1,5 @@
 import { STORAGE_TYPE, resource } from '@prisma/client';
-import { DescribeInstancesCommandOutput } from '@aws-sdk/client-ec2';
+import { DescribeInstancesCommandOutput, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { listResources } from '../lib/database/db';
@@ -113,8 +113,7 @@ async function getTopology(
     resourceId: string,
     resourceData: resource,
     activeNodeInstanceId: string,
-    standbyNodeInstanceId?: string,
-    additionalFields?: { [key: string]: boolean }
+    standbyNodeInstanceId?: string
 ): Promise<TopologyResponseType> {
     logger.info('Fetching topology data', {
         accountId,
@@ -122,8 +121,7 @@ async function getTopology(
         resourceId,
         resourceData,
         activeNodeInstanceId,
-        standbyNodeInstanceId,
-        additionalFields
+        standbyNodeInstanceId
     });
 
     if (isEmpty(resourceData)) {
@@ -164,30 +162,34 @@ async function getTopology(
         let fileSystemThroughputCapacity;
         let subnetIds: Array<string> | undefined;
         let availabilityZones: Array<string> | undefined;
+        let vpcCidr: string | undefined;
 
-        if (additionalFields?.allTopology || additionalFields?.vpc) {
-            try {
-                const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
-                vpcId = fsxInfo?.FileSystems?.[0].VpcId;
-                fileSystemName = fsxInfo?.FileSystems?.[0].Tags?.reduce(
-                    (a = '', tag) => (tag.Key === 'Name' ? tag.Value : a),
-                    ''
-                );
+        try {
+            const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
+            vpcId = fsxInfo?.FileSystems?.[0].VpcId;
+            fileSystemName = fsxInfo?.FileSystems?.[0].Tags?.reduce(
+                (a = '', tag) => (tag.Key === 'Name' ? tag.Value : a),
+                ''
+            );
 
-                fileSystemDeploymentMode = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DeploymentType;
-                fileSystemStatus = fsxInfo?.FileSystems?.[0].Lifecycle;
-                fileSystemStorageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity;
-                fileSystemThroughputCapacity = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
-                subnetIds = fsxInfo?.FileSystems?.[0].SubnetIds;
+            fileSystemDeploymentMode = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DeploymentType;
+            fileSystemStatus = fsxInfo?.FileSystems?.[0].Lifecycle;
+            fileSystemStorageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity;
+            fileSystemThroughputCapacity = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
+            subnetIds = fsxInfo?.FileSystems?.[0].SubnetIds;
 
-                const { Subnets: subnets } = await describeSubnets(credentialsId, region, {
-                    SubnetIds: subnetIds
-                });
-                availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
-                logger.info('availabilityZones', availabilityZones);
-            } catch (error) {
-                logger.error(`Error while fetching details for fsx. Error: ${error}`);
-            }
+            const { Subnets: subnets } = await describeSubnets(credentialsId, region, {
+                SubnetIds: subnetIds
+            });
+            availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
+            const vpcParams: DescribeVpcsCommandInput = {
+                VpcIds: [vpcId!]
+            };
+            const { Vpcs: vpcs = [] } = await describeVpc(credentialsId, region, vpcParams);
+            vpcCidr = vpcs[0]?.CidrBlock;
+            logger.info('availabilityZones', availabilityZones);
+        } catch (error) {
+            logger.error(`Error while fetching details for fsx. Error: ${error}`);
         }
 
         const instanceIds = node2InstanceId ? [node1InstanceId, node2InstanceId] : [node1InstanceId];
@@ -203,43 +205,41 @@ async function getTopology(
         let standbyAvailabilityZone;
         let standbySubnetId;
         let standbyVolumeId;
-        let activeDirectoryDetails;
         let activeNodeInstanceName;
         let standbyNodeInstanceName;
-        if (additionalFields?.allTopology) {
-            if (!isEmpty(activeNodeInstanceId)) {
-                // fetch instance details only if there is atleast one active node
-                try {
-                    ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
-                    const node1 = ec2InstanceDetails.Reservations?.[0].Instances?.[0];
-                    const node2 = ec2InstanceDetails.Reservations?.[1].Instances?.[0];
-                    const [activeNode, standbyNode] =
-                        node1?.InstanceId === activeNodeInstanceId ? [node1, node2] : [node2, node1];
-                    if (!isEmpty(activeNode)) {
-                        keyPairName = activeNode.KeyName;
-                        activeInstanceType = activeNode.InstanceType;
-                        activeAvailabilityZone = activeNode.Placement?.AvailabilityZone;
-                        activeSubnetId = activeNode.SubnetId;
-                        activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
-                        activeNodeInstanceName = findResourceNameFromTags(activeNode.Tags);
 
-                        if (!isEmpty(standbyNode)) {
-                            standbyInstanceType = standbyNode.InstanceType;
-                            standbyAvailabilityZone = standbyNode.Placement?.AvailabilityZone;
-                            standbySubnetId = standbyNode.SubnetId;
-                            standbyVolumeId = standbyNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
-                            standbyNodeInstanceName = findResourceNameFromTags(standbyNode.Tags);
-                        }
+        if (!isEmpty(activeNodeInstanceId)) {
+            // fetch instance details only if there is atleast one active node
+            try {
+                ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
+                const node1 = ec2InstanceDetails.Reservations?.[0].Instances?.[0];
+                const node2 = ec2InstanceDetails.Reservations?.[1].Instances?.[0];
+                const [activeNode, standbyNode] =
+                    node1?.InstanceId === activeNodeInstanceId ? [node1, node2] : [node2, node1];
+                if (!isEmpty(activeNode)) {
+                    keyPairName = activeNode.KeyName;
+                    activeInstanceType = activeNode.InstanceType;
+                    activeAvailabilityZone = activeNode.Placement?.AvailabilityZone;
+                    activeSubnetId = activeNode.SubnetId;
+                    activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
+                    activeNodeInstanceName = findResourceNameFromTags(activeNode.Tags);
+
+                    if (!isEmpty(standbyNode)) {
+                        standbyInstanceType = standbyNode.InstanceType;
+                        standbyAvailabilityZone = standbyNode.Placement?.AvailabilityZone;
+                        standbySubnetId = standbyNode.SubnetId;
+                        standbyVolumeId = standbyNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
+                        standbyNodeInstanceName = findResourceNameFromTags(standbyNode.Tags);
                     }
-                } catch (error) {
-                    logger.error(`Error while fetching details for ec2 instances. Error: ${error}`);
                 }
+            } catch (error) {
+                logger.error(`Error while fetching details for ec2 instances. Error: ${error}`);
             }
-            activeDirectoryDetails = {
-                name: activeDirectoryName || '',
-                address: activeDirectoryAddress || ''
-            };
         }
+        const activeDirectoryDetails = {
+            name: activeDirectoryName || '',
+            address: activeDirectoryAddress || ''
+        };
         let vpcName;
         if (vpcId) {
             const { Vpcs } = await describeVpc(credentialsId, region, {
@@ -268,6 +268,7 @@ async function getTopology(
             ...(vpcId && { vpcId }),
             ...(vpcName && { vpcName }),
             ...(availabilityZones && { availabilityZones }),
+            ...(vpcCidr && { vpcCidr }),
             ...(keyPairName && { keyPairName }),
             ...(activeNodeInstanceId && {
                 ec2Details: [
@@ -612,9 +613,6 @@ async function getDatabaseHostsSummary(
     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
-    const additionalFields = {
-        vpc: Boolean(getUsageEstimation)
-    };
 
     const databaseHosts: DatabaseHostSummaryResponseType[] = [];
     try {
@@ -650,8 +648,7 @@ async function getDatabaseHostsSummary(
                                 resourceId,
                                 resourceDetail,
                                 activeNodeInstanceId!,
-                                standbyNodeInstanceId,
-                                additionalFields
+                                standbyNodeInstanceId
                             ),
                             ...(isSSMConnected && getPerformance && activeNodeInstanceId
                                 ? [getServerIOLatency(resourceId, activeNodeInstanceId)]
@@ -734,9 +731,6 @@ async function getDatabaseHostSummary(
     const getResourceutilization = fieldsValues?.includes(
         DatabaseHostsQueryFields.RESOURCE_UTILIZATION.toLocaleLowerCase()
     );
-    const additionalFields = {
-        allTopology: true
-    };
 
     const {
         resource_id: resourceId,
@@ -781,8 +775,7 @@ async function getDatabaseHostSummary(
                     resourceId,
                     resourceDetail,
                     activeNodeInstanceId!,
-                    standbyNodeInstanceId,
-                    additionalFields
+                    standbyNodeInstanceId
                 ),
                 ...(isSSMConnected && getPerformance && activeNodeInstanceId
                     ? [getPerformanceMetrics(resourceId, activeNodeInstanceId)]
