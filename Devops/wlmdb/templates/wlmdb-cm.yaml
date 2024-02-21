@@ -11,6 +11,7 @@ data:
   WLMDB_BUCKET_REGION: {{ .Values.global.region }}
   NODE_ENV: {{ .Values.global.NODE_ENV }}
   KEY_ALIAS: alias/wlmdb-service
+  TEMPLATE_BUCKET_NAME: {{ .Values.global.bucketName }}
   {{ if eq .Values.global.environment "production" }}
   AUTH0_ENDPOINT: netapp-cloud-account.auth0.com
   CLOUD_MANAGER_ENDPOINT: api.bluexp.netapp.com
@@ -18,7 +19,6 @@ data:
   WLMDB_ABSOLUTE_ENDPOINT: console.bluexp.netapp.com
   KINESIS_STREAM_NAME: audit-service-prod-stream
   WLMDB_BUCKET_NAME: production.wlmdb.workloads.netapp.com
-  TEMPLATE_BUCKET_NAME: templates-workloads-netapp-com
   ARTIFACT_BUCKET_NAME: artifacts-REGION-workloads-netapp-com
   {{ else }}
   AUTH0_ENDPOINT: staging-netapp-cloud-account.auth0.com
@@ -27,6 +27,5 @@ data:
   WLMDB_ABSOLUTE_ENDPOINT: staging.console.bluexp.netapp.com
   KINESIS_STREAM_NAME: audit-service-staging-stream
   WLMDB_BUCKET_NAME: staging.wlmdb.workloads.netapp.com
-  TEMPLATE_BUCKET_NAME: staging-templates-workloads-netapp-com
   ARTIFACT_BUCKET_NAME: staging-artifacts-REGION-workloads-netapp-com
   {{ end }}
