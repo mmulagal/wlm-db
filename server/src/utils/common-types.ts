@@ -86,4 +86,30 @@ interface NetworkInterface {
     availabilityZone?: string;
 }
 
-export { Metadata, ResourceDetails, DeploymentDetails, NetworkViolation, SecurityGroup, Subnet, VPC, NetworkInterface };
+interface SSMParamterObject {
+    path: string;
+    value: {
+        [key: string]:
+            | {
+                  username: string;
+                  password: string;
+              }
+            | {
+                  sqlinstancename: string;
+                  username: string;
+                  password: string;
+              }[];
+    };
+}
+
+export {
+    Metadata,
+    ResourceDetails,
+    DeploymentDetails,
+    NetworkViolation,
+    SecurityGroup,
+    Subnet,
+    VPC,
+    NetworkInterface,
+    SSMParamterObject
+};

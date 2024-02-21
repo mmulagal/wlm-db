@@ -50,7 +50,7 @@ const TopologyResponse = Type.Object({
     vpcName: Type.Optional(Type.String()),
     availabilityZones: Type.Optional(Type.Array(Type.String())),
     keyPairName: Type.Optional(Type.String()),
-    ec2Details: Type.Array(EC2InstanceDetailsResponse),
+    ec2Details: Type.Optional(Type.Array(EC2InstanceDetailsResponse)),
     activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse)
 });
 type TopologyResponseType = Static<typeof TopologyResponse>;

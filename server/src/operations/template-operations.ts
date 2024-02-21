@@ -224,28 +224,26 @@ async function updateTemplateUrls(
             url: standAloneSignedUrl,
             location: customStandAloneTemplatePath
         });
-    } else if (templateType === TEMPLATE_TYPES.ENDPOINT || templateType === TEMPLATE_TYPES.NEWFSX || templateType === TEMPLATE_TYPES.EXISTINGFSX) {
-        let templatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'VpcEndpointTemplate');
-        if(templateType === TEMPLATE_TYPES.NEWFSX) {
-            templatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXNewTemplate');
+    } else if (
+        templateType === TEMPLATE_TYPES.ENDPOINT ||
+        templateType === TEMPLATE_TYPES.NEWFSX ||
+        templateType === TEMPLATE_TYPES.EXISTINGFSX
+    ) {
+        let staticTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'VpcEndpointTemplate');
+        if (templateType === TEMPLATE_TYPES.NEWFSX) {
+            staticTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXNewTemplate');
+        } else if (templateType === TEMPLATE_TYPES.EXISTINGFSX) {
+            staticTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXExistingTemplate');
         }
-        else if (templateType === TEMPLATE_TYPES.EXISTINGFSX){
-            templatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXExistingTemplate');
-        }
-        const customTemplatePath: string = `${WLMDB}/${stackName}/${templatePath!.url}`;
-        await putObjectBucket(
-            TEMPLATE_BUCKET_REGION,
-            SIGNED_TEMPLATES_BUCKET_NAME,
-            customTemplatePath,
-            source
-        );
+        const customTemplatePath: string = `${WLMDB}/${stackName}/${staticTemplatePath!.url}`;
+        await putObjectBucket(TEMPLATE_BUCKET_REGION, SIGNED_TEMPLATES_BUCKET_NAME, customTemplatePath, source);
         const signedUrl = await getPreSignedUrl(
             TEMPLATE_BUCKET_REGION,
             SIGNED_TEMPLATES_BUCKET_NAME,
             customTemplatePath
         );
-        signedUrls.set(templatePath!.name, {
-            name: templatePath!.name,
+        signedUrls.set(staticTemplatePath!.name, {
+            name: staticTemplatePath!.name,
             url: signedUrl,
             location: customTemplatePath
         });

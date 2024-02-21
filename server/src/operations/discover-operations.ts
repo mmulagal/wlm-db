@@ -6,12 +6,18 @@ import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
 import { describeInstance } from '../lib/aws/ec2';
 import { getResourceNameFromTags, sleep } from '../utils/utils';
-import { getSSMConnectionStatus, pollCommandStatus } from './aws/ssm-operations';
-import { HttpErrorCodes } from '../utils/consts';
+import { getSSMConnectionStatus, pollCommandStatus, ssmPutParameters } from './aws/ssm-operations';
+import { HttpErrorCodes, RESOURCESTYPE, SSM_PARAMETERS_BASE_PATH } from '../utils/consts';
 import { hostAndSqlInfoPowerShellScript } from './workloads/mssql/discover-consts';
 import { sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
-import { SqlServerInstanceInfoType, DiscoverResponseInfoType } from '../routes/types/discover.types';
+import { registerFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
+import { SSMParamterObject } from '../utils/common-types';
+import {
+    SqlServerInstanceInfoType,
+    DiscoverResponseInfoType,
+    DiscoverCredentialsType
+} from '../routes/types/discover.types';
 import getLogger from '../utils/logger';
 
 const logger = getLogger();
@@ -194,4 +200,69 @@ async function makeSsmCall(
     return commandId;
 }
 
-export { getHostAndSqlServerInfo, hostAndSqlInfoPowerShellScript };
+function prepareParametersToStore(instanceId: string, credentials: DiscoverCredentialsType[]) {
+    logger.debug('prepare parameters to store', { instanceId });
+
+    return credentials.reduce((acc: SSMParamterObject[], { resourceId, resourceType, username, password }) => {
+        if (resourceType === RESOURCESTYPE.MSSQL) {
+            const sqlItem = acc.find(el => el.value.sql);
+
+            if (sqlItem && Array.isArray(sqlItem)) {
+                sqlItem.push({
+                    sqlinstancename: resourceId,
+                    username,
+                    password
+                });
+            } else {
+                acc.push({
+                    path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                    value: {
+                        sql: [
+                            {
+                                sqlinstancename: resourceId,
+                                username,
+                                password
+                            }
+                        ]
+                    }
+                });
+            }
+        } else if (resourceType === RESOURCESTYPE.FSX) {
+            acc.push({
+                path: `${SSM_PARAMETERS_BASE_PATH}/${resourceId}`,
+                value: {
+                    fsx: {
+                        username,
+                        password
+                    }
+                }
+            });
+        }
+        return acc;
+    }, []);
+}
+
+async function saveDiscoveredParameters(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    credentials: DiscoverCredentialsType[]
+) {
+    logger.info('Put SSM parameters', { accountId, credentialsId, region, instanceId });
+
+    const fsxCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.FSX);
+
+    const creds = prepareParametersToStore(instanceId, credentials);
+
+    await Promise.all([
+        Promise.all(
+            fsxCredentials.map(cred =>
+                registerFsxOntapCredentials(accountId, credentialsId, region, cred.resourceId, cred.password)
+            )
+        ),
+        ssmPutParameters(credentialsId, region, creds)
+    ]);
+}
+
+export { getHostAndSqlServerInfo, hostAndSqlInfoPowerShellScript, saveDiscoveredParameters };

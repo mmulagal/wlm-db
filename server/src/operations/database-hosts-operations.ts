@@ -113,9 +113,19 @@ async function getTopology(
     region: string,
     resourceId: string,
     resourceData: resource,
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId?: string,
     additionalFields?: { [key: string]: boolean }
 ): Promise<TopologyResponseType> {
-    logger.info('Fetching topology data', accountId, region, resourceId, resourceData);
+    logger.info('Fetching topology data', {
+        accountId,
+        region,
+        resourceId,
+        resourceData,
+        activeNodeInstanceId,
+        standbyNodeInstanceId,
+        additionalFields
+    });
 
     if (isEmpty(resourceData)) {
         throw createError(
@@ -146,15 +156,7 @@ async function getTopology(
         ec2Details: []
     };
 
-    let activeNodeInstanceId: string | undefined;
-    let standbyNodeInstanceId;
     if (!isEmpty(node1InstanceId)) {
-        ({ activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
-            credentialsId,
-            region,
-            node1InstanceId,
-            node2InstanceId
-        ));
         let vpcId;
         let fileSystemStatus;
         let fileSystemName;
@@ -206,30 +208,33 @@ async function getTopology(
         let activeNodeInstanceName;
         let standbyNodeInstanceName;
         if (additionalFields?.allTopology) {
-            try {
-                ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
-                const node1 = ec2InstanceDetails.Reservations?.[0].Instances?.[0];
-                const node2 = ec2InstanceDetails.Reservations?.[1].Instances?.[0];
-                const [activeNode, standbyNode] =
-                    node1?.InstanceId === activeNodeInstanceId ? [node1, node2] : [node2, node1];
-                if (!isEmpty(activeNode)) {
-                    keyPairName = activeNode.KeyName;
-                    activeInstanceType = activeNode.InstanceType;
-                    activeAvailabilityZone = activeNode.Placement?.AvailabilityZone;
-                    activeSubnetId = activeNode.SubnetId;
-                    activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
-                    activeNodeInstanceName = findResourceNameFromTags(activeNode.Tags);
+            if (!isEmpty(activeNodeInstanceId)) {
+                // fetch instance details only if there is atleast one active node
+                try {
+                    ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
+                    const node1 = ec2InstanceDetails.Reservations?.[0].Instances?.[0];
+                    const node2 = ec2InstanceDetails.Reservations?.[1].Instances?.[0];
+                    const [activeNode, standbyNode] =
+                        node1?.InstanceId === activeNodeInstanceId ? [node1, node2] : [node2, node1];
+                    if (!isEmpty(activeNode)) {
+                        keyPairName = activeNode.KeyName;
+                        activeInstanceType = activeNode.InstanceType;
+                        activeAvailabilityZone = activeNode.Placement?.AvailabilityZone;
+                        activeSubnetId = activeNode.SubnetId;
+                        activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
+                        activeNodeInstanceName = findResourceNameFromTags(activeNode.Tags);
 
-                    if (!isEmpty(standbyNode)) {
-                        standbyInstanceType = standbyNode.InstanceType;
-                        standbyAvailabilityZone = standbyNode.Placement?.AvailabilityZone;
-                        standbySubnetId = standbyNode.SubnetId;
-                        standbyVolumeId = standbyNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
-                        standbyNodeInstanceName = findResourceNameFromTags(standbyNode.Tags);
+                        if (!isEmpty(standbyNode)) {
+                            standbyInstanceType = standbyNode.InstanceType;
+                            standbyAvailabilityZone = standbyNode.Placement?.AvailabilityZone;
+                            standbySubnetId = standbyNode.SubnetId;
+                            standbyVolumeId = standbyNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
+                            standbyNodeInstanceName = findResourceNameFromTags(standbyNode.Tags);
+                        }
                     }
+                } catch (error) {
+                    logger.error(`Error while fetching details for ec2 instances. Error: ${error}`);
                 }
-            } catch (error) {
-                logger.error(`Error while fetching details for ec2 instances. Error: ${error}`);
             }
             activeDirectoryDetails = {
                 name: activeDirectoryName || '',
@@ -265,20 +270,22 @@ async function getTopology(
             ...(vpcName && { vpcName }),
             ...(availabilityZones && { availabilityZones }),
             ...(keyPairName && { keyPairName }),
-            ec2Details: [
-                {
-                    id: activeNodeInstanceId!,
-                    name: activeNodeInstanceName,
-                    ebsVolumeId: activeVolumeId || '',
-                    ...(activeInstanceType && { instanceType: activeInstanceType }),
-                    ...(activeAvailabilityZone && { availabilityZone: activeAvailabilityZone }),
-                    ...(activeSubnetId && { subnetId: activeSubnetId })
-                }
-            ],
+            ...(activeNodeInstanceId && {
+                ec2Details: [
+                    {
+                        id: activeNodeInstanceId!,
+                        name: activeNodeInstanceName,
+                        ebsVolumeId: activeVolumeId || '',
+                        ...(activeInstanceType && { instanceType: activeInstanceType }),
+                        ...(activeAvailabilityZone && { availabilityZone: activeAvailabilityZone }),
+                        ...(activeSubnetId && { subnetId: activeSubnetId })
+                    }
+                ]
+            }),
             ...(activeDirectoryDetails && { activeDirectoryDetails })
         };
-        if (standbyNodeInstanceId) {
-            topologyData.ec2Details.push({
+        if (activeNodeInstanceId && standbyNodeInstanceId) {
+            topologyData.ec2Details?.push({
                 id: standbyNodeInstanceId!,
                 name: standbyNodeInstanceName,
                 ebsVolumeId: standbyVolumeId || '',
@@ -625,7 +632,7 @@ async function getDatabaseHostsSummary(
                 const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
                 // Check SSM Connection status
-                const { isSSMConnected, activeNodeInstanceId } = await isSSMConnectionSuccessful(
+                const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
                     credentialsId,
                     region!,
                     node1InstanceId,
@@ -638,7 +645,15 @@ async function getDatabaseHostsSummary(
                             ...(isSSMConnected && activeNodeInstanceId
                                 ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId)]
                                 : [Promise.resolve()]),
-                            getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
+                            getTopology(
+                                accountId,
+                                region!,
+                                resourceId,
+                                resourceDetail,
+                                activeNodeInstanceId!,
+                                standbyNodeInstanceId,
+                                additionalFields
+                            ),
                             ...(isSSMConnected && getPerformance && activeNodeInstanceId
                                 ? [getServerIOLatency(resourceId, activeNodeInstanceId)]
                                 : [Promise.resolve()]), // Fetch io latency data
@@ -735,7 +750,7 @@ async function getDatabaseHostSummary(
         const { node1InstanceId, node2InstanceId, creationDate } = metadata as unknown as Metadata;
 
         // Check SSM Connection status
-        const { isSSMConnected, activeNodeInstanceId } = await isSSMConnectionSuccessful(
+        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
             credentialsId,
             region!,
             node1InstanceId,
@@ -761,7 +776,15 @@ async function getDatabaseHostSummary(
                     ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId)]
                     : [Promise.resolve()]),
                 ...(isSSMConnected ? [getServerSummary(resourceId)] : [Promise.resolve()]), // Fetch server metadata
-                getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
+                getTopology(
+                    accountId,
+                    region!,
+                    resourceId,
+                    resourceDetail,
+                    activeNodeInstanceId!,
+                    standbyNodeInstanceId,
+                    additionalFields
+                ),
                 ...(isSSMConnected && getPerformance && activeNodeInstanceId
                     ? [getPerformanceMetrics(resourceId, activeNodeInstanceId)]
                     : [Promise.resolve()]), // Fetch io latency data

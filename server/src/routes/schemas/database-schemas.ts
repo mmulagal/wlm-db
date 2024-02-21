@@ -11,7 +11,7 @@ import {
     MsSqlServerDiscoveryResponse,
     MsSqlServerDiscoverRequestBody
 } from '../types/database.types';
-import { GenericHeaders, ManagedHostParams } from '../types/generic.types';
+import { GenericHeaders, CredentialsIdParams } from '../types/generic.types';
 
 const baseRequest = {
     Headers: GenericHeaders,
@@ -28,7 +28,7 @@ const resourceUtilizationBaseRequest = {
 
 const PostSqlServerSchema = {
     tags: [RouteTags.DATABASE],
-    params: ManagedHostParams,
+    params: CredentialsIdParams,
     body: MsSqlServerDiscoverRequestBody,
     summary: 'Discover MSSQL',
     description: 'Discover Microsoft SQL Server',
