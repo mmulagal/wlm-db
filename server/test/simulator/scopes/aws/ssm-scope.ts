@@ -194,12 +194,6 @@ const getDefaultDataDrive = {
     ]
 };
 
-const getDefaultLogDrive = {
-    commands: [
-        "\n    if($false){\n    $results = sqlcmd -d \"$false\" -Q \"SET NOCOUNT ON; DECLARE @LogPath NVARCHAR(500);\nEXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultLog', @LogPath OUTPUT;\nSELECT LEFT(@LogPath,1) AS CurrentLogDrive \nFOR JSON PATH\" -y 0\n    }\n    else{\n    $results = sqlcmd -Q \"SET NOCOUNT ON; DECLARE @LogPath NVARCHAR(500);\nEXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultLog', @LogPath OUTPUT;\nSELECT LEFT(@LogPath,1) AS CurrentLogDrive \nFOR JSON PATH\" -y 0\n    }\n    Write-Output $results "
-    ]
-};
-
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)

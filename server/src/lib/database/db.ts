@@ -286,9 +286,9 @@ async function listResources(
         where: {
             account_id: accountId,
             ...(resourceId && { resource_id: resourceId }),
-            ...(resourceType && { resource_type: resourceType })
-            // ...(region && { region }),
-            // ...(credentialsId && { credentials_id: credentialsId }) // Note: This is on assumption that we have column credentials
+            ...(resourceType && { resource_type: resourceType }),
+            ...(region && { region }),
+            ...(credentialsId && { credentials_id: credentialsId })
         },
         orderBy: {
             id: 'asc'

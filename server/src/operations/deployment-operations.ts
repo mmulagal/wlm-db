@@ -285,7 +285,7 @@ async function getCloudformationTemplate(
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
 
-    region = region ? region : DEFAULT_AWS_REGION
+    region = !isEmpty(region) ? region : DEFAULT_AWS_REGION;
 
     const customMasterTemplatePath: string = `${WLMDB}/${stackName}/${MASTER_TEMPLATE_PATH}`;
 
@@ -339,7 +339,11 @@ async function getCloudformationTemplate(
     } else {
         // Sleep for 2 seconds for master template to be uploaded
         await sleep(2000);
-        const response = await getObjectBucket(TEMPLATE_BUCKET_REGION, SIGNED_TEMPLATES_BUCKET_NAME, customMasterTemplatePath);
+        const response = await getObjectBucket(
+            TEMPLATE_BUCKET_REGION,
+            SIGNED_TEMPLATES_BUCKET_NAME,
+            customMasterTemplatePath
+        );
         masterTemplateContents = await response.Body?.transformToString();
     }
 
