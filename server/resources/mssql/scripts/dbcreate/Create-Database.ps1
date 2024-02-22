@@ -38,7 +38,7 @@ if ($ResourceID) {
   $SQLCredStore = "/netapp/wlmdb/$ResourceID"
   $credobject =  (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
   $instance = $SQLServer.ToLower() 
-  $index = $credobject.sql.instancename.ToLower().IndexOf($instance) 
+  $index = $credobject.sql.sqlinstancename.ToLower().IndexOf($instance) 
 
   $Dbuser = $credobject.sql.username[$index] 
   $Dbpass = $credobject.sql.password[$index] 
