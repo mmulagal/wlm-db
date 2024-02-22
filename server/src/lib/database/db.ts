@@ -278,9 +278,10 @@ async function listResources(
     pageSize?: number,
     nextToken?: string,
     region?: string,
-    credentialsId?: string
+    credentialsId?: string,
+    fsxId?: string
 ) {
-    logger.info('Listing resources', { accountId, resourceId, resourceType, region, credentialsId });
+    logger.info('Listing resources', { accountId, resourceId, resourceType, region, credentialsId, fsxId });
     accountId = checkAccount(accountId);
     return prisma.client.resource.findMany({
         where: {
@@ -288,7 +289,8 @@ async function listResources(
             ...(resourceId && { resource_id: resourceId }),
             ...(resourceType && { resource_type: resourceType }),
             ...(region && { region }),
-            ...(credentialsId && { credentials_id: credentialsId })
+            // ...(credentialsId && { credentials_id: credentialsId }),
+            ...(fsxId && { co_relation_id: fsxId })
         },
         orderBy: {
             id: 'asc'
