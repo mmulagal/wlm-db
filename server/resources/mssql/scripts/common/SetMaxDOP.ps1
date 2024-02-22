@@ -14,7 +14,7 @@ param(
     $Stackname,
 
     [Parameter(Mandatory=$true)]
-    [string]$Parentstackname
+    [string]$Parentstackname,
 
     [Parameter(Mandatory=$false)]
     [string]
