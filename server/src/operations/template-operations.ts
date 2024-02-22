@@ -75,7 +75,7 @@ async function updateTemplateUrls(
 ) {
     logger.info('Updating templates and uploading to bucket', region, templateFilepath, templateType);
     const source = readFileSync(templateFilepath).toString();
-    const template = Handlebars.compile(source, { noEscape: true });
+    const template = Handlebars.compile(source);
     if (templateType === TEMPLATE_TYPES.MASTER) {
         tags = tags ? tags.concat(DEFAULT_TAGS) : DEFAULT_TAGS;
 
