@@ -1,8 +1,6 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$ParameterStorePath,
-
+    
     [Parameter(Mandatory = $true)]
     [string]$FSxID,
 
@@ -19,7 +17,7 @@ param(
     [string]$OntapResourceQuery
 )
 
-$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | ConvertFrom-Json
+$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
 $FSxUserName = $SsmParameter.fsx.username
 $FSxPassword = $SsmParameter.fsx.password
 

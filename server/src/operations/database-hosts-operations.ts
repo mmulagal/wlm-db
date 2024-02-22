@@ -299,19 +299,19 @@ async function getStorageData(
     try {
         const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
 
-        const { parameterStorePath } = metadata as unknown as Metadata;
+        const { stackname } = metadata as unknown as Metadata;
 
         const info = await getStorageDataUsingSSM(
             credentialsId,
             region!,
             fileSystemId!,
             'storage/volumes',
-            `tiering.object_tags="wlmDeploymentId=${parameterStorePath}"`,
+            `tiering.object_tags="wlmDeploymentId=${stackname}"`,
             'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
             activeNodeInstanceId
         );
 
-        logger.info(`Storage data for volumes with deploymentId ${parameterStorePath}:`, info);
+        logger.info(`Storage data for volumes with deploymentId ${stackname}:`, info);
 
         let totalSize = 0;
         let totalUsed = 0;

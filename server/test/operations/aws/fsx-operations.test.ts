@@ -42,7 +42,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             {
                 node1InstanceId: `i-${faker.string.alpha(17)}`,
                 node2InstanceId: `i-${faker.string.alpha(17)}`,
-                parameterStorePath: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
+                stackname: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
             },
             `i-${faker.string.alpha(17)}`
         );
@@ -57,7 +57,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             {
                 node1InstanceId: `i-${faker.string.alpha(17)}`,
                 node2InstanceId: `i-${faker.string.alpha(17)}`,
-                parameterStorePath: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
+                stackname: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
             }
         );
         expect(response).toBeDefined();
@@ -71,7 +71,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             {
                 node1InstanceId: `i-${faker.string.alpha(17)}`,
                 node2InstanceId: `i-${faker.string.alpha(17)}`,
-                parameterStorePath: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
+                stackname: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
             }
         );
         expect(response).toBeDefined();

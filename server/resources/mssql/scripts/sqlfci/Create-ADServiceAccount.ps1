@@ -23,11 +23,11 @@ param(
         $DomainNetBIOSName = $env:USERDOMAIN
         $DomainAdminFullUser = $DomainNetBIOSName + '\' + $DomainAdminUser
         $ServiceAccountFullUser = $DomainNetBIOSName + '\' + $ServiceAccountUser
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | ConvertFrom-Json
+        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
         $DomainAdminSecurePassword = $SsmParameter.domain.password
-        $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,(ConvertTo-SecureString $DomainAdminSecurePassword.password -AsPlainText -Force)))
+        $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,(ConvertTo-SecureString $DomainAdminSecurePassword -AsPlainText -Force)))
         $ServiceAccountPassword = $SsmParameter.sql[0].password
-        $ServiceAccountSecurePassword = ConvertTo-SecureString $ServiceAccountPassword.password -AsPlainText -Force
+        $ServiceAccountSecurePassword = ConvertTo-SecureString $ServiceAccountPassword -AsPlainText -Force
         $UserPrincipalName = $ServiceAccountUser + "@" + $DomainDNSName
        $createUserSB = {
             $ErrorActionPreference = "Stop"

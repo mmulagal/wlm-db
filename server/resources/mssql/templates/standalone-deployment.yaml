@@ -491,7 +491,9 @@ Resources:
                         d-configure-ontap:
                             command: !Join
                                 - ''
-                                - - pwsh -Command "C:\cfn\scripts\sqlontap\Configure-ONTAP.ps1 
+                                - - pwsh -Command "C:\cfn\scripts\sqlontap\Configure-ONTAP.ps1 -Parentstackname
+                                    '
+                                  - !Ref 'ParentStackName'
                                   - "' -SQLVMName '"
                                   - !Ref 'SQLSvmName'
                                   - "' -FSxDataVolumeName '"
@@ -508,8 +510,6 @@ Resources:
                                   - !Ref 'SQLigroupname'
                                   - "' -ResourceID SqlNode -Stackname '"
                                   - !Ref 'AWS::StackName'
-                                  - ' -Parentstackname '
-                                  - !Ref 'ParentStackName'
                                   - '''"'
                         e-connect-ontap-instance:
                             command: !Join
@@ -559,7 +559,7 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
                                     -DomainDNSName '
                                   - !Ref 'DomainDNSName'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
@@ -585,7 +585,7 @@ Resources:
                                   - !Ref 'DomainDNSName'
                                   - "' -ServiceAccountUser '"
                                   - !Ref 'SQLAdminAccounts'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: '0'
@@ -621,10 +621,12 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -SQLServiceAccount '"
                                   - !Ref 'SQLAdminAccounts'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - "' -NetBIOSName '"
                                   - !Ref 'SqlServerName'
+                                  - "' -Stackname '"
+                                  - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: '0'
                 Configure:
@@ -634,7 +636,7 @@ Resources:
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\SetMaxDOP.ps1 -DomainAdminUser '
                                   - !Ref 'DomainAdminUser'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - "' -NetBIOSName '"
                                   - !Ref 'SqlServerName'
@@ -645,7 +647,7 @@ Resources:
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Set-SQLInstanceName.ps1 -DomainAdminUser '
                                   - !Ref 'DomainAdminUser'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - "' -NetBIOSName '"
                                   - !Ref 'SqlServerName'
@@ -669,9 +671,9 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Create-FsxParameter.ps1
-                                  - ' -FSxID '
+                                  - "' -FSxID '"
                                   - !Ref 'FSxFileSystemId'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '"'
                             waitAfterCompletion: 0

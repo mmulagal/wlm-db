@@ -37,7 +37,7 @@ $InstanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} 
 
 $ErrorActionPreference = "Stop"
 try {
-$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | ConvertFrom-Json
+$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
 $Username = $SsmParameter.fsx.username
 $Password = $SsmParameter.fsx.password
 }catch{

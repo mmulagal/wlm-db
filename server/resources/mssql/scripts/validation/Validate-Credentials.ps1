@@ -56,7 +56,7 @@
         }
         else {
             try {
-            $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | ConvertFrom-Json
+            $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
             $secure = $SsmParameter.domain.password
             # $secure = (Get-SSMParameterValue -Names $DomainAdminSecretName -WithDecryption $True).Parameters[0].Value
             }

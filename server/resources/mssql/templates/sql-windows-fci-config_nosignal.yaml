@@ -557,7 +557,9 @@ Resources:
                         d-configure-ontap:
                             command: !Join
                                 - ''
-                                - - pwsh -Command "C:\cfn\scripts\sqlontap\Configure-ONTAP.ps1 
+                                - - pwsh -Command "C:\cfn\scripts\sqlontap\Configure-ONTAP.ps1 -Parentstackname
+                                    '
+                                  - !Ref 'ParentStackName'
                                   - "' -SQLVMName '"
                                   - !Ref 'SQLSvmName'
                                   - "' -FSxDataVolumeName '"
@@ -576,8 +578,6 @@ Resources:
                                   - !Ref 'SQLigroupname'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
-                                  - ' -Parentstackname '
-                                  - !Ref 'ParentStackName'
                                   - '''"'
                         e-connect-ontap-instance:
                             command: !Join
@@ -627,7 +627,7 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
                                     -DomainDNSName '
                                   - !Ref 'DomainDNSName'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
@@ -664,7 +664,7 @@ Resources:
                                   - !Ref 'DomainDNSName'
                                   - "' -ServiceAccountUser '"
                                   - !Ref 'SQLAdminAccounts'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: '0'
@@ -696,7 +696,7 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Node1AddCluster.ps1
                                     -DomainDNSName '
                                   - !Ref 'DomainDNSName'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - "' -FileSystemId '"
                                   - !Ref 'FSxFileSystemId'
@@ -719,7 +719,7 @@ Resources:
                                     - !GetAtt 'NetworkInterface1.SecondaryPrivateIpAddresses'
                                   - "' -ClusterName '"
                                   - !Ref 'SqlFSxWSFCName'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
@@ -735,7 +735,7 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -wsfcName '"
                                   - !Ref 'SqlFSxWSFCName'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 0
@@ -768,7 +768,7 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 0
@@ -806,7 +806,7 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 0
@@ -824,7 +824,7 @@ Resources:
                                   - !Ref 'SqlFSxServerNetBIOSName2'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 0
@@ -858,9 +858,9 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Create-FsxParameter.ps1
-                                  - ' -FSxID '
+                                  - "' -FSxID '"
                                   - !Ref 'FSxFileSystemId'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '"'
                             waitAfterCompletion: 0
@@ -1115,7 +1115,7 @@ Resources:
                                   - !Ref 'FSxFileSystemId'
                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '''"'
                         e-connect-ontap-instance:
@@ -1156,7 +1156,7 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
                                     -DomainDNSName '
                                   - !Ref 'DomainDNSName'
-                                   - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
@@ -1211,7 +1211,7 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 60
@@ -1228,7 +1228,7 @@ Resources:
                                     - !GetAtt 'NetworkInterface2.SecondaryPrivateIpAddresses'
                                   - "' -ClusterName '"
                                   - !Ref 'SqlFSxWSFCName'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
@@ -1251,7 +1251,7 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 0
@@ -1284,7 +1284,7 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
-                                  - ' -Parentstackname '
+                                  - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 0

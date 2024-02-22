@@ -947,4 +947,3 @@ Resources:
       ActiveDirectoryName: !Ref DomainDNSName
       ActiveDirectoryAddress: !Ref DNSIpAddresses
       EncryptedFsxPassword: !Ref 'EncryptedFsxPassword'
-      ParameterStorePath: !Ref 'AWS::StackName'
