@@ -625,8 +625,6 @@ Resources:
                                   - !Ref 'ParentStackName'
                                   - "' -NetBIOSName '"
                                   - !Ref 'SqlServerName'
-                                  - "' -Stackname '"
-                                  - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: '0'
                 Configure:
@@ -651,8 +649,6 @@ Resources:
                                   - !Ref 'ParentStackName'
                                   - "' -NetBIOSName '"
                                   - !Ref 'SqlServerName'
-                                  - "' -Stackname '"
-                                  - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: '0'
 

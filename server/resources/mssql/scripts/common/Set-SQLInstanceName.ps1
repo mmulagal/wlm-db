@@ -3,11 +3,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string]
     $DomainAdminUser,
-
-    [Parameter(Mandatory=$true)]
-    [string]
-    $Stackname,
-
+    
     [Parameter(Mandatory=$true)]
     [string]
     $NetBIOSName,

@@ -13,10 +13,6 @@ param(
     $DomainAdminUser,
 
     [Parameter(Mandatory=$true)]
-    [string]
-    $Stackname,
-
-    [Parameter(Mandatory=$true)]
     [string]$Parentstackname
 
 )

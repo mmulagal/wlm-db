@@ -653,7 +653,7 @@ const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
 const SQL_RESOURCE_ASSETS = [
     {
         name: 'DSC',
-        url: `DSC.zip`
+        url: `${WLMDB}/DSC.zip`
     },
     // {
     //     name: 'DSCSignature',
@@ -661,7 +661,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'PowerShell',
-        url: `Installer/powershell.zip`
+        url: `${WLMDB}/Installer/powershell.zip`
     },
     // {
     //     name: 'PowerShellSignature',
@@ -669,7 +669,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'Sqlspcu',
-        url: `Installer/sqlspcu.zip`
+        url: `${WLMDB}/Installer/sqlspcu.zip`
     },
     // {
     //     name: 'SqlspcuSignature',
@@ -677,7 +677,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'AmazonFailoverCluster',
-        url: `modules/AmznFailoverCluster.zip`
+        url: `${WLMDB}/modules/AmznFailoverCluster.zip`
     },
     // {
     //     name: 'AmazonFailoverClusterSignature',
@@ -685,7 +685,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'AmazonLaunchWizardForCFN',
-        url: `modules/AWSLaunchWizardForCFN.zip`
+        url: `${WLMDB}/modules/AWSLaunchWizardForCFN.zip`
     },
     // {
     //     name: 'AmazonLaunchWizardForCFNSignature',
@@ -693,7 +693,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'AmazonLaunchWizardForSSM',
-        url: `modules/AWSLaunchWizardForSSM.zip`
+        url: `${WLMDB}/modules/AWSLaunchWizardForSSM.zip`
     },
     // {
     //     name: 'AmazonLaunchWizardForSSMSignature',
@@ -701,15 +701,15 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'ScriptVerifySignature',
-        url: `scripts/Verify-Signature.ps1`
+        url: `${WLMDB}/scripts/Verify-Signature.ps1`
     },
     {
         name: 'ScriptUnzipArchive',
-        url: `scripts/Unzip-Archive.ps1`
+        url: `${WLMDB}/scripts/Unzip-Archive.ps1`
     },
     {
         name: 'ScriptCommon',
-        url: `scripts/common.zip`
+        url: `${WLMDB}/scripts/common.zip`
     },
     // {
     //     name: 'ScriptCommonSignature',
@@ -717,7 +717,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'ScriptSQLFCI',
-        url: `scripts/sqlfci.zip`
+        url: `${WLMDB}/scripts/sqlfci.zip`
     },
     // {
     //     name: 'ScriptSQLFCISignature',
@@ -725,7 +725,7 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'ScriptSQLONTAP',
-        url: `scripts/sqlontap.zip`
+        url: `${WLMDB}/scripts/sqlontap.zip`
     },
     // {
     //     name: 'ScriptSQLONTAPSignature',
@@ -733,27 +733,27 @@ const SQL_RESOURCE_ASSETS = [
     // },
     {
         name: 'ScriptVpcCheck',
-        url: `validation/Validate-VPCConnectivity.ps1`
+        url: `${WLMDB}/validation/Validate-VPCConnectivity.ps1`
     },
     {
         name: 'ScriptUpdateDnsServers',
-        url: `validation/Update-DNSServers.ps1`
+        url: `${WLMDB}/validation/Update-DNSServers.ps1`
     },
     {
         name: 'ScriptRenameComputer',
-        url: `validation/Rename-Computer.ps1`
+        url: `${WLMDB}/validation/Rename-Computer.ps1`
     },
     {
         name: 'ScriptRestartComputer',
-        url: `validation/Restart-Computer.ps1`
+        url: `${WLMDB}/validation/Restart-Computer.ps1`
     },
     {
         name: 'ScriptAdValidation',
-        url: `validation/Validate-Credentials.ps1`
+        url: `${WLMDB}/validation/Validate-Credentials.ps1`
     },
     {
         name: 'ScriptFSxValidation',
-        url: `validation/Validate-FsxConnectivity.ps1`
+        url: `${WLMDB}/validation/Validate-FsxConnectivity.ps1`
     }
 ];
 
