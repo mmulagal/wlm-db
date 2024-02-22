@@ -735,6 +735,8 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -wsfcName '"
                                   - !Ref 'SqlFSxWSFCName'
+                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                  - !Ref 'AWS::StackName'
                                   - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '''"'
