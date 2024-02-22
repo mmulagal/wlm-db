@@ -15,7 +15,9 @@ const initialCreateNewUserState: any = {
     driveLetterLogFile: '',
     dbHostName: '',
     isExistingDataDrive: false,
-    isExistingLogDrive: false
+    isExistingLogDrive: false,
+    isDataSizeValid: true,
+    isLogSizeValid: true
 };
 
 const createNewUserSlice = createSlice({
@@ -66,6 +68,12 @@ const createNewUserSlice = createSlice({
         },
         setIsExistingLogDrive: (state, action: PayloadAction<any>) => {
             state.isExistingLogDrive = action.payload;
+        },
+        setIsDataSizeValid: (state, action: PayloadAction<any>) => {
+            state.isDataSizeValid = action.payload;
+        },
+        setIsLogSizeValid: (state, action: PayloadAction<any>) => {
+            state.isLogSizeValid = action.payload;
         }
     }
 });
@@ -85,7 +93,9 @@ export const {
     setDriveLetterForLogFile,
     setDBHostName,
     setIsExistingDataDrive,
-    setIsExistingLogDrive
+    setIsExistingLogDrive,
+    setIsDataSizeValid,
+    setIsLogSizeValid
 } = createNewUserSlice.actions;
 
 export default createNewUserSlice;

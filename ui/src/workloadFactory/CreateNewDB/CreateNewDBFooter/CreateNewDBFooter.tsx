@@ -14,7 +14,7 @@ const CreateNewUserFooter = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    const createNewUser = useAppSelector(state => state.createNewUser);
+    const state = useAppSelector(state => state);
     const resourceId = useAppSelector(state => state.auth.resourceId);
     const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
     const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
@@ -26,7 +26,7 @@ const CreateNewUserFooter = () => {
     const [createNewUserDb] = useCreateUserDBMutation();
 
     const handleCreate = async () => {
-        const payload = handleCreateUserDb(createNewUser);
+        const payload = handleCreateUserDb(state, dispatch);
         if (payload) {
             dispatch(setIsLoading(true));
             try {
@@ -43,7 +43,7 @@ const CreateNewUserFooter = () => {
                             notificationType: NOTIFICATION_TYPES.INFO,
                             message: (
                                 <>
-                                    {`${GENERAL.DB_CREATE_NOTIFICATION[0]} ${createNewUser?.newUserDBName} ${GENERAL.DB_CREATE_NOTIFICATION[1]} ${createNewUser?.dbHostName} ${GENERAL.DB_CREATE_NOTIFICATION[2]}`}
+                                    {`${GENERAL.DB_CREATE_NOTIFICATION[0]} ${state?.createNewUser?.newUserDBName} ${GENERAL.DB_CREATE_NOTIFICATION[1]} ${state?.createNewUser?.dbHostName} ${GENERAL.DB_CREATE_NOTIFICATION[2]}`}
                                     <Button
                                         Component="button"
                                         variant="text"

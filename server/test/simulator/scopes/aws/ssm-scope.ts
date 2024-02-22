@@ -8,7 +8,8 @@ import {
     SendCommandCommand,
     SSMClient,
     GetParametersByPathCommand,
-    GetConnectionStatusCommand
+    GetConnectionStatusCommand,
+    PutParameterCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
 import { hostAndSqlInfoPowerShellScript } from '../../../../src/operations/workloads/mssql/discover-consts';
@@ -16,6 +17,7 @@ import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands
 import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
 import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
 import getConnectionStatusResponse from '../../responses/aws/ssm-connection-status.json';
+import putParameterResponse from '../../responses/aws/ssm-put-parameter.json';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -194,12 +196,6 @@ const getDefaultDataDrive = {
     ]
 };
 
-const getDefaultLogDrive = {
-    commands: [
-        "\n    if($false){\n    $results = sqlcmd -d \"$false\" -Q \"SET NOCOUNT ON; DECLARE @LogPath NVARCHAR(500);\nEXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultLog', @LogPath OUTPUT;\nSELECT LEFT(@LogPath,1) AS CurrentLogDrive \nFOR JSON PATH\" -y 0\n    }\n    else{\n    $results = sqlcmd -Q \"SET NOCOUNT ON; DECLARE @LogPath NVARCHAR(500);\nEXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultLog', @LogPath OUTPUT;\nSELECT LEFT(@LogPath,1) AS CurrentLogDrive \nFOR JSON PATH\" -y 0\n    }\n    Write-Output $results "
-    ]
-};
-
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -331,3 +327,4 @@ ssmMock
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
+ssmMock.on(PutParameterCommand).resolves(putParameterResponse);

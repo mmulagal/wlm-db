@@ -123,10 +123,10 @@ Parameters:
         Default: 1024
 
     FSxVolumeThroughputCapacity:
-        Description: The sustained speed, in MB/s, at which the file server hosting your file system can serve data. The file server can also burst to higher speeds for periods of time. Valid values are 128, 256, 512, 1024, and 2048 MB/s.
+        Description: The sustained speed, in MB/s, at which the file server hosting your file system can serve data. The file server can also burst to higher speeds for periods of time. Valid values are 128, 256, 512, 1024, 2048 and 4096 MB/s.
         Type: Number
         Default: 128
-        AllowedValues: [128, 256, 512, 1024, 2048]
+        AllowedValues: [128, 256, 512, 1024, 2048, 4096]
 
     FSxWeeklyMaintenanceStartTime:
         Description: A recurring weekly maintenance start time, in the format D:HH:MM. D is the day of the week, for which 1 represents Monday and 7 represents Sunday. HH is the zero-padded hour of the day (0-23), and MM is the zero-padded minute of the hour.

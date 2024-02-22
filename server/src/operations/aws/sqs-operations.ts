@@ -537,7 +537,7 @@ async function processCloudFormationMessages() {
                                                     }
 
                                                     const resourceId = getMsSqlResourceId(
-                                                        node2InstanceId,
+                                                        node1InstanceId,
                                                         node2InstanceId
                                                     );
 

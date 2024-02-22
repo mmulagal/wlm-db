@@ -80,7 +80,7 @@ const GetFSxRegionsSchema = {
     tags: [RouteTags.AWS],
     params: AwsParams,
     summary: 'List AWS regions that supports FSx',
-    descriptions: 'List the AWS regions enabled for the given account and supports Amazon FSx for NetApp ONTAP',
+    description: 'List the AWS regions enabled for the given account and supports Amazon FSx for NetApp ONTAP',
     response: {
         200: FSxRegionsResponse
     }

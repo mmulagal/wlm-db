@@ -1,5 +1,9 @@
 import { faker } from '@faker-js/faker';
-import { executeSSMDocument, getFSxOntapRegionsList } from '../../../src/operations/aws/ssm-operations';
+import {
+    executeSSMDocument,
+    getFSxOntapRegionsList,
+    ssmPutParameters
+} from '../../../src/operations/aws/ssm-operations';
 import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -7,11 +11,12 @@ import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
+import { SSMParamterObject } from '../../../src/utils/common-types';
+
+const credentialsId = `${faker.string.alpha(20)}`;
 
 describe('executeSsmDocument', () => {
     it('executeSsmDocument', async () => {
-        const credentialsId = `${faker.string.alpha(20)}`;
-
         const resp = await executeSSMDocument(credentialsId, 'ap-southeast-1', SSM_PARAMS);
         expect(resp).toBeDefined();
     });
@@ -134,5 +139,39 @@ describe('executeSsmDocument', () => {
 
         const response = await getFSxOntapRegionsList(credentialsType);
         expect(response).toEqual(fsxOntapRegionsResponse);
+    });
+
+    it('Put parameters in ssm parameter store', async () => {
+        const params: SSMParamterObject[] = [
+            {
+                path: 'netapp/wlmdb/fs-1234',
+                value: {
+                    fsx: {
+                        username: 'username',
+                        password: 'SQLdev'
+                    }
+                }
+            },
+            {
+                path: 'netapp/wlmdb/i-5678',
+                value: {
+                    sql: [
+                        {
+                            username: 'username',
+                            password: 'SQLdev',
+                            sqlinstancename: 'SQLinstanceName1'
+                        },
+                        {
+                            username: 'username',
+                            password: 'SQLdev',
+                            sqlinstancename: 'SQLinstanceName2'
+                        }
+                    ]
+                }
+            }
+        ];
+
+        const response = await ssmPutParameters(credentialsId, 'us-east-1', params);
+        expect(response).toBeUndefined();
     });
 });

@@ -107,7 +107,11 @@ const app = fastify({
         openapi: {
             info: {
                 title: API_TITLE,
-                version: VERSION
+                version: VERSION,
+                description: API_TITLE,
+                contact: {
+                    email: 'ng-wlm-fsx@netapp.com'
+                }
             },
             servers: [
                 {
