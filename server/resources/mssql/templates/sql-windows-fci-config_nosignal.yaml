@@ -1,3 +1,4 @@
+#prettier-ignore
 AWSTemplateFormatVersion: '2010-09-09'
 Description: This template deploys SQL Server failover cluster instances using NetApp FSx for ONTAP in an existing VPC.
             This template creates EC2 instances and related resources. 
@@ -524,7 +525,15 @@ Resources:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
                         o-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
-                        p-hide-ssm:
+                        p-move-mappedontapvolumesscript:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Configure-LUNs.ps1 -Destination C:\SSM\
+                        q-move-mappedontapvolumesscript:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\NewDB_Initialize-Iscsidisk.ps1 -Destination C:\SSM\
+                        r-move-mappedontapvolumesscript:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Create-Database.ps1 -Destination C:\SSM\
+                        s-move-mappedontapvolumesscript:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Cleanup-ONTAP.ps1 -Destination C:\SSM\
+                        t-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                 InitialSetup:
                     commands:
@@ -1069,7 +1078,15 @@ Resources:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
                         o-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
-                        p-hide-ssm:
+                        p-move-mappedontapvolumesscript:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Configure-LUNs.ps1 -Destination C:\SSM\
+                        q-move-mappedontapvolumesscript:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\NewDB_Initialize-Iscsidisk.ps1 -Destination C:\SSM\
+                        r-move-mappedontapvolumesscript:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Create-Database.ps1 -Destination C:\SSM\
+                        s-move-mappedontapvolumesscript:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Cleanup-ONTAP.ps1 -Destination C:\SSM\
+                        t-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                 InitialSetup:
                     commands:
