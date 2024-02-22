@@ -62,7 +62,7 @@ import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { getSSMConnectionStatus, isSSMConnectionSuccessful } from './aws/ssm-operations';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
-import { GET_DEFAULT_DRIVES, GET_DRIVE_INFO } from './workloads/mssql/ssm-script-utils';
+import { GET_CLUSTER_DRIVES, GET_DEFAULT_DRIVES, GET_DRIVE_INFO } from './workloads/mssql/ssm-script-utils';
 import { getResources } from './database/database-operations';
 import { sqlResponseParsing } from '../utils/utils';
 
@@ -988,16 +988,20 @@ async function getDriveInfoFromNodes(
         undefined,
         false
     );
+    // Getting clustered drive letters for FCI deployments
+    const clusterCommand = [GET_CLUSTER_DRIVES];
+
+    const clusterCommandPromise = standbyNodeInstanceId
+        ? callSsmExecution(credentialsId, region, clusterCommand, activeNodeInstanceId!, undefined, false)
+        : Promise.resolve();
 
     // Getting drive info of drives present on standby node to eliminate presenting existing drive letter as available drive letter
     const existingDriveStandbyNodePromise = standbyNodeInstanceId
         ? callSsmExecution(credentialsId, region, driveInfoCommand, standbyNodeInstanceId!, undefined, false)
         : Promise.resolve();
 
-    const [existingDriveActiveNodeResponse, existingDriveStandbyNodeResponse] = await Promise.all([
-        existingDriveActiveNodePromise,
-        existingDriveStandbyNodePromise
-    ]);
+    const [clusterDrivesResponse, existingDriveActiveNodeResponse, existingDriveStandbyNodeResponse] =
+        await Promise.all([clusterCommandPromise, existingDriveActiveNodePromise, existingDriveStandbyNodePromise]);
 
     const parsedActiveNodeResponse = sqlResponseParsing(existingDriveActiveNodeResponse!);
     const parsedstandbyNodeResponse = existingDriveStandbyNodeResponse!
@@ -1023,13 +1027,23 @@ async function getDriveInfoFromNodes(
         }
     });
 
+    let updatedExitingDrives: any[] = activeNodeExistingDrives;
+
+    if (standbyNodeInstanceId && clusterDrivesResponse) {
+        const clusterDrivesValue = JSON.parse(clusterDrivesResponse).map((value: string) => value.replace(':', ''));
+        updatedExitingDrives = activeNodeExistingDrives.map(drive => ({
+            ...drive,
+            isDriveClustered: clusterDrivesValue.includes(drive.driveLetter)
+        }));
+    }
+
     // Constructing list of available drive letters
     const availableDriveLetters = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).filter(
-        letter => letter >= 'D' && !activeNodeExistingDrives.some(obj => obj.driveLetter === letter)
+        letter => letter >= 'D' && !updatedExitingDrives.some(obj => obj.driveLetter === letter)
     );
 
-    logger.debug('Existing drives info', { activeNodeExistingDrives, availableDriveLetters });
-    return { activeNodeExistingDrives, availableDriveLetters };
+    logger.debug('Existing drives info', { updatedExitingDrives, availableDriveLetters });
+    return { updatedExitingDrives, availableDriveLetters };
 }
 
 async function getDriveInfoFromSSM(
@@ -1112,7 +1126,7 @@ async function getDriveInfo(
     const { storage } = fsxStorageCapacity ?? {};
 
     const response: DriveInfoResponseBodyType = {
-        existingDriveInfo: getDriveInfoFromNodesResponse.activeNodeExistingDrives,
+        existingDriveInfo: getDriveInfoFromNodesResponse.updatedExitingDrives,
         availableDriveLetters: getDriveInfoFromNodesResponse.availableDriveLetters,
         ...(storage !== undefined && { fsxStorageCapacity: storage * 1024 * 1024 * 1024 }),
         ...(getDefaultDrivesResponse.currentDataDrive !== undefined && {

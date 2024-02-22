@@ -196,6 +196,12 @@ const getDefaultDriveLetters = {
     ]
 };
 
+const getClusterDriveLetters = {
+    commands: [
+        "\n$diskqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_Disk'\n$partqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_DiskPartition'\n\n$paths = Get-ClusterResource | Where-Object { $_.ResourceType.Name -eq 'Physical Disk' } `\n  | ForEach-Object { Get-WmiObject MSCluster_Resource -Namespace root/mscluster -Filter \"Name='$_'\" } `\n  | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($diskqry -f $_) } `\n  | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($partqry -f $_) } `\n  | Select-Object -ExpandProperty Path\n\n$paths | ConvertTo-JSON\n"
+    ]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -262,6 +268,8 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getDriveInfo })
     .resolves(listSendCommandCommandResponse.getDriveInfoCommandResponse)
     .on(SendCommandCommand, { Parameters: getDefaultDriveLetters })
+    .resolves(listSendCommandCommandResponse.getDefaultDriveLettersCommandResponse)
+    .on(SendCommandCommand, { Parameters: getClusterDriveLetters })
     .resolves(listSendCommandCommandResponse.getDefaultDriveLettersCommandResponse);
 
 ssmMock
@@ -326,7 +334,9 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getDriveInfo' })
     .resolves(getCommandInvocationResponse.getDriveInfoResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getDefaultDriveLetters' })
-    .resolves(getCommandInvocationResponse.getDefaultDrivesResponse);
+    .resolves(getCommandInvocationResponse.getDefaultDrivesResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getClusterDriveLetters' })
+    .resolves(getCommandInvocationResponse.getClusterdDrivesResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
