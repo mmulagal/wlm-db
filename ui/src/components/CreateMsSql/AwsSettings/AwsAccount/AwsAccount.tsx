@@ -161,9 +161,11 @@ const AwsAccount = () => {
 
     useEffect(() => {
         const credValue = selectedCredential?.data?.name;
-        const label2 = `Account ID: ${selectedCredential?.data?.providerAccountId}`;
-        const option = generateOptionType(credValue, credValue, label2, false, '', selectedCredential?.data);
-        dispatch(setHeaderSelectedCred(option));
+        if (credValue) {
+            const label2 = `Account ID: ${selectedCredential?.data?.providerAccountId}`;
+            const option = generateOptionType(credValue, credValue, label2, false, '', selectedCredential?.data);
+            dispatch(setHeaderSelectedCred(option));
+        }
     }, [selectedCredential]);
 
     //Set the Header text here
