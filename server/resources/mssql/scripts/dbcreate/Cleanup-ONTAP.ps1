@@ -1,12 +1,9 @@
 #Requires -Version 7.0
-#Requires -Module AWS.Tools.FSX,AWS.Tools.secretsmanager
+#Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
     [string]$FileSystemId,
-
-    [Parameter(Mandatory=$true)]
-    [string]$FSxCredStore,
 
     [Parameter(Mandatory=$true)]
     [string]$SQLVMName,
