@@ -468,6 +468,7 @@ Resources:
 
   TrackStackDeployment:
     Type: Custom::MyCustomResource
+    Condition: ShouldSendSaasNotification
     Properties:
       ServiceToken: !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb'
       AccountId: !Ref AccountId
@@ -973,6 +974,7 @@ Resources:
       {{Tags}}
   PostStackDeployment:
     Type: Custom::MyCustomResource
+    Condition: ShouldSendSaasNotification
     Properties:
       ServiceToken: !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb'
       AccountId: !Ref AccountId
