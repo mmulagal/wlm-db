@@ -183,6 +183,11 @@ Outputs:
     FSxFileSystemId:
         Description: ID of the FSx for ONTAP file system
         Value: !Ref FSxFileSystemId
+    FSxSvmId:
+        Description: System generated ID of the storage virtual machine
+        Value: !GetAtt FSxSvmConfiguration.StorageVirtualMachineId
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxSvmId
     FSxDataVolumeLogicalId:
         Description: Logical ID of the FSx for ONTAP data volume
         Value: !Ref FSxDataVolumeConfiguration
