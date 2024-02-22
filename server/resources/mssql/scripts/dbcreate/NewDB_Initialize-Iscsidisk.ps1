@@ -25,7 +25,7 @@ $ErrorActionPreference = "Stop"
 if (-Not $DataDrive) { 
     if ($IsClustered -ne "false") {
         $clusterdrives = (Get-WmiObject -Namespace root\MSCluster MSCluster_DiskPartition).Path
-        $DataDrive = (ls function:[d-z]: -n | ?{ !(test-path $_) -And !($list -contains $_)} | random)
+        $DataDrive = (ls function:[d-z]: -n | ?{ !(test-path $_) -And !($clusterdrives -contains $_)} | random)
     } else {
         $DataDrive = (ls function:[d-z]: -n | ?{ !(test-path $_) } | random) 
     }
@@ -34,7 +34,7 @@ if (-Not $DataDrive) {
 if (-Not $LogDrive) {
     if ($IsClustered -ne "false") {
        $clusterdrives = (Get-WmiObject -Namespace root\MSCluster MSCluster_DiskPartition).Path
-       $LogDrive = (ls function:[d-z]: -n | ?{ !(test-path $_) -And !($list -contains $_)} | random)
+       $LogDrive = (ls function:[d-z]: -n | ?{ !(test-path $_) -And !($clusterdrives -contains $_)} | random)
     } else {
         $LogDrive = (ls function:[d-z]: -n | ?{ !(test-path $_) } | random)
     }
