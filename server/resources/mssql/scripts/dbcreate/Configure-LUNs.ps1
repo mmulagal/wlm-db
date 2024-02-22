@@ -6,9 +6,6 @@ param(
     [string]$FileSystemId,
 
     [Parameter(Mandatory=$true)]
-    [string]$FSxCredStore,
-
-    [Parameter(Mandatory=$true)]
     [string]$SQLVMName,
 
     [Parameter(Mandatory=$true)]
@@ -27,6 +24,8 @@ param(
 Start-Transcript -Path C:\cfn\log\Configure_luns.log.txt -Append
 
 $ErrorActionPreference = "Stop"
+
+$FSxCredStore  = "/netapp/wlmdb/$FileSystemId"
 
 $credobject =  (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
 

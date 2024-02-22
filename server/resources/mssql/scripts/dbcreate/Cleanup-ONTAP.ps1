@@ -1,4 +1,4 @@
- #Requires -Version 7.0
+#Requires -Version 7.0
 #Requires -Module AWS.Tools.FSX,AWS.Tools.secretsmanager
 [CmdletBinding()]
 param(
@@ -25,6 +25,7 @@ Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Append
 
 $ErrorActionPreference = "Stop"
 
+$FSxCredStore  = "/netapp/wlmdb/$FileSystemId"
 $credobject =  (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
 
 $username = $credobject.fsx.username
