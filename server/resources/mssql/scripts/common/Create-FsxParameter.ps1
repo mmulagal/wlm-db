@@ -15,5 +15,5 @@ try {
     Write-SSMParameter -Name "/netapp/wlmdb/$FSxID" -Value "{fsx:{username:'$FSxUserName',password:'$FSxPassword'}}" -Type SecureString -Overwrite $true
 }
 catch {
-    $_ | Write-AWSLaunchWizardException
+    Write-Output @{ status = "Failed"; reason = $_ } | ConvertTo-Json -Compress
 }

@@ -864,7 +864,7 @@ Resources:
                                   - !Ref 'FSxFileSystemId'
                                   - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
-                                  - '"'
+                                  - '''"'
                             waitAfterCompletion: 0
                 Cleanup:
                     commands:

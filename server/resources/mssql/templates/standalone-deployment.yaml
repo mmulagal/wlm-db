@@ -673,7 +673,7 @@ Resources:
                                   - !Ref 'FSxFileSystemId'
                                   - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
-                                  - '"'
+                                  - '''"'
                             waitAfterCompletion: 0
                         b-signal-resource:
                             command: !Sub "cfn-signal.exe -e %ERRORLEVEL% --resource SqlNode\
