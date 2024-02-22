@@ -24,7 +24,7 @@ import {
     setRefreshTime
 } from '../../../store/workloadFactory/headersSlice';
 import { workloadFactoryResourceApi } from '../../../utils/apiService';
-import { setJobsList } from '../../../store/workloadFactory/jobMonitoringSlice';
+import { setJobsList, setSubJobsData } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
 import { WLF_TABS } from '../../../utils/consts';
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
@@ -123,6 +123,7 @@ const HeaderComponent = () => {
             dispatch(workloadFactoryResourceApi.util.resetApiState());
         } else if (selectedHeaderTab === WLF_TABS.JOB_MONITORING) {
             dispatch(setJobsList([]));
+            dispatch(setSubJobsData([]))
         }
     };
 
