@@ -83,7 +83,7 @@ function callGetOrDeleteApi{
 
 $LOGLUN = 'sqllog'
 $DATALUN = 'sqldata'
-if ($FSxDataVolumeName -And $FsxLogVolume){
+if ($FSxDataVolumeName -And $FsxLogVolumeName){
 $vollist = @($FSxDataVolumeName,$FSxLogVolumeName)
 $pathlist =@("/vol/$FSxDataVolumeName/$DATALUN","/vol/$FSxLogVolumeName/$LOGLUN")
 }  elseif($FSxDataVolumeName) {
