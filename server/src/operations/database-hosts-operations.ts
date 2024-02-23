@@ -1,5 +1,5 @@
 import { JOBSTATUS, JOBTYPE, resource, STORAGE_TYPE } from '@prisma/client';
-import { DescribeInstancesCommandOutput } from '@aws-sdk/client-ec2';
+import { DescribeInstancesCommandOutput, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { listResources } from '../lib/database/db';
@@ -119,9 +119,17 @@ async function getTopology(
     region: string,
     resourceId: string,
     resourceData: resource,
-    additionalFields?: { [key: string]: boolean }
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId?: string
 ): Promise<TopologyResponseType> {
-    logger.info('Fetching topology data', accountId, region, resourceId, resourceData);
+    logger.info('Fetching topology data', {
+        accountId,
+        region,
+        resourceId,
+        resourceData,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    });
 
     if (isEmpty(resourceData)) {
         throw createError(
@@ -152,15 +160,7 @@ async function getTopology(
         ec2Details: []
     };
 
-    let activeNodeInstanceId: string | undefined;
-    let standbyNodeInstanceId;
     if (!isEmpty(node1InstanceId)) {
-        ({ activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
-            credentialsId,
-            region,
-            node1InstanceId,
-            node2InstanceId
-        ));
         let vpcId;
         let fileSystemStatus;
         let fileSystemName;
@@ -169,30 +169,34 @@ async function getTopology(
         let fileSystemThroughputCapacity;
         let subnetIds: Array<string> | undefined;
         let availabilityZones: Array<string> | undefined;
+        let vpcCidr: string | undefined;
 
-        if (additionalFields?.allTopology || additionalFields?.vpc) {
-            try {
-                const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
-                vpcId = fsxInfo?.FileSystems?.[0].VpcId;
-                fileSystemName = fsxInfo?.FileSystems?.[0].Tags?.reduce(
-                    (a = '', tag) => (tag.Key === 'Name' ? tag.Value : a),
-                    ''
-                );
+        try {
+            const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
+            vpcId = fsxInfo?.FileSystems?.[0].VpcId;
+            fileSystemName = fsxInfo?.FileSystems?.[0].Tags?.reduce(
+                (a = '', tag) => (tag.Key === 'Name' ? tag.Value : a),
+                ''
+            );
 
-                fileSystemDeploymentMode = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DeploymentType;
-                fileSystemStatus = fsxInfo?.FileSystems?.[0].Lifecycle;
-                fileSystemStorageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity;
-                fileSystemThroughputCapacity = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
-                subnetIds = fsxInfo?.FileSystems?.[0].SubnetIds;
+            fileSystemDeploymentMode = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DeploymentType;
+            fileSystemStatus = fsxInfo?.FileSystems?.[0].Lifecycle;
+            fileSystemStorageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity;
+            fileSystemThroughputCapacity = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
+            subnetIds = fsxInfo?.FileSystems?.[0].SubnetIds;
 
-                const { Subnets: subnets } = await describeSubnets(credentialsId, region, {
-                    SubnetIds: subnetIds
-                });
-                availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
-                logger.info('availabilityZones', availabilityZones);
-            } catch (error) {
-                logger.error(`Error while fetching details for fsx. Error: ${error}`);
-            }
+            const { Subnets: subnets } = await describeSubnets(credentialsId, region, {
+                SubnetIds: subnetIds
+            });
+            availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
+            const vpcParams: DescribeVpcsCommandInput = {
+                VpcIds: [vpcId!]
+            };
+            const { Vpcs: vpcs = [] } = await describeVpc(credentialsId, region, vpcParams);
+            vpcCidr = vpcs[0]?.CidrBlock;
+            logger.info('availabilityZones', availabilityZones);
+        } catch (error) {
+            logger.error(`Error while fetching details for fsx. Error: ${error}`);
         }
 
         const instanceIds = node2InstanceId ? [node1InstanceId, node2InstanceId] : [node1InstanceId];
@@ -208,10 +212,11 @@ async function getTopology(
         let standbyAvailabilityZone;
         let standbySubnetId;
         let standbyVolumeId;
-        let activeDirectoryDetails;
         let activeNodeInstanceName;
         let standbyNodeInstanceName;
-        if (additionalFields?.allTopology) {
+
+        if (!isEmpty(activeNodeInstanceId)) {
+            // fetch instance details only if there is atleast one active node
             try {
                 ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
                 const node1 = ec2InstanceDetails.Reservations?.[0].Instances?.[0];
@@ -237,11 +242,11 @@ async function getTopology(
             } catch (error) {
                 logger.error(`Error while fetching details for ec2 instances. Error: ${error}`);
             }
-            activeDirectoryDetails = {
-                name: activeDirectoryName || '',
-                address: activeDirectoryAddress || ''
-            };
         }
+        const activeDirectoryDetails = {
+            name: activeDirectoryName || '',
+            address: activeDirectoryAddress || ''
+        };
         let vpcName;
         if (vpcId) {
             const { Vpcs } = await describeVpc(credentialsId, region, {
@@ -270,21 +275,24 @@ async function getTopology(
             ...(vpcId && { vpcId }),
             ...(vpcName && { vpcName }),
             ...(availabilityZones && { availabilityZones }),
+            ...(vpcCidr && { vpcCidr }),
             ...(keyPairName && { keyPairName }),
-            ec2Details: [
-                {
-                    id: activeNodeInstanceId!,
-                    name: activeNodeInstanceName,
-                    ebsVolumeId: activeVolumeId || '',
-                    ...(activeInstanceType && { instanceType: activeInstanceType }),
-                    ...(activeAvailabilityZone && { availabilityZone: activeAvailabilityZone }),
-                    ...(activeSubnetId && { subnetId: activeSubnetId })
-                }
-            ],
+            ...(activeNodeInstanceId && {
+                ec2Details: [
+                    {
+                        id: activeNodeInstanceId!,
+                        name: activeNodeInstanceName,
+                        ebsVolumeId: activeVolumeId || '',
+                        ...(activeInstanceType && { instanceType: activeInstanceType }),
+                        ...(activeAvailabilityZone && { availabilityZone: activeAvailabilityZone }),
+                        ...(activeSubnetId && { subnetId: activeSubnetId })
+                    }
+                ]
+            }),
             ...(activeDirectoryDetails && { activeDirectoryDetails })
         };
-        if (standbyNodeInstanceId) {
-            topologyData.ec2Details.push({
+        if (activeNodeInstanceId && standbyNodeInstanceId) {
+            topologyData.ec2Details?.push({
                 id: standbyNodeInstanceId!,
                 name: standbyNodeInstanceName,
                 ebsVolumeId: standbyVolumeId || '',
@@ -306,27 +314,19 @@ async function getStorageData(
     try {
         const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
 
-        const { fsxSecret } = metadata as unknown as Metadata;
-
-        // DeploymentID is same as AWS CloudFormation stack name.  We retrieve
-        // deploymentID from the fsxSecret, which has an additional '-fsx'
-        // suffix to stack name (e.g., WLMDB-SqlFciStack-1698992271319-fsx).
-        //     ONTAP tags have '_' instead of '-' in the stack name.  So we
-        // tune tag accordingly with replaceAll.
-        const deploymentId = fsxSecret?.replace('-fsx', '')?.replaceAll('-', '_');
+        const { stackname } = metadata as unknown as Metadata;
 
         const info = await getStorageDataUsingSSM(
             credentialsId,
             region!,
             fileSystemId!,
-            fsxSecret!,
             'storage/volumes',
-            `tiering.object_tags="wlmDeploymentId=${deploymentId}"`,
+            `tiering.object_tags="wlmDeploymentId=${stackname}"`,
             'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
             activeNodeInstanceId
         );
 
-        logger.info(`Storage data for volumes with deploymentId ${deploymentId}:`, info);
+        logger.info(`Storage data for volumes with deploymentId ${stackname}:`, info);
 
         let totalSize = 0;
         let totalUsed = 0;
@@ -612,9 +612,6 @@ async function getDatabaseHostsSummary(
     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
-    const additionalFields = {
-        vpc: Boolean(getUsageEstimation)
-    };
 
     const databaseHosts: DatabaseHostSummaryResponseType[] = [];
     try {
@@ -631,7 +628,7 @@ async function getDatabaseHostsSummary(
                 const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
                 // Check SSM Connection status
-                const { isSSMConnected, activeNodeInstanceId } = await isSSMConnectionSuccessful(
+                const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
                     credentialsId,
                     region!,
                     node1InstanceId,
@@ -644,7 +641,14 @@ async function getDatabaseHostsSummary(
                             ...(isSSMConnected && activeNodeInstanceId
                                 ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId)]
                                 : [Promise.resolve()]),
-                            getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
+                            getTopology(
+                                accountId,
+                                region!,
+                                resourceId,
+                                resourceDetail,
+                                activeNodeInstanceId!,
+                                standbyNodeInstanceId
+                            ),
                             ...(isSSMConnected && getPerformance && activeNodeInstanceId
                                 ? [getServerIOLatency(resourceId, activeNodeInstanceId)]
                                 : [Promise.resolve()]), // Fetch io latency data
@@ -726,9 +730,6 @@ async function getDatabaseHostSummary(
     const getResourceutilization = fieldsValues?.includes(
         DatabaseHostsQueryFields.RESOURCE_UTILIZATION.toLocaleLowerCase()
     );
-    const additionalFields = {
-        allTopology: true
-    };
 
     const {
         resource_id: resourceId,
@@ -741,7 +742,7 @@ async function getDatabaseHostSummary(
         const { node1InstanceId, node2InstanceId, creationDate } = metadata as unknown as Metadata;
 
         // Check SSM Connection status
-        const { isSSMConnected, activeNodeInstanceId } = await isSSMConnectionSuccessful(
+        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
             credentialsId,
             region!,
             node1InstanceId,
@@ -767,7 +768,14 @@ async function getDatabaseHostSummary(
                     ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId)]
                     : [Promise.resolve()]),
                 ...(isSSMConnected ? [getServerSummary(resourceId)] : [Promise.resolve()]), // Fetch server metadata
-                getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
+                getTopology(
+                    accountId,
+                    region!,
+                    resourceId,
+                    resourceDetail,
+                    activeNodeInstanceId!,
+                    standbyNodeInstanceId
+                ),
                 ...(isSSMConnected && getPerformance && activeNodeInstanceId
                     ? [getPerformanceMetrics(resourceId, activeNodeInstanceId)]
                     : [Promise.resolve()]), // Fetch io latency data

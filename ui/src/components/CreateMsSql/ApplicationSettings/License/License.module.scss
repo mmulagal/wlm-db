@@ -8,6 +8,13 @@
         width: 676px;
     }
 
+    .labelClass {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        width: 400px;
+    }
+
     .radio-container {
         display: flex;
         gap: 32px;

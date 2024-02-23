@@ -90,7 +90,9 @@ const License = () => {
         }
         if (licenseSelect === GENERAL.LICENSE_INCLUDED_AMI) {
             return (
-                <Typography variant="Regular_14">{selectedLicenseId?.value || GENERAL.LICENSE_INCLUDED_AMI}</Typography>
+                <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
+                    {licenseSelect}
+                </Typography>
             );
         }
         if (licenseSelect === GENERAL.USE_CUSTOM_AMI) {

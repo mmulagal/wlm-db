@@ -21,7 +21,8 @@ import {
     WF,
     DEPLOYMENT_JOBS_FAILED_STATUS,
     WLMDB_COST_ALLOCATION_TAG,
-    CF_STACK_RESOURCE_TYPE
+    CF_STACK_RESOURCE_TYPE,
+    RESOURCE_SOURCE
 } from '../../utils/consts';
 import {
     checkAndRetrieveJsonObject,
@@ -492,7 +493,7 @@ async function processCloudFormationMessages() {
                                                         SQLDeploymentType: sqlDeploymentType,
                                                         ResourceName: resourceName,
                                                         FileSystemType: fileSystemType,
-                                                        FSxNSecret: fsxSecret,
+                                                        StackName: stackname,
                                                         ActiveDirectoryName: activeDirectoryName,
                                                         ActiveDirectoryAddress: activeDirectoryAddress,
                                                         EncryptedFsxPassword: encryptedFsxPassword,
@@ -536,7 +537,7 @@ async function processCloudFormationMessages() {
                                                     }
 
                                                     const resourceId = getMsSqlResourceId(
-                                                        node2InstanceId,
+                                                        node1InstanceId,
                                                         node2InstanceId
                                                     );
 
@@ -555,10 +556,11 @@ async function processCloudFormationMessages() {
                                                             node1InstanceId,
                                                             node2InstanceId,
                                                             sqlDeploymentType,
-                                                            fsxSecret,
+                                                            stackname,
                                                             activeDirectoryName,
                                                             activeDirectoryAddress,
-                                                            fsxSvmId
+                                                            fsxSvmId,
+                                                            source:RESOURCE_SOURCE.DEPLOY
                                                         }
                                                     });
 

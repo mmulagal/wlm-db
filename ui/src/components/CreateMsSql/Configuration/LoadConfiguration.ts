@@ -122,14 +122,15 @@ Get APIs calls are required on change fields as to show latest data in accordion
 export const apiCallsList = (dispatch: Dispatch, loadData: any) => {
     const state = store.getState();
     let apis = [];
-    const credId = loadData?.awsAccount?.selectedCredential?.value;
+    const credId = loadData?.awsAccount?.selectedCredential?.data?.credentialsId;
     const regionId = loadData?.regionAndVpc?.selectedRegion?.value;
     const vpcId = loadData?.regionAndVpc?.selectedVPC?.label2;
     const osVersion = loadData?.operatingSystem?.label;
     const dbVersion = loadData?.dbVersion?.value;
     const dbEdition = loadData?.dbEdition?.value;
 
-    const isSameCred = state.mssqlForm.awsAccount?.selectedCredential?.value === credId;
+    // cred value was getting compared earlier. But found 1 case where cred id was same but name was different so comparing with credId now.
+    const isSameCred = state.mssqlForm.awsAccount?.selectedCredential?.data?.credentialsId === credId;
     const isSameRegion = state.mssqlForm.regionAndVpc?.selectedRegion?.value === regionId;
     const isSameVpc = state.mssqlForm.regionAndVpc?.selectedVPC?.label2 === vpcId;
 

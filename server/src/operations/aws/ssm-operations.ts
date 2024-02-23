@@ -6,13 +6,21 @@ import {
     GetCommandInvocationCommandInput,
     GetCommandInvocationCommandOutput,
     InvocationDoesNotExist,
+    PutParameterCommandInput,
     SendCommandCommandInput
 } from '@aws-sdk/client-ssm';
-import { sendSSMCommand, getCommandInvocation, describeFSxOntapRegions, getConnectionStatus } from '../../lib/aws/ssm';
+import {
+    sendSSMCommand,
+    getCommandInvocation,
+    describeFSxOntapRegions,
+    getConnectionStatus,
+    putParameter
+} from '../../lib/aws/ssm';
 import { sleep } from '../../utils/utils';
 import { AWS_REGIONS } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
+import { SSMParamterObject } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -107,7 +115,7 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
 }
 
 async function getSSMConnectionStatus(credentialId: string, region: string, instanceId: string) {
-    logger.info('Check for successful SSM connection', credentialId, region, instanceId);
+    logger.info('Check for successful SSM connection', { credentialId, region, instanceId });
     return getConnectionStatus(credentialId, region, {
         Target: instanceId
     });
@@ -120,14 +128,13 @@ async function isSSMConnectionSuccessful(
     node2InstanceId?: string,
     resourceId?: string
 ) {
-    logger.info(
-        'Check if SSM connection is a success',
+    logger.info('Check if SSM connection is a success', {
         credentialsId,
         region,
         node1InstanceId,
         node2InstanceId,
         resourceId
-    );
+    });
     try {
         let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node1InstanceId);
         const resourceError = `for resource ID ${resourceId}`;
@@ -169,4 +176,29 @@ async function isSSMConnectionSuccessful(
     return { isSSMConnected: false };
 }
 
-export { executeSSMDocument, getFSxOntapRegionsList, getSSMConnectionStatus, isSSMConnectionSuccessful };
+async function ssmPutParameters(credentialsId: string, region: string, credentials: SSMParamterObject[]) {
+    logger.info('Put SSM parameters', { credentialsId, region });
+
+    const inputList = credentials.map(({ path, value }) => ({
+        Name: path,
+        Value: JSON.stringify(value),
+        Overwrite: true,
+        Type: 'SecureString',
+        Tier: 'Standard'
+    }));
+
+    logger.debug('Put SSM parameters', inputList);
+
+    await Promise.all(
+        inputList.map(async input => putParameter(credentialsId, region, input as PutParameterCommandInput))
+    );
+}
+
+export {
+    executeSSMDocument,
+    getFSxOntapRegionsList,
+    getSSMConnectionStatus,
+    isSSMConnectionSuccessful,
+    ssmPutParameters,
+    pollCommandStatus
+};

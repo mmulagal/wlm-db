@@ -62,7 +62,8 @@ import {
     VIEW,
     MAP_SERVICE_TEMPLATE_PARAMETER,
     SIGNED_TEMPLATES_BUCKET_NAME,
-    TEMPLATE_BUCKET_REGION
+    TEMPLATE_BUCKET_REGION,
+    DEFAULT_AWS_REGION
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -284,6 +285,8 @@ async function getCloudformationTemplate(
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
 
+    region = !isEmpty(region) ? region : DEFAULT_AWS_REGION;
+
     const customMasterTemplatePath: string = `${WLMDB}/${stackName}/${MASTER_TEMPLATE_PATH}`;
 
     const signedMasterTemplateUrl = await getPreSignedUrl(
@@ -336,7 +339,11 @@ async function getCloudformationTemplate(
     } else {
         // Sleep for 2 seconds for master template to be uploaded
         await sleep(2000);
-        const response = await getObjectBucket(region!, SIGNED_TEMPLATES_BUCKET_NAME, customMasterTemplatePath);
+        const response = await getObjectBucket(
+            TEMPLATE_BUCKET_REGION,
+            SIGNED_TEMPLATES_BUCKET_NAME,
+            customMasterTemplatePath
+        );
         masterTemplateContents = await response.Body?.transformToString();
     }
 

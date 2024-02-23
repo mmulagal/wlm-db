@@ -7,9 +7,6 @@
         [string]$UserName,
 
         [Parameter(Mandatory=$true)]
-        [string]$DomainAdminSecretName,
-
-        [Parameter(Mandatory=$true)]
         [boolean]$isSecretManagerSupported,
 
         [Parameter(Mandatory=$false)]
@@ -17,6 +14,9 @@
 
         [Parameter(Mandatory=$true)]
         [string]$Stackname,
+
+        [Parameter(Mandatory=$true)]
+        [string]$Parentstackname,
 
         [Parameter(Mandatory=$true)]
         [string]$ResourceID,
@@ -55,7 +55,19 @@
             }
         }
         else {
-            $secure = (Get-SSMParameterValue -Names $DomainAdminSecretName -WithDecryption $True).Parameters[0].Value
+            try {
+            $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+            $secure = $SsmParameter.domain.password
+            # $secure = (Get-SSMParameterValue -Names $DomainAdminSecretName -WithDecryption $True).Parameters[0].Value
+            }
+             catch {
+                $Failed = $true
+                $FailureReason = '"{0}"' -f "Unable to fetch SSM parameter, /netapp/wlmdb/$Parentstackname and access to SSM parameter store"
+                Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
+                Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
+                Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
+                exit(1)
+            }
         }
         $pass = ConvertTo-SecureString $secure -AsPlainText -Force
         $cred = New-Object System.Management.Automation.PSCredential -ArgumentList $UserName, $pass

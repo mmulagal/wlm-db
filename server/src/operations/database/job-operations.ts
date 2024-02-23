@@ -30,6 +30,8 @@ const logger = getLogger();
 interface Job extends JobRecordType {
     id: string;
     accountId: string;
+    credentialsId: string;
+    region: string;
 }
 interface JobWithSubJobs extends Job {
     subJobs?: Job[];

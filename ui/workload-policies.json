@@ -104,9 +104,6 @@
                     "logs:ListLogDeliveries",
                     "logs:PutLogEvents",
                     "logs:TagResource",
-                    "secretsmanager:CreateSecret",
-                    "secretsmanager:GetSecretValue",
-                    "secretsmanager:ListSecrets",
                     "servicequotas:ListServiceQuotas",
                     "sns:ListTopics",
                     "sns:Publish",
@@ -128,14 +125,11 @@
                 "Sid": "ArnGroup",
                 "Effect": "Allow",
                 "Action": [
-                    "cloudformation:SignalResource",
-                    "secretsmanager:PutResourcePolicy",
-                    "secretsmanager:TagResource"
+                    "cloudformation:SignalResource"
                 ],
                 "Resource": [
                     "arn:aws:cloudformation:*:*:stack/WLMDB*",
-                    "arn:aws:logs:*:*:log-group:WLMDB*",
-                    "arn:aws:secretsmanager:*:*:secret:wlmdb*"
+                    "arn:aws:logs:*:*:log-group:WLMDB*"
                 ]
             },
             {
@@ -178,6 +172,16 @@
                         "iam:PassedToService": "ec2.amazonaws.com"
                     }
                 }
+            },
+            {
+                "Sid": "SSMParameterStore",
+                "Effect": "Allow",
+                "Action": [
+                    "ssm:GetParameter",
+                    "ssm:GetParameters",
+                    "ssm:PutParameter"
+                ],
+                "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
             }
         ]
     },
@@ -188,7 +192,6 @@
                 "Sid": "CommonGroup",
                 "Effect": "Allow",
                 "Action": [
-                    "secretsmanager:GetSecretValue",
                     "sns:ListTopics",
                     "ec2:DescribeInstances",
                     "ec2:DescribeVpcs",
@@ -218,6 +221,16 @@
                     "fsx:ListTagsForResource"
                 ],
                 "Resource": ["*"]
+            },
+            {
+                "Sid": "SSMParameterStore",
+                "Effect": "Allow",
+                "Action": [
+                    "ssm:GetParameter",
+                    "ssm:GetParameters",
+                    "ssm:PutParameter"
+                ],
+                "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
             }
         ]
     }

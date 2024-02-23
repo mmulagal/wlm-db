@@ -34,14 +34,14 @@ describe('Testcases for Amazon FSx resources operations', () => {
     });
 
     it('AWS backup enabled check', async () => {
+       
         const response = await isAWSBackupEnabled(
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID,
             {
                 node1InstanceId: `i-${faker.string.alpha(17)}`,
-                node2InstanceId: `i-${faker.string.alpha(17)}`,
-                fsxSecret: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
+                node2InstanceId: `i-${faker.string.alpha(17)}`
             },
             `i-${faker.string.alpha(17)}`
         );
@@ -55,8 +55,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             FSX_FILESYSTEM_ID,
             {
                 node1InstanceId: `i-${faker.string.alpha(17)}`,
-                node2InstanceId: `i-${faker.string.alpha(17)}`,
-                fsxSecret: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
+                node2InstanceId: `i-${faker.string.alpha(17)}`
             }
         );
         expect(response).toBeDefined();
@@ -69,8 +68,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             FSX_FILESYSTEM_ID,
             {
                 node1InstanceId: `i-${faker.string.alpha(17)}`,
-                node2InstanceId: `i-${faker.string.alpha(17)}`,
-                fsxSecret: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
+                node2InstanceId: `i-${faker.string.alpha(17)}`
             }
         );
         expect(response).toBeDefined();

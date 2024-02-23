@@ -7,20 +7,25 @@ import {
     setNewDBFileName,
     setNewUserLogFileName,
     setDriveLetter,
-    setDriveLetterForLogFile
+    setDriveLetterForLogFile,
+    setIsExistingDataDrive,
+    setIsExistingLogDrive
 } from '../../../../../store/workloadFactory/createNewDBSlice';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { generateOptionType } from '../../../../../utils/utilityFunctions';
 
 import styles from './FileNames.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
-import { useGetDriveInfoQuery } from '../../../../../utils/apiService';
 import { DRIVE_LETTER_TYPE } from '../../../../../utils/consts';
+import { NOTIFICATION_TYPES, addNotification } from '../../../../../store/notificationSlice';
 
 const FileNames = () => {
     const dispatch = useDispatch();
+
+    const dataNameRef = useRef(null);
+    const logNameRef = useRef(null);
 
     const {
         newUserDBFileName,
@@ -28,14 +33,33 @@ const FileNames = () => {
         selectedNewUserConfig,
         driveLetter,
         driveLetterLogFile,
-        newUserDBName
+        newUserDBName,
+        driveInfoList,
+        driveInfoListLoading
     } = useAppSelector(state => state.createNewUser);
+    const isDbCreateHit = useAppSelector(state => state.msSqlAction.isDbCreateHit);
+    const dbCreateDataNameAdded = useAppSelector(state => state.msSqlAction.dbCreateDataNameAdded);
+    const dbCreateLogNameAdded = useAppSelector(state => state.msSqlAction.dbCreateLogNameAdded);
 
     const [dataFilePath, setDataFilePath] = useState('');
     const [logFilePath, setLogFilePath] = useState('');
-    const resourceId = useAppSelector(state => state.auth.resourceId);
 
-    const { data: driveInfoList, isFetching: driveInfoListLoading } = useGetDriveInfoQuery({ id: resourceId });
+    useEffect(() => {
+        if (isDbCreateHit) {
+            if (!dbCreateDataNameAdded) {
+                setTimeout(() => {
+                    //@ts-ignore
+                    dataNameRef?.current?.focus();
+                }, 100);
+            }
+            if (!dbCreateLogNameAdded) {
+                setTimeout(() => {
+                    //@ts-ignore
+                    logNameRef?.current?.focus();
+                }, 90);
+            }
+        }
+    }, [dbCreateDataNameAdded, dbCreateLogNameAdded, isDbCreateHit]);
 
     useEffect(() => {
         if (driveLetter && newUserDBFileName) {
@@ -75,14 +99,9 @@ const FileNames = () => {
                 val?.driveLetter,
                 DRIVE_LETTER_TYPE.EXISTING,
                 !val?.isNetappDrive,
-                ''
+                '',
+                val
             );
-            if (val?.defaultDataDrive) {
-                dispatch(setDriveLetter(option));
-            }
-            if (val?.defaultLogDrive) {
-                dispatch(setDriveLetterForLogFile(option));
-            }
             options.push(option);
         });
         driveInfoList?.availableDriveLetters?.map((val: any, idx: number) => {
@@ -92,9 +111,56 @@ const FileNames = () => {
         return options;
     }, [driveInfoList]);
 
+    // Default drive letters logic to set for quick and advanced view
+    useEffect(() => {
+        dispatch(setDriveLetter(null));
+        dispatch(setDriveLetterForLogFile(null));
+        if (selectedNewUserConfig === GENERAL.DB_QUICK_CREATE) {
+            // For quick - Select drive letters from available drives list
+            const avlDrive = driveInfoList?.availableDriveLetters;
+            if (avlDrive && avlDrive.length >= 2) {
+                const option1 = generateOptionType(avlDrive[0], avlDrive[0], DRIVE_LETTER_TYPE.NEW, false, '');
+                dispatch(setDriveLetter(option1));
+                const option2 = generateOptionType(avlDrive[1], avlDrive[1], DRIVE_LETTER_TYPE.NEW, false, '');
+                dispatch(setDriveLetterForLogFile(option2));
+            }
+        } else if (selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE) {
+            // For Advanced - Select default drive letters
+            const defaultDataDrive = driveInfoList?.defaultDataDrive;
+            const defaultLogDrive = driveInfoList?.defaultLogDrive;
+            driveInfoList?.existingDriveInfo?.map((val: any, idx: number) => {
+                const option = generateOptionType(
+                    val?.driveLetter,
+                    val?.driveLetter,
+                    DRIVE_LETTER_TYPE.EXISTING,
+                    !val?.isNetappDrive,
+                    '',
+                    val
+                );
+                if (defaultDataDrive === val?.driveLetter) {
+                    dispatch(setDriveLetter(option));
+                }
+                if (defaultLogDrive === val?.driveLetter) {
+                    dispatch(setDriveLetterForLogFile(option));
+                }
+            });
+        }
+    }, [selectedNewUserConfig, driveInfoList]);
+
+    // Based of selected drive letters need to add if it is a existing or new drive letters
+    useEffect(() => {
+        dispatch(setIsExistingDataDrive(driveLetter?.label2 === DRIVE_LETTER_TYPE.EXISTING));
+        dispatch(setIsExistingLogDrive(driveLetterLogFile?.label2 === DRIVE_LETTER_TYPE.EXISTING));
+    }, [driveLetter, driveLetterLogFile]);
+
     //Set the Header text here
     const setHeader = () => {
-        if (newUserDBFileName && newUserLogFileName) {
+        // For quick create it will just show file name. For advanced it will show path also.
+        if (
+            newUserDBFileName &&
+            newUserLogFileName &&
+            (selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE ? (driveLetter && driveLetterLogFile) : true)
+        ) {
             return (
                 <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
                     <div className={styles.headerText}>
@@ -119,7 +185,7 @@ const FileNames = () => {
                 </DsTypography>
             );
         }
-        return <ActionRequired error={false} />;
+        return <ActionRequired error={!dbCreateDataNameAdded || !dbCreateLogNameAdded ? true : false} />;
     };
 
     return (
@@ -141,6 +207,7 @@ const FileNames = () => {
                             <>
                                 <div className={styles.firstRow}>
                                     <TextField
+                                        ref={dataNameRef}
                                         label={GENERAL.DATA_FILE_NAME}
                                         placeholder={GENERAL.DATA_FILE_NAME}
                                         value={newUserDBFileName}
@@ -148,8 +215,12 @@ const FileNames = () => {
                                             dispatch(setNewDBFileName(e.target.value));
                                         }}
                                         className={styles.quickFileNameText}
+                                        error={
+                                            !dbCreateDataNameAdded && !newUserDBFileName ? GENERAL.ACTION_REQUIRED : ''
+                                        }
                                     />
                                     <TextField
+                                        ref={logNameRef}
                                         label={GENERAL.LOG_FILE_NAME}
                                         placeholder={GENERAL.LOG_FILE_NAME}
                                         value={newUserLogFileName}
@@ -157,6 +228,9 @@ const FileNames = () => {
                                             dispatch(setNewUserLogFileName(e.target.value));
                                         }}
                                         className={styles.quickFileNameText}
+                                        error={
+                                            !dbCreateLogNameAdded && !newUserLogFileName ? GENERAL.ACTION_REQUIRED : ''
+                                        }
                                     />
                                 </div>
                             </>
@@ -198,6 +272,7 @@ const FileNames = () => {
 
                                         <div className={styles.firstRow}>
                                             <TextField
+                                                ref={dataNameRef}
                                                 label={GENERAL.DATA_FILE_NAME}
                                                 placeholder={GENERAL.DATA_FILE_NAME}
                                                 value={newUserDBFileName}
@@ -205,6 +280,11 @@ const FileNames = () => {
                                                     dispatch(setNewDBFileName(e.target.value));
                                                 }}
                                                 className={styles.advFileNameText}
+                                                error={
+                                                    !dbCreateDataNameAdded && !newUserDBFileName
+                                                        ? GENERAL.ACTION_REQUIRED
+                                                        : ''
+                                                }
                                             />
                                         </div>
                                         <div className={styles.pathSection}>
@@ -236,6 +316,7 @@ const FileNames = () => {
 
                                         <div className={styles.firstRow}>
                                             <TextField
+                                                ref={logNameRef}
                                                 label={GENERAL.LOG_FILE_NAME}
                                                 placeholder={GENERAL.LOG_FILE_NAME}
                                                 value={newUserLogFileName}
@@ -243,6 +324,11 @@ const FileNames = () => {
                                                     dispatch(setNewUserLogFileName(e.target.value));
                                                 }}
                                                 className={styles.advFileNameText}
+                                                error={
+                                                    !dbCreateLogNameAdded && !newUserLogFileName
+                                                        ? GENERAL.ACTION_REQUIRED
+                                                        : ''
+                                                }
                                             />
                                         </div>
                                         <div className={styles.pathSection}>

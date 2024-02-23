@@ -7,6 +7,7 @@ import { addCredentialsHeaderList, addRegionsHeaderList, addStatus } from '../..
 const HeaderComponentApi = () => {
     const dispatch = useAppDispatch();
     const selectedCredential = useAppSelector(state => state.headers.headerSelectedCred);
+    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
     // CredentialId state
     const [selectedCredId, setSelectedCredId] = useState(undefined);
@@ -43,7 +44,7 @@ const HeaderComponentApi = () => {
             dispatch(addStatus({ undefined, statusLoading, statusError }));
         } else {
             dispatch(addStatus({ statusData, statusLoading, statusError }));
-            if (statusData && statusData?.isActive) {
+            if (isDemoMode || (statusData && statusData?.isActive)) {
                 setSkipApiCall(false);
             }
         }

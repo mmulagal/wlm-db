@@ -522,6 +522,26 @@
             "RequestedDateTime": "2023-08-28T14:57:41.365Z"
         }
     },
+    "getHostAndSqlServerInfoResponse": {
+        "$metadata": {
+          "httpStatusCode": 200,
+          "requestId": "0bc3b860-4278-4eec-8fab-ff33ed0cacb9",
+          "extendedRequestId": "undefined",
+          "cfId": "undefined",
+          "attempts": 1,
+          "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "7f937c8c-3f95-460b-ad99-788b354bffa8",
+            "DocumentName": "AWS-RunPowerShellScript",
+            "ExpiresAfter": "2024-02-18T16:58:41.365Z",
+            "InstanceId": [ "i-006dfc76b11ef264e" ],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2024-02-18T16:55:41.365Z"
+        }
+      },
     "getDriveInfoCommandResponse": {
         "$metadata": {
             "httpStatusCode": 200,

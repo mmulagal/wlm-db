@@ -553,6 +553,7 @@ export const GENERAL = {
         'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
         'Names should not be Transact-SQL reserved words.'
     ],
+    DB_NAME_ERROR_CHECK: 'Check database name criteria',
     DB_ADVANCED_CREATE: 'Advanced create',
     DB_QUICK_CREATE: 'Quick create',
     QUICK_DB_CREATE_CONTENT:
@@ -580,7 +581,12 @@ export const GENERAL = {
     LOG_FILE: 'Log file',
     DATA_FILE_PATH: 'Data file path:',
     LOG_FILE_PATH: 'Log file path:',
-    SELECT_DRIVE_LETTER: 'Select drive letter'
+    SELECT_DRIVE_LETTER: 'Select drive letter',
+    LOG_SIZE_ERROR: 'Log size should be less than data size.',
+    DATA_SIZE_ERROR: 'The valid range is 1 GiB - ',
+    DRIVE_LETTER_CREATE_ERROR: 'Action required: Drive letters are missing. Use Advanced Create mode to select drives.',
+    DRIVE_LETTER_QUICK_CREATE_ERROR:
+        'Insufficient drive letters available on system to create new drives. Use Advanced Create mode to reuse existing drives.'
 };
 
 export const CODE_VIEWER = {

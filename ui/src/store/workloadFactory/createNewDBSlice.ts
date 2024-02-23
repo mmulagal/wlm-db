@@ -2,6 +2,8 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 const initialCreateNewUserState: any = {
     selectedNewUserConfig: 'Quick create',
+    driveInfoList: null,
+    driveInfoListLoading: false,
     newUserDBName: '',
     newUserDataSize: '',
     newUserDataSizeUnit: '',
@@ -11,7 +13,11 @@ const initialCreateNewUserState: any = {
     newUserLogFileSizeUnit: '',
     driveLetter: '',
     driveLetterLogFile: '',
-    dbHostName: ''
+    dbHostName: '',
+    isExistingDataDrive: false,
+    isExistingLogDrive: false,
+    isDataSizeValid: true,
+    isLogSizeValid: true
 };
 
 const createNewUserSlice = createSlice({
@@ -20,6 +26,12 @@ const createNewUserSlice = createSlice({
     reducers: {
         setSelectedNewUserConfig: (state, action: PayloadAction<any>) => {
             state.selectedNewUserConfig = action.payload;
+        },
+        setDriveInfoList: (state, action: PayloadAction<any>) => {
+            state.driveInfoList = action.payload;
+        },
+        setDriveInfoListLoading: (state, action: PayloadAction<any>) => {
+            state.driveInfoListLoading = action.payload;
         },
         setNewUserDBName: (state, action: PayloadAction<any>) => {
             state.newUserDBName = action.payload;
@@ -50,12 +62,26 @@ const createNewUserSlice = createSlice({
         },
         setDBHostName: (state, action: PayloadAction<any>) => {
             state.dbHostName = action.payload;
+        },
+        setIsExistingDataDrive: (state, action: PayloadAction<any>) => {
+            state.isExistingDataDrive = action.payload;
+        },
+        setIsExistingLogDrive: (state, action: PayloadAction<any>) => {
+            state.isExistingLogDrive = action.payload;
+        },
+        setIsDataSizeValid: (state, action: PayloadAction<any>) => {
+            state.isDataSizeValid = action.payload;
+        },
+        setIsLogSizeValid: (state, action: PayloadAction<any>) => {
+            state.isLogSizeValid = action.payload;
         }
     }
 });
 
 export const {
     setSelectedNewUserConfig,
+    setDriveInfoList,
+    setDriveInfoListLoading,
     setNewUserDBName,
     setNewUserDataSize,
     setNewUserDataSizeUnit,
@@ -65,7 +91,11 @@ export const {
     setNewUserLogFileSizeUnit,
     setDriveLetter,
     setDriveLetterForLogFile,
-    setDBHostName
+    setDBHostName,
+    setIsExistingDataDrive,
+    setIsExistingLogDrive,
+    setIsDataSizeValid,
+    setIsLogSizeValid
 } = createNewUserSlice.actions;
 
 export default createNewUserSlice;

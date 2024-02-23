@@ -38,6 +38,7 @@ import pricingRoutes from './routes/pricing';
 import databaseHostsRoutes from './routes/database-hosts';
 import deploymentJobsRoutes from './routes/jobs';
 import serviceStatusRoutes from './routes/service-status';
+import discoverRoutes from './routes/discover';
 // import {
 //     createAuditGroup,
 //     updateAuditGroup,
@@ -106,7 +107,11 @@ const app = fastify({
         openapi: {
             info: {
                 title: API_TITLE,
-                version: VERSION
+                version: VERSION,
+                description: API_TITLE,
+                contact: {
+                    email: 'ng-wlm-fsx@netapp.com'
+                }
             },
             servers: [
                 {
@@ -185,6 +190,7 @@ const app = fastify({
             deploymentJobsRoutes(instance);
             chatbotRoutes(instance);
             serviceStatusRoutes(instance);
+            discoverRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}` }

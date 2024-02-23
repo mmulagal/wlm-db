@@ -15,7 +15,6 @@ import {
     GetDriveInfoSchema
 } from './schemas/database-hosts-schemas';
 
-const DATABASE_HOSTS_API_PATH = '/v1/database-hosts';
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 
 export default function databaseHostsRoutes(fastify: FastifyInstance) {
@@ -31,7 +30,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         })
         .get(
-            `${DATABASE_HOSTS_API_PATH}/:databaseHostId`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId`,
             { schema: DatabaseHostDetailsSchema },
             async (request, reply) => {
                 const {
@@ -43,7 +42,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${DATABASE_HOSTS_API_PATH}/:databaseHostId/databases`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/databases`,
             { schema: DatabasesListSchema },
             async (request, reply) => {
                 const {

@@ -22,13 +22,11 @@ Metadata:
                   - PerformADCheck
                   - DomainDNSName
                   - DomainAdminUser
-                  - DomainAdminSecretName
             - Label:
                   default: Amazon FSx for ONTAP Volume Configuration
               Parameters:
                   - PerformFSxCheck
                   - FSxFileSystemId
-                  - FSxAdministratorPasswordSecret
             - Label:
                   default: AWS Launch Wizard Configuration
               Parameters:
@@ -39,8 +37,6 @@ Metadata:
                 default: Unique ID for your resource tags
             AMI:
                 default: AMI ID of the validation node
-            DomainAdminSecretName:
-                default: Domain Admin password secret string name
             DomainAdminUser:
                 default: Domain Admin user name
             DomainDNSName:
@@ -67,8 +63,6 @@ Metadata:
                 default: Boolean to check whether to validate FSx for ONTAP credentials and reachability from subnet
             FSxFileSystemId:
                 default: FSx for ONTAP Filesystem ID
-            FSxAdministratorPasswordSecret:
-                default: Secret String for FSx for ONTAP user account
 Parameters:
     UniqueID:
         Default: UID123
@@ -77,9 +71,6 @@ Parameters:
     AMI:
         Type: String
         Default: ami-061d37dd032d5c737
-    DomainAdminSecretName:
-        Description: Secret string name for the domain admin password.
-        Type: String
     DomainAdminUser:
         Description: User name for the account that will be used as Domain Administrator.
             This is separate from the default "Administrator" account.
@@ -133,9 +124,6 @@ Parameters:
         Type: String
     FSxFileSystemId:
         Description: ID for the FSx for ONTAP file system.
-        Type: String
-    FSxAdministratorPasswordSecret:
-        Description: Secret string for the FSx for ONTAP user account.
         Type: String
 Conditions:
     isGovRegion: !Or
@@ -335,11 +323,11 @@ Resources:
                                   - !Ref 'DomainDNSName'
                                   - ' -UserName '
                                   - !Ref 'DomainAdminUser'
-                                  - ' -DomainAdminSecretName '
-                                  - !Ref 'DomainAdminSecretName'
-                                  - ' -isSecretManagerSupported  1'
+                                  - ' -isSecretManagerSupported  0'
                                   - ' -Stackname '
                                   - !Ref 'AWS::StackName'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - ' -ResourceID ValidationNode1'
                                   - ' -WaitHandler '
                                   - '"'
@@ -356,10 +344,10 @@ Resources:
                                     - !Ref 'FSxFileSystemId'
                                     - ' -FSxRegion '
                                     - !Ref 'AWS::Region'
-                                    - ' -FSxAdministratorPasswordSecret '
-                                    - !Ref 'FSxAdministratorPasswordSecret'
                                     - ' -Stackname '
                                     - !Ref 'AWS::StackName'
+                                    - ' -Parentstackname '
+                                    - !Ref 'ParentStackName'
                                     - ' -ResourceID ValidationNode1'
                                     - ' -WaitHandler '
                                     - '"'
@@ -383,7 +371,7 @@ Resources:
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
-            InstanceInitiatedShutdownBehavior: terminate
+            InstanceInitiatedShutdownBehavior: stop
             UserData: !Base64
                 Fn::Join:
                     - ''
@@ -417,6 +405,12 @@ Resources:
                       - 'Write-Output $StatusCode'
                       - "\n"
                       - 'if ($StatusCode -eq 200) {'
+                      - "\n"
+                      - '$stackname = "'
+                      - !Ref 'ParentStackName'
+                      - '"'
+                      - "\n"
+                      - 'Write-SSMParameter  -Name "/netapp/wlmdb/$stackname" -Value (Get-SSMParameter -Name "/netapp/wlmdb/$stackname").Value -Type "SecureString" -Overwrite $true'
                       - "\n"
                       - 'cfn-init.exe -v -c config -s '
                       - !Ref 'AWS::StackId'
@@ -579,10 +573,10 @@ Resources:
                                     - !Ref 'FSxFileSystemId'
                                     - ' -FSxRegion '
                                     - !Ref 'AWS::Region'
-                                    - ' -FSxAdministratorPasswordSecret '
-                                    - !Ref 'FSxAdministratorPasswordSecret'
                                     - ' -Stackname '
                                     - !Ref 'AWS::StackName'
+                                    - ' -Parentstackname '
+                                    - !Ref 'ParentStackName'
                                     - ' -ResourceID ValidationNode2'
                                     - ' -WaitHandler '
                                     - '"'
@@ -606,7 +600,7 @@ Resources:
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
-            InstanceInitiatedShutdownBehavior: terminate
+            InstanceInitiatedShutdownBehavior: stop
             UserData: !Base64
                 Fn::Join:
                     - ''
