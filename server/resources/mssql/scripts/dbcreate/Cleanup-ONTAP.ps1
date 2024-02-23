@@ -40,6 +40,7 @@ $base64 = [System.Convert]::ToBase64String($bytes)
 #get management IP
 $nodeiqn = (Get-InitiatorPort).NodeAddress
 
+$result = @{}
 
 function returncert{
     param(
@@ -62,7 +63,9 @@ function callGetOrDeleteApi{
     [Parameter(Mandatory=$true)]
     [string]$creds,
     [Parameter(Mandatory=$true)]
-    [string]$method
+    [string]$method,
+    [Parameter(Mandatory=$true)]
+    [hashtable]$result    
     )
     try{
         $restcert = returncert -region $region
@@ -74,7 +77,12 @@ function callGetOrDeleteApi{
         }
         Invoke-RestMethod @Params -Certificate $restcert
     }catch{
-        Write-Error "{Message:Failed to run the API command,Exception: $_"
+    $result.Add('Status','Failed')
+    $result.Add('Message','Failed to run the REST API command')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson 
+    exit 1
     }
 }
 
@@ -101,12 +109,11 @@ foreach ($lunpath in $pathlist) {
 $URI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($SQLVMName)&igroup=$($IGROUP)&path=$($lunpath)"
 $restcert = returncert -region $region
 #check if records exist before deleting
-$lunmappingdata = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records
+$lunmappingdata = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET" -result $result).records
 
 foreach ($perlunmap in $lunmappingdata) {
     $DeleteURI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($perlunmap.vserver)&path=$($perlunmap.path)&igroup=$($perlunmap.igroup)"
-    callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
-    Write-Output ("Deleted LUN mapping for {0}" -f $perlunmap.path)
+    callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE" -result $result
 }
 
 }
@@ -115,17 +122,21 @@ foreach ($perlunmap in $lunmappingdata) {
 try{
 $lunUriDynamicPart='private/cli/lun'
 $URI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($SQLVMName)"
-$lunlist = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records
+$lunlist = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET" -result $result).records
 #check if lun exists before deleting
 foreach ($perlun in $lunlist) {
     if($pathlist -contains $perlun.path) {
         $DeleteURI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($perlun.vserver)&path=$($perlun.path)"
-        callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
-        Write-Output ("Deleted LUN {0}" -f $perlun.path)
+        callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE" -result $result
     }
 }
 }catch{
-        Write-Error "{Message:Failed to cleanup LUNs,Exception: $_}"
+    $result.Add('Status','Failed')
+    $result.Add('Message','Failed to delete LUNs')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson 
+    exit 1
     }
 
 
@@ -134,15 +145,21 @@ try{
 $volUriDynamicPart = 'storage/volumes'
 foreach ($volume in $vollist) {
 $URI = "https://$($MgmtDNS)/api/$($volUriDynamicPart)?name=$($volume)"
-$voluri = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records.uuid
+$voluri = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET" -result $result).records.uuid
 if ($voluri) {
     $DELVOLURI = "https://$($MgmtDNS)/api/$($volUriDynamicPart)/$($voluri)"
-    callGetOrDeleteApi -uri $DELVOLURI -region $region -creds $base64 -method "DELETE"
-    Write-Output "Deleted volume $volume"
+    callGetOrDeleteApi -uri $DELVOLURI -region $region -creds $base64 -method "DELETE" -result $result
 }
-else {Write-Output "Volume $volume not present"}
 }
 }catch{
-        Write-Error "{Message:Failed to cleanup volumes,Exception: $_}"
+    $result.Add('Status','Failed')
+    $result.Add('Message','Failed to delete volumes')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson 
+    exit 1
     }
- 
+    $result.Add('Status','Complete')
+    $result.Add('Message','Cleaning up resources complete')
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson 
