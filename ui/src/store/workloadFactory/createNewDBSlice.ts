@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-const initialCreateNewUserState: any = {
+export const initialCreateNewUserState: any = {
     selectedNewUserConfig: 'Quick create',
     driveInfoList: null,
     driveInfoListLoading: false,
@@ -74,6 +74,9 @@ const createNewUserSlice = createSlice({
         },
         setIsLogSizeValid: (state, action: PayloadAction<any>) => {
             state.isLogSizeValid = action.payload;
+        },
+        addInitialDBCreateData: (state, action: PayloadAction<any>) => {
+            return { ...state, ...action.payload };
         }
     }
 });
@@ -95,7 +98,8 @@ export const {
     setIsExistingDataDrive,
     setIsExistingLogDrive,
     setIsDataSizeValid,
-    setIsLogSizeValid
+    setIsLogSizeValid,
+    addInitialDBCreateData
 } = createNewUserSlice.actions;
 
 export default createNewUserSlice;

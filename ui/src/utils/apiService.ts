@@ -485,6 +485,7 @@ export const policiesApi = createApi({
 export const createUserDbApi = createApi({
     reducerPath: 'createUserDbApi',
     baseQuery: dynamicBaseQuery,
+    refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
             getDriveInfo: builder.query({
