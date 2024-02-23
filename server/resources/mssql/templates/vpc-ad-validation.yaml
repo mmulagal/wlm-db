@@ -279,21 +279,21 @@ Resources:
                 FetchResources:
                     files:
                         C:\cfn\scripts\Unzip-Archive.ps1:
-                            source: {{ ScriptUnzipArchive }}
+                            source: {{{ ScriptUnzipArchive }}}
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
-                            source: {{ AmazonLaunchWizardForCFN }}
+                            source: {{{ AmazonLaunchWizardForCFN }}}
                         C:\cfn\scripts\Validate-VPC.ps1:
-                            source: {{ ScriptVpcCheck }}
+                            source: {{{ ScriptVpcCheck }}}
                         C:\cfn\scripts\Update-DNSServers.ps1:
-                            source: {{ ScriptUpdateDnsServers }}
+                            source: {{{ ScriptUpdateDnsServers }}}
                         C:\cfn\scripts\Rename-Computer.ps1:
-                            source: {{ ScriptRenameComputer }}
+                            source: {{{ ScriptRenameComputer }}}
                         C:\cfn\scripts\Restart-Computer.ps1:
-                            source: {{ ScriptRestartComputer }}
+                            source: {{{ ScriptRestartComputer }}}
                         C:\cfn\scripts\Validate-Credentials.ps1:
-                            source: {{ ScriptAdValidation }}
+                            source: {{{ ScriptAdValidation }}}
                         C:\cfn\scripts\Validate-FsxConnectivity.ps1:
-                            source: {{ ScriptFSxValidation }}
+                            source: {{{ ScriptFSxValidation }}}
                 LaunchWizardCFNSetup:
                     commands:
                         b-unpack-launchwizard-module:
@@ -539,13 +539,13 @@ Resources:
                 FetchResources:
                     files:
                         C:\cfn\scripts\Unzip-Archive.ps1:
-                            source: {{ ScriptUnzipArchive }}
+                            source: {{{ ScriptUnzipArchive }}}
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
-                            source: {{ AmazonLaunchWizardForCFN }}
+                            source: {{{ AmazonLaunchWizardForCFN }}}
                         C:\cfn\scripts\Validate-VPC.ps1:
-                            source: {{ ScriptVpcCheck }}
+                            source: {{{ ScriptVpcCheck }}}
                         C:\cfn\scripts\Validate-FsxConnectivity.ps1:
-                            source: {{ ScriptFSxValidation }}
+                            source: {{{ ScriptFSxValidation }}}
                 LaunchWizardCFNSetup:
                     commands:
                         b-unpack-launchwizard-module:
