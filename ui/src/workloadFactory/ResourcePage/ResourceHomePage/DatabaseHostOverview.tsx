@@ -8,7 +8,7 @@ import OverviewTabs from '../OverviewTabs/OverviewTabs';
 
 import styles from './DatabaseHostOverview.module.scss';
 import { useGetDatabaseListQuery, useGetResourceDetailsQuery } from '../../../utils/apiService';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import {
     setDatabaseList,
