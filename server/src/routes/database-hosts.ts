@@ -52,7 +52,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH}/databaseHostId/:databaseHostId/driveInfo`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/driveInfo`,
             { schema: GetDriveInfoSchema },
             async (request, reply) => {
                 const {
