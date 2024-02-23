@@ -1,9 +1,11 @@
 import createError from 'http-errors';
 import config from 'config';
 
+import { STORAGE_TYPE } from '@prisma/client';
 import { DescribeInstancesCommandInput, DescribeInstancesCommandOutput, InstanceStateName } from '@aws-sdk/client-ec2';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
+import { FileSystem, DescribeStorageVirtualMachinesCommandOutput } from '@aws-sdk/client-fsx';
 import { describeInstance } from '../lib/aws/ec2';
 import { getResourceNameFromTags, sleep } from '../utils/utils';
 import { getSSMConnectionStatus, pollCommandStatus, ssmPutParameters } from './aws/ssm-operations';
@@ -13,12 +15,14 @@ import { sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
 import { registerFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
 import { SSMParamterObject } from '../utils/common-types';
+
 import {
     SqlServerInstanceInfoType,
     DiscoverResponseInfoType,
     DiscoverCredentialsType
 } from '../routes/types/discover.types';
 import getLogger from '../utils/logger';
+import { describeFSxFileSystems, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 
 const logger = getLogger();
 
@@ -26,10 +30,12 @@ interface SsmTargetsInfo {
     ec2InstanceId: string;
     ec2InstanceName: string;
     ssmState: string;
+    vpcId: string | undefined;
+    ebsVolumeIDs: (string | undefined)[] | undefined;
 }
 
-const MAX_DESCRIBE_INSTANCES_COUNT = 10;
-const MAX_SSM_COMMANDS_POLL_COUNT = 10;
+const MAX_DESCRIBE_INSTANCES_COUNT = 50;
+const MAX_SSM_COMMANDS_POLL_COUNT = 50;
 const MINIMUM_SQL_SERVER_EDITION_SUPPORTED = 2016;
 
 async function getHostAndSqlServerInfo(
@@ -62,6 +68,26 @@ async function getHostAndSqlServerInfo(
         describeInstanceParams
     );
 
+    /*
+        FIXME: Optimize
+
+        These calls will be made for each invocation of the API, though they
+        will be repetitive for a paginated call.
+
+        One option is to see if nextToken is present and don't make the call.
+        However, two independent requests can be having nextToken and can cause
+        incorrect data to be returned.
+
+        If we cache data based on nextToken, it won't be valid since the next
+        call will come with a new nextToken.
+     */
+
+    const fsxInfo: FileSystem[] = await describeFSxFileSystems(credentialsId, region);
+    const svmInfo: DescribeStorageVirtualMachinesCommandOutput = await describeFSxStorageVirtualMachines(
+        credentialsId,
+        region
+    );
+
     const ssmTargets: SsmTargetsInfo[] = [];
     for (const reservation of paginatedEc2Instances.Reservations!) {
         for (const ec2Instance of reservation.Instances!) {
@@ -70,7 +96,9 @@ async function getHostAndSqlServerInfo(
             ssmTargets.push({
                 ec2InstanceId: ec2Instance.InstanceId!,
                 ec2InstanceName: name!,
-                ssmState: ssmStatus.Status!
+                ssmState: ssmStatus.Status!,
+                vpcId: ec2Instance.VpcId,
+                ebsVolumeIDs: ec2Instance.BlockDeviceMappings?.map(bdm => bdm?.Ebs?.VolumeId)
             });
         }
     }
@@ -103,13 +131,17 @@ async function getHostAndSqlServerInfo(
                     dbInfo = await getHostAndSqlInfoFromPsOutput(
                         credentialsId,
                         region,
-                        target.ec2InstanceId,
-                        commandId!
+                        target,
+                        commandId!,
+                        fsxInfo,
+                        svmInfo
                     );
+
                     ssmConnectedEc2ResponseInfo.push({
                         ec2InstanceId: target.ec2InstanceId,
                         ec2InstanceName: target.ec2InstanceName,
                         ssmState: target.ssmState,
+                        vpcId: target.vpcId,
                         sqlServerInstances: dbInfo
                     });
                 })
@@ -127,12 +159,14 @@ async function getHostAndSqlServerInfo(
 async function getHostAndSqlInfoFromPsOutput(
     credentialsId: string,
     region: string,
-    ssmTarget: string,
-    commandId: string
+    ssmTarget: SsmTargetsInfo,
+    commandId: string,
+    fsxInfo: FileSystem[],
+    svmInfo: DescribeStorageVirtualMachinesCommandOutput
 ): Promise<SqlServerInstanceInfoType[]> {
     const commandInvocationParam = {
         CommandId: commandId,
-        InstanceId: ssmTarget
+        InstanceId: ssmTarget.ec2InstanceId
     };
 
     const response = await pollCommandStatus(credentialsId, region, commandInvocationParam);
@@ -140,7 +174,7 @@ async function getHostAndSqlInfoFromPsOutput(
         logger.error('Failed to collect info using SSM. Reason: ', response?.StandardErrorContent);
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Failed to get details from EC2 instance ${ssmTarget}. Reason: ${response?.StandardErrorContent}`
+            `Failed to get details from EC2 instance ${ssmTarget.ec2InstanceId}. Reason: ${response?.StandardErrorContent}`
         );
     }
 
@@ -151,10 +185,45 @@ async function getHostAndSqlInfoFromPsOutput(
         if (!Array.isArray(responseInJson)) {
             responseInJson = [responseInJson];
         }
-
         for (const dbInstanceInfo of responseInJson) {
             if (dbInstanceInfo.sqlServerEdition >= MINIMUM_SQL_SERVER_EDITION_SUPPORTED) {
-                dbInfo.push(dbInstanceInfo);
+                const endPointIps = svmInfo.StorageVirtualMachines?.map(elem => elem.Endpoints?.Iscsi?.IpAddresses);
+                const flatEndPointIps = endPointIps?.flat(10);
+
+                const storageTypes: string[] = [];
+                const availabilityZones: string[] = [];
+                let driveInfo = JSON.parse(dbInstanceInfo.sqlDriveInfo);
+                if (!Array.isArray(driveInfo)) {
+                    driveInfo = [driveInfo];
+                }
+
+                for (let elem of ssmTarget.ebsVolumeIDs!) {
+                    elem = elem?.replace('-', '');
+
+                    for (const di of driveInfo) {
+                        if (di?.SerialNumberOrScsiTarget?.includes(elem)) {
+                            storageTypes.push(STORAGE_TYPE.EBS);
+                        } else if (flatEndPointIps?.includes(di?.SerialNumberOrScsiTarget)) {
+                            storageTypes.push(STORAGE_TYPE.FSXN);
+                            for (const fsx of fsxInfo) {
+                                if (fsx?.OntapConfiguration?.DeploymentType) {
+                                    availabilityZones.push(fsx?.OntapConfiguration?.DeploymentType);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                dbInfo.push({
+                    sqlServerVersion: dbInstanceInfo.sqlServerVersion,
+                    sqlServerInstance: dbInstanceInfo.sqlServerInstance,
+                    sqlServerState: dbInstanceInfo.sqlServerState,
+                    sqlServerEdition: dbInstanceInfo.sqlServerEdition,
+                    windowsAuthentication: dbInstanceInfo.windowsAuthentication,
+                    storage: [...new Set(storageTypes)],
+                    availabilityZones: [...new Set(availabilityZones)]
+                });
             }
         }
     }
@@ -265,4 +334,10 @@ async function saveDiscoveredParameters(
     ]);
 }
 
-export { getHostAndSqlServerInfo, hostAndSqlInfoPowerShellScript, saveDiscoveredParameters };
+export {
+    getHostAndSqlServerInfo,
+    hostAndSqlInfoPowerShellScript,
+    saveDiscoveredParameters,
+    makeSsmCall,
+    getHostAndSqlInfoFromPsOutput
+};

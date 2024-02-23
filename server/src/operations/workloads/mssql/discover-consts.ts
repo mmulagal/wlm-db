@@ -1,18 +1,36 @@
 const hostAndSqlInfoPowerShellScript = [
     `
-    $body = @{}
+    $ErrorActionPreference = "Stop"
 
+    $body = @{}
     (Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}) | SELECT Name, State, PathName | ForEach {
     
         $instance = $_.Name -Replace "MSSQL\\$", ""
         $state = $_.State
         $path = $_.PathName  -Replace "-s.*",""
     
-        If (Get-Command sqlcmd) {
+        try {
+            Get-Command sqlcmd > Out-Nul
             $serverInstance = If ($instance -ne "MSSQLSERVER") { "$Env:ComputerName\\$instance" } Else { "$Env:ComputerName" }
             sqlcmd -Q "SELECT @@serviceName" -C -S $serverInstance -l 1 2> Out-Null | Out-Null
             $body['windowsAuthentication'] = $?
-        } else {
+
+            $sqlDrives = sqlcmd -Q " SET NOCOUNT ON; SELECT DISTINCT LEFT(physical_name, 1) AS DriveLetter FROM sys.master_files " -h -1 -C -W -S $serverInstance | ConvertTo-Json
+            $sqlDriveInfo = Get-PhysicalDisk | ForEach-Object {
+                $a = $_
+                Get-Partition | ForEach-Object {
+                  $b = $_
+                  if (($a.DeviceId -eq $b.diskNumber) -and ($sqlDrives.contains($b.DriveLetter))) {
+                    if ($a.BusType -eq "NVMe") {
+                      New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $a.serialnumber }
+                  } elseif ($a.BusType -eq "iSCSI") {
+                    $scsiTarget = (get-disk | Where { $_.BusType -eq  'iSCSI' } | Get-IscsiConnection).TargetAddress
+                    New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $scsiTarget }
+                  }
+                }
+              }
+            } | ConvertTo-Json
+        } catch {
             $body['windowsAuthentication'] = $False
         }
 
@@ -24,6 +42,7 @@ const hostAndSqlInfoPowerShellScript = [
         $body['sqlServerState'] = $state
         $body['sqlServerVersion'] = $productversion
         $body['sqlServerEdition'] = $sqlversion
+        $body['sqlDriveInfo'] = $sqlDriveInfo
     
         Echo $body | ConvertTo-Json
     } | ConvertFrom-Json | ConvertTo-Json
