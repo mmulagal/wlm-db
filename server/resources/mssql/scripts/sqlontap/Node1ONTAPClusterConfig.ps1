@@ -11,16 +11,16 @@ param(
     [string]$ClusterName,
 
     [Parameter(Mandatory=$true)]
-    [string]$AdminSecret,
-
-    [Parameter(Mandatory=$true)]
     [string]$DomainAdminUser,
 
     [Parameter(Mandatory=$true)]
     [string]$ResourceID,   
 
     [Parameter(Mandatory=$true)]
-    [string]$Stackname   
+    [string]$Stackname,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Parentstackname    
 
 )
 #Requires -Modules xFailOverCluster,PSDscResources,xActiveDirectory
@@ -37,10 +37,11 @@ $ErrorActionPreference = "Stop"
 $DscCertThumbprint = (get-childitem -path cert:\LocalMachine\My | where { $_.subject -eq "CN=AWSLWDscEncryptCert" }).Thumbprint
 # Getting Password from Secrets Manager for AD Admin User
 $DomainNetBIOSName = $env:USERDOMAIN
-$AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret).SecretString
+$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+$AdminPassword = $SsmParameter.domain.password
 $ClusterAdminUser = $DomainNetBIOSName + '\' + $DomainAdminUser
 # Creating Credential Object for Administrator
-$Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminUser.Password -AsPlainText -Force)))
+$Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminPassword -AsPlainText -Force)))
 $disklist=Get-Disk | Where-Object{$_.FriendlyName -eq 'NETAPP LUN C-MODE'} | Sort-Object -Property Size
 
 $ConfigurationData = @{

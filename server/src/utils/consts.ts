@@ -1054,6 +1054,9 @@ const subJobDescriptions: SubJobDescriptions = {
     'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint'
 };
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
+const RESOURCE_SOURCE = { 
+    DEPLOY: 'deployment',
+    DISCOVER: 'discovery'}
 
 const ENDPOINTS_DEPLOYMENT = ['s3', 'cloudformation', 'sqs', 'ssm', 'ssmmessages', 'ec2messages', 'monitoring'];
 
@@ -1283,6 +1286,7 @@ export {
     subJobDescriptions,
     CF_STACK_RESOURCE_TYPE,
     AWS_PRICING_TYPE,
+    RESOURCE_SOURCE,
     AWS_FSX_TYPE,
     ENDPOINTS_DEPLOYMENT,
     TEMPLATE_S3_ENDPOINT,
