@@ -1,4 +1,5 @@
 #prettier-ignore
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: This template deploys a SQL Server standalone instance using FSx for NetApp ONTAP in an existing VPC. 
             This template creates EC2 instances and the required resources. You will be billed for AWS resources if you create a stack from this template.
@@ -436,23 +437,30 @@ Resources:
                         f-unpack-powershell-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer
-                        g-move-ssmscript:
+                        g-move-execurequeryfromssmscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM\ -Type Directory )  -Recurse
+                        waitAfterCompletion: 0
                         h-move-ontapscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
-                        o-move-mappedontapvolumesscript:
+                        waitAfterCompletion: 0
+                        i-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
-                        p-move-mappedontapvolumesscript:
+                        waitAfterCompletion: 0
+                        j-move-configurelubsscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Configure-LUNs.ps1 -Destination C:\SSM\
-                        q-move-mappedontapvolumesscript:
+                        waitAfterCompletion: 0
+                        k-move-newdbinitializeiscsidiskscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\NewDB_Initialize-Iscsidisk.ps1 -Destination C:\SSM\
-                        r-move-mappedontapvolumesscript:
+                        waitAfterCompletion: 0
+                        l-move-createdatabasescript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Create-Database.ps1 -Destination C:\SSM\
-                        s-move-mappedontapvolumesscript:
+                        waitAfterCompletion: 0
+                        m-move-cleanupontapscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Cleanup-ONTAP.ps1 -Destination C:\SSM\
-                        t-hide-ssm:
+                        waitAfterCompletion: 0
+                        n-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
-
+                        waitAfterCompletion: 0 
                 InitialSetup:
                     commands:
                         a-unpack-launchwizard-module:
