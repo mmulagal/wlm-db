@@ -361,12 +361,12 @@ export const workloadFactoryResourceApi = createApi({
         return {
             getResourceDetails: builder.query({
                 query: ({credentialId, region, id}) => ({
-                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}?fields=storage,performance,usageEstimation,resourceUtilization`
+                    url: `database-hosts/${id}?fields=storage,performance,usageEstimation,resourceUtilization`
                 })
             }),
             getDatabaseList: builder.query({
                 query: ({credentialId, region, id}) => ({
-                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}/databases`
+                    url: `database-hosts/${id}/databases`
                 })
             })
         };
