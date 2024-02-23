@@ -1,15 +1,13 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { BILLING, PRICING } from '../../utils/consts';
+import { CredentialsIdParams } from './generic.types';
 
 const DatabaseHostObjectParams = Type.Object({
     accountId: Type.String({ minLength: 1 })
 });
 type DatabaseHostObjectParamsType = Static<typeof DatabaseHostObjectParams>;
 
-const DatabaseHostSummaryParams = Type.Object({
-    accountId: Type.String({ minLength: 1 }),
-    databaseHostId: Type.String({ minLength: 1 })
-});
+const DatabaseHostSummaryParams = Type.Composite([CredentialsIdParams, Type.Object({ databaseHostId: Type.String() })]);
 type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
 
 // Query parameter to fetch protection, performance, storage and cost details
@@ -48,6 +46,7 @@ const TopologyResponse = Type.Object({
     fileSystemThroughputCapacity: Type.Optional(Type.Number()),
     vpcId: Type.Optional(Type.String()),
     vpcName: Type.Optional(Type.String()),
+    vpcCidr: Type.Optional(Type.String()),
     availabilityZones: Type.Optional(Type.Array(Type.String())),
     keyPairName: Type.Optional(Type.String()),
     ec2Details: Type.Optional(Type.Array(EC2InstanceDetailsResponse)),
@@ -191,14 +190,6 @@ const DatabaseHostsParamsWithRegion = Type.Object({
     region: Type.String()
 });
 
-const DatabaseHostSummaryParamsWithRegion = Type.Object({
-    accountId: Type.String({ minLength: 1 }),
-    databaseHostId: Type.String({ minLength: 1 }),
-    credentialsId: Type.String(),
-    region: Type.String()
-});
-type DatabaseHostSummaryParamsWithRegionType = Static<typeof DatabaseHostSummaryParamsWithRegion>;
-
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -236,7 +227,5 @@ export {
     RWPerformanceResponseType,
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
-    DatabaseHostsParamsWithRegion,
-    DatabaseHostSummaryParamsWithRegion,
-    DatabaseHostSummaryParamsWithRegionType
+    DatabaseHostsParamsWithRegion
 };

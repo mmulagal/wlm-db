@@ -91,11 +91,7 @@ const License = () => {
         if (licenseSelect === GENERAL.LICENSE_INCLUDED_AMI) {
             return (
                 <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
-                    <div>{selectedLicenseId?.value || GENERAL.LICENSE_INCLUDED_AMI}</div>
-                    <div className={CommonStyles.separator} />
-                    <div className={styles.labelClass} title={selectedLicenseId?.label2 || ''}>
-                        {selectedLicenseId?.label2 || ''}
-                    </div>
+                    {licenseSelect}
                 </Typography>
             );
         }

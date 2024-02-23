@@ -5,16 +5,9 @@ import {
     DatabaseHostSummaryParams,
     DatabaseHostSummaryResponse,
     DatabasesListResponse,
-    DriveInfoResponseBody,
-    DatabaseHostSummaryParamsWithRegion
+    DriveInfoResponseBody
 } from '../types/database-hosts.types';
-import { AccountIdParams, CredentialsIdParams } from '../types/generic.types';
-
-// Base Request for Deployment Routes
-const baseRequest = {
-    tags: [RouteTags.DEPLOYMENT],
-    params: AccountIdParams
-};
+import { CredentialsIdParams } from '../types/generic.types';
 
 // Base Request for Deployment with credential and region Routes
 const databaseHostsRequest = {
@@ -25,7 +18,7 @@ const databaseHostsRequest = {
 // Get Database hosts summary details
 const DatabaseHostsSummarySchema = {
     ...databaseHostsRequest,
-    summary: 'Get databse hosts details',
+    summary: 'Get database hosts details',
     description: 'Get database hosts summary details',
     querystring: DatabaseHostQueryString,
     response: {
@@ -35,7 +28,7 @@ const DatabaseHostsSummarySchema = {
 
 // Get Database host summary details
 const DatabaseHostDetailsSchema = {
-    ...baseRequest,
+    ...databaseHostsRequest,
     summary: 'Fetch database server details ',
     description:
         'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server.',
@@ -48,7 +41,7 @@ const DatabaseHostDetailsSchema = {
 
 // Get databases in a database server
 const DatabasesListSchema = {
-    ...baseRequest,
+    ...databaseHostsRequest,
     summary: 'Fetch details about databases in a server ',
     description:
         'Fetch details about databases in a server - name, protection status, availability status, size and type of database',
@@ -59,10 +52,10 @@ const DatabasesListSchema = {
 };
 
 const GetDriveInfoSchema = {
-    ...baseRequest,
+    ...databaseHostsRequest,
     summary: 'Get database host drive information',
     description: 'Fetch drive info about the database host',
-    params: DatabaseHostSummaryParamsWithRegion,
+    params: DatabaseHostSummaryParams,
     response: {
         200: DriveInfoResponseBody
     }
