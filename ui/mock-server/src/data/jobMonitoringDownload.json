@@ -5,7 +5,7 @@
         "id": "9876543219236789",
         "name": "Microsoft SQL server deployed with stack <stack-name>",
         "description": "Microsoft SQL server deployed with stack <stack-name>",
-        "type": "Deployment",
+        "type": "Database Create",
         "status": "COMPLETED",
         "startTime": 1704785588798,
         "endTime": 1704871988798,
