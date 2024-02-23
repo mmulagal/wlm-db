@@ -510,7 +510,7 @@ Resources:
                         o-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
                         waitAfterCompletion: 0
-                        p-move-configurelubsscript:
+                        p-move-configurelunsscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Configure-LUNs.ps1 -Destination C:\SSM\
                         waitAfterCompletion: 0
                         q-move-newdbinitializeiscsidiskscript:
@@ -1076,7 +1076,7 @@ Resources:
                         o-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
                         waitAfterCompletion: 0
-                        p-move-configurelubsscript:
+                        p-move-configurelunsscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Configure-LUNs.ps1 -Destination C:\SSM\
                         waitAfterCompletion: 0
                         q-move-newdbinitializeiscsidiskscript:

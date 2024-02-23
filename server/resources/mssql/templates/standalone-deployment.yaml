@@ -446,7 +446,7 @@ Resources:
                         i-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
                         waitAfterCompletion: 0
-                        j-move-configurelubsscript:
+                        j-move-configurelunsscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Configure-LUNs.ps1 -Destination C:\SSM\
                         waitAfterCompletion: 0
                         k-move-newdbinitializeiscsidiskscript:
