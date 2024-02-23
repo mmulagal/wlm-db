@@ -14,7 +14,7 @@ param(
   [string]$LogPath,
 
   [Parameter(Mandatory = $false)]
-  [string]$SQLCredStore
+  [string]$ResourceID
 )
 
 New-Item -ItemType Directory -Path C:\cfn\log -Force
@@ -34,11 +34,14 @@ $found2 = $LogFile -match '(.+?)\.'
 if ($found2) {$LogFileName = $matches[1]}
 
 #Decrypt SSM Parameter for SQL Username and password
-if ($SQLCredStore -ne "") { 
-  $userfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="String"}
-  $pwdfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="SecureString"}
-  $Dbuser = ( Get-SSMParametersByPath -Path $SQLCredStore -WithDecryption $true -Recursive $true -ParameterFilter $userfilter).Value
-  $Dbpass = ( Get-SSMParametersByPath -Path $SQLCredStore -WithDecryption $true -Recursive $true -ParameterFilter $pwdfilter).Value
+if ($ResourceID) { 
+  $SQLCredStore = "/netapp/wlmdb/$ResourceID"
+  $credobject =  (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
+  $instance = $SQLServer.ToLower() 
+  $index = $credobject.sql.sqlinstancename.ToLower().IndexOf($instance) 
+
+  $Dbuser = $credobject.sql.username[$index] 
+  $Dbpass = $credobject.sql.password[$index] 
 
 }
 
@@ -49,7 +52,7 @@ if ($DataPathExists -Or $LogPathExists) {
 }
 
 #Check if database name already exists
-if ($SQLCredStore -ne "") { 
+if ($ResourceID) { 
   $dblist =(Invoke-Sqlcmd  -ConnectionString "Data Source=$SqlServer; User Id=$Dbuser; Password =$Dbpass;TrustServerCertificate=True" -Query "SELECT name FROM sys.databases").name
 }
 else {
@@ -71,7 +74,7 @@ try {
   #Query to create database with required data and log path
   $Query = 'CREATE DATABASE '+$DBName+' ON (NAME = '+$DataFileName+',FILENAME = '''+$DataPath+''') LOG ON (NAME = '+$LogFileName+',FILENAME = '''+$LogPath+''')'
   
-  if ($SQLCredStore -ne "") {
+  if ($ResourceID) {
     Write-Output "Connecting with SQL User Authentication"
     #Execute a query with SQL credentials
     Invoke-Sqlcmd  -ConnectionString "Data Source=$SqlServer; User Id=$Dbuser; Password =$Dbpass;TrustServerCertificate=True" -Query "$Query"

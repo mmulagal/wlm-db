@@ -17,7 +17,6 @@ Metadata:
               Parameters:
                   - DomainDNSName
                   - DomainAdminUser
-                  - DomainAdminSecretName
                   - ADDnsIpAddresses
                   - DomainMemberSGID
             - Label:
@@ -30,7 +29,6 @@ Metadata:
                   default: Amazon FSx for ONTAP Volume Configuration
               Parameters:
                   - FSxFileSystemId
-                  - FsxAdminPassword
                   - SQLSvmName
                   - FSxDataLunSize
                   - FSxDataVolumeName
@@ -45,7 +43,6 @@ Metadata:
                   - MSSQLMediaPathKey
                   - NumberOfNodes
                   - SQLAdminAccounts
-                  - SQLServiceAccountSecret
                   - AMIID
                   - BYOLAMI
                   - SqlServerName
@@ -70,10 +67,6 @@ Metadata:
                     up security groups. For example, 10.0.0.8/16
             WorkloadInstanceType:
                 default: Workload Servers Instance Type for SQL EC2 Instances. For example, r4.xlarge
-            DomainAdminSecretName:
-                default: Domain Admin Secret Name for the Domain Admin user in Secrets Manager. For example, 'LaunchWizard-Admin'
-            SQLServiceAccountSecret:
-                default: Secret Name for the SQL Admin user in Secrets Manager. For example, 'LaunchWizard-Admin'
             DomainAdminUser:
                 default: Domain Admin User Name. For example, Administrator
             DomainDNSName:
@@ -102,8 +95,6 @@ Metadata:
                 default: SQL log volume name
             FSxTempDbVolumeName:
                 default: SQL tempdb volume name
-            FsxAdminPassword:
-                default: Secret name for FSxN Admin password in Secrets Manager
             FSxFileSystemId:
                 default: File system ID for FSxN
             SQLSvmName:
@@ -165,12 +156,6 @@ Parameters:
         Description: NetBIOS name of the SQL Server (up to 15 characters).
         MaxLength: '15'
         MinLength: '1'
-        Type: String
-    DomainAdminSecretName:
-        Description: ARN for the secret for domain admin.
-        Type: String
-    SQLServiceAccountSecret:
-        Description: ARN of the secret for the SQL Server service account.
         Type: String
     DomainAdminUser:
         AllowedPattern: ([a-zA-Z0-9]+(\.|_|-|@)*)+
@@ -250,9 +235,6 @@ Parameters:
         Type: String
     FSxFileSystemId:
         Description: ID for the FSx for ONTAP file system.
-        Type: String
-    FsxAdminPassword:
-        Description: Secret ARN for the FSx for ONTAP admin password.
         Type: String
     SqlServerName:
         Description: Name for the SQL Server.
@@ -518,9 +500,9 @@ Resources:
                         d-configure-ontap:
                             command: !Join
                                 - ''
-                                - - pwsh -Command "C:\cfn\scripts\sqlontap\Configure-ONTAP.ps1 -AdminSecret
+                                - - pwsh -Command "C:\cfn\scripts\sqlontap\Configure-ONTAP.ps1 -Parentstackname
                                     '
-                                  - !Ref 'FsxAdminPassword'
+                                  - !Ref 'ParentStackName'
                                   - "' -SQLVMName '"
                                   - !Ref 'SQLSvmName'
                                   - "' -FSxDataVolumeName '"
@@ -586,8 +568,8 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
                                     -DomainDNSName '
                                   - !Ref 'DomainDNSName'
-                                  - "' -AdminSecret '"
-                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -Parentstackname '"
+                                  - !Ref 'ParentStackName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
                                   - '''"'
@@ -608,14 +590,12 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Create-ADServiceAccount.ps1
                                     -DomainAdminUser '
                                   - !Ref 'DomainAdminUser'
-                                  - "' -AdminSecret '"
-                                  - !Ref 'DomainAdminSecretName'
                                   - "' -DomainDNSName '"
                                   - !Ref 'DomainDNSName'
                                   - "' -ServiceAccountUser '"
                                   - !Ref 'SQLAdminAccounts'
-                                  - "' -SqlUserSecret '"
-                                  - !Ref 'SQLServiceAccountSecret'
+                                  - "' -Parentstackname '"
+                                  - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: '0'
                         h-wait-for-ad-replication:
@@ -648,12 +628,10 @@ Resources:
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Reconfigure-SQL.ps1 -DomainAdminUser '
                                   - !Ref 'DomainAdminUser'
-                                  - "' -DomainAdminPasswordKey '"
-                                  - !Ref 'DomainAdminSecretName'
                                   - "' -SQLServiceAccount '"
                                   - !Ref 'SQLAdminAccounts'
-                                  - "' -SQLServiceAccountPasswordKey '"
-                                  - !Ref 'SQLServiceAccountSecret'
+                                  - "' -Parentstackname '"
+                                  - !Ref 'ParentStackName'
                                   - "' -NetBIOSName '"
                                   - !Ref 'SqlServerName'
                                   - '''"'
@@ -665,8 +643,8 @@ Resources:
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\SetMaxDOP.ps1 -DomainAdminUser '
                                   - !Ref 'DomainAdminUser'
-                                  - "' -DomainAdminPasswordKey '"
-                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -Parentstackname '"
+                                  - !Ref 'ParentStackName'
                                   - "' -NetBIOSName '"
                                   - !Ref 'SqlServerName'
                                   - '''"'
@@ -676,8 +654,8 @@ Resources:
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Set-SQLInstanceName.ps1 -DomainAdminUser '
                                   - !Ref 'DomainAdminUser'
-                                  - "' -DomainAdminPasswordKey '"
-                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -Parentstackname '"
+                                  - !Ref 'ParentStackName'
                                   - "' -NetBIOSName '"
                                   - !Ref 'SqlServerName'
                                   - '''"'
@@ -696,7 +674,16 @@ Resources:
                             waitAfterCompletion: '0'
                 Finalize:
                     commands:
-                        a-signal-resource:
+                        a-create-fsxparameter:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Create-FsxParameter.ps1 -FSxID '
+                                  - !Ref 'FSxFileSystemId'
+                                  - "' -Parentstackname '"
+                                  - !Ref 'ParentStackName'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        b-signal-resource:
                             command: !Sub "cfn-signal.exe -e %ERRORLEVEL% --resource SqlNode\
                                 \ --stack ${AWS::StackName} --region ${AWS::Region}\n"
                             waitAfterCompletion: 0

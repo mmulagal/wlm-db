@@ -10,17 +10,35 @@ param(
     [string]$DataDrive,
 
     [Parameter(Mandatory=$false)]
-    [string]$LogDrive
+    [string]$LogDrive,
+
+    [Parameter(Mandatory=$true)]
+    [string]$LogNew,
+
+    [Parameter(Mandatory=$true)]
+    [string]$DataNew   
 )
 Start-Transcript -Path C:\cfn\log\NewDB_initializeiscsi.log.txt -Append
 $ErrorActionPreference = "Stop"
 
 #Create a list of drive letters if not passed
-if ($DataDrive -eq "" -Or $LogDrive -eq "") {
-    $DataDrive = (ls function:[d-z]: -n | ?{ !(test-path $_) } | random)
-    $LogDrive = (ls function:[d-z]: -n | ?{ !(test-path $_) } | random)
+if (-Not $DataDrive) { 
+    if ($IsClustered -ne "false") {
+        $clusterdrives = (Get-WmiObject -Namespace root\MSCluster MSCluster_DiskPartition).Path
+        $DataDrive = (ls function:[d-z]: -n | ?{ !(test-path $_) -And !($clusterdrives -contains $_)} | random)
+    } else {
+        $DataDrive = (ls function:[d-z]: -n | ?{ !(test-path $_) } | random) 
+    }
 }
 
+if (-Not $LogDrive) {
+    if ($IsClustered -ne "false") {
+       $clusterdrives = (Get-WmiObject -Namespace root\MSCluster MSCluster_DiskPartition).Path
+       $LogDrive = (ls function:[d-z]: -n | ?{ !(test-path $_) -And !($clusterdrives -contains $_)} | random)
+    } else {
+        $LogDrive = (ls function:[d-z]: -n | ?{ !(test-path $_) } | random)
+    }
+}
 
 try{
 #Retrieve a list of FSx for ONTAP disks
@@ -49,9 +67,15 @@ $loglabel = $DBName+"-Log"
 $LogDriveLetter = $LogDrive.Substring(0,1)
 $DataDriveLetter = $DataDrive.Substring(0,1)
 
+if(($LogNew -ne "false") -And ($DataNew -ne "false")) {
 New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel
 New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel
-
+}
+elseif($LogNew -ne "false") {
+    New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel
+    } else {
+    New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel    
+    }
 Start-Service -Name ShellHWDetection
 }catch{
     Write-Error "{Message:Error initializing drives,Exception:$_}"
@@ -61,8 +85,15 @@ Start-Service -Name ShellHWDetection
 try{
 if ($IsClustered -ne "false") {
 # Add new disks to Cluster Storage
-$logdisk = (Get-Disk -Number $disklist[0].Number | Add-ClusterDisk)
-$datadisk = (Get-Disk -Number $disklist[1].Number | Add-ClusterDisk)
+    if( ($LogNew -ne "false")-And ($DataNew -ne "false")) {
+    $logdisk = (Get-Disk -Number $disklist[0].Number | Add-ClusterDisk)
+    $datadisk = (Get-Disk -Number $disklist[1].Number | Add-ClusterDisk)
+    }
+    elseif($LogNew -ne "false") {
+        $logdisk = (Get-Disk -Number $disklist[0].Number | Add-ClusterDisk)
+    } else {
+        $datadisk = (Get-Disk -Number $disklist[0].Number | Add-ClusterDisk)
+    }
 
 }
 }catch{
@@ -75,19 +106,42 @@ if ($IsClustered -ne "false") {
 $SQLRoleGroup =  (Get-ClusterGroup).Name -match ('SQl Server*')
 $SQLGroup = $SQLRoleGroup[0]
 
-#Add  new cluster disks added to SQL Server Group
-$datavol = $datadisk.Name
-$logvol = $logdisk.Name
-Move-ClusterResource -Name $logvol -Group $SQLGroup
-Move-ClusterResource -Name $datavol -Group $SQLGroup 
+if( ($LogNew -ne "false")-And ($DataNew -ne "false")) {
+    #Add  new cluster disks added to SQL Server Group    
+    $datavol = $datadisk.Name
+    $logvol = $logdisk.Name
+    Move-ClusterResource -Name $logvol -Group $SQLGroup
+    Move-ClusterResource -Name $datavol -Group $SQLGroup 
 
-#Add dependency on new disks in SQL Server Resource
-Add-ClusterResourceDependency -Resource "SQL Server" -Provider $datavol
-Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol
+    #Add dependency on new disks in SQL Server Resource
+    Add-ClusterResourceDependency -Resource "SQL Server" -Provider $datavol
+    Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol
 
-#Rename new cluster disks to user friendly name
-(Get-ClusterResource -Name $datavol).name = $datalabel
-(Get-ClusterResource -Name $logvol).name = $loglabel
+    #Rename new cluster disks to user friendly name
+    (Get-ClusterResource -Name $datavol).name = $datalabel
+    (Get-ClusterResource -Name $logvol).name = $loglabel
+} elseif($LogNew -ne "false") { 
+    #Add  new cluster disks added to SQL Server Group    
+    $logvol = $logdisk.Name
+    Move-ClusterResource -Name $logvol -Group $SQLGroup
+
+    #Add dependency on new disks in SQL Server Resource
+    Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol
+
+    #Rename new cluster disks to user friendly name
+    (Get-ClusterResource -Name $logvol).name = $loglabel
+}
+else{
+    #Add  new cluster disks added to SQL Server Group    
+    $datavol = $datadisk.Name
+    Move-ClusterResource -Name $datavol -Group $SQLGroup 
+
+    #Add dependency on new disks in SQL Server Resource
+    Add-ClusterResourceDependency -Resource "SQL Server" -Provider $datavol
+
+    #Rename new cluster disks to user friendly name
+    (Get-ClusterResource -Name $datavol).name = $datalabel
+}
 
 }
 }catch{

@@ -1,9 +1,6 @@
      [CmdletBinding()]
 param (
     [Parameter(Mandatory=$true)]
-    [string]$AdminSecret,
-
-    [Parameter(Mandatory=$true)]
     [string]$DomainAdminUser,  
     
     [Parameter(Mandatory=$true)]
@@ -19,7 +16,10 @@ param (
     [string]$ResourceID,   
 
     [Parameter(Mandatory=$true)]
-    [string]$Stackname  
+    [string]$Stackname,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Parentstackname 
   
 )
 
@@ -56,9 +56,10 @@ try {
 
     $HostName = hostname
     $DomainNetBIOSName = $env:USERDOMAIN
-    $AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret).SecretString 
+    $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+    $AdminPassword = $SsmParameter.domain.password
     $ClusterAdminUser = $DomainNetBIOSName + '\' + $DomainAdminUser
-    $Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminUser.Password -AsPlainText -Force)))
+    $Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminPassword -AsPlainText -Force)))
 
     try {
     $Nodes = Invoke-Command -scriptblock {
