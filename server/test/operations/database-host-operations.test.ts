@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { getDatabases, getDriveInfo } from '../../src/operations/database-hosts-operations';
+import { getDatabases, getDriveInfo, deployDatabase } from '../../src/operations/database-hosts-operations';
 import '../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../simulator/scopes/aws/fsx-scope';
@@ -13,6 +13,22 @@ import { createResource, deleteResource } from '../../src/lib/database/db';
 SECRETS.AUTH_CLIENT_ID = `${faker.string.alphanumeric(20)}`;
 SECRETS.SIGNURL_ACCESS_KEY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 SECRETS.SIGNURL_SECRET_KEY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+const createDBRequest = {
+    databaseName: 'tempdb8',
+    dataFileConfig: {
+        fileName: 'tempdb8_data.mdf',
+        volumeSize: 1,
+        drive: 'E',
+        isExisting: true
+    },
+    logFileConfig: {
+        fileName: 'tempdb8_log.ldf',
+        volumeSize: 2,
+        drive: 'F',
+        isExisting: true
+    }
+};
 
 beforeAll(async () => {
     await createResource(ACCOUNT_ID, {
@@ -50,5 +66,18 @@ describe('Database host operations', () => {
             'ap-southeast-1'
         );
         expect(resp).toBeDefined();
+    });
+
+    it('Create user databases in a server', async () => {
+        const resp = await deployDatabase(
+            ACCOUNT_ID,
+            '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
+            createDBRequest.databaseName,
+            createDBRequest.dataFileConfig,
+            createDBRequest.logFileConfig
+        );
+        expect(resp.jobId).toBeDefined();
     });
 });

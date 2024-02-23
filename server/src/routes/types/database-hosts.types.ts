@@ -12,7 +12,7 @@ const DatabaseHostSummaryParams = Type.Object({
 });
 type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
 
-const MSSQLCREATEDATABASEPARAMS = Type.Object({
+const CREATEDATABASEPARAMS = Type.Object({
     accountId: Type.String({ minLength: 1 }),
     databaseHostId: Type.String({ minLength: 1 }),
     credentialsId: Type.String(),
@@ -196,6 +196,7 @@ const DatabasesCreateResponse = Type.Object({
 });
 
 type DatabaseCreateResponseType = Static<typeof DatabasesCreateResponse>;
+type FileConfigType = Static<typeof FileConfig>;
 
 const DriveInfoResponseBody = Type.Object({
     existingDriveInfo: Type.Array(
@@ -264,10 +265,11 @@ export {
     CreateDatabseRequestBody,
     DatabasesCreateResponse,
     DatabaseCreateResponseType,
-    MSSQLCREATEDATABASEPARAMS,
+    CREATEDATABASEPARAMS,
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
     DatabaseHostsParamsWithRegion,
     DatabaseHostSummaryParamsWithRegion,
-    DatabaseHostSummaryParamsWithRegionType
+    DatabaseHostSummaryParamsWithRegionType,
+    FileConfigType
 };
