@@ -78,7 +78,7 @@ async function getHostAndSqlServerInfo(
         However, two independent requests can be having nextToken and can cause
         incorrect data to be returned.
 
-        If we cache data based on nextToken, it won't be valid since the next
+        If we cache data based on nextToken, it won't be useful since the next
         call will come with a new nextToken.
      */
 
@@ -137,13 +137,15 @@ async function getHostAndSqlServerInfo(
                         svmInfo
                     );
 
-                    ssmConnectedEc2ResponseInfo.push({
-                        ec2InstanceId: target.ec2InstanceId,
-                        ec2InstanceName: target.ec2InstanceName,
-                        ssmState: target.ssmState,
-                        vpcId: target.vpcId,
-                        sqlServerInstances: dbInfo
-                    });
+                    if (dbInfo.length) {
+                        ssmConnectedEc2ResponseInfo.push({
+                            ec2InstanceId: target.ec2InstanceId,
+                            ec2InstanceName: target.ec2InstanceName,
+                            ssmState: target.ssmState,
+                            vpcId: target.vpcId,
+                            sqlServerInstances: dbInfo
+                        });
+                    }
                 })
             )
         );
@@ -179,6 +181,8 @@ async function getHostAndSqlInfoFromPsOutput(
     }
 
     const dbInfo: SqlServerInstanceInfoType[] = [];
+    const endPointIps = svmInfo.StorageVirtualMachines?.map(elem => elem.Endpoints?.Iscsi?.IpAddresses);
+    const flatEndPointIps = [...new Set(endPointIps?.flat(10))];
     const powerShellScriptOutput = response?.StandardOutputContent || '';
     if (powerShellScriptOutput.length > 0) {
         let responseInJson = JSON.parse(response?.StandardOutputContent || '');
@@ -187,29 +191,24 @@ async function getHostAndSqlInfoFromPsOutput(
         }
         for (const dbInstanceInfo of responseInJson) {
             if (dbInstanceInfo.sqlServerEdition >= MINIMUM_SQL_SERVER_EDITION_SUPPORTED) {
-                const endPointIps = svmInfo.StorageVirtualMachines?.map(elem => elem.Endpoints?.Iscsi?.IpAddresses);
-                const flatEndPointIps = endPointIps?.flat(10);
-
                 const storageTypes: string[] = [];
                 const availabilityZones: string[] = [];
+                const ebsVolumeIDs = ssmTarget.ebsVolumeIDs?.map(elem => elem?.replace('-', ''));
+
                 let driveInfo = JSON.parse(dbInstanceInfo.sqlDriveInfo);
                 if (!Array.isArray(driveInfo)) {
                     driveInfo = [driveInfo];
                 }
 
-                for (let elem of ssmTarget.ebsVolumeIDs!) {
-                    elem = elem?.replace('-', '');
-
-                    for (const di of driveInfo) {
-                        if (di?.SerialNumberOrScsiTarget?.includes(elem)) {
-                            storageTypes.push(STORAGE_TYPE.EBS);
-                        } else if (flatEndPointIps?.includes(di?.SerialNumberOrScsiTarget)) {
-                            storageTypes.push(STORAGE_TYPE.FSXN);
-                            for (const fsx of fsxInfo) {
-                                if (fsx?.OntapConfiguration?.DeploymentType) {
-                                    availabilityZones.push(fsx?.OntapConfiguration?.DeploymentType);
-                                    break;
-                                }
+                for (const di of driveInfo) {
+                    if (ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget.includes(elem))) {
+                        storageTypes.push(STORAGE_TYPE.EBS);
+                    } else if (flatEndPointIps?.includes(di?.SerialNumberOrScsiTarget)) {
+                        storageTypes.push(STORAGE_TYPE.FSXN);
+                        for (const fsx of fsxInfo) {
+                            if (fsx?.OntapConfiguration?.DeploymentType) {
+                                availabilityZones.push(fsx?.OntapConfiguration?.DeploymentType);
+                                break;
                             }
                         }
                     }

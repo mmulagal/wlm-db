@@ -20,7 +20,7 @@ const hostAndSqlInfoPowerShellScript = [
                 $a = $_
                 Get-Partition | ForEach-Object {
                   $b = $_
-                  if (($a.DeviceId -eq $b.diskNumber) -and ($sqlDrives.contains($b.DriveLetter))) {
+                  if (($b.DriveLetter -ne $null) -and ($a.DeviceId -eq $b.diskNumber) -and ($sqlDrives.contains($b.DriveLetter))) {
                     if ($a.BusType -eq "NVMe") {
                       New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $a.serialnumber }
                   } elseif ($a.BusType -eq "iSCSI") {
