@@ -730,8 +730,7 @@ Resources:
                         d-set-wsfc-cluster-permission:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Configure-MAD-Permissions.ps1
-                                  - "' -DomainAdminUser '"
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Configure-MAD-Permissions.ps1 -DomainAdminUser '
                                   - !Ref 'DomainAdminUser'
                                   - "' -wsfcName '"
                                   - !Ref 'SqlFSxWSFCName'
@@ -757,8 +756,7 @@ Resources:
                         c-prepare-fci:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\prepare-fci.ps1
-                                  - "' -MSSQLMediaBucket '"
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\prepare-fci.ps1 -MSSQLMediaBucket '
                                   - !Ref 'MSSQLMediaBucketName'
                                   - "' -MSSQLMediaKey '"
                                   - !Ref 'MSSQLMediaPathKey'
@@ -789,8 +787,7 @@ Resources:
                         i-complete-fci:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlontap\completeONTAP-fci.ps1
-                                  - "' -Node1FciIp '"
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlontap\completeONTAP-fci.ps1 -Node1FciIp '
                                   - !Select
                                     - '1'
                                     - !GetAtt 'NetworkInterface1.SecondaryPrivateIpAddresses'
@@ -815,8 +812,7 @@ Resources:
                         j-validate-FCI-Cluster:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Validate-FCICluster.ps1
-                                  - "' -DomainAdminUser '"
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Validate-FCICluster.ps1 -DomainAdminUser '
                                   - !Ref 'DomainAdminUser'
                                   - "' -WFCName '"
                                   - !Ref 'SqlFSxWSFCName'
