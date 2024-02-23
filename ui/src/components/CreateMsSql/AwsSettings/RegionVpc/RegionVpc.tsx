@@ -68,9 +68,11 @@ const RegionVpc = () => {
 
     useEffect(() => {
         const regionValue = selectedRegionData?.data?.regionName;
-        const label2 = selectedRegionData?.data?.regionCode;
-        const option = generateOptionType(regionValue, regionValue, label2, false, '', selectedRegionData?.data);
-        dispatch(setHeaderSelectedRegion(option));
+        if (regionValue) {
+            const label2 = selectedRegionData?.data?.regionCode;
+            const option = generateOptionType(regionValue, regionValue, label2, false, '', selectedRegionData?.data);
+            dispatch(setHeaderSelectedRegion(option));
+        }
     }, [selectedRegionData]);
 
     useEffect(() => {

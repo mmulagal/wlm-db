@@ -80,6 +80,7 @@ import { navigateToCanvas } from '../../../utils/appConfig';
 import MissingPermissionsMsg from '../AwsSettings/AwsAccount/MissingPermissionsMsg';
 import store from '../../../store/store';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import { setHeaderSelectedCred, setHeaderSelectedRegion } from '../../../store/workloadFactory/headersSlice';
 const _ = require('lodash');
 
 type optionsType = {
@@ -102,6 +103,8 @@ const Chatbot = () => {
     const { messages, currentIntent, isReceivingMsg, loadConfigClicked, showRetry, latestIntentMsg, resumeCount } =
         useAppSelector(state => state.chatbot);
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
+    const selectedCredential = useAppSelector(state => state.mssqlForm?.awsAccount?.selectedCredential);
+    const selectedRegionData = useAppSelector(state => state.mssqlForm?.regionAndVpc?.selectedRegion);
     const mssqlData = useAppSelector(state => state.mssql);
     const state = useAppSelector(state => state);
     const [isBotReplying, setIsBotReplying] = useState(false);
@@ -340,6 +343,24 @@ const Chatbot = () => {
                 });
         }
     };
+
+    useEffect(() => {
+        const credValue = selectedCredential?.data?.name;
+        if (credValue) {
+            const label2 = `Account ID: ${selectedCredential?.data?.providerAccountId}`;
+            const option = generateOptionType(credValue, credValue, label2, false, '', selectedCredential?.data);
+            dispatch(setHeaderSelectedCred(option));
+        }
+    }, [selectedCredential]);
+
+    useEffect(() => {
+        const regionValue = selectedRegionData?.data?.regionName;
+        if (regionValue) {
+            const label2 = selectedRegionData?.data?.regionCode;
+            const option = generateOptionType(regionValue, regionValue, label2, false, '', selectedRegionData?.data);
+            dispatch(setHeaderSelectedRegion(option));
+        }
+    }, [selectedRegionData]);
 
     const mapParamsToPayload = (params: any) => {
         Object.keys(params).map(key => {
