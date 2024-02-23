@@ -637,14 +637,20 @@ Resources:
     Type: AWS::CloudFormation::WaitConditionHandle
     Condition: IsFailoverCluster
     DependsOn: 
-      - TrackStackDeployment
+      - !If
+        - ShouldSendSaasNotification
+        - TrackStackDeployment
+        - !Ref "AWS::NoValue"
       - ValidationStack2
       - ValidationStack1
   SIWaitHandler: 
     Type: AWS::CloudFormation::WaitConditionHandle
     Condition: IsStandalone
     DependsOn: 
-      - TrackStackDeployment
+      - !If
+        - ShouldSendSaasNotification
+        - TrackStackDeployment
+        - !Ref "AWS::NoValue"
       - ValidationStack1
   WaitCondition:
     Type: AWS::CloudFormation::WaitCondition
@@ -756,11 +762,7 @@ Resources:
       - Fn::If: 
         - ShouldSendSaasNotification
         - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-        - [Ref: NotificationARN]
-      - Fn::If: 
-        - ShouldSendSaasNotification
         - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-        - ''
       {{Tags}}
   SQLServerStack:
     Type: AWS::CloudFormation::Stack
