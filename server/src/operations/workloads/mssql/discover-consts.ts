@@ -8,15 +8,17 @@ const hostAndSqlInfoPowerShellScript = [
         $instance = $_.Name -Replace "MSSQL\\$", ""
         $state = $_.State
         $path = $_.PathName  -Replace "-s.*",""
-    
-        try {
-            Get-Command sqlcmd > Out-Nul
-            $serverInstance = If ($instance -ne "MSSQLSERVER") { "$Env:ComputerName\\$instance" } Else { "$Env:ComputerName" }
-            sqlcmd -Q "SELECT @@serviceName" -C -S $serverInstance -l 1 2> Out-Null | Out-Null
-            $body['windowsAuthentication'] = $?
+        $body['windowsAuthentication'] = $False
 
-            $sqlDrives = sqlcmd -Q " SET NOCOUNT ON; SELECT DISTINCT LEFT(physical_name, 1) AS DriveLetter FROM sys.master_files " -h -1 -C -W -S $serverInstance | ConvertTo-Json
-            $sqlDriveInfo = Get-PhysicalDisk | ForEach-Object {
+        try {
+            if ($state -eq "Running") {
+              Get-Command sqlcmd > Out-Nul
+              $serverInstance = If ($instance -ne "MSSQLSERVER") { "$Env:ComputerName\\$instance" } Else { "$Env:ComputerName" }
+              sqlcmd -Q "SELECT @@serviceName" -C -S $serverInstance -l 1 2> Out-Null | Out-Null
+              $body['windowsAuthentication'] = $?
+
+              $sqlDrives = sqlcmd -Q " SET NOCOUNT ON; SELECT DISTINCT LEFT(physical_name, 1) AS DriveLetter FROM sys.master_files " -h -1 -C -W -S $serverInstance | ConvertTo-Json
+              $sqlDriveInfo = Get-PhysicalDisk | ForEach-Object {
                 $a = $_
                 Get-Partition | ForEach-Object {
                   $b = $_
@@ -30,8 +32,9 @@ const hostAndSqlInfoPowerShellScript = [
                 }
               }
             } | ConvertTo-Json
+          }
         } catch {
-            $body['windowsAuthentication'] = $False
+          # Prevent any possible errors from clobbering JSON output
         }
 
         $info = Invoke-Expression -Command "(dir $path).VersionInfo"
