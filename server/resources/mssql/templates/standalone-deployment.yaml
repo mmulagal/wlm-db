@@ -651,6 +651,15 @@ Resources:
                                   - !Ref 'SqlServerName'
                                   - '''"'
                             waitAfterCompletion: '0'
+                        c-create-fsxparameter:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Create-FsxParameter.ps1 -FSxID '
+                                  - !Ref 'FSxFileSystemId'
+                                  - "' -Parentstackname '"
+                                  - !Ref 'ParentStackName'
+                                  - '''"'
+                            waitAfterCompletion: 0
 
                 Cleanup:
                     commands:
@@ -665,16 +674,7 @@ Resources:
                             waitAfterCompletion: '0'
                 Finalize:
                     commands:
-                        a-create-fsxparameter:
-                            command: !Join
-                                - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\common\Create-FsxParameter.ps1 -FSxID '
-                                  - !Ref 'FSxFileSystemId'
-                                  - "' -Parentstackname '"
-                                  - !Ref 'ParentStackName'
-                                  - '''"'
-                            waitAfterCompletion: 0
-                        b-signal-resource:
+                        a-signal-resource:
                             command: !Sub "cfn-signal.exe -e %ERRORLEVEL% --resource SqlNode\
                                 \ --stack ${AWS::StackName} --region ${AWS::Region}\n"
                             waitAfterCompletion: 0
