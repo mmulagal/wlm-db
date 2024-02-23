@@ -1,10 +1,10 @@
 [CmdletBinding()]
 param(
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$true)]
     [string]$FSxID,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$true)]
     [string]$Parentstackname
 )
 Import-Module -Name AWSPowerShell

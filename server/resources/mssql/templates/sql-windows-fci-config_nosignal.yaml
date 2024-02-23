@@ -859,8 +859,7 @@ Resources:
                         n-create-fsxparameter:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\common\Create-FsxParameter.ps1
-                                  - "' -FSxID '"
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Create-FsxParameter.ps1 -FSxID '
                                   - !Ref 'FSxFileSystemId'
                                   - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
