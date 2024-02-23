@@ -1074,9 +1074,7 @@ async function deployDatabase(
     // create the parent job for database deployment
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
-        credentialsId,
         status: JOBSTATUS.IN_PROGRESS,
-        region,
         resourceName: sqlServerName as string,
         name: 'Create User Database',
         startTime: new Date().valueOf(),
@@ -1285,8 +1283,6 @@ async function createDatabase(
 
     // child job creation
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
-        credentialsId,
-        region,
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: sqlServerName as string,
@@ -1361,8 +1357,6 @@ async function configureLuns(
     ];
 
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
-        credentialsId,
-        region,
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: sqlServerName as string,
@@ -1441,8 +1435,6 @@ async function newDBInitialization(
             : 'Attaching iSCSI disks to Windows host and initializing drives';
 
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
-        credentialsId,
-        region,
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: sqlServerName as string,
@@ -1511,8 +1503,6 @@ async function newDBInitialization(
 //     });
 
 //     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
-//         credentialsId,
-//         region,
 //         type: JOBTYPE.CREATE_RESOURCE,
 //         status: JOBSTATUS.IN_PROGRESS,
 //         resourceName: sqlServerName as string,
