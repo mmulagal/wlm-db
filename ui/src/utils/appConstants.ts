@@ -219,8 +219,13 @@ export const GENERAL = {
     ARN: 'ARN',
     //Cloud watch
     CLOUD_WATCH_MONITORING: 'CloudWatch monitoring',
+    RESOURCE_ROLLBACK: 'Resource rollback',
     CLOUD_WATCH_TEXT:
         'Set up monitors and automated insights for this SQL deployment using CloudWatch Application Insights.',
+    //Resource Text
+    RESOURCE_TEXT_ONE: 'When a deployment fails, your provisioned resources will not be rolled back by default.',
+    RESOURCE_TEXT_TWO:
+        'The provisioned resources will be deleted when you delete your deployment from the AWS console.',
     //FSX Accordion
     CREATE_NEW_FSXN: 'Create new FSxN',
     CREATE_NEW_FSXN_SYSTEM: 'Create new file system',
@@ -587,7 +592,9 @@ export const GENERAL = {
     DATA_SIZE_ERROR: 'The valid range is 1 GiB - ',
     DRIVE_LETTER_CREATE_ERROR: 'Action required: Drive letters are missing. Use Advanced Create mode to select drives.',
     DRIVE_LETTER_QUICK_CREATE_ERROR:
-        'Insufficient drive letters available on system to create new drives. Use Advanced Create mode to reuse existing drives.'
+        'Insufficient drive letters available on system to create new drives. Use Advanced Create mode to reuse existing drives.',
+    RESOURCE_ROLLBACK_TOOLTIP:
+        'When a deployment fails, your provisioned resources will not be rolled back by default. The provisioned resources will be deleted when you delete your deployment from the AWS console.'
 };
 
 export const CODE_VIEWER = {
