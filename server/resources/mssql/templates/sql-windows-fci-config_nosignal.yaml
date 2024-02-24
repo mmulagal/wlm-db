@@ -1103,8 +1103,7 @@ Resources:
                         d-add-node2-initiator:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Add-node2initiator.ps1
-                                  - "' -SQLVMName '"
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Add-node2initiator.ps1 -SQLVMName '
                                   - !Ref 'SQLSvmName'
                                   - "' -igroup '"
                                   - !Ref 'SQLigroupname'
@@ -1203,8 +1202,7 @@ Resources:
                         a-add-cluster-secondary-node:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\AdditionalNodeAddCluster.ps1
-                                  - "' -DomainAdminUser '"
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\AdditionalNodeAddCluster.ps1 -DomainAdminUser '
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
@@ -1268,8 +1266,7 @@ Resources:
                         c-prepare-fci:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\prepare-fci.ps1
-                                  - "' -MSSQLMediaBucket '"
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\prepare-fci.ps1 -MSSQLMediaBucket '
                                   - !Ref 'MSSQLMediaBucketName'
                                   - "' -MSSQLMediaKey '"
                                   - !Ref 'MSSQLMediaPathKey'
