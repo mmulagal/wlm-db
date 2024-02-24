@@ -20,7 +20,8 @@ param(
     [string]$DataNew   
 
 )
-Start-Transcript -Path C:\cfn\log\Configure_luns.log.txt -Append
+$logtranscript = (New-Item -ItemType Directory -Path C:\cfn\log -Force)
+$silenttranscript = (Start-Transcript -Path C:\cfn\log\Configure_luns.log.txt -Append)
 
 $ErrorActionPreference = "Stop"
 

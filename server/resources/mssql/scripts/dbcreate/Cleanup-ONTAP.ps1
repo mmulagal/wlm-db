@@ -18,7 +18,7 @@ param(
     [string]$IGROUP    
 
 )
-Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Append
+$silenttranscript = (Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Append)
 
 $ErrorActionPreference = "Stop"
 

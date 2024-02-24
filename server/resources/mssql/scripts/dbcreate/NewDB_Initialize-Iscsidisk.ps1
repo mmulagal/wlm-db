@@ -18,7 +18,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$DataNew   
 )
-Start-Transcript -Path C:\cfn\log\NewDB_initializeiscsi.log.txt -Append
+$silenttranscript = (Start-Transcript -Path C:\cfn\log\NewDB_initializeiscsi.log.txt -Append)
 $ErrorActionPreference = "Stop"
 
 #Explicit wait to ensure new LUNs are available for discovery 
