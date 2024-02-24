@@ -1,3 +1,17 @@
+/*
+  The disks in an EC2 instance can be EBS, FSxN, FSxW or from CVO.
+  This script collects serial-number of EBS disks, and the iSCSI
+  connection IP for FSxN disks.  It returns a JSON object containing
+  below details:
+    - sqlServerInstance - Name of SQL Server instance, e.g., MSSQLSERVER.
+    - sqlServerState    - The operational state of the SQL server instance.
+    - sqlServerVersion  - Version of SQL Server instance, e.g., 16.0.4095.4.
+    - sqlServerEdition  - Edition of SQL Server instance, e.g., 2022.
+    - sqlDriveInfo      - JSON object containing a list of serial number
+                          and/or iSCSI targets
+  The sqlDriveInfo details help to identify the instance associated with
+  an SQL Server instance.
+ */
 const hostAndSqlInfoPowerShellScript = [
     `
     $ErrorActionPreference = "Stop"
@@ -11,23 +25,25 @@ const hostAndSqlInfoPowerShellScript = [
         $body['windowsAuthentication'] = $False
 
         try {
-            if ($state -eq "Running") {
-              Get-Command sqlcmd > Out-Nul
-              $serverInstance = If ($instance -ne "MSSQLSERVER") { "$Env:ComputerName\\$instance" } Else { "$Env:ComputerName" }
-              sqlcmd -Q "SELECT @@serviceName" -C -S $serverInstance -l 1 2> Out-Null | Out-Null
-              $body['windowsAuthentication'] = $?
+          if ($state -eq "Running") {
+            Get-Command sqlcmd > Out-Null
+            $serverInstance = If ($instance -ne "MSSQLSERVER") { "$Env:ComputerName\\$instance" } Else { "$Env:ComputerName" }
+            sqlcmd -Q "SELECT @@serviceName" -C -S $serverInstance -l 1 2> Out-Null | Out-Null
+            $body['windowsAuthentication'] = $?
 
-              $sqlDrives = sqlcmd -Q " SET NOCOUNT ON; SELECT DISTINCT LEFT(physical_name, 1) AS DriveLetter FROM sys.master_files " -h -1 -C -W -S $serverInstance | ConvertTo-Json
-              $sqlDriveInfo = Get-PhysicalDisk | ForEach-Object {
-                $a = $_
-                Get-Partition | ForEach-Object {
-                  $b = $_
-                  if (($b.DriveLetter -ne $null) -and ($a.DeviceId -eq $b.diskNumber) -and ($sqlDrives.contains($b.DriveLetter))) {
-                    if ($a.BusType -eq "NVMe") {
-                      New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $a.serialnumber }
+            $sqlDrives = sqlcmd -Q " SET NOCOUNT ON; SELECT DISTINCT LEFT(physical_name, 1) AS DriveLetter FROM sys.master_files " -h -1 -C -W -S $serverInstance | ConvertTo-Json
+            $sqlDriveInfo = Get-PhysicalDisk | ForEach-Object {
+              $a = $_
+              Get-Partition | ForEach-Object {
+                $b = $_
+                if (($b.DriveLetter -ne $null) -and ($a.DeviceId -eq $b.diskNumber) -and ($sqlDrives.contains($b.DriveLetter))) {
+                  if ($a.BusType -eq "NVMe") {
+                    New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $a.serialnumber }
                   } elseif ($a.BusType -eq "iSCSI") {
-                    $scsiTarget = (get-disk | Where { $_.BusType -eq  'iSCSI' } | Get-IscsiConnection).TargetAddress
-                    New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $scsiTarget }
+                    $scsiTarget = (get-disk | Where { $_.BusType -eq  'iSCSI' } | Get-IscsiConnection).TargetAddress | Select -Unique
+                    $scsiTarget | ForEach-Object {
+                      New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $_ }
+                    }
                   }
                 }
               }

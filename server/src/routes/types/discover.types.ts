@@ -41,10 +41,10 @@ const SqlServerInstanceInfo = Type.Object({
             })
         )
     ),
-    availabilityZones: Type.Optional(
+    deploymentTypes: Type.Optional(
         Type.Array(
             Type.String({
-                description: 'Availability zones of the storage media'
+                description: 'Deployment type of FSx for NetApp'
             })
         )
     )

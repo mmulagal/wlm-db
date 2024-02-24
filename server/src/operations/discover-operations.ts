@@ -5,7 +5,6 @@ import { STORAGE_TYPE } from '@prisma/client';
 import { DescribeInstancesCommandInput, DescribeInstancesCommandOutput, InstanceStateName } from '@aws-sdk/client-ec2';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
-import { FileSystem, DescribeStorageVirtualMachinesCommandOutput } from '@aws-sdk/client-fsx';
 import { describeInstance } from '../lib/aws/ec2';
 import { getResourceNameFromTags, sleep } from '../utils/utils';
 import { getSSMConnectionStatus, pollCommandStatus, ssmPutParameters } from './aws/ssm-operations';
@@ -57,7 +56,7 @@ async function getHostAndSqlServerInfo(
         NextToken: nextToken
     };
 
-    // For cases, where info for specific EC2s is needed
+    // For use cases, where info for one or more specific EC2s is needed
     if (instances.length > 0) {
         describeInstanceParams.Filters?.push({ Name: 'instance-id', Values: instances });
     }
@@ -66,26 +65,6 @@ async function getHostAndSqlServerInfo(
         credentialsId,
         region,
         describeInstanceParams
-    );
-
-    /*
-        FIXME: Optimize
-
-        These calls will be made for each invocation of the API, though they
-        will be repetitive for a paginated call.
-
-        One option is to see if nextToken is present and don't make the call.
-        However, two independent requests can be having nextToken and can cause
-        incorrect data to be returned.
-
-        If we cache data based on nextToken, it won't be useful since the next
-        call will come with a new nextToken.
-     */
-
-    const fsxInfo: FileSystem[] = await describeFSxFileSystems(credentialsId, region);
-    const svmInfo: DescribeStorageVirtualMachinesCommandOutput = await describeFSxStorageVirtualMachines(
-        credentialsId,
-        region
     );
 
     const ssmTargets: SsmTargetsInfo[] = [];
@@ -121,7 +100,42 @@ async function getHostAndSqlServerInfo(
             accountId
         );
 
+        /*
+          FIXME: Optimize
+
+          These calls will be made for each invocation of the API, though they
+          will be repetitive for a paginated call.
+
+          One option is to see if nextToken is present and don't make the call.
+          However, two independent requests can be having nextToken and can cause
+          incorrect data to be returned.
+
+          If we cache data based on nextToken, it too won't be useful since the next
+          call will come with a new nextToken.
+        */
+        const [fsxList, svmList] = await Promise.all([
+            describeFSxFileSystems(credentialsId, region),
+            describeFSxStorageVirtualMachines(credentialsId, region)
+        ]);
+
+        const endPointIpWithFsxId = new Map<string, string>();
+        const fsIdWithDeploymentType = new Map<string, string>();
+        svmList.StorageVirtualMachines?.forEach(async elem => {
+            const fsId = elem.FileSystemId;
+            elem?.Endpoints?.Iscsi?.IpAddresses?.forEach(async ip => {
+                endPointIpWithFsxId.set(ip, fsId!);
+            });
+            const deploymentType = fsxList.find(fsx => fsx?.FileSystemId === fsId)?.OntapConfiguration?.DeploymentType;
+            fsIdWithDeploymentType.set(fsId!, deploymentType!);
+        });
+
         // PS execution would take some time, so we wait for a second before triggering polling.
+        //
+        // NOTE:
+        //  Getting FSx filesystems and SVMs will take some time, which could serve the
+        // purpose of sleep() below.  Since  PowerShell script takes some time to complete,
+        // sleeping for a second would help us get the results in first SSM poll itself.
+        // If run time performance is needed, this is one possible candidate for purge.
         await sleep(1000);
 
         await Promise.all(
@@ -133,8 +147,8 @@ async function getHostAndSqlServerInfo(
                         region,
                         target,
                         commandId!,
-                        fsxInfo,
-                        svmInfo
+                        endPointIpWithFsxId,
+                        fsIdWithDeploymentType
                     );
 
                     if (dbInfo.length) {
@@ -163,8 +177,8 @@ async function getHostAndSqlInfoFromPsOutput(
     region: string,
     ssmTarget: SsmTargetsInfo,
     commandId: string,
-    fsxInfo: FileSystem[],
-    svmInfo: DescribeStorageVirtualMachinesCommandOutput
+    endPointIpWithFsxId: Map<string, string>,
+    fsIdWithDeploymentType: Map<string, string>
 ): Promise<SqlServerInstanceInfoType[]> {
     const commandInvocationParam = {
         CommandId: commandId,
@@ -181,8 +195,7 @@ async function getHostAndSqlInfoFromPsOutput(
     }
 
     const dbInfo: SqlServerInstanceInfoType[] = [];
-    const endPointIps = svmInfo.StorageVirtualMachines?.map(elem => elem.Endpoints?.Iscsi?.IpAddresses);
-    const flatEndPointIps = [...new Set(endPointIps?.flat(10))];
+
     const powerShellScriptOutput = response?.StandardOutputContent || '';
     if (powerShellScriptOutput.length > 0) {
         let responseInJson = JSON.parse(response?.StandardOutputContent || '');
@@ -192,7 +205,7 @@ async function getHostAndSqlInfoFromPsOutput(
         for (const dbInstanceInfo of responseInJson) {
             if (dbInstanceInfo.sqlServerEdition >= MINIMUM_SQL_SERVER_EDITION_SUPPORTED) {
                 const storageTypes: string[] = [];
-                const availabilityZones: string[] = [];
+                const deploymentTypes: string[] = [];
                 const ebsVolumeIDs = ssmTarget.ebsVolumeIDs?.map(elem => elem?.replace('-', ''));
 
                 let driveInfo = JSON.parse(dbInstanceInfo.sqlDriveInfo);
@@ -201,27 +214,27 @@ async function getHostAndSqlInfoFromPsOutput(
                 }
 
                 for (const di of driveInfo) {
-                    if (ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget.includes(elem))) {
+                    if (ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem))) {
                         storageTypes.push(STORAGE_TYPE.EBS);
-                    } else if (flatEndPointIps?.includes(di?.SerialNumberOrScsiTarget)) {
+                    } else if (endPointIpWithFsxId.has(di?.SerialNumberOrScsiTarget)) {
                         storageTypes.push(STORAGE_TYPE.FSXN);
-                        for (const fsx of fsxInfo) {
-                            if (fsx?.OntapConfiguration?.DeploymentType) {
-                                availabilityZones.push(fsx?.OntapConfiguration?.DeploymentType);
-                                break;
-                            }
-                        }
+                        deploymentTypes.push(
+                            fsIdWithDeploymentType.get(endPointIpWithFsxId.get(di?.SerialNumberOrScsiTarget)!)!
+                        );
                     }
                 }
 
+                const { sqlServerVersion, sqlServerInstance, sqlServerState, sqlServerEdition, windowsAuthentication } =
+                    dbInstanceInfo;
+
                 dbInfo.push({
-                    sqlServerVersion: dbInstanceInfo.sqlServerVersion,
-                    sqlServerInstance: dbInstanceInfo.sqlServerInstance,
-                    sqlServerState: dbInstanceInfo.sqlServerState,
-                    sqlServerEdition: dbInstanceInfo.sqlServerEdition,
-                    windowsAuthentication: dbInstanceInfo.windowsAuthentication,
+                    sqlServerVersion,
+                    sqlServerInstance,
+                    sqlServerState,
+                    sqlServerEdition,
+                    windowsAuthentication,
                     storage: [...new Set(storageTypes)],
-                    availabilityZones: [...new Set(availabilityZones)]
+                    deploymentTypes: [...new Set(deploymentTypes)]
                 });
             }
         }
