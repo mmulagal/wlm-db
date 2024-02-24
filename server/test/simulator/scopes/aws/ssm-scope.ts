@@ -146,19 +146,19 @@ const nativeSqlBackupDatabasesParams = {
 
 const getOntapSnapshotCountParams = {
     commands: [
-        "C:\\SSM\\OntapRestGet.ps1 -FSxSecretName WLMDB-SqlStandaloneStack-1699407080711-fsx -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1 -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'uuid=939a4ec9-7c14-11ee-b185-8329e8fcbf44' -OntapResourceQuery 'fields=snapshot_count'"
+        "C:\\SSM\\OntapRestGet.ps1 -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1 -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'uuid=939a4ec9-7c14-11ee-b185-8329e8fcbf44' -OntapResourceQuery 'fields=snapshot_count'"
     ]
 };
 
 const getOntapMappedVolumesParams = {
     commands: [
-        'C:\\SSM\\Get-MappedOntapVolumes.ps1 -FSxSecretName WLMDB-SqlStandaloneStack-1699407080711-fsx -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1'
+        'C:\\SSM\\Get-MappedOntapVolumes.ps1 -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1'
     ]
 };
 
 const getStorageParams = {
     commands: [
-        "C:\\SSM\\OntapRestGet.ps1 -FSxSecretName undefined -FSxID test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'tiering.object_tags=\"wlmDeploymentId=undefined\"' -OntapResourceQuery 'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used'"
+        "C:\\SSM\\OntapRestGet.ps1 -FSxID test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'tiering.object_tags=\"wlmDeploymentId=undefined\"' -OntapResourceQuery 'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used'"
     ]
 };
 
