@@ -569,6 +569,7 @@ export const GENERAL = {
     DATABASE_INFORMATION: 'Database information',
     FILE_SETTINGS: 'File settings',
     DB_CREATE_DATABASE_NAME: 'Database name',
+    COLLATION: 'Collation',
     DB_CREATE_FILES_SIZE: 'Files size',
     DB_CREATE_FILE_SETTINGS_MODE: 'File settings mode',
     DB_CREATE_FILE_NAMES: 'File names',
