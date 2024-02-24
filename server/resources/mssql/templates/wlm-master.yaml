@@ -465,7 +465,6 @@ Resources:
             - ''
             - - !Ref 'AWS::StackName'
               - WLMDB_Policy_I
-
   TrackStackDeployment:
     Type: Custom::MyCustomResource
     Condition: ShouldSendSaasNotification
@@ -486,10 +485,25 @@ Resources:
       FileSystemType: 'FSXN'
       DatabaseType: 'Microsoft SQL server'
       Metrics: !Ref Metrics
+  WaitConditionHandle:
+    Type: 'AWS::CloudFormation::WaitConditionHandle'
+  TrackStackDeploymentWaitConditionHandle:
+    Type: 'AWS::CloudFormation::WaitConditionHandle'
+    Condition: ShouldSendSaasNotification
+  TrackStackDeploymentWaitCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    Properties:
+      Handle:
+        !If
+        - ShouldSendSaasNotification
+        - !Ref TrackStackDeploymentWaitConditionHandle
+        - !Ref WaitConditionHandle
+      Timeout: '1'
+      Count: '0'
   VpcEndpointStack:
     Type: AWS::CloudFormation::Stack
     DependsOn:
-      - TrackStackDeployment
+      - TrackStackDeploymentWaitCondition
     Properties:
       TemplateURL: {{VpcEndpointTemplate}}
       Parameters:
@@ -637,20 +651,14 @@ Resources:
     Type: AWS::CloudFormation::WaitConditionHandle
     Condition: IsFailoverCluster
     DependsOn: 
-      - !If
-        - ShouldSendSaasNotification
-        - TrackStackDeployment
-        - !Ref "AWS::NoValue"
+      - TrackStackDeploymentWaitCondition
       - ValidationStack2
       - ValidationStack1
   SIWaitHandler: 
     Type: AWS::CloudFormation::WaitConditionHandle
     Condition: IsStandalone
     DependsOn: 
-      - !If
-        - ShouldSendSaasNotification
-        - TrackStackDeployment
-        - !Ref "AWS::NoValue"
+      - TrackStackDeploymentWaitCondition
       - ValidationStack1
   WaitCondition:
     Type: AWS::CloudFormation::WaitCondition
