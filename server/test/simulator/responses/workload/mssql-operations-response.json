@@ -1,14 +1,14 @@
 {
     "getResourceUtilizationResponse": {
-        "percentUsed": 7,
+        "percentUsed": 25,
         "used": 342859776,
         "total": 4294557696,
         "remaining": 3951697920
     },
     "diskUtilizationResponse": {
-        "percentUsed": "3",
-        "remaining": "4146708480",
-        "total": "4294557696",
+        "percentUsed": "1",
+        "remaining": "17032019968",
+        "total": "17179869184",
         "used": "147849216"
     },
     "databaseSummaryResponse": {
@@ -142,7 +142,7 @@
         "activeNode": "SQLNODE1-39362",
         "standbyNode": "SQLNODE2-39362",
         "creationDate": "2023-02-20T09:23:59.600",
-        "operatingSystem": "Windows Server 2016",
+        "operatingSystem": "Windows Server 2019",
         "nodeNames": ["SQLNODE1-39362", "SQLNODE2-39362"]
     },
     "mssqlRegistrationResponse": {
