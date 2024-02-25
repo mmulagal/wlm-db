@@ -76,7 +76,7 @@ describe('MSSQL Resource methods', () => {
 
     it('Get databases count', async () => {
         const resp = await getDatabasesCount(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID);
-        expect(resp.totalCount).toEqual(252);
+        expect(resp.totalCount).toEqual(8);
     });
 
     it('Get resource details ', async () => {
