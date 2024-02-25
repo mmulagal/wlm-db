@@ -12,7 +12,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"percentUsed\":7,\"used\":342859776,\"total\":4294557696,\"remaining\":3951697920}]\r\n",
+        "StandardOutputContent": "[{\"percentUsed\":25,\"used\":8589934592,\"total\":17179869184,\"remaining\":8589934592}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
