@@ -292,6 +292,8 @@ Parameters:
   {{SqsEndpointExists}}
 
   {{CloudwatchEndpointExists}}
+
+  {{CloudwatchLogsEndpointExists}}
        
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -508,6 +510,8 @@ Resources:
           Ref: SqsEndpointExists
         CloudwatchEndpointExists:
           Ref: CloudwatchEndpointExists
+        CloudwatchLogsEndpointExists:
+          Ref: CloudwatchLogsEndpointExists
       NotificationARNs:
         Fn::If:
         - IncludeNotification

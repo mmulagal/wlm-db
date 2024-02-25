@@ -18,6 +18,7 @@ Metadata:
                   - SsmEndpointExists
                   - SqsEndpointExists
                   - CloudwatchEndpointExists
+                  - CloudwatchLogsEndpointExists
         ParameterLabels:
             VPCId:
                 default: Existing VPC ID for deployment.
@@ -37,6 +38,8 @@ Metadata:
                 default: Boolean to check if a SQS endpoint exists in the vpc.
             CloudwatchEndpointExists:
                 default: Boolean to check if a Cloudwatch endpoint exists in the vpc.
+            CloudwatchLogsEndpointExists:
+                default: Boolean to check if a Cloudwatch logs endpoint exists in the vpc.
 
 Parameters:
     VPCId:
@@ -82,6 +85,11 @@ Parameters:
         Description: Boolean to convey if a Cloudwatch endpoint exists in the vpc.
         Type: String
         Default: 'false'
+    
+    CloudwatchLogsEndpointExists:
+        Description: Boolean to convey if a Cloudwatch logs endpoint exists in the vpc.
+        Type: String
+        Default: 'false'
 
 Conditions:
     SingleZone: !Equals [!Ref StandbySubnetId, 'subnet-123456']
@@ -90,6 +98,7 @@ Conditions:
     CreateSqsEndpoint: !Equals [!Ref SqsEndpointExists, 'false']
     CreateS3Endpoint: !Equals [!Ref S3EndpointExists, 'false']
     CreateCloudwatchEndpoint: !Equals [!Ref CloudwatchEndpointExists, 'false']
+    CreateCloudwatchLogsEndpoint: !Equals [!Ref CloudwatchLogsEndpointExists, 'false']
 
 Resources:
     HttpsSecurityGroup:
@@ -183,6 +192,19 @@ Resources:
         VpcId: !Ref VPCId
         VpcEndpointType: Interface
         ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.monitoring'
+        SubnetIds:
+            !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
+        PrivateDnsEnabled: true
+        SecurityGroupIds: 
+          - !Ref HttpsSecurityGroup
+    
+    CloudwatchLogsEndpoint:
+      Condition: CreateCloudwatchLogsEndpoint
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        VpcId: !Ref VPCId
+        VpcEndpointType: Interface
+        ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.logs'
         SubnetIds:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
