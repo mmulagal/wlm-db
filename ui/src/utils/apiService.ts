@@ -490,7 +490,7 @@ export const createUserDbApi = createApi({
         return {
             getDriveInfo: builder.query({
                 query: ({ credentialId, region, id }) => ({ 
-                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}/driveInfo` 
+                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}/drive-information` 
                 })
             }),
             createUserDB: builder.mutation({
