@@ -412,7 +412,7 @@ Resources:
                       - !Ref 'ParentStackName'
                       - '"'
                       - "\n"
-                      - 'Write-SSMParameter  -Name "/netapp/wlmdb/$stackname" -Value (Get-SSMParameter -Name "/netapp/wlmdb/$stackname").Value -Type "SecureString" -Overwrite $true'
+                      - 'Write-SSMParameter  -Name "/netapp/wlmdb/$stackname" -Value (Get-SSMParameter -Name "/netapp/wlmdb/$stackname" -WithDecryption $True).Value -Type "SecureString" -Overwrite $true'
                       - "\n"
                       - 'cfn-init.exe -v -c config -s '
                       - !Ref 'AWS::StackId'

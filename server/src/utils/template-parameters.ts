@@ -383,6 +383,12 @@ const PARAMETERS = [
         description: 'Boolean to convey if a Cloudwatch endpoint exists in the vpc.',
         type: 'String',
         default: 'false'
+    },
+    {
+        name: 'CloudwatchLogsEndpointExists',
+        description: 'Boolean to convey if a Cloudwatch Logs endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
     }
 ];
 

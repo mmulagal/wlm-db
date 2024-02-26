@@ -34,6 +34,7 @@ import { createMssqlPayload } from './MSSqlFooter/createSqlServer';
 import ViewDialog from '../../../common/ViewDialog/ViewDialog';
 import { useEffect, useState } from 'react';
 import { setMovingFromChatbot } from '../../../store/chatbot/chatbotSlice';
+import ResourceRollBack from '../InfrastructureSettings/ResourceRollBack/ResourceRollBack';
 
 const MSSqlAccordions = () => {
     const { setDialog } = useDialog();
@@ -190,6 +191,7 @@ const MSSqlAccordions = () => {
                         <Tags />
                         <SimpleNotificationService />
                         <CloudWatch />
+                        {/* <ResourceRollBack /> */}
                     </>
                 )}
 

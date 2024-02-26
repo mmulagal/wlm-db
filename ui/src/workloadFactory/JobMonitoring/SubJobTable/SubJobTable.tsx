@@ -40,15 +40,23 @@ const SubJobTable = ({ jobId, statusType }: any) => {
                 const statusType = rowData?.status.toLowerCase();
                 return (
                     <>
-                        <div className={styles.arrow}>
-                            <ArrowIcon
-                                className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
-                                onClick={(e: any) => {
-                                    e.stopPropagation();
-                                    expandTableRow(updateRowState, rowData, currentRowState, rowsState);
-                                }}
-                            />
-                        </div>
+                        {
+                            rowData?.subJobs ?
+                            <div className={styles.arrow}>
+                                <ArrowIcon
+                                    className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
+                                    onClick={(e: any) => {
+                                        e.stopPropagation();
+                                        expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                    }}
+                                />
+                            </div> :
+                            <div className={styles.arrow}>
+                                <ArrowIcon
+                                    className={styles['arrow-disable']}
+                                />
+                            </div>
+                        }
                     </>
                 );
             }

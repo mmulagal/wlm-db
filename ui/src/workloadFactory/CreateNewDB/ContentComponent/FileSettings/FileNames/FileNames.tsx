@@ -98,7 +98,7 @@ const FileNames = () => {
                 val?.driveLetter,
                 val?.driveLetter,
                 DRIVE_LETTER_TYPE.EXISTING,
-                !val?.isNetappDrive,
+                !val?.isNetappDrive || ('isDriveClustered' in val ? !val.isDriveClustered : false),
                 '',
                 val
             );
@@ -133,14 +133,14 @@ const FileNames = () => {
                     val?.driveLetter,
                     val?.driveLetter,
                     DRIVE_LETTER_TYPE.EXISTING,
-                    !val?.isNetappDrive,
+                    !val?.isNetappDrive || ('isDriveClustered' in val ? !val.isDriveClustered : false),
                     '',
                     val
                 );
-                if (defaultDataDrive === val?.driveLetter) {
+                if (defaultDataDrive === val?.driveLetter && !option.isDisabled) {
                     dispatch(setDriveLetter(option));
                 }
-                if (defaultLogDrive === val?.driveLetter) {
+                if (defaultLogDrive === val?.driveLetter && !option.isDisabled) {
                     dispatch(setDriveLetterForLogFile(option));
                 }
             });
