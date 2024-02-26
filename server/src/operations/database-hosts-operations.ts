@@ -40,7 +40,8 @@ import {
     SqlServerDeploymentModel,
     DatabaseTypes,
     ACCOUNT_ID,
-    FileSystemTypes
+    FileSystemTypes,
+    COMPLETE
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -1338,7 +1339,7 @@ async function createDatabase(
         logger.debug('Create database is done', createDatabaseResponse);
         const parsedDBResponse = createDatabaseResponse ? sqlResponseParsing(createDatabaseResponse) : {};
 
-        if (parsedDBResponse?.Status === 'Complete') {
+        if (parsedDBResponse?.Status === COMPLETE) {
             status = JOBSTATUS.COMPLETED;
         } else {
             status = JOBSTATUS.FAILED;
@@ -1439,7 +1440,7 @@ async function configureLuns(
         logger.debug('Configure luns is done', configureLunresponse);
         const parsedLunsResponse = configureLunresponse ? sqlResponseParsing(configureLunresponse) : {};
 
-        if (parsedLunsResponse?.Status === 'Complete') {
+        if (parsedLunsResponse?.Status === COMPLETE) {
             status = JOBSTATUS.COMPLETED;
         } else {
             status = JOBSTATUS.FAILED;
@@ -1557,7 +1558,7 @@ async function newDBInitialization(
             ? sqlResponseParsing(newDBInitializeresponse)
             : {};
 
-        if (parsedDBInitializationResponse?.Status === 'Complete') {
+        if (parsedDBInitializationResponse?.Status === COMPLETE) {
             status = JOBSTATUS.COMPLETED;
         } else {
             status = JOBSTATUS.FAILED;
@@ -1655,7 +1656,7 @@ async function cleanUpDatabaseDeployment(
         );
 
         const parsedCleanUpResponse = cleanUpResponse ? sqlResponseParsing(cleanUpResponse) : {};
-        status = parsedCleanUpResponse?.Status === 'Complete' ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED;
+        status = parsedCleanUpResponse?.Status === COMPLETE ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED;
         errMsg = parsedCleanUpResponse.Message;
 
         return parsedCleanUpResponse;

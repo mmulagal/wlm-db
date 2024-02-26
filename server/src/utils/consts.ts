@@ -1065,6 +1065,7 @@ const RESOURCE_SOURCE = {
 const ENDPOINTS_DEPLOYMENT = ['s3', 'cloudformation', 'sqs', 'ssm', 'ssmmessages', 'ec2messages', 'monitoring'];
 
 const SSM_PARAMETERS_BASE_PATH = '/netapp/wlmdb';
+const COMPLETE = 'Complete';
 
 export {
     WLMDB,
@@ -1302,5 +1303,6 @@ export {
     ARTIFACT_BUCKET_NAME,
     SIGNED_TEMPLATES_BUCKET_NAME,
     TEMPLATE_BUCKET_REGION,
-    SSM_PARAMETERS_BASE_PATH
+    SSM_PARAMETERS_BASE_PATH,
+    COMPLETE
 };
