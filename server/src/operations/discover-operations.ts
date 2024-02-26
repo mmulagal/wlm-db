@@ -33,8 +33,8 @@ interface SsmTargetsInfo {
     ebsVolumeIDs: (string | undefined)[] | undefined;
 }
 
-const MAX_DESCRIBE_INSTANCES_COUNT = 50;
-const MAX_SSM_COMMANDS_POLL_COUNT = 50;
+const MAX_DESCRIBE_INSTANCES_COUNT = 20;
+const MAX_SSM_COMMANDS_POLL_COUNT = 20;
 const MINIMUM_SQL_SERVER_EDITION_SUPPORTED = 2016;
 
 async function getHostAndSqlServerInfo(
