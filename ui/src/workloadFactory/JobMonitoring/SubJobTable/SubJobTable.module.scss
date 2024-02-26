@@ -59,6 +59,11 @@
                 transform: rotate(90deg);
                 -webkit-transform: rotate(90deg);
             }
+            &.arrow-disable {
+                path {
+                    fill: var(--text-disabled);
+                }
+            }
         }
     }
 
