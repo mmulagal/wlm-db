@@ -37,7 +37,7 @@ import {
     sqlStandaloneStackData,
     validationStack1Data,
     validationStack2Data
-} from './job-monitoring-mockdata';
+} from './demo-utils/demoMockdata';
 
 const logger = getLogger();
 
@@ -313,7 +313,9 @@ async function createJobMockData(
     resourceName: string,
     stackName: string,
     sqlDeploymentMode: string,
-    fsxFileSystemId: string | undefined
+    fsxFileSystemId: string | undefined,
+    credentialsId: string,
+    region: string
 ) {
     logger.info('Generate mock data for job table', accountId, resourceName, stackName);
     accountId = checkAccount(accountId);
@@ -328,24 +330,44 @@ async function createJobMockData(
     const fsxType = fsxFileSystemId ? 'ExistingFSxStack' : 'NewFSxStack';
 
     data.push(
-        ...masterStackData(accountId, resourceName, stackName, masterStackId),
-        ...fsxStackData(accountId, resourceName, stackName, fsxStackId, masterStackId, fsxType),
+        ...masterStackData(accountId, resourceName, stackName, masterStackId, credentialsId, region),
+        ...fsxStackData(accountId, resourceName, stackName, fsxStackId, masterStackId, fsxType, credentialsId, region),
         ...validationStack1Data(
             accountId,
             resourceName,
             stackName,
             validationStack1Id,
             masterStackId,
-            sqlDeploymentMode
+            sqlDeploymentMode,
+            credentialsId,
+            region
         )
     );
     if (sqlDeploymentMode.toLowerCase() === 'fci') {
         data.push(
-            ...sqlFciServerStackData(accountId, resourceName, serverStackId, masterStackId),
-            ...validationStack2Data(accountId, resourceName, stackName, validationStack2Id, masterStackId)
+            ...sqlFciServerStackData(accountId, resourceName, serverStackId, masterStackId, credentialsId, region),
+            ...validationStack2Data(
+                accountId,
+                resourceName,
+                stackName,
+                validationStack2Id,
+                masterStackId,
+                credentialsId,
+                region
+            )
         );
     } else {
-        data.push(...sqlStandaloneStackData(accountId, resourceName, stackName, serverStackId, masterStackId));
+        data.push(
+            ...sqlStandaloneStackData(
+                accountId,
+                resourceName,
+                stackName,
+                serverStackId,
+                masterStackId,
+                credentialsId,
+                region
+            )
+        );
     }
     return data;
 }

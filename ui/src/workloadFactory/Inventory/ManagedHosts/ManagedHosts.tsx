@@ -20,7 +20,7 @@ import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory
 
 import { setManagedHostColState, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
-import { setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
+import { addInitialDBCreateData, initialCreateNewUserState, setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
 
 const ManagedHosts = () => {
     const dispatch = useDispatch();
@@ -412,6 +412,7 @@ const ManagedHosts = () => {
                                     }
 
                                     if (menuId === 'createNewUserDatabase') {
+                                        dispatch(addInitialDBCreateData(initialCreateNewUserState));
                                         dispatch(updateResourceId(rowData.id));
                                         dispatch(setDBHostName(rowData?.name));
                                         navigate('../create-new-user');

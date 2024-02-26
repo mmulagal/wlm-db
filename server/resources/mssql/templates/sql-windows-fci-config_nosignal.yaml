@@ -1,3 +1,5 @@
+#prettier-ignore
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: This template deploys SQL Server failover cluster instances using NetApp FSx for ONTAP in an existing VPC.
             This template creates EC2 instances and related resources. 
@@ -499,14 +501,30 @@ Resources:
                         l-unpack-powershell-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer
-                        m-move-ssmscript:
+                        m-move-execurequeryfromssmscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM\ -Type Directory )  -Recurse
+                            waitAfterCompletion: 0
                         n-move-ontapscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
+                            waitAfterCompletion: 0
                         o-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
-                        p-hide-ssm:
+                            waitAfterCompletion: 0
+                        #p-move-configurelunsscript:
+                           # command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Configure-LUNs.ps1 -Destination C:\SSM\
+                           # waitAfterCompletion: 0
+                        #q-move-newdbinitializeiscsidiskscript:
+                           # command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\NewDB_Initialize-Iscsidisk.ps1 -Destination C:\SSM\
+                          #  waitAfterCompletion: 0
+                        #r-move-createdatabasescript:
+                         #   command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Create-Database.ps1 -Destination C:\SSM\
+                         #   waitAfterCompletion: 0
+                       # s-move-cleanupontapscript:
+                          #  command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Cleanup-ONTAP.ps1 -Destination C:\SSM\
+                           # waitAfterCompletion: 0
+                        t-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
+                            waitAfterCompletion: 0 
                 InitialSetup:
                     commands:
                         a-unpack-launchwizard-module:
@@ -730,8 +748,7 @@ Resources:
                         d-set-wsfc-cluster-permission:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Configure-MAD-Permissions.ps1
-                                  - "' -DomainAdminUser '"
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Configure-MAD-Permissions.ps1 -DomainAdminUser '
                                   - !Ref 'DomainAdminUser'
                                   - "' -wsfcName '"
                                   - !Ref 'SqlFSxWSFCName'
@@ -757,8 +774,7 @@ Resources:
                         c-prepare-fci:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\prepare-fci.ps1
-                                  - "' -MSSQLMediaBucket '"
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\prepare-fci.ps1 -MSSQLMediaBucket '
                                   - !Ref 'MSSQLMediaBucketName'
                                   - "' -MSSQLMediaKey '"
                                   - !Ref 'MSSQLMediaPathKey'
@@ -789,8 +805,7 @@ Resources:
                         i-complete-fci:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlontap\completeONTAP-fci.ps1
-                                  - "' -Node1FciIp '"
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlontap\completeONTAP-fci.ps1 -Node1FciIp '
                                   - !Select
                                     - '1'
                                     - !GetAtt 'NetworkInterface1.SecondaryPrivateIpAddresses'
@@ -815,8 +830,7 @@ Resources:
                         j-validate-FCI-Cluster:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Validate-FCICluster.ps1
-                                  - "' -DomainAdminUser '"
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Validate-FCICluster.ps1 -DomainAdminUser '
                                   - !Ref 'DomainAdminUser'
                                   - "' -WFCName '"
                                   - !Ref 'SqlFSxWSFCName'
@@ -1049,14 +1063,30 @@ Resources:
                         l-unpack-powershell-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer
-                        m-move-ssmscript:
+                        m-move-execurequeryfromssmscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM\ -Type Directory )  -Recurse
+                            waitAfterCompletion: 0
                         n-move-ontapscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
+                            waitAfterCompletion: 0
                         o-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
-                        p-hide-ssm:
+                            waitAfterCompletion: 0
+                        #p-move-configurelunsscript:
+                         #   command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Configure-LUNs.ps1 -Destination C:\SSM\
+                         #   waitAfterCompletion: 0
+                        #q-move-newdbinitializeiscsidiskscript:
+                         #   command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\NewDB_Initialize-Iscsidisk.ps1 -Destination C:\SSM\
+                          #  waitAfterCompletion: 0
+                        #r-move-createdatabasescript:
+                         #  command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Create-Database.ps1 -Destination C:\SSM\
+                          #  waitAfterCompletion: 0
+                        #s-move-cleanupontapscript:
+                          #  command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Cleanup-ONTAP.ps1 -Destination C:\SSM\
+                          #  waitAfterCompletion: 0
+                        t-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
+                            waitAfterCompletion: 0 
                 InitialSetup:
                     commands:
                         a-unpack-launchwizard-module:
@@ -1107,8 +1137,7 @@ Resources:
                         d-add-node2-initiator:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Add-node2initiator.ps1
-                                  - "' -SQLVMName '"
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Add-node2initiator.ps1 -SQLVMName '
                                   - !Ref 'SQLSvmName'
                                   - "' -igroup '"
                                   - !Ref 'SQLigroupname'
@@ -1207,8 +1236,7 @@ Resources:
                         a-add-cluster-secondary-node:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\AdditionalNodeAddCluster.ps1
-                                  - "' -DomainAdminUser '"
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\AdditionalNodeAddCluster.ps1 -DomainAdminUser '
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
@@ -1272,8 +1300,7 @@ Resources:
                         c-prepare-fci:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\prepare-fci.ps1
-                                  - "' -MSSQLMediaBucket '"
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\prepare-fci.ps1 -MSSQLMediaBucket '
                                   - !Ref 'MSSQLMediaBucketName'
                                   - "' -MSSQLMediaKey '"
                                   - !Ref 'MSSQLMediaPathKey'

@@ -151,9 +151,7 @@ const getOntapSnapshotCountParams = {
 };
 
 const getOntapMappedVolumesParams = {
-    commands: [
-        'C:\\SSM\\Get-MappedOntapVolumes.ps1 -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1'
-    ]
+    commands: ['C:\\SSM\\Get-MappedOntapVolumes.ps1 -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1']
 };
 
 const getStorageParams = {
@@ -208,7 +206,7 @@ ssmMock
     .on(SendCommandCommand, { Parameters: cpuParams })
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
     .on(SendCommandCommand, { Parameters: memeoryParams })
-    .resolves(listSendCommandCommandResponse.resourceCommandResponse)
+    .resolves(listSendCommandCommandResponse.memoryCommandResponse)
     .on(SendCommandCommand, { Parameters: dbCountParams })
     .resolves(listSendCommandCommandResponse.dbCountCommandResponse)
     .on(SendCommandCommand, { Parameters: dbSummaryParams1 })
@@ -275,6 +273,8 @@ ssmMock
 ssmMock
     .on(GetCommandInvocationCommand)
     .resolves(getCommandInvocationResponse.resourceInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-memoryCommand' })
+    .resolves(getCommandInvocationResponse.memoryInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbSummary1' })
     .resolves(getCommandInvocationResponse.dbSummaryInvocationResponse1)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbSummary2' })

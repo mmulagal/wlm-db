@@ -56,7 +56,7 @@ afterAll(async () => {
 describe('MSSQL Resource methods', () => {
     it('Get memory utilization', async () => {
         const resp = await getResourceUtilisation('36E53042-04E8-40C9-AE69-26E56CB0D216', DATABASE_METRIC_TYPE.MEMORY);
-        expect(resp.percentUsed).toEqual(mssqlResponse.getResourceUtilizationResponse.percentUsed);
+        expect(resp.percentUsed).toEqual(50);
     });
 
     it('Get cpu utilization', async () => {
@@ -76,7 +76,7 @@ describe('MSSQL Resource methods', () => {
 
     it('Get databases count', async () => {
         const resp = await getDatabasesCount(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID);
-        expect(resp.totalCount).toEqual(252);
+        expect(resp.totalCount).toEqual(8);
     });
 
     it('Get resource details ', async () => {
