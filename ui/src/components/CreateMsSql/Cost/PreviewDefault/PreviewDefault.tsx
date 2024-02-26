@@ -1,4 +1,11 @@
-import { AccordionCard, AccordionCardContent, Button, Typography } from '@netapp/design-system';
+import {
+    AccordionCard,
+    AccordionCardContent,
+    Button,
+    DsTypography,
+    TooltipInfo,
+    Typography
+} from '@netapp/design-system';
 import { Table, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './PreviewDefault.module.scss';
@@ -160,7 +167,8 @@ const PreviewDefault = () => {
             editable: 'N/A',
             id: '14'
         },
-        { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: GENERAL.ENABLED, editable: 'N/A', id: '15' }
+        { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: GENERAL.ENABLED, editable: 'N/A', id: '15' },
+        { accordionName: 'Resource rollback', defaultValue: GENERAL.PD_DISABLED, editable: 'No', id: '16' }
     ];
 
     const PreviewDefaultColDefs: ColumnProps[] = [
@@ -170,7 +178,17 @@ const PreviewDefault = () => {
             id: '1',
             isSortable: false,
 
-            width: '231px'
+            width: '231px',
+            renderCell: (cellData: any, rowData: any) => {
+                return cellData === 'Resource rollback' ? (
+                    <div className={styles.resourceContainer}>
+                        <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                        <TooltipInfo>{GENERAL.RESOURCE_ROLLBACK_TOOLTIP}</TooltipInfo>
+                    </div>
+                ) : (
+                    <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                );
+            }
         },
         {
             Header: GENERAL.DEFAULT,

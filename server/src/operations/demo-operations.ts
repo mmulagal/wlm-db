@@ -18,7 +18,8 @@ export default async function createDeploymentMockDataInDB(
     region: string,
     credentialsId: string,
     sqlDeploymentMode: string,
-    fsxFileSystemId: string | undefined
+    fsxFileSystemId: string | undefined,
+    awsAccountId: string
 ) {
     logger.info('create deployment, resource and job table mock data in database', {
         accountId,
@@ -30,7 +31,7 @@ export default async function createDeploymentMockDataInDB(
         fsxFileSystemId
     });
 
-    const cloudProviderId = randomize('0', 8);
+    const cloudProviderId = awsAccountId;
     const resourceName = `sqlnode-${randomize('0', 5)}`;
     if (sqlDeploymentMode.toLowerCase() === 'fci') {
         sqlDeploymentMode = 'FCI';
@@ -79,6 +80,14 @@ export default async function createDeploymentMockDataInDB(
         metadata
     });
 
-    const data = await createJobMockData(accountId, resourceName, stackName, sqlDeploymentMode, fsxFileSystemId);
+    const data = await createJobMockData(
+        accountId,
+        resourceName,
+        stackName,
+        sqlDeploymentMode,
+        fsxFileSystemId,
+        credentialsId,
+        region
+    );
     await createJobs(accountId, data);
 }

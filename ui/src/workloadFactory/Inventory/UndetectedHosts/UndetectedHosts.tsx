@@ -5,74 +5,11 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import UndetectedHostDialogContent from './UndetectedHostDialogContent/UndetectedHostDialogContent';
 import UndetectedSecondDialog from './UndetectedSecondDialog/UndetectedSecondDialog';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const UndetectedHosts = () => {
     const { setDialog, closeDialog } = useDialog();
-    const dummyData = [
-        {
-            name: 'N/A',
-            id: '1',
-            instance: 'Instance name 1',
-            instanceID: '987654',
-            vpc: 'vpc 1',
-            availability: 'Single AZ',
-            ssm: 'Online'
-        },
-        {
-            name: 'N/A',
-            id: '2',
-            instance: 'Instance name 2',
-            instanceID: '987654',
-            vpc: 'vpc 2',
-            availability: 'Single AZ',
-            ssm: 'Online'
-        },
-        {
-            name: 'N/A',
-            id: '3',
-            instance: 'Instance name 3',
-            instanceID: '987654',
-            vpc: 'vpc 3',
-            availability: 'Single AZ',
-            ssm: 'Online'
-        },
-        {
-            name: 'N/A',
-            id: '4',
-            instance: 'Instance name 4',
-            instanceID: '987654',
-            vpc: 'vpc 4',
-            availability: 'Single AZ',
-            ssm: 'Online'
-        },
-        {
-            name: 'N/A',
-            id: '5',
-            instance: 'Instance name 5',
-            instanceID: '987654',
-            vpc: 'vpc 5',
-            availability: 'Single AZ',
-            ssm: 'Online'
-        },
-        {
-            name: 'N/A',
-            id: '6',
-            instance: 'Instance name 6',
-            instanceID: '987654',
-            vpc: 'vpc 6',
-            availability: 'Single AZ',
-            ssm: 'Online'
-        },
-        {
-            name: 'N/A',
-            id: '7',
-            instance: 'Instance name 7',
-            instanceID: '987654',
-            vpc: 'vpc 7',
-            availability: 'Single AZ',
-            ssm: 'Online'
-        }
-    ];
+    const unIdentifiableHosts = useAppSelector(state => state.inventory.unIdentifiableHosts);
 
     const handleFirstDialog = () => {
         setTimeout(() => {
@@ -179,7 +116,7 @@ const UndetectedHosts = () => {
         isSorting: false,
         selectionType: 'none',
         columns: UnidentifiedHostsColDefs,
-        rows: dummyData || [],
+        rows: unIdentifiableHosts || [],
         pageSize: 10,
         isHorizontalScroll: true
     });

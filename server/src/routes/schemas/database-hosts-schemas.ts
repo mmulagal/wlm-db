@@ -7,7 +7,7 @@ import {
     DatabasesListResponse,
     CreateDatabseRequestBody,
     DatabasesCreateResponse,
-    CREATEDATABASEPARAMS,
+    CreateDatabaseParams,
     DriveInfoResponseBody
 } from '../types/database-hosts.types';
 import { CredentialsIdParams } from '../types/generic.types';
@@ -57,7 +57,7 @@ const DatabasesListSchema = {
 // Create database in a database server
 const DatabasesCreateSchema = {
     tags: [RouteTags.DEPLOYMENT],
-    params: CREATEDATABASEPARAMS,
+    params: CreateDatabaseParams,
     summary: 'Create a new user databases in a server ',
     description: 'Create a new user database in a server',
     body: CreateDatabseRequestBody,

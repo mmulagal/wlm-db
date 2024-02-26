@@ -70,7 +70,7 @@ import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws
 import { GET_DRIVE_INFO } from './workloads/mssql/ssm-script-utils';
 import { getResources } from './database/database-operations';
 import { sqlResponseParsing } from '../utils/utils';
-import { CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
+import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
 
 const logger = getLogger();
 
@@ -1076,9 +1076,9 @@ async function deployDatabase(
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: sqlServerName as string,
-        name: 'Create User Database',
+        name: 'Create Database',
         startTime: new Date().valueOf(),
-        description: 'Creating user database on the SQL Server with provided configuration.'
+        description: 'Creating database on the SQL Server with provided configuration.'
     });
 
     invokeSSMForDatabaseDeployment(
@@ -1112,7 +1112,7 @@ async function invokeSSMForDatabaseDeployment(
     fsxSvmId: string | undefined,
     parentJobId: string,
     resourceId: string,
-    node2InstanceId?: string | undefined | null
+    node2InstanceId?: string
 ) {
     logger.info(
         'invoke SSM for database deployment',
@@ -1140,26 +1140,41 @@ async function invokeSSMForDatabaseDeployment(
     const dataDrivePath = `${dataDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\data\\${dataFileName}`;
     const logDrivePath = `${logDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\data\\${logFileName}`;
 
-    // const resourceIdForScript = `/netapp/wlmdb/${resourceId}`; // TODO: parameterStorePath
+    let sqlVirtualMachineName;
+    let activeNodeId;
 
-    const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
-        credentialsId,
-        region,
-        fileSystemId as string
-    );
+    try {
+        const { isSSMConnected, activeNodeInstanceId } = await isSSMConnectionSuccessful(
+            credentialsId,
+            region!,
+            node1InstanceId,
+            node2InstanceId
+        );
+        if (!isSSMConnected && activeNodeInstanceId === undefined) {
+            const errorMessage = `Error while creating database for ${accountId} ${resourceId} due to SSM connection issues.`;
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+        }
 
-    const svmList = fsxSVMs?.filter(svm => svm.StorageVirtualMachineId === fsxSvmId) || [];
-    const [{ Name: sqlVMName }] = svmList;
+        const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
+            credentialsId,
+            region,
+            fileSystemId as string
+        );
 
-    if (isDataDriveExists && isLogDriveExists) {
-        // When the user selected drive as existing, we will only execute the create database script on the drive
-        try {
+        const svmList = fsxSVMs?.filter(svm => svm.StorageVirtualMachineId === fsxSvmId) || [];
+        const [{ Name: sqlVMName }] = svmList;
+
+        sqlVirtualMachineName = sqlVMName;
+        activeNodeId = activeNodeInstanceId;
+
+        if (isDataDriveExists && isLogDriveExists) {
+            // When the user selected drive as existing, we will only execute the create database script on the drive
             await createDatabase(
                 accountId,
                 credentialsId,
                 region,
                 parentJobId,
-                node1InstanceId,
+                activeNodeInstanceId as string,
                 sqlServerName,
                 databaseName,
                 dataDrivePath,
@@ -1170,24 +1185,16 @@ async function invokeSSMForDatabaseDeployment(
                 endTime: new Date().valueOf(),
                 error: undefined
             });
-        } catch (err: any) {
-            logger.error('Error while creating database for existing drive', err);
-            // update parent job with error
-            await updateJobDetails(accountId, credentialsId, region, parentJobId, {
-                status: JOBSTATUS.FAILED,
-                endTime: new Date().valueOf(),
-                error: err?.message
-            });
-        }
-    } else if (!isDataDriveExists && !isLogDriveExists) {
-        // New Drive selected, Will execute all the 3 scripts
-        try {
-            const configureLunsResponse = await configureLuns(
+        } else if (!isDataDriveExists && !isLogDriveExists) {
+            // New Drive selected, Will execute all the 3 scripts
+            const {
+                Resources: { Igroup: iGroup, FSxDataVolumeName: fsxDataVolumeName, FSxLogVolumeName: fsxLogVolumeName }
+            } = await configureLuns(
                 accountId,
                 credentialsId,
                 region,
                 parentJobId,
-                node1InstanceId,
+                activeNodeInstanceId as string,
                 sqlServerName,
                 fileSystemId,
                 sqlVMName,
@@ -1196,21 +1203,23 @@ async function invokeSSMForDatabaseDeployment(
                 (!isLogDriveExists).toString(),
                 (!isDataDriveExists).toString()
             );
-            logger.debug('configure luns is completed', configureLunsResponse);
 
             await newDBInitialization(
                 accountId,
                 credentialsId,
                 region,
                 parentJobId,
-                node1InstanceId,
+                activeNodeInstanceId as string,
                 sqlServerName,
                 databaseName,
                 isClustered,
                 dataDrive,
                 logDrive,
                 (!isLogDriveExists).toString(),
-                (!isDataDriveExists).toString()
+                (!isDataDriveExists).toString(),
+                iGroup,
+                fsxDataVolumeName,
+                fsxLogVolumeName
             );
 
             await createDatabase(
@@ -1218,39 +1227,49 @@ async function invokeSSMForDatabaseDeployment(
                 credentialsId,
                 region,
                 parentJobId,
-                node1InstanceId,
+                activeNodeInstanceId as string,
                 sqlServerName,
                 databaseName,
                 dataDrivePath,
-                logDrivePath
+                logDrivePath,
+                iGroup,
+                fsxDataVolumeName,
+                fsxLogVolumeName
             );
+
             await updateJobDetails(accountId, credentialsId, region, parentJobId, {
                 status: JOBSTATUS.COMPLETED,
                 endTime: new Date().valueOf(),
                 error: undefined
             });
-        } catch (err: any) {
-            logger.error('Error while creating database', err);
-            // TODO: Enable after the script change to return the response in json format
-            // await cleanUpDatabaseDeployment(
-            //     accountId,
-            //     credentialsId,
-            //     region,
-            //     fileSystemId,
-            //     sqlVMName,
-            //     dataFileName,
-            //     logFileName,
-            //     iGroup,
-            //     node1InstanceId,
-            //     sqlServerName,
-            //     parentJobId
-            // );
-            await updateJobDetails(accountId, credentialsId, region, parentJobId, {
-                status: JOBSTATUS.FAILED,
-                endTime: new Date().valueOf(),
-                error: err?.message
-            });
         }
+    } catch (err: any) {
+        logger.error('Error while creating database', err, err.data);
+        // Clean up script will only be executed when the configure lun script is provisioned
+        if (err.data && err.data?.iGroup) {
+            const {
+                data: { iGroup, fsxDataVolumeName, fsxLogVolumeName }
+            } = err;
+            await cleanUpDatabaseDeployment(
+                accountId,
+                credentialsId,
+                region,
+                fileSystemId,
+                sqlVirtualMachineName,
+                fsxDataVolumeName,
+                fsxLogVolumeName,
+                iGroup,
+                activeNodeId as string,
+                sqlServerName,
+                parentJobId
+            );
+        }
+
+        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: new Date().valueOf(),
+            error: err?.message
+        });
     }
 }
 
@@ -1259,27 +1278,40 @@ async function createDatabase(
     credentialsId: string,
     region: string,
     parentJobId: string,
-    node1InstanceId: string,
+    activeNodeInstanceId: string,
     sqlServerName: string | null,
     databaseName: string,
     dataDrivePath: string,
-    logDrivePath: string
+    logDrivePath: string,
+    iGroup?: string,
+    fsxDataVolumeName?: string,
+    fsxLogVolumeName?: string
 ) {
     logger.info('Creating Database', {
         accountId,
         credentialsId,
         region,
         parentJobId,
-        node1InstanceId,
+        activeNodeInstanceId,
         sqlServerName,
         databaseName,
         dataDrivePath,
-        logDrivePath
+        logDrivePath,
+        iGroup,
+        fsxDataVolumeName,
+        fsxLogVolumeName
     });
 
-    const createDatabaseCommand = [
-        `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath}`
-    ];
+    let createDatabaseCommand;
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        createDatabaseCommand = [
+            `${CREATEDBSCRIPT} -SQLServer Draculla  -DBName tempdb9  -DataPath J:\\MSSQL\\data\\tempdb9_data.mdf  -LogPath K:\\MSSQL\\data\\tempdb9_log.ldf`
+        ];
+    } else {
+        createDatabaseCommand = [
+            `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath}`
+        ];
+    }
 
     // child job creation
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
@@ -1292,34 +1324,54 @@ async function createDatabase(
         startTime: new Date().valueOf()
     });
 
+    let status;
+    let errMsg;
     try {
-        const createDatabaseresponse = await callSsmExecution(
+        const createDatabaseResponse = await callSsmExecution(
             credentialsId,
             region,
             createDatabaseCommand,
-            node1InstanceId,
-            accountId
+            activeNodeInstanceId,
+            accountId,
+            false
         );
-        logger.info('create database is successfully done', createDatabaseresponse);
+        logger.debug('Create database is done', createDatabaseResponse);
+        const parsedDBResponse = createDatabaseResponse ? sqlResponseParsing(createDatabaseResponse) : {};
 
-        await updateJobDetails(accountId, credentialsId, region, childJobId, {
-            status: JOBSTATUS.COMPLETED,
-            endTime: new Date().valueOf(),
-            error: undefined
-        });
-
-        return createDatabaseresponse;
+        if (parsedDBResponse?.Status === 'Complete') {
+            status = JOBSTATUS.COMPLETED;
+        } else {
+            status = JOBSTATUS.FAILED;
+            errMsg = parsedDBResponse.Message;
+            const exception = JSON.stringify(parsedDBResponse?.Exception);
+            logger.error(`Exception for create db ${parsedDBResponse.Message} ${exception}`);
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                `Error while creating database in account ${accountId} ${errMsg}.`,
+                { data: { iGroup, fsxDataVolumeName, fsxLogVolumeName } }
+            );
+        }
+        return parsedDBResponse;
     } catch (err: any) {
         // child job failed
-        await updateJobDetails(accountId, credentialsId, region, childJobId, {
-            status: JOBSTATUS.FAILED,
-            endTime: new Date().valueOf(),
-            error: err?.message
-        });
+        logger.error(err);
+        errMsg = err?.message;
+        status = JOBSTATUS.FAILED;
+        if (!err.data) {
+            err.data = { iGroup, fsxLogVolumeName, fsxDataVolumeName };
+        }
         throw createError(
-            HttpErrorCodes.NOT_FOUND,
-            `Error while creating database for existing drive in account ${accountId} ${err?.message}.`
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while creating database in account ${accountId} ${databaseName} ${err?.message}.`,
+            { data: err.data }
         );
+    } finally {
+        // child job update
+        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status,
+            endTime: new Date().valueOf(),
+            ...(errMsg && { error: errMsg })
+        });
     }
 }
 
@@ -1328,7 +1380,7 @@ async function configureLuns(
     credentialsId: string,
     region: string,
     parentJobId: string,
-    node1InstanceId: string,
+    activeNodeInstanceId: string,
     sqlServerName: string | null,
     fileSystemId: string | null,
     sqlVMName: string | undefined,
@@ -1342,7 +1394,7 @@ async function configureLuns(
         credentialsId,
         region,
         parentJobId,
-        node1InstanceId,
+        activeNodeInstanceId,
         sqlServerName,
         fileSystemId,
         sqlVMName,
@@ -1352,9 +1404,16 @@ async function configureLuns(
         isDataDriveExists
     });
 
-    const configureLuncommands = [
-        `${CONFIGURELUNSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataLunSize ${dataVolumeSize}  -FSxLogLunSize ${logVolumeSize} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists}`
-    ];
+    let configureLuncommands;
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        configureLuncommands = [
+            `${CONFIGURELUNSCRIPT} -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataLunSize 1074  -FSxLogLunSize 1074 -LogNew false -DataNew false`
+        ];
+    } else {
+        configureLuncommands = [
+            `${CONFIGURELUNSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataLunSize ${dataVolumeSize}  -FSxLogLunSize ${logVolumeSize} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists}`
+        ];
+    }
 
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
@@ -1366,34 +1425,57 @@ async function configureLuns(
         startTime: new Date().valueOf()
     });
 
+    let status;
+    let errMsg;
     try {
         const configureLunresponse = await callSsmExecution(
             credentialsId,
             region,
             configureLuncommands,
-            node1InstanceId,
-            accountId
+            activeNodeInstanceId,
+            accountId,
+            false
         );
-        logger.debug('Configure luns is successfully done', configureLunresponse);
+        logger.debug('Configure luns is done', configureLunresponse);
+        const parsedLunsResponse = configureLunresponse ? sqlResponseParsing(configureLunresponse) : {};
 
-        await updateJobDetails(accountId, credentialsId, region, childJobId, {
-            status: JOBSTATUS.COMPLETED,
-            endTime: new Date().valueOf(),
-            error: undefined
-        });
+        if (parsedLunsResponse?.Status === 'Complete') {
+            status = JOBSTATUS.COMPLETED;
+        } else {
+            status = JOBSTATUS.FAILED;
+            errMsg = parsedLunsResponse.Message;
+            const exception = JSON.stringify(parsedLunsResponse?.Exception);
+            logger.error(`Exception for configure lun ${parsedLunsResponse.Message} ${exception}`);
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                `Error while configuring luns for account ${accountId} ${errMsg}.`,
+                {
+                    data: {
+                        iGroup: parsedLunsResponse?.Resources?.Igroup,
+                        fsxLogVolumeName: parsedLunsResponse?.Resources?.FSxLogVolumeName,
+                        fsxDataVolumeName: parsedLunsResponse?.Resources?.FSxDataVolumeName
+                    }
+                }
+            );
+        }
 
-        return configureLunresponse;
+        return parsedLunsResponse;
     } catch (err: any) {
         logger.error(err);
-        await updateJobDetails(accountId, credentialsId, region, childJobId, {
-            status: JOBSTATUS.FAILED,
-            endTime: new Date().valueOf(),
-            error: err?.message
-        });
+        errMsg = err?.message;
+        status = JOBSTATUS.FAILED;
         throw createError(
-            HttpErrorCodes.NOT_FOUND,
-            `Error while configuring luns for account ${accountId} ${err?.message}.`
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while configuring luns for account ${accountId} ${err?.message}.`,
+            { data: err.data }
         );
+    } finally {
+        // child job failed
+        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status,
+            endTime: new Date().valueOf(),
+            ...(errMsg && { error: errMsg })
+        });
     }
 }
 
@@ -1402,33 +1484,47 @@ async function newDBInitialization(
     credentialsId: string,
     region: string,
     parentJobId: string,
-    node1InstanceId: string,
+    activeNodeInstanceId: string,
     sqlServerName: string | null,
     databaseName: string,
     isClustered: string,
     dataDrive: string,
     logDrive: string,
     isLogDriveExists: string,
-    isDataDriveExists: string
+    isDataDriveExists: string,
+    iGroup: string,
+    fsxDataVolumeName: string,
+    fsxLogVolumeName: string
 ) {
     logger.info('Initialising new database', {
         accountId,
         credentialsId,
         region,
         parentJobId,
-        node1InstanceId,
+        activeNodeInstanceId,
         sqlServerName,
         databaseName,
         isClustered,
         dataDrive,
         logDrive,
         isLogDriveExists,
-        isDataDriveExists
+        isDataDriveExists,
+        iGroup,
+        fsxDataVolumeName,
+        fsxLogVolumeName
     });
 
-    const dbInitializecommands = [
-        `${INITIALIZEDBSCRIPT} -DBName ${databaseName}  -IsClustered ${isClustered}  -DataDrive ${dataDrive}  -LogDrive ${logDrive} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists}`
-    ];
+    let dbInitializecommands;
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        dbInitializecommands = [
+            `${INITIALIZEDBSCRIPT} -DBName tempdb9  -IsClustered false  -DataDrive J  -LogDrive K -LogNew true -DataNew true`
+        ];
+    } else {
+        dbInitializecommands = [
+            `${INITIALIZEDBSCRIPT} -DBName ${databaseName}  -IsClustered ${isClustered}  -DataDrive ${dataDrive}  -LogDrive ${logDrive} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists}`
+        ];
+    }
+
     const description =
         isClustered === 'true'
             ? 'Attaching iSCSI disks to Windows host, initializing drives, and assigning to SQL role in Windows cluster'
@@ -1444,110 +1540,152 @@ async function newDBInitialization(
         startTime: new Date().valueOf()
     });
 
+    let status;
+    let errMsg;
     try {
         const newDBInitializeresponse = await callSsmExecution(
             credentialsId,
             region,
             dbInitializecommands,
-            node1InstanceId,
-            accountId
+            activeNodeInstanceId,
+            accountId,
+            false
         );
         logger.debug('New DB initialize is successfully done', newDBInitializeresponse);
 
-        await updateJobDetails(accountId, credentialsId, region, childJobId, {
-            status: JOBSTATUS.COMPLETED,
-            endTime: new Date().valueOf(),
-            error: undefined
-        });
+        const parsedDBInitializationResponse = newDBInitializeresponse
+            ? sqlResponseParsing(newDBInitializeresponse)
+            : {};
 
-        return newDBInitializeresponse;
+        if (parsedDBInitializationResponse?.Status === 'Complete') {
+            status = JOBSTATUS.COMPLETED;
+        } else {
+            status = JOBSTATUS.FAILED;
+            errMsg = parsedDBInitializationResponse.Message;
+            const exception = JSON.stringify(parsedDBInitializationResponse?.Exception);
+            logger.error(`Exception for db initialize  ${parsedDBInitializationResponse.Message} ${exception}`);
+
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                `Error while initializing new db for account ${accountId} ${databaseName} ${errMsg}.`,
+                { data: { iGroup, fsxLogVolumeName, fsxDataVolumeName } }
+            );
+        }
+        return parsedDBInitializationResponse;
     } catch (err: any) {
         logger.error(err);
-        await updateJobDetails(accountId, credentialsId, region, childJobId, {
-            status: JOBSTATUS.FAILED,
-            endTime: new Date().valueOf(),
-            error: err?.message
-        });
+        errMsg = err?.message;
+        status = JOBSTATUS.FAILED;
+        if (!err.data) {
+            err.data = { iGroup, fsxLogVolumeName, fsxDataVolumeName };
+        }
         throw createError(
-            HttpErrorCodes.NOT_FOUND,
-            `Error while initializing new db for account ${accountId} ${err?.message}.`
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while initializing new db for account ${accountId} ${databaseName} ${err?.message}.`,
+            { data: err.data }
         );
+    } finally {
+        // child job failed
+        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status,
+            endTime: new Date().valueOf(),
+            ...(errMsg && { error: errMsg })
+        });
     }
 }
 
-// async function cleanUpDatabaseDeployment(
-//     accountId: string,
-//     credentialsId: string,
-//     region: string,
-//     fileSystemId: string | null,
-//     sqlVMName: string | undefined,
-//     dataFileName: string,
-//     logFileName: string,
-//     iGroup: string = '11',
-//     node1InstanceId: string,
-//     sqlServerName: string | null,
-//     parentJobId: string
-// ) {
-//     logger.info('Cleaning up the database deployment', {
-//         accountId,
-//         credentialsId,
-//         region,
-//         fileSystemId,
-//         sqlVMName,
-//         dataFileName,
-//         logFileName,
-//         iGroup,
-//         node1InstanceId,
-//         sqlServerName,
-//         parentJobId
-//     });
+async function cleanUpDatabaseDeployment(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    fileSystemId: string | null,
+    sqlVMName: string | undefined,
+    dataVolumeName: string,
+    logVolumeName: string,
+    iGroup: string,
+    activeNodeInstanceId: string,
+    sqlServerName: string | null,
+    parentJobId: string
+) {
+    logger.info('Cleaning up the database deployment', {
+        accountId,
+        credentialsId,
+        region,
+        fileSystemId,
+        sqlVMName,
+        dataVolumeName,
+        logVolumeName,
+        iGroup,
+        activeNodeInstanceId,
+        sqlServerName,
+        parentJobId
+    });
 
-//     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
-//         type: JOBTYPE.CREATE_RESOURCE,
-//         status: JOBSTATUS.IN_PROGRESS,
-//         resourceName: sqlServerName as string,
-//         name: 'CLean up Database',
-//         parentJobId,
-//         description: 'Cleaning up database deployment is in progress',
-//         startTime: new Date().valueOf()
-//     });
-//     try {
-//         const cleaupCommand = [
-//             `${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataFileName}  -FSxLogVolumeName ${logFileName} -IGROUP ${iGroup}`
-//         ];
+    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.CREATE_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: sqlServerName as string,
+        name: 'CLean up Database',
+        parentJobId,
+        description: 'Cleaning up database deployment is in progress',
+        startTime: new Date().valueOf()
+    });
 
-//         const cleanUpResponse = await callSsmExecution(
-//             credentialsId,
-//             region,
-//             cleaupCommand,
-//             node1InstanceId,
-//             accountId
-//         );
-//         logger.debug('database clean up done', cleanUpResponse);
+    let status;
+    let errMsg;
+    try {
+        let cleaupCommand;
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            cleaupCommand = [
+                `${CLEANUPSCRIPT} -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataVolumeName wlmdb_sqldata_1708948249  -FSxLogVolumeName wlmdb_sqllog_1708948249 -IGROUP wlmdb_sqligroup_1708791218786`
+            ];
+        } else {
+            cleaupCommand = [
+                `${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup}`
+            ];
+        }
 
-//         await updateJobDetails(accountId, credentialsId, region, childJobId, {
-//             status: JOBSTATUS.COMPLETED,
-//             endTime: new Date().valueOf(),
-//             error: undefined
-//         });
-//         return cleaupCommand;
-//     } catch (err: any) {
-//         logger.error('Error while cleaning up database', err);
-//         await updateJobDetails(accountId, credentialsId, region, childJobId, {
-//             status: JOBSTATUS.FAILED,
-//             endTime: new Date().valueOf(),
-//             error: err?.message
-//         });
-//         throw createError(
-//             HttpErrorCodes.NOT_FOUND,
-//             `Error while cleaing up the db for account ${accountId} ${err?.message}.`
-//         );
-//     }
-// }
+        const cleanUpResponse = await callSsmExecution(
+            credentialsId,
+            region,
+            cleaupCommand,
+            activeNodeInstanceId,
+            accountId,
+            false
+        );
+
+        const parsedCleanUpResponse = cleanUpResponse ? sqlResponseParsing(cleanUpResponse) : {};
+        status = parsedCleanUpResponse?.Status === 'Complete' ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED;
+        errMsg = parsedCleanUpResponse.Message;
+
+        return parsedCleanUpResponse;
+    } catch (err: any) {
+        logger.error('Error while cleaning up database', err);
+        errMsg = err?.message;
+        status = JOBSTATUS.FAILED;
+    } finally {
+        // child job failed
+        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status,
+            endTime: new Date().valueOf(),
+            ...(errMsg && { error: errMsg })
+        });
+    }
+}
 
 async function validateTheParams() {
     logger.info('validating the params for db user creation');
     // TODO: yet to implement
 }
 
-export { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases, deployDatabase, getDriveInfo };
+export {
+    getDatabaseHostsSummary,
+    getDatabaseHostSummary,
+    getDatabases,
+    deployDatabase,
+    getDriveInfo,
+    createDatabase,
+    newDBInitialization,
+    configureLuns,
+    cleanUpDatabaseDeployment
+};

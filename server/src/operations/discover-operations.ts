@@ -1,6 +1,7 @@
 import createError from 'http-errors';
 import config from 'config';
 
+import { STORAGE_TYPE } from '@prisma/client';
 import { DescribeInstancesCommandInput, DescribeInstancesCommandOutput, InstanceStateName } from '@aws-sdk/client-ec2';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
@@ -13,12 +14,14 @@ import { sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
 import { registerFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
 import { SSMParamterObject } from '../utils/common-types';
+
 import {
     SqlServerInstanceInfoType,
     DiscoverResponseInfoType,
     DiscoverCredentialsType
 } from '../routes/types/discover.types';
 import getLogger from '../utils/logger';
+import { describeFSxFileSystems, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 
 const logger = getLogger();
 
@@ -26,10 +29,12 @@ interface SsmTargetsInfo {
     ec2InstanceId: string;
     ec2InstanceName: string;
     ssmState: string;
+    vpcId: string | undefined;
+    ebsVolumeIDs: (string | undefined)[] | undefined;
 }
 
-const MAX_DESCRIBE_INSTANCES_COUNT = 10;
-const MAX_SSM_COMMANDS_POLL_COUNT = 10;
+const MAX_DESCRIBE_INSTANCES_COUNT = 20;
+const MAX_SSM_COMMANDS_POLL_COUNT = 20;
 const MINIMUM_SQL_SERVER_EDITION_SUPPORTED = 2016;
 
 async function getHostAndSqlServerInfo(
@@ -51,7 +56,7 @@ async function getHostAndSqlServerInfo(
         NextToken: nextToken
     };
 
-    // For cases, where info for specific EC2s is needed
+    // For use cases, where info for one or more specific EC2s is needed
     if (instances.length > 0) {
         describeInstanceParams.Filters?.push({ Name: 'instance-id', Values: instances });
     }
@@ -70,7 +75,9 @@ async function getHostAndSqlServerInfo(
             ssmTargets.push({
                 ec2InstanceId: ec2Instance.InstanceId!,
                 ec2InstanceName: name!,
-                ssmState: ssmStatus.Status!
+                ssmState: ssmStatus.Status!,
+                vpcId: ec2Instance.VpcId,
+                ebsVolumeIDs: ec2Instance.BlockDeviceMappings?.map(bdm => bdm?.Ebs?.VolumeId)
             });
         }
     }
@@ -93,7 +100,42 @@ async function getHostAndSqlServerInfo(
             accountId
         );
 
+        /*
+          FIXME: Optimize
+
+          These calls will be made for each invocation of the API, though they
+          will be repetitive for a paginated call.
+
+          One option is to see if nextToken is present and don't make the call.
+          However, two independent requests can be having nextToken and can cause
+          incorrect data to be returned.
+
+          If we cache data based on nextToken, it too won't be useful since the next
+          call will come with a new nextToken.
+        */
+        const [fsxList, svmList] = await Promise.all([
+            describeFSxFileSystems(credentialsId, region),
+            describeFSxStorageVirtualMachines(credentialsId, region)
+        ]);
+
+        const endPointIpWithFsxId = new Map<string, string>();
+        const fsIdWithDeploymentType = new Map<string, string>();
+        svmList.StorageVirtualMachines?.forEach(async elem => {
+            const fsId = elem.FileSystemId;
+            elem?.Endpoints?.Iscsi?.IpAddresses?.forEach(async ip => {
+                endPointIpWithFsxId.set(ip, fsId!);
+            });
+            const deploymentType = fsxList.find(fsx => fsx?.FileSystemId === fsId)?.OntapConfiguration?.DeploymentType;
+            fsIdWithDeploymentType.set(fsId!, deploymentType!);
+        });
+
         // PS execution would take some time, so we wait for a second before triggering polling.
+        //
+        // NOTE:
+        //  Getting FSx filesystems and SVMs will take some time, which could serve the
+        // purpose of sleep() below.  Since  PowerShell script takes some time to complete,
+        // sleeping for a second would help us get the results in first SSM poll itself.
+        // If run time performance is needed, this is one possible candidate for purge.
         await sleep(1000);
 
         await Promise.all(
@@ -103,15 +145,21 @@ async function getHostAndSqlServerInfo(
                     dbInfo = await getHostAndSqlInfoFromPsOutput(
                         credentialsId,
                         region,
-                        target.ec2InstanceId,
-                        commandId!
+                        target,
+                        commandId!,
+                        endPointIpWithFsxId,
+                        fsIdWithDeploymentType
                     );
-                    ssmConnectedEc2ResponseInfo.push({
-                        ec2InstanceId: target.ec2InstanceId,
-                        ec2InstanceName: target.ec2InstanceName,
-                        ssmState: target.ssmState,
-                        sqlServerInstances: dbInfo
-                    });
+
+                    if (dbInfo.length) {
+                        ssmConnectedEc2ResponseInfo.push({
+                            ec2InstanceId: target.ec2InstanceId,
+                            ec2InstanceName: target.ec2InstanceName,
+                            ssmState: target.ssmState,
+                            vpcId: target.vpcId,
+                            sqlServerInstances: dbInfo
+                        });
+                    }
                 })
             )
         );
@@ -127,12 +175,14 @@ async function getHostAndSqlServerInfo(
 async function getHostAndSqlInfoFromPsOutput(
     credentialsId: string,
     region: string,
-    ssmTarget: string,
-    commandId: string
+    ssmTarget: SsmTargetsInfo,
+    commandId: string,
+    endPointIpWithFsxId: Map<string, string>,
+    fsIdWithDeploymentType: Map<string, string>
 ): Promise<SqlServerInstanceInfoType[]> {
     const commandInvocationParam = {
         CommandId: commandId,
-        InstanceId: ssmTarget
+        InstanceId: ssmTarget.ec2InstanceId
     };
 
     const response = await pollCommandStatus(credentialsId, region, commandInvocationParam);
@@ -140,21 +190,52 @@ async function getHostAndSqlInfoFromPsOutput(
         logger.error('Failed to collect info using SSM. Reason: ', response?.StandardErrorContent);
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Failed to get details from EC2 instance ${ssmTarget}. Reason: ${response?.StandardErrorContent}`
+            `Failed to get details from EC2 instance ${ssmTarget.ec2InstanceId}. Reason: ${response?.StandardErrorContent}`
         );
     }
 
     const dbInfo: SqlServerInstanceInfoType[] = [];
+
     const powerShellScriptOutput = response?.StandardOutputContent || '';
     if (powerShellScriptOutput.length > 0) {
         let responseInJson = JSON.parse(response?.StandardOutputContent || '');
         if (!Array.isArray(responseInJson)) {
             responseInJson = [responseInJson];
         }
-
         for (const dbInstanceInfo of responseInJson) {
             if (dbInstanceInfo.sqlServerEdition >= MINIMUM_SQL_SERVER_EDITION_SUPPORTED) {
-                dbInfo.push(dbInstanceInfo);
+                const storageTypes: string[] = [];
+                const deploymentTypes: string[] = [];
+                const ebsVolumeIDs = ssmTarget.ebsVolumeIDs?.map(elem => elem?.replace('-', ''));
+
+                let driveInfo = JSON.parse(dbInstanceInfo.sqlDriveInfo);
+                if (!Array.isArray(driveInfo)) {
+                    driveInfo = [driveInfo];
+                }
+
+                for (const di of driveInfo) {
+                    if (ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem))) {
+                        storageTypes.push(STORAGE_TYPE.EBS);
+                    } else if (endPointIpWithFsxId.has(di?.SerialNumberOrScsiTarget)) {
+                        storageTypes.push(STORAGE_TYPE.FSXN);
+                        deploymentTypes.push(
+                            fsIdWithDeploymentType.get(endPointIpWithFsxId.get(di?.SerialNumberOrScsiTarget)!)!
+                        );
+                    }
+                }
+
+                const { sqlServerVersion, sqlServerInstance, sqlServerState, sqlServerEdition, windowsAuthentication } =
+                    dbInstanceInfo;
+
+                dbInfo.push({
+                    sqlServerVersion,
+                    sqlServerInstance,
+                    sqlServerState,
+                    sqlServerEdition,
+                    windowsAuthentication,
+                    storage: [...new Set(storageTypes)],
+                    deploymentTypes: [...new Set(deploymentTypes)]
+                });
             }
         }
     }
@@ -265,4 +346,9 @@ async function saveDiscoveredParameters(
     ]);
 }
 
-export { getHostAndSqlServerInfo, hostAndSqlInfoPowerShellScript, saveDiscoveredParameters };
+export {
+    getHostAndSqlServerInfo,
+    hostAndSqlInfoPowerShellScript,
+    saveDiscoveredParameters,
+    getHostAndSqlInfoFromPsOutput
+};

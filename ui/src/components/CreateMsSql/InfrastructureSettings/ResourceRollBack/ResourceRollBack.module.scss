@@ -1,0 +1,24 @@
+.resourceRollback {
+    .subText1 {
+        margin-top: 8px;
+        margin-left: 55px;
+        color: var(--text-secondary);
+    }
+    .subText2 {
+        margin-left: 55px;
+        color: var(--text-secondary);
+    }
+
+    [class*='ToggleSelector-module_text'] {
+        color: var(--text-secondary) !important;
+        font-weight: 500;
+    }
+
+    [class*='ToggleSelector-module_toggle-button'] {
+        svg {
+            circle {
+                fill: var(--toggle-off-bg) !important;
+            }
+        }
+    }
+}

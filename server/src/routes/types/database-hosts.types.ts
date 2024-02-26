@@ -10,9 +10,9 @@ type DatabaseHostObjectParamsType = Static<typeof DatabaseHostObjectParams>;
 const DatabaseHostSummaryParams = Type.Composite([CredentialsIdParams, Type.Object({ databaseHostId: Type.String() })]);
 type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
 
-const CREATEDATABASEPARAMS = Type.Object({
-    accountId: Type.String({ minLength: 1 }),
-    databaseHostId: Type.String({ minLength: 1 }),
+const CreateDatabaseParams = Type.Object({
+    accountId: Type.String({ minLength: 7 }),
+    databaseHostId: Type.String({ minLength: 10 }),
     credentialsId: Type.String(),
     region: Type.String()
 });
@@ -256,7 +256,7 @@ export {
     CreateDatabseRequestBody,
     DatabasesCreateResponse,
     DatabaseCreateResponseType,
-    CREATEDATABASEPARAMS,
+    CreateDatabaseParams,
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
     FileConfigType,

@@ -32,13 +32,29 @@ const SqlServerInstanceInfo = Type.Object({
     sqlServerVersion: Type.String({ description: 'MS SQL Server version' }),
     windowsAuthentication: Type.Boolean({
         description: 'Is Windows Authentication used for SQL Server?'
-    })
+    }),
+    storage: Type.Optional(
+        Type.Array(
+            Type.String({
+                description: 'Underlying storage types of the SQL Server instance',
+                enum: ['EBS', 'FSXN']
+            })
+        )
+    ),
+    deploymentTypes: Type.Optional(
+        Type.Array(
+            Type.String({
+                description: 'Deployment type of FSx for NetApp'
+            })
+        )
+    )
 });
 
 const DiscoverResponseInfo = Type.Object({
     ec2InstanceId: Type.String({ description: 'AWS EC2 instance ID' }),
     ec2InstanceName: Type.Optional(Type.String({ description: 'EC2 tag with key "Name".' })),
     ssmState: Type.String({ description: 'SSM connection status', enum: ['connected', 'notconnected'] }),
+    vpcId: Type.Optional(Type.String({ description: 'VPC ID' })),
     sqlServerInstances: Type.Optional(Type.Array(SqlServerInstanceInfo))
 });
 

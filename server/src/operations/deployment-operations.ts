@@ -781,6 +781,7 @@ async function deployCloudFormationTemplate(
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
         const stackId = deployStackResponse.StackId || '';
+        const awsAccountId = randomize('0', 8);
         createDeploymentMockDataInDB(
             accountId,
             stackId,
@@ -788,7 +789,8 @@ async function deployCloudFormationTemplate(
             region,
             credentialsId,
             sqlConfiguration?.sqlDeploymentMode,
-            fsxConfiguration?.fsxFileSystemId
+            fsxConfiguration?.fsxFileSystemId,
+            awsAccountId
         );
         if (!fsxConfiguration.fsxFileSystemId) {
             // create a new fsx record in fsx inventory

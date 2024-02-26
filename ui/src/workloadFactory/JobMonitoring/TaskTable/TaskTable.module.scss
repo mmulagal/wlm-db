@@ -10,8 +10,8 @@
         display: flex;
         align-items: center;
         padding-left: 110px;
-        background-color: var(--blue-10);
-        color: var(--grey-50) !important;
+        background-color: var(--hover-background);
+        color: var(--text-primary) !important;
     }
 
     .firstItemText {
@@ -28,8 +28,8 @@
         display: flex;
         align-items: center;
         padding-left: 24px;
-        background-color: var(--blue-10);
-        color: var(--grey-50) !important;
+        background-color: var(--hover-background);
+        color: var(--text-primary) !important;
     }
 
     .thirdItem {
@@ -38,13 +38,13 @@
         display: flex;
         align-items: center;
         padding-left: 24px;
-        background-color: var(--blue-10);
+        background-color: var(--hover-background);
+        color: var(--text-primary) !important;
         gap: 16px;
-        color: var(--grey-50) !important;
 
         .popOverClass {
             span {
-                background-color: var(--blue-10) !important;
+                background-color: var(--hover-background) !important;
             }
         }
 
@@ -54,7 +54,7 @@
         }
 
         .statusColor {
-            color: var(--grey-50);
+            color: var(--text-primary);
         }
     }
 
@@ -64,8 +64,8 @@
         display: flex;
         align-items: center;
         padding-left: 24px;
-        background-color: var(--blue-10);
-        color: var(--grey-50) !important;
+        background-color: var(--hover-background);
+        color: var(--text-primary) !important;
     }
 
     .fifthItem {
@@ -74,8 +74,8 @@
         display: flex;
         align-items: center;
         padding-left: 24px;
-        background-color: var(--blue-10);
-        color: var(--grey-50) !important;
+        background-color: var(--hover-background);
+        color: var(--text-primary) !important;
     }
 
     .emptyTable {
