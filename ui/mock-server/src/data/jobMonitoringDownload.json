@@ -2,10 +2,59 @@
     "count": 6,
     "items": [
       {
+        "id": "0651f836-05f8-42b0-b930-c3d0f958c390",
+        "accountId": "account-aHP3esT5",
+        "name": "Create User Database",
+        "status": "COMPLETED",
+        "resourceName": "sqldbap75j",
+        "type": "CREATE_RESOURCE",
+        "startTime": 1708681054000,
+        "description": "Creating user database on the SQL Server with provided configuration.",
+        "endTime": 1708681137000,
+        "subJobs": [
+            {
+                "id": "cca916aa-4eb4-4fbe-9834-55e55cf6ff37",
+                "accountId": "account-aHP3esT5",
+                "name": "Create Database",
+                "status": "COMPLETED",
+                "resourceName": "sqldbap75j",
+                "type": "CREATE_RESOURCE",
+                "startTime": 1708681135000,
+                "description": "Creating database tempdb3 with provided data and log paths.",
+                "parentJobId": "0651f836-05f8-42b0-b930-c3d0f958c390",
+                "endTime": 1708681137000
+            },
+            {
+                "id": "e1a161b4-6cca-4bb1-a389-b0a815c77033",
+                "accountId": "account-aHP3esT5",
+                "name": "New Database Initialization",
+                "status": "COMPLETED",
+                "resourceName": "sqldbap75j",
+                "type": "CREATE_RESOURCE",
+                "startTime": 1708681092000,
+                "description": "New Database initialization is in progress",
+                "parentJobId": "0651f836-05f8-42b0-b930-c3d0f958c390",
+                "endTime": 1708681135000
+            },
+            {
+                "id": "051ea036-efd1-4de6-b82e-685fe6fbb46f",
+                "accountId": "account-aHP3esT5",
+                "name": "Configure Luns",
+                "status": "COMPLETED",
+                "resourceName": "sqldbap75j",
+                "type": "CREATE_RESOURCE",
+                "startTime": 1708681054000,
+                "description": "Configuring volumes and LUNs on FSx for ONTAP with recommended best practices.",
+                "parentJobId": "0651f836-05f8-42b0-b930-c3d0f958c390",
+                "endTime": 1708681092000
+            }
+        ]
+      },
+      {
         "id": "9876543219236789",
         "name": "Microsoft SQL server deployed with stack <stack-name>",
         "description": "Microsoft SQL server deployed with stack <stack-name>",
-        "type": "Database Create",
+        "type": "Deployment",
         "status": "COMPLETED",
         "startTime": 1704785588798,
         "endTime": 1704871988798,

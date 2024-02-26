@@ -550,9 +550,9 @@ export const GENERAL = {
     MANAGED_HOSTS_HEADING: 'Managed hosts',
     MANAGED_HOST_HEADING: 'Managed host',
     // Create USER DB
-    FILE_SETTINGS_FIRST_TEXT: 'Select between new drive letter or existing drive letter per file.',
+    FILE_SETTINGS_FIRST_TEXT: 'Select a new drive letter or an existing drive letter for the data file.',
     FILE_SETTINGS_SECOND_TEXT:
-        'When selecting new drive letter for Data file it is recommended to select a different new drive letter for the Log file.',
+        'If you select a new drive letter, we recommend selecting a new drive letter for the log file.',
     CREATE_DB_NAME_TOOLTIP: [
         'SQL databases should have names that are no more than 30 characters long.',
         'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
@@ -561,24 +561,27 @@ export const GENERAL = {
     DB_NAME_ERROR_CHECK: 'Check database name criteria',
     DB_ADVANCED_CREATE: 'Advanced create',
     DB_QUICK_CREATE: 'Quick create',
-    QUICK_DB_CREATE_CONTENT:
-        'Use a recommended best-practice configuration. Quick mode enhance performance and restore time by allocating new drive letters for you, segregating the user database layout into distinct volumes and LUNs per data and log files and optimize performance. Particularly recommended for large databases.',
+    QUICK_DB_CREATE_CONTENT: [
+        'Recommended for large databases. Quick create mode selects an optimal configuration for you.',
+        'Quick create enhances database performance by allocating new drive letters for you and segregating the user database layout into distinct volumes and LUNs per data and log files.'
+    ],
     ADVANCED_DB_CREATE_CONTENT:
-        'You set your storage layout configuration by precisely configuring drive letter options for database data and log files. Allocating new drive letters, segregates the user database layout into distinct volumes and LUNs per data and log files and optimize performance. Alternatively, select existing drive letters  (hosting multiple user data and log files on the same drive), recommended for small-medium databases.',
-    FILE_SIZE_TEXT:
-        'The Log size minimum value is 1 GiB.  Recommended size (default) is approximately 25% of data size.',
+        'Recommended for small to medium databases. With Advanced create mode, you set your storage layout configuration to optimize performance by configuring new and existing drive letter options for data and log files.',
+    FILE_SIZE_TEXT: [
+        'Data and log file sizes have a minimum value of 1 GiB.',
+        'The recommended log file size (default) is 25% of the data file size. The default log file size value is editable.'
+    ],
     CREATE_USER_DB_TITLE: 'Create user database',
     DB_CREATE_HOST: 'Host:',
     CREATE: 'Create',
-    DB_CREATE_NOTIFICATION: ['Database ', ' in host ', ' is in deployment status.'],
+    DB_CREATE_NOTIFICATION: ['Creation of ', ' in ', ' is in progress. Track progress in '],
     DATABASE_INFORMATION: 'Database information',
     FILE_SETTINGS: 'File settings',
     DB_CREATE_DATABASE_NAME: 'Database name',
     COLLATION: 'Collation',
-    DB_CREATE_FILES_SIZE: 'Files size',
+    DB_CREATE_FILES_SIZE: 'File sizes',
     DB_CREATE_FILE_SETTINGS_MODE: 'File settings mode',
-    DB_CREATE_FILE_NAMES: 'File names',
-    DB_CREATE_FILE_NAMES_AND_DRIVES: 'File names & drives',
+    DB_CREATE_FILE_NAMES_AND_PATH: 'File names & path',
     DATA_FILE_SIZE: 'Data file size:',
     LOG_FILE_SIZE: 'Log file size:',
     DATA_FILE_NAME: 'Data file name',
@@ -594,7 +597,10 @@ export const GENERAL = {
     DRIVE_LETTER_QUICK_CREATE_ERROR:
         'Insufficient drive letters available on system to create new drives. Use Advanced Create mode to reuse existing drives.',
     RESOURCE_ROLLBACK_TOOLTIP:
-        'When a deployment fails, your provisioned resources will not be rolled back by default. The provisioned resources will be deleted when you delete your deployment from the AWS console.'
+        'When a deployment fails, your provisioned resources will not be rolled back by default. The provisioned resources will be deleted when you delete your deployment from the AWS console.',
+    DATA_SIZE_TOOLTIP: ['Host ', ' data size range is '],
+    NON_CLUSTERED_DRIVE: 'Non clustered drive or not part of SQL server',
+    NON_NETAPP_DRIVE: 'Non NetApp drive'
 };
 
 export const CODE_VIEWER = {
