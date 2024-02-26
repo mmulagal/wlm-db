@@ -451,19 +451,10 @@ Resources:
                         j-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
                             waitAfterCompletion: 0
-                        k-move-configurelunsscript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Configure-LUNs.ps1 -Destination C:\SSM\
+                        k-move-dbcreatescripts:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\* -Destination C:\SSM\ -Recurse
                             waitAfterCompletion: 0
-                        l-move-newdbinitializeiscsidiskscript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\NewDB_Initialize-Iscsidisk.ps1 -Destination C:\SSM\
-                            waitAfterCompletion: 0
-                        m-move-createdatabasescript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Create-Database.ps1 -Destination C:\SSM\
-                            waitAfterCompletion: 0
-                        n-move-cleanupontapscript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Cleanup-ONTAP.ps1 -Destination C:\SSM\
-                            waitAfterCompletion: 0
-                        o-hide-ssm:
+                        l-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                             waitAfterCompletion: 0 
                 InitialSetup:

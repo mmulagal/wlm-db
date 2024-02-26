@@ -515,19 +515,10 @@ Resources:
                         p-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
                             waitAfterCompletion: 0
-                        q-move-configurelunsscript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Configure-LUNs.ps1 -Destination C:\SSM\
+                        q-move-dbcreatescripts:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\* -Destination C:\SSM\ -Recurse
                             waitAfterCompletion: 0
-                        r-move-newdbinitializeiscsidiskscript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\NewDB_Initialize-Iscsidisk.ps1 -Destination C:\SSM\
-                            waitAfterCompletion: 0
-                        s-move-createdatabasescript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Create-Database.ps1 -Destination C:\SSM\
-                            waitAfterCompletion: 0
-                        t-move-cleanupontapscript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Cleanup-ONTAP.ps1 -Destination C:\SSM\
-                            waitAfterCompletion: 0
-                        t-hide-ssm:
+                        r-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                             waitAfterCompletion: 0 
                 InitialSetup:
@@ -1082,19 +1073,10 @@ Resources:
                         p-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
                             waitAfterCompletion: 0
-                        q-move-configurelunsscript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Configure-LUNs.ps1 -Destination C:\SSM\
+                        q-move-dbcreatescripts:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\* -Destination C:\SSM\ -Recurse
                             waitAfterCompletion: 0
-                        r-move-newdbinitializeiscsidiskscript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\NewDB_Initialize-Iscsidisk.ps1 -Destination C:\SSM\
-                            waitAfterCompletion: 0
-                        s-move-createdatabasescript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Create-Database.ps1 -Destination C:\SSM\
-                            waitAfterCompletion: 0
-                        t-move-cleanupontapscript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Cleanup-ONTAP.ps1 -Destination C:\SSM\
-                            waitAfterCompletion: 0
-                        u-hide-ssm:
+                        r-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                             waitAfterCompletion: 0 
                 InitialSetup:
