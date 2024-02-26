@@ -4,14 +4,14 @@
     .extraDiv {
         position: sticky;
         left: 0;
-        z-index: 2;
+        z-index: 1;
     }
 
     .extraDiv2 {
         width: 56px;
         position: sticky;
         left: 4px;
-        z-index: 2;
+        z-index: 1;
         background-color: var(--content-background);
         border-bottom: 1px solid var(--border);
     }
