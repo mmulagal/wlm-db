@@ -1,8 +1,6 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$FSxSecretName,
-
+    
     [Parameter(Mandatory = $true)]
     [string]$FSxID,
 
@@ -19,9 +17,9 @@ param(
     [string]$OntapResourceQuery
 )
 
-$SecretInfo = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId ${FSxSecretName}).SecretString
-$FSxUserName = $SecretInfo.username
-$FSxPassword = $SecretInfo.password
+$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+$FSxUserName = $SsmParameter.fsx.username
+$FSxPassword = $SsmParameter.fsx.password
 
 $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("$(${FSxUserName}):$(${FSxPassword})"))
 

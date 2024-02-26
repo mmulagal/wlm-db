@@ -104,9 +104,6 @@
                     "logs:ListLogDeliveries",
                     "logs:PutLogEvents",
                     "logs:TagResource",
-                    "secretsmanager:CreateSecret",
-                    "secretsmanager:GetSecretValue",
-                    "secretsmanager:ListSecrets",
                     "servicequotas:ListServiceQuotas",
                     "sns:ListTopics",
                     "sns:Publish",
@@ -128,14 +125,11 @@
                 "Sid": "ArnGroup",
                 "Effect": "Allow",
                 "Action": [
-                    "cloudformation:SignalResource",
-                    "secretsmanager:PutResourcePolicy",
-                    "secretsmanager:TagResource"
+                    "cloudformation:SignalResource"
                 ],
                 "Resource": [
                     "arn:aws:cloudformation:*:*:stack/WLMDB*",
-                    "arn:aws:logs:*:*:log-group:WLMDB*",
-                    "arn:aws:secretsmanager:*:*:secret:wlmdb*"
+                    "arn:aws:logs:*:*:log-group:WLMDB*"
                 ]
             },
             {
@@ -198,7 +192,6 @@
                 "Sid": "CommonGroup",
                 "Effect": "Allow",
                 "Action": [
-                    "secretsmanager:GetSecretValue",
                     "sns:ListTopics",
                     "ec2:DescribeInstances",
                     "ec2:DescribeVpcs",

@@ -1,9 +1,6 @@
     [CmdletBinding()]
 param(
 
-    [Parameter(Mandatory=$true)]
-    [string]$AdminSecret,
-
 	[Parameter(Mandatory=$true)]
     [string]$Node1FciIp,
 
@@ -26,7 +23,10 @@ param(
     [string]$ResourceID,   
 
     [Parameter(Mandatory=$true)]
-    [string]$Stackname
+    [string]$Stackname,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Parentstackname 
 
 )
 
@@ -80,9 +80,10 @@ try
     $DomainNetBIOSName = $env:USERDOMAIN
     $AdminGroup = 'BUILTIN\Administrators'
     # Creating Credential Object for Administrator
-    $AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret).SecretString
+    $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+    $AdminPassword = $SsmParameter.domain.password
     $ClusterAdminUser = $DomainNetBIOSName + '\' + $DomainAdminUser
-    $Credentials = (New-Object PSCredential($ClusterAdminUser, (ConvertTo-SecureString $AdminUser.Password -AsPlainText -Force)))
+    $Credentials = (New-Object PSCredential($ClusterAdminUser, (ConvertTo-SecureString $AdminPassword -AsPlainText -Force)))
 
     #https://docs.microsoft.com/en-us/sql/database-engine/install-windows/install-sql-server-from-the-command-prompt?view=sql-server-ver15
 

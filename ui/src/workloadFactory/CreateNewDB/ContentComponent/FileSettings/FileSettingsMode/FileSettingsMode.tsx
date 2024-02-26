@@ -34,9 +34,10 @@ const FileSettingsMode = () => {
                                 children={<DsTypography variant="Semibold_14">{GENERAL.DB_QUICK_CREATE}</DsTypography>}
                                 className={styles.radio}
                             />
-                            <DsTypography variant="Regular_14" className={styles.failoverText}>
-                                {GENERAL.QUICK_DB_CREATE_CONTENT}
-                            </DsTypography>
+                            <div className={styles.failoverText}>
+                                <DsTypography variant="Regular_14">{GENERAL.QUICK_DB_CREATE_CONTENT[0]}</DsTypography>
+                                <DsTypography variant="Regular_14">{GENERAL.QUICK_DB_CREATE_CONTENT[1]}</DsTypography>
+                            </div>
                         </div>
                         <div className={styles.failOver}>
                             <RadioButton

@@ -1,4 +1,4 @@
-﻿#Requires -Module AWS.Tools.SimpleSystemsManagement 
+﻿ #Requires -Module AWS.Tools.SimpleSystemsManagement 
      
 param(
   [Parameter(Mandatory = $true)]
@@ -14,13 +14,16 @@ param(
   [string]$LogPath,
 
   [Parameter(Mandatory = $false)]
+  [string]$InstanceName,
+
+  [Parameter(Mandatory = $false)]
   [string]$ResourceID
 )
 
-New-Item -ItemType Directory -Path C:\cfn\log -Force
-Start-Transcript -Path C:\cfn\log\Create_Database.log.txt -Append
+$createlog = (New-Item -ItemType Directory -Path C:\cfn\log -Force)
+$silenttranscript = (Start-Transcript -Path C:\cfn\log\Create_Database.log.txt -Append)
 $ErrorActionPreference = "Stop"
-
+$result = [ordered]@{}
 $DataPathExists = Test-Path -Path $DataPath
 $LogPathExists = Test-Path -Path $LogPath
 
@@ -29,75 +32,128 @@ $LogPathExists = Test-Path -Path $LogPath
 $DataFile= Split-Path $DataPath -leaf
 $LogFile= Split-Path $LogPath -leaf
 $found1 = $DataFile -match '(.+?)\.'
-if ($found1) {$DataFileName = $matches[1]}
+if ($found1) {$DataLogicalName = $matches[1]}
 $found2 = $LogFile -match '(.+?)\.'
-if ($found2) {$LogFileName = $matches[1]}
+if ($found2) {$LogLogicalName = $matches[1]}
+
+#In the event of same logical name for log and data due to same OS file name
+if ($DataLogicalName -eq $LogLogicalName) {
+   $DataLogicalName = $DBName + "_DATA"
+   $LogLogicalName = $DBName + "_LOG"
+}
 
 #Decrypt SSM Parameter for SQL Username and password
 if ($ResourceID) { 
   $SQLCredStore = "/netapp/wlmdb/$ResourceID"
+  try {
   $credobject =  (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
-  $instance = $SQLServer.ToLower() 
-  $index = $credobject.sql.sqlinstancename.ToLower().IndexOf($instance) 
+  $instancelist = $credobject.sql.sqlinstancename
+  $instancecount = $instancelist.Count
+  if($instancecount -eq 1) {
+    $Dbuser = $credobject.sql.username
+    $Dbpass = $credobject.sql.password 
+  } else {
+    $instance = $InstanceName.ToLower() 
+    $index = $credobject.sql.sqlinstancename.ToLower().IndexOf($instance) 
+    
+    $Dbuser = $credobject.sql.username[$index] 
+    $Dbpass = $credobject.sql.password[$index] 
+  }
 
-  $Dbuser = $credobject.sql.username[$index] 
-  $Dbpass = $credobject.sql.password[$index] 
+  } catch {
+    $result.Add('Status','Failed')
+    $result.Add('Message','Failed to get SQL credentials from SSM Parameter')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson 
+    exit 1 
+  }
 
 }
 
+#Moved from Invoke-Sqlcmd to Sqlcmd as Invoke-Sqlcmd required ConnectionString parameter to pass trusted connection and trust certificate for version > 2016
+#The parameter is not supported in 2016 and without that works in 2016 but not higher versions
+#Unlike Invoke-Sqlcmd, Sqlcmd NEVER returns error on failure back to shell. Hence the roundabout work to redirect to error file and capture
 #In case of reusing existing drives check if data/log file name exists in path already
-
-if ($DataPathExists -Or $LogPathExists) {
-    Write-Error "{Message:Data or Log file with provided name already exists,Exception:$_}"
+try {
+if ($DataPathExists -Or $LogPathExists) { throw }  
+} catch {
+    $result.Add('Status','Failed')
+    $result.Add('Message','Data or Log file with provided name already exists')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson 
+    exit 1
 }
 
 #Check if database name already exists
+try {
+
+  $Dblisterrlog = 'C:\cfn\log\dblist_err.log'
 if ($ResourceID) { 
-  $dblist =(Invoke-Sqlcmd  -ConnectionString "Data Source=$SqlServer; User Id=$Dbuser; Password =$Dbpass;TrustServerCertificate=True" -Query "SELECT name FROM sys.databases").name
+  $dblist =(Sqlcmd  -S $SQLServer -U $Dbuser -P $Dbpass -Q "SET NOCOUNT ON;SELECT name FROM sys.databases" -y 0 -r1 2> $Dblisterrlog)
+  if (Get-Content $Dblisterrlog) {throw}
 }
 else {
-  $dblist = (Invoke-Sqlcmd -ConnectionString "Data Source=$SQLServer; Integrated Security=True; TrustServerCertificate=True" -Query "SELECT name FROM sys.databases").name
+  $dblist = (Sqlcmd -S $SQLServer -Q "SET NOCOUNT ON;SELECT name FROM sys.databases" -y 0 -r1 2> $Dblisterrlog)
+  if (Get-Content $Dblisterrlog) {throw}
+} }
+catch {
+    $result.Add('Status','Failed')
+    $result.Add('Message','Unable to connect to SQL Server')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson 
+    exit 1
 }
-
+try {
 if ($dblist -Contains $DBName) {
-    Write-Error "{Message: Database name $DBName already exists on Server,Exception:$_}"
+    throw
+} } catch {
+    $result.Add('Status','Failed')
+    $result.Add('Message','Database name already exists on Server')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson 
+    exit 1
 }
 #create directory structure required
 $DataDir = [System.IO.Path]::GetDirectoryName($DataPath) 
 $LogDir = [System.IO.Path]::GetDirectoryName($LogPath) 
 
-New-Item -ItemType Directory -Path $DataDir -Force
-New-Item -ItemType Directory -Path $LogDir -Force
+$datadircreate = (New-Item -ItemType Directory -Path $DataDir -Force)
+$logdircreate = (New-Item -ItemType Directory -Path $LogDir -Force)
 
 
 try {
   #Query to create database with required data and log path
-  $Query = 'CREATE DATABASE '+$DBName+' ON (NAME = '+$DataFileName+',FILENAME = '''+$DataPath+''') LOG ON (NAME = '+$LogFileName+',FILENAME = '''+$LogPath+''')'
-  
+  $Query = 'SET NOCOUNT ON;CREATE DATABASE '+$DBName+' ON (NAME = '+$DataLogicalName+',FILENAME = '''+$DataPath+''') LOG ON (NAME = '+$LogLogicalName+',FILENAME = '''+$LogPath+''')'
+  $Dbcreatelog = 'C:\cfn\log\dbcreate.log'
+  $Dbcreateerrlog = 'C:\cfn\log\dbcreate_err.log'
   if ($ResourceID) {
-    Write-Output "Connecting with SQL User Authentication"
-    #Execute a query with SQL credentials
-    Invoke-Sqlcmd  -ConnectionString "Data Source=$SqlServer; User Id=$Dbuser; Password =$Dbpass;TrustServerCertificate=True" -Query "$Query"
-    Write-Output "Created database $DBName with SQL user credentials"
+    #Execute DB create query with SQL user authentication
+    $invokecreate = (Sqlcmd  -S $SqlServer -U $Dbuser -P $Dbpass -Q "$Query" -y 0  -r1 2> $Dbcreateerrlog 1> $Dbcreatelog)
+    $ErrorExists = Test-Path -Path C:\cfn\log\dblist_err.log
+    if (Get-Content $Dbcreateerrlog) {throw} 
 
   }
   else {
-  Write-Output "Connecting with Windows Authentication"
-  #Execute a query with trusted connection. If you omit the server, it will default to localhost.
-  Invoke-Sqlcmd -ConnectionString "Data Source=$SQLServer; Integrated Security=True; TrustServerCertificate=True" -Query "$Query"
-  Write-Output "Created database $DBName with Windows credentials" 
+  #Execute DB create query with trusted connection(Windows authentication). If you omit the server, it will default to localhost.
+  $invokecreate = (Sqlcmd  -S $SqlServer -Q "$Query" -y 0  -r1 2> $Dbcreateerrlog 1> $Dbcreatelog)
+  if (Get-Content $Dbcreateerrlog) {throw} 
   }
   
     }
 catch {
-  Write-Error "{Message:A network-related or instance-specific error occurred while creating database in SQL Server, Error: $_ }"
+    $result.Add('Status','Failed')
+    $result.Add('Message','Failed to create database on Server')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson 
+    exit 1
       }
      
-
-
-  
-
- 
- 
- 
- 
+$result.Add('Status','Complete')
+$result.Add('Message','Successfully created database on SQL Server')
+$resultjson = ($result | ConvertTo-Json) 
+$resultjson 

@@ -1,3 +1,4 @@
+#prettier-ignore
 ---
 AWSTemplateFormatVersion: 2010-09-09
 
@@ -11,7 +12,7 @@ Metadata:
               Parameters:
                   - DeploymentMode
                   - FSxFileSystemName
-                  - FSxAdministratorPasswordSecret
+                  - FSxAdministratorPassword
                   - FSxDiskIops
                   - FSxStorageCapacity
                   - FSxVolumeThroughputCapacity
@@ -41,12 +42,13 @@ Metadata:
                   - StandbySubnetId
                   - PreferredRouteTableId
                   - StandbyRouteTableId
+                  - ParentStackName
         ParameterLabels:
             DeploymentMode:
                 default: File system deployment mode
             FSxFileSystemName:
                 default: File system name
-            FSxAdministratorPasswordSecret:
+            FSxAdministratorPassword:
                 default: File system administrative password
             FSxDiskIops:
                 default: Provisioned SSD IOPS
@@ -88,6 +90,8 @@ Metadata:
                 default: Preferred VPC route table
             StandbyRouteTableId:
                 default: Standby VPC route table
+            ParentStackName:
+                default: Name of the parent CloudFormation stack
 
 Parameters:
     DeploymentMode:
@@ -101,8 +105,8 @@ Parameters:
         Type: String
         Default: wlmdb-fsx
 
-    FSxAdministratorPasswordSecret:
-        Description: Secret string for the "fsxadmin" administrator account.
+    FSxAdministratorPassword:
+        Description: Password for the "fsxadmin" administrator account.
         Type: String
 
     FSxDiskIops:
@@ -206,6 +210,10 @@ Parameters:
         Description: Standby VPC route tables to associate with your file system.
         Type: String
         Default: rtb-123456
+    
+    ParentStackName:
+        Description: Name of the parent CloudFormation stack.
+        Type: String
 
 Conditions:
     FSxIsProvisionModeAutomatic: !Equals [!Ref FSxDiskIops, '3']
@@ -343,7 +351,7 @@ Resources:
                 DiskIopsConfiguration:
                     Iops: !If [FSxIsProvisionModeAutomatic, !Ref AWS::NoValue, !Ref FSxDiskIops]
                     Mode: !If [FSxIsProvisionModeAutomatic, AUTOMATIC, USER_PROVISIONED]
-                FsxAdminPassword: !Sub '{{resolve:secretsmanager:${FSxAdministratorPasswordSecret}:SecretString:password}}'
+                FsxAdminPassword: !Ref FSxAdministratorPassword
                 PreferredSubnetId: !Ref PreferredSubnetId
                 RouteTableIds:
                     !If [
