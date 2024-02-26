@@ -12,7 +12,25 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"percentUsed\":25,\"used\":8589934592,\"total\":17179869184,\"remaining\":8589934592}]\r\n",
+        "StandardOutputContent": "[{\"percentUsed\":25,\"used\":8589934592,\"total\":9895604649984,\"remaining\":8589934592}]\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "memoryInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[{\"percentUsed\":50,\"used\":8796093022208,\"total\":17592186044416,\"remaining\":8796093022208}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -300,7 +318,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"TotalSize\":147849216}]\r\n",
+        "StandardOutputContent": "[{\"TotalSize\":2473901162496}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -318,7 +336,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"total\":40128937984,\"remaining\":40004681728},{\"total\":160924893184,\"remaining\":160665894912},{\"total\":16070410240,\"remaining\":15964766208}]\r\n",
+        "StandardOutputContent": "[{\"total\":9895604649984,\"remaining\":7421703487488}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
