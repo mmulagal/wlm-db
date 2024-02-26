@@ -954,14 +954,12 @@ async function getDefaultDrives(credentialsId: string, region: string, activeNod
 async function getDriveInfoFromNodes(
     credentialsId: string,
     region: string,
-    resourceType: string,
     activeNodeInstanceId: string,
     standbyNodeInstanceId: string
 ) {
     logger.info('Getting existing drives info on node', {
         credentialsId,
         region,
-        resourceType,
         activeNodeInstanceId,
         standbyNodeInstanceId
     });
@@ -978,16 +976,14 @@ async function getDriveInfoFromNodes(
     // Getting clustered drive letters for FCI deployments
     const clusterCommand = [GET_CLUSTER_DRIVES];
 
-    const clusterCommandPromise =
-        resourceType === 'FCI'
-            ? callSsmExecution(credentialsId, region, clusterCommand, activeNodeInstanceId, undefined, false)
-            : Promise.resolve();
+    const clusterCommandPromise = standbyNodeInstanceId
+        ? callSsmExecution(credentialsId, region, clusterCommand, activeNodeInstanceId, undefined, false)
+        : Promise.resolve();
 
     // Getting drive info of drives present on standby node to eliminate presenting existing drive letter as available drive letter
-    const existingDriveStandbyNodePromise =
-        resourceType === 'FCI'
-            ? callSsmExecution(credentialsId, region, driveInfoCommand, standbyNodeInstanceId!, undefined, false)
-            : Promise.resolve();
+    const existingDriveStandbyNodePromise = standbyNodeInstanceId
+        ? callSsmExecution(credentialsId, region, driveInfoCommand, standbyNodeInstanceId!, undefined, false)
+        : Promise.resolve();
 
     const [clusterDrivesResponse, existingDriveActiveNodeResponse, existingDriveStandbyNodeResponse] =
         await Promise.all([clusterCommandPromise, existingDriveActiveNodePromise, existingDriveStandbyNodePromise]);
@@ -1040,7 +1036,6 @@ async function getDriveInfoFromSSM(
     databaseHostId: string,
     credentialsId: string,
     region: string,
-    resourceType: string,
     node1InstanceId: string,
     node2InstanceId?: string
 ) {
@@ -1065,7 +1060,7 @@ async function getDriveInfoFromSSM(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
-    if (resourceType === 'FCI') {
+    if (standbyNodeInstanceId) {
         const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId!);
         if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
             const errorMessage = `Error while fetching drive details for ${accountId} ${databaseHostId}. Unable to connect to node ${standbyNodeInstanceId} through SSM`;
@@ -1078,7 +1073,7 @@ async function getDriveInfoFromSSM(
     try {
         // Not caching any ssm response as multiple creation will require real time data
         [getDriveInfoFromNodesResponse, getDefaultDrivesResponse] = await Promise.all([
-            getDriveInfoFromNodes(credentialsId, region, resourceType, activeNodeInstanceId, standbyNodeInstanceId!),
+            getDriveInfoFromNodes(credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId!),
             getDefaultDrives(credentialsId, region, activeNodeInstanceId)
         ]);
     } catch (error) {
@@ -1111,7 +1106,7 @@ async function getDriveInfo(
         throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
     }
 
-    const { co_relation_id: fileSystemId, metadata, resource_type: resourceType } = resourceDetail;
+    const { co_relation_id: fileSystemId, metadata } = resourceDetail;
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
     let fsxStorageCapacity;
@@ -1119,15 +1114,7 @@ async function getDriveInfo(
     try {
         [fsxStorageCapacity, driveResponse] = await Promise.all([
             getFsxStorageCapacity(credentialsId, region!, fileSystemId!),
-            getDriveInfoFromSSM(
-                accountId,
-                databaseHostId,
-                credentialsId,
-                region,
-                resourceType,
-                node1InstanceId,
-                node2InstanceId
-            )
+            getDriveInfoFromSSM(accountId, databaseHostId, credentialsId, region, node1InstanceId, node2InstanceId)
         ]);
     } catch (error) {
         const errorMessage = `Unable to get drive information and FSx storage capacity. ${error}.`;
