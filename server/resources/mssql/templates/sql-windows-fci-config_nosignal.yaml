@@ -456,29 +456,29 @@ Resources:
                 FetchResources:
                     files:
                         C:\cfn\scripts\Verify-Signature.ps1:
-                            source: {{ ScriptVerifySignature }}
+                            source: {{{ ScriptVerifySignature }}}
                         C:\cfn\scripts\Unzip-Archive.ps1:
-                            source: {{ ScriptUnzipArchive }}
+                            source: {{{ ScriptUnzipArchive }}}
                         C:\cfn\scripts\common.zip:
-                            source: {{ ScriptCommon }}
+                            source: {{{ ScriptCommon }}}
                         C:\cfn\scripts\sqlfci.zip:
-                            source: {{ ScriptSQLFCI }}
+                            source: {{{ ScriptSQLFCI }}}
                         C:\cfn\scripts\sqlontap.zip:
-                            source: {{ ScriptSQLONTAP }}
+                            source: {{{ ScriptSQLONTAP }}}
                         C:\cfn\scripts\dbcreate.zip:
-                            source: {{ ScriptDBCREATE}}
+                            source: {{{ ScriptDBCREATE}}}
                         C:\cfn\DSC.zip:
-                            source: {{ DSC }}
+                            source: {{{ DSC }}}
                         C:\cfn\Installer\powershell.zip:
-                            source: {{ PowerShell }}
+                            source: {{{ PowerShell }}}
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
-                            source: {{ AmazonLaunchWizardForCFN }}
+                            source: {{{ AmazonLaunchWizardForCFN }}}
                         C:\cfn\modules\AWSLaunchWizardForSSM.zip:
-                            source: {{ AmazonLaunchWizardForSSM }}
+                            source: {{{ AmazonLaunchWizardForSSM }}}
                         C:\cfn\modules\AmznFailoverCluster.zip:
-                            source: {{ AmazonFailoverCluster }}
+                            source: {{{ AmazonFailoverCluster }}}
                         C:\cfn\Installer\sqlspcu.zip:
-                            source: {{ Sqlspcu }}
+                            source: {{{ Sqlspcu }}}
                 ScriptSignatureVerificationandExtract:
                     commands:
                         b-unpack-common-scripts:
@@ -1014,29 +1014,29 @@ Resources:
                 FetchResources:
                     files:
                         C:\cfn\scripts\Verify-Signature.ps1:
-                            source: {{ ScriptVerifySignature }}
+                            source: {{{ ScriptVerifySignature }}}
                         C:\cfn\scripts\Unzip-Archive.ps1:
-                            source: {{ ScriptUnzipArchive }}
+                            source: {{{ ScriptUnzipArchive }}}
                         C:\cfn\scripts\common.zip:
-                            source: {{ ScriptCommon }}
+                            source: {{{ ScriptCommon }}}
                         C:\cfn\scripts\sqlfci.zip:
-                            source: {{ ScriptSQLFCI }}
+                            source: {{{ ScriptSQLFCI }}}
                         C:\cfn\scripts\sqlontap.zip:
-                            source: {{ ScriptSQLONTAP }}
+                            source: {{{ ScriptSQLONTAP }}}
                         C:\cfn\scripts\dbcreate.zip:
-                            source: {{ ScriptDBCREATE}}
+                            source: {{{ ScriptDBCREATE}}}
                         C:\cfn\DSC.zip:
-                            source: {{ DSC }}
+                            source: {{{ DSC }}}
                         C:\cfn\Installer\powershell.zip:
-                            source: {{ PowerShell }}
+                            source: {{{ PowerShell }}}
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
-                            source: {{ AmazonLaunchWizardForCFN }}
+                            source: {{{ AmazonLaunchWizardForCFN }}}
                         C:\cfn\modules\AWSLaunchWizardForSSM.zip:
-                            source: {{ AmazonLaunchWizardForSSM }}
+                            source: {{{ AmazonLaunchWizardForSSM }}}
                         C:\cfn\modules\AmznFailoverCluster.zip:
-                            source: {{ AmazonFailoverCluster }}
+                            source: {{{ AmazonFailoverCluster }}}
                         C:\cfn\Installer\sqlspcu.zip:
-                            source: {{ Sqlspcu }}
+                            source: {{{ Sqlspcu }}}
                 ScriptSignatureVerificationandExtract:
                     commands:
                         b-unpack-common-scripts:
