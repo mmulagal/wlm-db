@@ -6,10 +6,10 @@
         "remaining": 3951697920
     },
     "diskUtilizationResponse": {
-        "percentUsed": "1",
-        "remaining": "17032019968",
-        "total": "17179869184",
-        "used": "147849216"
+        "percentUsed": "25",
+        "remaining": "7421703487488",
+        "total": "9895604649984",
+        "used": "2473901162496"
     },
     "databaseSummaryResponse": {
         "databases": [
