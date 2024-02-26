@@ -10,7 +10,8 @@ import {
     jobMonitoringApi,
     policiesApi,
     resourceApi,
-    workloadFactoryResourceApi
+    workloadFactoryResourceApi,
+    inventoryApi
 } from '../utils/apiService';
 import authSlice from './authSlice';
 import mssqlSlice from './mssql/mssqlSlice';
@@ -50,7 +51,8 @@ const rootReducer = combineReducers({
     [headersSlice.name]: headersSlice.reducer,
     [createNewUserSlice.name]: createNewUserSlice.reducer,
     [policiesApi.reducerPath]: policiesApi.reducer,
-    [createUserDbApi.reducerPath]: createUserDbApi.reducer
+    [createUserDbApi.reducerPath]: createUserDbApi.reducer,
+    [inventoryApi.reducerPath]: inventoryApi.reducer
 });
 
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action: any) => {
@@ -95,6 +97,7 @@ const store = configureStore({
             .concat(headersApi.middleware)
             .concat(policiesApi.middleware)
             .concat(createUserDbApi.middleware)
+            .concat(inventoryApi.middleware)
             .concat(rtkQueryErrorLogger)
 });
 
