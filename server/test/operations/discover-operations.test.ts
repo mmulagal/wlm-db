@@ -5,12 +5,19 @@ import '../simulator/scopes/aws/ec2-scope';
 import '../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../simulator/scopes/aws/ssm-scope';
+import '../simulator/scopes/aws/fsx-scope';
 
 describe('Discover operations', () => {
-    it('Get host and SQL Server instance details', async () => {
-        const response = await getHostAndSqlServerInfo(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION);
-        expect(response).toBeDefined();
-    });
+    it(
+        'Get host and SQL Server instance details',
+        async () => {
+            const response = await getHostAndSqlServerInfo(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 10);
+            expect(response).toBeDefined();
+        },
+        {
+            timeout: 10000
+        }
+    );
 
     it('Store discovered resource credentials', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
