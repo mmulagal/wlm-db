@@ -734,6 +734,10 @@ const SQL_RESOURCE_ASSETS = [
     //     url: 'scripts/sqlontap.zip.sig'
     // },
     {
+        name: 'ScriptDBCREATE',
+        url: `${WLMDB}/scripts/dbcreate.zip`
+    },
+    {
         name: 'ScriptVpcCheck',
         url: `${WLMDB}/validation/Validate-VPCConnectivity.ps1`
     },
@@ -1056,7 +1060,6 @@ const subJobDescriptions: SubJobDescriptions = {
     'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint'
 };
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
-
 const RESOURCE_SOURCE = {
     DEPLOY: 'deployment',
     DISCOVER: 'discovery'
