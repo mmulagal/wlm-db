@@ -23,7 +23,7 @@ param(
 $createlog = (New-Item -ItemType Directory -Path C:\cfn\log -Force)
 $silenttranscript = (Start-Transcript -Path C:\cfn\log\Create_Database.log.txt -Append)
 $ErrorActionPreference = "Stop"
-$result = @{}
+$result = [ordered]@{}
 $DataPathExists = Test-Path -Path $DataPath
 $LogPathExists = Test-Path -Path $LogPath
 

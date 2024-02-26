@@ -1,5 +1,5 @@
- #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
-[CmdletBinding()]
+   #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
+ [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
     [string]$FileSystemId,
@@ -45,7 +45,8 @@ $FSxDataVolumeName = "wlmdb_sqldata_"+$epoch
 $FSxDataVolumeSize = [math]::Round([int]$FSxDataLunSize*1.3,2)
 $FSxLogVolumeName = "wlmdb_sqllog_"+$epoch
 $FSxLogVolumeSize = [math]::Round([int]$FSxLogLunSize*1.3,2)
-$result = @{}
+$result = [ordered]@{}
+$resources=[ordered]@{}
 
 $LOGLUN = 'sqllog'
 $DATALUN = 'sqldata'
@@ -125,7 +126,7 @@ function callrestapi{
             "Body" =  "$JsonBody"
             "ContentType" = "application/json"
         }
-        Invoke-RestMethod @Params -Certificate $restcert
+        $invokerest = (Invoke-RestMethod @Params -Certificate $restcert)
     }catch{
         $result.Add('Status','Failed')
         $result.Add('Message','REST API call to FSx for ONTAP failed')
@@ -222,7 +223,7 @@ $Body = @{
     "nas" = @{"security_style" = "NTFS"}
     "size" = "$DVOLSIZE"      
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $volUriDynamicPart -region $region -parambody $Body -creds $base64 -result $result
+$datavolcreate= (callrestapi -MgmtDNS $MgmtDNS -uri $volUriDynamicPart -region $region -parambody $Body -creds $base64 -result $result)
 }
 
 if($LogNew -ne "false") {
@@ -238,7 +239,7 @@ $Body = @{
     "nas" = @{"security_style" = "NTFS"}
     "size" = "$LVOLSIZE"      
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $volUriDynamicPart -region $region -parambody $Body -creds $base64 -result $result
+$logvolcreate = (callrestapi -MgmtDNS $MgmtDNS -uri $volUriDynamicPart -region $region -parambody $Body -creds $base64 -result $result)
 }
 } catch {
     $result.Add('Status','Failed')
@@ -252,12 +253,13 @@ callrestapi -MgmtDNS $MgmtDNS -uri $volUriDynamicPart -region $region -parambody
 Start-Sleep 5
 
 #Build return object for cleanup after volume creation
-   $result = @{
+   $resources = @{
       'FSxDataVolumeName' = $FsxDataVolumeName
       'FSxLogVolumeName' = $FsxLogVolumeName
       'Igroup' = $IGROUP
       'SQLVMName' = $SQLVMName
    }
+   $result.Add('Resources',$resources)
 
 ##modify volumes
 $VolUriDynamicPart='private/cli/volume'
@@ -297,7 +299,7 @@ $Params = @{
 }
 try{
     $restcert = returncert -region $region
-    Invoke-RestMethod @Params -Certificate $restcert
+    $modifyvol = (Invoke-RestMethod @Params -Certificate $restcert)
 }catch{
     $result.Add('Status','Failed')
     $result.Add('Message','Volume modification to set best practise parameters failed')
@@ -326,7 +328,7 @@ $Body = @{
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "$DSIZE"}       
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64 -result $result
+$createdatalun = (callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64 -result $result)
 Start-Sleep 2
 }
 
@@ -341,7 +343,7 @@ $Body = @{
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "$LSIZE"}   
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64 -result $result
+$createloglun = (callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64 -result $result)
 Start-Sleep 2
 }
 
@@ -362,7 +364,7 @@ $Body = @{
     "lun" = @{"name" = "$path"}
     "igroup" = @{"name" = "$IGROUP"}
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64 -result $result
+$lunmodify = (callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64 -result $result)
 }
 
 Start-Sleep 2
@@ -388,7 +390,7 @@ foreach ($perlun in $pathlist) {
         }
         try{
         $restcert = returncert -region $region
-        Invoke-RestMethod @Params -Certificate $restcert
+        $lunmodify1 = (Invoke-RestMethod @Params -Certificate $restcert)
         }
         catch{
             $result.Add('Status','Failed')
@@ -412,7 +414,7 @@ foreach ($perlun in $pathlist) {
         }
         try{
         $restcert = returncert -region $region
-        Invoke-RestMethod @Params -Certificate $restcert
+        $lunmodify1 = (Invoke-RestMethod @Params -Certificate $restcert)
         }
         catch{
             $result.Add('Status','Failed')
@@ -428,7 +430,4 @@ foreach ($perlun in $pathlist) {
     $result.Add('Message','Provisioning volumes and LUNs complete')
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson 
- 
- 
- 
  
