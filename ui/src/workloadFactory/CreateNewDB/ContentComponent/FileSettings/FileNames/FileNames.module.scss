@@ -37,6 +37,10 @@
         .driveSelectField {
             width: 229px;
             --menu-max-height: 255px;
+
+            [class*='Select-module_option-with-secondary'] {
+                gap: 0 !important;
+            }
         }
 
         .pathSection {
