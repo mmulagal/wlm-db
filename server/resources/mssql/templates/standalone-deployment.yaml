@@ -446,18 +446,18 @@ Resources:
                         i-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
                             waitAfterCompletion: 0
-                        j-move-configurelunsscript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Configure-LUNs.ps1 -Destination C:\SSM\
-                            waitAfterCompletion: 0
-                        k-move-newdbinitializeiscsidiskscript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\NewDB_Initialize-Iscsidisk.ps1 -Destination C:\SSM\
-                            waitAfterCompletion: 0
-                        l-move-createdatabasescript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Create-Database.ps1 -Destination C:\SSM\
-                            waitAfterCompletion: 0
-                        m-move-cleanupontapscript:
-                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Cleanup-ONTAP.ps1 -Destination C:\SSM\
-                            waitAfterCompletion: 0
+                        #j-move-configurelunsscript:
+                         #   command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Configure-LUNs.ps1 -Destination C:\SSM\
+                         #   waitAfterCompletion: 0
+                        #k-move-newdbinitializeiscsidiskscript:
+                           # command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\NewDB_Initialize-Iscsidisk.ps1 -Destination C:\SSM\
+                           # waitAfterCompletion: 0
+                        #l-move-createdatabasescript:
+                           # command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Create-Database.ps1 -Destination C:\SSM\
+                           # waitAfterCompletion: 0
+                        #m-move-cleanupontapscript:
+                          #  command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Cleanup-ONTAP.ps1 -Destination C:\SSM\
+                          #  waitAfterCompletion: 0
                         n-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                             waitAfterCompletion: 0 
