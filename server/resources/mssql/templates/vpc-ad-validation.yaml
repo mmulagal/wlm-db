@@ -1,3 +1,5 @@
+#prettier-ignore
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: This template creates AWS resources for validating Active Directory credentials
             under the provided VPC. You will be billed for the AWS resources used if you create
@@ -410,7 +412,7 @@ Resources:
                       - !Ref 'ParentStackName'
                       - '"'
                       - "\n"
-                      - 'Write-SSMParameter  -Name "/netapp/wlmdb/$stackname" -Value (Get-SSMParameter -Name "/netapp/wlmdb/$stackname").Value -Type "SecureString" -Overwrite $true'
+                      - 'Write-SSMParameter  -Name "/netapp/wlmdb/$stackname" -Value (Get-SSMParameter -Name "/netapp/wlmdb/$stackname" -WithDecryption $True).Value -Type "SecureString" -Overwrite $true'
                       - "\n"
                       - 'cfn-init.exe -v -c config -s '
                       - !Ref 'AWS::StackId'

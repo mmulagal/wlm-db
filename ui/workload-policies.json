@@ -44,8 +44,7 @@
                     "ec2:RevokeSecurityGroupEgress",
                     "ec2:RevokeSecurityGroupIngress",
                     "ec2:StartInstances",
-                    "ec2:StopInstances",
-                    "ssm:DeleteParameter"
+                    "ec2:StopInstances"
                 ],
                 "Resource": "*",
                 "Condition": {
@@ -111,7 +110,6 @@
                     "ssm:Describe*",
                     "ssm:Get*",
                     "ssm:List*",
-                    "ssm:PutParameter",
                     "ssm:PutComplianceItems",
                     "ssm:PutConfigurePackageResult",
                     "ssm:PutInventory",

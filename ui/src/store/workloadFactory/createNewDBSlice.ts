@@ -17,13 +17,17 @@ export const initialCreateNewUserState: any = {
     isExistingDataDrive: false,
     isExistingLogDrive: false,
     isDataSizeValid: true,
-    isLogSizeValid: true
+    isLogSizeValid: true,
+    selectedCollation: ''
 };
 
 const createNewUserSlice = createSlice({
     name: 'createNewUser',
     initialState: initialCreateNewUserState,
     reducers: {
+        setSelectedCollation: (state, action: PayloadAction<any>) => {
+            state.selectedCollation = action.payload;
+        },
         setSelectedNewUserConfig: (state, action: PayloadAction<any>) => {
             state.selectedNewUserConfig = action.payload;
         },
@@ -99,6 +103,7 @@ export const {
     setIsExistingLogDrive,
     setIsDataSizeValid,
     setIsLogSizeValid,
+    setSelectedCollation,
     addInitialDBCreateData
 } = createNewUserSlice.actions;
 

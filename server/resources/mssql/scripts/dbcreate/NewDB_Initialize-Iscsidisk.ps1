@@ -18,8 +18,12 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$DataNew   
 )
-Start-Transcript -Path C:\cfn\log\NewDB_initializeiscsi.log.txt -Append
+$silenttranscript = (Start-Transcript -Path C:\cfn\log\NewDB_initializeiscsi.log.txt -Append)
 $ErrorActionPreference = "Stop"
+
+#Explicit wait to ensure new LUNs are available for discovery 
+Start-Sleep 20
+$result = @{}
 
 #Create a list of drive letters if not passed
 if (-Not $DataDrive) { 
@@ -78,8 +82,12 @@ elseif($LogNew -ne "false") {
     }
 Start-Service -Name ShellHWDetection
 }catch{
-    Write-Error "{Message:Error initializing drives,Exception:$_}"
-    
+    $result.Add('Status','Failed')
+    $result.Add('Message','Failed to initialize drives')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson  
+    exit 1     
 } 
 
 try{
@@ -97,8 +105,12 @@ if ($IsClustered -ne "false") {
 
 }
 }catch{
-    Write-Error "{Message:Error adding disks to Cluster Storage,Exception:$_}"
-    
+    $result.Add('Status','Failed')
+    $result.Add('Message','Failed to add disks to Cluster Storage')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson  
+    exit 1        
 } 
 try{
 if ($IsClustered -ne "false") {
@@ -145,10 +157,18 @@ else{
 
 }
 }catch{
-    Write-Error "{Message:Error adding disks to SQL Server Role dependency,Exception:$_}"
-    
+    $result.Add('Status','Failed')
+    $result.Add('Message','Failed to add disks to SQL Server Role dependency in Cluster')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson  
+    exit 1        
 } 
 
+$result.Add('Status','Complete')
+$result.Add('Message','Completed preparing iSCSI drives for SQL')
+$resultjson = ($result | ConvertTo-Json) 
+$resultjson  
  
 
 

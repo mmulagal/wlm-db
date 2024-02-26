@@ -19,6 +19,11 @@ param(
     [string]$WaitHandler 
 )
 
+#get Instance ID
+$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+$instanceId = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+
+
 # Tries to enable TLS12
 function enableTLS12 {
     try {
@@ -47,7 +52,7 @@ foreach ($property in $serviceURlMapJson.PSObject.Properties) {
 foreach ($service in $serviceURLHashTable.keys) {
 
     try{
-        $out = (Invoke-WebRequest $serviceURLHashTable[$service] -UseBasicParsing).StatusCode
+        $out = (Invoke-WebRequest "https://cloudformation.$region.amazonaws.com" -UseBasicParsing).StatusCode
 
         if (($out -ge 200 -and $out -lt 299) -or ($out -ge 500 -and $out-lt 600)) {
             # Was able to connect to service, continue testing

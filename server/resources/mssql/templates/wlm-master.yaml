@@ -1,3 +1,4 @@
+#prettier-ignore
 ---
 AWSTemplateFormatVersion: "2010-09-09"
 Description: This template deploys Windows SQL Server in the chosen deployment model (failover cluster instances or a standalone instance). 
@@ -292,6 +293,8 @@ Parameters:
   {{SqsEndpointExists}}
 
   {{CloudwatchEndpointExists}}
+
+  {{CloudwatchLogsEndpointExists}}
        
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -508,6 +511,8 @@ Resources:
           Ref: SqsEndpointExists
         CloudwatchEndpointExists:
           Ref: CloudwatchEndpointExists
+        CloudwatchLogsEndpointExists:
+          Ref: CloudwatchLogsEndpointExists
       NotificationARNs:
         Fn::If:
         - IncludeNotification
