@@ -2,6 +2,7 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import {
     Job,
     registerJobs,
+    registerJob,
     getJobs,
     getJobDetails,
     updateJobDetails,
@@ -208,6 +209,18 @@ describe('Job operations', () => {
         expect(response).toHaveProperty('inProgress');
         expect(response).toHaveProperty('completed');
         expect(response).toHaveProperty('failed');
+    });
+    it('Register single job', async () => {
+        const response = await registerJob(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, {
+            name: 'test-job-ops-1',
+            description: 'test-filtered-job-description',
+            resourceName: 'test-resource',
+            initiator: 'filterMe',
+            startTime: Date.now(),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.DEPLOYMENT
+        });
+        expect(response).toBeDefined();
     });
 });
 

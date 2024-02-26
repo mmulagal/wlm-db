@@ -4,12 +4,14 @@ import {
     getDatabaseHostsSummary,
     getDatabaseHostSummary,
     getDatabases,
+    deployDatabase,
     getDriveInfo
 } from '../operations/database-hosts-operations';
 import {
     DatabaseHostDetailsSchema,
     DatabasesListSchema,
     DatabaseHostsSummarySchema,
+    DatabasesCreateSchema,
     GetDriveInfoSchema
 } from './schemas/database-hosts-schemas';
 
@@ -47,6 +49,26 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     params: { accountId, databaseHostId }
                 } = request;
                 const response = await getDatabases(accountId, databaseHostId);
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database`,
+            { schema: DatabasesCreateSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region },
+                    body: { databaseName, dataFileConfig, logFileConfig }
+                } = request;
+                const response = await deployDatabase(
+                    accountId,
+                    databaseHostId,
+                    credentialsId,
+                    region,
+                    databaseName,
+                    dataFileConfig,
+                    logFileConfig
+                );
                 return reply.send(response);
             }
         )

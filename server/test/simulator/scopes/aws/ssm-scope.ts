@@ -194,6 +194,30 @@ const getDefaultDataDrive = {
     ]
 };
 
+const configureLuns = {
+    commands: [
+        'C:\\SSM\\Configure-LUNs.ps1 -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataLunSize 1074  -FSxLogLunSize 1074 -LogNew false -DataNew false'
+    ]
+};
+
+const createDatabase = {
+    commands: [
+        'C:\\SSM\\Create-Database.ps1 -SQLServer Draculla  -DBName tempdb9  -DataPath J:\\MSSQL\\data\\tempdb9_data.mdf  -LogPath K:\\MSSQL\\data\\tempdb9_log.ldf'
+    ]
+};
+
+const newDBInitialize = {
+    commands: [
+        'C:\\SSM\\NewDB_Initialize-Iscsidisk.ps1 -DBName tempdb9  -IsClustered false  -DataDrive J  -LogDrive K -LogNew true -DataNew true'
+    ]
+};
+
+const cleanUpDB = {
+    commands: [
+        'C:\\SSM\\Cleanup-ONTAP.ps1 -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataVolumeName wlmdb_sqldata_1708948249  -FSxLogVolumeName wlmdb_sqllog_1708948249 -IGROUP wlmdb_sqligroup_1708791218786'
+    ]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -259,7 +283,15 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getHostAndSqlServerInfoResponse)
     .on(SendCommandCommand, { Parameters: getDriveInfo })
     .resolves(listSendCommandCommandResponse.getDriveInfoCommandResponse)
-    .on(SendCommandCommand, { Parameters: getDefaultDataDrive });
+    .on(SendCommandCommand, { Parameters: getDefaultDataDrive })
+    .on(SendCommandCommand, { Parameters: createDatabase })
+    .resolves(listSendCommandCommandResponse.createDBResponse)
+    .on(SendCommandCommand, { Parameters: configureLuns })
+    .resolves(listSendCommandCommandResponse.configureLunsResponse)
+    .on(SendCommandCommand, { Parameters: newDBInitialize })
+    .resolves(listSendCommandCommandResponse.newDBInitalizeResponse)
+    .on(SendCommandCommand, { Parameters: cleanUpDB })
+    .resolves(listSendCommandCommandResponse.cleanUpDBResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -323,7 +355,15 @@ ssmMock
     .on(GetCommandInvocationCommand, { Parameters: '7f937c8c-3f95-460b-ad99-788b354bffa8' })
     .resolves(getCommandInvocationResponse.getHostAndSqlServerInfoResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getDriveInfo' })
-    .resolves(getCommandInvocationResponse.getDriveInfoResponse);
+    .resolves(getCommandInvocationResponse.getDriveInfoResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-bc46-createDB' })
+    .resolves(getCommandInvocationResponse.createDBInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abc46-configureLuns' })
+    .resolves(getCommandInvocationResponse.configureLunsInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-newDBInitialise' })
+    .resolves(getCommandInvocationResponse.newDBInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-cleanUpDB' })
+    .resolves(getCommandInvocationResponse.cleanUpDBInvocationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
