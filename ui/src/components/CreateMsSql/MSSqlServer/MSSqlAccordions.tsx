@@ -191,7 +191,7 @@ const MSSqlAccordions = () => {
                         <Tags />
                         <SimpleNotificationService />
                         <CloudWatch />
-                        {/* <ResourceRollBack /> */}
+                        <ResourceRollBack />
                     </>
                 )}
 
