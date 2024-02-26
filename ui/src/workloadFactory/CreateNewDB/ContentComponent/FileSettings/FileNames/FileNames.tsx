@@ -13,13 +13,12 @@ import {
 } from '../../../../../store/workloadFactory/createNewDBSlice';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
-import { generateOptionType } from '../../../../../utils/utilityFunctions';
+import { generateOptionType, sortListOfDict } from '../../../../../utils/utilityFunctions';
 
 import styles from './FileNames.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { DRIVE_LETTER_TYPE } from '../../../../../utils/consts';
-import { NOTIFICATION_TYPES, addNotification } from '../../../../../store/notificationSlice';
 
 const FileNames = () => {
     const dispatch = useDispatch();
@@ -90,6 +89,15 @@ const FileNames = () => {
         }
     }, [newUserDBName]);
 
+    const disableDriveMsg = (val: any) => {
+        if ('isDriveClustered' in val ? !val.isDriveClustered : false) {
+            return GENERAL.NON_CLUSTERED_DRIVE;
+        } else if (!val?.isNetappDrive) {
+            return GENERAL.NON_NETAPP_DRIVE;
+        }
+        return '';
+    };
+
     //Function to generate the options for Select Field
     const generateDriveLetters = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
@@ -99,7 +107,7 @@ const FileNames = () => {
                 val?.driveLetter,
                 DRIVE_LETTER_TYPE.EXISTING,
                 !val?.isNetappDrive || ('isDriveClustered' in val ? !val.isDriveClustered : false),
-                '',
+                disableDriveMsg(val),
                 val
             );
             options.push(option);
@@ -108,7 +116,7 @@ const FileNames = () => {
             const option = generateOptionType(val, val, DRIVE_LETTER_TYPE.NEW, false, '');
             options.push(option);
         });
-        return options;
+        return sortListOfDict(options, 'isDisabled');
     }, [driveInfoList]);
 
     // Default drive letters logic to set for quick and advanced view
@@ -134,7 +142,7 @@ const FileNames = () => {
                     val?.driveLetter,
                     DRIVE_LETTER_TYPE.EXISTING,
                     !val?.isNetappDrive || ('isDriveClustered' in val ? !val.isDriveClustered : false),
-                    '',
+                    disableDriveMsg(val),
                     val
                 );
                 if (defaultDataDrive === val?.driveLetter && !option.isDisabled) {
@@ -159,7 +167,7 @@ const FileNames = () => {
         if (
             newUserDBFileName &&
             newUserLogFileName &&
-            (selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE ? (driveLetter && driveLetterLogFile) : true)
+            (selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE ? driveLetter && driveLetterLogFile : true)
         ) {
             return (
                 <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
@@ -167,7 +175,7 @@ const FileNames = () => {
                         <DsTypography variant="Regular_14">
                             {`${GENERAL.DATA_FILE_NAME}: ${newUserDBFileName}`}{' '}
                         </DsTypography>
-                        {selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE && dataFilePath && (
+                        {dataFilePath && (
                             <TooltipInfo onVisibleChange={function noRefCheck() {}}>{dataFilePath}</TooltipInfo>
                         )}
                     </div>
@@ -178,7 +186,7 @@ const FileNames = () => {
                         <DsTypography variant="Regular_14">
                             {`${GENERAL.LOG_FILE_NAME}: ${newUserLogFileName}`}{' '}
                         </DsTypography>
-                        {selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE && logFilePath && (
+                        {logFilePath && (
                             <TooltipInfo onVisibleChange={function noRefCheck() {}}>{logFilePath}</TooltipInfo>
                         )}
                     </div>
@@ -193,18 +201,43 @@ const FileNames = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="3"
-                title={
-                    <div className={CommonStyles.title}>
-                        {selectedNewUserConfig === GENERAL.DB_QUICK_CREATE
-                            ? GENERAL.DB_CREATE_FILE_NAMES
-                            : GENERAL.DB_CREATE_FILE_NAMES_AND_DRIVES}
-                    </div>
-                }
+                title={<div className={CommonStyles.title}>{GENERAL.DB_CREATE_FILE_NAMES_AND_PATH}</div>}
             >
                 <AccordionCardContent>
                     <DsTypography>
-                        {selectedNewUserConfig === GENERAL.DB_QUICK_CREATE && (
-                            <>
+                        {selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE && (
+                            <div className={styles.textSection}>
+                                <div className={styles.firstSection}>
+                                    <DsTypography variant="Regular_14">{GENERAL.FILE_SETTINGS_FIRST_TEXT}</DsTypography>
+                                </div>
+                                <div className={styles.firstSection}>
+                                    <DsTypography variant="Regular_14">
+                                        {GENERAL.FILE_SETTINGS_SECOND_TEXT}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        )}
+                        <div className={styles.dataFileSection}>
+                            <DsTypography variant="Regular_14">{GENERAL.DATA_FILE}</DsTypography>
+                            <div className={styles.dataFileSeparator} />
+                            <div className={styles.inputSection}>
+                                {selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE && (
+                                    <SelectField
+                                        isLoading={driveInfoListLoading}
+                                        label={GENERAL.SELECT_DRIVE_LETTER}
+                                        isClearable={false}
+                                        placeholder={GENERAL.SELECT_DRIVE_LETTER}
+                                        onChange={(selectedOptions: any): void => {
+                                            dispatch(setDriveLetter(selectedOptions));
+                                        }}
+                                        value={driveLetter ? driveLetter : null}
+                                        isSearchable={generateDriveLetters.length > 5}
+                                        options={generateDriveLetters}
+                                        variant="two-lines"
+                                        className={styles.driveSelectField}
+                                    />
+                                )}
+
                                 <div className={styles.firstRow}>
                                     <TextField
                                         ref={dataNameRef}
@@ -214,11 +247,42 @@ const FileNames = () => {
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                             dispatch(setNewDBFileName(e.target.value));
                                         }}
-                                        className={styles.quickFileNameText}
+                                        className={styles.advFileNameText}
                                         error={
                                             !dbCreateDataNameAdded && !newUserDBFileName ? GENERAL.ACTION_REQUIRED : ''
                                         }
                                     />
+                                </div>
+                                <div className={styles.pathSection}>
+                                    <DsTypography variant="Semibold_14">{GENERAL.DATA_FILE_PATH} </DsTypography>
+                                    &nbsp;&nbsp;
+                                    <DsTypography variant="Regular_14">{dataFilePath}</DsTypography>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles.dataFileSection}>
+                            <DsTypography variant="Regular_14">{GENERAL.LOG_FILE}</DsTypography>
+                            <div className={styles.dataFileSeparator} />
+                            <div className={styles.inputSection}>
+                                {selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE && (
+                                    <SelectField
+                                        isLoading={driveInfoListLoading}
+                                        label={GENERAL.SELECT_DRIVE_LETTER}
+                                        isClearable={false}
+                                        placeholder={GENERAL.SELECT_DRIVE_LETTER}
+                                        onChange={(selectedOptions: any): void => {
+                                            dispatch(setDriveLetterForLogFile(selectedOptions));
+                                        }}
+                                        value={driveLetterLogFile ? driveLetterLogFile : null}
+                                        isSearchable={generateDriveLetters.length > 5}
+                                        options={generateDriveLetters}
+                                        variant="two-lines"
+                                        className={styles.driveSelectField}
+                                    />
+                                )}
+
+                                <div className={styles.firstRow}>
                                     <TextField
                                         ref={logNameRef}
                                         label={GENERAL.LOG_FILE_NAME}
@@ -227,119 +291,19 @@ const FileNames = () => {
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                             dispatch(setNewUserLogFileName(e.target.value));
                                         }}
-                                        className={styles.quickFileNameText}
+                                        className={styles.advFileNameText}
                                         error={
                                             !dbCreateLogNameAdded && !newUserLogFileName ? GENERAL.ACTION_REQUIRED : ''
                                         }
                                     />
                                 </div>
-                            </>
-                        )}
-
-                        {/* Advanced Create Logic */}
-                        {selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE && (
-                            <>
-                                <div className={styles.textSection}>
-                                    <div className={styles.firstSection}>
-                                        <DsTypography variant="Regular_14">
-                                            {GENERAL.FILE_SETTINGS_FIRST_TEXT}
-                                        </DsTypography>
-                                    </div>
-                                    <div className={styles.firstSection}>
-                                        <DsTypography variant="Regular_14">
-                                            {GENERAL.FILE_SETTINGS_SECOND_TEXT}
-                                        </DsTypography>
-                                    </div>
+                                <div className={styles.pathSection}>
+                                    <DsTypography variant="Semibold_14">{GENERAL.LOG_FILE_PATH}</DsTypography>
+                                    &nbsp;&nbsp;
+                                    <DsTypography variant="Regular_14">{logFilePath}</DsTypography>
                                 </div>
-                                <div className={styles.dataFileSection}>
-                                    <DsTypography variant="Regular_14">{GENERAL.DATA_FILE}</DsTypography>
-                                    <div className={styles.dataFileSeparator} />
-                                    <div className={styles.inputSection}>
-                                        <SelectField
-                                            isLoading={driveInfoListLoading}
-                                            label={GENERAL.SELECT_DRIVE_LETTER}
-                                            isClearable={false}
-                                            placeholder={GENERAL.SELECT_DRIVE_LETTER}
-                                            onChange={(selectedOptions: any): void => {
-                                                dispatch(setDriveLetter(selectedOptions));
-                                            }}
-                                            value={driveLetter ? driveLetter : null}
-                                            isSearchable={generateDriveLetters.length > 5}
-                                            options={generateDriveLetters}
-                                            variant="two-lines"
-                                            className={styles.driveSelectField}
-                                        />
-
-                                        <div className={styles.firstRow}>
-                                            <TextField
-                                                ref={dataNameRef}
-                                                label={GENERAL.DATA_FILE_NAME}
-                                                placeholder={GENERAL.DATA_FILE_NAME}
-                                                value={newUserDBFileName}
-                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                                    dispatch(setNewDBFileName(e.target.value));
-                                                }}
-                                                className={styles.advFileNameText}
-                                                error={
-                                                    !dbCreateDataNameAdded && !newUserDBFileName
-                                                        ? GENERAL.ACTION_REQUIRED
-                                                        : ''
-                                                }
-                                            />
-                                        </div>
-                                        <div className={styles.pathSection}>
-                                            <DsTypography variant="Semibold_14">{GENERAL.DATA_FILE_PATH} </DsTypography>
-                                            &nbsp;&nbsp;
-                                            <DsTypography variant="Regular_14">{dataFilePath}</DsTypography>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className={styles.dataFileSection}>
-                                    <DsTypography variant="Regular_14">{GENERAL.LOG_FILE}</DsTypography>
-                                    <div className={styles.dataFileSeparator} />
-                                    <div className={styles.inputSection}>
-                                        <SelectField
-                                            isLoading={driveInfoListLoading}
-                                            label={GENERAL.SELECT_DRIVE_LETTER}
-                                            isClearable={false}
-                                            placeholder={GENERAL.SELECT_DRIVE_LETTER}
-                                            onChange={(selectedOptions: any): void => {
-                                                dispatch(setDriveLetterForLogFile(selectedOptions));
-                                            }}
-                                            value={driveLetterLogFile ? driveLetterLogFile : null}
-                                            isSearchable={generateDriveLetters.length > 5}
-                                            options={generateDriveLetters}
-                                            variant="two-lines"
-                                            className={styles.driveSelectField}
-                                        />
-
-                                        <div className={styles.firstRow}>
-                                            <TextField
-                                                ref={logNameRef}
-                                                label={GENERAL.LOG_FILE_NAME}
-                                                placeholder={GENERAL.LOG_FILE_NAME}
-                                                value={newUserLogFileName}
-                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                                    dispatch(setNewUserLogFileName(e.target.value));
-                                                }}
-                                                className={styles.advFileNameText}
-                                                error={
-                                                    !dbCreateLogNameAdded && !newUserLogFileName
-                                                        ? GENERAL.ACTION_REQUIRED
-                                                        : ''
-                                                }
-                                            />
-                                        </div>
-                                        <div className={styles.pathSection}>
-                                            <DsTypography variant="Semibold_14">{GENERAL.LOG_FILE_PATH}</DsTypography>
-                                            &nbsp;&nbsp;
-                                            <DsTypography variant="Regular_14">{logFilePath}</DsTypography>
-                                        </div>
-                                    </div>
-                                </div>
-                            </>
-                        )}
+                            </div>
+                        </div>
                     </DsTypography>
                 </AccordionCardContent>
             </AccordionCard>

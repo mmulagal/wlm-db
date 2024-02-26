@@ -287,3 +287,5 @@ curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/$
 --header 'Content-Type: application/json' \\
 --data-raw '${payload}'
 `;
+
+export const CREATE_RESOURCE = 'CREATE_RESOURCE'; // Job monitoring type for DB create
