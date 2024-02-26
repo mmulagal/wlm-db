@@ -504,6 +504,35 @@ export const createUserDbApi = createApi({
     }
 });
 
+export const inventoryApi = createApi({
+    reducerPath: 'inventoryApi',
+    baseQuery: dynamicBaseQuery,
+    endpoints: builder => {
+        return {
+            discoverHosts: builder.query({
+                query: ({ regionId, credentialsId, nextToken = null }) => {
+                    if (nextToken) {
+                        return `credentials/${credentialsId}/regions/${regionId}/mssql/discover?nextToken=${nextToken}`;
+                    } else {
+                        return `credentials/${credentialsId}/regions/${regionId}/mssql/discover`;
+                    }
+                }
+            }),
+            getHostsDetails: builder.query({
+                query: ({ regionId, credentialsId }) => ({
+                    url: `credentials/${credentialsId}/regions/${regionId}/discover/summary`
+                })
+            }),
+            manageHost: builder.mutation({
+                query: ({ credentialId, regionId, instanceId }) => ({
+                    url: `credentials/${credentialId}/regions/${regionId}/manage/${instanceId}`,
+                    method: 'POST'
+                })
+            })
+        };
+    }
+});
+
 export const {
     useGetCredentialsQuery,
     useGetRegionsQuery,
@@ -558,3 +587,5 @@ export const { useGetHeadersCredentialsQuery, useGetHeadersRegionsQuery, useGetS
 export const { useGetWlmdbPoliciesQuery } = policiesApi;
 
 export const { useGetDriveInfoQuery, useCreateUserDBMutation } = createUserDbApi;
+
+export const { useDiscoverHostsQuery, useGetHostsDetailsQuery, useManageHostMutation } = inventoryApi;

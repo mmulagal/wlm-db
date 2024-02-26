@@ -11,7 +11,14 @@ const initialInventoryState: any = {
     detectOntapPassword: '',
     detectHostRadio: 'Yes, Manage host via workload factory',
     managedHostInitialColumns: initialColStateManagedHosts,
-    unManagedHostInitialColumns: initialColStateManagedHosts
+    unManagedHostInitialColumns: initialColStateManagedHosts,
+    discoveredHosts: {
+        discoveredHostData: null,
+        discoverHostLoading: false,
+        discoverHostError: null
+    },
+    unManagedHosts: [],
+    unIdentifiableHosts: []
 };
 
 const inventorySlice = createSlice({
@@ -45,6 +52,15 @@ const inventorySlice = createSlice({
         },
         setRadioValueDetect: (state, action: PayloadAction<any>) => {
             state.detectHostRadio = action.payload;
+        },
+        setDiscoveredHosts: (state, action: PayloadAction<any>) => {
+            state.discoveredHosts = action.payload;
+        },
+        setUnManagedHosts: (state, action: PayloadAction<any>) => {
+            state.unManagedHosts = action.payload;
+        },
+        setUnIdentifiableHosts: (state, action: PayloadAction<any>) => {
+            state.unIdentifiableHosts = action.payload;
         }
     }
 });
@@ -58,7 +74,10 @@ export const {
     setDetectONTAPPassword,
     setRadioValueDetect,
     setManagedHostColState,
-    setUnManagedHostColState
+    setUnManagedHostColState,
+    setDiscoveredHosts,
+    setUnManagedHosts,
+    setUnIdentifiableHosts
 } = inventorySlice.actions;
 
 export default inventorySlice;

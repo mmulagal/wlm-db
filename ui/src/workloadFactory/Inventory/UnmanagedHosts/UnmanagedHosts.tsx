@@ -17,7 +17,7 @@ const UnmanagedHosts = () => {
     const dispatch = useDispatch();
 
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
+    const unManagedHostList = useAppSelector(state => state.inventory.unManagedHosts);
     const { unManagedHostInitialColumns } = useAppSelector(state => state.inventory);
 
     const [resetPage, setResetPage] = useState(false);
@@ -320,7 +320,7 @@ const UnmanagedHosts = () => {
     const tableProps = useTable({
         isSorting: false,
         columns: DatabasesColDefs,
-        rows: databaseTableSort(databaseHostsList) || [],
+        rows: databaseTableSort(unManagedHostList) || [],
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
@@ -352,7 +352,7 @@ const UnmanagedHosts = () => {
 
     useEffect(() => {
         if (resetPage) {
-            if ((databaseHostsList || []).length % pageSize === 1) {
+            if ((unManagedHostList || []).length % pageSize === 1) {
                 tableProps.pagination?.gotoPage(0);
             }
         }
