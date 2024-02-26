@@ -931,7 +931,7 @@ async function getDefaultDrives(credentialsId: string, region: string, activeNod
         credentialsId,
         region,
         defaultDrivesCommand,
-        activeNodeInstanceId!,
+        activeNodeInstanceId,
         undefined,
         false
     );
@@ -969,7 +969,7 @@ async function getDriveInfoFromNodes(
         credentialsId,
         region,
         driveInfoCommand,
-        activeNodeInstanceId!,
+        activeNodeInstanceId,
         undefined,
         false
     );
@@ -977,7 +977,7 @@ async function getDriveInfoFromNodes(
     const clusterCommand = [GET_CLUSTER_DRIVES];
 
     const clusterCommandPromise = standbyNodeInstanceId
-        ? callSsmExecution(credentialsId, region, clusterCommand, activeNodeInstanceId!, undefined, false)
+        ? callSsmExecution(credentialsId, region, clusterCommand, activeNodeInstanceId, undefined, false)
         : Promise.resolve();
 
     // Getting drive info of drives present on standby node to eliminate presenting existing drive letter as available drive letter
@@ -1057,7 +1057,7 @@ async function getDriveInfoFromSSM(
     if (activeNodeInstanceId !== node1InstanceId) {
         const errorMessage = `Error while fetching drive details for ${accountId} ${databaseHostId}. Unable to connect to node ${node1InstanceId} through SSM`;
         logger.error(errorMessage);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
     if (standbyNodeInstanceId) {
@@ -1065,7 +1065,7 @@ async function getDriveInfoFromSSM(
         if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
             const errorMessage = `Error while fetching drive details for ${accountId} ${databaseHostId}. Unable to connect to node ${standbyNodeInstanceId} through SSM`;
             logger.error(errorMessage);
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
     }
 
