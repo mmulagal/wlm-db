@@ -167,8 +167,8 @@ const PreviewDefault = () => {
             editable: 'N/A',
             id: '14'
         },
-        { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: GENERAL.ENABLED, editable: 'N/A', id: '15' }
-        // { accordionName: 'Resource rollback', defaultValue: GENERAL.PD_DISABLED, editable: 'No', id: '16' }
+        { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: GENERAL.ENABLED, editable: 'N/A', id: '15' },
+        { accordionName: 'Resource rollback', defaultValue: GENERAL.PD_DISABLED, editable: 'No', id: '16' }
     ];
 
     const PreviewDefaultColDefs: ColumnProps[] = [
@@ -178,17 +178,17 @@ const PreviewDefault = () => {
             id: '1',
             isSortable: false,
 
-            width: '231px'
-            // renderCell: (cellData: any, rowData: any) => {
-            //     return cellData === 'Resource rollback' ? (
-            //         <div className={styles.resourceContainer}>
-            //             <DsTypography variant="Regular_14">{cellData}</DsTypography>
-            //             <TooltipInfo>{GENERAL.RESOURCE_ROLLBACK_TOOLTIP}</TooltipInfo>
-            //         </div>
-            //     ) : (
-            //         <DsTypography variant="Regular_14">{cellData}</DsTypography>
-            //     );
-            // }
+            width: '231px',
+            renderCell: (cellData: any, rowData: any) => {
+                return cellData === 'Resource rollback' ? (
+                    <div className={styles.resourceContainer}>
+                        <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                        <TooltipInfo>{GENERAL.RESOURCE_ROLLBACK_TOOLTIP}</TooltipInfo>
+                    </div>
+                ) : (
+                    <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                );
+            }
         },
         {
             Header: GENERAL.DEFAULT,
