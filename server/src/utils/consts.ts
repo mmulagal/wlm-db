@@ -641,13 +641,15 @@ const TEMPLATE_CLOUDFORMATION_ENDPOINT = 'CloudformationEndpointExists';
 const TEMPLATE_SSM_ENDPOINT = 'SsmEndpointExists';
 const TEMPLATE_SQS_ENDPOINT = 'SqsEndpointExists';
 const TEMPLATE_CLOUDWATCH_ENDPOINT = 'CloudwatchEndpointExists';
+const TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT = 'CloudwatchLogsEndpointExists';
 
 const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
     s3: TEMPLATE_S3_ENDPOINT,
     cloudformation: TEMPLATE_CLOUDFORMATION_ENDPOINT,
     ssm: TEMPLATE_SSM_ENDPOINT,
     sqs: TEMPLATE_SQS_ENDPOINT,
-    monitoring: TEMPLATE_CLOUDWATCH_ENDPOINT
+    monitoring: TEMPLATE_CLOUDWATCH_ENDPOINT,
+    logs: TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT
 };
 
 const SQL_RESOURCE_ASSETS = [
