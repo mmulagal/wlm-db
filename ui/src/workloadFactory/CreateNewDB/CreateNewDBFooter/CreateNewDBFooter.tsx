@@ -9,6 +9,7 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import { WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import { GENERAL } from '../../../utils/appConstants';
+import styles from './CreateNewUserFooter.module.scss';
 
 const CreateNewUserFooter = () => {
     const navigate = useNavigate();
@@ -42,8 +43,12 @@ const CreateNewUserFooter = () => {
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.INFO,
                             message: (
-                                <>
-                                    {`${GENERAL.DB_CREATE_NOTIFICATION[0]} ${state?.createNewUser?.newUserDBName} ${GENERAL.DB_CREATE_NOTIFICATION[1]} ${state?.createNewUser?.dbHostName} ${GENERAL.DB_CREATE_NOTIFICATION[2]}`}
+                                <div className={styles.notification}>
+                                    {GENERAL.DB_CREATE_NOTIFICATION[0]}
+                                    <span className={styles.bold}>{state?.createNewUser?.newUserDBName}</span>
+                                    {GENERAL.DB_CREATE_NOTIFICATION[1]}
+                                    <span className={styles.bold}>{state?.createNewUser?.dbHostName}</span>
+                                    {GENERAL.DB_CREATE_NOTIFICATION[2]}
                                     <Button
                                         Component="button"
                                         variant="text"
@@ -53,9 +58,9 @@ const CreateNewUserFooter = () => {
                                             dispatch(clearNotifications());
                                         }}
                                     >
-                                        {GENERAL.VIEW_JOB_MONITORING}
+                                        {GENERAL.JOB_MONITORING}.
                                     </Button>
-                                </>
+                                </div>
                             )
                         })
                     );
