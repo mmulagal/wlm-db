@@ -23,6 +23,7 @@ const InventoryApis = () => {
     // skipApiCall to skip APi call when isActive is not true
     const [skipApiCall, setSkipApiCall] = useState(true);
     const [skipDiscoveryCall, setSkipDiscoveryCall] = useState(false);
+    const [skipManagedHostCall, setSkipManagedHostCall] = useState(false);
 
     const {
         data: databaseHosts,
@@ -34,7 +35,7 @@ const InventoryApis = () => {
             region: headerSelectedRegion?.label2,
             nextToken: hostCursor
         },
-        { skip: skipApiCall }
+        { skip: skipApiCall || skipManagedHostCall }
     );
 
     const {
@@ -56,6 +57,7 @@ const InventoryApis = () => {
         if (headerSelectedCred && headerSelectedRegion) {
             setSkipApiCall(false);
             setSkipDiscoveryCall(false);
+            setSkipManagedHostCall(false);
             dispatch(
                 setDiscoveredHosts({
                     discoveredHostData: null,
@@ -71,16 +73,31 @@ const InventoryApis = () => {
         if (databaseHostsError) {
             dispatch(addDatabaseHosts({ undefined, databaseHostsLoading, databaseHostsError }));
         } else {
-            let oldList = databaseHostsData || [];
-            let newList = databaseHosts?.items || [];
-            dispatch(
-                addDatabaseHosts({
-                    databaseHostsData: [...oldList, ...newList],
-                    databaseHostsLoading,
-                    databaseHostsError
-                })
-            );
-            setHostCursor(databaseHosts?.nextToken || null);
+            if (!databaseHostsLoading) {
+                let oldList = databaseHostsData || [];
+                let newList = databaseHosts?.items || [];
+                dispatch(
+                    addDatabaseHosts({
+                        databaseHostsData: [...oldList, ...newList],
+                        databaseHostsLoading,
+                        databaseHostsError
+                    })
+                );
+                setHostCursor(databaseHosts?.nextToken || null);
+                if (!databaseHosts?.nextToken && databaseHostsData && databaseHostsData.length) {
+                    setSkipManagedHostCall(true);
+                } else {
+                    setSkipManagedHostCall(false);
+                }
+            } else {
+                dispatch(
+                    addDatabaseHosts({
+                        databaseHostsData,
+                        databaseHostsLoading,
+                        databaseHostsError
+                    })
+                );
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHosts, databaseHostsLoading, databaseHostsError]);
