@@ -23,7 +23,7 @@ $ErrorActionPreference = "Stop"
 
 #Explicit wait to ensure new LUNs are available for discovery 
 Start-Sleep 20
-$result = @{}
+$result = [ordered]@{}
 
 #Create a list of drive letters if not passed
 if (-Not $DataDrive) { 
@@ -72,13 +72,13 @@ $LogDriveLetter = $LogDrive.Substring(0,1)
 $DataDriveLetter = $DataDrive.Substring(0,1)
 
 if(($LogNew -ne "false") -And ($DataNew -ne "false")) {
-New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel
-New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel
+$logpartition = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel)
+$datapartition = (New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel)
 }
 elseif($LogNew -ne "false") {
-    New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel
+    $logpartition = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel)
     } else {
-    New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel    
+    $datapartition = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel)    
     }
 Start-Service -Name ShellHWDetection
 }catch{
@@ -169,8 +169,3 @@ $result.Add('Status','Complete')
 $result.Add('Message','Completed preparing iSCSI drives for SQL')
 $resultjson = ($result | ConvertTo-Json) 
 $resultjson  
- 
-
-
- 
- 
