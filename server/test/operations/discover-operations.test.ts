@@ -11,7 +11,7 @@ describe('Discover operations', () => {
     it(
         'Get host and SQL Server instance details',
         async () => {
-            const response = await getHostAndSqlServerInfo(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION);
+            const response = await getHostAndSqlServerInfo(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 10);
             expect(response).toBeDefined();
         },
         {
