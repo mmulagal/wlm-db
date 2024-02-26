@@ -522,7 +522,7 @@ Resources:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\NewDB_Initialize-Iscsidisk.ps1 -Destination C:\SSM\
                             waitAfterCompletion: 0
                         s-move-createdatabasescript:
-                           command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Create-Database.ps1 -Destination C:\SSM\
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Create-Database.ps1 -Destination C:\SSM\
                             waitAfterCompletion: 0
                         t-move-cleanupontapscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Cleanup-ONTAP.ps1 -Destination C:\SSM\
@@ -1089,7 +1089,7 @@ Resources:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\NewDB_Initialize-Iscsidisk.ps1 -Destination C:\SSM\
                             waitAfterCompletion: 0
                         s-move-createdatabasescript:
-                           command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Create-Database.ps1 -Destination C:\SSM\
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Create-Database.ps1 -Destination C:\SSM\
                             waitAfterCompletion: 0
                         t-move-cleanupontapscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\Cleanup-ONTAP.ps1 -Destination C:\SSM\
