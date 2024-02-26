@@ -11,6 +11,16 @@
                           and/or iSCSI targets
   The sqlDriveInfo details help to identify the instance associated with
   an SQL Server instance.
+
+  Example output:
+    {
+        "sqlServerVersion":  "16.0.4095.4",
+        "sqlDriveInfo":  "[\r\n    {\r\n        \"SerialNumberOrScsiTarget\":  \"vol05109452537b7ad57_00000001.\"\r\n    },\r\n    {\r\n        \"SerialNumberOrScsiTarget\":  \"172.31.11.195\"\r\n    }\r\n]",
+        "sqlServerInstance":  "MSSQLSERVER",
+        "sqlServerState":  "Running",
+        "sqlServerEdition":  2022,
+        "windowsAuthentication":  true
+    }
  */
 const hostAndSqlInfoPowerShellScript = [
     `

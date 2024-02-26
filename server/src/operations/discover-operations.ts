@@ -350,6 +350,5 @@ export {
     getHostAndSqlServerInfo,
     hostAndSqlInfoPowerShellScript,
     saveDiscoveredParameters,
-    makeSsmCall,
     getHostAndSqlInfoFromPsOutput
 };
