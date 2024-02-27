@@ -15,11 +15,11 @@ export default function discoverRoutes(fastify: FastifyInstance) {
     server.get(`${DISCOVER_MSSQL_API_PATH}/mssql/discover`, { schema: DiscoverMsSqlSchema }, async request => {
         const {
             params: { accountId, credentialsId, region },
-            query: { ec2Count, nextToken }
+            query: { pageSize, nextToken }
         } = request;
 
         const startTime = performance.now();
-        const apiInfo = await getHostAndSqlServerInfo(accountId, credentialsId, region, ec2Count, nextToken);
+        const apiInfo = await getHostAndSqlServerInfo(accountId, credentialsId, region, pageSize, nextToken);
         const endTime = performance.now();
         logger.info(`Time taken to collect information for ${apiInfo.count} records: ${endTime - startTime}ms`);
         return apiInfo;

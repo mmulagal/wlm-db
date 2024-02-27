@@ -2,7 +2,7 @@ import { JOBSTATUS, JOBTYPE, resource, STORAGE_TYPE } from '@prisma/client';
 import { DescribeInstancesCommandOutput, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import createError from 'http-errors';
-import { compact, isEmpty } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { listResources } from '../lib/database/db';
 import {
     DatabaseHostSummaryResponseType,
@@ -14,8 +14,7 @@ import {
     DatabasesListResponseType,
     DatabaseCreateResponseType,
     DriveInfoResponseBodyType,
-    FileConfigType,
-    ManageResourceResponseType
+    FileConfigType
 } from '../routes/types/database-hosts.types';
 import { describeInstance, describeSubnets, describeVpc, getAmis } from '../lib/aws/ec2';
 import { describeFSxN, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
@@ -1828,44 +1827,6 @@ async function validateTheParams() {
     // TODO: yet to implement
 }
 
-async function getManagedResources(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    pageSize?: number,
-    clientNextToken?: string
-): Promise<ManageResourceResponseType> {
-    logger.info('Fetching managed resources for account', {
-        accountId,
-        credentialsId,
-        region,
-        pageSize,
-        clientNextToken
-    });
-
-    const { items, nextToken, count } = await getResources(
-        accountId,
-        undefined,
-        credentialsId,
-        region,
-        RESOURCESTYPE.MSSQL,
-        pageSize,
-        clientNextToken
-    );
-
-    return {
-        items: items.map(({ resource_id: resourceId, metadata }) => ({
-            resourceId,
-            instances: compact([
-                (metadata as unknown as Metadata)?.node1InstanceId,
-                (metadata as unknown as Metadata)?.node2InstanceId
-            ])
-        })),
-        count,
-        nextToken
-    };
-}
-
 export {
     getDatabaseHostsSummary,
     getDatabaseHostSummary,
@@ -1875,6 +1836,5 @@ export {
     createDatabase,
     newDBInitialization,
     configureLuns,
-    cleanUpDatabaseDeployment,
-    getManagedResources
+    cleanUpDatabaseDeployment
 };

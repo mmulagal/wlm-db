@@ -214,19 +214,6 @@ const DriveInfoResponseBody = Type.Object({
 });
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
 
-const ManageResourceResponse = Type.Object({
-    count: Type.Number(),
-    items: Type.Array(
-        Type.Object({
-            instances: Type.Array(Type.String()),
-            resourceId: Type.String()
-        })
-    ),
-    nextToken: Type.Optional(Type.String())
-});
-
-type ManageResourceResponseType = Static<typeof ManageResourceResponse>;
-
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -268,7 +255,5 @@ export {
     CreateDatabaseParams,
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
-    FileConfigType,
-    ManageResourceResponse,
-    ManageResourceResponseType
+    FileConfigType
 };

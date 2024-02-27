@@ -2,7 +2,6 @@ import { faker } from '@faker-js/faker';
 import {
     getDatabases,
     getDriveInfo,
-    getManagedResources,
     deployDatabase,
     createDatabase,
     configureLuns,
@@ -183,22 +182,5 @@ describe('Database host operations', () => {
         );
 
         expect(resp.Status).toBe('Complete');
-    });
-
-    it('Get drive info for a database host', async () => {
-        const expected = {
-            count: 1,
-            items: [
-                {
-                    resourceId: '36E53042-04E8-40C9-AE69-26E56CB0D216',
-                    instances: ['i-07e76a4b916548dc0', 'i-0880a21327284f67c']
-                }
-            ],
-            nextToken: undefined
-        };
-
-        const resp = await getManagedResources(ACCOUNT_ID, 'f6082f35-c1db-4619-bb5c-84bcb5bf3286', 'ap-southeast-1');
-
-        expect(resp).toEqual(expected);
     });
 });
