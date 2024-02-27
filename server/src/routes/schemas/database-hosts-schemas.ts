@@ -8,7 +8,8 @@ import {
     CreateDatabseRequestBody,
     DatabasesCreateResponse,
     CreateDatabaseParams,
-    DriveInfoResponseBody
+    DriveInfoResponseBody,
+    ManageResourceResponse
 } from '../types/database-hosts.types';
 import { CredentialsIdParams } from '../types/generic.types';
 
@@ -76,10 +77,21 @@ const GetDriveInfoSchema = {
     }
 };
 
+const GetManagedResourcesSchema = {
+    ...databaseHostsRequest,
+    querystring: DatabaseHostQueryString,
+    summary: 'List managed resources',
+    description: 'List managed resources for the given account and region',
+    response: {
+        200: ManageResourceResponse
+    }
+};
+
 export {
     DatabaseHostsSummarySchema,
     DatabaseHostDetailsSchema,
     DatabasesListSchema,
     GetDriveInfoSchema,
-    DatabasesCreateSchema
+    DatabasesCreateSchema,
+    GetManagedResourcesSchema
 };

@@ -5,14 +5,16 @@ import {
     getDatabaseHostSummary,
     getDatabases,
     deployDatabase,
-    getDriveInfo
+    getDriveInfo,
+    getManagedResources
 } from '../operations/database-hosts-operations';
 import {
     DatabaseHostDetailsSchema,
     DatabasesListSchema,
     DatabaseHostsSummarySchema,
     DatabasesCreateSchema,
-    GetDriveInfoSchema
+    GetDriveInfoSchema,
+    GetManagedResourcesSchema
 } from './schemas/database-hosts-schemas';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
@@ -80,6 +82,17 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     params: { accountId, databaseHostId, credentialsId, region }
                 } = request;
                 const response = await getDriveInfo(accountId, databaseHostId, credentialsId, region);
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH}/database-hosts/managed-resources`,
+            { schema: GetManagedResourcesSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region }
+                } = request;
+                const response = await getManagedResources(accountId, credentialsId, region);
                 return reply.send(response);
             }
         );

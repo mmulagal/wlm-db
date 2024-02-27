@@ -20,7 +20,8 @@ const CreateDatabaseParams = Type.Object({
 // Query parameter to fetch protection, performance, storage and cost details
 const DatabaseHostQueryString = Type.Object({
     fields: Type.Optional(Type.String()),
-    nextToken: Type.Optional(Type.String())
+    nextToken: Type.Optional(Type.String()),
+    pageSize: Type.Optional(Type.Number())
 });
 
 const EC2InstanceDetailsResponse = Type.Object({
@@ -212,11 +213,18 @@ const DriveInfoResponseBody = Type.Object({
 });
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
 
-const DatabaseHostsParamsWithRegion = Type.Object({
-    accountId: Type.String(),
-    credentialsId: Type.String(),
-    region: Type.String()
+const ManageResourceResponse = Type.Object({
+    count: Type.Number(),
+    items: Type.Array(
+        Type.Object({
+            instances: Type.Array(Type.String()),
+            resourceId: Type.String()
+        })
+    ),
+    nextToken: Type.Optional(Type.String())
 });
+
+type ManageResourceResponseType = Static<typeof ManageResourceResponse>;
 
 export {
     DatabaseHostObjectParams,
@@ -260,5 +268,6 @@ export {
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
     FileConfigType,
-    DatabaseHostsParamsWithRegion
+    ManageResourceResponse,
+    ManageResourceResponseType
 };

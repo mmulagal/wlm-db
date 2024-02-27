@@ -62,15 +62,7 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
         const credentialsDetails: any = await createAwsCredential(accountId, token, arn, externalId, credentialsName);
         credentialsId = credentialsDetails.id;
     }
-    const mssqlResources = await listResources(
-        accountId,
-        undefined,
-        RESOURCESTYPE.MSSQL,
-        undefined,
-        undefined,
-        'us-east-1',
-        credentialsId
-    );
+    const mssqlResources = await listResources(accountId, undefined, credentialsId, 'us-east-1', RESOURCESTYPE.MSSQL);
 
     if (isEmpty(mssqlResources)) {
         // create 2 new resources and configurations

@@ -274,13 +274,21 @@ async function deleteDeployment(accountId: string, deploymentId: string) {
 async function listResources(
     accountId: string,
     resourceId?: string,
+    credentialsId?: string,
+    region?: string,
     resourceType?: string,
     pageSize?: number,
-    nextToken?: string,
-    region?: string,
-    credentialsId?: string
+    nextToken?: string
 ) {
-    logger.info('Listing resources', { accountId, resourceId, resourceType, region, credentialsId });
+    logger.info('Listing resources', {
+        accountId,
+        resourceId,
+        resourceType,
+        region,
+        credentialsId,
+        pageSize,
+        nextToken
+    });
     accountId = checkAccount(accountId);
     return prisma.client.resource.findMany({
         where: {
@@ -298,6 +306,24 @@ async function listResources(
             cursor: { id: nextToken },
             skip: 1
         })
+    });
+}
+
+async function countResources(accountId: string, credentialsId?: string, region?: string, resourceType?: string) {
+    logger.info('Counting managed resources', { accountId, credentialsId, region, resourceType });
+
+    accountId = checkAccount(accountId);
+
+    return prisma.client.resource.aggregate({
+        _count: {
+            id: true
+        },
+        where: {
+            account_id: accountId,
+            ...(credentialsId && { credentials_id: credentialsId }),
+            ...(region && { region }),
+            ...(resourceType && { resource_type: resourceType })
+        }
     });
 }
 
@@ -478,6 +504,7 @@ export {
     updateDeployment,
     createEvent,
     listResources,
+    countResources,
     createResource,
     deleteResource,
     listConfig,

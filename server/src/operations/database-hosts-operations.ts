@@ -1,7 +1,7 @@
 import { JOBSTATUS, JOBTYPE, resource, STORAGE_TYPE } from '@prisma/client';
 import { DescribeInstancesCommandOutput, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import { listResources } from '../lib/database/db';
 import {
     DatabaseHostSummaryResponseType,
@@ -13,7 +13,8 @@ import {
     DatabasesListResponseType,
     DatabaseCreateResponseType,
     DriveInfoResponseBodyType,
-    FileConfigType
+    FileConfigType,
+    ManageResourceResponseType
 } from '../routes/types/database-hosts.types';
 import { describeInstance, describeSubnets, describeVpc, getAmis } from '../lib/aws/ec2';
 import { describeFSxN, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
@@ -590,11 +591,11 @@ async function getDatabaseHostsSummary(
     const resourceDetails = await listResources(
         accountId,
         undefined,
+        customerCredentialsId,
+        awsRegion,
         RESOURCESTYPE.MSSQL,
         API_PAGE_SIZE,
-        nextToken,
-        awsRegion,
-        customerCredentialsId
+        nextToken
     );
 
     if (isEmpty(resourceDetails)) {
@@ -1006,7 +1007,9 @@ async function getDriveInfo(
         region
     );
 
-    const [resourceDetail] = await getResources(accountId, databaseHostId, RESOURCESTYPE.MSSQL, credentialsId, region);
+    const {
+        items: [resourceDetail]
+    } = await getResources(accountId, databaseHostId, credentialsId, region, RESOURCESTYPE.MSSQL);
 
     if (isEmpty(resourceDetail)) {
         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
@@ -1057,7 +1060,9 @@ async function deployDatabase(
 
     await validateTheParams(); // TODO: Validate the params
 
-    const [resourceDetail] = await getResources(accountId, databaseHostId);
+    const {
+        items: [resourceDetail]
+    } = await getResources(accountId, databaseHostId);
 
     const {
         resource_id: resourceId,
@@ -1679,6 +1684,44 @@ async function validateTheParams() {
     // TODO: yet to implement
 }
 
+async function getManagedResources(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    pageSize?: number,
+    clientNextToken?: string
+): Promise<ManageResourceResponseType> {
+    logger.info('Fetching managed resources for account', {
+        accountId,
+        credentialsId,
+        region,
+        pageSize,
+        clientNextToken
+    });
+
+    const { items, nextToken, count } = await getResources(
+        accountId,
+        undefined,
+        credentialsId,
+        region,
+        RESOURCESTYPE.MSSQL,
+        pageSize,
+        clientNextToken
+    );
+
+    return {
+        items: items.map(({ resource_id: resourceId, metadata }) => ({
+            resourceId,
+            instances: compact([
+                (metadata as unknown as Metadata)?.node1InstanceId,
+                (metadata as unknown as Metadata)?.node2InstanceId
+            ])
+        })),
+        count,
+        nextToken
+    };
+}
+
 export {
     getDatabaseHostsSummary,
     getDatabaseHostSummary,
@@ -1688,5 +1731,6 @@ export {
     createDatabase,
     newDBInitialization,
     configureLuns,
-    cleanUpDatabaseDeployment
+    cleanUpDatabaseDeployment,
+    getManagedResources
 };
