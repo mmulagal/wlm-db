@@ -560,7 +560,7 @@ async function processCloudFormationMessages() {
                                                             activeDirectoryName,
                                                             activeDirectoryAddress,
                                                             fsxSvmId,
-                                                            source:RESOURCE_SOURCE.DEPLOY
+                                                            source: RESOURCE_SOURCE.DEPLOY
                                                         }
                                                     });
 

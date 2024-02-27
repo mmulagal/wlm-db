@@ -1,6 +1,6 @@
 import Promise from 'bluebird';
 import { describeRegions } from '../../lib/aws/ec2';
-import { createTopic, listTopics, setTopicAttributes, subscribeTopic } from '../../lib/aws/sns';
+import { createTopic, listTopics, subscribeTopic } from '../../lib/aws/sns';
 import { createQueue } from '../../lib/aws/sqs';
 import { AWS_RESOURCE_NAME_TAG, DEFAULT_AWS_REGION, SQS_MSG_RETENTION, WLMDB } from '../../utils/consts';
 import getLogger from '../../utils/logger';
@@ -125,51 +125,6 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
     }
 }
 
-// TODO: delete me; temporary function
-async function updateSnsTopicAttributeInAllRegions() {
-    logger.info('Update SNS topic attributes in all region');
-
-    const { Regions: regions } = await describeRegions({});
-    try {
-        if (regions) {
-            await Promise.map(
-                regions,
-                async ({ RegionName: code }) => {
-                    if (code && process.env.AWS_ROLE_ARN) {
-                        const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
-                        const policyStatement = {
-                            Version: '2012-10-17',
-                            Statement: [
-                                {
-                                    Sid: 'AllowSNSNotifications',
-                                    Effect: 'Allow',
-                                    Principal: {
-                                        AWS: '*'
-                                    },
-                                    Action: ['SNS:Publish', 'SNS:Subscribe'],
-                                    Resource: `arn:aws:sns:${code}:${awsAccountId}:${WLMDB}`
-                                }
-                            ]
-                        };
-                        try {
-                            await setTopicAttributes(code, {
-                                TopicArn: `arn:aws:sns:${code}:${awsAccountId}:${WLMDB}`,
-                                AttributeName: 'Policy',
-                                AttributeValue: JSON.stringify(policyStatement)
-                            });
-                        } catch (error) {
-                            logger.error('>>Failed to set topic attributes', error);
-                        }
-                    }
-                },
-                { concurrency: 3 }
-            );
-        }
-    } catch (error) {
-        logger.error('Failed to create and subscribe to SNS topics', error);
-    }
-}
-
 async function checkAndCreateTopic(region: string, queueName: string, policyStatement: any) {
     logger.info('Check and create sns topic', region, queueName, policyStatement);
     let wlmdbTopicArn;
@@ -191,7 +146,8 @@ async function checkAndCreateTopic(region: string, queueName: string, policyStat
         const { TopicArn } = await createTopic(region, {
             Name: queueName,
             Attributes: {
-                Policy: JSON.stringify(policyStatement)
+                Policy: JSON.stringify(policyStatement),
+                KmsMasterKeyId: 'alias/aws/sns'
             },
             Tags: [{ Key: AWS_RESOURCE_NAME_TAG, Value: WLMDB }]
         });
@@ -200,9 +156,4 @@ async function checkAndCreateTopic(region: string, queueName: string, policyStat
 
     return wlmdbTopicArn;
 }
-export {
-    getSnsTopics,
-    createAndSubscribeToSnsTopicInAllRegions,
-    updateSnsTopicAttributeInAllRegions,
-    transformStackEventMessage
-};
+export { getSnsTopics, checkAndCreateTopic, createAndSubscribeToSnsTopicInAllRegions, transformStackEventMessage };

@@ -3,6 +3,11 @@ import { RESOURCESTYPE } from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
 
 const DiscoverMsSqlQuery = Type.Object({
+    ec2Count: Type.Number({
+        description: 'Number of EC2 instances to discover per call of the API.',
+        minimum: 5,
+        default: 50
+    }),
     nextToken: Type.Optional(
         Type.String({
             description:

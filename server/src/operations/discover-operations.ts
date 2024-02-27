@@ -33,14 +33,13 @@ interface SsmTargetsInfo {
     ebsVolumeIDs: (string | undefined)[] | undefined;
 }
 
-const MAX_DESCRIBE_INSTANCES_COUNT = 20;
-const MAX_SSM_COMMANDS_POLL_COUNT = 20;
 const MINIMUM_SQL_SERVER_EDITION_SUPPORTED = 2016;
 
 async function getHostAndSqlServerInfo(
     accountId: string,
     credentialsId: string,
     region: string,
+    ec2Count: number,
     nextToken: string = '',
     instances: string[] = []
 ) {
@@ -52,7 +51,7 @@ async function getHostAndSqlServerInfo(
             { Name: 'architecture', Values: ['x86_64'] },
             { Name: 'instance-state-name', Values: [InstanceStateName.running] }
         ],
-        MaxResults: MAX_DESCRIBE_INSTANCES_COUNT,
+        MaxResults: ec2Count,
         NextToken: nextToken
     };
 
@@ -140,7 +139,7 @@ async function getHostAndSqlServerInfo(
 
         await Promise.all(
             ssmConnectedNodes.map(
-                throat(MAX_SSM_COMMANDS_POLL_COUNT, async (target: SsmTargetsInfo) => {
+                throat(ec2Count, async (target: SsmTargetsInfo) => {
                     let dbInfo: SqlServerInstanceInfoType[] = [];
                     dbInfo = await getHostAndSqlInfoFromPsOutput(
                         credentialsId,
