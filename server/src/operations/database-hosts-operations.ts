@@ -936,16 +936,18 @@ async function getDefaultDrives(credentialsId: string, region: string, activeNod
         false
     );
 
-    const parsedDefaultDrives = sqlResponseParsing(defaultDriveResponse!);
+    const [parsedDefaultDataDrive, parsedDefaultLogDrive] = defaultDriveResponse
+        ? sqlResponseParsing(defaultDriveResponse)
+        : [];
 
     const currentDataDrive =
-        parsedDefaultDrives[0] && !parsedDefaultDrives[0].includes('error')
-            ? sqlResponseParsing(parsedDefaultDrives[0])[0].CurrentDataDrive
+        parsedDefaultDataDrive && !parsedDefaultDataDrive.includes('error')
+            ? sqlResponseParsing(parsedDefaultDataDrive)[0].CurrentDataDrive
             : '';
 
     const currentLogDrive =
-        parsedDefaultDrives[1] && !parsedDefaultDrives[1].includes('error')
-            ? sqlResponseParsing(parsedDefaultDrives[1])[0].CurrentLogDrive
+        parsedDefaultLogDrive && !parsedDefaultLogDrive.includes('error')
+            ? sqlResponseParsing(parsedDefaultLogDrive)[0].CurrentLogDrive
             : '';
     logger.debug('MSSQL default data and log drives response', { currentDataDrive, currentLogDrive });
     return { currentDataDrive, currentLogDrive };
@@ -954,6 +956,7 @@ async function getDefaultDrives(credentialsId: string, region: string, activeNod
 async function getDriveInfoFromNodes(
     credentialsId: string,
     region: string,
+    sqlDeploymentType: string,
     activeNodeInstanceId: string,
     standbyNodeInstanceId: string
 ) {
@@ -976,14 +979,16 @@ async function getDriveInfoFromNodes(
     // Getting clustered drive letters for FCI deployments
     const clusterCommand = [GET_CLUSTER_DRIVES];
 
-    const clusterCommandPromise = standbyNodeInstanceId
-        ? callSsmExecution(credentialsId, region, clusterCommand, activeNodeInstanceId, undefined, false)
-        : Promise.resolve();
+    const clusterCommandPromise =
+        sqlDeploymentType === 'FCI'
+            ? callSsmExecution(credentialsId, region, clusterCommand, activeNodeInstanceId, undefined, false)
+            : Promise.resolve();
 
     // Getting drive info of drives present on standby node to eliminate presenting existing drive letter as available drive letter
-    const existingDriveStandbyNodePromise = standbyNodeInstanceId
-        ? callSsmExecution(credentialsId, region, driveInfoCommand, standbyNodeInstanceId!, undefined, false)
-        : Promise.resolve();
+    const existingDriveStandbyNodePromise =
+        sqlDeploymentType === 'FCI'
+            ? callSsmExecution(credentialsId, region, driveInfoCommand, standbyNodeInstanceId!, undefined, false)
+            : Promise.resolve();
 
     const [clusterDrivesResponse, existingDriveActiveNodeResponse, existingDriveStandbyNodeResponse] =
         await Promise.all([clusterCommandPromise, existingDriveActiveNodePromise, existingDriveStandbyNodePromise]);
@@ -1014,12 +1019,18 @@ async function getDriveInfoFromNodes(
 
     let updatedExitingDrives: any[] = activeNodeExistingDrives;
 
-    if (standbyNodeInstanceId && clusterDrivesResponse) {
-        const clusterDrivesValue = JSON.parse(clusterDrivesResponse).map((value: string) => value.replace(':', ''));
-        updatedExitingDrives = activeNodeExistingDrives.map(drive => ({
-            ...drive,
-            isDriveClustered: clusterDrivesValue.includes(drive.driveLetter)
-        }));
+    if (sqlDeploymentType === 'FCI' && clusterDrivesResponse) {
+        try {
+            const clusterDrivesValue = JSON.parse(clusterDrivesResponse).map((value: string) => value.replace(':', ''));
+            updatedExitingDrives = activeNodeExistingDrives.map(drive => ({
+                ...drive,
+                isDriveClustered: clusterDrivesValue.includes(drive.driveLetter)
+            }));
+        } catch (error) {
+            const errorMessage = `Error while parsing cluster drive info ${activeNodeInstanceId} ${standbyNodeInstanceId}, ${error}`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
     }
 
     // Constructing list of available drive letters
@@ -1036,10 +1047,18 @@ async function getDriveInfoFromSSM(
     databaseHostId: string,
     credentialsId: string,
     region: string,
+    sqlDeploymentType: string,
     node1InstanceId: string,
     node2InstanceId?: string
 ) {
-    logger.info('Getting drive information from SSM');
+    logger.info('Getting drive information from SSM', {
+        accountId,
+        databaseHostId,
+        credentialsId,
+        sqlDeploymentType,
+        node1InstanceId,
+        node2InstanceId
+    });
     // Check SSM Connection status
     const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
         credentialsId,
@@ -1051,7 +1070,7 @@ async function getDriveInfoFromSSM(
     if (!isSSMConnected && activeNodeInstanceId === undefined) {
         const errorMessage = `Error while fetching drive details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
         logger.error(errorMessage);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
     if (activeNodeInstanceId !== node1InstanceId) {
@@ -1073,7 +1092,13 @@ async function getDriveInfoFromSSM(
     try {
         // Not caching any ssm response as multiple creation will require real time data
         [getDriveInfoFromNodesResponse, getDefaultDrivesResponse] = await Promise.all([
-            getDriveInfoFromNodes(credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId!),
+            getDriveInfoFromNodes(
+                credentialsId,
+                region,
+                sqlDeploymentType,
+                activeNodeInstanceId,
+                standbyNodeInstanceId!
+            ),
             getDefaultDrives(credentialsId, region, activeNodeInstanceId)
         ]);
     } catch (error) {
@@ -1103,18 +1128,26 @@ async function getDriveInfo(
     if (isEmpty(resourceDetail)) {
         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
         logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
 
     const { co_relation_id: fileSystemId, metadata } = resourceDetail;
-    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+    const { node1InstanceId, node2InstanceId, sqlDeploymentType } = metadata as unknown as Metadata;
 
     let fsxStorageCapacity;
     let driveResponse;
     try {
         [fsxStorageCapacity, driveResponse] = await Promise.all([
             getFsxStorageCapacity(credentialsId, region!, fileSystemId!),
-            getDriveInfoFromSSM(accountId, databaseHostId, credentialsId, region, node1InstanceId, node2InstanceId)
+            getDriveInfoFromSSM(
+                accountId,
+                databaseHostId,
+                credentialsId,
+                region,
+                sqlDeploymentType!,
+                node1InstanceId,
+                node2InstanceId
+            )
         ]);
     } catch (error) {
         const errorMessage = `Unable to get drive information and FSx storage capacity. ${error}.`;
