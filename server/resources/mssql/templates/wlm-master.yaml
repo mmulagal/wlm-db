@@ -490,6 +490,7 @@ Resources:
   TrackStackDeploymentWaitConditionHandle:
     Type: 'AWS::CloudFormation::WaitConditionHandle'
     Condition: ShouldSendSaasNotification
+    DependsOn: TrackStackDeployment
   TrackStackDeploymentWaitCondition:
     Type: AWS::CloudFormation::WaitCondition
     Properties:
@@ -498,7 +499,7 @@ Resources:
         - ShouldSendSaasNotification
         - !Ref TrackStackDeploymentWaitConditionHandle
         - !Ref WaitConditionHandle
-      Timeout: '1'
+      Timeout: '600'
       Count: '0'
   VpcEndpointStack:
     Type: AWS::CloudFormation::Stack
