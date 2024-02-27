@@ -203,7 +203,7 @@ async function getHostAndSqlInfoFromPsOutput(
         }
         for (const dbInstanceInfo of responseInJson) {
             if (dbInstanceInfo.sqlServerEdition >= MINIMUM_SQL_SERVER_EDITION_SUPPORTED) {
-                const storageTypes: string[] = [];
+                const storageTypes = [];
                 const deploymentTypes: string[] = [];
                 const ebsVolumeIDs = ssmTarget.ebsVolumeIDs?.map(elem => elem?.replace('-', ''));
 
@@ -213,13 +213,19 @@ async function getHostAndSqlInfoFromPsOutput(
                 }
 
                 for (const di of driveInfo) {
-                    if (ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem))) {
-                        storageTypes.push(STORAGE_TYPE.EBS);
+                    const ebsVolumeId = ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem));
+                    if (ebsVolumeId) {
+                        storageTypes.push({
+                            type: STORAGE_TYPE.EBS,
+                            id: ebsVolumeId
+                        });
                     } else if (endPointIpWithFsxId.has(di?.SerialNumberOrScsiTarget)) {
-                        storageTypes.push(STORAGE_TYPE.FSXN);
-                        deploymentTypes.push(
-                            fsIdWithDeploymentType.get(endPointIpWithFsxId.get(di?.SerialNumberOrScsiTarget)!)!
-                        );
+                        const fsxId = endPointIpWithFsxId.get(di?.SerialNumberOrScsiTarget);
+                        storageTypes.push({
+                            type: STORAGE_TYPE.FSXN,
+                            id: fsxId!
+                        });
+                        deploymentTypes.push(fsIdWithDeploymentType.get(fsxId!)!);
                     }
                 }
 

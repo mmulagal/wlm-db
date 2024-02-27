@@ -134,7 +134,8 @@ enum RouteTags {
     BATCH = 'Batch',
     PRICING = 'Pricing',
     CHATBOT = 'Chatbot',
-    DISCOVER = 'Discover'
+    DISCOVER = 'Discover',
+    RESOURCE = 'Resource'
 }
 
 enum HttpErrorCodes {
