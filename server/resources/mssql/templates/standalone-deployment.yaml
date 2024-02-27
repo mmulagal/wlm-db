@@ -1,3 +1,5 @@
+#prettier-ignore
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: This template deploys a SQL Server standalone instance using FSx for NetApp ONTAP in an existing VPC. 
             This template creates EC2 instances and the required resources. You will be billed for AWS resources if you create a stack from this template.
@@ -392,25 +394,27 @@ Resources:
                 FetchResources:
                     files:
                         C:\cfn\scripts\Verify-Signature.ps1:
-                            source: {{ ScriptVerifySignature }}
+                            source: {{{ ScriptVerifySignature }}}
                         C:\cfn\scripts\Unzip-Archive.ps1:
-                            source: {{ ScriptUnzipArchive }}
+                            source: {{{ ScriptUnzipArchive }}}
                         C:\cfn\scripts\common.zip:
-                            source: {{ ScriptCommon }}
+                            source: {{{ ScriptCommon }}}
                         C:\cfn\scripts\sqlfci.zip:
-                            source: {{ ScriptSQLFCI }}
+                            source: {{{ ScriptSQLFCI }}}
                         C:\cfn\scripts\sqlontap.zip:
-                            source: {{ ScriptSQLONTAP }}
+                            source: {{{ ScriptSQLONTAP }}}
+                        C:\cfn\scripts\dbcreate.zip:
+                            source: {{{ ScriptDBCREATE}}}
                         C:\cfn\DSC.zip:
-                            source: {{ DSC }}
+                            source: {{{ DSC }}}
                         C:\cfn\Installer\powershell.zip:
-                            source: {{ PowerShell }}
+                            source: {{{ PowerShell }}}
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
-                            source: {{ AmazonLaunchWizardForCFN }}
+                            source: {{{ AmazonLaunchWizardForCFN }}}
                         C:\cfn\modules\AWSLaunchWizardForSSM.zip:
-                            source: {{ AmazonLaunchWizardForSSM }}
+                            source: {{{ AmazonLaunchWizardForSSM }}}
                         C:\cfn\Installer\sqlspcu.zip:
-                            source: {{ Sqlspcu }}
+                            source: {{{ Sqlspcu }}}
                 ScriptSignatureVerificationandExtract:
                     commands:
                         a-unpack-common-scripts:
@@ -435,15 +439,24 @@ Resources:
                         f-unpack-powershell-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer
-                        g-move-ssmscript:
+                        g-unpack-dbcreate-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\scripts\dbcreate.zip -Destination C:\cfn\scripts
+                        h-move-execurequeryfromssmscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM\ -Type Directory )  -Recurse
-                        h-move-ontapscript:
+                            waitAfterCompletion: 0
+                        i-move-ontapscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
-                        o-move-mappedontapvolumesscript:
+                            waitAfterCompletion: 0
+                        j-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
-                        p-hide-ssm:
+                            waitAfterCompletion: 0
+                        k-move-dbcreatescripts:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\* -Destination C:\SSM\ -Recurse
+                            waitAfterCompletion: 0
+                        l-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
-
+                            waitAfterCompletion: 0 
                 InitialSetup:
                     commands:
                         a-unpack-launchwizard-module:

@@ -1,7 +1,7 @@
 import Promise from 'bluebird';
 import createError from 'http-errors';
 import { attempt, isEmpty } from 'lodash-es';
-import { STORAGE_TYPE, resource } from '@prisma/client';
+import { STORAGE_TYPE } from '@prisma/client';
 import config from 'config';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT, DB_ROWS_COUNT, SSM_QUERY_CONCURRENCY_LIMIT } from './const';
 import {
@@ -62,11 +62,9 @@ async function getResourceDetails(resourceId: string) {
     let region;
     let credentialsId;
     try {
-        [{ credentials_id: credentialsId, metadata, region }] = (await getResources(
-            accountId,
-            resourceId,
-            DatabaseTypes.MS_SQL_SERVER
-        )) as resource[];
+        ({
+            items: [{ credentials_id: credentialsId, metadata, region }]
+        } = await getResources(accountId, resourceId, undefined, undefined, DatabaseTypes.MS_SQL_SERVER));
     } catch (error) {
         throw createError(HttpErrorCodes.NOT_FOUND, `Error Tenancy resource not found for resource id: ${resourceId}`);
     }
@@ -480,7 +478,9 @@ async function discoverMsSqlServer(
         activeNodeInstanceId,
         standbyNodeInstanceId
     );
-    const [resourceDetails] = await getResources(accountId, resourceId);
+    const {
+        items: [resourceDetails]
+    } = await getResources(accountId, resourceId);
 
     if (!isEmpty(resourceDetails)) {
         throw createError(409, 'MSSQL server already exists in your tenancy account');

@@ -1,3 +1,4 @@
+#prettier-ignore
 ---
 AWSTemplateFormatVersion: "2010-09-09"
 Description: This template deploys Windows SQL Server in the chosen deployment model (failover cluster instances or a standalone instance). 
@@ -171,127 +172,129 @@ Parameters:
     Description: Automation execution unique ID.
     Type: String 
 
-  {{DeploymentMode}}
+  {{{DeploymentMode}}}
   
-  {{SQLDeploymentMode}}
+  {{{SQLDeploymentMode}}}
         
-  {{CfDeployRoleName}}
+  {{{CfDeployRoleName}}}
 
-  {{ADScenarioType}}
+  {{{ADScenarioType}}}
 
-  {{DNSIpAddresses}}
+  {{{DNSIpAddresses}}}
 
-  {{DomainAdminUser}}
+  {{{DomainAdminUser}}}
 
-  {{DomainAdminPassword}}
+  {{{DomainAdminPassword}}}
 
-  {{DomainDNSName}}
+  {{{DomainDNSName}}}
 
-  {{DomainMemberSGID}}
+  {{{DomainMemberSGID}}}
 
-  {{KeyPairName}}
+  {{{KeyPairName}}}
 
-  {{MSSQLMediaBucketName}}
+  {{{MSSQLMediaBucketName}}}
 
-  {{MSSQLMediaPathKey}}
+  {{{MSSQLMediaPathKey}}}
 
-  {{SQLAMIID}}
+  {{{SQLAMIID}}}
 
-  {{SQLServiceAccountName}}
+  {{{SQLServiceAccountName}}}
   
-  {{SQLServiceAccountPassword}}
+  {{{SQLServiceAccountPassword}}}
 
-  {{SQLigroupname}}
+  {{{SQLigroupname}}}
 
-  {{SqlServerName}}
+  {{{SqlServerName}}}
 
-  {{SqlFSxWSFCName}}
+  {{{SqlFSxWSFCName}}}
 
-  {{VPCCIDR}}
+  {{{VPCCIDR}}}
 
-  {{PrivateSubnet1ID}}
+  {{{PrivateSubnet1ID}}}
 
-  {{PrivateSubnet2ID}}
+  {{{PrivateSubnet2ID}}}
 
-  {{RouteTable1Id}}
+  {{{RouteTable1Id}}}
   
-  {{RouteTable2Id}}
+  {{{RouteTable2Id}}}
   
-  {{SQLSvmName}}
+  {{{SQLSvmName}}}
 
-  {{WorkloadInstanceType}}
+  {{{WorkloadInstanceType}}}
 
-  {{NodeNetBIOSNames}}
+  {{{NodeNetBIOSNames}}}
   
-  {{FSxStorageCapacity}}
+  {{{FSxStorageCapacity}}}
   
-  {{FSxDataVolumeSize}}
+  {{{FSxDataVolumeSize}}}
 
-  {{FSxDataVolumeName}}
+  {{{FSxDataVolumeName}}}
   
-  {{FSxLogVolumeName}}
+  {{{FSxLogVolumeName}}}
   
-  {{FSxLogVolumeSize}}
+  {{{FSxLogVolumeSize}}}
   
-  {{FSxTempDbVolumeName}}
+  {{{FSxTempDbVolumeName}}}
   
-  {{FSxTempDbVolumeSize}}
+  {{{FSxTempDbVolumeSize}}}
   
-  {{FSxQuorumVolumeName}}
+  {{{FSxQuorumVolumeName}}}
   
-  {{FSxQuorumVolumeSize}}
+  {{{FSxQuorumVolumeSize}}}
 
-  {{FSxDataLunSize}}
+  {{{FSxDataLunSize}}}
 
-  {{FSxAdminUsername}}
+  {{{FSxAdminUsername}}}
          
-  {{FSxAdminPassword}}
+  {{{FSxAdminPassword}}}
 
-  {{FSxSvmName}}
+  {{{FSxSvmName}}}
   
-  {{FSxFileSystemName}}
+  {{{FSxFileSystemName}}}
 
-  {{FSxFileSystemId}}
+  {{{FSxFileSystemId}}}
   
-  {{FSxDiskIops}}
+  {{{FSxDiskIops}}}
   
-  {{FSxVolumeThroughputCapacity}}
+  {{{FSxVolumeThroughputCapacity}}}
   
-  {{FileSystemEncryptionKeyId}}
+  {{{FileSystemEncryptionKeyId}}}
   
-  {{VPCID}}
+  {{{VPCID}}}
   
-  {{ONTAPSecurityGroupID}}
+  {{{ONTAPSecurityGroupID}}}
   
-  {{EnableCloudWatchLogFeature}}
+  {{{EnableCloudWatchLogFeature}}}
 
-  {{NotificationARN}}
+  {{{NotificationARN}}}
   
-  {{ValidationAmi}}
+  {{{ValidationAmi}}}
   
-  {{RoleCredentialsId}}
+  {{{RoleCredentialsId}}}
   
-  {{AccountId}}
+  {{{AccountId}}}
     
-  {{CloudProviderAccountId}}
+  {{{CloudProviderAccountId}}}
   
-  {{JwtToken}}
+  {{{JwtToken}}}
 
-  {{EncryptedFsxPassword}}
+  {{{EncryptedFsxPassword}}}
   
-  {{WlmdbAwsAccountId}}
+  {{{WlmdbAwsAccountId}}}
   
-  {{Metrics}}
+  {{{Metrics}}}
 
-  {{S3EndpointExists}}
+  {{{S3EndpointExists}}}
 
-  {{CloudformationEndpointExists}}
+  {{{CloudformationEndpointExists}}}
 
-  {{SsmEndpointExists}}
+  {{{SsmEndpointExists}}}
 
-  {{SqsEndpointExists}}
+  {{{SqsEndpointExists}}}
 
-  {{CloudwatchEndpointExists}}
+  {{{CloudwatchEndpointExists}}}
+
+  {{{CloudwatchLogsEndpointExists}}}
        
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -489,7 +492,7 @@ Resources:
     DependsOn:
       - TrackStackDeployment
     Properties:
-      TemplateURL: {{VpcEndpointTemplate}}
+      TemplateURL: {{{VpcEndpointTemplate}}}
       Parameters:
         VPCId:
           Ref: VPCID
@@ -508,19 +511,21 @@ Resources:
           Ref: SqsEndpointExists
         CloudwatchEndpointExists:
           Ref: CloudwatchEndpointExists
+        CloudwatchLogsEndpointExists:
+          Ref: CloudwatchLogsEndpointExists
       NotificationARNs:
         Fn::If:
         - IncludeNotification
         - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
         - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-      {{Tags}}
+      {{{Tags}}}
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
     DependsOn:
       - VpcEndpointStack
       - EC2IAMRole
     Properties:
-      TemplateURL: {{ValidationTemplate}}
+      TemplateURL: {{{ValidationTemplate}}}
       Parameters:
         DomainAdminUser:
           Ref: DomainAdminUser
@@ -558,7 +563,7 @@ Resources:
         - IncludeNotification
         - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
         - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-      {{Tags}}
+      {{{Tags}}}
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
     Condition: IsFailoverCluster
@@ -566,7 +571,7 @@ Resources:
       - VpcEndpointStack
       - EC2IAMRole
     Properties:
-      TemplateURL: {{ValidationTemplate}}
+      TemplateURL: {{{ValidationTemplate}}}
       Parameters:
         DomainAdminUser:
           Ref: DomainAdminUser
@@ -604,7 +609,7 @@ Resources:
         - IncludeNotification
         - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
         - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-      {{Tags}}
+      {{{Tags}}}
   FCIWaitHandler: 
     Type: AWS::CloudFormation::WaitConditionHandle
     Condition: IsFailoverCluster
@@ -629,7 +634,7 @@ Resources:
     Condition: NewOntapFsx
     DependsOn: WaitCondition
     Properties:
-      TemplateURL: {{ FSXNewTemplate }}
+      TemplateURL: {{{ FSXNewTemplate }}}
       Parameters:
         DeploymentMode:
           Ref: DeploymentMode
@@ -682,13 +687,13 @@ Resources:
         - IncludeNotification
         - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
         - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-      {{Tags}}
+      {{{Tags}}}
   ExistingFSxStack:
     Type: AWS::CloudFormation::Stack
     Condition: ExistingOntapFsx
     DependsOn: WaitCondition
     Properties:
-      TemplateURL: {{FSXExistingTemplate}}
+      TemplateURL: {{{FSXExistingTemplate}}}
       Parameters:
         DeploymentMode:
           Ref: DeploymentMode
@@ -717,13 +722,13 @@ Resources:
         - IncludeNotification
         - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
         - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-      {{Tags}}
+      {{{Tags}}}
   SQLServerStack:
     Type: AWS::CloudFormation::Stack
     Condition: IsFailoverCluster
     DependsOn: WaitCondition
     Properties:
-      TemplateURL: {{SQLTemplate}}
+      TemplateURL: {{{SQLTemplate}}}
       Parameters:
         UniqueID:
           Ref: UniqueID
@@ -817,13 +822,13 @@ Resources:
         - IncludeNotification
         - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
         - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-      {{Tags}}
+      {{{Tags}}}
   SQLStandaloneStack:
     Type: AWS::CloudFormation::Stack
     Condition: IsStandalone
     DependsOn: WaitCondition
     Properties:
-      TemplateURL: {{SQLStandaloneTemplate}}
+      TemplateURL: {{{SQLStandaloneTemplate}}}
       Parameters:
         UniqueID:
           Ref: UniqueID
@@ -903,7 +908,7 @@ Resources:
         - IncludeNotification
         - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
         - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-      {{Tags}}
+      {{{Tags}}}
   PostStackDeployment:
     Type: Custom::MyCustomResource
     Properties:

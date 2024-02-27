@@ -13,6 +13,7 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
+        background-color: var(--white);
     }
 
     .message-text {
@@ -25,6 +26,6 @@
         padding: 10px 20px 10px 20px;
         white-space: pre-line;
         text-align: justify;
-        background-color: white;
+        background-color: var(--content-background);
     }
 }

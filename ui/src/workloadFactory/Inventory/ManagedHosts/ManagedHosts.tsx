@@ -20,7 +20,7 @@ import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory
 
 import { setManagedHostColState, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
-import { setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
+import { addInitialDBCreateData, initialCreateNewUserState, setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
 
 const ManagedHosts = () => {
     const dispatch = useDispatch();
@@ -401,6 +401,7 @@ const ManagedHosts = () => {
                                         dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
                                         dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
                                         dispatch(updateResourceId(rowData.id));
+                                        dispatch(setDBHostName(rowData?.name));
                                         dispatch(resetWorkloadFactoryResourceData());
                                     }
 
@@ -408,10 +409,12 @@ const ManagedHosts = () => {
                                         dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
                                         dispatch(selectedTabSelection(WLF_TABS.DATABASE_LIST));
                                         dispatch(updateResourceId(rowData.id));
+                                        dispatch(setDBHostName(rowData?.name));
                                         dispatch(resetWorkloadFactoryResourceData());
                                     }
 
                                     if (menuId === 'createNewUserDatabase') {
+                                        dispatch(addInitialDBCreateData(initialCreateNewUserState));
                                         dispatch(updateResourceId(rowData.id));
                                         dispatch(setDBHostName(rowData?.name));
                                         navigate('../create-new-user');

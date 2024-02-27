@@ -13,7 +13,7 @@ import {
 } from '../../../../../store/workloadFactory/createNewDBSlice';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
-import { formatSize, generateOptionType } from '../../../../../utils/utilityFunctions';
+import { formatSizeRoundOff, generateOptionType } from '../../../../../utils/utilityFunctions';
 
 import styles from './FilesSize.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
@@ -135,7 +135,7 @@ const FilesSize = () => {
 
         if (maxSize && currentSize && (currentSize < 0 || currentSize > maxSize)) {
             dispatch(setIsDataSizeValid(false));
-            return `${GENERAL.DATA_SIZE_ERROR} ${formatSize(maxSize)}`;
+            return `${GENERAL.DATA_SIZE_ERROR} ${formatSizeRoundOff(maxSize)}`;
         } else {
             dispatch(setIsDataSizeValid(true));
         }
@@ -179,7 +179,8 @@ const FilesSize = () => {
                     <DsTypography>
                         <div className={styles.textSection}>
                             <div className={styles.firstSection}>
-                                <DsTypography variant="Regular_14">{GENERAL.FILE_SIZE_TEXT}</DsTypography>
+                                <DsTypography variant="Regular_14">{GENERAL.FILE_SIZE_TEXT[0]}</DsTypography>
+                                <DsTypography variant="Regular_14">{GENERAL.FILE_SIZE_TEXT[1]}</DsTypography>
                             </div>
                         </div>
 
@@ -188,7 +189,7 @@ const FilesSize = () => {
                                 <TextField
                                     ref={dataSizeRef}
                                     label="Data size"
-                                    placeholder={maxSize ? `1 GiB - ${formatSize(maxSize)}` : ''}
+                                    placeholder={maxSize ? `1 GiB - ${formatSizeRoundOff(maxSize)}` : ''}
                                     value={newUserDataSize}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                         const numSize = e.target.value.replace(/\D/g, '');
@@ -204,7 +205,12 @@ const FilesSize = () => {
                                     info={
                                         maxSize && (
                                             <div className={styles.dataSizeTooltip}>
-                                                <DsTypography variant="Regular_13">{`Host ${dbHostName} data size range is 1 GiB - ${formatSize(
+                                                <div>
+                                                    {GENERAL.DATA_SIZE_TOOLTIP[0]}
+                                                    <span className={styles.bold}>{dbHostName}</span>
+                                                    {GENERAL.DATA_SIZE_TOOLTIP[1]}
+                                                </div>
+                                                <DsTypography variant="Regular_13">{`1 GiB - ${formatSizeRoundOff(
                                                     maxSize
                                                 )}.`}</DsTypography>
                                             </div>

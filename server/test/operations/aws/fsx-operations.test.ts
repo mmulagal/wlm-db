@@ -34,7 +34,6 @@ describe('Testcases for Amazon FSx resources operations', () => {
     });
 
     it('AWS backup enabled check', async () => {
-       
         const response = await isAWSBackupEnabled(
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,

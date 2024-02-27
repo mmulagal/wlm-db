@@ -16,8 +16,8 @@ import { setUnManagedHostColState } from '../../../store/workloadFactory/invento
 const UnmanagedHosts = () => {
     const dispatch = useDispatch();
 
-    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
+    const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
+    const unManagedHostList = useAppSelector(state => state.inventory.unManagedHosts);
     const { unManagedHostInitialColumns } = useAppSelector(state => state.inventory);
 
     const [resetPage, setResetPage] = useState(false);
@@ -320,7 +320,7 @@ const UnmanagedHosts = () => {
     const tableProps = useTable({
         isSorting: false,
         columns: DatabasesColDefs,
-        rows: databaseTableSort(databaseHostsList) || [],
+        rows: databaseTableSort(unManagedHostList) || [],
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
@@ -343,7 +343,7 @@ const UnmanagedHosts = () => {
             }
         },
         initialColumnState: unManagedHostInitialColumns,
-        isLazyLoading: databaseHostsLoading
+        isLazyLoading: isDiscoverInProgress
     });
 
     useEffect(() => {
@@ -352,7 +352,7 @@ const UnmanagedHosts = () => {
 
     useEffect(() => {
         if (resetPage) {
-            if ((databaseHostsList || []).length % pageSize === 1) {
+            if ((unManagedHostList || []).length % pageSize === 1) {
                 tableProps.pagination?.gotoPage(0);
             }
         }

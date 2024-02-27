@@ -2,9 +2,6 @@
 param(
 
     [Parameter(Mandatory=$true)]
-    [string]$AdminSecret,
-
-    [Parameter(Mandatory=$true)]
     [string]$DomainAdminUser,
 
     [Parameter(Mandatory=$true)]

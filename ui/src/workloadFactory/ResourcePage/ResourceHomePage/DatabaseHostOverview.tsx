@@ -20,7 +20,7 @@ import { resetDBHomePageState } from '../../../utils/utilityFunctions';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import DatabaseHostTile from '../DatabaseOverviewLayout/DatabaseHostTile/DatabaseHostTile';
 import { WLF_TABS } from '../../../utils/consts';
-import { setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
+import { addInitialDBCreateData, initialCreateNewUserState, setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
 import { GENERAL } from '../../../utils/appConstants';
 
 const DatabaseHostOverview = () => {
@@ -32,6 +32,7 @@ const DatabaseHostOverview = () => {
     const stateResourceDetails = useAppSelector(state => state.workloadFactoryResource.resourceDetails);
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
+    const dbHostName = useAppSelector(state => state.createNewUser.dbHostName);
 
     const {
         data: resourceDetails,
@@ -105,7 +106,8 @@ const DatabaseHostOverview = () => {
                 <Button
                     variant="primary"
                     onClick={() => {
-                        dispatch(setDBHostName(resourceDetails?.name));
+                        dispatch(addInitialDBCreateData(initialCreateNewUserState));
+                        dispatch(setDBHostName(resourceDetails?.name || dbHostName));
                         navigate('../create-new-user');
                     }}
                     id={'create-new-user-button'}

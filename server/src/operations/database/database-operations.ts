@@ -7,7 +7,8 @@ import {
     deleteConfig,
     listConfig,
     listDeployments,
-    listResources
+    listResources,
+    countResources
 } from '../../lib/database/db';
 import {
     FormConfigCreateResponseType,
@@ -203,23 +204,48 @@ async function getDeployments(
 async function getResources(
     accountId: string,
     resourceId?: string,
-    resourceType?: string,
     credentialsId?: string,
-    region?: string
-): Promise<Array<ResourceDetails>> {
-    logger.info(' Get the Resources', { accountId, resourceId, resourceType, credentialsId, region });
+    region?: string,
+    resourceType?: string,
+    pageSize: number = 200,
+    nextToken?: string
+): Promise<{ count: number; items: Array<ResourceDetails>; nextToken?: string }> {
+    logger.info(' Get the Resources', {
+        accountId,
+        resourceId,
+        credentialsId,
+        region,
+        resourceType,
+        pageSize,
+        nextToken
+    });
 
     try {
-        const records = await listResources(
+        const recordsPromise = listResources(
             accountId,
             resourceId,
-            resourceType,
-            undefined,
-            undefined,
+            credentialsId,
             region,
-            credentialsId
+            resourceType,
+            pageSize,
+            nextToken
         );
-        return trimAccountIdForDemo(records);
+
+        const countPromise = countResources(accountId);
+
+        const {
+            _count: { id: totalResourcesCount }
+        } = await countPromise;
+
+        const records = await recordsPromise;
+        const items = trimAccountIdForDemo(records);
+
+        return {
+            count: items?.length,
+            items,
+            nextToken:
+                totalResourcesCount > pageSize && records.length >= pageSize ? items[items.length - 1].id : undefined
+        };
     } catch (error) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to list the resources');
     }

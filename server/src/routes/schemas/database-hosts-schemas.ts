@@ -5,6 +5,9 @@ import {
     DatabaseHostSummaryParams,
     DatabaseHostSummaryResponse,
     DatabasesListResponse,
+    CreateDatabseRequestBody,
+    DatabasesCreateResponse,
+    CreateDatabaseParams,
     DriveInfoResponseBody
 } from '../types/database-hosts.types';
 import { CredentialsIdParams } from '../types/generic.types';
@@ -51,6 +54,18 @@ const DatabasesListSchema = {
     }
 };
 
+// Create database in a database server
+const DatabasesCreateSchema = {
+    tags: [RouteTags.DEPLOYMENT],
+    params: CreateDatabaseParams,
+    summary: 'Create a new user databases in a server ',
+    description: 'Create a new user database in a server',
+    body: CreateDatabseRequestBody,
+    response: {
+        200: DatabasesCreateResponse
+    }
+};
+
 const GetDriveInfoSchema = {
     ...databaseHostsRequest,
     summary: 'Get database host drive information',
@@ -61,4 +76,10 @@ const GetDriveInfoSchema = {
     }
 };
 
-export { DatabaseHostsSummarySchema, DatabaseHostDetailsSchema, DatabasesListSchema, GetDriveInfoSchema };
+export {
+    DatabaseHostsSummarySchema,
+    DatabaseHostDetailsSchema,
+    DatabasesListSchema,
+    GetDriveInfoSchema,
+    DatabasesCreateSchema
+};
