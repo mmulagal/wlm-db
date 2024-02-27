@@ -67,13 +67,14 @@ import {
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { getSSMConnectionStatus, isSSMConnectionSuccessful } from './aws/ssm-operations';
-import { registerJob, updateJobDetails } from './database/job-operations';
+import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
 import { GET_CLUSTER_DRIVES, GET_DEFAULT_DRIVES, GET_DRIVE_INFO } from './workloads/mssql/ssm-script-utils';
 import { getResources } from './database/database-operations';
-import { sqlResponseParsing } from '../utils/utils';
+import { sleep, sqlResponseParsing } from '../utils/utils';
 import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
+import { DatabaseResponseBodyInterface } from '../routes/types/database.types';
 
 const logger = getLogger();
 
@@ -1202,8 +1203,6 @@ async function deployDatabase(
         logFileConfig
     });
 
-    await validateTheParams(); // TODO: Validate the params
-
     const {
         items: [resourceDetail]
     } = await getResources(accountId, databaseHostId);
@@ -1219,6 +1218,23 @@ async function deployDatabase(
 
     if (!credentialsId || !region || !node1InstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource  information');
+    }
+
+    // check whether any jobs on the same resource running
+    const filterParams = {
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: sqlServerName as string,
+        typeFilter: JOBTYPE.CREATE_RESOURCE
+    };
+    const {
+        items: [job]
+    } = await getJobs(accountId, credentialsId, region, filterParams);
+
+    if (job) {
+        throw createError(
+            400,
+            `Already one job with ${job.id} is in progress on the same resource ${sqlServerName}, Please wait for some time!`
+        );
     }
 
     // create the parent job for database deployment
@@ -1305,6 +1321,21 @@ async function invokeSSMForDatabaseDeployment(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
         }
 
+        await validateParams(
+            accountId,
+            resourceId,
+            credentialsId,
+            region,
+            databaseName,
+            dataFileConfig,
+            logFileConfig,
+            fileSystemId as string,
+            isClustered,
+            sqlServerName as string,
+            parentJobId,
+            activeNodeInstanceId as string
+        );
+
         const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
             credentialsId,
             region,
@@ -1335,7 +1366,7 @@ async function invokeSSMForDatabaseDeployment(
                 endTime: new Date().valueOf(),
                 error: undefined
             });
-        } else if (!isDataDriveExists && !isLogDriveExists) {
+        } else {
             // New Drive selected, Will execute all the 3 scripts
             const {
                 Resources: { Igroup: iGroup, FSxDataVolumeName: fsxDataVolumeName, FSxLogVolumeName: fsxLogVolumeName }
@@ -1353,7 +1384,8 @@ async function invokeSSMForDatabaseDeployment(
                 (!isLogDriveExists).toString(),
                 (!isDataDriveExists).toString()
             );
-
+            // its required to sleep for 45 seconds so that initialization script will go through.. the ontap LUN configure can take time depending on busy system for the multiple API calls, and the disk initialize may take time to discover the created LUNs
+            await sleep(45000);
             await newDBInitialization(
                 accountId,
                 credentialsId,
@@ -1504,7 +1536,7 @@ async function createDatabase(
         return parsedDBResponse;
     } catch (err: any) {
         // child job failed
-        logger.error(err);
+        logger.error(`Error while creating database in account ${accountId} ${databaseName}`, err);
         errMsg = err?.message;
         status = JOBSTATUS.FAILED;
         if (!err.data) {
@@ -1611,7 +1643,7 @@ async function configureLuns(
 
         return parsedLunsResponse;
     } catch (err: any) {
-        logger.error(err);
+        logger.error(`Error while configuring luns for account ${accountId}`, err);
         errMsg = err?.message;
         status = JOBSTATUS.FAILED;
         throw createError(
@@ -1723,7 +1755,7 @@ async function newDBInitialization(
         }
         return parsedDBInitializationResponse;
     } catch (err: any) {
-        logger.error(err);
+        logger.error(`Error while initializing new db for account ${accountId} ${databaseName}`, err);
         errMsg = err?.message;
         status = JOBSTATUS.FAILED;
         if (!err.data) {
@@ -1823,9 +1855,176 @@ async function cleanUpDatabaseDeployment(
     }
 }
 
-async function validateTheParams() {
-    logger.info('validating the params for db user creation');
-    // TODO: yet to implement
+async function validateParams(
+    accountId: string,
+    databaseHostId: string,
+    credentialsId: string,
+    region: string,
+    databaseName: string,
+    dataFileConfig: FileConfigType,
+    logFileConfig: FileConfigType,
+    fileSystemId: string,
+    isClustered: string,
+    sqlServerName: string,
+    parentJobId: string,
+    activeNodeInstanceId: string
+) {
+    logger.info('validating params for db user creation', {
+        accountId,
+        databaseHostId,
+        credentialsId,
+        region,
+        databaseName,
+        dataFileConfig,
+        logFileConfig,
+        fileSystemId,
+        sqlServerName,
+        parentJobId
+    });
+    const { drive: dataDrive, isExisting: isDataDriveExists, volumeSize: dataVolumeSize } = dataFileConfig;
+    const { drive: logDrive, isExisting: isLogDriveExists, volumeSize: logVolumeSize } = logFileConfig;
+
+    const dataGibIntoBytes = dataVolumeSize * 1073741824;
+    const logGibIntoBytes = logVolumeSize * 1073741824;
+
+    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.CREATE_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: sqlServerName as string,
+        name: 'Database Validation',
+        parentJobId,
+        description: `Validating parameters for database ${databaseName}.`,
+        startTime: new Date().valueOf()
+    });
+
+    let status;
+    let errMsg;
+
+    try {
+        await checkDatabaseExists(databaseHostId, databaseName, activeNodeInstanceId);
+
+        const { existingDriveInfo, availableDriveLetters, fsxStorageCapacity } = await getDriveInfo(
+            accountId,
+            databaseHostId,
+            credentialsId,
+            region
+        );
+
+        if (!fsxStorageCapacity) {
+            throw createError(400, 'FSX storage capacity information is not available');
+        }
+
+        // check whether the drive selection detail is right
+        await checkDriveExists(
+            existingDriveInfo,
+            availableDriveLetters,
+            dataDrive,
+            isDataDriveExists,
+            dataGibIntoBytes,
+            isClustered,
+            'data'
+        );
+        await checkDriveExists(
+            existingDriveInfo,
+            availableDriveLetters,
+            logDrive,
+            isLogDriveExists,
+            logGibIntoBytes,
+            isClustered,
+            'log'
+        );
+        status = JOBSTATUS.COMPLETED;
+    } catch (error: any) {
+        logger.error(`Error while validating params ${databaseName}`, error);
+        errMsg = error?.message;
+        status = JOBSTATUS.FAILED;
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while validating params for account ${accountId} ${databaseName} ${errMsg}.`
+        );
+    } finally {
+        // child job failed
+        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status,
+            endTime: new Date().valueOf(),
+            ...(errMsg && { error: errMsg })
+        });
+    }
+}
+
+async function checkDriveExists(
+    existingDriveInfo: Array<{
+        driveLetter: string;
+        availableSize: number;
+        isNetappDrive: boolean;
+        isDriveClustered?: boolean;
+    }>,
+    availableDriveLetters: Array<string>,
+    selectedDrive: string,
+    isDriveExists: boolean,
+    volumeSizeInBytes: number,
+    isClustered: string,
+    driveType: string
+) {
+    logger.info(
+        'checking whether the drive exists',
+        existingDriveInfo,
+        availableDriveLetters,
+        selectedDrive,
+        isDriveExists,
+        volumeSizeInBytes,
+        isClustered,
+        driveType
+    );
+
+    const restrictedDrives = ['A', 'B'];
+
+    if (restrictedDrives.includes(selectedDrive)) {
+        throw createError(400, `Selected ${driveType} drive ${selectedDrive} is not allowed`);
+    }
+
+    const regex = /^[A-Z]{1}$/; // Allows only single Capital Alphabetical letter
+    if (!regex.test(selectedDrive)) {
+        throw createError(400, `Selected ${driveType} drive ${selectedDrive} is not a valid drive`);
+    }
+
+    if (isDriveExists) {
+        const [matchedExistingDrive] = existingDriveInfo?.filter(drive => drive.driveLetter === selectedDrive) || [];
+        if (!matchedExistingDrive) {
+            throw createError(400, `Selected ${driveType} drive ${selectedDrive} does not exist in existing drives`);
+        }
+        if (!matchedExistingDrive.isNetappDrive) {
+            throw createError(400, `Selected ${driveType} drive ${selectedDrive} is not a NetApp LUN`);
+        }
+        if (isClustered === 'true' && !matchedExistingDrive.isDriveClustered) {
+            throw createError(
+                400,
+                `Selected ${driveType} drive ${selectedDrive} is not part of windows cluster or not owned by SQL Role`
+            );
+        }
+        if (matchedExistingDrive.availableSize < volumeSizeInBytes) {
+            throw createError(400, `Selected ${driveType} drive ${selectedDrive} does not have enough space`);
+        }
+    } else {
+        const matchedAvailableDrive = availableDriveLetters?.includes(selectedDrive);
+        if (!matchedAvailableDrive) {
+            throw createError(400, `Selected ${driveType} drive ${selectedDrive} does not exist in available drives`);
+        }
+    }
+}
+
+async function checkDatabaseExists(databaseHostId: string, databaseName: string, activeNodeInstanceId: string) {
+    logger.info('Checking Database name exists', {
+        databaseHostId,
+        databaseName,
+        activeNodeInstanceId
+    });
+    const response: DatabaseResponseBodyInterface = await getDataBasesSummary(databaseHostId, activeNodeInstanceId);
+    const databaseFound = response?.databases?.filter(db => db.databaseName === databaseName);
+    logger.debug('database exists', databaseFound);
+    if (databaseFound && databaseFound.length) {
+        throw createError(400, `Provided database ${databaseName} already exists`);
+    }
 }
 
 async function getManagedResources(
