@@ -44,7 +44,9 @@ async function pollCommandStatus(
             case CommandInvocationStatus.FAILED:
             case CommandInvocationStatus.TIMED_OUT:
             case CommandInvocationStatus.CANCELLED:
-                logger.error(`SSM execution ${status} for command ${pollParams.CommandId}`);
+                logger.error(
+                    `SSM execution ${status} for command ${pollParams.CommandId} on instance ${pollParams.InstanceId}`
+                );
                 return response;
             case CommandInvocationStatus.CANCELLING:
             case CommandInvocationStatus.DELAYED:
