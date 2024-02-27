@@ -13,7 +13,7 @@ import {
 } from '../../../../../store/workloadFactory/createNewDBSlice';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
-import { formatSizeOnePrecision, generateOptionType } from '../../../../../utils/utilityFunctions';
+import { formatSizeRoundOff, generateOptionType } from '../../../../../utils/utilityFunctions';
 
 import styles from './FilesSize.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
@@ -135,7 +135,7 @@ const FilesSize = () => {
 
         if (maxSize && currentSize && (currentSize < 0 || currentSize > maxSize)) {
             dispatch(setIsDataSizeValid(false));
-            return `${GENERAL.DATA_SIZE_ERROR} ${formatSizeOnePrecision(maxSize)}`;
+            return `${GENERAL.DATA_SIZE_ERROR} ${formatSizeRoundOff(maxSize)}`;
         } else {
             dispatch(setIsDataSizeValid(true));
         }
@@ -189,7 +189,7 @@ const FilesSize = () => {
                                 <TextField
                                     ref={dataSizeRef}
                                     label="Data size"
-                                    placeholder={maxSize ? `1 GiB - ${formatSizeOnePrecision(maxSize)}` : ''}
+                                    placeholder={maxSize ? `1 GiB - ${formatSizeRoundOff(maxSize)}` : ''}
                                     value={newUserDataSize}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                         const numSize = e.target.value.replace(/\D/g, '');
@@ -210,7 +210,7 @@ const FilesSize = () => {
                                                     <span className={styles.bold}>{dbHostName}</span>
                                                     {GENERAL.DATA_SIZE_TOOLTIP[1]}
                                                 </div>
-                                                <DsTypography variant="Regular_13">{`1 GiB - ${formatSizeOnePrecision(
+                                                <DsTypography variant="Regular_13">{`1 GiB - ${formatSizeRoundOff(
                                                     maxSize
                                                 )}.`}</DsTypography>
                                             </div>
