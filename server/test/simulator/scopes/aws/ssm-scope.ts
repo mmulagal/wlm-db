@@ -293,8 +293,6 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getDefaultDriveLettersCommandResponse)
     .on(SendCommandCommand, { Parameters: getClusterDriveLetters })
     .resolves(listSendCommandCommandResponse.getClusterDriveLetters)
-    .on(SendCommandCommand, { Parameters: getDefaultDataDrive })
-    .resolves(listSendCommandCommandResponse.getDefaultDriveLettersCommandResponse)
     .on(SendCommandCommand, { Parameters: createDatabase })
     .resolves(listSendCommandCommandResponse.createDBResponse)
     .on(SendCommandCommand, { Parameters: configureLuns })
