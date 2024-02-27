@@ -49,7 +49,9 @@ async function createConfigurations(accountId: string, awsAccountId: string) {
 
 async function creadteDemoDBData(accountId: string, credentialsList: any) {
     logger.info('Checking for default demo resources');
-    const matchingCredentials = credentialsList.find((item: { name: string }) => item.name === 'DemoDefaultCredential');
+    const matchingCredentials = credentialsList?.find(
+        (item: { name: string }) => item.name === 'DemoDefaultCredential'
+    );
     let credentialsId;
     const awsAccountId = randomize('0', 12);
     if (matchingCredentials) {
@@ -71,7 +73,7 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
             'STANDARD',
             true
         );
-        credentialsId = credentialsDetails?.id || credentialsList[0]?.credentialsId;
+        credentialsId = credentialsDetails?.id || credentialsList?.[0]?.credentialsId;
     }
 
     const configs = await listConfig(accountId);
