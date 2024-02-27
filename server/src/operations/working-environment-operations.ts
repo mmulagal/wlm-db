@@ -1,5 +1,4 @@
 import createError from 'http-errors';
-import { resource } from '@prisma/client';
 import { RESOURCESTYPE, HttpErrorCodes, ACCOUNT_ID } from '../utils/consts';
 import getLogger from '../utils/logger';
 import { getDatabasesCount, getResourceDetails } from './workloads/mssql/mssql-operations';
@@ -21,7 +20,13 @@ async function getWorkingEnvironments() {
     logger.info('Getting working environment list');
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const mssqlResources = (await getResources(accountId, undefined, RESOURCESTYPE.MSSQL)) as resource[];
+    const { items: mssqlResources } = await getResources(
+        accountId,
+        undefined,
+        undefined,
+        undefined,
+        RESOURCESTYPE.MSSQL
+    );
     const workingEnvironments: WorkingEnvironment[] = mssqlResources.map(
         ({
             resource_id: resourceId,
@@ -71,7 +76,9 @@ async function getMSSQLEnvData(resourceDetails: any, resourceId: string) {
 async function getWorkingEnvironment(id: string) {
     logger.info('Getting MSSQL working environment data for resource:', id);
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const [resourceDetails] = await getResources(accountId, id, RESOURCESTYPE.MSSQL);
+    const {
+        items: [resourceDetails]
+    } = await getResources(accountId, id, undefined, undefined, RESOURCESTYPE.MSSQL);
 
     if (resourceDetails) {
         const response = await getMSSQLEnvData(resourceDetails, id);
