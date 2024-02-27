@@ -1,7 +1,5 @@
-const GET_DRIVE_INFO = `
-#Get the list of all used and available drive letters
+const GET_DRIVE_INFO = `#Get the list of all used drive letters
 $usedDriveLetters = Get-PSDrive -PSProvider FileSystem | Select-Object -ExpandProperty Name
-$availableDriveLetters = [char[]]([int][char]'D'..[int][char]'Z') | Where-Object { $_ -notin $usedDriveLetters }
 
 #Updating manufacturer detail and availabble space of each existing drives
 $driveInfo = $usedDriveLetters | ForEach-Object {
@@ -9,19 +7,28 @@ $driveInfo = $usedDriveLetters | ForEach-Object {
     $drive = Get-PSDrive -Name $driveLetter
     $diskNumber = (Get-Partition -DriveLetter $driveLetter).DiskNumber
     try{
-        $manufacturer = (Get-PhysicalDisk | Where-Object { $_.DeviceId -eq $diskNumber }).Manufacturer
+        if((Get-PhysicalDisk | Where-Object { $_.DeviceId -eq $diskNumber }).Manufacturer -eq 'NETAPP'){
+            $isNetappDrive = $true 
+        }
+        else{
+            $isNetappDrive = $false 
+        }
     }
     catch {
-        $manufacturer = 'N/A'
+        $isNetappDrive = $false 
     }
     $freeSpace = $drive.Free
     [PSCustomObject]@{
-        DriveLetter = $driveLetter
-        FreeSpace = $freeSpace
-        manufacturer = $manufacturer 
+        driveLetter = $driveLetter
+        availableSize = $freeSpace
+        isNetappDrive = $isNetappDrive 
     }
 }
 
+Write-Output $driveInfo | ConvertTo-Json
+`;
+
+const GET_DEFAULT_DRIVES = `
 #Get default data drive of SQL server
 $defaultDataDrive = sqlcmd -Q @"
     SET NOCOUNT ON;
@@ -38,14 +45,30 @@ $defaultLogDrive = sqlcmd -Q @"
     SELECT LEFT(@LogPath,1) AS CurrentLogDrive FOR JSON PATH;
 "@ -y 0
 
-$jsonObject = @{
-    AvailableDriveLetters = $availableDriveLetters
-    ExistingDriveInfo = $driveInfo
-    DefaultDataDrive = $defaultDataDrive
-    DefaultLogDrive = $defaultLogDrive
-} | ConvertTo-Json
-
-Write-Output $jsonObject
+Write-Output $defaultDataDrive $defaultLogDrive | ConvertTo-Json
 `;
 
-export { GET_DRIVE_INFO };
+const EXECUTE_SQL_QUERY = (query: string, database?: string) => `
+if(${database}){
+    $results = sqlcmd -d "${database}" -Q "${query}" -y 0
+}
+else{
+    $results = sqlcmd -Q "${query}" -y 0
+}
+Write-Output $results 
+`;
+
+const GET_CLUSTER_DRIVES = `
+$diskqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_Disk'
+$partqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_DiskPartition'
+
+$paths = Get-ClusterResource | Where-Object { $_.ResourceType.Name -eq 'Physical Disk' } \`
+  | ForEach-Object { Get-WmiObject MSCluster_Resource -Namespace root/mscluster -Filter "Name='$_'" } \`
+  | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($diskqry -f $_) } \`
+  | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($partqry -f $_) } \`
+  | Select-Object -ExpandProperty Path
+
+$paths | ConvertTo-JSON
+`;
+
+export { GET_DRIVE_INFO, GET_DEFAULT_DRIVES, EXECUTE_SQL_QUERY, GET_CLUSTER_DRIVES };

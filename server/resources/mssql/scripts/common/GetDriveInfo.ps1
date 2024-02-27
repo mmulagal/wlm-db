@@ -1,6 +1,5 @@
-#Get the list of all used and available drive letters
+#Get the list of all used drive letters
 $usedDriveLetters = Get-PSDrive -PSProvider FileSystem | Select-Object -ExpandProperty Name
-$availableDriveLetters = [char[]]([int][char]'D'..[int][char]'Z') | Where-Object { $_ -notin $usedDriveLetters }
 
 #Updating manufacturer detail and availabble space of each existing drives
 $driveInfo = $usedDriveLetters | ForEach-Object {
@@ -8,41 +7,22 @@ $driveInfo = $usedDriveLetters | ForEach-Object {
     $drive = Get-PSDrive -Name $driveLetter
     $diskNumber = (Get-Partition -DriveLetter $driveLetter).DiskNumber
     try{
-        $manufacturer = (Get-PhysicalDisk | Where-Object { $_.DeviceId -eq $diskNumber }).Manufacturer
+        if((Get-PhysicalDisk | Where-Object { $_.DeviceId -eq $diskNumber }).Manufacturer -eq 'NETAPP'){
+            $isNetappDrive = $true 
+        }
+        else{
+            $isNetappDrive = $false 
+        }
     }
     catch {
-        $manufacturer = 'N/A'
+        $isNetappDrive = $false 
     }
     $freeSpace = $drive.Free
     [PSCustomObject]@{
-        DriveLetter = $driveLetter
-        FreeSpace = $freeSpace
-        manufacturer = $manufacturer 
+        driveLetter = $driveLetter
+        availableSize = $freeSpace
+        isNetappDrive = $isNetappDrive 
     }
 }
 
-#Get default data drive of SQL server
-$defaultDataDrive = sqlcmd -Q @"
-    SET NOCOUNT ON;
-    DECLARE @DataPath NVARCHAR(500);
-    EXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'DefaultData', @DataPath OUTPUT;
-    SELECT LEFT(@DataPath,1) AS CurrentDataDrive FOR JSON PATH;
-"@ -y 0
-
-#Get default log drive of SQL server
-$defaultLogDrive = sqlcmd -Q @"
-    SET NOCOUNT ON;
-    DECLARE @LogPath NVARCHAR(500);
-    EXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'DefaultLog', @LogPath OUTPUT;
-    SELECT LEFT(@LogPath,1) AS CurrentLogDrive FOR JSON PATH;
-"@ -y 0
-
-$jsonObject = @{
-    AvailableDriveLetters = $availableDriveLetters
-    ExistingDriveInfo = $driveInfo
-    DefaultDataDrive = $defaultDataDrive
-    DefaultLogDrive = $defaultLogDrive
-} | ConvertTo-Json
-
-Write-Output $jsonObject
- 
+Write-Output $driveInfo | ConvertTo-Json
