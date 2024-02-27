@@ -55,7 +55,7 @@ async function pollCommandStatus(
                 logger.debug(`SSM command execution is in ${status} status. Polling again.`);
                 break;
             default: {
-                const errorMessage = `SSM command execution returned an unexpected status: ${status}`;
+                const errorMessage = `SSM command execution returned an unexpected status: ${status} for command ${pollParams.CommandId} on instance ${pollParams.InstanceId}`;
                 logger.error(errorMessage);
                 throw new Error(errorMessage);
             }

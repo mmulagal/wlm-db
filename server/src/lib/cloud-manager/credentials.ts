@@ -253,7 +253,7 @@ async function createAwsCredential(
                 credentialsId: string;
             }>();
     } catch (error) {
-        logger.info('error creating credntials', error);
+        logger.info('error creating credential', error);
     }
 }
 
