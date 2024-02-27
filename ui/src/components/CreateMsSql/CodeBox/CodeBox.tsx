@@ -47,6 +47,7 @@ import SyntaxHighlighter from '../../../common/hooks/SyntaxHighlighter';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import CodeBoxHeading from '../../../common/CodeBoxHeading/CodeBoxHeading';
 import CodeBoxScroll from '../../../common/CodeBoxScroll/CodeBoxScroll';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 
 const _ = require('lodash');
 
@@ -191,6 +192,24 @@ const CodeBox = () => {
             return rightPanelResponse?.props?.textToHighlight;
         } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
             return rightPanelTemplateResponse?.cliCommand;
+        }
+    };
+
+    const handleCopy = () => {
+        if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
+            dispatch(clearNotifications());
+            const ele = (
+                <div>
+                    <div style={{ fontWeight: 400 }}>{GENERAL.CF_COPIED}</div>
+                    <div style={{ fontWeight: 400 }}>{GENERAL.CF_NOTICE}</div>
+                </div>
+            );
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.INFO,
+                    message: ele
+                })
+            );
         }
     };
 
@@ -397,12 +416,25 @@ const CodeBox = () => {
                                     </div>
                                 ) : (
                                     <Download
-                                        onClick={() =>
+                                        onClick={() => {
                                             handleDownloadYAML(
                                                 rightPanelTemplateResponse?.template,
                                                 cfDownloadName(selectedDBName)
-                                            )
-                                        }
+                                            );
+                                            dispatch(clearNotifications());
+                                            const ele = (
+                                                <div>
+                                                    <div style={{ fontWeight: 400 }}>{GENERAL.CF_DOWNLOAD}</div>
+                                                    <div style={{ fontWeight: 400 }}>{GENERAL.CF_NOTICE}</div>
+                                                </div>
+                                            );
+                                            dispatch(
+                                                addNotification({
+                                                    notificationType: NOTIFICATION_TYPES.INFO,
+                                                    message: ele
+                                                })
+                                            );
+                                        }}
                                     />
                                 ))}
                             {dropDownValue !== CODE_VIEWER.REST_API && isRightPanelTemplateLoading ? (
@@ -417,7 +449,11 @@ const CodeBox = () => {
                                     children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
                                     container={
                                         <CopyToClipboard text={copyResponseData()}>
-                                            <div className={styles.menuItem} id={UI_IDS.WIZARD_CODEBOX_COPY}>
+                                            <div
+                                                className={styles.menuItem}
+                                                id={UI_IDS.WIZARD_CODEBOX_COPY}
+                                                onClick={handleCopy}
+                                            >
                                                 <Copy />
                                             </div>
                                         </CopyToClipboard>
