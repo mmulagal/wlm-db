@@ -360,12 +360,12 @@ export const workloadFactoryResourceApi = createApi({
     endpoints: builder => {
         return {
             getResourceDetails: builder.query({
-                query: ({credentialId, region, id}) => ({
+                query: ({ credentialId, region, id }) => ({
                     url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}?fields=storage,performance,usageEstimation,resourceUtilization`
                 })
             }),
             getDatabaseList: builder.query({
-                query: ({credentialId, region, id}) => ({
+                query: ({ credentialId, region, id }) => ({
                     url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}/databases`
                 })
             })
@@ -489,8 +489,8 @@ export const createUserDbApi = createApi({
     endpoints: builder => {
         return {
             getDriveInfo: builder.query({
-                query: ({ credentialId, region, id }) => ({ 
-                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}/drive-information` 
+                query: ({ credentialId, region, id }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}/drive-information`
                 })
             }),
             createUserDB: builder.mutation({
@@ -512,9 +512,9 @@ export const inventoryApi = createApi({
             discoverHosts: builder.query({
                 query: ({ regionId, credentialsId, nextToken = null }) => {
                     if (nextToken) {
-                        return `credentials/${credentialsId}/regions/${regionId}/mssql/discover?nextToken=${nextToken}`;
+                        return `credentials/${credentialsId}/regions/${regionId}/mssql/discover?ec2Count=10&nextToken=${nextToken}`;
                     } else {
-                        return `credentials/${credentialsId}/regions/${regionId}/mssql/discover`;
+                        return `credentials/${credentialsId}/regions/${regionId}/mssql/discover?ec2Count=10`;
                     }
                 }
             }),

@@ -16,7 +16,7 @@ import { setUnManagedHostColState } from '../../../store/workloadFactory/invento
 const UnmanagedHosts = () => {
     const dispatch = useDispatch();
 
-    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const unManagedHostList = useAppSelector(state => state.inventory.unManagedHosts);
     const { unManagedHostInitialColumns } = useAppSelector(state => state.inventory);
 
@@ -343,7 +343,7 @@ const UnmanagedHosts = () => {
             }
         },
         initialColumnState: unManagedHostInitialColumns,
-        isLazyLoading: databaseHostsLoading
+        isLazyLoading: isDiscoverInProgress
     });
 
     useEffect(() => {
