@@ -28,12 +28,12 @@
                 },
                 "PreferredSubnetId": "subnet-f4484e80",
                 "RouteTableIds": ["rtb-65aeb107"],
-                "ThroughputCapacity": 128,
+                "ThroughputCapacity": 512,
                 "WeeklyMaintenanceStartTime": "1:14:30"
             },
             "OwnerId": "464262061435",
             "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-03773e21b2f0e39b4",
-            "StorageCapacity": 1024,
+            "StorageCapacity": 35840,
             "StorageType": "SSD",
             "SubnetIds": ["subnet-f4484e80", "subnet-4cdd3b29"],
             "Tags": [
@@ -112,7 +112,7 @@
             },
             "OwnerId": "464262061425",
             "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061425:file-system/fs-03773e21b2f039b4",
-            "StorageCapacity": 1024,
+            "StorageCapacity": 25600,
             "StorageType": "SSD",
             "SubnetIds": ["subnet-f4484e80", "subnet-4cdd3b29"],
             "Tags": [
@@ -156,7 +156,7 @@
             },
             "OwnerId": "464262061425",
             "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061425:file-system/fs-03773e21b2f039b4",
-            "StorageCapacity": 1024,
+            "StorageCapacity": 25600,
             "StorageType": "SSD",
             "SubnetIds": ["subnet-f4484e80", "subnet-4cdd3b29"],
             "Tags": [
@@ -200,7 +200,7 @@
             },
             "OwnerId": "464262061425",
             "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061425:file-system/fs-03773e21b2f039b4",
-            "StorageCapacity": 1024,
+            "StorageCapacity": 25600,
             "StorageType": "SSD",
             "SubnetIds": ["subnet-f4484e80", "subnet-4cdd3b29"],
             "Tags": [
