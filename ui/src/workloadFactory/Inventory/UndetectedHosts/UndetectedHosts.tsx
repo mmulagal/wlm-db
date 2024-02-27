@@ -10,6 +10,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 const UndetectedHosts = () => {
     const { setDialog, closeDialog } = useDialog();
     const unIdentifiableHosts = useAppSelector(state => state.inventory.unIdentifiableHosts);
+    const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
 
     const handleFirstDialog = () => {
         setTimeout(() => {
@@ -118,7 +119,8 @@ const UndetectedHosts = () => {
         columns: UnidentifiedHostsColDefs,
         rows: unIdentifiableHosts || [],
         pageSize: 10,
-        isHorizontalScroll: true
+        isHorizontalScroll: true,
+        isLazyLoading: isDiscoverInProgress
     });
     return (
         <div className={styles.undetectedHosts}>

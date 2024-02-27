@@ -11,6 +11,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 const InventoryHeaderSection = () => {
     const navigate = useNavigate();
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
+    const isManagedHostInProgress = useAppSelector(state => state.databaseHome.getDatabaseHosts.databaseHostsLoading);
     const { unManagedHosts, unIdentifiableHosts } = useAppSelector(state => state.inventory);
     const { databaseHostsData } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     return (
@@ -76,7 +77,7 @@ const InventoryHeaderSection = () => {
                                 value={(databaseHostsData?.length || 0).toString()}
                                 color="var(--chart-9)"
                                 text={GENERAL.MANAGED_BY_WLF}
-                                isLoading={isDiscoverInProgress}
+                                isLoading={isManagedHostInProgress}
                             />
                         </div>
 

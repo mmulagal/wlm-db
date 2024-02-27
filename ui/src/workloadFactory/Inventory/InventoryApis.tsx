@@ -13,8 +13,7 @@ const InventoryApis = () => {
     const dispatch = useAppDispatch();
 
     const { databaseHostsData } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
-    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
+    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const { discoveredHostData } = useAppSelector(state => state.inventory.discoveredHosts);
 
     const [hostCursor, setHostCursor] = useState(null);
@@ -54,6 +53,8 @@ const InventoryApis = () => {
     );
 
     useEffect(() => {
+        setDiscoveryCursor(null);
+        setHostCursor(null);
         if (headerSelectedCred && headerSelectedRegion) {
             setSkipApiCall(false);
             setSkipDiscoveryCall(false);
@@ -84,7 +85,7 @@ const InventoryApis = () => {
                     })
                 );
                 setHostCursor(databaseHosts?.nextToken || null);
-                if (!databaseHosts?.nextToken && databaseHostsData && databaseHostsData.length) {
+                if (!databaseHosts?.nextToken && databaseHostsData) {
                     setSkipManagedHostCall(true);
                 } else {
                     setSkipManagedHostCall(false);
@@ -125,7 +126,7 @@ const InventoryApis = () => {
                     })
                 );
                 setDiscoveryCursor(discoveredHosts?.nextToken || null);
-                if (!discoveredHosts?.nextToken && discoveredHostData && discoveredHostData.length) {
+                if (!discoveredHosts?.nextToken && discoveredHostData) {
                     setSkipDiscoveryCall(true);
                 } else {
                     setSkipDiscoveryCall(false);
