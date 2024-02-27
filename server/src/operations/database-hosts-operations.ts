@@ -221,7 +221,7 @@ async function getTopology(
             try {
                 ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
                 const node1 = ec2InstanceDetails.Reservations?.[0].Instances?.[0];
-                const node2 = ec2InstanceDetails.Reservations?.[1].Instances?.[0];
+                const node2 = ec2InstanceDetails.Reservations?.[1]?.Instances?.[0];
                 const [activeNode, standbyNode] =
                     node1?.InstanceId === activeNodeInstanceId ? [node1, node2] : [node2, node1];
                 if (!isEmpty(activeNode)) {
