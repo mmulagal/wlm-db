@@ -75,7 +75,7 @@ async function updateTemplateUrls(
 ) {
     logger.info('Updating templates and uploading to bucket', region, templateFilepath, templateType);
     const source = readFileSync(templateFilepath).toString();
-    const template = Handlebars.compile(source, { noEscape: true });
+    const template = Handlebars.compile(source);
     if (templateType === TEMPLATE_TYPES.MASTER) {
         tags = tags ? tags.concat(DEFAULT_TAGS) : DEFAULT_TAGS;
 
@@ -127,7 +127,9 @@ async function updateTemplateUrls(
             ScriptSQLFCI: decodeURI(signedUrls.get('ScriptSQLFCI')?.url || ''),
             ScriptSQLFCISignature: decodeURI(signedUrls.get('ScriptSQLFCISignature')?.url || ''),
             ScriptSQLONTAP: decodeURI(signedUrls.get('ScriptSQLONTAP')?.url || ''),
-            ScriptSQLONTAPSignature: decodeURI(signedUrls.get('ScriptSQLONTAPSignature')?.url || '')
+            ScriptSQLONTAPSignature: decodeURI(signedUrls.get('ScriptSQLONTAPSignature')?.url || ''),
+            ScriptDBCREATE: decodeURI(signedUrls.get('ScriptDBCREATE')?.url || ''),
+            ScriptDBCREATESignature: decodeURI(signedUrls.get('ScriptDBCREATESignature')?.url || '')
         });
 
         const sqlTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLTemplate');
@@ -204,7 +206,9 @@ async function updateTemplateUrls(
             ScriptSQLFCI: decodeURI(signedUrls.get('ScriptSQLFCI')?.url || ''),
             ScriptSQLFCISignature: decodeURI(signedUrls.get('ScriptSQLFCISignature')?.url || ''),
             ScriptSQLONTAP: decodeURI(signedUrls.get('ScriptSQLONTAP')?.url || ''),
-            ScriptSQLONTAPSignature: decodeURI(signedUrls.get('ScriptSQLONTAPSignature')?.url || '')
+            ScriptSQLONTAPSignature: decodeURI(signedUrls.get('ScriptSQLONTAPSignature')?.url || ''),
+            ScriptDBCREATE: decodeURI(signedUrls.get('ScriptDBCREATE')?.url || ''),
+            ScriptDBCREATESignature: decodeURI(signedUrls.get('ScriptDBCREATESignature')?.url || '')
         });
         const standAloneTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLStandaloneTemplate');
         const customStandAloneTemplatePath: string = `${WLMDB}/${stackName}/${standAloneTemplatePath!.url}`;
