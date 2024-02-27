@@ -962,7 +962,7 @@ Resources:
         - Fn::If: 
           - ShouldSendSaasNotification
           - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-          - ''ws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - ''
       {{{Tags}}}
   PostStackDeployment:
     Type: Custom::MyCustomResource
