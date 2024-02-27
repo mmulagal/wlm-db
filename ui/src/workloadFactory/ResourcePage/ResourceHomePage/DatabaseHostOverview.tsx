@@ -32,6 +32,7 @@ const DatabaseHostOverview = () => {
     const stateResourceDetails = useAppSelector(state => state.workloadFactoryResource.resourceDetails);
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
+    const dbHostName = useAppSelector(state => state.createNewUser.dbHostName);
 
     const {
         data: resourceDetails,
@@ -106,7 +107,7 @@ const DatabaseHostOverview = () => {
                     variant="primary"
                     onClick={() => {
                         dispatch(addInitialDBCreateData(initialCreateNewUserState));
-                        dispatch(setDBHostName(resourceDetails?.name));
+                        dispatch(setDBHostName(resourceDetails?.name || dbHostName));
                         navigate('../create-new-user');
                     }}
                     id={'create-new-user-button'}

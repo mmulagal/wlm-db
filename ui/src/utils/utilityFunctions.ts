@@ -313,6 +313,8 @@ export const sortListOfDict = (dataList: any, field: string, ascOrder = true) =>
 
 export const formatSizeOnePrecision = (value: number | string) => numeral(value).format('0.[0] ib');
 
+export const formatSizeRoundOff = (value: number | string) => numeral(value).format('0 ib');
+
 export const formatSizeSplit = (value: number | string) => {
     const formatted = formatSizeOnePrecision(value);
     const splitted = formatted.split(' ');
