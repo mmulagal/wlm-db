@@ -15,12 +15,12 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/database-h
     generateResponse(res, 200, DatabaseHosts);
 });
 
-router.get(`${BASE_URL}/v1/database-hosts/:id`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/database-hosts/:id`, async (req: {}, res: any) => {
     await delay(3000);
     generateResponse(res, 200, ResourceDetails);
 });
 
-router.get(`${BASE_URL}/v1/database-hosts/:id/databases`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/database-hosts/:id/databases`, async (req: {}, res: any) => {
     await delay(3000);
     generateResponse(res, 200, DatabaseList);
 });

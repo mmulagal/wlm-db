@@ -8,7 +8,7 @@ import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
 import TaskTable from '../TaskTable/TaskTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { JOB_MONITORING_STATUS } from '../../../utils/consts';
+import { CREATE_RESOURCE, JOB_MONITORING_STATUS } from '../../../utils/consts';
 import { expandTableRow, formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 import { useEffect, useState } from 'react';
 import { GENERAL } from '../../../utils/appConstants';
@@ -40,15 +40,21 @@ const SubJobTable = ({ jobId, statusType }: any) => {
                 const statusType = rowData?.status.toLowerCase();
                 return (
                     <>
-                        <div className={styles.arrow}>
-                            <ArrowIcon
-                                className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
-                                onClick={(e: any) => {
-                                    e.stopPropagation();
-                                    expandTableRow(updateRowState, rowData, currentRowState, rowsState);
-                                }}
-                            />
-                        </div>
+                        {rowData?.subJobs ? (
+                            <div className={styles.arrow}>
+                                <ArrowIcon
+                                    className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
+                                    onClick={(e: any) => {
+                                        e.stopPropagation();
+                                        expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                    }}
+                                />
+                            </div>
+                        ) : (
+                            <div className={styles.arrow}>
+                                {rowData?.type !== CREATE_RESOURCE && <ArrowIcon className={styles['arrow-disable']} />}
+                            </div>
+                        )}
                     </>
                 );
             }
@@ -61,7 +67,11 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             width: '676px',
             isSticky: true,
             renderCell: (cellData: any) => {
-                return <div className={CommonStyles.wrapTextIn2Line} title={cellData}>{cellData}</div>;
+                return (
+                    <div className={CommonStyles.wrapTextIn2Line} title={cellData}>
+                        {cellData}
+                    </div>
+                );
             }
         },
         // {
@@ -107,8 +117,12 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             isSortable: true,
             width: '240px',
             renderCell: (cellData: any) => {
-                const formatDate = cellData ? formatDateWithTime(cellData): 'N/A';
-                return <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>{formatDate}</div>;
+                const formatDate = cellData ? formatDateWithTime(cellData) : 'N/A';
+                return (
+                    <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>
+                        {formatDate}
+                    </div>
+                );
             }
         },
         {
@@ -118,8 +132,12 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             isSortable: true,
             width: '240px',
             renderCell: (cellData: any) => {
-                const formatDate = cellData ? formatDateWithTime(cellData): 'N/A';
-                return <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>{formatDate}</div>;
+                const formatDate = cellData ? formatDateWithTime(cellData) : 'N/A';
+                return (
+                    <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>
+                        {formatDate}
+                    </div>
+                );
             }
         },
         {
@@ -149,19 +167,19 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             <div className={styles.subJobTable}>
                 <div className={`${styles.statusbar} ${styles[statusType]} ${styles.extraDiv}`}>&nbsp;</div>
                 <div className={styles.extraDiv2} />
-                {subJobsDataLoading && 
+                {subJobsDataLoading && (
                     <Typography variant="Regular_14" className={styles.loadingTable}>
                         <FlashingDotsLoader />
                         <div>{GENERAL.LOADING_DATA}</div>
                     </Typography>
-                }
-                {!subJobsDataLoading && !subTaskList && 
+                )}
+                {!subJobsDataLoading && !subTaskList && (
                     <Typography variant="Regular_14" className={styles.loadingTable}>
                         <NoDataIcon />
                         <div>{GENERAL.NO_DATA}</div>
                     </Typography>
-                }
-                {!subJobsDataLoading && subTaskList &&
+                )}
+                {!subJobsDataLoading && subTaskList && (
                     <div
                         //  @ts-ignore
                         className={`${styles.table}`}
@@ -175,7 +193,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
                             variant="innerTable"
                         />
                     </div>
-                }
+                )}
             </div>
         </>
     );

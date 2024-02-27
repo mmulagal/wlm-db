@@ -285,7 +285,7 @@ async function getCloudformationTemplate(
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
 
-    region = region ? region : DEFAULT_AWS_REGION
+    region = !isEmpty(region) ? region : DEFAULT_AWS_REGION;
 
     const customMasterTemplatePath: string = `${WLMDB}/${stackName}/${MASTER_TEMPLATE_PATH}`;
 
@@ -339,7 +339,11 @@ async function getCloudformationTemplate(
     } else {
         // Sleep for 2 seconds for master template to be uploaded
         await sleep(2000);
-        const response = await getObjectBucket(TEMPLATE_BUCKET_REGION, SIGNED_TEMPLATES_BUCKET_NAME, customMasterTemplatePath);
+        const response = await getObjectBucket(
+            TEMPLATE_BUCKET_REGION,
+            SIGNED_TEMPLATES_BUCKET_NAME,
+            customMasterTemplatePath
+        );
         masterTemplateContents = await response.Body?.transformToString();
     }
 
@@ -777,6 +781,7 @@ async function deployCloudFormationTemplate(
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
         const stackId = deployStackResponse.StackId || '';
+        const awsAccountId = randomize('0', 8);
         createDeploymentMockDataInDB(
             accountId,
             stackId,
@@ -784,7 +789,8 @@ async function deployCloudFormationTemplate(
             region,
             credentialsId,
             sqlConfiguration?.sqlDeploymentMode,
-            fsxConfiguration?.fsxFileSystemId
+            fsxConfiguration?.fsxFileSystemId,
+            awsAccountId
         );
         if (!fsxConfiguration.fsxFileSystemId) {
             // create a new fsx record in fsx inventory

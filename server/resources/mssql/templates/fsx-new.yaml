@@ -1,3 +1,4 @@
+#prettier-ignore
 ---
 AWSTemplateFormatVersion: 2010-09-09
 
@@ -11,7 +12,7 @@ Metadata:
               Parameters:
                   - DeploymentMode
                   - FSxFileSystemName
-                  - FSxAdministratorPasswordSecret
+                  - FSxAdministratorPassword
                   - FSxDiskIops
                   - FSxStorageCapacity
                   - FSxVolumeThroughputCapacity
@@ -41,12 +42,13 @@ Metadata:
                   - StandbySubnetId
                   - PreferredRouteTableId
                   - StandbyRouteTableId
+                  - ParentStackName
         ParameterLabels:
             DeploymentMode:
                 default: File system deployment mode
             FSxFileSystemName:
                 default: File system name
-            FSxAdministratorPasswordSecret:
+            FSxAdministratorPassword:
                 default: File system administrative password
             FSxDiskIops:
                 default: Provisioned SSD IOPS
@@ -88,6 +90,8 @@ Metadata:
                 default: Preferred VPC route table
             StandbyRouteTableId:
                 default: Standby VPC route table
+            ParentStackName:
+                default: Name of the parent CloudFormation stack
 
 Parameters:
     DeploymentMode:
@@ -101,8 +105,8 @@ Parameters:
         Type: String
         Default: wlmdb-fsx
 
-    FSxAdministratorPasswordSecret:
-        Description: Secret string for the "fsxadmin" administrator account.
+    FSxAdministratorPassword:
+        Description: Password for the "fsxadmin" administrator account.
         Type: String
 
     FSxDiskIops:
@@ -120,10 +124,10 @@ Parameters:
         Default: 1024
 
     FSxVolumeThroughputCapacity:
-        Description: The sustained speed, in MB/s, at which the file server hosting your file system can serve data. The file server can also burst to higher speeds for periods of time. Valid values are 128, 256, 512, 1024, and 2048 MB/s.
+        Description: The sustained speed, in MB/s, at which the file server hosting your file system can serve data. The file server can also burst to higher speeds for periods of time. Valid values are 128, 256, 512, 1024, 2048 and 4096 MB/s.
         Type: Number
         Default: 128
-        AllowedValues: [128, 256, 512, 1024, 2048]
+        AllowedValues: [128, 256, 512, 1024, 2048, 4096]
 
     FSxWeeklyMaintenanceStartTime:
         Description: A recurring weekly maintenance start time, in the format D:HH:MM. D is the day of the week, for which 1 represents Monday and 7 represents Sunday. HH is the zero-padded hour of the day (0-23), and MM is the zero-padded minute of the hour.
@@ -206,6 +210,10 @@ Parameters:
         Description: Standby VPC route tables to associate with your file system.
         Type: String
         Default: rtb-123456
+    
+    ParentStackName:
+        Description: Name of the parent CloudFormation stack.
+        Type: String
 
 Conditions:
     FSxIsProvisionModeAutomatic: !Equals [!Ref FSxDiskIops, '3']
@@ -343,7 +351,7 @@ Resources:
                 DiskIopsConfiguration:
                     Iops: !If [FSxIsProvisionModeAutomatic, !Ref AWS::NoValue, !Ref FSxDiskIops]
                     Mode: !If [FSxIsProvisionModeAutomatic, AUTOMATIC, USER_PROVISIONED]
-                FsxAdminPassword: !Sub '{{resolve:secretsmanager:${FSxAdministratorPasswordSecret}:SecretString:password}}'
+                FsxAdminPassword: !Ref FSxAdministratorPassword
                 PreferredSubnetId: !Ref PreferredSubnetId
                 RouteTableIds:
                     !If [

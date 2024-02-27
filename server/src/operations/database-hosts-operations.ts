@@ -1,7 +1,7 @@
-import { STORAGE_TYPE, resource } from '@prisma/client';
-import { DescribeInstancesCommandOutput } from '@aws-sdk/client-ec2';
+import { JOBSTATUS, JOBTYPE, resource, STORAGE_TYPE } from '@prisma/client';
+import { DescribeInstancesCommandOutput, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import { listResources } from '../lib/database/db';
 import {
     DatabaseHostSummaryResponseType,
@@ -11,10 +11,13 @@ import {
     StorageResponseType,
     UsageCostResponseType,
     DatabasesListResponseType,
-    DriveInfoResponseBodyType
+    DatabaseCreateResponseType,
+    DriveInfoResponseBodyType,
+    FileConfigType,
+    ManageResourceResponseType
 } from '../routes/types/database-hosts.types';
 import { describeInstance, describeSubnets, describeVpc, getAmis } from '../lib/aws/ec2';
-import { describeFSxN } from '../lib/aws/fsx';
+import { describeFSxN, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { PricingServiceRequestType, PricingServiceResponseType } from '../routes/types/pricing.types';
 
 import calculatePrice from './aws/pricing-operations';
@@ -36,7 +39,10 @@ import {
     WLMDB_COST_ALLOCATION_TAG,
     API_PAGE_SIZE,
     SqlServerDeploymentModel,
-    FileSystemTypes
+    DatabaseTypes,
+    ACCOUNT_ID,
+    FileSystemTypes,
+    COMPLETE
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -60,10 +66,13 @@ import {
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { isSSMConnectionSuccessful } from './aws/ssm-operations';
+import { registerJob, updateJobDetails } from './database/job-operations';
+import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
 import { GET_DRIVE_INFO } from './workloads/mssql/ssm-script-utils';
 import { getResources } from './database/database-operations';
 import { sqlResponseParsing } from '../utils/utils';
+import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
 
 const logger = getLogger();
 
@@ -112,9 +121,17 @@ async function getTopology(
     region: string,
     resourceId: string,
     resourceData: resource,
-    additionalFields?: { [key: string]: boolean }
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId?: string
 ): Promise<TopologyResponseType> {
-    logger.info('Fetching topology data', accountId, region, resourceId, resourceData);
+    logger.info('Fetching topology data', {
+        accountId,
+        region,
+        resourceId,
+        resourceData,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    });
 
     if (isEmpty(resourceData)) {
         throw createError(
@@ -145,15 +162,7 @@ async function getTopology(
         ec2Details: []
     };
 
-    let activeNodeInstanceId: string | undefined;
-    let standbyNodeInstanceId;
     if (!isEmpty(node1InstanceId)) {
-        ({ activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
-            credentialsId,
-            region,
-            node1InstanceId,
-            node2InstanceId
-        ));
         let vpcId;
         let fileSystemStatus;
         let fileSystemName;
@@ -162,30 +171,34 @@ async function getTopology(
         let fileSystemThroughputCapacity;
         let subnetIds: Array<string> | undefined;
         let availabilityZones: Array<string> | undefined;
+        let vpcCidr: string | undefined;
 
-        if (additionalFields?.allTopology || additionalFields?.vpc) {
-            try {
-                const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
-                vpcId = fsxInfo?.FileSystems?.[0].VpcId;
-                fileSystemName = fsxInfo?.FileSystems?.[0].Tags?.reduce(
-                    (a = '', tag) => (tag.Key === 'Name' ? tag.Value : a),
-                    ''
-                );
+        try {
+            const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
+            vpcId = fsxInfo?.FileSystems?.[0].VpcId;
+            fileSystemName = fsxInfo?.FileSystems?.[0].Tags?.reduce(
+                (a = '', tag) => (tag.Key === 'Name' ? tag.Value : a),
+                ''
+            );
 
-                fileSystemDeploymentMode = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DeploymentType;
-                fileSystemStatus = fsxInfo?.FileSystems?.[0].Lifecycle;
-                fileSystemStorageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity;
-                fileSystemThroughputCapacity = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
-                subnetIds = fsxInfo?.FileSystems?.[0].SubnetIds;
+            fileSystemDeploymentMode = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DeploymentType;
+            fileSystemStatus = fsxInfo?.FileSystems?.[0].Lifecycle;
+            fileSystemStorageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity;
+            fileSystemThroughputCapacity = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
+            subnetIds = fsxInfo?.FileSystems?.[0].SubnetIds;
 
-                const { Subnets: subnets } = await describeSubnets(credentialsId, region, {
-                    SubnetIds: subnetIds
-                });
-                availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
-                logger.info('availabilityZones', availabilityZones);
-            } catch (error) {
-                logger.error(`Error while fetching details for fsx. Error: ${error}`);
-            }
+            const { Subnets: subnets } = await describeSubnets(credentialsId, region, {
+                SubnetIds: subnetIds
+            });
+            availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
+            const vpcParams: DescribeVpcsCommandInput = {
+                VpcIds: [vpcId!]
+            };
+            const { Vpcs: vpcs = [] } = await describeVpc(credentialsId, region, vpcParams);
+            vpcCidr = vpcs[0]?.CidrBlock;
+            logger.info('availabilityZones', availabilityZones);
+        } catch (error) {
+            logger.error(`Error while fetching details for fsx. Error: ${error}`);
         }
 
         const instanceIds = node2InstanceId ? [node1InstanceId, node2InstanceId] : [node1InstanceId];
@@ -201,14 +214,15 @@ async function getTopology(
         let standbyAvailabilityZone;
         let standbySubnetId;
         let standbyVolumeId;
-        let activeDirectoryDetails;
         let activeNodeInstanceName;
         let standbyNodeInstanceName;
-        if (additionalFields?.allTopology) {
+
+        if (!isEmpty(activeNodeInstanceId)) {
+            // fetch instance details only if there is atleast one active node
             try {
                 ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
                 const node1 = ec2InstanceDetails.Reservations?.[0].Instances?.[0];
-                const node2 = ec2InstanceDetails.Reservations?.[1].Instances?.[0];
+                const node2 = ec2InstanceDetails.Reservations?.[1]?.Instances?.[0];
                 const [activeNode, standbyNode] =
                     node1?.InstanceId === activeNodeInstanceId ? [node1, node2] : [node2, node1];
                 if (!isEmpty(activeNode)) {
@@ -230,11 +244,11 @@ async function getTopology(
             } catch (error) {
                 logger.error(`Error while fetching details for ec2 instances. Error: ${error}`);
             }
-            activeDirectoryDetails = {
-                name: activeDirectoryName || '',
-                address: activeDirectoryAddress || ''
-            };
         }
+        const activeDirectoryDetails = {
+            name: activeDirectoryName || '',
+            address: activeDirectoryAddress || ''
+        };
         let vpcName;
         if (vpcId) {
             const { Vpcs } = await describeVpc(credentialsId, region, {
@@ -263,21 +277,24 @@ async function getTopology(
             ...(vpcId && { vpcId }),
             ...(vpcName && { vpcName }),
             ...(availabilityZones && { availabilityZones }),
+            ...(vpcCidr && { vpcCidr }),
             ...(keyPairName && { keyPairName }),
-            ec2Details: [
-                {
-                    id: activeNodeInstanceId!,
-                    name: activeNodeInstanceName,
-                    ebsVolumeId: activeVolumeId || '',
-                    ...(activeInstanceType && { instanceType: activeInstanceType }),
-                    ...(activeAvailabilityZone && { availabilityZone: activeAvailabilityZone }),
-                    ...(activeSubnetId && { subnetId: activeSubnetId })
-                }
-            ],
+            ...(activeNodeInstanceId && {
+                ec2Details: [
+                    {
+                        id: activeNodeInstanceId!,
+                        name: activeNodeInstanceName,
+                        ebsVolumeId: activeVolumeId || '',
+                        ...(activeInstanceType && { instanceType: activeInstanceType }),
+                        ...(activeAvailabilityZone && { availabilityZone: activeAvailabilityZone }),
+                        ...(activeSubnetId && { subnetId: activeSubnetId })
+                    }
+                ]
+            }),
             ...(activeDirectoryDetails && { activeDirectoryDetails })
         };
-        if (standbyNodeInstanceId) {
-            topologyData.ec2Details.push({
+        if (activeNodeInstanceId && standbyNodeInstanceId) {
+            topologyData.ec2Details?.push({
                 id: standbyNodeInstanceId!,
                 name: standbyNodeInstanceName,
                 ebsVolumeId: standbyVolumeId || '',
@@ -299,27 +316,19 @@ async function getStorageData(
     try {
         const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
 
-        const { fsxSecret } = metadata as unknown as Metadata;
-
-        // DeploymentID is same as AWS CloudFormation stack name.  We retrieve
-        // deploymentID from the fsxSecret, which has an additional '-fsx'
-        // suffix to stack name (e.g., WLMDB-SqlFciStack-1698992271319-fsx).
-        //     ONTAP tags have '_' instead of '-' in the stack name.  So we
-        // tune tag accordingly with replaceAll.
-        const deploymentId = fsxSecret?.replace('-fsx', '')?.replaceAll('-', '_');
+        const { stackname } = metadata as unknown as Metadata;
 
         const info = await getStorageDataUsingSSM(
             credentialsId,
             region!,
             fileSystemId!,
-            fsxSecret!,
             'storage/volumes',
-            `tiering.object_tags="wlmDeploymentId=${deploymentId}"`,
+            `tiering.object_tags="wlmDeploymentId=${stackname}"`,
             'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
             activeNodeInstanceId
         );
 
-        logger.info(`Storage data for volumes with deploymentId ${deploymentId}:`, info);
+        logger.info(`Storage data for volumes with deploymentId ${stackname}:`, info);
 
         let totalSize = 0;
         let totalUsed = 0;
@@ -582,11 +591,11 @@ async function getDatabaseHostsSummary(
     const resourceDetails = await listResources(
         accountId,
         undefined,
+        customerCredentialsId,
+        awsRegion,
         RESOURCESTYPE.MSSQL,
         API_PAGE_SIZE,
-        nextToken,
-        awsRegion,
-        customerCredentialsId
+        nextToken
     );
 
     if (isEmpty(resourceDetails)) {
@@ -605,9 +614,6 @@ async function getDatabaseHostsSummary(
     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
-    const additionalFields = {
-        vpc: Boolean(getUsageEstimation)
-    };
 
     const databaseHosts: DatabaseHostSummaryResponseType[] = [];
     try {
@@ -624,7 +630,7 @@ async function getDatabaseHostsSummary(
                 const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
                 // Check SSM Connection status
-                const { isSSMConnected, activeNodeInstanceId } = await isSSMConnectionSuccessful(
+                const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
                     credentialsId,
                     region!,
                     node1InstanceId,
@@ -637,7 +643,14 @@ async function getDatabaseHostsSummary(
                             ...(isSSMConnected && activeNodeInstanceId
                                 ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId)]
                                 : [Promise.resolve()]),
-                            getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
+                            getTopology(
+                                accountId,
+                                region!,
+                                resourceId,
+                                resourceDetail,
+                                activeNodeInstanceId!,
+                                standbyNodeInstanceId
+                            ),
                             ...(isSSMConnected && getPerformance && activeNodeInstanceId
                                 ? [getServerIOLatency(resourceId, activeNodeInstanceId)]
                                 : [Promise.resolve()]), // Fetch io latency data
@@ -719,9 +732,6 @@ async function getDatabaseHostSummary(
     const getResourceutilization = fieldsValues?.includes(
         DatabaseHostsQueryFields.RESOURCE_UTILIZATION.toLocaleLowerCase()
     );
-    const additionalFields = {
-        allTopology: true
-    };
 
     const {
         resource_id: resourceId,
@@ -734,7 +744,7 @@ async function getDatabaseHostSummary(
         const { node1InstanceId, node2InstanceId, creationDate } = metadata as unknown as Metadata;
 
         // Check SSM Connection status
-        const { isSSMConnected, activeNodeInstanceId } = await isSSMConnectionSuccessful(
+        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
             credentialsId,
             region!,
             node1InstanceId,
@@ -760,7 +770,14 @@ async function getDatabaseHostSummary(
                     ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId)]
                     : [Promise.resolve()]),
                 ...(isSSMConnected ? [getServerSummary(resourceId)] : [Promise.resolve()]), // Fetch server metadata
-                getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
+                getTopology(
+                    accountId,
+                    region!,
+                    resourceId,
+                    resourceDetail,
+                    activeNodeInstanceId!,
+                    standbyNodeInstanceId
+                ),
                 ...(isSSMConnected && getPerformance && activeNodeInstanceId
                     ? [getPerformanceMetrics(resourceId, activeNodeInstanceId)]
                     : [Promise.resolve()]), // Fetch io latency data
@@ -990,7 +1007,9 @@ async function getDriveInfo(
         region
     );
 
-    const [resourceDetail] = await getResources(accountId, databaseHostId, RESOURCESTYPE.MSSQL, credentialsId, region);
+    const {
+        items: [resourceDetail]
+    } = await getResources(accountId, databaseHostId, credentialsId, region, RESOURCESTYPE.MSSQL);
 
     if (isEmpty(resourceDetail)) {
         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
@@ -1020,4 +1039,698 @@ async function getDriveInfo(
     return response;
 }
 
-export { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases, getDriveInfo };
+async function deployDatabase(
+    accountId: string,
+    databaseHostId: string,
+    credentialsId: string,
+    region: string,
+    databaseName: string,
+    dataFileConfig: FileConfigType,
+    logFileConfig: FileConfigType
+): Promise<DatabaseCreateResponseType> {
+    logger.info('Deploy new database', {
+        accountId,
+        databaseHostId,
+        credentialsId,
+        region,
+        databaseName,
+        dataFileConfig,
+        logFileConfig
+    });
+
+    await validateTheParams(); // TODO: Validate the params
+
+    const {
+        items: [resourceDetail]
+    } = await getResources(accountId, databaseHostId);
+
+    const {
+        resource_id: resourceId,
+        co_relation_id: fileSystemId,
+        metadata,
+        resource_name: sqlServerName
+    } = resourceDetail;
+    const { node1InstanceId, node2InstanceId, fsxSvmId, sqlDeploymentType } = metadata as unknown as Metadata;
+    const isClustered = sqlDeploymentType === 'FCI' ? 'true' : 'false';
+
+    if (!credentialsId || !region || !node1InstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource  information');
+    }
+
+    // create the parent job for database deployment
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.CREATE_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: sqlServerName as string,
+        name: 'Create Database',
+        startTime: new Date().valueOf(),
+        description: 'Creating database on the SQL Server with provided configuration.'
+    });
+
+    invokeSSMForDatabaseDeployment(
+        credentialsId,
+        region,
+        databaseName,
+        dataFileConfig,
+        logFileConfig,
+        fileSystemId,
+        isClustered,
+        sqlServerName,
+        node1InstanceId,
+        fsxSvmId,
+        jobId,
+        resourceId,
+        node2InstanceId
+    );
+    return { jobId };
+}
+
+async function invokeSSMForDatabaseDeployment(
+    credentialsId: string,
+    region: string,
+    databaseName: string,
+    dataFileConfig: FileConfigType,
+    logFileConfig: FileConfigType,
+    fileSystemId: string | null,
+    isClustered: string,
+    sqlServerName: string | null,
+    node1InstanceId: string,
+    fsxSvmId: string | undefined,
+    parentJobId: string,
+    resourceId: string,
+    node2InstanceId?: string
+) {
+    logger.info(
+        'invoke SSM for database deployment',
+        credentialsId,
+        region,
+        databaseName,
+        dataFileConfig,
+        logFileConfig,
+        node1InstanceId,
+        node2InstanceId,
+        fsxSvmId,
+        fileSystemId,
+        resourceId,
+        isClustered
+    );
+
+    const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
+
+    const { fileName: dataFileName, drive: dataDrive, isExisting: isDataDriveExists } = dataFileConfig;
+    const { fileName: logFileName, drive: logDrive, isExisting: isLogDriveExists } = logFileConfig;
+
+    const dataVolumeSize = dataFileConfig.volumeSize * 1074; // converting from GiB to MBs
+    const logVolumeSize = logFileConfig.volumeSize * 1074; // converting from GiB to MBs
+
+    const dataDrivePath = `${dataDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\data\\${dataFileName}`;
+    const logDrivePath = `${logDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\data\\${logFileName}`;
+
+    let sqlVirtualMachineName;
+    let activeNodeId;
+
+    try {
+        const { isSSMConnected, activeNodeInstanceId } = await isSSMConnectionSuccessful(
+            credentialsId,
+            region!,
+            node1InstanceId,
+            node2InstanceId
+        );
+        if (!isSSMConnected && activeNodeInstanceId === undefined) {
+            const errorMessage = `Error while creating database for ${accountId} ${resourceId} due to SSM connection issues.`;
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+        }
+
+        const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
+            credentialsId,
+            region,
+            fileSystemId as string
+        );
+
+        const svmList = fsxSVMs?.filter(svm => svm.StorageVirtualMachineId === fsxSvmId) || [];
+        const [{ Name: sqlVMName }] = svmList;
+
+        sqlVirtualMachineName = sqlVMName;
+        activeNodeId = activeNodeInstanceId;
+
+        if (isDataDriveExists && isLogDriveExists) {
+            // When the user selected drive as existing, we will only execute the create database script on the drive
+            await createDatabase(
+                accountId,
+                credentialsId,
+                region,
+                parentJobId,
+                activeNodeInstanceId as string,
+                sqlServerName,
+                databaseName,
+                dataDrivePath,
+                logDrivePath
+            );
+            await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+                status: JOBSTATUS.COMPLETED,
+                endTime: new Date().valueOf(),
+                error: undefined
+            });
+        } else if (!isDataDriveExists && !isLogDriveExists) {
+            // New Drive selected, Will execute all the 3 scripts
+            const {
+                Resources: { Igroup: iGroup, FSxDataVolumeName: fsxDataVolumeName, FSxLogVolumeName: fsxLogVolumeName }
+            } = await configureLuns(
+                accountId,
+                credentialsId,
+                region,
+                parentJobId,
+                activeNodeInstanceId as string,
+                sqlServerName,
+                fileSystemId,
+                sqlVMName,
+                dataVolumeSize,
+                logVolumeSize,
+                (!isLogDriveExists).toString(),
+                (!isDataDriveExists).toString()
+            );
+
+            await newDBInitialization(
+                accountId,
+                credentialsId,
+                region,
+                parentJobId,
+                activeNodeInstanceId as string,
+                sqlServerName,
+                databaseName,
+                isClustered,
+                dataDrive,
+                logDrive,
+                (!isLogDriveExists).toString(),
+                (!isDataDriveExists).toString(),
+                iGroup,
+                fsxDataVolumeName,
+                fsxLogVolumeName
+            );
+
+            await createDatabase(
+                accountId,
+                credentialsId,
+                region,
+                parentJobId,
+                activeNodeInstanceId as string,
+                sqlServerName,
+                databaseName,
+                dataDrivePath,
+                logDrivePath,
+                iGroup,
+                fsxDataVolumeName,
+                fsxLogVolumeName
+            );
+
+            await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+                status: JOBSTATUS.COMPLETED,
+                endTime: new Date().valueOf(),
+                error: undefined
+            });
+        }
+    } catch (err: any) {
+        logger.error('Error while creating database', err, err.data);
+        // Clean up script will only be executed when the configure lun script is provisioned
+        if (err.data && err.data?.iGroup) {
+            const {
+                data: { iGroup, fsxDataVolumeName, fsxLogVolumeName }
+            } = err;
+            await cleanUpDatabaseDeployment(
+                accountId,
+                credentialsId,
+                region,
+                fileSystemId,
+                sqlVirtualMachineName,
+                fsxDataVolumeName,
+                fsxLogVolumeName,
+                iGroup,
+                activeNodeId as string,
+                sqlServerName,
+                parentJobId
+            );
+        }
+
+        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: new Date().valueOf(),
+            error: err?.message
+        });
+    }
+}
+
+async function createDatabase(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    activeNodeInstanceId: string,
+    sqlServerName: string | null,
+    databaseName: string,
+    dataDrivePath: string,
+    logDrivePath: string,
+    iGroup?: string,
+    fsxDataVolumeName?: string,
+    fsxLogVolumeName?: string
+) {
+    logger.info('Creating Database', {
+        accountId,
+        credentialsId,
+        region,
+        parentJobId,
+        activeNodeInstanceId,
+        sqlServerName,
+        databaseName,
+        dataDrivePath,
+        logDrivePath,
+        iGroup,
+        fsxDataVolumeName,
+        fsxLogVolumeName
+    });
+
+    let createDatabaseCommand;
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        createDatabaseCommand = [
+            `${CREATEDBSCRIPT} -SQLServer Draculla  -DBName tempdb9  -DataPath J:\\MSSQL\\data\\tempdb9_data.mdf  -LogPath K:\\MSSQL\\data\\tempdb9_log.ldf`
+        ];
+    } else {
+        createDatabaseCommand = [
+            `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath}`
+        ];
+    }
+
+    // child job creation
+    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.CREATE_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: sqlServerName as string,
+        name: 'Create Database',
+        parentJobId,
+        description: `Creating database ${databaseName} with provided data and log paths.`,
+        startTime: new Date().valueOf()
+    });
+
+    let status;
+    let errMsg;
+    try {
+        const createDatabaseResponse = await callSsmExecution(
+            credentialsId,
+            region,
+            createDatabaseCommand,
+            activeNodeInstanceId,
+            accountId,
+            false
+        );
+        logger.debug('Create database is done', createDatabaseResponse);
+        const parsedDBResponse = createDatabaseResponse ? sqlResponseParsing(createDatabaseResponse) : {};
+
+        if (parsedDBResponse?.Status === COMPLETE) {
+            status = JOBSTATUS.COMPLETED;
+        } else {
+            status = JOBSTATUS.FAILED;
+            errMsg = parsedDBResponse.Message;
+            const exception = JSON.stringify(parsedDBResponse?.Exception);
+            logger.error(`Exception for create db ${parsedDBResponse.Message} ${exception}`);
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                `Error while creating database in account ${accountId} ${errMsg}.`,
+                { data: { iGroup, fsxDataVolumeName, fsxLogVolumeName } }
+            );
+        }
+        return parsedDBResponse;
+    } catch (err: any) {
+        // child job failed
+        logger.error(err);
+        errMsg = err?.message;
+        status = JOBSTATUS.FAILED;
+        if (!err.data) {
+            err.data = { iGroup, fsxLogVolumeName, fsxDataVolumeName };
+        }
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while creating database in account ${accountId} ${databaseName} ${err?.message}.`,
+            { data: err.data }
+        );
+    } finally {
+        // child job update
+        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status,
+            endTime: new Date().valueOf(),
+            ...(errMsg && { error: errMsg })
+        });
+    }
+}
+
+async function configureLuns(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    activeNodeInstanceId: string,
+    sqlServerName: string | null,
+    fileSystemId: string | null,
+    sqlVMName: string | undefined,
+    dataVolumeSize: number,
+    logVolumeSize: number,
+    isLogDriveExists: string,
+    isDataDriveExists: string
+) {
+    logger.info('Configure Luns', {
+        accountId,
+        credentialsId,
+        region,
+        parentJobId,
+        activeNodeInstanceId,
+        sqlServerName,
+        fileSystemId,
+        sqlVMName,
+        dataVolumeSize,
+        logVolumeSize,
+        isLogDriveExists,
+        isDataDriveExists
+    });
+
+    let configureLuncommands;
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        configureLuncommands = [
+            `${CONFIGURELUNSCRIPT} -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataLunSize 1074  -FSxLogLunSize 1074 -LogNew false -DataNew false`
+        ];
+    } else {
+        configureLuncommands = [
+            `${CONFIGURELUNSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataLunSize ${dataVolumeSize}  -FSxLogLunSize ${logVolumeSize} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists}`
+        ];
+    }
+
+    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.CREATE_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: sqlServerName as string,
+        name: 'Configure Luns',
+        parentJobId,
+        description: 'Configuring volumes and LUNs on FSx for ONTAP with recommended best practices.',
+        startTime: new Date().valueOf()
+    });
+
+    let status;
+    let errMsg;
+    try {
+        const configureLunresponse = await callSsmExecution(
+            credentialsId,
+            region,
+            configureLuncommands,
+            activeNodeInstanceId,
+            accountId,
+            false
+        );
+        logger.debug('Configure luns is done', configureLunresponse);
+        const parsedLunsResponse = configureLunresponse ? sqlResponseParsing(configureLunresponse) : {};
+
+        if (parsedLunsResponse?.Status === COMPLETE) {
+            status = JOBSTATUS.COMPLETED;
+        } else {
+            status = JOBSTATUS.FAILED;
+            errMsg = parsedLunsResponse.Message;
+            const exception = JSON.stringify(parsedLunsResponse?.Exception);
+            logger.error(`Exception for configure lun ${parsedLunsResponse.Message} ${exception}`);
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                `Error while configuring luns for account ${accountId} ${errMsg}.`,
+                {
+                    data: {
+                        iGroup: parsedLunsResponse?.Resources?.Igroup,
+                        fsxLogVolumeName: parsedLunsResponse?.Resources?.FSxLogVolumeName,
+                        fsxDataVolumeName: parsedLunsResponse?.Resources?.FSxDataVolumeName
+                    }
+                }
+            );
+        }
+
+        return parsedLunsResponse;
+    } catch (err: any) {
+        logger.error(err);
+        errMsg = err?.message;
+        status = JOBSTATUS.FAILED;
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while configuring luns for account ${accountId} ${err?.message}.`,
+            { data: err.data }
+        );
+    } finally {
+        // child job failed
+        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status,
+            endTime: new Date().valueOf(),
+            ...(errMsg && { error: errMsg })
+        });
+    }
+}
+
+async function newDBInitialization(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    activeNodeInstanceId: string,
+    sqlServerName: string | null,
+    databaseName: string,
+    isClustered: string,
+    dataDrive: string,
+    logDrive: string,
+    isLogDriveExists: string,
+    isDataDriveExists: string,
+    iGroup: string,
+    fsxDataVolumeName: string,
+    fsxLogVolumeName: string
+) {
+    logger.info('Initialising new database', {
+        accountId,
+        credentialsId,
+        region,
+        parentJobId,
+        activeNodeInstanceId,
+        sqlServerName,
+        databaseName,
+        isClustered,
+        dataDrive,
+        logDrive,
+        isLogDriveExists,
+        isDataDriveExists,
+        iGroup,
+        fsxDataVolumeName,
+        fsxLogVolumeName
+    });
+
+    let dbInitializecommands;
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        dbInitializecommands = [
+            `${INITIALIZEDBSCRIPT} -DBName tempdb9  -IsClustered false  -DataDrive J  -LogDrive K -LogNew true -DataNew true`
+        ];
+    } else {
+        dbInitializecommands = [
+            `${INITIALIZEDBSCRIPT} -DBName ${databaseName}  -IsClustered ${isClustered}  -DataDrive ${dataDrive}  -LogDrive ${logDrive} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists}`
+        ];
+    }
+
+    const description =
+        isClustered === 'true'
+            ? 'Attaching iSCSI disks to Windows host, initializing drives, and assigning to SQL role in Windows cluster'
+            : 'Attaching iSCSI disks to Windows host and initializing drives';
+
+    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.CREATE_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: sqlServerName as string,
+        name: 'New Database Initialization',
+        parentJobId,
+        description,
+        startTime: new Date().valueOf()
+    });
+
+    let status;
+    let errMsg;
+    try {
+        const newDBInitializeresponse = await callSsmExecution(
+            credentialsId,
+            region,
+            dbInitializecommands,
+            activeNodeInstanceId,
+            accountId,
+            false
+        );
+        logger.debug('New DB initialize is successfully done', newDBInitializeresponse);
+
+        const parsedDBInitializationResponse = newDBInitializeresponse
+            ? sqlResponseParsing(newDBInitializeresponse)
+            : {};
+
+        if (parsedDBInitializationResponse?.Status === COMPLETE) {
+            status = JOBSTATUS.COMPLETED;
+        } else {
+            status = JOBSTATUS.FAILED;
+            errMsg = parsedDBInitializationResponse.Message;
+            const exception = JSON.stringify(parsedDBInitializationResponse?.Exception);
+            logger.error(`Exception for db initialize  ${parsedDBInitializationResponse.Message} ${exception}`);
+
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                `Error while initializing new db for account ${accountId} ${databaseName} ${errMsg}.`,
+                { data: { iGroup, fsxLogVolumeName, fsxDataVolumeName } }
+            );
+        }
+        return parsedDBInitializationResponse;
+    } catch (err: any) {
+        logger.error(err);
+        errMsg = err?.message;
+        status = JOBSTATUS.FAILED;
+        if (!err.data) {
+            err.data = { iGroup, fsxLogVolumeName, fsxDataVolumeName };
+        }
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while initializing new db for account ${accountId} ${databaseName} ${err?.message}.`,
+            { data: err.data }
+        );
+    } finally {
+        // child job failed
+        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status,
+            endTime: new Date().valueOf(),
+            ...(errMsg && { error: errMsg })
+        });
+    }
+}
+
+async function cleanUpDatabaseDeployment(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    fileSystemId: string | null,
+    sqlVMName: string | undefined,
+    dataVolumeName: string,
+    logVolumeName: string,
+    iGroup: string,
+    activeNodeInstanceId: string,
+    sqlServerName: string | null,
+    parentJobId: string
+) {
+    logger.info('Cleaning up the database deployment', {
+        accountId,
+        credentialsId,
+        region,
+        fileSystemId,
+        sqlVMName,
+        dataVolumeName,
+        logVolumeName,
+        iGroup,
+        activeNodeInstanceId,
+        sqlServerName,
+        parentJobId
+    });
+
+    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.CREATE_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: sqlServerName as string,
+        name: 'CLean up Database',
+        parentJobId,
+        description: 'Cleaning up database deployment is in progress',
+        startTime: new Date().valueOf()
+    });
+
+    let status;
+    let errMsg;
+    try {
+        let cleaupCommand;
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            cleaupCommand = [
+                `${CLEANUPSCRIPT} -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataVolumeName wlmdb_sqldata_1708948249  -FSxLogVolumeName wlmdb_sqllog_1708948249 -IGROUP wlmdb_sqligroup_1708791218786`
+            ];
+        } else {
+            cleaupCommand = [
+                `${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup}`
+            ];
+        }
+
+        const cleanUpResponse = await callSsmExecution(
+            credentialsId,
+            region,
+            cleaupCommand,
+            activeNodeInstanceId,
+            accountId,
+            false
+        );
+
+        const parsedCleanUpResponse = cleanUpResponse ? sqlResponseParsing(cleanUpResponse) : {};
+        status = parsedCleanUpResponse?.Status === COMPLETE ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED;
+        errMsg = parsedCleanUpResponse.Message;
+
+        return parsedCleanUpResponse;
+    } catch (err: any) {
+        logger.error('Error while cleaning up database', err);
+        errMsg = err?.message;
+        status = JOBSTATUS.FAILED;
+    } finally {
+        // child job failed
+        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status,
+            endTime: new Date().valueOf(),
+            ...(errMsg && { error: errMsg })
+        });
+    }
+}
+
+async function validateTheParams() {
+    logger.info('validating the params for db user creation');
+    // TODO: yet to implement
+}
+
+async function getManagedResources(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    pageSize?: number,
+    clientNextToken?: string
+): Promise<ManageResourceResponseType> {
+    logger.info('Fetching managed resources for account', {
+        accountId,
+        credentialsId,
+        region,
+        pageSize,
+        clientNextToken
+    });
+
+    const { items, nextToken, count } = await getResources(
+        accountId,
+        undefined,
+        credentialsId,
+        region,
+        RESOURCESTYPE.MSSQL,
+        pageSize,
+        clientNextToken
+    );
+
+    return {
+        items: items.map(({ resource_id: resourceId, metadata }) => ({
+            resourceId,
+            instances: compact([
+                (metadata as unknown as Metadata)?.node1InstanceId,
+                (metadata as unknown as Metadata)?.node2InstanceId
+            ])
+        })),
+        count,
+        nextToken
+    };
+}
+
+export {
+    getDatabaseHostsSummary,
+    getDatabaseHostSummary,
+    getDatabases,
+    deployDatabase,
+    getDriveInfo,
+    createDatabase,
+    newDBInitialization,
+    configureLuns,
+    cleanUpDatabaseDeployment,
+    getManagedResources
+};

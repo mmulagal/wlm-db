@@ -427,9 +427,10 @@ const JobMonitoringTable = () => {
     };
 
     useEffect(() => {
+        // Even if jobsList is changed than also collapse subjobs
         collapseAllRows(tableProps?.updateRowState, tableProps?.rowsState);
         tableProps?.pagination?.gotoPage(0);
-    }, [timeInterval]);
+    }, [timeInterval, jobsList]);
 
     const downloadJobMonitoring = () => {
         dispatch(setDownloadJobsLoading(true));

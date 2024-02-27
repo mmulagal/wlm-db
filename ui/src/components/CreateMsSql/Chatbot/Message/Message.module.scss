@@ -16,11 +16,11 @@
     }
 
     .user-icon {
-        background-color: #ddf1fd;
+        background-color: var(--table-header-background);
     }
 
     .bot-icon {
-        background-color: white;
+        background-color: var(--white);
     }
 
     .message-text {
@@ -33,15 +33,15 @@
         padding: 10px 20px 10px 20px;
         white-space: pre-line;
         text-align: justify;
-        color: var(--grey-55);
+        color: var(--text-primary);
     }
 
     .bot-text {
-        background-color: white;
+        background-color: var(--content-background);
     }
 
     .user-text {
-        background-color: #ddf1fd;
+        background-color: var(--table-header-background);
     }
 
     .msg-group-container {

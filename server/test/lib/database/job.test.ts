@@ -3,6 +3,7 @@ import moment from 'moment';
 import {
     countParentJobs,
     createJobs,
+    createJob,
     deleteJobs,
     deleteJobsOfAccount,
     deleteOlderJobs,
@@ -114,6 +115,22 @@ describe('Create jobs', () => {
         ]);
 
         expect(response.count).toEqual(0);
+    });
+
+    it('should create a job', async () => {
+        const response = await createJob(ACCOUNT_ID, {
+            account_id: ACCOUNT_ID,
+            credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
+            name: 'test-job-1',
+            description: 'test-job-description',
+            resource_name: 'test-resource',
+            initiator: 'test-user',
+            start_time: new Date(),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.DEPLOYMENT
+        });
+        expect(response).toBeDefined();
     });
 });
 

@@ -8,12 +8,14 @@
       {
         "driveLetter": "L",
         "availableSize": 61426892800,
-        "isNetappDrive": true
+        "isNetappDrive": true,
+        "isDriveClustered": false
       },
       {
         "driveLetter": "Q",
         "availableSize": 10653175808,
-        "isNetappDrive": true
+        "isNetappDrive": true,
+        "isDriveClustered": true
       },
       {
         "driveLetter": "S",

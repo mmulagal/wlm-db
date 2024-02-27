@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { WLF_TABS } from '../../utils/consts';
+import { initialColStateManagedHosts } from '../../utils/utilityFunctions';
 
 const initialInventoryState: any = {
     selectedInventoryTab: WLF_TABS.MANAGED_HOSTS,
@@ -8,13 +9,28 @@ const initialInventoryState: any = {
     detectManagePassword: '',
     detectOntapUsername: '',
     detectOntapPassword: '',
-    detectHostRadio: 'Yes, Manage host via workload factory'
+    detectHostRadio: 'Yes, Manage host via workload factory',
+    managedHostInitialColumns: initialColStateManagedHosts,
+    unManagedHostInitialColumns: initialColStateManagedHosts,
+    discoveredHosts: {
+        discoveredHostData: null,
+        discoverHostLoading: false,
+        discoverHostError: null
+    },
+    unManagedHosts: [],
+    unIdentifiableHosts: []
 };
 
 const inventorySlice = createSlice({
     name: 'inventory',
     initialState: initialInventoryState,
     reducers: {
+        setManagedHostColState: (state, action: PayloadAction<any>) => {
+            state.managedHostInitialColumns = action.payload;
+        },
+        setUnManagedHostColState: (state, action: PayloadAction<any>) => {
+            state.unManagedHostInitialColumns = action.payload;
+        },
         setSelectedInventoryTab: (state, action: PayloadAction<any>) => {
             state.selectedInventoryTab = action.payload;
         },
@@ -36,6 +52,15 @@ const inventorySlice = createSlice({
         },
         setRadioValueDetect: (state, action: PayloadAction<any>) => {
             state.detectHostRadio = action.payload;
+        },
+        setDiscoveredHosts: (state, action: PayloadAction<any>) => {
+            state.discoveredHosts = action.payload;
+        },
+        setUnManagedHosts: (state, action: PayloadAction<any>) => {
+            state.unManagedHosts = action.payload;
+        },
+        setUnIdentifiableHosts: (state, action: PayloadAction<any>) => {
+            state.unIdentifiableHosts = action.payload;
         }
     }
 });
@@ -47,7 +72,12 @@ export const {
     setDetectManagePassword,
     setDetectONTAPUserName,
     setDetectONTAPPassword,
-    setRadioValueDetect
+    setRadioValueDetect,
+    setManagedHostColState,
+    setUnManagedHostColState,
+    setDiscoveredHosts,
+    setUnManagedHosts,
+    setUnIdentifiableHosts
 } = inventorySlice.actions;
 
 export default inventorySlice;

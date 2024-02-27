@@ -1,21 +1,27 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { BILLING, PRICING } from '../../utils/consts';
+import { CredentialsIdParams } from './generic.types';
 
 const DatabaseHostObjectParams = Type.Object({
     accountId: Type.String({ minLength: 1 })
 });
 type DatabaseHostObjectParamsType = Static<typeof DatabaseHostObjectParams>;
 
-const DatabaseHostSummaryParams = Type.Object({
-    accountId: Type.String({ minLength: 1 }),
-    databaseHostId: Type.String({ minLength: 1 })
-});
+const DatabaseHostSummaryParams = Type.Composite([CredentialsIdParams, Type.Object({ databaseHostId: Type.String() })]);
 type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
+
+const CreateDatabaseParams = Type.Object({
+    accountId: Type.String({ minLength: 7 }),
+    databaseHostId: Type.String({ minLength: 10 }),
+    credentialsId: Type.String(),
+    region: Type.String()
+});
 
 // Query parameter to fetch protection, performance, storage and cost details
 const DatabaseHostQueryString = Type.Object({
     fields: Type.Optional(Type.String()),
-    nextToken: Type.Optional(Type.String())
+    nextToken: Type.Optional(Type.String()),
+    pageSize: Type.Optional(Type.Number())
 });
 
 const EC2InstanceDetailsResponse = Type.Object({
@@ -48,9 +54,10 @@ const TopologyResponse = Type.Object({
     fileSystemThroughputCapacity: Type.Optional(Type.Number()),
     vpcId: Type.Optional(Type.String()),
     vpcName: Type.Optional(Type.String()),
+    vpcCidr: Type.Optional(Type.String()),
     availabilityZones: Type.Optional(Type.Array(Type.String())),
     keyPairName: Type.Optional(Type.String()),
-    ec2Details: Type.Array(EC2InstanceDetailsResponse),
+    ec2Details: Type.Optional(Type.Array(EC2InstanceDetailsResponse)),
     activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse)
 });
 type TopologyResponseType = Static<typeof TopologyResponse>;
@@ -169,6 +176,28 @@ const DatabasesListResponse = Type.Object({
 });
 type DatabasesListResponseType = Static<typeof DatabasesListResponse>;
 
+// Cloud formation template creation Request and Response
+
+const FileConfig = Type.Object({
+    fileName: Type.String(),
+    volumeSize: Type.Number(),
+    drive: Type.String(),
+    isExisting: Type.Boolean()
+});
+
+const CreateDatabseRequestBody = Type.Object({
+    databaseName: Type.String(),
+    dataFileConfig: FileConfig,
+    logFileConfig: FileConfig
+});
+
+const DatabasesCreateResponse = Type.Object({
+    jobId: Type.String()
+});
+
+type DatabaseCreateResponseType = Static<typeof DatabasesCreateResponse>;
+type FileConfigType = Static<typeof FileConfig>;
+
 const DriveInfoResponseBody = Type.Object({
     existingDriveInfo: Type.Array(
         Type.Object({
@@ -184,19 +213,18 @@ const DriveInfoResponseBody = Type.Object({
 });
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
 
-const DatabaseHostsParamsWithRegion = Type.Object({
-    accountId: Type.String(),
-    credentialsId: Type.String(),
-    region: Type.String()
+const ManageResourceResponse = Type.Object({
+    count: Type.Number(),
+    items: Type.Array(
+        Type.Object({
+            instances: Type.Array(Type.String()),
+            resourceId: Type.String()
+        })
+    ),
+    nextToken: Type.Optional(Type.String())
 });
 
-const DatabaseHostSummaryParamsWithRegion = Type.Object({
-    accountId: Type.String({ minLength: 1 }),
-    databaseHostId: Type.String({ minLength: 1 }),
-    credentialsId: Type.String(),
-    region: Type.String()
-});
-type DatabaseHostSummaryParamsWithRegionType = Static<typeof DatabaseHostSummaryParamsWithRegion>;
+type ManageResourceResponseType = Static<typeof ManageResourceResponse>;
 
 export {
     DatabaseHostObjectParams,
@@ -233,9 +261,13 @@ export {
     DetailedPerformanceResponseType,
     RWPerformanceResponse,
     RWPerformanceResponseType,
+    CreateDatabseRequestBody,
+    DatabasesCreateResponse,
+    DatabaseCreateResponseType,
+    CreateDatabaseParams,
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
-    DatabaseHostsParamsWithRegion,
-    DatabaseHostSummaryParamsWithRegion,
-    DatabaseHostSummaryParamsWithRegionType
+    FileConfigType,
+    ManageResourceResponse,
+    ManageResourceResponseType
 };

@@ -13,19 +13,14 @@ import { useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
 import { addDatabaseHosts, selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
-import {
-    databaseTableSort,
-    formatFractionalNumber,
-    formatSizeOnePrecision,
-    initialColStateManagedHosts
-} from '../../../utils/utilityFunctions';
+import { databaseTableSort, formatFractionalNumber, formatSizeOnePrecision } from '../../../utils/utilityFunctions';
 import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import { setManagedHostColState, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
-import { setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
+import { addInitialDBCreateData, initialCreateNewUserState, setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
 
 const ManagedHosts = () => {
     const dispatch = useDispatch();
@@ -33,6 +28,7 @@ const ManagedHosts = () => {
 
     const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
+    const { managedHostInitialColumns } = useAppSelector(state => state.inventory);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
@@ -416,6 +412,7 @@ const ManagedHosts = () => {
                                     }
 
                                     if (menuId === 'createNewUserDatabase') {
+                                        dispatch(addInitialDBCreateData(initialCreateNewUserState));
                                         dispatch(updateResourceId(rowData.id));
                                         dispatch(setDBHostName(rowData?.name));
                                         navigate('../create-new-user');
@@ -433,9 +430,13 @@ const ManagedHosts = () => {
                 );
             }
         },
-        initialColumnState: initialColStateManagedHosts,
+        initialColumnState: managedHostInitialColumns,
         isLazyLoading: databaseHostsLoading
     });
+
+    useEffect(() => {
+        dispatch(setManagedHostColState(tableProps.columnsState));
+    }, [tableProps.columnsState]);
 
     useEffect(() => {
         if (resetPage) {

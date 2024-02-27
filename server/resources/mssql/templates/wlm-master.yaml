@@ -1,3 +1,4 @@
+#prettier-ignore
 ---
 AWSTemplateFormatVersion: "2010-09-09"
 Description: This template deploys Windows SQL Server in the chosen deployment model (failover cluster instances or a standalone instance). 
@@ -171,127 +172,129 @@ Parameters:
     Description: Automation execution unique ID.
     Type: String 
 
-  {{DeploymentMode}}
+  {{{DeploymentMode}}}
   
-  {{SQLDeploymentMode}}
+  {{{SQLDeploymentMode}}}
         
-  {{CfDeployRoleName}}
+  {{{CfDeployRoleName}}}
 
-  {{ADScenarioType}}
+  {{{ADScenarioType}}}
 
-  {{DNSIpAddresses}}
+  {{{DNSIpAddresses}}}
 
-  {{DomainAdminUser}}
+  {{{DomainAdminUser}}}
 
-  {{DomainAdminPassword}}
+  {{{DomainAdminPassword}}}
 
-  {{DomainDNSName}}
+  {{{DomainDNSName}}}
 
-  {{DomainMemberSGID}}
+  {{{DomainMemberSGID}}}
 
-  {{KeyPairName}}
+  {{{KeyPairName}}}
 
-  {{MSSQLMediaBucketName}}
+  {{{MSSQLMediaBucketName}}}
 
-  {{MSSQLMediaPathKey}}
+  {{{MSSQLMediaPathKey}}}
 
-  {{SQLAMIID}}
+  {{{SQLAMIID}}}
 
-  {{SQLServiceAccountName}}
+  {{{SQLServiceAccountName}}}
   
-  {{SQLServiceAccountPassword}}
+  {{{SQLServiceAccountPassword}}}
 
-  {{SQLigroupname}}
+  {{{SQLigroupname}}}
 
-  {{SqlServerName}}
+  {{{SqlServerName}}}
 
-  {{SqlFSxWSFCName}}
+  {{{SqlFSxWSFCName}}}
 
-  {{VPCCIDR}}
+  {{{VPCCIDR}}}
 
-  {{PrivateSubnet1ID}}
+  {{{PrivateSubnet1ID}}}
 
-  {{PrivateSubnet2ID}}
+  {{{PrivateSubnet2ID}}}
 
-  {{RouteTable1Id}}
+  {{{RouteTable1Id}}}
   
-  {{RouteTable2Id}}
+  {{{RouteTable2Id}}}
   
-  {{SQLSvmName}}
+  {{{SQLSvmName}}}
 
-  {{WorkloadInstanceType}}
+  {{{WorkloadInstanceType}}}
 
-  {{NodeNetBIOSNames}}
+  {{{NodeNetBIOSNames}}}
   
-  {{FSxStorageCapacity}}
+  {{{FSxStorageCapacity}}}
   
-  {{FSxDataVolumeSize}}
+  {{{FSxDataVolumeSize}}}
 
-  {{FSxDataVolumeName}}
+  {{{FSxDataVolumeName}}}
   
-  {{FSxLogVolumeName}}
+  {{{FSxLogVolumeName}}}
   
-  {{FSxLogVolumeSize}}
+  {{{FSxLogVolumeSize}}}
   
-  {{FSxTempDbVolumeName}}
+  {{{FSxTempDbVolumeName}}}
   
-  {{FSxTempDbVolumeSize}}
+  {{{FSxTempDbVolumeSize}}}
   
-  {{FSxQuorumVolumeName}}
+  {{{FSxQuorumVolumeName}}}
   
-  {{FSxQuorumVolumeSize}}
+  {{{FSxQuorumVolumeSize}}}
 
-  {{FSxDataLunSize}}
+  {{{FSxDataLunSize}}}
 
-  {{FSxAdminUsername}}
+  {{{FSxAdminUsername}}}
          
-  {{FSxAdminPassword}}
+  {{{FSxAdminPassword}}}
 
-  {{FSxSvmName}}
+  {{{FSxSvmName}}}
   
-  {{FSxFileSystemName}}
+  {{{FSxFileSystemName}}}
 
-  {{FSxFileSystemId}}
+  {{{FSxFileSystemId}}}
   
-  {{FSxDiskIops}}
+  {{{FSxDiskIops}}}
   
-  {{FSxVolumeThroughputCapacity}}
+  {{{FSxVolumeThroughputCapacity}}}
   
-  {{FileSystemEncryptionKeyId}}
+  {{{FileSystemEncryptionKeyId}}}
   
-  {{VPCID}}
+  {{{VPCID}}}
   
-  {{ONTAPSecurityGroupID}}
+  {{{ONTAPSecurityGroupID}}}
   
-  {{EnableCloudWatchLogFeature}}
+  {{{EnableCloudWatchLogFeature}}}
 
-  {{NotificationARN}}
+  {{{NotificationARN}}}
   
-  {{ValidationAmi}}
+  {{{ValidationAmi}}}
   
-  {{RoleCredentialsId}}
+  {{{RoleCredentialsId}}}
   
-  {{AccountId}}
+  {{{AccountId}}}
     
-  {{CloudProviderAccountId}}
+  {{{CloudProviderAccountId}}}
   
-  {{JwtToken}}
+  {{{JwtToken}}}
 
-  {{EncryptedFsxPassword}}
+  {{{EncryptedFsxPassword}}}
   
-  {{WlmdbAwsAccountId}}
+  {{{WlmdbAwsAccountId}}}
   
-  {{Metrics}}
+  {{{Metrics}}}
 
-  {{S3EndpointExists}}
+  {{{S3EndpointExists}}}
 
-  {{CloudformationEndpointExists}}
+  {{{CloudformationEndpointExists}}}
 
-  {{SsmEndpointExists}}
+  {{{SsmEndpointExists}}}
 
-  {{SqsEndpointExists}}
+  {{{SqsEndpointExists}}}
 
-  {{CloudwatchEndpointExists}}
+  {{{CloudwatchEndpointExists}}}
+
+  {{{CloudwatchLogsEndpointExists}}}
        
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -308,27 +311,28 @@ Conditions:
   IsFailoverCluster: !Not [Condition: IsStandalone]
   ShouldSendSaasNotification: !Not [!Equals [!Ref "RoleCredentialsId", ""]]
 Resources:
-  DomainAdminSecretName:
-    Type: AWS::SecretsManager::Secret
+  CredentialsSsmParameter:
+    Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub ${AWS::StackName}-domain
-      Description: Secret for Domain Account
-      SecretString: !Sub '{ "username": "${DomainAdminUser}", "password": "${DomainAdminPassword}" }'
+      Name: !Sub /netapp/wlmdb/${AWS::StackName}
+      Description: SSM Paramter for active directory, FSxN and SQL service account credentials
+      Type: String
+      Value: !Sub '{
+                        fsx: {
+                            username: "${FSxAdminUsername}",
+                            password: "${FSxAdminPassword}"
+                        },
+                        domain: {
+                            username: "${DomainAdminUser}",
+                            password: "${DomainAdminPassword}"
+                        },
+                        sql: [{
+                            username: "${SQLServiceAccountName}",
+                            password: "${SQLServiceAccountPassword}",
+                            sqlinstancename: "MSSQL"
+                        }]
+                    }'
 
-  FSxNSecret:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Name: !Sub ${AWS::StackName}-fsx
-      Description: Secret for FSxN filesystem
-      SecretString: !Sub '{ "username": "${FSxAdminUsername}", "password": "${FSxAdminPassword}" }'
-
-  SQLServiceAccountSecret:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Name: !Sub ${AWS::StackName}-sql
-      Description: Secret for SQL Service Account
-      SecretString: !Sub '{ "username": "${SQLServiceAccountName}", "password": "${SQLServiceAccountPassword}" }'
-  
   EC2IAMRole:
     Type: AWS::IAM::Role
     Properties:
@@ -346,12 +350,6 @@ Resources:
       Policies:
         - PolicyDocument:
             Statement:
-              - Sid: SecretManagerListStatement
-                Effect: Allow
-                Action:
-                  - secretsmanager:ListSecrets
-                  - secretsmanager:GetSecretValue
-                Resource: '*'
               - Sid: CloudWatchDeploymentStatement
                 Effect: Allow
                 Action:
@@ -406,11 +404,8 @@ Resources:
                   - ssm:GetDocument
                   - ssm:DescribeDocument
                   - ssm:GetManifest
-                  - ssm:GetParameter
-                  - ssm:GetParameters
                   - ssm:ListAssociations
                   - ssm:ListInstanceAssociations
-                  - ssm:GetParametersByPath
                   - ssm:GetCommandInvocation
                   - ec2messages:GetEndpoint
                   - ec2messages:GetMessages
@@ -461,6 +456,14 @@ Resources:
                   StringLike:
                     aws:ResourceTag/aws:cloudformation:stack-name:
                       - WLMDB*
+              - Sid: SSMGetPutParameter
+                Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                  - ssm:PutParameter
+                  - ssm:GetParametersByPath
+                Resource: 'arn:aws:ssm:*:*:parameter/netapp/wlmdb/*'
           PolicyName: !Join
             - ''
             - - !Ref 'AWS::StackName'
@@ -506,7 +509,7 @@ Resources:
     DependsOn:
       - TrackStackDeploymentWaitCondition
     Properties:
-      TemplateURL: {{VpcEndpointTemplate}}
+      TemplateURL: {{{VpcEndpointTemplate}}}
       Parameters:
         VPCId:
           Ref: VPCID
@@ -525,6 +528,8 @@ Resources:
           Ref: SqsEndpointExists
         CloudwatchEndpointExists:
           Ref: CloudwatchEndpointExists
+        CloudwatchLogsEndpointExists:
+          Ref: CloudwatchLogsEndpointExists
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -536,17 +541,15 @@ Resources:
           - ShouldSendSaasNotification
           - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - ''
-      {{Tags}}
+      {{{Tags}}}
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
     DependsOn:
       - VpcEndpointStack
       - EC2IAMRole
     Properties:
-      TemplateURL: {{ValidationTemplate}}
+      TemplateURL: {{{ValidationTemplate}}}
       Parameters:
-        DomainAdminSecretName:
-          Ref: DomainAdminSecretName
         DomainAdminUser:
           Ref: DomainAdminUser
         DomainDNSName:
@@ -578,8 +581,6 @@ Resources:
           - ExistingOntapFsx
           - Ref: FSxFileSystemId
           - 'fs-id'
-        FSxAdministratorPasswordSecret:
-          Ref: FSxNSecret
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -591,7 +592,7 @@ Resources:
           - ShouldSendSaasNotification
           - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - ''
-      {{Tags}}
+      {{{Tags}}}
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
     Condition: IsFailoverCluster
@@ -599,10 +600,8 @@ Resources:
       - VpcEndpointStack
       - EC2IAMRole
     Properties:
-      TemplateURL: {{ValidationTemplate}}
+      TemplateURL: {{{ValidationTemplate}}}
       Parameters:
-        DomainAdminSecretName:
-          Ref: DomainAdminSecretName
         DomainAdminUser:
           Ref: DomainAdminUser
         DomainDNSName:
@@ -634,8 +633,6 @@ Resources:
           - ExistingOntapFsx
           - Ref: FSxFileSystemId
           - 'fs-id'
-        FSxAdministratorPasswordSecret:
-          Ref: FSxNSecret
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -647,7 +644,7 @@ Resources:
           - ShouldSendSaasNotification
           - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - ''
-      {{Tags}}
+      {{{Tags}}}
   FCIWaitHandler: 
     Type: AWS::CloudFormation::WaitConditionHandle
     Condition: IsFailoverCluster
@@ -667,25 +664,17 @@ Resources:
       Handle: !If [IsFailoverCluster, !Ref FCIWaitHandler, !Ref SIWaitHandler]
       Timeout: '7200'
       Count: 0
-  FSxNSecret:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Name: !Sub ${AWS::StackName}-fsx
-      Description: Secret for FSxN filesystem
-      SecretString: !Sub '{ "username": "${FSxAdminUsername}", "password": "${FSxAdminPassword}" }'
   NewFSxStack:
     Type: AWS::CloudFormation::Stack
     Condition: NewOntapFsx
     DependsOn: WaitCondition
     Properties:
-      TemplateURL: {{ FSXNewTemplate }}
+      TemplateURL: {{{ FSXNewTemplate }}}
       Parameters:
         DeploymentMode:
           Ref: DeploymentMode
         FSxFileSystemName:
           Ref: FSxFileSystemName
-        FSxAdministratorPasswordSecret:
-          Ref: FSxNSecret
         FSxVolumeThroughputCapacity:
           Ref: FSxVolumeThroughputCapacity
         FSxStorageCapacity:
@@ -706,6 +695,8 @@ Resources:
           Ref: FSxQuorumVolumeName
         FSxClusterQuorumVolumeSize:
           Ref: FSxQuorumVolumeSize
+        FSxAdministratorPassword:
+          Ref: FSxAdminPassword
         FSxSvmName:
           Ref: SQLSvmName
         VPCID:
@@ -724,6 +715,8 @@ Resources:
           Ref: FileSystemEncryptionKeyId
         FSxDiskIops:
           Ref: FSxDiskIops 
+        ParentStackName:
+          Ref: AWS::StackName
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -735,13 +728,13 @@ Resources:
           - ShouldSendSaasNotification
           - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - ''
-      {{Tags}}
+      {{{Tags}}}
   ExistingFSxStack:
     Type: AWS::CloudFormation::Stack
     Condition: ExistingOntapFsx
     DependsOn: WaitCondition
     Properties:
-      TemplateURL: {{FSXExistingTemplate}}
+      TemplateURL: {{{FSXExistingTemplate}}}
       Parameters:
         DeploymentMode:
           Ref: DeploymentMode
@@ -772,13 +765,13 @@ Resources:
         - ShouldSendSaasNotification
         - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
         - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-      {{Tags}}
+      {{{Tags}}}
   SQLServerStack:
     Type: AWS::CloudFormation::Stack
     Condition: IsFailoverCluster
     DependsOn: WaitCondition
     Properties:
-      TemplateURL: {{SQLTemplate}}
+      TemplateURL: {{{SQLTemplate}}}
       Parameters:
         UniqueID:
           Ref: UniqueID
@@ -790,8 +783,6 @@ Resources:
             - Fn::Split:
                 - ","
                 - Ref: DNSIpAddresses
-        DomainAdminSecretName:
-          Ref: DomainAdminSecretName
         DomainAdminUser:
           Ref: DomainAdminUser
         DomainDNSName:
@@ -822,8 +813,6 @@ Resources:
           Ref: SqlServerName
         SQLAdminAccounts:
           Ref: SQLServiceAccountName
-        SQLServiceAccountSecret:
-          Ref: SQLServiceAccountSecret
         VPCID:
           Ref: VPCID
         VPCCIDR:
@@ -847,8 +836,6 @@ Resources:
             - NewOntapFsx
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
-        FsxAdminPassword:
-          Ref: FSxNSecret
         SQLSvmName:
           Ref: SQLSvmName
         FSxDataVolumeName:
@@ -884,13 +871,13 @@ Resources:
           - ShouldSendSaasNotification
           - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - ''
-      {{Tags}}
+      {{{Tags}}}
   SQLStandaloneStack:
     Type: AWS::CloudFormation::Stack
     Condition: IsStandalone
     DependsOn: WaitCondition
     Properties:
-      TemplateURL: {{SQLStandaloneTemplate}}
+      TemplateURL: {{{SQLStandaloneTemplate}}}
       Parameters:
         UniqueID:
           Ref: UniqueID
@@ -902,8 +889,6 @@ Resources:
             - Fn::Split:
                 - ","
                 - Ref: DNSIpAddresses
-        DomainAdminSecretName:
-          Ref: DomainAdminSecretName
         DomainAdminUser:
           Ref: DomainAdminUser
         DomainDNSName:
@@ -926,8 +911,6 @@ Resources:
           Ref: SQLAMIID
         SQLAdminAccounts:
           Ref: SQLServiceAccountName
-        SQLServiceAccountSecret:
-          Ref: SQLServiceAccountSecret
         VPCID:
           Ref: VPCID
         VPCCIDR:
@@ -945,8 +928,6 @@ Resources:
             - NewOntapFsx
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
-        FsxAdminPassword:
-          Ref: FSxNSecret
         SQLSvmName:
           Ref: SQLSvmName
         FSxDataVolumeName:
@@ -982,7 +963,7 @@ Resources:
           - ShouldSendSaasNotification
           - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - ''ws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-      {{Tags}}
+      {{{Tags}}}
   PostStackDeployment:
     Type: Custom::MyCustomResource
     Condition: ShouldSendSaasNotification
@@ -994,7 +975,6 @@ Resources:
       JWToken: !Ref JwtToken
       Region: !Ref 'AWS::Region' 
       StackName: !Ref 'AWS::StackName'
-      FSxNSecret: !Sub ${AWS::StackName}-fsx
       DatabaseType: 'Microsoft SQL server'
       FSxSvmId:
           !If

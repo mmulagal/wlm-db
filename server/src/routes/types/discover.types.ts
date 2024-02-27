@@ -1,6 +1,13 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
+import { RESOURCESTYPE } from '../../utils/consts';
+import { CredentialsIdParams } from './generic.types';
 
 const DiscoverMsSqlQuery = Type.Object({
+    ec2Count: Type.Number({
+        description: 'Number of EC2 instances to discover per call of the API.',
+        minimum: 5,
+        default: 50
+    }),
     nextToken: Type.Optional(
         Type.String({
             description:
@@ -30,13 +37,29 @@ const SqlServerInstanceInfo = Type.Object({
     sqlServerVersion: Type.String({ description: 'MS SQL Server version' }),
     windowsAuthentication: Type.Boolean({
         description: 'Is Windows Authentication used for SQL Server?'
-    })
+    }),
+    storage: Type.Optional(
+        Type.Array(
+            Type.String({
+                description: 'Underlying storage types of the SQL Server instance',
+                enum: ['EBS', 'FSXN']
+            })
+        )
+    ),
+    deploymentTypes: Type.Optional(
+        Type.Array(
+            Type.String({
+                description: 'Deployment type of FSx for NetApp'
+            })
+        )
+    )
 });
 
 const DiscoverResponseInfo = Type.Object({
     ec2InstanceId: Type.String({ description: 'AWS EC2 instance ID' }),
     ec2InstanceName: Type.Optional(Type.String({ description: 'EC2 tag with key "Name".' })),
     ssmState: Type.String({ description: 'SSM connection status', enum: ['connected', 'notconnected'] }),
+    vpcId: Type.Optional(Type.String({ description: 'VPC ID' })),
     sqlServerInstances: Type.Optional(Type.Array(SqlServerInstanceInfo))
 });
 
@@ -53,4 +76,32 @@ const DiscoverMsSqlResponseBody = Type.Object({
 type SqlServerInstanceInfoType = Static<typeof SqlServerInstanceInfo>;
 type DiscoverResponseInfoType = Static<typeof DiscoverResponseInfo>;
 
-export { DiscoverMsSqlQuery, DiscoverMsSqlResponseBody, SqlServerInstanceInfoType, DiscoverResponseInfoType };
+const DiscoverCredentials = Type.Object({
+    resourceId: Type.String({ minLength: 1, description: 'SQL server instance id or FSxN file-system id' }),
+    resourceType: Type.String({ enum: [RESOURCESTYPE.FSX, RESOURCESTYPE.MSSQL] }),
+    username: Type.String({ minLength: 1 }),
+    password: Type.String({ minLength: 1 })
+});
+
+const DiscoverCredentialsRequestBody = Type.Object({
+    credentials: Type.Array(DiscoverCredentials)
+});
+
+type DiscoverCredentialsType = Static<typeof DiscoverCredentials>;
+
+const DiscoverInstanceParams = Type.Composite([
+    CredentialsIdParams,
+    Type.Object({
+        instanceId: Type.String()
+    })
+]);
+
+export {
+    DiscoverMsSqlQuery,
+    DiscoverMsSqlResponseBody,
+    SqlServerInstanceInfoType,
+    DiscoverResponseInfoType,
+    DiscoverCredentialsRequestBody,
+    DiscoverInstanceParams,
+    DiscoverCredentialsType
+};

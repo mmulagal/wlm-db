@@ -641,13 +641,15 @@ const TEMPLATE_CLOUDFORMATION_ENDPOINT = 'CloudformationEndpointExists';
 const TEMPLATE_SSM_ENDPOINT = 'SsmEndpointExists';
 const TEMPLATE_SQS_ENDPOINT = 'SqsEndpointExists';
 const TEMPLATE_CLOUDWATCH_ENDPOINT = 'CloudwatchEndpointExists';
+const TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT = 'CloudwatchLogsEndpointExists';
 
 const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
     s3: TEMPLATE_S3_ENDPOINT,
     cloudformation: TEMPLATE_CLOUDFORMATION_ENDPOINT,
     ssm: TEMPLATE_SSM_ENDPOINT,
     sqs: TEMPLATE_SQS_ENDPOINT,
-    monitoring: TEMPLATE_CLOUDWATCH_ENDPOINT
+    monitoring: TEMPLATE_CLOUDWATCH_ENDPOINT,
+    logs: TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT
 };
 
 const SQL_RESOURCE_ASSETS = [
@@ -731,6 +733,10 @@ const SQL_RESOURCE_ASSETS = [
     //     name: 'ScriptSQLONTAPSignature',
     //     url: 'scripts/sqlontap.zip.sig'
     // },
+    {
+        name: 'ScriptDBCREATE',
+        url: `${WLMDB}/scripts/dbcreate.zip`
+    },
     {
         name: 'ScriptVpcCheck',
         url: `${WLMDB}/validation/Validate-VPCConnectivity.ps1`
@@ -1042,11 +1048,27 @@ const subJobDescriptions: SubJobDescriptions = {
         'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
     'ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
     'ValidationNode2WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
-        'Signaling wait condition to resume next steps'
+        'Signaling wait condition to resume next steps',
+    VpcEndpointStack: 'Creating VPC endpoints for S3 CloudFormation, SQS, SSM, CloudWatch services',
+    'HttpsSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating security group to allow HTTPs access',
+    'S3Endpoint(AWS::EC2::VPCEndpoint)': 'Creating S3 gateway endpoint',
+    'CloudformationEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudFormation endpoint',
+    'CloudwatchEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch endpoint',
+    'Ec2MessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2Messages endpoint',
+    'SqsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SQS endpoint',
+    'SsmEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSM endpoint',
+    'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint'
 };
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
+const RESOURCE_SOURCE = {
+    DEPLOY: 'deployment',
+    DISCOVER: 'discovery'
+};
 
 const ENDPOINTS_DEPLOYMENT = ['s3', 'cloudformation', 'sqs', 'ssm', 'ssmmessages', 'ec2messages', 'monitoring'];
+
+const SSM_PARAMETERS_BASE_PATH = '/netapp/wlmdb';
+const COMPLETE = 'Complete';
 
 export {
     WLMDB,
@@ -1272,6 +1294,7 @@ export {
     subJobDescriptions,
     CF_STACK_RESOURCE_TYPE,
     AWS_PRICING_TYPE,
+    RESOURCE_SOURCE,
     AWS_FSX_TYPE,
     ENDPOINTS_DEPLOYMENT,
     TEMPLATE_S3_ENDPOINT,
@@ -1282,5 +1305,7 @@ export {
     MAP_SERVICE_TEMPLATE_PARAMETER,
     ARTIFACT_BUCKET_NAME,
     SIGNED_TEMPLATES_BUCKET_NAME,
-    TEMPLATE_BUCKET_REGION
+    TEMPLATE_BUCKET_REGION,
+    SSM_PARAMETERS_BASE_PATH,
+    COMPLETE
 };

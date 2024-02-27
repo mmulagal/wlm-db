@@ -8,20 +8,17 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { STATUS_CONST } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 
-import {
-    databaseTableSort,
-    formatFractionalNumber,
-    formatSizeOnePrecision,
-    initialColStateManagedHosts
-} from '../../../utils/utilityFunctions';
+import { databaseTableSort, formatFractionalNumber, formatSizeOnePrecision } from '../../../utils/utilityFunctions';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
+import { setUnManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
 
 const UnmanagedHosts = () => {
     const dispatch = useDispatch();
 
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
+    const unManagedHostList = useAppSelector(state => state.inventory.unManagedHosts);
+    const { unManagedHostInitialColumns } = useAppSelector(state => state.inventory);
 
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
@@ -323,7 +320,7 @@ const UnmanagedHosts = () => {
     const tableProps = useTable({
         isSorting: false,
         columns: DatabasesColDefs,
-        rows: databaseTableSort(databaseHostsList) || [],
+        rows: databaseTableSort(unManagedHostList) || [],
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
@@ -345,13 +342,17 @@ const UnmanagedHosts = () => {
                 );
             }
         },
-        initialColumnState: initialColStateManagedHosts,
+        initialColumnState: unManagedHostInitialColumns,
         isLazyLoading: databaseHostsLoading
     });
 
     useEffect(() => {
+        dispatch(setUnManagedHostColState(tableProps.columnsState));
+    }, [tableProps.columnsState]);
+
+    useEffect(() => {
         if (resetPage) {
-            if ((databaseHostsList || []).length % pageSize === 1) {
+            if ((unManagedHostList || []).length % pageSize === 1) {
                 tableProps.pagination?.gotoPage(0);
             }
         }

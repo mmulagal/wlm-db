@@ -5,7 +5,7 @@ param(
     [string]$DomainDnsName,
 
     [Parameter(Mandatory=$true)]
-    [string]$AdminSecret,
+    [string]$Parentstackname,
 
     [Parameter(Mandatory=$true)]
     [string]$FileSystemId,
@@ -22,10 +22,11 @@ $ErrorActionPreference = "Stop"
 $DscCertThumbprint = (get-childitem -path cert:\LocalMachine\My | where { $_.subject -eq "CN=AWSLWDscEncryptCert" }).Thumbprint
 # Getting Password from Secrets Manager for AD Admin User
 $DomainNetBIOSName = $env:USERDOMAIN
-$AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret).SecretString
+$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+$AdminPassword = $SsmParameter.domain.password
 $ClusterAdminUser = $DomainNetBIOSName + '\' + $DomainAdminUser
 # Creating Credential Object for Administrator
-$Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminUser.Password -AsPlainText -Force)))
+$Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminPassword -AsPlainText -Force)))
 $fsList = Get-FSXFileSystem -FileSystemId $FileSystemId
 if ($fsList.DNSName) {
     $ShareName = "\\" + $fsList.DNSName + "\SqlWitnessShare"

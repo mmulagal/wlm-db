@@ -1,11 +1,16 @@
 import { RouteTags } from '../../utils/consts';
-import { DiscoverMsSqlResponseBody, DiscoverMsSqlQuery } from '../types/discover.types';
-import { GenericHeaders, ManagedHostParams } from '../types/generic.types';
+import {
+    DiscoverMsSqlResponseBody,
+    DiscoverMsSqlQuery,
+    DiscoverInstanceParams,
+    DiscoverCredentialsRequestBody
+} from '../types/discover.types';
+import { GenericHeaders, CredentialsIdParams } from '../types/generic.types';
 
 const DiscoverMsSqlSchema = {
     Headers: GenericHeaders,
     tags: [RouteTags.DISCOVER],
-    params: ManagedHostParams,
+    params: CredentialsIdParams,
     querystring: DiscoverMsSqlQuery,
     summary: 'Discover EC2 instances running on Microsoft Windows platform and hosting Microsoft SQL Server.',
     description: `Discover AWS EC2 instances hosting Microsoft SQL Server.
@@ -24,5 +29,16 @@ const DiscoverMsSqlSchema = {
     }
 };
 
-// eslint-disable-next-line import/prefer-default-export
-export { DiscoverMsSqlSchema };
+const DiscoverCredentialsSchema = {
+    Headers: GenericHeaders,
+    tags: [RouteTags.DISCOVER],
+    params: DiscoverInstanceParams,
+    body: DiscoverCredentialsRequestBody,
+    summary: 'Discover credentials',
+    description: 'Store the credentials for a given discovered resource in SSM Parameter Store',
+    response: {
+        201: {}
+    }
+};
+
+export { DiscoverMsSqlSchema, DiscoverCredentialsSchema };

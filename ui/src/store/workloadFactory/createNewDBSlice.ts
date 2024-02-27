@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-const initialCreateNewUserState: any = {
+export const initialCreateNewUserState: any = {
     selectedNewUserConfig: 'Quick create',
     driveInfoList: null,
     driveInfoListLoading: false,
@@ -15,13 +15,19 @@ const initialCreateNewUserState: any = {
     driveLetterLogFile: '',
     dbHostName: '',
     isExistingDataDrive: false,
-    isExistingLogDrive: false
+    isExistingLogDrive: false,
+    isDataSizeValid: true,
+    isLogSizeValid: true,
+    selectedCollation: ''
 };
 
 const createNewUserSlice = createSlice({
     name: 'createNewUser',
     initialState: initialCreateNewUserState,
     reducers: {
+        setSelectedCollation: (state, action: PayloadAction<any>) => {
+            state.selectedCollation = action.payload;
+        },
         setSelectedNewUserConfig: (state, action: PayloadAction<any>) => {
             state.selectedNewUserConfig = action.payload;
         },
@@ -66,6 +72,15 @@ const createNewUserSlice = createSlice({
         },
         setIsExistingLogDrive: (state, action: PayloadAction<any>) => {
             state.isExistingLogDrive = action.payload;
+        },
+        setIsDataSizeValid: (state, action: PayloadAction<any>) => {
+            state.isDataSizeValid = action.payload;
+        },
+        setIsLogSizeValid: (state, action: PayloadAction<any>) => {
+            state.isLogSizeValid = action.payload;
+        },
+        addInitialDBCreateData: (state, action: PayloadAction<any>) => {
+            return { ...state, ...action.payload };
         }
     }
 });
@@ -85,7 +100,11 @@ export const {
     setDriveLetterForLogFile,
     setDBHostName,
     setIsExistingDataDrive,
-    setIsExistingLogDrive
+    setIsExistingLogDrive,
+    setIsDataSizeValid,
+    setIsLogSizeValid,
+    setSelectedCollation,
+    addInitialDBCreateData
 } = createNewUserSlice.actions;
 
 export default createNewUserSlice;

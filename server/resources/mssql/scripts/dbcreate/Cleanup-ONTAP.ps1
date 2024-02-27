@@ -1,34 +1,31 @@
- #Requires -Version 7.0
-#Requires -Module AWS.Tools.FSX,AWS.Tools.secretsmanager
+ #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
     [string]$FileSystemId,
 
     [Parameter(Mandatory=$true)]
-    [string]$FSxCredStore,
-
-    [Parameter(Mandatory=$true)]
     [string]$SQLVMName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$FSxDataVolumeName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$FSxLogVolumeName,
 
     [Parameter(Mandatory=$true)]
-    [string]$IGROUP
+    [string]$IGROUP    
 
 )
-Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Append
+$silenttranscript = (Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Append)
 
 $ErrorActionPreference = "Stop"
 
-$userfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="String"}
-$pwdfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="SecureString"}
-$username = (Get-SSMParametersByPath -Path $FSxCredStore -WithDecryption $true -Recursive $true -ParameterFilter $userfilter).Value
-$password = (Get-SSMParametersByPath -Path $FSxCredStore -WithDecryption $true -Recursive $true -ParameterFilter $pwdfilter).Value
+$FSxCredStore  = "/netapp/wlmdb/$FileSystemId"
+$credobject =  (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
+
+$username = $credobject.fsx.username
+$password = $credobject.fsx.password
 
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
@@ -42,14 +39,14 @@ $base64 = [System.Convert]::ToBase64String($bytes)
 #get management IP
 $nodeiqn = (Get-InitiatorPort).NodeAddress
 
+$result = [ordered]@{}
 
 function returncert{
     param(
     [Parameter(Mandatory=$true)]
     [string]$region
     )
-    $certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
-    Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
+    #Reuse cert file created by LUN configure script
     $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
     return Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
 
@@ -64,7 +61,9 @@ function callGetOrDeleteApi{
     [Parameter(Mandatory=$true)]
     [string]$creds,
     [Parameter(Mandatory=$true)]
-    [string]$method
+    [string]$method,
+    [Parameter(Mandatory=$true)]
+    [hashtable]$result    
     )
     try{
         $restcert = returncert -region $region
@@ -76,15 +75,36 @@ function callGetOrDeleteApi{
         }
         Invoke-RestMethod @Params -Certificate $restcert
     }catch{
-        Write-Error "{Message:Failed to run the API command,Exception: $_"
+    $result.Add('Status','Failed')
+    $result.Add('Message','Failed to run the REST API command')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson 
+    exit 1
     }
 }
 
 
 $LOGLUN = 'sqllog'
 $DATALUN = 'sqldata'
+if ($FSxDataVolumeName -And $FsxLogVolumeName){
 $vollist = @($FSxDataVolumeName,$FSxLogVolumeName)
 $pathlist =@("/vol/$FSxDataVolumeName/$DATALUN","/vol/$FSxLogVolumeName/$LOGLUN")
+}  elseif($FSxDataVolumeName) {
+    $vollist = @($FSxDataVolumeName)
+    $pathlist =@("/vol/$FSxDataVolumeName/$DATALUN")
+}
+elseif($FSxLogVolumeName){
+    $vollist = @($FSxLogVolumeName)
+    $pathlist =@("/vol/$FSxLogVolumeName/$LOGLUN")
+} else {
+    $result.Add('Status','Failed')
+    $result.Add('Message','No volumes passed for deletion')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson 
+    exit 1
+}
 
 # delete created lun mapping 
 $lunmapsUriDynamicPart = 'private/cli/lun/mapping'
@@ -92,12 +112,11 @@ foreach ($lunpath in $pathlist) {
 $URI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($SQLVMName)&igroup=$($IGROUP)&path=$($lunpath)"
 $restcert = returncert -region $region
 #check if records exist before deleting
-$lunmappingdata = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records
+$lunmappingdata = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET" -result $result).records
 
 foreach ($perlunmap in $lunmappingdata) {
     $DeleteURI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($perlunmap.vserver)&path=$($perlunmap.path)&igroup=$($perlunmap.igroup)"
-    callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
-    Write-Output ("Deleted LUN mapping for {0}" -f $perlunmap.path)
+    $deletelun = (callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE" -result $result)
 }
 
 }
@@ -106,17 +125,21 @@ foreach ($perlunmap in $lunmappingdata) {
 try{
 $lunUriDynamicPart='private/cli/lun'
 $URI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($SQLVMName)"
-$lunlist = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records
+$lunlist = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET" -result $result).records
 #check if lun exists before deleting
 foreach ($perlun in $lunlist) {
     if($pathlist -contains $perlun.path) {
         $DeleteURI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($perlun.vserver)&path=$($perlun.path)"
-        callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
-        Write-Output ("Deleted LUN {0}" -f $perlun.path)
+        $deletelun = (callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE" -result $result)
     }
 }
 }catch{
-        Write-Error "{Message:Failed to cleanup LUNs,Exception: $_}"
+    $result.Add('Status','Failed')
+    $result.Add('Message','Failed to delete LUNs')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson 
+    exit 1
     }
 
 
@@ -125,15 +148,22 @@ try{
 $volUriDynamicPart = 'storage/volumes'
 foreach ($volume in $vollist) {
 $URI = "https://$($MgmtDNS)/api/$($volUriDynamicPart)?name=$($volume)"
-$voluri = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records.uuid
+$voluri = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET" -result $result).records.uuid
 if ($voluri) {
     $DELVOLURI = "https://$($MgmtDNS)/api/$($volUriDynamicPart)/$($voluri)"
-    callGetOrDeleteApi -uri $DELVOLURI -region $region -creds $base64 -method "DELETE"
-    Write-Output "Deleted volume $volume"
+    $deletevol = (callGetOrDeleteApi -uri $DELVOLURI -region $region -creds $base64 -method "DELETE" -result $result)
 }
-else {Write-Output "Volume $volume not present"}
 }
 }catch{
-        Write-Error "{Message:Failed to cleanup volumes,Exception: $_}"
+    $result.Add('Status','Failed')
+    $result.Add('Message','Failed to delete volumes')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson 
+    exit 1
     }
+    $result.Add('Status','Complete')
+    $result.Add('Message','Cleaning up resources complete')
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson 
  

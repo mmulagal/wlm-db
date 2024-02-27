@@ -12,13 +12,20 @@ import { useGetDriveInfoQuery } from '../../../utils/apiService';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { setDriveInfoList, setDriveInfoListLoading } from '../../../store/workloadFactory/createNewDBSlice';
+import Collation from './DatabaseInformation/Collation/Collation';
 
 const ContentComponent = () => {
     const dispatch = useDispatch();
     const dbHostName = useAppSelector(state => state.createNewUser.dbHostName);
     const resourceId = useAppSelector(state => state.auth.resourceId);
+    const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
+    const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
 
-    const { data: driveInfoList, isFetching: driveInfoListLoading } = useGetDriveInfoQuery({ id: resourceId });
+    const { data: driveInfoList, isFetching: driveInfoListLoading } = useGetDriveInfoQuery({
+        credentialId: selectedCredId?.data?.credentialsId,
+        region: selectedRegionCode?.data?.regionCode,
+        id: resourceId
+    });
 
     useEffect(() => {
         dispatch(setDriveInfoList(driveInfoList));
@@ -40,6 +47,7 @@ const ContentComponent = () => {
                         {GENERAL.DATABASE_INFORMATION}
                     </DsTypography>
                     <DatabaseName />
+                    {/* <Collation /> */}
                     <DsTypography variant="Semibold_16" className={styles.accordionContainer}>
                         {GENERAL.FILE_SETTINGS}
                     </DsTypography>
