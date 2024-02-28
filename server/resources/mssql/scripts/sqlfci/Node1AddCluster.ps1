@@ -14,7 +14,7 @@ param(
     [string]$DomainAdminUser
 
 )
-#Requires -Modules xFailOverCluster,PSDscResources,xActiveDirectory
+#Requires -Modules xFailOverCluster,PSDscResources
 try {
 Start-Transcript -Path C:\cfn\log\node1addcluster.ps1.txt -Append
 $ErrorActionPreference = "Stop"
@@ -53,11 +53,9 @@ Configuration Node1AddCluster {
 
     Import-Module -Name PSDscResources
     Import-Module -Name xFailOverCluster
-    Import-Module -Name xActiveDirectory
 
     Import-DscResource -Module PSDscResources
     Import-DscResource -ModuleName xFailOverCluster
-    Import-DscResource -ModuleName xActiveDirectory
 
     Node 'localhost' {
         WindowsFeature RSAT-AD-PowerShell {
