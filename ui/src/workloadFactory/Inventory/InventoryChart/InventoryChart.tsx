@@ -50,9 +50,14 @@ const InventoryChart = () => {
             setDoughnutChart(myDoughnut);
         }
         return () => {
-            myDoughnut.destroy();
+            if (myDoughnut) {
+                myDoughnut.destroy();
+            }
         };
     }, [databaseHostsData, unManagedHosts, unIdentifiableHosts]);
+
+    const totalHosts = (databaseHostsData?.length || 0) + unManagedHosts.length + unIdentifiableHosts.length;
+
     return (
         <div className={styles.inventoryChart} id="chart-item">
             <div className={styles['center-text']}>
@@ -62,7 +67,8 @@ const InventoryChart = () => {
                 <Typography variant="Regular_14">{GENERAL.DATABASE_HOSTS}</Typography>
                 {discoverHostLoading && <DsFlashingDotsLoader />}
             </div>
-            <canvas ref={ref} id="chart-area" width={196} height={196}></canvas>
+            {!totalHosts && <div className={styles.emptyCircle}></div>}
+            {totalHosts ? <canvas ref={ref} id="chart-area" width={196} height={196}></canvas> : null}
         </div>
     );
 };

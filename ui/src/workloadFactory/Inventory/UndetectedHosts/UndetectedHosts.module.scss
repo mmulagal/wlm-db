@@ -9,23 +9,32 @@
             width: 192px;
             height: 32px;
             border-radius: 32px;
-            border: 1px solid var(--Light-Buttons-button-secondary, #0067c5);
-            cursor: pointer;
+            border: 1px solid var(--text-button-disabled);
+            //cursor: pointer;
 
             .textStyle {
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 margin-top: 2px;
-                color: var(--Light-Buttons-button-secondary, #0067c5);
+                color: var(--text-button-disabled);
             }
         }
 
         .detectManage:hover {
-            border: 1px solid var(--Light-Buttons-button-secondary-hover, #1e4a93);
+            border: 1px solid var(--text-button-disabled);
 
             .textStyle {
-                color: var(--Light-Buttons-button-secondary-hover, #1e4a93);
+                color: var(--text-button-disabled);
+            }
+        }
+
+        .statusCol {
+            display: flex;
+            gap: 16px;
+            .statusIcon {
+                width: 20px;
+                height: 20px;
             }
         }
     }
