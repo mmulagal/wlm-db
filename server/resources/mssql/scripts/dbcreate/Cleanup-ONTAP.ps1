@@ -1,4 +1,4 @@
- #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
+  #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
@@ -14,7 +14,13 @@ param(
     [string]$FSxLogVolumeName,
 
     [Parameter(Mandatory=$true)]
-    [string]$IGROUP    
+    [string]$IGROUP,
+    
+    [Parameter(Mandatory=$true)]
+    [string]$DBName,
+
+    [Parameter(Mandatory=$true)]
+    [string]$IsClustered       
 
 )
 $silenttranscript = (Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Append)
@@ -27,7 +33,7 @@ $credobject =  (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Valu
 $username = $credobject.fsx.username
 $password = $credobject.fsx.password
 
-##Create Volume with ONTAP RestAPI via PowerShell 7.0
+##Variables
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
@@ -36,10 +42,29 @@ $pair = "$($username):$($password)"
 $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
 $base64 = [System.Convert]::ToBase64String($bytes)
 
-#get management IP
-$nodeiqn = (Get-InitiatorPort).NodeAddress
-
 $result = [ordered]@{}
+
+
+#Cleanup drives from SQL dependency in case of clustered configuration
+$datalabel = $DBName+"-Data"
+$loglabel = $DBName+"-Log"
+
+if($IsClustered -ne "false") {
+    #Check if disks are in dependency list before cleaning up
+    $dependencylist = (Get-ClusterResourceDependency -Resource "SQL Server").DependencyExpression
+    $logpattern = '\(\['+$loglabel+'\]\)'
+    $datapattern = '\(\['+$datalabel+'\]\)'
+    $logfound =  $dependencylist -match $logpattern
+    $datafound = $dependencylist -match $datapattern
+    if ($datafound) {
+    $silencedependency =(Remove-ClusterResourceDependency -Resource "SQL Server" -Provider $datalabel)
+    Remove-ClusterResource -Name $datalabel -Force
+    } 
+    if ($logfound) {
+    $silencedependency =(Remove-ClusterResourceDependency -Resource "SQL Server" -Provider $loglabel)
+    Remove-ClusterResource -Name $loglabel -Force
+    }     
+}
 
 function returncert{
     param(
@@ -166,4 +191,4 @@ if ($voluri) {
     $result.Add('Message','Cleaning up resources complete')
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson 
- 
+  
