@@ -31,7 +31,9 @@ import {
     DescribeTagsCommandInput,
     DescribeTagsCommand,
     DescribeVpcEndpointsCommandInput,
-    DescribeVpcEndpointsCommand
+    DescribeVpcEndpointsCommand,
+    paginateDescribeVpcs,
+    paginateDescribeSubnets
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -62,6 +64,21 @@ async function describeVpc(credentialsId: string, region: string, params: Descri
     return resp;
 }
 
+async function paginatedDescribeVpcs(credentialsId: string, region: string, params: DescribeVpcsRequest) {
+    logger.info('Describe VPC', { region, params });
+
+    const ec2 = await getEC2Client(region, credentialsId);
+
+    const vpcList = [];
+    for await (const { Vpcs } of paginateDescribeVpcs({ client: ec2 }, params)) {
+        if (Vpcs?.length) {
+            vpcList.push(...Vpcs);
+        }
+    }
+
+    return vpcList;
+}
+
 async function describeSubnets(credentialsId: string, region: string, params: DescribeSubnetsRequest) {
     logger.info('Describe Subnets', { region, params });
 
@@ -71,6 +88,21 @@ async function describeSubnets(credentialsId: string, region: string, params: De
     logger.debug('descibeSubnets response:', resp);
 
     return resp;
+}
+
+async function paginatedDescribeSubnets(credentialsId: string, region: string, params: DescribeVpcsRequest) {
+    logger.info('Describe VPC', { region, params });
+
+    const ec2 = await getEC2Client(region, credentialsId);
+
+    const subnetList = [];
+    for await (const { Subnets } of paginateDescribeSubnets({ client: ec2 }, params)) {
+        if (Subnets?.length) {
+            subnetList.push(...Subnets);
+        }
+    }
+
+    return subnetList;
 }
 
 async function describeSecurityGroups(credentialsId: string, region: string, params: DescribeSecurityGroupsRequest) {
@@ -274,5 +306,7 @@ export {
     describeNetworkInterfaces,
     createTag,
     describeTags,
-    describeEndpoints
+    describeEndpoints,
+    paginatedDescribeVpcs,
+    paginatedDescribeSubnets
 };

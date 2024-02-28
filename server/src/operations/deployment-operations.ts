@@ -86,7 +86,7 @@ import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
 import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
 import createDeploymentMockDataInDB from './demo-operations';
-import { createFSXForDemo } from '../lib/cloud-manager/fsx-core';
+import { createFSX } from '../lib/cloud-manager/fsx-core';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -827,7 +827,7 @@ async function createFileSystemForDemo(credentialsId: string, region: string, fs
         automaticBackupRetentionDays: 30
     };
 
-    return createFSXForDemo(requestBody);
+    return createFSX(requestBody, true);
 }
 
 async function deploymentStatus(accountId: string) {
