@@ -14,8 +14,7 @@ import {
 export default function resourceRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
-    const API_PATH_RESOURCES = '/v1/resources';
-    const API_PATH_RESOURCES_WITH_CRED = '/v1/credentials/:credentialsId/regions/:region/resources';
+    const API_PATH_RESOURCES = '/v1/credentials/:credentialsId/regions/:region/resources';
 
     server.get(
         `${API_PATH_RESOURCES}/file-systems/credentials-status`,
@@ -24,7 +23,7 @@ export default function resourceRoutes(fastify: FastifyInstance) {
             const {
                 params: { accountId },
                 query: { fsxids }
-            } = request as { params: { accountId: string }; query: { fsxids: string } };
+            } = request;
 
             const response = await getFileSystemsCredentialsStatus(accountId, fsxids);
             return reply.send(response);
@@ -44,15 +43,11 @@ export default function resourceRoutes(fastify: FastifyInstance) {
         }
     );
 
-    server.get(
-        `${API_PATH_RESOURCES_WITH_CRED}/managed-hosts`,
-        { schema: GetManagedResourcesSchema },
-        async (request, reply) => {
-            const {
-                params: { accountId, credentialsId, region }
-            } = request;
-            const response = await getManagedResources(accountId, credentialsId, region);
-            return reply.send(response);
-        }
-    );
+    server.get(`${API_PATH_RESOURCES}/managed-hosts`, { schema: GetManagedResourcesSchema }, async (request, reply) => {
+        const {
+            params: { accountId, credentialsId, region }
+        } = request;
+        const response = await getManagedResources(accountId, credentialsId, region);
+        return reply.send(response);
+    });
 }

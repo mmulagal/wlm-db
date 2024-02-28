@@ -21,7 +21,7 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         const startTime = performance.now();
         const apiInfo = await getHostAndSqlServerInfo(accountId, credentialsId, region, pageSize, nextToken);
         const endTime = performance.now();
-        logger.info(`Time taken to collect information for ${apiInfo.count} records: ${endTime - startTime}ms`);
+        logger.info(`API1Performance: Time taken to collect data for ${apiInfo.count} EC2s: ${endTime - startTime}ms`);
         return apiInfo;
     });
 

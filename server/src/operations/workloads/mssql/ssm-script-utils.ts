@@ -62,13 +62,25 @@ const GET_CLUSTER_DRIVES = `
 $diskqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_Disk'
 $partqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_DiskPartition'
 
-$paths = Get-ClusterResource | Where-Object { $_.ResourceType.Name -eq 'Physical Disk' } \`
+$clusterDrivesDetail = Get-ClusterResource | Where-Object { $_.ResourceType.Name -eq 'Physical Disk' } \`
   | ForEach-Object { Get-WmiObject MSCluster_Resource -Namespace root/mscluster -Filter "Name='$_'" } \`
   | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($diskqry -f $_) } \`
   | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($partqry -f $_) } \`
-  | Select-Object -ExpandProperty Path
+  | Select-Object  Path, VolumeLabel
 
-$paths | ConvertTo-JSON
+$clusterDriveInfo = foreach ($clusterDriveDetails in $clusterDrivesDetail) {
+    $driveName = $clusterDriveDetails.VolumeLabel
+    $driveOwnerGroup = Get-ClusterResource | Where-Object { $_.Name -eq $driveName } | Select-Object -ExpandProperty OwnerGroup
+    $drivePath = $clusterDriveDetails.Path
+
+    [PSCustomObject]@{
+        driveLetter = $drivePath
+        owner = $driveOwnerGroup 
+    }
+}
+
+$clusterDriveInfoJson = $clusterDriveInfo | Select-Object -Property driveLetter, @{Name='owner'; Expression={$_.owner.Name}} | ConvertTo-Json
+Write-Output $clusterDriveInfoJson
 `;
 
 export { GET_DRIVE_INFO, GET_DEFAULT_DRIVES, EXECUTE_SQL_QUERY, GET_CLUSTER_DRIVES };
