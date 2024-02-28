@@ -1,11 +1,10 @@
 import createError from 'http-errors';
 import { RESOURCESTYPE, HttpErrorCodes, ACCOUNT_ID } from '../utils/consts';
 import getLogger from '../utils/logger';
-import { getDatabasesCount, getResourceDetails } from './workloads/mssql/mssql-operations';
+import { getDatabasesCount, getResourceDetails, getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { listRelationshipsResources } from '../lib/database/db';
 import { getResources } from './database/database-operations';
-import { isSSMConnectionSuccessful } from './aws/ssm-operations';
 import { describeInstance } from '../lib/aws/ec2';
 
 interface WorkingEnvironment {
@@ -51,7 +50,7 @@ async function getMSSQLEnvData(resourceDetails: any, resourceId: string) {
     if (!credentialsId || !region || !node1InstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Unable to get mssql env data');
     }
-    const { activeNodeInstanceId } = await isSSMConnectionSuccessful(credentialsId, region!, node1InstanceId);
+    const { activeNodeInstanceId } = await getActiveSqlNode(credentialsId, region!, node1InstanceId);
     let activeNodeInstanceIp;
     if (activeNodeInstanceId) {
         const activeInstanceDetails = await describeInstance(credentialsId, region, {

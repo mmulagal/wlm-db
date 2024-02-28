@@ -54,7 +54,8 @@ import {
     getPerformanceMetrics,
     getDataBasesSummary,
     getNativeSQLBackedupDatabases,
-    callSsmExecution
+    callSsmExecution,
+    getActiveSqlNode
 } from './workloads/mssql/mssql-operations';
 import {
     getStorageDataUsingSSM,
@@ -65,7 +66,7 @@ import {
 } from './aws/fsx-operations';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
-import { getSSMConnectionStatus, isSSMConnectionSuccessful } from './aws/ssm-operations';
+import { getSSMConnectionStatus } from './aws/ssm-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
@@ -630,7 +631,7 @@ async function getDatabaseHostsSummary(
                 const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
                 // Check SSM Connection status
-                const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
+                const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await getActiveSqlNode(
                     credentialsId,
                     region!,
                     node1InstanceId,
@@ -744,7 +745,7 @@ async function getDatabaseHostSummary(
         const { node1InstanceId, node2InstanceId, creationDate } = metadata as unknown as Metadata;
 
         // Check SSM Connection status
-        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
+        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await getActiveSqlNode(
             credentialsId,
             region!,
             node1InstanceId,
@@ -866,7 +867,7 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
     // Check SSM Connection status
-    const { isSSMConnected, activeNodeInstanceId } = await isSSMConnectionSuccessful(
+    const { isSSMConnected, activeNodeInstanceId } = await getActiveSqlNode(
         credentialsId,
         region!,
         node1InstanceId,
@@ -1068,7 +1069,7 @@ async function getDriveInfoFromSSM(
         node2InstanceId
     });
     // Check SSM Connection status
-    const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
+    const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await getActiveSqlNode(
         credentialsId,
         region!,
         node1InstanceId,
@@ -1293,7 +1294,7 @@ async function invokeSSMForDatabaseDeployment(
     let activeNodeId;
 
     try {
-        const { isSSMConnected, activeNodeInstanceId } = await isSSMConnectionSuccessful(
+        const { isSSMConnected, activeNodeInstanceId } = await getActiveSqlNode(
             credentialsId,
             region!,
             node1InstanceId,
