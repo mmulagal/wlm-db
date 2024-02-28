@@ -55,7 +55,8 @@ import {
     getPerformanceMetrics,
     getDataBasesSummary,
     getNativeSQLBackedupDatabases,
-    callSsmExecution
+    callSsmExecution,
+    checkDatabaseExists
 } from './workloads/mssql/mssql-operations';
 import {
     getStorageDataUsingSSM,
@@ -73,14 +74,7 @@ import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws
 import { GET_CLUSTER_DRIVES, GET_DEFAULT_DRIVES, GET_DRIVE_INFO } from './workloads/mssql/ssm-script-utils';
 import { getResources } from './database/database-operations';
 import { convertGiBToBytes, sleep, sqlResponseParsing } from '../utils/utils';
-import {
-    CLEANUPSCRIPT,
-    CONFIGURELUNSCRIPT,
-    CREATEDBSCRIPT,
-    INITIALIZEDBSCRIPT,
-    PSSCRIPT
-} from './workloads/mssql/const';
-import { DATABASE_NAME_EXISTS } from './workloads/mssql/queries';
+import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
 
 const logger = getLogger();
 
@@ -1449,7 +1443,9 @@ async function invokeSSMForDatabaseDeployment(
                 iGroup,
                 activeNodeId as string,
                 sqlServerName,
-                parentJobId
+                parentJobId,
+                databaseName,
+                isClustered
             );
         }
 
@@ -1784,7 +1780,9 @@ async function cleanUpDatabaseDeployment(
     iGroup: string,
     activeNodeInstanceId: string,
     sqlServerName: string | null,
-    parentJobId: string
+    parentJobId: string,
+    databaseName: string,
+    isClustered: string
 ) {
     logger.info('Cleaning up the database deployment', {
         accountId,
@@ -1797,7 +1795,9 @@ async function cleanUpDatabaseDeployment(
         iGroup,
         activeNodeInstanceId,
         sqlServerName,
-        parentJobId
+        parentJobId,
+        databaseName,
+        isClustered
     });
 
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
@@ -1820,7 +1820,7 @@ async function cleanUpDatabaseDeployment(
             ];
         } else {
             cleaupCommand = [
-                `${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup}`
+                `${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered}`
             ];
         }
 
@@ -2006,44 +2006,6 @@ async function checkDriveExists(
         }
     }
     return true;
-}
-
-async function checkDatabaseExists(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    databaseHostId: string,
-    databaseName: string,
-    activeNodeInstanceId: string
-) {
-    logger.info('Checking Database name exists', {
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        databaseName,
-        activeNodeInstanceId
-    });
-    const command = [`${PSSCRIPT} -Query "${DATABASE_NAME_EXISTS(databaseName)}"`];
-
-    const checkDatabaseExistsResponse = await callSsmExecution(
-        credentialsId,
-        region,
-        command,
-        activeNodeInstanceId,
-        accountId,
-        false
-    );
-
-    logger.debug('checking database name exists done', checkDatabaseExistsResponse);
-
-    const parsedDatabaseExistsResponse = checkDatabaseExistsResponse
-        ? sqlResponseParsing(checkDatabaseExistsResponse)
-        : {};
-    if (parsedDatabaseExistsResponse && parsedDatabaseExistsResponse.length) {
-        throw createError(412, `Provided database ${databaseName} already exists`);
-    }
-    return parsedDatabaseExistsResponse;
 }
 
 async function getManagedResources(
