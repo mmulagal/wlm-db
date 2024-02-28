@@ -219,6 +219,7 @@ async function getHostAndSqlServerInfo(
                             ec2InstanceName: target.ec2InstanceName,
                             ssmState: target.ssmState,
                             vpcId: target.vpcId,
+                            vpcName: target.vpcName,
                             sqlServerInstances: dbInfo
                         });
                     }
