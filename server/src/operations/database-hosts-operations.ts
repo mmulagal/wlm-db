@@ -72,9 +72,15 @@ import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
 import { GET_CLUSTER_DRIVES, GET_DEFAULT_DRIVES, GET_DRIVE_INFO } from './workloads/mssql/ssm-script-utils';
 import { getResources } from './database/database-operations';
-import { sleep, sqlResponseParsing } from '../utils/utils';
-import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
-import { DatabaseResponseBodyInterface } from '../routes/types/database.types';
+import { convertGiBToBytes, sleep, sqlResponseParsing } from '../utils/utils';
+import {
+    CLEANUPSCRIPT,
+    CONFIGURELUNSCRIPT,
+    CREATEDBSCRIPT,
+    INITIALIZEDBSCRIPT,
+    PSSCRIPT
+} from './workloads/mssql/const';
+import { DATABASE_NAME_EXISTS } from './workloads/mssql/queries';
 
 const logger = getLogger();
 
@@ -1232,8 +1238,8 @@ async function deployDatabase(
 
     if (job) {
         throw createError(
-            400,
-            `Already one job with ${job.id} is in progress on the same resource ${sqlServerName}, Please wait for some time!`
+            412,
+            `A database creation operation for ${sqlServerName} is already in progress with job ID ${job.id}`
         );
     }
 
@@ -1243,7 +1249,7 @@ async function deployDatabase(
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: sqlServerName as string,
         name: 'Create Database',
-        startTime: new Date().valueOf(),
+        startTime: Date.now(),
         description: 'Creating database on the SQL Server with provided configuration.'
     });
 
@@ -1363,7 +1369,7 @@ async function invokeSSMForDatabaseDeployment(
             );
             await updateJobDetails(accountId, credentialsId, region, parentJobId, {
                 status: JOBSTATUS.COMPLETED,
-                endTime: new Date().valueOf(),
+                endTime: Date.now(),
                 error: undefined
             });
         } else {
@@ -1421,12 +1427,12 @@ async function invokeSSMForDatabaseDeployment(
 
             await updateJobDetails(accountId, credentialsId, region, parentJobId, {
                 status: JOBSTATUS.COMPLETED,
-                endTime: new Date().valueOf(),
+                endTime: Date.now(),
                 error: undefined
             });
         }
     } catch (err: any) {
-        logger.error('Error while creating database', err, err.data);
+        logger.error(`Error while creating database ${databaseName} in account ${accountId}`, err, err.data);
         // Clean up script will only be executed when the configure lun script is provisioned
         if (err.data && err.data?.iGroup) {
             const {
@@ -1449,7 +1455,7 @@ async function invokeSSMForDatabaseDeployment(
 
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             status: JOBSTATUS.FAILED,
-            endTime: new Date().valueOf(),
+            endTime: Date.now(),
             error: err?.message
         });
     }
@@ -1503,7 +1509,7 @@ async function createDatabase(
         name: 'Create Database',
         parentJobId,
         description: `Creating database ${databaseName} with provided data and log paths.`,
-        startTime: new Date().valueOf()
+        startTime: Date.now()
     });
 
     let status;
@@ -1536,22 +1542,19 @@ async function createDatabase(
         return parsedDBResponse;
     } catch (err: any) {
         // child job failed
-        logger.error(`Error while creating database in account ${accountId} ${databaseName}`, err);
-        errMsg = err?.message;
+        const errorMsg = `Error while creating database ${databaseName} in account ${accountId}`;
+        logger.error(errorMsg, err);
+        errMsg = `${errorMsg}  ${err?.message}`;
         status = JOBSTATUS.FAILED;
         if (!err.data) {
             err.data = { iGroup, fsxLogVolumeName, fsxDataVolumeName };
         }
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while creating database in account ${accountId} ${databaseName} ${err?.message}.`,
-            { data: err.data }
-        );
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg, { data: err.data });
     } finally {
         // child job update
         await updateJobDetails(accountId, credentialsId, region, childJobId, {
             status,
-            endTime: new Date().valueOf(),
+            endTime: Date.now(),
             ...(errMsg && { error: errMsg })
         });
     }
@@ -1604,7 +1607,7 @@ async function configureLuns(
         name: 'Configure Luns',
         parentJobId,
         description: 'Configuring volumes and LUNs on FSx for ONTAP with recommended best practices.',
-        startTime: new Date().valueOf()
+        startTime: Date.now()
     });
 
     let status;
@@ -1643,19 +1646,16 @@ async function configureLuns(
 
         return parsedLunsResponse;
     } catch (err: any) {
-        logger.error(`Error while configuring luns for account ${accountId}`, err);
-        errMsg = err?.message;
+        const errorMsg = `Error while configuring luns in account ${accountId}`;
+        logger.error(errorMsg, err);
+        errMsg = `${errorMsg}  ${err?.message}`;
         status = JOBSTATUS.FAILED;
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while configuring luns for account ${accountId} ${err?.message}.`,
-            { data: err.data }
-        );
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg, { data: err.data });
     } finally {
         // child job failed
         await updateJobDetails(accountId, credentialsId, region, childJobId, {
             status,
-            endTime: new Date().valueOf(),
+            endTime: Date.now(),
             ...(errMsg && { error: errMsg })
         });
     }
@@ -1719,7 +1719,7 @@ async function newDBInitialization(
         name: 'New Database Initialization',
         parentJobId,
         description,
-        startTime: new Date().valueOf()
+        startTime: Date.now()
     });
 
     let status;
@@ -1755,22 +1755,19 @@ async function newDBInitialization(
         }
         return parsedDBInitializationResponse;
     } catch (err: any) {
-        logger.error(`Error while initializing new db for account ${accountId} ${databaseName}`, err);
-        errMsg = err?.message;
+        const errorMsg = `Error while initializing new database ${databaseName} in account ${accountId}`;
+        logger.error(errorMsg, err);
+        errMsg = `${errorMsg}  ${err?.message}`;
         status = JOBSTATUS.FAILED;
         if (!err.data) {
             err.data = { iGroup, fsxLogVolumeName, fsxDataVolumeName };
         }
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while initializing new db for account ${accountId} ${databaseName} ${err?.message}.`,
-            { data: err.data }
-        );
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg, { data: err.data });
     } finally {
         // child job failed
         await updateJobDetails(accountId, credentialsId, region, childJobId, {
             status,
-            endTime: new Date().valueOf(),
+            endTime: Date.now(),
             ...(errMsg && { error: errMsg })
         });
     }
@@ -1810,7 +1807,7 @@ async function cleanUpDatabaseDeployment(
         name: 'CLean up Database',
         parentJobId,
         description: 'Cleaning up database deployment is in progress',
-        startTime: new Date().valueOf()
+        startTime: Date.now()
     });
 
     let status;
@@ -1842,14 +1839,15 @@ async function cleanUpDatabaseDeployment(
 
         return parsedCleanUpResponse;
     } catch (err: any) {
-        logger.error('Error while cleaning up database', err);
-        errMsg = err?.message;
+        const errorMsg = `Error while cleaning up database' in account ${accountId}`;
+        logger.error(errorMsg, err);
+        errMsg = `${errorMsg}  ${err?.message}`;
         status = JOBSTATUS.FAILED;
     } finally {
         // child job failed
         await updateJobDetails(accountId, credentialsId, region, childJobId, {
             status,
-            endTime: new Date().valueOf(),
+            endTime: Date.now(),
             ...(errMsg && { error: errMsg })
         });
     }
@@ -1884,8 +1882,8 @@ async function validateParams(
     const { drive: dataDrive, isExisting: isDataDriveExists, volumeSize: dataVolumeSize } = dataFileConfig;
     const { drive: logDrive, isExisting: isLogDriveExists, volumeSize: logVolumeSize } = logFileConfig;
 
-    const dataGibIntoBytes = dataVolumeSize * 1073741824;
-    const logGibIntoBytes = logVolumeSize * 1073741824;
+    const dataGibIntoBytes = convertGiBToBytes(dataVolumeSize);
+    const logGibIntoBytes = convertGiBToBytes(logVolumeSize);
 
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
@@ -1894,59 +1892,55 @@ async function validateParams(
         name: 'Database Validation',
         parentJobId,
         description: `Validating parameters for database ${databaseName}.`,
-        startTime: new Date().valueOf()
+        startTime: Date.now()
     });
 
     let status;
     let errMsg;
 
     try {
-        await checkDatabaseExists(databaseHostId, databaseName, activeNodeInstanceId);
+        await checkDatabaseExists(accountId, credentialsId, region, databaseHostId, databaseName, activeNodeInstanceId);
 
-        const { existingDriveInfo, availableDriveLetters, fsxStorageCapacity } = await getDriveInfo(
+        const { existingDriveInfo, availableDriveLetters } = await getDriveInfo(
             accountId,
             databaseHostId,
             credentialsId,
             region
         );
 
-        if (!fsxStorageCapacity) {
-            throw createError(400, 'FSX storage capacity information is not available');
-        }
-
         // check whether the drive selection detail is right
-        await checkDriveExists(
-            existingDriveInfo,
-            availableDriveLetters,
-            dataDrive,
-            isDataDriveExists,
-            dataGibIntoBytes,
-            isClustered,
-            'data'
-        );
-        await checkDriveExists(
-            existingDriveInfo,
-            availableDriveLetters,
-            logDrive,
-            isLogDriveExists,
-            logGibIntoBytes,
-            isClustered,
-            'log'
-        );
+        await Promise.all([
+            checkDriveExists(
+                existingDriveInfo,
+                availableDriveLetters,
+                dataDrive,
+                isDataDriveExists,
+                dataGibIntoBytes,
+                isClustered,
+                'data'
+            ),
+            checkDriveExists(
+                existingDriveInfo,
+                availableDriveLetters,
+                logDrive,
+                isLogDriveExists,
+                logGibIntoBytes,
+                isClustered,
+                'log'
+            )
+        ]);
         status = JOBSTATUS.COMPLETED;
     } catch (error: any) {
-        logger.error(`Error while validating params ${databaseName}`, error);
+        const errorMsg = `Error while validating params in database ${databaseName} in account ${accountId}`;
+        logger.error(errorMsg, error);
         errMsg = error?.message;
         status = JOBSTATUS.FAILED;
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while validating params for account ${accountId} ${databaseName} ${errMsg}.`
-        );
+        throw createError(error.statusCode || 412, `${errorMsg} ${errMsg}`);
     } finally {
         // child job failed
         await updateJobDetails(accountId, credentialsId, region, childJobId, {
             status,
-            endTime: new Date().valueOf(),
+            endTime: Date.now(),
             ...(errMsg && { error: errMsg })
         });
     }
@@ -1980,51 +1974,76 @@ async function checkDriveExists(
     const restrictedDrives = ['A', 'B'];
 
     if (restrictedDrives.includes(selectedDrive)) {
-        throw createError(400, `Selected ${driveType} drive ${selectedDrive} is not allowed`);
+        throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not allowed`);
     }
 
     const regex = /^[A-Z]{1}$/; // Allows only single Capital Alphabetical letter
     if (!regex.test(selectedDrive)) {
-        throw createError(400, `Selected ${driveType} drive ${selectedDrive} is not a valid drive`);
+        throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not a valid drive`);
     }
 
     if (isDriveExists) {
-        const [matchedExistingDrive] = existingDriveInfo?.filter(drive => drive.driveLetter === selectedDrive) || [];
+        const matchedExistingDrive = existingDriveInfo?.find(drive => drive.driveLetter === selectedDrive);
         if (!matchedExistingDrive) {
-            throw createError(400, `Selected ${driveType} drive ${selectedDrive} does not exist in existing drives`);
+            throw createError(412, `Selected ${driveType} drive ${selectedDrive} does not exist in existing drives`);
         }
         if (!matchedExistingDrive.isNetappDrive) {
-            throw createError(400, `Selected ${driveType} drive ${selectedDrive} is not a NetApp LUN`);
+            throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not a NetApp LUN`);
         }
         if (isClustered === 'true' && !matchedExistingDrive.isDriveClustered) {
             throw createError(
-                400,
+                412,
                 `Selected ${driveType} drive ${selectedDrive} is not part of windows cluster or not owned by SQL Role`
             );
         }
         if (matchedExistingDrive.availableSize < volumeSizeInBytes) {
-            throw createError(400, `Selected ${driveType} drive ${selectedDrive} does not have enough space`);
+            throw createError(412, `Selected ${driveType} drive ${selectedDrive} does not have enough space`);
         }
     } else {
         const matchedAvailableDrive = availableDriveLetters?.includes(selectedDrive);
         if (!matchedAvailableDrive) {
-            throw createError(400, `Selected ${driveType} drive ${selectedDrive} does not exist in available drives`);
+            throw createError(412, `Selected ${driveType} drive ${selectedDrive} does not exist in available drives`);
         }
     }
+    return true;
 }
 
-async function checkDatabaseExists(databaseHostId: string, databaseName: string, activeNodeInstanceId: string) {
+async function checkDatabaseExists(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseName: string,
+    activeNodeInstanceId: string
+) {
     logger.info('Checking Database name exists', {
+        accountId,
+        credentialsId,
+        region,
         databaseHostId,
         databaseName,
         activeNodeInstanceId
     });
-    const response: DatabaseResponseBodyInterface = await getDataBasesSummary(databaseHostId, activeNodeInstanceId);
-    const databaseFound = response?.databases?.filter(db => db.databaseName === databaseName);
-    logger.debug('database exists', databaseFound);
-    if (databaseFound && databaseFound.length) {
-        throw createError(400, `Provided database ${databaseName} already exists`);
+    const command = [`${PSSCRIPT} -Query "${DATABASE_NAME_EXISTS(databaseName)}"`];
+
+    const checkDatabaseExistsResponse = await callSsmExecution(
+        credentialsId,
+        region,
+        command,
+        activeNodeInstanceId,
+        accountId,
+        false
+    );
+
+    logger.debug('checking database name exists done', checkDatabaseExistsResponse);
+
+    const parsedDatabaseExistsResponse = checkDatabaseExistsResponse
+        ? sqlResponseParsing(checkDatabaseExistsResponse)
+        : {};
+    if (parsedDatabaseExistsResponse && parsedDatabaseExistsResponse.length) {
+        throw createError(412, `Provided database ${databaseName} already exists`);
     }
+    return parsedDatabaseExistsResponse;
 }
 
 async function getManagedResources(
