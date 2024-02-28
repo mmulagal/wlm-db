@@ -31,14 +31,14 @@ const CreateNewUserFooter = () => {
         if (payload) {
             dispatch(setIsLoading(true));
             try {
-                const result = await createNewUserDb({
+                const result: any = await createNewUserDb({
                     credentialId: selectedCredId?.data?.credentialsId,
                     region: selectedRegionCode?.data?.regionCode,
                     id: resourceId,
                     payload: payload
                 });
                 dispatch(setIsLoading(false));
-                if (result) {
+                if (result && !result?.error) {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.INFO,
