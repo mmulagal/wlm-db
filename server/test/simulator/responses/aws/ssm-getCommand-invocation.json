@@ -587,7 +587,7 @@
         "InstanceId": "i-0880a21327284f67c",
         "PluginName": "aws:runPowerShellScript",
         "ResponseCode": 0,
-        "StandardErrorContent": "[\r\n    \"Q:\",\r\n    \"S:\",\r\n    \"L:\",\r\n    \"T:\"\r\n]\r\n",
+        "StandardErrorContent": "[\r\n    {\r\n        \"driveLetter\":  \"Q:\",\r\n        \"owner\":  \"Cluster Group\"\r\n    },\r\n    {\r\n        \"driveLetter\":  \"S:\",\r\n        \"owner\":  \"SQL Server (MSSQLSERVER)\"\r\n    },\r\n    {\r\n        \"driveLetter\":  \"L:\",\r\n        \"owner\":  \"SQL Server (MSSQLSERVER)\"\r\n    },\r\n    {\r\n        \"driveLetter\":  \"T:\",\r\n        \"owner\":  \"SQL Server (MSSQLSERVER)\"\r\n    }\r\n]\r\n",
         "StandardErrorUrl": "",
         "StandardOutputContent": "",
         "StandardOutputUrl": "",
