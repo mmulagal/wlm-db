@@ -17,7 +17,7 @@ import {
     ERROR_CODE_SQS_NON_EXISTENT_QUEUE,
     RESOURCESTYPE,
     TRACK_STATUS_CUSTOM_RESOURCE,
-    WLMDB,
+    // WLMDB,
     WF,
     DEPLOYMENT_JOBS_FAILED_STATUS,
     WLMDB_COST_ALLOCATION_TAG,
@@ -28,9 +28,9 @@ import {
     checkAndRetrieveJsonObject,
     convertMetricsIntoJson,
     deployedStackUrl,
-    derivePropertiesFromARN,
+    // derivePropertiesFromARN,
     getDescriptionForMatchingName,
-    getQueueUrl
+    // getQueueUrl
 } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
@@ -334,9 +334,12 @@ async function createOrUpdateChildJobs(
 async function processCloudFormationMessages() {
     logger.info('Processing cloud formation messages');
 
-    if (process.env.AWS_ROLE_ARN) {
-        const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
-        const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
+    // if (process.env.AWS_ROLE_ARN) {
+    if (true) {
+        // const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
+        // const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
+
+        const queueUrl = 'https://sqs.us-east-1.amazonaws.com/464262061435/wlmdb'
 
         try {
             const sqsMessages = await getSqsMessages(DEFAULT_AWS_REGION, queueUrl);

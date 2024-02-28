@@ -763,6 +763,10 @@ const SQL_RESOURCE_ASSETS = [
     {
         name: 'ScriptFSxValidation',
         url: `${WLMDB}/validation/Validate-FsxConnectivity.ps1`
+    },
+    {
+        name: 'DependentPackages',
+        url: `${WLMDB}/Installer/dependent-packages.zip`
     }
 ];
 
