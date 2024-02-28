@@ -289,3 +289,6 @@ curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/$
 `;
 
 export const CREATE_RESOURCE = 'CREATE_RESOURCE'; // Job monitoring type for DB create
+
+export const SSM_TROUBLESHOOTING_LINK =
+    'https://docs.aws.amazon.com/systems-manager/latest/userguide/troubleshooting-ssm-agent.html';

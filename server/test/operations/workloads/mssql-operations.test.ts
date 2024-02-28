@@ -26,7 +26,8 @@ import {
     discoverMsSqlServer,
     deleteResourceById,
     getServerIOLatency,
-    getNativeSQLProtection
+    getNativeSQLProtection,
+    checkDatabaseExists
 } from '../../../src/operations/workloads/mssql/mssql-operations';
 import { createResource, deleteResource, listResources } from '../../../src/lib/database/db';
 
@@ -132,5 +133,20 @@ describe('MSSQL Resource methods', () => {
         expect(mssqlResource).toBeUndefined();
         const fsxResource = listResp.find(res => res.resource_id === 'fs-f6082f35c1db');
         expect(fsxResource).toBeUndefined();
+    });
+
+    it('check database name exists in resource', async () => {
+        try {
+            await checkDatabaseExists(
+                'account-13rAEYet',
+                '2626c05d-364c-4196-bec9-0317c4d53d81',
+                'ap-southeast-1',
+                'd749b6e689352eeaadf7b3d3c08dbda25763a62c7a75b7159d5e96080b7433b3',
+                'tempdb18',
+                'i-0ac64c292872877c7'
+            );
+        } catch (err: any) {
+            expect(err.message).toEqual('Provided database tempdb18 already exists');
+        }
     });
 });

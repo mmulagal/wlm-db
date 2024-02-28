@@ -61,9 +61,9 @@ const DatabaseHomePage = () => {
                         </div>
                     </div>
                 </div>
-                <div className={styles.secondLevelContainer}>
+                {/*<div className={styles.secondLevelContainer}>
                     <DatabaseTable />
-                </div>
+                </div> */}
             </div>
 
             <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />

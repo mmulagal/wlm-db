@@ -224,6 +224,12 @@ const cleanUpDB = {
     ]
 };
 
+const checkDBExists = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = "tempdb18" FOR JSON PATH"'
+    ]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -300,7 +306,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: newDBInitialize })
     .resolves(listSendCommandCommandResponse.newDBInitalizeResponse)
     .on(SendCommandCommand, { Parameters: cleanUpDB })
-    .resolves(listSendCommandCommandResponse.cleanUpDBResponse);
+    .resolves(listSendCommandCommandResponse.cleanUpDBResponse)
+    .on(SendCommandCommand, { Parameters: checkDBExists })
+    .resolves(listSendCommandCommandResponse.checkDBExistsResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -376,7 +384,9 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-newDBInitialise' })
     .resolves(getCommandInvocationResponse.newDBInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-cleanUpDB' })
-    .resolves(getCommandInvocationResponse.cleanUpDBInvocationResponse);
+    .resolves(getCommandInvocationResponse.cleanUpDBInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-checkDBExists' })
+    .resolves(getCommandInvocationResponse.checkDBInvocationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

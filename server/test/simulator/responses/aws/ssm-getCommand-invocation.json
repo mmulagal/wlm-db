@@ -693,5 +693,30 @@
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
+    },
+    "checkDBInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "60785c9e-62c6-43fe-9d85-8c120a9b99eb",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CommandId": "3ea7ae59-c4e2-4f7f-8bae-db6ffb46d24f",
+        "Comment": "",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT3.756S",
+        "ExecutionEndDateTime": "2024-02-28T10:06:23.405Z",
+        "ExecutionStartDateTime": "2024-02-28T10:06:20.405Z",
+        "InstanceId": "i-0ac64c292872877c7",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[{\"name\":\"tempdb18\"}]\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
     }
 }

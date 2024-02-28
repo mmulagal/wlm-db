@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import { addDatabaseHosts, addDatabaseHostsList } from '../../store/workloadFactory/databaseHomeSlice';
-import { useDiscoverHostsQuery, useGetDatabaseHostsQuery } from '../../utils/apiService';
+import {
+    useDiscoverHostsQuery,
+    useGetDatabaseHostsQuery,
+    useGetFsxCredentialStatusQuery
+} from '../../utils/apiService';
 import { mergeDatabaseHostsData } from '../../utils/utilityFunctions';
 import {
     setDiscoveredHosts,
+    setFsxCredentialStatus,
     setUnIdentifiableHosts,
     setUnManagedHosts
 } from '../../store/workloadFactory/inventorySlice';
@@ -49,6 +54,17 @@ const InventoryApis = () => {
         },
         {
             skip: skipApiCall || skipDiscoveryCall
+        }
+    );
+
+    const {
+        data: fsxCredentialStatus,
+        isFetching: credentialStatusLoading,
+        isError: credentialStatusError
+    } = useGetFsxCredentialStatusQuery(
+        {},
+        {
+            skip: skipApiCall
         }
     );
 
@@ -144,21 +160,32 @@ const InventoryApis = () => {
     }, [discoveredHosts, discoverHostLoading, discoverHostError]);
 
     useEffect(() => {
+        if (!credentialStatusLoading) {
+            dispatch(setFsxCredentialStatus(fsxCredentialStatus));
+        }
+    }, [fsxCredentialStatus, credentialStatusLoading, credentialStatusError]);
+
+    useEffect(() => {
         if (discoveredHostData && discoveredHostData.length) {
             let unManagedHosts: any[] = [];
             let unIdentifiableHosts: any[] = [];
             discoveredHostData.map((host: any) => {
                 const isWindowAuthentication = host?.sqlServerInstances?.[0]?.windowsAuthentication;
+                const isManaged = databaseHostsData?.find(managedHost =>
+                    managedHost?.topology?.ec2Details?.find(instances => instances.id === host?.ec2InstanceId)
+                );
                 if (host.ssmState !== 'connected' || !isWindowAuthentication) {
                     unIdentifiableHosts.push(host);
                 } else {
-                    unManagedHosts.push(host);
+                    if (!isManaged) {
+                        unManagedHosts.push(host);
+                    }
                 }
             });
             dispatch(setUnIdentifiableHosts(unIdentifiableHosts));
             dispatch(setUnManagedHosts(unManagedHosts));
         }
-    }, [discoveredHostData]);
+    }, [discoveredHostData, databaseHostsData, fsxCredentialStatus]);
 
     return <></>;
 };

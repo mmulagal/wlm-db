@@ -1007,7 +1007,7 @@ export const getShiftedHoursList = (baseList: Array<String | number>) => {
     return [...baseList.slice(shift), ...baseList.slice(0, shift)];
 };
 
-export const groupByTime = (days: number, data: any, baseList: Array<number>) => {
+export const groupByTime = (days: number, data: any, baseList: Array<number>, daysList: any = []) => {
     const dayGrouping: any = {};
     if (days === 1) {
         // grouping for lats 24 hours
@@ -1015,11 +1015,17 @@ export const groupByTime = (days: number, data: any, baseList: Array<number>) =>
             if (perObj?.timeInterval || perObj?.timeInterval === 0) {
                 let hr = perObj?.timeInterval;
                 const min = perObj?.minutes;
+                const objDate = perObj?.date;
                 if (min > 0) {
                     hr += 1;
                 }
                 const index = Math.ceil(hr / 4) % baseList.length;
-                const newTimeInterval = baseList[index];
+                let newTimeInterval = baseList[index];
+                // This logic is to check count before putting data in x-axis last point. If it is yesterday count than add in x-axix first point.
+                const currDate = new Date().getDate();
+                if (daysList.length >= 6 && newTimeInterval === daysList[5] && objDate && objDate !== currDate) {
+                    newTimeInterval = daysList[0];
+                }
                 if (newTimeInterval in dayGrouping) {
                     dayGrouping[newTimeInterval] = {
                         completed: dayGrouping[newTimeInterval]?.completed + (perObj?.completed || 0),
@@ -1059,13 +1065,14 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
     if (!data || data?.length === 0) {
         return groupedData;
     }
-
+    
     // Using endTime calculate hr or day
     if (days === 1) {
         data = data.map((e: any) => ({
             ...e,
             timeInterval: new Date(e.endTime).getHours(),
-            minutes: new Date(e.endTime).getMinutes()
+            minutes: new Date(e.endTime).getMinutes(),
+            date: new Date(e.endTime).getDate()
         }));
     } else {
         data = data.map((e: any) => ({ ...e, timeInterval: new Date(e.endTime).getDate() }));
@@ -1094,7 +1101,7 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
     }
 
     // Group data by time used in x-axis line chart
-    const dayGrouping = groupByTime(days, data, baseList);
+    const dayGrouping = groupByTime(days, data, baseList, daysList);
 
     daysList.map(day => {
         groupedData['time'].push(day);
