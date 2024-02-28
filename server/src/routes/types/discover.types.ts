@@ -3,6 +3,11 @@ import { RESOURCESTYPE } from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
 
 const DiscoverMsSqlQuery = Type.Object({
+    pageSize: Type.Number({
+        description: 'Number of EC2 instances to discover per call of the API.',
+        minimum: 5,
+        default: 50
+    }),
     nextToken: Type.Optional(
         Type.String({
             description:
@@ -35,9 +40,9 @@ const SqlServerInstanceInfo = Type.Object({
     }),
     storage: Type.Optional(
         Type.Array(
-            Type.String({
-                description: 'Underlying storage types of the SQL Server instance',
-                enum: ['EBS', 'FSXN']
+            Type.Object({
+                type: Type.String({ description: 'Underlying storage types of the SQL Server instance' }),
+                id: Type.String()
             })
         )
     ),

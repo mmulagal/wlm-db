@@ -134,7 +134,8 @@ enum RouteTags {
     BATCH = 'Batch',
     PRICING = 'Pricing',
     CHATBOT = 'Chatbot',
-    DISCOVER = 'Discover'
+    DISCOVER = 'Discover',
+    RESOURCE = 'Resource'
 }
 
 enum HttpErrorCodes {
@@ -734,6 +735,10 @@ const SQL_RESOURCE_ASSETS = [
     //     url: 'scripts/sqlontap.zip.sig'
     // },
     {
+        name: 'ScriptDBCREATE',
+        url: `${WLMDB}/scripts/dbcreate.zip`
+    },
+    {
         name: 'ScriptVpcCheck',
         url: `${WLMDB}/validation/Validate-VPCConnectivity.ps1`
     },
@@ -1056,13 +1061,15 @@ const subJobDescriptions: SubJobDescriptions = {
     'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint'
 };
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
-const RESOURCE_SOURCE = { 
+const RESOURCE_SOURCE = {
     DEPLOY: 'deployment',
-    DISCOVER: 'discovery'}
+    DISCOVER: 'discovery'
+};
 
 const ENDPOINTS_DEPLOYMENT = ['s3', 'cloudformation', 'sqs', 'ssm', 'ssmmessages', 'ec2messages', 'monitoring'];
 
 const SSM_PARAMETERS_BASE_PATH = '/netapp/wlmdb';
+const COMPLETE = 'Complete';
 
 export {
     WLMDB,
@@ -1300,5 +1307,6 @@ export {
     ARTIFACT_BUCKET_NAME,
     SIGNED_TEMPLATES_BUCKET_NAME,
     TEMPLATE_BUCKET_REGION,
-    SSM_PARAMETERS_BASE_PATH
+    SSM_PARAMETERS_BASE_PATH,
+    COMPLETE
 };

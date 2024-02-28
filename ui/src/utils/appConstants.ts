@@ -600,7 +600,10 @@ export const GENERAL = {
         'When a deployment fails, your provisioned resources will not be rolled back by default. The provisioned resources will be deleted when you delete your deployment from the AWS console.',
     DATA_SIZE_TOOLTIP: ['Host ', ' data size range is '],
     NON_CLUSTERED_DRIVE: 'Non clustered drive or not part of SQL server',
-    NON_NETAPP_DRIVE: 'Non NetApp drive'
+    NON_NETAPP_DRIVE: 'Non NetApp drive',
+    CF_COPIED: 'CloudFormation copied successfully.',
+    CF_DOWNLOAD: 'CloudFormation downloaded successfully.',
+    CF_NOTICE: 'Notice: the YAML configuration file is available for 7 days.'
 };
 
 export const CODE_VIEWER = {

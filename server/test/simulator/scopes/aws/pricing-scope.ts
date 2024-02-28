@@ -295,7 +295,7 @@ const EC2INSTANCERATEFILTER: GetProductsCommandInput = {
         {
             Type: FilterType.TERM_MATCH,
             Field: 'instanceType',
-            Value: 'm5.xlarge'
+            Value: 'c5a.16xlarge'
         },
         {
             Type: FilterType.TERM_MATCH,

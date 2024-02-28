@@ -2,14 +2,86 @@ import randomize from 'randomatic';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, STORAGE_TYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { CloudProviders, RESOURCESTYPE, DATABASE_TYPE } from '../utils/consts';
-import { createJobMockData, generateRandomIP } from '../utils/utils';
 // import { handleNotification } from './cloud-manager/notification-operations';
-import { createDeployment, createResource } from '../lib/database/db';
+import { checkAccount, createDeployment, createResource } from '../lib/database/db';
 import { Metadata } from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
 import getLogger from '../utils/logger';
+import {
+    masterStackData,
+    fsxStackData,
+    validationStack1Data,
+    sqlFciServerStackData,
+    validationStack2Data,
+    sqlStandaloneStackData
+} from '../utils/demo-utils/demoMockdata';
+import { generateRandomIP } from '../utils/utils';
 
 const logger = getLogger();
+
+async function createJobMockData(
+    accountId: string,
+    resourceName: string,
+    stackName: string,
+    sqlDeploymentMode: string,
+    fsxFileSystemId: string | undefined,
+    credentialsId: string,
+    region: string
+) {
+    logger.info('Generate mock data for job table', accountId, resourceName, stackName);
+    accountId = checkAccount(accountId);
+    const masterStackId = randomUUID();
+    const serverStackId = randomUUID();
+    const fsxStackId = randomUUID();
+    const validationStack1Id = randomUUID();
+    const validationStack2Id = randomUUID();
+
+    const data: any[] = [];
+
+    const fsxType = fsxFileSystemId ? 'ExistingFSxStack' : 'NewFSxStack';
+
+    data.push(
+        ...masterStackData(accountId, resourceName, stackName, masterStackId, credentialsId, region),
+        ...fsxStackData(accountId, resourceName, stackName, fsxStackId, masterStackId, fsxType, credentialsId, region),
+        ...validationStack1Data(
+            accountId,
+            resourceName,
+            stackName,
+            validationStack1Id,
+            masterStackId,
+            sqlDeploymentMode,
+            credentialsId,
+            region
+        )
+    );
+    if (sqlDeploymentMode.toLowerCase() === 'fci') {
+        data.push(
+            ...sqlFciServerStackData(accountId, resourceName, serverStackId, masterStackId, credentialsId, region),
+            ...validationStack2Data(
+                accountId,
+                resourceName,
+                stackName,
+                validationStack2Id,
+                masterStackId,
+                credentialsId,
+                region
+            )
+        );
+    } else {
+        data.push(
+            ...sqlStandaloneStackData(
+                accountId,
+                resourceName,
+                stackName,
+                serverStackId,
+                masterStackId,
+                credentialsId,
+                region
+            )
+        );
+    }
+    return data;
+}
 
 export default async function createDeploymentMockDataInDB(
     accountId: string,

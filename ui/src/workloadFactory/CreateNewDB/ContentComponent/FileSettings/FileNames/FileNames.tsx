@@ -199,6 +199,7 @@ const FileNames = () => {
     return (
         <div className={styles.fileNames}>
             <AccordionCard
+                isLoading={driveInfoListLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="3"
                 title={<div className={CommonStyles.title}>{GENERAL.DB_CREATE_FILE_NAMES_AND_PATH}</div>}

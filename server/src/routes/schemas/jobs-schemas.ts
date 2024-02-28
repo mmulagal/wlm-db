@@ -1,4 +1,5 @@
 import { RouteTags } from '../../utils/consts';
+import { CredentialsIdParams } from '../types/generic.types';
 import {
     JobsParams,
     ListJobsQueryString,
@@ -11,14 +12,13 @@ import {
     JobDetailsResponse,
     JobSummaryQueryString,
     JobSummaryResponse,
-    JobSummaryByTimeResponse,
-    JobsGenericParams
+    JobSummaryByTimeResponse
 } from '../types/jobs.types';
 
 // Base Request for Deployment Routes
 const baseRequest = {
     tags: [RouteTags.JOB_MONITORING],
-    params: JobsGenericParams
+    params: CredentialsIdParams
 };
 
 // Get all jobs

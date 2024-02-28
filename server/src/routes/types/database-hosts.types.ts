@@ -10,10 +10,18 @@ type DatabaseHostObjectParamsType = Static<typeof DatabaseHostObjectParams>;
 const DatabaseHostSummaryParams = Type.Composite([CredentialsIdParams, Type.Object({ databaseHostId: Type.String() })]);
 type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
 
+const CreateDatabaseParams = Type.Object({
+    accountId: Type.String({ minLength: 7 }),
+    databaseHostId: Type.String({ minLength: 10 }),
+    credentialsId: Type.String(),
+    region: Type.String()
+});
+
 // Query parameter to fetch protection, performance, storage and cost details
 const DatabaseHostQueryString = Type.Object({
     fields: Type.Optional(Type.String()),
-    nextToken: Type.Optional(Type.String())
+    nextToken: Type.Optional(Type.String()),
+    pageSize: Type.Optional(Type.Number())
 });
 
 const EC2InstanceDetailsResponse = Type.Object({
@@ -168,12 +176,35 @@ const DatabasesListResponse = Type.Object({
 });
 type DatabasesListResponseType = Static<typeof DatabasesListResponse>;
 
+// Cloud formation template creation Request and Response
+
+const FileConfig = Type.Object({
+    fileName: Type.String(),
+    volumeSize: Type.Number(),
+    drive: Type.String(),
+    isExisting: Type.Boolean()
+});
+
+const CreateDatabseRequestBody = Type.Object({
+    databaseName: Type.String(),
+    dataFileConfig: FileConfig,
+    logFileConfig: FileConfig
+});
+
+const DatabasesCreateResponse = Type.Object({
+    jobId: Type.String()
+});
+
+type DatabaseCreateResponseType = Static<typeof DatabasesCreateResponse>;
+type FileConfigType = Static<typeof FileConfig>;
+
 const DriveInfoResponseBody = Type.Object({
     existingDriveInfo: Type.Array(
         Type.Object({
             driveLetter: Type.String(),
             availableSize: Type.Number(),
-            isNetappDrive: Type.Boolean()
+            isNetappDrive: Type.Boolean(),
+            isDriveClustered: Type.Optional(Type.Boolean())
         })
     ),
     defaultDataDrive: Type.Optional(Type.String()),
@@ -182,12 +213,6 @@ const DriveInfoResponseBody = Type.Object({
     fsxStorageCapacity: Type.Optional(Type.Number())
 });
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
-
-const DatabaseHostsParamsWithRegion = Type.Object({
-    accountId: Type.String(),
-    credentialsId: Type.String(),
-    region: Type.String()
-});
 
 export {
     DatabaseHostObjectParams,
@@ -224,7 +249,11 @@ export {
     DetailedPerformanceResponseType,
     RWPerformanceResponse,
     RWPerformanceResponseType,
+    CreateDatabseRequestBody,
+    DatabasesCreateResponse,
+    DatabaseCreateResponseType,
+    CreateDatabaseParams,
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
-    DatabaseHostsParamsWithRegion
+    FileConfigType
 };

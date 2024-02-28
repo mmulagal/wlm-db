@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash-es';
 import { ContextEntry, SimulatePrincipalPolicyCommandInput } from '@aws-sdk/client-iam'; // ES Modules import
 import { getRoleDetails } from '../cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -33,10 +34,10 @@ export default async function getMissingPermissionsList(
     const missingPermissions =
         results
             ?.filter(
-                ({ EvalDecision, OrganizationsDecisionDetail, PermissionsBoundaryDecisionDetail }) =>
+                ({ EvalDecision, OrganizationsDecisionDetail, MatchedStatements }) =>
                     EvalDecision !== 'allowed' &&
                     OrganizationsDecisionDetail?.AllowedByOrganizations &&
-                    PermissionsBoundaryDecisionDetail?.AllowedByPermissionsBoundary
+                    isEmpty(MatchedStatements)
             )
             .map(({ EvalActionName }) => EvalActionName as string) || [];
     const blockedByOrganisation =
@@ -49,10 +50,11 @@ export default async function getMissingPermissionsList(
     const blockedByPermissionBoundary =
         results
             ?.filter(
-                ({ EvalDecision, OrganizationsDecisionDetail, PermissionsBoundaryDecisionDetail }) =>
+                ({ EvalDecision, OrganizationsDecisionDetail, PermissionsBoundaryDecisionDetail, MatchedStatements }) =>
                     EvalDecision !== 'allowed' &&
                     OrganizationsDecisionDetail?.AllowedByOrganizations &&
-                    !PermissionsBoundaryDecisionDetail?.AllowedByPermissionsBoundary
+                    !PermissionsBoundaryDecisionDetail?.AllowedByPermissionsBoundary &&
+                    !isEmpty(MatchedStatements)
             )
             .map(({ EvalActionName }) => EvalActionName as string) || [];
 

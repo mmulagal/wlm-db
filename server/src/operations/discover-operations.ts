@@ -33,14 +33,13 @@ interface SsmTargetsInfo {
     ebsVolumeIDs: (string | undefined)[] | undefined;
 }
 
-const MAX_DESCRIBE_INSTANCES_COUNT = 20;
-const MAX_SSM_COMMANDS_POLL_COUNT = 20;
 const MINIMUM_SQL_SERVER_EDITION_SUPPORTED = 2016;
 
 async function getHostAndSqlServerInfo(
     accountId: string,
     credentialsId: string,
     region: string,
+    ec2Count: number,
     nextToken: string = '',
     instances: string[] = []
 ) {
@@ -52,7 +51,7 @@ async function getHostAndSqlServerInfo(
             { Name: 'architecture', Values: ['x86_64'] },
             { Name: 'instance-state-name', Values: [InstanceStateName.running] }
         ],
-        MaxResults: MAX_DESCRIBE_INSTANCES_COUNT,
+        MaxResults: ec2Count,
         NextToken: nextToken
     };
 
@@ -140,7 +139,7 @@ async function getHostAndSqlServerInfo(
 
         await Promise.all(
             ssmConnectedNodes.map(
-                throat(MAX_SSM_COMMANDS_POLL_COUNT, async (target: SsmTargetsInfo) => {
+                throat(ec2Count, async (target: SsmTargetsInfo) => {
                     let dbInfo: SqlServerInstanceInfoType[] = [];
                     dbInfo = await getHostAndSqlInfoFromPsOutput(
                         credentialsId,
@@ -204,7 +203,7 @@ async function getHostAndSqlInfoFromPsOutput(
         }
         for (const dbInstanceInfo of responseInJson) {
             if (dbInstanceInfo.sqlServerEdition >= MINIMUM_SQL_SERVER_EDITION_SUPPORTED) {
-                const storageTypes: string[] = [];
+                const storageTypes = [];
                 const deploymentTypes: string[] = [];
                 const ebsVolumeIDs = ssmTarget.ebsVolumeIDs?.map(elem => elem?.replace('-', ''));
 
@@ -214,13 +213,19 @@ async function getHostAndSqlInfoFromPsOutput(
                 }
 
                 for (const di of driveInfo) {
-                    if (ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem))) {
-                        storageTypes.push(STORAGE_TYPE.EBS);
+                    const ebsVolumeId = ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem));
+                    if (ebsVolumeId) {
+                        storageTypes.push({
+                            type: STORAGE_TYPE.EBS,
+                            id: ebsVolumeId
+                        });
                     } else if (endPointIpWithFsxId.has(di?.SerialNumberOrScsiTarget)) {
-                        storageTypes.push(STORAGE_TYPE.FSXN);
-                        deploymentTypes.push(
-                            fsIdWithDeploymentType.get(endPointIpWithFsxId.get(di?.SerialNumberOrScsiTarget)!)!
-                        );
+                        const fsxId = endPointIpWithFsxId.get(di?.SerialNumberOrScsiTarget);
+                        storageTypes.push({
+                            type: STORAGE_TYPE.FSXN,
+                            id: fsxId!
+                        });
+                        deploymentTypes.push(fsIdWithDeploymentType.get(fsxId!)!);
                     }
                 }
 

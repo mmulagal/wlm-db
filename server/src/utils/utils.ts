@@ -4,7 +4,7 @@
  */
 import { attempt, trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
-import crypto, { randomUUID } from 'crypto';
+import crypto from 'crypto';
 import { Tag } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { getAsyncLocalStorageResource } from './async-local-storage';
@@ -30,14 +30,6 @@ import {
 
 import getLogger, { hideSecretsValues } from './logger';
 import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
-import {
-    fsxStackData,
-    masterStackData,
-    sqlFciServerStackData,
-    sqlStandaloneStackData,
-    validationStack1Data,
-    validationStack2Data
-} from './demo-utils/demoMockdata';
 
 const logger = getLogger();
 
@@ -308,69 +300,6 @@ function checkAccount(accountId: string) {
     return accountId;
 }
 
-async function createJobMockData(
-    accountId: string,
-    resourceName: string,
-    stackName: string,
-    sqlDeploymentMode: string,
-    fsxFileSystemId: string | undefined,
-    credentialsId: string,
-    region: string
-) {
-    logger.info('Generate mock data for job table', accountId, resourceName, stackName);
-    accountId = checkAccount(accountId);
-    const masterStackId = randomUUID();
-    const serverStackId = randomUUID();
-    const fsxStackId = randomUUID();
-    const validationStack1Id = randomUUID();
-    const validationStack2Id = randomUUID();
-
-    const data: any[] = [];
-
-    const fsxType = fsxFileSystemId ? 'ExistingFSxStack' : 'NewFSxStack';
-
-    data.push(
-        ...masterStackData(accountId, resourceName, stackName, masterStackId, credentialsId, region),
-        ...fsxStackData(accountId, resourceName, stackName, fsxStackId, masterStackId, fsxType, credentialsId, region),
-        ...validationStack1Data(
-            accountId,
-            resourceName,
-            stackName,
-            validationStack1Id,
-            masterStackId,
-            sqlDeploymentMode,
-            credentialsId,
-            region
-        )
-    );
-    if (sqlDeploymentMode.toLowerCase() === 'fci') {
-        data.push(
-            ...sqlFciServerStackData(accountId, resourceName, serverStackId, masterStackId, credentialsId, region),
-            ...validationStack2Data(
-                accountId,
-                resourceName,
-                stackName,
-                validationStack2Id,
-                masterStackId,
-                credentialsId,
-                region
-            )
-        );
-    } else {
-        data.push(
-            ...sqlStandaloneStackData(
-                accountId,
-                resourceName,
-                stackName,
-                serverStackId,
-                masterStackId,
-                credentialsId,
-                region
-            )
-        );
-    }
-    return data;
-}
 function calculateSQLandWindowsVersion(sqlAmiName: string) {
     logger.info('Calculate sql and windows version from the sql AMI name', sqlAmiName);
 
@@ -470,7 +399,6 @@ export {
     generateRandomIP,
     isActiveInstance,
     checkAccount,
-    createJobMockData,
     calculateSQLandWindowsVersion,
     getDescriptionForMatchingName,
     convertMetricsIntoJson,

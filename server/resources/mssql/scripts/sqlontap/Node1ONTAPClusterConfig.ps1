@@ -69,7 +69,6 @@ Configuration Node1ClusterConfig {
     Import-DscResource -Module PSDscResources
     Import-DscResource -ModuleName xFailOverCluster
 
-
     Node 'localhost' {
 
         WindowsFeature AddRemoteServerAdministrationToolsClusteringFeature {

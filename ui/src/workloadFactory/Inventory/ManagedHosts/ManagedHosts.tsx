@@ -401,6 +401,7 @@ const ManagedHosts = () => {
                                         dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
                                         dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
                                         dispatch(updateResourceId(rowData.id));
+                                        dispatch(setDBHostName(rowData?.name));
                                         dispatch(resetWorkloadFactoryResourceData());
                                     }
 
@@ -408,6 +409,7 @@ const ManagedHosts = () => {
                                         dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
                                         dispatch(selectedTabSelection(WLF_TABS.DATABASE_LIST));
                                         dispatch(updateResourceId(rowData.id));
+                                        dispatch(setDBHostName(rowData?.name));
                                         dispatch(resetWorkloadFactoryResourceData());
                                     }
 

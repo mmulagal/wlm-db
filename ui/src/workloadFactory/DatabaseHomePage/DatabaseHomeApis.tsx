@@ -17,7 +17,8 @@ import {
     getAggrStorageSavings,
     getHostStatusCount,
     jobStatusPercent,
-    mergeDatabaseHostsData
+    mergeDatabaseHostsData,
+    resetDBHomePageState
 } from '../../utils/utilityFunctions';
 
 const DatabaseHomeApis = () => {
@@ -80,6 +81,7 @@ const DatabaseHomeApis = () => {
     }, [refetchJobSummaryApi]);
 
     useEffect(() => {
+        resetDBHomePageState(dispatch); // reset dahsboard state if cred and region is changed
         if (headerSelectedCred && headerSelectedRegion) {
             setCredId(headerSelectedCred?.data?.credentialsId);
             setRegionId(headerSelectedRegion?.label2);
