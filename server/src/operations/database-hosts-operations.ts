@@ -1040,7 +1040,7 @@ async function getDriveInfoFromNodes(
                 if (matchingDrive && matchingDrive.owner.includes('SQL Server')) {
                     return { ...drive, isDriveClustered: true };
                 }
-                return drive;
+                return { ...drive, isDriveClustered: false };
             });
         } catch (error) {
             const errorMessage = `Error while parsing cluster drive info ${activeNodeInstanceId} ${standbyNodeInstanceId}, ${error}`;
