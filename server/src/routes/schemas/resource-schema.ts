@@ -1,5 +1,5 @@
 import { RouteTags } from '../../utils/consts';
-import { AccountIdParams, CredentialsIdParams } from '../types/generic.types';
+import { CredentialsIdParams } from '../types/generic.types';
 import {
     FileSystemsCredentialsStatusRequestQuery,
     FileSystemsCredentialsStatusResponse,
@@ -14,8 +14,8 @@ const FileSystemsCredentialsStatusSchema = {
     summary: 'File Systems Credentials Status',
     description:
         'File Systems Credentials Status, specifically whether or not if a FSxN is registered with fsx-core service',
-    params: AccountIdParams,
-    queryString: FileSystemsCredentialsStatusRequestQuery,
+    params: CredentialsIdParams,
+    querystring: FileSystemsCredentialsStatusRequestQuery,
     response: {
         200: FileSystemsCredentialsStatusResponse
     }

@@ -2,10 +2,17 @@ import createError from 'http-errors';
 import config from 'config';
 
 import { STORAGE_TYPE } from '@prisma/client';
-import { DescribeInstancesCommandInput, DescribeInstancesCommandOutput, InstanceStateName } from '@aws-sdk/client-ec2';
+import { FileSystem } from '@aws-sdk/client-fsx';
+import { compact, uniqBy } from 'lodash-es';
+import {
+    DescribeInstancesCommandInput,
+    DescribeInstancesCommandOutput,
+    InstanceStateName,
+    Vpc
+} from '@aws-sdk/client-ec2';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
-import { describeInstance } from '../lib/aws/ec2';
+import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
 import { getResourceNameFromTags, sleep } from '../utils/utils';
 import { getSSMConnectionStatus, pollCommandStatus, ssmPutParameters } from './aws/ssm-operations';
 import { HttpErrorCodes, RESOURCESTYPE, SSM_PARAMETERS_BASE_PATH } from '../utils/consts';
@@ -30,7 +37,13 @@ interface SsmTargetsInfo {
     ec2InstanceName: string;
     ssmState: string;
     vpcId: string | undefined;
+    vpcName: string | undefined;
     ebsVolumeIDs: (string | undefined)[] | undefined;
+}
+
+interface DeployType {
+    deploymentType: string | undefined;
+    subnetIds: string[] | undefined;
 }
 
 const MINIMUM_SQL_SERVER_EDITION_SUPPORTED = 2016;
@@ -73,6 +86,16 @@ async function getHostAndSqlServerInfo(
 
     const ec2instanceList = Reservations?.flatMap(reservation => reservation.Instances);
 
+    let vpcNames = new Map<string | undefined, string | undefined>();
+
+    try {
+        const vpcs = await paginatedDescribeVpcs(credentialsId, region, {});
+
+        vpcNames = new Map(vpcs?.map(({ Tags, VpcId }: Vpc) => [VpcId, getResourceNameFromTags(Tags)]));
+    } catch (error) {
+        logger.error('Failed to get VPC details. Reason:', error);
+    }
+
     const ssmTargets: SsmTargetsInfo[] = [];
     api1StartTime = performance.now();
     await Promise.all(
@@ -84,6 +107,7 @@ async function getHostAndSqlServerInfo(
                 ec2InstanceName: name!,
                 ssmState: ssmStatus.Status!,
                 vpcId: ec2Instance?.VpcId,
+                vpcName: vpcNames.get(ec2Instance?.VpcId),
                 ebsVolumeIDs: ec2Instance?.BlockDeviceMappings?.map(bdm => bdm?.Ebs?.VolumeId)
             });
         })
@@ -130,26 +154,33 @@ async function getHostAndSqlServerInfo(
           call will come with a new nextToken.
         */
         api1StartTime = performance.now();
-        const [fsxList, svmList] = await Promise.all([
+        const [fsxList, svmList, subnetList] = await Promise.all([
             describeFSxFileSystems(credentialsId, region),
-            describeFSxStorageVirtualMachines(credentialsId, region)
+            describeFSxStorageVirtualMachines(credentialsId, region),
+            paginatedDescribeSubnets(credentialsId, region, {})
         ]);
         api1EndTime = performance.now();
         logger.info(`API1Performance: Time taken by describe FSxFS/SVM: ${api1EndTime - api1StartTime}ms`);
 
         const endPointIpWithFsxId = new Map<string, string>();
-        const fsIdWithDeploymentType = new Map<string, string>();
+        const fsIdWithDeploymentType = new Map<string, DeployType>();
         api1StartTime = performance.now();
         svmList.StorageVirtualMachines?.forEach(async elem => {
             const fsId = elem.FileSystemId;
             elem?.Endpoints?.Iscsi?.IpAddresses?.forEach(async ip => {
                 endPointIpWithFsxId.set(ip, fsId!);
             });
-            const deploymentType = fsxList.find(fsx => fsx?.FileSystemId === fsId)?.OntapConfiguration?.DeploymentType;
-            fsIdWithDeploymentType.set(fsId!, deploymentType!);
+            const { OntapConfiguration, SubnetIds } =
+                fsxList.find((fsx: FileSystem) => fsx?.FileSystemId === fsId) || {};
+            fsIdWithDeploymentType.set(fsId!, {
+                deploymentType: OntapConfiguration?.DeploymentType,
+                subnetIds: SubnetIds!
+            });
         });
         api1EndTime = performance.now();
         logger.info(`API1Performance: Endpoint/FSx/Deployment map creation time: ${api1EndTime - api1StartTime}ms`);
+
+        const subnetListMap = new Map(subnetList?.map(subnet => [subnet.SubnetId, subnet.AvailabilityZone]));
 
         // PS execution would take some time, so we wait for a second before triggering polling.
         //
@@ -172,7 +203,8 @@ async function getHostAndSqlServerInfo(
                         target,
                         commandId!,
                         endPointIpWithFsxId,
-                        fsIdWithDeploymentType
+                        fsIdWithDeploymentType,
+                        subnetListMap
                     );
                     const dbInfoEndTime = performance.now();
                     logger.info(
@@ -214,7 +246,8 @@ async function getHostAndSqlInfoFromPsOutput(
     ssmTarget: SsmTargetsInfo,
     commandId: string,
     endPointIpWithFsxId: Map<string, string>,
-    fsIdWithDeploymentType: Map<string, string>
+    fsIdWithDeploymentType: Map<string, DeployType>,
+    subnetListMap: Map<string | undefined, string | undefined>
 ): Promise<SqlServerInstanceInfoType[]> {
     const commandInvocationParam = {
         CommandId: commandId,
@@ -252,7 +285,7 @@ async function getHostAndSqlInfoFromPsOutput(
             if (dbInstanceInfo.sqlServerEdition >= MINIMUM_SQL_SERVER_EDITION_SUPPORTED) {
                 api1StartTime = performance.now();
                 const storageTypes = [];
-                const deploymentTypes: string[] = [];
+                const deploymentTypes = [];
                 const ebsVolumeIDs = ssmTarget.ebsVolumeIDs?.map(elem => elem?.replace('-', ''));
 
                 let driveInfo = JSON.parse(dbInstanceInfo.sqlDriveInfo);
@@ -273,7 +306,13 @@ async function getHostAndSqlInfoFromPsOutput(
                             type: STORAGE_TYPE.FSXN,
                             id: fsxId!
                         });
-                        deploymentTypes.push(fsIdWithDeploymentType.get(fsxId!)!);
+                        const { deploymentType, subnetIds } = fsIdWithDeploymentType.get(fsxId!) || {};
+
+                        deploymentTypes.push({
+                            type: deploymentType,
+                            zones: compact(subnetIds?.map(subnetId => subnetListMap.get(subnetId))),
+                            ids: subnetIds?.join()
+                        });
                     }
                 }
                 api1EndTime = performance.now();
@@ -299,8 +338,8 @@ async function getHostAndSqlInfoFromPsOutput(
                     sqlServerState,
                     sqlServerEdition,
                     windowsAuthentication,
-                    storage: [...new Set(storageTypes)],
-                    deploymentTypes: [...new Set(deploymentTypes)]
+                    storage: uniqBy(storageTypes, 'id'),
+                    deploymentTypes: uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones }))
                 });
             }
         }
