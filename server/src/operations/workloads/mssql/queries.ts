@@ -154,6 +154,9 @@ EXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft
 SELECT LEFT(@LogPath,1) AS CurrentLogDrive 
 ${FOR_JSON_PATH}`;
 
+const DATABASE_NAME_EXISTS = (databaseName: string) =>
+    `${SET_NOCOUNT} SELECT name FROM sys.databases WHERE name = '${databaseName}' ${FOR_JSON_PATH}`;
+
 export {
     DATABASES,
     DATABASES_COUNT,
@@ -178,5 +181,6 @@ export {
     PERFORMANCE_METRICS,
     SQL_BACKUPS,
     DEFAULT_SQL_DATA_DRIVE,
-    DEFAULT_SQL_LOG_DRIVE
+    DEFAULT_SQL_LOG_DRIVE,
+    DATABASE_NAME_EXISTS
 };

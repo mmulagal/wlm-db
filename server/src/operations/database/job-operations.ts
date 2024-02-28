@@ -145,7 +145,8 @@ async function getJobs(accountId: string, credentialsId: string, region: string,
         endTime,
         limit = 50,
         nextToken,
-        includeSubJobs = false
+        includeSubJobs = false,
+        resourceName
     } = filterParams;
 
     let typeFilter;
@@ -173,7 +174,8 @@ async function getJobs(accountId: string, credentialsId: string, region: string,
         startTime,
         endTime,
         limit,
-        nextToken
+        nextToken,
+        resourceName
     );
 
     const {

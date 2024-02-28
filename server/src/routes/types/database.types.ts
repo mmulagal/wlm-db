@@ -38,6 +38,7 @@ const DatabasesResponseBody = Type.Object({
         })
     )
 });
+type DatabaseResponseBodyInterface = Static<typeof DatabasesResponseBody>;
 
 const DatabaseDeleteResponseBody = Type.Object({
     message: Type.String()
@@ -88,5 +89,6 @@ export {
     DatabaseDeleteResponseBody,
     DatabaseHeaders,
     MsSqlServerDiscoveryResponse,
-    MsSqlServerDiscoverRequestBody
+    MsSqlServerDiscoverRequestBody,
+    DatabaseResponseBodyInterface
 };
