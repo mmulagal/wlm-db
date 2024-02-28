@@ -57,6 +57,7 @@ import SyntaxHighlighter from '../../../common/hooks/SyntaxHighlighter';
 import ThemeProvider from '../../../common/ThemeProvider/ThemeProvider';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useAppSelector } from '../../../store/storeHooks';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 
 type ConfigType = {
     id?: string;
@@ -557,6 +558,24 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
     };
 
+    const handleCopy = () => {
+        if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
+            dispatch(clearNotifications());
+            const element = (
+                <div>
+                    <div style={{ fontWeight: 400 }}>{GENERAL.CF_COPIED}</div>
+                    <div style={{ fontWeight: 400 }}>{GENERAL.CF_NOTICE}</div>
+                </div>
+            );
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.INFO,
+                    message: element
+                })
+            );
+        }
+    };
+
     const openDemoInfoDialog = () => {
         setDialog(
             <DialogComponent
@@ -891,7 +910,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                 children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
                                                 container={
                                                     <CopyToClipboard text={copyResponseData()}>
-                                                        <div className={styles.menuItem} id={UI_IDS.DBP_CODEBOX_COPY}>
+                                                        <div
+                                                            onClick={handleCopy}
+                                                            className={styles.menuItem}
+                                                            id={UI_IDS.DBP_CODEBOX_COPY}
+                                                        >
                                                             <Copy />
                                                         </div>
                                                     </CopyToClipboard>
@@ -921,6 +944,23 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                         handleDownloadYAML(
                                                             getRightPanelTemplateResponse(openKey)?.template,
                                                             cfDownloadName(dbName || openedItem?.name || '')
+                                                        );
+                                                        dispatch(clearNotifications());
+                                                        const element = (
+                                                            <div>
+                                                                <div style={{ fontWeight: 400 }}>
+                                                                    {GENERAL.CF_DOWNLOAD}
+                                                                </div>
+                                                                <div style={{ fontWeight: 400 }}>
+                                                                    {GENERAL.CF_NOTICE}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                        dispatch(
+                                                            addNotification({
+                                                                notificationType: NOTIFICATION_TYPES.INFO,
+                                                                message: element
+                                                            })
                                                         );
                                                     } else if (menuId === 'viewAwsCloudFormation') {
                                                         handleViewInAwsCloudFormation();
