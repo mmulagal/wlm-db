@@ -1,13 +1,4 @@
-import {
-    Table,
-    useTable,
-    Typography,
-    TableTopBar,
-    useDialog,
-    Popover,
-    Button,
-    TooltipInfo
-} from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar, useDialog, Popover, Button } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './UndetectedHosts.module.scss';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
