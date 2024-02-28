@@ -36,7 +36,8 @@ const ListJobsQueryString = Type.Object({
     endTime: Type.Optional(Type.Number()),
     limit: Type.Optional(Type.Number()),
     nextToken: Type.Optional(Type.String()),
-    includeSubJobs: Type.Optional(Type.Boolean())
+    includeSubJobs: Type.Optional(Type.Boolean()),
+    resourceName: Type.Optional(Type.String())
 });
 
 type ListJobsQueryType = Static<typeof ListJobsQueryString>;

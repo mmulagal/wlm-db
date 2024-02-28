@@ -378,6 +378,10 @@ function sqlResponseParsing(response: string) {
     }
 }
 
+function convertGiBToBytes(sizeInGiB: number) {
+    return sizeInGiB * 1024 * 1024 * 1024;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -404,5 +408,6 @@ export {
     convertMetricsIntoJson,
     getResourceNameFromTags,
     getArtifactsRegionBucketName,
-    sqlResponseParsing
+    sqlResponseParsing,
+    convertGiBToBytes
 };

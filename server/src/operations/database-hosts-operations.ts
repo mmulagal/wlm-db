@@ -54,7 +54,8 @@ import {
     getPerformanceMetrics,
     getDataBasesSummary,
     getNativeSQLBackedupDatabases,
-    callSsmExecution
+    callSsmExecution,
+    checkDatabaseExists
 } from './workloads/mssql/mssql-operations';
 import {
     getStorageDataUsingSSM,
@@ -66,12 +67,12 @@ import {
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { getSSMConnectionStatus, isSSMConnectionSuccessful } from './aws/ssm-operations';
-import { registerJob, updateJobDetails } from './database/job-operations';
+import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
 import { GET_CLUSTER_DRIVES, GET_DEFAULT_DRIVES, GET_DRIVE_INFO } from './workloads/mssql/ssm-script-utils';
 import { getResources } from './database/database-operations';
-import { sqlResponseParsing } from '../utils/utils';
+import { convertGiBToBytes, sleep, sqlResponseParsing } from '../utils/utils';
 import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
 
 const logger = getLogger();
@@ -1201,8 +1202,6 @@ async function deployDatabase(
         logFileConfig
     });
 
-    await validateTheParams(); // TODO: Validate the params
-
     const {
         items: [resourceDetail]
     } = await getResources(accountId, databaseHostId);
@@ -1220,13 +1219,30 @@ async function deployDatabase(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource  information');
     }
 
+    // check whether any jobs on the same resource running
+    const filterParams = {
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: sqlServerName as string,
+        typeFilter: JOBTYPE.CREATE_RESOURCE
+    };
+    const {
+        items: [job]
+    } = await getJobs(accountId, credentialsId, region, filterParams);
+
+    if (job) {
+        throw createError(
+            412,
+            `A database creation operation for ${sqlServerName} is already in progress with job ID ${job.id}`
+        );
+    }
+
     // create the parent job for database deployment
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: sqlServerName as string,
         name: 'Create Database',
-        startTime: new Date().valueOf(),
+        startTime: Date.now(),
         description: 'Creating database on the SQL Server with provided configuration.'
     });
 
@@ -1304,6 +1320,21 @@ async function invokeSSMForDatabaseDeployment(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
         }
 
+        await validateParams(
+            accountId,
+            resourceId,
+            credentialsId,
+            region,
+            databaseName,
+            dataFileConfig,
+            logFileConfig,
+            fileSystemId as string,
+            isClustered,
+            sqlServerName as string,
+            parentJobId,
+            activeNodeInstanceId as string
+        );
+
         const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
             credentialsId,
             region,
@@ -1331,10 +1362,10 @@ async function invokeSSMForDatabaseDeployment(
             );
             await updateJobDetails(accountId, credentialsId, region, parentJobId, {
                 status: JOBSTATUS.COMPLETED,
-                endTime: new Date().valueOf(),
+                endTime: Date.now(),
                 error: undefined
             });
-        } else if (!isDataDriveExists && !isLogDriveExists) {
+        } else {
             // New Drive selected, Will execute all the 3 scripts
             const {
                 Resources: { Igroup: iGroup, FSxDataVolumeName: fsxDataVolumeName, FSxLogVolumeName: fsxLogVolumeName }
@@ -1352,7 +1383,8 @@ async function invokeSSMForDatabaseDeployment(
                 (!isLogDriveExists).toString(),
                 (!isDataDriveExists).toString()
             );
-
+            // its required to sleep for 45 seconds so that initialization script will go through.. the ontap LUN configure can take time depending on busy system for the multiple API calls, and the disk initialize may take time to discover the created LUNs
+            await sleep(45000);
             await newDBInitialization(
                 accountId,
                 credentialsId,
@@ -1388,12 +1420,12 @@ async function invokeSSMForDatabaseDeployment(
 
             await updateJobDetails(accountId, credentialsId, region, parentJobId, {
                 status: JOBSTATUS.COMPLETED,
-                endTime: new Date().valueOf(),
+                endTime: Date.now(),
                 error: undefined
             });
         }
     } catch (err: any) {
-        logger.error('Error while creating database', err, err.data);
+        logger.error(`Error while creating database ${databaseName} in account ${accountId}`, err, err.data);
         // Clean up script will only be executed when the configure lun script is provisioned
         if (err.data && err.data?.iGroup) {
             const {
@@ -1410,13 +1442,15 @@ async function invokeSSMForDatabaseDeployment(
                 iGroup,
                 activeNodeId as string,
                 sqlServerName,
-                parentJobId
+                parentJobId,
+                databaseName,
+                isClustered
             );
         }
 
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             status: JOBSTATUS.FAILED,
-            endTime: new Date().valueOf(),
+            endTime: Date.now(),
             error: err?.message
         });
     }
@@ -1470,7 +1504,7 @@ async function createDatabase(
         name: 'Create Database',
         parentJobId,
         description: `Creating database ${databaseName} with provided data and log paths.`,
-        startTime: new Date().valueOf()
+        startTime: Date.now()
     });
 
     let status;
@@ -1503,22 +1537,19 @@ async function createDatabase(
         return parsedDBResponse;
     } catch (err: any) {
         // child job failed
-        logger.error(err);
-        errMsg = err?.message;
+        const errorMsg = `Error while creating database ${databaseName} in account ${accountId}`;
+        logger.error(errorMsg, err);
+        errMsg = `${errorMsg}  ${err?.message}`;
         status = JOBSTATUS.FAILED;
         if (!err.data) {
             err.data = { iGroup, fsxLogVolumeName, fsxDataVolumeName };
         }
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while creating database in account ${accountId} ${databaseName} ${err?.message}.`,
-            { data: err.data }
-        );
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg, { data: err.data });
     } finally {
         // child job update
         await updateJobDetails(accountId, credentialsId, region, childJobId, {
             status,
-            endTime: new Date().valueOf(),
+            endTime: Date.now(),
             ...(errMsg && { error: errMsg })
         });
     }
@@ -1571,7 +1602,7 @@ async function configureLuns(
         name: 'Configure Luns',
         parentJobId,
         description: 'Configuring volumes and LUNs on FSx for ONTAP with recommended best practices.',
-        startTime: new Date().valueOf()
+        startTime: Date.now()
     });
 
     let status;
@@ -1610,19 +1641,16 @@ async function configureLuns(
 
         return parsedLunsResponse;
     } catch (err: any) {
-        logger.error(err);
-        errMsg = err?.message;
+        const errorMsg = `Error while configuring luns in account ${accountId}`;
+        logger.error(errorMsg, err);
+        errMsg = `${errorMsg}  ${err?.message}`;
         status = JOBSTATUS.FAILED;
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while configuring luns for account ${accountId} ${err?.message}.`,
-            { data: err.data }
-        );
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg, { data: err.data });
     } finally {
         // child job failed
         await updateJobDetails(accountId, credentialsId, region, childJobId, {
             status,
-            endTime: new Date().valueOf(),
+            endTime: Date.now(),
             ...(errMsg && { error: errMsg })
         });
     }
@@ -1686,7 +1714,7 @@ async function newDBInitialization(
         name: 'New Database Initialization',
         parentJobId,
         description,
-        startTime: new Date().valueOf()
+        startTime: Date.now()
     });
 
     let status;
@@ -1722,22 +1750,19 @@ async function newDBInitialization(
         }
         return parsedDBInitializationResponse;
     } catch (err: any) {
-        logger.error(err);
-        errMsg = err?.message;
+        const errorMsg = `Error while initializing new database ${databaseName} in account ${accountId}`;
+        logger.error(errorMsg, err);
+        errMsg = `${errorMsg}  ${err?.message}`;
         status = JOBSTATUS.FAILED;
         if (!err.data) {
             err.data = { iGroup, fsxLogVolumeName, fsxDataVolumeName };
         }
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while initializing new db for account ${accountId} ${databaseName} ${err?.message}.`,
-            { data: err.data }
-        );
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg, { data: err.data });
     } finally {
         // child job failed
         await updateJobDetails(accountId, credentialsId, region, childJobId, {
             status,
-            endTime: new Date().valueOf(),
+            endTime: Date.now(),
             ...(errMsg && { error: errMsg })
         });
     }
@@ -1754,7 +1779,9 @@ async function cleanUpDatabaseDeployment(
     iGroup: string,
     activeNodeInstanceId: string,
     sqlServerName: string | null,
-    parentJobId: string
+    parentJobId: string,
+    databaseName: string,
+    isClustered: string
 ) {
     logger.info('Cleaning up the database deployment', {
         accountId,
@@ -1767,7 +1794,9 @@ async function cleanUpDatabaseDeployment(
         iGroup,
         activeNodeInstanceId,
         sqlServerName,
-        parentJobId
+        parentJobId,
+        databaseName,
+        isClustered
     });
 
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
@@ -1777,7 +1806,7 @@ async function cleanUpDatabaseDeployment(
         name: 'CLean up Database',
         parentJobId,
         description: 'Cleaning up database deployment is in progress',
-        startTime: new Date().valueOf()
+        startTime: Date.now()
     });
 
     let status;
@@ -1790,7 +1819,7 @@ async function cleanUpDatabaseDeployment(
             ];
         } else {
             cleaupCommand = [
-                `${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup}`
+                `${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered}`
             ];
         }
 
@@ -1809,22 +1838,173 @@ async function cleanUpDatabaseDeployment(
 
         return parsedCleanUpResponse;
     } catch (err: any) {
-        logger.error('Error while cleaning up database', err);
-        errMsg = err?.message;
+        const errorMsg = `Error while cleaning up database' in account ${accountId}`;
+        logger.error(errorMsg, err);
+        errMsg = `${errorMsg}  ${err?.message}`;
         status = JOBSTATUS.FAILED;
     } finally {
         // child job failed
         await updateJobDetails(accountId, credentialsId, region, childJobId, {
             status,
-            endTime: new Date().valueOf(),
+            endTime: Date.now(),
             ...(errMsg && { error: errMsg })
         });
     }
 }
 
-async function validateTheParams() {
-    logger.info('validating the params for db user creation');
-    // TODO: yet to implement
+async function validateParams(
+    accountId: string,
+    databaseHostId: string,
+    credentialsId: string,
+    region: string,
+    databaseName: string,
+    dataFileConfig: FileConfigType,
+    logFileConfig: FileConfigType,
+    fileSystemId: string,
+    isClustered: string,
+    sqlServerName: string,
+    parentJobId: string,
+    activeNodeInstanceId: string
+) {
+    logger.info('validating params for db user creation', {
+        accountId,
+        databaseHostId,
+        credentialsId,
+        region,
+        databaseName,
+        dataFileConfig,
+        logFileConfig,
+        fileSystemId,
+        sqlServerName,
+        parentJobId
+    });
+    const { drive: dataDrive, isExisting: isDataDriveExists, volumeSize: dataVolumeSize } = dataFileConfig;
+    const { drive: logDrive, isExisting: isLogDriveExists, volumeSize: logVolumeSize } = logFileConfig;
+
+    const dataGibIntoBytes = convertGiBToBytes(dataVolumeSize);
+    const logGibIntoBytes = convertGiBToBytes(logVolumeSize);
+
+    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.CREATE_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: sqlServerName as string,
+        name: 'Database Validation',
+        parentJobId,
+        description: `Validating parameters for database ${databaseName}.`,
+        startTime: Date.now()
+    });
+
+    let status;
+    let errMsg;
+
+    try {
+        await checkDatabaseExists(accountId, credentialsId, region, databaseHostId, databaseName, activeNodeInstanceId);
+
+        const { existingDriveInfo, availableDriveLetters } = await getDriveInfo(
+            accountId,
+            databaseHostId,
+            credentialsId,
+            region
+        );
+
+        // check whether the drive selection detail is right
+        await Promise.all([
+            checkDriveExists(
+                existingDriveInfo,
+                availableDriveLetters,
+                dataDrive,
+                isDataDriveExists,
+                dataGibIntoBytes,
+                isClustered,
+                'data'
+            ),
+            checkDriveExists(
+                existingDriveInfo,
+                availableDriveLetters,
+                logDrive,
+                isLogDriveExists,
+                logGibIntoBytes,
+                isClustered,
+                'log'
+            )
+        ]);
+        status = JOBSTATUS.COMPLETED;
+    } catch (error: any) {
+        const errorMsg = `Error while validating params in database ${databaseName} in account ${accountId}`;
+        logger.error(errorMsg, error);
+        errMsg = error?.message;
+        status = JOBSTATUS.FAILED;
+        throw createError(error.statusCode || 412, `${errorMsg} ${errMsg}`);
+    } finally {
+        // child job failed
+        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status,
+            endTime: Date.now(),
+            ...(errMsg && { error: errMsg })
+        });
+    }
+}
+
+async function checkDriveExists(
+    existingDriveInfo: Array<{
+        driveLetter: string;
+        availableSize: number;
+        isNetappDrive: boolean;
+        isDriveClustered?: boolean;
+    }>,
+    availableDriveLetters: Array<string>,
+    selectedDrive: string,
+    isDriveExists: boolean,
+    volumeSizeInBytes: number,
+    isClustered: string,
+    driveType: string
+) {
+    logger.info(
+        'checking whether the drive exists',
+        existingDriveInfo,
+        availableDriveLetters,
+        selectedDrive,
+        isDriveExists,
+        volumeSizeInBytes,
+        isClustered,
+        driveType
+    );
+
+    const restrictedDrives = ['A', 'B'];
+
+    if (restrictedDrives.includes(selectedDrive)) {
+        throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not allowed`);
+    }
+
+    const regex = /^[A-Z]{1}$/; // Allows only single Capital Alphabetical letter
+    if (!regex.test(selectedDrive)) {
+        throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not a valid drive`);
+    }
+
+    if (isDriveExists) {
+        const matchedExistingDrive = existingDriveInfo?.find(drive => drive.driveLetter === selectedDrive);
+        if (!matchedExistingDrive) {
+            throw createError(412, `Selected ${driveType} drive ${selectedDrive} does not exist in existing drives`);
+        }
+        if (!matchedExistingDrive.isNetappDrive) {
+            throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not a NetApp LUN`);
+        }
+        if (isClustered === 'true' && !matchedExistingDrive.isDriveClustered) {
+            throw createError(
+                412,
+                `Selected ${driveType} drive ${selectedDrive} is not part of windows cluster or not owned by SQL Role`
+            );
+        }
+        if (matchedExistingDrive.availableSize < volumeSizeInBytes) {
+            throw createError(412, `Selected ${driveType} drive ${selectedDrive} does not have enough space`);
+        }
+    } else {
+        const matchedAvailableDrive = availableDriveLetters?.includes(selectedDrive);
+        if (!matchedAvailableDrive) {
+            throw createError(412, `Selected ${driveType} drive ${selectedDrive} does not exist in available drives`);
+        }
+    }
+    return true;
 }
 
 export {

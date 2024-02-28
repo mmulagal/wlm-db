@@ -178,7 +178,9 @@ describe('Database host operations', () => {
             reqData.iGroup,
             reqData.activeNodeInstanceId,
             reqData.sqlServerName,
-            reqData.parentJobId
+            reqData.parentJobId,
+            reqData.databaseName,
+            reqData.isClustered
         );
 
         expect(resp.Status).toBe('Complete');

@@ -26,7 +26,8 @@ import {
     SERVER_INSTALL_DATE,
     PERFORMANCE_METRICS,
     SQL_BACKUPS,
-    SERVER_EDITION
+    SERVER_EDITION,
+    DATABASE_NAME_EXISTS
 } from './queries';
 import { executeSSMDocument, isSSMConnectionSuccessful } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -666,6 +667,52 @@ async function getNativeSQLBackedupDatabases(resourceId: string, activeNodeInsta
     }
 }
 
+async function checkDatabaseExists(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseName: string,
+    activeNodeInstanceId: string
+) {
+    logger.info('Checking Database name exists', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseName,
+        activeNodeInstanceId
+    });
+
+    let command;
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        command = [
+            `${PSSCRIPT} -Query "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = "tempdb18" FOR JSON PATH"'`
+        ];
+    } else {
+        command = [`${PSSCRIPT} -Query "${DATABASE_NAME_EXISTS(databaseName)}"`];
+    }
+
+    const checkDatabaseExistsResponse = await callSsmExecution(
+        credentialsId,
+        region,
+        command,
+        activeNodeInstanceId,
+        accountId,
+        false
+    );
+
+    logger.debug('checking database name exists done', checkDatabaseExistsResponse);
+
+    const parsedDatabaseExistsResponse = checkDatabaseExistsResponse
+        ? sqlResponseParsing(checkDatabaseExistsResponse)
+        : {};
+    if (parsedDatabaseExistsResponse && parsedDatabaseExistsResponse.length) {
+        throw createError(412, `Provided database ${databaseName} already exists`);
+    }
+    return parsedDatabaseExistsResponse;
+}
+
 export {
     getSqlServerDetails,
     getResourceUtilisation,
@@ -683,5 +730,6 @@ export {
     getServerState,
     getNativeSQLProtection,
     getPerformanceMetrics,
-    getNativeSQLBackedupDatabases
+    getNativeSQLBackedupDatabases,
+    checkDatabaseExists
 };

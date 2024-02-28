@@ -53,7 +53,8 @@ async function listJobs(
     startTime?: number,
     endTime?: number,
     pageSize?: number,
-    nextToken?: string
+    nextToken?: string,
+    resourceName?: string
 ) {
     logger.info('Listing jobs', {
         accountId,
@@ -68,7 +69,8 @@ async function listJobs(
         startTime,
         endTime,
         pageSize,
-        nextToken
+        nextToken,
+        resourceName
     });
 
     accountId = checkAccount(accountId);
@@ -91,6 +93,7 @@ async function listJobs(
                 }
             }),
             ...(initiator && { initiator }),
+            ...(resourceName && { resource_name: resourceName }),
             start_time: {
                 gte: new Date(startTime),
                 lte: new Date(endTime)
