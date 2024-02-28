@@ -4,12 +4,7 @@ import config from 'config';
 import { STORAGE_TYPE } from '@prisma/client';
 import { FileSystem } from '@aws-sdk/client-fsx';
 import { compact, uniqBy } from 'lodash-es';
-import {
-    DescribeInstancesCommandInput,
-    DescribeInstancesCommandOutput,
-    InstanceStateName,
-    Vpc
-} from '@aws-sdk/client-ec2';
+import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
@@ -37,7 +32,7 @@ interface SsmTargetsInfo {
     ec2InstanceName: string;
     ssmState: string;
     vpcId: string | undefined;
-    vpcName: string | undefined;
+    vpcName?: string | undefined;
     ebsVolumeIDs: (string | undefined)[] | undefined;
 }
 
@@ -76,25 +71,16 @@ async function getHostAndSqlServerInfo(
     }
 
     api1StartTime = performance.now();
-    const { Reservations, NextToken }: DescribeInstancesCommandOutput = await describeInstance(
-        credentialsId,
-        region,
-        describeInstanceParams
-    );
+    const [{ Reservations, NextToken }, vpcs] = await Promise.all([
+        describeInstance(credentialsId, region, describeInstanceParams),
+        paginatedDescribeVpcs(credentialsId, region, {})
+    ]);
+
+    const vpcNames = new Map(vpcs?.map(({ Tags, VpcId }: Vpc) => [VpcId, getResourceNameFromTags(Tags)]));
     api1EndTime = performance.now();
     logger.info(`API1Performance: Time taken by describeInstance(): ${api1EndTime - api1StartTime}ms`);
 
     const ec2instanceList = Reservations?.flatMap(reservation => reservation.Instances);
-
-    let vpcNames = new Map<string | undefined, string | undefined>();
-
-    try {
-        const vpcs = await paginatedDescribeVpcs(credentialsId, region, {});
-
-        vpcNames = new Map(vpcs?.map(({ Tags, VpcId }: Vpc) => [VpcId, getResourceNameFromTags(Tags)]));
-    } catch (error) {
-        logger.error('Failed to get VPC details. Reason:', error);
-    }
 
     const ssmTargets: SsmTargetsInfo[] = [];
     api1StartTime = performance.now();
@@ -107,8 +93,8 @@ async function getHostAndSqlServerInfo(
                 ec2InstanceName: name!,
                 ssmState: ssmStatus.Status!,
                 vpcId: ec2Instance?.VpcId,
-                vpcName: vpcNames.get(ec2Instance?.VpcId),
-                ebsVolumeIDs: ec2Instance?.BlockDeviceMappings?.map(bdm => bdm?.Ebs?.VolumeId)
+                ebsVolumeIDs: ec2Instance?.BlockDeviceMappings?.map(bdm => bdm?.Ebs?.VolumeId),
+                ...(vpcNames.has(ec2Instance?.VpcId) && { vpcName: vpcNames.get(ec2Instance?.VpcId) })
             });
         })
     );
