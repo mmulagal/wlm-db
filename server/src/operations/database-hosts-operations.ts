@@ -1029,11 +1029,18 @@ async function getDriveInfoFromNodes(
 
     if (sqlDeploymentType === 'FCI' && clusterDrivesResponse) {
         try {
-            const clusterDrivesValue = JSON.parse(clusterDrivesResponse).map((value: string) => value.replace(':', ''));
-            updatedExitingDrives = activeNodeExistingDrives.map(drive => ({
-                ...drive,
-                isDriveClustered: clusterDrivesValue.includes(drive.driveLetter)
-            }));
+            const parsedclusterDrivesResponse = sqlResponseParsing(clusterDrivesResponse);
+            updatedExitingDrives = activeNodeExistingDrives.map(drive => {
+                const matchingDrive = parsedclusterDrivesResponse.find(
+                    (parsedDrive: { driveLetter: string }) =>
+                        parsedDrive.driveLetter.replace(':', '') === drive.driveLetter
+                );
+
+                if (matchingDrive && matchingDrive.owner.includes('SQL Server')) {
+                    return { ...drive, isDriveClustered: true };
+                }
+                return drive;
+            });
         } catch (error) {
             const errorMessage = `Error while parsing cluster drive info ${activeNodeInstanceId} ${standbyNodeInstanceId}, ${error}`;
             logger.error(errorMessage);
