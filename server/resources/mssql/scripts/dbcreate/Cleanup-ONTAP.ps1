@@ -90,15 +90,33 @@ function callGetOrDeleteApi{
     [Parameter(Mandatory=$true)]
     [hashtable]$result    
     )
+    
+    $isprivatesubnet = $False
+    $certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
+    try {
+        Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
+        $isprivatesubnet = $False
+    }
+    catch {
+        $isprivatesubnet = $True    
+    }
+
     try{
-        $restcert = returncert -region $region
+
         $Params = @{
             "URI"     = "$uri"
             "Method"  = "$method"
             "Headers" = @{"Authorization" = "Basic $creds"}
             "ContentType" = "application/json"
         }
-        Invoke-RestMethod @Params -Certificate $restcert
+        
+        if ($isprivatesubnet -eq $False) {
+            $restcert = returncert -region $region
+            Invoke-RestMethod @Params -Certificate $restcert
+        }else {
+            Invoke-RestMethod @Params -SkipCertificateCheck
+        }
+        
     }catch{
     $result.Add('Status','Failed')
     $result.Add('Message','Failed to run the REST API command')

@@ -1,4 +1,4 @@
-[CmdletBinding()]
+ [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
     [string]$ResourceID,   
@@ -11,32 +11,55 @@ param(
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
 $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 
-try{
-    "Setting up Powershell Gallery to Install DSC Modules"
+$NugetFileLoc = "C:\Program Files\PackageManagement\ProviderAssemblies\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-#Register-PSRepository -Default -Verbose
-Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
 
-"Installing the needed Powershell DSC modules for this Quick Start"
-Install-Module -Name ComputerManagementDsc
-Install-Module -Name "xFailOverCluster"
-Install-Module -Name PSDscResources
-Install-Module -Name xSmbShare
-Install-Module -Name "xActiveDirectory"
-Install-Module -Name "xDnsServer"
-Install-Module -Name 'NetworkingDsc'
+try {
+     $response = Invoke-WebRequest www.google.com -UseBasicParsing 
+     $statuscode = $response.StatusCode
+}catch {
+    $statuscode = 0
+}
 
-"Disabling Windows Firewall"
-Get-NetFirewallProfile | Set-NetFirewallProfile -Enabled False
+if ($statuscode -eq 200) {
+    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+    Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+    Install-Module -Name AWS.Tools.Installer -Force
+    $sourcelocation = 'C:\Users\Administrator\Downloads\Installers'
+}
 
-"Creating Directory for DSC Public Cert"
-New-Item -Path C:\cfn\dsc\publickeys -ItemType directory
+else {
+    "Installing from packaged modules downloaded from s3"
+    Write-Output "Installing from packaged modules downloaded from s3"
+    Unblock-File -Path "C:\cfn\Installer\dependent-packages\powershell\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll"
+    Copy-Item "C:\cfn\Installer\dependent-packages\powershell\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination "C:\Program Files\PackageManagement\ProviderAssemblies" -Recurse -Force
+    $sourcelocation = 'C:\cfn\Installer\dependent-packages\powershell'
+}
 
-"Setting up DSC Certificate to Encrypt Credentials in MOF File"
-$cert = New-SelfSignedCertificate -Type DocumentEncryptionCertLegacyCsp -DnsName 'AWSLWDscEncryptCert' -HashAlgorithm SHA256
-# Exporting the public key certificate
-$cert | Export-Certificate -FilePath "C:\cfn\dsc\publickeys\AWSLWDscPublicKey.cer" -Force
+try { 
+    Import-PackageProvider -Name NuGet
+
+    "Installing the needed Powershell DSC modules for this Quick Start"
+    Register-PSRepository -Name 'Modules' -SourceLocation $sourcelocation -InstallationPolicy Trusted
+
+    Install-Module -Name ComputerManagementDsc -Repository 'Modules'
+    Install-Module -Name "xFailOverCluster" -Repository 'Modules'
+    Install-Module -Name PSDscResources -Repository 'Modules'
+    Install-Module -Name xSmbShare -Repository 'Modules'
+    Install-Module -Name "xActiveDirectory" -Repository 'Modules'
+    Install-Module -Name "xDnsServer" -Repository 'Modules'
+    Install-Module -Name 'NetworkingDsc' -Repository 'Modules'
+
+    "Disabling Windows Firewall"
+    Get-NetFirewallProfile | Set-NetFirewallProfile -Enabled False
+
+    "Creating Directory for DSC Public Cert"
+    New-Item -Path C:\cfn\dsc\publickeys -ItemType directory
+
+    "Setting up DSC Certificate to Encrypt Credentials in MOF File"
+    $cert = New-SelfSignedCertificate -Type DocumentEncryptionCertLegacyCsp -DnsName 'AWSLWDscEncryptCert' -HashAlgorithm SHA256
+    # Exporting the public key certificate
+    $cert | Export-Certificate -FilePath "C:\cfn\dsc\publickeys\AWSLWDscPublicKey.cer" -Force
 } catch {
     Write-Output "Failed to install DSC modules. PowerShell Galllery unavailable could happen due to Microsoft updating site certificate. Please retry after sometime"
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId    
@@ -44,3 +67,4 @@ $cert | Export-Certificate -FilePath "C:\cfn\dsc\publickeys\AWSLWDscPublicKey.ce
 }
 
 
+ 

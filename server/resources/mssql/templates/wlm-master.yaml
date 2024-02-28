@@ -295,6 +295,8 @@ Parameters:
   {{{CloudwatchEndpointExists}}}
 
   {{{CloudwatchLogsEndpointExists}}}
+
+  {{{FsxEndpointExists}}}
        
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -513,6 +515,8 @@ Resources:
           Ref: CloudwatchEndpointExists
         CloudwatchLogsEndpointExists:
           Ref: CloudwatchLogsEndpointExists
+        FsxEndpointExists:
+          Ref: FsxEndpointExists
       NotificationARNs:
         Fn::If:
         - IncludeNotification

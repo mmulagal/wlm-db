@@ -56,20 +56,29 @@ $nodeiqn = (Get-InitiatorPort).NodeAddress
 
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
 
-
+$isprivatesubnet = $False
 function returncert{
     param(
     [Parameter(Mandatory=$true)]
     [string]$region
     )
     $certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
-    Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
-    $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
-    return Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
-
+    try {
+        Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
+        $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
+        $content = Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
+        $private = $False
+    }
+    catch {
+        $private = $True
+        $content = ''
+    }
+    return $content, $private
 }
 
-$restcert = returncert -region $region
+$restcert, $isprivatesubnet = returncert -region $region
+
+Write-output "Private subnet $isprivatesubnet"
 
 function callGetApi{
     param(
@@ -89,7 +98,11 @@ function callGetApi{
             "Headers" = @{"Authorization" = "Basic $creds"}
             "ContentType" = "application/json"
         }
-        Invoke-RestMethod @Params -Certificate $restcert
+        if ($isprivatesubnet -eq $False) {
+            Invoke-RestMethod @Params -Certificate $restcert
+        }else {
+            Invoke-RestMethod @Params -SkipCertificateCheck
+        }
     }catch{
         $result.Add('Status','Failed')
         $result.Add('Message','REST API call to FSx for ONTAP failed')
@@ -126,7 +139,13 @@ function callrestapi{
             "Body" =  "$JsonBody"
             "ContentType" = "application/json"
         }
-        $invokerest = (Invoke-RestMethod @Params -Certificate $restcert)
+
+        if ($isprivatesubnet -eq $False) {
+            $invokerest = Invoke-RestMethod @Params -Certificate $restcert
+        }else {
+            $invokerest = Invoke-RestMethod @Params -SkipCertificateCheck
+        }
+        
     }catch{
         $result.Add('Status','Failed')
         $result.Add('Message','REST API call to FSx for ONTAP failed')
@@ -299,7 +318,11 @@ $Params = @{
 }
 try{
     $restcert = returncert -region $region
-    $modifyvol = (Invoke-RestMethod @Params -Certificate $restcert)
+    if ($isprivatesubnet -eq $False) {
+            $modifyvol = Invoke-RestMethod @Params -Certificate $restcert
+    }else {
+            $modifyvol = Invoke-RestMethod @Params -SkipCertificateCheck
+        }
 }catch{
     $result.Add('Status','Failed')
     $result.Add('Message','Volume modification to set best practise parameters failed')
@@ -390,7 +413,12 @@ foreach ($perlun in $pathlist) {
         }
         try{
         $restcert = returncert -region $region
-        $lunmodify1 = (Invoke-RestMethod @Params -Certificate $restcert)
+        if ($isprivatesubnet -eq $False) {
+            $lunmodify1 = Invoke-RestMethod @Params -Certificate $restcert
+        }else {
+            $lunmodify1 = Invoke-RestMethod @Params -SkipCertificateCheck
+        }
+        
         }
         catch{
             $result.Add('Status','Failed')
@@ -414,7 +442,11 @@ foreach ($perlun in $pathlist) {
         }
         try{
         $restcert = returncert -region $region
-        $lunmodify1 = (Invoke-RestMethod @Params -Certificate $restcert)
+        if ($isprivatesubnet -eq $False) {
+            $lunmodify1 = Invoke-RestMethod @Params -Certificate $restcert
+        }else {
+            $lunmodify1 = Invoke-RestMethod @Params -SkipCertificateCheck
+        }
         }
         catch{
             $result.Add('Status','Failed')

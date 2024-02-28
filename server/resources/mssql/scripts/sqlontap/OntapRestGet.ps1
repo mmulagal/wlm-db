@@ -24,10 +24,16 @@ $FSxPassword = $SsmParameter.fsx.password
 $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("$(${FSxUserName}):$(${FSxPassword})"))
 
 # Get region Certificateificate for FSx
+$isprivatesubnet = $False
 $FSxCertificateificateUri = "https://fsx-aws-Certificates.s3.amazonaws.com/bundle-${FSxRegion}.pem"
-Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\cfn\FSxCertificate.pem
-$Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStoreLocation Cert:\LocalMachine\Root
-$regionCertificateificate = Get-ChildItem -Path Cert:\LocalMachine\Root | ? { $_.Subject -like $Certificate.Subject }
+try {
+        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\cfn\FSxCertificate.pem
+        $Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStoreLocation Cert:\LocalMachine\Root
+        $regionCertificateificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+    }
+catch {
+        $isprivatesubnet = $True      
+    }
 
 $Ampersand = ""
 if ($OntapResourceFilter -ne "" -and $OntapResourceQuery -ne "") {
@@ -41,4 +47,8 @@ $Params = @{
     "ContentType" = "application/json"
 }
 
-Invoke-RestMethod @Params -Certificate $regionCertificateificate | ConvertTo-Json -Depth 100
+if($isprivatesubnet -eq $False) {
+        Invoke-RestMethod @Params -Certificate $regionCertificateificate | ConvertTo-Json -Depth 100
+    }else {
+        Invoke-RestMethod @Params -SkipCertificateCheck | ConvertTo-Json -Depth 100
+    }
