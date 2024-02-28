@@ -158,6 +158,10 @@ async function getDataBasesSummary(resourceId: string, activeNodeInstanceId?: st
         ({ activeNodeInstanceId } = await getActiveSqlNode(credentialsId!, region!, node1InstanceId, node2InstanceId!));
     }
 
+    if (!activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get active instance information');
+    }
+
     let dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId!);
     dbCount = dbCount?.totalCount || 0;
 
@@ -554,7 +558,7 @@ async function getServerIOLatency(resourceId: string, activeNodeInstanceId: stri
 async function isActiveSqlNode(credentialsId: string, region: string, instanceId: string) {
     logger.info('Check SQL node is active', { credentialsId, region, instanceId });
 
-    const commands = [`${PSSCRIPT} -Query "${SERVER_STATE}"`];
+    const commands = [`${PSSCRIPT} -Query "${SERVER_NAME}"`];
     try {
         await callSsmExecution(credentialsId, region, commands, instanceId);
         return true;
