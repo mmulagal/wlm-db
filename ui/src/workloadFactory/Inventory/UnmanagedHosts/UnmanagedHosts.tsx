@@ -329,7 +329,12 @@ const UnmanagedHosts = () => {
             width: '182px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
-                    <div className={styles.manageHostCol} onClick={() => manageHost(rowData)}>
+                    <div
+                        className={styles.manageHostCol}
+                        onClick={() => {
+                            //manageHost(rowData)
+                        }}
+                    >
                         {rowData?.id in manageLoading && manageLoading[rowData?.id] && (
                             <Spinner className={styles.loading} />
                         )}
