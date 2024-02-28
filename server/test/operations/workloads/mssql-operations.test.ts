@@ -85,12 +85,12 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get tables count', async () => {
-        const resp = await getTablesCount(CREDENTIALS_ID, DEFAULT_AWS_REGION, 'Aaronview', ACTIVE_INSTANCE_ID);
+        const resp = await getTablesCount(CREDENTIALS_ID, DEFAULT_AWS_REGION, 'RetailBanking', ACTIVE_INSTANCE_ID);
         expect(resp.totalCount).toEqual(7);
     });
 
     it('Get tables summary ', async () => {
-        const resp = await getTablesSummary('36E53042-04E8-40C9-AE69-26E56CB0D216', 'Aaronview');
+        const resp = await getTablesSummary('36E53042-04E8-40C9-AE69-26E56CB0D216', 'RetailBanking');
         expect(resp).toEqual(mssqlResponse.tablesSummaryResponse);
     });
 
