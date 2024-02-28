@@ -705,7 +705,7 @@ async function getActiveSqlNode(
         if (node2InstanceId) {
             connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-                isSqlNodeActive = await isActiveSqlNode(credentialsId, region, node1InstanceId);
+                isSqlNodeActive = await isActiveSqlNode(credentialsId, region, node2InstanceId);
                 if (isSqlNodeActive) {
                     return {
                         isSSMConnected: true,
