@@ -1,8 +1,8 @@
+import { isEmpty } from 'lodash-es';
 import { ContextEntry, SimulatePrincipalPolicyCommandInput } from '@aws-sdk/client-iam'; // ES Modules import
 import { getRoleDetails } from '../cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
 import simulatePrincipalPolicy from '../../lib/aws/iam';
-import { isEmpty } from 'lodash-es';
 
 const logger = getLogger();
 

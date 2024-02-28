@@ -223,26 +223,38 @@ async function createAwsCredential(
     token: string,
     arn: string,
     externalId: string,
-    credentialsName: string
+    credentialsName: string,
+    accountType: string,
+    isDemo: boolean
 ) {
-    return gotInstanceForInternalRequest
-        .post(`accounts/${accountId}/credentials/v1/aws/assume-role`, {
-            prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
-            headers: {
-                [HEADERS.AUTHORIZATION]: token,
-                [HEADERS.SIMULATOR]: 'true'
-            },
-            json: {
-                arn,
-                name: credentialsName,
-                externalId,
-                accountType: 'STANDARD',
-                metadata: { policy: { fsx: 'automate', databases: true } }
-            }
-        })
-        .json<{
-            credentialsId: string;
-        }>();
+    try {
+        return await gotInstanceForInternalRequest
+            .post(`accounts/${accountId}/credentials/v1/aws/assume-role`, {
+                prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
+                headers: {
+                    [HEADERS.AUTHORIZATION]: token,
+                    ...(isDemo && { [HEADERS.SIMULATOR]: 'true' })
+                },
+                json: {
+                    arn,
+                    name: credentialsName,
+                    externalId,
+                    accountType,
+                    metadata: {
+                        policy: {
+                            fsx: 'automate',
+                            databases: 'automate',
+                            vmware: false
+                        }
+                    }
+                }
+            })
+            .json<{
+                credentialsId: string;
+            }>();
+    } catch (error) {
+        logger.info('error creating credential', error);
+    }
 }
 
 export {
