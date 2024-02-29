@@ -79,29 +79,18 @@ if($IsClustered -ne "false") {
     }     
 }
 
-$isprivatesubnet = $False
-function returncert{
-    param(
-    [Parameter(Mandatory=$true)]
-    [string]$region
-    )
-    #Reuse cert file created by LUN configure script
-    $certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
-    try {
-        Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
-        $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
-        $content =  Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
-        $isprivatesubnet = $False
-    }
-    else{
-        $content = ''
-        $isprivatesubnet = $True
-    }
-    return $content, $isprivatesubnet
-}
-
 # Get FSx certificate
-$restcert, $isprivatesubnet = returncert -region $region
+$isprivatesubnet = $False
+$certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
+try {
+    Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
+    $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
+    $restcert = Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
+}
+catch {
+    $isprivatesubnet = $True
+    $restcert = ''
+}
 
 Write-output "Private subnet $isprivatesubnet"
 
@@ -116,7 +105,7 @@ function callGetOrDeleteApi{
     [Parameter(Mandatory=$true)]
     [string]$method,
     [Parameter(Mandatory=$true)]
-    [hashtable]$result    
+    [hashtable]$result     
     )
     
     try{

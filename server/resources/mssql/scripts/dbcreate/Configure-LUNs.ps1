@@ -69,28 +69,19 @@ $nodeiqn = (Get-InitiatorPort).NodeAddress
 
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
 
-$isprivatesubnet = $False
-function returncert{
-    param(
-    [Parameter(Mandatory=$true)]
-    [string]$region
-    )
-    $certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
-    try {
-        Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
-        $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
-        $content = Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
-        $private = $False
-    }
-    catch {
-        $private = $True
-        $content = ''
-    }
-    return $content, $private
-}
 
 # Get FSx certificate
-$restcert, $isprivatesubnet = returncert -region $region
+$isprivatesubnet = $False
+$certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
+try {
+    Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
+    $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
+    $restcert = Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
+}
+catch {
+    $isprivatesubnet = $True
+    $restcert = ''
+}
 
 Write-output "Private subnet $isprivatesubnet"
 
@@ -103,7 +94,7 @@ function callGetApi{
     [Parameter(Mandatory=$true)]
     [string]$creds,
     [Parameter(Mandatory=$true)]
-    [hashtable]$result  
+    [hashtable]$result
     )
     try{
         $Params = @{
@@ -140,7 +131,7 @@ function callrestapi{
     [Parameter(Mandatory=$true)]
     [string]$creds,
     [Parameter(Mandatory=$true)]
-    [hashtable]$result  
+    [hashtable]$result 
     )
     try{
         $resturi = "https://$MgmtDNS/api/$uri"
@@ -156,7 +147,7 @@ function callrestapi{
         if ($isprivatesubnet -eq $False) {
             $invokerest = Invoke-RestMethod @Params -Certificate $restcert
         }else {
-            $invokerest = Invoke-RestMethod @Params -SkipCertificateCheck
+            $invokerest = Invoke-RestMethod @Params 
         }
         
     }catch{
@@ -333,7 +324,7 @@ try{
     if ($isprivatesubnet -eq $False) {
             $modifyvol = Invoke-RestMethod @Params -Certificate $restcert
     }else {
-            $modifyvol = Invoke-RestMethod @Params -SkipCertificateCheck
+            $modifyvol = Invoke-RestMethod @Params 
         }
 }catch{
     $result.Add('Status','Failed')
@@ -427,7 +418,7 @@ foreach ($perlun in $pathlist) {
         if ($isprivatesubnet -eq $False) {
             $lunmodify1 = Invoke-RestMethod @Params -Certificate $restcert
         }else {
-            $lunmodify1 = Invoke-RestMethod @Params -SkipCertificateCheck
+            $lunmodify1 = Invoke-RestMethod @Params 
         }
         
         }
@@ -455,7 +446,7 @@ foreach ($perlun in $pathlist) {
         if ($isprivatesubnet -eq $False) {
             $lunmodify1 = Invoke-RestMethod @Params -Certificate $restcert
         }else {
-            $lunmodify1 = Invoke-RestMethod @Params -SkipCertificateCheck
+            $lunmodify1 = Invoke-RestMethod @Params 
         }
         }
         catch{
