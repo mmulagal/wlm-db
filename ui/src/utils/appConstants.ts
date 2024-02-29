@@ -605,7 +605,9 @@ export const GENERAL = {
     CF_DOWNLOAD: 'CloudFormation downloaded successfully.',
     CF_NOTICE: 'Notice: the YAML configuration file is available for 7 days.',
     SSM_NO_CONNECTION_MSG: 'Can’t connect to your instance. See',
-    SSM_NO_CONNECTION_LINK: 'Troubleshooting SSM agent'
+    SSM_NO_CONNECTION_LINK: 'Troubleshooting SSM agent',
+    FSX_FOR_ONTAP: 'FSx for ONTAP',
+    EBS: 'EBS'
 };
 
 export const CODE_VIEWER = {

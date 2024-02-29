@@ -10,6 +10,7 @@ import { mergeDatabaseHostsData } from '../../utils/utilityFunctions';
 import {
     setDiscoveredHosts,
     setFsxCredentialStatus,
+    setFsxIdsList,
     setUnIdentifiableHosts,
     setUnManagedHosts
 } from '../../store/workloadFactory/inventorySlice';
@@ -20,6 +21,7 @@ const InventoryApis = () => {
     const { databaseHostsData } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const { discoveredHostData } = useAppSelector(state => state.inventory.discoveredHosts);
+    const { fsxIdsList } = useAppSelector(state => state.inventory);
 
     const [hostCursor, setHostCursor] = useState(null);
     const [discoveryCursor, setDiscoveryCursor] = useState(null);
@@ -62,7 +64,11 @@ const InventoryApis = () => {
         isFetching: credentialStatusLoading,
         isError: credentialStatusError
     } = useGetFsxCredentialStatusQuery(
-        {},
+        {
+            credentialsId: headerSelectedCred?.data?.credentialsId,
+            regionId: headerSelectedRegion?.label2,
+            fsxIds: fsxIdsList.join(',')
+        },
         {
             skip: skipApiCall
         }
@@ -161,9 +167,31 @@ const InventoryApis = () => {
 
     useEffect(() => {
         if (!credentialStatusLoading) {
-            dispatch(setFsxCredentialStatus(fsxCredentialStatus));
+            let fsxCredStatusObj: any = {};
+            fsxCredentialStatus &&
+                fsxCredentialStatus.fileSystems &&
+                fsxCredentialStatus.fileSystems.map((item: any) => {
+                    fsxCredStatusObj[item.id] = item.isRegistered;
+                });
+            dispatch(setFsxCredentialStatus(fsxCredStatusObj));
         }
     }, [fsxCredentialStatus, credentialStatusLoading, credentialStatusError]);
+
+    useEffect(() => {
+        if (discoveredHostData) {
+            let fsxIds: any = [];
+            discoveredHostData.map((host: any) => {
+                if (host?.sqlServerInstances?.[0]?.storage) {
+                    host?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
+                        if (storageObj.type === 'FSXN') {
+                            fsxIds.push(storageObj.id);
+                        }
+                    });
+                }
+            });
+            dispatch(setFsxIdsList(fsxIds));
+        }
+    }, [discoveredHostData]);
 
     useEffect(() => {
         if (discoveredHostData && discoveredHostData.length) {
@@ -174,7 +202,10 @@ const InventoryApis = () => {
                 const isManaged = databaseHostsData?.find(managedHost =>
                     managedHost?.topology?.ec2Details?.find(instances => instances.id === host?.ec2InstanceId)
                 );
-                if (host.ssmState !== 'connected' || !isWindowAuthentication) {
+                const fsxCredentialValidationFailed = host?.sqlServerInstances?.[0]?.storage?.find(
+                    (item: any) => item.type === 'FSXN' && !fsxCredentialStatus[item.id]
+                );
+                if (host.ssmState !== 'connected' || !isWindowAuthentication || fsxCredentialValidationFailed) {
                     unIdentifiableHosts.push(host);
                 } else {
                     if (!isManaged) {
