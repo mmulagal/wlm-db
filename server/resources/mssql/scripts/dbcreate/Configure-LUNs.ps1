@@ -145,9 +145,9 @@ function callrestapi{
         }
 
         if ($isprivatesubnet -eq $False) {
-            $invokerest = Invoke-RestMethod @Params -Certificate $restcert
+            $invokerest = (Invoke-RestMethod @Params -Certificate $restcert)
         }else {
-            $invokerest = Invoke-RestMethod @Params 
+            $invokerest = (Invoke-RestMethod @Params) 
         }
         
     }catch{
@@ -322,9 +322,9 @@ $Params = @{
 }
 try{
     if ($isprivatesubnet -eq $False) {
-            $modifyvol = Invoke-RestMethod @Params -Certificate $restcert
+            $modifyvol = (Invoke-RestMethod @Params -Certificate $restcert)
     }else {
-            $modifyvol = Invoke-RestMethod @Params 
+            $modifyvol = (Invoke-RestMethod @Params)
         }
 }catch{
     $result.Add('Status','Failed')
@@ -416,9 +416,9 @@ foreach ($perlun in $pathlist) {
         }
         try{
         if ($isprivatesubnet -eq $False) {
-            $lunmodify1 = Invoke-RestMethod @Params -Certificate $restcert
+            $lunmodify1 = (Invoke-RestMethod @Params -Certificate $restcert)
         }else {
-            $lunmodify1 = Invoke-RestMethod @Params 
+            $lunmodify1 = (Invoke-RestMethod @Params) 
         }
         
         }
@@ -444,9 +444,9 @@ foreach ($perlun in $pathlist) {
         }
         try{
         if ($isprivatesubnet -eq $False) {
-            $lunmodify1 = Invoke-RestMethod @Params -Certificate $restcert
+            $lunmodify1 = (Invoke-RestMethod @Params -Certificate $restcert)
         }else {
-            $lunmodify1 = Invoke-RestMethod @Params 
+            $lunmodify1 = (Invoke-RestMethod @Params) 
         }
         }
         catch{
