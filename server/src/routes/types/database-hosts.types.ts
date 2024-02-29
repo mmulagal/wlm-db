@@ -180,7 +180,7 @@ type DatabasesListResponseType = Static<typeof DatabasesListResponse>;
 
 const FileConfig = Type.Object({
     fileName: Type.String(),
-    volumeSize: Type.Number(),
+    volumeSize: Type.Number({ minimum: 1 }),
     drive: Type.String({ maxLength: 1 }),
     isExisting: Type.Boolean()
 });
