@@ -45,9 +45,10 @@ export default function resourceRoutes(fastify: FastifyInstance) {
 
     server.get(`${API_PATH_RESOURCES}/managed-hosts`, { schema: GetManagedResourcesSchema }, async (request, reply) => {
         const {
-            params: { accountId, credentialsId, region }
+            params: { accountId, credentialsId, region },
+            query: { pageSize, nextToken }
         } = request;
-        const response = await getManagedResources(accountId, credentialsId, region);
+        const response = await getManagedResources(accountId, credentialsId, region, pageSize, nextToken);
         return reply.send(response);
     });
 }
