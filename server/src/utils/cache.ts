@@ -124,4 +124,11 @@ function deleteFromCache(type: string, key: string) {
     cache?.delete(key);
 }
 
-export { writeToCache, readFromCacheByKey, hasCache, deleteFromCache };
+function resetCache(type: string) {
+    logger.info('Resetting cache', type);
+
+    const cache = getCacheByType(type);
+    cache?.clear();
+}
+
+export { writeToCache, readFromCacheByKey, hasCache, deleteFromCache, resetCache };

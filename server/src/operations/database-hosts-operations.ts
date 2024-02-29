@@ -43,7 +43,8 @@ import {
     ACCOUNT_ID,
     FileSystemTypes,
     COMPLETE,
-    CUSTOM_SSM_EXECUTION_TIMEOUT
+    CUSTOM_SSM_EXECUTION_TIMEOUT,
+    SSM_COMMAND_CACHE_TYPE
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -75,6 +76,7 @@ import { GET_CLUSTER_DRIVES, GET_DEFAULT_DRIVES, GET_DRIVE_INFO } from './worklo
 import { getResources } from './database/database-operations';
 import { convertGiBToBytes, sleep, sqlResponseParsing } from '../utils/utils';
 import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
+import { resetCache } from '../utils/cache';
 
 const logger = getLogger();
 
@@ -933,7 +935,12 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
     }
 }
 
-async function getDefaultDrives(credentialsId: string, region: string, activeNodeInstanceId: string) {
+async function getDefaultDrives(
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string,
+    executionTimeout?: string
+) {
     logger.info('Getting MSSQL default data and log drives', { credentialsId, region, activeNodeInstanceId });
     const defaultDrivesCommand = [GET_DEFAULT_DRIVES];
 
@@ -943,7 +950,8 @@ async function getDefaultDrives(credentialsId: string, region: string, activeNod
         defaultDrivesCommand,
         activeNodeInstanceId,
         undefined,
-        false
+        false,
+        executionTimeout
     );
 
     const [parsedDefaultDataDrive, parsedDefaultLogDrive] = defaultDriveResponse
@@ -968,7 +976,8 @@ async function getDriveInfoFromNodes(
     region: string,
     sqlDeploymentType: string,
     activeNodeInstanceId: string,
-    standbyNodeInstanceId: string
+    standbyNodeInstanceId: string,
+    executionTimeout?: string
 ) {
     logger.info('Getting existing drives info on node', {
         credentialsId,
@@ -984,21 +993,35 @@ async function getDriveInfoFromNodes(
         driveInfoCommand,
         activeNodeInstanceId,
         undefined,
-        false
+        false,
+        executionTimeout
     );
     // Getting clustered drive letters for FCI deployments
     const clusterCommand = [GET_CLUSTER_DRIVES];
 
-    const clusterCommandPromise =
-        sqlDeploymentType === 'FCI'
-            ? callSsmExecution(credentialsId, region, clusterCommand, activeNodeInstanceId, undefined, false)
-            : Promise.resolve();
+    const clusterCommandMethod = callSsmExecution(
+        credentialsId,
+        region,
+        clusterCommand,
+        activeNodeInstanceId,
+        undefined,
+        false,
+        executionTimeout
+    );
+
+    const existingDriveMethod = callSsmExecution(
+        credentialsId,
+        region,
+        driveInfoCommand,
+        standbyNodeInstanceId!,
+        undefined,
+        false,
+        executionTimeout
+    );
+    const clusterCommandPromise = sqlDeploymentType === 'FCI' ? clusterCommandMethod : Promise.resolve();
 
     // Getting drive info of drives present on standby node to eliminate presenting existing drive letter as available drive letter
-    const existingDriveStandbyNodePromise =
-        sqlDeploymentType === 'FCI'
-            ? callSsmExecution(credentialsId, region, driveInfoCommand, standbyNodeInstanceId!, undefined, false)
-            : Promise.resolve();
+    const existingDriveStandbyNodePromise = sqlDeploymentType === 'FCI' ? existingDriveMethod : Promise.resolve();
 
     const [clusterDrivesResponse, existingDriveActiveNodeResponse, existingDriveStandbyNodeResponse] =
         await Promise.all([clusterCommandPromise, existingDriveActiveNodePromise, existingDriveStandbyNodePromise]);
@@ -1066,7 +1089,8 @@ async function getDriveInfoFromSSM(
     region: string,
     sqlDeploymentType: string,
     node1InstanceId: string,
-    node2InstanceId?: string
+    node2InstanceId?: string,
+    executionTimeout?: string
 ) {
     logger.info('Getting drive information from SSM', {
         accountId,
@@ -1090,12 +1114,6 @@ async function getDriveInfoFromSSM(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
-    if (activeNodeInstanceId !== node1InstanceId) {
-        const errorMessage = `Error while fetching drive details for ${accountId} ${databaseHostId}. Unable to connect to node ${node1InstanceId} through SSM`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-    }
-
     if (standbyNodeInstanceId) {
         const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId!);
         if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
@@ -1113,10 +1131,11 @@ async function getDriveInfoFromSSM(
                 credentialsId,
                 region,
                 sqlDeploymentType,
-                activeNodeInstanceId,
-                standbyNodeInstanceId!
+                activeNodeInstanceId as string,
+                standbyNodeInstanceId!,
+                executionTimeout
             ),
-            getDefaultDrives(credentialsId, region, activeNodeInstanceId)
+            getDefaultDrives(credentialsId, region, activeNodeInstanceId as string, executionTimeout)
         ]);
     } catch (error) {
         const errorMessage = `Unable to get drive information ${error}.`;
@@ -1130,7 +1149,8 @@ async function getDriveInfo(
     accountId: string,
     databaseHostId: string,
     credentialsId: string,
-    region: string
+    region: string,
+    executionTimeout?: string
 ): Promise<DriveInfoResponseBodyType> {
     logger.info(
         'Fetching drive details and storage capacity of the database host',
@@ -1165,7 +1185,8 @@ async function getDriveInfo(
                 region,
                 sqlDeploymentType!,
                 node1InstanceId,
-                node2InstanceId
+                node2InstanceId,
+                executionTimeout
             )
         ]);
     } catch (error) {
@@ -1373,6 +1394,8 @@ async function invokeSSMForDatabaseDeployment(
                 endTime: Date.now(),
                 error: undefined
             });
+            // clearning all the ssm command cache so that we will get the fresh data once the database is created
+            resetCache(SSM_COMMAND_CACHE_TYPE);
         } else {
             // New Drive selected, Will execute all the 3 scripts
             const {
@@ -1431,6 +1454,8 @@ async function invokeSSMForDatabaseDeployment(
                 endTime: Date.now(),
                 error: undefined
             });
+            // clearning all the ssm command cache so that we will get the fresh data once the database is created
+            resetCache(SSM_COMMAND_CACHE_TYPE);
         }
     } catch (err: any) {
         logger.error(`Error while creating database ${databaseName} in account ${accountId}`, err, err.data);
@@ -1912,7 +1937,8 @@ async function validateParams(
             accountId,
             databaseHostId,
             credentialsId,
-            region
+            region,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
         );
 
         // check whether the drive selection detail is right
