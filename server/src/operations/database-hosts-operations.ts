@@ -1311,7 +1311,7 @@ async function invokeSSMForDatabaseDeployment(
     const logVolumeSize = logFileConfig.volumeSize * 1074; // converting from GiB to MBs
 
     const dataDrivePath = `${dataDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\data\\${dataFileName}`;
-    const logDrivePath = `${logDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\data\\${logFileName}`;
+    const logDrivePath = `${logDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\log\\${logFileName}`;
 
     let sqlVirtualMachineName;
     let activeNodeId;
@@ -1536,11 +1536,9 @@ async function createDatabase(
             errMsg = parsedDBResponse.Message;
             const exception = JSON.stringify(parsedDBResponse?.Exception);
             logger.error(`Exception for create db ${parsedDBResponse.Message} ${exception}`);
-            throw createError(
-                HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                `Error while creating database in account ${accountId} ${errMsg}.`,
-                { data: { iGroup, fsxDataVolumeName, fsxLogVolumeName } }
-            );
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errMsg}.`, {
+                data: { iGroup, fsxDataVolumeName, fsxLogVolumeName }
+            });
         }
         return parsedDBResponse;
     } catch (err: any) {
@@ -1635,17 +1633,13 @@ async function configureLuns(
             errMsg = parsedLunsResponse.Message;
             const exception = JSON.stringify(parsedLunsResponse?.Exception);
             logger.error(`Exception for configure lun ${parsedLunsResponse.Message} ${exception}`);
-            throw createError(
-                HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                `Error while configuring luns for account ${accountId} ${errMsg}.`,
-                {
-                    data: {
-                        iGroup: parsedLunsResponse?.Resources?.Igroup,
-                        fsxLogVolumeName: parsedLunsResponse?.Resources?.FSxLogVolumeName,
-                        fsxDataVolumeName: parsedLunsResponse?.Resources?.FSxDataVolumeName
-                    }
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errMsg}.`, {
+                data: {
+                    iGroup: parsedLunsResponse?.Resources?.Igroup,
+                    fsxLogVolumeName: parsedLunsResponse?.Resources?.FSxLogVolumeName,
+                    fsxDataVolumeName: parsedLunsResponse?.Resources?.FSxDataVolumeName
                 }
-            );
+            });
         }
 
         return parsedLunsResponse;
@@ -1752,11 +1746,9 @@ async function newDBInitialization(
             const exception = JSON.stringify(parsedDBInitializationResponse?.Exception);
             logger.error(`Exception for db initialize  ${parsedDBInitializationResponse.Message} ${exception}`);
 
-            throw createError(
-                HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                `Error while initializing new db for account ${accountId} ${databaseName} ${errMsg}.`,
-                { data: { iGroup, fsxLogVolumeName, fsxDataVolumeName } }
-            );
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errMsg}.`, {
+                data: { iGroup, fsxLogVolumeName, fsxDataVolumeName }
+            });
         }
         return parsedDBInitializationResponse;
     } catch (err: any) {
