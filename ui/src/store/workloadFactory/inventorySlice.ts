@@ -19,7 +19,8 @@ const initialInventoryState: any = {
     },
     unManagedHosts: [],
     unIdentifiableHosts: [],
-    fsxCredentialStatus: null
+    fsxCredentialStatus: null,
+    fsxIdsList: []
 };
 
 const inventorySlice = createSlice({
@@ -65,6 +66,9 @@ const inventorySlice = createSlice({
         },
         setFsxCredentialStatus: (state, action: PayloadAction<any>) => {
             state.fsxCredentialStatus = action.payload;
+        },
+        setFsxIdsList: (state, action: PayloadAction<any>) => {
+            state.fsxIdsList = action.payload;
         }
     }
 });
@@ -82,7 +86,8 @@ export const {
     setDiscoveredHosts,
     setUnManagedHosts,
     setUnIdentifiableHosts,
-    setFsxCredentialStatus
+    setFsxCredentialStatus,
+    setFsxIdsList
 } = inventorySlice.actions;
 
 export default inventorySlice;
