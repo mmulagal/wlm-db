@@ -282,8 +282,7 @@ async function getHostAndSqlInfoFromPsOutput(
                 const deploymentTypes = [];
                 const ebsVolumeIDs = ssmTarget.ebsVolumeIDs?.map(elem => elem?.replace('-', ''));
 
-                let driveInfo = attempt(JSON.parse, dbInstanceInfo.sqlDriveInfo);
-                driveInfo = driveInfo || dbInstanceInfo.sqlDriveInfo;
+                let driveInfo = JSON.parse(dbInstanceInfo.sqlDriveInfo);
                 if (!Array.isArray(driveInfo)) {
                     driveInfo = [driveInfo];
                 }
