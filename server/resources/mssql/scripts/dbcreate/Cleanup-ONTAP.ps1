@@ -27,6 +27,19 @@ $silenttranscript = (Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Ap
 
 $ErrorActionPreference = "Stop"
 
+add-type @"
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+public class TrustAllCertsPolicy : ICertificatePolicy {
+    public bool CheckValidationResult(
+        ServicePoint srvPoint, X509Certificate certificate,
+        WebRequest request, int certificateProblem) {
+            return true;
+        }
+}
+"@
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
 $FSxCredStore  = "/netapp/wlmdb/$FileSystemId"
 $credobject =  (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
 
@@ -118,7 +131,7 @@ function callGetOrDeleteApi{
         if ($isprivatesubnet -eq $False) {
             Invoke-RestMethod @Params -Certificate $restcert
         }else {
-            Invoke-RestMethod @Params -SkipCertificateCheck
+            Invoke-RestMethod @Params
         }
         
     }catch{
