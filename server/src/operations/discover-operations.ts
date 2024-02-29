@@ -3,7 +3,7 @@ import config from 'config';
 
 import { STORAGE_TYPE } from '@prisma/client';
 import { FileSystem } from '@aws-sdk/client-fsx';
-import { compact, uniqBy } from 'lodash-es';
+import { attempt, compact, uniqBy } from 'lodash-es';
 import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
@@ -282,7 +282,8 @@ async function getHostAndSqlInfoFromPsOutput(
                 const deploymentTypes = [];
                 const ebsVolumeIDs = ssmTarget.ebsVolumeIDs?.map(elem => elem?.replace('-', ''));
 
-                let driveInfo = JSON.parse(dbInstanceInfo.sqlDriveInfo);
+                let driveInfo = attempt(JSON.parse, dbInstanceInfo.sqlDriveInfo);
+                driveInfo = driveInfo || dbInstanceInfo.sqlDriveInfo;
                 if (!Array.isArray(driveInfo)) {
                     driveInfo = [driveInfo];
                 }
