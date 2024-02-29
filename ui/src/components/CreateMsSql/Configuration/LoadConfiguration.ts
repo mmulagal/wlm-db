@@ -15,6 +15,7 @@ import { SELECT_CONFIG } from '../../../utils/appConstants';
 import { API_NAME, FROM_DIALOG } from '../../../utils/consts';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import { setIsWizardTouched, setLoadConfigClicked } from '../../../store/chatbot/chatbotSlice';
+import { removePasswordInConfig } from '../../../utils/utilityFunctions';
 
 /*
 This function is used to load config data on click on config load. 
@@ -179,7 +180,7 @@ export const SaveConfiguration = (
     const state = store.getState();
     const saveConfigName = state.mssqlForm.saveConfigName;
     const existingSavedConfig = state.msSqlAction.savedConfig;
-    const payload = { name: saveConfigName, data: state.mssqlForm };
+    const payload = { name: saveConfigName, data: removePasswordInConfig(state.mssqlForm) };
     const isDuplicate = duplicateSaveCheck(state.mssqlForm, existingSavedConfig);
     if (isDuplicate) {
         dispatch(

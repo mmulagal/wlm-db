@@ -1191,3 +1191,22 @@ export const initialColStateManagedHosts = {
         isHidden: true
     }
 };
+
+export const removePasswordInConfig = (payload: any) => {
+    if (payload?.dbCredentials?.password) {
+        payload = { ...payload, dbCredentials: { ...payload.dbCredentials,
+            password: ''
+        }};
+    }
+    if (payload?.activeDirectory?.password) {
+        payload = { ...payload, activeDirectory: { ...payload.activeDirectory,
+            password: ''
+        }};
+    }
+    if (payload?.fsxN?.fsxNPassword) {
+        payload = { ...payload, fsxN: { ...payload.fsxN,
+            fsxNPassword: ''
+        }};
+    }
+    return payload;
+};
