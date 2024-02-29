@@ -292,3 +292,7 @@ export const CREATE_RESOURCE = 'CREATE_RESOURCE'; // Job monitoring type for DB 
 
 export const SSM_TROUBLESHOOTING_LINK =
     'https://docs.aws.amazon.com/systems-manager/latest/userguide/troubleshooting-ssm-agent.html';
+
+
+export const GIB_IN_BYTE = 1073741824; // 1024 * 1024 * 1024
+export const TIB_IN_BYTE = 1099511627776; // 1024 * 1024 * 1024 * 1024
