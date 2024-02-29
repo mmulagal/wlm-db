@@ -159,7 +159,7 @@ const UndetectedHosts = () => {
     const formatUnIdentifiableData = (data: any) => {
         return data.map((item: any) => {
             return {
-                name: item?.sqlServerInstances?.[0]?.sqlServerInstance,
+                name: item?.sqlServerInstances?.[0]?.sqlServerInstance || 'N/A',
                 instance: item?.ec2InstanceName,
                 instanceID: item?.ec2InstanceId,
                 vpc: item?.vpcId,

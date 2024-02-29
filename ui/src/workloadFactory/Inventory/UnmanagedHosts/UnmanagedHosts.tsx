@@ -66,29 +66,27 @@ const UnmanagedHosts = () => {
             isSticky: true,
             accessorForTextFilter: 'databaseHostname',
             renderCell: (cellData: any, rowData: any) => {
+                const status = rowData?.sqlServerInstances?.[0]?.sqlServerState;
+                const name = rowData?.sqlServerInstances?.[0]?.sqlServerInstance;
                 return (
                     <div>
-                        <Typography variant="Semibold_14">{rowData?.name || GENERAL.NOT_AVAILABLE}</Typography>
+                        <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
                         <div className={styles.firstColText}>
-                            {rowData?.status === STATUS_CONST.UP && (
+                            {status === GENERAL.JOB_STATUS_RUNNING && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
                             )}
-                            {rowData?.status === STATUS_CONST.DOWN && (
+                            {status !== GENERAL.JOB_STATUS_RUNNING && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['down']}`}></div>
                             )}
-                            {rowData?.status === STATUS_CONST.INITIALIZING && (
-                                <div
-                                    className={`${styles.statusIcon} ${styles['circle']} ${styles['initializing']}`}
-                                ></div>
-                            )}
-                            {rowData?.status === STATUS_CONST.FAILED && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['failed']}`}></div>
-                            )}
-                            <Typography variant="Regular_13">{rowData?.status || GENERAL.NOT_AVAILABLE}</Typography>
-                            <div className={CommonStyles.separator} />
                             <Typography variant="Regular_13">
-                                {rowData?.topology?.serverType || GENERAL.NOT_AVAILABLE}
+                                {status
+                                    ? status === GENERAL.JOB_STATUS_RUNNING
+                                        ? GENERAL.DB_HOST_UP
+                                        : GENERAL.DB_HOST_DOWN
+                                    : GENERAL.NOT_AVAILABLE}
                             </Typography>
+                            <div className={CommonStyles.separator} />
+                            <Typography variant="Regular_13">{GENERAL.MSSQL}</Typography>
                         </div>
                     </div>
                 );
@@ -100,8 +98,16 @@ const UnmanagedHosts = () => {
             accessor: 'topology.fileSystemType',
             width: '200px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find((item: any) => item.type === 'FSXN');
+                const hasEbs = rowData?.sqlServerInstances?.[0]?.storage?.find((item: any) => item.type === 'EBS');
+                return hasEbs && hasFsx
+                    ? `${GENERAL.FSX_FOR_ONTAP}, ${GENERAL.EBS}`
+                    : hasEbs
+                    ? GENERAL.EBS
+                    : hasFsx
+                    ? GENERAL.FSX_FOR_ONTAP
+                    : 'N/A';
             }
         },
         {

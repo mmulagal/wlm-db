@@ -609,7 +609,11 @@ export const GENERAL = {
     CF_NOTICE: 'Notice: the YAML configuration file is available for 7 days.',
     SSM_NO_CONNECTION_MSG: 'Can’t connect to your instance. See',
     SSM_NO_CONNECTION_LINK: 'Troubleshooting SSM agent',
-    SAME_NEW_DRIVE_ERROR: 'Data and log drives should be different for new drives.'
+    SAME_NEW_DRIVE_ERROR: 'Data and log drives should be different for new drives.',
+    FSX_FOR_ONTAP: 'FSx for ONTAP',
+    EBS: 'EBS',
+    SINGLE_AZ: 'Single AZ',
+    MULTI_AZ: 'Multi AZ'
 };
 
 export const CODE_VIEWER = {

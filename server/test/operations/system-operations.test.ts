@@ -11,7 +11,7 @@ describe('System Operations', () => {
     });
 
     it.skip('Get system status - resource present', async () => {
-        //Since we are not checking status based on resources skipping the test
+        // Since we are not checking status based on resources skipping the test
         await deleteResource('account-with-resource', 'i-1a2b3c4d5e');
         await createResource('account-with-resource', {
             resourceId: 'i-1a2b3c4d5e',

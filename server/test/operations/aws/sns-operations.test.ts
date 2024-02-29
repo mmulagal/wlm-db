@@ -28,7 +28,7 @@ describe('List SNS topics', () => {
                         AWS: '*'
                     },
                     Action: ['SNS:Publish', 'SNS:Subscribe'],
-                    Resource: `arn:aws:sns:us-east-1:464262061435:wlmdb`
+                    Resource: 'arn:aws:sns:us-east-1:464262061435:wlmdb'
                 }
             ]
         };

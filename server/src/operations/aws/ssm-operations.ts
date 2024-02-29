@@ -2,7 +2,6 @@ import config from 'config';
 import ms from 'ms';
 import {
     CommandInvocationStatus,
-    ConnectionStatus,
     GetCommandInvocationCommandInput,
     GetCommandInvocationCommandOutput,
     InvocationDoesNotExist,
@@ -123,61 +122,6 @@ async function getSSMConnectionStatus(credentialId: string, region: string, inst
     });
 }
 
-async function isSSMConnectionSuccessful(
-    credentialsId: string,
-    region: string,
-    node1InstanceId: string,
-    node2InstanceId?: string,
-    resourceId?: string
-) {
-    logger.info('Check if SSM connection is a success', {
-        credentialsId,
-        region,
-        node1InstanceId,
-        node2InstanceId,
-        resourceId
-    });
-    try {
-        let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node1InstanceId);
-        const resourceError = `for resource ID ${resourceId}`;
-        // Connection to activenode is successful
-        if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-            return {
-                isSSMConnected: true,
-                activeNodeInstanceId: node1InstanceId,
-                standbyNodeInstanceId: node2InstanceId
-            };
-        }
-
-        let errorMessage = `SSM connection to node ${node1InstanceId} has failed.`;
-        errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
-        logger.error(errorMessage);
-
-        // Check for connection to standby node
-        if (node2InstanceId) {
-            connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
-            if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-                return {
-                    isSSMConnected: true,
-                    activeNodeInstanceId: node2InstanceId,
-                    standbyNodeInstanceId: node1InstanceId
-                };
-            }
-
-            errorMessage = `SSM connection to nodes ${node1InstanceId} and ${node2InstanceId} has failed.`;
-            errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
-            logger.error(errorMessage);
-        }
-    } catch (error) {
-        logger.error(
-            `Error while checking SSM connection ${credentialsId}, ${region}, ${node1InstanceId}, ${node2InstanceId} for resource ID ${resourceId}`
-        );
-        return { isSSMConnected: false };
-    }
-
-    return { isSSMConnected: false };
-}
-
 async function ssmPutParameters(credentialsId: string, region: string, credentials: SSMParamterObject[]) {
     logger.info('Put SSM parameters', { credentialsId, region });
 
@@ -196,11 +140,4 @@ async function ssmPutParameters(credentialsId: string, region: string, credentia
     );
 }
 
-export {
-    executeSSMDocument,
-    getFSxOntapRegionsList,
-    getSSMConnectionStatus,
-    isSSMConnectionSuccessful,
-    ssmPutParameters,
-    pollCommandStatus
-};
+export { executeSSMDocument, getFSxOntapRegionsList, getSSMConnectionStatus, ssmPutParameters, pollCommandStatus };

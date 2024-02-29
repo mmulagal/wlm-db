@@ -519,8 +519,8 @@ export const inventoryApi = createApi({
                 }
             }),
             getFsxCredentialStatus: builder.query({
-                query: () => ({
-                    url: `resources/file-systems/credentials-status`
+                query: ({ regionId, credentialsId, fsxIds }) => ({
+                    url: `credentials/${credentialsId}/regions/${regionId}/resources/file-systems/credentials-status?fsxids=${fsxIds}`
                 })
             }),
             getHostsDetails: builder.query({
