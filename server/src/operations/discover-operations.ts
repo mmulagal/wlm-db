@@ -31,9 +31,12 @@ interface SsmTargetsInfo {
     ec2InstanceId: string;
     ec2InstanceName: string;
     ssmState: string;
-    vpcId: string | undefined;
-    vpcName?: string | undefined;
     ebsVolumeIDs: (string | undefined)[] | undefined;
+    vpc?: {
+        id?: string;
+        name?: string;
+        cidrBlock?: string;
+    };
 }
 
 interface DeployType {
@@ -77,6 +80,8 @@ async function getHostAndSqlServerInfo(
     ]);
 
     const vpcNames = new Map(vpcs?.map(({ Tags, VpcId }: Vpc) => [VpcId, getResourceNameFromTags(Tags)]));
+    const vpcCidrs = new Map(vpcs?.map(({ CidrBlock, VpcId }: Vpc) => [VpcId, CidrBlock]));
+
     api1EndTime = performance.now();
     logger.info(`API1Performance: Time taken by describeInstance(): ${api1EndTime - api1StartTime}ms`);
 
@@ -92,9 +97,12 @@ async function getHostAndSqlServerInfo(
                 ec2InstanceId: ec2Instance?.InstanceId || '',
                 ec2InstanceName: name!,
                 ssmState: ssmStatus.Status!,
-                vpcId: ec2Instance?.VpcId,
                 ebsVolumeIDs: ec2Instance?.BlockDeviceMappings?.map(bdm => bdm?.Ebs?.VolumeId),
-                ...(vpcNames.has(ec2Instance?.VpcId) && { vpcName: vpcNames.get(ec2Instance?.VpcId) })
+                vpc: {
+                    ...(ec2Instance?.VpcId && { id: ec2Instance?.VpcId }),
+                    ...(vpcNames.has(ec2Instance?.VpcId) && { name: vpcNames.get(ec2Instance?.VpcId) }),
+                    ...(vpcCidrs.has(ec2Instance?.VpcId) && { cidrBlock: vpcCidrs.get(ec2Instance?.VpcId) })
+                }
             });
         })
     );
@@ -204,9 +212,8 @@ async function getHostAndSqlServerInfo(
                             ec2InstanceId: target.ec2InstanceId,
                             ec2InstanceName: target.ec2InstanceName,
                             ssmState: target.ssmState,
-                            vpcId: target.vpcId,
-                            vpcName: target.vpcName,
-                            sqlServerInstances: dbInfo
+                            sqlServerInstances: dbInfo,
+                            vpc: target.vpc
                         });
                     }
                 })

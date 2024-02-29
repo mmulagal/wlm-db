@@ -62,8 +62,13 @@ const DiscoverResponseInfo = Type.Object({
     ec2InstanceId: Type.String({ description: 'AWS EC2 instance ID' }),
     ec2InstanceName: Type.Optional(Type.String({ description: 'EC2 tag with key "Name".' })),
     ssmState: Type.String({ description: 'SSM connection status', enum: ['connected', 'notconnected'] }),
-    vpcId: Type.Optional(Type.String({ description: 'VPC ID' })),
-    vpcName: Type.Optional(Type.String({ description: 'VPC tag with key "Name".' })),
+    vpc: Type.Optional(
+        Type.Object({
+            id: Type.Optional(Type.String({ description: 'VPC ID' })),
+            name: Type.Optional(Type.String({ description: 'VPC tag with key "Name".' })),
+            cidrBlock: Type.Optional(Type.String({ description: 'VPC CIDR block' }))
+        })
+    ),
     sqlServerInstances: Type.Optional(Type.Array(SqlServerInstanceInfo))
 });
 
