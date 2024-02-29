@@ -999,29 +999,32 @@ async function getDriveInfoFromNodes(
     // Getting clustered drive letters for FCI deployments
     const clusterCommand = [GET_CLUSTER_DRIVES];
 
-    const clusterCommandMethod = callSsmExecution(
-        credentialsId,
-        region,
-        clusterCommand,
-        activeNodeInstanceId,
-        undefined,
-        false,
-        executionTimeout
-    );
-
-    const existingDriveMethod = callSsmExecution(
-        credentialsId,
-        region,
-        driveInfoCommand,
-        standbyNodeInstanceId!,
-        undefined,
-        false,
-        executionTimeout
-    );
-    const clusterCommandPromise = sqlDeploymentType === 'FCI' ? clusterCommandMethod : Promise.resolve();
+    const clusterCommandPromise =
+        sqlDeploymentType === 'FCI'
+            ? callSsmExecution(
+                  credentialsId,
+                  region,
+                  clusterCommand,
+                  activeNodeInstanceId,
+                  undefined,
+                  false,
+                  executionTimeout
+              )
+            : Promise.resolve();
 
     // Getting drive info of drives present on standby node to eliminate presenting existing drive letter as available drive letter
-    const existingDriveStandbyNodePromise = sqlDeploymentType === 'FCI' ? existingDriveMethod : Promise.resolve();
+    const existingDriveStandbyNodePromise =
+        sqlDeploymentType === 'FCI'
+            ? callSsmExecution(
+                  credentialsId,
+                  region,
+                  driveInfoCommand,
+                  standbyNodeInstanceId!,
+                  undefined,
+                  false,
+                  executionTimeout
+              )
+            : Promise.resolve();
 
     const [clusterDrivesResponse, existingDriveActiveNodeResponse, existingDriveStandbyNodeResponse] =
         await Promise.all([clusterCommandPromise, existingDriveActiveNodePromise, existingDriveStandbyNodePromise]);
