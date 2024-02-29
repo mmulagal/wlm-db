@@ -17,6 +17,19 @@ param(
     [string]$OntapResourceQuery
 )
 
+add-type @"
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+public class TrustAllCertsPolicy : ICertificatePolicy {
+    public bool CheckValidationResult(
+        ServicePoint srvPoint, X509Certificate certificate,
+        WebRequest request, int certificateProblem) {
+            return true;
+        }
+}
+"@
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
 $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
 $FSxUserName = $SsmParameter.fsx.username
 $FSxPassword = $SsmParameter.fsx.password
@@ -35,6 +48,8 @@ catch {
         $isprivatesubnet = $True      
     }
 
+Write-output "Private subnet $isprivatesubnet"
+
 $Ampersand = ""
 if ($OntapResourceFilter -ne "" -and $OntapResourceQuery -ne "") {
     $Ampersand = '&';
@@ -50,5 +65,5 @@ $Params = @{
 if($isprivatesubnet -eq $False) {
         Invoke-RestMethod @Params -Certificate $regionCertificateificate | ConvertTo-Json -Depth 100
     }else {
-        Invoke-RestMethod @Params -SkipCertificateCheck | ConvertTo-Json -Depth 100
+        Invoke-RestMethod @Params | ConvertTo-Json -Depth 100
     }
