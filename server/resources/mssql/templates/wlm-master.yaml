@@ -311,6 +311,7 @@ Conditions:
   IncludeNotification: !Not [Condition: ExcludeNotification]
   IsStandalone: !Equals [!Ref SQLDeploymentMode, 'standalone']
   IsFailoverCluster: !Not [Condition: IsStandalone]
+  ShouldSendSaasNotification: !Not [!Equals [!Ref "RoleCredentialsId", ""]]
 Resources:
   CredentialsSsmParameter:
     Type: AWS::SSM::Parameter
@@ -469,9 +470,9 @@ Resources:
             - ''
             - - !Ref 'AWS::StackName'
               - WLMDB_Policy_I
-
   TrackStackDeployment:
     Type: Custom::MyCustomResource
+    Condition: ShouldSendSaasNotification
     Properties:
       ServiceToken: !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb'
       AccountId: !Ref AccountId
@@ -489,10 +490,26 @@ Resources:
       FileSystemType: 'FSXN'
       DatabaseType: 'Microsoft SQL server'
       Metrics: !Ref Metrics
+  WaitConditionHandle:
+    Type: 'AWS::CloudFormation::WaitConditionHandle'
+  TrackStackDeploymentWaitConditionHandle:
+    Type: 'AWS::CloudFormation::WaitConditionHandle'
+    Condition: ShouldSendSaasNotification
+    DependsOn: TrackStackDeployment
+  TrackStackDeploymentWaitCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    Properties:
+      Handle:
+        !If
+        - ShouldSendSaasNotification
+        - !Ref TrackStackDeploymentWaitConditionHandle
+        - !Ref WaitConditionHandle
+      Timeout: '3600'
+      Count: '0'
   VpcEndpointStack:
     Type: AWS::CloudFormation::Stack
     DependsOn:
-      - TrackStackDeployment
+      - TrackStackDeploymentWaitCondition
     Properties:
       TemplateURL: {{{VpcEndpointTemplate}}}
       Parameters:
@@ -520,8 +537,14 @@ Resources:
       NotificationARNs:
         Fn::If:
         - IncludeNotification
-        - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-        - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [Ref: NotificationARN]
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - []
       {{{Tags}}}
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
@@ -565,8 +588,14 @@ Resources:
       NotificationARNs:
         Fn::If:
         - IncludeNotification
-        - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-        - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [Ref: NotificationARN]
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - []
       {{{Tags}}}
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
@@ -611,22 +640,28 @@ Resources:
       NotificationARNs:
         Fn::If:
         - IncludeNotification
-        - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-        - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [Ref: NotificationARN]
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - []
       {{{Tags}}}
   FCIWaitHandler: 
     Type: AWS::CloudFormation::WaitConditionHandle
     Condition: IsFailoverCluster
     DependsOn: 
-      - TrackStackDeployment
-      # - ValidationStack2
-      # - ValidationStack1
+      - TrackStackDeploymentWaitCondition
+      - ValidationStack2
+      - ValidationStack1
   SIWaitHandler: 
     Type: AWS::CloudFormation::WaitConditionHandle
     Condition: IsStandalone
     DependsOn: 
-      - TrackStackDeployment
-      # - ValidationStack1
+      - TrackStackDeploymentWaitCondition
+      - ValidationStack1
   WaitCondition:
     Type: AWS::CloudFormation::WaitCondition
     Properties: 
@@ -689,8 +724,14 @@ Resources:
       NotificationARNs:
         Fn::If:
         - IncludeNotification
-        - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-        - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [Ref: NotificationARN]
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - []
       {{{Tags}}}
   ExistingFSxStack:
     Type: AWS::CloudFormation::Stack
@@ -724,8 +765,14 @@ Resources:
       NotificationARNs:
         Fn::If:
         - IncludeNotification
-        - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-        - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [Ref: NotificationARN]
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - []
       {{{Tags}}}
   SQLServerStack:
     Type: AWS::CloudFormation::Stack
@@ -824,8 +871,14 @@ Resources:
       NotificationARNs:
         Fn::If:
         - IncludeNotification
-        - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-        - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [Ref: NotificationARN]
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - []
       {{{Tags}}}
   SQLStandaloneStack:
     Type: AWS::CloudFormation::Stack
@@ -910,11 +963,18 @@ Resources:
       NotificationARNs:
         Fn::If:
         - IncludeNotification
-        - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
-        - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [Ref: NotificationARN]
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - []
       {{{Tags}}}
   PostStackDeployment:
     Type: Custom::MyCustomResource
+    Condition: ShouldSendSaasNotification
     Properties:
       ServiceToken: !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb'
       AccountId: !Ref AccountId
