@@ -124,15 +124,15 @@ const UndetectedHosts = () => {
             renderCell: (cellData: any) => {
                 return (
                     <>
-                        {cellData?.vpc?.name && (
+                        {cellData?.name && (
                             <div className={styles.colText}>
                                 <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                    {cellData?.vpc?.cidrBlock}
+                                    {cellData?.cidrBlock}
                                 </TooltipInfo>
-                                <Typography variant="Regular_14">{cellData?.vpc?.name}</Typography>
+                                <Typography variant="Regular_14">{cellData?.name}</Typography>
                             </div>
                         )}
-                        {!cellData?.vpc?.name && notAvailable()}
+                        {!cellData?.name && notAvailable()}
                     </>
                 );
             }
@@ -147,11 +147,11 @@ const UndetectedHosts = () => {
                 { label: GENERAL.SINGLE_AZ, value: FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 },
                 { label: GENERAL.MULTI_AZ, value: FSX_DEPLOYMENT_MODE.MULTI_AZ_1 }
             ],
-            renderCell: (cellData: any, rowData: any) => {
-                const azList = rowData?.sqlServerInstances?.[0]?.deploymentTypes?.zones
-                    ? rowData?.sqlServerInstances?.[0]?.deploymentTypes?.zones.join(',')
+            renderCell: (cellData: any) => {
+                const azList = cellData?.[0]?.deploymentTypes?.[0]?.zones
+                    ? cellData?.[0]?.deploymentTypes?.[0]?.zones.join(',')
                     : '';
-                const deploymentType = rowData?.sqlServerInstances?.[0]?.deploymentTypes?.type;
+                const deploymentType = cellData?.[0]?.deploymentTypes?.[0]?.type;
                 return (
                     <>
                         {deploymentType && (
@@ -177,7 +177,7 @@ const UndetectedHosts = () => {
             id: '6',
             width: '246px',
             filterOptions: 'auto',
-            renderCell: (cellData: any, rowData: any) => {
+            renderCell: (cellData: any) => {
                 return (
                     <div className={styles.statusCol}>
                         <div>
@@ -221,8 +221,9 @@ const UndetectedHosts = () => {
                 name: item?.sqlServerInstances?.[0]?.sqlServerInstance || 'N/A',
                 instance: item?.ec2InstanceName,
                 instanceID: item?.ec2InstanceId,
-                vpc: item?.vpcId,
-                ssm: item?.ssmState
+                vpc: item?.vpc,
+                ssm: item?.ssmState,
+                sqlServerInstances: item?.sqlServerInstances
             };
         });
     };
