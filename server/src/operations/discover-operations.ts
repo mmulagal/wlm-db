@@ -3,7 +3,7 @@ import config from 'config';
 
 import { STORAGE_TYPE } from '@prisma/client';
 import { FileSystem } from '@aws-sdk/client-fsx';
-import { attempt, compact, uniqBy } from 'lodash-es';
+import { compact, uniqBy } from 'lodash-es';
 import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
