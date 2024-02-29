@@ -30,7 +30,7 @@ import { callSsmExecution } from '../workloads/mssql/mssql-operations';
 import { Metadata, ResourceDetails } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { getFsxArn } from '../../utils/utils';
-import { listFSXFileSystemForDemo } from '../../lib/cloud-manager/fsx-core';
+import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
 
 const logger = getLogger();
 
@@ -182,7 +182,7 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
 async function getFSXFileSystemListForDemo(credentialsId: string, region: string, vpcId: string) {
     logger.info('Get FSX file systems list for demo', { credentialsId, region, vpcId });
 
-    const items = await listFSXFileSystemForDemo(credentialsId, region);
+    const items = await listFSXFileSystem(credentialsId, region, true);
     logger.debug('file system list api response', {
         items
     });

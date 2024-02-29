@@ -48,8 +48,11 @@ const SqlServerInstanceInfo = Type.Object({
     ),
     deploymentTypes: Type.Optional(
         Type.Array(
-            Type.String({
-                description: 'Deployment type of FSx for NetApp'
+            Type.Object({
+                type: Type.Optional(Type.String({ description: 'Deployment type of FSx for NetApp' })),
+                zones: Type.Optional(
+                    Type.Array(Type.Optional(Type.String({ description: 'Availability zones of FSx for NetApp' })))
+                )
             })
         )
     )
@@ -60,6 +63,7 @@ const DiscoverResponseInfo = Type.Object({
     ec2InstanceName: Type.Optional(Type.String({ description: 'EC2 tag with key "Name".' })),
     ssmState: Type.String({ description: 'SSM connection status', enum: ['connected', 'notconnected'] }),
     vpcId: Type.Optional(Type.String({ description: 'VPC ID' })),
+    vpcName: Type.Optional(Type.String({ description: 'VPC tag with key "Name".' })),
     sqlServerInstances: Type.Optional(Type.Array(SqlServerInstanceInfo))
 });
 

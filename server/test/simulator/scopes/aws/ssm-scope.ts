@@ -96,12 +96,12 @@ const serVerParams = {
 };
 const tablesCountParams = {
     commands: [
-        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Database Aaronview -Query "SET NOCOUNT ON; SELECT COUNT(DISTINCT name) AS totalCount FROM sys.tables FOR JSON PATH"'
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Database RetailBanking -Query "SET NOCOUNT ON; SELECT COUNT(DISTINCT name) AS totalCount FROM sys.tables FOR JSON PATH"'
     ]
 };
 const tablesListParams = {
     commands: [
-        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Database Aaronview -Query "SET NOCOUNT ON; SELECT \n                        t.NAME AS tableName,\n                        t.type_desc AS tableType,\n                        s.Name AS tableSchema,\n                        SUM(a.total_pages) * 8 * 1024 AS tableSize\n                    FROM \n                        sys.tables t\n                    INNER JOIN      \n                        sys.indexes i ON t.OBJECT_ID = i.object_id\n                    INNER JOIN \n                        sys.partitions p ON i.object_id = p.OBJECT_ID AND i.index_id = p.index_id\n                    INNER JOIN \n                        sys.allocation_units a ON p.partition_id = a.container_id\n                    LEFT OUTER JOIN \n                        sys.schemas s ON t.schema_id = s.schema_id\n                    GROUP BY \n                        t.Name, s.Name, p.Rows, t.type_desc\n                    ORDER BY \n                        t.Name offset 0 rows fetch next 75 rows only FOR JSON PATH"'
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Database RetailBanking -Query "SET NOCOUNT ON; SELECT \n                        t.NAME AS tableName,\n                        t.type_desc AS tableType,\n                        s.Name AS tableSchema,\n                        SUM(a.total_pages) * 8 * 1024 AS tableSize\n                    FROM \n                        sys.tables t\n                    INNER JOIN      \n                        sys.indexes i ON t.OBJECT_ID = i.object_id\n                    INNER JOIN \n                        sys.partitions p ON i.object_id = p.OBJECT_ID AND i.index_id = p.index_id\n                    INNER JOIN \n                        sys.allocation_units a ON p.partition_id = a.container_id\n                    LEFT OUTER JOIN \n                        sys.schemas s ON t.schema_id = s.schema_id\n                    GROUP BY \n                        t.Name, s.Name, p.Rows, t.type_desc\n                    ORDER BY \n                        t.Name offset 0 rows fetch next 75 rows only FOR JSON PATH"'
     ]
 };
 const diskSizeParams = {
@@ -196,7 +196,7 @@ const getDefaultDriveLetters = {
 
 const getClusterDriveLetters = {
     commands: [
-        "\n$diskqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_Disk'\n$partqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_DiskPartition'\n\n$paths = Get-ClusterResource | Where-Object { $_.ResourceType.Name -eq 'Physical Disk' } `\n  | ForEach-Object { Get-WmiObject MSCluster_Resource -Namespace root/mscluster -Filter \"Name='$_'\" } `\n  | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($diskqry -f $_) } `\n  | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($partqry -f $_) } `\n  | Select-Object -ExpandProperty Path\n\n$paths | ConvertTo-JSON\n"
+        "\n$diskqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_Disk'\n$partqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_DiskPartition'\n\n$clusterDrivesDetail = Get-ClusterResource | Where-Object { $_.ResourceType.Name -eq 'Physical Disk' } `\n  | ForEach-Object { Get-WmiObject MSCluster_Resource -Namespace root/mscluster -Filter \"Name='$_'\" } `\n  | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($diskqry -f $_) } `\n  | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($partqry -f $_) } `\n  | Select-Object  Path, VolumeLabel\n\n$clusterDriveInfo = foreach ($clusterDriveDetails in $clusterDrivesDetail) {\n    $driveName = $clusterDriveDetails.VolumeLabel\n    $driveOwnerGroup = Get-ClusterResource | Where-Object { $_.Name -eq $driveName } | Select-Object -ExpandProperty OwnerGroup\n    $drivePath = $clusterDriveDetails.Path\n\n    [PSCustomObject]@{\n        driveLetter = $drivePath\n        owner = $driveOwnerGroup \n    }\n}\n\n$clusterDriveInfoJson = $clusterDriveInfo | Select-Object -Property driveLetter, @{Name='owner'; Expression={$_.owner.Name}} | ConvertTo-Json\nWrite-Output $clusterDriveInfoJson\n"
     ]
 };
 

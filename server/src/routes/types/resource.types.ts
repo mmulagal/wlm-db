@@ -1,5 +1,5 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
-import { AccountIdParams } from './generic.types';
+import { CredentialsIdParams } from './generic.types';
 
 const FileSystemsCredentialsStatusRequestQuery = Type.Object({
     fsxids: Type.String()
@@ -11,7 +11,7 @@ const FileSystemCredentialsStatusResponse = Type.Object({
 });
 
 const FileSystemCredentialsStatusParams = Type.Composite([
-    AccountIdParams,
+    CredentialsIdParams,
     Type.Object({ fileSystemId: Type.String({ minLength: 1 }) })
 ]);
 
