@@ -42,7 +42,8 @@ import {
     DatabaseTypes,
     ACCOUNT_ID,
     FileSystemTypes,
-    COMPLETE
+    COMPLETE,
+    CUSTOM_SSM_EXECUTION_TIMEOUT
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -1621,7 +1622,8 @@ async function configureLuns(
             configureLuncommands,
             activeNodeInstanceId,
             accountId,
-            false
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
         );
         logger.debug('Configure luns is done', configureLunresponse);
         const parsedLunsResponse = configureLunresponse ? sqlResponseParsing(configureLunresponse) : {};
@@ -1733,7 +1735,8 @@ async function newDBInitialization(
             dbInitializecommands,
             activeNodeInstanceId,
             accountId,
-            false
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
         );
         logger.debug('New DB initialize is successfully done', newDBInitializeresponse);
 
@@ -1905,6 +1908,12 @@ async function validateParams(
     let errMsg;
 
     try {
+        if (!isDataDriveExists && !isLogDriveExists) {
+            if (dataDrive === logDrive) {
+                throw createError(412, 'Data and log drives should be different for new drives');
+            }
+        }
+
         await checkDatabaseExists(accountId, credentialsId, region, databaseHostId, databaseName, activeNodeInstanceId);
 
         const { existingDriveInfo, availableDriveLetters } = await getDriveInfo(

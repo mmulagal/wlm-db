@@ -83,7 +83,8 @@ async function callSsmExecution(
     commands: Array<string>,
     activeNodeInstanceId: string,
     accountId?: string,
-    cacheData: boolean = true
+    cacheData: boolean = true,
+    executionTimeout?: string
 ) {
     logger.info('Calling SSM command execution', credentialsId, region, commands, activeNodeInstanceId);
 
@@ -100,7 +101,7 @@ async function callSsmExecution(
         Documentversion: '1',
         Parameters: {
             // DBS-1449 - Adding execution timeout in sec
-            executionTimeout: [config.get<string>('ssm.execution-timeout')],
+            executionTimeout: [executionTimeout || config.get<string>('ssm.execution-timeout')],
             commands
         }
     };

@@ -1071,6 +1071,8 @@ const ENDPOINTS_DEPLOYMENT = ['s3', 'cloudformation', 'sqs', 'ssm', 'ssmmessages
 const SSM_PARAMETERS_BASE_PATH = '/netapp/wlmdb';
 const COMPLETE = 'Complete';
 
+const CUSTOM_SSM_EXECUTION_TIMEOUT = '180';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1308,5 +1310,6 @@ export {
     SIGNED_TEMPLATES_BUCKET_NAME,
     TEMPLATE_BUCKET_REGION,
     SSM_PARAMETERS_BASE_PATH,
-    COMPLETE
+    COMPLETE,
+    CUSTOM_SSM_EXECUTION_TIMEOUT
 };
