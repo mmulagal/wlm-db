@@ -18,7 +18,7 @@ import { formatSizeRoundOff, generateOptionType } from '../../../../../utils/uti
 import styles from './FilesSize.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
-import { DRIVE_LETTER_TYPE } from '../../../../../utils/consts';
+import { DRIVE_LETTER_TYPE, GIB_IN_BYTE, TIB_IN_BYTE } from '../../../../../utils/consts';
 import AccordionError from '../../../../../common/AccordionError/AccordionError';
 
 const FilesSize = () => {
@@ -66,9 +66,9 @@ const FilesSize = () => {
         let roundOffMaxSize = (value ? formatSizeRoundOff(value) : '').split(' ');
         if (roundOffMaxSize && roundOffMaxSize.length > 1) {
             if (roundOffMaxSize[1] === 'GiB') {
-                compareMaxSize = Number(roundOffMaxSize[0]) * 1024 * 1024 * 1024;
+                compareMaxSize = Number(roundOffMaxSize[0]) * GIB_IN_BYTE;
             } else if (roundOffMaxSize[1] === 'TiB') {
-                compareMaxSize = Number(roundOffMaxSize[0]) * 1024 * 1024 * 1024 * 1024;
+                compareMaxSize = Number(roundOffMaxSize[0]) * TIB_IN_BYTE;
             } else {
                 compareMaxSize = value || 0;
             }
@@ -143,15 +143,15 @@ const FilesSize = () => {
     const errorCheckForDataSize = () => {
         let currentSize = 0;
         if (newUserDataSizeUnit?.label === 'GiB') {
-            currentSize = newUserDataSize * 1024 * 1024 * 1024;
+            currentSize = newUserDataSize * GIB_IN_BYTE;
         } else if (newUserDataSizeUnit?.label === 'TiB') {
-            currentSize = newUserDataSize * 1024 * 1024 * 1024 * 1024;
+            currentSize = newUserDataSize * TIB_IN_BYTE;
         }
 
         if (!newUserDataSize || newUserDataSize === '0') {
             dispatch(setIsDataSizeValid(false));
             return GENERAL.NO_DATA_SIZE_ERROR;
-        } else if (maxSize && maxSize < 1024 * 1024 * 1024) {
+        } else if (maxSize && maxSize < GIB_IN_BYTE) {
             dispatch(setIsDataSizeValid(false));
             return GENERAL.DATA_SIZE_MIN_ERROR;
         } else if (maxSize && (currentSize < 1 || currentSize > maxSize)) {
@@ -228,7 +228,7 @@ const FilesSize = () => {
                                     isClearable={false}
                                     info={
                                         maxSize &&
-                                        maxSize >= 1024 * 1024 * 1024 && (
+                                        maxSize >= GIB_IN_BYTE && (
                                             <div className={styles.dataSizeTooltip}>
                                                 <div>
                                                     {GENERAL.DATA_SIZE_TOOLTIP[0]}

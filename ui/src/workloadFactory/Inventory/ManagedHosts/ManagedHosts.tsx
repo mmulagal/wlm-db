@@ -33,6 +33,7 @@ const ManagedHosts = () => {
     const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
     const { managedHostInitialColumns } = useAppSelector(state => state.inventory);
+    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
@@ -61,17 +62,17 @@ const ManagedHosts = () => {
                 disabled: row?.status === STATUS_CONST.UP ? false : true
             },
             {
+                id: 'remove',
+                displayName: 'Remove',
+                disabled: row?.status === STATUS_CONST.DOWN || isDemoMode ? false : true
+            },
+            {
                 id: 'observe',
                 displayName: 'Observe',
                 disabled: true,
                 tagAdded: true,
                 tag: <ComingSoon />
             }
-            // {
-            //     id: 'remove',
-            //     displayName: 'Remove',
-            //     disabled: row?.status === STATUS_CONST.DOWN || isDemoMode ? false : true
-            // }
         ];
     };
 
