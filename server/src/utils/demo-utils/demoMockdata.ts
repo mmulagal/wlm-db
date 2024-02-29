@@ -626,7 +626,7 @@ function sqlStandaloneStackData(
     ];
 }
 
-function saveFciConfigurationData(region: string, awsAccountId: string, dbName: string) {
+function saveFciConfigurationData(region: string, awsAccountId: string, dbName: string, configName: string) {
     return {
         awsAccount: {
             selectedCredential: {
@@ -955,13 +955,13 @@ function saveFciConfigurationData(region: string, awsAccountId: string, dbName: 
                 value: ''
             }
         ],
-        saveConfigName: 'Staging deployment in us-east',
+        saveConfigName: configName,
         selectConfig: 'Easy create',
         loadConfig: 'bea41d12-95fc-4736-859b-0c9eba9acbba'
     };
 }
 
-function saveStandaloneConfigurationData(region: string, awsAccountId: string, dbName: string) {
+function saveStandaloneConfigurationData(region: string, awsAccountId: string, dbName: string, configName: string) {
     return {
         awsAccount: {
             selectedCredential: {
@@ -973,15 +973,15 @@ function saveStandaloneConfigurationData(region: string, awsAccountId: string, d
                 data: {
                     credentialsId: 'e196c608-8c0c-4d84-9762-b86f955c72d2',
                     name: 'DemoDefaultCredential',
-                    arn: `arn:aws:iam::${awsAccountId},:role/demo_role_auth06538bde070feaa7ed69bb979`,
+                    arn: `arn:aws:iam::${awsAccountId},:role/demo_role`,
                     providerAccountId: awsAccountId
                 }
             }
         },
         regionAndVpc: {
             selectedRegion: {
-                value: `${region} | ${AWS_REGIONS.get(region)!}`,
-                label: `${region} | ${AWS_REGIONS.get(region)!}`,
+                value: region,
+                label: AWS_REGIONS.get(region)!,
                 label2: '',
                 isDisabled: false,
                 disabledTitle: '',
@@ -1274,7 +1274,7 @@ function saveStandaloneConfigurationData(region: string, awsAccountId: string, d
                 value: ''
             }
         ],
-        saveConfigName: 'standalone1',
+        saveConfigName: configName,
         selectConfig: 'Standard create',
         loadConfig: ''
     };

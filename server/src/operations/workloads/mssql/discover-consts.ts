@@ -25,10 +25,9 @@
 const hostAndSqlInfoPowerShellScript = [
     `
     $ErrorActionPreference = "Stop"
-
     $body = @{}
     (Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}) | SELECT Name, State, PathName | ForEach {
-    
+        $instanceSectionStartTime = (Get-Date)
         $instance = $_.Name -Replace "MSSQL\\$", ""
         $state = $_.State
         $path = $_.PathName  -Replace "-s.*",""
@@ -72,7 +71,9 @@ const hostAndSqlInfoPowerShellScript = [
         $body['sqlServerVersion'] = $productversion
         $body['sqlServerEdition'] = $sqlversion
         $body['sqlDriveInfo'] = $sqlDriveInfo
-    
+
+        $instanceSectionEndTime = (Get-Date)
+        $body['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
         Echo $body | ConvertTo-Json
     } | ConvertFrom-Json | ConvertTo-Json
     `

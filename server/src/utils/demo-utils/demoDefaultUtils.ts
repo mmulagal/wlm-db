@@ -34,17 +34,21 @@ function createDemoResources(accountId: string, region: string, credentialsId: s
 
 async function createConfigurations(accountId: string, awsAccountId: string) {
     logger.info('Creating demo default configurations');
-    const stagingData = saveFciConfigurationData('us-east-1', awsAccountId, 'stagingDB');
-    saveConfig(accountId, 'SYSTEM', 'Staging deployment in us-east', stagingData);
+    let configName = 'Staging deployment in us-east';
+    const stagingData = saveFciConfigurationData('us-east-1', awsAccountId, 'stagingDB', configName);
+    saveConfig(accountId, 'SYSTEM', configName, stagingData);
 
-    const preprodData = saveFciConfigurationData('us-west-1', awsAccountId, 'preProdDB');
-    saveConfig(accountId, 'SYSTEM', 'Pre-prod deployment in us-west', preprodData);
+    configName = 'Pre-prod deployment in us-west';
+    const preprodData = saveFciConfigurationData('us-west-1', awsAccountId, 'preProdDB', configName);
+    saveConfig(accountId, 'SYSTEM', configName, preprodData);
 
-    const fciData = saveFciConfigurationData('us-west-1', awsAccountId, 'fciDB');
-    saveConfig(accountId, 'SYSTEM', 'MSSQL 2 nodes FCI deployment in us-east', fciData);
+    configName = 'MSSQL 2 nodes FCI deployment in us-east';
+    const fciData = saveFciConfigurationData('us-west-1', awsAccountId, 'fciDB', configName);
+    saveConfig(accountId, 'SYSTEM', configName, fciData);
 
-    const standaloneData = saveStandaloneConfigurationData('us-east-1', awsAccountId, 'standaloneDB');
-    saveConfig(accountId, 'SYSTEM', 'MSSQL Single Instance DR system deployment', standaloneData);
+    configName = 'MSSQL Single Instance DR system deployment';
+    const standaloneData = saveStandaloneConfigurationData('us-east-1', awsAccountId, 'standaloneDB', configName);
+    saveConfig(accountId, 'SYSTEM', configName, standaloneData);
 }
 
 async function creadteDemoDBData(accountId: string, credentialsList: any) {

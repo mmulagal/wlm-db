@@ -1,4 +1,4 @@
-[CmdletBinding()]
+  [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
     [string]$DBName,
@@ -21,8 +21,7 @@ param(
 $silenttranscript = (Start-Transcript -Path C:\cfn\log\NewDB_initializeiscsi.log.txt -Append)
 $ErrorActionPreference = "Stop"
 
-#Explicit wait to ensure new LUNs are available for discovery 
-Start-Sleep 20
+
 $result = [ordered]@{}
 
 #Create a list of drive letters if not passed
@@ -44,32 +43,83 @@ if (-Not $LogDrive) {
     }
 }
 
+try {
+if(($LogNew -eq "false") -And ($DataNew -eq "false")) { throw }
+elseif (($LogNew -ne "false") -And ($DataNew -ne "false")) { $count = 2}
+else {$count = 1}
+
+
+} catch {
+    $result.Add('Status','Failed')
+    $result.Add('Message','Need to define at least one new drive to configure volume and LUN')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson  
+    exit 1 
+}
 try{
-#Retrieve a list of FSx for ONTAP disks
-$disklist=Get-Disk | Where-Object{$_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline'} | Sort-Object -Property Size
+#Retrieve a list of FSx for ONTAP disks. 
+$disklist=(Get-Disk | Where-Object{$_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline'} | Sort-Object -Property Size)
+$diskcount = $disklist.Number.Count
+#Retry for 1 min until disks are available on host
+if ($diskcount -lt $count) {
+    do {
+    $disklist=(Get-Disk | Where-Object{$_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline'} | Sort-Object -Property Size)
+    $diskcount = $disklist.Number.Count
+    $retry++
+    Start-Sleep 20
+    } until (($retry -eq 4) -Or($diskcount -ge $count))
+    try {
+    if (($retry -ge 4) -And ($diskcount -lt $count)) {throw}
+    } catch {
+    $result.Add('Status','Failed')
+    $result.Add('Message','Disks created are not discoverable on host')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson  
+    exit 1        
+    }
+
+}
+#Adding Silently Continue for Set-Disk as warning caused output to have the string an API considered failure despite success
+#If warning is indeed serious the next step to initialize will fail and that will be caught
 foreach($dk in $disklist)
 {
     if(($dk).IsOffline -eq $True){
-       Set-Disk -Number ($dk).Number -IsOffline $False
+       Set-Disk -Number ($dk).Number -IsOffline $False -ErrorAction SilentlyContinue
+       Start-Sleep 2
 
     }
     if(($dk).PartitionStyle -eq 'RAW'){
         Initialize-Disk -Number ($dk).Number -PartitionStyle GPT -ErrorAction SilentlyContinue
+        Start-Sleep 2
     }
     if($dk.IsReadOnly -eq $True){
-        Set-Disk -Number ($dk).Number -IsReadOnly $False
+        Set-Disk -Number ($dk).Number -IsReadOnly $False -ErrorAction SilentlyContinue
+        Start-Sleep 2
     }
 }
 
 #Initiate, create and format volumes from the list of available FSx for ONTAP disks
 #Stopping Service to prevent format dialogs
 Stop-Service -Name ShellHWDetection
+} catch{
+    $result.Add('Status','Failed')
+    $result.Add('Message','Failed to set drive status')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson  
+    exit 1     
+} 
 
+
+try {
 $datalabel = $DBName+"-Data"
 $loglabel = $DBName+"-Log"
 
 $LogDriveLetter = $LogDrive.Substring(0,1)
 $DataDriveLetter = $DataDrive.Substring(0,1)
+
 
 if(($LogNew -ne "false") -And ($DataNew -ne "false")) {
 $logpartition = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel)
@@ -122,12 +172,12 @@ if( ($LogNew -ne "false")-And ($DataNew -ne "false")) {
     #Add  new cluster disks added to SQL Server Group    
     $datavol = $datadisk.Name
     $logvol = $logdisk.Name
-    Move-ClusterResource -Name $logvol -Group $SQLGroup
-    Move-ClusterResource -Name $datavol -Group $SQLGroup 
+    $movelog = (Move-ClusterResource -Name $logvol -Group $SQLGroup)
+    $movedata = (Move-ClusterResource -Name $datavol -Group $SQLGroup) 
 
     #Add dependency on new disks in SQL Server Resource
-    Add-ClusterResourceDependency -Resource "SQL Server" -Provider $datavol
-    Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol
+    $adddataSQL = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $datavol)
+    $addlogSQL = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol)
 
     #Rename new cluster disks to user friendly name
     (Get-ClusterResource -Name $datavol).name = $datalabel
@@ -135,10 +185,10 @@ if( ($LogNew -ne "false")-And ($DataNew -ne "false")) {
 } elseif($LogNew -ne "false") { 
     #Add  new cluster disks added to SQL Server Group    
     $logvol = $logdisk.Name
-    Move-ClusterResource -Name $logvol -Group $SQLGroup
+    $movelog = (Move-ClusterResource -Name $logvol -Group $SQLGroup)
 
     #Add dependency on new disks in SQL Server Resource
-    Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol
+    $addlog = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol)
 
     #Rename new cluster disks to user friendly name
     (Get-ClusterResource -Name $logvol).name = $loglabel
@@ -146,10 +196,10 @@ if( ($LogNew -ne "false")-And ($DataNew -ne "false")) {
 else{
     #Add  new cluster disks added to SQL Server Group    
     $datavol = $datadisk.Name
-    Move-ClusterResource -Name $datavol -Group $SQLGroup 
+    $movedata = (Move-ClusterResource -Name $datavol -Group $SQLGroup) 
 
     #Add dependency on new disks in SQL Server Resource
-    Add-ClusterResourceDependency -Resource "SQL Server" -Provider $datavol
+    $adddata= (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $datavol)
 
     #Rename new cluster disks to user friendly name
     (Get-ClusterResource -Name $datavol).name = $datalabel
@@ -168,4 +218,4 @@ else{
 $result.Add('Status','Complete')
 $result.Add('Message','Completed preparing iSCSI drives for SQL')
 $resultjson = ($result | ConvertTo-Json) 
-$resultjson  
+$resultjson 

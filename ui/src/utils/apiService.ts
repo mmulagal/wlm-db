@@ -518,6 +518,11 @@ export const inventoryApi = createApi({
                     }
                 }
             }),
+            getFsxCredentialStatus: builder.query({
+                query: () => ({
+                    url: `resources/file-systems/credentials-status`
+                })
+            }),
             getHostsDetails: builder.query({
                 query: ({ regionId, credentialsId }) => ({
                     url: `credentials/${credentialsId}/regions/${regionId}/discover/summary`
@@ -588,4 +593,5 @@ export const { useGetWlmdbPoliciesQuery } = policiesApi;
 
 export const { useGetDriveInfoQuery, useCreateUserDBMutation } = createUserDbApi;
 
-export const { useDiscoverHostsQuery, useGetHostsDetailsQuery, useManageHostMutation } = inventoryApi;
+export const { useDiscoverHostsQuery, useGetFsxCredentialStatusQuery, useGetHostsDetailsQuery, useManageHostMutation } =
+    inventoryApi;

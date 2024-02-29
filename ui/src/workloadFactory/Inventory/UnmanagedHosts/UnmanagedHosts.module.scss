@@ -7,16 +7,16 @@
         width: 182px;
         height: 32px;
         border-radius: 32px;
-        border: 1px solid var(--blue-70);
+        border: 1px solid var(--text-button-disabled);
         margin-right: 10px;
-        cursor: pointer;
+        //cursor: pointer;
 
         .textStyle {
             display: flex;
             justify-content: center;
             align-items: center;
             margin-top: 2px;
-            color: var(--blue-70);
+            color: var(--text-button-disabled);
         }
 
         .loading {
@@ -31,10 +31,10 @@
     }
 
     .manageHostCol:hover {
-        border: 1px solid var(--blue-80);
+        border: 1px solid var(--text-button-disabled);
 
         .textStyle {
-            color: var(--blue-80);
+            color: var(--text-button-disabled);
         }
     }
 

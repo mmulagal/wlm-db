@@ -23,7 +23,7 @@ param(
     [string]$Parentstackname    
 
 )
-#Requires -Modules xFailOverCluster,PSDscResources,xActiveDirectory
+#Requires -Modules xFailOverCluster,PSDscResources
 
 #get Instance ID
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
@@ -65,11 +65,9 @@ Configuration Node1ClusterConfig {
 
     Import-Module -Name PSDscResources
     Import-Module -Name xFailOverCluster
-    Import-Module -Name xActiveDirectory
 
     Import-DscResource -Module PSDscResources
     Import-DscResource -ModuleName xFailOverCluster
-    Import-DscResource -ModuleName xActiveDirectory
 
     Node 'localhost' {
 
