@@ -76,6 +76,7 @@ function returncert{
     return $content, $private
 }
 
+# Get FSx certificate
 $restcert, $isprivatesubnet = returncert -region $region
 
 Write-output "Private subnet $isprivatesubnet"
@@ -129,7 +130,6 @@ function callrestapi{
     [hashtable]$result  
     )
     try{
-        $restcert = returncert -region $region
         $resturi = "https://$MgmtDNS/api/$uri"
         $JsonBody = $Body | ConvertTo-Json
         $Params = @{
@@ -317,7 +317,6 @@ $Params = @{
     "ContentType" = "application/json"
 }
 try{
-    $restcert = returncert -region $region
     if ($isprivatesubnet -eq $False) {
             $modifyvol = Invoke-RestMethod @Params -Certificate $restcert
     }else {
@@ -412,7 +411,6 @@ foreach ($perlun in $pathlist) {
         "ContentType" = "application/json"
         }
         try{
-        $restcert = returncert -region $region
         if ($isprivatesubnet -eq $False) {
             $lunmodify1 = Invoke-RestMethod @Params -Certificate $restcert
         }else {
@@ -441,7 +439,6 @@ foreach ($perlun in $pathlist) {
         "ContentType" = "application/json"
         }
         try{
-        $restcert = returncert -region $region
         if ($isprivatesubnet -eq $False) {
             $lunmodify1 = Invoke-RestMethod @Params -Certificate $restcert
         }else {

@@ -66,16 +66,31 @@ if($IsClustered -ne "false") {
     }     
 }
 
+$isprivatesubnet = $False
 function returncert{
     param(
     [Parameter(Mandatory=$true)]
     [string]$region
     )
     #Reuse cert file created by LUN configure script
-    $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
-    return Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
-
+    $certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
+    try {
+        Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
+        $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
+        $content =  Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
+        $isprivatesubnet = $False
+    }
+    else{
+        $content = ''
+        $isprivatesubnet = $True
+    }
+    return $content, $isprivatesubnet
 }
+
+# Get FSx certificate
+$restcert, $isprivatesubnet = returncert -region $region
+
+Write-output "Private subnet $isprivatesubnet"
 
 function callGetOrDeleteApi{
     param(
@@ -91,16 +106,6 @@ function callGetOrDeleteApi{
     [hashtable]$result    
     )
     
-    $isprivatesubnet = $False
-    $certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
-    try {
-        Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
-        $isprivatesubnet = $False
-    }
-    catch {
-        $isprivatesubnet = $True    
-    }
-
     try{
 
         $Params = @{
@@ -111,7 +116,6 @@ function callGetOrDeleteApi{
         }
         
         if ($isprivatesubnet -eq $False) {
-            $restcert = returncert -region $region
             Invoke-RestMethod @Params -Certificate $restcert
         }else {
             Invoke-RestMethod @Params -SkipCertificateCheck
@@ -153,7 +157,6 @@ elseif($FSxLogVolumeName){
 $lunmapsUriDynamicPart = 'private/cli/lun/mapping'
 foreach ($lunpath in $pathlist) {
 $URI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($SQLVMName)&igroup=$($IGROUP)&path=$($lunpath)"
-$restcert = returncert -region $region
 #check if records exist before deleting
 $lunmappingdata = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET" -result $result).records
 

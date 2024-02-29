@@ -54,7 +54,6 @@ Import-PackageProvider -Name NuGet
 Register-PSRepository -Name 'AWS' -SourceLocation $sourcelocation -InstallationPolicy Trusted
 
 Install-Module -Name AWS.Tools.FSX -Force -AllowClobber -Repository 'AWS'
-Install-Module -Name AWS.Tools.SecretsManager -Force -AllowClobber -Repository 'AWS'
 Install-Module -Name AWS.Tools.EC2 -Force -AllowClobber -Repository 'AWS'
 Install-Module -Name AWS.Tools.CloudFormation -Force -AllowClobber -Repository 'AWS'
 Install-Module -Name AWS.Tools.SimpleSystemsManagement -AllowClobber -Repository 'AWS'

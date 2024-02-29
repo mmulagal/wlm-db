@@ -1,4 +1,4 @@
-#Requires -Module AWS.Tools.FSX,netapp.ontap, AWs.Tools.SecretsManager
+#Requires -Module AWS.Tools.FSX,netapp.ontap
 [CmdletBinding()]
 param(
 

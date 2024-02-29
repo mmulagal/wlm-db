@@ -1,5 +1,5 @@
    #Requires -Version 7.0
-#Requires -Module AWS.Tools.FSX,AWS.Tools.secretsmanager
+#Requires -Module AWS.Tools.FSX
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
@@ -100,6 +100,7 @@ function callGetOrDeleteApi{
     [Parameter(Mandatory=$true)]
     [string]$method,
     [Parameter(Mandatory=$true)]
+    [AllowEmptyString()]
     [string]$restcert
     )
     try{
@@ -139,6 +140,7 @@ function callrestapi{
     [Parameter(Mandatory=$true)]
     [string]$instanceId,
     [Parameter(Mandatory=$true)]
+    [AllowEmptyString()]
     [string]$restcert
     )
     try{

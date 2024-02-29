@@ -56,10 +56,10 @@ async function getWfServiceToken(): Promise<{ token: string; expiresIn: number }
         } = await gotInstanceForInternalRequest
             .post(`${WORKLOAD_FACTORY_ENDPOINT}/auth/v1/auth/token`, {
                 json: {
-                                        client_id: 'f4b33665-e96d-4615-9028-ac2a1012226d' || SECRETS.AUTH_CLIENT_ID,
-                                        client_secret: 'ddfa645c-14a6-4857-ac28-1d89d5db9921' || SECRETS.AUTH_CLIENT_SECRET,
-                                        grant_type: 'client_credentials'
-                                    }
+                    client_id: SECRETS.AUTH_CLIENT_ID,
+                    client_secret: SECRETS.AUTH_CLIENT_SECRET,
+                    grant_type: 'client_credentials'
+                }
             })
             .json<svcToken>();
         logger.debug('service token response', {

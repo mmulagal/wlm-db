@@ -619,14 +619,14 @@ Resources:
     Condition: IsFailoverCluster
     DependsOn: 
       - TrackStackDeployment
-      - ValidationStack2
-      - ValidationStack1
+      # - ValidationStack2
+      # - ValidationStack1
   SIWaitHandler: 
     Type: AWS::CloudFormation::WaitConditionHandle
     Condition: IsStandalone
     DependsOn: 
       - TrackStackDeployment
-      - ValidationStack1
+      # - ValidationStack1
   WaitCondition:
     Type: AWS::CloudFormation::WaitCondition
     Properties: 

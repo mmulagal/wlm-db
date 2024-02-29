@@ -415,7 +415,7 @@ Resources:
                             source: {{{ AmazonLaunchWizardForSSM }}}
                         C:\cfn\Installer\sqlspcu.zip:
                             source: {{{ Sqlspcu }}}
-			            C:\cfn\Installer\dependent-packages.zip:
+                        C:\cfn\Installer\dependent-packages.zip:
                             source: {{{ DependentPackages }}}
                 ScriptSignatureVerificationandExtract:
                     commands:
