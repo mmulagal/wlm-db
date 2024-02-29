@@ -607,7 +607,9 @@ export const GENERAL = {
     SSM_NO_CONNECTION_MSG: 'Can’t connect to your instance. See',
     SSM_NO_CONNECTION_LINK: 'Troubleshooting SSM agent',
     FSX_FOR_ONTAP: 'FSx for ONTAP',
-    EBS: 'EBS'
+    EBS: 'EBS',
+    SINGLE_AZ: 'Single AZ',
+    MULTI_AZ: 'Multi AZ'
 };
 
 export const CODE_VIEWER = {

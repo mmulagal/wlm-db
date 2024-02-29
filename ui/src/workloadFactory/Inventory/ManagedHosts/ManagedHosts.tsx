@@ -7,7 +7,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { WLF_TABS, STATUS_CONST } from '../../../utils/consts';
+import { WLF_TABS, STATUS_CONST, FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
@@ -20,7 +20,11 @@ import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory
 
 import { setManagedHostColState, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
-import { addInitialDBCreateData, initialCreateNewUserState, setDBHostName } from '../../../store/workloadFactory/createNewDBSlice';
+import {
+    addInitialDBCreateData,
+    initialCreateNewUserState,
+    setDBHostName
+} from '../../../store/workloadFactory/createNewDBSlice';
 
 const ManagedHosts = () => {
     const dispatch = useDispatch();
@@ -328,7 +332,9 @@ const ManagedHosts = () => {
                     <>
                         {cellData?.vpcId && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData?.vpcId}</TooltipInfo>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>
+                                    {cellData?.vpcCidr}
+                                </TooltipInfo>
                                 <Typography variant="Regular_14">{cellData?.vpcName}</Typography>
                             </div>
                         )}
@@ -340,20 +346,32 @@ const ManagedHosts = () => {
         {
             id: '10',
             Header: GENERAL.DB_HOST_AVAILABILITY,
-            accessor: 'topology',
+            accessor: 'topology.fileSystemDeploymentMode',
             isSortable: true,
             width: '212px',
-            renderCell: (cellData: any) => {
-                const azList = cellData?.availabilityZones ? cellData.availabilityZones.join(',') : '';
+            filterOptions: [
+                { label: GENERAL.SINGLE_AZ, value: FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 },
+                { label: GENERAL.MULTI_AZ, value: FSX_DEPLOYMENT_MODE.MULTI_AZ_1 }
+            ],
+            renderCell: (cellData: any, rowData: any) => {
+                const azList = rowData?.topology?.availabilityZones
+                    ? rowData?.topology?.availabilityZones.join(',')
+                    : '';
                 return (
                     <>
-                        {cellData?.fileSystemDeploymentMode && (
+                        {cellData && (
                             <div className={styles.colText}>
                                 <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
-                                <Typography variant="Regular_14">{cellData?.fileSystemDeploymentMode}</Typography>
+                                <Typography variant="Regular_14">
+                                    {cellData === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+                                        ? GENERAL.SINGLE_AZ
+                                        : cellData === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                                        ? GENERAL.MULTI_AZ
+                                        : ''}
+                                </Typography>
                             </div>
                         )}
-                        {!cellData?.fileSystemDeploymentMode && notAvailable()}
+                        {!cellData && notAvailable()}
                     </>
                 );
             }
@@ -364,6 +382,7 @@ const ManagedHosts = () => {
             accessor: 'topology.serverInstallationMode',
             isSortable: true,
             width: '212px',
+            filterOptions: 'auto',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
