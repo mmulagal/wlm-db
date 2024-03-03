@@ -389,6 +389,12 @@ const PARAMETERS = [
         description: 'Boolean to convey if a Cloudwatch Logs endpoint exists in the vpc.',
         type: 'String',
         default: 'false'
+    },
+    {
+        name: 'FsxEndpointExists',
+        description: 'Boolean to convey if a FSxN endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
     }
 ];
 

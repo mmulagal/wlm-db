@@ -20,6 +20,7 @@ Metadata:
                   - SqsEndpointExists
                   - CloudwatchEndpointExists
                   - CloudwatchLogsEndpointExists
+                  - FsxEndpointExists
         ParameterLabels:
             VPCId:
                 default: Existing VPC ID for deployment.
@@ -41,6 +42,8 @@ Metadata:
                 default: Boolean to check if a Cloudwatch endpoint exists in the vpc.
             CloudwatchLogsEndpointExists:
                 default: Boolean to check if a Cloudwatch logs endpoint exists in the vpc.
+            FsxEndpointExists:
+                default: Boolean to check if a FSxN endpoint exists in the vpc.
 
 Parameters:
     VPCId:
@@ -92,6 +95,11 @@ Parameters:
         Type: String
         Default: 'false'
 
+    FsxEndpointExists:
+        Description: Boolean to convey if a FSxN endpoint exists in the vpc.
+        Type: String
+        Default: 'false'
+
 Conditions:
     SingleZone: !Equals [!Ref StandbySubnetId, 'subnet-123456']
     CreateCloudformationEndpoint: !Equals [!Ref CloudformationEndpointExists, 'false']
@@ -100,6 +108,7 @@ Conditions:
     CreateS3Endpoint: !Equals [!Ref S3EndpointExists, 'false']
     CreateCloudwatchEndpoint: !Equals [!Ref CloudwatchEndpointExists, 'false']
     CreateCloudwatchLogsEndpoint: !Equals [!Ref CloudwatchLogsEndpointExists, 'false']
+    CreateFsxEndpoint: !Equals [!Ref FsxEndpointExists, 'false']
 
 Resources:
     HttpsSecurityGroup:
@@ -206,6 +215,19 @@ Resources:
         VpcId: !Ref VPCId
         VpcEndpointType: Interface
         ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.logs'
+        SubnetIds:
+            !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
+        PrivateDnsEnabled: true
+        SecurityGroupIds: 
+          - !Ref HttpsSecurityGroup
+
+    FsxEndpoint:
+      Condition: CreateFsxEndpoint
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        VpcId: !Ref VPCId
+        VpcEndpointType: Interface
+        ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.fsx'
         SubnetIds:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true

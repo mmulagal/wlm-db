@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import config from 'config';
 import createError from 'http-errors';
 import { gotInstanceForInternalRequest, gotInstanceForTextResponse } from '../../utils/got';
-import { ACCOUNT_ID, CLOUD_MANAGER_ENDPOINT, HEADERS, WORKSPACE_ID, SECRETS, HttpErrorCodes } from '../../utils/consts';
+import { ACCOUNT_ID, CLOUD_MANAGER_ENDPOINT, HEADERS, WORKSPACE_ID, HttpErrorCodes, SECRETS } from '../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import getLogger from '../../utils/logger';
 import { getBxpServiceToken } from './auth';
