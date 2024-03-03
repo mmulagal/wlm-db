@@ -32,10 +32,17 @@ try {
 }
 
 if ($statuscode -eq 200) {
+    #Install Nuget provider
     Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
     Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+
     Install-Module -Name AWS.Tools.Installer -Force
-    $sourcelocation = 'C:\Users\Administrator\Downloads\Installers'
+    Install-Module -Name AWS.Tools.FSX -Force -AllowClobber
+    Install-Module -Name AWS.Tools.EC2 -Force -AllowClobber
+    Install-Module -Name AWS.Tools.CloudFormation -Force -AllowClobber
+    Install-Module -Name AWS.Tools.SimpleSystemsManagement -AllowClobber
+    Install-Module -Name SqlServer -Force -AllowClobber
+    Install-Module -Name netapp.ontap
 }
 
 else {
@@ -44,21 +51,19 @@ else {
     Unblock-File -Path "C:\cfn\Installer\dependent-packages\powershell\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll"
     Copy-Item "C:\cfn\Installer\dependent-packages\powershell\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination "C:\Program Files\PackageManagement\ProviderAssemblies" -Recurse -Force
     $sourcelocation = 'C:\cfn\Installer\dependent-packages\aws'
+    try {
+        Import-PackageProvider -Name NuGet
+
+
+        Register-PSRepository -Name 'AWS' -SourceLocation $sourcelocation -InstallationPolicy Trusted
+
+        Install-Module -Name AWS.Tools.FSX -Force -AllowClobber -Repository 'AWS'
+        Install-Module -Name AWS.Tools.EC2 -Force -AllowClobber -Repository 'AWS'
+        Install-Module -Name AWS.Tools.CloudFormation -Force -AllowClobber -Repository 'AWS'
+        Install-Module -Name AWS.Tools.SimpleSystemsManagement -AllowClobber -Repository 'AWS'
+        Install-Module -Name SqlServer -Force -AllowClobber -Repository 'AWS'
+        Install-Module -Name netapp.ontap -SkipPublisherCheck -Repository 'AWS'
+        }catch {
+        Write-output $_}
 }
-
-#Install Nuget provider
-try {
-Import-PackageProvider -Name NuGet
-
-
-Register-PSRepository -Name 'AWS' -SourceLocation $sourcelocation -InstallationPolicy Trusted
-
-Install-Module -Name AWS.Tools.FSX -Force -AllowClobber -Repository 'AWS'
-Install-Module -Name AWS.Tools.EC2 -Force -AllowClobber -Repository 'AWS'
-Install-Module -Name AWS.Tools.CloudFormation -Force -AllowClobber -Repository 'AWS'
-Install-Module -Name AWS.Tools.SimpleSystemsManagement -AllowClobber -Repository 'AWS'
-Install-Module -Name SqlServer -Force -AllowClobber -Repository 'AWS'
-Install-Module -Name netapp.ontap -SkipPublisherCheck -Repository 'AWS'
-}catch {
-Write-output $_}
  

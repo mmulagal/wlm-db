@@ -19,6 +19,9 @@ try {
        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
        Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
        $sourcelocation = 'C:\Users\Administrator\Downloads\Installers'
+
+       # Install necessary PowerShell modules
+       Install-Module -Name SqlServerDsc
     }
     else {
         "Installing from packaged modules downloaded from s3"
@@ -26,12 +29,12 @@ try {
         Unblock-File -Path "C:\cfn\Installer\powershell\modules\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll"
         Copy-Item "C:\cfn\Installer\powershell\modules\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination "C:\Program Files\PackageManagement\ProviderAssemblies" -Recurse -Force
         $sourcelocation = 'C:\cfn\Installer\dependent-packages\dsc'
+
+        Register-PSRepository -Name 'DSC' -SourceLocation $sourcelocation -InstallationPolicy Trusted
+
+        # Install necessary PowerShell modules
+        Install-Module -Name SqlServerDsc -Repository 'DSC'
     }
-
-    Register-PSRepository -Name 'DSC' -SourceLocation $sourcelocation -InstallationPolicy Trusted
-
-    # Install necessary PowerShell modules
-    Install-Module -Name SqlServerDsc -Repository 'DSC'
 
     # Configure SQLAddAdmins
     $AddAdminPath = 'C:\cfn\DSC\SQLAddAdmins'
