@@ -33,7 +33,9 @@ import {
     DescribeVpcEndpointsCommandInput,
     DescribeVpcEndpointsCommand,
     paginateDescribeVpcs,
-    paginateDescribeSubnets
+    paginateDescribeSubnets,
+    ModifyVpcAttributeCommandInput,
+    ModifyVpcAttributeCommand
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -292,6 +294,18 @@ async function describeEndpoints(credentialsId: string, region: string, input: D
     }
 }
 
+async function modifyVpcAttributes(credentialsId: string, region: string, input:ModifyVpcAttributeCommandInput) {
+    logger.info('Modify vpc attibutes ', credentialsId, region, input);
+
+    const client = await getEC2Client(region);
+    const command = new ModifyVpcAttributeCommand(input);
+    const response = await client.send(command);
+    
+    logger.debug('Modify vpc attibutes response', response)
+
+    return response;
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -308,5 +322,6 @@ export {
     describeTags,
     describeEndpoints,
     paginatedDescribeVpcs,
-    paginatedDescribeSubnets
+    paginatedDescribeSubnets,
+    modifyVpcAttributes
 };

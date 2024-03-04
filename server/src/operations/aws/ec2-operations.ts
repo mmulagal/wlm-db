@@ -22,7 +22,8 @@ import {
     describeNetworkInterfaces,
     createTag,
     describeTags,
-    describeEndpoints
+    describeEndpoints,
+    modifyVpcAttributes
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
@@ -487,6 +488,17 @@ async function getServicesWithNoEndpoint(credentialsId: string, region: string, 
     return servicesWithNoEndpoint;
 }
 
+async function enableVpcDnsAttributes(credentialsId: string, region: string, vpcId: string) {
+    logger.info('Enable vpc dns attributes', credentialsId, region, vpcId);
+    
+    // <p>You cannot modify the DNS resolution and DNS hostnames attributes in the same request. Use separate requests for each attribute.</p>
+    const[dnsHostnameResponse, dnsSupportResponse] = await Promise.all([modifyVpcAttributes(credentialsId, region, {VpcId: vpcId, EnableDnsSupport:{Value: true}}),
+        modifyVpcAttributes(credentialsId, region, {VpcId: vpcId, EnableDnsHostnames:{Value: true}})])
+
+    logger.info('Enable vpc dns attributes response ', dnsHostnameResponse, dnsSupportResponse)
+
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -500,5 +512,6 @@ export {
     getVpcEndpoints,
     getVpcSecurityGroups,
     getServicesWithNoEndpoint,
-    findResourceNameFromTags
+    findResourceNameFromTags,
+    enableVpcDnsAttributes
 };
