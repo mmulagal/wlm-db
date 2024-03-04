@@ -30,6 +30,7 @@ const DatabaseVersion = () => {
     const generateDbVersions = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         versions?.map((val, idx: number) => {
+            // If win 2016 is selected than dont show 2022 SQL server in dropdown list
             if (!(osVersion?.value === GENERAL.WIN_SERVER_2016_VERSION && val.value === GENERAL.SQL_SERVER_2022_VERSION)) {
                 const option = generateOptionType(val.value, val.label, '', false, '');
                 options.push(option);
