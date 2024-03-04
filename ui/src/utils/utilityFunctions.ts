@@ -15,6 +15,7 @@ import {
     JM_DOWNLOAD,
     JOBS_REPORT,
     JOB_MONITORING_STATUS,
+    JOB_MONITORING_TYPE,
     PENDING_DELETION,
     PRODUCTION,
     RECOMMENDED_TEMPLATES,
@@ -927,6 +928,16 @@ export const jobMonitoringStatusMapping = (val: string) => {
     return statusValue;
 };
 
+export const jobMonitoringTypeMapping = (val: string) => {
+    let typeValue = val;
+    if (val === JOB_MONITORING_TYPE.DEPLOYMENT) {
+        typeValue = GENERAL.JM_TYPE_DEPLOYMENT;
+    } else if (val === JOB_MONITORING_TYPE.CREATE_RESOURCE) {
+        typeValue = GENERAL.JM_TYPE_CREATE_RESOURCE;
+    }
+    return typeValue;
+};
+
 export const downloadCsv = (data: any) => {
     const csv = 'data:text/csv;charset=utf-8,' + data;
     const excel = encodeURI(csv); //Links to CSV
@@ -966,6 +977,8 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
                     result += value.split(';href')[0] + ',';
                 } else if (key === 'status' && value) {
                     result += jobMonitoringStatusMapping(value) + ',';
+                } else if (key === 'type' && value) {
+                    result += jobMonitoringTypeMapping(value) + ',';
                 } else {
                     if (value) {
                         result += value + ',';

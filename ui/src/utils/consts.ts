@@ -149,6 +149,11 @@ export const JOB_MONITORING_STATUS = {
     COMPLETED: 'COMPLETED'
 };
 
+export const JOB_MONITORING_TYPE = {
+    DEPLOYMENT: 'DEPLOYMENT',
+    CREATE_RESOURCE: 'CREATE_RESOURCE',
+};
+
 export const MAX_SAVED_CONFIG = 100;
 
 export const WLF_TO_FORM_NAVIGATE = '../add-working-environment/database-services/mssql/create';

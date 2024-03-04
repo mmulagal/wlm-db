@@ -39,11 +39,16 @@ const License = () => {
     const customAmiId: any[] = [];
 
     useEffect(() => {
-        const newValLicense = {
-            ...selectedLicenseId,
-            label: `${selectedLicenseId?.label} | ${selectedLicenseId?.label2}`
-        };
-        selectedDefaultValue(newValLicense);
+        if (selectedLicenseId) {
+            const newValLicense = {
+                ...selectedLicenseId,
+                label: `${selectedLicenseId?.label} | ${selectedLicenseId?.label2}`
+            };
+            selectedDefaultValue(newValLicense);
+        } else {
+            selectedDefaultValue(null);
+        }
+        
     }, [selectedLicenseId]);
 
     //Function to generate the options for Select Field

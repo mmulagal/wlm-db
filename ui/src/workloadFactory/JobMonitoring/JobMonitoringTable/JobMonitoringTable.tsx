@@ -10,14 +10,15 @@ import { ReactComponent as DownloadIcon } from '../../../assets/ic_download.svg'
 import SubJobTable from '../SubJobTable/SubJobTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
-import { JM_DOWNLOAD, JOB_MONITORING_STATUS } from '../../../utils/consts';
+import { JM_DOWNLOAD, JOB_MONITORING_STATUS, JOB_MONITORING_TYPE } from '../../../utils/consts';
 import {
     collapseAllRows,
     createJobMonitorCSV,
     downloadCsv,
     expandTableRow,
     formatDateWithTime,
-    jobMonitoringStatusMapping
+    jobMonitoringStatusMapping,
+    jobMonitoringTypeMapping
 } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
@@ -301,13 +302,12 @@ const JobMonitoringTable = () => {
             Header: 'Type',
             accessor: 'type',
             width: '160px',
-            filterOptions: 'auto',
+            filterOptions: [
+                { value: JOB_MONITORING_TYPE.DEPLOYMENT, label: GENERAL.JM_TYPE_DEPLOYMENT },
+                { value: JOB_MONITORING_TYPE.CREATE_RESOURCE, label: GENERAL.JM_TYPE_CREATE_RESOURCE }
+            ],
             renderCell: (cellData: any) => {
-                if (cellData) {
-                    return cellData.charAt(0).toUpperCase() + cellData.substr(1).toLowerCase();
-                } else {
-                    return cellData;
-                }
+                return jobMonitoringTypeMapping(cellData);
             }
         },
         {

@@ -39,7 +39,7 @@ spec:
             claimName: {{ .Values.global.pvName }}
       {{ end }}
       containers:
-      - image: {{ .Values.image.registry }}:{{ .Values.infraversion }}
+      - image: {{ .Values.global.accountID }}.dkr.ecr.{{ .Values.global.region }}.amazonaws.com/wlmdb:{{ .Values.infraversion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         name: wlmdb
         envFrom:
