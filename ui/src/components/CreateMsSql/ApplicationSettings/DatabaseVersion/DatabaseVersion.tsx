@@ -17,6 +17,7 @@ const DatabaseVersion = () => {
     const getDBVersion = useAppSelector(state => state.mssqlForm.dbVersion);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
+    const osVersion = useAppSelector(state => state.mssqlForm.operatingSystem);
 
     const versions = [
         { label: GENERAL.SQL_SERVER_2016, value: GENERAL.SQL_SERVER_2016_VERSION },
@@ -29,12 +30,15 @@ const DatabaseVersion = () => {
     const generateDbVersions = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         versions?.map((val, idx: number) => {
-            const option = generateOptionType(val.value, val.label, '', false, '');
-            options.push(option);
+            // If win 2016 is selected than dont show 2022 SQL server in dropdown list
+            if (!(osVersion?.value === GENERAL.WIN_SERVER_2016_VERSION && val.value === GENERAL.SQL_SERVER_2022_VERSION)) {
+                const option = generateOptionType(val.value, val.label, '', false, '');
+                options.push(option);
+            }
         });
 
         return options;
-    }, []);
+    }, [osVersion]);
 
     useEffect(() => {
         if (!isLoadConfig && !movingFromChatbot) {
