@@ -92,8 +92,6 @@ catch {
     $restcert = ''
 }
 
-Write-output "Private subnet $isprivatesubnet"
-
 function callGetOrDeleteApi{
     param(
     [Parameter(Mandatory=$true)]
