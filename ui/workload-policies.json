@@ -125,8 +125,13 @@
             {
                 "Sid": "ArnGroup",
                 "Effect": "Allow",
-                "Action": ["cloudformation:SignalResource"],
-                "Resource": ["arn:aws:cloudformation:*:*:stack/WLMDB*", "arn:aws:logs:*:*:log-group:WLMDB*"]
+                "Action": [
+                    "cloudformation:SignalResource"
+                ],
+                "Resource": [
+                    "arn:aws:cloudformation:*:*:stack/WLMDB*", 
+                    "arn:aws:logs:*:*:log-group:WLMDB*"
+                ]
             },
             {
                 "Sid": "IAMGroup",
@@ -172,7 +177,11 @@
             {
                 "Sid": "SSMParameterStore",
                 "Effect": "Allow",
-                "Action": ["ssm:GetParameter", "ssm:GetParameters", "ssm:PutParameter"],
+                "Action": [
+                    "ssm:GetParameter", 
+                    "ssm:GetParameters", 
+                    "ssm:PutParameter"
+                ],
                 "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
             }
         ]
