@@ -643,6 +643,7 @@ const TEMPLATE_SSM_ENDPOINT = 'SsmEndpointExists';
 const TEMPLATE_SQS_ENDPOINT = 'SqsEndpointExists';
 const TEMPLATE_CLOUDWATCH_ENDPOINT = 'CloudwatchEndpointExists';
 const TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT = 'CloudwatchLogsEndpointExists';
+const TEMPLATE_FSX_ENDPOINT = 'FsxEndpointExists';
 
 const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
     s3: TEMPLATE_S3_ENDPOINT,
@@ -650,7 +651,8 @@ const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
     ssm: TEMPLATE_SSM_ENDPOINT,
     sqs: TEMPLATE_SQS_ENDPOINT,
     monitoring: TEMPLATE_CLOUDWATCH_ENDPOINT,
-    logs: TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT
+    logs: TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT,
+    fsx: TEMPLATE_FSX_ENDPOINT
 };
 
 const SQL_RESOURCE_ASSETS = [
@@ -761,6 +763,10 @@ const SQL_RESOURCE_ASSETS = [
     {
         name: 'ScriptFSxValidation',
         url: `${WLMDB}/validation/Validate-FsxConnectivity.ps1`
+    },
+    {
+        name: 'DependentPackages',
+        url: `${WLMDB}/Installer/dependent-packages.zip`
     }
 ];
 
@@ -1071,6 +1077,8 @@ const ENDPOINTS_DEPLOYMENT = ['s3', 'cloudformation', 'sqs', 'ssm', 'ssmmessages
 const SSM_PARAMETERS_BASE_PATH = '/netapp/wlmdb';
 const COMPLETE = 'Complete';
 
+const CUSTOM_SSM_EXECUTION_TIMEOUT = '180';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1308,5 +1316,6 @@ export {
     SIGNED_TEMPLATES_BUCKET_NAME,
     TEMPLATE_BUCKET_REGION,
     SSM_PARAMETERS_BASE_PATH,
-    COMPLETE
+    COMPLETE,
+    CUSTOM_SSM_EXECUTION_TIMEOUT
 };

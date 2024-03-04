@@ -27,6 +27,19 @@ $silenttranscript = (Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Ap
 
 $ErrorActionPreference = "Stop"
 
+add-type @"
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+public class TrustAllCertsPolicy : ICertificatePolicy {
+    public bool CheckValidationResult(
+        ServicePoint srvPoint, X509Certificate certificate,
+        WebRequest request, int certificateProblem) {
+            return true;
+        }
+}
+"@
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
 $FSxCredStore  = "/netapp/wlmdb/$FileSystemId"
 $credobject =  (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
 
@@ -66,16 +79,20 @@ if($IsClustered -ne "false") {
     }     
 }
 
-function returncert{
-    param(
-    [Parameter(Mandatory=$true)]
-    [string]$region
-    )
-    #Reuse cert file created by LUN configure script
+# Get FSx certificate
+$isprivatesubnet = $False
+$certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
+try {
+    Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
     $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
-    return Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
-
+    $restcert = Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
 }
+catch {
+    $isprivatesubnet = $True
+    $restcert = ''
+}
+
+Write-output "Private subnet $isprivatesubnet"
 
 function callGetOrDeleteApi{
     param(
@@ -88,17 +105,24 @@ function callGetOrDeleteApi{
     [Parameter(Mandatory=$true)]
     [string]$method,
     [Parameter(Mandatory=$true)]
-    [hashtable]$result    
+    [hashtable]$result     
     )
+    
     try{
-        $restcert = returncert -region $region
+
         $Params = @{
             "URI"     = "$uri"
             "Method"  = "$method"
             "Headers" = @{"Authorization" = "Basic $creds"}
             "ContentType" = "application/json"
         }
-        Invoke-RestMethod @Params -Certificate $restcert
+        
+        if ($isprivatesubnet -eq $False) {
+            Invoke-RestMethod @Params -Certificate $restcert
+        }else {
+            Invoke-RestMethod @Params
+        }
+        
     }catch{
     $result.Add('Status','Failed')
     $result.Add('Message','Failed to run the REST API command')
@@ -135,7 +159,6 @@ elseif($FSxLogVolumeName){
 $lunmapsUriDynamicPart = 'private/cli/lun/mapping'
 foreach ($lunpath in $pathlist) {
 $URI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($SQLVMName)&igroup=$($IGROUP)&path=$($lunpath)"
-$restcert = returncert -region $region
 #check if records exist before deleting
 $lunmappingdata = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET" -result $result).records
 

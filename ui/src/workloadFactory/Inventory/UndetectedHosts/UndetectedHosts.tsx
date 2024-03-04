@@ -1,4 +1,13 @@
-import { Table, useTable, Typography, TableTopBar, useDialog, Popover, Button } from '@netapp/design-system';
+import {
+    Table,
+    useTable,
+    Typography,
+    TableTopBar,
+    useDialog,
+    Popover,
+    Button,
+    TooltipInfo
+} from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './UndetectedHosts.module.scss';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
@@ -9,7 +18,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { SSM_TROUBLESHOOTING_LINK } from '../../../utils/consts';
+import { FSX_DEPLOYMENT_MODE, SSM_TROUBLESHOOTING_LINK } from '../../../utils/consts';
 
 const UndetectedHosts = () => {
     const { setDialog, closeDialog } = useDialog();
@@ -76,6 +85,14 @@ const UndetectedHosts = () => {
         };
     };
 
+    const notAvailable = () => {
+        return (
+            <Typography variant="Regular_13" className={styles.colText}>
+                {GENERAL.NOT_AVAILABLE}
+            </Typography>
+        );
+    };
+
     const UnidentifiedHostsColDefs: ColumnProps[] = [
         {
             Header: 'Database host name',
@@ -99,18 +116,60 @@ const UndetectedHosts = () => {
             isSortable: true
         },
         {
-            Header: 'VPC',
-            accessor: 'vpc',
             id: '4',
-            width: '200px',
-            isSortable: true
+            Header: GENERAL.DB_HOST_VPC,
+            accessor: 'vpc',
+            isSortable: true,
+            width: '212px',
+            renderCell: (cellData: any) => {
+                return (
+                    <>
+                        {cellData?.name && (
+                            <div className={styles.colText}>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>
+                                    {cellData?.cidrBlock}
+                                </TooltipInfo>
+                                <Typography variant="Regular_14">{cellData?.name}</Typography>
+                            </div>
+                        )}
+                        {!cellData?.name && notAvailable()}
+                    </>
+                );
+            }
         },
         {
-            Header: 'Availability',
-            accessor: 'availability',
             id: '5',
-            width: '200px',
-            filterOptions: 'auto'
+            Header: GENERAL.DB_HOST_AVAILABILITY,
+            accessor: 'sqlServerInstances',
+            isSortable: true,
+            width: '212px',
+            filterOptions: [
+                { label: GENERAL.SINGLE_AZ, value: FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 },
+                { label: GENERAL.MULTI_AZ, value: FSX_DEPLOYMENT_MODE.MULTI_AZ_1 }
+            ],
+            renderCell: (cellData: any) => {
+                const azList = cellData?.[0]?.deploymentTypes?.[0]?.zones
+                    ? cellData?.[0]?.deploymentTypes?.[0]?.zones.join(',')
+                    : '';
+                const deploymentType = cellData?.[0]?.deploymentTypes?.[0]?.type;
+                return (
+                    <>
+                        {deploymentType && (
+                            <div className={styles.colText}>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
+                                <Typography variant="Regular_14">
+                                    {deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+                                        ? GENERAL.SINGLE_AZ
+                                        : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                                        ? GENERAL.MULTI_AZ
+                                        : ''}
+                                </Typography>
+                            </div>
+                        )}
+                        {!deploymentType && notAvailable()}
+                    </>
+                );
+            }
         },
         {
             Header: 'SSM connectivity',
@@ -118,7 +177,7 @@ const UndetectedHosts = () => {
             id: '6',
             width: '246px',
             filterOptions: 'auto',
-            renderCell: (cellData: any, rowData: any) => {
+            renderCell: (cellData: any) => {
                 return (
                     <div className={styles.statusCol}>
                         <div>
@@ -159,11 +218,12 @@ const UndetectedHosts = () => {
     const formatUnIdentifiableData = (data: any) => {
         return data.map((item: any) => {
             return {
-                name: item?.sqlServerInstances?.[0]?.sqlServerInstance,
+                name: item?.sqlServerInstances?.[0]?.sqlServerInstance || 'N/A',
                 instance: item?.ec2InstanceName,
                 instanceID: item?.ec2InstanceId,
-                vpc: item?.vpcId,
-                ssm: item?.ssmState
+                vpc: item?.vpc,
+                ssm: item?.ssmState,
+                sqlServerInstances: item?.sqlServerInstances
             };
         });
     };

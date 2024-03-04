@@ -18,7 +18,7 @@ import { formatSizeRoundOff, generateOptionType } from '../../../../../utils/uti
 import styles from './FilesSize.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
-import { DRIVE_LETTER_TYPE } from '../../../../../utils/consts';
+import { DRIVE_LETTER_TYPE, GIB_IN_BYTE, TIB_IN_BYTE } from '../../../../../utils/consts';
 import AccordionError from '../../../../../common/AccordionError/AccordionError';
 
 const FilesSize = () => {
@@ -42,7 +42,7 @@ const FilesSize = () => {
     const dbHostName = useAppSelector(state => state.createNewUser.dbHostName);
 
     const units = ['GiB', 'TiB'];
-    const [maxSize, setMaxSize] = useState(undefined);
+    const [maxSize, setMaxSize] = useState<number | undefined>(undefined);
 
     useEffect(() => {
         if (isDbCreateHit) {
@@ -61,11 +61,26 @@ const FilesSize = () => {
         }
     }, [dbCreateDataSizeValid, dbCreateLogSizeValid, isDbCreateHit]);
 
+    const calculateRoundOffMaxSize = (value: any) => {
+        let compareMaxSize = 0;
+        let roundOffMaxSize = (value ? formatSizeRoundOff(value) : '').split(' ');
+        if (roundOffMaxSize && roundOffMaxSize.length > 1) {
+            if (roundOffMaxSize[1] === 'GiB') {
+                compareMaxSize = Number(roundOffMaxSize[0]) * GIB_IN_BYTE;
+            } else if (roundOffMaxSize[1] === 'TiB') {
+                compareMaxSize = Number(roundOffMaxSize[0]) * TIB_IN_BYTE;
+            } else {
+                compareMaxSize = value || 0;
+            }
+        }
+        setMaxSize(compareMaxSize);
+    };
+
     useEffect(() => {
         if (driveLetter?.label2 === DRIVE_LETTER_TYPE.EXISTING && driveLetter?.data?.availableSize) {
-            setMaxSize(driveLetter?.data?.availableSize);
+            calculateRoundOffMaxSize(driveLetter?.data?.availableSize);
         } else if (driveLetter?.label2 === DRIVE_LETTER_TYPE.NEW && driveInfoList?.fsxStorageCapacity) {
-            setMaxSize(driveInfoList?.fsxStorageCapacity);
+            calculateRoundOffMaxSize(driveInfoList?.fsxStorageCapacity);
         } else {
             setMaxSize(undefined);
         }
@@ -128,12 +143,18 @@ const FilesSize = () => {
     const errorCheckForDataSize = () => {
         let currentSize = 0;
         if (newUserDataSizeUnit?.label === 'GiB') {
-            currentSize = newUserDataSize * 1024 * 1024 * 1024;
+            currentSize = newUserDataSize * GIB_IN_BYTE;
         } else if (newUserDataSizeUnit?.label === 'TiB') {
-            currentSize = newUserDataSize * 1024 * 1024 * 1024 * 1024;
+            currentSize = newUserDataSize * TIB_IN_BYTE;
         }
 
-        if (maxSize && currentSize && (currentSize < 0 || currentSize > maxSize)) {
+        if (!newUserDataSize || newUserDataSize === '0') {
+            dispatch(setIsDataSizeValid(false));
+            return GENERAL.NO_DATA_SIZE_ERROR;
+        } else if (maxSize && maxSize < GIB_IN_BYTE) {
+            dispatch(setIsDataSizeValid(false));
+            return GENERAL.DATA_SIZE_MIN_ERROR;
+        } else if (maxSize && (currentSize < 1 || currentSize > maxSize)) {
             dispatch(setIsDataSizeValid(false));
             return `${GENERAL.DATA_SIZE_ERROR} ${formatSizeRoundOff(maxSize)}`;
         } else {
@@ -160,7 +181,10 @@ const FilesSize = () => {
                 }
             }
         }
-        if (!logSizeValid) {
+        if (!newUserLogFileSize || newUserLogFileSize === '0') {
+            dispatch(setIsLogSizeValid(false));
+            return GENERAL.LOG_SIZE_MIN_ERROR;
+        } else if (!logSizeValid) {
             dispatch(setIsLogSizeValid(false));
             return GENERAL.LOG_SIZE_ERROR;
         } else {
@@ -192,7 +216,7 @@ const FilesSize = () => {
                                     placeholder={maxSize ? `1 GiB - ${formatSizeRoundOff(maxSize)}` : ''}
                                     value={newUserDataSize}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                        const numSize = e.target.value.replace(/\D/g, '');
+                                        const numSize = e.target.value.replace(/[^0-9.]/g, '');
                                         dispatch(setNewUserDataSize(numSize));
                                     }}
                                     error={errorCheckForDataSize()}
@@ -203,7 +227,8 @@ const FilesSize = () => {
                                     label={'select'}
                                     isClearable={false}
                                     info={
-                                        maxSize && (
+                                        maxSize &&
+                                        maxSize >= GIB_IN_BYTE && (
                                             <div className={styles.dataSizeTooltip}>
                                                 <div>
                                                     {GENERAL.DATA_SIZE_TOOLTIP[0]}
@@ -236,7 +261,8 @@ const FilesSize = () => {
                                     placeholder="25% of the data size"
                                     value={newUserLogFileSize}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                        dispatch(setNewUserLogFileSize(e.target.value));
+                                        const numSize = e.target.value.replace(/[^0-9.]/g, '');
+                                        dispatch(setNewUserLogFileSize(numSize));
                                     }}
                                     className={styles.textFieldNewUSer}
                                     error={errorCheckForLogSize()}

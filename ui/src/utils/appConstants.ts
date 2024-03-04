@@ -591,7 +591,10 @@ export const GENERAL = {
     DATA_FILE_PATH: 'Data file path:',
     LOG_FILE_PATH: 'Log file path:',
     SELECT_DRIVE_LETTER: 'Select drive letter',
+    LOG_SIZE_MIN_ERROR: 'Log size should be 1 GiB or more.',
+    NO_DATA_SIZE_ERROR: 'Data size should be 1 GiB or more.',
     LOG_SIZE_ERROR: 'Log size should be less than data size.',
+    DATA_SIZE_MIN_ERROR: 'Minimum space not available in the drive.',
     DATA_SIZE_ERROR: 'The valid range is 1 GiB - ',
     DRIVE_LETTER_CREATE_ERROR: 'Action required: Drive letters are missing. Use Advanced Create mode to select drives.',
     DRIVE_LETTER_QUICK_CREATE_ERROR:
@@ -605,7 +608,12 @@ export const GENERAL = {
     CF_DOWNLOAD: 'CloudFormation downloaded successfully.',
     CF_NOTICE: 'Notice: the YAML configuration file is available for 7 days.',
     SSM_NO_CONNECTION_MSG: 'Can’t connect to your instance. See',
-    SSM_NO_CONNECTION_LINK: 'Troubleshooting SSM agent'
+    SSM_NO_CONNECTION_LINK: 'Troubleshooting SSM agent',
+    SAME_NEW_DRIVE_ERROR: 'Data and log drives should be different for new drives.',
+    FSX_FOR_ONTAP: 'FSx for ONTAP',
+    EBS: 'EBS',
+    SINGLE_AZ: 'Single AZ',
+    MULTI_AZ: 'Multi AZ'
 };
 
 export const CODE_VIEWER = {

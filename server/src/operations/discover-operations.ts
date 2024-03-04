@@ -31,9 +31,12 @@ interface SsmTargetsInfo {
     ec2InstanceId: string;
     ec2InstanceName: string;
     ssmState: string;
-    vpcId: string | undefined;
-    vpcName?: string | undefined;
     ebsVolumeIDs: (string | undefined)[] | undefined;
+    vpc?: {
+        id?: string;
+        name?: string;
+        cidrBlock?: string;
+    };
 }
 
 interface DeployType {
@@ -77,6 +80,8 @@ async function getHostAndSqlServerInfo(
     ]);
 
     const vpcNames = new Map(vpcs?.map(({ Tags, VpcId }: Vpc) => [VpcId, getResourceNameFromTags(Tags)]));
+    const vpcCidrs = new Map(vpcs?.map(({ CidrBlock, VpcId }: Vpc) => [VpcId, CidrBlock]));
+
     api1EndTime = performance.now();
     logger.info(`API1Performance: Time taken by describeInstance(): ${api1EndTime - api1StartTime}ms`);
 
@@ -92,9 +97,12 @@ async function getHostAndSqlServerInfo(
                 ec2InstanceId: ec2Instance?.InstanceId || '',
                 ec2InstanceName: name!,
                 ssmState: ssmStatus.Status!,
-                vpcId: ec2Instance?.VpcId,
                 ebsVolumeIDs: ec2Instance?.BlockDeviceMappings?.map(bdm => bdm?.Ebs?.VolumeId),
-                ...(vpcNames.has(ec2Instance?.VpcId) && { vpcName: vpcNames.get(ec2Instance?.VpcId) })
+                vpc: {
+                    ...(ec2Instance?.VpcId && { id: ec2Instance?.VpcId }),
+                    ...(vpcNames.has(ec2Instance?.VpcId) && { name: vpcNames.get(ec2Instance?.VpcId) }),
+                    ...(vpcCidrs.has(ec2Instance?.VpcId) && { cidrBlock: vpcCidrs.get(ec2Instance?.VpcId) })
+                }
             });
         })
     );
@@ -204,9 +212,8 @@ async function getHostAndSqlServerInfo(
                             ec2InstanceId: target.ec2InstanceId,
                             ec2InstanceName: target.ec2InstanceName,
                             ssmState: target.ssmState,
-                            vpcId: target.vpcId,
-                            vpcName: target.vpcName,
-                            sqlServerInstances: dbInfo
+                            sqlServerInstances: dbInfo,
+                            vpc: target.vpc
                         });
                     }
                 })
@@ -260,79 +267,87 @@ async function getHostAndSqlInfoFromPsOutput(
         }ms`
     );
 
-    const dbInfo: SqlServerInstanceInfoType[] = [];
+    const ssmTargetSqlServerInstancesInfo: SqlServerInstanceInfoType[] = [];
 
-    const powerShellScriptOutput = response?.StandardOutputContent || '';
-    if (powerShellScriptOutput.length > 0) {
-        let responseInJson = JSON.parse(response?.StandardOutputContent || '');
-        if (!Array.isArray(responseInJson)) {
-            responseInJson = [responseInJson];
-        }
-        for (const dbInstanceInfo of responseInJson) {
-            if (dbInstanceInfo.sqlServerEdition >= MINIMUM_SQL_SERVER_EDITION_SUPPORTED) {
-                api1StartTime = performance.now();
-                const storageTypes = [];
-                const deploymentTypes = [];
-                const ebsVolumeIDs = ssmTarget.ebsVolumeIDs?.map(elem => elem?.replace('-', ''));
+    try {
+        const powerShellScriptOutput = response?.StandardOutputContent || '';
+        if (powerShellScriptOutput.length > 0) {
+            let responseInJson = JSON.parse(response?.StandardOutputContent || '');
+            if (!Array.isArray(responseInJson)) {
+                responseInJson = [responseInJson];
+            }
+            for (const sqlServerInstanceInfo of responseInJson) {
+                if (sqlServerInstanceInfo?.sqlServerEdition >= MINIMUM_SQL_SERVER_EDITION_SUPPORTED) {
+                    api1StartTime = performance.now();
+                    const storageTypes = [];
+                    const deploymentTypes = [];
+                    const ebsVolumeIDs = ssmTarget.ebsVolumeIDs?.map(elem => elem?.replace('-', ''));
 
-                let driveInfo = JSON.parse(dbInstanceInfo.sqlDriveInfo);
-                if (!Array.isArray(driveInfo)) {
-                    driveInfo = [driveInfo];
-                }
-
-                for (const di of driveInfo) {
-                    const ebsVolumeId = ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem));
-                    if (ebsVolumeId) {
-                        storageTypes.push({
-                            type: STORAGE_TYPE.EBS,
-                            id: ebsVolumeId
-                        });
-                    } else if (endPointIpWithFsxId.has(di?.SerialNumberOrScsiTarget)) {
-                        const fsxId = endPointIpWithFsxId.get(di?.SerialNumberOrScsiTarget);
-                        storageTypes.push({
-                            type: STORAGE_TYPE.FSXN,
-                            id: fsxId!
-                        });
-                        const { deploymentType, subnetIds } = fsIdWithDeploymentType.get(fsxId!) || {};
-
-                        deploymentTypes.push({
-                            type: deploymentType,
-                            zones: compact(subnetIds?.map(subnetId => subnetListMap.get(subnetId))),
-                            ids: subnetIds?.join()
-                        });
+                    let driveInfo = JSON.parse(sqlServerInstanceInfo?.sqlDriveInfo);
+                    if (!Array.isArray(driveInfo)) {
+                        driveInfo = [driveInfo];
                     }
+
+                    for (const di of driveInfo) {
+                        const ebsVolumeId = ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem));
+                        if (ebsVolumeId) {
+                            storageTypes.push({
+                                type: STORAGE_TYPE.EBS,
+                                id: ebsVolumeId
+                            });
+                        } else if (endPointIpWithFsxId.has(di?.SerialNumberOrScsiTarget)) {
+                            const fsxId = endPointIpWithFsxId.get(di?.SerialNumberOrScsiTarget);
+                            storageTypes.push({
+                                type: STORAGE_TYPE.FSXN,
+                                id: fsxId!
+                            });
+                            const { deploymentType, subnetIds } = fsIdWithDeploymentType.get(fsxId!) || {};
+
+                            deploymentTypes.push({
+                                type: deploymentType,
+                                zones: compact(subnetIds?.map(subnetId => subnetListMap.get(subnetId))),
+                                ids: subnetIds?.join()
+                            });
+                        }
+                    }
+                    api1EndTime = performance.now();
+                    logger.info(
+                        `API1Performance: Time taken to parse PowerShell script output: ${
+                            api1EndTime - api1StartTime
+                        }ms`
+                    );
+
+                    const {
+                        sqlServerVersion,
+                        sqlServerInstance,
+                        sqlServerState,
+                        sqlServerEdition,
+                        windowsAuthentication,
+                        scriptExecutionTime
+                    } = sqlServerInstanceInfo;
+                    logger.info(
+                        `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
+                    );
+
+                    ssmTargetSqlServerInstancesInfo.push({
+                        sqlServerVersion,
+                        sqlServerInstance,
+                        sqlServerState,
+                        sqlServerEdition,
+                        windowsAuthentication,
+                        storage: uniqBy(storageTypes, 'id'),
+                        deploymentTypes: uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones }))
+                    });
                 }
-                api1EndTime = performance.now();
-                logger.info(
-                    `API1Performance: Time taken to parse PowerShell script output: ${api1EndTime - api1StartTime}ms`
-                );
-
-                const {
-                    sqlServerVersion,
-                    sqlServerInstance,
-                    sqlServerState,
-                    sqlServerEdition,
-                    windowsAuthentication,
-                    scriptExecutionTime
-                } = dbInstanceInfo;
-                logger.info(
-                    `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
-                );
-
-                dbInfo.push({
-                    sqlServerVersion,
-                    sqlServerInstance,
-                    sqlServerState,
-                    sqlServerEdition,
-                    windowsAuthentication,
-                    storage: uniqBy(storageTypes, 'id'),
-                    deploymentTypes: uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones }))
-                });
             }
         }
+    } catch (error) {
+        logger.error(
+            `Failed to process the SQL Server instance details for host ${ssmTarget.ec2InstanceId}. Reason: ${error}.`
+        );
     }
 
-    return dbInfo;
+    return ssmTargetSqlServerInstancesInfo;
 }
 
 async function makeSsmCall(

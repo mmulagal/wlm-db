@@ -1,11 +1,10 @@
 import createError from 'http-errors';
 import { RESOURCESTYPE, HttpErrorCodes, ACCOUNT_ID } from '../utils/consts';
 import getLogger from '../utils/logger';
-import { getDatabasesCount, getResourceDetails } from './workloads/mssql/mssql-operations';
+import { getDatabasesCount, getResourceDetails, getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { listRelationshipsResources } from '../lib/database/db';
 import { getResources } from './database/database-operations';
-import { isSSMConnectionSuccessful } from './aws/ssm-operations';
 import { describeInstance } from '../lib/aws/ec2';
 
 interface WorkingEnvironment {
@@ -51,7 +50,7 @@ async function getMSSQLEnvData(resourceDetails: any, resourceId: string) {
     if (!credentialsId || !region || !node1InstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Unable to get mssql env data');
     }
-    const { activeNodeInstanceId } = await isSSMConnectionSuccessful(credentialsId, region!, node1InstanceId);
+    const { activeNodeInstanceId } = await getActiveSqlNode(credentialsId, region!, node1InstanceId);
     let activeNodeInstanceIp;
     if (activeNodeInstanceId) {
         const activeInstanceDetails = await describeInstance(credentialsId, region, {
@@ -59,18 +58,25 @@ async function getMSSQLEnvData(resourceDetails: any, resourceId: string) {
         });
         activeNodeInstanceIp =
             activeInstanceDetails?.Reservations?.[0]?.Instances?.[0]?.NetworkInterfaces?.[0]?.PrivateIpAddress;
+        const dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId!);
+        const { resource_name: serverName, cloud_provider_name: location } = resourceDetails || {};
+        const deploymentState = 'SUCCESS';
+        return {
+            id: resourceId,
+            serverName,
+            location,
+            deploymentState,
+            databasesCount: dbCount?.totalCount,
+            domain: activeNodeInstanceIp || ''
+        };
     }
-    const dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId!);
-    const { resource_name: serverName, cloud_provider_name: location } = resourceDetails || {};
-    const deploymentState = 'SUCCESS';
-    return {
-        id: resourceId,
-        serverName,
-        location,
-        deploymentState,
-        databasesCount: dbCount?.totalCount,
-        domain: activeNodeInstanceIp || ''
-    };
+
+    if (!activeNodeInstanceId) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'Failed to get MSSQL resource information, the instance is not available'
+        );
+    }
 }
 
 async function getWorkingEnvironment(id: string) {

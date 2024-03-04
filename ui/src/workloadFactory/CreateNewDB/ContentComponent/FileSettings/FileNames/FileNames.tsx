@@ -98,8 +98,8 @@ const FileNames = () => {
         return '';
     };
 
-    //Function to generate the options for Select Field
-    const generateDriveLetters = useMemo<optionType[]>((): optionType[] => {
+    //Function to generate the options for data drive Select Field
+    const generateDataDriveLetters = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         driveInfoList?.existingDriveInfo?.map((val: any, idx: number) => {
             const option = generateOptionType(
@@ -113,11 +113,44 @@ const FileNames = () => {
             options.push(option);
         });
         driveInfoList?.availableDriveLetters?.map((val: any, idx: number) => {
-            const option = generateOptionType(val, val, DRIVE_LETTER_TYPE.NEW, false, '');
+            const option = generateOptionType(
+                val,
+                val,
+                DRIVE_LETTER_TYPE.NEW,
+                driveLetterLogFile?.value === val ? true : false,
+                driveLetterLogFile?.value === val ? GENERAL.SAME_NEW_DRIVE_ERROR : ''
+            );
             options.push(option);
         });
         return sortListOfDict(options, 'isDisabled');
-    }, [driveInfoList]);
+    }, [driveInfoList, driveLetterLogFile]);
+
+    //Function to generate the options for log file Select Field
+    const generateLogDriveLetters = useMemo<optionType[]>((): optionType[] => {
+        const options: optionType[] = [];
+        driveInfoList?.existingDriveInfo?.map((val: any, idx: number) => {
+            const option = generateOptionType(
+                val?.driveLetter,
+                val?.driveLetter,
+                DRIVE_LETTER_TYPE.EXISTING,
+                !val?.isNetappDrive || ('isDriveClustered' in val ? !val.isDriveClustered : false),
+                disableDriveMsg(val),
+                val
+            );
+            options.push(option);
+        });
+        driveInfoList?.availableDriveLetters?.map((val: any, idx: number) => {
+            const option = generateOptionType(
+                val,
+                val,
+                DRIVE_LETTER_TYPE.NEW,
+                driveLetter?.value === val ? true : false,
+                driveLetter?.value === val ? GENERAL.SAME_NEW_DRIVE_ERROR : ''
+            );
+            options.push(option);
+        });
+        return sortListOfDict(options, 'isDisabled');
+    }, [driveInfoList, driveLetter]);
 
     // Default drive letters logic to set for quick and advanced view
     useEffect(() => {
@@ -232,8 +265,8 @@ const FileNames = () => {
                                             dispatch(setDriveLetter(selectedOptions));
                                         }}
                                         value={driveLetter ? driveLetter : null}
-                                        isSearchable={generateDriveLetters.length > 5}
-                                        options={generateDriveLetters}
+                                        isSearchable={generateDataDriveLetters.length > 5}
+                                        options={generateDataDriveLetters}
                                         variant="two-lines"
                                         className={styles.driveSelectField}
                                     />
@@ -276,8 +309,8 @@ const FileNames = () => {
                                             dispatch(setDriveLetterForLogFile(selectedOptions));
                                         }}
                                         value={driveLetterLogFile ? driveLetterLogFile : null}
-                                        isSearchable={generateDriveLetters.length > 5}
-                                        options={generateDriveLetters}
+                                        isSearchable={generateLogDriveLetters.length > 5}
+                                        options={generateLogDriveLetters}
                                         variant="two-lines"
                                         className={styles.driveSelectField}
                                     />
