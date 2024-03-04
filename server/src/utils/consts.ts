@@ -658,7 +658,7 @@ const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
 const SQL_RESOURCE_ASSETS = [
     {
         name: 'DSC',
-        url: `${WLMDB}/DSC.zip`
+        url: `${WLMDB}/scripts/DSC.zip`
     },
     // {
     //     name: 'DSCSignature',
