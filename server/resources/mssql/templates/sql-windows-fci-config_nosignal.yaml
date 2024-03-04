@@ -479,6 +479,8 @@ Resources:
                             source: {{{ AmazonFailoverCluster }}}
                         C:\cfn\Installer\sqlspcu.zip:
                             source: {{{ Sqlspcu }}}
+                        C:\cfn\Installer\dependent-packages.zip:
+                            source: {{{ DependentPackages }}}
                 ScriptSignatureVerificationandExtract:
                     commands:
                         b-unpack-common-scripts:
@@ -521,6 +523,9 @@ Resources:
                         r-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                             waitAfterCompletion: 0 
+                        s-unpack-dependentpackages:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\Installer\dependent-packages.zip -Destination C:\cfn\Installer
                 InitialSetup:
                     commands:
                         a-unpack-launchwizard-module:
@@ -1037,6 +1042,8 @@ Resources:
                             source: {{{ AmazonFailoverCluster }}}
                         C:\cfn\Installer\sqlspcu.zip:
                             source: {{{ Sqlspcu }}}
+                        C:\cfn\Installer\dependent-packages.zip:
+                            source: {{{ DependentPackages }}}
                 ScriptSignatureVerificationandExtract:
                     commands:
                         b-unpack-common-scripts:
@@ -1079,6 +1086,9 @@ Resources:
                         r-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                             waitAfterCompletion: 0 
+                        s-unpack-dependentpackages:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\Installer\dependent-packages.zip -Destination C:\cfn\Installer
                 InitialSetup:
                     commands:
                         a-unpack-launchwizard-module:

@@ -25,6 +25,19 @@ param(
 
 Start-Transcript -Path C:\cfn\log\Validate-FsxConnectivity.ps1.txt -Append
 
+add-type @"
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+public class TrustAllCertsPolicy : ICertificatePolicy {
+    public bool CheckValidationResult(
+        ServicePoint srvPoint, X509Certificate certificate,
+        WebRequest request, int certificateProblem) {
+            return true;
+        }
+}
+"@
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
 if (${PerformFSxCheck} -ne 'true' ) {
     Write-Output @{ status= "Skipped"; reason= "Deployment creates new FSx." } | ConvertTo-Json -Compress
     Start-Process "cfn-signal.exe" -ArgumentList "-e 0 $WaitHandler" -Wait -NoNewWindow
@@ -52,10 +65,16 @@ $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding
 $FSxHostName = "management.${FSxFileSystemId}.fsx.${FSxRegion}.amazonaws.com"
 
 # Get region Certificateificate for FSx
+$isprivatesubnet = $False
 $FSxCertificateificateUri = "https://fsx-aws-Certificates.s3.amazonaws.com/bundle-${FSxRegion}.pem"
-Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\cfn\FSxCertificate.pem
-$Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStoreLocation Cert:\LocalMachine\Root
-$regionCertificateificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+try {
+        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\cfn\FSxCertificate.pem
+        $Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStoreLocation Cert:\LocalMachine\Root
+        $regionCertificateificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+    }
+catch {
+        $isprivatesubnet = $True      
+    }
 
 $Params = @{
     "URI"         = "https://management.${FSxFileSystemId}.fsx.${FSxRegion}.amazonaws.com/api/cluster?fields=version"
@@ -65,7 +84,11 @@ $Params = @{
 }
 
 try {
-Invoke-RestMethod @Params -Certificate $regionCertificateificate
+    if($isprivatesubnet -eq $False) {
+        Invoke-RestMethod @Params -Certificate $regionCertificateificate
+    }else {
+        Invoke-RestMethod @Params 
+    }
 Write-Output @{ status= "Completed"; reason= "Done." } | ConvertTo-Json -Compress
 Start-Process "cfn-signal.exe" -ArgumentList "-e 0 $WaitHandler" -Wait -NoNewWindow
 }catch{

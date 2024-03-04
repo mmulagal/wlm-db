@@ -448,7 +448,8 @@ async function getVpcEndpoints(credentialsId: string, region: string, vpcId: str
                     `com.amazonaws.${region}.ec2messages`,
                     `com.amazonaws.${region}.monitoring`,
                     `com.amazonaws.${region}.sqs`,
-                    `com.amazonaws.${region}.logs`
+                    `com.amazonaws.${region}.logs`,
+                    `com.amazonaws.${region}.fsx`
                 ]
             }
         ]

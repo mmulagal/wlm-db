@@ -25,6 +25,19 @@ $silenttranscript = (Start-Transcript -Path C:\cfn\log\Configure_luns.log.txt -A
 
 $ErrorActionPreference = "Stop"
 
+add-type @"
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+public class TrustAllCertsPolicy : ICertificatePolicy {
+    public bool CheckValidationResult(
+        ServicePoint srvPoint, X509Certificate certificate,
+        WebRequest request, int certificateProblem) {
+            return true;
+        }
+}
+"@
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
 $FSxCredStore  = "/netapp/wlmdb/$FileSystemId"
 
 $credobject =  (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
@@ -57,19 +70,20 @@ $nodeiqn = (Get-InitiatorPort).NodeAddress
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
 
 
-function returncert{
-    param(
-    [Parameter(Mandatory=$true)]
-    [string]$region
-    )
-    $certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
+# Get FSx certificate
+$isprivatesubnet = $False
+$certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
+try {
     Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
     $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
-    return Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
-
+    $restcert = Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
+}
+catch {
+    $isprivatesubnet = $True
+    $restcert = ''
 }
 
-$restcert = returncert -region $region
+Write-output "Private subnet $isprivatesubnet"
 
 function callGetApi{
     param(
@@ -80,7 +94,7 @@ function callGetApi{
     [Parameter(Mandatory=$true)]
     [string]$creds,
     [Parameter(Mandatory=$true)]
-    [hashtable]$result  
+    [hashtable]$result
     )
     try{
         $Params = @{
@@ -89,7 +103,11 @@ function callGetApi{
             "Headers" = @{"Authorization" = "Basic $creds"}
             "ContentType" = "application/json"
         }
-        Invoke-RestMethod @Params -Certificate $restcert
+        if ($isprivatesubnet -eq $False) {
+            Invoke-RestMethod @Params -Certificate $restcert
+        }else {
+            Invoke-RestMethod @Params
+        }
     }catch{
         $result.Add('Status','Failed')
         $result.Add('Message','REST API call to FSx for ONTAP failed')
@@ -113,10 +131,9 @@ function callrestapi{
     [Parameter(Mandatory=$true)]
     [string]$creds,
     [Parameter(Mandatory=$true)]
-    [hashtable]$result  
+    [hashtable]$result 
     )
     try{
-        $restcert = returncert -region $region
         $resturi = "https://$MgmtDNS/api/$uri"
         $JsonBody = $Body | ConvertTo-Json
         $Params = @{
@@ -126,7 +143,13 @@ function callrestapi{
             "Body" =  "$JsonBody"
             "ContentType" = "application/json"
         }
-        $invokerest = (Invoke-RestMethod @Params -Certificate $restcert)
+
+        if ($isprivatesubnet -eq $False) {
+            $invokerest = (Invoke-RestMethod @Params -Certificate $restcert)
+        }else {
+            $invokerest = (Invoke-RestMethod @Params) 
+        }
+        
     }catch{
         $result.Add('Status','Failed')
         $result.Add('Message','REST API call to FSx for ONTAP failed')
@@ -298,8 +321,11 @@ $Params = @{
     "ContentType" = "application/json"
 }
 try{
-    $restcert = returncert -region $region
-    $modifyvol = (Invoke-RestMethod @Params -Certificate $restcert)
+    if ($isprivatesubnet -eq $False) {
+            $modifyvol = (Invoke-RestMethod @Params -Certificate $restcert)
+    }else {
+            $modifyvol = (Invoke-RestMethod @Params)
+        }
 }catch{
     $result.Add('Status','Failed')
     $result.Add('Message','Volume modification to set best practise parameters failed')
@@ -389,8 +415,12 @@ foreach ($perlun in $pathlist) {
         "ContentType" = "application/json"
         }
         try{
-        $restcert = returncert -region $region
-        $lunmodify1 = (Invoke-RestMethod @Params -Certificate $restcert)
+        if ($isprivatesubnet -eq $False) {
+            $lunmodify1 = (Invoke-RestMethod @Params -Certificate $restcert)
+        }else {
+            $lunmodify1 = (Invoke-RestMethod @Params) 
+        }
+        
         }
         catch{
             $result.Add('Status','Failed')
@@ -413,8 +443,11 @@ foreach ($perlun in $pathlist) {
         "ContentType" = "application/json"
         }
         try{
-        $restcert = returncert -region $region
-        $lunmodify1 = (Invoke-RestMethod @Params -Certificate $restcert)
+        if ($isprivatesubnet -eq $False) {
+            $lunmodify1 = (Invoke-RestMethod @Params -Certificate $restcert)
+        }else {
+            $lunmodify1 = (Invoke-RestMethod @Params) 
+        }
         }
         catch{
             $result.Add('Status','Failed')
