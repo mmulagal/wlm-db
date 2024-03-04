@@ -490,13 +490,14 @@ async function getServicesWithNoEndpoint(credentialsId: string, region: string, 
 
 async function enableVpcDnsAttributes(credentialsId: string, region: string, vpcId: string) {
     logger.info('Enable vpc dns attributes', credentialsId, region, vpcId);
-    
+
     // <p>You cannot modify the DNS resolution and DNS hostnames attributes in the same request. Use separate requests for each attribute.</p>
-    const[dnsHostnameResponse, dnsSupportResponse] = await Promise.all([modifyVpcAttributes(credentialsId, region, {VpcId: vpcId, EnableDnsSupport:{Value: true}}),
-        modifyVpcAttributes(credentialsId, region, {VpcId: vpcId, EnableDnsHostnames:{Value: true}})])
+    const [dnsHostnameResponse, dnsSupportResponse] = await Promise.all([
+        modifyVpcAttributes(credentialsId, region, { VpcId: vpcId, EnableDnsSupport: { Value: true } }),
+        modifyVpcAttributes(credentialsId, region, { VpcId: vpcId, EnableDnsHostnames: { Value: true } })
+    ]);
 
-    logger.info('Enable vpc dns attributes response ', dnsHostnameResponse, dnsSupportResponse)
-
+    logger.info('Enable vpc dns attributes response ', dnsHostnameResponse, dnsSupportResponse);
 }
 
 export {

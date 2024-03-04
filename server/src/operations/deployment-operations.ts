@@ -714,12 +714,15 @@ async function deployCloudFormationTemplate(
     if (cfStackQuotaReached) {
         throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
     }
-    
+
     // Set EnableDnsSupport and EnableDnsHostnames to true
     try {
-        await enableVpcDnsAttributes(credentialsId, region, networkConfiguration.vpcId)
+        await enableVpcDnsAttributes(credentialsId, region, networkConfiguration.vpcId);
     } catch {
-        logger.error('Error while setting "EnableDnsSupport" and "EnableDnsHostnames" to true for vpc', networkConfiguration.vpcId)
+        logger.error(
+            'Error while setting "EnableDnsSupport" and "EnableDnsHostnames" to true for vpc',
+            networkConfiguration.vpcId
+        );
     }
 
     const { stackName, templateParameters } = await formatTemplateParameters(
