@@ -277,13 +277,13 @@ async function getHostAndSqlInfoFromPsOutput(
                 responseInJson = [responseInJson];
             }
             for (const sqlServerInstanceInfo of responseInJson) {
-                if (sqlServerInstanceInfo.sqlServerEdition >= MINIMUM_SQL_SERVER_EDITION_SUPPORTED) {
+                if (sqlServerInstanceInfo?.sqlServerEdition >= MINIMUM_SQL_SERVER_EDITION_SUPPORTED) {
                     api1StartTime = performance.now();
                     const storageTypes = [];
                     const deploymentTypes = [];
                     const ebsVolumeIDs = ssmTarget.ebsVolumeIDs?.map(elem => elem?.replace('-', ''));
 
-                    let driveInfo = JSON.parse(sqlServerInstanceInfo.sqlDriveInfo);
+                    let driveInfo = JSON.parse(sqlServerInstanceInfo?.sqlDriveInfo);
                     if (!Array.isArray(driveInfo)) {
                         driveInfo = [driveInfo];
                     }
