@@ -17,7 +17,8 @@ import {
     downloadCsv,
     expandTableRow,
     formatDateWithTime,
-    jobMonitoringStatusMapping
+    jobMonitoringStatusMapping,
+    jobMonitoringTypeMapping
 } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
@@ -306,12 +307,7 @@ const JobMonitoringTable = () => {
                 { value: JOB_MONITORING_TYPE.CREATE_RESOURCE, label: GENERAL.JM_TYPE_CREATE_RESOURCE }
             ],
             renderCell: (cellData: any) => {
-                if (cellData) {
-                    cellData = cellData.replace('_', ' ');
-                    return cellData.charAt(0).toUpperCase() + cellData.substr(1).toLowerCase();
-                } else {
-                    return cellData;
-                }
+                return jobMonitoringTypeMapping(cellData);
             }
         },
         {
