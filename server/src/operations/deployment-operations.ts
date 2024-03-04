@@ -75,7 +75,7 @@ import {
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
-import { getServicesWithNoEndpoint, getWindowsServerBaseAmi } from './aws/ec2-operations';
+import { enableVpcDnsAttributes, getServicesWithNoEndpoint, getWindowsServerBaseAmi } from './aws/ec2-operations';
 import uploadTemplates from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
@@ -713,6 +713,13 @@ async function deployCloudFormationTemplate(
     const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
     if (cfStackQuotaReached) {
         throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
+    }
+    
+    // Set EnableDnsSupport and EnableDnsHostnames to true
+    try {
+        await enableVpcDnsAttributes(credentialsId, region, networkConfiguration.vpcId)
+    } catch {
+        logger.error('Error while setting "EnableDnsSupport" and "EnableDnsHostnames" to true for vpc', networkConfiguration.vpcId)
     }
 
     const { stackName, templateParameters } = await formatTemplateParameters(
