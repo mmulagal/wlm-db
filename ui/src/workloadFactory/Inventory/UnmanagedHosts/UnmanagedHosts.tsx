@@ -5,7 +5,7 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useEffect, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { STATUS_CONST } from '../../../utils/consts';
+import { FSX_DEPLOYMENT_MODE, STATUS_CONST } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 
 import { databaseTableSort, formatFractionalNumber, formatSizeOnePrecision } from '../../../utils/utilityFunctions';
@@ -245,47 +245,28 @@ const UnmanagedHosts = () => {
         {
             id: '8',
             Header: GENERAL.DB_HOST_INSTANCE_NAME,
-            accessor: 'topology',
+            accessor: 'ec2InstanceName',
             isSortable: true,
-            width: '235px',
-            renderCell: (cellData: any) => {
-                let instanceIds: any = [];
-                let instanceNames: any = [];
-                cellData?.ec2Details?.map((row: any) => {
-                    instanceIds.push(row?.id);
-                    instanceNames.push(row?.name);
-                });
-                return (
-                    <>
-                        {cellData?.ec2Details && (
-                            <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                    ID: {instanceIds.join(',')}
-                                </TooltipInfo>
-                                <Typography variant="Regular_14">{instanceNames.join(',')}</Typography>
-                            </div>
-                        )}
-                        {!cellData?.ec2Details && notAvailable()}
-                    </>
-                );
-            }
+            width: '235px'
         },
         {
             id: '9',
             Header: GENERAL.DB_HOST_VPC,
-            accessor: 'topology',
+            accessor: 'vpc',
             isSortable: true,
-            width: '235px',
+            width: '212px',
             renderCell: (cellData: any) => {
                 return (
                     <>
-                        {cellData?.vpcId && (
+                        {cellData?.name && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData?.vpcId}</TooltipInfo>
-                                <Typography variant="Regular_14">{cellData?.vpcName}</Typography>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>
+                                    {cellData?.cidrBlock}
+                                </TooltipInfo>
+                                <Typography variant="Regular_14">{cellData?.name}</Typography>
                             </div>
                         )}
-                        {!cellData?.vpcId && notAvailable()}
+                        {!cellData?.name && notAvailable()}
                     </>
                 );
             }
@@ -293,20 +274,33 @@ const UnmanagedHosts = () => {
         {
             id: '10',
             Header: GENERAL.DB_HOST_AVAILABILITY,
-            accessor: 'topology',
+            accessor: 'sqlServerInstances',
             isSortable: true,
-            width: '235px',
+            width: '212px',
+            filterOptions: [
+                { label: GENERAL.SINGLE_AZ, value: FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 },
+                { label: GENERAL.MULTI_AZ, value: FSX_DEPLOYMENT_MODE.MULTI_AZ_1 }
+            ],
             renderCell: (cellData: any) => {
-                const azList = cellData?.availabilityZones ? cellData.availabilityZones.join(',') : '';
+                const azList = cellData?.[0]?.deploymentTypes?.[0]?.zones
+                    ? cellData?.[0]?.deploymentTypes?.[0]?.zones.join(',')
+                    : '';
+                const deploymentType = cellData?.[0]?.deploymentTypes?.[0]?.type;
                 return (
                     <>
-                        {cellData?.fileSystemDeploymentMode && (
+                        {deploymentType && (
                             <div className={styles.colText}>
                                 <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
-                                <Typography variant="Regular_14">{cellData?.fileSystemDeploymentMode}</Typography>
+                                <Typography variant="Regular_14">
+                                    {deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+                                        ? GENERAL.SINGLE_AZ
+                                        : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                                        ? GENERAL.MULTI_AZ
+                                        : ''}
+                                </Typography>
                             </div>
                         )}
-                        {!cellData?.fileSystemDeploymentMode && notAvailable()}
+                        {!deploymentType && notAvailable()}
                     </>
                 );
             }
