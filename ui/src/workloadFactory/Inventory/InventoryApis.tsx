@@ -25,6 +25,7 @@ const InventoryApis = () => {
     const { discoveredHostData } = useAppSelector(state => state.inventory.discoveredHosts);
     const discoveredHostState = useAppSelector(state => state.inventory.discoveredHosts);
     const { fsxIdsList, fsxCredentialStatusObj, isRefreshed } = useAppSelector(state => state.inventory);
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const [hostCursor, setHostCursor] = useState(null);
     const [discoveryCursor, setDiscoveryCursor] = useState(null);
@@ -245,9 +246,13 @@ const InventoryApis = () => {
                 const isManaged = databaseHostsData?.find(managedHost =>
                     managedHost?.topology?.ec2Details?.find(instances => instances.id === host?.ec2InstanceId)
                 );
-                const fsxCredentialValidationFailed = host?.sqlServerInstances?.[0]?.storage?.find(
+                let fsxCredentialValidationFailed = host?.sqlServerInstances?.[0]?.storage?.find(
                     (item: any) => item.type === 'FSXN' && !fsxCredentialStatusObj[item.id]
                 );
+                // FSx credential validation always passed for demo mode
+                if (isDemoMode) {
+                    fsxCredentialValidationFailed = false;
+                }
                 if (host.ssmState !== 'connected' || !isWindowAuthentication || fsxCredentialValidationFailed) {
                     unIdentifiableHosts.push(host);
                 } else {

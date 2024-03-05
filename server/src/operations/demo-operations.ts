@@ -13,7 +13,8 @@ import {
     validationStack1Data,
     sqlFciServerStackData,
     validationStack2Data,
-    sqlStandaloneStackData
+    sqlStandaloneStackData,
+    endpointData
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 
@@ -35,6 +36,7 @@ async function createJobMockData(
     const fsxStackId = randomUUID();
     const validationStack1Id = randomUUID();
     const validationStack2Id = randomUUID();
+    const endpointStackId = randomUUID();
 
     const data: any[] = [];
 
@@ -42,6 +44,7 @@ async function createJobMockData(
 
     data.push(
         ...masterStackData(accountId, resourceName, stackName, masterStackId, credentialsId, region),
+        ...endpointData(accountId, resourceName, endpointStackId, masterStackId, credentialsId, region),
         ...fsxStackData(accountId, resourceName, stackName, fsxStackId, masterStackId, fsxType, credentialsId, region),
         ...validationStack1Data(
             accountId,
