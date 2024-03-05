@@ -803,7 +803,7 @@ async function deployCloudFormationTemplate(
 async function createFileSystemForDemo(credentialsId: string, region: string, fsxConfiguration: FSXConfigurationType) {
     logger.info('Creating fsx for demo', credentialsId, region, fsxConfiguration);
 
-    const { fsxDeploymentMode, fsxIOPS, fsxPassword } = fsxConfiguration;
+    const { fsxDeploymentMode, fsxPassword } = fsxConfiguration;
     const mode = fsxDeploymentMode.replace(/_\d+$/, '');
 
     const requestBody = {
@@ -816,7 +816,7 @@ async function createFileSystemForDemo(credentialsId: string, region: string, fs
         },
         primarySubnetId: 'subnet-a1', // default subnet for fsx
         ...(mode === 'MULTI_AZ' && { secondarySubnetId: 'subnet-a2' }),
-        throughputCapacity: fsxIOPS,
+        throughputCapacity: 3072,
         fsxAdminPassword: fsxPassword,
         deploymentType: mode,
         securityGroupIds: [],
@@ -824,7 +824,8 @@ async function createFileSystemForDemo(credentialsId: string, region: string, fs
         svmAdminPassword: `${randomize('*', 8)}`,
         generateSecurityGroup: true,
         haPairs: 2,
-        automaticBackupRetentionDays: 30
+        automaticBackupRetentionDays: 30,
+        routeTableIds: ['rtb-11111111']
     };
 
     return createFSX(requestBody, true);

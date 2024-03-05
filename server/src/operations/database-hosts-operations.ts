@@ -1003,28 +1003,28 @@ async function getDriveInfoFromNodes(
     const clusterCommandPromise =
         sqlDeploymentType === 'FCI'
             ? callSsmExecution(
-                  credentialsId,
-                  region,
-                  clusterCommand,
-                  activeNodeInstanceId,
-                  undefined,
-                  false,
-                  executionTimeout
-              )
+                credentialsId,
+                region,
+                clusterCommand,
+                activeNodeInstanceId,
+                undefined,
+                false,
+                executionTimeout
+            )
             : Promise.resolve();
 
     // Getting drive info of drives present on standby node to eliminate presenting existing drive letter as available drive letter
     const existingDriveStandbyNodePromise =
         sqlDeploymentType === 'FCI'
             ? callSsmExecution(
-                  credentialsId,
-                  region,
-                  driveInfoCommand,
+                credentialsId,
+                region,
+                driveInfoCommand,
                   standbyNodeInstanceId!,
                   undefined,
                   false,
                   executionTimeout
-              )
+            )
             : Promise.resolve();
 
     const [clusterDrivesResponse, existingDriveActiveNodeResponse, existingDriveStandbyNodeResponse] =
@@ -1274,9 +1274,9 @@ async function deployDatabase(
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: sqlServerName as string,
-        name: 'Create Database',
+        name: `Creating user database ${databaseName} on the SQL Server host ${databaseHostId}`,
         startTime: Date.now(),
-        description: 'Creating database on the SQL Server with provided configuration.'
+        description: `Creating user database ${databaseName} on the SQL Server host ${databaseHostId}`
     });
 
     invokeSSMForDatabaseDeployment(
@@ -1385,6 +1385,7 @@ async function invokeSSMForDatabaseDeployment(
             await createDatabase(
                 accountId,
                 credentialsId,
+                resourceId,
                 region,
                 parentJobId,
                 activeNodeInstanceId as string,
@@ -1441,6 +1442,7 @@ async function invokeSSMForDatabaseDeployment(
             await createDatabase(
                 accountId,
                 credentialsId,
+                resourceId,
                 region,
                 parentJobId,
                 activeNodeInstanceId as string,
@@ -1462,7 +1464,11 @@ async function invokeSSMForDatabaseDeployment(
             resetCache(SSM_COMMAND_CACHE_TYPE);
         }
     } catch (err: any) {
-        logger.error(`Error while creating database ${databaseName} in account ${accountId}`, err, err.data);
+        logger.error(
+            `Error while creating database${databaseName} in host ${resourceId} in account ${accountId}`,
+            err,
+            err.data
+        );
         // Clean up script will only be executed when the configure lun script is provisioned
         if (err.data && err.data?.iGroup) {
             const {
@@ -1471,6 +1477,7 @@ async function invokeSSMForDatabaseDeployment(
             await cleanUpDatabaseDeployment(
                 accountId,
                 credentialsId,
+                resourceId,
                 region,
                 fileSystemId,
                 sqlVirtualMachineName,
@@ -1496,6 +1503,7 @@ async function invokeSSMForDatabaseDeployment(
 async function createDatabase(
     accountId: string,
     credentialsId: string,
+    resourceId: string,
     region: string,
     parentJobId: string,
     activeNodeInstanceId: string,
@@ -1510,6 +1518,7 @@ async function createDatabase(
     logger.info('Creating Database', {
         accountId,
         credentialsId,
+        resourceId,
         region,
         parentJobId,
         activeNodeInstanceId,
@@ -1538,9 +1547,9 @@ async function createDatabase(
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: sqlServerName as string,
-        name: 'Create Database',
+        name: 'Creating Database',
         parentJobId,
-        description: `Creating database ${databaseName} with provided data and log paths.`,
+        description: `Creating database ${databaseName} with provided data and log file paths.`,
         startTime: Date.now()
     });
 
@@ -1553,7 +1562,8 @@ async function createDatabase(
             createDatabaseCommand,
             activeNodeInstanceId,
             accountId,
-            false
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
         );
         logger.debug('Create database is done', createDatabaseResponse);
         const parsedDBResponse = createDatabaseResponse ? sqlResponseParsing(createDatabaseResponse) : {};
@@ -1572,7 +1582,7 @@ async function createDatabase(
         return parsedDBResponse;
     } catch (err: any) {
         // child job failed
-        const errorMsg = `Error while creating database ${databaseName} in account ${accountId}`;
+        const errorMsg = `Error while creating database ${databaseName} in host ${resourceId} in account ${accountId}.`;
         logger.error(errorMsg, err);
         errMsg = `${errorMsg}  ${err?.message}`;
         status = JOBSTATUS.FAILED;
@@ -1634,9 +1644,9 @@ async function configureLuns(
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: sqlServerName as string,
-        name: 'Configure Luns',
+        name: 'Configuring storage',
         parentJobId,
-        description: 'Configuring volumes and LUNs on FSx for ONTAP with recommended best practices.',
+        description: 'Configuring storage on FSx for NetApp ONTAP with recommended best practices.',
         startTime: Date.now()
     });
 
@@ -1673,7 +1683,7 @@ async function configureLuns(
 
         return parsedLunsResponse;
     } catch (err: any) {
-        const errorMsg = `Error while configuring luns in account ${accountId}`;
+        const errorMsg = `Error while configuring storage in account ${accountId}.`;
         logger.error(errorMsg, err);
         errMsg = `${errorMsg}  ${err?.message}`;
         status = JOBSTATUS.FAILED;
@@ -1743,7 +1753,7 @@ async function newDBInitialization(
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: sqlServerName as string,
-        name: 'New Database Initialization',
+        name: 'New iSCSI Disk Initialization',
         parentJobId,
         description,
         startTime: Date.now()
@@ -1781,7 +1791,7 @@ async function newDBInitialization(
         }
         return parsedDBInitializationResponse;
     } catch (err: any) {
-        const errorMsg = `Error while initializing new database ${databaseName} in account ${accountId}`;
+        const errorMsg = `Error while initializing new database ${databaseName} in account ${accountId}.`;
         logger.error(errorMsg, err);
         errMsg = `${errorMsg}  ${err?.message}`;
         status = JOBSTATUS.FAILED;
@@ -1802,6 +1812,7 @@ async function newDBInitialization(
 async function cleanUpDatabaseDeployment(
     accountId: string,
     credentialsId: string,
+    resourceId: string,
     region: string,
     fileSystemId: string | null,
     sqlVMName: string | undefined,
@@ -1817,6 +1828,7 @@ async function cleanUpDatabaseDeployment(
     logger.info('Cleaning up the database deployment', {
         accountId,
         credentialsId,
+        resourceId,
         region,
         fileSystemId,
         sqlVMName,
@@ -1834,9 +1846,9 @@ async function cleanUpDatabaseDeployment(
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: sqlServerName as string,
-        name: 'CLean up Database',
+        name: 'Cleaning up',
         parentJobId,
-        description: 'Cleaning up database deployment is in progress',
+        description: `Database creation failed. Cleaning up resources in FSx for NetApp ONTAP and in host ${resourceId}`,
         startTime: Date.now()
     });
 
@@ -1869,7 +1881,7 @@ async function cleanUpDatabaseDeployment(
 
         return parsedCleanUpResponse;
     } catch (err: any) {
-        const errorMsg = `Error while cleaning up database' in account ${accountId}`;
+        const errorMsg = `Error while cleaning up resources in FSx for NetApp ONTAP and in host ${resourceId} in account ${accountId}.`;
         logger.error(errorMsg, err);
         errMsg = `${errorMsg}  ${err?.message}`;
         status = JOBSTATUS.FAILED;
@@ -1897,7 +1909,7 @@ async function validateParams(
     parentJobId: string,
     activeNodeInstanceId: string
 ) {
-    logger.info('validating params for db user creation', {
+    logger.info('validating parameters for database user creation', {
         accountId,
         databaseHostId,
         credentialsId,
@@ -1931,7 +1943,7 @@ async function validateParams(
     try {
         if (!isDataDriveExists && !isLogDriveExists) {
             if (dataDrive === logDrive) {
-                throw createError(412, 'Data and log drives should be different for new drives');
+                throw createError(412, 'Data and log file drive letters should be different for new drives');
             }
         }
 
@@ -1968,7 +1980,7 @@ async function validateParams(
         ]);
         status = JOBSTATUS.COMPLETED;
     } catch (error: any) {
-        const errorMsg = `Error while validating params in database ${databaseName} in account ${accountId}`;
+        const errorMsg = `Error while validating parameters in database ${databaseName} in host ${databaseHostId} in account ${accountId}.`;
         logger.error(errorMsg, error);
         errMsg = error?.message;
         status = JOBSTATUS.FAILED;
@@ -2011,7 +2023,7 @@ async function checkDriveExists(
     const restrictedDrives = ['A', 'B'];
 
     if (restrictedDrives.includes(selectedDrive)) {
-        throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not allowed`);
+        throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not a valid drive`);
     }
 
     const regex = /^[A-Z]{1}$/; // Allows only single Capital Alphabetical letter
@@ -2022,24 +2034,24 @@ async function checkDriveExists(
     if (isDriveExists) {
         const matchedExistingDrive = existingDriveInfo?.find(drive => drive.driveLetter === selectedDrive);
         if (!matchedExistingDrive) {
-            throw createError(412, `Selected ${driveType} drive ${selectedDrive} does not exist in existing drives`);
+            throw createError(412, `Selected ${driveType} drive letter ${selectedDrive} does not exist`);
         }
         if (!matchedExistingDrive.isNetappDrive) {
-            throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not a NetApp LUN`);
+            throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not a NetApp drive`);
         }
         if (isClustered === 'true' && !matchedExistingDrive.isDriveClustered) {
             throw createError(
                 412,
-                `Selected ${driveType} drive ${selectedDrive} is not part of windows cluster or not owned by SQL Role`
+                `Selected ${driveType} drive ${selectedDrive} is non clustered drive or drive not part of SQL server`
             );
         }
         if (matchedExistingDrive.availableSize < volumeSizeInBytes) {
-            throw createError(412, `Selected ${driveType} drive ${selectedDrive} does not have enough space`);
+            throw createError(412, `Selected ${driveType} drive ${selectedDrive} does not have sufficient capacity`);
         }
     } else {
         const matchedAvailableDrive = availableDriveLetters?.includes(selectedDrive);
         if (!matchedAvailableDrive) {
-            throw createError(412, `Selected ${driveType} drive ${selectedDrive} does not exist in available drives`);
+            throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not available for creation`);
         }
     }
     return true;
