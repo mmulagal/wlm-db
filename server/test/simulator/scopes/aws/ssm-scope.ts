@@ -12,7 +12,7 @@ import {
     PutParameterCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
-import { hostAndSqlInfoPowerShellScript } from '../../../../src/operations/workloads/mssql/discover-consts';
+import { HOST_AND_SQL_INFO_PS1 } from '../../../../src/operations/workloads/mssql/discover-consts';
 import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands-response.json';
 import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
 import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
@@ -179,7 +179,7 @@ const getServerEdition = {
 };
 
 const getHostAndSqlServerInfo = {
-    commands: hostAndSqlInfoPowerShellScript
+    commands: HOST_AND_SQL_INFO_PS1
 };
 
 const getDriveInfo = {
