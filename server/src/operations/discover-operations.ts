@@ -11,7 +11,7 @@ import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } fro
 import { getResourceNameFromTags, sleep } from '../utils/utils';
 import { getSSMConnectionStatus, pollCommandStatus, ssmPutParameters } from './aws/ssm-operations';
 import { HttpErrorCodes, RESOURCESTYPE, SSM_PARAMETERS_BASE_PATH } from '../utils/consts';
-import { hostAndSqlInfoPowerShellScript } from './workloads/mssql/discover-consts';
+import { SQL_SERVER_VERSION_TO_EDITION, HOST_AND_SQL_INFO_PS1 } from './workloads/mssql/discover-consts';
 import { sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
 import { registerFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
@@ -50,7 +50,7 @@ async function getHostAndSqlServerInfo(
     accountId: string,
     credentialsId: string,
     region: string,
-    ec2Count: number,
+    pageSize: number,
     nextToken: string = '',
     instances: string[] = []
 ) {
@@ -64,7 +64,7 @@ async function getHostAndSqlServerInfo(
             { Name: 'architecture', Values: ['x86_64'] },
             { Name: 'instance-state-name', Values: [InstanceStateName.running] }
         ],
-        MaxResults: ec2Count,
+        MaxResults: pageSize,
         NextToken: nextToken
     };
 
@@ -125,7 +125,7 @@ async function getHostAndSqlServerInfo(
         const commandId = await makeSsmCall(
             credentialsId,
             region,
-            hostAndSqlInfoPowerShellScript,
+            HOST_AND_SQL_INFO_PS1,
             ssmConnectedNodes.map(target => target.ec2InstanceId),
             accountId
         );
@@ -188,7 +188,7 @@ async function getHostAndSqlServerInfo(
         api1StartTime = performance.now();
         await Promise.all(
             ssmConnectedNodes.map(
-                throat(ec2Count, async (target: SsmTargetsInfo) => {
+                throat(pageSize, async (target: SsmTargetsInfo) => {
                     let dbInfo: SqlServerInstanceInfoType[] = [];
                     const dbInfoStartTime = performance.now();
                     dbInfo = await getHostAndSqlInfoFromPsOutput(
@@ -277,13 +277,17 @@ async function getHostAndSqlInfoFromPsOutput(
                 responseInJson = [responseInJson];
             }
             for (const sqlServerInstanceInfo of responseInJson) {
-                if (sqlServerInstanceInfo?.sqlServerEdition >= MINIMUM_SQL_SERVER_EDITION_SUPPORTED) {
+                // If an SQL Server version is unknown, default to 2015, which
+                // causes no data to be returned for the SQL Server instance.
+                const sqlServerEdition =
+                    SQL_SERVER_VERSION_TO_EDITION.get(sqlServerInstanceInfo?.sqlServerMajorVersion) || 2015;
+                if (sqlServerEdition >= MINIMUM_SQL_SERVER_EDITION_SUPPORTED) {
                     api1StartTime = performance.now();
                     const storageTypes = [];
                     const deploymentTypes = [];
                     const ebsVolumeIDs = ssmTarget.ebsVolumeIDs?.map(elem => elem?.replace('-', ''));
 
-                    let driveInfo = JSON.parse(sqlServerInstanceInfo?.sqlDriveInfo);
+                    let driveInfo = JSON.parse(sqlServerInstanceInfo?.sqlServerInstanceStorageInfo);
                     if (!Array.isArray(driveInfo)) {
                         driveInfo = [driveInfo];
                     }
@@ -321,7 +325,6 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerVersion,
                         sqlServerInstance,
                         sqlServerState,
-                        sqlServerEdition,
                         windowsAuthentication,
                         scriptExecutionTime
                     } = sqlServerInstanceInfo;
@@ -453,9 +456,4 @@ async function saveDiscoveredParameters(
     ]);
 }
 
-export {
-    getHostAndSqlServerInfo,
-    hostAndSqlInfoPowerShellScript,
-    saveDiscoveredParameters,
-    getHostAndSqlInfoFromPsOutput
-};
+export { getHostAndSqlServerInfo, saveDiscoveredParameters, getHostAndSqlInfoFromPsOutput };
