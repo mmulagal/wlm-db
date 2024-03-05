@@ -514,9 +514,9 @@ export const inventoryApi = createApi({
             discoverHosts: builder.query({
                 query: ({ regionId, credentialsId, nextToken = null }) => {
                     if (nextToken) {
-                        return `credentials/${credentialsId}/regions/${regionId}/mssql/discover?ec2Count=10&nextToken=${nextToken}`;
+                        return `credentials/${credentialsId}/regions/${regionId}/mssql/discover?pageSize=10&nextToken=${nextToken}`;
                     } else {
-                        return `credentials/${credentialsId}/regions/${regionId}/mssql/discover?ec2Count=10`;
+                        return `credentials/${credentialsId}/regions/${regionId}/mssql/discover?pageSize=10`;
                     }
                 }
             }),
