@@ -608,7 +608,7 @@ export const GENERAL = {
     NON_NETAPP_DRIVE: 'Not a NetApp drive',
     CF_COPIED: 'CloudFormation copied successfully.',
     CF_DOWNLOAD: 'CloudFormation downloaded successfully.',
-    CF_NOTICE: 'Notice: the YAML configuration file is available for 7 days.',
+    CF_NOTICE: 'Notice: access to the YAML configuration file expires after 7 days.',
     SSM_NO_CONNECTION_MSG: 'Can’t connect to your instance. See',
     SSM_NO_CONNECTION_LINK: 'Troubleshooting SSM agent',
     SAME_NEW_DRIVE_ERROR: 'Data and log file drive letters should be different for new drives.',
