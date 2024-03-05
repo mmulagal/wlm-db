@@ -1064,7 +1064,9 @@ const subJobDescriptions: SubJobDescriptions = {
     'Ec2MessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2Messages endpoint',
     'SqsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SQS endpoint',
     'SsmEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSM endpoint',
-    'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint'
+    'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint',
+    'FsxEndpoint(AWS::EC2::VPCEndpoint)': 'Creating FSxN endpoint',
+    'CloudwatchLogsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch logs endpoint'
 };
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
 const RESOURCE_SOURCE = {
@@ -1072,7 +1074,17 @@ const RESOURCE_SOURCE = {
     DISCOVER: 'discovery'
 };
 
-const ENDPOINTS_DEPLOYMENT = ['s3', 'cloudformation', 'sqs', 'ssm', 'ssmmessages', 'ec2messages', 'monitoring', 'logs', 'fsx'];
+const ENDPOINTS_DEPLOYMENT = [
+    's3',
+    'cloudformation',
+    'sqs',
+    'ssm',
+    'ssmmessages',
+    'ec2messages',
+    'monitoring',
+    'logs',
+    'fsx'
+];
 
 const SSM_PARAMETERS_BASE_PATH = '/netapp/wlmdb';
 const COMPLETE = 'Complete';
