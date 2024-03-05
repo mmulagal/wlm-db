@@ -20,6 +20,8 @@ public class TrustAllCertsPolicy : ICertificatePolicy {
 "@
 [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
 
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 # Read fsxadmin password from secrets and encode the username:password with base64String
 $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
 $FSxUserName = $SsmParameter.fsx.username
