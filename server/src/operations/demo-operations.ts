@@ -17,6 +17,7 @@ import {
     sqlStandaloneStackData
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
+import { FSXConfigurationType } from '../routes/types/deployment.types';
 
 const logger = getLogger();
 
