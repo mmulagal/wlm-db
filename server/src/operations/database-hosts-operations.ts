@@ -328,7 +328,7 @@ async function getStorageData(
             region!,
             fileSystemId!,
             'storage/volumes',
-            `tiering.object_tags="wlmDeploymentId=${stackname?.replace('-', '_')}"`,
+            `tiering.object_tags="wlmDeploymentId=${stackname?.replaceAll('-', '_')}"`,
             'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
             activeNodeInstanceId
         );
