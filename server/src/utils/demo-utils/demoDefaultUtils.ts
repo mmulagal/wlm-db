@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 import { USER_TOKEN } from '../consts';
 import getLogger from '../logger';
 import { saveFciConfigurationData, saveStandaloneConfigurationData } from './demoMockdata';
-import createDeploymentMockDataInDB from '../../operations/demo-operations';
+import { createDeploymentMockDataInDB } from '../../operations/demo-operations';
 import { createAwsCredential } from '../../lib/cloud-manager/credentials';
 import { listConfig } from '../../lib/database/db';
 import { saveConfig } from '../../operations/database/database-operations';

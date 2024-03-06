@@ -40,6 +40,7 @@ const createDBRequest = {
 
 const reqData = {
     accountId: 'account-13rAEYet',
+    resourceId: '36E53042-04E8-40C9-AE69-26E56CB0D216',
     credentialsId: '2626c05d-364c-4196-bec9-0317c4d53d81',
     region: 'ap-southeast-1',
     parentJobId: '4015cc3a-b7cf-40f6-8afd-d9462fd4ef42',
@@ -113,6 +114,7 @@ describe('Database host operations', () => {
         const resp = await createDatabase(
             reqData.accountId,
             reqData.credentialsId,
+            reqData.resourceId,
             reqData.region,
             reqData.parentJobId,
             reqData.activeNodeInstanceId,
@@ -170,6 +172,7 @@ describe('Database host operations', () => {
         const resp = await cleanUpDatabaseDeployment(
             reqData.accountId,
             reqData.credentialsId,
+            reqData.resourceId,
             reqData.region,
             reqData.fileSystemId,
             reqData.sqlVMName,
