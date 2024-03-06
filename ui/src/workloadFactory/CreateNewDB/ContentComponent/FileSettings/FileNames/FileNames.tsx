@@ -19,6 +19,10 @@ import styles from './FileNames.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { DRIVE_LETTER_TYPE } from '../../../../../utils/consts';
+import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
+import { isValidFileName } from '../../../CreateNewDBFooter/createUserDBPayload';
+import { useDelayedError } from '../../../../../common/hooks/useDelayedError';
+import AccordionError from '../../../../../common/AccordionError/AccordionError';
 
 const FileNames = () => {
     const dispatch = useDispatch();
@@ -39,6 +43,9 @@ const FileNames = () => {
     const isDbCreateHit = useAppSelector(state => state.msSqlAction.isDbCreateHit);
     const dbCreateDataNameAdded = useAppSelector(state => state.msSqlAction.dbCreateDataNameAdded);
     const dbCreateLogNameAdded = useAppSelector(state => state.msSqlAction.dbCreateLogNameAdded);
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
+    const [dataFileNameChange, setDataFileNameChange] = useState(false);
+    const [logFileNameChange, setLogFileNameChange] = useState(false);
 
     const [dataFilePath, setDataFilePath] = useState('');
     const [logFilePath, setLogFilePath] = useState('');
@@ -81,10 +88,12 @@ const FileNames = () => {
     }, [driveLetterLogFile, newUserLogFileName]);
 
     useEffect(() => {
-        if (newUserDBName) {
+        if (newUserDBName && !dataFileNameChange) {
             const newDBName = `${newUserDBName}_data`;
-            const newLogName = `${newUserDBName}_log`;
             dispatch(setNewDBFileName(newDBName));
+        }
+        if (newUserDBName && !logFileNameChange) {
+            const newLogName = `${newUserDBName}_log`;
             dispatch(setNewUserLogFileName(newLogName));
         }
     }, [newUserDBName]);
@@ -197,7 +206,9 @@ const FileNames = () => {
     //Set the Header text here
     const setHeader = () => {
         // For quick create it will just show file name. For advanced it will show path also.
-        if (
+        if (isValidDataName() && isValidLogName()) {
+            return <AccordionError />;
+        } else if (
             newUserDBFileName &&
             newUserLogFileName &&
             (selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE ? driveLetter && driveLetterLogFile : true)
@@ -205,7 +216,7 @@ const FileNames = () => {
             return (
                 <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
                     <div className={styles.headerText}>
-                        <DsTypography variant="Regular_14">
+                        <DsTypography variant="Regular_14" className={styles.headerWrap} title={newUserDBFileName}>
                             {`${GENERAL.DATA_FILE_NAME}: ${newUserDBFileName}`}{' '}
                         </DsTypography>
                         {dataFilePath && (
@@ -216,7 +227,7 @@ const FileNames = () => {
                     <div className={CommonStyles.separator} />
 
                     <div className={styles.headerText}>
-                        <DsTypography variant="Regular_14">
+                        <DsTypography variant="Regular_14" className={styles.headerWrap} title={newUserLogFileName}>
                             {`${GENERAL.LOG_FILE_NAME}: ${newUserLogFileName}`}{' '}
                         </DsTypography>
                         {logFilePath && (
@@ -228,6 +239,26 @@ const FileNames = () => {
         }
         return <ActionRequired error={!dbCreateDataNameAdded || !dbCreateLogNameAdded ? true : false} />;
     };
+
+    function isValidDataName() {
+        if (isDemoMode) {
+            return '';
+        }
+        if (!dbCreateDataNameAdded && (!newUserDBFileName || newUserDBFileName.length === 0)) {
+            return GENERAL.ACTION_REQUIRED;
+        }
+        return isValidFileName(newUserDBFileName) ? '' : GENERAL.DB_DATA_NAME_ERROR_CHECK;
+    }
+
+    function isValidLogName() {
+        if (isDemoMode) {
+            return '';
+        }
+        if (!dbCreateLogNameAdded && (!newUserLogFileName || newUserLogFileName.length === 0)) {
+            return GENERAL.ACTION_REQUIRED;
+        }
+        return isValidFileName(newUserLogFileName) ? '' : GENERAL.DB_LOG_NAME_ERROR_CHECK;
+    }
 
     return (
         <div className={styles.fileNames}>
@@ -279,18 +310,40 @@ const FileNames = () => {
                                         placeholder={GENERAL.DATA_FILE_NAME}
                                         value={newUserDBFileName}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            // This flag is to validate if user has changed data file name by itself
+                                            if (e.target.value) {
+                                                setDataFileNameChange(true);
+                                            } else {
+                                                setDataFileNameChange(false);
+                                            }
                                             dispatch(setNewDBFileName(e.target.value));
                                         }}
                                         className={styles.advFileNameText}
-                                        error={
-                                            !dbCreateDataNameAdded && !newUserDBFileName ? GENERAL.ACTION_REQUIRED : ''
+                                        error={useDelayedError(isValidDataName())}
+                                        info={
+                                            <div className={styles.nameTooltip}>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                        {GENERAL.CREATE_DB_DATA_FILE_NAME_TOOLTIP[0]}
+                                                    </DsTypography>
+                                                </div>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                        {GENERAL.CREATE_DB_DATA_FILE_NAME_TOOLTIP[1]}
+                                                    </DsTypography>
+                                                </div>
+                                            </div>
                                         }
                                     />
                                 </div>
                                 <div className={styles.pathSection}>
                                     <DsTypography variant="Semibold_14">{GENERAL.DATA_FILE_PATH} </DsTypography>
                                     &nbsp;&nbsp;
-                                    <DsTypography variant="Regular_14">{dataFilePath}</DsTypography>
+                                    <DsTypography variant="Regular_14" className={styles.pathText} title={dataFilePath}>
+                                        {dataFilePath}
+                                    </DsTypography>
                                 </div>
                             </div>
                         </div>
@@ -323,18 +376,40 @@ const FileNames = () => {
                                         placeholder={GENERAL.LOG_FILE_NAME}
                                         value={newUserLogFileName}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            // This flag is to validate if user has changed log file name by itself
+                                            if (e.target.value) {
+                                                setLogFileNameChange(true);
+                                            } else {
+                                                setLogFileNameChange(false);
+                                            }
                                             dispatch(setNewUserLogFileName(e.target.value));
                                         }}
                                         className={styles.advFileNameText}
-                                        error={
-                                            !dbCreateLogNameAdded && !newUserLogFileName ? GENERAL.ACTION_REQUIRED : ''
+                                        error={useDelayedError(isValidLogName())}
+                                        info={
+                                            <div className={styles.nameTooltip}>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                        {GENERAL.CREATE_DB_LOG_FILE_NAME_TOOLTIP[0]}
+                                                    </DsTypography>
+                                                </div>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                        {GENERAL.CREATE_DB_LOG_FILE_NAME_TOOLTIP[1]}
+                                                    </DsTypography>
+                                                </div>
+                                            </div>
                                         }
                                     />
                                 </div>
                                 <div className={styles.pathSection}>
                                     <DsTypography variant="Semibold_14">{GENERAL.LOG_FILE_PATH}</DsTypography>
                                     &nbsp;&nbsp;
-                                    <DsTypography variant="Regular_14">{logFilePath}</DsTypography>
+                                    <DsTypography variant="Regular_14" className={styles.pathText} title={logFilePath}>
+                                        {logFilePath}
+                                    </DsTypography>
                                 </div>
                             </div>
                         </div>

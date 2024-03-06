@@ -36,6 +36,13 @@ const DatabaseName = () => {
     const dbCreateLogSizeValid = useAppSelector(state => state.msSqlAction.dbCreateLogSizeValid);
 
     useEffect(() => {
+        // by default Database Name accordion will be opened
+        accordionContext({
+            1: true
+        });
+    }, []);
+
+    useEffect(() => {
         if (
             isDbCreatePresed &&
             (!dbCreateNameAdded ||
