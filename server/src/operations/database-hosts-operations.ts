@@ -1020,10 +1020,10 @@ async function getDriveInfoFromNodes(
                 credentialsId,
                 region,
                 driveInfoCommand,
-                  standbyNodeInstanceId!,
-                  undefined,
-                  false,
-                  executionTimeout
+                standbyNodeInstanceId!,
+                undefined,
+                false,
+                executionTimeout
             )
             : Promise.resolve();
 
@@ -1274,9 +1274,9 @@ async function deployDatabase(
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: sqlServerName as string,
-        name: `Creating user database ${databaseName} on the SQL Server host ${databaseHostId}`,
+        name: `Creating user database ${databaseName} on the SQL Server host ${sqlServerName}`,
         startTime: Date.now(),
-        description: `Creating user database ${databaseName} on the SQL Server host ${databaseHostId}`
+        description: `Creating user database ${databaseName} on the SQL Server host ${sqlServerName}`
     });
 
     invokeSSMForDatabaseDeployment(
@@ -1324,7 +1324,8 @@ async function invokeSSMForDatabaseDeployment(
         fsxSvmId,
         fileSystemId,
         resourceId,
-        isClustered
+        isClustered,
+        parentJobId
     );
 
     const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
