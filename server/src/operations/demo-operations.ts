@@ -6,6 +6,7 @@ import { CloudProviders, RESOURCESTYPE, DATABASE_TYPE } from '../utils/consts';
 import { checkAccount, createDeployment, createResource } from '../lib/database/db';
 import { Metadata } from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
+import { createFSX } from '../lib/cloud-manager/fsx-core';
 import getLogger from '../utils/logger';
 import {
     masterStackData,
@@ -83,7 +84,7 @@ async function createJobMockData(
     return data;
 }
 
-export default async function createDeploymentMockDataInDB(
+async function createDeploymentMockDataInDB(
     accountId: string,
     stackId: string,
     stackName: string,
@@ -163,3 +164,36 @@ export default async function createDeploymentMockDataInDB(
     );
     await createJobs(accountId, data);
 }
+
+async function createFileSystemForDemo(credentialsId: string, region: string, fsxConfiguration: FSXConfigurationType) {
+    logger.info('Creating fsx for demo', credentialsId, region, fsxConfiguration);
+
+    const { fsxDeploymentMode, fsxPassword } = fsxConfiguration;
+    const mode = fsxDeploymentMode.replace(/_\d+$/, '');
+
+    const requestBody = {
+        name: `fsx-wlmdb-${randomize('A', 5)}`,
+        credentialsId,
+        region,
+        storageCapacity: {
+            size: 2,
+            unit: 'TiB'
+        },
+        primarySubnetId: 'subnet-a1', // default subnet for fsx
+        ...(mode === 'MULTI_AZ' && { secondarySubnetId: 'subnet-a2' }),
+        throughputCapacity: 3072,
+        fsxAdminPassword: fsxPassword,
+        deploymentType: mode,
+        securityGroupIds: [],
+        tags: [],
+        svmAdminPassword: `${randomize('*', 8)}`,
+        generateSecurityGroup: true,
+        haPairs: 2,
+        automaticBackupRetentionDays: 30,
+        routeTableIds: ['rtb-11111111']
+    };
+
+    return createFSX(requestBody, true);
+}
+
+export { createFileSystemForDemo, createDeploymentMockDataInDB };
