@@ -19,6 +19,10 @@ import styles from './FileNames.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { DRIVE_LETTER_TYPE } from '../../../../../utils/consts';
+import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
+import { isValidFileName } from '../../../CreateNewDBFooter/createUserDBPayload';
+import { useDelayedError } from '../../../../../common/hooks/useDelayedError';
+import AccordionError from '../../../../../common/AccordionError/AccordionError';
 
 const FileNames = () => {
     const dispatch = useDispatch();
@@ -39,6 +43,7 @@ const FileNames = () => {
     const isDbCreateHit = useAppSelector(state => state.msSqlAction.isDbCreateHit);
     const dbCreateDataNameAdded = useAppSelector(state => state.msSqlAction.dbCreateDataNameAdded);
     const dbCreateLogNameAdded = useAppSelector(state => state.msSqlAction.dbCreateLogNameAdded);
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const [dataFilePath, setDataFilePath] = useState('');
     const [logFilePath, setLogFilePath] = useState('');
@@ -197,7 +202,9 @@ const FileNames = () => {
     //Set the Header text here
     const setHeader = () => {
         // For quick create it will just show file name. For advanced it will show path also.
-        if (
+        if (isValidDataName() && isValidLogName()) {
+            return <AccordionError />;
+        } else if (
             newUserDBFileName &&
             newUserLogFileName &&
             (selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE ? driveLetter && driveLetterLogFile : true)
@@ -227,6 +234,26 @@ const FileNames = () => {
             );
         }
         return <ActionRequired error={!dbCreateDataNameAdded || !dbCreateLogNameAdded ? true : false} />;
+    };
+
+    function isValidDataName() {
+        if (isDemoMode) {
+            return '';
+        }
+        if (!dbCreateDataNameAdded && (!newUserDBFileName || newUserDBFileName.length === 0)) {
+            return GENERAL.ACTION_REQUIRED;
+        }
+        return isValidFileName(newUserDBFileName) ? '' : GENERAL.DB_DATA_NAME_ERROR_CHECK;
+    };
+
+    function isValidLogName() {
+        if (isDemoMode) {
+            return '';
+        }
+        if (!dbCreateLogNameAdded && (!newUserLogFileName || newUserLogFileName.length === 0)) {
+            return GENERAL.ACTION_REQUIRED;
+        }
+        return isValidFileName(newUserLogFileName) ? '' : GENERAL.DB_LOG_NAME_ERROR_CHECK;
     };
 
     return (
@@ -282,8 +309,22 @@ const FileNames = () => {
                                             dispatch(setNewDBFileName(e.target.value));
                                         }}
                                         className={styles.advFileNameText}
-                                        error={
-                                            !dbCreateDataNameAdded && !newUserDBFileName ? GENERAL.ACTION_REQUIRED : ''
+                                        error={useDelayedError(isValidDataName())}
+                                        info={
+                                            <div className={styles.nameTooltip}>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                        {GENERAL.CREATE_DB_DATA_FILE_NAME_TOOLTIP[0]}
+                                                    </DsTypography>
+                                                </div>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                        {GENERAL.CREATE_DB_DATA_FILE_NAME_TOOLTIP[1]}
+                                                    </DsTypography>
+                                                </div>
+                                            </div>
                                         }
                                     />
                                 </div>
@@ -326,8 +367,22 @@ const FileNames = () => {
                                             dispatch(setNewUserLogFileName(e.target.value));
                                         }}
                                         className={styles.advFileNameText}
-                                        error={
-                                            !dbCreateLogNameAdded && !newUserLogFileName ? GENERAL.ACTION_REQUIRED : ''
+                                        error={useDelayedError(isValidLogName())}
+                                        info={
+                                            <div className={styles.nameTooltip}>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                        {GENERAL.CREATE_DB_LOG_FILE_NAME_TOOLTIP[0]}
+                                                    </DsTypography>
+                                                </div>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                        {GENERAL.CREATE_DB_LOG_FILE_NAME_TOOLTIP[1]}
+                                                    </DsTypography>
+                                                </div>
+                                            </div>
                                         }
                                     />
                                 </div>
