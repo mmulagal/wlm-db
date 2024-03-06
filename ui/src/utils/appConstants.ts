@@ -556,16 +556,16 @@ export const GENERAL = {
     FILE_SETTINGS_SECOND_TEXT:
         'If you select a new drive letter, we recommend selecting a new drive letter for the log file.',
     CREATE_DB_NAME_TOOLTIP: [
-        'SQL databases should have names that are no more than 30 characters long.',
+        'SQL databases should have names that are no more than 123 characters long.',
         'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
         'Names should not be Transact-SQL reserved words.'
     ],
     CREATE_DB_DATA_FILE_NAME_TOOLTIP: [
-        'Data file name should have names that are no more than 35 characters long.',
+        'Data file name should have names that are no more than 128 characters long.',
         'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
     ],
     CREATE_DB_LOG_FILE_NAME_TOOLTIP: [
-        'Log file name should have names that are no more than 35 characters long.',
+        'Log file name should have names that are no more than 128 characters long.',
         'Names can only contain alphanumeric characters, including letters, numbers and underscrores.'
     ],
     DB_NAME_ERROR_CHECK: 'Check database name criteria',

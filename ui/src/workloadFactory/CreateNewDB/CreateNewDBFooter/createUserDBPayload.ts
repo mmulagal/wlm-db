@@ -36,14 +36,14 @@ export const createUserDbPayload = (newUserDb: any) => {
 };
 
 export const isValidDatabaseName = (name: any) => {
-    if (name && name.length > 0 && (name.length > 30 || !/^[a-zA-Z0-9/_]+$/.test(name))) {
+    if (name && name.length > 0 && (name.length > 123 || !/^[a-zA-Z0-9/_]+$/.test(name))) {
         return false;
     }
     return true;
 };
 
 export const isValidFileName = (name: any) => {
-    if (name && name.length > 0 && (name.length > 35 || !/^[a-zA-Z0-9/_]+$/.test(name))) {
+    if (name && name.length > 0 && (name.length > 128 || !/^[a-zA-Z0-9/_]+$/.test(name))) {
         return false;
     }
     return true;
