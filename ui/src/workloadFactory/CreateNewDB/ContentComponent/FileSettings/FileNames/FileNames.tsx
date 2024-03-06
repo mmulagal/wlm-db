@@ -216,7 +216,7 @@ const FileNames = () => {
             return (
                 <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
                     <div className={styles.headerText}>
-                        <DsTypography variant="Regular_14">
+                        <DsTypography variant="Regular_14" className={styles.headerWrap} title={newUserDBFileName}>
                             {`${GENERAL.DATA_FILE_NAME}: ${newUserDBFileName}`}{' '}
                         </DsTypography>
                         {dataFilePath && (
@@ -227,7 +227,7 @@ const FileNames = () => {
                     <div className={CommonStyles.separator} />
 
                     <div className={styles.headerText}>
-                        <DsTypography variant="Regular_14">
+                        <DsTypography variant="Regular_14" className={styles.headerWrap} title={newUserLogFileName}>
                             {`${GENERAL.LOG_FILE_NAME}: ${newUserLogFileName}`}{' '}
                         </DsTypography>
                         {logFilePath && (
