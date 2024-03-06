@@ -8,6 +8,8 @@ import JobsSummaryTimeline from '../data/jobsSummaryTimeline.json';
 import Templates from '../data/template.json';
 import JobMonitoringDownloads from '../data/jobMonitoringDownload.json';
 import JobMonitoringSubTask from '../data/JobMonitoringSubTask.json';
+import DiscoverEC2 from '../data/discoverEc2.json';
+import CredentialsStatus from '../data/credentialsStatus.json';
 
 const router = require('express').Router();
 
@@ -56,6 +58,18 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/jobs`, asy
 router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/jobs/:jobId`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, JobMonitoringSubTask);
+    }, 3000);
+});
+
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/mssql/discover`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, DiscoverEC2);
+    }, 3000);
+});
+
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/resources/file-systems/credentials-status`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, CredentialsStatus);
     }, 3000);
 });
 
