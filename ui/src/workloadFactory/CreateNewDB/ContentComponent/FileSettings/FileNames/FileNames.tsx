@@ -244,7 +244,7 @@ const FileNames = () => {
             return GENERAL.ACTION_REQUIRED;
         }
         return isValidFileName(newUserDBFileName) ? '' : GENERAL.DB_DATA_NAME_ERROR_CHECK;
-    };
+    }
 
     function isValidLogName() {
         if (isDemoMode) {
@@ -254,7 +254,7 @@ const FileNames = () => {
             return GENERAL.ACTION_REQUIRED;
         }
         return isValidFileName(newUserLogFileName) ? '' : GENERAL.DB_LOG_NAME_ERROR_CHECK;
-    };
+    }
 
     return (
         <div className={styles.fileNames}>
@@ -331,7 +331,9 @@ const FileNames = () => {
                                 <div className={styles.pathSection}>
                                     <DsTypography variant="Semibold_14">{GENERAL.DATA_FILE_PATH} </DsTypography>
                                     &nbsp;&nbsp;
-                                    <DsTypography variant="Regular_14" className={styles.pathText} title={dataFilePath}>{dataFilePath}</DsTypography>
+                                    <DsTypography variant="Regular_14" className={styles.pathText} title={dataFilePath}>
+                                        {dataFilePath}
+                                    </DsTypography>
                                 </div>
                             </div>
                         </div>
@@ -389,7 +391,9 @@ const FileNames = () => {
                                 <div className={styles.pathSection}>
                                     <DsTypography variant="Semibold_14">{GENERAL.LOG_FILE_PATH}</DsTypography>
                                     &nbsp;&nbsp;
-                                    <DsTypography variant="Regular_14" className={styles.pathText} title={logFilePath}>{logFilePath}</DsTypography>
+                                    <DsTypography variant="Regular_14" className={styles.pathText} title={logFilePath}>
+                                        {logFilePath}
+                                    </DsTypography>
                                 </div>
                             </div>
                         </div>
