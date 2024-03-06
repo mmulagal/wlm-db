@@ -1071,7 +1071,7 @@ async function getDriveInfoFromNodes(
                 return { ...drive, isDriveClustered: false };
             });
         } catch (error) {
-            const errorMessage = `Error while parsing cluster drive info ${activeNodeInstanceId} ${standbyNodeInstanceId}, ${error}`;
+            const errorMessage = `Unable to read cluster drive information ${activeNodeInstanceId} ${standbyNodeInstanceId}, ${error}`;
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
@@ -1113,7 +1113,7 @@ async function getDriveInfoFromSSM(
     );
 
     if (!isSSMConnected && activeNodeInstanceId === undefined) {
-        const errorMessage = `Error while fetching drive details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
+        const errorMessage = `Unable to access drive details for host ${databaseHostId} in account ${accountId} due to SSM connection issues.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
@@ -1121,7 +1121,7 @@ async function getDriveInfoFromSSM(
     if (standbyNodeInstanceId) {
         const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId!);
         if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
-            const errorMessage = `Error while fetching drive details for ${accountId} ${databaseHostId}. Unable to connect to node ${standbyNodeInstanceId} through SSM`;
+            const errorMessage = `Unable to connect to node to access drive details for host ${databaseHostId} in account ${accountId}`;
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
