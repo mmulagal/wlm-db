@@ -10,6 +10,7 @@ import { listConfig } from '../../lib/database/db';
 import { saveConfig } from '../../operations/database/database-operations';
 import { getAsyncLocalStorageResource } from '../async-local-storage';
 import { listJobs } from '../../lib/database/job';
+import { inventoryDemoData } from './demoInventoryData';
 
 const logger = getLogger();
 
@@ -95,4 +96,14 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
     }
 }
 
-export { creadteDemoDBData };
+async function returnInventorydata() {
+    logger.info('Generate and return inventory data for demo');
+    const fsxId = `fs-${randomize('a0', 17)}`;
+    const inventoryDemoDataResponse = inventoryDemoData(fsxId);
+    return {
+        count: inventoryDemoDataResponse.count,
+        items: inventoryDemoDataResponse.items
+    };
+}
+
+export { creadteDemoDBData, returnInventorydata };

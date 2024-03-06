@@ -24,6 +24,7 @@ import {
 } from '../routes/types/discover.types';
 import getLogger from '../utils/logger';
 import { describeFSxFileSystems, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
+import { returnInventorydata } from '../utils/demo-utils/demoDefaultUtils';
 
 const logger = getLogger();
 
@@ -55,6 +56,9 @@ async function getHostAndSqlServerInfo(
     instances: string[] = []
 ) {
     logger.info('getHostAndSqlServerInfo():', { accountId, credentialsId, region, nextToken });
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        return returnInventorydata();
+    }
     let api1StartTime;
     let api1EndTime;
 
