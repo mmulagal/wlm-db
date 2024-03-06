@@ -331,7 +331,7 @@ const FileNames = () => {
                                 <div className={styles.pathSection}>
                                     <DsTypography variant="Semibold_14">{GENERAL.DATA_FILE_PATH} </DsTypography>
                                     &nbsp;&nbsp;
-                                    <DsTypography variant="Regular_14">{dataFilePath}</DsTypography>
+                                    <DsTypography variant="Regular_14" className={styles.pathText} title={dataFilePath}>{dataFilePath}</DsTypography>
                                 </div>
                             </div>
                         </div>
@@ -389,7 +389,7 @@ const FileNames = () => {
                                 <div className={styles.pathSection}>
                                     <DsTypography variant="Semibold_14">{GENERAL.LOG_FILE_PATH}</DsTypography>
                                     &nbsp;&nbsp;
-                                    <DsTypography variant="Regular_14">{logFilePath}</DsTypography>
+                                    <DsTypography variant="Regular_14" className={styles.pathText} title={logFilePath}>{logFilePath}</DsTypography>
                                 </div>
                             </div>
                         </div>
