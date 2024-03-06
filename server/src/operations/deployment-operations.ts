@@ -63,7 +63,8 @@ import {
     MAP_SERVICE_TEMPLATE_PARAMETER,
     SIGNED_TEMPLATES_BUCKET_NAME,
     TEMPLATE_BUCKET_REGION,
-    DEFAULT_AWS_REGION
+    DEFAULT_AWS_REGION,
+    VALIDATION_INSTANCE_TYPE
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -75,7 +76,11 @@ import {
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
-import { getServicesWithNoEndpoint, getWindowsServerBaseAmi } from './aws/ec2-operations';
+import {
+    getServicesWithNoEndpoint,
+    getValidationNodeInstanceType,
+    getWindowsServerBaseAmi
+} from './aws/ec2-operations';
 import uploadTemplates from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
@@ -119,13 +124,18 @@ async function formatTemplateParameters(
 
     const stackName = derivedParams.StackName;
     const validationAmiImage = credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : '';
+
+    const validationNodeInstanceType = await getValidationNodeInstanceType(credentialsId!, region!);
+
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+
     const templateParams: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
+        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: validationNodeInstanceType },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
@@ -579,6 +589,7 @@ async function createCloudFormationTemplateForUserDeployment(
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
+    const validationNodeInstanceType = await getValidationNodeInstanceType(credentialsId!, region!);
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
@@ -588,13 +599,14 @@ async function createCloudFormationTemplateForUserDeployment(
     const templateParamsAsList: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
+        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: validationNodeInstanceType },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
     ];
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${validationNodeInstanceType}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
     if (fsxConfiguration.fsxPassword) {
         try {
             const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);

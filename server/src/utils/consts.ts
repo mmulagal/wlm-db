@@ -521,6 +521,7 @@ const SIGNED_TEMPLATES_BUCKET_NAME = process.env.TEMPLATE_BUCKET_NAME || config.
 const TEMPLATE_BUCKET_REGION = process.env.WLMDB_BUCKET_REGION || config.get<string>('bucket.region');
 const CF_DEPLOY_ROLE_NAME = 'CfDeployRoleName';
 const VALIDATION_AMI = 'ValidationAmi';
+const VALIDATION_INSTANCE_TYPE = 'ValidationNodeInstanceType';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
@@ -1091,6 +1092,11 @@ const COMPLETE = 'Complete';
 
 const CUSTOM_SSM_EXECUTION_TIMEOUT = '180';
 
+const VALIDATION_NODE_INSTANCETYPE = {
+    T2MICRO: 't2.micro',
+    T3MICRO: 't3.micro'
+};
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1329,5 +1335,7 @@ export {
     TEMPLATE_BUCKET_REGION,
     SSM_PARAMETERS_BASE_PATH,
     COMPLETE,
-    CUSTOM_SSM_EXECUTION_TIMEOUT
+    CUSTOM_SSM_EXECUTION_TIMEOUT,
+    VALIDATION_NODE_INSTANCETYPE,
+    VALIDATION_INSTANCE_TYPE
 };

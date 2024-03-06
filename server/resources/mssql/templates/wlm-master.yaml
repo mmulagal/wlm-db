@@ -28,6 +28,7 @@ Metadata:
           - NodeNetBIOSNames
           - KeyPairName
           - ValidationAmi
+          - ValidationNodeInstanceType
           - CfDeployRoleName
       - Label:
           default: Microsoft Active Directory Configuration
@@ -155,6 +156,8 @@ Metadata:
         default: (optional) Notification ARN
       ValidationAmi:
        default: Validation node AMI image ID
+      ValidationNodeInstanceType:
+       default: Validation node instance type
       SQLDeploymentMode:
         default: SQL server deployment mode
       S3EndpointExists:
@@ -269,6 +272,8 @@ Parameters:
   {{{NotificationARN}}}
   
   {{{ValidationAmi}}}
+
+  {{{ValidationNodeInstanceType}}}
   
   {{{RoleCredentialsId}}}
   
@@ -574,6 +579,8 @@ Resources:
         PerformADCheck: "true"
         AMI:
           Ref: ValidationAmi
+        InstanceType:
+          Ref: ValidationNodeInstanceType
         EnableCloudWatchLogFeature:
           Ref: EnableCloudWatchLogFeature
         ParentStackName:
@@ -626,6 +633,8 @@ Resources:
         PerformADCheck: "false"  
         AMI:
           Ref: ValidationAmi
+        InstanceType:
+          Ref: ValidationNodeInstanceType
         EnableCloudWatchLogFeature:
           Ref: EnableCloudWatchLogFeature
         ParentStackName:

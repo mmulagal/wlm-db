@@ -1,0 +1,12 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "b9a45b8d-41ce-421a-8cca-8347f1ee56c9",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "InstanceTypeOfferings": [
+        { "InstanceType": "t3.micro", "LocationType": "region", "Location": "ap-southeast-1" },
+        { "InstanceType": "t2.micro", "LocationType": "region", "Location": "ap-southeast-1" }
+    ]
+}
