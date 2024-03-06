@@ -61,7 +61,7 @@ const HOST_AND_SQL_INFO_PS1 = [
         try {
           if ($state -eq "Running") {
             Get-Command sqlcmd > Out-Null
-            $serverInstance = If ($instance -ne "MSSQLSERVER" -And -$instance -ne "SQLEXPRESS") { "$Env:ComputerName\\$instance" } Else { "$Env:ComputerName" }
+            $serverInstance = If ($instance -ne "MSSQLSERVER" -And $instance -ne "SQLEXPRESS") { "$Env:ComputerName\\$instance" } Else { "$Env:ComputerName" }
             sqlcmd -Q "SELECT @@serviceName" -C -S $serverInstance -l 1 2> Out-Null | Out-Null
             $body['windowsAuthentication'] = $?
 
