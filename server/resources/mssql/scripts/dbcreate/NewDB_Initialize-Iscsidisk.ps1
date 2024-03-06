@@ -26,6 +26,7 @@ $result = [ordered]@{}
 
 #Refresh the cached information on iSCSI target
 Update-IscsiTarget
+Start-Sleep 2
 
 #Create a list of drive letters if not passed
 if (-Not $DataDrive) { 
@@ -117,9 +118,14 @@ Stop-Service -Name ShellHWDetection
 
 
 try {
-$datalabel = $DBName+"-Data"
-$loglabel = $DBName+"-Log"
-
+    if ($DBName.Length -gt 25) {
+        $TruncatedName = $DBName.Substring(0,25)
+        $datalabel = $TruncatedName+"-Data"
+        $loglabel = $TruncatedName+"-Log"
+    } else {
+      $datalabel = $DBName+"-Data"
+      $loglabel = $DBName+"-Log"
+    }
 $LogDriveLetter = $LogDrive.Substring(0,1)
 $DataDriveLetter = $DataDrive.Substring(0,1)
 
