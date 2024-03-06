@@ -59,8 +59,14 @@ $result = [ordered]@{}
 
 
 #Cleanup drives from SQL dependency in case of clustered configuration
-$datalabel = $DBName+"-Data"
-$loglabel = $DBName+"-Log"
+if ($DBName.Length -gt 25) {
+    $TruncatedName = $DBName.Substring(0,25)
+    $datalabel = $TruncatedName+"-Data"
+    $loglabel = $TruncatedName+"-Log"
+  } else {
+  $datalabel = $DBName+"-Data"
+  $loglabel = $DBName+"-Log"
+  }
 
 if($IsClustered -ne "false") {
     #Check if disks are in dependency list before cleaning up

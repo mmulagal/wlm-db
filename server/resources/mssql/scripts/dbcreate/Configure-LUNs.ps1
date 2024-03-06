@@ -332,7 +332,7 @@ try{
     $resultjson  
     exit 1
 }
-Start-Sleep 2
+Start-Sleep 5
 }
 
 
