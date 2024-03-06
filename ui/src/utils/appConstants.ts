@@ -519,6 +519,8 @@ export const GENERAL = {
     JM_FAILED: 'Failed',
     NO_DATA: 'No data',
     JM_RUNNING: 'Running',
+    JM_TYPE_DEPLOYMENT: 'Deployment',
+    JM_TYPE_CREATE_RESOURCE: 'Create resource',
     JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
     DEMO_TITLE: 'Redirect to CloudFormation',
@@ -554,11 +556,21 @@ export const GENERAL = {
     FILE_SETTINGS_SECOND_TEXT:
         'If you select a new drive letter, we recommend selecting a new drive letter for the log file.',
     CREATE_DB_NAME_TOOLTIP: [
-        'SQL databases should have names that are no more than 30 characters long.',
+        'SQL databases should have names that are no more than 123 characters long.',
         'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
         'Names should not be Transact-SQL reserved words.'
     ],
+    CREATE_DB_DATA_FILE_NAME_TOOLTIP: [
+        'Data file name should have names that are no more than 128 characters long.',
+        'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
+    ],
+    CREATE_DB_LOG_FILE_NAME_TOOLTIP: [
+        'Log file name should have names that are no more than 128 characters long.',
+        'Names can only contain alphanumeric characters, including letters, numbers and underscrores.'
+    ],
     DB_NAME_ERROR_CHECK: 'Check database name criteria',
+    DB_DATA_NAME_ERROR_CHECK: 'Check data file name criteria',
+    DB_LOG_NAME_ERROR_CHECK: 'Check log file name criteria',
     DB_ADVANCED_CREATE: 'Advanced create',
     DB_QUICK_CREATE: 'Quick create',
     QUICK_DB_CREATE_CONTENT: [
@@ -591,10 +603,10 @@ export const GENERAL = {
     DATA_FILE_PATH: 'Data file path:',
     LOG_FILE_PATH: 'Log file path:',
     SELECT_DRIVE_LETTER: 'Select drive letter',
-    LOG_SIZE_MIN_ERROR: 'Log size should be 1 GiB or more.',
-    NO_DATA_SIZE_ERROR: 'Data size should be 1 GiB or more.',
-    LOG_SIZE_ERROR: 'Log size should be less than data size.',
-    DATA_SIZE_MIN_ERROR: 'Minimum space not available in the drive.',
+    LOG_SIZE_MIN_ERROR: 'Log file size should be 1 GiB or more.',
+    NO_DATA_SIZE_ERROR: 'Data file size should be 1 GiB or more.',
+    LOG_SIZE_ERROR: 'Log file size should be less than data file size.',
+    DATA_SIZE_MIN_ERROR: 'Minimum space required to create the file is not available in the drive',
     DATA_SIZE_ERROR: 'The valid range is 1 GiB - ',
     DRIVE_LETTER_CREATE_ERROR: 'Action required: Drive letters are missing. Use Advanced Create mode to select drives.',
     DRIVE_LETTER_QUICK_CREATE_ERROR:
@@ -602,14 +614,14 @@ export const GENERAL = {
     RESOURCE_ROLLBACK_TOOLTIP:
         'When a deployment fails, your provisioned resources will not be rolled back by default. The provisioned resources will be deleted when you delete your deployment from the AWS console.',
     DATA_SIZE_TOOLTIP: ['Host ', ' data size range is '],
-    NON_CLUSTERED_DRIVE: 'Non clustered drive or not part of SQL server',
-    NON_NETAPP_DRIVE: 'Non NetApp drive',
+    NON_CLUSTERED_DRIVE: 'Non clustered drive or drive not part of SQL server',
+    NON_NETAPP_DRIVE: 'Not a NetApp drive',
     CF_COPIED: 'CloudFormation copied successfully.',
     CF_DOWNLOAD: 'CloudFormation downloaded successfully.',
-    CF_NOTICE: 'Notice: the YAML configuration file is available for 7 days.',
+    CF_NOTICE: 'Notice: access to the YAML configuration file expires after 7 days.',
     SSM_NO_CONNECTION_MSG: 'Can’t connect to your instance. See',
     SSM_NO_CONNECTION_LINK: 'Troubleshooting SSM agent',
-    SAME_NEW_DRIVE_ERROR: 'Data and log drives should be different for new drives.',
+    SAME_NEW_DRIVE_ERROR: 'Data and log file drive letters should be different for new drives.',
     FSX_FOR_ONTAP: 'FSx for ONTAP',
     EBS: 'EBS',
     SINGLE_AZ: 'Single AZ',

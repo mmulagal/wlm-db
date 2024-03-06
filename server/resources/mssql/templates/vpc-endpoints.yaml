@@ -65,6 +65,15 @@ Parameters:
         Type: String
         Default: subnet-123456
     
+    PreferredRouteTableId:
+        Description: Specify routetable id for the preferred subnet.
+        Type: String
+
+    StandbyRouteTableId:
+        Description: Specify routetable id for the standby subnet.
+        Type: String
+        Default: rtb-123456
+    
     S3EndpointExists:
         Description: Boolean to convey if an S3 endpoint exists in the vpc.
         Type: String
@@ -129,6 +138,8 @@ Resources:
         VpcId: !Ref VPCId
         VpcEndpointType: Gateway
         ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+        RouteTableIds:
+            !If [SingleZone, [!Ref PreferredRouteTableId], [!Ref PreferredRouteTableId, !Ref StandbyRouteTableId]]
     
     CloudformationEndpoint:
       Condition: CreateCloudformationEndpoint

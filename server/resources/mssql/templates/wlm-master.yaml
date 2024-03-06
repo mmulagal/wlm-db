@@ -519,7 +519,10 @@ Resources:
           Ref: VPCCIDR
         PreferredSubnetId:
           Ref: PrivateSubnet1ID
+        PreferredRouteTableId:
+          Ref: RouteTable1Id
         StandbySubnetId: !If [IsFailoverCluster, !Ref PrivateSubnet2ID, !Ref AWS::NoValue]
+        StandbyRouteTableId: !If [IsFailoverCluster, !Ref RouteTable2Id, !Ref AWS::NoValue]
         S3EndpointExists:
           Ref: S3EndpointExists
         CloudformationEndpointExists:

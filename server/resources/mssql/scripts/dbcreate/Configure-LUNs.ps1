@@ -38,6 +38,8 @@ public class TrustAllCertsPolicy : ICertificatePolicy {
 "@
 [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
 
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 $FSxCredStore  = "/netapp/wlmdb/$FileSystemId"
 
 $credobject =  (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
@@ -83,8 +85,6 @@ catch {
     $restcert = ''
 }
 
-Write-output "Private subnet $isprivatesubnet"
-
 function callGetApi{
     param(
     [Parameter(Mandatory=$true)]
@@ -110,7 +110,7 @@ function callGetApi{
         }
     }catch{
         $result.Add('Status','Failed')
-        $result.Add('Message','REST API call to FSx for ONTAP failed')
+        $result.Add('Message','REST API call to FSx for NetApp ONTAP failed')
         $result.Add('Exception',$_)
         $resultjson = ($result | ConvertTo-Json) 
         $resultjson  
@@ -152,7 +152,7 @@ function callrestapi{
         
     }catch{
         $result.Add('Status','Failed')
-        $result.Add('Message','REST API call to FSx for ONTAP failed')
+        $result.Add('Message','REST API call to FSx for NetApp ONTAP failed')
         $result.Add('Exception',$_)
         $resultjson = ($result | ConvertTo-Json) 
         $resultjson  
@@ -167,7 +167,7 @@ try {
 if(($LogNew -eq "false") -And ($DataNew -eq "false")) { throw }
 } catch {
     $result.Add('Status','Failed')
-    $result.Add('Message','Need to define at least one new drive to configure volume and LUN')
+    $result.Add('Message','Need to define at least one new drive to configure storage')
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson  
@@ -187,7 +187,7 @@ $igroups = (callGetApi -uri $URI -region $region -creds $base64 -result $result)
 $IGROUP = $igroups[0].name
 } catch {
     $result.Add('Status','Failed')
-    $result.Add('Message','Unable to fetch igroup from SVM')
+    $result.Add('Message','Unable to fetch initiator group from SVM')
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson     
@@ -202,7 +202,7 @@ if ([string]::IsNullOrEmpty($IGROUP)) {
   else { throw}
   } catch {
     $result.Add('Status','Failed')
-    $result.Add('Message','Unable to find initiator group allowing the node IQN')
+    $result.Add('Message','Unable to find initiator group allowing access to the node')
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson  
@@ -218,7 +218,7 @@ if ([string]::IsNullOrEmpty($IGROUP)) {
   if ([string]::IsNullOrEmpty($IGROUP)) { throw }
   } catch {
     $result.Add('Status','Failed')
-    $result.Add('Message','Unable to find initiator group allowing the node IQN')
+    $result.Add('Message','Unable to find initiator group allowing access to the node')
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson  
@@ -266,7 +266,7 @@ $logvolcreate = (callrestapi -MgmtDNS $MgmtDNS -uri $volUriDynamicPart -region $
 }
 } catch {
     $result.Add('Status','Failed')
-    $result.Add('Message','Failed to create volume on FSx for ONTAP')
+    $result.Add('Message','Failed to create volume on FSx for NetApp ONTAP')
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson  
@@ -328,7 +328,7 @@ try{
         }
 }catch{
     $result.Add('Status','Failed')
-    $result.Add('Message','Volume modification to set best practise parameters failed')
+    $result.Add('Message','Failed to set best practise parameters on the volume')
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson  
@@ -424,7 +424,7 @@ foreach ($perlun in $pathlist) {
         }
         catch{
             $result.Add('Status','Failed')
-            $result.Add('Message','LUN modification to set space-reserve failed')
+            $result.Add('Message','Failed to set best practise parameters on the storage')
             $result.Add('Exception',$_)
             $resultjson = ($result | ConvertTo-Json) 
             $resultjson  
@@ -451,7 +451,7 @@ foreach ($perlun in $pathlist) {
         }
         catch{
             $result.Add('Status','Failed')
-            $result.Add('Message','LUN modification to set space-reserve failed')
+            $result.Add('Message','Failed to set best practise parameters on the storage')
             $result.Add('Exception',$_)
             $resultjson = ($result | ConvertTo-Json) 
             $resultjson  
@@ -460,7 +460,7 @@ foreach ($perlun in $pathlist) {
         Start-Sleep 3
     }
     $result.Add('Status','Complete')
-    $result.Add('Message','Provisioning volumes and LUNs complete')
+    $result.Add('Message','Provisioning storage on FSx for NetApp ONTAP complete')
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson 
  

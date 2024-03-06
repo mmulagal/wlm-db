@@ -15,7 +15,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import Inventory from '../../Inventory/Inventory';
 import { useDispatch } from 'react-redux';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import DatabaseHostOverview from '../../ResourcePage/ResourceHomePage/DatabaseHostOverview';
 import HeaderComponentApi from './HeaderComponentApis';
 import {
@@ -117,13 +117,14 @@ const HeaderComponent = () => {
         if (selectedHeaderTab === WLF_TABS.DASHBOARD) {
             resetDBHomePageState(dispatch);
         } else if (selectedHeaderTab === WLF_TABS.INVENTORY) {
-            resetDBHomePageState(dispatch); // will add for inventory once API will be available
+            resetDBHomePageState(dispatch);
+            dispatch(setIsRefreshed(true));
         } else if (selectedHeaderTab === WLF_TABS.OVERVIEW) {
             resetDBHomePageState(dispatch);
             dispatch(workloadFactoryResourceApi.util.resetApiState());
         } else if (selectedHeaderTab === WLF_TABS.JOB_MONITORING) {
             dispatch(setJobsList([]));
-            dispatch(setSubJobsData([]))
+            dispatch(setSubJobsData([]));
         }
     };
 
