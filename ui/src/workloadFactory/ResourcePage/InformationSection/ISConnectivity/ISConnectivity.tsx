@@ -17,13 +17,6 @@ const ISConnectivity = ({ handleToggle, openKey }: accordionType) => {
             <>
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        {GENERAL.KEY_PAIR_NAME_INFO}
-                    </Typography>
-                    <Typography variant="Regular_14">{resourceDetails?.topology?.keyPairName}</Typography>
-                </div>
-
-                <div className={commonStyles.row}>
-                    <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.VPC_INFO}
                     </Typography>
                     <Typography variant="Regular_14">{resourceDetails?.topology?.vpcId}</Typography>
