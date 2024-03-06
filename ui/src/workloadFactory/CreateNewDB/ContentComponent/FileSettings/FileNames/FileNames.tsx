@@ -44,6 +44,8 @@ const FileNames = () => {
     const dbCreateDataNameAdded = useAppSelector(state => state.msSqlAction.dbCreateDataNameAdded);
     const dbCreateLogNameAdded = useAppSelector(state => state.msSqlAction.dbCreateLogNameAdded);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
+    const [dataFileNameChange, setDataFileNameChange] = useState(false);
+    const [logFileNameChange, setLogFileNameChange] = useState(false);
 
     const [dataFilePath, setDataFilePath] = useState('');
     const [logFilePath, setLogFilePath] = useState('');
@@ -86,10 +88,12 @@ const FileNames = () => {
     }, [driveLetterLogFile, newUserLogFileName]);
 
     useEffect(() => {
-        if (newUserDBName) {
+        if (newUserDBName && !dataFileNameChange) {
             const newDBName = `${newUserDBName}_data`;
-            const newLogName = `${newUserDBName}_log`;
             dispatch(setNewDBFileName(newDBName));
+        }
+        if (newUserDBName && !logFileNameChange) {
+            const newLogName = `${newUserDBName}_log`;
             dispatch(setNewUserLogFileName(newLogName));
         }
     }, [newUserDBName]);
@@ -306,6 +310,12 @@ const FileNames = () => {
                                         placeholder={GENERAL.DATA_FILE_NAME}
                                         value={newUserDBFileName}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            // This flag is to validate if user has changed data file name by itself
+                                            if (e.target.value) {
+                                                setDataFileNameChange(true);
+                                            } else {
+                                                setDataFileNameChange(false);
+                                            }
                                             dispatch(setNewDBFileName(e.target.value));
                                         }}
                                         className={styles.advFileNameText}
@@ -366,6 +376,12 @@ const FileNames = () => {
                                         placeholder={GENERAL.LOG_FILE_NAME}
                                         value={newUserLogFileName}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            // This flag is to validate if user has changed log file name by itself
+                                            if (e.target.value) {
+                                                setLogFileNameChange(true);
+                                            } else {
+                                                setLogFileNameChange(false);
+                                            }
                                             dispatch(setNewUserLogFileName(e.target.value));
                                         }}
                                         className={styles.advFileNameText}
