@@ -51,6 +51,12 @@
             margin-top: 26px;
             margin-bottom: 64px;
             padding: 10px 24px;
+            white-space: nowrap;
+
+            .pathText {
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
         }
     }
 
