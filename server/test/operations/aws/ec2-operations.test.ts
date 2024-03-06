@@ -8,7 +8,8 @@ import {
     tagEc2Resource,
     getVpcSecurityGroups,
     getVpcEndpoints,
-    getServicesWithNoEndpoint
+    getServicesWithNoEndpoint,
+    getValidationNodeInstanceType
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -70,5 +71,10 @@ describe('EC2 Operations', () => {
     it('Get services without endpoints', async () => {
         const response = await getServicesWithNoEndpoint(credentialsId, DEFAULT_AWS_REGION, 'vpc-123445');
         expect(response).toBeDefined();
+    });
+
+    it('Get validation node instance tyoe', async () => {
+        const response = await getValidationNodeInstanceType(credentialsId, DEFAULT_AWS_REGION);
+        expect(response).toEqual('t2.micro');
     });
 });

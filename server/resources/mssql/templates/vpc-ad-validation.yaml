@@ -39,6 +39,8 @@ Metadata:
                 default: Unique ID for your resource tags
             AMI:
                 default: AMI ID of the validation node
+            InstanceType:
+                default: Instance type of the validation node
             DomainAdminUser:
                 default: Domain Admin user name
             DomainDNSName:
@@ -79,6 +81,9 @@ Parameters:
         MaxLength: '20'
         MinLength: '5'
         Type: String
+    InstanceType:
+        Type: String
+        Default: t3.micro
     DomainDNSName:
         Description: Fully qualified domain name (FQDN). For example, example.com.
         MaxLength: '255'
@@ -362,18 +367,18 @@ Resources:
                             waitAfterCompletion: '0'
         Properties:
             ImageId: !Ref 'AMI'
+            InstanceType: !Ref 'InstanceType'
             IamInstanceProfile: !Ref 'ValidationInstanceProfile'
             LaunchTemplate:
                 LaunchTemplateId: !Ref 'DisableIMDSv1'
                 Version: !GetAtt 'DisableIMDSv1.DefaultVersionNumber'
-            InstanceType: t2.micro
             NetworkInterfaces:
                 - DeviceIndex: '0'
                   SubnetId: !Ref 'SubnetID'
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
-            InstanceInitiatedShutdownBehavior: stop
+            InstanceInitiatedShutdownBehavior: terminate
             UserData: !Base64
                 Fn::Join:
                     - ''
@@ -591,6 +596,7 @@ Resources:
                             waitAfterCompletion: '0'
         Properties:
             ImageId: !Ref 'AMI'
+            InstanceType: !Ref 'InstanceType'
             IamInstanceProfile: !Ref 'ValidationInstanceProfile'
             LaunchTemplate:
                 LaunchTemplateId: !Ref 'DisableIMDSv1'
@@ -602,7 +608,7 @@ Resources:
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
-            InstanceInitiatedShutdownBehavior: stop
+            InstanceInitiatedShutdownBehavior: terminate
             UserData: !Base64
                 Fn::Join:
                     - ''
