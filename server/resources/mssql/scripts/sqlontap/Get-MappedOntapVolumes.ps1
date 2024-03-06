@@ -39,8 +39,6 @@ catch {
         $isprivatesubnet = $True      
     }
 
-Write-output "Private subnet $isprivatesubnet"
-
 # Get Windows drives associated with databases
 $sqlresponse =  sqlcmd -Q "SET NOCOUNT ON; SELECT DISTINCT vs.logical_volume_name FROM sys.master_files AS mf CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs WHERE vs.volume_mount_point != 'C:\' AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF' AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB' FOR JSON PATH;" -y 0;
 

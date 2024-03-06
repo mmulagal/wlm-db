@@ -328,7 +328,7 @@ async function getStorageData(
             region!,
             fileSystemId!,
             'storage/volumes',
-            `tiering.object_tags="wlmDeploymentId=${stackname?.replace('-', '_')}"`,
+            `tiering.object_tags="wlmDeploymentId=${stackname?.replaceAll('-', '_')}"`,
             'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
             activeNodeInstanceId
         );
@@ -1003,28 +1003,28 @@ async function getDriveInfoFromNodes(
     const clusterCommandPromise =
         sqlDeploymentType === 'FCI'
             ? callSsmExecution(
-                  credentialsId,
-                  region,
-                  clusterCommand,
-                  activeNodeInstanceId,
-                  undefined,
-                  false,
-                  executionTimeout
-              )
+                credentialsId,
+                region,
+                clusterCommand,
+                activeNodeInstanceId,
+                undefined,
+                false,
+                executionTimeout
+            )
             : Promise.resolve();
 
     // Getting drive info of drives present on standby node to eliminate presenting existing drive letter as available drive letter
     const existingDriveStandbyNodePromise =
         sqlDeploymentType === 'FCI'
             ? callSsmExecution(
-                  credentialsId,
-                  region,
-                  driveInfoCommand,
+                credentialsId,
+                region,
+                driveInfoCommand,
                   standbyNodeInstanceId!,
                   undefined,
                   false,
                   executionTimeout
-              )
+            )
             : Promise.resolve();
 
     const [clusterDrivesResponse, existingDriveActiveNodeResponse, existingDriveStandbyNodeResponse] =

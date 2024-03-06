@@ -48,8 +48,6 @@ catch {
         $isprivatesubnet = $True      
     }
 
-Write-output "Private subnet $isprivatesubnet"
-
 $Ampersand = ""
 if ($OntapResourceFilter -ne "" -and $OntapResourceQuery -ne "") {
     $Ampersand = '&';
