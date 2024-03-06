@@ -42,6 +42,13 @@ export const isValidDatabaseName = (name: any) => {
     return true;
 };
 
+export const isValidFileName = (name: any) => {
+    if (name && name.length > 0 && (name.length > 35 || !/^[a-zA-Z0-9/_]+$/.test(name))) {
+        return false;
+    }
+    return true;
+};
+
 export const handleCreateUserDb = (state: any, dispatch: any) => {
     let payload;
     dispatch(setDbCreatePressed(true));
@@ -53,8 +60,8 @@ export const handleCreateUserDb = (state: any, dispatch: any) => {
         // Fields validation checks
         const dbNameStateValue =
             !state?.createNewUser?.newUserDBName || !isValidDatabaseName(state?.createNewUser?.newUserDBName);
-        const dbDataNameStateValue = !state?.createNewUser?.newUserDBFileName;
-        const dbLogNameStateValue = !state?.createNewUser?.newUserLogFileName;
+        const dbDataNameStateValue = !state?.createNewUser?.newUserDBFileName || !isValidFileName(state?.createNewUser?.newUserDBFileName);
+        const dbLogNameStateValue = !state?.createNewUser?.newUserLogFileName || !isValidFileName(state?.createNewUser?.newUserLogFileName);
         const dbDataSizeState = !state?.createNewUser?.newUserDataSize || !state?.createNewUser?.isDataSizeValid;
         const dbLogSizeState = !state?.createNewUser?.newUserLogFileSize || !state?.createNewUser?.isLogSizeValid;
         const driveLettersState =

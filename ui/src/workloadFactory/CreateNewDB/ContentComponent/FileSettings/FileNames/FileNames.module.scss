@@ -58,4 +58,25 @@
         display: flex;
         gap: 8px;
     }
+
+    [class*='tooltip-base'] {
+        padding: 8px 12px !important;
+        width: 480px !important;
+        max-width: 480px !important;
+    }
+
+    .nameTooltip {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 3px;
+
+        .listItem {
+            display: flex;
+            gap: 16px;
+        }
+
+        .textWidth {
+            width: 420px;
+        }
+    }
 }

@@ -560,7 +560,17 @@ export const GENERAL = {
         'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
         'Names should not be Transact-SQL reserved words.'
     ],
+    CREATE_DB_DATA_FILE_NAME_TOOLTIP: [
+        'Data file name should have names that are no more than 35 characters long.',
+        'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
+    ],
+    CREATE_DB_LOG_FILE_NAME_TOOLTIP: [
+        'Log file name should have names that are no more than 35 characters long.',
+        'Names can only contain alphanumeric characters, including letters, numbers and underscrores.'
+    ],
     DB_NAME_ERROR_CHECK: 'Check database name criteria',
+    DB_DATA_NAME_ERROR_CHECK: 'Check data file name criteria',
+    DB_LOG_NAME_ERROR_CHECK: 'Check log file name criteria',
     DB_ADVANCED_CREATE: 'Advanced create',
     DB_QUICK_CREATE: 'Quick create',
     QUICK_DB_CREATE_CONTENT: [
