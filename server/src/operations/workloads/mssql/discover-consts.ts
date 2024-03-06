@@ -1,3 +1,15 @@
+const SQL_SERVER_VERSION_TO_EDITION = new Map<number, number>([
+    // Ref: https://learn.microsoft.com/en-AU/troubleshoot/sql/releases/download-and-install-latest-updates#sql-server-2022
+    [9, 2005],
+    [10, 2008],
+    [11, 2012],
+    [12, 2014],
+    [13, 2016],
+    [14, 2017],
+    [15, 2019],
+    [16, 2022]
+]);
+
 /*
   The disks in an EC2 instance can be EBS, FSxN, FSxW or from CVO.
   This script collects serial-number of EBS disks, and the iSCSI
@@ -6,16 +18,17 @@
     - sqlServerInstance - Name of SQL Server instance, e.g., MSSQLSERVER.
     - sqlServerState    - The operational state of the SQL server instance.
     - sqlServerVersion  - Version of SQL Server instance, e.g., 16.0.4095.4.
-    - sqlServerEdition  - Edition of SQL Server instance, e.g., 2022.
-    - sqlDriveInfo      - JSON object containing a list of serial number
+    - sqlServerMajorVersion  - Edition of SQL Server instance, e.g., 2022.
+    - sqlServerInstanceStorageInfo- JSON object containing a list of serial number
                           and/or iSCSI targets
-  The sqlDriveInfo details help to identify the instance associated with
+  The sqlServerInstanceStorageInfo details help to identify the instance associated with
   an SQL Server instance.
 
   Example output:
     {
         "sqlServerVersion":  "16.0.4095.4",
-        "sqlDriveInfo":  "[\r\n    {\r\n        \"SerialNumberOrScsiTarget\":  \"vol05109452537b7ad57_00000001.\"\r\n    },\r\n    {\r\n        \"SerialNumberOrScsiTarget\":  \"172.31.11.195\"\r\n    }\r\n]",
+        "sqlServerMajorVersion": "16",
+        "sqlServerInstanceStorageInfo":  "[\r\n    {\r\n        \"SerialNumberOrScsiTarget\":  \"vol05109452537b7ad57_00000001.\"\r\n    },\r\n    {\r\n        \"SerialNumberOrScsiTarget\":  \"172.31.11.195\"\r\n    }\r\n]",
         "sqlServerInstance":  "MSSQLSERVER",
         "sqlServerState":  "Running",
         "sqlServerEdition":  2022,
@@ -28,8 +41,12 @@
     to which the script won't  get/return SerialNumberOrScsiTargets.  As a
     result, the storageType can't be determined while processing script output,
     which causes the API to return an empty  response for storageType.
+  - SQL Instance is not running.
+    Because of this, we won't be able to get storagex details.
+  - No SQL authentication
+    Because of this, we won't be able to get storage details.
  */
-const hostAndSqlInfoPowerShellScript = [
+const HOST_AND_SQL_INFO_PS1 = [
     `
     $ErrorActionPreference = "Stop"
     $body = @{}
@@ -39,7 +56,7 @@ const hostAndSqlInfoPowerShellScript = [
         $state = $_.State
         $path = $_.PathName  -Replace "-s.*",""
         $body['windowsAuthentication'] = $False
-        $sqlDriveInfo = $Null
+        $sqlServerInstanceStorageInfo = $Null
 
         try {
           if ($state -eq "Running") {
@@ -50,7 +67,7 @@ const hostAndSqlInfoPowerShellScript = [
 
             $sqlDrives = sqlcmd -Q " SET NOCOUNT ON; SELECT DISTINCT LEFT(physical_name, 1) AS DriveLetter FROM sys.master_files " -h -1 -C -W -S $serverInstance | ConvertTo-Json
             if ($sqlDrives) {
-              $sqlDriveInfo = Get-PhysicalDisk | ForEach-Object {
+              $sqlServerInstanceStorageInfo = Get-PhysicalDisk | ForEach-Object {
                 $a = $_
                 Get-Partition | ForEach-Object {
                   $b = $_
@@ -74,13 +91,13 @@ const hostAndSqlInfoPowerShellScript = [
 
         $info = Invoke-Expression -Command "(dir $path).VersionInfo"
         $productversion = $info.ProductVersion
-        $sqlversion = $info.FileVersionRaw.Major
+        $productMajorVersion = $info.ProductMajorPart
     
         $body['sqlServerInstance'] = $instance
         $body['sqlServerState'] = $state
         $body['sqlServerVersion'] = $productversion
-        $body['sqlServerEdition'] = $sqlversion
-        $body['sqlDriveInfo'] = $sqlDriveInfo
+        $body['sqlServerMajorVersion'] = $productMajorVersion
+        $body['sqlServerInstanceStorageInfo'] = $sqlServerInstanceStorageInfo
 
         $instanceSectionEndTime = (Get-Date)
         $body['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
@@ -89,5 +106,4 @@ const hostAndSqlInfoPowerShellScript = [
     `
 ];
 
-// eslint-disable-next-line import/prefer-default-export
-export { hostAndSqlInfoPowerShellScript };
+export { HOST_AND_SQL_INFO_PS1, SQL_SERVER_VERSION_TO_EDITION };
