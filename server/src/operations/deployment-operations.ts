@@ -124,10 +124,10 @@ async function formatTemplateParameters(
 
     const stackName = derivedParams.StackName;
     const validationAmiImage =
-        credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : 't2.micro';
+        credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : '';
 
     const validationNodeInstanceType =
-        credentialsId && region ? await getValidationNodeInstanceType(credentialsId!, region) : '';
+        credentialsId && region ? await getValidationNodeInstanceType(credentialsId!, region) : 't2.micro';
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
