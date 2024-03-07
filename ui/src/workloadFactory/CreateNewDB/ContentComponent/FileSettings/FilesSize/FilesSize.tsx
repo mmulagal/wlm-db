@@ -182,14 +182,14 @@ const FilesSize = () => {
             }
         }
 
-        let currentSize = 0;
+        let currentLogSize = 0;
         if (newUserLogFileSizeUnit?.label === 'GiB') {
-            currentSize = newUserLogFileSize * GIB_IN_BYTE;
+            currentLogSize = newUserLogFileSize * GIB_IN_BYTE;
         } else if (newUserLogFileSizeUnit?.label === 'TiB') {
-            currentSize = newUserLogFileSize * TIB_IN_BYTE;
+            currentLogSize = newUserLogFileSize * TIB_IN_BYTE;
         }
 
-        if (!currentSize || parseFloat(currentSize.toString()) < GIB_IN_BYTE) {
+        if (!currentLogSize || parseFloat(currentLogSize.toString()) < GIB_IN_BYTE) {
             dispatch(setIsLogSizeValid(false));
             return GENERAL.LOG_SIZE_MIN_ERROR;
         } else if (!logSizeValid) {
