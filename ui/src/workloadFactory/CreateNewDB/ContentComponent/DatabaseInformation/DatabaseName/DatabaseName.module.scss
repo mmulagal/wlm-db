@@ -30,4 +30,11 @@
             width: 420px;
         }
     }
+
+    .headerWrap {
+        max-width: 620px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 }
