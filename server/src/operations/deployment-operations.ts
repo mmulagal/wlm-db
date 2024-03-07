@@ -886,7 +886,7 @@ async function checkAllMissingPermissions(credentialsId: string, region: string,
     await Promise.all(
         // 'throat' is used to limit the number of concurrent requests
         // Limit of 3 is tested for 10 requests, 4 sometimes throws - rate execeeded error
-        // 07-03-2024: throatling to 1, as the issue is continuously being hit
+        // 07-03-2024: throttling to 1, as the issue is continuously being hit
         policyResourceActions.map(
             throat(1, async ({ resourceArn, resourceActions, resourceConditions }) => {
                 try {
