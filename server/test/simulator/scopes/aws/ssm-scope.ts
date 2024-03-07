@@ -182,9 +182,15 @@ const getHostAndSqlServerInfo = {
     commands: HOST_AND_SQL_INFO_PS1
 };
 
-const getDriveInfo = {
+const getFCIDriveInfo = {
     commands: [
-        "#Get the list of all used drive letters\n$usedDriveLetters = Get-PSDrive -PSProvider FileSystem | Select-Object -ExpandProperty Name\n\n#Updating manufacturer detail and availabble space of each existing drives\n$driveInfo = $usedDriveLetters | ForEach-Object {\n    $driveLetter = $_\n    $drive = Get-PSDrive -Name $driveLetter\n    $diskNumber = (Get-Partition -DriveLetter $driveLetter).DiskNumber\n    try{\n        if((Get-PhysicalDisk | Where-Object { $_.DeviceId -eq $diskNumber }).Manufacturer -eq 'NETAPP'){\n            $isNetappDrive = $true \n        }\n        else{\n            $isNetappDrive = $false \n        }\n    }\n    catch {\n        $isNetappDrive = $false \n    }\n    $freeSpace = $drive.Free\n    [PSCustomObject]@{\n        driveLetter = $driveLetter\n        availableSize = $freeSpace\n        isNetappDrive = $isNetappDrive \n    }\n}\n\nWrite-Output $driveInfo | ConvertTo-Json\n"
+        '#Get the list of all used drive letters\n$disks = Get-Disk\n$usedDriveDetails = @()\nforeach ($disk in $disks) {\n    $volume = Get-Partition | Where-Object { $_.DiskNumber -eq $disk.Number } | get-volume\n\t$labels = Get-ClusterResource | where { $_.ResourceType -eq "Physical Disk" } | where { $_.Name -eq $volume.FileSystemLabel }\n    $output = New-Object PSObject -Property @{\n        driveLetter = $volume.DriveLetter\n        availableSize = $volume.SizeRemaining\n        manufacturer = $disk.Manufacturer\n\t    owner = $labels.OwnerGroup.Name\n    }\n    $usedDriveDetails += $output \n}\n\n $usedDrivesInfoJson = $usedDriveDetails | ConvertTo-Json\nWrite-Host $usedDrivesInfoJson \n'
+    ]
+};
+
+const getStandaloneDriveInfo = {
+    commands: [
+        '#Get the list of all used drive letters\n$disks = Get-Disk\n$usedDriveDetails = @()\nforeach ($disk in $disks) {\n    $volume = Get-Partition | Where-Object { $_.DiskNumber -eq $disk.Number } | get-volume\n    $output = New-Object PSObject -Property @{\n        driveLetter = $volume.DriveLetter\n        availableSize = $volume.SizeRemaining\n        manufacturer = $disk.Manufacturer\n    }\n    $usedDriveDetails += $output \n}\n\n $usedDrivesInfoJson = $usedDriveDetails | ConvertTo-Json\nWrite-Host $usedDrivesInfoJson \n'
     ]
 };
 
@@ -293,7 +299,9 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getServerEdition)
     .on(SendCommandCommand, { Parameters: getHostAndSqlServerInfo })
     .resolves(listSendCommandCommandResponse.getHostAndSqlServerInfoResponse)
-    .on(SendCommandCommand, { Parameters: getDriveInfo })
+    .on(SendCommandCommand, { Parameters: getFCIDriveInfo })
+    .resolves(listSendCommandCommandResponse.getDriveInfoCommandResponse)
+    .on(SendCommandCommand, { Parameters: getStandaloneDriveInfo })
     .resolves(listSendCommandCommandResponse.getDriveInfoCommandResponse)
     .on(SendCommandCommand, { Parameters: getDefaultDriveLetters })
     .resolves(listSendCommandCommandResponse.getDefaultDriveLettersCommandResponse)
