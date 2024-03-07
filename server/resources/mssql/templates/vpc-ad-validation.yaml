@@ -601,7 +601,6 @@ Resources:
             LaunchTemplate:
                 LaunchTemplateId: !Ref 'DisableIMDSv1'
                 Version: !GetAtt 'DisableIMDSv1.DefaultVersionNumber'
-            InstanceType: t2.micro
             NetworkInterfaces:
                 - DeviceIndex: '0'
                   SubnetId: !Ref 'SubnetID'
