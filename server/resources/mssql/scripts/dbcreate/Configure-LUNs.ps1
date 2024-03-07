@@ -1,180 +1,159 @@
-   #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
- [CmdletBinding()]
-param(
-    [Parameter(Mandatory=$true)]
-    [string]$FileSystemId,
-
-    [Parameter(Mandatory=$true)]
-    [string]$SQLVMName,
-
-    [Parameter(Mandatory=$true)]
-    [string]$FSxDataLunSize,
-
-    [Parameter(Mandatory=$true)]
-    [string]$FSxLogLunSize,
-
-    [Parameter(Mandatory=$true)]
-    [string]$LogNew,
-
-    [Parameter(Mandatory=$true)]
-    [string]$DataNew   
-
-)
-$logtranscript = (New-Item -ItemType Directory -Path C:\cfn\log -Force)
-$silenttranscript = (Start-Transcript -Path C:\cfn\log\Configure_luns.log.txt -Append)
-
-$ErrorActionPreference = "Stop"
-
-add-type @"
-using System.Net;
-using System.Security.Cryptography.X509Certificates;
-public class TrustAllCertsPolicy : ICertificatePolicy {
-    public bool CheckValidationResult(
-        ServicePoint srvPoint, X509Certificate certificate,
-        WebRequest request, int certificateProblem) {
-            return true;
-        }
-}
-"@
-[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
-
-$FSxCredStore  = "/netapp/wlmdb/$FileSystemId"
-
-$credobject =  (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
-
-$username = $credobject.fsx.username
-$password = $credobject.fsx.password
-$fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
-$MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
-$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
-$region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token" = $token} -ErrorAction Stop -UseBasicParsing).Content
-$pair = "$($username):$($password)"
-$bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
-$base64 = [System.Convert]::ToBase64String($bytes)
-
-$epoch = (Get-Date -Date ((Get-Date).DateTime) -UFormat %s)
-
-$FSxDataVolumeName = "wlmdb_sqldata_"+$epoch
-$FSxDataVolumeSize = [math]::Round([int]$FSxDataLunSize*1.3,2)
-$FSxLogVolumeName = "wlmdb_sqllog_"+$epoch
-$FSxLogVolumeSize = [math]::Round([int]$FSxLogLunSize*1.3,2)
-$result = [ordered]@{}
-$resources=[ordered]@{}
-
-$LOGLUN = 'sqllog'
-$DATALUN = 'sqldata'
-
-#get initiator address
-$nodeiqn = (Get-InitiatorPort).NodeAddress
-
-##Create Volume with ONTAP RestAPI via PowerShell 7.0
-
-
-# Get FSx certificate
-$isprivatesubnet = $False
-$certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
-try {
-    Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
-    $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
-    $restcert = Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
-}
-catch {
-    $isprivatesubnet = $True
-    $restcert = ''
-}
-
-function callGetApi{
+    #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
+    [CmdletBinding()]
     param(
-    [Parameter(Mandatory=$true)]
-    [string]$uri,
-    [Parameter(Mandatory=$true)]
-    [string]$region,
-    [Parameter(Mandatory=$true)]
-    [string]$creds,
-    [Parameter(Mandatory=$true)]
-    [hashtable]$result
+        [Parameter(Mandatory=$true)]
+        [string]$FileSystemId,
+    
+        [Parameter(Mandatory=$true)]
+        [string]$SQLVMName,
+    
+        [Parameter(Mandatory=$true)]
+        [string]$FSxDataLunSize,
+    
+        [Parameter(Mandatory=$true)]
+        [string]$FSxLogLunSize,
+    
+        [Parameter(Mandatory=$true)]
+        [string]$LogNew,
+    
+        [Parameter(Mandatory=$true)]
+        [string]$DataNew   
+    
     )
-    try{
-        $Params = @{
-            "URI"     = "$uri"
-            "Method"  = "GET"
-            "Headers" = @{"Authorization" = "Basic $creds"}
-            "ContentType" = "application/json"
-        }
-        if ($isprivatesubnet -eq $False) {
+    $logtranscript = (New-Item -ItemType Directory -Path C:\cfn\log -Force)
+    $silenttranscript = (Start-Transcript -Path C:\cfn\log\Configure_luns.log.txt -Append)
+    
+    $ErrorActionPreference = "Stop"
+    
+    $FSxCredStore  = "/netapp/wlmdb/$FileSystemId"
+    
+    $credobject =  (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
+    
+    $username = $credobject.fsx.username
+    $password = $credobject.fsx.password
+    $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
+    $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
+    $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+    $region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token" = $token} -ErrorAction Stop -UseBasicParsing).Content
+    $pair = "$($username):$($password)"
+    $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
+    $base64 = [System.Convert]::ToBase64String($bytes)
+    
+    $epoch = (Get-Date -Date ((Get-Date).DateTime) -UFormat %s)
+    
+    $FSxDataVolumeName = "wlmdb_sqldata_"+$epoch
+    $FSxDataVolumeSize = [math]::Round([int]$FSxDataLunSize*1.3,2)
+    $FSxLogVolumeName = "wlmdb_sqllog_"+$epoch
+    $FSxLogVolumeSize = [math]::Round([int]$FSxLogLunSize*1.3,2)
+    $result = [ordered]@{}
+    $resources=[ordered]@{}
+    
+    $LOGLUN = 'sqllog'
+    $DATALUN = 'sqldata'
+    
+    #get initiator address
+    $nodeiqn = (Get-InitiatorPort).NodeAddress
+    
+    ##Create Volume with ONTAP RestAPI via PowerShell 7.0
+    
+    
+    function returncert{
+        param(
+        [Parameter(Mandatory=$true)]
+        [string]$region
+        )
+        $certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
+        Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
+        $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
+        return Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
+    
+    }
+    
+    $restcert = returncert -region $region
+    
+    function callGetApi{
+        param(
+        [Parameter(Mandatory=$true)]
+        [string]$uri,
+        [Parameter(Mandatory=$true)]
+        [string]$region,
+        [Parameter(Mandatory=$true)]
+        [string]$creds,
+        [Parameter(Mandatory=$true)]
+        [hashtable]$result  
+        )
+        try{
+            $Params = @{
+                "URI"     = "$uri"
+                "Method"  = "GET"
+                "Headers" = @{"Authorization" = "Basic $creds"}
+                "ContentType" = "application/json"
+            }
             Invoke-RestMethod @Params -Certificate $restcert
-        }else {
-            Invoke-RestMethod @Params
+        }catch{
+            $result.Add('Status','Failed')
+            $result.Add('Message','REST API call to FSx for NetApp ONTAP failed')
+            $result.Add('Exception',$_)
+            $resultjson = ($result | ConvertTo-Json) 
+            $resultjson  
+            exit 1
         }
-    }catch{
-        $result.Add('Status','Failed')
-        $result.Add('Message','REST API call to FSx for NetApp ONTAP failed')
-        $result.Add('Exception',$_)
-        $resultjson = ($result | ConvertTo-Json) 
-        $resultjson  
-        exit 1
     }
-}
-
-function callrestapi{
-    param(
-    [Parameter(Mandatory=$true)]
-    [string]$MgmtDNS,
-    [Parameter(Mandatory=$true)]
-    [string]$uri,
-    [Parameter(Mandatory=$true)]
-    [string]$region,
-    [Parameter(Mandatory=$true)]
-    [Hashtable]$parambody,
-    [Parameter(Mandatory=$true)]
-    [string]$creds,
-    [Parameter(Mandatory=$true)]
-    [hashtable]$result 
-    )
-    try{
-        $resturi = "https://$MgmtDNS/api/$uri"
-        $JsonBody = $Body | ConvertTo-Json
-        $Params = @{
-            "URI"     = "$resturi"
-            "Method"  = "POST"
-            "Headers" = @{"Authorization" = "Basic $creds"}
-            "Body" =  "$JsonBody"
-            "ContentType" = "application/json"
-        }
-
-        if ($isprivatesubnet -eq $False) {
+    
+    function callrestapi{
+        param(
+        [Parameter(Mandatory=$true)]
+        [string]$MgmtDNS,
+        [Parameter(Mandatory=$true)]
+        [string]$uri,
+        [Parameter(Mandatory=$true)]
+        [string]$region,
+        [Parameter(Mandatory=$true)]
+        [Hashtable]$parambody,
+        [Parameter(Mandatory=$true)]
+        [string]$creds,
+        [Parameter(Mandatory=$true)]
+        [hashtable]$result  
+        )
+        try{
+            $restcert = returncert -region $region
+            $resturi = "https://$MgmtDNS/api/$uri"
+            $JsonBody = $Body | ConvertTo-Json
+            $Params = @{
+                "URI"     = "$resturi"
+                "Method"  = "POST"
+                "Headers" = @{"Authorization" = "Basic $creds"}
+                "Body" =  "$JsonBody"
+                "ContentType" = "application/json"
+            }
             $invokerest = (Invoke-RestMethod @Params -Certificate $restcert)
-        }else {
-            $invokerest = (Invoke-RestMethod @Params) 
+        }catch{
+            $result.Add('Status','Failed')
+            $result.Add('Message','REST API call to FSx for NetApp ONTAP failed')
+            $result.Add('Exception',$_)
+            $resultjson = ($result | ConvertTo-Json) 
+            $resultjson  
+            exit 1
         }
-        
-    }catch{
+    }
+    
+    $LOGLUN = 'sqllog'
+    $DATALUN = 'sqldata'
+    
+    try {
+    if(($LogNew -eq "false") -And ($DataNew -eq "false")) { throw }
+    } catch {
         $result.Add('Status','Failed')
-        $result.Add('Message','REST API call to FSx for NetApp ONTAP failed')
+        $result.Add('Message','Need to define at least one new drive to configure storage')
         $result.Add('Exception',$_)
         $resultjson = ($result | ConvertTo-Json) 
         $resultjson  
-        exit 1
+        exit 1 
     }
-}
-
-$LOGLUN = 'sqllog'
-$DATALUN = 'sqldata'
-
-try {
-if(($LogNew -eq "false") -And ($DataNew -eq "false")) { throw }
-} catch {
-    $result.Add('Status','Failed')
-    $result.Add('Message','Need to define at least one new drive to configure storage')
-    $result.Add('Exception',$_)
-    $resultjson = ($result | ConvertTo-Json) 
-    $resultjson  
-    exit 1 
-}
-
-#Start ONTAP configuration
-
-##Get the existing igroup for the initiator
+    
+    #Start ONTAP configuration
+    
+ ##Get the existing igroup for the initiator
 
 $IGUriDynamicPart='protocols/san/igroups'
 try {
