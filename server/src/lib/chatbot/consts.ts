@@ -297,7 +297,7 @@ const KEY_LABEL_MAP = {
 
 const BACKTRACE_MESSAGES = {
     [VPC_ID]:
-        'We could not found any VPC that supports FCI deployment, please select a different region that has valid VPC',
+        'We could not find any VPC that supports FCI deployment, please select a different region that has valid VPC',
     [AZ_1]: 'The VPC that you selected does not contain required availability zones, please select a different VPC',
     [AZ_2]: 'The VPC that you selected does not contain required availability zones, please select a different VPC'
 };

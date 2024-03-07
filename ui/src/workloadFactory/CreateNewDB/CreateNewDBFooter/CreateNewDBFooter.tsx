@@ -39,31 +39,42 @@ const CreateNewUserFooter = () => {
                 });
                 dispatch(setIsLoading(false));
                 if (result && !result?.error) {
-                    dispatch(
-                        addNotification({
-                            notificationType: NOTIFICATION_TYPES.INFO,
-                            message: (
-                                <div className={styles.notification}>
-                                    {GENERAL.DB_CREATE_NOTIFICATION[0]}
-                                    <span className={styles.bold}>{state?.createNewUser?.newUserDBName}</span>
-                                    {GENERAL.DB_CREATE_NOTIFICATION[1]}
-                                    <span className={styles.bold}>{state?.createNewUser?.dbHostName}</span>
-                                    {GENERAL.DB_CREATE_NOTIFICATION[2]}
-                                    <Button
-                                        Component="button"
-                                        variant="text"
-                                        onClick={() => {
-                                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                                            navigate('../databases');
-                                            dispatch(clearNotifications());
-                                        }}
-                                    >
-                                        {GENERAL.JOB_MONITORING}.
-                                    </Button>
-                                </div>
-                            )
-                        })
+                    const msgData = (
+                        <div className={styles.notification}>
+                            {GENERAL.DB_CREATE_NOTIFICATION[0]}
+                            <span className={styles.bold}>{state?.createNewUser?.newUserDBName}</span>
+                            {GENERAL.DB_CREATE_NOTIFICATION[1]}
+                            <span className={styles.bold}>{state?.createNewUser?.dbHostName}</span>
+                            {GENERAL.DB_CREATE_NOTIFICATION[2]}
+                            <Button
+                                Component="button"
+                                variant="text"
+                                onClick={() => {
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                    navigate('../databases');
+                                    dispatch(clearNotifications());
+                                }}
+                            >
+                                {GENERAL.JOB_MONITORING}.
+                            </Button>
+                        </div>
                     );
+                    if (state?.createNewUser?.newUserDBName && state?.createNewUser?.newUserDBName.length > 100) {
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.INFO,
+                                message: GENERAL.DB_CREATE_SUCCESS_MSG,
+                                additionalText: msgData
+                            })
+                        );
+                    } else {
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.INFO,
+                                message: msgData
+                            })
+                        );
+                    }
                     navigate('../databases');
                 }
             } catch (error) {

@@ -67,7 +67,7 @@ const UnmanagedHosts = () => {
             accessorForTextFilter: 'databaseHostname',
             renderCell: (cellData: any, rowData: any) => {
                 const status = rowData?.sqlServerInstances?.[0]?.sqlServerState;
-                const name = rowData?.sqlServerInstances?.[0]?.sqlServerInstance;
+                const name = rowData?.sqlServerInstances?.[0]?.sqlServerName;
                 return (
                     <div>
                         <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>

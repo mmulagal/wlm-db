@@ -1248,10 +1248,16 @@ async function deployDatabase(
     } = await getJobs(accountId, credentialsId, region, filterParams);
 
     if (job) {
-        throw createError(
-            412,
-            `A database creation operation for ${sqlServerName} is already in progress with job ID ${job.id}`
-        );
+        // Calculate the time difference in minutes
+        const timeDifferenceInMilliseconds = Math.abs(Date.now() - job.startTime);
+        const timeDifferenceInMinutes = Math.floor(timeDifferenceInMilliseconds / (1000 * 60));
+        // workaround to allow the user to create database when there is a job stuck in progress for a very long time
+        if (timeDifferenceInMinutes <= 15) {
+            throw createError(
+                412,
+                `A database creation operation for ${sqlServerName} is already in progress with job ID ${job.id}`
+            );
+        }
     }
 
     // create the parent job for database deployment
