@@ -156,7 +156,10 @@ async function formatTemplateParameters(
         }
     }
 
-    const missingServices = await getServicesWithNoEndpoint(credentialsId!, region!, networkConfiguration.vpcId);
+    const missingServices =
+        credentialsId && region
+            ? await getServicesWithNoEndpoint(credentialsId!, region!, networkConfiguration.vpcId)
+            : [];
     Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
         if (!missingServices.includes(key)) {
             templateParams.push({
