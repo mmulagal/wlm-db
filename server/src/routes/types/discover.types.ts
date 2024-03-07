@@ -105,6 +105,19 @@ const DiscoverInstanceParams = Type.Composite([
     })
 ]);
 
+const MsSqlInstancesRequestBody = Type.Object({
+    instancesDetails: Type.Array(
+        Type.Object({
+            instanceId: Type.String({
+                description: 'Ec2 instance ID associated with the MS SQL Server instance.'
+            }),
+            fsxId: Type.String({
+                description: 'FileSystem ID associated with the MS SQL Server instance.'
+            })
+        })
+    )
+});
+
 export {
     DiscoverMsSqlQuery,
     DiscoverMsSqlResponseBody,
@@ -112,5 +125,6 @@ export {
     DiscoverResponseInfoType,
     DiscoverCredentialsRequestBody,
     DiscoverInstanceParams,
-    DiscoverCredentialsType
+    DiscoverCredentialsType,
+    MsSqlInstancesRequestBody
 };

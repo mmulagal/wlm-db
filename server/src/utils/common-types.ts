@@ -10,7 +10,7 @@ interface Metadata {
 }
 
 interface ResourceDetails {
-    id: string;
+    id: string | null; // the value is null when the resource is not found in the database; in case of unmanaged hosts the DB record is not created.
     account_id: string;
     resource_id: string;
     resource_name: string | null;

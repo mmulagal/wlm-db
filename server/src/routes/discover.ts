@@ -1,7 +1,11 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import { DiscoverMsSqlSchema, DiscoverCredentialsSchema } from './schemas/discover-schemas';
-import { getHostAndSqlServerInfo, saveDiscoveredParameters } from '../operations/discover-operations';
+import { DiscoverMsSqlSchema, DiscoverCredentialsSchema, MsSqlInstancesSchema } from './schemas/discover-schemas';
+import {
+    fetchHostsInformation,
+    getHostAndSqlServerInfo,
+    saveDiscoveredParameters
+} from '../operations/discover-operations';
 
 import getLogger from '../utils/logger';
 
@@ -37,4 +41,13 @@ export default function discoverRoutes(fastify: FastifyInstance) {
             return saveDiscoveredParameters(accountId, credentialsId, region, instanceId, credentials);
         }
     );
+
+    server.post(`${DISCOVER_MSSQL_API_PATH}/mssql/instances`, { schema: MsSqlInstancesSchema }, async request => {
+        const {
+            params: { accountId, credentialsId, region },
+            body: { instancesDetails }
+        } = request;
+
+        return fetchHostsInformation(accountId, credentialsId, region, instancesDetails);
+    });
 }

@@ -1,4 +1,4 @@
-import { JOBSTATUS, JOBTYPE, resource, STORAGE_TYPE } from '@prisma/client';
+import { JOBSTATUS, JOBTYPE, STORAGE_TYPE } from '@prisma/client';
 import { DescribeInstancesCommandOutput, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import createError from 'http-errors';
@@ -125,7 +125,7 @@ async function getTopology(
     accountId: string,
     region: string,
     resourceId: string,
-    resourceData: resource,
+    resourceData: ResourceDetails,
     activeNodeInstanceId: string,
     standbyNodeInstanceId?: string
 ): Promise<TopologyResponseType> {
@@ -705,12 +705,14 @@ async function getDatabaseHostsSummary(
 async function getDatabaseHostSummary(
     accountId: string,
     databaseHostId: string,
-    fields?: string
+    fields?: string,
+    resourceDetail?: ResourceDetails
 ): Promise<DatabaseHostSummaryResponseType> {
     logger.info('Fetching details about a database installtion ', accountId, databaseHostId, fields);
 
-    const [resourceDetail] = await listResources(accountId, databaseHostId);
-
+    if (isEmpty(resourceDetail)) {
+        [resourceDetail] = await listResources(accountId, databaseHostId);
+    }
     if (isEmpty(resourceDetail)) {
         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
         logger.error(errorMessage);
@@ -1000,32 +1002,36 @@ async function getDriveInfoFromNodes(
     // Getting clustered drive letters for FCI deployments
     const clusterCommand = [GET_CLUSTER_DRIVES];
 
-    const clusterCommandPromise =
-        sqlDeploymentType === 'FCI'
-            ? callSsmExecution(
-                credentialsId,
-                region,
-                clusterCommand,
-                activeNodeInstanceId,
-                undefined,
-                false,
-                executionTimeout
-            )
-            : Promise.resolve();
+    let clusterCommandPromise;
+    if (sqlDeploymentType === 'FCI') {
+        clusterCommandPromise = callSsmExecution(
+            credentialsId,
+            region,
+            clusterCommand,
+            activeNodeInstanceId,
+            undefined,
+            false,
+            executionTimeout
+        );
+    } else {
+        clusterCommandPromise = Promise.resolve();
+    }
 
     // Getting drive info of drives present on standby node to eliminate presenting existing drive letter as available drive letter
-    const existingDriveStandbyNodePromise =
-        sqlDeploymentType === 'FCI'
-            ? callSsmExecution(
-                credentialsId,
-                region,
-                driveInfoCommand,
-                standbyNodeInstanceId!,
-                undefined,
-                false,
-                executionTimeout
-            )
-            : Promise.resolve();
+    let existingDriveStandbyNodePromise;
+    if (sqlDeploymentType === 'FCI') {
+        existingDriveStandbyNodePromise = callSsmExecution(
+            credentialsId,
+            region,
+            driveInfoCommand,
+            standbyNodeInstanceId!,
+            undefined,
+            false,
+            executionTimeout
+        );
+    } else {
+        existingDriveStandbyNodePromise = Promise.resolve();
+    }
 
     const [clusterDrivesResponse, existingDriveActiveNodeResponse, existingDriveStandbyNodeResponse] =
         await Promise.all([clusterCommandPromise, existingDriveActiveNodePromise, existingDriveStandbyNodePromise]);
