@@ -148,7 +148,7 @@ const FilesSize = () => {
             currentSize = newUserDataSize * TIB_IN_BYTE;
         }
 
-        if (!newUserDataSize || newUserDataSize === '0') {
+        if (!currentSize || parseFloat(currentSize.toString()) < GIB_IN_BYTE) {
             dispatch(setIsDataSizeValid(false));
             return GENERAL.NO_DATA_SIZE_ERROR;
         } else if (maxSize && maxSize < GIB_IN_BYTE) {
@@ -181,7 +181,15 @@ const FilesSize = () => {
                 }
             }
         }
-        if (!newUserLogFileSize || newUserLogFileSize === '0') {
+
+        let currentSize = 0;
+        if (newUserLogFileSizeUnit?.label === 'GiB') {
+            currentSize = newUserLogFileSize * GIB_IN_BYTE;
+        } else if (newUserLogFileSizeUnit?.label === 'TiB') {
+            currentSize = newUserLogFileSize * TIB_IN_BYTE;
+        }
+
+        if (!currentSize || parseFloat(currentSize.toString()) < GIB_IN_BYTE) {
             dispatch(setIsLogSizeValid(false));
             return GENERAL.LOG_SIZE_MIN_ERROR;
         } else if (!logSizeValid) {
