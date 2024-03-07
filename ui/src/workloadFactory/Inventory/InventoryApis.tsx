@@ -81,6 +81,70 @@ const InventoryApis = () => {
     );
 
     useEffect(() => {
+        if (databaseHostsError) {
+            dispatch(addDatabaseHosts({ undefined, databaseHostsLoading, databaseHostsError }));
+        } else {
+            if (!databaseHostsLoading) {
+                let oldList = databaseHostsData || [];
+                let newList = databaseHosts?.items || [];
+                dispatch(
+                    addDatabaseHosts({
+                        databaseHostsData: [...oldList, ...newList],
+                        databaseHostsLoading,
+                        databaseHostsError
+                    })
+                );
+                setHostCursor(databaseHosts?.nextToken || null);
+                if (!databaseHosts?.nextToken && databaseHostsData) {
+                    setSkipManagedHostCall(true);
+                } else {
+                    setSkipManagedHostCall(false);
+                }
+            } else {
+                dispatch(
+                    addDatabaseHosts({
+                        databaseHostsData,
+                        databaseHostsLoading,
+                        databaseHostsError
+                    })
+                );
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [databaseHosts, databaseHostsLoading, databaseHostsError]);
+
+    useEffect(() => {
+        if (discoverHostError) {
+            dispatch(setDiscoveredHosts({ discoveredHostData: null, databaseHostsLoading, databaseHostsError }));
+        } else {
+            if (!discoverHostLoading) {
+                let oldList = discoveredHostData || [];
+                let newList = discoveredHosts?.items || [];
+                dispatch(
+                    setDiscoveredHosts({
+                        discoveredHostData: [...oldList, ...newList],
+                        discoverHostLoading,
+                        discoverHostError
+                    })
+                );
+                setDiscoveryCursor(discoveredHosts?.nextToken || null);
+                if (!discoveredHosts?.nextToken && discoveredHostData) {
+                    setSkipDiscoveryCall(true);
+                } else {
+                    setSkipDiscoveryCall(false);
+                }
+            } else {
+                dispatch(
+                    setDiscoveredHosts({
+                        ...discoveredHostState,
+                        discoverHostLoading
+                    })
+                );
+            }
+        }
+    }, [discoveredHosts, discoverHostLoading, discoverHostError]);
+
+    useEffect(() => {
         if (isRefreshed) {
             setDiscoveryCursor(null);
             setHostCursor(null);
@@ -137,39 +201,6 @@ const InventoryApis = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [headerSelectedCred, headerSelectedRegion]);
 
-    useEffect(() => {
-        if (databaseHostsError) {
-            dispatch(addDatabaseHosts({ undefined, databaseHostsLoading, databaseHostsError }));
-        } else {
-            if (!databaseHostsLoading) {
-                let oldList = databaseHostsData || [];
-                let newList = databaseHosts?.items || [];
-                dispatch(
-                    addDatabaseHosts({
-                        databaseHostsData: [...oldList, ...newList],
-                        databaseHostsLoading,
-                        databaseHostsError
-                    })
-                );
-                setHostCursor(databaseHosts?.nextToken || null);
-                if (!databaseHosts?.nextToken && databaseHostsData) {
-                    setSkipManagedHostCall(true);
-                } else {
-                    setSkipManagedHostCall(false);
-                }
-            } else {
-                dispatch(
-                    addDatabaseHosts({
-                        databaseHostsData,
-                        databaseHostsLoading,
-                        databaseHostsError
-                    })
-                );
-            }
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [databaseHosts, databaseHostsLoading, databaseHostsError]);
-
     // To merge database host and database jobs data
     useEffect(() => {
         const mergedData = mergeDatabaseHostsData(databaseHostsData);
@@ -177,37 +208,6 @@ const InventoryApis = () => {
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHostsData]);
-
-    useEffect(() => {
-        if (discoverHostError) {
-            dispatch(setDiscoveredHosts({ discoveredHostData: null, databaseHostsLoading, databaseHostsError }));
-        } else {
-            if (!discoverHostLoading) {
-                let oldList = discoveredHostData || [];
-                let newList = discoveredHosts?.items || [];
-                dispatch(
-                    setDiscoveredHosts({
-                        discoveredHostData: [...oldList, ...newList],
-                        discoverHostLoading,
-                        discoverHostError
-                    })
-                );
-                setDiscoveryCursor(discoveredHosts?.nextToken || null);
-                if (!discoveredHosts?.nextToken && discoveredHostData) {
-                    setSkipDiscoveryCall(true);
-                } else {
-                    setSkipDiscoveryCall(false);
-                }
-            } else {
-                dispatch(
-                    setDiscoveredHosts({
-                        ...discoveredHostState,
-                        discoverHostLoading
-                    })
-                );
-            }
-        }
-    }, [discoveredHosts, discoverHostLoading, discoverHostError]);
 
     useEffect(() => {
         if (!credentialStatusLoading) {

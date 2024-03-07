@@ -211,7 +211,6 @@ async function updateTemplateUrls(
             ScriptDBCREATE: decodeURI(signedUrls.get('ScriptDBCREATE')?.url || ''),
             ScriptDBCREATESignature: decodeURI(signedUrls.get('ScriptDBCREATESignature')?.url || ''),
             DependentPackages: decodeURI(signedUrls.get('DependentPackages')?.url || '')
-            
         });
         const standAloneTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLStandaloneTemplate');
         const customStandAloneTemplatePath: string = `${WLMDB}/${stackName}/${standAloneTemplatePath!.url}`;

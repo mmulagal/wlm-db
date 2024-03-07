@@ -16,13 +16,13 @@ const SQL_SERVER_VERSION_TO_EDITION = new Map<number, number>([
   connection IP for FSxN disks.  It returns a JSON object containing
   below details:
     - sqlServerInstance - Name of SQL Server instance, e.g., MSSQLSERVER.
-    - sqlServerState    - The operational state of the SQL server instance.
-    - sqlServerVersion  - Version of SQL Server instance, e.g., 16.0.4095.4.
-    - sqlServerMajorVersion  - Edition of SQL Server instance, e.g., 2022.
-    - sqlServerInstanceStorageInfo- JSON object containing a list of serial number
-                          and/or iSCSI targets
-  The sqlServerInstanceStorageInfo details help to identify the instance associated with
-  an SQL Server instance.
+    - sqlServerState - The operational state of the SQL server instance.
+    - sqlServerVersion - Version of SQL Server instance, e.g., 16.0.4095.4.
+    - sqlServerMajorVersion  Edition of SQL Server instance, e.g., 2022.
+    - sqlServerInstanceStorageInfo - JSON object containing a list of serial
+                                     number and/or iSCSI targets
+    - sqlServerName: The computer name on which SQL Server instance is running.
+                     For a cluster, this value represents virtual server name.
 
   Example output:
     {
@@ -32,6 +32,7 @@ const SQL_SERVER_VERSION_TO_EDITION = new Map<number, number>([
         "sqlServerInstance":  "MSSQLSERVER",
         "sqlServerState":  "Running",
         "sqlServerEdition":  2022,
+        "sqlServerName": "EC2AMAZ-1MF7SUF"
         "windowsAuthentication":  true
     }
 
@@ -56,7 +57,6 @@ const HOST_AND_SQL_INFO_PS1 = [
         $state = $_.State
         $path = $_.PathName  -Replace "-s.*",""
         $body['windowsAuthentication'] = $False
-        $sqlServerInstanceStorageInfo = $Null
 
         try {
           if ($state -eq "Running") {
@@ -66,6 +66,7 @@ const HOST_AND_SQL_INFO_PS1 = [
             $body['windowsAuthentication'] = $?
 
             $sqlDrives = sqlcmd -Q " SET NOCOUNT ON; SELECT DISTINCT LEFT(physical_name, 1) AS DriveLetter FROM sys.master_files " -h -1 -C -W -S $serverInstance | ConvertTo-Json
+            $machineName = sqlcmd -Q " SET NOCOUNT ON; SELECT SERVERPROPERTY('MachineName')	 " -h -1 -C -W -S $serverInstance 2> Out-Null
             if ($sqlDrives) {
               $sqlServerInstanceStorageInfo = Get-PhysicalDisk | ForEach-Object {
                 $a = $_
@@ -98,6 +99,7 @@ const HOST_AND_SQL_INFO_PS1 = [
         $body['sqlServerVersion'] = $productversion
         $body['sqlServerMajorVersion'] = $productMajorVersion
         $body['sqlServerInstanceStorageInfo'] = $sqlServerInstanceStorageInfo
+        $body['sqlServerName'] = $machineName
 
         $instanceSectionEndTime = (Get-Date)
         $body['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
