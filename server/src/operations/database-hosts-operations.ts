@@ -1003,28 +1003,28 @@ async function getDriveInfoFromNodes(
     const clusterCommandPromise =
         sqlDeploymentType === 'FCI'
             ? callSsmExecution(
-                credentialsId,
-                region,
-                clusterCommand,
-                activeNodeInstanceId,
-                undefined,
-                false,
-                executionTimeout
-            )
+                  credentialsId,
+                  region,
+                  clusterCommand,
+                  activeNodeInstanceId,
+                  undefined,
+                  false,
+                  executionTimeout
+              )
             : Promise.resolve();
 
     // Getting drive info of drives present on standby node to eliminate presenting existing drive letter as available drive letter
     const existingDriveStandbyNodePromise =
         sqlDeploymentType === 'FCI'
             ? callSsmExecution(
-                credentialsId,
-                region,
-                driveInfoCommand,
-                standbyNodeInstanceId!,
-                undefined,
-                false,
-                executionTimeout
-            )
+                  credentialsId,
+                  region,
+                  driveInfoCommand,
+                  standbyNodeInstanceId!,
+                  undefined,
+                  false,
+                  executionTimeout
+              )
             : Promise.resolve();
 
     const [clusterDrivesResponse, existingDriveActiveNodeResponse, existingDriveStandbyNodeResponse] =
