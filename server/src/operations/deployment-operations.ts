@@ -123,7 +123,8 @@ async function formatTemplateParameters(
         : { roleName: '', providerAccountId: '' };
 
     const stackName = derivedParams.StackName;
-    const validationAmiImage = credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : '';
+    const validationAmiImage =
+        credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : 't2.micro';
 
     const validationNodeInstanceType =
         credentialsId && region ? await getValidationNodeInstanceType(credentialsId!, region) : '';
