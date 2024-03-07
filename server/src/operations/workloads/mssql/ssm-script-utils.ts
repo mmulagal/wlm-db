@@ -1,31 +1,37 @@
-const GET_DRIVE_INFO = `#Get the list of all used drive letters
-$usedDriveLetters = Get-PSDrive -PSProvider FileSystem | Select-Object -ExpandProperty Name
-
-#Updating manufacturer detail and availabble space of each existing drives
-$driveInfo = $usedDriveLetters | ForEach-Object {
-    $driveLetter = $_
-    $drive = Get-PSDrive -Name $driveLetter
-    $diskNumber = (Get-Partition -DriveLetter $driveLetter).DiskNumber
-    try{
-        if((Get-PhysicalDisk | Where-Object { $_.DeviceId -eq $diskNumber }).Manufacturer -eq 'NETAPP'){
-            $isNetappDrive = $true 
-        }
-        else{
-            $isNetappDrive = $false 
-        }
+const GET_FCI_DRIVE_INFO = `#Get the list of all used drive letters
+$disks = Get-Disk
+$usedDriveDetails = @()
+foreach ($disk in $disks) {
+    $volume = Get-Partition | Where-Object { $_.DiskNumber -eq $disk.Number } | get-volume
+	$labels = Get-ClusterResource | where { $_.ResourceType -eq "Physical Disk" } | where { $_.Name -eq $volume.FileSystemLabel }
+    $output = New-Object PSObject -Property @{
+        driveLetter = $volume.DriveLetter
+        availableSize = $volume.SizeRemaining
+        manufacturer = $disk.Manufacturer
+	    owner = $labels.OwnerGroup.Name
     }
-    catch {
-        $isNetappDrive = $false 
-    }
-    $freeSpace = $drive.Free
-    [PSCustomObject]@{
-        driveLetter = $driveLetter
-        availableSize = $freeSpace
-        isNetappDrive = $isNetappDrive 
-    }
+    $usedDriveDetails += $output 
 }
 
-Write-Output $driveInfo | ConvertTo-Json
+ $usedDrivesInfoJson = $usedDriveDetails | ConvertTo-Json
+Write-Host $usedDrivesInfoJson 
+`;
+
+const GET_STANDALONE_DRIVE_INFO = `#Get the list of all used drive letters
+$disks = Get-Disk
+$usedDriveDetails = @()
+foreach ($disk in $disks) {
+    $volume = Get-Partition | Where-Object { $_.DiskNumber -eq $disk.Number } | get-volume
+    $output = New-Object PSObject -Property @{
+        driveLetter = $volume.DriveLetter
+        availableSize = $volume.SizeRemaining
+        manufacturer = $disk.Manufacturer
+    }
+    $usedDriveDetails += $output 
+}
+
+ $usedDrivesInfoJson = $usedDriveDetails | ConvertTo-Json
+Write-Host $usedDrivesInfoJson 
 `;
 
 const GET_DEFAULT_DRIVES = `
@@ -59,28 +65,17 @@ Write-Output $results
 `;
 
 const GET_CLUSTER_DRIVES = `
-$diskqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_Disk'
-$partqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_DiskPartition'
-
-$clusterDrivesDetail = Get-ClusterResource | Where-Object { $_.ResourceType.Name -eq 'Physical Disk' } \`
-  | ForEach-Object { Get-WmiObject MSCluster_Resource -Namespace root/mscluster -Filter "Name='$_'" } \`
-  | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($diskqry -f $_) } \`
-  | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($partqry -f $_) } \`
-  | Select-Object  Path, VolumeLabel
-
-$clusterDriveInfo = foreach ($clusterDriveDetails in $clusterDrivesDetail) {
-    $driveName = $clusterDriveDetails.VolumeLabel
-    $driveOwnerGroup = Get-ClusterResource | Where-Object { $_.Name -eq $driveName } | Select-Object -ExpandProperty OwnerGroup
-    $drivePath = $clusterDriveDetails.Path
-
-    [PSCustomObject]@{
-        driveLetter = $drivePath
-        owner = $driveOwnerGroup 
+$clusterDrives = Get-Volume | ForEach-Object {
+    $volume = $_
+    Get-ClusterResource | Where-Object { $_.Name -eq $volume.FileSystemLabel } | ForEach-Object {
+        [PsCustomObject]@{
+            DriveLetter = $volume.DriveLetter
+            OwnerGroup = $_.OwnerGroup.Name
+        }
     }
-}
-
-$clusterDriveInfoJson = $clusterDriveInfo | Select-Object -Property driveLetter, @{Name='owner'; Expression={$_.owner.Name}} | ConvertTo-Json
-Write-Output $clusterDriveInfoJson
+} | Select-Object DriveLetter, OwnerGroup | ConvertTo-Json
+ 
+$clusterDrives
 `;
 
-export { GET_DRIVE_INFO, GET_DEFAULT_DRIVES, EXECUTE_SQL_QUERY, GET_CLUSTER_DRIVES };
+export { GET_FCI_DRIVE_INFO, GET_STANDALONE_DRIVE_INFO, GET_DEFAULT_DRIVES, EXECUTE_SQL_QUERY, GET_CLUSTER_DRIVES };
