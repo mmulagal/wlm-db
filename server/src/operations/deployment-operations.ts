@@ -64,7 +64,8 @@ import {
     SIGNED_TEMPLATES_BUCKET_NAME,
     TEMPLATE_BUCKET_REGION,
     DEFAULT_AWS_REGION,
-    VALIDATION_INSTANCE_TYPE
+    VALIDATION_INSTANCE_TYPE,
+    VALIDATION_NODE_INSTANCETYPE
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -125,7 +126,10 @@ async function formatTemplateParameters(
     const stackName = derivedParams.StackName;
     const validationAmiImage = credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : '';
 
-    const validationNodeInstanceType = await getValidationNodeInstanceType(credentialsId!, region!);
+    const validationNodeInstanceType =
+        credentialsId && region
+            ? await getValidationNodeInstanceType(credentialsId!, region)
+            : VALIDATION_NODE_INSTANCETYPE.T2MICRO;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
@@ -155,7 +159,10 @@ async function formatTemplateParameters(
         }
     }
 
-    const missingServices = await getServicesWithNoEndpoint(credentialsId!, region!, networkConfiguration.vpcId);
+    const missingServices =
+        credentialsId && region
+            ? await getServicesWithNoEndpoint(credentialsId!, region!, networkConfiguration.vpcId)
+            : [];
     Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
         if (!missingServices.includes(key)) {
             templateParams.push({
