@@ -329,6 +329,7 @@ async function getHostAndSqlInfoFromPsOutput(
 
                     const {
                         sqlServerVersion,
+                        sqlServerName,
                         sqlServerInstance,
                         sqlServerState,
                         windowsAuthentication,
@@ -340,6 +341,7 @@ async function getHostAndSqlInfoFromPsOutput(
 
                     ssmTargetSqlServerInstancesInfo.push({
                         sqlServerVersion,
+                        ...(sqlServerName && { sqlServerName }),
                         sqlServerInstance,
                         sqlServerState,
                         sqlServerEdition,

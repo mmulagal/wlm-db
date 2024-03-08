@@ -1,31 +1,29 @@
-const GET_DRIVE_INFO = `#Get the list of all used drive letters
-$usedDriveLetters = Get-PSDrive -PSProvider FileSystem | Select-Object -ExpandProperty Name
+const GET_DRIVE_INFO = (deploymentType: string) => `#Get the list of all used drive letters
+$disks = Get-Disk
+$usedDriveDetails = @()
+$deploymentType = '${deploymentType}'
+foreach ($disk in $disks) {
+    $volume = Get-Partition | Where-Object { $_.DiskNumber -eq $disk.Number } | Get-Volume
+    if ($deploymentType -eq 'FCI') {
+        $labels = Get-ClusterResource | Where-Object { $_.ResourceType -eq "Physical Disk" } | Where-Object { $_.Name -eq $volume.FileSystemLabel }
+    }
 
-#Updating manufacturer detail and availabble space of each existing drives
-$driveInfo = $usedDriveLetters | ForEach-Object {
-    $driveLetter = $_
-    $drive = Get-PSDrive -Name $driveLetter
-    $diskNumber = (Get-Partition -DriveLetter $driveLetter).DiskNumber
-    try{
-        if((Get-PhysicalDisk | Where-Object { $_.DeviceId -eq $diskNumber }).Manufacturer -eq 'NETAPP'){
-            $isNetappDrive = $true 
-        }
-        else{
-            $isNetappDrive = $false 
-        }
+    $output = [PSCustomObject]@{
+        driveLetter = $volume.DriveLetter
+        availableSize = $volume.SizeRemaining
+        manufacturer = $disk.Manufacturer
     }
-    catch {
-        $isNetappDrive = $false 
+
+    if ($deploymentType -eq 'FCI') {
+        $output | Add-Member -NotePropertyName "owner" -NotePropertyValue $labels.OwnerGroup.Name
     }
-    $freeSpace = $drive.Free
-    [PSCustomObject]@{
-        driveLetter = $driveLetter
-        availableSize = $freeSpace
-        isNetappDrive = $isNetappDrive 
-    }
+
+    $usedDriveDetails += $output
 }
 
-Write-Output $driveInfo | ConvertTo-Json
+$usedDrivesInfoJson = $usedDriveDetails | ConvertTo-Json
+Write-Host $usedDrivesInfoJson
+
 `;
 
 const GET_DEFAULT_DRIVES = `
@@ -48,39 +46,4 @@ $defaultLogDrive = sqlcmd -Q @"
 Write-Output $defaultDataDrive $defaultLogDrive | ConvertTo-Json
 `;
 
-const EXECUTE_SQL_QUERY = (query: string, database?: string) => `
-if(${database}){
-    $results = sqlcmd -d "${database}" -Q "${query}" -y 0
-}
-else{
-    $results = sqlcmd -Q "${query}" -y 0
-}
-Write-Output $results 
-`;
-
-const GET_CLUSTER_DRIVES = `
-$diskqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_Disk'
-$partqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_DiskPartition'
-
-$clusterDrivesDetail = Get-ClusterResource | Where-Object { $_.ResourceType.Name -eq 'Physical Disk' } \`
-  | ForEach-Object { Get-WmiObject MSCluster_Resource -Namespace root/mscluster -Filter "Name='$_'" } \`
-  | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($diskqry -f $_) } \`
-  | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($partqry -f $_) } \`
-  | Select-Object  Path, VolumeLabel
-
-$clusterDriveInfo = foreach ($clusterDriveDetails in $clusterDrivesDetail) {
-    $driveName = $clusterDriveDetails.VolumeLabel
-    $driveOwnerGroup = Get-ClusterResource | Where-Object { $_.Name -eq $driveName } | Select-Object -ExpandProperty OwnerGroup
-    $drivePath = $clusterDriveDetails.Path
-
-    [PSCustomObject]@{
-        driveLetter = $drivePath
-        owner = $driveOwnerGroup 
-    }
-}
-
-$clusterDriveInfoJson = $clusterDriveInfo | Select-Object -Property driveLetter, @{Name='owner'; Expression={$_.owner.Name}} | ConvertTo-Json
-Write-Output $clusterDriveInfoJson
-`;
-
-export { GET_DRIVE_INFO, GET_DEFAULT_DRIVES, EXECUTE_SQL_QUERY, GET_CLUSTER_DRIVES };
+export { GET_DRIVE_INFO, GET_DEFAULT_DRIVES };

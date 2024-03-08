@@ -19,6 +19,7 @@ import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFac
 import DatabaseHostOverview from '../../ResourcePage/ResourceHomePage/DatabaseHostOverview';
 import HeaderComponentApi from './HeaderComponentApis';
 import {
+    setDashboardRefresh,
     setHeaderSelectedCred,
     setHeaderSelectedRegion,
     setRefreshTime
@@ -116,6 +117,7 @@ const HeaderComponent = () => {
         dispatch(setRefreshTime(getCurrentDateTime()));
         if (selectedHeaderTab === WLF_TABS.DASHBOARD) {
             resetDBHomePageState(dispatch);
+            dispatch(setDashboardRefresh(true));
         } else if (selectedHeaderTab === WLF_TABS.INVENTORY) {
             resetDBHomePageState(dispatch);
             dispatch(setIsRefreshed(true));

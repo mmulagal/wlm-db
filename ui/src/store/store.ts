@@ -60,6 +60,13 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
         let errorMsg = action.payload.error || action.payload.data?.message || action.payload.data?.responseMessage;
 
+        const apiName = action?.meta?.arg?.queryCacheKey || '';
+
+        // DBS-2226 - It is happening when cred and region is changed in between of other call. Will check this again.
+        if (apiName.includes('discoverHosts') && errorMsg.includes('Unable to parse pagination token')) {
+            return;
+        }
+
         const reqFieldChk = requiredFieldError(errorMsg);
         if (reqFieldChk) {
             errorMsg = reqFieldChk + GENERAL.IS_REQUIRED_MSG;

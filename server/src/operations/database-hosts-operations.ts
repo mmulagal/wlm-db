@@ -73,7 +73,7 @@ import { getSSMConnectionStatus } from './aws/ssm-operations';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
-import { GET_CLUSTER_DRIVES, GET_DEFAULT_DRIVES, GET_DRIVE_INFO } from './workloads/mssql/ssm-script-utils';
+import { GET_DEFAULT_DRIVES, GET_DRIVE_INFO } from './workloads/mssql/ssm-script-utils';
 import { getResources } from './database/database-operations';
 import { convertGiBToBytes, sleep, sqlResponseParsing } from '../utils/utils';
 import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
@@ -988,7 +988,7 @@ async function getDriveInfoFromNodes(
         activeNodeInstanceId,
         standbyNodeInstanceId
     });
-    const driveInfoCommand = [GET_DRIVE_INFO];
+    const driveInfoCommand = [GET_DRIVE_INFO(sqlDeploymentType)];
 
     const existingDriveActiveNodePromise = callSsmExecution(
         credentialsId,
@@ -999,42 +999,25 @@ async function getDriveInfoFromNodes(
         false,
         executionTimeout
     );
-    // Getting clustered drive letters for FCI deployments
-    const clusterCommand = [GET_CLUSTER_DRIVES];
-
-    let clusterCommandPromise;
-    if (sqlDeploymentType === 'FCI') {
-        clusterCommandPromise = callSsmExecution(
-            credentialsId,
-            region,
-            clusterCommand,
-            activeNodeInstanceId,
-            undefined,
-            false,
-            executionTimeout
-        );
-    } else {
-        clusterCommandPromise = Promise.resolve();
-    }
 
     // Getting drive info of drives present on standby node to eliminate presenting existing drive letter as available drive letter
-    let existingDriveStandbyNodePromise;
-    if (sqlDeploymentType === 'FCI') {
-        existingDriveStandbyNodePromise = callSsmExecution(
-            credentialsId,
-            region,
-            driveInfoCommand,
-            standbyNodeInstanceId!,
-            undefined,
-            false,
-            executionTimeout
-        );
-    } else {
-        existingDriveStandbyNodePromise = Promise.resolve();
-    }
+    const existingDriveStandbyNodePromise =
+        sqlDeploymentType === 'FCI'
+            ? callSsmExecution(
+                  credentialsId,
+                  region,
+                  driveInfoCommand,
+                  standbyNodeInstanceId!,
+                  undefined,
+                  false,
+                  executionTimeout
+              )
+            : Promise.resolve();
 
-    const [clusterDrivesResponse, existingDriveActiveNodeResponse, existingDriveStandbyNodeResponse] =
-        await Promise.all([clusterCommandPromise, existingDriveActiveNodePromise, existingDriveStandbyNodePromise]);
+    const [existingDriveActiveNodeResponse, existingDriveStandbyNodeResponse] = await Promise.all([
+        existingDriveActiveNodePromise,
+        existingDriveStandbyNodePromise
+    ]);
 
     const parsedActiveNodeResponse = sqlResponseParsing(existingDriveActiveNodeResponse!);
     const parsedstandbyNodeResponse = existingDriveStandbyNodeResponse!
@@ -1051,37 +1034,26 @@ async function getDriveInfoFromNodes(
             : [parsedstandbyNodeResponse]
         : undefined;
 
-    standbyNodeExistingDrives?.forEach(standbyNodeDrive => {
-        const driveLetterExists = activeNodeExistingDrives.find(
-            activeNodeDrive => activeNodeDrive.driveLetter === standbyNodeDrive.driveLetter
-        );
-        if (!driveLetterExists) {
-            activeNodeExistingDrives.push(standbyNodeDrive);
-        }
-    });
-
-    let updatedExitingDrives: any[] = activeNodeExistingDrives;
-
-    if (sqlDeploymentType === 'FCI' && clusterDrivesResponse) {
-        try {
-            const parsedclusterDrivesResponse = sqlResponseParsing(clusterDrivesResponse);
-            updatedExitingDrives = activeNodeExistingDrives.map(drive => {
-                const matchingDrive = parsedclusterDrivesResponse.find(
-                    (parsedDrive: { driveLetter: string }) =>
-                        parsedDrive.driveLetter.replace(':', '') === drive.driveLetter
-                );
-
-                if (matchingDrive && matchingDrive.owner.includes('SQL Server')) {
-                    return { ...drive, isDriveClustered: true };
+    const updatedDriveInfo = (activeNodeExistingDrives || [])
+        .concat(standbyNodeExistingDrives || [])
+        .filter(drive => drive.driveLetter !== null)
+        .reduce((result, drive) => {
+            const existingDrive = result.find((d: { driveLetter: any }) => d.driveLetter === drive.driveLetter);
+            if (!existingDrive) {
+                const updatedDrive: any = {
+                    driveLetter: drive.driveLetter,
+                    availableSize: drive.availableSize,
+                    isNetappDrive: drive.manufacturer !== null && drive.manufacturer.includes('NETAPP')
+                };
+                if (sqlDeploymentType === 'FCI') {
+                    updatedDrive.isDriveClustered = drive.owner?.includes('SQL Server') ?? false;
                 }
-                return { ...drive, isDriveClustered: false };
-            });
-        } catch (error) {
-            const errorMessage = `Unable to read cluster drive information ${activeNodeInstanceId} ${standbyNodeInstanceId}, ${error}`;
-            logger.error(errorMessage);
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-        }
-    }
+                result.push(updatedDrive);
+            }
+            return result;
+        }, []);
+
+    const updatedExitingDrives: any[] = updatedDriveInfo;
 
     // Constructing list of available drive letters
     const availableDriveLetters = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).filter(
@@ -1124,7 +1096,7 @@ async function getDriveInfoFromSSM(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
-    if (standbyNodeInstanceId) {
+    if (sqlDeploymentType === 'FCI' && standbyNodeInstanceId) {
         const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId!);
         if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
             const errorMessage = `Unable to connect to node to access drive details for host ${databaseHostId} in account ${accountId}`;
@@ -1132,6 +1104,7 @@ async function getDriveInfoFromSSM(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
     }
+
     let getDriveInfoFromNodesResponse;
     let getDefaultDrivesResponse;
     try {
@@ -1269,10 +1242,16 @@ async function deployDatabase(
     } = await getJobs(accountId, credentialsId, region, filterParams);
 
     if (job) {
-        throw createError(
-            412,
-            `A database creation operation for ${sqlServerName} is already in progress with job ID ${job.id}`
-        );
+        // Calculate the time difference in minutes
+        const timeDifferenceInMilliseconds = Math.abs(Date.now() - job.startTime);
+        const timeDifferenceInMinutes = Math.floor(timeDifferenceInMilliseconds / (1000 * 60));
+        // workaround to allow the user to create database when there is a job stuck in progress for a very long time
+        if (timeDifferenceInMinutes <= 15) {
+            throw createError(
+                412,
+                `A database creation operation for ${sqlServerName} is already in progress with job ID ${job.id}`
+            );
+        }
     }
 
     // create the parent job for database deployment

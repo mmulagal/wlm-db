@@ -35,6 +35,11 @@ const SqlServerInstanceInfo = Type.Object({
         enum: ['ContinuePending', 'Paused', 'PausePending', 'Running', 'StartPending', 'Stopped', 'StopPending']
     }),
     sqlServerVersion: Type.String({ description: 'MS SQL Server version' }),
+    sqlServerName: Type.Optional(
+        Type.String({
+            description: 'Name of SQL Server. For a clustered instance, this is the name of the virtual server.'
+        })
+    ),
     windowsAuthentication: Type.Boolean({
         description: 'Is Windows Authentication used for SQL Server?'
     }),
