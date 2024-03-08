@@ -99,10 +99,10 @@ const FileNames = () => {
     }, [newUserDBName]);
 
     const disableDriveMsg = (val: any) => {
-        if ('isDriveClustered' in val ? !val.isDriveClustered : false) {
-            return GENERAL.NON_CLUSTERED_DRIVE;
-        } else if (!val?.isNetappDrive) {
+        if (!val?.isNetappDrive) {
             return GENERAL.NON_NETAPP_DRIVE;
+        } else if ('isDriveClustered' in val ? !val.isDriveClustered : false) {
+            return GENERAL.NON_CLUSTERED_DRIVE;
         }
         return '';
     };
