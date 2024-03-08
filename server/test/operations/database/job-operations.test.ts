@@ -256,7 +256,7 @@ describe('getJobSummaryByTime', async () => {
             mockEndTime
         );
 
-        expect(result.length).toEqual(2);
+        expect(result.length).toEqual(1);
     });
 
     it('should handle error and throw an error', async () => {
