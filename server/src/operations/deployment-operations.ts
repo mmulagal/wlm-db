@@ -801,7 +801,8 @@ async function deployCloudFormationTemplate(
             credentialsId,
             sqlConfiguration?.sqlDeploymentMode,
             fsxConfiguration?.fsxFileSystemId,
-            awsAccountId
+            awsAccountId,
+            sqlConfiguration?.sqlServerName
         );
         if (!fsxConfiguration.fsxFileSystemId) {
             // create a new fsx record in fsx inventory

@@ -96,7 +96,8 @@ async function createDeploymentMockDataInDB(
     credentialsId: string,
     sqlDeploymentMode: string,
     fsxFileSystemId: string | undefined,
-    awsAccountId: string
+    awsAccountId: string,
+    serverName: string
 ) {
     logger.info('create deployment, resource and job table mock data in database', {
         accountId,
@@ -105,11 +106,12 @@ async function createDeploymentMockDataInDB(
         region,
         credentialsId,
         sqlDeploymentMode,
-        fsxFileSystemId
+        fsxFileSystemId,
+        serverName
     });
 
     const cloudProviderId = awsAccountId;
-    const resourceName = `sqlnode-${randomize('0', 5)}`;
+    const resourceName = serverName;
     if (sqlDeploymentMode.toLowerCase() === 'fci') {
         sqlDeploymentMode = 'FCI';
     } else if (sqlDeploymentMode.toLowerCase() === 'standalone') {
