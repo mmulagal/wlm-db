@@ -516,7 +516,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"ServerEdition\":\"Standard Edition: Core-based Licensing (64-bit)\"}]\r\n",
+        "StandardOutputContent": "[{\"ServerEdition\":\"Standard Edition\",\"isClustered\":1,\"activeNode\":\"SQLNODE1-99495\"}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
