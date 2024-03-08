@@ -1,5 +1,6 @@
 import config from 'config';
 import ms from 'ms';
+import createError from 'http-errors';
 import {
     CommandInvocationStatus,
     GetCommandInvocationCommandInput,
@@ -145,6 +146,3 @@ async function ssmPutParameters(credentialsId: string, region: string, credentia
 }
 
 export { executeSSMDocument, getFSxOntapRegionsList, getSSMConnectionStatus, ssmPutParameters, pollCommandStatus };
-function createError(INTERNAL_SERVER_ERROR: any, errorMessage: string) {
-    throw new Error('Function not implemented.');
-}
