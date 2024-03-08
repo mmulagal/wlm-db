@@ -26,9 +26,10 @@ $result = [ordered]@{}
 
 #Refresh the cached information on iSCSI target
 Update-IscsiTarget
-Start-Sleep 2
+
 echo "RESCAN" | Out-File -FilePath C:\SSM\rescan.txt
 $rescan =(diskpart /s C:\SSM\rescan.txt)
+Start-Sleep 2
 
 #Create a list of drive letters if not passed
 if (-Not $DataDrive) { 
