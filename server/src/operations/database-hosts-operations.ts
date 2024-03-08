@@ -1646,7 +1646,7 @@ async function configureLuns(
         ];
     } else {
         configureLuncommands = [
-            `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CONFIGURELUNSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataLunSize ${dataVolumeSize}  -FSxLogLunSize ${logVolumeSize} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists}`
+            `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CONFIGURELUNSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataLunSize ${dataVolumeSize}  -FSxLogLunSize ${logVolumeSize} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists}}`
         ];
     }
 
@@ -1872,7 +1872,7 @@ async function cleanUpDatabaseDeployment(
             ];
         } else {
             cleaupCommand = [
-                `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered}`
+                `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered}}`
             ];
         }
 
@@ -2059,7 +2059,8 @@ async function checkDriveExists(
     if (!fileName) {
         throw createError(412, `Selected ${driveType} drive ${fileName} should not be empty`);
     } else {
-        const [name, extension] = fileName.split('.');
+        const splitRegEx = /(.+)\.(.+)$/;
+        const [, name, extension] = splitRegEx.exec(fileName) || [];
         if (extension && driveType === 'data' && extension !== 'mdf') {
             throw createError(412, `Selected ${driveType} drive file is not having a valid extension`);
         }
