@@ -182,15 +182,9 @@ const getHostAndSqlServerInfo = {
     commands: HOST_AND_SQL_INFO_PS1
 };
 
-const getFCIDriveInfo = {
+const getDriveInfo = {
     commands: [
-        '#Get the list of all used drive letters\n$disks = Get-Disk\n$usedDriveDetails = @()\nforeach ($disk in $disks) {\n    $volume = Get-Partition | Where-Object { $_.DiskNumber -eq $disk.Number } | get-volume\n\t$labels = Get-ClusterResource | where { $_.ResourceType -eq "Physical Disk" } | where { $_.Name -eq $volume.FileSystemLabel }\n    $output = New-Object PSObject -Property @{\n        driveLetter = $volume.DriveLetter\n        availableSize = $volume.SizeRemaining\n        manufacturer = $disk.Manufacturer\n\t    owner = $labels.OwnerGroup.Name\n    }\n    $usedDriveDetails += $output \n}\n\n $usedDrivesInfoJson = $usedDriveDetails | ConvertTo-Json\nWrite-Host $usedDrivesInfoJson \n'
-    ]
-};
-
-const getStandaloneDriveInfo = {
-    commands: [
-        '#Get the list of all used drive letters\n$disks = Get-Disk\n$usedDriveDetails = @()\nforeach ($disk in $disks) {\n    $volume = Get-Partition | Where-Object { $_.DiskNumber -eq $disk.Number } | get-volume\n    $output = New-Object PSObject -Property @{\n        driveLetter = $volume.DriveLetter\n        availableSize = $volume.SizeRemaining\n        manufacturer = $disk.Manufacturer\n    }\n    $usedDriveDetails += $output \n}\n\n $usedDrivesInfoJson = $usedDriveDetails | ConvertTo-Json\nWrite-Host $usedDrivesInfoJson \n'
+        "#Get the list of all used drive letters\n$disks = Get-Disk\n$usedDriveDetails = @()\n$deploymentType = 'FCI'\nforeach ($disk in $disks) {\n    $volume = Get-Partition | Where-Object { $_.DiskNumber -eq $disk.Number } | Get-Volume\n    if ($deploymentType -eq 'FCI') {\n        $labels = Get-ClusterResource | Where-Object { $_.ResourceType -eq \"Physical Disk\" } | Where-Object { $_.Name -eq $volume.FileSystemLabel }\n    }\n\n    $output = [PSCustomObject]@{\n        driveLetter = $volume.DriveLetter\n        availableSize = $volume.SizeRemaining\n        manufacturer = $disk.Manufacturer\n    }\n\n    if ($deploymentType -eq 'FCI') {\n        $output | Add-Member -NotePropertyName \"owner\" -NotePropertyValue $labels.OwnerGroup.Name\n    }\n\n    $usedDriveDetails += $output\n}\n\n$usedDrivesInfoJson = $usedDriveDetails | ConvertTo-Json\nWrite-Host $usedDrivesInfoJson\n\n"
     ]
 };
 
@@ -299,9 +293,7 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getServerEdition)
     .on(SendCommandCommand, { Parameters: getHostAndSqlServerInfo })
     .resolves(listSendCommandCommandResponse.getHostAndSqlServerInfoResponse)
-    .on(SendCommandCommand, { Parameters: getFCIDriveInfo })
-    .resolves(listSendCommandCommandResponse.getDriveInfoCommandResponse)
-    .on(SendCommandCommand, { Parameters: getStandaloneDriveInfo })
+    .on(SendCommandCommand, { Parameters: getDriveInfo })
     .resolves(listSendCommandCommandResponse.getDriveInfoCommandResponse)
     .on(SendCommandCommand, { Parameters: getDefaultDriveLetters })
     .resolves(listSendCommandCommandResponse.getDefaultDriveLettersCommandResponse)

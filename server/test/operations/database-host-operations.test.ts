@@ -72,7 +72,8 @@ beforeAll(async () => {
         storageType: 'FSXN',
         metadata: {
             node1InstanceId: 'i-07e76a4b916548dc0',
-            node2InstanceId: 'i-0880a21327284f67c'
+            node2InstanceId: 'i-0880a21327284f67c',
+            sqlDeploymentType: 'FCI'
         }
     });
 });

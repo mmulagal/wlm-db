@@ -1,37 +1,29 @@
-const GET_FCI_DRIVE_INFO = `#Get the list of all used drive letters
+const GET_DRIVE_INFO = (deploymentType: string) => `#Get the list of all used drive letters
 $disks = Get-Disk
 $usedDriveDetails = @()
+$deploymentType = '${deploymentType}'
 foreach ($disk in $disks) {
-    $volume = Get-Partition | Where-Object { $_.DiskNumber -eq $disk.Number } | get-volume
-	$labels = Get-ClusterResource | where { $_.ResourceType -eq "Physical Disk" } | where { $_.Name -eq $volume.FileSystemLabel }
-    $output = New-Object PSObject -Property @{
-        driveLetter = $volume.DriveLetter
-        availableSize = $volume.SizeRemaining
-        manufacturer = $disk.Manufacturer
-	    owner = $labels.OwnerGroup.Name
+    $volume = Get-Partition | Where-Object { $_.DiskNumber -eq $disk.Number } | Get-Volume
+    if ($deploymentType -eq 'FCI') {
+        $labels = Get-ClusterResource | Where-Object { $_.ResourceType -eq "Physical Disk" } | Where-Object { $_.Name -eq $volume.FileSystemLabel }
     }
-    $usedDriveDetails += $output 
-}
 
- $usedDrivesInfoJson = $usedDriveDetails | ConvertTo-Json
-Write-Host $usedDrivesInfoJson 
-`;
-
-const GET_STANDALONE_DRIVE_INFO = `#Get the list of all used drive letters
-$disks = Get-Disk
-$usedDriveDetails = @()
-foreach ($disk in $disks) {
-    $volume = Get-Partition | Where-Object { $_.DiskNumber -eq $disk.Number } | get-volume
-    $output = New-Object PSObject -Property @{
+    $output = [PSCustomObject]@{
         driveLetter = $volume.DriveLetter
         availableSize = $volume.SizeRemaining
         manufacturer = $disk.Manufacturer
     }
-    $usedDriveDetails += $output 
+
+    if ($deploymentType -eq 'FCI') {
+        $output | Add-Member -NotePropertyName "owner" -NotePropertyValue $labels.OwnerGroup.Name
+    }
+
+    $usedDriveDetails += $output
 }
 
- $usedDrivesInfoJson = $usedDriveDetails | ConvertTo-Json
-Write-Host $usedDrivesInfoJson 
+$usedDrivesInfoJson = $usedDriveDetails | ConvertTo-Json
+Write-Host $usedDrivesInfoJson
+
 `;
 
 const GET_DEFAULT_DRIVES = `
@@ -54,28 +46,4 @@ $defaultLogDrive = sqlcmd -Q @"
 Write-Output $defaultDataDrive $defaultLogDrive | ConvertTo-Json
 `;
 
-const EXECUTE_SQL_QUERY = (query: string, database?: string) => `
-if(${database}){
-    $results = sqlcmd -d "${database}" -Q "${query}" -y 0
-}
-else{
-    $results = sqlcmd -Q "${query}" -y 0
-}
-Write-Output $results 
-`;
-
-const GET_CLUSTER_DRIVES = `
-$clusterDrives = Get-Volume | ForEach-Object {
-    $volume = $_
-    Get-ClusterResource | Where-Object { $_.Name -eq $volume.FileSystemLabel } | ForEach-Object {
-        [PsCustomObject]@{
-            DriveLetter = $volume.DriveLetter
-            OwnerGroup = $_.OwnerGroup.Name
-        }
-    }
-} | Select-Object DriveLetter, OwnerGroup | ConvertTo-Json
- 
-$clusterDrives
-`;
-
-export { GET_FCI_DRIVE_INFO, GET_STANDALONE_DRIVE_INFO, GET_DEFAULT_DRIVES, EXECUTE_SQL_QUERY, GET_CLUSTER_DRIVES };
+export { GET_DRIVE_INFO, GET_DEFAULT_DRIVES };

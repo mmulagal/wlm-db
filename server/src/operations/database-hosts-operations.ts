@@ -73,7 +73,7 @@ import { getSSMConnectionStatus } from './aws/ssm-operations';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
-import { GET_DEFAULT_DRIVES, GET_FCI_DRIVE_INFO, GET_STANDALONE_DRIVE_INFO } from './workloads/mssql/ssm-script-utils';
+import { GET_DEFAULT_DRIVES, GET_DRIVE_INFO } from './workloads/mssql/ssm-script-utils';
 import { getResources } from './database/database-operations';
 import { convertGiBToBytes, sleep, sqlResponseParsing } from '../utils/utils';
 import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
@@ -986,7 +986,7 @@ async function getDriveInfoFromNodes(
         activeNodeInstanceId,
         standbyNodeInstanceId
     });
-    const driveInfoCommand = sqlDeploymentType === 'FCI' ? [GET_FCI_DRIVE_INFO] : [GET_STANDALONE_DRIVE_INFO];
+    const driveInfoCommand = [GET_DRIVE_INFO(sqlDeploymentType)];
 
     const existingDriveActiveNodePromise = callSsmExecution(
         credentialsId,
@@ -1043,10 +1043,8 @@ async function getDriveInfoFromNodes(
                     availableSize: drive.availableSize,
                     isNetappDrive: drive.manufacturer !== null && drive.manufacturer.includes('NETAPP')
                 };
-                if (drive.owner !== undefined && drive.owner !== null && drive.owner.includes('SQL Server')) {
-                    updatedDrive.isDriveClustered = true;
-                } else {
-                    updatedDrive.isDriveClustered = false;
+                if (sqlDeploymentType === 'FCI') {
+                    updatedDrive.isDriveClustered = drive.owner?.includes('SQL Server') ?? false;
                 }
                 result.push(updatedDrive);
             }
@@ -1090,26 +1088,20 @@ async function getDriveInfoFromSSM(
         node2InstanceId
     );
 
-    async function checkSSMConnection(): Promise<void> {
-        if (!isSSMConnected && activeNodeInstanceId === undefined) {
-            const errorMessage = `Unable to access drive details for host ${databaseHostId} in account ${accountId} due to SSM connection issues.`;
+    if (!isSSMConnected && activeNodeInstanceId === undefined) {
+        const errorMessage = `Unable to access drive details for host ${databaseHostId} in account ${accountId} due to SSM connection issues.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    if (sqlDeploymentType === 'FCI' && standbyNodeInstanceId) {
+        const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId!);
+        if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
+            const errorMessage = `Unable to connect to node to access drive details for host ${databaseHostId} in account ${accountId}`;
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
     }
-
-    async function checkConnectionStatus(): Promise<void> {
-        if (sqlDeploymentType === 'FCI' && standbyNodeInstanceId) {
-            const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId!);
-            if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
-                const errorMessage = `Unable to connect to node to access drive details for host ${databaseHostId} in account ${accountId}`;
-                logger.error(errorMessage);
-                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-            }
-        }
-    }
-
-    await Promise.all([checkSSMConnection(), checkConnectionStatus()]);
 
     let getDriveInfoFromNodesResponse;
     let getDefaultDrivesResponse;
