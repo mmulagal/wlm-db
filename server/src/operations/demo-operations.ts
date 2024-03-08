@@ -139,7 +139,8 @@ async function createDeploymentMockDataInDB(
         node1InstanceId: `i-${randomize('A0', 17)}`,
         creationDate: new Date().getTime().toString(),
         activeDirectoryName: 'wlm.com',
-        activeDirectoryAddress: generateRandomIP()
+        activeDirectoryAddress: generateRandomIP(),
+        fsxSvmId: 'svm-0491dd89a76b7ca3d'
     };
 
     if (sqlDeploymentMode === 'FCI') {

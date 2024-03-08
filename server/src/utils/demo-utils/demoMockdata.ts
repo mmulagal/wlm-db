@@ -803,7 +803,13 @@ function endpointData(
     ];
 }
 
-function saveFciConfigurationData(region: string, awsAccountId: string, dbName: string, configName: string) {
+function saveFciConfigurationData(
+    region: string,
+    awsAccountId: string,
+    credentialsId: string,
+    dbName: string,
+    configName: string
+) {
     return {
         awsAccount: {
             selectedCredential: {
@@ -813,7 +819,7 @@ function saveFciConfigurationData(region: string, awsAccountId: string, dbName: 
                 isDisabled: false,
                 disabledTitle: '',
                 data: {
-                    credentialsId: 'e196c608-8c0c-4d84-9762-b86f955c72d2',
+                    credentialsId,
                     name: 'DemoDefaultCredential',
                     arn: `arn:aws:iam::${awsAccountId}:role/demo_role`,
                     providerAccountId: awsAccountId
@@ -1138,7 +1144,13 @@ function saveFciConfigurationData(region: string, awsAccountId: string, dbName: 
     };
 }
 
-function saveStandaloneConfigurationData(region: string, awsAccountId: string, dbName: string, configName: string) {
+function saveStandaloneConfigurationData(
+    region: string,
+    awsAccountId: string,
+    credentialsId: string,
+    dbName: string,
+    configName: string
+) {
     return {
         awsAccount: {
             selectedCredential: {
@@ -1148,7 +1160,7 @@ function saveStandaloneConfigurationData(region: string, awsAccountId: string, d
                 isDisabled: false,
                 disabledTitle: '',
                 data: {
-                    credentialsId: 'e196c608-8c0c-4d84-9762-b86f955c72d2',
+                    credentialsId,
                     name: 'DemoDefaultCredential',
                     arn: `arn:aws:iam::${awsAccountId},:role/demo_role`,
                     providerAccountId: awsAccountId

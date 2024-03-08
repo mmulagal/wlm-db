@@ -588,8 +588,8 @@
         "PluginName": "aws:runPowerShellScript",
         "ResponseCode": 0,
         "StandardErrorContent": "",
-        "StandardErrorUrl":"",
-        "StandardOutputContent":  "[\r\n    {\r\n        \"driveLetter\":  \"Q:\",\r\n        \"owner\":  \"Cluster Group\"\r\n    },\r\n    {\r\n        \"driveLetter\":  \"S:\",\r\n        \"owner\":  \"SQL Server (MSSQLSERVER)\"\r\n    },\r\n    {\r\n        \"driveLetter\":  \"L:\",\r\n        \"owner\":  \"SQL Server (MSSQLSERVER)\"\r\n    },\r\n    {\r\n        \"driveLetter\":  \"T:\",\r\n        \"owner\":  \"SQL Server (MSSQLSERVER)\"\r\n    }\r\n]\r\n",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[\r\n    {\r\n        \"driveLetter\":  \"Q:\",\r\n        \"owner\":  \"Cluster Group\"\r\n    },\r\n    {\r\n        \"driveLetter\":  \"S:\",\r\n        \"owner\":  \"SQL Server (MSSQLSERVER)\"\r\n    },\r\n    {\r\n        \"driveLetter\":  \"L:\",\r\n        \"owner\":  \"SQL Server (MSSQLSERVER)\"\r\n    },\r\n    {\r\n        \"driveLetter\":  \"T:\",\r\n        \"owner\":  \"SQL Server (MSSQLSERVER)\"\r\n    }\r\n]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -714,7 +714,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"name\":\"tempdb18\"}]\r\n",
+        "StandardOutputContent": "",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
