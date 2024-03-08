@@ -1,4 +1,5 @@
-  #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
+#Requires -Version 7.0
+#Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
@@ -26,19 +27,6 @@ param(
 $silenttranscript = (Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Append)
 
 $ErrorActionPreference = "Stop"
-
-add-type @"
-using System.Net;
-using System.Security.Cryptography.X509Certificates;
-public class TrustAllCertsPolicy : ICertificatePolicy {
-    public bool CheckValidationResult(
-        ServicePoint srvPoint, X509Certificate certificate,
-        WebRequest request, int certificateProblem) {
-            return true;
-        }
-}
-"@
-[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
@@ -127,7 +115,7 @@ function callGetOrDeleteApi{
         if ($isprivatesubnet -eq $False) {
             Invoke-RestMethod @Params -Certificate $restcert
         }else {
-            Invoke-RestMethod @Params
+            Invoke-RestMethod @Params -SkipCertificateCheck
         }
         
     }catch{
