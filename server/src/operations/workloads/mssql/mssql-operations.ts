@@ -17,8 +17,6 @@ import {
     SERVER_VERSION_DETAILS,
     NUMBER_OF_CONNECTIONS,
     SERVER_STATE,
-    IS_SERVER_CLUSTERED,
-    SERVER_NODE,
     CLUSTER_NODES,
     TABLES_COUNT_QUERY,
     TABLES_QUERY,
@@ -27,7 +25,7 @@ import {
     SERVER_INSTALL_DATE,
     PERFORMANCE_METRICS,
     SQL_BACKUPS,
-    SERVER_EDITION,
+    SERVER_PROPERTIES,
     DATABASE_NAME_EXISTS
 } from './queries';
 import { executeSSMDocument, getSSMConnectionStatus } from '../../aws/ssm-operations';
@@ -341,41 +339,29 @@ async function getServerSummary(resourceId: string) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get server summary');
     }
 
-    const [
-        serverDetailsInfo,
-        severEditionInfo,
-        connectionsInfo,
-        isClusteredInfo,
-        nodeInfo,
-        clusterNodesInfo,
-        serverNameInfo,
-        serverInstallDate
-    ] = await Promise.all(
-        [
-            SERVER_VERSION_DETAILS,
-            SERVER_EDITION,
-            NUMBER_OF_CONNECTIONS,
-            IS_SERVER_CLUSTERED,
-            SERVER_NODE,
-            CLUSTER_NODES,
-            SERVER_NAME,
-            SERVER_INSTALL_DATE
-        ].map(query =>
-            callSsmExecution(credentialsId, region, [`${PSSCRIPT} -Query "${query}"`], activeNodeInstanceId).catch(
-                error =>
-                    logger.error(
-                        `Error while executing query: ${node1InstanceId} ${node2InstanceId} ${query} Error: ${error}`
-                    )
+    const [serverDetailsInfo, serverProperties, connectionsInfo, clusterNodesInfo, serverNameInfo, serverInstallDate] =
+        await Promise.all(
+            [
+                SERVER_VERSION_DETAILS,
+                SERVER_PROPERTIES,
+                NUMBER_OF_CONNECTIONS,
+                CLUSTER_NODES,
+                SERVER_NAME,
+                SERVER_INSTALL_DATE
+            ].map(query =>
+                callSsmExecution(credentialsId, region, [`${PSSCRIPT} -Query "${query}"`], activeNodeInstanceId).catch(
+                    error =>
+                        logger.error(
+                            `Error while executing query: ${node1InstanceId} ${node2InstanceId} ${query} Error: ${error}`
+                        )
+                )
             )
-        )
-    );
+        );
 
     const serverDetails = serverDetailsInfo ? serverDetailsInfo?.replaceAll('\r\n', '') : '';
-    const [{ ServerEdition }] = severEditionInfo ? sqlResponseParsing(severEditionInfo) : '';
+    let [{ ServerEdition, isClustered, activeNode }] = serverProperties ? sqlResponseParsing(serverProperties) : '';
     const serverInfo = serverDetails?.split('\t');
     const [{ numberOfConnections: activeConnections }] = connectionsInfo ? sqlResponseParsing(connectionsInfo) : '';
-    let [{ activeNode }] = nodeInfo ? sqlResponseParsing(nodeInfo) : '';
-    const [{ isClustered }] = isClusteredInfo ? sqlResponseParsing(isClusteredInfo) : '';
     const [{ serverName: clusterName }] = serverNameInfo ? sqlResponseParsing(serverNameInfo!) : '';
     const [{ creationDate }] = serverInstallDate ? sqlResponseParsing(serverInstallDate!) : '';
     const serverStatus = serverDetails ? ServerState.UP : ServerState.DOWN;
