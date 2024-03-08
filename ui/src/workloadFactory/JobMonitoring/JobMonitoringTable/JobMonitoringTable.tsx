@@ -328,8 +328,14 @@ const JobMonitoringTable = () => {
                             {cellData === JOB_MONITORING_STATUS.FAILED && (
                                 <Popover
                                     popoverClass={CommonStyles['popover']}
-                                    children={<Typography variant="Regular_14">{rowData?.error}</Typography>}
+                                    children={
+                                        <Typography variant="Regular_14" style={{ wordBreak: 'break-word' }}>
+                                            {rowData?.error}
+                                        </Typography>
+                                    }
                                     trigger="hover"
+                                    delayHide={200}
+                                    interactive={true}
                                     container={<ErrorIcon className={styles.statusIcon} />}
                                 />
                             )}
