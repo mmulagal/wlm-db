@@ -115,7 +115,7 @@ async function lookupCredentials(credentialsId: string, accountId?: string) {
 }
 
 async function getCredentialsDetails(credentialsId: string, accountId?: string) {
-    logger.info('Getting credentials details:', { credentialsId, accountId });
+    logger.debug('Getting credentials details:', { credentialsId, accountId });
     if (isEmpty(credentialsId)) {
         throw new Error('Credentials id is invalid');
     }

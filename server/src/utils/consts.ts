@@ -922,6 +922,7 @@ const AWS_FSX_TYPE = 'AWS_FSX';
 const ADMIN_ROLE = 'Role-1';
 const USER_ROLE = 'Role-2';
 enum DatabaseHostsQueryFields {
+    TOPOLOGY = 'topology',
     PERFORMANCE = 'performance',
     PROTECTION = 'protection',
     STORAGE = 'storage',

@@ -495,7 +495,7 @@ async function fetchHostsInformation(
             getDatabaseHostSummary(
                 accountId,
                 resourceDetail.resource_id,
-                'performance,storage,usageEstimation,resourceUtilization',
+                'performance,topology,usageEstimation,resourceUtilization',
                 resourceDetail
             )
         )

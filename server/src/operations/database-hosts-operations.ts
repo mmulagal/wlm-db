@@ -51,14 +51,14 @@ import {
     getServerIOLatency,
     getNativeSQLProtection,
     getDatabasesCount,
-    getServerSummary,
-    getResourceUtilisation,
     getPerformanceMetrics,
     getDataBasesSummary,
     getNativeSQLBackedupDatabases,
     callSsmExecution,
     getActiveSqlNode,
-    checkDatabaseExists
+    checkDatabaseExists,
+    getServerDetails,
+    getResourceUtilisationDetails
 } from './workloads/mssql/mssql-operations';
 import {
     getStorageDataUsingSSM,
@@ -733,6 +733,7 @@ async function getDatabaseHostSummary(
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
 
+    const shouldQueryTopology = fieldsValues?.includes(DatabaseHostsQueryFields.TOPOLOGY);
     const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
@@ -758,92 +759,119 @@ async function getDatabaseHostSummary(
             node2InstanceId,
             resourceId
         );
-
         const errormessages: { [index: string]: string } = {};
+        if (credentialsId && region) {
+            const [
+                dbCount,
+                serverMetadata,
+                topologyData,
+                performanceData,
+                storageData,
+                usageEstimationData,
+                memoryUtilizationData,
+                diskUtilizationData,
+                cpuUtilizationData
+            ] = await Promise.all(
+                [
+                    ...(isSSMConnected && activeNodeInstanceId
+                        ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId)]
+                        : [Promise.resolve()]),
+                    ...(isSSMConnected && activeNodeInstanceId
+                        ? [getServerDetails(credentialsId, region, activeNodeInstanceId)]
+                        : [Promise.resolve()]), // Fetch server metadata
+                    ...(shouldQueryTopology
+                        ? [
+                              getTopology(
+                                  accountId,
+                                  region!,
+                                  resourceId,
+                                  resourceDetail,
+                                  activeNodeInstanceId!,
+                                  standbyNodeInstanceId
+                              )
+                          ]
+                        : [Promise.resolve()]),
+                    ...(isSSMConnected && getPerformance && activeNodeInstanceId
+                        ? [getPerformanceMetrics(credentialsId, region, activeNodeInstanceId)]
+                        : [Promise.resolve()]), // Fetch io latency data
+                    ...(isSSMConnected && getStorageSavings && activeNodeInstanceId
+                        ? [getStorageData(resourceDetail, activeNodeInstanceId)]
+                        : [Promise.resolve()]), // Fetch storage savings data
+                    ...(getUsageEstimation
+                        ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId)]
+                        : [Promise.resolve()]), // Fetch pricing estimate data
+                    ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
+                        ? [
+                              getResourceUtilisationDetails(
+                                  credentialsId,
+                                  region,
+                                  DATABASE_METRIC_TYPE.MEMORY,
+                                  activeNodeInstanceId
+                              )
+                          ]
+                        : [Promise.resolve()]),
+                    ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
+                        ? [
+                              getResourceUtilisationDetails(
+                                  credentialsId,
+                                  region,
+                                  DATABASE_METRIC_TYPE.DISK,
+                                  activeNodeInstanceId
+                              )
+                          ]
+                        : [Promise.resolve()]),
+                    ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
+                        ? [
+                              getResourceUtilisationDetails(
+                                  credentialsId,
+                                  region,
+                                  DATABASE_METRIC_TYPE.CPU,
+                                  activeNodeInstanceId
+                              )
+                          ]
+                        : [Promise.resolve()])
+                ].map((p, index) =>
+                    p.catch(error => {
+                        if (DATABASE_HOSTS_INDEX_MAPPING[index]) {
+                            errormessages[DATABASE_HOSTS_INDEX_MAPPING[index]] = JSON.stringify(error);
+                        }
+                        logger.error(`Error while fetching data: ${error}.`);
+                    })
+                )
+            );
 
-        const [
-            dbCount,
-            serverMetadata,
-            topologyData,
-            performanceData,
-            storageData,
-            usageEstimationData,
-            memoryUtilizationData,
-            diskUtilizationData,
-            cpuUtilizationData
-        ] = await Promise.all(
-            [
-                ...(isSSMConnected && activeNodeInstanceId
-                    ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId)]
-                    : [Promise.resolve()]),
-                ...(isSSMConnected ? [getServerSummary(resourceId)] : [Promise.resolve()]), // Fetch server metadata
-                getTopology(
-                    accountId,
-                    region!,
-                    resourceId,
-                    resourceDetail,
-                    activeNodeInstanceId!,
-                    standbyNodeInstanceId
-                ),
-                ...(isSSMConnected && getPerformance && activeNodeInstanceId
-                    ? [getPerformanceMetrics(resourceId, activeNodeInstanceId)]
-                    : [Promise.resolve()]), // Fetch io latency data
-                ...(isSSMConnected && getStorageSavings && activeNodeInstanceId
-                    ? [getStorageData(resourceDetail, activeNodeInstanceId)]
-                    : [Promise.resolve()]), // Fetch storage savings data
-                ...(getUsageEstimation
-                    ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId)]
-                    : [Promise.resolve()]), // Fetch pricing estimate data
-                ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
-                    ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY, activeNodeInstanceId)]
-                    : [Promise.resolve()]),
-                ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
-                    ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.DISK, activeNodeInstanceId)]
-                    : [Promise.resolve()]),
-                ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
-                    ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.CPU, activeNodeInstanceId)]
-                    : [Promise.resolve()])
-            ].map((p, index) =>
-                p.catch(error => {
-                    if (DATABASE_HOSTS_INDEX_MAPPING[index]) {
-                        errormessages[DATABASE_HOSTS_INDEX_MAPPING[index]] = JSON.stringify(error);
-                    }
-                    logger.error(`Error while fetching data: ${error}.`);
-                })
-            )
-        );
-
-        // CreationDate needs to be picked up from resource table: https://jira.ngage.netapp.com/browse/DBS-1586
-        if (serverMetadata) {
-            serverMetadata.creationDate = creationDate || '';
-        }
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-            if (topologyData.serverInstallationMode === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
-                delete serverMetadata.clusterName;
-                serverMetadata.activeNode = resourceName || '';
-                serverMetadata.nodeNames = [resourceName || ''];
-            } else {
-                serverMetadata.clusterName = resourceName || '';
+            // CreationDate needs to be picked up from resource table: https://jira.ngage.netapp.com/browse/DBS-1586
+            if (serverMetadata) {
+                serverMetadata.creationDate = creationDate || '';
             }
-        }
-        databaseHostDetails.id = resourceId;
-        databaseHostDetails.name = resourceName || '';
-        databaseHostDetails.status = serverMetadata ? ServerState.UP : ServerState.DOWN;
-        databaseHostDetails.databaseCount = dbCount?.totalCount || 0;
-        databaseHostDetails.databaseServer = serverMetadata;
-        databaseHostDetails.topology = topologyData!;
-        databaseHostDetails.performance = getPerformance ? { rwMetrics: performanceData! } : {};
-        databaseHostDetails.storage = storageData!;
-        databaseHostDetails.estimatedUsageCost = usageEstimationData!;
-        if (getResourceutilization && cpuUtilizationData && memoryUtilizationData && diskUtilizationData) {
-            databaseHostDetails.resourceUtilization = {
-                cpu: cpuUtilizationData! || {},
-                memory: memoryUtilizationData! || {},
-                disk: diskUtilizationData! || {}
-            };
-        }
-        if (!isEmpty(errormessages)) {
-            databaseHostDetails.errors = errormessages;
+            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+                if (topologyData.serverInstallationMode === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
+                    delete serverMetadata.clusterName;
+                    serverMetadata.activeNode = resourceName || '';
+                    serverMetadata.nodeNames = [resourceName || ''];
+                } else {
+                    serverMetadata.clusterName = resourceName || '';
+                }
+            }
+            databaseHostDetails.id = resourceId;
+            databaseHostDetails.name = resourceName || '';
+            databaseHostDetails.status = serverMetadata ? ServerState.UP : ServerState.DOWN;
+            databaseHostDetails.databaseCount = dbCount?.totalCount || 0;
+            databaseHostDetails.databaseServer = serverMetadata;
+            databaseHostDetails.topology = topologyData!;
+            databaseHostDetails.performance = getPerformance ? { rwMetrics: performanceData! } : {};
+            databaseHostDetails.storage = storageData!;
+            databaseHostDetails.estimatedUsageCost = usageEstimationData!;
+            if (getResourceutilization && cpuUtilizationData && memoryUtilizationData && diskUtilizationData) {
+                databaseHostDetails.resourceUtilization = {
+                    cpu: cpuUtilizationData! || {},
+                    memory: memoryUtilizationData! || {},
+                    disk: diskUtilizationData! || {}
+                };
+            }
+            if (!isEmpty(errormessages)) {
+                databaseHostDetails.errors = errormessages;
+            }
         }
     } catch (error) {
         logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
