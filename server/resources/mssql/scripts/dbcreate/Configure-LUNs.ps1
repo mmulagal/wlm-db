@@ -1,5 +1,6 @@
-   #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
- [CmdletBinding()]
+#Requires -Version 7.0
+#Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
+[CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
     [string]$FileSystemId,
@@ -24,19 +25,6 @@ $logtranscript = (New-Item -ItemType Directory -Path C:\cfn\log -Force)
 $silenttranscript = (Start-Transcript -Path C:\cfn\log\Configure_luns.log.txt -Append)
 
 $ErrorActionPreference = "Stop"
-
-add-type @"
-using System.Net;
-using System.Security.Cryptography.X509Certificates;
-public class TrustAllCertsPolicy : ICertificatePolicy {
-    public bool CheckValidationResult(
-        ServicePoint srvPoint, X509Certificate certificate,
-        WebRequest request, int certificateProblem) {
-            return true;
-        }
-}
-"@
-[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
@@ -71,19 +59,19 @@ $nodeiqn = (Get-InitiatorPort).NodeAddress
 
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
 
-
 # Get FSx certificate
 $isprivatesubnet = $False
-$certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
-try {
+$connection =  Test-Connection -ComputerName https://fsx-aws-certificates.s3.amazonaws.com -Quiet
+if($connection -eq $False) {
+    $isprivatesubnet = $True
+    $restcert = ''
+    }
+else {
+    $certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
     Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
     $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
     $restcert = Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
-}
-catch {
-    $isprivatesubnet = $True
-    $restcert = ''
-}
+    }
 
 function callGetApi{
     param(
@@ -106,7 +94,7 @@ function callGetApi{
         if ($isprivatesubnet -eq $False) {
             Invoke-RestMethod @Params -Certificate $restcert
         }else {
-            Invoke-RestMethod @Params
+            Invoke-RestMethod @Params -SkipCertificateCheck
         }
     }catch{
         $result.Add('Status','Failed')
@@ -147,7 +135,7 @@ function callrestapi{
         if ($isprivatesubnet -eq $False) {
             $invokerest = (Invoke-RestMethod @Params -Certificate $restcert)
         }else {
-            $invokerest = (Invoke-RestMethod @Params) 
+            $invokerest = (Invoke-RestMethod @Params -SkipCertificateCheck) 
         }
         
     }catch{
@@ -324,7 +312,7 @@ try{
     if ($isprivatesubnet -eq $False) {
             $modifyvol = (Invoke-RestMethod @Params -Certificate $restcert)
     }else {
-            $modifyvol = (Invoke-RestMethod @Params)
+            $modifyvol = (Invoke-RestMethod @Params -SkipCertificateCheck)
         }
 }catch{
     $result.Add('Status','Failed')
@@ -418,7 +406,7 @@ foreach ($perlun in $pathlist) {
         if ($isprivatesubnet -eq $False) {
             $lunmodify1 = (Invoke-RestMethod @Params -Certificate $restcert)
         }else {
-            $lunmodify1 = (Invoke-RestMethod @Params) 
+            $lunmodify1 = (Invoke-RestMethod @Params -SkipCertificateCheck) 
         }
         
         }
@@ -446,7 +434,7 @@ foreach ($perlun in $pathlist) {
         if ($isprivatesubnet -eq $False) {
             $lunmodify1 = (Invoke-RestMethod @Params -Certificate $restcert)
         }else {
-            $lunmodify1 = (Invoke-RestMethod @Params) 
+            $lunmodify1 = (Invoke-RestMethod @Params -SkipCertificateCheck) 
         }
         }
         catch{
