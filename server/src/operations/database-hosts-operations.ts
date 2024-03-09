@@ -1404,7 +1404,10 @@ async function invokeSSMForDatabaseDeployment(
                 (!isDataDriveExists).toString()
             );
             // its required to sleep for 45 seconds so that initialization script will go through.. the ontap LUN configure can take time depending on busy system for the multiple API calls, and the disk initialize may take time to discover the created LUNs
-            await sleep(45000);
+            if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
+                await sleep(45000);
+            }
+
             await newDBInitialization(
                 accountId,
                 credentialsId,
@@ -1620,7 +1623,7 @@ async function configureLuns(
         ];
     } else {
         configureLuncommands = [
-            `${CONFIGURELUNSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataLunSize ${dataVolumeSize}  -FSxLogLunSize ${logVolumeSize} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists}`
+            `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CONFIGURELUNSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataLunSize ${dataVolumeSize}  -FSxLogLunSize ${logVolumeSize} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists}}`
         ];
     }
 
@@ -1846,7 +1849,7 @@ async function cleanUpDatabaseDeployment(
             ];
         } else {
             cleaupCommand = [
-                `${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered}`
+                `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CLEANUPSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataVolumeName ${dataVolumeName}  -FSxLogVolumeName ${logVolumeName} -IGROUP ${iGroup} -DBName ${databaseName} -IsClustered ${isClustered}}`
             ];
         }
 
@@ -1905,8 +1908,19 @@ async function validateParams(
         sqlServerName,
         parentJobId
     });
-    const { drive: dataDrive, isExisting: isDataDriveExists, volumeSize: dataVolumeSize } = dataFileConfig;
-    const { drive: logDrive, isExisting: isLogDriveExists, volumeSize: logVolumeSize } = logFileConfig;
+
+    const {
+        fileName: dataFileName,
+        drive: dataDrive,
+        isExisting: isDataDriveExists,
+        volumeSize: dataVolumeSize
+    } = dataFileConfig;
+    const {
+        fileName: logFileName,
+        drive: logDrive,
+        isExisting: isLogDriveExists,
+        volumeSize: logVolumeSize
+    } = logFileConfig;
 
     const dataGibIntoBytes = convertGiBToBytes(dataVolumeSize);
     const logGibIntoBytes = convertGiBToBytes(logVolumeSize);
@@ -1950,6 +1964,7 @@ async function validateParams(
                 isDataDriveExists,
                 dataGibIntoBytes,
                 isClustered,
+                dataFileName,
                 'data'
             ),
             checkDriveExists(
@@ -1959,6 +1974,7 @@ async function validateParams(
                 isLogDriveExists,
                 logGibIntoBytes,
                 isClustered,
+                logFileName,
                 'log'
             )
         ]);
@@ -1991,6 +2007,7 @@ async function checkDriveExists(
     isDriveExists: boolean,
     volumeSizeInBytes: number,
     isClustered: string,
+    fileName: string,
     driveType: string
 ) {
     logger.info(
@@ -2001,6 +2018,7 @@ async function checkDriveExists(
         isDriveExists,
         volumeSizeInBytes,
         isClustered,
+        fileName,
         driveType
     );
 
@@ -2013,6 +2031,32 @@ async function checkDriveExists(
     const regex = /^[A-Z]{1}$/; // Allows only single Capital Alphabetical letter
     if (!regex.test(selectedDrive)) {
         throw createError(412, `Selected ${driveType} drive ${selectedDrive} is not a valid drive`);
+    }
+
+    if (!fileName) {
+        throw createError(412, `Selected ${driveType} drive ${fileName} should not be empty`);
+    } else {
+        const splitRegEx = /(.+)\.(.+)$/;
+        const [, name, extension] = splitRegEx.exec(fileName) || [];
+        if (extension && driveType === 'data' && extension !== 'mdf') {
+            throw createError(412, `Selected ${driveType} drive file is not having a valid extension`);
+        }
+        if (extension && driveType === 'log' && extension !== 'ldf') {
+            throw createError(412, `Selected ${driveType} drive file is not having a valid extension`);
+        }
+        const fileNameRegEx = /^[a-zA-Z0-9_]+$/;
+        if (!fileNameRegEx.test(name)) {
+            throw createError(
+                412,
+                `Selected ${driveType} file names can only contain alphanumeric characters, including letters, numbers and underscores`
+            );
+        }
+        if (name.length > 128) {
+            throw createError(
+                412,
+                `Selected ${driveType} file name should have names that are no more than 128 characters long`
+            );
+        }
     }
 
     if (isDriveExists) {

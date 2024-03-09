@@ -143,7 +143,7 @@ async function createJobs(accountId: string, jobs: readOnlyJob[]) {
 
 async function createJob(accountId: string, job: readOnlyJob) {
     logger.info('Creating job', { accountId, job });
-
+    job.account_id = checkAccount(accountId);
     return prisma.client.job.create({
         data: job
     });

@@ -20,6 +20,7 @@ function createDemoResources(accountId: string, region: string, credentialsId: s
     const stackId = randomize('A0', 10);
     const sqlDeploymentMode = 'FCI';
     const fsxFilSystemId = `fs-${randomize('a0', 10)}`;
+    const serverName = `sqldatabase${randomize('a', 4)}`;
 
     createDeploymentMockDataInDB(
         accountId!,
@@ -29,26 +30,33 @@ function createDemoResources(accountId: string, region: string, credentialsId: s
         credentialsId,
         sqlDeploymentMode,
         fsxFilSystemId,
-        awsAccountId
+        awsAccountId,
+        serverName
     );
 }
 
-async function createConfigurations(accountId: string, awsAccountId: string) {
+async function createConfigurations(accountId: string, awsAccountId: string, credentialsId: string) {
     logger.info('Creating demo default configurations');
     let configName = 'Staging deployment in us-east';
-    const stagingData = saveFciConfigurationData('us-east-1', awsAccountId, 'stagingDB', configName);
+    const stagingData = saveFciConfigurationData('us-east-1', awsAccountId, credentialsId, 'stagingDB', configName);
     saveConfig(accountId, 'SYSTEM', configName, stagingData);
 
     configName = 'Pre-prod deployment in us-west';
-    const preprodData = saveFciConfigurationData('us-west-1', awsAccountId, 'preProdDB', configName);
+    const preprodData = saveFciConfigurationData('us-west-1', awsAccountId, credentialsId, 'preProdDB', configName);
     saveConfig(accountId, 'SYSTEM', configName, preprodData);
 
     configName = 'MSSQL 2 nodes FCI deployment in us-east';
-    const fciData = saveFciConfigurationData('us-west-1', awsAccountId, 'fciDB', configName);
+    const fciData = saveFciConfigurationData('us-west-1', awsAccountId, credentialsId, 'fciDB', configName);
     saveConfig(accountId, 'SYSTEM', configName, fciData);
 
     configName = 'MSSQL Single Instance DR system deployment';
-    const standaloneData = saveStandaloneConfigurationData('us-east-1', awsAccountId, 'standaloneDB', configName);
+    const standaloneData = saveStandaloneConfigurationData(
+        'us-east-1',
+        awsAccountId,
+        credentialsId,
+        'standaloneDB',
+        configName
+    );
     saveConfig(accountId, 'SYSTEM', configName, standaloneData);
 }
 
@@ -92,7 +100,7 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
     }
     if (isEmpty(configs)) {
         logger.info('Creating demo and templates');
-        createConfigurations(accountId, awsAccountId);
+        createConfigurations(accountId, awsAccountId, credentialsId);
     }
 }
 

@@ -714,7 +714,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"name\":\"tempdb18\"}]\r\n",
+        "StandardOutputContent": "",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
