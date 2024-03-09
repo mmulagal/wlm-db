@@ -189,11 +189,11 @@ async function createFileSystemForDemo(credentialsId: string, region: string, fs
         primarySubnetId: 'subnet-a1', // default subnet for fsx
         ...(mode === 'MULTI_AZ' && { secondarySubnetId: 'subnet-a2' }),
         throughputCapacity: 3072,
-        fsxAdminPassword: 'Netapp1234', // Since fsx api does not allow the special characters which we allow from our deployment wizard, so hard coding the password all the time
+        fsxAdminPassword: `${randomize('Aa0', 8)}`, // Since fsx api does not allow the special characters which we allow from our deployment wizard, so randomizing the password all the time
         deploymentType: mode,
         securityGroupIds: [],
         tags: [],
-        svmAdminPassword: 'Netapp1234',
+        svmAdminPassword: `${randomize('Aa0', 8)}`,
         generateSecurityGroup: true,
         haPairs: 2,
         automaticBackupRetentionDays: 30,
