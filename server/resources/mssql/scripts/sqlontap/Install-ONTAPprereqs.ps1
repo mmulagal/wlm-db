@@ -56,6 +56,7 @@ else {
     if($destinationPathExists -eq $False) {
         New-Item -ItemType Directory -Path $destinationPath -Force
     }
+    Copy-Item "C:\cfn\Installer\dependent-packages\powershell\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination $destinationPath -Recurse -Force
     $sourcelocation = 'C:\cfn\Installer\dependent-packages\aws'
     try {
         Import-PackageProvider -Name NuGet
