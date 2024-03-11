@@ -1,9 +1,9 @@
 import randomize from 'randomatic';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, STORAGE_TYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
-import { CloudProviders, RESOURCESTYPE, DATABASE_TYPE } from '../utils/consts';
+import { CloudProviders, RESOURCESTYPE, DATABASE_TYPE, MSSQL_DATABASE_TYPES, ONLINE } from '../utils/consts';
 // import { handleNotification } from './cloud-manager/notification-operations';
-import { checkAccount, createDeployment, createResource } from '../lib/database/db';
+import { checkAccount, createDeployment, createResource, updateResourceMetaData } from '../lib/database/db';
 import { Metadata } from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
 import { createFSX } from '../lib/cloud-manager/fsx-core';
@@ -203,4 +203,33 @@ async function createFileSystemForDemo(credentialsId: string, region: string, fs
     return createFSX(requestBody, true);
 }
 
-export { createFileSystemForDemo, createDeploymentMockDataInDB };
+async function updateUserDBIntoResourceData(
+    accountId: string,
+    resourceId: string,
+    databaseName: string,
+    metaData: Metadata
+) {
+    logger.info('updating user db into resource meta data', accountId, resourceId, databaseName);
+
+    // this is used to retreive the newly created user databases in database list for demo using meta data
+    const databaseDetails = {
+        name: databaseName,
+        size: 16777216,
+        type: MSSQL_DATABASE_TYPES.USER,
+        status: ONLINE,
+        protection: {
+            isAWSBackupEnabled: false,
+            isFsxOntapSnapshotsEnabled: false,
+            isSqlNativeEnabled: true
+        }
+    };
+    if (metaData.userDatabase) {
+        metaData.userDatabase?.push(databaseDetails);
+    } else {
+        metaData.userDatabase = [];
+        metaData.userDatabase.push(databaseDetails);
+    }
+    await updateResourceMetaData(accountId, resourceId, metaData);
+}
+
+export { createFileSystemForDemo, createDeploymentMockDataInDB, updateUserDBIntoResourceData };
