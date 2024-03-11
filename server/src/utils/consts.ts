@@ -645,6 +645,7 @@ const TEMPLATE_SQS_ENDPOINT = 'SqsEndpointExists';
 const TEMPLATE_CLOUDWATCH_ENDPOINT = 'CloudwatchEndpointExists';
 const TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT = 'CloudwatchLogsEndpointExists';
 const TEMPLATE_FSX_ENDPOINT = 'FsxEndpointExists';
+const TEMPLATE_EC2_ENDPOINT = 'Ec2EndpointExists';
 
 const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
     s3: TEMPLATE_S3_ENDPOINT,
@@ -653,7 +654,8 @@ const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
     sqs: TEMPLATE_SQS_ENDPOINT,
     monitoring: TEMPLATE_CLOUDWATCH_ENDPOINT,
     logs: TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT,
-    fsx: TEMPLATE_FSX_ENDPOINT
+    fsx: TEMPLATE_FSX_ENDPOINT,
+    ec2: TEMPLATE_EC2_ENDPOINT
 };
 
 const SQL_RESOURCE_ASSETS = [
@@ -1084,7 +1086,8 @@ const ENDPOINTS_DEPLOYMENT = [
     'ec2messages',
     'monitoring',
     'logs',
-    'fsx'
+    'fsx',
+    'ec2'
 ];
 
 const SSM_PARAMETERS_BASE_PATH = '/netapp/wlmdb';
