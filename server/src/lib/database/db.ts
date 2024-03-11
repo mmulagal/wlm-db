@@ -3,7 +3,6 @@ import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from '../../utils/utils';
-import { Metadata } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -496,7 +495,7 @@ async function deleteDeploymentJobById(accountId: string, jobId: string) {
     });
 }
 
-async function updateResourceMetaData(accountId: string, resourceId: string, metaData: Metadata) {
+async function updateResourceMetaData(accountId: string, resourceId: string, metaData: any) {
     logger.info('Updating resource metadata', { accountId, resourceId });
 
     accountId = checkAccount(accountId);
