@@ -223,12 +223,8 @@ async function updateUserDBIntoResourceData(
             isSqlNativeEnabled: true
         }
     };
-    if (metaData.userDatabase) {
-        metaData.userDatabase?.push(databaseDetails);
-    } else {
-        metaData.userDatabase = [];
-        metaData.userDatabase.push(databaseDetails);
-    }
+    metaData.userDatabase = [...(metaData.userDatabase || []), databaseDetails];
+
     await updateResourceMetaData(accountId, resourceId, metaData);
 }
 
