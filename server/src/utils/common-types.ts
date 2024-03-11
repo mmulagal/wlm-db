@@ -7,6 +7,16 @@ interface Metadata {
     activeDirectoryAddress?: string;
     creationDate?: string;
     fsxSvmId?: string;
+    // this is used to retreive the newly created user databases in database list for demo
+    userDatabase?: Array<UserDatabase>;
+}
+
+interface UserDatabase {
+    name: string;
+    size: number;
+    status: string;
+    type: string;
+    protection: { isAWSBackupEnabled: boolean; isFsxOntapSnapshotsEnabled: boolean; isSqlNativeEnabled: boolean };
 }
 
 interface ResourceDetails {
@@ -111,5 +121,6 @@ export {
     Subnet,
     VPC,
     NetworkInterface,
-    SSMParamterObject
+    SSMParamterObject,
+    UserDatabase
 };

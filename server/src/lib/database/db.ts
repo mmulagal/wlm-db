@@ -495,6 +495,22 @@ async function deleteDeploymentJobById(accountId: string, jobId: string) {
     });
 }
 
+async function updateResourceMetaData(accountId: string, resourceId: string, metaData: any) {
+    logger.info('Updating resource metadata', { accountId, resourceId });
+
+    accountId = checkAccount(accountId);
+
+    return prisma.client.resource.updateMany({
+        where: {
+            account_id: accountId,
+            resource_id: resourceId
+        },
+        data: {
+            ...(!isEmpty(metaData) && { metadata: metaData })
+        }
+    });
+}
+
 export {
     Resource,
     listDeployments,
@@ -515,5 +531,6 @@ export {
     deploymentJobsCount,
     deleteDeploymentJobById,
     checkAccount,
-    listEvents
+    listEvents,
+    updateResourceMetaData
 };

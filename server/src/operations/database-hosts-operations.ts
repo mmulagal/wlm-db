@@ -78,6 +78,7 @@ import { getResources } from './database/database-operations';
 import { convertGiBToBytes, sleep, sqlResponseParsing } from '../utils/utils';
 import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
 import { resetCache } from '../utils/cache';
+import { updateUserDBIntoResourceData } from './demo-operations';
 
 const logger = getLogger();
 
@@ -868,7 +869,7 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
     }
 
     const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
-    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+    const { node1InstanceId, node2InstanceId, userDatabase = [] } = metadata as unknown as Metadata;
 
     // Check SSM Connection status
     const { isSSMConnected, activeNodeInstanceId } = await getActiveSqlNode(
@@ -924,6 +925,15 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
                 }
             })
         );
+
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            const demoResponse = [...response, ...userDatabase];
+            return {
+                count: demoResponse.length,
+                nextToken: '',
+                items: demoResponse
+            };
+        }
         return {
             count: response.length,
             nextToken: '',
@@ -1275,7 +1285,8 @@ async function deployDatabase(
         fsxSvmId,
         jobId,
         resourceId,
-        node2InstanceId
+        node2InstanceId,
+        metadata as Metadata
     );
     return { jobId };
 }
@@ -1293,7 +1304,8 @@ async function invokeSSMForDatabaseDeployment(
     fsxSvmId: string | undefined,
     parentJobId: string,
     resourceId: string,
-    node2InstanceId?: string
+    node2InstanceId?: string,
+    metaData?: Metadata
 ) {
     logger.info(
         'invoke SSM for database deployment',
@@ -1383,6 +1395,12 @@ async function invokeSSMForDatabaseDeployment(
                 endTime: Date.now(),
                 error: undefined
             });
+
+            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+                // this is used to retreive the newly created user databases in database list for demo using meta data
+                await updateUserDBIntoResourceData(accountId, resourceId, databaseName, metaData as Metadata);
+            }
+
             // clearning all the ssm command cache so that we will get the fresh data once the database is created
             resetCache(SSM_COMMAND_CACHE_TYPE);
         } else {
@@ -1447,6 +1465,12 @@ async function invokeSSMForDatabaseDeployment(
                 endTime: Date.now(),
                 error: undefined
             });
+
+            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+                // this is used to retreive the newly created user databases in database list for demo using meta data
+                await updateUserDBIntoResourceData(accountId, resourceId, databaseName, metaData as Metadata);
+            }
+
             // clearning all the ssm command cache so that we will get the fresh data once the database is created
             resetCache(SSM_COMMAND_CACHE_TYPE);
         }
