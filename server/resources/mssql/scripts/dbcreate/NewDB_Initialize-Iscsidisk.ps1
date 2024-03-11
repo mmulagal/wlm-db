@@ -25,7 +25,8 @@ $ErrorActionPreference = "Stop"
 $result = [ordered]@{}
 
 #Refresh the cached information on iSCSI target
-Update-IscsiTarget
+#This command hangs in few cases for any issue with iSCSI. Even passing -AsJob won't help as multiple jobs would be stuck. 
+#Update-IscsiTarget
 
 echo "RESCAN" | Out-File -FilePath C:\SSM\rescan.txt
 $rescan =(diskpart /s C:\SSM\rescan.txt)
