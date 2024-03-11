@@ -9,7 +9,7 @@ try {
 
     #Check if private network
     $isprivatesubnet = $True
-    $connection =  Test-Connection -ComputerName  www.google.com -Quiet
+    $connection =  Test-Connection -ComputerName www.powershellgallery.com -Quiet
     if($connection -eq $False) {
         $isprivatesubnet = $True
         }
