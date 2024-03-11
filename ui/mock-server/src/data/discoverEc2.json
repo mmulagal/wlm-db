@@ -1,0 +1,206 @@
+{
+    "count": 7,
+    "items": [
+        {
+            "ec2InstanceId": "i-02dbf20711b3c8311",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode1-37211",
+            "vpc": {
+                "id": "vpc-84b3afe61",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerEdition": 2019,
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "15.0.4298.1",
+                    "windowsAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-02951e19b874b0611",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode1-12742-rashid",
+            "vpc": {
+                "id": "vpc-84b3afe61",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerEdition": 2022,
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "16.0.4080.1",
+                    "windowsAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0d6acde2918b1ee11",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode2-32911",
+            "vpc": {
+                "id": "vpc-092dd893be0d23",
+                "name": "pvt-NoS3-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerEdition": 2019,
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "15.0.4345.5",
+                    "windowsAuthentication": true,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol08b0788a4333c0233"
+                        }
+                    ],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-041d3a81922334",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode2-12742-rashid",
+            "vpc": {
+                "id": "vpc-84b3af123",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerEdition": 2022,
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "16.0.4080.1",
+                    "windowsAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0ccb393ef1e834df",
+            "ssmState": "connected",
+            "ec2InstanceName": "rranga-wlmdb-ec2",
+            "vpc": {
+                "id": "vpc-84b3a2346",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerEdition": 2022,
+                    "sqlServerInstance": "INST_C",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.1000.6",
+                    "windowsAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                },
+                {
+                    "sqlServerEdition": 2022,
+                    "sqlServerInstance": "INST_D",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.1000.6",
+                    "windowsAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                },
+                {
+                    "sqlServerEdition": 2022,
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4095.4",
+                    "windowsAuthentication": true,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol0510945253723454"
+                        },
+                        {
+                            "type": "FSXN",
+                            "id": "fs123"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1b"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-02dadc332885523434",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode2-19110",
+            "vpc": {
+                "id": "vpc-046f7e26255234d3",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerEdition": 2022,
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Stopped",
+                    "sqlServerVersion": "16.0.4015.1",
+                    "windowsAuthentication": false,
+                    "storage": [],
+                    "deploymentTypes": []
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0291bc7476b72344d",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode1-10122",
+            "vpc": {
+                "id": "vpc-046f7e2625542344df",
+                "name": "kanika-vpc",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerEdition": 2022,
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4015.1",
+                    "windowsAuthentication": true,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs123"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1a"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "nextToken": null
+}

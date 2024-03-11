@@ -24,6 +24,12 @@ $ErrorActionPreference = "Stop"
 
 $result = [ordered]@{}
 
+#Refresh the cached information on iSCSI target
+Update-IscsiTarget
+Start-Sleep 2
+echo "RESCAN" | Out-File -FilePath C:\SSM\rescan.txt
+$rescan =(diskpart /s C:\SSM\rescan.txt)
+
 #Create a list of drive letters if not passed
 if (-Not $DataDrive) { 
     if ($IsClustered -ne "false") {
@@ -51,7 +57,7 @@ else {$count = 1}
 
 } catch {
     $result.Add('Status','Failed')
-    $result.Add('Message','Need to define at least one new drive to configure volume and LUN')
+    $result.Add('Message','Need to define at least one new drive to configure storage')
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson  
@@ -114,9 +120,14 @@ Stop-Service -Name ShellHWDetection
 
 
 try {
-$datalabel = $DBName+"-Data"
-$loglabel = $DBName+"-Log"
-
+    if ($DBName.Length -gt 25) {
+        $TruncatedName = $DBName.Substring(0,25)
+        $datalabel = $TruncatedName+"-Data"
+        $loglabel = $TruncatedName+"-Log"
+    } else {
+      $datalabel = $DBName+"-Data"
+      $loglabel = $DBName+"-Log"
+    }
 $LogDriveLetter = $LogDrive.Substring(0,1)
 $DataDriveLetter = $DataDrive.Substring(0,1)
 
@@ -156,7 +167,7 @@ if ($IsClustered -ne "false") {
 }
 }catch{
     $result.Add('Status','Failed')
-    $result.Add('Message','Failed to add disks to Cluster Storage')
+    $result.Add('Message','Failed to add disks to cluster storage')
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson  
@@ -208,7 +219,7 @@ else{
 }
 }catch{
     $result.Add('Status','Failed')
-    $result.Add('Message','Failed to add disks to SQL Server Role dependency in Cluster')
+    $result.Add('Message','Failed to add disks to SQL Server Role dependency in cluster')
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson  
@@ -216,6 +227,6 @@ else{
 } 
 
 $result.Add('Status','Complete')
-$result.Add('Message','Completed preparing iSCSI drives for SQL')
+$result.Add('Message','Completed preparing iSCSI drives for new SQL database')
 $resultjson = ($result | ConvertTo-Json) 
 $resultjson 

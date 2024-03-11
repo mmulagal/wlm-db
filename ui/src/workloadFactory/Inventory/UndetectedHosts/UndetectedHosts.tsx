@@ -142,7 +142,7 @@ const UndetectedHosts = () => {
             Header: GENERAL.DB_HOST_AVAILABILITY,
             accessor: 'sqlServerInstances',
             isSortable: true,
-            width: '212px',
+            width: '209px',
             filterOptions: [
                 { label: GENERAL.SINGLE_AZ, value: FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 },
                 { label: GENERAL.MULTI_AZ, value: FSX_DEPLOYMENT_MODE.MULTI_AZ_1 }
@@ -175,7 +175,7 @@ const UndetectedHosts = () => {
             Header: 'SSM connectivity',
             accessor: 'ssm',
             id: '6',
-            width: '246px',
+            width: '226px',
             filterOptions: 'auto',
             renderCell: (cellData: any) => {
                 return (
@@ -218,7 +218,7 @@ const UndetectedHosts = () => {
     const formatUnIdentifiableData = (data: any) => {
         return data.map((item: any) => {
             return {
-                name: item?.sqlServerInstances?.[0]?.sqlServerInstance || 'N/A',
+                name: item?.sqlServerInstances?.[0]?.sqlServerName || 'N/A',
                 instance: item?.ec2InstanceName,
                 instanceID: item?.ec2InstanceId,
                 vpc: item?.vpc,

@@ -475,7 +475,7 @@ Resources:
                                 Files\WindowsPowerShell\Modules\'
                         c-initialize-disks:
                             command: powershell.exe -Command "C:\cfn\scripts\common\InitializeDisks.ps1"
-                            waitAfterCompletion: 0
+                            waitAfterCompletion: 60
                         d-install-dsc-modules:
                             command: !Join
                                 - ''

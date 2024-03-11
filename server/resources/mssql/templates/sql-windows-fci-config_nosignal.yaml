@@ -542,7 +542,7 @@ Resources:
                                 C:\cfn\modules\AmznFailoverCluster.zip -Destination 'C:\Program Files\WindowsPowerShell\Modules\'
                         d-initialize-disks:
                             command: powershell.exe -Command "C:\cfn\scripts\common\InitializeDisks.ps1"
-                            waitAfterCompletion: 0
+                            waitAfterCompletion: 60
                         e-install-dsc-modules:
                             command: !Join
                                 - ''
@@ -1105,7 +1105,7 @@ Resources:
                                 C:\cfn\modules\AmznFailoverCluster.zip -Destination 'C:\Program Files\WindowsPowerShell\Modules\'
                         d-initialize-disks:
                             command: powershell.exe -Command "C:\cfn\scripts\common\InitializeDisks.ps1"
-                            waitAfterCompletion: 0
+                            waitAfterCompletion: 60
                         e-install-dsc-modules:
                             command: !Join
                                 - ''

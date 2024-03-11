@@ -35,7 +35,9 @@ import {
     paginateDescribeVpcs,
     paginateDescribeSubnets,
     ModifyVpcAttributeCommandInput,
-    ModifyVpcAttributeCommand
+    ModifyVpcAttributeCommand,
+    DescribeInstanceTypeOfferingsCommandInput,
+    DescribeInstanceTypeOfferingsCommand
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -306,6 +308,22 @@ async function modifyVpcAttributes(credentialsId: string, region: string, input:
     return response;
 }
 
+async function describeInstanceTypeOfferings(
+    credentialsId: string,
+    region: string,
+    input: DescribeInstanceTypeOfferingsCommandInput
+) {
+    logger.info('Describe instance type offerings command ', credentialsId, region, input);
+
+    const client = await getEC2Client(region, credentialsId);
+    const command = new DescribeInstanceTypeOfferingsCommand(input);
+    const response = await client.send(command);
+
+    logger.info('Describe instance type offerings response ', response);
+
+    return response;
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -323,5 +341,6 @@ export {
     describeEndpoints,
     paginatedDescribeVpcs,
     paginatedDescribeSubnets,
-    modifyVpcAttributes
+    modifyVpcAttributes,
+    describeInstanceTypeOfferings
 };

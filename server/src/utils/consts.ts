@@ -521,6 +521,7 @@ const SIGNED_TEMPLATES_BUCKET_NAME = process.env.TEMPLATE_BUCKET_NAME || config.
 const TEMPLATE_BUCKET_REGION = process.env.WLMDB_BUCKET_REGION || config.get<string>('bucket.region');
 const CF_DEPLOY_ROLE_NAME = 'CfDeployRoleName';
 const VALIDATION_AMI = 'ValidationAmi';
+const VALIDATION_INSTANCE_TYPE = 'ValidationNodeInstanceType';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
@@ -658,7 +659,7 @@ const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
 const SQL_RESOURCE_ASSETS = [
     {
         name: 'DSC',
-        url: `${WLMDB}/DSC.zip`
+        url: `${WLMDB}/scripts/DSC.zip`
     },
     // {
     //     name: 'DSCSignature',
@@ -1064,7 +1065,9 @@ const subJobDescriptions: SubJobDescriptions = {
     'Ec2MessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2Messages endpoint',
     'SqsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SQS endpoint',
     'SsmEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSM endpoint',
-    'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint'
+    'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint',
+    'FsxEndpoint(AWS::EC2::VPCEndpoint)': 'Creating FSxN endpoint',
+    'CloudwatchLogsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch logs endpoint'
 };
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
 const RESOURCE_SOURCE = {
@@ -1072,12 +1075,27 @@ const RESOURCE_SOURCE = {
     DISCOVER: 'discovery'
 };
 
-const ENDPOINTS_DEPLOYMENT = ['s3', 'cloudformation', 'sqs', 'ssm', 'ssmmessages', 'ec2messages', 'monitoring'];
+const ENDPOINTS_DEPLOYMENT = [
+    's3',
+    'cloudformation',
+    'sqs',
+    'ssm',
+    'ssmmessages',
+    'ec2messages',
+    'monitoring',
+    'logs',
+    'fsx'
+];
 
 const SSM_PARAMETERS_BASE_PATH = '/netapp/wlmdb';
 const COMPLETE = 'Complete';
 
 const CUSTOM_SSM_EXECUTION_TIMEOUT = '180';
+
+const VALIDATION_NODE_INSTANCETYPE = {
+    T2MICRO: 't2.micro',
+    T3MICRO: 't3.micro'
+};
 
 export {
     WLMDB,
@@ -1317,5 +1335,7 @@ export {
     TEMPLATE_BUCKET_REGION,
     SSM_PARAMETERS_BASE_PATH,
     COMPLETE,
-    CUSTOM_SSM_EXECUTION_TIMEOUT
+    CUSTOM_SSM_EXECUTION_TIMEOUT,
+    VALIDATION_NODE_INSTANCETYPE,
+    VALIDATION_INSTANCE_TYPE
 };

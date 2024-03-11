@@ -10,7 +10,12 @@ import {
     VpcEndpoint
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
-import { AWSQueryFields, ENDPOINTS_DEPLOYMENT, WLMDB_COST_ALLOCATION_TAG } from '../../utils/consts';
+import {
+    AWSQueryFields,
+    ENDPOINTS_DEPLOYMENT,
+    VALIDATION_NODE_INSTANCETYPE,
+    WLMDB_COST_ALLOCATION_TAG
+} from '../../utils/consts';
 import {
     describeVpc,
     describeSecurityGroups,
@@ -23,7 +28,8 @@ import {
     createTag,
     describeTags,
     describeEndpoints,
-    modifyVpcAttributes
+    modifyVpcAttributes,
+    describeInstanceTypeOfferings
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
@@ -497,7 +503,24 @@ async function enableVpcDnsAttributes(credentialsId: string, region: string, vpc
         modifyVpcAttributes(credentialsId, region, { VpcId: vpcId, EnableDnsHostnames: { Value: true } })
     ]);
 
-    logger.info('Enable vpc dns attributes response ', dnsHostnameResponse, dnsSupportResponse);
+    logger.debug('Enable vpc dns attributes response ', dnsHostnameResponse, dnsSupportResponse);
+
+    return [dnsHostnameResponse, dnsSupportResponse];
+}
+
+async function getValidationNodeInstanceType(credentialsId: string, region: string) {
+    logger.info('Get instance type offerings ', credentialsId, region);
+
+    const response = await describeInstanceTypeOfferings(credentialsId, region, {
+        LocationType: 'region',
+        Filters: [{ Name: 'instance-type', Values: ['t2.micro', 't3.micro'] }]
+    });
+    const instanceType = response.InstanceTypeOfferings?.find(e =>
+        e.InstanceType?.includes(VALIDATION_NODE_INSTANCETYPE.T2MICRO)
+    )
+        ? VALIDATION_NODE_INSTANCETYPE.T2MICRO
+        : VALIDATION_NODE_INSTANCETYPE.T3MICRO;
+    return instanceType;
 }
 
 export {
@@ -514,5 +537,6 @@ export {
     getVpcSecurityGroups,
     getServicesWithNoEndpoint,
     findResourceNameFromTags,
-    enableVpcDnsAttributes
+    enableVpcDnsAttributes,
+    getValidationNodeInstanceType
 };

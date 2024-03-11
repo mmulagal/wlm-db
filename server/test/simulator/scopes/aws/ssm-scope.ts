@@ -12,7 +12,7 @@ import {
     PutParameterCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
-import { hostAndSqlInfoPowerShellScript } from '../../../../src/operations/workloads/mssql/discover-consts';
+import { HOST_AND_SQL_INFO_PS1 } from '../../../../src/operations/workloads/mssql/discover-consts';
 import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands-response.json';
 import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
 import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
@@ -174,17 +174,17 @@ const getServerInstallDate = {
 
 const getServerEdition = {
     commands: [
-        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query " SET NOCOUNT ON; SELECT SERVERPROPERTY(\'Edition\') AS ServerEdition FOR JSON PATH"'
-    ]
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \" SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition') AS ServerEdition, SERVERPROPERTY('IsClustered') as isClustered, SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode FOR JSON PATH\"",
+      ]
 };
 
 const getHostAndSqlServerInfo = {
-    commands: hostAndSqlInfoPowerShellScript
+    commands: HOST_AND_SQL_INFO_PS1
 };
 
 const getDriveInfo = {
     commands: [
-        "#Get the list of all used drive letters\n$usedDriveLetters = Get-PSDrive -PSProvider FileSystem | Select-Object -ExpandProperty Name\n\n#Updating manufacturer detail and availabble space of each existing drives\n$driveInfo = $usedDriveLetters | ForEach-Object {\n    $driveLetter = $_\n    $drive = Get-PSDrive -Name $driveLetter\n    $diskNumber = (Get-Partition -DriveLetter $driveLetter).DiskNumber\n    try{\n        if((Get-PhysicalDisk | Where-Object { $_.DeviceId -eq $diskNumber }).Manufacturer -eq 'NETAPP'){\n            $isNetappDrive = $true \n        }\n        else{\n            $isNetappDrive = $false \n        }\n    }\n    catch {\n        $isNetappDrive = $false \n    }\n    $freeSpace = $drive.Free\n    [PSCustomObject]@{\n        driveLetter = $driveLetter\n        availableSize = $freeSpace\n        isNetappDrive = $isNetappDrive \n    }\n}\n\nWrite-Output $driveInfo | ConvertTo-Json\n"
+        "#Get the list of all used drive letters\n$disks = Get-Disk\n$usedDriveDetails = @()\n$deploymentType = 'FCI'\nforeach ($disk in $disks) {\n    $volume = Get-Partition | Where-Object { $_.DiskNumber -eq $disk.Number } | Get-Volume\n    if ($deploymentType -eq 'FCI') {\n        $labels = Get-ClusterResource | Where-Object { $_.ResourceType -eq \"Physical Disk\" } | Where-Object { $_.Name -eq $volume.FileSystemLabel }\n    }\n\n    $output = [PSCustomObject]@{\n        driveLetter = $volume.DriveLetter\n        availableSize = $volume.SizeRemaining\n        manufacturer = $disk.Manufacturer\n    }\n\n    if ($deploymentType -eq 'FCI') {\n        $output | Add-Member -NotePropertyName \"owner\" -NotePropertyValue $labels.OwnerGroup.Name\n    }\n\n    $usedDriveDetails += $output\n}\n\n$usedDrivesInfoJson = $usedDriveDetails | ConvertTo-Json\nWrite-Host $usedDrivesInfoJson\n\n"
     ]
 };
 
@@ -226,7 +226,7 @@ const cleanUpDB = {
 
 const checkDBExists = {
     commands: [
-        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = "tempdb18" FOR JSON PATH"'
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = "tempdb18" FOR JSON PATH"\''
     ]
 };
 

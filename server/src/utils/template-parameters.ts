@@ -312,6 +312,12 @@ const PARAMETERS = [
         minLength: 1
     },
     {
+        name: 'ValidationNodeInstanceType',
+        description: 'Validation node instance type.',
+        type: 'String',
+        minLength: 1
+    },
+    {
         name: 'RoleCredentialsId',
         description: 'WLM account credentials ID to deploy and manage resources (DO NOT EDIT).',
         type: 'String',

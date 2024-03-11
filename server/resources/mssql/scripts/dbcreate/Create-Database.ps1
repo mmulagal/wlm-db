@@ -79,7 +79,7 @@ try {
 if ($DataPathExists -Or $LogPathExists) { throw }  
 } catch {
     $result.Add('Status','Failed')
-    $result.Add('Message','Data or Log file with provided name already exists')
+    $result.Add('Message','Data or log file name already exists')
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson 
@@ -91,16 +91,17 @@ try {
 
   $Dblisterrlog = 'C:\cfn\log\dblist_err.log'
 if ($ResourceID) { 
-  $dblist =(Sqlcmd  -S $SQLServer -U $Dbuser -P $Dbpass -Q "SET NOCOUNT ON;SELECT name FROM sys.databases" -y 0 -r1 2> $Dblisterrlog)
+  $dblist =(Sqlcmd -U $Dbuser -P $Dbpass -Q "SET NOCOUNT ON;SELECT name FROM sys.databases" -l 20 -y 0 -r1 2> $Dblisterrlog)
   if (Get-Content $Dblisterrlog) {throw}
 }
 else {
-  $dblist = (Sqlcmd -S $SQLServer -Q "SET NOCOUNT ON;SELECT name FROM sys.databases" -y 0 -r1 2> $Dblisterrlog)
+  $dblist = (Sqlcmd -Q "SET NOCOUNT ON;SELECT name FROM sys.databases" -l 20 -y 0 -r1 2> $Dblisterrlog)
   if (Get-Content $Dblisterrlog) {throw}
 } }
 catch {
+    $conerror = 'Unable to connect to SQL Server' + $SQLServer
     $result.Add('Status','Failed')
-    $result.Add('Message','Unable to connect to SQL Server')
+    $result.Add('Message',$conerror)
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson 
@@ -132,28 +133,30 @@ try {
   $Dbcreateerrlog = 'C:\cfn\log\dbcreate_err.log'
   if ($ResourceID) {
     #Execute DB create query with SQL user authentication
-    $invokecreate = (Sqlcmd  -S $SqlServer -U $Dbuser -P $Dbpass -Q "$Query" -y 0  -r1 2> $Dbcreateerrlog 1> $Dbcreatelog)
+    $invokecreate = (Sqlcmd  -U $Dbuser -P $Dbpass -Q "$Query" -l 20 -y 0  -r1 2> $Dbcreateerrlog 1> $Dbcreatelog)
     $ErrorExists = Test-Path -Path C:\cfn\log\dblist_err.log
     if (Get-Content $Dbcreateerrlog) {throw} 
 
   }
   else {
   #Execute DB create query with trusted connection(Windows authentication). If you omit the server, it will default to localhost.
-  $invokecreate = (Sqlcmd  -S $SqlServer -Q "$Query" -y 0  -r1 2> $Dbcreateerrlog 1> $Dbcreatelog)
+  $invokecreate = (Sqlcmd -Q "$Query" -l 20 -y 0 -r1 2> $Dbcreateerrlog 1> $Dbcreatelog)
   if (Get-Content $Dbcreateerrlog) {throw} 
   }
   
     }
 catch {
+    $failerr = 'Database creation failed on Server' + $SQLServer
     $result.Add('Status','Failed')
-    $result.Add('Message','Failed to create database on Server')
+    $result.Add('Message',$failerr)
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson 
     exit 1
       }
-     
+
+$success = 'Successfully created database on SQL Server ' + $SQLServer
 $result.Add('Status','Complete')
-$result.Add('Message','Successfully created database on SQL Server')
+$result.Add('Message',$success)
 $resultjson = ($result | ConvertTo-Json) 
 $resultjson 

@@ -490,7 +490,7 @@ async function getFsxStorageCapacity(credentialsId: string, region: string, fsxI
         writeToCache(AWS_FSX_TYPE, cacheKey, fsxStorage);
         return fsxStorage;
     } catch (error: any) {
-        const errorMessage = `Error fetching FSx storage capacity: ${error}`;
+        const errorMessage = `Unable to retrieve FSx for NetApp ONTAP storage capacity: ${error}`;
         logger.error(errorMessage);
         if (error.name === 'FileSystemNotFound') {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);

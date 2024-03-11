@@ -1,4 +1,5 @@
-  #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
+#Requires -Version 7.0
+#Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
@@ -27,18 +28,7 @@ $silenttranscript = (Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Ap
 
 $ErrorActionPreference = "Stop"
 
-add-type @"
-using System.Net;
-using System.Security.Cryptography.X509Certificates;
-public class TrustAllCertsPolicy : ICertificatePolicy {
-    public bool CheckValidationResult(
-        ServicePoint srvPoint, X509Certificate certificate,
-        WebRequest request, int certificateProblem) {
-            return true;
-        }
-}
-"@
-[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $FSxCredStore  = "/netapp/wlmdb/$FileSystemId"
 $credobject =  (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
@@ -59,8 +49,14 @@ $result = [ordered]@{}
 
 
 #Cleanup drives from SQL dependency in case of clustered configuration
-$datalabel = $DBName+"-Data"
-$loglabel = $DBName+"-Log"
+if ($DBName.Length -gt 25) {
+    $TruncatedName = $DBName.Substring(0,25)
+    $datalabel = $TruncatedName+"-Data"
+    $loglabel = $TruncatedName+"-Log"
+  } else {
+  $datalabel = $DBName+"-Data"
+  $loglabel = $DBName+"-Log"
+  }
 
 if($IsClustered -ne "false") {
     #Check if disks are in dependency list before cleaning up
@@ -81,18 +77,17 @@ if($IsClustered -ne "false") {
 
 # Get FSx certificate
 $isprivatesubnet = $False
-$certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
-try {
+$connection =  Test-Connection -ComputerName https://fsx-aws-certificates.s3.amazonaws.com -Quiet
+if($connection -eq $False) {
+    $isprivatesubnet = $True
+    $restcert = ''
+    }
+else {
+    $certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
     Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
     $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
     $restcert = Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
-}
-catch {
-    $isprivatesubnet = $True
-    $restcert = ''
-}
-
-Write-output "Private subnet $isprivatesubnet"
+    }
 
 function callGetOrDeleteApi{
     param(
@@ -120,7 +115,7 @@ function callGetOrDeleteApi{
         if ($isprivatesubnet -eq $False) {
             Invoke-RestMethod @Params -Certificate $restcert
         }else {
-            Invoke-RestMethod @Params
+            Invoke-RestMethod @Params -SkipCertificateCheck
         }
         
     }catch{

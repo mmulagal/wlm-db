@@ -11,9 +11,11 @@ import {
     setDiscoveredHosts,
     setFsxCredentialStatus,
     setFsxIdsList,
+    setIsRefreshed,
     setUnIdentifiableHosts,
     setUnManagedHosts
 } from '../../store/workloadFactory/inventorySlice';
+import { setHeaderSelectedCred, setHeaderSelectedRegion } from '../../store/workloadFactory/headersSlice';
 
 const InventoryApis = () => {
     const dispatch = useAppDispatch();
@@ -21,7 +23,9 @@ const InventoryApis = () => {
     const { databaseHostsData } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const { discoveredHostData } = useAppSelector(state => state.inventory.discoveredHosts);
-    const { fsxIdsList } = useAppSelector(state => state.inventory);
+    const discoveredHostState = useAppSelector(state => state.inventory.discoveredHosts);
+    const { fsxIdsList, fsxCredentialStatusObj, isRefreshed } = useAppSelector(state => state.inventory);
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const [hostCursor, setHostCursor] = useState(null);
     const [discoveryCursor, setDiscoveryCursor] = useState(null);
@@ -30,6 +34,8 @@ const InventoryApis = () => {
     const [skipApiCall, setSkipApiCall] = useState(true);
     const [skipDiscoveryCall, setSkipDiscoveryCall] = useState(false);
     const [skipManagedHostCall, setSkipManagedHostCall] = useState(false);
+
+    const isCredRegionMissing = !headerSelectedCred || !headerSelectedRegion;
 
     const {
         data: databaseHosts,
@@ -41,7 +47,7 @@ const InventoryApis = () => {
             region: headerSelectedRegion?.label2,
             nextToken: hostCursor
         },
-        { skip: skipApiCall || skipManagedHostCall }
+        { skip: skipApiCall || skipManagedHostCall || isCredRegionMissing }
     );
 
     const {
@@ -55,7 +61,7 @@ const InventoryApis = () => {
             nextToken: discoveryCursor
         },
         {
-            skip: skipApiCall || skipDiscoveryCall
+            skip: skipApiCall || skipDiscoveryCall || isCredRegionMissing
         }
     );
 
@@ -70,27 +76,9 @@ const InventoryApis = () => {
             fsxIds: fsxIdsList.join(',')
         },
         {
-            skip: skipApiCall
+            skip: skipApiCall || !fsxIdsList?.length
         }
     );
-
-    useEffect(() => {
-        setDiscoveryCursor(null);
-        setHostCursor(null);
-        if (headerSelectedCred && headerSelectedRegion) {
-            setSkipApiCall(false);
-            setSkipDiscoveryCall(false);
-            setSkipManagedHostCall(false);
-            dispatch(
-                setDiscoveredHosts({
-                    discoveredHostData: null,
-                    discoverHostLoading: true,
-                    discoverHostError
-                })
-            );
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [headerSelectedCred, headerSelectedRegion]);
 
     useEffect(() => {
         if (databaseHostsError) {
@@ -125,14 +113,6 @@ const InventoryApis = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHosts, databaseHostsLoading, databaseHostsError]);
 
-    // To merge database host and database jobs data
-    useEffect(() => {
-        const mergedData = mergeDatabaseHostsData(databaseHostsData);
-        dispatch(addDatabaseHostsList(mergedData));
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [databaseHostsData]);
-
     useEffect(() => {
         if (discoverHostError) {
             dispatch(setDiscoveredHosts({ discoveredHostData: null, databaseHostsLoading, databaseHostsError }));
@@ -156,14 +136,78 @@ const InventoryApis = () => {
             } else {
                 dispatch(
                     setDiscoveredHosts({
-                        discoveredHostData,
-                        discoverHostLoading,
-                        discoverHostError
+                        ...discoveredHostState,
+                        discoverHostLoading
                     })
                 );
             }
         }
     }, [discoveredHosts, discoverHostLoading, discoverHostError]);
+
+    useEffect(() => {
+        if (isRefreshed) {
+            setDiscoveryCursor(null);
+            setHostCursor(null);
+            dispatch(
+                setDiscoveredHosts({
+                    discoveredHostData: null,
+                    discoverHostLoading: true,
+                    discoverHostError
+                })
+            );
+            dispatch(
+                addDatabaseHosts({
+                    databaseHostsData: null,
+                    databaseHostsLoading: true,
+                    databaseHostsError
+                })
+            );
+            dispatch(setUnManagedHosts([]));
+            dispatch(setUnIdentifiableHosts([]));
+            dispatch(setHeaderSelectedCred(null));
+            dispatch(setHeaderSelectedRegion(null));
+            setTimeout(() => {
+                dispatch(setHeaderSelectedCred(headerSelectedCred));
+                dispatch(setHeaderSelectedRegion(headerSelectedRegion));
+            }, 100);
+            dispatch(setIsRefreshed(false));
+        }
+    }, [isRefreshed]);
+
+    useEffect(() => {
+        setDiscoveryCursor(null);
+        setHostCursor(null);
+        dispatch(
+            setDiscoveredHosts({
+                discoveredHostData: null,
+                discoverHostLoading: true,
+                discoverHostError
+            })
+        );
+        dispatch(
+            addDatabaseHosts({
+                databaseHostsData: null,
+                databaseHostsLoading: true,
+                databaseHostsError
+            })
+        );
+        dispatch(setUnManagedHosts([]));
+        dispatch(setUnIdentifiableHosts([]));
+        if (headerSelectedCred && headerSelectedRegion) {
+            setSkipApiCall(false);
+            setSkipDiscoveryCall(false);
+            setSkipManagedHostCall(false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [headerSelectedCred, headerSelectedRegion]);
+
+    // To merge database host and database jobs data
+    useEffect(() => {
+        const mergedData = mergeDatabaseHostsData(databaseHostsData);
+        dispatch(addDatabaseHostsList(mergedData));
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [databaseHostsData]);
 
     useEffect(() => {
         if (!credentialStatusLoading) {
@@ -202,9 +246,13 @@ const InventoryApis = () => {
                 const isManaged = databaseHostsData?.find(managedHost =>
                     managedHost?.topology?.ec2Details?.find(instances => instances.id === host?.ec2InstanceId)
                 );
-                const fsxCredentialValidationFailed = host?.sqlServerInstances?.[0]?.storage?.find(
-                    (item: any) => item.type === 'FSXN' && !fsxCredentialStatus[item.id]
+                let fsxCredentialValidationFailed = host?.sqlServerInstances?.[0]?.storage?.find(
+                    (item: any) => item.type === 'FSXN' && !fsxCredentialStatusObj[item.id]
                 );
+                // FSx credential validation always passed for demo mode
+                if (isDemoMode) {
+                    fsxCredentialValidationFailed = false;
+                }
                 if (host.ssmState !== 'connected' || !isWindowAuthentication || fsxCredentialValidationFailed) {
                     unIdentifiableHosts.push(host);
                 } else {
@@ -216,7 +264,7 @@ const InventoryApis = () => {
             dispatch(setUnIdentifiableHosts(unIdentifiableHosts));
             dispatch(setUnManagedHosts(unManagedHosts));
         }
-    }, [discoveredHostData, databaseHostsData, fsxCredentialStatus]);
+    }, [discoveredHostData, databaseHostsData, fsxCredentialStatusObj]);
 
     return <></>;
 };

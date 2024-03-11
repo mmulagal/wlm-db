@@ -626,7 +626,190 @@ function sqlStandaloneStackData(
     ];
 }
 
-function saveFciConfigurationData(region: string, awsAccountId: string, dbName: string, configName: string) {
+function endpointData(
+    accountId: string,
+    resourceName: string,
+    endpointStackId: string,
+    masterStackId: string,
+    credentialsId: string,
+    region: string
+) {
+    return [
+        {
+            id: endpointStackId,
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: 'VpcEndpointStack',
+            status: JOBSTATUS.COMPLETED,
+            description: 'Creating VPC endpoints for S3 CloudFormation, SQS, SSM, CloudWatch services',
+            parent_job_id: masterStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: 'HttpsSecurityGroup(AWS::EC2::SecurityGroup)',
+            description: 'Creating security group to allow HTTPs access',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: endpointStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: 'S3Endpoint(AWS::EC2::VPCEndpoint)',
+            description: 'Creating S3 gateway endpoint',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: endpointStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: 'CloudformationEndpoint(AWS::EC2::VPCEndpoint)',
+            status: JOBSTATUS.COMPLETED,
+            description: 'Creating CloudFormation endpoint',
+            parent_job_id: endpointStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: 'CloudwatchEndpoint(AWS::EC2::VPCEndpoint)',
+            description: 'Creating CloudWatch endpoint',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: endpointStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: 'Ec2MessagesEndpoint(AWS::EC2::VPCEndpoint)',
+            description: 'Creating EC2Messages endpoint',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: endpointStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: 'SqsEndpoint(AWS::EC2::VPCEndpoint)',
+            description: 'Creating SQS endpoint',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: endpointStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: 'SsmEndpoint(AWS::EC2::VPCEndpoint)',
+            description: 'Creating SSM endpoint',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: endpointStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: 'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)',
+            description: 'Creating SSMMessages endpoint',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: endpointStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: 'FsxEndpoint(AWS::EC2::VPCEndpoint)',
+            description: 'Creating FSxN endpoint',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: endpointStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: 'CloudwatchLogsEndpoint(AWS::EC2::VPCEndpoint)',
+            description: 'Creating CloudWatch logs endpoint',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: endpointStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        }
+    ];
+}
+
+function saveFciConfigurationData(
+    region: string,
+    awsAccountId: string,
+    credentialsId: string,
+    dbName: string,
+    configName: string
+) {
     return {
         awsAccount: {
             selectedCredential: {
@@ -636,7 +819,7 @@ function saveFciConfigurationData(region: string, awsAccountId: string, dbName: 
                 isDisabled: false,
                 disabledTitle: '',
                 data: {
-                    credentialsId: 'e196c608-8c0c-4d84-9762-b86f955c72d2',
+                    credentialsId,
                     name: 'DemoDefaultCredential',
                     arn: `arn:aws:iam::${awsAccountId}:role/demo_role`,
                     providerAccountId: awsAccountId
@@ -961,7 +1144,13 @@ function saveFciConfigurationData(region: string, awsAccountId: string, dbName: 
     };
 }
 
-function saveStandaloneConfigurationData(region: string, awsAccountId: string, dbName: string, configName: string) {
+function saveStandaloneConfigurationData(
+    region: string,
+    awsAccountId: string,
+    credentialsId: string,
+    dbName: string,
+    configName: string
+) {
     return {
         awsAccount: {
             selectedCredential: {
@@ -971,7 +1160,7 @@ function saveStandaloneConfigurationData(region: string, awsAccountId: string, d
                 isDisabled: false,
                 disabledTitle: '',
                 data: {
-                    credentialsId: 'e196c608-8c0c-4d84-9762-b86f955c72d2',
+                    credentialsId,
                     name: 'DemoDefaultCredential',
                     arn: `arn:aws:iam::${awsAccountId},:role/demo_role`,
                     providerAccountId: awsAccountId
@@ -1284,6 +1473,7 @@ export {
     masterStackData,
     validationStack1Data,
     validationStack2Data,
+    endpointData,
     sqlFciServerStackData,
     sqlStandaloneStackData,
     fsxStackData,

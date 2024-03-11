@@ -1,5 +1,6 @@
-   #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
- [CmdletBinding()]
+#Requires -Version 7.0
+#Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
+[CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
     [string]$FileSystemId,
@@ -25,18 +26,7 @@ $silenttranscript = (Start-Transcript -Path C:\cfn\log\Configure_luns.log.txt -A
 
 $ErrorActionPreference = "Stop"
 
-add-type @"
-using System.Net;
-using System.Security.Cryptography.X509Certificates;
-public class TrustAllCertsPolicy : ICertificatePolicy {
-    public bool CheckValidationResult(
-        ServicePoint srvPoint, X509Certificate certificate,
-        WebRequest request, int certificateProblem) {
-            return true;
-        }
-}
-"@
-[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $FSxCredStore  = "/netapp/wlmdb/$FileSystemId"
 
@@ -69,21 +59,19 @@ $nodeiqn = (Get-InitiatorPort).NodeAddress
 
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
 
-
 # Get FSx certificate
 $isprivatesubnet = $False
-$certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
-try {
+$connection =  Test-Connection -ComputerName https://fsx-aws-certificates.s3.amazonaws.com -Quiet
+if($connection -eq $False) {
+    $isprivatesubnet = $True
+    $restcert = ''
+    }
+else {
+    $certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
     Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
     $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
     $restcert = Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
-}
-catch {
-    $isprivatesubnet = $True
-    $restcert = ''
-}
-
-Write-output "Private subnet $isprivatesubnet"
+    }
 
 function callGetApi{
     param(
@@ -106,11 +94,11 @@ function callGetApi{
         if ($isprivatesubnet -eq $False) {
             Invoke-RestMethod @Params -Certificate $restcert
         }else {
-            Invoke-RestMethod @Params
+            Invoke-RestMethod @Params -SkipCertificateCheck
         }
     }catch{
         $result.Add('Status','Failed')
-        $result.Add('Message','REST API call to FSx for ONTAP failed')
+        $result.Add('Message','REST API call to FSx for NetApp ONTAP failed')
         $result.Add('Exception',$_)
         $resultjson = ($result | ConvertTo-Json) 
         $resultjson  
@@ -147,12 +135,12 @@ function callrestapi{
         if ($isprivatesubnet -eq $False) {
             $invokerest = (Invoke-RestMethod @Params -Certificate $restcert)
         }else {
-            $invokerest = (Invoke-RestMethod @Params) 
+            $invokerest = (Invoke-RestMethod @Params -SkipCertificateCheck) 
         }
         
     }catch{
         $result.Add('Status','Failed')
-        $result.Add('Message','REST API call to FSx for ONTAP failed')
+        $result.Add('Message','REST API call to FSx for NetApp ONTAP failed')
         $result.Add('Exception',$_)
         $resultjson = ($result | ConvertTo-Json) 
         $resultjson  
@@ -167,7 +155,7 @@ try {
 if(($LogNew -eq "false") -And ($DataNew -eq "false")) { throw }
 } catch {
     $result.Add('Status','Failed')
-    $result.Add('Message','Need to define at least one new drive to configure volume and LUN')
+    $result.Add('Message','Need to define at least one new drive to configure storage')
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson  
@@ -187,7 +175,7 @@ $igroups = (callGetApi -uri $URI -region $region -creds $base64 -result $result)
 $IGROUP = $igroups[0].name
 } catch {
     $result.Add('Status','Failed')
-    $result.Add('Message','Unable to fetch igroup from SVM')
+    $result.Add('Message','Unable to fetch initiator group from SVM')
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson     
@@ -202,7 +190,7 @@ if ([string]::IsNullOrEmpty($IGROUP)) {
   else { throw}
   } catch {
     $result.Add('Status','Failed')
-    $result.Add('Message','Unable to find initiator group allowing the node IQN')
+    $result.Add('Message','Unable to find initiator group allowing access to the node')
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson  
@@ -218,7 +206,7 @@ if ([string]::IsNullOrEmpty($IGROUP)) {
   if ([string]::IsNullOrEmpty($IGROUP)) { throw }
   } catch {
     $result.Add('Status','Failed')
-    $result.Add('Message','Unable to find initiator group allowing the node IQN')
+    $result.Add('Message','Unable to find initiator group allowing access to the node')
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson  
@@ -266,7 +254,7 @@ $logvolcreate = (callrestapi -MgmtDNS $MgmtDNS -uri $volUriDynamicPart -region $
 }
 } catch {
     $result.Add('Status','Failed')
-    $result.Add('Message','Failed to create volume on FSx for ONTAP')
+    $result.Add('Message','Failed to create volume on FSx for NetApp ONTAP')
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson  
@@ -324,17 +312,17 @@ try{
     if ($isprivatesubnet -eq $False) {
             $modifyvol = (Invoke-RestMethod @Params -Certificate $restcert)
     }else {
-            $modifyvol = (Invoke-RestMethod @Params)
+            $modifyvol = (Invoke-RestMethod @Params -SkipCertificateCheck)
         }
 }catch{
     $result.Add('Status','Failed')
-    $result.Add('Message','Volume modification to set best practise parameters failed')
+    $result.Add('Message','Failed to set best practise parameters on the volume')
     $result.Add('Exception',$_)
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson  
     exit 1
 }
-Start-Sleep 2
+Start-Sleep 5
 }
 
 
@@ -418,13 +406,13 @@ foreach ($perlun in $pathlist) {
         if ($isprivatesubnet -eq $False) {
             $lunmodify1 = (Invoke-RestMethod @Params -Certificate $restcert)
         }else {
-            $lunmodify1 = (Invoke-RestMethod @Params) 
+            $lunmodify1 = (Invoke-RestMethod @Params -SkipCertificateCheck) 
         }
         
         }
         catch{
             $result.Add('Status','Failed')
-            $result.Add('Message','LUN modification to set space-reserve failed')
+            $result.Add('Message','Failed to set best practise parameters on the storage')
             $result.Add('Exception',$_)
             $resultjson = ($result | ConvertTo-Json) 
             $resultjson  
@@ -446,12 +434,12 @@ foreach ($perlun in $pathlist) {
         if ($isprivatesubnet -eq $False) {
             $lunmodify1 = (Invoke-RestMethod @Params -Certificate $restcert)
         }else {
-            $lunmodify1 = (Invoke-RestMethod @Params) 
+            $lunmodify1 = (Invoke-RestMethod @Params -SkipCertificateCheck) 
         }
         }
         catch{
             $result.Add('Status','Failed')
-            $result.Add('Message','LUN modification to set space-reserve failed')
+            $result.Add('Message','Failed to set best practise parameters on the storage')
             $result.Add('Exception',$_)
             $resultjson = ($result | ConvertTo-Json) 
             $resultjson  
@@ -460,7 +448,7 @@ foreach ($perlun in $pathlist) {
         Start-Sleep 3
     }
     $result.Add('Status','Complete')
-    $result.Add('Message','Provisioning volumes and LUNs complete')
+    $result.Add('Message','Provisioning storage on FSx for NetApp ONTAP complete')
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson 
  

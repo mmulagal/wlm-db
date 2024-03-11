@@ -36,6 +36,13 @@ const DatabaseName = () => {
     const dbCreateLogSizeValid = useAppSelector(state => state.msSqlAction.dbCreateLogSizeValid);
 
     useEffect(() => {
+        // by default Database Name accordion will be opened
+        accordionContext({
+            1: true
+        });
+    }, []);
+
+    useEffect(() => {
         if (
             isDbCreatePresed &&
             (!dbCreateNameAdded ||
@@ -77,7 +84,11 @@ const DatabaseName = () => {
         } else if (isValidDBName()) {
             return <AccordionError />;
         } else if (newUserDBName) {
-            return <DsTypography variant="Regular_14">{newUserDBName}</DsTypography>;
+            return (
+                <DsTypography variant="Regular_14" className={styles.headerWrap} title={newUserDBName}>
+                    {newUserDBName}
+                </DsTypography>
+            );
         }
         return <ActionRequired error={false} />;
     };
