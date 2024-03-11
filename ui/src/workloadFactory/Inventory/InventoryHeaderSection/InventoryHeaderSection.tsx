@@ -59,7 +59,7 @@ const InventoryHeaderSection = () => {
                             <SquareComponent
                                 value={unIdentifiableHosts.length}
                                 color="var(--chart-2)"
-                                text={GENERAL.UNDETECTED_HOSTS}
+                                text={GENERAL.UNIDENTIFIABLE_HOSTS}
                                 isLoading={isDiscoverInProgress}
                             />
                         </div>
