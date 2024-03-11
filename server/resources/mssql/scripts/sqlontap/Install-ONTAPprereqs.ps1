@@ -23,15 +23,17 @@ try{
 $NugetFileLoc = "C:\Program Files\PackageManagement\ProviderAssemblies\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$statuscode = 0
-try {
-     $response = Invoke-WebRequest https://www.powershellgallery.com/api/v2 -UseBasicParsing 
-     $statuscode = $response.StatusCode
-}catch {
-     $statuscode = 0
+#Check if private network
+$isprivatesubnet = $True
+$connection =  Test-Connection -ComputerName www.powershellgallery.com -Quiet
+if($connection -eq $False) {
+    $isprivatesubnet = $True
+    }
+else {
+    $isprivatesubnet = $False
 }
 
-if ($statuscode -eq 200) {
+if ($isprivatesubnet -ne $True) {
     #Install Nuget provider
     Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
     Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
@@ -49,7 +51,12 @@ else {
     "Installing from packaged modules"
     Write-Output "Installing from packaged modules"
     Unblock-File -Path "C:\cfn\Installer\dependent-packages\powershell\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll"
-    Copy-Item "C:\cfn\Installer\dependent-packages\powershell\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination "C:\Program Files\PackageManagement\ProviderAssemblies" -Recurse -Force
+    $destinationPath = "C:\Program Files\PackageManagement\ProviderAssemblies"
+    $destinationPathExists = Test-Path -Path $destinationPath
+    if($destinationPathExists -eq $False) {
+        New-Item -ItemType Directory -Path $destinationPath -Force
+    }
+    Copy-Item "C:\cfn\Installer\dependent-packages\powershell\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination $destinationPath -Recurse -Force
     $sourcelocation = 'C:\cfn\Installer\dependent-packages\aws'
     try {
         Import-PackageProvider -Name NuGet

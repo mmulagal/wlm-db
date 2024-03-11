@@ -7,6 +7,8 @@ param(
     [string]$Stackname
 )
 
+Start-Transcript -Path C:\cfn\log\InstallDscModules.ps1.txt -Append
+
 #get Instance ID
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
 $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
@@ -14,14 +16,17 @@ $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} 
 $NugetFileLoc = "C:\Program Files\PackageManagement\ProviderAssemblies\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-try {
-     $response = Invoke-WebRequest www.google.com -UseBasicParsing 
-     $statuscode = $response.StatusCode
-}catch {
-    $statuscode = 0
+#Check if private network
+$isprivatesubnet = $True
+$connection =  Test-Connection -ComputerName  www.powershellgallery.com -Quiet
+if($connection -eq $False) {
+    $isprivatesubnet = $True
+    }
+else {
+    $isprivatesubnet = $False
 }
 
-if ($statuscode -eq 200) {
+if ($isprivatesubnet -ne $True) {
     Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
     Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
     Install-Module -Name AWS.Tools.Installer -Force
@@ -58,7 +63,12 @@ else {
         "Installing from packaged modules downloaded from s3"
         Write-Output "Installing from packaged modules downloaded from s3"
         Unblock-File -Path "C:\cfn\Installer\dependent-packages\powershell\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll"
-        Copy-Item "C:\cfn\Installer\dependent-packages\powershell\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination "C:\Program Files\PackageManagement\ProviderAssemblies" -Recurse -Force
+        $destinationPath = "C:\Program Files\PackageManagement\ProviderAssemblies"
+        $destinationPathExists = Test-Path -Path $destinationPath
+        if($destinationPathExists -eq $False) {
+            New-Item -ItemType Directory -Path $destinationPath -Force
+        }
+        Copy-Item "C:\cfn\Installer\dependent-packages\powershell\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination $destinationPath -Recurse -Force
         $sourcelocation = 'C:\cfn\Installer\dependent-packages\powershell'
         try { 
         Import-PackageProvider -Name NuGet
