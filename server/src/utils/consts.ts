@@ -1069,7 +1069,8 @@ const subJobDescriptions: SubJobDescriptions = {
     'SsmEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSM endpoint',
     'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint',
     'FsxEndpoint(AWS::EC2::VPCEndpoint)': 'Creating FSxN endpoint',
-    'CloudwatchLogsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch logs endpoint'
+    'CloudwatchLogsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch logs endpoint',
+    'Ec2Endpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2 endpoint'
 };
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
 const RESOURCE_SOURCE = {
