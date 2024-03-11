@@ -166,16 +166,16 @@ const FilesSize = () => {
         let logSizeValid = true;
         if (newUserDataSize && newUserLogFileSize) {
             if (newUserDataSizeUnit?.value === newUserLogFileSizeUnit?.value) {
-                if (newUserLogFileSize > newUserDataSize) {
+                if (+newUserLogFileSize > +newUserDataSize) {
                     logSizeValid = false;
                 }
             } else {
                 if (newUserDataSizeUnit?.value === 'TiB') {
-                    if (newUserLogFileSize > newUserDataSize * 1024) {
+                    if (+newUserLogFileSize > +newUserDataSize * 1024) {
                         logSizeValid = false;
                     }
                 } else {
-                    if (newUserLogFileSize * 1024 > newUserDataSize) {
+                    if (+newUserLogFileSize * 1024 > +newUserDataSize) {
                         logSizeValid = false;
                     }
                 }
@@ -184,9 +184,9 @@ const FilesSize = () => {
 
         let currentLogSize = 0;
         if (newUserLogFileSizeUnit?.label === 'GiB') {
-            currentLogSize = newUserLogFileSize * GIB_IN_BYTE;
+            currentLogSize = +newUserLogFileSize * GIB_IN_BYTE;
         } else if (newUserLogFileSizeUnit?.label === 'TiB') {
-            currentLogSize = newUserLogFileSize * TIB_IN_BYTE;
+            currentLogSize = +newUserLogFileSize * TIB_IN_BYTE;
         }
 
         if (!currentLogSize || parseFloat(currentLogSize.toString()) < GIB_IN_BYTE) {
