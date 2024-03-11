@@ -547,7 +547,6 @@ export const GENERAL = {
     DB_HOSTS_DISTRIBUTION: 'Database hosts distribution',
     DETECTED_DB_HOSTS_DISTRIBUTION: 'Detected database hosts distribution',
     DETECTED_HOSTS: 'Detected hosts',
-    UNDETECTED_HOSTS: 'Undetected hosts',
     UNIDENTIFIABLE_HOSTS: 'Unidentifiable hosts',
     UNMANAGED_HOSTS: 'Unmanaged hosts',
     MANAGED_BY_WLF: 'Managed by Workload Factory',
