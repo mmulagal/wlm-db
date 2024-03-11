@@ -63,7 +63,10 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
         const apiName = action?.meta?.arg?.queryCacheKey || '';
 
         // DBS-2226 - It is happening when cred and region is changed in between of other call. Will check this again.
-        if (apiName.includes('discoverHosts') && errorMsg.includes('Unable to parse pagination token')) {
+        if (
+            apiName.includes('discoverHosts') &&
+            (errorMsg.includes('Unable to parse pagination token') || errorMsg.includes('Tag mismatch'))
+        ) {
             return;
         }
 
