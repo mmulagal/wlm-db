@@ -47,7 +47,7 @@ const ContentComponent = () => {
                         {GENERAL.DATABASE_INFORMATION}
                     </DsTypography>
                     <DatabaseName />
-                    {/* <Collation /> */}
+                    <Collation />
                     <DsTypography variant="Semibold_16" className={styles.accordionContainer}>
                         {GENERAL.FILE_SETTINGS}
                     </DsTypography>
