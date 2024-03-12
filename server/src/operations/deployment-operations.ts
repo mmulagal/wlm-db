@@ -737,10 +737,11 @@ async function deployCloudFormationTemplate(
     // Set EnableDnsSupport and EnableDnsHostnames to true
     try {
         await enableVpcDnsAttributes(credentialsId, region, networkConfiguration.vpcId);
-    } catch {
+    } catch (error) {
         logger.error(
             'Error while setting "EnableDnsSupport" and "EnableDnsHostnames" to true for vpc',
-            networkConfiguration.vpcId
+            networkConfiguration.vpcId,
+            error
         );
     }
 

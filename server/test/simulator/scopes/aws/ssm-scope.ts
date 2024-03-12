@@ -174,8 +174,8 @@ const getServerInstallDate = {
 
 const getServerEdition = {
     commands: [
-        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \" SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition') AS ServerEdition, SERVERPROPERTY('IsClustered') as isClustered, SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode FOR JSON PATH\"",
-      ]
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \" SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition') AS ServerEdition, SERVERPROPERTY('IsClustered') as isClustered, SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode FOR JSON PATH\""
+    ]
 };
 
 const getHostAndSqlServerInfo = {
