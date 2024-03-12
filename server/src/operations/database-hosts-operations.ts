@@ -1061,7 +1061,7 @@ async function getDriveInfoFromNodes(
             return result;
         }, []);
 
-    let updatedExitingDrives: any[] = updatedDriveInfo;
+    const updatedExitingDrives: any[] = updatedDriveInfo;
 
     // Constructing list of available drive letters
     const availableDriveLetters = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).filter(
