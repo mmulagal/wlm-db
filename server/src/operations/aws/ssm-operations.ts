@@ -1,5 +1,6 @@
 import config from 'config';
 import ms from 'ms';
+import createError from 'http-errors';
 import {
     CommandInvocationStatus,
     GetCommandInvocationCommandInput,
@@ -16,7 +17,7 @@ import {
     putParameter
 } from '../../lib/aws/ssm';
 import { sleep } from '../../utils/utils';
-import { AWS_REGIONS } from '../../utils/consts';
+import { AWS_REGIONS, HttpErrorCodes } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
 import { SSMParamterObject } from '../../utils/common-types';
@@ -40,9 +41,13 @@ async function pollCommandStatus(
         switch (status) {
             case CommandInvocationStatus.SUCCESS:
                 return response;
-            case CommandInvocationStatus.FAILED:
+
             case CommandInvocationStatus.TIMED_OUT:
             case CommandInvocationStatus.CANCELLED:
+                const errorMessage = `SSM execution ${status} for command ${pollParams.CommandId} on instance ${pollParams.InstanceId}`;
+                logger.error(errorMessage);
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            case CommandInvocationStatus.FAILED:
                 logger.error(
                     `SSM execution ${status} for command ${pollParams.CommandId} on instance ${pollParams.InstanceId}`
                 );
