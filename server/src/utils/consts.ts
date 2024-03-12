@@ -645,6 +645,7 @@ const TEMPLATE_SQS_ENDPOINT = 'SqsEndpointExists';
 const TEMPLATE_CLOUDWATCH_ENDPOINT = 'CloudwatchEndpointExists';
 const TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT = 'CloudwatchLogsEndpointExists';
 const TEMPLATE_FSX_ENDPOINT = 'FsxEndpointExists';
+const TEMPLATE_EC2_ENDPOINT = 'Ec2EndpointExists';
 
 const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
     s3: TEMPLATE_S3_ENDPOINT,
@@ -653,7 +654,8 @@ const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
     sqs: TEMPLATE_SQS_ENDPOINT,
     monitoring: TEMPLATE_CLOUDWATCH_ENDPOINT,
     logs: TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT,
-    fsx: TEMPLATE_FSX_ENDPOINT
+    fsx: TEMPLATE_FSX_ENDPOINT,
+    ec2: TEMPLATE_EC2_ENDPOINT
 };
 
 const SQL_RESOURCE_ASSETS = [
@@ -1067,7 +1069,8 @@ const subJobDescriptions: SubJobDescriptions = {
     'SsmEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSM endpoint',
     'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint',
     'FsxEndpoint(AWS::EC2::VPCEndpoint)': 'Creating FSxN endpoint',
-    'CloudwatchLogsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch logs endpoint'
+    'CloudwatchLogsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch logs endpoint',
+    'Ec2Endpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2 endpoint'
 };
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
 const RESOURCE_SOURCE = {
@@ -1084,7 +1087,8 @@ const ENDPOINTS_DEPLOYMENT = [
     'ec2messages',
     'monitoring',
     'logs',
-    'fsx'
+    'fsx',
+    'ec2'
 ];
 
 const SSM_PARAMETERS_BASE_PATH = '/netapp/wlmdb';

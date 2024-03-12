@@ -401,6 +401,12 @@ const PARAMETERS = [
         description: 'Boolean to convey if a FSxN endpoint exists in the vpc.',
         type: 'String',
         default: 'false'
+    },
+    {
+        name: 'Ec2EndpointExists',
+        description: 'Boolean to convey if a EC2 endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
     }
 ];
 
