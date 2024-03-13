@@ -30,13 +30,13 @@ async function pollCommandStatus(
     pollParams: GetCommandInvocationCommandInput
 ): Promise<GetCommandInvocationCommandOutput> {
     logger.info('Polling SSM command execution', pollParams);
-
+    let status: string | undefined;
     try {
         const response = await getCommandInvocation(credentialsId, region, pollParams);
 
         logger.debug('Polling SSM command execution response', response);
 
-        const status = response?.Status;
+        status = response?.Status;
 
         switch (status) {
             case CommandInvocationStatus.SUCCESS:
@@ -56,6 +56,7 @@ async function pollCommandStatus(
             case CommandInvocationStatus.DELAYED:
             case CommandInvocationStatus.IN_PROGRESS:
             case CommandInvocationStatus.PENDING:
+            case undefined:
                 logger.debug(`SSM command execution is in ${status} status. Polling again.`);
                 break;
             default: {
@@ -66,12 +67,14 @@ async function pollCommandStatus(
         }
 
         await sleep(ms(config.get<string>('ssm.poll-interval')));
-        return await pollCommandStatus(credentialsId, region, pollParams);
-    } catch (error) {
+        return pollCommandStatus(credentialsId, region, pollParams);
+    } catch (error: any) {
         if (error instanceof InvocationDoesNotExist) {
             logger.info('Command invocation does not exist yet, waiting...');
             await sleep(ms(config.get<string>('ssm.poll-interval')));
             return pollCommandStatus(credentialsId, region, pollParams);
+        } else if (status === CommandInvocationStatus.TIMED_OUT || status === CommandInvocationStatus.CANCELLED) {
+            throw new Error(error);
         }
         logger.error('Error fetching command status:', error);
         throw new Error(`Error fetching command status:${error}`);
