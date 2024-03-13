@@ -528,7 +528,8 @@ const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = `https://${DEFAULT_AWS_REGION}.console.aws.amazon.com/cloudformation/home`;
 const CLOUD_FORMATION_CLI_COMMAND = 'aws cloudformation create-stack';
 const DISABLE_ROLLBACK = true;
-const MASTER_STACK_TIMEOUT_MINUTES = 180;
+// In private network, time taken is longer
+const MASTER_STACK_TIMEOUT_MINUTES = 240;
 const FSX_SSD_MIN_SIZE = 1024; // in GiB
 const FSX_SSD_MAX_SIZE = 211106; // in GiB
 
