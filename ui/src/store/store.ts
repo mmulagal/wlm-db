@@ -19,7 +19,7 @@ import mssqlFormSlice from './mssql/mssqlFormSlice';
 import msSqlActionSlice from './mssql/msSqlActionSlice';
 import resourceSlice from './resource/resourceSlice';
 import { GENERAL } from '../utils/appConstants';
-import { customErrorMessages, requiredFieldError } from '../utils/utilityFunctions';
+import { customErrorMessages, removeOldApisError, requiredFieldError } from '../utils/utilityFunctions';
 import databaseHomeSlice from './workloadFactory/databaseHomeSlice';
 import chatbotSlice, { setShowRetry } from './chatbot/chatbotSlice';
 import workloadFactoryResourceSlice from './workloadFactory/workloadFactoryResourceSlice';
@@ -60,13 +60,9 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
         let errorMsg = action.payload.error || action.payload.data?.message || action.payload.data?.responseMessage;
 
-        const apiName = action?.meta?.arg?.queryCacheKey || '';
-
-        // DBS-2226 - It is happening when cred and region is changed in between of other call. Will check this again.
         if (
-            apiName.includes('discoverHosts') &&
-            (errorMsg.includes('Unable to parse pagination token') || errorMsg.includes('Tag mismatch'))
-        ) {
+            (action?.meta?.arg?.endpointName === 'discoverHosts' || action?.meta?.arg?.endpointName === 'getDatabaseHosts') 
+            && removeOldApisError(action?.meta?.arg)) {
             return;
         }
 
