@@ -1232,7 +1232,7 @@ Resources:
                                     -DomainDNSName '
                                   - !Ref 'DomainDNSName'
                                   - '''"'
-                            waitAfterCompletion: 300
+                            waitAfterCompletion: 900
                 ConfigureInstance:
                     commands:
                         a-add-cluster-secondary-node:
