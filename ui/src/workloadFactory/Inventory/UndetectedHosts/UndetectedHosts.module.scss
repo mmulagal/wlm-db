@@ -9,24 +9,24 @@
             width: 192px;
             height: 32px;
             border-radius: 32px;
-            border: 1px solid var(--text-button-disabled);
+            border: 1px solid var(--blue-70);
             margin-left: -12px;
-            //cursor: pointer;
+            cursor: pointer;
 
             .textStyle {
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 margin-top: 2px;
-                color: var(--text-button-disabled);
+                color: var(--blue-70);
             }
         }
 
         .detectManage:hover {
-            border: 1px solid var(--text-button-disabled);
+            border: 1px solid var(--blue-80);
 
             .textStyle {
-                color: var(--text-button-disabled);
+                color: var(--blue-80);
             }
         }
 

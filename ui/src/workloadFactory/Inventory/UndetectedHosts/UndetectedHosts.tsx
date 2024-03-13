@@ -19,28 +19,43 @@ import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { FSX_DEPLOYMENT_MODE, SSM_TROUBLESHOOTING_LINK } from '../../../utils/consts';
+import { useResourceCredentialsMutation } from '../../../utils/apiService';
 
 const UndetectedHosts = () => {
     const { setDialog, closeDialog } = useDialog();
     const unIdentifiableHosts = useAppSelector(state => state.inventory.unIdentifiableHosts);
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
+    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const [resourceCred] = useResourceCredentialsMutation();
 
-    const handleFirstDialog = () => {
-        setTimeout(() => {
-            setDialog(
-                <DialogComponent
-                    header={
-                        <div className={styles.headerDialog}>
-                            <Typography variant="Regular_20">Detect host</Typography>
-                            <Typography variant="Semibold_14">Step 2 out of 2</Typography>
-                        </div>
-                    }
-                    content={<UndetectedSecondDialog />}
-                    primaryButton="Done"
-                    callback={() => {}}
-                />
-            );
-        }, 10);
+    const handleFirstDialog = async (instanceId: string) => {
+        try {
+            const result: any = await resourceCred({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                regionId: headerSelectedRegion?.label2,
+                instanceId: instanceId
+            });
+            if (result && !result?.error) {
+                setTimeout(() => {
+                    setDialog(
+                        <DialogComponent
+                            header={
+                                <div className={styles.headerDialog}>
+                                    <Typography variant="Regular_20">Detect host</Typography>
+                                    <Typography variant="Semibold_14">Step 2 out of 2</Typography>
+                                </div>
+                            }
+                            content={<UndetectedSecondDialog />}
+                            primaryButton="Done"
+                            callback={() => {}}
+                        />
+                    );
+                }, 10);
+            }
+        } catch (error) {
+            console.log("Error");
+        }
+        
     };
 
     const handleManageDetect = (rowData: any) => {
@@ -55,7 +70,7 @@ const UndetectedHosts = () => {
                 content={<UndetectedHostDialogContent />}
                 primaryButton="Detect"
                 secondaryButton={GENERAL.CANCEL}
-                callback={handleFirstDialog}
+                callback={() => handleFirstDialog(rowData?.instanceID)}
                 closeCallback={() => {
                     closeDialog();
                 }}
@@ -70,16 +85,21 @@ const UndetectedHosts = () => {
             width: '240px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
-                    <div
-                        className={styles.detectManage}
-                        onClick={() => {
-                            //handleManageDetect(rowData)
-                        }}
-                    >
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            Detect host
-                        </Typography>
-                    </div>
+                    <>
+                    {rowData?.ssm === 'connected' && 
+                        <div
+                            className={styles.detectManage}
+                            onClick={() => {
+                                handleManageDetect(rowData)
+                            }}
+                        >
+                            <Typography variant="Regular_14" className={styles.textStyle}>
+                                Detect host
+                            </Typography>
+                        </div>
+                    }
+                    </>
+                    
                 );
             }
         };

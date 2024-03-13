@@ -535,6 +535,12 @@ export const inventoryApi = createApi({
                     url: `credentials/${credentialId}/regions/${regionId}/manage/${instanceId}`,
                     method: 'POST'
                 })
+            }),
+            resourceCredentials: builder.mutation({
+                query: ({ credentialId, regionId, instanceId }) => ({
+                    url: `credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/mssql/discover/resource-credentials`,
+                    method: 'POST'
+                })
             })
         };
     }
@@ -595,5 +601,10 @@ export const { useGetWlmdbPoliciesQuery } = policiesApi;
 
 export const { useGetDriveInfoQuery, useCreateUserDBMutation } = createUserDbApi;
 
-export const { useDiscoverHostsQuery, useGetFsxCredentialStatusQuery, useGetHostsDetailsQuery, useManageHostMutation } =
-    inventoryApi;
+export const { 
+    useDiscoverHostsQuery, 
+    useGetFsxCredentialStatusQuery, 
+    useGetHostsDetailsQuery, 
+    useManageHostMutation,
+    useResourceCredentialsMutation 
+} = inventoryApi;

@@ -24,7 +24,7 @@
         },
         {
             "ec2InstanceId": "i-02951e19b874b0611",
-            "ssmState": "connected",
+            "ssmState": "not connected",
             "ec2InstanceName": "sqlnode1-12742-rashid",
             "vpc": {
                 "id": "vpc-84b3afe61",
@@ -71,7 +71,7 @@
         },
         {
             "ec2InstanceId": "i-041d3a81922334",
-            "ssmState": "connected",
+            "ssmState": "not connected",
             "ec2InstanceName": "sqlnode2-12742-rashid",
             "vpc": {
                 "id": "vpc-84b3af123",
