@@ -6,7 +6,7 @@ import {
     useGetDatabaseHostsQuery,
     useGetFsxCredentialStatusQuery
 } from '../../utils/apiService';
-import { mergeDatabaseHostsData } from '../../utils/utilityFunctions';
+import { mergeDatabaseHostsData, resetDBHomePageState } from '../../utils/utilityFunctions';
 import {
     setDiscoveredHosts,
     setFsxCredentialStatus,
@@ -24,6 +24,7 @@ const InventoryApis = () => {
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const { discoveredHostData } = useAppSelector(state => state.inventory.discoveredHosts);
     const discoveredHostState = useAppSelector(state => state.inventory.discoveredHosts);
+    const databaseHostState = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { fsxIdsList, fsxCredentialStatusObj, isRefreshed } = useAppSelector(state => state.inventory);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
@@ -34,8 +35,14 @@ const InventoryApis = () => {
     const [skipApiCall, setSkipApiCall] = useState(true);
     const [skipDiscoveryCall, setSkipDiscoveryCall] = useState(false);
     const [skipManagedHostCall, setSkipManagedHostCall] = useState(false);
+    const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
+    const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
 
     const isCredRegionMissing = !headerSelectedCred || !headerSelectedRegion;
+
+    useEffect(() => {
+        resetDBHomePageState(dispatch);
+    }, [credId, regionId]);
 
     const {
         data: databaseHosts,
@@ -43,8 +50,8 @@ const InventoryApis = () => {
         isError: databaseHostsError
     } = useGetDatabaseHostsQuery(
         {
-            credentialId: headerSelectedCred?.data?.credentialsId,
-            region: headerSelectedRegion?.label2,
+            credentialId: credId,
+            region: regionId,
             nextToken: hostCursor
         },
         { skip: skipApiCall || skipManagedHostCall || isCredRegionMissing }
@@ -56,8 +63,8 @@ const InventoryApis = () => {
         isError: discoverHostError
     } = useDiscoverHostsQuery(
         {
-            credentialsId: headerSelectedCred?.data?.credentialsId,
-            regionId: headerSelectedRegion?.label2,
+            credentialsId: credId,
+            regionId: regionId,
             nextToken: discoveryCursor
         },
         {
@@ -71,8 +78,8 @@ const InventoryApis = () => {
         isError: credentialStatusError
     } = useGetFsxCredentialStatusQuery(
         {
-            credentialsId: headerSelectedCred?.data?.credentialsId,
-            regionId: headerSelectedRegion?.label2,
+            credentialsId: credId,
+            regionId: regionId,
             fsxIds: fsxIdsList.join(',')
         },
         {
@@ -81,19 +88,59 @@ const InventoryApis = () => {
     );
 
     useEffect(() => {
+        setSkipApiCall(true);
+        setDiscoveryCursor(null);
+        setHostCursor(null);
+        dispatch(
+            setDiscoveredHosts({
+                discoveredHostData: null,
+                discoverHostLoading: true,
+                discoverHostError
+            })
+        );
+        dispatch(addDatabaseHostsList([]));
+        dispatch(
+            addDatabaseHosts({
+                databaseHostsData: null,
+                databaseHostsLoading: true,
+                databaseHostsError
+            })
+        );
+        dispatch(setUnManagedHosts([]));
+        dispatch(setUnIdentifiableHosts([]));
+        if (headerSelectedCred && headerSelectedRegion) {
+            setSkipApiCall(false);
+            setSkipDiscoveryCall(false);
+            setSkipManagedHostCall(false);
+            setCredId(headerSelectedCred?.data?.credentialsId);
+            setRegionId(headerSelectedRegion?.label2);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [headerSelectedCred, headerSelectedRegion]);
+
+    useEffect(() => {
         if (databaseHostsError) {
             dispatch(addDatabaseHosts({ undefined, databaseHostsLoading, databaseHostsError }));
         } else {
             if (!databaseHostsLoading) {
                 let oldList = databaseHostsData || [];
                 let newList = databaseHosts?.items || [];
-                dispatch(
-                    addDatabaseHosts({
-                        databaseHostsData: [...oldList, ...newList],
-                        databaseHostsLoading,
-                        databaseHostsError
-                    })
-                );
+                if (databaseHosts && databaseHosts?.credentialId === credId && databaseHosts?.regionId === regionId) {
+                    dispatch(
+                        addDatabaseHosts({
+                            databaseHostsData: [...oldList, ...newList],
+                            databaseHostsLoading,
+                            databaseHostsError
+                        })
+                    );
+                } else {
+                    dispatch(
+                        addDatabaseHosts({
+                            ...databaseHostState,
+                            databaseHostsLoading
+                        })
+                    );
+                }
                 setHostCursor(databaseHosts?.nextToken || null);
                 if (!databaseHosts?.nextToken && databaseHostsData) {
                     setSkipManagedHostCall(true);
@@ -103,9 +150,8 @@ const InventoryApis = () => {
             } else {
                 dispatch(
                     addDatabaseHosts({
-                        databaseHostsData,
-                        databaseHostsLoading,
-                        databaseHostsError
+                        ...databaseHostState,
+                        databaseHostsLoading
                     })
                 );
             }
@@ -120,13 +166,22 @@ const InventoryApis = () => {
             if (!discoverHostLoading) {
                 let oldList = discoveredHostData || [];
                 let newList = discoveredHosts?.items || [];
-                dispatch(
-                    setDiscoveredHosts({
-                        discoveredHostData: [...oldList, ...newList],
-                        discoverHostLoading,
-                        discoverHostError
-                    })
-                );
+                if (discoveredHosts && discoveredHosts?.credentialId === credId && discoveredHosts?.regionId === regionId) {
+                    dispatch(
+                        setDiscoveredHosts({
+                            discoveredHostData: [...oldList, ...newList],
+                            discoverHostLoading,
+                            discoverHostError
+                        })
+                    );
+                } else {
+                    dispatch(
+                        setDiscoveredHosts({
+                            ...discoveredHostState,
+                            discoverHostLoading
+                        })
+                    );
+                }
                 setDiscoveryCursor(discoveredHosts?.nextToken || null);
                 if (!discoveredHosts?.nextToken && discoveredHostData) {
                     setSkipDiscoveryCall(true);
@@ -155,6 +210,7 @@ const InventoryApis = () => {
                     discoverHostError
                 })
             );
+            dispatch(addDatabaseHostsList([]));
             dispatch(
                 addDatabaseHosts({
                     databaseHostsData: null,
@@ -169,6 +225,8 @@ const InventoryApis = () => {
             setTimeout(() => {
                 dispatch(setHeaderSelectedCred(headerSelectedCred));
                 dispatch(setHeaderSelectedRegion(headerSelectedRegion));
+                setCredId(headerSelectedCred?.data?.credentialsId);
+                setRegionId(headerSelectedRegion?.label2);
             }, 100);
             dispatch(setIsRefreshed(false));
         }
@@ -184,6 +242,7 @@ const InventoryApis = () => {
                 discoverHostError
             })
         );
+        dispatch(addDatabaseHostsList([]));
         dispatch(
             addDatabaseHosts({
                 databaseHostsData: null,
@@ -197,6 +256,8 @@ const InventoryApis = () => {
             setSkipApiCall(false);
             setSkipDiscoveryCall(false);
             setSkipManagedHostCall(false);
+            setCredId(headerSelectedCred?.data?.credentialsId);
+            setRegionId(headerSelectedRegion?.label2);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [headerSelectedCred, headerSelectedRegion]);

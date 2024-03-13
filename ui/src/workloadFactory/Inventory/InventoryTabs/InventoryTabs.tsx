@@ -10,7 +10,7 @@ import { GENERAL } from '../../../utils/appConstants';
 const InventoryTabs = () => {
     const dispatch = useDispatch();
     const selectedInventoryTab = useAppSelector(state => state.inventory.selectedInventoryTab);
-    const { databaseHostsData } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
     const { unManagedHosts, unIdentifiableHosts } = useAppSelector(state => state.inventory);
     const [selectedTab, setSelectedTab] = useState(WLF_TABS.MANAGED_HOSTS);
 
@@ -39,7 +39,7 @@ const InventoryTabs = () => {
                     }
                     onClick={() => handleClick(WLF_TABS.MANAGED_HOSTS)}
                 >
-                    {GENERAL.TAB_MANAGED_HOSTS} ({databaseHostsData?.length || 0})
+                    {GENERAL.TAB_MANAGED_HOSTS} ({(databaseHostsList || [])?.length || 0})
                 </Typography>
             </div>
             <div
