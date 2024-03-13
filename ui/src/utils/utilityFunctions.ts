@@ -10,6 +10,7 @@ import {
     CREDENTIAL_STAGE_LINK,
     DB_HOME_DATA_TYPE,
     DEFAULT_MASTER_KEY,
+    DETECT_HOST_VAR,
     DISABLED_STATE,
     ENABLED_STATE,
     JM_DOWNLOAD,
@@ -1243,4 +1244,30 @@ export const removeOldApisError = (data: any) => {
     } else {
         return false;
     }
+};
+
+export const createDetectHostPayload = (instanceID: string, fsxId: string) => {
+    const state = store.getState();
+    const detectManageUserName = state?.inventory?.detectManageUserName;
+    const detectManagePassword = state?.inventory?.detectManagePassword;
+    const detectOntapUsername = state?.inventory?.detectOntapUsername;
+    const detectOntapPassword = state?.inventory?.detectOntapPassword;
+    let credList = [];
+    if (detectManageUserName && detectManagePassword) {
+        credList.push({
+            resourceId: instanceID,
+            resourceType: DETECT_HOST_VAR.MSSQL,
+            username: detectManageUserName,
+            password: detectManagePassword
+        });
+    };
+    if (detectOntapUsername && detectOntapPassword) {
+        credList.push({
+            resourceId: fsxId,
+            resourceType: DETECT_HOST_VAR.FSX,
+            username: detectOntapUsername,
+            password: detectOntapPassword
+        });
+    };
+    return {credentials: credList};
 };

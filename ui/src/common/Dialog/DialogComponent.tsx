@@ -28,12 +28,15 @@ const DialogComponent = ({
     const isSaveConfigLoading = useAppSelector(state => state.msSqlAction.isSaveConfigLoading);
     const saveConfigName = useAppSelector(state => state.mssqlForm.saveConfigName);
     const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
+    const detectHostError = useAppSelector(state => state.msSqlAction.isDetectHostError);
+    const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
 
     // To show loader on primary button in load config and save config dialog
     const primaryButtonLoad = (() => {
         return (
             (dialogFrom === FROM_DIALOG.LOAD_CONFIG && isLoadConfig) ||
-            ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom === FROM_DIALOG.HEADER_CROSS) && isSaveConfigLoading)
+            ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom === FROM_DIALOG.HEADER_CROSS) && isSaveConfigLoading) ||
+            (dialogFrom === FROM_DIALOG.DETECT_HOST && detectHostLoading)
         );
     })();
 
@@ -43,7 +46,8 @@ const DialogComponent = ({
         if (
             dialogFrom !== FROM_DIALOG.LOAD_CONFIG &&
             dialogFrom !== FROM_DIALOG.SAVE_CONFIG &&
-            dialogFrom !== FROM_DIALOG.HEADER_CROSS
+            dialogFrom !== FROM_DIALOG.HEADER_CROSS && 
+            dialogFrom !== FROM_DIALOG.DETECT_HOST
         ) {
             closeDialog();
         }
@@ -67,7 +71,7 @@ const DialogComponent = ({
         <DialogLayout>
             <DialogHeader>{header}</DialogHeader>
             <DialogContent>{content}</DialogContent>
-            <DialogFooter>
+            <DialogFooter error={detectHostError}>
                 <Button
                     variant={'primary'}
                     className={'continue-button'}

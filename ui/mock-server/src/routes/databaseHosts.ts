@@ -73,4 +73,10 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/resources/
     }, 3000);
 });
 
+router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances/:instanceId/mssql/discover/resource-credentials`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, {});
+    }, 3000);
+});
+
 export default router;

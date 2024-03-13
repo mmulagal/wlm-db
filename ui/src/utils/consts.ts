@@ -104,7 +104,8 @@ export const WORKLOADS = 'workloads';
 export const FROM_DIALOG = {
     LOAD_CONFIG: 'load_config',
     SAVE_CONFIG: 'save_config',
-    HEADER_CROSS: 'header_cross'
+    HEADER_CROSS: 'header_cross',
+    DETECT_HOST: 'detect_host'
 };
 
 export const API_NAME = {
@@ -301,3 +302,13 @@ export const SSM_TROUBLESHOOTING_LINK =
 
 export const GIB_IN_BYTE = 1073741824; // 1024 * 1024 * 1024
 export const TIB_IN_BYTE = 1099511627776; // 1024 * 1024 * 1024 * 1024
+
+export const DETECT_HOST_VAR = {
+    FSXN: 'FSXN',
+    EBS: 'EBS',
+    SSM_CONNECTED: 'connected',
+    MOVE_TO_MANAGE: 'move_to_manage',
+    MOVE_TO_UNMANAGE: 'move_to_unmanage',
+    FSX: 'FSX',
+    MSSQL: 'MSSQL'
+};

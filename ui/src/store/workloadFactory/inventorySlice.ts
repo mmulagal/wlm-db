@@ -1,5 +1,5 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import { WLF_TABS } from '../../utils/consts';
+import { DETECT_HOST_VAR, WLF_TABS } from '../../utils/consts';
 import { initialColStateManagedHosts } from '../../utils/utilityFunctions';
 
 const initialInventoryState: any = {
@@ -9,7 +9,7 @@ const initialInventoryState: any = {
     detectManagePassword: '',
     detectOntapUsername: '',
     detectOntapPassword: '',
-    detectHostRadio: 'Yes, Manage host via workload factory',
+    detectHostRadio: DETECT_HOST_VAR.MOVE_TO_UNMANAGE,
     managedHostInitialColumns: initialColStateManagedHosts,
     unManagedHostInitialColumns: initialColStateManagedHosts,
     discoveredHosts: {

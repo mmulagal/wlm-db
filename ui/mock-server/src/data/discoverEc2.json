@@ -59,6 +59,7 @@
                     "sqlServerState": "Running",
                     "sqlServerVersion": "15.0.4345.5",
                     "windowsAuthentication": true,
+                    "sqlServerName": "SQL Server 1",
                     "storage": [
                         {
                             "type": "EBS",
@@ -103,7 +104,7 @@
                 {
                     "sqlServerEdition": 2022,
                     "sqlServerInstance": "INST_C",
-                    "sqlServerState": "Running",
+                    "sqlServerState": "Stopped",
                     "sqlServerVersion": "16.0.1000.6",
                     "windowsAuthentication": false,
                     "storage": [],
@@ -112,7 +113,7 @@
                 {
                     "sqlServerEdition": 2022,
                     "sqlServerInstance": "INST_D",
-                    "sqlServerState": "Running",
+                    "sqlServerState": "Stopped",
                     "sqlServerVersion": "16.0.1000.6",
                     "windowsAuthentication": false,
                     "storage": [],
@@ -123,7 +124,8 @@
                     "sqlServerInstance": "MSSQLSERVER",
                     "sqlServerState": "Running",
                     "sqlServerVersion": "16.0.4095.4",
-                    "windowsAuthentication": true,
+                    "windowsAuthentication": false,
+                    "sqlServerName": "SQL Server 2",
                     "storage": [
                         {
                             "type": "EBS",
@@ -159,11 +161,25 @@
                 {
                     "sqlServerEdition": 2022,
                     "sqlServerInstance": "MSSQLSERVER",
-                    "sqlServerState": "Stopped",
+                    "sqlServerState": "Running",
                     "sqlServerVersion": "16.0.4015.1",
                     "windowsAuthentication": false,
-                    "storage": [],
-                    "deploymentTypes": []
+                    "sqlServerName": "SQL Server 3",
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fsnew"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1a"
+                            ]
+                        }
+                    ]
                 }
             ]
         },
@@ -183,6 +199,7 @@
                     "sqlServerState": "Running",
                     "sqlServerVersion": "16.0.4015.1",
                     "windowsAuthentication": true,
+                    "sqlServerName": "SQL Server 4",
                     "storage": [
                         {
                             "type": "FSXN",

@@ -3,16 +3,33 @@ import styles from './UndetectedSecondDialog.module.scss';
 import { useDispatch } from 'react-redux';
 import { setRadioValueDetect } from '../../../../store/workloadFactory/inventorySlice';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { GENERAL } from '../../../../utils/appConstants';
+import { DETECT_HOST_VAR } from '../../../../utils/consts';
 
-const UndetectedSecondDialog = () => {
+const UndetectedSecondDialog = ({data}: {data: any}) => {
     const detectHostRadio = useAppSelector(state => state.inventory.detectHostRadio);
     const dispatch = useDispatch();
     const handleRadio = (val: string) => {
         dispatch(setRadioValueDetect(val));
     };
+
+    let fsxType = false;
+    let ebsType = false;
+    if (data?.sqlServerInstances?.[0]?.storage) {
+        data?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
+            if (storageObj.type === DETECT_HOST_VAR.FSXN) {
+                fsxType = true;
+            }
+            if (storageObj.type === DETECT_HOST_VAR.EBS) {
+                ebsType = true;
+            }
+        });
+    }
+    const hostType = fsxType ? GENERAL.FSX_FOR_ONTAP : (ebsType ? GENERAL.EBS : GENERAL.NOT_AVAILABLE);
+
     return (
         <div className={styles.secondDialog}>
-            <Typography variant="Semibold_14">Detected host information</Typography>
+            <Typography variant="Semibold_14">{GENERAL.DETECTED_HOST_INFO}</Typography>
 
             <div className={styles.contentSection}>
                 <div className={styles.leftSide}>
@@ -20,27 +37,27 @@ const UndetectedSecondDialog = () => {
 
                     <div className={styles.entry} style={{ gap: '80px' }}>
                         <Typography variant="Regular_14" style={{ width: '116px' }}>
-                            Host name
+                            {GENERAL.DETECT_HOSTNAME}
                         </Typography>
-                        <Typography variant="Semibold_14">Host name number 1</Typography>
+                        <Typography variant="Semibold_14">{data?.ec2InstanceName || GENERAL.NOT_AVAILABLE}</Typography>
                     </div>
 
                     <div className={styles.separator} />
 
                     <div className={styles.entry} style={{ gap: '80px' }}>
                         <Typography variant="Regular_14" style={{ width: '116px' }}>
-                            Host type
+                            {GENERAL.DETECT_HOST_TYPE}
                         </Typography>
-                        <Typography variant="Semibold_14">FSx for ONTAP</Typography>
+                        <Typography variant="Semibold_14">{hostType}</Typography>
                     </div>
 
                     <div className={styles.separator} />
 
                     <div className={styles.entry} style={{ gap: '48px' }}>
                         <Typography variant="Regular_14" style={{ width: '148px' }}>
-                            Number of databases
+                            {GENERAL.DETECT_NO_OF_DB}
                         </Typography>
-                        <Typography variant="Semibold_14">10</Typography>
+                        <Typography variant="Semibold_14">{GENERAL.NOT_AVAILABLE}</Typography>
                     </div>
 
                     <div className={styles.separator} />
@@ -51,27 +68,27 @@ const UndetectedSecondDialog = () => {
 
                     <div className={styles.entry} style={{ gap: '80px' }}>
                         <Typography variant="Regular_14" style={{ width: '124px' }}>
-                            SQL version
+                            {GENERAL.DETECT_SQL_VERSION}
                         </Typography>
-                        <Typography variant="Semibold_14">2022</Typography>
+                        <Typography variant="Semibold_14">{data?.sqlServerInstances?.[0]?.sqlServerVersion}</Typography>
                     </div>
 
                     <div className={styles.separator} />
 
                     <div className={styles.entry} style={{ gap: '80px' }}>
                         <Typography variant="Regular_14" style={{ width: '124px' }}>
-                            Deployment model
+                            {GENERAL.DETECT_DEPLOYMENT_MODEL}
                         </Typography>
-                        <Typography variant="Semibold_14">Stand alone</Typography>
+                        <Typography variant="Semibold_14">{data?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type}</Typography>
                     </div>
 
                     <div className={styles.separator} />
 
                     <div className={styles.entry} style={{ gap: '80px' }}>
                         <Typography variant="Regular_14" style={{ width: '124px' }}>
-                            Edition
+                            {GENERAL.DETECT_EDITION}
                         </Typography>
-                        <Typography variant="Semibold_14">Enterprise</Typography>
+                        <Typography variant="Semibold_14">{data?.sqlServerInstances?.[0]?.sqlServerEdition}</Typography>
                     </div>
 
                     <div className={styles.separator} />
@@ -79,37 +96,46 @@ const UndetectedSecondDialog = () => {
             </div>
 
             {/* Second section after content - EBS */}
-            {/* <div className={styles.ebsSection}>
-                <Typography variant="Regular_14">Host detected successfully.</Typography>
-                <Typography variant="Regular_14">
-                    After detection the host was redirected to the unmanaged hosts tab.
-                </Typography>
-            </div> */}
+            {
+                hostType !== GENERAL.FSX_FOR_ONTAP && 
+                <div className={styles.ebsSection}>
+                    <Typography variant="Regular_14">{GENERAL.EBS_DETECT_SUCCESS_MSG[0]}</Typography>
+                    <Typography variant="Regular_14">
+                        {GENERAL.EBS_DETECT_SUCCESS_MSG[1]}
+                    </Typography>
+                </div>
+            }
+            
 
             {/* Second section after content - FSX */}
-            <div className={styles.fsxSection}>
-                <Typography variant="Semibold_14">Detected hosts management</Typography>
-                <Typography variant="Regular_14" className={styles.subHeading}>
-                    Would you like to manage the detected host via workload factory?
-                </Typography>
+            {
+                hostType === GENERAL.FSX_FOR_ONTAP &&
+                <div className={styles.fsxSection}>
+                    <Typography variant="Semibold_14">{GENERAL.FSX_DETECT_SUCCESS_MSG[0]}</Typography>
+                    <Typography variant="Regular_14" className={styles.subHeading}>
+                        {GENERAL.FSX_DETECT_SUCCESS_MSG[1]}
+                    </Typography>
 
-                <div className={styles.radioSection}>
-                    <DsRadioButton
-                        isSelected={detectHostRadio === 'Yes, Manage host via workload factory'}
-                        title="Yes, Manage host via workload factory"
-                        id="1"
-                        variant="Default"
-                        onClick={() => handleRadio('Yes, Manage host via workload factory')}
-                    />
-                    <DsRadioButton
-                        isSelected={detectHostRadio === 'No, moved host to the Unmanaged hosts tab.'}
-                        title="No, moved host to the Unmanaged hosts tab."
-                        id="2"
-                        variant="Default"
-                        onClick={() => handleRadio('No, moved host to the Unmanaged hosts tab.')}
-                    />
+                    <div className={styles.radioSection}>
+                        <DsRadioButton
+                            isSelected={detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE}
+                            title={GENERAL.FSX_AFTER_DETECT_OPTIONS[0]}
+                            id="1"
+                            variant="Default"
+                            onClick={() => handleRadio(DETECT_HOST_VAR.MOVE_TO_MANAGE)}
+                            isDisabled={true}
+                        />
+                        <DsRadioButton
+                            isSelected={detectHostRadio === DETECT_HOST_VAR.MOVE_TO_UNMANAGE}
+                            title={GENERAL.FSX_AFTER_DETECT_OPTIONS[1]}
+                            id="2"
+                            variant="Default"
+                            onClick={() => handleRadio(DETECT_HOST_VAR.MOVE_TO_UNMANAGE)}
+                        />
+                    </div>
                 </div>
-            </div>
+            }
+            
         </div>
     );
 };

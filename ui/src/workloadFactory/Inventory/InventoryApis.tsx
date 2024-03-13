@@ -6,7 +6,7 @@ import {
     useGetDatabaseHostsQuery,
     useGetFsxCredentialStatusQuery
 } from '../../utils/apiService';
-import { mergeDatabaseHostsData, resetDBHomePageState } from '../../utils/utilityFunctions';
+import { mergeDatabaseHostsData, resetDBHomePageState, sortListOfDict } from '../../utils/utilityFunctions';
 import {
     setDiscoveredHosts,
     setFsxCredentialStatus,
@@ -16,6 +16,7 @@ import {
     setUnManagedHosts
 } from '../../store/workloadFactory/inventorySlice';
 import { setHeaderSelectedCred, setHeaderSelectedRegion } from '../../store/workloadFactory/headersSlice';
+import { DETECT_HOST_VAR } from '../../utils/consts';
 
 const InventoryApis = () => {
     const dispatch = useAppDispatch();
@@ -288,7 +289,7 @@ const InventoryApis = () => {
             discoveredHostData.map((host: any) => {
                 if (host?.sqlServerInstances?.[0]?.storage) {
                     host?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
-                        if (storageObj.type === 'FSXN') {
+                        if (storageObj.type === DETECT_HOST_VAR.FSXN) {
                             fsxIds.push(storageObj.id);
                         }
                     });
@@ -303,18 +304,21 @@ const InventoryApis = () => {
             let unManagedHosts: any[] = [];
             let unIdentifiableHosts: any[] = [];
             discoveredHostData.map((host: any) => {
+                if (host?.sqlServerInstances && host?.sqlServerInstances?.length > 1) {
+                    host = {...host, sqlServerInstances: sortListOfDict(host?.sqlServerInstances, 'sqlServerState')};
+                }
                 const isWindowAuthentication = host?.sqlServerInstances?.[0]?.windowsAuthentication;
                 const isManaged = databaseHostsData?.find(managedHost =>
                     managedHost?.topology?.ec2Details?.find(instances => instances.id === host?.ec2InstanceId)
                 );
                 let fsxCredentialValidationFailed = host?.sqlServerInstances?.[0]?.storage?.find(
-                    (item: any) => item.type === 'FSXN' && !fsxCredentialStatusObj[item.id]
+                    (item: any) => item.type === DETECT_HOST_VAR.FSXN && !fsxCredentialStatusObj[item.id]
                 );
                 // FSx credential validation always passed for demo mode
                 if (isDemoMode) {
                     fsxCredentialValidationFailed = false;
                 }
-                if (host.ssmState !== 'connected' || !isWindowAuthentication || fsxCredentialValidationFailed) {
+                if (host.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED || !isWindowAuthentication || fsxCredentialValidationFailed) {
                     unIdentifiableHosts.push(host);
                 } else {
                     if (!isManaged) {

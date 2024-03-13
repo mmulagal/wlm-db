@@ -556,10 +556,11 @@ export const inventoryApi = createApi({
                     method: 'POST'
                 })
             }),
-            resourceCredentials: builder.mutation({
-                query: ({ credentialId, regionId, instanceId }) => ({
+            registerResourceCredentials: builder.mutation({
+                query: ({ credentialId, regionId, instanceId, payload }) => ({
                     url: `credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/mssql/discover/resource-credentials`,
-                    method: 'POST'
+                    method: 'POST',
+                    body: payload
                 })
             })
         };
@@ -626,5 +627,5 @@ export const {
     useGetFsxCredentialStatusQuery, 
     useGetHostsDetailsQuery, 
     useManageHostMutation,
-    useResourceCredentialsMutation 
+    useRegisterResourceCredentialsMutation 
 } = inventoryApi;
