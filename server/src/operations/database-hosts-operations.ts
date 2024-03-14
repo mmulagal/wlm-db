@@ -56,7 +56,6 @@ import {
     getPerformanceMetrics,
     getDataBasesSummary,
     getNativeSQLBackedupDatabases,
-    callSsmExecution,
     getActiveSqlNode,
     checkDatabaseExists
 } from './workloads/mssql/mssql-operations';
@@ -69,7 +68,7 @@ import {
 } from './aws/fsx-operations';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
-import { getSSMConnectionStatus } from './aws/ssm-operations';
+import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
