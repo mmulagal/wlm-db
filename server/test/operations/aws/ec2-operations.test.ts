@@ -75,7 +75,7 @@ describe('EC2 Operations', () => {
     });
 
     it('Get validation node instance tyoe', async () => {
-        const response = await getValidationNodeInstanceType(credentialsId, DEFAULT_AWS_REGION);
+        const response = await getValidationNodeInstanceType(credentialsId, DEFAULT_AWS_REGION, ['zone-1', 'zone-2']);
         expect(response).toEqual('t2.micro');
     });
 
