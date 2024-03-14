@@ -9,6 +9,7 @@ import {
     PutParameterCommandInput,
     SendCommandCommandInput
 } from '@aws-sdk/client-ssm';
+import { DescribeRegionsCommandInput } from '@aws-sdk/client-ec2';
 import {
     sendSSMCommand,
     getCommandInvocation,
@@ -21,6 +22,7 @@ import { AWS_REGIONS, HttpErrorCodes } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
 import { SSMParamterObject } from '../../utils/common-types';
+import { describeRegions } from '../../lib/aws/ec2';
 
 const logger = getLogger();
 
@@ -107,20 +109,40 @@ async function executeSSMDocument(
 async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegionType[] }> {
     logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
 
-    const response = await describeFSxOntapRegions(credentialsId);
-    const fsxRegionsList: Array<FSxAvailableRegionType> = [];
-    const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
+    try {
+        const input: DescribeRegionsCommandInput = {
+            AllRegions: true,
+            Filters: [
+                {
+                    Name: 'opt-in-status',
+                    Values: ['opted-in', 'opt-in-not-required']
+                }
+            ]
+        };
+        const [fsxRegionResponse, ec2RegionResponse] = await Promise.all([
+            describeFSxOntapRegions(credentialsId),
+            describeRegions(input, credentialsId)
+        ]);
 
-    response.forEach(({ Value: regionCode }) => {
-        if (regionCode && !restrictedRegions.includes(regionCode)) {
-            fsxRegionsList.push({
-                regionCode,
-                regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : ''
-            });
-        }
-    });
+        const fsxRegionsList: Array<FSxAvailableRegionType> = [];
+        const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
 
-    return { regions: fsxRegionsList };
+        const { Regions: enabledRegionsInAccount } = ec2RegionResponse;
+        fsxRegionResponse.forEach(({ Value: regionCode }) => {
+            if (regionCode && !restrictedRegions.includes(regionCode)) {
+                enabledRegionsInAccount?.some(enabledRegion => enabledRegion?.RegionName === regionCode);
+                fsxRegionsList.push({
+                    regionCode,
+                    regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : ''
+                });
+            }
+        });
+
+        return { regions: fsxRegionsList };
+    } catch (error) {
+        logger.error('Get FSX ONTAP Region list has failed with error:', error);
+        throw new Error(`Error fetching fsx region:${error}`);
+    }
 }
 
 async function getSSMConnectionStatus(credentialId: string, region: string, instanceId: string) {

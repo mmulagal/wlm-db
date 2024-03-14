@@ -116,6 +116,16 @@ Parameters:
         Description: Boolean to convey if a EC2 endpoint exists in the vpc.
         Type: String
         Default: 'false'
+    
+    Ec2MessagesEndpointExists:
+        Description: Boolean to convey if  EC2 messages endpoint exists in the vpc.
+        Type: String
+        Default: 'false'
+
+    SSMMessagesEndpointExists:
+        Description: Boolean to convey if SSM messages endpoint exists in the vpc.
+        Type: String
+        Default: 'false'
 
 Conditions:
     SingleZone: !Equals [!Ref StandbySubnetId, 'subnet-123456']
@@ -127,6 +137,8 @@ Conditions:
     CreateCloudwatchLogsEndpoint: !Equals [!Ref CloudwatchLogsEndpointExists, 'false']
     CreateFsxEndpoint: !Equals [!Ref FsxEndpointExists, 'false']
     CreateEc2Endpoint: !Equals [!Ref Ec2EndpointExists, 'false']
+    CreateEc2MessagesEndpoint: !Equals [!Ref Ec2MessagesEndpointExists, 'false']
+    CreateSSMMessagesEndpoint: !Equals [!Ref SSMMessagesEndpointExists, 'false']
 
 Resources:
     HttpsSecurityGroup:
@@ -190,7 +202,7 @@ Resources:
           - !Ref HttpsSecurityGroup
     
     SsmMessagesEndpoint:
-      Condition: CreateSsmEndpoint
+      Condition: CreateSSMMessagesEndpoint
       Type: AWS::EC2::VPCEndpoint
       Properties:
         VpcId: !Ref VPCId
@@ -203,7 +215,7 @@ Resources:
           - !Ref HttpsSecurityGroup
     
     Ec2MessagesEndpoint:
-      Condition: CreateSsmEndpoint
+      Condition: CreateEc2MessagesEndpoint
       Type: AWS::EC2::VPCEndpoint
       Properties:
         VpcId: !Ref VPCId
