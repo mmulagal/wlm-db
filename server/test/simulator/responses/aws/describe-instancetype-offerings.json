@@ -6,7 +6,7 @@
         "totalRetryDelay": 0
     },
     "InstanceTypeOfferings": [
-        { "InstanceType": "t3.micro", "LocationType": "region", "Location": "ap-southeast-1" },
-        { "InstanceType": "t2.micro", "LocationType": "region", "Location": "ap-southeast-1" }
+        { "InstanceType": "t3.micro", "LocationType": "availability-zone", "Location": "ap-southeast-1a" },
+        { "InstanceType": "t2.micro", "LocationType": "availability-zone", "Location": "ap-southeast-1b" }
     ]
 }
