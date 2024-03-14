@@ -12,6 +12,8 @@ import {
     setFsxCredentialStatus,
     setFsxIdsList,
     setIsRefreshed,
+    setMovedToManagedHost,
+    setMovedToUnmanagedHost,
     setUnIdentifiableHosts,
     setUnManagedHosts
 } from '../../store/workloadFactory/inventorySlice';
@@ -28,6 +30,8 @@ const InventoryApis = () => {
     const databaseHostState = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { fsxIdsList, fsxCredentialStatusObj, isRefreshed } = useAppSelector(state => state.inventory);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
+    const movedToUnmanagedHost = useAppSelector(state => state.inventory.movedToUnmanagedHost);
+    const movedToManagedHost = useAppSelector(state => state.inventory.movedToManagedHost);
 
     const [hostCursor, setHostCursor] = useState(null);
     const [discoveryCursor, setDiscoveryCursor] = useState(null);
@@ -109,6 +113,8 @@ const InventoryApis = () => {
         );
         dispatch(setUnManagedHosts([]));
         dispatch(setUnIdentifiableHosts([]));
+        dispatch(setMovedToManagedHost([]));
+        dispatch(setMovedToUnmanagedHost([]));
         if (headerSelectedCred && headerSelectedRegion) {
             setSkipApiCall(false);
             setSkipDiscoveryCall(false);
@@ -223,6 +229,8 @@ const InventoryApis = () => {
             dispatch(setUnIdentifiableHosts([]));
             dispatch(setHeaderSelectedCred(null));
             dispatch(setHeaderSelectedRegion(null));
+            dispatch(setMovedToManagedHost([]));
+            dispatch(setMovedToUnmanagedHost([]));
             setTimeout(() => {
                 dispatch(setHeaderSelectedCred(headerSelectedCred));
                 dispatch(setHeaderSelectedRegion(headerSelectedRegion));
@@ -318,7 +326,12 @@ const InventoryApis = () => {
                 if (isDemoMode) {
                     fsxCredentialValidationFailed = false;
                 }
-                if (host.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED || !isWindowAuthentication || fsxCredentialValidationFailed) {
+                
+                if (movedToManagedHost.includes(host?.ec2InstanceId)) {
+                    // ToDo: push in managed
+                } else if (movedToUnmanagedHost.includes(host?.ec2InstanceId)) {
+                    unManagedHosts.push(host);
+                } else if (host.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED || !isWindowAuthentication || fsxCredentialValidationFailed) {
                     unIdentifiableHosts.push(host);
                 } else {
                     if (!isManaged) {
@@ -329,7 +342,7 @@ const InventoryApis = () => {
             dispatch(setUnIdentifiableHosts(unIdentifiableHosts));
             dispatch(setUnManagedHosts(unManagedHosts));
         }
-    }, [discoveredHostData, databaseHostsData, fsxCredentialStatusObj]);
+    }, [discoveredHostData, databaseHostsData, fsxCredentialStatusObj, movedToUnmanagedHost, movedToManagedHost]);
 
     return <></>;
 };

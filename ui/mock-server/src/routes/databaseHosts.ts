@@ -79,4 +79,10 @@ router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances
     }, 3000);
 });
 
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/manage/:instanceId`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, {});
+    }, 3000);
+});
+
 export default router;

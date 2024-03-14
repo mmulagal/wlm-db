@@ -123,7 +123,7 @@ const UndetectedSecondDialog = ({data}: {data: any}) => {
                             id="1"
                             variant="Default"
                             onClick={() => handleRadio(DETECT_HOST_VAR.MOVE_TO_MANAGE)}
-                            isDisabled={true}
+                            // isDisabled={true}
                         />
                         <DsRadioButton
                             isSelected={detectHostRadio === DETECT_HOST_VAR.MOVE_TO_UNMANAGE}

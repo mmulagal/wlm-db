@@ -553,7 +553,7 @@ export const inventoryApi = createApi({
             manageHost: builder.mutation({
                 query: ({ credentialId, regionId, instanceId }) => ({
                     url: `credentials/${credentialId}/regions/${regionId}/manage/${instanceId}`,
-                    method: 'POST'
+                    method: 'GET'
                 })
             }),
             registerResourceCredentials: builder.mutation({

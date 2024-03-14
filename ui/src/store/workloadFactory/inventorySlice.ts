@@ -21,7 +21,9 @@ const initialInventoryState: any = {
     unIdentifiableHosts: [],
     fsxCredentialStatusObj: null,
     fsxIdsList: [],
-    isRefreshed: false
+    isRefreshed: false,
+    movedToUnmanagedHost: [],
+    movedToManagedHost: []
 };
 
 const inventorySlice = createSlice({
@@ -73,6 +75,12 @@ const inventorySlice = createSlice({
         },
         setIsRefreshed: (state, action: PayloadAction<any>) => {
             state.isRefreshed = action.payload;
+        },
+        setMovedToUnmanagedHost: (state, action: PayloadAction<any>) => {
+            state.movedToUnmanagedHost = action.payload;
+        },
+        setMovedToManagedHost: (state, action: PayloadAction<any>) => {
+            state.movedToManagedHost = action.payload;
         }
     }
 });
@@ -92,7 +100,9 @@ export const {
     setUnIdentifiableHosts,
     setFsxCredentialStatus,
     setFsxIdsList,
-    setIsRefreshed
+    setIsRefreshed,
+    setMovedToUnmanagedHost,
+    setMovedToManagedHost
 } = inventorySlice.actions;
 
 export default inventorySlice;

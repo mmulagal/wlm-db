@@ -19,12 +19,14 @@ import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { DETECT_HOST_VAR, FROM_DIALOG, FSX_DEPLOYMENT_MODE, SSM_TROUBLESHOOTING_LINK } from '../../../utils/consts';
-import { useRegisterResourceCredentialsMutation } from '../../../utils/apiService';
+import { useManageHostMutation, useRegisterResourceCredentialsMutation } from '../../../utils/apiService';
 import { setIsDetectHostError, setIsDetectHostLoading } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
-import { setDetectManagePassword, setDetectManageUserName, setDetectONTAPPassword, setDetectONTAPUserName } from '../../../store/workloadFactory/inventorySlice';
+import { setDetectManagePassword, setDetectManageUserName, setDetectONTAPPassword, setDetectONTAPUserName, setMovedToManagedHost, setMovedToUnmanagedHost, setRadioValueDetect } from '../../../store/workloadFactory/inventorySlice';
 import { createDetectHostPayload } from '../../../utils/utilityFunctions';
 import { useEffect, useState } from 'react';
+import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import store from '../../../store/store';
 
 const UndetectedHosts = () => {
     const dispatch = useDispatch();
@@ -35,6 +37,7 @@ const UndetectedHosts = () => {
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const fsxCredentialStatusObj = useAppSelector(state => state.inventory.fsxCredentialStatusObj);
 
+    const [manageHostApi] = useManageHostMutation();
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
 
     const [tableData, setTableData] = useState<any>([]);
@@ -79,9 +82,53 @@ const UndetectedHosts = () => {
         setTableData(formatUnIdentifiableData(unIdentifiableHosts));
     }, [unIdentifiableHosts, fsxCredentialStatusObj]);
 
+    const handleMoveToManage = async (rowData: any) => {
+        const state = store.getState();
+        const detectHostRadio = state.inventory.detectHostRadio;
+        const movedToManagedHost = state.inventory.movedToManagedHost;
+        const movedToUnmanagedHost = state.inventory.movedToUnmanagedHost;
+        if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE) {
+            const result: any = await manageHostApi({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                regionId: headerSelectedRegion?.label2,
+                instanceId: rowData?.instanceId
+            });
+            if (result && !result?.error) {
+                dispatch(setMovedToManagedHost([...movedToManagedHost, rowData?.instanceID]));
+                const managedSuccessMsg = (
+                    <div className={styles.notification}>
+                        {GENERAL.HOST_MOVED_SUCCESS[0]}
+                        <span className={styles.bold}>{rowData?.instance}</span>
+                        {GENERAL.HOST_MOVED_SUCCESS[1]}
+                        <span className={styles.bold}>{GENERAL.HOST_MOVED_SUCCESS[3]}</span>
+                        {GENERAL.HOST_MOVED_SUCCESS[4]}
+                    </div>
+                );
+                dispatch(
+                    addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: managedSuccessMsg })
+                );
+            };
+            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_UNMANAGE));
+        } else {
+            dispatch(setMovedToUnmanagedHost([...movedToUnmanagedHost, rowData?.instanceID]));
+            const unmanagedSuccessMsg = (
+                <div className={styles.notification}>
+                    {GENERAL.HOST_MOVED_SUCCESS[0]}
+                    <span className={styles.bold}>{rowData?.instance}</span>
+                    {GENERAL.HOST_MOVED_SUCCESS[1]}
+                    <span className={styles.bold}>{GENERAL.HOST_MOVED_SUCCESS[2]}</span>
+                    {GENERAL.HOST_MOVED_SUCCESS[4]}
+                </div>
+            );
+            dispatch(
+                addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: unmanagedSuccessMsg })
+            );
+            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_UNMANAGE));
+        }
+    };
+
     const handleRegisterResourceCred = async (rowData: any, fsxId: string) => {
         dispatch(setIsDetectHostLoading(true));
-        
         try {
             const result: any = await registerResourceCred({
                 credentialId: headerSelectedCred?.data?.credentialsId,
@@ -102,7 +149,7 @@ const UndetectedHosts = () => {
                             }
                             content={<UndetectedSecondDialog data={rowData} />}
                             primaryButton={GENERAL.DONE}
-                            callback={() => {}}
+                            callback={() => handleMoveToManage(rowData)}
                         />
                     );
                 }, 1);

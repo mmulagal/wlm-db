@@ -654,7 +654,8 @@ export const GENERAL = {
     DETECT_EDITION: 'Edition',
     EBS_DETECT_SUCCESS_MSG: ['Host detected successfully.', 'After detection the host was redirected to the unmanaged hosts tab.'],
     FSX_DETECT_SUCCESS_MSG: ['Detected host management', 'Would you like to manage the detected host via workload factory?'],
-    FSX_AFTER_DETECT_OPTIONS: ['Yes, Manage host via Workload Factory.', 'No, move host to the Unmanaged hosts tab.']
+    FSX_AFTER_DETECT_OPTIONS: ['Yes, Manage host via Workload Factory.', 'No, move host to the Unmanaged hosts tab.'],
+    HOST_MOVED_SUCCESS: ['Host ', ' successfully detected and moved to the ', ' Unmanaged hosts ', ' Managed hosts ', 'tab']
 };
 
 export const CODE_VIEWER = {
