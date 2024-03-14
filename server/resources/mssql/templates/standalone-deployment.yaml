@@ -316,8 +316,8 @@ Resources:
                         - FetchResources
                         - ScriptSignatureVerificationandExtract
                         - InitialSetup
-                        - ontapconfig
                         - InstancePrep
+                        - ontapconfig
                         - SQLIncludedConfigure
                         - Configure
                         - Cleanup
