@@ -24,6 +24,7 @@ import { setIsDetectHostError, setIsDetectHostLoading } from '../../../store/mss
 import { useDispatch } from 'react-redux';
 import { setDetectManagePassword, setDetectManageUserName, setDetectONTAPPassword, setDetectONTAPUserName } from '../../../store/workloadFactory/inventorySlice';
 import { createDetectHostPayload } from '../../../utils/utilityFunctions';
+import { useEffect, useState } from 'react';
 
 const UndetectedHosts = () => {
     const dispatch = useDispatch();
@@ -32,8 +33,51 @@ const UndetectedHosts = () => {
     const unIdentifiableHosts = useAppSelector(state => state.inventory.unIdentifiableHosts);
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const fsxCredentialStatusObj = useAppSelector(state => state.inventory.fsxCredentialStatusObj);
 
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
+
+    const [tableData, setTableData] = useState<any>([]);
+
+    const formatUnIdentifiableData = (data: any) => {
+        return data.map((item: any) => {
+            let fsxId = '';
+            if (item?.sqlServerInstances?.[0]?.storage) {
+                item?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
+                    if (storageObj.type === DETECT_HOST_VAR.FSXN) {
+                        fsxId = storageObj.id;
+                    }
+                });
+            };
+
+            let isRegistered = false;
+            let detectOption = 'disable';
+            if (fsxId) {
+                isRegistered = fsxCredentialStatusObj?.[fsxId];
+            }
+            if (item?.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED) {
+                detectOption = 'hide';
+            } else if ((fsxId && fsxId in fsxCredentialStatusObj) || !fsxId) {
+                detectOption = 'show';
+            }
+            
+            return {
+                name: item?.sqlServerInstances?.[0]?.sqlServerName || GENERAL.NOT_AVAILABLE,
+                instance: item?.ec2InstanceName,
+                instanceID: item?.ec2InstanceId,
+                vpc: item?.vpc,
+                ssm: item?.ssmState,
+                sqlServerInstances: item?.sqlServerInstances,
+                fsxId: fsxId,
+                isFsxRegistered: isRegistered,
+                detectOption: detectOption
+            };
+        });
+    };
+
+    useEffect(() => {
+        setTableData(formatUnIdentifiableData(unIdentifiableHosts));
+    }, [unIdentifiableHosts, fsxCredentialStatusObj]);
 
     const handleRegisterResourceCred = async (rowData: any, fsxId: string) => {
         dispatch(setIsDetectHostLoading(true));
@@ -82,15 +126,6 @@ const UndetectedHosts = () => {
 
     const handleManageDetect = (rowData: any) => {
         dispatch(setIsDetectHostError(''));
-        let fsxId = '';
-        if (rowData?.sqlServerInstances?.[0]?.storage) {
-            rowData?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
-                if (storageObj.type === DETECT_HOST_VAR.FSXN) {
-                    fsxId = storageObj.id;
-                }
-            });
-        };
-        
         setDialog(
             <DialogComponent
                 header={
@@ -99,10 +134,10 @@ const UndetectedHosts = () => {
                         <Typography variant="Semibold_14">{GENERAL.DETECT_HOST_STEPS[0]}</Typography>
                     </div>
                 }
-                content={<UndetectedHostDialogContent rowData={rowData} fsxId={fsxId} />}
+                content={<UndetectedHostDialogContent rowData={rowData} />}
                 primaryButton={GENERAL.DETECT}
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => handleRegisterResourceCred(rowData, fsxId)}
+                callback={() => handleRegisterResourceCred(rowData, rowData?.fsxId)}
                 closeCallback={() => {
                     closeDialog();
                     resetDialogValues();
@@ -120,12 +155,21 @@ const UndetectedHosts = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
-                    {rowData?.ssm === DETECT_HOST_VAR.SSM_CONNECTED && 
+                    {rowData?.detectOption === 'show' &&
                         <div
                             className={styles.detectManage}
                             onClick={() => {
                                 handleManageDetect(rowData)
                             }}
+                        >
+                            <Typography variant="Regular_14" className={styles.textStyle}>
+                                {GENERAL.DETECT_HOST}
+                            </Typography>
+                        </div>
+                    }
+                    {rowData?.detectOption === 'disable' &&
+                        <div
+                            className={styles.detectManageDisable}
                         >
                             <Typography variant="Regular_14" className={styles.textStyle}>
                                 {GENERAL.DETECT_HOST}
@@ -269,28 +313,16 @@ const UndetectedHosts = () => {
         lastColDetails()
     ];
 
-    const formatUnIdentifiableData = (data: any) => {
-        return data.map((item: any) => {
-            return {
-                name: item?.sqlServerInstances?.[0]?.sqlServerName || GENERAL.NOT_AVAILABLE,
-                instance: item?.ec2InstanceName,
-                instanceID: item?.ec2InstanceId,
-                vpc: item?.vpc,
-                ssm: item?.ssmState,
-                sqlServerInstances: item?.sqlServerInstances
-            };
-        });
-    };
-
     const tableProps = useTable({
         isSorting: false,
         selectionType: 'none',
-        columns: UnidentifiedHostsColDefs,
-        rows: formatUnIdentifiableData(unIdentifiableHosts) || [],
+        columns: UnidentifiedHostsColDefs ,
+        rows: tableData,
         pageSize: 10,
         isHorizontalScroll: true,
         isLazyLoading: isDiscoverInProgress
     });
+
     return (
         <div className={styles.undetectedHosts}>
             <div className={styles.table}>

@@ -14,11 +14,9 @@ import { GENERAL } from '../../../../utils/appConstants';
 
 type DialogProps = {
     rowData: any;
-    fsxId: string;
-    fsxRegistered?: boolean;
 };
 
-const UndetectedHostDialogContent = ({rowData,fsxId,fsxRegistered = false}: DialogProps) => {
+const UndetectedHostDialogContent = ({rowData}: DialogProps) => {
     const dispatch = useDispatch();
     const detectManageUserName = useAppSelector(state => state.inventory.detectManageUserName);
     const detectManagePassword = useAppSelector(state => state.inventory.detectManagePassword);
@@ -32,7 +30,7 @@ const UndetectedHostDialogContent = ({rowData,fsxId,fsxRegistered = false}: Dial
     return (
         <div className={styles.undetectedHostContent}>
             <Typography variant="Regular_14">
-                {GENERAL.DETECT_HOST_DESC}
+                {`${GENERAL.DETECT_HOST_DESC} ${rowData?.instance}`}
             </Typography>
 
             {
@@ -62,7 +60,7 @@ const UndetectedHostDialogContent = ({rowData,fsxId,fsxRegistered = false}: Dial
             }
             
             {
-                fsxId && !fsxRegistered &&
+                rowData?.fsxId && !rowData?.isFsxRegistered &&
                 <div className={styles.secondSection}>
                     <Typography variant="Semibold_14">{GENERAL.DETECT_FSX_HEADING}</Typography>
                     <div className={styles.textFieldContainer}>

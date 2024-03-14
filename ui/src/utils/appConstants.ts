@@ -638,7 +638,7 @@ export const GENERAL = {
     SSM_CONNECTIVITY: 'SSM connectivity',
     SSM_ONLINE: 'Online',
     SSM_CONNECTION_LOST: 'Connection lost',
-    DETECT_HOST_DESC: 'Detect and manage Microsoft SQL Server deployed on EC2 instance with IP address',
+    DETECT_HOST_DESC: 'Detect and manage Microsoft SQL Server deployed on EC2 instance ',
     DETECT_MSSQL_HEADING: 'Microsoft SQL Server',
     DETECT_MSSQL_USERNAME: 'Microsoft SQL Server user name',
     DETECT_MSSQL_PASSWORD: 'Microsoft SQL Server password',
@@ -653,7 +653,7 @@ export const GENERAL = {
     DETECT_DEPLOYMENT_MODEL: 'Deployment model',
     DETECT_EDITION: 'Edition',
     EBS_DETECT_SUCCESS_MSG: ['Host detected successfully.', 'After detection the host was redirected to the unmanaged hosts tab.'],
-    FSX_DETECT_SUCCESS_MSG: ['Detected hosts management', 'Would you like to manage the detected host via workload factory?'],
+    FSX_DETECT_SUCCESS_MSG: ['Detected host management', 'Would you like to manage the detected host via workload factory?'],
     FSX_AFTER_DETECT_OPTIONS: ['Yes, Manage host via Workload Factory.', 'No, move host to the Unmanaged hosts tab.']
 };
 
