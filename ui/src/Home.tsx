@@ -14,6 +14,7 @@ import { clearNotifications, removeNotification } from './store/notificationSlic
 
 import JobMonitoring from './workloadFactory/JobMonitoring/JobMonitoring';
 import HeaderComponent from './workloadFactory/DatabaseHomePage/HeaderComponent/HeaderComponent';
+import WizardComponent from './workloadFactory/CreateNewDB/WizardComponent/WizardComponent';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -23,8 +24,6 @@ const Home = () => {
     const showNotifications = useMemo(() => {
         return notificationsObj && notificationsObj.messages && notificationsObj.messages.length > 0;
     }, [notificationsObj]);
-
-    const CreateNewUserDB = React.lazy(() => import('./workloadFactory/CreateNewDB/WizardComponent/WizardComponent')); //Load Create User DB lazily
 
     return (
         <div className={styles['app-layout']}>
@@ -46,7 +45,7 @@ const Home = () => {
                             <Route path={'tables'} element={<Tables />} />
                         </Route>
                         <Route path={'databases'} element={<HeaderComponent />} />
-                        <Route path={'create-new-user'} element={<CreateNewUserDB />} />
+                        <Route path={'create-new-user'} element={<WizardComponent />} />
                         <Route path={'job-monitor'} element={<JobMonitoring />} />
                         <Route path="*" element={<MainComponent />} />
                     </Routes>
