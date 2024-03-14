@@ -23,6 +23,15 @@ const PricingServiceRequest = Type.Object({
             )
         })
     ),
+    ebsStorage: Type.Optional(
+        Type.Object({
+            regionCode: Type.String({ minLength: 1 }),
+            size: Type.Number({ description: 'Volume size in GiB' }),
+            throughput: Type.Optional(Type.Number({ description: 'Throughput is in MBps' })),
+            iops: Type.Optional(Type.Number()),
+            volumeType: Type.String(Type.String({ enum: ['gp2', 'io1', 'st1', 'sc1', 'gp3', 'io2'] }))
+        })
+    ),
     vpc: Type.Optional(
         Type.Object({
             regionCode: Type.String({ minLength: 1 })
@@ -34,8 +43,8 @@ const PricingServiceResponse = Type.Object({
     compute: Type.Number(),
     storage: Type.Optional(
         Type.Object({
-            capacity: Type.Number(),
-            throughput: Type.Number(),
+            capacityCost: Type.Number(),
+            operationalCost: Type.Number(),
             size: Type.Optional(
                 Type.Object(
                     {
@@ -53,6 +62,12 @@ const PricingServiceResponse = Type.Object({
         })
     ),
     vpc: Type.Optional(Type.Number()),
+    ebsStorage: Type.Optional(
+        Type.Object({
+            ebsStorageCost: Type.Number(),
+            size: Type.Number()
+        })
+    ),
     total: Type.Number()
 });
 

@@ -464,22 +464,22 @@ async function saveDiscoveredParameters(
     ]);
 }
 
-async function fetchHostsInformation(
+async function fetchUnmanagedHostsInformation(
     accountId: string,
     credentialsId: string,
     region: string,
-    instancesDetails: { instanceId: string; fsxId: string }[] = []
+    instancesDetails: { instanceId: string; fsxId?: string; ebsVolumeId?: string }[] = []
 ) {
     logger.info('Fetching hosts information:', { accountId, credentialsId, region, instancesDetails });
 
-    const resourceDetailsList = instancesDetails.map(({ instanceId, fsxId }) => ({
+    const resourceDetailsList = instancesDetails.map(({ instanceId, fsxId, ebsVolumeId }) => ({
         id: null,
         account_id: accountId,
         resource_id: getMsSqlResourceId(instanceId),
         resource_type: RESOURCESTYPE.MSSQL,
         resource_name: instanceId,
         cloud_provider_name: CloudProviders.AWS,
-        co_relation_id: fsxId,
+        co_relation_id: fsxId || null,
         cloud_provider_account_id: null,
         region,
         credentials_id: credentialsId,
@@ -487,7 +487,8 @@ async function fetchHostsInformation(
         metadata: {
             creationDate: Date.now(),
             node1InstanceId: instanceId
-        }
+        },
+        ebsVolumeId
     }));
 
     const response = await Promise.all(
@@ -495,8 +496,10 @@ async function fetchHostsInformation(
             getDatabaseHostSummary(
                 accountId,
                 resourceDetail.resource_id,
-                'performance,topology,usageEstimation,resourceUtilization',
-                resourceDetail
+                'performance,usageEstimation,resourceUtilization',
+                resourceDetail,
+                resourceDetail?.ebsVolumeId,
+                false // unmanaged host
             )
         )
     );
@@ -507,4 +510,9 @@ async function fetchHostsInformation(
     };
 }
 
-export { getHostAndSqlServerInfo, saveDiscoveredParameters, getHostAndSqlInfoFromPsOutput, fetchHostsInformation };
+export {
+    getHostAndSqlServerInfo,
+    saveDiscoveredParameters,
+    getHostAndSqlInfoFromPsOutput,
+    fetchUnmanagedHostsInformation
+};

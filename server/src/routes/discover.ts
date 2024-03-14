@@ -2,7 +2,7 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import { DiscoverMsSqlSchema, DiscoverCredentialsSchema, MsSqlInstancesSchema } from './schemas/discover-schemas';
 import {
-    fetchHostsInformation,
+    fetchUnmanagedHostsInformation,
     getHostAndSqlServerInfo,
     saveDiscoveredParameters
 } from '../operations/discover-operations';
@@ -48,6 +48,6 @@ export default function discoverRoutes(fastify: FastifyInstance) {
             body: { instancesDetails }
         } = request;
 
-        return fetchHostsInformation(accountId, credentialsId, region, instancesDetails);
+        return fetchUnmanagedHostsInformation(accountId, credentialsId, region, instancesDetails);
     });
 }

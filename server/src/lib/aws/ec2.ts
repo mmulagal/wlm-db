@@ -35,7 +35,9 @@ import {
     paginateDescribeVpcs,
     paginateDescribeSubnets,
     DescribeInstanceTypeOfferingsCommandInput,
-    DescribeInstanceTypeOfferingsCommand
+    DescribeInstanceTypeOfferingsCommand,
+    DescribeVolumesCommandInput,
+    DescribeVolumesCommand
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -310,6 +312,17 @@ async function describeInstanceTypeOfferings(
     return response;
 }
 
+async function describeVolumes(credentialsId: string, region: string, params: DescribeVolumesCommandInput) {
+    logger.info('Describe volumes', { region, params });
+
+    const ec2 = await getEC2Client(region, credentialsId);
+
+    const resp = await ec2.send(new DescribeVolumesCommand(params));
+    logger.debug('descibeVolumes response:', resp);
+
+    return resp;
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -327,5 +340,6 @@ export {
     describeEndpoints,
     paginatedDescribeVpcs,
     paginatedDescribeSubnets,
-    describeInstanceTypeOfferings
+    describeInstanceTypeOfferings,
+    describeVolumes
 };

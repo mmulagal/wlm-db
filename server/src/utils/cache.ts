@@ -86,7 +86,7 @@ function getCacheByType(type: string) {
 }
 
 function writeToCache(type: string, key: string, data: any, ttl?: number | string) {
-    logger.info('Writing to cache:', { key, data });
+    logger.debug('Writing to cache:', { key, data });
 
     const cache = getCacheByType(type);
 

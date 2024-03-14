@@ -24,13 +24,14 @@ describe('Pricing Operations', () => {
                 iops: 0,
                 deploymentOption: 'MULTI_AZ_1'
             },
+            ebsStorage: { regionCode: 'ap-southeast-1', size: 102400, throughput: 1024, iops: 0, volumeType: 'gp2' },
             vpc: {
                 regionCode: 'ap-southeast-1'
             }
         };
 
-        const { compute, storage, vpc } = pricingRequest;
-        const resp = await calculatePrice(compute, storage, vpc);
+        const { compute, storage, vpc, ebsStorage } = pricingRequest;
+        const resp = await calculatePrice(compute, storage, vpc, ebsStorage);
         expect(resp).toBeDefined();
     });
 });
