@@ -135,7 +135,7 @@ async function callSsmExecution(
             throw createError(errorMessage);
         }
         if (status === CommandInvocationStatus.TIMED_OUT || status === CommandInvocationStatus.CANCELLED) {
-            const errorMessage = `SSM command ${commandId} execution  timed out on node ${activeNodeInstanceId}  Error: ${response?.StandardErrorContent}`;
+            const errorMessage = `SSM command ${commandId} execution  timed out on node ${activeNodeInstanceId}`;
             logger.error(errorMessage);
             throw createError(errorMessage);
         }

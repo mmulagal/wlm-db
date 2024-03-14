@@ -265,7 +265,7 @@ async function getHostAndSqlInfoFromPsOutput(
         );
     }
     if (status === CommandInvocationStatus.TIMED_OUT || status === CommandInvocationStatus.CANCELLED) {
-        const errorMessage = `SSM command ${commandId} execution  timed out on node ${ssmTarget.ec2InstanceId}  Error: ${response?.StandardErrorContent}`;
+        const errorMessage = `SSM command ${commandId} execution  timed out on node ${ssmTarget.ec2InstanceId}`;
         logger.error(errorMessage);
         throw createError(errorMessage);
     }
