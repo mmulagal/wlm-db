@@ -407,6 +407,18 @@ const PARAMETERS = [
         description: 'Boolean to convey if a EC2 endpoint exists in the vpc.',
         type: 'String',
         default: 'false'
+    },
+    {
+        name: 'Ec2MessagesEndpointExists',
+        description: 'Boolean to convey if EC2 messages endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
+    },
+    {
+        name: 'SSMMessagesEndpointExists',
+        description: 'Boolean to convey if SSM messages endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
     }
 ];
 
