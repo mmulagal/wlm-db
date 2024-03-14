@@ -127,9 +127,13 @@ async function formatTemplateParameters(
     const stackName = derivedParams.StackName;
     const validationAmiImage = credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : '';
 
+    const availabilityZones =
+        sqlConfiguration.sqlDeploymentMode === STANDALONE
+            ? [networkConfiguration.availabilityZone1!]
+            : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
     const validationNodeInstanceType =
         credentialsId && region
-            ? await getValidationNodeInstanceType(credentialsId!, region)
+            ? await getValidationNodeInstanceType(credentialsId!, region, availabilityZones)
             : VALIDATION_NODE_INSTANCETYPE.T2MICRO;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
@@ -597,7 +601,11 @@ async function createCloudFormationTemplateForUserDeployment(
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
-    const validationNodeInstanceType = await getValidationNodeInstanceType(credentialsId!, region!);
+    const availabilityZones =
+        sqlConfiguration.sqlDeploymentMode === STANDALONE
+            ? [networkConfiguration.availabilityZone1!]
+            : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
+    const validationNodeInstanceType = await getValidationNodeInstanceType(credentialsId!, region!, availabilityZones);
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
