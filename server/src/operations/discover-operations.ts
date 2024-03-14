@@ -264,10 +264,8 @@ async function getHostAndSqlInfoFromPsOutput(
             `Failed to get details from EC2 instance ${ssmTarget.ec2InstanceId}. Reason: ${response?.StandardErrorContent}`
         );
     }
-    if (status === CommandInvocationStatus.TIMED_OUT || status === CommandInvocationStatus.CANCELLED) {
-        const errorMessage = `SSM command ${commandId} execution  timed out on node ${ssmTarget.ec2InstanceId}`;
-        logger.error(errorMessage);
-        throw createError(errorMessage);
+    if (status === CommandInvocationStatus.TIMED_OUT) {
+        logger.error(`SSM command ${commandId} execution  timed out on node ${ssmTarget.ec2InstanceId}`);
     }
 
     api1EndTime = performance.now();
