@@ -22,18 +22,30 @@ import { DETECT_HOST_VAR, FROM_DIALOG, FSX_DEPLOYMENT_MODE, SSM_TROUBLESHOOTING_
 import { useRegisterResourceCredentialsMutation } from '../../../utils/apiService';
 import { setIsDetectHostError, setIsDetectHostLoading } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
-import { setDetectManagePassword, setDetectManageUserName, setDetectONTAPPassword, setDetectONTAPUserName } from '../../../store/workloadFactory/inventorySlice';
+import {
+    setDetectManagePassword,
+    setDetectManageUserName,
+    setDetectONTAPPassword,
+    setDetectONTAPUserName,
+    setValuesForForm
+} from '../../../store/workloadFactory/inventorySlice';
 import { createDetectHostPayload } from '../../../utils/utilityFunctions';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const UndetectedHosts = () => {
     const dispatch = useDispatch();
-    
+
     const { setDialog, closeDialog } = useDialog();
     const unIdentifiableHosts = useAppSelector(state => state.inventory.unIdentifiableHosts);
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const fsxCredentialStatusObj = useAppSelector(state => state.inventory.fsxCredentialStatusObj);
+
+    //Validation check in form
+    const detectManageUserName = useAppSelector(state => state.inventory.detectManageUserName);
+    const detectManagePassword = useAppSelector(state => state.inventory.detectManagePassword);
+
+    const valueRef = useRef(false);
 
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
 
@@ -48,7 +60,7 @@ const UndetectedHosts = () => {
                         fsxId = storageObj.id;
                     }
                 });
-            };
+            }
 
             let isRegistered = false;
             let detectOption = 'disable';
@@ -60,7 +72,7 @@ const UndetectedHosts = () => {
             } else if ((fsxId && fsxId in fsxCredentialStatusObj) || !fsxId) {
                 detectOption = 'show';
             }
-            
+
             return {
                 name: item?.sqlServerInstances?.[0]?.sqlServerName || GENERAL.NOT_AVAILABLE,
                 instance: item?.ec2InstanceName,
@@ -74,45 +86,58 @@ const UndetectedHosts = () => {
             };
         });
     };
+    useEffect(() => {
+        if (detectManageUserName && detectManagePassword) {
+            valueRef.current = true;
+        } else {
+            valueRef.current = false;
+        }
+    }, [detectManageUserName, detectManagePassword]);
 
     useEffect(() => {
         setTableData(formatUnIdentifiableData(unIdentifiableHosts));
     }, [unIdentifiableHosts, fsxCredentialStatusObj]);
 
     const handleRegisterResourceCred = async (rowData: any, fsxId: string) => {
-        dispatch(setIsDetectHostLoading(true));
-        
-        try {
-            const result: any = await registerResourceCred({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
-                instanceId: rowData?.instanceId,
-                payload: createDetectHostPayload(rowData?.instanceID, fsxId)
-            });
-            if (result && !result?.error) {
-                dispatch(setIsDetectHostLoading(false));
-                setTimeout(() => {
-                    setDialog(
-                        <DialogComponent
-                            header={
-                                <div className={styles.headerDialog}>
-                                    <Typography variant="Regular_20">{GENERAL.DETECT_HOST}</Typography>
-                                    <Typography variant="Semibold_14">{GENERAL.DETECT_HOST_STEPS[1]}</Typography>
-                                </div>
-                            }
-                            content={<UndetectedSecondDialog data={rowData} />}
-                            primaryButton={GENERAL.DONE}
-                            callback={() => {}}
-                        />
-                    );
-                }, 1);
-                resetDialogValues();
-            } else {
-                dispatch(setIsDetectHostError(GENERAL.FAILED_TO_DETECT_HOST));
+        if (!valueRef.current) {
+            dispatch(setValuesForForm(true));
+        } else {
+            dispatch(setValuesForForm(false));
+
+            dispatch(setIsDetectHostLoading(true));
+
+            try {
+                const result: any = await registerResourceCred({
+                    credentialId: headerSelectedCred?.data?.credentialsId,
+                    regionId: headerSelectedRegion?.label2,
+                    instanceId: rowData?.instanceId,
+                    payload: createDetectHostPayload(rowData?.instanceID, fsxId)
+                });
+                if (result && !result?.error) {
+                    dispatch(setIsDetectHostLoading(false));
+                    setTimeout(() => {
+                        setDialog(
+                            <DialogComponent
+                                header={
+                                    <div className={styles.headerDialog}>
+                                        <Typography variant="Regular_20">{GENERAL.DETECT_HOST}</Typography>
+                                        <Typography variant="Semibold_14">{GENERAL.DETECT_HOST_STEPS[1]}</Typography>
+                                    </div>
+                                }
+                                content={<UndetectedSecondDialog data={rowData} />}
+                                primaryButton={GENERAL.DONE}
+                                callback={() => {}}
+                            />
+                        );
+                    }, 1);
+                    resetDialogValues();
+                } else {
+                    dispatch(setIsDetectHostError(GENERAL.FAILED_TO_DETECT_HOST));
+                    dispatch(setIsDetectHostLoading(false));
+                }
+            } catch (error) {
                 dispatch(setIsDetectHostLoading(false));
             }
-        } catch (error) {
-            dispatch(setIsDetectHostLoading(false));
         }
     };
 
@@ -126,6 +151,7 @@ const UndetectedHosts = () => {
 
     const handleManageDetect = (rowData: any) => {
         dispatch(setIsDetectHostError(''));
+
         setDialog(
             <DialogComponent
                 header={
@@ -155,29 +181,26 @@ const UndetectedHosts = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
-                    {rowData?.detectOption === 'show' &&
-                        <div
-                            className={styles.detectManage}
-                            onClick={() => {
-                                handleManageDetect(rowData)
-                            }}
-                        >
-                            <Typography variant="Regular_14" className={styles.textStyle}>
-                                {GENERAL.DETECT_HOST}
-                            </Typography>
-                        </div>
-                    }
-                    {rowData?.detectOption === 'disable' &&
-                        <div
-                            className={styles.detectManageDisable}
-                        >
-                            <Typography variant="Regular_14" className={styles.textStyle}>
-                                {GENERAL.DETECT_HOST}
-                            </Typography>
-                        </div>
-                    }
+                        {rowData?.detectOption === 'show' && (
+                            <div
+                                className={styles.detectManage}
+                                onClick={() => {
+                                    handleManageDetect(rowData);
+                                }}
+                            >
+                                <Typography variant="Regular_14" className={styles.textStyle}>
+                                    {GENERAL.DETECT_HOST}
+                                </Typography>
+                            </div>
+                        )}
+                        {rowData?.detectOption === 'disable' && (
+                            <div className={styles.detectManageDisable}>
+                                <Typography variant="Regular_14" className={styles.textStyle}>
+                                    {GENERAL.DETECT_HOST}
+                                </Typography>
+                            </div>
+                        )}
                     </>
-                    
                 );
             }
         };
@@ -305,7 +328,11 @@ const UndetectedHosts = () => {
                                 />
                             )}
                         </div>
-                        <div>{cellData === DETECT_HOST_VAR.SSM_CONNECTED ? GENERAL.SSM_ONLINE : GENERAL.SSM_CONNECTION_LOST}</div>
+                        <div>
+                            {cellData === DETECT_HOST_VAR.SSM_CONNECTED
+                                ? GENERAL.SSM_ONLINE
+                                : GENERAL.SSM_CONNECTION_LOST}
+                        </div>
                     </div>
                 );
             }
@@ -316,7 +343,7 @@ const UndetectedHosts = () => {
     const tableProps = useTable({
         isSorting: false,
         selectionType: 'none',
-        columns: UnidentifiedHostsColDefs ,
+        columns: UnidentifiedHostsColDefs,
         rows: tableData,
         pageSize: 10,
         isHorizontalScroll: true,

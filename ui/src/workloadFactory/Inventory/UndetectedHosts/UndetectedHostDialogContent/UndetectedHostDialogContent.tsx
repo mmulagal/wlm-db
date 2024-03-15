@@ -16,12 +16,13 @@ type DialogProps = {
     rowData: any;
 };
 
-const UndetectedHostDialogContent = ({rowData}: DialogProps) => {
+const UndetectedHostDialogContent = ({ rowData }: DialogProps) => {
     const dispatch = useDispatch();
     const detectManageUserName = useAppSelector(state => state.inventory.detectManageUserName);
     const detectManagePassword = useAppSelector(state => state.inventory.detectManagePassword);
     const detectOntapUsername = useAppSelector(state => state.inventory.detectOntapUsername);
     const detectOntapPassword = useAppSelector(state => state.inventory.detectOntapPassword);
+    const topRowValuesNotFilled = useAppSelector(state => state.inventory.valuesNotFilled);
 
     useEffect(() => {
         dispatch(setIsDetectHostError(''));
@@ -29,12 +30,9 @@ const UndetectedHostDialogContent = ({rowData}: DialogProps) => {
 
     return (
         <div className={styles.undetectedHostContent}>
-            <Typography variant="Regular_14">
-                {`${GENERAL.DETECT_HOST_DESC} ${rowData?.instance}`}
-            </Typography>
+            <Typography variant="Regular_14">{`${GENERAL.DETECT_HOST_DESC} ${rowData?.instance}`}</Typography>
 
-            {
-                !rowData?.sqlServerInstances?.[0]?.windowsAuthentication && 
+            {!rowData?.sqlServerInstances?.[0]?.windowsAuthentication && (
                 <div className={styles.firstSection}>
                     <Typography variant="Semibold_14">{GENERAL.DETECT_MSSQL_HEADING}</Typography>
                     <div className={styles.textFieldContainer}>
@@ -45,6 +43,7 @@ const UndetectedHostDialogContent = ({rowData}: DialogProps) => {
                                 dispatch(setDetectManageUserName(e.target.value));
                             }}
                             className={styles.textFieldStyle}
+                            error={topRowValuesNotFilled && !detectManageUserName ? GENERAL.ACTION_REQUIRED : ''}
                         />
 
                         <PasswordField
@@ -54,13 +53,13 @@ const UndetectedHostDialogContent = ({rowData}: DialogProps) => {
                                 dispatch(setDetectManagePassword(e.target.value));
                             }}
                             className={styles.textFieldStyle}
+                            error={topRowValuesNotFilled && !detectManagePassword ? GENERAL.ACTION_REQUIRED : ''}
                         />
                     </div>
                 </div>
-            }
-            
-            {
-                rowData?.fsxId && !rowData?.isFsxRegistered &&
+            )}
+
+            {rowData?.fsxId && !rowData?.isFsxRegistered && (
                 <div className={styles.secondSection}>
                     <Typography variant="Semibold_14">{GENERAL.DETECT_FSX_HEADING}</Typography>
                     <div className={styles.textFieldContainer}>
@@ -83,7 +82,7 @@ const UndetectedHostDialogContent = ({rowData}: DialogProps) => {
                         />
                     </div>
                 </div>
-            }
+            )}
         </div>
     );
 };

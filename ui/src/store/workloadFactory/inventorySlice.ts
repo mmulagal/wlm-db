@@ -21,13 +21,17 @@ const initialInventoryState: any = {
     unIdentifiableHosts: [],
     fsxCredentialStatusObj: null,
     fsxIdsList: [],
-    isRefreshed: false
+    isRefreshed: false,
+    valuesNotFilled: false
 };
 
 const inventorySlice = createSlice({
     name: 'inventory',
     initialState: initialInventoryState,
     reducers: {
+        setValuesForForm: (state, action: PayloadAction<any>) => {
+            state.valuesNotFilled = action.payload;
+        },
         setManagedHostColState: (state, action: PayloadAction<any>) => {
             state.managedHostInitialColumns = action.payload;
         },
@@ -92,7 +96,8 @@ export const {
     setUnIdentifiableHosts,
     setFsxCredentialStatus,
     setFsxIdsList,
-    setIsRefreshed
+    setIsRefreshed,
+    setValuesForForm
 } = inventorySlice.actions;
 
 export default inventorySlice;
