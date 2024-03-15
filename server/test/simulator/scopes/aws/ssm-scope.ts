@@ -146,7 +146,7 @@ const nativeSqlBackupDatabasesParams = {
 
 const getOntapSnapshotCountParams = {
     commands: [
-        "C:\\SSM\\OntapRestGet.ps1 test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'uuid=939a4ec9-7c14-11ee-b185-8329e8fcbf44' -OntapResourceQuery 'fields=snapshot_count'"
+        "C:\\SSM\\OntapRestGet.ps1 test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'uuid=ea8b0326-302e-11ee-8387-19b38f44ff5b' -OntapResourceQuery 'fields=snapshot_count'"
     ]
 };
 
