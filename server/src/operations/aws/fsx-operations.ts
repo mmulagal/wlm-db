@@ -312,10 +312,16 @@ async function getOntapVolumesSnapshotCount(
             const apiEndpoint = 'storage/volumes';
             const apiFilter = `uuid=${volumeUuids?.join()}`;
             const apiQuery = 'fields=snapshot_count';
-
-            const commands = [
-                `C:\\SSM\\OntapRestGet.ps1 -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
-            ];
+            let commands;
+            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+                commands = [
+                    `C:\\SSM\\OntapRestGet.ps1 test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+                ];
+            } else {
+                commands = [
+                    `C:\\SSM\\OntapRestGet.ps1 -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+                ];
+            }
 
             const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId!);
 
