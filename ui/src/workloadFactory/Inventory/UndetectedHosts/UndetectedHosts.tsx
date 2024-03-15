@@ -44,6 +44,9 @@ const UndetectedHosts = () => {
     //Validation check in form
     const detectManageUserName = useAppSelector(state => state.inventory.detectManageUserName);
     const detectManagePassword = useAppSelector(state => state.inventory.detectManagePassword);
+    const detectOntapUsername = useAppSelector(state => state.inventory.detectOntapUsername);
+    const detectOntapPassword = useAppSelector(state => state.inventory.detectOntapPassword);
+    const [entryData, setEntryData] = useState<any>({});
 
     const valueRef = useRef(false);
 
@@ -87,12 +90,30 @@ const UndetectedHosts = () => {
         });
     };
     useEffect(() => {
-        if (detectManageUserName && detectManagePassword) {
-            valueRef.current = true;
-        } else {
-            valueRef.current = false;
+        if (
+            !entryData?.sqlServerInstances?.[0]?.windowsAuthentication &&
+            entryData?.fsxId &&
+            !entryData?.isFsxRegistered
+        ) {
+            if (detectManageUserName && detectManagePassword && detectOntapUsername && detectOntapPassword) {
+                valueRef.current = true;
+            } else {
+                valueRef.current = false;
+            }
+        } else if (!entryData?.sqlServerInstances?.[0]?.windowsAuthentication) {
+            if (detectManageUserName && detectManagePassword) {
+                valueRef.current = true;
+            } else {
+                valueRef.current = false;
+            }
+        } else if (entryData?.fsxId && !entryData?.isFsxRegistered) {
+            if (detectOntapUsername && detectOntapPassword) {
+                valueRef.current = true;
+            } else {
+                valueRef.current = false;
+            }
         }
-    }, [detectManageUserName, detectManagePassword]);
+    }, [detectManageUserName, detectManagePassword, detectOntapUsername, detectOntapPassword]);
 
     useEffect(() => {
         setTableData(formatUnIdentifiableData(unIdentifiableHosts));
@@ -150,6 +171,7 @@ const UndetectedHosts = () => {
     };
 
     const handleManageDetect = (rowData: any) => {
+        setEntryData(rowData);
         dispatch(setIsDetectHostError(''));
 
         setDialog(

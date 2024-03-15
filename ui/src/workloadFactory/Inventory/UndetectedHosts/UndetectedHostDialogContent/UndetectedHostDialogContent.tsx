@@ -70,6 +70,7 @@ const UndetectedHostDialogContent = ({ rowData }: DialogProps) => {
                                 dispatch(setDetectONTAPUserName(e.target.value));
                             }}
                             className={styles.textFieldStyle}
+                            error={topRowValuesNotFilled && !detectOntapUsername ? GENERAL.ACTION_REQUIRED : ''}
                         />
 
                         <PasswordField
@@ -79,6 +80,7 @@ const UndetectedHostDialogContent = ({ rowData }: DialogProps) => {
                                 dispatch(setDetectONTAPPassword(e.target.value));
                             }}
                             className={styles.textFieldStyle}
+                            error={topRowValuesNotFilled && !detectOntapPassword ? GENERAL.ACTION_REQUIRED : ''}
                         />
                     </div>
                 </div>
