@@ -95,6 +95,7 @@ const UndetectedHosts = () => {
             };
         });
     };
+
     useEffect(() => {
         if (
             !entryData?.sqlServerInstances?.[0]?.windowsAuthentication &&
@@ -171,7 +172,6 @@ const UndetectedHosts = () => {
             dispatch(setValuesForForm(true));
         } else {
             dispatch(setValuesForForm(false));
-
             dispatch(setIsDetectHostLoading(true));
 
             try {
@@ -192,18 +192,19 @@ const UndetectedHosts = () => {
                                         <Typography variant="Semibold_14">{GENERAL.DETECT_HOST_STEPS[1]}</Typography>
                                     </div>
                                 }
-                                content={<UndetectedSecondDialog data={rowData} />}
+                                content={<UndetectedSecondDialog data={rowData} apiResult={result?.data}/>}
                                 primaryButton={GENERAL.DONE}
-                                callback={() => {}}
+                                callback={() => handleMoveToManage(rowData)}
                             />
                         );
-                    }, 1);
+                    }, 0);
                     resetDialogValues();
                 } else {
-                    dispatch(setIsDetectHostError(GENERAL.FAILED_TO_DETECT_HOST));
+                    dispatch(setIsDetectHostError(result?.error?.data?.message || GENERAL.FAILED_TO_DETECT_HOST));
                     dispatch(setIsDetectHostLoading(false));
                 }
             } catch (error) {
+                dispatch(setIsDetectHostError(error || GENERAL.FAILED_TO_DETECT_HOST));
                 dispatch(setIsDetectHostLoading(false));
             }
         }
@@ -231,7 +232,7 @@ const UndetectedHosts = () => {
                 }
                 content={<UndetectedHostDialogContent rowData={rowData} />}
                 primaryButton={GENERAL.DETECT}
-                secondaryButton={GENERAL.CANCEL}
+                secondaryButton={GENERAL.CLOSE}
                 callback={() => handleRegisterResourceCred(rowData, rowData?.fsxId)}
                 closeCallback={() => {
                     closeDialog();
