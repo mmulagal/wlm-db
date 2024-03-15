@@ -192,7 +192,7 @@ const UndetectedHosts = () => {
                                         <Typography variant="Semibold_14">{GENERAL.DETECT_HOST_STEPS[1]}</Typography>
                                     </div>
                                 }
-                                content={<UndetectedSecondDialog data={rowData} apiResult={result?.data}/>}
+                                content={<UndetectedSecondDialog data={rowData} apiResult={result?.data} />}
                                 primaryButton={GENERAL.DONE}
                                 callback={() => handleMoveToManage(rowData)}
                             />

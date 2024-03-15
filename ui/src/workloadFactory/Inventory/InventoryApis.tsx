@@ -173,7 +173,11 @@ const InventoryApis = () => {
             if (!discoverHostLoading) {
                 let oldList = discoveredHostData || [];
                 let newList = discoveredHosts?.items || [];
-                if (discoveredHosts && discoveredHosts?.credentialId === credId && discoveredHosts?.regionId === regionId) {
+                if (
+                    discoveredHosts &&
+                    discoveredHosts?.credentialId === credId &&
+                    discoveredHosts?.regionId === regionId
+                ) {
                     dispatch(
                         setDiscoveredHosts({
                             discoveredHostData: [...oldList, ...newList],
@@ -313,7 +317,7 @@ const InventoryApis = () => {
             let unIdentifiableHosts: any[] = [];
             discoveredHostData.map((host: any) => {
                 if (host?.sqlServerInstances && host?.sqlServerInstances?.length > 1) {
-                    host = {...host, sqlServerInstances: sortListOfDict(host?.sqlServerInstances, 'sqlServerState')};
+                    host = { ...host, sqlServerInstances: sortListOfDict(host?.sqlServerInstances, 'sqlServerState') };
                 }
                 const isWindowAuthentication = host?.sqlServerInstances?.[0]?.windowsAuthentication;
                 const isManaged = databaseHostsData?.find(managedHost =>
@@ -326,12 +330,16 @@ const InventoryApis = () => {
                 if (isDemoMode) {
                     fsxCredentialValidationFailed = false;
                 }
-                
+
                 if (movedToManagedHost.includes(host?.ec2InstanceId)) {
                     // ToDo: push in managed
                 } else if (movedToUnmanagedHost.includes(host?.ec2InstanceId)) {
                     unManagedHosts.push(host);
-                } else if (host.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED || !isWindowAuthentication || fsxCredentialValidationFailed) {
+                } else if (
+                    host.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED ||
+                    !isWindowAuthentication ||
+                    fsxCredentialValidationFailed
+                ) {
                     unIdentifiableHosts.push(host);
                 } else {
                     if (!isManaged) {

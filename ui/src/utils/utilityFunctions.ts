@@ -1079,7 +1079,7 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
     if (!data || data?.length === 0) {
         return groupedData;
     }
-    
+
     // Using endTime calculate hr or day
     if (days === 1) {
         data = data.map((e: any) => ({
@@ -1208,19 +1208,13 @@ export const initialColStateManagedHosts = {
 
 export const removePasswordInConfig = (payload: any) => {
     if (payload?.dbCredentials?.password) {
-        payload = { ...payload, dbCredentials: { ...payload.dbCredentials,
-            password: ''
-        }};
+        payload = { ...payload, dbCredentials: { ...payload.dbCredentials, password: '' } };
     }
     if (payload?.activeDirectory?.password) {
-        payload = { ...payload, activeDirectory: { ...payload.activeDirectory,
-            password: ''
-        }};
+        payload = { ...payload, activeDirectory: { ...payload.activeDirectory, password: '' } };
     }
     if (payload?.fsxN?.fsxNPassword) {
-        payload = { ...payload, fsxN: { ...payload.fsxN,
-            fsxNPassword: ''
-        }};
+        payload = { ...payload, fsxN: { ...payload.fsxN, fsxNPassword: '' } };
     }
     return payload;
 };
@@ -1230,13 +1224,19 @@ export const removeOldApisError = (data: any) => {
     const credId = state.headers.headerSelectedCred?.data?.credentialsId;
     const regionId = state.headers.headerSelectedRegion?.label2;
     if (data?.endpointName === 'getDatabaseHosts') {
-        if (data?.originalArgs && (data?.originalArgs?.credentialId !== credId || data?.originalArgs?.region !== regionId)) {
+        if (
+            data?.originalArgs &&
+            (data?.originalArgs?.credentialId !== credId || data?.originalArgs?.region !== regionId)
+        ) {
             return true;
         } else {
             return false;
         }
     } else if (data?.endpointName === 'discoverHosts') {
-        if (data?.originalArgs && (data?.originalArgs?.credentialsId !== credId || data?.originalArgs?.regionId !== regionId)) {
+        if (
+            data?.originalArgs &&
+            (data?.originalArgs?.credentialsId !== credId || data?.originalArgs?.regionId !== regionId)
+        ) {
             return true;
         } else {
             return false;
@@ -1260,7 +1260,7 @@ export const createDetectHostPayload = (instanceID: string, fsxId: string) => {
             username: detectManageUserName,
             password: detectManagePassword
         });
-    };
+    }
     if (detectOntapUsername && detectOntapPassword) {
         credList.push({
             resourceId: fsxId,
@@ -1268,6 +1268,6 @@ export const createDetectHostPayload = (instanceID: string, fsxId: string) => {
             username: detectOntapUsername,
             password: detectOntapPassword
         });
-    };
-    return {credentials: credList};
+    }
+    return { credentials: credList };
 };

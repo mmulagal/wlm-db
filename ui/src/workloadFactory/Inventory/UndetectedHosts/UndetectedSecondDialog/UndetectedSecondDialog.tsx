@@ -6,7 +6,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE } from '../../../../utils/consts';
 
-const UndetectedSecondDialog = ({data, apiResult}: {data: any, apiResult: any}) => {
+const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any }) => {
     const detectHostRadio = useAppSelector(state => state.inventory.detectHostRadio);
     const dispatch = useDispatch();
     const handleRadio = (val: string) => {
@@ -25,11 +25,16 @@ const UndetectedSecondDialog = ({data, apiResult}: {data: any, apiResult: any}) 
             }
         });
     }
-    const hostType = fsxType ? GENERAL.FSX_FOR_ONTAP : (ebsType ? GENERAL.EBS : GENERAL.NOT_AVAILABLE);
+    const hostType = fsxType ? GENERAL.FSX_FOR_ONTAP : ebsType ? GENERAL.EBS : GENERAL.NOT_AVAILABLE;
     const deploymentType = data?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
     const hostName = data?.sqlServerInstances?.[0]?.sqlServerName || GENERAL.NOT_AVAILABLE;
 
-    const type = deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1 ? GENERAL.FCI : (deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 ? GENERAL.STANDALONE : GENERAL.NOT_AVAILABLE);
+    const type =
+        deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+            ? GENERAL.FCI
+            : deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+            ? GENERAL.STANDALONE
+            : GENERAL.NOT_AVAILABLE;
 
     return (
         <div className={styles.secondDialog}>
@@ -61,7 +66,9 @@ const UndetectedSecondDialog = ({data, apiResult}: {data: any, apiResult: any}) 
                         <Typography variant="Regular_14" style={{ width: '148px' }}>
                             {GENERAL.DETECT_NO_OF_DB}
                         </Typography>
-                        <Typography variant="Semibold_14">{apiResult?.noOfDatabases || GENERAL.NOT_AVAILABLE}</Typography>
+                        <Typography variant="Semibold_14">
+                            {apiResult?.noOfDatabases || GENERAL.NOT_AVAILABLE}
+                        </Typography>
                     </div>
 
                     <div className={styles.separator} />
@@ -74,7 +81,9 @@ const UndetectedSecondDialog = ({data, apiResult}: {data: any, apiResult: any}) 
                         <Typography variant="Regular_14" style={{ width: '124px' }}>
                             {GENERAL.DETECT_SQL_VERSION}
                         </Typography>
-                        <Typography variant="Semibold_14">{data?.sqlServerInstances?.[0]?.sqlServerVersion || GENERAL.NOT_AVAILABLE}</Typography>
+                        <Typography variant="Semibold_14">
+                            {data?.sqlServerInstances?.[0]?.sqlServerVersion || GENERAL.NOT_AVAILABLE}
+                        </Typography>
                     </div>
 
                     <div className={styles.separator} />
@@ -100,8 +109,7 @@ const UndetectedSecondDialog = ({data, apiResult}: {data: any, apiResult: any}) 
             </div>
 
             {/* Second section after content - EBS */}
-            {
-                hostType !== GENERAL.FSX_FOR_ONTAP && 
+            {hostType !== GENERAL.FSX_FOR_ONTAP && (
                 <div className={styles.ebsSection}>
                     <div className={styles.successMsg}>
                         <Typography variant="Regular_14">{GENERAL.EBS_DETECT_SUCCESS_MSG[0]}</Typography>&nbsp;
@@ -114,12 +122,10 @@ const UndetectedSecondDialog = ({data, apiResult}: {data: any, apiResult: any}) 
                         <Typography variant="Regular_14">{GENERAL.EBS_DETECT_SUCCESS_MSG[4]}</Typography>
                     </div>
                 </div>
-            }
-            
+            )}
 
             {/* Second section after content - FSX */}
-            {
-                hostType === GENERAL.FSX_FOR_ONTAP &&
+            {hostType === GENERAL.FSX_FOR_ONTAP && (
                 <div className={styles.fsxSection}>
                     <Typography variant="Semibold_14">{GENERAL.FSX_DETECT_SUCCESS_MSG[0]}</Typography>
                     <Typography variant="Regular_14" className={styles.subHeading}>
@@ -144,8 +150,7 @@ const UndetectedSecondDialog = ({data, apiResult}: {data: any, apiResult: any}) 
                         />
                     </div>
                 </div>
-            }
-            
+            )}
         </div>
     );
 };

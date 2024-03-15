@@ -60,13 +60,15 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
         let errorMsg = action.payload.error || action.payload.data?.message || action.payload.data?.responseMessage;
 
-        if (action?.meta?.arg?.endpointName === 'registerResourceCredentials' ) {
+        if (action?.meta?.arg?.endpointName === 'registerResourceCredentials') {
             return;
         }
 
         if (
-            (action?.meta?.arg?.endpointName === 'discoverHosts' || action?.meta?.arg?.endpointName === 'getDatabaseHosts') 
-            && removeOldApisError(action?.meta?.arg)) {
+            (action?.meta?.arg?.endpointName === 'discoverHosts' ||
+                action?.meta?.arg?.endpointName === 'getDatabaseHosts') &&
+            removeOldApisError(action?.meta?.arg)
+        ) {
             return;
         }
 
