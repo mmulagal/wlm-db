@@ -256,7 +256,7 @@ async function getHostAndSqlInfoFromPsOutput(
     let api1EndTime;
 
     api1StartTime = performance.now();
-    const { response, status } = await pollCommandStatus(credentialsId, region, commandInvocationParam);
+    const response = await pollCommandStatus(credentialsId, region, commandInvocationParam);
     if (response?.StandardErrorContent) {
         logger.error('Failed to collect info using SSM. Reason: ', response?.StandardErrorContent);
         throw createError(
@@ -264,7 +264,7 @@ async function getHostAndSqlInfoFromPsOutput(
             `Failed to get details from EC2 instance ${ssmTarget.ec2InstanceId}. Reason: ${response?.StandardErrorContent}`
         );
     }
-    if (status === CommandInvocationStatus.TIMED_OUT) {
+    if (response.Status === CommandInvocationStatus.TIMED_OUT) {
         logger.error(`SSM command ${commandId} execution  timed out on node ${ssmTarget.ec2InstanceId}`);
     }
 

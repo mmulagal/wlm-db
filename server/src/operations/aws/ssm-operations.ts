@@ -4,6 +4,7 @@ import createError from 'http-errors';
 import {
     CommandInvocationStatus,
     GetCommandInvocationCommandInput,
+    GetCommandInvocationCommandOutput,
     InvocationDoesNotExist,
     PutParameterCommandInput,
     SendCommandCommandInput
@@ -27,7 +28,11 @@ import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 
 const logger = getLogger();
 
-async function pollCommandStatus(credentialsId: string, region: string, pollParams: GetCommandInvocationCommandInput) {
+async function pollCommandStatus(
+    credentialsId: string,
+    region: string,
+    pollParams: GetCommandInvocationCommandInput
+): Promise<GetCommandInvocationCommandOutput> {
     logger.info('Polling SSM command execution', pollParams);
     try {
         const response = await getCommandInvocation(credentialsId, region, pollParams);
@@ -40,12 +45,12 @@ async function pollCommandStatus(credentialsId: string, region: string, pollPara
             case CommandInvocationStatus.TIMED_OUT:
             case CommandInvocationStatus.CANCELLED:
             case CommandInvocationStatus.SUCCESS:
-                return { response, status };
+                return response;
             case CommandInvocationStatus.FAILED:
                 logger.error(
                     `SSM execution ${status} for command ${pollParams.CommandId} on instance ${pollParams.InstanceId}`
                 );
-                return { response, status };
+                return response;
             case CommandInvocationStatus.CANCELLING:
             case CommandInvocationStatus.DELAYED:
             case CommandInvocationStatus.IN_PROGRESS:
@@ -88,11 +93,11 @@ async function executeSSMDocument(
     };
 
     await sleep(1000);
-    const { response, status } = await pollCommandStatus(credentialsId, region, pollParams);
+    const response = await pollCommandStatus(credentialsId, region, pollParams);
 
     logger.debug('SSM command Response:', response);
 
-    return { response, status, commandId };
+    return response;
 }
 
 async function callSsmExecution(
@@ -128,14 +133,17 @@ async function callSsmExecution(
     };
     try {
         logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);
-        const { response, status, commandId } = await executeSSMDocument(credentialsId, region, params, accountId);
+        const response = await executeSSMDocument(credentialsId, region, params, accountId);
         if (response?.StandardErrorContent) {
-            const errorMessage = `SSM command ${commandId}  execution  failed on node ${activeNodeInstanceId}  Error: ${response?.StandardErrorContent}`;
+            const errorMessage = `SSM command ${response.CommandId}  execution  failed on node ${activeNodeInstanceId}  Error: ${response?.StandardErrorContent}`;
             logger.error(errorMessage);
             throw createError(errorMessage);
         }
-        if (status === CommandInvocationStatus.TIMED_OUT || status === CommandInvocationStatus.CANCELLED) {
-            const errorMessage = `SSM command ${commandId} execution  timed out on node ${activeNodeInstanceId}`;
+        if (
+            response.Status === CommandInvocationStatus.TIMED_OUT ||
+            response.Status === CommandInvocationStatus.CANCELLED
+        ) {
+            const errorMessage = `SSM command ${response.CommandId} execution  timed out on node ${activeNodeInstanceId}`;
             logger.error(errorMessage);
             throw createError(errorMessage);
         }
