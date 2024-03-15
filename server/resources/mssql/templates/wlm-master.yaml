@@ -21,7 +21,8 @@ Metadata:
           - SsmEndpointExists
           - SqsEndpointExists
           - CloudwatchEndpointExists
-          - Ec2EndpointExists
+          - Ec2MessagesEndpointExists
+          - SSMMessagesEndpointExists
       - Label:
           default: Amazon EC2 Configuration
         Parameters:
@@ -305,6 +306,10 @@ Parameters:
   {{{FsxEndpointExists}}}
 
   {{{Ec2EndpointExists}}}
+
+  {{{Ec2MessagesEndpointExists}}}
+
+  {{{SSMMessagesEndpointExists}}}
        
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -547,6 +552,10 @@ Resources:
           Ref: FsxEndpointExists
         Ec2EndpointExists:
           Ref: Ec2EndpointExists
+        Ec2MessagesEndpointExists:
+          Ref: Ec2MessagesEndpointExists
+        SSMMessagesEndpointExists:
+          Ref: SSMMessagesEndpointExists
       NotificationARNs:
         Fn::If:
         - IncludeNotification

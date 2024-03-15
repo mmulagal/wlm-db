@@ -378,8 +378,8 @@ Resources:
                         - FetchResources
                         - ScriptSignatureVerificationandExtract
                         - InitialSetup
-                        - ontapconfig
                         - InstancePrep
+                        - ontapconfig
                         - ConfigureInstance
                         - FCIConfigure
                         - Cleanup
@@ -942,8 +942,8 @@ Resources:
                         - FetchResources
                         - ScriptSignatureVerificationandExtract
                         - InitialSetup
-                        - ontapconfig
                         - InstancePrep
+                        - ontapconfig
                         - ConfigureInstance
                         - ConfigureFCI
                         - Cleanup
@@ -1232,7 +1232,7 @@ Resources:
                                     -DomainDNSName '
                                   - !Ref 'DomainDNSName'
                                   - '''"'
-                            waitAfterCompletion: 900
+                            waitAfterCompletion: 300
                 ConfigureInstance:
                     commands:
                         a-add-cluster-secondary-node:

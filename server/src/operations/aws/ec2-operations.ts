@@ -509,18 +509,22 @@ async function enableVpcDnsAttributes(credentialsId: string, region: string, vpc
     return [dnsHostnameResponse, dnsSupportResponse];
 }
 
-async function getValidationNodeInstanceType(credentialsId: string, region: string) {
-    logger.info('Get instance type offerings ', credentialsId, region);
+async function getValidationNodeInstanceType(credentialsId: string, region: string, availabilityZones: string[]) {
+    logger.info('Get instance type offerings ', credentialsId, region, availabilityZones);
 
     const response = await describeInstanceTypeOfferings(credentialsId, region, {
-        LocationType: 'region',
+        LocationType: 'availability-zone',
         Filters: [{ Name: 'instance-type', Values: ['t2.micro', 't3.micro'] }]
     });
-    const instanceType = response.InstanceTypeOfferings?.find(e =>
+
+    const t2microSupportedZones = response.InstanceTypeOfferings?.filter(e =>
         e.InstanceType?.includes(VALIDATION_NODE_INSTANCETYPE.T2MICRO)
-    )
+    ).map(e => e.Location as string);
+
+    const instanceType = availabilityZones.every(a => t2microSupportedZones?.includes(a))
         ? VALIDATION_NODE_INSTANCETYPE.T2MICRO
         : VALIDATION_NODE_INSTANCETYPE.T3MICRO;
+
     return instanceType;
 }
 
