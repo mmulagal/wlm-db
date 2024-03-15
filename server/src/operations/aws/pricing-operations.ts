@@ -72,11 +72,11 @@ const ec2Service = {
     ServiceCode: 'AmazonEC2'
 };
 
-// const storageProductFamily: Filter = {
-//     Type: FilterType.TERM_MATCH,
-//     Field: 'productFamily',
-//     Value: 'Storage'
-// };
+const storageProductFamily: Filter = {
+    Type: FilterType.TERM_MATCH,
+    Field: 'productFamily',
+    Value: 'Storage'
+};
 
 // const readWriteRequestProductFamily: Filter = {
 //     Type: FilterType.TERM_MATCH,
@@ -173,6 +173,7 @@ function getEc2StorageInput(compute: PricingServiceRequestType['compute']): Prod
         input: {
             Filters: [
                 getRegionCodeFilter(compute.regionCode),
+                storageProductFamily,
                 {
                     Type: FilterType.TERM_MATCH,
                     Field: 'volumeType',
@@ -198,6 +199,7 @@ function getEbsStorageInput(region: string, volumeType: string): ProductInput {
         input: {
             Filters: [
                 getRegionCodeFilter(region),
+                storageProductFamily,
                 {
                     Type: FilterType.TERM_MATCH,
                     Field: 'volumeApiName',
@@ -219,6 +221,7 @@ function getFSxNStorageInput(storage: PricingServiceRequestType['storage']): Pro
             Filters: [
                 getRegionCodeFilter(storage?.regionCode),
                 getDeploymentOption(storage?.deploymentOption),
+                storageProductFamily,
                 {
                     Type: FilterType.TERM_MATCH,
                     Field: 'fileSystemType',
