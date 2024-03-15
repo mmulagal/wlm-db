@@ -22,7 +22,9 @@ const initialInventoryState: any = {
     fsxCredentialStatusObj: null,
     fsxIdsList: [],
     isRefreshed: false,
-    valuesNotFilled: false
+    valuesNotFilled: false,
+    movedToUnmanagedHost: [],
+    movedToManagedHost: []
 };
 
 const inventorySlice = createSlice({
@@ -77,6 +79,12 @@ const inventorySlice = createSlice({
         },
         setIsRefreshed: (state, action: PayloadAction<any>) => {
             state.isRefreshed = action.payload;
+        },
+        setMovedToUnmanagedHost: (state, action: PayloadAction<any>) => {
+            state.movedToUnmanagedHost = action.payload;
+        },
+        setMovedToManagedHost: (state, action: PayloadAction<any>) => {
+            state.movedToManagedHost = action.payload;
         }
     }
 });
@@ -97,7 +105,9 @@ export const {
     setFsxCredentialStatus,
     setFsxIdsList,
     setIsRefreshed,
-    setValuesForForm
+    setValuesForForm,
+    setMovedToUnmanagedHost,
+    setMovedToManagedHost
 } = inventorySlice.actions;
 
 export default inventorySlice;

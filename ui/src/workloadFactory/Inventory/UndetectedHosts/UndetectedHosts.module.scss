@@ -74,3 +74,10 @@
     display: flex;
     justify-content: space-between;
 }
+
+.notification {
+    font-weight: 400;
+    .bold {
+        font-weight: 540;
+    }
+}
