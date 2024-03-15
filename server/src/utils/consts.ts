@@ -30,7 +30,8 @@ const FSX_BATCH_CONCURRENCY_VALUE = 10;
 
 enum FileSystemDeploymentType {
     SINGLE_AZ_1,
-    MULTI_AZ_1
+    MULTI_AZ_1,
+    SINGLE_AZ_2
 }
 
 // version
@@ -929,6 +930,7 @@ const AWS_FSX_TYPE = 'AWS_FSX';
 const ADMIN_ROLE = 'Role-1';
 const USER_ROLE = 'Role-2';
 enum DatabaseHostsQueryFields {
+    TOPOLOGY = 'topology',
     PERFORMANCE = 'performance',
     PROTECTION = 'protection',
     STORAGE = 'storage',

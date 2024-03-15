@@ -26,7 +26,13 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 params: { accountId, credentialsId, region },
                 query: { fields, nextToken }
             } = request;
-            const response = await getDatabaseHostsSummary(accountId, fields, nextToken, region, credentialsId);
+            const response = await getDatabaseHostsSummary(
+                accountId,
+                `${fields},topology`,
+                nextToken,
+                region,
+                credentialsId
+            );
             return reply.send(response);
         })
         .get(
@@ -37,7 +43,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     params: { accountId, databaseHostId },
                     query: { fields }
                 } = request;
-                const response = await getDatabaseHostSummary(accountId, databaseHostId, fields);
+                const response = await getDatabaseHostSummary(accountId, databaseHostId, `${fields},topology`);
                 return reply.send(response);
             }
         )

@@ -14,7 +14,6 @@ import {
     SERVER_NAME,
     SERVER_GUID,
     DB_SIZE,
-    SERVER_VERSION_DETAILS,
     NUMBER_OF_CONNECTIONS,
     SERVER_STATE,
     CLUSTER_NODES,
@@ -140,7 +139,7 @@ async function callSsmExecution(
 async function getDatabasesCount(credentialsId: string, region: string, activeNodeInstanceId: string) {
     logger.info('Fetching databases total count ', credentialsId, region, activeNodeInstanceId);
 
-    const commands = [`${PSSCRIPT} -Query "${DATABASES_COUNT()}"`];
+    const commands = [`sqlcmd -Q "${DATABASES_COUNT()}" -y 0`];
     const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId);
     logger.debug('Fetching databases count response', response);
     return response ? sqlResponseParsing(response)[0] : undefined;
@@ -197,20 +196,33 @@ function resourceUtilisationQuery(metricType: string) {
     }
 }
 
-async function getResourceUtilisation(resourceId: string, metricType: string, activeNodeInstanceId?: string) {
+async function getResourceUtilisation(resourceId: string, metricType: string) {
     logger.info(`Get ${metricType} resource utilization for resource: `, {
         resourceId,
-        metricType,
-        activeNodeInstanceId
+        metricType
     });
 
     const [credentialsId, region, node1InstanceId, node2InstanceId] = await getResourceDetails(resourceId);
     if (!credentialsId || !region || !node1InstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource utilisation information');
     }
-    if (!activeNodeInstanceId && node1InstanceId) {
-        ({ activeNodeInstanceId } = await getActiveSqlNode(credentialsId!, region!, node1InstanceId, node2InstanceId!));
-    }
+    const { activeNodeInstanceId } = await getActiveSqlNode(credentialsId!, region!, node1InstanceId, node2InstanceId!);
+
+    return getResourceUtilisationDetails(credentialsId, region, metricType, activeNodeInstanceId);
+}
+
+async function getResourceUtilisationDetails(
+    credentialsId: string,
+    region: string,
+    metricType: string,
+    activeNodeInstanceId?: string
+) {
+    logger.info(`Get ${metricType} resource utilization for resource: `, {
+        credentialsId,
+        region,
+        metricType,
+        activeNodeInstanceId
+    });
 
     if (!activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get active instance information');
@@ -219,11 +231,11 @@ async function getResourceUtilisation(resourceId: string, metricType: string, ac
 
     let commands: string[] = [];
     const metricQuery = resourceUtilisationQuery(metricType);
-    commands = [`${PSSCRIPT} -Query "${metricQuery}"`];
+    commands = [`sqlcmd -Q "${metricQuery}" -y 0`];
 
     if (metricType === DATABASE_METRIC_TYPE.DISK) {
-        const dbSizecommand = [`${PSSCRIPT} -Query '${DB_SIZE}'`];
-        const diskUtilizationCommand = [`${PSSCRIPT} -Query "${DISK_UTILISATION}"`];
+        const dbSizecommand = [`sqlcmd -Q "${DB_SIZE}" -y 0`];
+        const diskUtilizationCommand = [`sqlcmd -Q "${DISK_UTILISATION}" -y 0`];
 
         const [diskdata, size] = await Promise.all([
             callSsmExecution(credentialsId, region, diskUtilizationCommand, activeNodeInstanceId, undefined, false),
@@ -334,37 +346,36 @@ async function getServerSummary(resourceId: string) {
         node1InstanceId!,
         node2InstanceId!
     );
+    if (credentialsId && region && activeNodeInstanceId) {
+        const response = await getServerDetails(credentialsId, region, activeNodeInstanceId);
+        return {
+            ...response,
+            serverId: resourceId
+        };
+    }
+}
+async function getServerDetails(credentialsId: string, region: string, activeNodeInstanceId: string) {
+    logger.info('Get details of SQL Server database:', { credentialsId, region, activeNodeInstanceId });
 
     if (!credentialsId || !region || !activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get server summary');
     }
 
-    const [serverDetailsInfo, serverProperties, connectionsInfo, clusterNodesInfo, serverNameInfo, serverInstallDate] =
-        await Promise.all(
-            [
-                SERVER_VERSION_DETAILS,
-                SERVER_PROPERTIES,
-                NUMBER_OF_CONNECTIONS,
-                CLUSTER_NODES,
-                SERVER_NAME,
-                SERVER_INSTALL_DATE
-            ].map(query =>
-                callSsmExecution(credentialsId, region, [`${PSSCRIPT} -Query "${query}"`], activeNodeInstanceId).catch(
-                    error =>
-                        logger.error(
-                            `Error while executing query: ${node1InstanceId} ${node2InstanceId} ${query} Error: ${error}`
-                        )
-                )
+    const [serverProperties, connectionsInfo, clusterNodesInfo, serverInstallDate] = await Promise.all(
+        [SERVER_PROPERTIES, NUMBER_OF_CONNECTIONS, CLUSTER_NODES, SERVER_INSTALL_DATE].map(query =>
+            callSsmExecution(credentialsId, region, [`sqlcmd -Q "${query}" -y 0`], activeNodeInstanceId).catch(error =>
+                logger.error(`Error while executing query: ${activeNodeInstanceId} ${query} Error: ${error}`)
             )
-        );
+        )
+    );
 
-    const serverDetails = serverDetailsInfo ? serverDetailsInfo?.replaceAll('\r\n', '') : '';
-    let [{ ServerEdition, isClustered, activeNode }] = serverProperties ? sqlResponseParsing(serverProperties) : '';
-    const serverInfo = serverDetails?.split('\t');
+    let [{ serverDetails, ServerEdition, isClustered, activeNode, serverName: clusterName }] = serverProperties
+        ? sqlResponseParsing(serverProperties)
+        : '';
+    const serverInfo = serverDetails ? serverDetails?.replaceAll('\r\n', '').split('\t') : '';
     const [{ numberOfConnections: activeConnections }] = connectionsInfo ? sqlResponseParsing(connectionsInfo) : '';
-    const [{ serverName: clusterName }] = serverNameInfo ? sqlResponseParsing(serverNameInfo!) : '';
     const [{ creationDate }] = serverInstallDate ? sqlResponseParsing(serverInstallDate!) : '';
-    const serverStatus = serverDetails ? ServerState.UP : ServerState.DOWN;
+    const serverStatus = serverInfo ? ServerState.UP : ServerState.DOWN;
 
     let standbyNode: string = '';
     if (isClustered && clusterNodesInfo) {
@@ -380,7 +391,6 @@ async function getServerSummary(resourceId: string) {
     }
 
     return {
-        serverId: resourceId,
         serverVersion: serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim(),
         serverEdition: `SQL Server ${ServerEdition?.split(':')?.[0] || 'Standard Edition'}`,
         serverEngine: '', // sending empty string to support blueXP endpoint
@@ -603,19 +613,18 @@ async function getNativeSQLProtection(resourceId: string, activeNodeInstanceId: 
     }
 }
 
-async function getPerformanceMetrics(resourceId: string, activeNodeInstanceId: string) {
+async function getPerformanceMetrics(credentialsId: string, region: string, activeNodeInstanceId: string) {
     logger.info('Fetch SQL server performance metrics (latency, IOPS, throughput) for resource', {
-        resourceId,
+        credentialsId,
+        region,
         activeNodeInstanceId
     });
-
-    const [credentialsId, region] = await getResourceDetails(resourceId);
 
     if (!credentialsId || !region || !activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
     }
 
-    const commands = [`${PSSCRIPT} -Query "${PERFORMANCE_METRICS}"`];
+    const commands = [`sqlcmd -Q "${PERFORMANCE_METRICS}" -y 0`];
     const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId, undefined, false);
 
     logger.debug('SQL server performance metrics (latency, IOPS, throughput) response', response);
@@ -679,7 +688,7 @@ async function getActiveSqlNode(
         // Connection to activenode is successful
         let isSqlNodeActive = false;
         if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-            isSqlNodeActive = await isActiveSqlNode(credentialsId, region, node1InstanceId);
+            isSqlNodeActive = true;
             if (isSqlNodeActive) {
                 return {
                     isSSMConnected: true,
@@ -773,8 +782,10 @@ async function checkDatabaseExists(
 export {
     getSqlServerDetails,
     getResourceUtilisation,
+    getResourceUtilisationDetails,
     getDataBasesSummary,
     getServerSummary,
+    getServerDetails,
     getResourceDetails,
     getDatabasesCount,
     getTablesSummary,

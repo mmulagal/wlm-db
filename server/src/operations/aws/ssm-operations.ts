@@ -31,7 +31,7 @@ async function pollCommandStatus(
     region: string,
     pollParams: GetCommandInvocationCommandInput
 ): Promise<GetCommandInvocationCommandOutput> {
-    logger.info('Polling SSM command execution', pollParams);
+    logger.debug('Polling SSM command execution', pollParams);
 
     try {
         const response = await getCommandInvocation(credentialsId, region, pollParams);
@@ -45,10 +45,11 @@ async function pollCommandStatus(
                 return response;
 
             case CommandInvocationStatus.TIMED_OUT:
-            case CommandInvocationStatus.CANCELLED:
+            case CommandInvocationStatus.CANCELLED: {
                 const errorMessage = `SSM execution ${status} for command ${pollParams.CommandId} on instance ${pollParams.InstanceId}`;
                 logger.error(errorMessage);
                 throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            }
             case CommandInvocationStatus.FAILED:
                 logger.error(
                     `SSM execution ${status} for command ${pollParams.CommandId} on instance ${pollParams.InstanceId}`
