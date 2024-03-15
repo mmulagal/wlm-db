@@ -30,7 +30,8 @@ const FSX_BATCH_CONCURRENCY_VALUE = 10;
 
 enum FileSystemDeploymentType {
     SINGLE_AZ_1,
-    MULTI_AZ_1
+    MULTI_AZ_1,
+    SINGLE_AZ_2
 }
 
 // version
