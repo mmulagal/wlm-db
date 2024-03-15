@@ -214,6 +214,18 @@ const DriveInfoResponseBody = Type.Object({
 });
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
 
+const CollationInfoResponseBody = Type.Object({
+    collationList: Type.Array(
+        Type.Object({
+            name: Type.String(),
+            description: Type.Optional(Type.String()),
+            isDefault: Type.Boolean()
+        })
+    ),
+    defaultCollation: Type.String()
+});
+type CollationInfoResponseBodyType = Static<typeof CollationInfoResponseBody>;
+
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -255,5 +267,7 @@ export {
     CreateDatabaseParams,
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
-    FileConfigType
+    FileConfigType,
+    CollationInfoResponseBodyType,
+    CollationInfoResponseBody
 };

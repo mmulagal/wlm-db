@@ -5,14 +5,16 @@ import {
     getDatabaseHostSummary,
     getDatabases,
     deployDatabase,
-    getDriveInfo
+    getDriveInfo,
+    getCollationDetails
 } from '../operations/database-hosts-operations';
 import {
     DatabaseHostDetailsSchema,
     DatabasesListSchema,
     DatabaseHostsSummarySchema,
     DatabasesCreateSchema,
-    GetDriveInfoSchema
+    GetDriveInfoSchema,
+    GetCollationDetailsSchema
 } from './schemas/database-hosts-schemas';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
@@ -82,5 +84,16 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 const response = await getDriveInfo(accountId, databaseHostId, credentialsId, region);
                 return reply.send(response);
             }
+        )
+        .get(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/collation-list`,
+            { schema: GetCollationDetailsSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region }
+                } = request;
+                const response = await getCollationDetails(accountId, databaseHostId, credentialsId, region);
+                return reply.send(response);
+            }
         );
-}
+};

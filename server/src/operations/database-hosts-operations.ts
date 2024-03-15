@@ -917,9 +917,9 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
                     isFsxOntapSnapshotsEnabled: Boolean(ontapBackup),
                     isSqlNativeEnabled: Boolean(
                         backedupDatabases &&
-                            backedupDatabases.find(
-                                (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
-                            )
+                        backedupDatabases.find(
+                            (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
+                        )
                     )
                 }
             })
@@ -1011,14 +1011,14 @@ async function getDriveInfoFromNodes(
     const existingDriveStandbyNodePromise =
         sqlDeploymentType === 'FCI'
             ? callSsmExecution(
-                  credentialsId,
-                  region,
-                  driveInfoCommand,
-                  standbyNodeInstanceId!,
-                  undefined,
-                  false,
-                  executionTimeout
-              )
+                credentialsId,
+                region,
+                driveInfoCommand,
+                standbyNodeInstanceId!,
+                undefined,
+                false,
+                executionTimeout
+            )
             : Promise.resolve();
 
     const [existingDriveActiveNodeResponse, existingDriveStandbyNodeResponse] = await Promise.all([
@@ -2108,6 +2108,14 @@ async function checkDriveExists(
     return true;
 }
 
+async function getCollationDetails(accountId: string, databaseHostId: string, credentialsId: string, region: string) {
+    logger.info('Getting collation details from the database host', { accountId, databaseHostId, credentialsId, region });
+    return {
+        collationList: [{ name: 'test', description: 'test', isDefault: true }],
+        defaultCollation: 'default'
+    };
+}
+
 export {
     getDatabaseHostsSummary,
     getDatabaseHostSummary,
@@ -2117,5 +2125,6 @@ export {
     createDatabase,
     newDBInitialization,
     configureLuns,
-    cleanUpDatabaseDeployment
+    cleanUpDatabaseDeployment,
+    getCollationDetails
 };
