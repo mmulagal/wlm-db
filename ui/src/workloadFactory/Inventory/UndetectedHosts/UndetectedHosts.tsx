@@ -18,47 +18,234 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { FSX_DEPLOYMENT_MODE, SSM_TROUBLESHOOTING_LINK } from '../../../utils/consts';
+import { DETECT_HOST_VAR, FROM_DIALOG, FSX_DEPLOYMENT_MODE, SSM_TROUBLESHOOTING_LINK } from '../../../utils/consts';
+import { useManageHostMutation, useRegisterResourceCredentialsMutation } from '../../../utils/apiService';
+import { setIsDetectHostError, setIsDetectHostLoading } from '../../../store/mssql/msSqlActionSlice';
+import { useDispatch } from 'react-redux';
+import {
+    setDetectManagePassword,
+    setDetectManageUserName,
+    setDetectONTAPPassword,
+    setDetectONTAPUserName,
+    setMovedToManagedHost,
+    setMovedToUnmanagedHost,
+    setRadioValueDetect,
+    setValuesForForm
+} from '../../../store/workloadFactory/inventorySlice';
+import { createDetectHostPayload } from '../../../utils/utilityFunctions';
+import { useEffect, useRef, useState } from 'react';
+import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import store from '../../../store/store';
 
 const UndetectedHosts = () => {
+    const dispatch = useDispatch();
+
     const { setDialog, closeDialog } = useDialog();
     const unIdentifiableHosts = useAppSelector(state => state.inventory.unIdentifiableHosts);
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
+    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const fsxCredentialStatusObj = useAppSelector(state => state.inventory.fsxCredentialStatusObj);
 
-    const handleFirstDialog = () => {
-        setTimeout(() => {
-            setDialog(
-                <DialogComponent
-                    header={
-                        <div className={styles.headerDialog}>
-                            <Typography variant="Regular_20">Detect host</Typography>
-                            <Typography variant="Semibold_14">Step 2 out of 2</Typography>
-                        </div>
+    //Validation check in form
+    const detectManageUserName = useAppSelector(state => state.inventory.detectManageUserName);
+    const detectManagePassword = useAppSelector(state => state.inventory.detectManagePassword);
+    const detectOntapUsername = useAppSelector(state => state.inventory.detectOntapUsername);
+    const detectOntapPassword = useAppSelector(state => state.inventory.detectOntapPassword);
+    const [entryData, setEntryData] = useState<any>({}); // instance data of dialog that is opened
+
+    const valueRef = useRef(false); // For detect host dialog fields check
+
+    const [manageHostApi] = useManageHostMutation();
+    const [registerResourceCred] = useRegisterResourceCredentialsMutation();
+
+    const [tableData, setTableData] = useState<any>([]);
+
+    const formatUnIdentifiableData = (data: any) => {
+        return data.map((item: any) => {
+            let fsxId = '';
+            if (item?.sqlServerInstances?.[0]?.storage) {
+                item?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
+                    if (storageObj.type === DETECT_HOST_VAR.FSXN) {
+                        fsxId = storageObj.id;
                     }
-                    content={<UndetectedSecondDialog />}
-                    primaryButton="Done"
-                    callback={() => {}}
-                />
-            );
-        }, 10);
+                });
+            }
+
+            let isRegistered = false;
+            let detectOption = 'disable';
+            if (fsxId) {
+                isRegistered = fsxCredentialStatusObj?.[fsxId];
+            }
+            if (item?.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED) {
+                detectOption = 'hide';
+            } else if ((fsxId && fsxId in fsxCredentialStatusObj) || !fsxId) {
+                detectOption = 'show';
+            }
+
+            return {
+                name: item?.sqlServerInstances?.[0]?.sqlServerName || GENERAL.NOT_AVAILABLE,
+                instance: item?.ec2InstanceName,
+                instanceID: item?.ec2InstanceId,
+                vpc: item?.vpc,
+                ssm: item?.ssmState,
+                sqlServerInstances: item?.sqlServerInstances,
+                fsxId: fsxId,
+                isFsxRegistered: isRegistered,
+                detectOption: detectOption
+            };
+        });
     };
 
+    useEffect(() => {
+        if (
+            !entryData?.sqlServerInstances?.[0]?.windowsAuthentication &&
+            entryData?.fsxId &&
+            !entryData?.isFsxRegistered
+        ) {
+            if (detectManageUserName && detectManagePassword && detectOntapUsername && detectOntapPassword) {
+                valueRef.current = true;
+            } else {
+                valueRef.current = false;
+            }
+        } else if (!entryData?.sqlServerInstances?.[0]?.windowsAuthentication) {
+            if (detectManageUserName && detectManagePassword) {
+                valueRef.current = true;
+            } else {
+                valueRef.current = false;
+            }
+        } else if (entryData?.fsxId && !entryData?.isFsxRegistered) {
+            if (detectOntapUsername && detectOntapPassword) {
+                valueRef.current = true;
+            } else {
+                valueRef.current = false;
+            }
+        }
+    }, [detectManageUserName, detectManagePassword, detectOntapUsername, detectOntapPassword]);
+
+    useEffect(() => {
+        // Format data again on unIdentifiableHosts or fsxCredentialStatusObj change
+        setTableData(formatUnIdentifiableData(unIdentifiableHosts));
+    }, [unIdentifiableHosts, fsxCredentialStatusObj]);
+
+    // This function is used to check if user wants to manage the detected host vis workload factory
+    const handleMoveToManage = async (rowData: any) => {
+        const state = store.getState();
+        const detectHostRadio = state.inventory.detectHostRadio;
+        const movedToManagedHost = state.inventory.movedToManagedHost;
+        const movedToUnmanagedHost = state.inventory.movedToUnmanagedHost;
+        if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE) {
+            // If yes than it will call another manage API to manage this instance. On success this instance will be moved to tab 1 from tab3
+            const result: any = await manageHostApi({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                regionId: headerSelectedRegion?.label2,
+                instanceId: rowData?.instanceId
+            });
+            if (result && !result?.error) {
+                dispatch(setMovedToManagedHost([...movedToManagedHost, rowData?.instanceID]));
+                const managedSuccessMsg = (
+                    <div className={styles.notification}>
+                        {GENERAL.HOST_MOVED_SUCCESS[0]}
+                        <span className={styles.bold}>{rowData?.instance}</span>
+                        {GENERAL.HOST_MOVED_SUCCESS[1]}
+                        <span className={styles.bold}>{GENERAL.HOST_MOVED_SUCCESS[3]}</span>
+                        {GENERAL.HOST_MOVED_SUCCESS[4]}
+                    </div>
+                );
+                dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: managedSuccessMsg }));
+            }
+            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_UNMANAGE));
+        } else {
+            // If no than it will just move instance to tab 2 from tab 3
+            dispatch(setMovedToUnmanagedHost([...movedToUnmanagedHost, rowData?.instanceID]));
+            const unmanagedSuccessMsg = (
+                <div className={styles.notification}>
+                    {GENERAL.HOST_MOVED_SUCCESS[0]}
+                    <span className={styles.bold}>{rowData?.instance}</span>
+                    {GENERAL.HOST_MOVED_SUCCESS[1]}
+                    <span className={styles.bold}>{GENERAL.HOST_MOVED_SUCCESS[2]}</span>
+                    {GENERAL.HOST_MOVED_SUCCESS[4]}
+                </div>
+            );
+            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: unmanagedSuccessMsg }));
+            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_UNMANAGE));
+        }
+    };
+
+    // This function is to register credentials on detect host
+    const handleRegisterResourceCred = async (rowData: any, fsxId: string) => {
+        if (!valueRef.current) {
+            dispatch(setValuesForForm(true));
+        } else {
+            dispatch(setValuesForForm(false));
+            dispatch(setIsDetectHostLoading(true));
+
+            try {
+                const result: any = await registerResourceCred({
+                    credentialId: headerSelectedCred?.data?.credentialsId,
+                    regionId: headerSelectedRegion?.label2,
+                    instanceId: rowData?.instanceId,
+                    payload: createDetectHostPayload(rowData?.instanceID, fsxId)
+                });
+                if (result && !result?.error) {
+                    dispatch(setIsDetectHostLoading(false));
+                    setTimeout(() => {
+                        setDialog(
+                            <DialogComponent
+                                header={
+                                    <div className={styles.headerDialog}>
+                                        <Typography variant="Regular_20">{GENERAL.DETECT_HOST}</Typography>
+                                        <Typography variant="Semibold_14">{GENERAL.DETECT_HOST_STEPS[1]}</Typography>
+                                    </div>
+                                }
+                                content={<UndetectedSecondDialog data={rowData} apiResult={result?.data} />}
+                                primaryButton={GENERAL.DONE}
+                                callback={() => handleMoveToManage(rowData)}
+                            />
+                        );
+                    }, 0);
+                    resetDialogValues();
+                } else {
+                    dispatch(setIsDetectHostError(result?.error?.data?.message || GENERAL.FAILED_TO_DETECT_HOST));
+                    dispatch(setIsDetectHostLoading(false));
+                }
+            } catch (error) {
+                dispatch(setIsDetectHostError(error || GENERAL.FAILED_TO_DETECT_HOST));
+                dispatch(setIsDetectHostLoading(false));
+            }
+        }
+    };
+
+    const resetDialogValues = () => {
+        // reset all detect host dialog fields if dialog is closed.
+        dispatch(setIsDetectHostError(''));
+        dispatch(setDetectManageUserName(''));
+        dispatch(setDetectManagePassword(''));
+        dispatch(setDetectONTAPUserName(''));
+        dispatch(setDetectONTAPPassword(''));
+    };
+
+    // To open detect host dialog
     const handleManageDetect = (rowData: any) => {
+        setEntryData(rowData);
+        dispatch(setIsDetectHostError(''));
+
         setDialog(
             <DialogComponent
                 header={
                     <div className={styles.headerDialog}>
-                        <Typography variant="Regular_20">Detect host</Typography>
-                        <Typography variant="Semibold_14">Step 1 / 2</Typography>
+                        <Typography variant="Regular_20">{GENERAL.DETECT_HOST}</Typography>
+                        <Typography variant="Semibold_14">{GENERAL.DETECT_HOST_STEPS[0]}</Typography>
                     </div>
                 }
-                content={<UndetectedHostDialogContent />}
-                primaryButton="Detect"
-                secondaryButton={GENERAL.CANCEL}
-                callback={handleFirstDialog}
+                content={<UndetectedHostDialogContent rowData={rowData} />}
+                primaryButton={GENERAL.DETECT}
+                secondaryButton={GENERAL.CLOSE}
+                callback={() => handleRegisterResourceCred(rowData, rowData?.fsxId)}
                 closeCallback={() => {
                     closeDialog();
+                    resetDialogValues();
                 }}
+                dialogFrom={FROM_DIALOG.DETECT_HOST}
             />
         );
     };
@@ -70,16 +257,27 @@ const UndetectedHosts = () => {
             width: '240px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
-                    <div
-                        className={styles.detectManage}
-                        onClick={() => {
-                            //handleManageDetect(rowData)
-                        }}
-                    >
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            Detect host
-                        </Typography>
-                    </div>
+                    <>
+                        {rowData?.detectOption === 'show' && (
+                            <div
+                                className={styles.detectManage}
+                                onClick={() => {
+                                    handleManageDetect(rowData);
+                                }}
+                            >
+                                <Typography variant="Regular_14" className={styles.textStyle}>
+                                    {GENERAL.DETECT_HOST}
+                                </Typography>
+                            </div>
+                        )}
+                        {rowData?.detectOption === 'disable' && (
+                            <div className={styles.detectManageDisable}>
+                                <Typography variant="Regular_14" className={styles.textStyle}>
+                                    {GENERAL.DETECT_HOST}
+                                </Typography>
+                            </div>
+                        )}
+                    </>
                 );
             }
         };
@@ -95,21 +293,21 @@ const UndetectedHosts = () => {
 
     const UnidentifiedHostsColDefs: ColumnProps[] = [
         {
-            Header: 'Database host name',
+            Header: GENERAL.DATABASE_HOST_NAME,
             accessor: 'name',
             id: '1',
             isSortable: true,
             width: '240px'
         },
         {
-            Header: 'Instance name',
+            Header: GENERAL.DB_HOST_INSTANCE_NAME,
             accessor: 'instance',
             id: '2',
             isSortable: true,
             width: '240px'
         },
         {
-            Header: 'Instance ID',
+            Header: GENERAL.DB_HOST_INSTANCE_ID,
             accessor: 'instanceID',
             id: '3',
             width: '240px',
@@ -172,7 +370,7 @@ const UndetectedHosts = () => {
             }
         },
         {
-            Header: 'SSM connectivity',
+            Header: GENERAL.SSM_CONNECTIVITY,
             accessor: 'ssm',
             id: '6',
             width: '226px',
@@ -181,8 +379,8 @@ const UndetectedHosts = () => {
                 return (
                     <div className={styles.statusCol}>
                         <div>
-                            {cellData === 'connected' && <Success />}
-                            {cellData !== 'connected' && (
+                            {cellData === DETECT_HOST_VAR.SSM_CONNECTED && <Success />}
+                            {cellData !== DETECT_HOST_VAR.SSM_CONNECTED && (
                                 <Popover
                                     popoverClass={CommonStyles['popover']}
                                     children={
@@ -207,7 +405,11 @@ const UndetectedHosts = () => {
                                 />
                             )}
                         </div>
-                        <div>{cellData === 'connected' ? 'Online' : 'Connection lost'}</div>
+                        <div>
+                            {cellData === DETECT_HOST_VAR.SSM_CONNECTED
+                                ? GENERAL.SSM_ONLINE
+                                : GENERAL.SSM_CONNECTION_LOST}
+                        </div>
                     </div>
                 );
             }
@@ -215,36 +417,24 @@ const UndetectedHosts = () => {
         lastColDetails()
     ];
 
-    const formatUnIdentifiableData = (data: any) => {
-        return data.map((item: any) => {
-            return {
-                name: item?.sqlServerInstances?.[0]?.sqlServerName || 'N/A',
-                instance: item?.ec2InstanceName,
-                instanceID: item?.ec2InstanceId,
-                vpc: item?.vpc,
-                ssm: item?.ssmState,
-                sqlServerInstances: item?.sqlServerInstances
-            };
-        });
-    };
-
     const tableProps = useTable({
         isSorting: false,
         selectionType: 'none',
         columns: UnidentifiedHostsColDefs,
-        rows: formatUnIdentifiableData(unIdentifiableHosts) || [],
+        rows: tableData,
         pageSize: 10,
         isHorizontalScroll: true,
         isLazyLoading: isDiscoverInProgress
     });
+
     return (
         <div className={styles.undetectedHosts}>
             <div className={styles.table}>
                 <TableTopBar
                     //@ts-ignore
                     tableProps={tableProps}
-                    pluralTitle="Unidentifiable hosts"
-                    singularTitle="Unidentifiable host"
+                    pluralTitle={GENERAL.UNIDENTIFIABLE_HOSTS}
+                    singularTitle={GENERAL.UNIDENTIFIABLE_HOST}
                 />
                 <Table
                     //@ts-ignore
