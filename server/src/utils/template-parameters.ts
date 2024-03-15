@@ -275,7 +275,7 @@ const PARAMETERS = [
         description: 'Throughput capacity for the FSx for ONTAP volume.',
         type: 'Number',
         default: 128,
-        allowedValues: [128, 256, 512, 1024, 2048]
+        allowedValues: [128, 256, 512, 1024, 2048, 4096]
     },
     {
         name: 'FileSystemEncryptionKeyId',
