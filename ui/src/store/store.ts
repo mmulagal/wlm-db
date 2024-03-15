@@ -60,6 +60,7 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
         let errorMsg = action.payload.error || action.payload.data?.message || action.payload.data?.responseMessage;
 
+        // This error msg is blocked to have in notification. This error will be part of detect host dialog error.
         if (action?.meta?.arg?.endpointName === 'registerResourceCredentials') {
             return;
         }

@@ -30,8 +30,12 @@ const UndetectedHostDialogContent = ({ rowData }: DialogProps) => {
 
     return (
         <div className={styles.undetectedHostContent}>
-            <Typography variant="Regular_14">{`${GENERAL.DETECT_HOST_DESC} ${rowData?.instance}`}</Typography>
+            <div className={styles.dialogMsg}>
+                <Typography variant="Regular_14">{GENERAL.DETECT_HOST_DESC}</Typography>&nbsp;
+                <Typography variant="Semibold_14">{rowData?.instance}</Typography>
+            </div>
 
+            {/* MSSQL credential is asked when it is not yet registered */}
             {!rowData?.sqlServerInstances?.[0]?.windowsAuthentication && (
                 <div className={styles.firstSection}>
                     <Typography variant="Semibold_14">{GENERAL.DETECT_MSSQL_HEADING}</Typography>
@@ -59,6 +63,7 @@ const UndetectedHostDialogContent = ({ rowData }: DialogProps) => {
                 </div>
             )}
 
+            {/* FSx credential is asked when this instance has FSx and its credential is not yet registered */}
             {rowData?.fsxId && !rowData?.isFsxRegistered && (
                 <div className={styles.secondSection}>
                     <Typography variant="Semibold_14">{GENERAL.DETECT_FSX_HEADING}</Typography>

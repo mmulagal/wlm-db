@@ -1246,6 +1246,7 @@ export const removeOldApisError = (data: any) => {
     }
 };
 
+// This function will create post payload for register credential API (registerResourceCredentials)
 export const createDetectHostPayload = (instanceID: string, fsxId: string) => {
     const state = store.getState();
     const detectManageUserName = state?.inventory?.detectManageUserName;

@@ -32,8 +32,9 @@ const initialState: any = {
     dbCreateLogNameAdded: true,
     dbCreateDataSizeValid: true,
     dbCreateLogSizeValid: true,
-    isDetectHostLoading: false,
-    isDetectHostError: ''
+    // Detect Host check - Inventory
+    isDetectHostLoading: false, // If Detect host is loading on registerResourceCredentials API call
+    isDetectHostError: '' // registerResourceCredentials API throws error
 };
 
 const msSqlActionSlice = createSlice({

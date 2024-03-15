@@ -669,7 +669,7 @@ export const GENERAL = {
         ' successfully detected and moved to the ',
         ' Unmanaged hosts ',
         ' Managed hosts ',
-        'tab'
+        'tab.'
     ],
     FCI: 'FCI',
     STANDALONE: 'Standalone'

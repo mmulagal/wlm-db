@@ -22,9 +22,9 @@ const initialInventoryState: any = {
     fsxCredentialStatusObj: null,
     fsxIdsList: [],
     isRefreshed: false,
-    valuesNotFilled: false,
-    movedToUnmanagedHost: [],
-    movedToManagedHost: []
+    valuesNotFilled: false, // Detect host dialog fields check
+    movedToUnmanagedHost: [], // Instances that is moved from Unidentifiable rows moved to unmanaged host in inventory
+    movedToManagedHost: [] // Instances that is moved from Unidentifiable rows moved to managed host in inventory
 };
 
 const inventorySlice = createSlice({

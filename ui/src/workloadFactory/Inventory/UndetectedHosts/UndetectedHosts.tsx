@@ -51,9 +51,9 @@ const UndetectedHosts = () => {
     const detectManagePassword = useAppSelector(state => state.inventory.detectManagePassword);
     const detectOntapUsername = useAppSelector(state => state.inventory.detectOntapUsername);
     const detectOntapPassword = useAppSelector(state => state.inventory.detectOntapPassword);
-    const [entryData, setEntryData] = useState<any>({});
+    const [entryData, setEntryData] = useState<any>({}); // instance data of dialog that is opened
 
-    const valueRef = useRef(false);
+    const valueRef = useRef(false); // For detect host dialog fields check
 
     const [manageHostApi] = useManageHostMutation();
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
@@ -123,15 +123,18 @@ const UndetectedHosts = () => {
     }, [detectManageUserName, detectManagePassword, detectOntapUsername, detectOntapPassword]);
 
     useEffect(() => {
+        // Format data again on unIdentifiableHosts or fsxCredentialStatusObj change
         setTableData(formatUnIdentifiableData(unIdentifiableHosts));
     }, [unIdentifiableHosts, fsxCredentialStatusObj]);
 
+    // This function is used to check if user wants to manage the detected host vis workload factory
     const handleMoveToManage = async (rowData: any) => {
         const state = store.getState();
         const detectHostRadio = state.inventory.detectHostRadio;
         const movedToManagedHost = state.inventory.movedToManagedHost;
         const movedToUnmanagedHost = state.inventory.movedToUnmanagedHost;
         if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE) {
+            // If yes than it will call another manage API to manage this instance. On success this instance will be moved to tab 1 from tab3
             const result: any = await manageHostApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
                 regionId: headerSelectedRegion?.label2,
@@ -152,6 +155,7 @@ const UndetectedHosts = () => {
             }
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_UNMANAGE));
         } else {
+            // If no than it will just move instance to tab 2 from tab 3
             dispatch(setMovedToUnmanagedHost([...movedToUnmanagedHost, rowData?.instanceID]));
             const unmanagedSuccessMsg = (
                 <div className={styles.notification}>
@@ -167,6 +171,7 @@ const UndetectedHosts = () => {
         }
     };
 
+    // This function is to register credentials on detect host
     const handleRegisterResourceCred = async (rowData: any, fsxId: string) => {
         if (!valueRef.current) {
             dispatch(setValuesForForm(true));
@@ -211,6 +216,7 @@ const UndetectedHosts = () => {
     };
 
     const resetDialogValues = () => {
+        // reset all detect host dialog fields if dialog is closed.
         dispatch(setIsDetectHostError(''));
         dispatch(setDetectManageUserName(''));
         dispatch(setDetectManagePassword(''));
@@ -218,6 +224,7 @@ const UndetectedHosts = () => {
         dispatch(setDetectONTAPPassword(''));
     };
 
+    // To open detect host dialog
     const handleManageDetect = (rowData: any) => {
         setEntryData(rowData);
         dispatch(setIsDetectHostError(''));
