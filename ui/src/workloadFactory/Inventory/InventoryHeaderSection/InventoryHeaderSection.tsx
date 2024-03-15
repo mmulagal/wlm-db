@@ -13,7 +13,7 @@ const InventoryHeaderSection = () => {
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const isManagedHostInProgress = useAppSelector(state => state.databaseHome.getDatabaseHosts.databaseHostsLoading);
     const { unManagedHosts, unIdentifiableHosts } = useAppSelector(state => state.inventory);
-    const { databaseHostsData } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
     return (
         <div className={styles.inventoryHeader}>
             {/* Top button area */}
@@ -46,7 +46,7 @@ const InventoryHeaderSection = () => {
                     <div className={styles.valueArea}>
                         <div className={styles.firstBlock}>
                             <SquareComponent
-                                value={(databaseHostsData?.length || 0) + unManagedHosts.length}
+                                value={((databaseHostsList || [])?.length || 0) + unManagedHosts.length}
                                 color="var(--chart-4)"
                                 text={GENERAL.DETECTED_HOSTS}
                                 isLoading={isDiscoverInProgress}
@@ -59,7 +59,7 @@ const InventoryHeaderSection = () => {
                             <SquareComponent
                                 value={unIdentifiableHosts.length}
                                 color="var(--chart-2)"
-                                text={GENERAL.UNDETECTED_HOSTS}
+                                text={GENERAL.UNIDENTIFIABLE_HOSTS}
                                 isLoading={isDiscoverInProgress}
                             />
                         </div>
@@ -74,7 +74,7 @@ const InventoryHeaderSection = () => {
                     <div className={styles.valueArea}>
                         <div className={styles.thirdBlock}>
                             <SquareComponent
-                                value={(databaseHostsData?.length || 0).toString()}
+                                value={((databaseHostsList || [])?.length || 0).toString()}
                                 color="var(--chart-9)"
                                 text={GENERAL.MANAGED_BY_WLF}
                                 isLoading={isManagedHostInProgress}

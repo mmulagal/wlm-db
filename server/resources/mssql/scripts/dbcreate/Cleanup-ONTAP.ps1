@@ -1,4 +1,5 @@
-  #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
+#Requires -Version 7.0
+#Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
@@ -26,19 +27,6 @@ param(
 $silenttranscript = (Start-Transcript -Path C:\cfn\log\cleanup_ontap.log.txt -Append)
 
 $ErrorActionPreference = "Stop"
-
-add-type @"
-using System.Net;
-using System.Security.Cryptography.X509Certificates;
-public class TrustAllCertsPolicy : ICertificatePolicy {
-    public bool CheckValidationResult(
-        ServicePoint srvPoint, X509Certificate certificate,
-        WebRequest request, int certificateProblem) {
-            return true;
-        }
-}
-"@
-[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
@@ -89,16 +77,17 @@ if($IsClustered -ne "false") {
 
 # Get FSx certificate
 $isprivatesubnet = $False
-$certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
-try {
+$connection =  Test-Connection -ComputerName https://fsx-aws-certificates.s3.amazonaws.com -Quiet
+if($connection -eq $False) {
+    $isprivatesubnet = $True
+    $restcert = ''
+    }
+else {
+    $certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
     Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
     $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
     $restcert = Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
-}
-catch {
-    $isprivatesubnet = $True
-    $restcert = ''
-}
+    }
 
 function callGetOrDeleteApi{
     param(
@@ -126,7 +115,7 @@ function callGetOrDeleteApi{
         if ($isprivatesubnet -eq $False) {
             Invoke-RestMethod @Params -Certificate $restcert
         }else {
-            Invoke-RestMethod @Params
+            Invoke-RestMethod @Params -SkipCertificateCheck
         }
         
     }catch{

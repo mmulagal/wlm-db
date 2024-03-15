@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { Suspense, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Routes, Route } from 'react-router-dom';
 import AppNotification from './common/AppNotification/AppNotification';
@@ -12,7 +12,6 @@ import Tables from './components/Resource/Tables/Tables';
 import styles from './Home.module.scss';
 import { clearNotifications, removeNotification } from './store/notificationSlice';
 
-import DatabaseHostOverview from './workloadFactory/ResourcePage/ResourceHomePage/DatabaseHostOverview';
 import JobMonitoring from './workloadFactory/JobMonitoring/JobMonitoring';
 import HeaderComponent from './workloadFactory/DatabaseHomePage/HeaderComponent/HeaderComponent';
 import WizardComponent from './workloadFactory/CreateNewDB/WizardComponent/WizardComponent';
@@ -29,26 +28,28 @@ const Home = () => {
     return (
         <div className={styles['app-layout']}>
             <div style={{ height: '100%' }}>
-                <Routes>
-                    <Route
-                        path={`add-working-environment/database-services/:storage/create`}
-                        element={<MainComponent />}
-                    />
-                    <Route
-                        path={`add-working-environment/database-services/:storage/discover`}
-                        element={<DiscoverPage />}
-                    />
-                    <Route path={`database-overview`} element={<DatabaseHostOverview />} />
-                    <Route path={`mssql/:resourceId/:resourceName/`} element={<ResourcePage />}>
-                        <Route path={'overview'} element={<MsSqlOverview />} />
-                        <Route path={'databases'} element={<Databases />} />
-                        <Route path={'tables'} element={<Tables />} />
-                    </Route>
-                    <Route path={'databases'} element={<HeaderComponent />} />
-                    <Route path={'create-new-user'} element={<WizardComponent />} />
-                    <Route path={'job-monitor'} element={<JobMonitoring />} />
-                    <Route path="*" element={<MainComponent />} />
-                </Routes>
+                <Suspense fallback={<MainComponent />}>
+                    <Routes>
+                        <Route
+                            path={`add-working-environment/database-services/:storage/create`}
+                            element={<MainComponent />}
+                        />
+                        <Route
+                            path={`add-working-environment/database-services/:storage/discover`}
+                            element={<DiscoverPage />}
+                        />
+
+                        <Route path={`mssql/:resourceId/:resourceName/`} element={<ResourcePage />}>
+                            <Route path={'overview'} element={<MsSqlOverview />} />
+                            <Route path={'databases'} element={<Databases />} />
+                            <Route path={'tables'} element={<Tables />} />
+                        </Route>
+                        <Route path={'databases'} element={<HeaderComponent />} />
+                        <Route path={'create-new-user'} element={<WizardComponent />} />
+                        <Route path={'job-monitor'} element={<JobMonitoring />} />
+                        <Route path="*" element={<MainComponent />} />
+                    </Routes>
+                </Suspense>
             </div>
 
             {/* To Display the notification */}

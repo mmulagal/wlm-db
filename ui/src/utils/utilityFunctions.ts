@@ -1223,3 +1223,24 @@ export const removePasswordInConfig = (payload: any) => {
     }
     return payload;
 };
+
+export const removeOldApisError = (data: any) => {
+    const state = store.getState();
+    const credId = state.headers.headerSelectedCred?.data?.credentialsId;
+    const regionId = state.headers.headerSelectedRegion?.label2;
+    if (data?.endpointName === 'getDatabaseHosts') {
+        if (data?.originalArgs && (data?.originalArgs?.credentialId !== credId || data?.originalArgs?.region !== regionId)) {
+            return true;
+        } else {
+            return false;
+        }
+    } else if (data?.endpointName === 'discoverHosts') {
+        if (data?.originalArgs && (data?.originalArgs?.credentialsId !== credId || data?.originalArgs?.regionId !== regionId)) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+};

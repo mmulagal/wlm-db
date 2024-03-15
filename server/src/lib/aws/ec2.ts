@@ -34,6 +34,8 @@ import {
     DescribeVpcEndpointsCommand,
     paginateDescribeVpcs,
     paginateDescribeSubnets,
+    ModifyVpcAttributeCommandInput,
+    ModifyVpcAttributeCommand,
     DescribeInstanceTypeOfferingsCommandInput,
     DescribeInstanceTypeOfferingsCommand,
     DescribeVolumesCommandInput,
@@ -296,6 +298,18 @@ async function describeEndpoints(credentialsId: string, region: string, input: D
     }
 }
 
+async function modifyVpcAttributes(credentialsId: string, region: string, input: ModifyVpcAttributeCommandInput) {
+    logger.info('Modify vpc attibutes ', credentialsId, region, input);
+
+    const client = await getEC2Client(region, credentialsId);
+    const command = new ModifyVpcAttributeCommand(input);
+    const response = await client.send(command);
+
+    logger.debug('Modify vpc attibutes response', response);
+
+    return response;
+}
+
 async function describeInstanceTypeOfferings(
     credentialsId: string,
     region: string,
@@ -340,6 +354,7 @@ export {
     describeEndpoints,
     paginatedDescribeVpcs,
     paginatedDescribeSubnets,
-    describeInstanceTypeOfferings,
-    describeVolumes
+    describeVolumes,
+    modifyVpcAttributes,
+    describeInstanceTypeOfferings
 };

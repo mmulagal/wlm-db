@@ -58,6 +58,12 @@ const HOST_AND_SQL_INFO_PS1 = [
         $path = $_.PathName  -Replace "-s.*",""
         $body['windowsAuthentication'] = $False
 
+        if ( (Get-Service -Name ClusSvc -ErrorAction SilentlyContinue) -AND (Get-Cluster -ErrorAction SilentlyContinue) ) {
+          $sqlServerNodes = Get-ClusterResource -Name "SQL Server"  | Get-ClusterOwnerNode | Select OwnerNodes  | forEach  { $_.OwnerNodes.NodeName }
+        } else {
+          $sqlServerNodes = hostname
+        }
+
         try {
           if ($state -eq "Running") {
             Get-Command sqlcmd > Out-Null
@@ -100,6 +106,7 @@ const HOST_AND_SQL_INFO_PS1 = [
         $body['sqlServerMajorVersion'] = $productMajorVersion
         $body['sqlServerInstanceStorageInfo'] = $sqlServerInstanceStorageInfo
         $body['sqlServerName'] = $machineName
+        $body['sqlServerNodes'] = $sqlServerNodes
 
         $instanceSectionEndTime = (Get-Date)
         $body['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)

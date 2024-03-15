@@ -40,6 +40,14 @@ const SqlServerInstanceInfo = Type.Object({
             description: 'Name of SQL Server. For a clustered instance, this is the name of the virtual server.'
         })
     ),
+    sqlServerNodes: Type.Optional(
+        Type.Array(
+            Type.String({
+                description:
+                    'Name of SQL Server nodes. FCI clusters will have a pair of nodes and standalone will have only one node.'
+            })
+        )
+    ),
     windowsAuthentication: Type.Boolean({
         description: 'Is Windows Authentication used for SQL Server?'
     }),

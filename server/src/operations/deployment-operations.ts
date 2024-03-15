@@ -80,7 +80,8 @@ import { getRoleDetails } from './cloud-manager/credentials-operations';
 import {
     getServicesWithNoEndpoint,
     getValidationNodeInstanceType,
-    getWindowsServerBaseAmi
+    getWindowsServerBaseAmi,
+    enableVpcDnsAttributes
 } from './aws/ec2-operations';
 import uploadTemplates from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
@@ -126,9 +127,13 @@ async function formatTemplateParameters(
     const stackName = derivedParams.StackName;
     const validationAmiImage = credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : '';
 
+    const availabilityZones =
+        sqlConfiguration.sqlDeploymentMode === STANDALONE
+            ? [networkConfiguration.availabilityZone1!]
+            : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
     const validationNodeInstanceType =
         credentialsId && region
-            ? await getValidationNodeInstanceType(credentialsId!, region)
+            ? await getValidationNodeInstanceType(credentialsId!, region, availabilityZones)
             : VALIDATION_NODE_INSTANCETYPE.T2MICRO;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
@@ -596,7 +601,11 @@ async function createCloudFormationTemplateForUserDeployment(
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
-    const validationNodeInstanceType = await getValidationNodeInstanceType(credentialsId!, region!);
+    const availabilityZones =
+        sqlConfiguration.sqlDeploymentMode === STANDALONE
+            ? [networkConfiguration.availabilityZone1!]
+            : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
+    const validationNodeInstanceType = await getValidationNodeInstanceType(credentialsId!, region!, availabilityZones);
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
@@ -733,6 +742,17 @@ async function deployCloudFormationTemplate(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
     }
 
+    // Set EnableDnsSupport and EnableDnsHostnames to true
+    try {
+        await enableVpcDnsAttributes(credentialsId, region, networkConfiguration.vpcId);
+    } catch (error) {
+        logger.error(
+            'Error while setting "EnableDnsSupport" and "EnableDnsHostnames" to true for vpc',
+            networkConfiguration.vpcId,
+            error
+        );
+    }
+
     const { stackName, templateParameters } = await formatTemplateParameters(
         networkConfiguration,
         ec2Configuration,
@@ -808,7 +828,8 @@ async function deployCloudFormationTemplate(
             credentialsId,
             sqlConfiguration?.sqlDeploymentMode,
             fsxConfiguration?.fsxFileSystemId,
-            awsAccountId
+            awsAccountId,
+            sqlConfiguration?.sqlServerName
         );
         if (!fsxConfiguration.fsxFileSystemId) {
             // create a new fsx record in fsx inventory

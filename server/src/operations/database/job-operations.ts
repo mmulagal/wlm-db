@@ -211,7 +211,7 @@ async function getJobDetails(accountId: string, credentialsId: string, region: s
     const formattedJob = formatJob(job);
     const subJobsDbSchema = await getSubJobs(accountId, credentialsId, region, jobId); // 2nd arg in listJobs is parentJObId, the idea here is to list all subs of a jobId in context. Hence passing down jobId as parentJobId
     let subJobs = trimAccountIdForDemo(subJobsDbSchema);
-    subJobs = isEmpty(subJobsDbSchema) ? [] : subJobsDbSchema.map(formatJob);
+    subJobs = isEmpty(subJobs) ? [] : subJobs.map(formatJob);
 
     const response = {
         ...formattedJob,

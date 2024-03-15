@@ -1,9 +1,9 @@
 import randomize from 'randomatic';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, STORAGE_TYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
-import { CloudProviders, RESOURCESTYPE, DATABASE_TYPE } from '../utils/consts';
+import { CloudProviders, RESOURCESTYPE, DATABASE_TYPE, MSSQL_DATABASE_TYPES, ONLINE } from '../utils/consts';
 // import { handleNotification } from './cloud-manager/notification-operations';
-import { checkAccount, createDeployment, createResource } from '../lib/database/db';
+import { checkAccount, createDeployment, createResource, updateResourceMetaData } from '../lib/database/db';
 import { Metadata } from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
 import { createFSX } from '../lib/cloud-manager/fsx-core';
@@ -96,7 +96,8 @@ async function createDeploymentMockDataInDB(
     credentialsId: string,
     sqlDeploymentMode: string,
     fsxFileSystemId: string | undefined,
-    awsAccountId: string
+    awsAccountId: string,
+    serverName: string
 ) {
     logger.info('create deployment, resource and job table mock data in database', {
         accountId,
@@ -105,11 +106,12 @@ async function createDeploymentMockDataInDB(
         region,
         credentialsId,
         sqlDeploymentMode,
-        fsxFileSystemId
+        fsxFileSystemId,
+        serverName
     });
 
     const cloudProviderId = awsAccountId;
-    const resourceName = `sqlnode-${randomize('0', 5)}`;
+    const resourceName = serverName;
     if (sqlDeploymentMode.toLowerCase() === 'fci') {
         sqlDeploymentMode = 'FCI';
     } else if (sqlDeploymentMode.toLowerCase() === 'standalone') {
@@ -137,7 +139,8 @@ async function createDeploymentMockDataInDB(
         node1InstanceId: `i-${randomize('A0', 17)}`,
         creationDate: new Date().getTime().toString(),
         activeDirectoryName: 'wlm.com',
-        activeDirectoryAddress: generateRandomIP()
+        activeDirectoryAddress: generateRandomIP(),
+        fsxSvmId: 'svm-0491dd89a76b7ca3d'
     };
 
     if (sqlDeploymentMode === 'FCI') {
@@ -172,7 +175,7 @@ async function createDeploymentMockDataInDB(
 async function createFileSystemForDemo(credentialsId: string, region: string, fsxConfiguration: FSXConfigurationType) {
     logger.info('Creating fsx for demo', credentialsId, region, fsxConfiguration);
 
-    const { fsxDeploymentMode, fsxPassword } = fsxConfiguration;
+    const { fsxDeploymentMode } = fsxConfiguration;
     const mode = fsxDeploymentMode.replace(/_\d+$/, '');
 
     const requestBody = {
@@ -186,11 +189,11 @@ async function createFileSystemForDemo(credentialsId: string, region: string, fs
         primarySubnetId: 'subnet-a1', // default subnet for fsx
         ...(mode === 'MULTI_AZ' && { secondarySubnetId: 'subnet-a2' }),
         throughputCapacity: 3072,
-        fsxAdminPassword: fsxPassword,
+        fsxAdminPassword: `${randomize('Aa0', 8)}`, // Since fsx api does not allow the special characters which we allow from our deployment wizard, so randomizing the password all the time
         deploymentType: mode,
         securityGroupIds: [],
         tags: [],
-        svmAdminPassword: `${randomize('*', 8)}`,
+        svmAdminPassword: `${randomize('Aa0', 8)}`,
         generateSecurityGroup: true,
         haPairs: 2,
         automaticBackupRetentionDays: 30,
@@ -200,4 +203,29 @@ async function createFileSystemForDemo(credentialsId: string, region: string, fs
     return createFSX(requestBody, true);
 }
 
-export { createFileSystemForDemo, createDeploymentMockDataInDB };
+async function updateUserDBIntoResourceData(
+    accountId: string,
+    resourceId: string,
+    databaseName: string,
+    metaData: Metadata
+) {
+    logger.info('updating user db into resource meta data', accountId, resourceId, databaseName);
+
+    // this is used to retreive the newly created user databases in database list for demo using meta data
+    const databaseDetails = {
+        name: databaseName,
+        size: 16777216,
+        type: MSSQL_DATABASE_TYPES.USER,
+        status: ONLINE,
+        protection: {
+            isAWSBackupEnabled: false,
+            isFsxOntapSnapshotsEnabled: false,
+            isSqlNativeEnabled: true
+        }
+    };
+    metaData.userDatabase = [...(metaData.userDatabase || []), databaseDetails];
+
+    await updateResourceMetaData(accountId, resourceId, metaData);
+}
+
+export { createFileSystemForDemo, createDeploymentMockDataInDB, updateUserDBIntoResourceData };

@@ -179,7 +179,7 @@ type DatabasesListResponseType = Static<typeof DatabasesListResponse>;
 // Cloud formation template creation Request and Response
 
 const FileConfig = Type.Object({
-    fileName: Type.String({ minLength: 5, maxLength: 128 }),
+    fileName: Type.String({ minLength: 5 }),
     volumeSize: Type.Number({ minimum: 1 }),
     drive: Type.String({ maxLength: 1 }),
     isExisting: Type.Boolean()

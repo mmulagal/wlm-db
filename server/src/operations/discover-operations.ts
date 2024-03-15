@@ -327,9 +327,10 @@ async function getHostAndSqlInfoFromPsOutput(
                         }ms`
                     );
 
-                    const {
+                    let {
                         sqlServerVersion,
                         sqlServerName,
+                        sqlServerNodes,
                         sqlServerInstance,
                         sqlServerState,
                         windowsAuthentication,
@@ -339,9 +340,14 @@ async function getHostAndSqlInfoFromPsOutput(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
                     );
 
+                    if (!Array.isArray(sqlServerNodes)) {
+                        sqlServerNodes = [sqlServerNodes];
+                    }
+
                     ssmTargetSqlServerInstancesInfo.push({
                         sqlServerVersion,
                         ...(sqlServerName && { sqlServerName }),
+                        sqlServerNodes,
                         sqlServerInstance,
                         sqlServerState,
                         sqlServerEdition,

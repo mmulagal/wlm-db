@@ -30,7 +30,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"percentUsed\":50,\"used\":8796093022208,\"total\":17592186044416,\"remaining\":8796093022208}]\r\n",
+        "StandardOutputContent": "[{\"percentUsed\":50,\"used\":8589934592,\"total\":17179869184,\"remaining\":8589934592}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -714,7 +714,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"name\":\"tempdb18\"}]\r\n",
+        "StandardOutputContent": "",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
