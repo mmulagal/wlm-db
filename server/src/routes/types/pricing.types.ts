@@ -8,7 +8,7 @@ const PricingServiceRequest = Type.Object({
         sqlSoftwareType: Type.String({ enum: [SQL_STD, SQL_ENT, SQL_WEB] }),
         sqlDeploymentMode: Type.String({ enum: [FCI, STANDALONE] })
     }),
-    storage: Type.Optional(
+    fsxnStorage: Type.Optional(
         Type.Object({
             regionCode: Type.String({ minLength: 1 }),
             diskSize: Type.Number({ description: 'Database "data" volume size in GiB' }),

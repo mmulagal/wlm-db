@@ -504,7 +504,6 @@ async function fetchUnmanagedHostsInformation(
                 resourceDetail.resource_id,
                 'performance,usageEstimation,resourceUtilization',
                 resourceDetail,
-                resourceDetail?.ebsVolumeId,
                 false // unmanaged host
             )
         )

@@ -420,15 +420,15 @@ const VPCFILTER: GetProductsCommandInput = {
     FormatVersion: 'aws_v1'
 };
 
-//pricingMock.on(GetProductsCommand, FSXIOPSRATEFILTER).resolves(mockfsxIopsPriceGetProductsResponse);
-//pricingMock.on(GetProductsCommand, FSXREADREQUESTSRATEFILTER).resolves(mockfsxReadPriceGetProductsResponse);
+// pricingMock.on(GetProductsCommand, FSXIOPSRATEFILTER).resolves(mockfsxIopsPriceGetProductsResponse);
+// pricingMock.on(GetProductsCommand, FSXREADREQUESTSRATEFILTER).resolves(mockfsxReadPriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, FSXSTORAGERATEFILTER).resolves(mockfsxStoragePriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, FSXTHROUGHPUTRATEFILTER).resolves(mockfsxThroughputPriceGetProductsResponse);
 // pricingMock.on(GetProductsCommand, FSXWRITEREQUESTSRATEFILTER).resolves(mockfsxWritePriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, EC2INSTANCERATEFILTER).resolves(mockec2InstancePriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, EC2STORAGERATEFILTER).resolves(mockec2StoragePriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, EBSSTORAGERATEFILTER).resolves(mockebsStoragePriceGetProductsResponse);
-//pricingMock.on(GetProductsCommand).resolves(mockGetProductsResponse);
+// pricingMock.on(GetProductsCommand).resolves(mockGetProductsResponse);
 pricingMock.on(GetProductsCommand, VPCFILTER).resolves(mockVPCPriceGetProductsResponse);
 
 export default mockGetProductsResponse;

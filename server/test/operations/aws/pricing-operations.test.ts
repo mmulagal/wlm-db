@@ -17,7 +17,7 @@ describe('Pricing Operations', () => {
                 sqlSoftwareType: 'SQL std',
                 sqlDeploymentMode: 'fci'
             },
-            storage: {
+            fsxnStorage: {
                 regionCode: 'ap-southeast-1',
                 diskSize: 102400,
                 throughput: 1024,
@@ -30,8 +30,8 @@ describe('Pricing Operations', () => {
             }
         };
 
-        const { compute, storage, vpc, ebsStorage } = pricingRequest;
-        const resp = await calculatePrice(compute, storage, vpc, ebsStorage);
+        const { compute, fsxnStorage, vpc, ebsStorage } = pricingRequest;
+        const resp = await calculatePrice(compute, fsxnStorage, vpc, ebsStorage);
         expect(resp).toBeDefined();
     });
 });

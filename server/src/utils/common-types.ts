@@ -32,6 +32,7 @@ interface ResourceDetails {
     credentials_id: string;
     storage_type: string;
     metadata: unknown;
+    ebsVolumeId?: string; // internal field used to store the ebs volume id for the unmanaged MSSQL resource
 }
 
 interface DeploymentDetails {

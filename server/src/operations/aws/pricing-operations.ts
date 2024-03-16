@@ -3,7 +3,7 @@ import { LazyJsonString } from '@smithy/smithy-client';
 import { compact, isEmpty } from 'lodash-es';
 import { PricingServiceRequestType, PricingServiceResponseType } from '../../routes/types/pricing.types';
 import getLogger from '../../utils/logger';
-import { calculateFsxStorageCapacity, sizeInGigaBytes } from '../../utils/utils';
+import { calculateFsxnStorageCapacity, sizeInGigaBytes } from '../../utils/utils';
 import {
     DEFAULT_AWS_REGION,
     FCI,
@@ -17,35 +17,6 @@ import {
 import getProducts from '../../lib/aws/pricing';
 
 const logger = getLogger();
-
-// interface PriceObject {
-//     unit: string;
-//     pricePerUnit: {
-//         USD: string;
-//     };
-// }
-
-// interface Terms {
-//     OnDemand: {
-//         [key: string]: {
-//             priceDimensions: {
-//                 [key: string]: PriceObject;
-//             };
-//         };
-//     };
-// }
-
-// interface Product {
-//     product: {
-//         productFamily: string;
-//         attributes: {
-//             [key: string]: string;
-//         };
-//         sku: string;
-//     };
-//     serviceCode: string;
-//     terms: Terms;
-// }
 
 interface ProductInput {
     name: string;
@@ -77,12 +48,6 @@ const storageProductFamily: Filter = {
     Field: 'productFamily',
     Value: 'Storage'
 };
-
-// const readWriteRequestProductFamily: Filter = {
-//     Type: FilterType.TERM_MATCH,
-//     Field: 'productFamily',
-//     Value: 'Request'
-// };
 
 function getPriceUtil(rate: number, quantity: number, resourceCount = 1): number {
     logger.debug('Calculate price util', { rate, quantity, resourceCount });
@@ -212,15 +177,15 @@ function getEbsStorageInput(region: string, volumeType: string): ProductInput {
     };
 }
 
-function getFSxNStorageInput(storage: PricingServiceRequestType['storage']): ProductInput {
-    logger.info('Geting FSxN Storage Input', { storage });
+function getFSxNStorageInput(fsxnStorage: PricingServiceRequestType['fsxnStorage']): ProductInput {
+    logger.info('Geting FSxN Storage Input', { fsxnStorage });
 
     return {
-        name: 'fsxStorage',
+        name: 'fsxnStorage',
         input: {
             Filters: [
-                getRegionCodeFilter(storage?.regionCode),
-                getDeploymentOption(storage?.deploymentOption),
+                getRegionCodeFilter(fsxnStorage?.regionCode),
+                getDeploymentOption(fsxnStorage?.deploymentOption),
                 storageProductFamily,
                 {
                     Type: FilterType.TERM_MATCH,
@@ -239,15 +204,15 @@ function getFSxNStorageInput(storage: PricingServiceRequestType['storage']): Pro
     };
 }
 
-function getFSxNOperationalMetrics(storage: PricingServiceRequestType['storage']): ProductInput {
-    logger.info('Geting FSxN operational metrics', { storage });
+function getFSxNOperationalMetrics(fsxnStorage: PricingServiceRequestType['fsxnStorage']): ProductInput {
+    logger.info('Geting FSxN operational metrics', { fsxnStorage });
 
     return {
         name: 'fsxOperationals',
         input: {
             Filters: [
-                getRegionCodeFilter(storage?.regionCode),
-                getDeploymentOption(storage?.deploymentOption),
+                getRegionCodeFilter(fsxnStorage?.regionCode),
+                getDeploymentOption(fsxnStorage?.deploymentOption),
                 {
                     Type: FilterType.TERM_MATCH,
                     Field: 'fileSystemType',
@@ -259,112 +224,6 @@ function getFSxNOperationalMetrics(storage: PricingServiceRequestType['storage']
         }
     };
 }
-
-// function getFSxNThroughputInput(storage: PricingServiceRequestType['storage']): ProductInput {
-//     logger.info('Geting FSxN Throughput Input', { storage });
-
-//     return {
-//         name: 'fsxThroughput',
-//         input: {
-//             Filters: [
-//                 getRegionCodeFilter(storage?.regionCode),
-//                 getDeploymentOption(storage?.deploymentOption),
-//                 {
-//                     Type: FilterType.TERM_MATCH,
-//                     Field: 'productFamily',
-//                     Value: 'Provisioned Throughput'
-//                 },
-//                 {
-//                     Type: FilterType.TERM_MATCH,
-//                     Field: 'fileSystemType',
-//                     Value: 'ONTAP'
-//                 }
-//             ],
-//             ...fsxService,
-//             ...AWS_PRICING_FORMAT_VERSION
-//         }
-//     };
-// }
-
-// function getFSxNIopsInput(storage: PricingServiceRequestType['storage']): ProductInput {
-//     logger.info('Geting FSxN Iops Input', { storage });
-
-//     return {
-//         name: 'fsxIops',
-//         input: {
-//             Filters: [
-//                 getRegionCodeFilter(storage?.regionCode),
-//                 getDeploymentOption(storage?.deploymentOption),
-//                 {
-//                     Type: FilterType.TERM_MATCH,
-//                     Field: 'productFamily',
-//                     Value: 'Provisioned IOPS'
-//                 },
-//                 {
-//                     Type: FilterType.TERM_MATCH,
-//                     Field: 'fileSystemType',
-//                     Value: 'ONTAP'
-//                 }
-//             ],
-//             ...fsxService,
-//             ...AWS_PRICING_FORMAT_VERSION
-//         }
-//     };
-// }
-
-// function getFSxNReadRequestsInput(storage: PricingServiceRequestType['storage']): ProductInput {
-//     logger.info('Geting FSxN read requests Input', { storage });
-
-//     return {
-//         name: 'fsxReadRequests',
-//         input: {
-//             Filters: [
-//                 getRegionCodeFilter(storage?.regionCode),
-//                 getDeploymentOption(storage?.deploymentOption),
-//                 readWriteRequestProductFamily,
-//                 {
-//                     Type: FilterType.TERM_MATCH,
-//                     Field: 'fileSystemType',
-//                     Value: 'ONTAP'
-//                 },
-//                 {
-//                     Type: FilterType.TERM_MATCH,
-//                     Field: 'requestType',
-//                     Value: 'Read'
-//                 }
-//             ],
-//             ...fsxService,
-//             ...AWS_PRICING_FORMAT_VERSION
-//         }
-//     };
-// }
-
-// function getFSxNWriteRequestsInput(storage: PricingServiceRequestType['storage']): ProductInput {
-//     logger.info('Geting FSxN write requests Input', { storage });
-
-//     return {
-//         name: 'fsxWriteRequests',
-//         input: {
-//             Filters: [
-//                 getRegionCodeFilter(storage?.regionCode),
-//                 getDeploymentOption(storage?.deploymentOption),
-//                 readWriteRequestProductFamily,
-//                 {
-//                     Type: FilterType.TERM_MATCH,
-//                     Field: 'fileSystemType',
-//                     Value: 'ONTAP'
-//                 },
-//                 {
-//                     Type: FilterType.TERM_MATCH,
-//                     Field: 'requestType',
-//                     Value: 'Write'
-//                 }
-//             ],
-//             ...fsxService,
-//             ...AWS_PRICING_FORMAT_VERSION
-//         }
-//     };
-// }
 
 function getVpcInput(vpcInfo: PricingServiceRequestType['vpc']): ProductInput {
     logger.info('Get VPC input', vpcInfo);
@@ -391,65 +250,6 @@ function getVpcInput(vpcInfo: PricingServiceRequestType['vpc']): ProductInput {
     };
 }
 
-// function parseResponse(response: GetProductsCommandOutput): number {
-//     logger.info('Parse Pricing Response', { response });
-
-//     /**
-//      * Sample response:
-//      * [{
-//             "product": {
-//                 "productFamily": "Storage",
-//                 "attributes": {
-//                     ...
-//                 },
-//                 "sku": "NXJD8KBTG7YXFF7F"
-//             },
-//             "serviceCode": "AmazonFSx",
-//             "terms": {
-//                 "OnDemand": {
-//                     "NXJD8KBTG7YXFF7F.JRTCKXETXF": {
-//                         "priceDimensions": {
-//                             "NXJD8KBTG7YXFF7F.JRTCKXETXF.6YS6EN2CT7": {
-//                                 "unit": "GB-Mo",
-//                                 "pricePerUnit": {
-//                                     "USD": "0.2500000000"
-//                                 }
-//                             }
-//                         },
-//                         ...
-//                     }
-//                 }
-//             },
-//             "version": "20230905212148",
-//             "publicationDate": "2023-09-05T21:21:48Z"
-//         }]
-//      */
-
-//     if (isEmpty(response?.PriceList)) {
-//         logger.error('Invalid AWS SDK response:', { data: response?.PriceList });
-//         return 0;
-//     }
-
-//     const [serializedResponse]: Product[] = (response?.PriceList || []).map(k =>
-//         (k as LazyJsonString).deserializeJSON()
-//     );
-
-//     const { OnDemand }: Terms = serializedResponse?.terms || {};
-
-//     const [{ priceDimensions }] = Object.values(OnDemand);
-
-//     const [
-//         {
-//             unit,
-//             pricePerUnit: { USD: rate }
-//         }
-//     ]: PriceObject[] = Object.values(priceDimensions);
-
-//     logger.debug({ rate, unit });
-
-//     return Number(rate);
-// }
-
 function calculateEc2Cost(instanceRate: number, storageRate: number, deploymentMode: string): number {
     logger.debug('Calculating compute cost');
 
@@ -460,13 +260,13 @@ function calculateEc2Cost(instanceRate: number, storageRate: number, deploymentM
     );
 }
 
-function calculateFsxStorageCost(instanceRate: number, diskSize: number): number {
-    logger.debug('Calculating fsx storage cost', { instanceRate, diskSize });
+function calculateFsxnStorageCost(instanceRate: number, diskSize: number): number {
+    logger.debug('Calculating fsx netapp storage cost', { instanceRate, diskSize });
 
     return getPriceUtil(instanceRate, diskSize);
 }
 
-function calculateFsxOperationalCost(
+function calculateFsxnOperationalCost(
     fsxThroughputRate: number,
     fsxIopsRate: number,
     fsxReadRequestsRate: number,
@@ -476,7 +276,7 @@ function calculateFsxOperationalCost(
     storageReadRequest: number = MAX_READ_REQUEST_FSXN,
     storageWriteRequest: number = MAX_WRITE_REQUEST_FSXN
 ): number {
-    logger.debug('Calculating fsx operational cost', {
+    logger.debug('Calculating fsx netapp operational cost', {
         fsxThroughputRate,
         fsxIopsRate,
         fsxReadRequestsRate,
@@ -497,20 +297,20 @@ function calculateFsxOperationalCost(
 
 function getInputs(
     compute: PricingServiceRequestType['compute'],
-    storage: PricingServiceRequestType['storage'],
+    fsxnStorage: PricingServiceRequestType['fsxnStorage'],
     ebsStorage: PricingServiceRequestType['ebsStorage'],
     vpc: PricingServiceRequestType['vpc']
 ): ProductInput[] {
     logger.info('Getting product inputs', {
         compute,
-        storage,
+        fsxnStorage,
         vpc
     });
 
     return [
         getEc2InstaceInput(compute),
         getEc2StorageInput(compute),
-        ...((storage && [getFSxNStorageInput(storage), getFSxNOperationalMetrics(storage)]) || []),
+        ...((fsxnStorage && [getFSxNStorageInput(fsxnStorage), getFSxNOperationalMetrics(fsxnStorage)]) || []),
         ...((ebsStorage && [getEbsStorageInput(ebsStorage.regionCode, ebsStorage.volumeType)]) || []),
         ...((vpc && [getVpcInput(vpc)]) || [])
     ];
@@ -569,18 +369,18 @@ function parseProductsResponse(response: GetProductsCommandOutput): {
 
 async function calculatePrice(
     compute: PricingServiceRequestType['compute'],
-    storage: PricingServiceRequestType['storage'],
+    fsxnStorage: PricingServiceRequestType['fsxnStorage'],
     vpc: PricingServiceRequestType['vpc'],
     ebsStorage?: PricingServiceRequestType['ebsStorage']
 ): Promise<PricingServiceResponseType> {
     logger.info('Calculating price for AWS resources', {
         compute,
-        storage,
+        fsxnStorage,
         ebsStorage,
         vpc
     });
 
-    const inputList: ProductInput[] = compact(getInputs(compute, storage, ebsStorage, vpc));
+    const inputList: ProductInput[] = compact(getInputs(compute, fsxnStorage, ebsStorage, vpc));
 
     const productsResponse = await Promise.all(
         inputList.map(
@@ -606,12 +406,12 @@ async function calculatePrice(
         ec2Storage: {
             storage: { pricePerUnit: ec2StorageRate }
         },
-        fsxStorage: { storage: { pricePerUnit: fsxStorageRate = 0 } = {} } = {}, // Default to 0 if FSx storage is not available
-        fsxOperationals: {
-            throughput: { pricePerUnit: fsxThroughputRate = 0 } = {},
-            iops: { pricePerUnit: fsxIopsRate = 0 } = {},
-            readRequest: { pricePerUnit: fsxReadRequestsRate = 0 } = {},
-            writeRequest: { pricePerUnit: fsxWriteRequestsRate = 0 } = {}
+        fsxnStorage: { storage: { pricePerUnit: fsxnStorageRate = 0 } = {} } = {}, // Default to 0 if FSx storage is not available
+        fsxnOperationals: {
+            throughput: { pricePerUnit: fsxnThroughputRate = 0 } = {},
+            iops: { pricePerUnit: fsxnIopsRate = 0 } = {},
+            readRequest: { pricePerUnit: fsxnReadRequestsRate = 0 } = {},
+            writeRequest: { pricePerUnit: fsxnWriteRequestsRate = 0 } = {}
         } = {},
         vpc: {
             unknown: { pricePerUnit: vpcRate }
@@ -622,40 +422,40 @@ async function calculatePrice(
     const ec2Cost = calculateEc2Cost(ec2InstanceRate, ec2StorageRate, compute?.sqlDeploymentMode);
     const vpcCost = vpcRate ? getPriceUtil(vpcRate, HOURS_IN_MONTH, 1) : 0;
 
-    let fsxStorageCost = 0;
-    let fsxOperationalCost = 0;
-    let fsxDiskSizes;
-    let fsxDisksize;
-    if (storage) {
+    let fsxnStorageCost = 0;
+    let fsxnOperationalCost = 0;
+    let fsxnDiskSizes;
+    let fsxnDisksize;
+    if (fsxnStorage) {
         // If the input size is database size, we need to calculate the total FSX storage capacity
         // In cases where the input is total FSx Storage capacity, we don't this calculation.
-        if (storage.diskSize) {
-            fsxDiskSizes = calculateFsxStorageCapacity(storage.diskSize);
-            fsxDisksize = fsxDiskSizes.FSxStorageCapacity;
+        if (fsxnStorage.diskSize) {
+            fsxnDiskSizes = calculateFsxnStorageCapacity(fsxnStorage.diskSize);
+            fsxnDisksize = fsxnDiskSizes.FSxStorageCapacity;
         } else {
-            fsxDisksize = storage?.storageCapacity;
+            fsxnDisksize = fsxnStorage?.storageCapacity;
         }
 
-        fsxDisksize = fsxDisksize || MIN_DISKSIZE;
-        const fsxThroughput = storage?.throughput || MIN_THROUGHPUT;
-        let fsxIops = storage?.iops || 3 * fsxDisksize;
+        fsxnDisksize = fsxnDisksize || MIN_DISKSIZE;
+        const fsxThroughput = fsxnStorage?.throughput || MIN_THROUGHPUT;
+        let fsxIops = fsxnStorage?.iops || 3 * fsxnDisksize;
 
-        fsxStorageCost = calculateFsxStorageCost(fsxStorageRate, fsxDisksize);
-        if (fsxIops > 3 * fsxDisksize) {
-            fsxIops -= 3 * fsxDisksize; // Iops cost is only charged when its greater than 3 * diskSize and charging is only on the difference
+        fsxnStorageCost = calculateFsxnStorageCost(fsxnStorageRate, fsxnDisksize);
+        if (fsxIops > 3 * fsxnDisksize) {
+            fsxIops -= 3 * fsxnDisksize; // Iops cost is only charged when its greater than 3 * diskSize and charging is only on the difference
         } else {
             fsxIops = 0; // Iops cost is 0 if it is less than or equal to  3 * diskSize
         }
 
-        fsxOperationalCost = calculateFsxOperationalCost(
-            fsxThroughputRate,
-            fsxIopsRate,
-            fsxReadRequestsRate,
-            fsxWriteRequestsRate,
+        fsxnOperationalCost = calculateFsxnOperationalCost(
+            fsxnThroughputRate,
+            fsxnIopsRate,
+            fsxnReadRequestsRate,
+            fsxnWriteRequestsRate,
             fsxThroughput,
             fsxIops
         );
-        logger.info('FSx operational cost value for demo', fsxOperationalCost);
+        logger.info('FSx Netapp operational cost value for demo', fsxnOperationalCost);
     }
 
     let ebsStorageCost = 0;
@@ -671,19 +471,19 @@ async function calculatePrice(
 
     return {
         compute: ec2Cost,
-        ...(storage && {
-            storage: {
-                capacityCost: fsxStorageCost,
-                operationalCost: fsxOperationalCost,
+        ...(fsxnStorage && {
+            fsxnStorage: {
+                capacityCost: fsxnStorageCost,
+                operationalCost: fsxnOperationalCost,
                 // This is optional and only needed to display in UI
-                ...(fsxDiskSizes && {
+                ...(fsxnDiskSizes && {
                     size: {
-                        data: sizeInGigaBytes(fsxDiskSizes?.FSxDataVolumeSize),
-                        log: sizeInGigaBytes(fsxDiskSizes?.FSxLogVolumeSize),
-                        tempdb: sizeInGigaBytes(fsxDiskSizes?.FSxTempDbVolumeSize),
-                        total: fsxDiskSizes?.FSxStorageCapacity,
-                        ...(fsxDiskSizes?.FSxQuorumVolumeSize && {
-                            quorum: sizeInGigaBytes(fsxDiskSizes?.FSxQuorumVolumeSize)
+                        data: sizeInGigaBytes(fsxnDiskSizes?.FSxDataVolumeSize),
+                        log: sizeInGigaBytes(fsxnDiskSizes?.FSxLogVolumeSize),
+                        tempdb: sizeInGigaBytes(fsxnDiskSizes?.FSxTempDbVolumeSize),
+                        total: fsxnDiskSizes?.FSxStorageCapacity,
+                        ...(fsxnDiskSizes?.FSxQuorumVolumeSize && {
+                            quorum: sizeInGigaBytes(fsxnDiskSizes?.FSxQuorumVolumeSize)
                         })
                     }
                 })
@@ -696,7 +496,7 @@ async function calculatePrice(
                 size: sizeInGigaBytes(ebsStorage.size) || 0
             }
         }),
-        total: ec2Cost + vpcCost + fsxStorageCost + fsxOperationalCost + ebsStorageCost
+        total: ec2Cost + vpcCost + fsxnStorageCost + fsxnOperationalCost + ebsStorageCost
     };
 }
 

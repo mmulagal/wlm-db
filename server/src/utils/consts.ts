@@ -935,7 +935,8 @@ enum DatabaseHostsQueryFields {
     PROTECTION = 'protection',
     STORAGE = 'storage',
     USAGE_ESTIMATION = 'usageEstimation',
-    RESOURCE_UTILIZATION = 'resourceUtilization'
+    RESOURCE_UTILIZATION = 'resourceUtilization',
+    DB_COUNT = 'dbCount'
 }
 
 enum ServerState {
