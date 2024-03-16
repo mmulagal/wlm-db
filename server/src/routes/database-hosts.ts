@@ -1,12 +1,7 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import {
-    getDatabaseHostsSummary,
-    getDatabaseHostSummary,
-    getDatabases,
-    deployDatabase,
-    getDriveInfo
-} from '../operations/database-hosts-operations';
+import { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases } from '../operations/database-hosts-operations';
+import { deployDatabase, getDriveInfo } from '../operations/createdb-operations';
 import {
     DatabaseHostDetailsSchema,
     DatabasesListSchema,

@@ -10,6 +10,7 @@ import {
     CREDENTIAL_STAGE_LINK,
     DB_HOME_DATA_TYPE,
     DEFAULT_MASTER_KEY,
+    DETECT_HOST_VAR,
     DISABLED_STATE,
     ENABLED_STATE,
     JM_DOWNLOAD,
@@ -1078,7 +1079,7 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
     if (!data || data?.length === 0) {
         return groupedData;
     }
-    
+
     // Using endTime calculate hr or day
     if (days === 1) {
         data = data.map((e: any) => ({
@@ -1207,19 +1208,13 @@ export const initialColStateManagedHosts = {
 
 export const removePasswordInConfig = (payload: any) => {
     if (payload?.dbCredentials?.password) {
-        payload = { ...payload, dbCredentials: { ...payload.dbCredentials,
-            password: ''
-        }};
+        payload = { ...payload, dbCredentials: { ...payload.dbCredentials, password: '' } };
     }
     if (payload?.activeDirectory?.password) {
-        payload = { ...payload, activeDirectory: { ...payload.activeDirectory,
-            password: ''
-        }};
+        payload = { ...payload, activeDirectory: { ...payload.activeDirectory, password: '' } };
     }
     if (payload?.fsxN?.fsxNPassword) {
-        payload = { ...payload, fsxN: { ...payload.fsxN,
-            fsxNPassword: ''
-        }};
+        payload = { ...payload, fsxN: { ...payload.fsxN, fsxNPassword: '' } };
     }
     return payload;
 };
@@ -1229,13 +1224,19 @@ export const removeOldApisError = (data: any) => {
     const credId = state.headers.headerSelectedCred?.data?.credentialsId;
     const regionId = state.headers.headerSelectedRegion?.label2;
     if (data?.endpointName === 'getDatabaseHosts') {
-        if (data?.originalArgs && (data?.originalArgs?.credentialId !== credId || data?.originalArgs?.region !== regionId)) {
+        if (
+            data?.originalArgs &&
+            (data?.originalArgs?.credentialId !== credId || data?.originalArgs?.region !== regionId)
+        ) {
             return true;
         } else {
             return false;
         }
     } else if (data?.endpointName === 'discoverHosts') {
-        if (data?.originalArgs && (data?.originalArgs?.credentialsId !== credId || data?.originalArgs?.regionId !== regionId)) {
+        if (
+            data?.originalArgs &&
+            (data?.originalArgs?.credentialsId !== credId || data?.originalArgs?.regionId !== regionId)
+        ) {
             return true;
         } else {
             return false;
@@ -1243,4 +1244,31 @@ export const removeOldApisError = (data: any) => {
     } else {
         return false;
     }
+};
+
+// This function will create post payload for register credential API (registerResourceCredentials)
+export const createDetectHostPayload = (instanceID: string, fsxId: string) => {
+    const state = store.getState();
+    const detectManageUserName = state?.inventory?.detectManageUserName;
+    const detectManagePassword = state?.inventory?.detectManagePassword;
+    const detectOntapUsername = state?.inventory?.detectOntapUsername;
+    const detectOntapPassword = state?.inventory?.detectOntapPassword;
+    let credList = [];
+    if (detectManageUserName && detectManagePassword) {
+        credList.push({
+            resourceId: instanceID,
+            resourceType: DETECT_HOST_VAR.MSSQL,
+            username: detectManageUserName,
+            password: detectManagePassword
+        });
+    }
+    if (detectOntapUsername && detectOntapPassword) {
+        credList.push({
+            resourceId: fsxId,
+            resourceType: DETECT_HOST_VAR.FSX,
+            username: detectOntapUsername,
+            password: detectOntapPassword
+        });
+    }
+    return { credentials: credList };
 };
