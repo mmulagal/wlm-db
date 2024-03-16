@@ -26,23 +26,23 @@ const ebsIopsPrice: LazyJsonString = LazyJsonString.fromObject(
 const ebsThroughputPrice: LazyJsonString = LazyJsonString.fromObject(
     '{ "product": {"productFamily": "Provisioned Throughput", "attributes": {"servicecode": "AmazonEC2","location": "US East (N. Virginia)"}},"terms": {"OnDemand": {"us-east-1": {"priceDimensions": {"us-east-1-ondemand": {"pricePerUnit": {"USD": "0.03"}}}}}}}'
 );
-const fsxStoragePrice: LazyJsonString = LazyJsonString.fromObject(
+const fsxnStoragePrice: LazyJsonString = LazyJsonString.fromObject(
     '{ "product": {"productFamily": "Storage", "attributes": {"servicecode": "AmazonFSx","location": "US East (N. Virginia)", "deploymentOption": "Multi-AZ", "fileSystemType": "ONTAP"}},"terms": {"OnDemand": {"us-east-1": {"priceDimensions": {"us-east-1-ondemand": {"pricePerUnit": {"USD": "0.25"}}}}}}}'
 );
 
-const fsxIopsPrice: LazyJsonString = LazyJsonString.fromObject(
+const fsxnIopsPrice: LazyJsonString = LazyJsonString.fromObject(
     '{ "product": {"productFamily": "Provisioned IOPS", "attributes": {"servicecode": "AmazonFSx","location": "US East (N. Virginia)", "deploymentOption": "Multi-AZ", "fileSystemType": "ONTAP"}},"terms": {"OnDemand": {"us-east-1": {"priceDimensions": {"us-east-1-ondemand": {"pricePerUnit": {"USD": "0.034"}}}}}}}'
 );
 
-const fsxReadPrice: LazyJsonString = LazyJsonString.fromObject(
+const fsxnReadPrice: LazyJsonString = LazyJsonString.fromObject(
     '{ "product": {"productFamily": "Request", "attributes": {"servicecode": "AmazonFSx","location": "US East (N. Virginia)", "deploymentOption": "Multi-AZ","fileSystemType": "ONTAP", "requestType": "Read"}},"terms": {"OnDemand": {"us-east-1": {"priceDimensions": {"us-east-1-ondemand": {"pricePerUnit": {"USD": "0.0000004"}}}}}}}'
 );
 
-const fsxWritePrice: LazyJsonString = LazyJsonString.fromObject(
+const fsxnWritePrice: LazyJsonString = LazyJsonString.fromObject(
     '{ "product": {"productFamily": "Request", "attributes": {"servicecode": "AmazonFSx","location": "US East (N. Virginia)", "deploymentOption": "Multi-AZ", "fileSystemType": "ONTAP", "requestType": "Write"}},"terms": {"OnDemand": {"us-east-1": {"priceDimensions": {"us-east-1-ondemand": {"pricePerUnit": {"USD": "0.000005"}}}}}}}'
 );
 
-const fsxThroughputPrice: LazyJsonString = LazyJsonString.fromObject(
+const fsxnThroughputPrice: LazyJsonString = LazyJsonString.fromObject(
     '{ "product": {"productFamily": "Provisioned Throughput", "attributes": {"servicecode": "AmazonFSx","location": "US East (N. Virginia)", "deploymentOption": "Multi-AZ", "fileSystemType": "ONTAP", "requestType": "Write"}},"terms": {"OnDemand": {"us-east-1": {"priceDimensions": {"us-east-1-ondemand": {"pricePerUnit": {"USD": "1.20"}}}}}}}'
 );
 
@@ -84,7 +84,7 @@ const mockebsStoragePriceGetProductsResponse = {
     FormatVersion: 'aws_v1',
     PriceList: [ebsStoragePrice, ebsIopsPrice, ebsThroughputPrice]
 };
-const mockfsxStoragePriceGetProductsResponse = {
+const mockfsxnStoragePriceGetProductsResponse = {
     $metadata: {
         httpStatusCode: 200,
         requestId: 'c8501a83-530c-47ce-9ebd-3a8b9674f759',
@@ -94,45 +94,10 @@ const mockfsxStoragePriceGetProductsResponse = {
         totalRetryDelay: 0
     },
     FormatVersion: 'aws_v1',
-    PriceList: [fsxStoragePrice]
+    PriceList: [fsxnStoragePrice]
 };
-// const mockfsxIopsPriceGetProductsResponse = {
-//     $metadata: {
-//         httpStatusCode: 200,
-//         requestId: 'c8501a83-530c-47ce-9ebd-3a8b9674f759',
-//         extendedRequestId: undefined,
-//         cfId: undefined,
-//         attempts: 1,
-//         totalRetryDelay: 0
-//     },
-//     FormatVersion: 'aws_v1',
-//     PriceList: [fsxIopsPrice]
-// };
-// const mockfsxReadPriceGetProductsResponse = {
-//     $metadata: {
-//         httpStatusCode: 200,
-//         requestId: 'c8501a83-530c-47ce-9ebd-3a8b9674f759',
-//         extendedRequestId: undefined,
-//         cfId: undefined,
-//         attempts: 1,
-//         totalRetryDelay: 0
-//     },
-//     FormatVersion: 'aws_v1',
-//     PriceList: [fsxReadPrice]
-// };
-// const mockfsxWritePriceGetProductsResponse = {
-//     $metadata: {
-//         httpStatusCode: 200,
-//         requestId: 'c8501a83-530c-47ce-9ebd-3a8b9674f759',
-//         extendedRequestId: undefined,
-//         cfId: undefined,
-//         attempts: 1,
-//         totalRetryDelay: 0
-//     },
-//     FormatVersion: 'aws_v1',
-//     PriceList: [fsxWritePrice]
-// };
-const mockfsxThroughputPriceGetProductsResponse = {
+
+const mockfsxnOperationalPriceGetProductsResponse = {
     $metadata: {
         httpStatusCode: 200,
         requestId: 'c8501a83-530c-47ce-9ebd-3a8b9674f759',
@@ -142,7 +107,7 @@ const mockfsxThroughputPriceGetProductsResponse = {
         totalRetryDelay: 0
     },
     FormatVersion: 'aws_v1',
-    PriceList: [fsxThroughputPrice, fsxIopsPrice, fsxReadPrice, fsxWritePrice]
+    PriceList: [fsxnThroughputPrice, fsxnIopsPrice, fsxnReadPrice, fsxnWritePrice]
 };
 const mockVPCPriceGetProductsResponse = {
     $metadata: {
@@ -156,38 +121,6 @@ const mockVPCPriceGetProductsResponse = {
     FormatVersion: 'aws_v1',
     PriceList: [vpcStoragePrice]
 };
-
-// const FSXREADREQUESTSRATEFILTER: GetProductsCommandInput = {
-//     Filters: [
-//         {
-//             Type: FilterType.TERM_MATCH,
-//             Field: 'regionCode',
-//             Value: 'us-east-1'
-//         },
-//         {
-//             Type: FilterType.TERM_MATCH,
-//             Field: 'deploymentOption',
-//             Value: 'Multi-AZ'
-//         },
-//         {
-//             Type: FilterType.TERM_MATCH,
-//             Field: 'productFamily',
-//             Value: 'Request'
-//         },
-//         {
-//             Type: FilterType.TERM_MATCH,
-//             Field: 'fileSystemType',
-//             Value: 'ONTAP'
-//         },
-//         {
-//             Type: FilterType.TERM_MATCH,
-//             Field: 'requestType',
-//             Value: 'Read'
-//         }
-//     ],
-//     ServiceCode: 'AmazonFSx',
-//     FormatVersion: 'aws_v1'
-// };
 
 const EC2STORAGERATEFILTER: GetProductsCommandInput = {
     Filters: [
@@ -238,7 +171,7 @@ const EBSSTORAGERATEFILTER: GetProductsCommandInput = {
     FormatVersion: 'aws_v1'
 };
 
-const FSXTHROUGHPUTRATEFILTER: GetProductsCommandInput = {
+const FSXNOPERATIONALFILTER: GetProductsCommandInput = {
     Filters: [
         {
             Type: FilterType.TERM_MATCH,
@@ -260,34 +193,7 @@ const FSXTHROUGHPUTRATEFILTER: GetProductsCommandInput = {
     FormatVersion: 'aws_v1'
 };
 
-// const FSXIOPSRATEFILTER: GetProductsCommandInput = {
-//     Filters: [
-//         {
-//             Type: FilterType.TERM_MATCH,
-//             Field: 'regionCode',
-//             Value: 'ap-southeast-1'
-//         },
-//         {
-//             Type: FilterType.TERM_MATCH,
-//             Field: 'deploymentOption',
-//             Value: 'Multi-AZ'
-//         },
-//         {
-//             Type: FilterType.TERM_MATCH,
-//             Field: 'productFamily',
-//             Value: 'Provisioned IOPS'
-//         },
-//         {
-//             Type: FilterType.TERM_MATCH,
-//             Field: 'fileSystemType',
-//             Value: 'ONTAP'
-//         }
-//     ],
-//     ServiceCode: 'AmazonFSx',
-//     FormatVersion: 'aws_v1'
-// };
-
-const FSXSTORAGERATEFILTER: GetProductsCommandInput = {
+const FSXNSTORAGERATEFILTER: GetProductsCommandInput = {
     Filters: [
         {
             Type: FilterType.TERM_MATCH,
@@ -361,43 +267,7 @@ const EC2INSTANCERATEFILTER: GetProductsCommandInput = {
     FormatVersion: 'aws_v1'
 };
 
-// const FSXWRITEREQUESTSRATEFILTER: GetProductsCommandInput = {
-//     Filters: [
-//         {
-//             Type: FilterType.TERM_MATCH,
-//             Field: 'regionCode',
-//             Value: 'ap-southeast-1'
-//         },
-//         {
-//             Type: FilterType.TERM_MATCH,
-//             Field: 'deploymentOption',
-//             Value: 'Multi-AZ'
-//         },
-//         {
-//             Type: FilterType.TERM_MATCH,
-//             Field: 'productFamily',
-//             Value: 'Request'
-//         },
-//         {
-//             Type: FilterType.TERM_MATCH,
-//             Field: 'fileSystemType',
-//             Value: 'ONTAP'
-//         },
-//         {
-//             Type: FilterType.TERM_MATCH,
-//             Field: 'requestType',
-//             Value: 'Write'
-//         }
-//     ],
-//     ServiceCode: 'AmazonFSx',
-//     FormatVersion: 'aws_v1'
-// };
-
-// const price: LazyJsonString = LazyJsonString.fromObject(
-//     '{"product":{"productFamily":"Compute Instance","attributes":{"servicecode":"AmazonEC2","instanceType":"t3.micro","location":"US East (N. Virginia)","memory":"1 GiB","vcpu":"2"}},"terms":{"OnDemand":{"us-east-1":{"priceDimensions":{"us-east-1-ondemand":{"pricePerUnit":{"USD":"0.00158"}}}}}}}'
-// );
-
-const mockGetProductsResponse = mockfsxStoragePriceGetProductsResponse;
+const mockGetProductsResponse = mockfsxnStoragePriceGetProductsResponse;
 const VPCFILTER: GetProductsCommandInput = {
     Filters: [
         {
@@ -420,15 +290,11 @@ const VPCFILTER: GetProductsCommandInput = {
     FormatVersion: 'aws_v1'
 };
 
-// pricingMock.on(GetProductsCommand, FSXIOPSRATEFILTER).resolves(mockfsxIopsPriceGetProductsResponse);
-// pricingMock.on(GetProductsCommand, FSXREADREQUESTSRATEFILTER).resolves(mockfsxReadPriceGetProductsResponse);
-pricingMock.on(GetProductsCommand, FSXSTORAGERATEFILTER).resolves(mockfsxStoragePriceGetProductsResponse);
-pricingMock.on(GetProductsCommand, FSXTHROUGHPUTRATEFILTER).resolves(mockfsxThroughputPriceGetProductsResponse);
-// pricingMock.on(GetProductsCommand, FSXWRITEREQUESTSRATEFILTER).resolves(mockfsxWritePriceGetProductsResponse);
+pricingMock.on(GetProductsCommand, FSXNSTORAGERATEFILTER).resolves(mockfsxnStoragePriceGetProductsResponse);
+pricingMock.on(GetProductsCommand, FSXNOPERATIONALFILTER).resolves(mockfsxnOperationalPriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, EC2INSTANCERATEFILTER).resolves(mockec2InstancePriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, EC2STORAGERATEFILTER).resolves(mockec2StoragePriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, EBSSTORAGERATEFILTER).resolves(mockebsStoragePriceGetProductsResponse);
-// pricingMock.on(GetProductsCommand).resolves(mockGetProductsResponse);
 pricingMock.on(GetProductsCommand, VPCFILTER).resolves(mockVPCPriceGetProductsResponse);
 
 export default mockGetProductsResponse;
