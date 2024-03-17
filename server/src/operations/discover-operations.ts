@@ -9,7 +9,12 @@ import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
 import { getResourceNameFromTags, sleep } from '../utils/utils';
-import { getSSMConnectionStatus, pollCommandStatus, ssmPutParameters } from './aws/ssm-operations';
+import {
+    getSSMConnectionStatus,
+    pollCommandStatus,
+    ssmPutParameters,
+    isSsmParameterForSqlInstancePresent as isSsmParameterForSqlInstanceAvailable
+} from './aws/ssm-operations';
 import { HttpErrorCodes, RESOURCESTYPE, SSM_PARAMETERS_BASE_PATH } from '../utils/consts';
 import { SQL_SERVER_VERSION_TO_EDITION, HOST_AND_SQL_INFO_PS1 } from './workloads/mssql/discover-consts';
 import { sendSSMCommand } from '../lib/aws/ssm';
@@ -342,6 +347,13 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerNodes = [sqlServerNodes];
                     }
 
+                    const sqlAuthentication = await isSsmParameterForSqlInstanceAvailable(
+                        credentialsId,
+                        region,
+                        ssmTarget.ec2InstanceId,
+                        sqlServerInstance
+                    );
+
                     ssmTargetSqlServerInstancesInfo.push({
                         sqlServerVersion,
                         ...(sqlServerName && { sqlServerName }),
@@ -350,6 +362,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerState,
                         sqlServerEdition,
                         windowsAuthentication,
+                        sqlAuthentication,
                         storage: uniqBy(storageTypes, 'id'),
                         deploymentTypes: uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones }))
                     });

@@ -15,7 +15,8 @@ import {
     getCommandInvocation,
     describeFSxOntapRegions,
     getConnectionStatus,
-    putParameter
+    putParameter,
+    getParameter
 } from '../../lib/aws/ssm';
 import { sleep } from '../../utils/utils';
 import { AWS_REGIONS, HttpErrorCodes } from '../../utils/consts';
@@ -167,4 +168,42 @@ async function ssmPutParameters(credentialsId: string, region: string, credentia
     );
 }
 
-export { executeSSMDocument, getFSxOntapRegionsList, getSSMConnectionStatus, ssmPutParameters, pollCommandStatus };
+async function isSsmParameterForSqlInstanceAvailable(
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    sqlServerInstanceName: string
+) {
+    logger.info('Get SSM parameter for SQL Server instance:', {
+        credentialsId,
+        region,
+        ec2InstanceId,
+        sqlServerInstanceName
+    });
+
+    let status = false;
+
+    try {
+        const response = await getParameter(credentialsId, region, `/netapp/wlmdb/${ec2InstanceId}`);
+        if (response) {
+            const info = JSON.parse(response);
+            const { sql } = info;
+            if (sql.find((elem: { sqlinstancename: string }) => elem.sqlinstancename === sqlServerInstanceName)) {
+                status = true;
+            }
+        }
+    } catch (error) {
+        logger.error(`Failed to get SQL Server SSM parameter for instance ${ec2InstanceId}. Reason: ${error}`);
+    }
+
+    return status;
+}
+
+export {
+    executeSSMDocument,
+    getFSxOntapRegionsList,
+    getSSMConnectionStatus,
+    ssmPutParameters,
+    pollCommandStatus,
+    isSsmParameterForSqlInstanceAvailable as isSsmParameterForSqlInstancePresent
+};
