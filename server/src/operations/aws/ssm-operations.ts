@@ -18,12 +18,14 @@ import {
     putParameter,
     getParameter
 } from '../../lib/aws/ssm';
-import { sleep } from '../../utils/utils';
-import { AWS_REGIONS, HttpErrorCodes } from '../../utils/consts';
+import { generateHash, sleep } from '../../utils/utils';
+import { AWS_REGIONS, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
 import { SSMParamterObject } from '../../utils/common-types';
 import { describeRegions } from '../../lib/aws/ec2';
+import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from '../workloads/mssql/const';
+import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 
 const logger = getLogger();
 
@@ -33,7 +35,6 @@ async function pollCommandStatus(
     pollParams: GetCommandInvocationCommandInput
 ): Promise<GetCommandInvocationCommandOutput> {
     logger.info('Polling SSM command execution', pollParams);
-
     try {
         const response = await getCommandInvocation(credentialsId, region, pollParams);
 
@@ -42,14 +43,10 @@ async function pollCommandStatus(
         const status = response?.Status;
 
         switch (status) {
-            case CommandInvocationStatus.SUCCESS:
-                return response;
-
             case CommandInvocationStatus.TIMED_OUT:
             case CommandInvocationStatus.CANCELLED:
-                const errorMessage = `SSM execution ${status} for command ${pollParams.CommandId} on instance ${pollParams.InstanceId}`;
-                logger.error(errorMessage);
-                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            case CommandInvocationStatus.SUCCESS:
+                return response;
             case CommandInvocationStatus.FAILED:
                 logger.error(
                     `SSM execution ${status} for command ${pollParams.CommandId} on instance ${pollParams.InstanceId}`
@@ -70,7 +67,7 @@ async function pollCommandStatus(
 
         await sleep(ms(config.get<string>('ssm.poll-interval')));
         return await pollCommandStatus(credentialsId, region, pollParams);
-    } catch (error) {
+    } catch (error: any) {
         if (error instanceof InvocationDoesNotExist) {
             logger.info('Command invocation does not exist yet, waiting...');
             await sleep(ms(config.get<string>('ssm.poll-interval')));
@@ -102,6 +99,65 @@ async function executeSSMDocument(
     logger.debug('SSM command Response:', response);
 
     return response;
+}
+
+async function callSsmExecution(
+    credentialsId: string,
+    region: string,
+    commands: Array<string>,
+    activeNodeInstanceId: string,
+    accountId?: string,
+    cacheData: boolean = true,
+    executionTimeout?: string
+) {
+    logger.info('Calling SSM command execution', credentialsId, region, commands, activeNodeInstanceId);
+
+    const cacheHashKey = generateHash(activeNodeInstanceId + commands);
+
+    if (cacheData && !process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
+        logger.info('Reading from cache', activeNodeInstanceId, cacheHashKey);
+        return readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheHashKey) as string;
+    }
+
+    const defaultParams = {
+        DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
+        Documentversion: '1',
+        Parameters: {
+            // DBS-1449 - Adding execution timeout in sec
+            executionTimeout: [executionTimeout || config.get<string>('ssm.execution-timeout')],
+            commands
+        }
+    };
+    const params = {
+        ...defaultParams,
+        InstanceIds: [activeNodeInstanceId]
+    };
+    try {
+        logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);
+        const response = await executeSSMDocument(credentialsId, region, params, accountId);
+        if (response?.StandardErrorContent) {
+            const errorMessage = `SSM command ${response.CommandId}  execution  failed on node ${activeNodeInstanceId}  Error: ${response?.StandardErrorContent}`;
+            logger.error(errorMessage);
+            throw createError(errorMessage);
+        }
+        if (
+            response.Status === CommandInvocationStatus.TIMED_OUT ||
+            response.Status === CommandInvocationStatus.CANCELLED
+        ) {
+            const errorMessage = `SSM command ${response.CommandId} execution  timed out on node ${activeNodeInstanceId}`;
+            logger.error(errorMessage);
+            throw createError(errorMessage);
+        }
+
+        const output = response?.StandardOutputContent;
+        if (cacheData) {
+            logger.info('Writing to cache', activeNodeInstanceId, cacheHashKey);
+            writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
+        }
+        return output;
+    } catch (error: any) {
+        throw createError(error);
+    }
 }
 
 async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegionType[] }> {
@@ -205,5 +261,6 @@ export {
     getSSMConnectionStatus,
     ssmPutParameters,
     pollCommandStatus,
-    isSsmParameterForSqlInstanceAvailable as isSsmParameterForSqlInstancePresent
+    callSsmExecution,
+    isSsmParameterForSqlInstanceAvailable
 };

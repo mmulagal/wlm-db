@@ -418,6 +418,7 @@ export const GENERAL = {
     DB_HOST_ESTIMATED_COST: 'Estimated cost',
     DB_HOST_ALLOCATED_CAPACITY: 'Allocated capacity',
     DB_HOST_INSTANCE_NAME: 'Instance name',
+    DB_HOST_INSTANCE_ID: 'Instance ID',
     DB_HOST_VPC: 'VPC',
     DB_HOST_AVAILABILITY: 'Availability',
     DB_HOST_TYPE: 'Type',
@@ -548,6 +549,7 @@ export const GENERAL = {
     DETECTED_DB_HOSTS_DISTRIBUTION: 'Detected database hosts distribution',
     DETECTED_HOSTS: 'Detected hosts',
     UNIDENTIFIABLE_HOSTS: 'Unidentifiable hosts',
+    UNIDENTIFIABLE_HOST: 'Unidentifiable host',
     UNMANAGED_HOSTS: 'Unmanaged hosts',
     MANAGED_BY_WLF: 'Managed by Workload Factory',
     MANAGED_HOSTS_HEADING: 'Managed hosts',
@@ -563,7 +565,7 @@ export const GENERAL = {
     ],
     CREATE_DB_DATA_FILE_NAME_TOOLTIP: [
         'Data file name should have names that are no more than 128 characters long.',
-        'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
+        'Names can only contain alphanumeric characters, including letters, numbers and underscrores.'
     ],
     CREATE_DB_LOG_FILE_NAME_TOOLTIP: [
         'Log file name should have names that are no more than 128 characters long.',
@@ -626,7 +628,51 @@ export const GENERAL = {
     FSX_FOR_ONTAP: 'FSx for ONTAP',
     EBS: 'EBS',
     SINGLE_AZ: 'Single AZ',
-    MULTI_AZ: 'Multi AZ'
+    MULTI_AZ: 'Multi AZ',
+    // Const for unidentifiable data
+    DETECT_HOST: 'Detect host',
+    DETECT_HOST_STEPS: ['Step 1 / 2', 'Step 2 out of 2'],
+    FAILED_TO_DETECT_HOST: 'Failed to detect host',
+    DONE: 'Done',
+    DETECT: 'Detect',
+    SSM_CONNECTIVITY: 'SSM connectivity',
+    SSM_ONLINE: 'Online',
+    SSM_CONNECTION_LOST: 'Connection lost',
+    DETECT_HOST_DESC: 'Detect and manage Microsoft SQL Server deployed on EC2 instance ',
+    DETECT_MSSQL_HEADING: 'Microsoft SQL Server',
+    DETECT_MSSQL_USERNAME: 'Microsoft SQL Server user name',
+    DETECT_MSSQL_PASSWORD: 'Microsoft SQL Server password',
+    DETECT_FSX_HEADING: 'FSx for ONTAP system',
+    DETECT_FSX_USERNAME: 'ONTAP user name',
+    DETECT_FSX_PASSWORD: 'ONTAP password',
+    DETECTED_HOST_INFO: 'Detected host information',
+    DETECT_HOSTNAME: 'Host name',
+    DETECT_HOST_TYPE: 'Host type',
+    DETECT_NO_OF_DB: 'Number of databases',
+    DETECT_SQL_VERSION: 'SQL version',
+    DETECT_DEPLOYMENT_MODEL: 'Deployment model',
+    DETECT_EDITION: 'Edition',
+    EBS_DETECT_SUCCESS_MSG: [
+        'Host ',
+        ' detected successfully.',
+        'The host is now listed in the ',
+        ' Unmanaged hosts ',
+        ' tab.'
+    ],
+    FSX_DETECT_SUCCESS_MSG: [
+        'Detected host management',
+        'Would you like to manage the detected host via workload factory?'
+    ],
+    FSX_AFTER_DETECT_OPTIONS: ['Yes, Manage host via Workload Factory.', 'No, move host to the Unmanaged hosts tab.'],
+    HOST_MOVED_SUCCESS: [
+        'Host ',
+        ' successfully detected and moved to the ',
+        ' Unmanaged hosts ',
+        ' Managed hosts ',
+        'tab.'
+    ],
+    FCI: 'FCI',
+    STANDALONE: 'Standalone'
 };
 
 export const CODE_VIEWER = {

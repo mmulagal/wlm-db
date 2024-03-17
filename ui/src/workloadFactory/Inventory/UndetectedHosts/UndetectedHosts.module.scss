@@ -9,9 +9,33 @@
             width: 192px;
             height: 32px;
             border-radius: 32px;
+            border: 1px solid var(--blue-70);
+            margin-left: -12px;
+            cursor: pointer;
+
+            .textStyle {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-top: 2px;
+                color: var(--blue-70);
+            }
+        }
+
+        .detectManage:hover {
+            border: 1px solid var(--blue-80);
+
+            .textStyle {
+                color: var(--blue-80);
+            }
+        }
+
+        .detectManageDisable {
+            width: 192px;
+            height: 32px;
+            border-radius: 32px;
             border: 1px solid var(--text-button-disabled);
             margin-left: -12px;
-            //cursor: pointer;
 
             .textStyle {
                 display: flex;
@@ -22,7 +46,7 @@
             }
         }
 
-        .detectManage:hover {
+        .detectManageDisable:hover {
             border: 1px solid var(--text-button-disabled);
 
             .textStyle {
@@ -49,4 +73,11 @@
 .headerDialog {
     display: flex;
     justify-content: space-between;
+}
+
+.notification {
+    font-weight: 400;
+    .bold {
+        font-weight: 540;
+    }
 }
