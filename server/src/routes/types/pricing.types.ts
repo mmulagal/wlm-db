@@ -36,6 +36,20 @@ const PricingServiceRequest = Type.Object({
         Type.Object({
             regionCode: Type.String({ minLength: 1 })
         })
+    ),
+    fsxwStorage: Type.Optional(
+        Type.Object({
+            regionCode: Type.String({ minLength: 1 }),
+            diskSize: Type.Number({ description: 'Database "data" volume size in GiB' }),
+            throughput: Type.Number({ description: 'Throughput is in MBps' }),
+            iops: Type.Number(),
+            deploymentOption: Type.String({ enum: [SINGLE_AZ, MULTI_AZ] }),
+            storageCapacity: Type.Number({
+                description:
+                    'The total FSxN storage capacity in GB. "storageCapacity" and "diskSize" are mutually exclusive'
+            }),
+            storageType: Type.String({ enum: ['HDD', 'SSD'] })
+        })
     )
 });
 

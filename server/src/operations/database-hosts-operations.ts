@@ -13,10 +13,10 @@ import {
     DatabasesListResponseType
 } from '../routes/types/database-hosts.types';
 import { describeInstance, describeSubnets, describeVolumes, describeVpc, getAmis } from '../lib/aws/ec2';
-import { describeFSxN } from '../lib/aws/fsx';
+import { describeFSx } from '../lib/aws/fsx';
 import { PricingServiceRequestType, PricingServiceResponseType } from '../routes/types/pricing.types';
 
-import calculatePrice from './aws/pricing-operations';
+import { calculatePrice } from './aws/pricing-operations';
 import {
     DatabaseHostsQueryFields,
     HttpErrorCodes,
@@ -99,6 +99,7 @@ type EstimationFSxType = {
     throughput: number;
     iops: number;
     deploymentOption: string;
+    storageType: string;
 };
 
 type EstimationEbsType = {
@@ -166,7 +167,7 @@ async function getTopology(
         let vpcCidr: string | undefined;
 
         try {
-            const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
+            const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId!] });
             vpcId = fsxInfo?.FileSystems?.[0].VpcId;
             fileSystemName = fsxInfo?.FileSystems?.[0].Tags?.reduce(
                 (a = '', tag) => (tag.Key === 'Name' ? tag.Value : a),
@@ -396,15 +397,15 @@ async function getProtectionStatus(
 async function getBillingOrPriceEstimation(
     resourceDetail: ResourceDetails,
     activeNodeInstanceId?: string,
-    managedResource?: boolean
+    isManagedResource?: boolean
 ) {
     logger.info('Get AWS resources billing or cost data:', {
         resourceDetail,
         activeNodeInstanceId,
-        managedResource
+        isManagedResource
     });
     const promises = [];
-    if (managedResource) {
+    if (isManagedResource) {
         promises.push(
             getBilling(resourceDetail).catch(error => {
                 logger.error('Failed to get billing data for resource: :', JSON.stringify(error));
@@ -484,22 +485,29 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
     try {
         const {
             region,
-            co_relation_id: fileSystemId,
+            co_relation_id: fsxnId,
             credentials_id: credentialsId,
             metadata,
-            ebsVolumeId
+            ebsVolumeId,
+            fsxwId
         } = resourceDetail;
         const { sqlDeploymentType } = metadata as unknown as Metadata;
 
-        const [ec2Info, fsxInfo, ebsInfo] = await Promise.all([
-            getEc2ResourceInfo(credentialsId, region!, activeNodeInstanceId),
-            ...(fileSystemId ? [getFsxResourceInfo(credentialsId, region!, fileSystemId!)] : [Promise.resolve()]),
-            ...(ebsVolumeId ? [getEbsResourceInfo(credentialsId, region!, ebsVolumeId!)] : [Promise.resolve()])
+        if (!region) {
+            throw new Error('Unable to fetch usage estimation data as region is not available');
+        }
+
+        const [ec2Info, fsxnInfo, ebsInfo, fsxwInfo] = await Promise.all([
+            getEc2ResourceInfo(credentialsId, region, activeNodeInstanceId),
+            ...(fsxnId ? [getFsxResourceInfo(credentialsId, region, fsxnId!)] : [Promise.resolve()]),
+            ...(ebsVolumeId ? [getEbsResourceInfo(credentialsId, region, ebsVolumeId!)] : [Promise.resolve()]),
+            ...(fsxwId ? [getFsxResourceInfo(credentialsId, region, fsxwId!)] : [Promise.resolve()])
         ]);
 
         const ec2ResourceInfo = ec2Info as EstimationEc2Type;
-        const fsxResourceInfo = fsxInfo as EstimationFSxType;
+        const fsxnResourceInfo = fsxnInfo as EstimationFSxType;
         const ebsResourceInfo = ebsInfo as EstimationEbsType;
+        const fsxwResourceInfo = fsxwInfo as EstimationFSxType;
 
         const pricingRequest: PricingServiceRequestType = {
             compute: {
@@ -508,13 +516,13 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
                 sqlDeploymentMode: sqlDeploymentType?.toLowerCase() === FCI ? FCI : STANDALONE,
                 sqlSoftwareType: ec2ResourceInfo.sqlSoftwareType
             },
-            ...(fsxResourceInfo && {
-                storage: {
+            ...(fsxnResourceInfo && {
+                fsxnStorage: {
                     regionCode: region!,
-                    storageCapacity: fsxResourceInfo.storageCapacity,
-                    throughput: fsxResourceInfo.throughput,
-                    iops: fsxResourceInfo.iops,
-                    deploymentOption: fsxResourceInfo.deploymentOption,
+                    storageCapacity: fsxnResourceInfo.storageCapacity,
+                    throughput: fsxnResourceInfo.throughput,
+                    iops: fsxnResourceInfo.iops,
+                    deploymentOption: fsxnResourceInfo.deploymentOption,
                     diskSize: 0 // As we are calculating post deployment cost usage, we don't need disk size, we can use storageCapacity instead.
                 }
             }),
@@ -529,14 +537,26 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             }),
             vpc: {
                 regionCode: region!
-            }
+            },
+            ...(fsxwResourceInfo && {
+                fsxwStorage: {
+                    regionCode: region!,
+                    storageCapacity: fsxwResourceInfo.storageCapacity,
+                    throughput: fsxwResourceInfo.throughput,
+                    iops: fsxwResourceInfo.iops,
+                    deploymentOption: fsxwResourceInfo.deploymentOption,
+                    storageType: fsxnResourceInfo.storageType,
+                    diskSize: 0 // As we are calculating post deployment cost usage, we don't need disk size, we can use storageCapacity instead.
+                }
+            })
         };
 
         const pricingResponse: PricingServiceResponseType = await calculatePrice(
             pricingRequest.compute,
             pricingRequest.fsxnStorage,
             pricingRequest.vpc,
-            pricingRequest.ebsStorage
+            pricingRequest.ebsStorage,
+            pricingRequest.fsxwStorage
         );
         return {
             compute: pricingResponse?.compute || 0,
@@ -590,15 +610,22 @@ async function getFsxResourceInfo(
 ): Promise<EstimationFSxType> {
     logger.info('Getting FSxN resource info:', { credentialsId, region, filesystemId });
 
-    const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [filesystemId] });
+    const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [filesystemId] });
     logger.info('Estimation info for FSxN:', fsxInfo);
 
-    const storageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity || 0;
-    const throughput = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
-    const iops = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DiskIopsConfiguration?.Iops;
-    const deploymentOption = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DeploymentType;
+    const [{ StorageCapacity, OntapConfiguration, StorageType }] = fsxInfo?.FileSystems || [];
+    const storageCapacity = StorageCapacity || 0;
+    const throughput = OntapConfiguration?.ThroughputCapacity;
+    const iops = OntapConfiguration?.DiskIopsConfiguration?.Iops;
+    const deploymentOption = OntapConfiguration?.DeploymentType;
 
-    return { storageCapacity, throughput: throughput!, iops: iops!, deploymentOption: deploymentOption! };
+    return {
+        storageCapacity,
+        throughput: throughput!,
+        iops: iops!,
+        deploymentOption: deploymentOption!,
+        storageType: StorageType!
+    };
 }
 
 async function getEbsResourceInfo(
@@ -755,9 +782,9 @@ async function getDatabaseHostSummary(
     databaseHostId: string,
     fields?: string,
     resourceDetail?: ResourceDetails,
-    managedResource: boolean = true
+    isManagedResource: boolean = true
 ): Promise<DatabaseHostSummaryResponseType> {
-    logger.info('Fetching details about a database installtion ', accountId, databaseHostId, fields, managedResource);
+    logger.info('Fetching details about a database installtion ', accountId, databaseHostId, fields, isManagedResource);
 
     if (isEmpty(resourceDetail)) {
         [resourceDetail] = await listResources(accountId, databaseHostId);
@@ -848,7 +875,7 @@ async function getDatabaseHostSummary(
                         ? [getStorageData(resourceDetail, activeNodeInstanceId)]
                         : [Promise.resolve()]), // Fetch storage savings data
                     ...(getUsageEstimation
-                        ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId, managedResource)]
+                        ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId, isManagedResource)]
                         : [Promise.resolve()]), // Fetch pricing estimate data
                     ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
                         ? [

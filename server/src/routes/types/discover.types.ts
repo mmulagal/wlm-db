@@ -124,14 +124,19 @@ const MsSqlInstancesRequestBody = Type.Object({
             instanceId: Type.String({
                 description: 'Ec2 instance ID associated with the MS SQL Server instance.'
             }),
-            fsxId: Type.Optional(
+            fsxnId: Type.Optional(
                 Type.String({
-                    description: 'FileSystem ID associated with the MS SQL Server instance.'
+                    description: 'Netapp FileSystem ID associated with the MS SQL Server instance.'
                 })
             ),
             ebsVolumeId: Type.Optional(
                 Type.String({
                     description: 'EBS volume ID associated with the MS SQL Server instance.'
+                })
+            ),
+            fsxwId: Type.Optional(
+                Type.String({
+                    description: 'Windows FileSystem ID associated with the MS SQL Server instance.'
                 })
             )
         })

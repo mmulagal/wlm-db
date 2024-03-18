@@ -1,7 +1,7 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import CalculatePriceSchema from './schemas/pricing-schema';
-import calculatePrice from '../operations/aws/pricing-operations';
+import { calculatePrice } from '../operations/aws/pricing-operations';
 
 export default function pricingRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();

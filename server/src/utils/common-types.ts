@@ -33,6 +33,7 @@ interface ResourceDetails {
     storage_type: string;
     metadata: unknown;
     ebsVolumeId?: string; // internal field used to store the ebs volume id for the unmanaged MSSQL resource
+    fsxwId?: string; // internal field used to store the windows fsx ID for the unmanaged MSSQL resource
 }
 
 interface DeploymentDetails {
