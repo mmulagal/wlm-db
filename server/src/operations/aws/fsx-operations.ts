@@ -26,11 +26,11 @@ import {
     HttpErrorCodes
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
-import { callSsmExecution } from '../workloads/mssql/mssql-operations';
 import { Metadata, ResourceDetails } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { getFsxArn } from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
+import { callSsmExecution } from './ssm-operations';
 
 const logger = getLogger();
 

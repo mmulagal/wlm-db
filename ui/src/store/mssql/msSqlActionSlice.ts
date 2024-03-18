@@ -31,7 +31,10 @@ const initialState: any = {
     dbCreateDataNameAdded: true,
     dbCreateLogNameAdded: true,
     dbCreateDataSizeValid: true,
-    dbCreateLogSizeValid: true
+    dbCreateLogSizeValid: true,
+    // Detect Host check - Inventory
+    isDetectHostLoading: false, // If Detect host is loading on registerResourceCredentials API call
+    isDetectHostError: '' // registerResourceCredentials API throws error
 };
 
 const msSqlActionSlice = createSlice({
@@ -125,6 +128,12 @@ const msSqlActionSlice = createSlice({
         },
         setDbCreateLogSizeValid(state, action: PayloadAction<any>) {
             state.dbCreateLogSizeValid = action.payload;
+        },
+        setIsDetectHostLoading(state, action: PayloadAction<any>) {
+            state.isDetectHostLoading = action.payload;
+        },
+        setIsDetectHostError(state, action: PayloadAction<any>) {
+            state.isDetectHostError = action.payload;
         }
     }
 });
@@ -157,6 +166,8 @@ export const {
     setDbCreateDataNameAdded,
     setDbCreateLogNameAdded,
     setDbCreateDataSizeValid,
-    setDbCreateLogSizeValid
+    setDbCreateLogSizeValid,
+    setIsDetectHostLoading,
+    setIsDetectHostError
 } = msSqlActionSlice.actions;
 export default msSqlActionSlice;

@@ -17,6 +17,7 @@
                     "sqlServerState": "Stopped",
                     "sqlServerVersion": "15.0.4298.1",
                     "windowsAuthentication": false,
+                    "sqlAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 }
@@ -24,7 +25,7 @@
         },
         {
             "ec2InstanceId": "i-02951e19b874b0611",
-            "ssmState": "connected",
+            "ssmState": "not connected",
             "ec2InstanceName": "sqlnode1-12742-rashid",
             "vpc": {
                 "id": "vpc-84b3afe61",
@@ -38,6 +39,7 @@
                     "sqlServerState": "Stopped",
                     "sqlServerVersion": "16.0.4080.1",
                     "windowsAuthentication": false,
+                    "sqlAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 }
@@ -59,6 +61,8 @@
                     "sqlServerState": "Running",
                     "sqlServerVersion": "15.0.4345.5",
                     "windowsAuthentication": true,
+                    "sqlAuthentication": true,
+                    "sqlServerName": "SQL Server 1",
                     "storage": [
                         {
                             "type": "EBS",
@@ -71,7 +75,7 @@
         },
         {
             "ec2InstanceId": "i-041d3a81922334",
-            "ssmState": "connected",
+            "ssmState": "not connected",
             "ec2InstanceName": "sqlnode2-12742-rashid",
             "vpc": {
                 "id": "vpc-84b3af123",
@@ -85,6 +89,7 @@
                     "sqlServerState": "Stopped",
                     "sqlServerVersion": "16.0.4080.1",
                     "windowsAuthentication": false,
+                    "sqlAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 }
@@ -103,18 +108,20 @@
                 {
                     "sqlServerEdition": 2022,
                     "sqlServerInstance": "INST_C",
-                    "sqlServerState": "Running",
+                    "sqlServerState": "Stopped",
                     "sqlServerVersion": "16.0.1000.6",
                     "windowsAuthentication": false,
+                    "sqlAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 },
                 {
                     "sqlServerEdition": 2022,
                     "sqlServerInstance": "INST_D",
-                    "sqlServerState": "Running",
+                    "sqlServerState": "Stopped",
                     "sqlServerVersion": "16.0.1000.6",
                     "windowsAuthentication": false,
+                    "sqlAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 },
@@ -123,7 +130,9 @@
                     "sqlServerInstance": "MSSQLSERVER",
                     "sqlServerState": "Running",
                     "sqlServerVersion": "16.0.4095.4",
-                    "windowsAuthentication": true,
+                    "windowsAuthentication": false,
+                    "sqlAuthentication": false,
+                    "sqlServerName": "SQL Server 2",
                     "storage": [
                         {
                             "type": "EBS",
@@ -159,11 +168,26 @@
                 {
                     "sqlServerEdition": 2022,
                     "sqlServerInstance": "MSSQLSERVER",
-                    "sqlServerState": "Stopped",
+                    "sqlServerState": "Running",
                     "sqlServerVersion": "16.0.4015.1",
                     "windowsAuthentication": false,
-                    "storage": [],
-                    "deploymentTypes": []
+                    "sqlAuthentication": false,
+                    "sqlServerName": "SQL Server 3",
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fsnew"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1a"
+                            ]
+                        }
+                    ]
                 }
             ]
         },
@@ -183,6 +207,8 @@
                     "sqlServerState": "Running",
                     "sqlServerVersion": "16.0.4015.1",
                     "windowsAuthentication": true,
+                    "sqlAuthentication": true,
+                    "sqlServerName": "SQL Server 4",
                     "storage": [
                         {
                             "type": "FSXN",

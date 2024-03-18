@@ -339,13 +339,13 @@ export const databaseHomeApi = createApi({
                         return `credentials/${credentialId}/regions/${region}/database-hosts?fields=performance,storage,protection,usageEstimation`;
                     }
                 },
-                transformResponse: (response: any, meta,args) => {
+                transformResponse: (response: any, meta, args) => {
                     if (response) {
-                        response= {
+                        response = {
                             ...response,
                             credentialId: args?.credentialId,
                             regionId: args?.region
-                        }
+                        };
                     }
                     return response;
                 }
@@ -529,13 +529,13 @@ export const inventoryApi = createApi({
                         return `credentials/${credentialsId}/regions/${regionId}/mssql/discover?pageSize=10`;
                     }
                 },
-                transformResponse: (response: any, meta,args) => {
+                transformResponse: (response: any, meta, args) => {
                     if (response) {
-                        response= {
+                        response = {
                             ...response,
                             credentialId: args?.credentialsId,
                             regionId: args?.regionId
-                        }
+                        };
                     }
                     return response;
                 }
@@ -553,7 +553,14 @@ export const inventoryApi = createApi({
             manageHost: builder.mutation({
                 query: ({ credentialId, regionId, instanceId }) => ({
                     url: `credentials/${credentialId}/regions/${regionId}/manage/${instanceId}`,
-                    method: 'POST'
+                    method: 'GET'
+                })
+            }),
+            registerResourceCredentials: builder.mutation({
+                query: ({ credentialId, regionId, instanceId, payload }) => ({
+                    url: `credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/mssql/discover/resource-credentials`,
+                    method: 'POST',
+                    body: payload
                 })
             })
         };
@@ -615,5 +622,10 @@ export const { useGetWlmdbPoliciesQuery } = policiesApi;
 
 export const { useGetDriveInfoQuery, useCreateUserDBMutation } = createUserDbApi;
 
-export const { useDiscoverHostsQuery, useGetFsxCredentialStatusQuery, useGetHostsDetailsQuery, useManageHostMutation } =
-    inventoryApi;
+export const {
+    useDiscoverHostsQuery,
+    useGetFsxCredentialStatusQuery,
+    useGetHostsDetailsQuery,
+    useManageHostMutation,
+    useRegisterResourceCredentialsMutation
+} = inventoryApi;
