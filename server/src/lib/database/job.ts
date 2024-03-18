@@ -1,9 +1,9 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import ms from 'ms';
+import { JOBS_DEFAULT_TIME_RANGE, MASTER_STACK_TIMEOUT_MINUTES } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from './db';
-import { JOBS_DEFAULT_TIME_RANGE } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -278,6 +278,26 @@ async function groupJobsByTimeAndStatus(
     });
 }
 
+const subtractHour = (date: Date, hour: number) => {
+    date.setHours(date.getHours() - hour);
+    return date;
+};
+
+async function listInProgressJobs(parentJobId: string | null = null) {
+    logger.info('Listing all jobs which are in progress ', parentJobId);
+
+    return prisma.client.job.findMany({
+        where: {
+            type: JOBTYPE.DEPLOYMENT,
+            parent_job_id: parentJobId,
+            status: JOBSTATUS.IN_PROGRESS,
+            start_time: {
+                lte: subtractHour(new Date(), Math.floor(MASTER_STACK_TIMEOUT_MINUTES / 60))
+            }
+        }
+    });
+}
+
 export {
     countParentJobs,
     listJobs,
@@ -289,5 +309,6 @@ export {
     deleteOlderJobs,
     getJobCountByStatus,
     groupJobsByTimeAndStatus,
-    createJob
+    createJob,
+    listInProgressJobs
 };
