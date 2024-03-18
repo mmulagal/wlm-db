@@ -631,6 +631,7 @@ export const GENERAL = {
     MULTI_AZ: 'Multi AZ',
     // Const for unidentifiable data
     DETECT_HOST: 'Detect host',
+    MANAGE_HOST: 'Manage host',
     DETECT_HOST_STEPS: ['Step 1 / 2', 'Step 2 out of 2'],
     FAILED_TO_DETECT_HOST: 'Failed to detect host',
     DONE: 'Done',
@@ -671,6 +672,8 @@ export const GENERAL = {
         ' Managed hosts ',
         'tab.'
     ],
+    HOST_MANAGED_MOVED_SUCCESS: ['Host ', ' successfully moved to the ', ' Managed hosts ', 'tab.'],
+    HOST_MOVED_FAILED: ['Host ', ' failed to become a managed host. For more details view ', ' Job Monitoring.'],
     FCI: 'FCI',
     STANDALONE: 'Standalone'
 };

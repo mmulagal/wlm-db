@@ -5,13 +5,19 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useEffect, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { FSX_DEPLOYMENT_MODE, STATUS_CONST } from '../../../utils/consts';
+import { FSX_DEPLOYMENT_MODE, WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 
 import { databaseTableSort, formatFractionalNumber, formatSizeOnePrecision } from '../../../utils/utilityFunctions';
-import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
-import { setUnManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
+import {
+    setMovedToManagedHost,
+    setSelectedHeaderTab,
+    setUnManagedHostColState
+} from '../../../store/workloadFactory/inventorySlice';
+import { useManageHostMutation } from '../../../utils/apiService';
+import store from '../../../store/store';
 
 const UnmanagedHosts = () => {
     const dispatch = useDispatch();
@@ -19,11 +25,13 @@ const UnmanagedHosts = () => {
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const unManagedHostList = useAppSelector(state => state.inventory.unManagedHosts);
     const { unManagedHostInitialColumns } = useAppSelector(state => state.inventory);
+    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
 
     const [manageLoading, setManageLoading] = useState<any>({});
+    const [manageHostApi] = useManageHostMutation();
 
     const notAvailable = () => {
         return (
@@ -33,27 +41,59 @@ const UnmanagedHosts = () => {
         );
     };
 
-    const manageHost = (manageRow: any) => {
-        if (!manageLoading[manageRow?.id]) {
-            manageLoading[manageRow?.id] = true;
+    const manageHost = async (rowData: any) => {
+        const state = store.getState();
+        const movedToManagedHost = state.inventory.movedToManagedHost;
+        const name = rowData?.sqlServerInstances?.[0]?.sqlServerName;
+        if (!manageLoading[rowData?.id]) {
+            manageLoading[rowData?.id] = true;
+            setManageLoading(manageLoading);
         }
-        setManageLoading(manageLoading);
-        setTimeout(() => {
-            stopLoading(manageRow);
-        }, 3000);
-    };
-
-    const stopLoading = (manageRow: any) => {
-        if (manageLoading[manageRow?.id]) {
-            manageLoading[manageRow?.id] = false;
+        const result: any = await manageHostApi({
+            credentialId: headerSelectedCred?.data?.credentialsId,
+            regionId: headerSelectedRegion?.label2,
+            instanceId: rowData?.ec2InstanceId
+        });
+        if (result && !result?.error) {
+            if (manageLoading[rowData?.id]) {
+                manageLoading[rowData?.id] = false;
+                setManageLoading(manageLoading);
+            }
+            dispatch(setMovedToManagedHost([...movedToManagedHost, rowData?.ec2InstanceId]));
+            const managedSuccessMsg = (
+                <div className={styles.notification}>
+                    {GENERAL.HOST_MANAGED_MOVED_SUCCESS[0]}
+                    <span className={styles.bold}>{name}</span>
+                    {GENERAL.HOST_MANAGED_MOVED_SUCCESS[1]}
+                    <span className={styles.bold}>{GENERAL.HOST_MANAGED_MOVED_SUCCESS[2]}</span>
+                    {GENERAL.HOST_MANAGED_MOVED_SUCCESS[3]}
+                </div>
+            );
+            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: managedSuccessMsg }));
+        } else {
+            if (manageLoading[rowData?.id]) {
+                manageLoading[rowData?.id] = false;
+                setManageLoading(manageLoading);
+            }
+            const managedFailedMsg = (
+                <div className={styles.notification}>
+                    {GENERAL.HOST_MOVED_FAILED[0]}
+                    <span className={styles.bold}>{name}</span>
+                    {GENERAL.HOST_MOVED_FAILED[1]}
+                    <Button
+                        Component="button"
+                        variant="text"
+                        onClick={() => {
+                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            dispatch(clearNotifications());
+                        }}
+                    >
+                        {GENERAL.JOB_MONITORING}.
+                    </Button>
+                </div>
+            );
+            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));
         }
-        setManageLoading(manageLoading);
-        dispatch(
-            addNotification({
-                notificationType: NOTIFICATION_TYPES.SUCCESS,
-                message: `Host "${manageRow?.name}" successfully moved to managed hosts tab`
-            })
-        );
     };
 
     const DatabasesColDefs: ColumnProps[] = [
@@ -328,22 +368,27 @@ const UnmanagedHosts = () => {
         manageColumnsProps: {
             width: '182px',
             renderCell: (cellData: any, rowData: any) => {
+                const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find((item: any) => item.type === 'FSXN');
                 return (
-                    <div
-                        className={styles.manageHostCol}
-                        onClick={() => {
-                            //manageHost(rowData)
-                        }}
-                    >
-                        {rowData?.id in manageLoading && manageLoading[rowData?.id] && (
-                            <Spinner className={styles.loading} />
+                    <>
+                        {hasFsx && (
+                            <div
+                                className={styles.manageHostCol}
+                                onClick={() => {
+                                    // manageHost(rowData);
+                                }}
+                            >
+                                {rowData?.id in manageLoading && manageLoading[rowData?.id] && (
+                                    <Spinner className={styles.loading} />
+                                )}
+                                {!manageLoading[rowData?.id] && (
+                                    <Typography variant="Regular_14" className={styles.textStyle}>
+                                        {GENERAL.MANAGE_HOST}
+                                    </Typography>
+                                )}
+                            </div>
                         )}
-                        {!manageLoading[rowData?.id] && (
-                            <Typography variant="Regular_14" className={styles.textStyle}>
-                                Manage host
-                            </Typography>
-                        )}
-                    </div>
+                    </>
                 );
             }
         },
