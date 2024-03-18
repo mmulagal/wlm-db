@@ -351,7 +351,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerNodes = [sqlServerNodes];
                     }
 
-                    const sqlAuthentication = await isSsmParameterForSqlInstanceAvailable(
+                    const sqlServerAuthentication = await isSsmParameterForSqlInstanceAvailable(
                         credentialsId,
                         region,
                         ssmTarget.ec2InstanceId,
@@ -366,7 +366,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerState,
                         sqlServerEdition,
                         windowsAuthentication,
-                        sqlAuthentication,
+                        sqlServerAuthentication,
                         storage: uniqBy(storageTypes, 'id'),
                         deploymentTypes: uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones }))
                     });

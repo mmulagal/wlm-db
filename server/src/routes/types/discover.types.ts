@@ -51,9 +51,9 @@ const SqlServerInstanceInfo = Type.Object({
     windowsAuthentication: Type.Boolean({
         description: 'Is Windows authentication used for SQL Server?'
     }),
-    sqlAuthentication: Type.Optional(
+    sqlServerAuthentication: Type.Optional(
         Type.Boolean({
-            description: 'Is SQL Server authentication possible for SQL Server?',
+            description: 'Is SQL Server authentication possible for SQL Server instnace?',
             default: false
         })
     ),
