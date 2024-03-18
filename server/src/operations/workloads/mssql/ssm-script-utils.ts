@@ -49,11 +49,13 @@ Write-Output $defaultDataDrive $defaultLogDrive | ConvertTo-Json
 const GET_DEFAULT_COLLATION = `
 #Get default collation of SQL server
 $defaultSqlCollation = sqlcmd -Q @"
+    SET NOCOUNT ON;
     SELECT CONVERT(nvarchar(128), SERVERPROPERTY('collation'));
 "@ -y 0
 
 #Get default version of SQL server
 $sqlVersion = sqlcmd -Q @"
+    SET NOCOUNT ON;
     SELECT @@VERSION;
 "@ -y 0
 

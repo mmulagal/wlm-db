@@ -218,8 +218,7 @@ const CollationInfoResponseBody = Type.Object({
     collationList: Type.Array(
         Type.Object({
             name: Type.String(),
-            description: Type.Optional(Type.String()),
-            isDefault: Type.Boolean()
+            description: Type.Optional(Type.String())
         })
     ),
     defaultCollation: Type.String()

@@ -80,7 +80,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/collation-list`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/collation`,
             { schema: GetCollationDetailsSchema },
             async (request, reply) => {
                 const {

@@ -3,7 +3,7 @@ import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import getLogger from '../utils/logger';
-import { GET_DEFAULT_DRIVES, GET_DRIVE_INFO } from './workloads/mssql/ssm-script-utils';
+import { GET_DEFAULT_DRIVES, GET_DRIVE_INFO, GET_DEFAULT_COLLATION } from './workloads/mssql/ssm-script-utils';
 import { checkDatabaseExists, getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { convertGiBToBytes, sleep, sqlResponseParsing } from '../utils/utils';
 import {
@@ -30,6 +30,7 @@ import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
 import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
+import { MS_SQL_2016, MS_SQL_2022 } from './workloads/mssql/createdb-collations';
 
 const logger = getLogger();
 
@@ -1203,10 +1204,113 @@ async function getCollationDetails(accountId: string, databaseHostId: string, cr
         credentialsId,
         region
     });
-    return {
-        collationList: [{ name: 'test', description: 'test', isDefault: true }],
-        defaultCollation: 'default'
-    };
+
+    try {
+        const {
+            items: [resourceDetail]
+        } = await getResources(accountId, databaseHostId, credentialsId, region, RESOURCESTYPE.MSSQL);
+
+        if (isEmpty(resourceDetail)) {
+            const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+        }
+
+        const { metadata } = resourceDetail;
+        const { node1InstanceId, node2InstanceId, sqlDeploymentType } = metadata as unknown as Metadata;
+
+        // Check SSM Connection status
+        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await getActiveSqlNode(
+            credentialsId,
+            region,
+            node1InstanceId,
+            node2InstanceId
+        );
+
+        if (!isSSMConnected && activeNodeInstanceId === undefined) {
+            const errorMessage = `Unable to get collation details for host ${databaseHostId} in account ${accountId} due to SSM connection issues.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
+
+        if (sqlDeploymentType === 'FCI' && standbyNodeInstanceId) {
+            const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId!);
+            if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
+                const errorMessage = `Unable to connect to node to get collation details for host ${databaseHostId} in account ${accountId}`;
+                logger.error(errorMessage);
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            }
+        }
+
+        const { defaultCollation, mssqlVersion } = await getDefaultCollation(
+            credentialsId,
+            region,
+            activeNodeInstanceId as string
+        );
+
+        // This regular expression matches four digits in a row, which is the pattern for a year.
+        const regex = /\b\d{4}\b/;
+
+        const [match] = mssqlVersion.match(regex);
+        switch (match) {
+            case '2016':
+                return {
+                    collationList: MS_SQL_2016,
+                    defaultCollation
+                };
+            case '2017':
+                return {
+                    collationList: MS_SQL_2016,
+                    defaultCollation
+                };
+            case '2019':
+                return {
+                    collationList: MS_SQL_2022,
+                    defaultCollation
+                };
+            case '2022':
+                return {
+                    collationList: MS_SQL_2022,
+                    defaultCollation
+                };
+            default:
+                return {
+                    collationList: MS_SQL_2022,
+                    defaultCollation
+                };
+        }
+    } catch (error: any) {
+        const errorMessage = `Unable to get collation information. ${error?.message}.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+}
+
+async function getDefaultCollation(
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string,
+    executionTimeout?: string
+) {
+    logger.info('Getting MSSQL default collation', { credentialsId, region, activeNodeInstanceId });
+    const defaultCollationCommand = [GET_DEFAULT_COLLATION];
+
+    const defaultCollationResponse = await callSsmExecution(
+        credentialsId,
+        region,
+        defaultCollationCommand,
+        activeNodeInstanceId,
+        undefined,
+        false,
+        executionTimeout
+    );
+
+    const [defaultCollation, mssqlVersion] = defaultCollationResponse
+        ? sqlResponseParsing(defaultCollationResponse)
+        : [];
+
+    logger.debug('MSSQL default collation response', { defaultCollation, mssqlVersion });
+    return { defaultCollation, mssqlVersion };
 }
 
 export {

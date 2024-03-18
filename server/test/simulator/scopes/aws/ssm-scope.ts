@@ -230,6 +230,12 @@ const checkDBExists = {
     ]
 };
 
+const getCollationDetails = {
+    commands: [
+        "\n#Get default collation of SQL server\n$defaultSqlCollation = sqlcmd -Q @\"\n    SET NOCOUNT ON;\n    SELECT CONVERT(nvarchar(128), SERVERPROPERTY('collation'));\n\"@ -y 0\n\n#Get default version of SQL server\n$sqlVersion = sqlcmd -Q @\"\n    SET NOCOUNT ON;\n    SELECT @@VERSION;\n\"@ -y 0\n\n\nWrite-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json\n"
+    ]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -308,7 +314,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: cleanUpDB })
     .resolves(listSendCommandCommandResponse.cleanUpDBResponse)
     .on(SendCommandCommand, { Parameters: checkDBExists })
-    .resolves(listSendCommandCommandResponse.checkDBExistsResponse);
+    .resolves(listSendCommandCommandResponse.checkDBExistsResponse)
+    .on(SendCommandCommand, { Parameters: getCollationDetails })
+    .resolves(listSendCommandCommandResponse.getCollationDetailsResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -386,7 +394,9 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-cleanUpDB' })
     .resolves(getCommandInvocationResponse.cleanUpDBInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-checkDBExists' })
-    .resolves(getCommandInvocationResponse.checkDBInvocationResponse);
+    .resolves(getCommandInvocationResponse.checkDBInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getCollationDetails' })
+    .resolves(getCommandInvocationResponse.collationDetailsInvoationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
