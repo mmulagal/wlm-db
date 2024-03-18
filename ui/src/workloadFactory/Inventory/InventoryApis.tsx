@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
-import { addDatabaseHosts, addDatabaseHostsList } from '../../store/workloadFactory/databaseHomeSlice';
+import { addDatabaseHosts, addDatabaseHostsList, addDatabaseHostsLoading } from '../../store/workloadFactory/databaseHomeSlice';
 import {
     useDiscoverHostsQuery,
     useGetDatabaseHostsQuery,
@@ -47,6 +47,7 @@ const InventoryApis = () => {
 
     useEffect(() => {
         resetDBHomePageState(dispatch);
+        dispatch(addDatabaseHostsLoading(databaseHostsLoading));
     }, [credId, regionId]);
 
     const {
@@ -168,7 +169,7 @@ const InventoryApis = () => {
 
     useEffect(() => {
         if (discoverHostError) {
-            dispatch(setDiscoveredHosts({ discoveredHostData: null, databaseHostsLoading, databaseHostsError }));
+            dispatch(setDiscoveredHosts({ ...discoveredHostState, discoverHostLoading, discoverHostError }));
         } else {
             if (!discoverHostLoading) {
                 let oldList = discoveredHostData || [];
@@ -244,36 +245,6 @@ const InventoryApis = () => {
             dispatch(setIsRefreshed(false));
         }
     }, [isRefreshed]);
-
-    useEffect(() => {
-        setDiscoveryCursor(null);
-        setHostCursor(null);
-        dispatch(
-            setDiscoveredHosts({
-                discoveredHostData: null,
-                discoverHostLoading: true,
-                discoverHostError
-            })
-        );
-        dispatch(addDatabaseHostsList([]));
-        dispatch(
-            addDatabaseHosts({
-                databaseHostsData: null,
-                databaseHostsLoading: true,
-                databaseHostsError
-            })
-        );
-        dispatch(setUnManagedHosts([]));
-        dispatch(setUnIdentifiableHosts([]));
-        if (headerSelectedCred && headerSelectedRegion) {
-            setSkipApiCall(false);
-            setSkipDiscoveryCall(false);
-            setSkipManagedHostCall(false);
-            setCredId(headerSelectedCred?.data?.credentialsId);
-            setRegionId(headerSelectedRegion?.label2);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [headerSelectedCred, headerSelectedRegion]);
 
     // To merge database host and database jobs data
     useEffect(() => {
