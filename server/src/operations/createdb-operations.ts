@@ -1254,20 +1254,12 @@ async function getCollationDetails(accountId: string, databaseHostId: string, cr
         const [match] = mssqlVersion.match(regex);
         switch (match) {
             case '2016':
-                return {
-                    collationList: MS_SQL_2016,
-                    defaultCollation
-                };
             case '2017':
                 return {
                     collationList: MS_SQL_2016,
                     defaultCollation
                 };
             case '2019':
-                return {
-                    collationList: MS_SQL_2022,
-                    defaultCollation
-                };
             case '2022':
                 return {
                     collationList: MS_SQL_2022,
