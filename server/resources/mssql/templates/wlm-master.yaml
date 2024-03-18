@@ -330,7 +330,7 @@ Resources:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub /netapp/wlmdb/${AWS::StackName}
-      Description: SSM Paramter for active directory, FSxN and SQL service account credentials
+      Description: SSM Parameter for active directory, FSxN and SQL service account credentials
       Type: String
       Value: !Sub '{
                         fsx: {
