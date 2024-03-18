@@ -81,7 +81,7 @@ router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances
 
 router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/manage/:instanceId`, async (req: {}, res: any) => {
     setTimeout(() => {
-        generateResponse(res, 200, {});
+        generateResponse(res, 500, {"message": "failing"});
     }, 3000);
 });
 
