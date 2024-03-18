@@ -31,7 +31,13 @@ import {
     DescribeTagsCommandInput,
     DescribeTagsCommand,
     DescribeVpcEndpointsCommandInput,
-    DescribeVpcEndpointsCommand
+    DescribeVpcEndpointsCommand,
+    paginateDescribeVpcs,
+    paginateDescribeSubnets,
+    ModifyVpcAttributeCommandInput,
+    ModifyVpcAttributeCommand,
+    DescribeInstanceTypeOfferingsCommandInput,
+    DescribeInstanceTypeOfferingsCommand
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -62,6 +68,21 @@ async function describeVpc(credentialsId: string, region: string, params: Descri
     return resp;
 }
 
+async function paginatedDescribeVpcs(credentialsId: string, region: string, params: DescribeVpcsRequest) {
+    logger.info('Describe VPC', { region, params });
+
+    const ec2 = await getEC2Client(region, credentialsId);
+
+    const vpcList = [];
+    for await (const { Vpcs } of paginateDescribeVpcs({ client: ec2 }, params)) {
+        if (Vpcs?.length) {
+            vpcList.push(...Vpcs);
+        }
+    }
+
+    return vpcList;
+}
+
 async function describeSubnets(credentialsId: string, region: string, params: DescribeSubnetsRequest) {
     logger.info('Describe Subnets', { region, params });
 
@@ -71,6 +92,21 @@ async function describeSubnets(credentialsId: string, region: string, params: De
     logger.debug('descibeSubnets response:', resp);
 
     return resp;
+}
+
+async function paginatedDescribeSubnets(credentialsId: string, region: string, params: DescribeVpcsRequest) {
+    logger.info('Describe VPC', { region, params });
+
+    const ec2 = await getEC2Client(region, credentialsId);
+
+    const subnetList = [];
+    for await (const { Subnets } of paginateDescribeSubnets({ client: ec2 }, params)) {
+        if (Subnets?.length) {
+            subnetList.push(...Subnets);
+        }
+    }
+
+    return subnetList;
 }
 
 async function describeSecurityGroups(credentialsId: string, region: string, params: DescribeSecurityGroupsRequest) {
@@ -260,6 +296,34 @@ async function describeEndpoints(credentialsId: string, region: string, input: D
     }
 }
 
+async function modifyVpcAttributes(credentialsId: string, region: string, input: ModifyVpcAttributeCommandInput) {
+    logger.info('Modify vpc attibutes ', credentialsId, region, input);
+
+    const client = await getEC2Client(region, credentialsId);
+    const command = new ModifyVpcAttributeCommand(input);
+    const response = await client.send(command);
+
+    logger.debug('Modify vpc attibutes response', response);
+
+    return response;
+}
+
+async function describeInstanceTypeOfferings(
+    credentialsId: string,
+    region: string,
+    input: DescribeInstanceTypeOfferingsCommandInput
+) {
+    logger.info('Describe instance type offerings command ', credentialsId, region, input);
+
+    const client = await getEC2Client(region, credentialsId);
+    const command = new DescribeInstanceTypeOfferingsCommand(input);
+    const response = await client.send(command);
+
+    logger.info('Describe instance type offerings response ', response);
+
+    return response;
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -274,5 +338,9 @@ export {
     describeNetworkInterfaces,
     createTag,
     describeTags,
-    describeEndpoints
+    describeEndpoints,
+    paginatedDescribeVpcs,
+    paginatedDescribeSubnets,
+    modifyVpcAttributes,
+    describeInstanceTypeOfferings
 };

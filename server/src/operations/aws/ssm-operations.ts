@@ -1,18 +1,30 @@
 import config from 'config';
 import ms from 'ms';
+import createError from 'http-errors';
 import {
     CommandInvocationStatus,
-    ConnectionStatus,
     GetCommandInvocationCommandInput,
     GetCommandInvocationCommandOutput,
     InvocationDoesNotExist,
+    PutParameterCommandInput,
     SendCommandCommandInput
 } from '@aws-sdk/client-ssm';
-import { sendSSMCommand, getCommandInvocation, describeFSxOntapRegions, getConnectionStatus } from '../../lib/aws/ssm';
-import { sleep } from '../../utils/utils';
-import { AWS_REGIONS } from '../../utils/consts';
+import { DescribeRegionsCommandInput } from '@aws-sdk/client-ec2';
+import {
+    sendSSMCommand,
+    getCommandInvocation,
+    describeFSxOntapRegions,
+    getConnectionStatus,
+    putParameter
+} from '../../lib/aws/ssm';
+import { generateHash, sleep } from '../../utils/utils';
+import { AWS_REGIONS, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
+import { SSMParamterObject } from '../../utils/common-types';
+import { describeRegions } from '../../lib/aws/ec2';
+import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from '../workloads/mssql/const';
+import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 
 const logger = getLogger();
 
@@ -22,7 +34,6 @@ async function pollCommandStatus(
     pollParams: GetCommandInvocationCommandInput
 ): Promise<GetCommandInvocationCommandOutput> {
     logger.info('Polling SSM command execution', pollParams);
-
     try {
         const response = await getCommandInvocation(credentialsId, region, pollParams);
 
@@ -31,12 +42,14 @@ async function pollCommandStatus(
         const status = response?.Status;
 
         switch (status) {
+            case CommandInvocationStatus.TIMED_OUT:
+            case CommandInvocationStatus.CANCELLED:
             case CommandInvocationStatus.SUCCESS:
                 return response;
             case CommandInvocationStatus.FAILED:
-            case CommandInvocationStatus.TIMED_OUT:
-            case CommandInvocationStatus.CANCELLED:
-                logger.error(`SSM execution ${status} for command ${pollParams.CommandId}`);
+                logger.error(
+                    `SSM execution ${status} for command ${pollParams.CommandId} on instance ${pollParams.InstanceId}`
+                );
                 return response;
             case CommandInvocationStatus.CANCELLING:
             case CommandInvocationStatus.DELAYED:
@@ -45,7 +58,7 @@ async function pollCommandStatus(
                 logger.debug(`SSM command execution is in ${status} status. Polling again.`);
                 break;
             default: {
-                const errorMessage = `SSM command execution returned an unexpected status: ${status}`;
+                const errorMessage = `SSM command execution returned an unexpected status: ${status} for command ${pollParams.CommandId} on instance ${pollParams.InstanceId}`;
                 logger.error(errorMessage);
                 throw new Error(errorMessage);
             }
@@ -53,7 +66,7 @@ async function pollCommandStatus(
 
         await sleep(ms(config.get<string>('ssm.poll-interval')));
         return await pollCommandStatus(credentialsId, region, pollParams);
-    } catch (error) {
+    } catch (error: any) {
         if (error instanceof InvocationDoesNotExist) {
             logger.info('Command invocation does not exist yet, waiting...');
             await sleep(ms(config.get<string>('ssm.poll-interval')));
@@ -87,23 +100,102 @@ async function executeSSMDocument(
     return response;
 }
 
+async function callSsmExecution(
+    credentialsId: string,
+    region: string,
+    commands: Array<string>,
+    activeNodeInstanceId: string,
+    accountId?: string,
+    cacheData: boolean = true,
+    executionTimeout?: string
+) {
+    logger.info('Calling SSM command execution', credentialsId, region, commands, activeNodeInstanceId);
+
+    const cacheHashKey = generateHash(activeNodeInstanceId + commands);
+
+    if (cacheData && !process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
+        logger.info('Reading from cache', activeNodeInstanceId, cacheHashKey);
+        return readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheHashKey) as string;
+    }
+
+    const defaultParams = {
+        DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
+        Documentversion: '1',
+        Parameters: {
+            // DBS-1449 - Adding execution timeout in sec
+            executionTimeout: [executionTimeout || config.get<string>('ssm.execution-timeout')],
+            commands
+        }
+    };
+    const params = {
+        ...defaultParams,
+        InstanceIds: [activeNodeInstanceId]
+    };
+    try {
+        logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);
+        const response = await executeSSMDocument(credentialsId, region, params, accountId);
+        if (response?.StandardErrorContent) {
+            const errorMessage = `SSM command ${response.CommandId}  execution  failed on node ${activeNodeInstanceId}  Error: ${response?.StandardErrorContent}`;
+            logger.error(errorMessage);
+            throw createError(errorMessage);
+        }
+        if (
+            response.Status === CommandInvocationStatus.TIMED_OUT ||
+            response.Status === CommandInvocationStatus.CANCELLED
+        ) {
+            const errorMessage = `SSM command ${response.CommandId} execution  timed out on node ${activeNodeInstanceId}`;
+            logger.error(errorMessage);
+            throw createError(errorMessage);
+        }
+
+        const output = response?.StandardOutputContent;
+        if (cacheData) {
+            logger.info('Writing to cache', activeNodeInstanceId, cacheHashKey);
+            writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
+        }
+        return output;
+    } catch (error: any) {
+        throw createError(error);
+    }
+}
+
 async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegionType[] }> {
     logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
 
-    const response = await describeFSxOntapRegions(credentialsId);
-    const fsxRegionsList: Array<FSxAvailableRegionType> = [];
-    const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
+    try {
+        const input: DescribeRegionsCommandInput = {
+            AllRegions: true,
+            Filters: [
+                {
+                    Name: 'opt-in-status',
+                    Values: ['opted-in', 'opt-in-not-required']
+                }
+            ]
+        };
+        const [fsxRegionResponse, ec2RegionResponse] = await Promise.all([
+            describeFSxOntapRegions(credentialsId),
+            describeRegions(input, credentialsId)
+        ]);
 
-    response.forEach(({ Value: regionCode }) => {
-        if (regionCode && !restrictedRegions.includes(regionCode)) {
-            fsxRegionsList.push({
-                regionCode,
-                regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : ''
-            });
-        }
-    });
+        const fsxRegionsList: Array<FSxAvailableRegionType> = [];
+        const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
 
-    return { regions: fsxRegionsList };
+        const { Regions: enabledRegionsInAccount } = ec2RegionResponse;
+        fsxRegionResponse.forEach(({ Value: regionCode }) => {
+            if (regionCode && !restrictedRegions.includes(regionCode)) {
+                enabledRegionsInAccount?.some(enabledRegion => enabledRegion?.RegionName === regionCode);
+                fsxRegionsList.push({
+                    regionCode,
+                    regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : ''
+                });
+            }
+        });
+
+        return { regions: fsxRegionsList };
+    } catch (error) {
+        logger.error('Get FSX ONTAP Region list has failed with error:', error);
+        throw new Error(`Error fetching fsx region:${error}`);
+    }
 }
 
 async function getSSMConnectionStatus(credentialId: string, region: string, instanceId: string) {
@@ -113,65 +205,29 @@ async function getSSMConnectionStatus(credentialId: string, region: string, inst
     });
 }
 
-async function isSSMConnectionSuccessful(
-    credentialsId: string,
-    region: string,
-    node1InstanceId: string,
-    node2InstanceId?: string,
-    resourceId?: string
-) {
-    logger.info('Check if SSM connection is a success', {
-        credentialsId,
-        region,
-        node1InstanceId,
-        node2InstanceId,
-        resourceId
-    });
-    try {
-        let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node1InstanceId);
-        const resourceError = `for resource ID ${resourceId}`;
-        // Connection to activenode is successful
-        if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-            return {
-                isSSMConnected: true,
-                activeNodeInstanceId: node1InstanceId,
-                standbyNodeInstanceId: node2InstanceId
-            };
-        }
+async function ssmPutParameters(credentialsId: string, region: string, credentials: SSMParamterObject[]) {
+    logger.info('Put SSM parameters', { credentialsId, region });
 
-        let errorMessage = `SSM connection to node ${node1InstanceId} has failed.`;
-        errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
-        logger.error(errorMessage);
+    const inputList = credentials.map(({ path, value }) => ({
+        Name: path,
+        Value: JSON.stringify(value),
+        Overwrite: true,
+        Type: 'SecureString',
+        Tier: 'Standard'
+    }));
 
-        // Check for connection to standby node
-        if (node2InstanceId) {
-            connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
-            if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-                return {
-                    isSSMConnected: true,
-                    activeNodeInstanceId: node2InstanceId,
-                    standbyNodeInstanceId: node1InstanceId
-                };
-            }
+    logger.debug('Put SSM parameters', inputList);
 
-            errorMessage = `SSM connection to nodes ${node1InstanceId} and ${node2InstanceId} has failed.`;
-            errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
-            logger.error(errorMessage);
-        }
-    } catch (error) {
-        logger.error(
-            `Error while checking SSM connection ${credentialsId}, ${region}, ${node1InstanceId}, ${node2InstanceId} for resource ID ${resourceId}`
-        );
-        return { isSSMConnected: false };
-    }
-
-    return { isSSMConnected: false };
+    await Promise.all(
+        inputList.map(async input => putParameter(credentialsId, region, input as PutParameterCommandInput))
+    );
 }
 
 export {
     executeSSMDocument,
     getFSxOntapRegionsList,
     getSSMConnectionStatus,
-    isSSMConnectionSuccessful,
-    pollCommandStatus
+    ssmPutParameters,
+    pollCommandStatus,
+    callSsmExecution
 };

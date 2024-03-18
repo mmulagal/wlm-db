@@ -10,7 +10,9 @@ import {
     describeRouteTable,
     describeInstance,
     createTag,
-    describeEndpoints
+    describeEndpoints,
+    describeInstanceTypeOfferings,
+    modifyVpcAttributes
 } from '../../../src/lib/aws/ec2';
 import { SQL_AMI_NAMES, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
@@ -31,6 +33,8 @@ import sgList from '../../simulator/responses/aws/list-security-groups.json';
 import ec2instanceTypes from '../../simulator/responses/aws/ec2-instance-types.json';
 import ec2Instances from '../../simulator/responses/aws/describe-instance.json';
 import vpcEndpoints from '../../simulator/responses/aws/describe-endpoints.json';
+import instanceTypeOfferings from '../../simulator/responses/aws/describe-instancetype-offerings.json';
+import modifyVpcAttributesResponse from '../../simulator/responses/aws/modify-vpc-attributes.json';
 import { DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
 
 const REGION = DEFAULT_AWS_REGION;
@@ -139,5 +143,25 @@ describe('EC2 Lib', () => {
         const response = await describeEndpoints(credentialsId, DEFAULT_AWS_REGION, params);
 
         expect(response).toEqual(vpcEndpoints);
+    });
+
+    it('Describe instance type offerings', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const response = await describeInstanceTypeOfferings(credentialsId, DEFAULT_AWS_REGION, {
+            LocationType: 'region',
+            Filters: [{ Name: 'instance-type', Values: ['t2.micro', 't3.micro'] }]
+        });
+
+        expect(response).toEqual(instanceTypeOfferings);
+    });
+
+    it('Modify vpc attributes', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const response = await modifyVpcAttributes(credentialsId, DEFAULT_AWS_REGION, {
+            VpcId: 'vpc-123445',
+            EnableDnsSupport: { Value: true }
+        });
+
+        expect(response).toEqual(modifyVpcAttributesResponse);
     });
 });

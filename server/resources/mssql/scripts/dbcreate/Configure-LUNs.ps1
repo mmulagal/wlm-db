@@ -1,12 +1,9 @@
- #Requires -Version 7.0
-#Requires -Module AWS.Tools.FSX,AWS.Tools.secretsmanager,AWS.Tools.SimpleSystemsManagement
+#Requires -Version 7.0
+#Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
     [string]$FileSystemId,
-
-    [Parameter(Mandatory=$true)]
-    [string]$FSxCredStore,
 
     [Parameter(Mandatory=$true)]
     [string]$SQLVMName,
@@ -15,17 +12,28 @@ param(
     [string]$FSxDataLunSize,
 
     [Parameter(Mandatory=$true)]
-    [string]$FSxLogLunSize
+    [string]$FSxLogLunSize,
+
+    [Parameter(Mandatory=$true)]
+    [string]$LogNew,
+
+    [Parameter(Mandatory=$true)]
+    [string]$DataNew   
 
 )
-Start-Transcript -Path C:\cfn\log\Configure_luns.log.txt -Append
+$logtranscript = (New-Item -ItemType Directory -Path C:\cfn\log -Force)
+$silenttranscript = (Start-Transcript -Path C:\cfn\log\Configure_luns.log.txt -Append)
 
 $ErrorActionPreference = "Stop"
 
-$userfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="String"}
-$pwdfilter= new-object -typename Amazon.SimpleSystemsManagement.Model.ParameterStringFilter -property @{key="Type";Option="Equals";Values="SecureString"}
-$username = (Get-SSMParametersByPath -Path $FsxCredStore -WithDecryption $true -Recursive $true -ParameterFilter $userfilter).Value
-$password = (Get-SSMParametersByPath -Path $FsxCredStore -WithDecryption $true -Recursive $true -ParameterFilter $pwdfilter).Value
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+$FSxCredStore  = "/netapp/wlmdb/$FileSystemId"
+
+$credobject =  (Get-SSMParameter -Name $FsxCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
+
+$username = $credobject.fsx.username
+$password = $credobject.fsx.password
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
@@ -37,9 +45,11 @@ $base64 = [System.Convert]::ToBase64String($bytes)
 $epoch = (Get-Date -Date ((Get-Date).DateTime) -UFormat %s)
 
 $FSxDataVolumeName = "wlmdb_sqldata_"+$epoch
-$FSxDataVolumeSize = [math]::Round([int]$FSxDataLunSize*1.3)
+$FSxDataVolumeSize = [math]::Round([int]$FSxDataLunSize*1.3,2)
 $FSxLogVolumeName = "wlmdb_sqllog_"+$epoch
-$FSxLogVolumeSize = [math]::Round([int]$FSxLogLunSize*1.3)
+$FSxLogVolumeSize = [math]::Round([int]$FSxLogLunSize*1.3,2)
+$result = [ordered]@{}
+$resources=[ordered]@{}
 
 $LOGLUN = 'sqllog'
 $DATALUN = 'sqldata'
@@ -49,20 +59,19 @@ $nodeiqn = (Get-InitiatorPort).NodeAddress
 
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
 
-
-function returncert{
-    param(
-    [Parameter(Mandatory=$true)]
-    [string]$region
-    )
+# Get FSx certificate
+$isprivatesubnet = $False
+$connection =  Test-Connection -ComputerName https://fsx-aws-certificates.s3.amazonaws.com -Quiet
+if($connection -eq $False) {
+    $isprivatesubnet = $True
+    $restcert = ''
+    }
+else {
     $certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
     Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
     $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
-    return Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
-
-}
-
-$restcert = returncert -region $region
+    $restcert = Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
+    }
 
 function callGetApi{
     param(
@@ -71,7 +80,9 @@ function callGetApi{
     [Parameter(Mandatory=$true)]
     [string]$region,
     [Parameter(Mandatory=$true)]
-    [string]$creds
+    [string]$creds,
+    [Parameter(Mandatory=$true)]
+    [hashtable]$result
     )
     try{
         $Params = @{
@@ -80,10 +91,18 @@ function callGetApi{
             "Headers" = @{"Authorization" = "Basic $creds"}
             "ContentType" = "application/json"
         }
-        Invoke-RestMethod @Params -Certificate $restcert
+        if ($isprivatesubnet -eq $False) {
+            Invoke-RestMethod @Params -Certificate $restcert
+        }else {
+            Invoke-RestMethod @Params -SkipCertificateCheck
+        }
     }catch{
-        Write-Output "{FSxDataVolumeName:$FSxDataVolumeName,FSxLogVolumeName:$FSxLogVolumeName,Igroup:$IGROUP,SQLVMName:$SQLVMName}"
-        Write-Error "{Message:REST API call to Fsx for ONTAP failed,Exception:$_}"
+        $result.Add('Status','Failed')
+        $result.Add('Message','REST API call to FSx for NetApp ONTAP failed')
+        $result.Add('Exception',$_)
+        $resultjson = ($result | ConvertTo-Json) 
+        $resultjson  
+        exit 1
     }
 }
 
@@ -98,10 +117,11 @@ function callrestapi{
     [Parameter(Mandatory=$true)]
     [Hashtable]$parambody,
     [Parameter(Mandatory=$true)]
-    [string]$creds
+    [string]$creds,
+    [Parameter(Mandatory=$true)]
+    [hashtable]$result 
     )
     try{
-        $restcert = returncert -region $region
         $resturi = "https://$MgmtDNS/api/$uri"
         $JsonBody = $Body | ConvertTo-Json
         $Params = @{
@@ -111,23 +131,97 @@ function callrestapi{
             "Body" =  "$JsonBody"
             "ContentType" = "application/json"
         }
-        Invoke-RestMethod @Params -Certificate $restcert
+
+        if ($isprivatesubnet -eq $False) {
+            $invokerest = (Invoke-RestMethod @Params -Certificate $restcert)
+        }else {
+            $invokerest = (Invoke-RestMethod @Params -SkipCertificateCheck) 
+        }
+        
     }catch{
-        Write-Output "{FSxDataVolumeName:$FSxDataVolumeName,FSxLogVolumeName:$FSxLogVolumeName,Igroup:$IGROUP,SQLVMName:$SQLVMName}"
-        Write-Error "{Message:REST API call to Fsx for ONTAP failed,Exception:$_ }"
+        $result.Add('Status','Failed')
+        $result.Add('Message','REST API call to FSx for NetApp ONTAP failed')
+        $result.Add('Exception',$_)
+        $resultjson = ($result | ConvertTo-Json) 
+        $resultjson  
+        exit 1
     }
 }
 
 $LOGLUN = 'sqllog'
 $DATALUN = 'sqldata'
 
-
+try {
+if(($LogNew -eq "false") -And ($DataNew -eq "false")) { throw }
+} catch {
+    $result.Add('Status','Failed')
+    $result.Add('Message','Need to define at least one new drive to configure storage')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson  
+    exit 1 
+}
 
 #Start ONTAP configuration
 
+##Get the existing igroup for the initiator
+
+$IGUriDynamicPart='protocols/san/igroups'
+try {
+$URI=@"
+https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($nodeiqn)&protocol=iscsi
+"@
+$igroups = (callGetApi -uri $URI -region $region -creds $base64 -result $result).records
+$IGROUP = $igroups[0].name
+} catch {
+    $result.Add('Status','Failed')
+    $result.Add('Message','Unable to fetch initiator group from SVM')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson     
+    exit 1
+}
+if ([string]::IsNullOrEmpty($IGROUP)) {
+  $found = $nodeiqn -match '(.*\:.+?)\.'
+  try {
+  if ($found) {
+    $baseiqn = $matches[1]
+    }
+  else { throw}
+  } catch {
+    $result.Add('Status','Failed')
+    $result.Add('Message','Unable to find initiator group allowing access to the node')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson  
+    exit 1 
+  }
+  $URI=@"
+  https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($baseiqn)&protocol=iscsi
+"@
+
+  $igroups = (callGetApi -uri $URI -region $region -creds $base64 -result $result).records
+  $IGROUP = $igroups[0].name
+  try {
+  if ([string]::IsNullOrEmpty($IGROUP)) { throw }
+  } catch {
+    $result.Add('Status','Failed')
+    $result.Add('Message','Unable to find initiator group allowing access to the node')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson  
+    exit 1
+  }
+
+}
+Start-Sleep 2
+
+
 ##create volumes
+try {
 $volUriDynamicPart='storage/volumes'
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
+if($DataNew -ne "false") {
 $DVOLSIZE = $FSxDataVolumeSize.ToString()+"M"
 $Body = @{
     "name" = "$FSxDataVolumeName"
@@ -140,8 +234,10 @@ $Body = @{
     "nas" = @{"security_style" = "NTFS"}
     "size" = "$DVOLSIZE"      
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $volUriDynamicPart -region $region -parambody $Body -creds $base64
+$datavolcreate= (callrestapi -MgmtDNS $MgmtDNS -uri $volUriDynamicPart -region $region -parambody $Body -creds $base64 -result $result)
+}
 
+if($LogNew -ne "false") {
 $LVOLSIZE = $FSxLogVolumeSize.ToString()+"M"
 $Body = @{
     "name" = "$FSxLogVolumeName"
@@ -154,15 +250,38 @@ $Body = @{
     "nas" = @{"security_style" = "NTFS"}
     "size" = "$LVOLSIZE"      
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $volUriDynamicPart -region $region -parambody $Body -creds $base64
-
+$logvolcreate = (callrestapi -MgmtDNS $MgmtDNS -uri $volUriDynamicPart -region $region -parambody $Body -creds $base64 -result $result)
+}
+} catch {
+    $result.Add('Status','Failed')
+    $result.Add('Message','Failed to create volume on FSx for NetApp ONTAP')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson  
+    exit 1    
+}
 
 Start-Sleep 5
 
+#Build return object for cleanup after volume creation
+   $resources = @{
+      'FSxDataVolumeName' = $FsxDataVolumeName
+      'FSxLogVolumeName' = $FsxLogVolumeName
+      'Igroup' = $IGROUP
+      'SQLVMName' = $SQLVMName
+   }
+   $result.Add('Resources',$resources)
+
 ##modify volumes
 $VolUriDynamicPart='private/cli/volume'
-
-$vollist = @($FSxDataVolumeName,$FSxLogVolumeName)
+if(($LogNew -ne "false")-And ($DataNew -ne "false")) {
+    $vollist = @($FSxDataVolumeName,$FSxLogVolumeName) 
+} elseif($DataNew -ne "false") {
+    $vollist = @($FSxDataVolumeName) 
+}
+else {
+  $vollist = @($FSxLogVolumeName) 
+}
 
 foreach ($vol in $vollist) {
 $URI=@"
@@ -190,44 +309,29 @@ $Params = @{
     "ContentType" = "application/json"
 }
 try{
-    $restcert = returncert -region $region
-    Invoke-RestMethod @Params -Certificate $restcert
+    if ($isprivatesubnet -eq $False) {
+            $modifyvol = (Invoke-RestMethod @Params -Certificate $restcert)
+    }else {
+            $modifyvol = (Invoke-RestMethod @Params -SkipCertificateCheck)
+        }
 }catch{
-    Write-Output "{FSxDataVolumeName:$FSxDataVolumeName,FSxLogVolumeName:$FSxLogVolumeName,Igroup:$IGROUP,SQLVMName:$SQLVMName}"
-    Write-Error "{Message:Volume modification to set best practise parameters failed, Exception:$_ }"
+    $result.Add('Status','Failed')
+    $result.Add('Message','Failed to set best practise parameters on the volume')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson  
+    exit 1
 }
-Start-Sleep 2
+Start-Sleep 5
 }
 
 
-##Get the existing igroup for the initiator
 
-$IGUriDynamicPart='protocols/san/igroups'
-$URI=@"
-https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($nodeiqn)&protocol=iscsi
-"@
-$igroups = (callGetApi -uri $URI -region $region -creds $base64).records
-$IGROUP = $igroups[0].name
-if ([string]::IsNullOrEmpty($IGROUP)) {
-  $found = $nodeiqn -match '(.*\:.+?)\.'
-  if ($found) {$baseiqn = $matches[1]}
-  $URI=@"
-  https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($baseiqn)&protocol=iscsi
-"@
-
-  $igroups = (callGetApi -uri $URI -region $region -creds $base64).records
-  $IGROUP = $igroups[0].name
-  if ([string]::IsNullOrEmpty($IGROUP)) {
-    Write-Output "{FSxDataVolumeName:$FSxDataVolumeName,FSxLogVolumeName:$FSxLogVolumeName,Igroup:$IGROUP,SQLVMName:$SQLVMName}"
-    Write-Error "{Message:Unable to fetch igroup for the Node IQN address,Exception:$_}"
-  }
-
-}
-Start-Sleep 2
 
  
 ##create data and log LUNs
 $lunUriDynamicPart='storage/luns'
+if ($DataNew -ne "false") {
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
 $DSIZE = $FSxDataLunSize+"M"
 $LUN_PATH = "/vol/$FSxDataVolumeName/$DATALUN"
@@ -238,10 +342,11 @@ $Body = @{
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "$DSIZE"}       
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64
-
+$createdatalun = (callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64 -result $result)
 Start-Sleep 2
+}
 
+if ($LogNew -ne "false") {
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
 $LUN_PATH = "/vol/$FSxLogVolumeName/$LOGLUN"
 $LSIZE = $FSxLogLunSize+"M"
@@ -252,13 +357,19 @@ $Body = @{
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "$LSIZE"}   
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64
-
+$createloglun = (callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64 -result $result)
 Start-Sleep 2
-
+}
 
 ##mapping data and log LUNs
+if (($LogNew -ne "false")-And ($DataNew -ne "false")) {
 $pathlist =@("/vol/$FSxDataVolumeName/$DATALUN","/vol/$FSxLogVolumeName/$LOGLUN")
+} elseif ($DataNew -ne "false") {
+    $pathlist =@("/vol/$FSxDataVolumeName/$DATALUN")
+}
+else {
+   $pathlist =@("/vol/$FSxLogVolumeName/$LOGLUN")
+}
 $lunmapsUriDynamicPart = 'protocols/san/lun-maps'
 foreach ($path in $pathlist) {
 $URI = "https://$MgmtDNS/api/$lunmapsUriDynamicPart"
@@ -267,7 +378,7 @@ $Body = @{
     "lun" = @{"name" = "$path"}
     "igroup" = @{"name" = "$IGROUP"}
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64
+$lunmodify = (callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64 -result $result)
 }
 
 Start-Sleep 2
@@ -278,8 +389,7 @@ Start-Sleep 2
 
 $lunUriDynamicPart='private/cli/lun'
 
-$lunPathList = @("/vol/$FSxLogVolumeName/$LOGLUN", "/vol/$FSxDataVolumeName/$DATALUN")
-foreach ($perlun in $lunPathlist) {
+foreach ($perlun in $pathlist) {
         $UpdateLUNURI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($SQLVMName)&path=$($perlun)"
         $Body = @{
          "space-reserve" = "enabled"
@@ -293,17 +403,26 @@ foreach ($perlun in $lunPathlist) {
         "ContentType" = "application/json"
         }
         try{
-        $restcert = returncert -region $region
-        Invoke-RestMethod @Params -Certificate $restcert
+        if ($isprivatesubnet -eq $False) {
+            $lunmodify1 = (Invoke-RestMethod @Params -Certificate $restcert)
+        }else {
+            $lunmodify1 = (Invoke-RestMethod @Params -SkipCertificateCheck) 
+        }
+        
         }
         catch{
-        Write-Error "{Message:LUN modification to set space-reserve failed,Exception: $_}"
+            $result.Add('Status','Failed')
+            $result.Add('Message','Failed to set best practise parameters on the storage')
+            $result.Add('Exception',$_)
+            $resultjson = ($result | ConvertTo-Json) 
+            $resultjson  
+            exit 1
         }
         Start-Sleep 2
         $Body = @{
          "space-allocation" = "enabled"
           }
-          $JsonBody = $Body | ConvertTo-Json
+        $JsonBody = $Body | ConvertTo-Json
         $Params = @{
         "URI"     = "$UpdateLUNURI"
         "Method"  = "PATCH"
@@ -312,16 +431,24 @@ foreach ($perlun in $lunPathlist) {
         "ContentType" = "application/json"
         }
         try{
-        $restcert = returncert -region $region
-        Invoke-RestMethod @Params -Certificate $restcert
+        if ($isprivatesubnet -eq $False) {
+            $lunmodify1 = (Invoke-RestMethod @Params -Certificate $restcert)
+        }else {
+            $lunmodify1 = (Invoke-RestMethod @Params -SkipCertificateCheck) 
+        }
         }
         catch{
-        Write-Output "{FSxDataVolumeName:$FSxDataVolumeName,FSxLogVolumeName:$FSxLogVolumeName,Igroup:$IGROUP,SQLVMName:$SQLVMName}"
-        Write-Error "{Message:LUN modification to set space-allocation failed,Exception:$_}"
+            $result.Add('Status','Failed')
+            $result.Add('Message','Failed to set best practise parameters on the storage')
+            $result.Add('Exception',$_)
+            $resultjson = ($result | ConvertTo-Json) 
+            $resultjson  
+            exit 1
         }
         Start-Sleep 3
     }
- Write-Output "{FSxDataVolumeName:$FSxDataVolumeName,FSxLogVolumeName:$FSxLogVolumeName,Igroup:$IGROUP,SQLVMName:$SQLVMName}"
- 
- 
+    $result.Add('Status','Complete')
+    $result.Add('Message','Provisioning storage on FSx for NetApp ONTAP complete')
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson 
  

@@ -63,7 +63,9 @@ import {
     MAP_SERVICE_TEMPLATE_PARAMETER,
     SIGNED_TEMPLATES_BUCKET_NAME,
     TEMPLATE_BUCKET_REGION,
-    DEFAULT_AWS_REGION
+    DEFAULT_AWS_REGION,
+    VALIDATION_INSTANCE_TYPE,
+    VALIDATION_NODE_INSTANCETYPE
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -75,7 +77,12 @@ import {
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
-import { getServicesWithNoEndpoint, getWindowsServerBaseAmi } from './aws/ec2-operations';
+import {
+    getServicesWithNoEndpoint,
+    getValidationNodeInstanceType,
+    getWindowsServerBaseAmi,
+    enableVpcDnsAttributes
+} from './aws/ec2-operations';
 import uploadTemplates from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
@@ -85,8 +92,7 @@ import { NetworkViolation } from '../utils/common-types';
 import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
 import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
-import createDeploymentMockDataInDB from './demo-operations';
-import { createFSXForDemo } from '../lib/cloud-manager/fsx-core';
+import { createDeploymentMockDataInDB, createFileSystemForDemo } from './demo-operations';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -120,13 +126,25 @@ async function formatTemplateParameters(
 
     const stackName = derivedParams.StackName;
     const validationAmiImage = credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : '';
+
+    const availabilityZones =
+        sqlConfiguration.sqlDeploymentMode === STANDALONE
+            ? [networkConfiguration.availabilityZone1!]
+            : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
+    const validationNodeInstanceType =
+        credentialsId && region
+            ? await getValidationNodeInstanceType(credentialsId!, region, availabilityZones)
+            : VALIDATION_NODE_INSTANCETYPE.T2MICRO;
+
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+
     const templateParams: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
+        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: validationNodeInstanceType },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
@@ -146,7 +164,10 @@ async function formatTemplateParameters(
         }
     }
 
-    const missingServices = await getServicesWithNoEndpoint(credentialsId!, region!, networkConfiguration.vpcId);
+    const missingServices =
+        credentialsId && region
+            ? await getServicesWithNoEndpoint(credentialsId!, region!, networkConfiguration.vpcId)
+            : [];
     Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
         if (!missingServices.includes(key)) {
             templateParams.push({
@@ -580,6 +601,11 @@ async function createCloudFormationTemplateForUserDeployment(
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
+    const availabilityZones =
+        sqlConfiguration.sqlDeploymentMode === STANDALONE
+            ? [networkConfiguration.availabilityZone1!]
+            : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
+    const validationNodeInstanceType = await getValidationNodeInstanceType(credentialsId!, region!, availabilityZones);
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
@@ -589,13 +615,14 @@ async function createCloudFormationTemplateForUserDeployment(
     const templateParamsAsList: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
+        { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: validationNodeInstanceType },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
     ];
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${validationNodeInstanceType}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
     if (fsxConfiguration.fsxPassword) {
         try {
             const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
@@ -715,6 +742,17 @@ async function deployCloudFormationTemplate(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
     }
 
+    // Set EnableDnsSupport and EnableDnsHostnames to true
+    try {
+        await enableVpcDnsAttributes(credentialsId, region, networkConfiguration.vpcId);
+    } catch (error) {
+        logger.error(
+            'Error while setting "EnableDnsSupport" and "EnableDnsHostnames" to true for vpc',
+            networkConfiguration.vpcId,
+            error
+        );
+    }
+
     const { stackName, templateParameters } = await formatTemplateParameters(
         networkConfiguration,
         ec2Configuration,
@@ -781,6 +819,7 @@ async function deployCloudFormationTemplate(
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
         const stackId = deployStackResponse.StackId || '';
+        const awsAccountId = randomize('0', 8);
         createDeploymentMockDataInDB(
             accountId,
             stackId,
@@ -788,7 +827,9 @@ async function deployCloudFormationTemplate(
             region,
             credentialsId,
             sqlConfiguration?.sqlDeploymentMode,
-            fsxConfiguration?.fsxFileSystemId
+            fsxConfiguration?.fsxFileSystemId,
+            awsAccountId,
+            sqlConfiguration?.sqlServerName
         );
         if (!fsxConfiguration.fsxFileSystemId) {
             // create a new fsx record in fsx inventory
@@ -796,36 +837,6 @@ async function deployCloudFormationTemplate(
         }
     }
     return { cloudFormationStackId: deployStackResponse.StackId!, cloudFormationUrl: cfUrl };
-}
-
-async function createFileSystemForDemo(credentialsId: string, region: string, fsxConfiguration: FSXConfigurationType) {
-    logger.info('Creating fsx for demo', credentialsId, region, fsxConfiguration);
-
-    const { fsxDeploymentMode, fsxIOPS, fsxPassword } = fsxConfiguration;
-    const mode = fsxDeploymentMode.replace(/_\d+$/, '');
-
-    const requestBody = {
-        name: `fsx-wlmdb-${randomize('A', 5)}`,
-        credentialsId,
-        region,
-        storageCapacity: {
-            size: 2,
-            unit: 'TiB'
-        },
-        primarySubnetId: 'subnet-a1', // default subnet for fsx
-        ...(mode === 'MULTI_AZ' && { secondarySubnetId: 'subnet-a2' }),
-        throughputCapacity: fsxIOPS,
-        fsxAdminPassword: fsxPassword,
-        deploymentType: mode,
-        securityGroupIds: [],
-        tags: [],
-        svmAdminPassword: `${randomize('*', 8)}`,
-        generateSecurityGroup: true,
-        haPairs: 2,
-        automaticBackupRetentionDays: 30
-    };
-
-    return createFSXForDemo(requestBody);
 }
 
 async function deploymentStatus(accountId: string) {
@@ -903,8 +914,9 @@ async function checkAllMissingPermissions(credentialsId: string, region: string,
     await Promise.all(
         // 'throat' is used to limit the number of concurrent requests
         // Limit of 3 is tested for 10 requests, 4 sometimes throws - rate execeeded error
+        // 07-03-2024: throttling to 1, as the issue is continuously being hit
         policyResourceActions.map(
-            throat(3, async ({ resourceArn, resourceActions, resourceConditions }) => {
+            throat(1, async ({ resourceArn, resourceActions, resourceConditions }) => {
                 try {
                     const { missingPermissions, blockedByOrganisation, blockedByPermissionBoundary } =
                         await getMissingPermissionsList(

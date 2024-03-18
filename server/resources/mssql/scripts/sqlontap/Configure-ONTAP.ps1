@@ -1,12 +1,9 @@
-  #Requires -Version 7.0
-#Requires -Module AWS.Tools.FSX,AWS.Tools.secretsmanager
+   #Requires -Version 7.0
+#Requires -Module AWS.Tools.FSX
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
     [string]$FileSystemId,
-
-    [Parameter(Mandatory=$true)]
-    [string]$AdminSecret,
 
     [Parameter(Mandatory=$true)]
     [string]$SQLVMName,
@@ -33,16 +30,19 @@ param(
     [string]$ResourceID,   
 
     [Parameter(Mandatory=$true)]
-    [string]$Stackname
+    [string]$Stackname,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Parentstackname 
 
 )
 Start-Transcript -Path C:\cfn\log\configureontap.ps1.txt -Append
 
 $ErrorActionPreference = "Stop"
 
-$AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret).SecretString
-$username = $AdminUser.username
-$password = $AdminUser.password
+$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+$username = $SsmParameter.fsx.username
+$password = $SsmParameter.fsx.password
 ##Create Volume with ONTAP RestAPI via PowerShell 7.0
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
 $MgmtDNS = $fslist.ontapconfiguration.Endpoints.Management.DNSName
@@ -58,17 +58,20 @@ $nodeiqn = (Get-InitiatorPort).NodeAddress
 #get Instance ID
 $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 
-function returncert{
-    param(
-    [Parameter(Mandatory=$true)]
-    [string]$region
-    )
-    $certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
+# Get FSx certificate
+$isprivatesubnet = $False
+$certuri= "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
+try {
     Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
     $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
-    return Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
-
+    $restcert = Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
 }
+catch {
+    $isprivatesubnet = $True
+    $restcert = ''
+}
+
+Write-output "Private subnet $isprivatesubnet"
 
 function callGetOrDeleteApi{
     param(
@@ -82,14 +85,17 @@ function callGetOrDeleteApi{
     [string]$method
     )
     try{
-        $restcert = returncert -region $region
         $Params = @{
             "URI"     = "$uri"
             "Method"  = "$method"
             "Headers" = @{"Authorization" = "Basic $creds"}
             "ContentType" = "application/json"
         }
-        Invoke-RestMethod @Params -Certificate $restcert
+        if ($isprivatesubnet -eq $False) {
+            Invoke-RestMethod @Params -Certificate $restcert
+        }else {
+            Invoke-RestMethod @Params -SkipCertificateCheck
+        }
     }catch{
         Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
         $_ | Write-AWSLaunchWizardException
@@ -116,7 +122,6 @@ function callrestapi{
     [string]$instanceId
     )
     try{
-        $restcert = returncert -region $region
         $resturi = "https://$MgmtDNS/api/$uri"
         $JsonBody = $Body | ConvertTo-Json
         $Params = @{
@@ -126,7 +131,11 @@ function callrestapi{
             "Body" =  "$JsonBody"
             "ContentType" = "application/json"
         }
-        Invoke-RestMethod @Params -Certificate $restcert
+        if ($isprivatesubnet -eq $False) {
+            Invoke-RestMethod @Params -Certificate $restcert
+        }else {
+            Invoke-RestMethod @Params -SkipCertificateCheck
+        }
     }catch{
         Send-CFNResourceSignal -StackName $stack -Status FAILURE -LogicalResourceId $resource -UniqueId $instanceId
         $_ | Write-AWSLaunchWizardException
@@ -141,7 +150,6 @@ $QLUN = 'quorum'
 # delete lun mapping if exist
 $lunmapsUriDynamicPart = 'private/cli/lun/mapping'
 $URI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($SQLVMName)&igroup=$($IGROUP)"
-$restcert = returncert -region $region
 $lunmappingdata = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records
 
 foreach ($perlunmap in $lunmappingdata) {
@@ -214,8 +222,11 @@ $Params = @{
     "ContentType" = "application/json"
 }
 try{
-    $restcert = returncert -region $region
-    Invoke-RestMethod @Params -Certificate $restcert
+    if ($isprivatesubnet -eq $False) {
+            Invoke-RestMethod @Params -Certificate $restcert
+    }else {
+            Invoke-RestMethod @Params -SkipCertificateCheck
+    }
 }catch{
     Write-Output "Volume modification failed." $_
 }
@@ -233,8 +244,11 @@ $Params = @{
     "ContentType" = "application/json"
 }
 try{
-    $restcert = returncert -region $region
-    Invoke-RestMethod @Params -Certificate $restcert
+    if ($isprivatesubnet -eq $False) {
+            Invoke-RestMethod @Params -Certificate $restcert
+    }else {
+            Invoke-RestMethod @Params -SkipCertificateCheck
+    }
 }catch{
     Write-Output "Volume modification failed." $_
 }
@@ -252,8 +266,11 @@ $Params = @{
     "ContentType" = "application/json"
 }
 try{
-    $restcert = returncert -region $region
-    Invoke-RestMethod @Params -Certificate $restcert
+    if ($isprivatesubnet -eq $False) {
+            Invoke-RestMethod @Params -Certificate $restcert
+    }else {
+            Invoke-RestMethod @Params -SkipCertificateCheck
+    }
 }catch{
     Write-Output "Volume modification failed." $_
 }
@@ -273,8 +290,11 @@ $Params = @{
 }
 
 try{
-    $restcert = returncert -region $region
-    Invoke-RestMethod @Params -Certificate $restcert
+    if ($isprivatesubnet -eq $False) {
+            Invoke-RestMethod @Params -Certificate $restcert
+    }else {
+            Invoke-RestMethod @Params -SkipCertificateCheck
+    }
 }catch{
     Write-Output "Volume modification failed." $_
 }
@@ -387,7 +407,7 @@ $Body = @{
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "10G"}   
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64 -resource $ResourceID -stack $Stackname -instanceId $instanceId
+callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64 -resource $ResourceID -stack $Stackname -instanceId $instanceId 
 
 Start-Sleep 5
 ##mapping quorum lun
@@ -422,8 +442,11 @@ foreach ($perlun in $lunPathlist) {
         "ContentType" = "application/json"
         }
         try{
-        $restcert = returncert -region $region
-        Invoke-RestMethod @Params -Certificate $restcert
+        if ($isprivatesubnet -eq $False) {
+            Invoke-RestMethod @Params -Certificate $restcert
+        }else {
+            Invoke-RestMethod @Params -SkipCertificateCheck
+        }
         }
         catch{
         Write-Output "LUN modification failed." $_
@@ -441,13 +464,17 @@ foreach ($perlun in $lunPathlist) {
         "ContentType" = "application/json"
         }
         try{
-        $restcert = returncert -region $region
-        Invoke-RestMethod @Params -Certificate $restcert
+        if ($isprivatesubnet -eq $False) {
+            Invoke-RestMethod @Params -Certificate $restcert
+        }else {
+            Invoke-RestMethod @Params -SkipCertificateCheck
+        }
         }
         catch{
         Write-Output "LUN modification failed." $_
         }
         Start-Sleep 3
     }
+ 
  
  

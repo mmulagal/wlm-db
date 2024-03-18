@@ -8,6 +8,8 @@ import JobsSummaryTimeline from '../data/jobsSummaryTimeline.json';
 import Templates from '../data/template.json';
 import JobMonitoringDownloads from '../data/jobMonitoringDownload.json';
 import JobMonitoringSubTask from '../data/JobMonitoringSubTask.json';
+import DiscoverEC2 from '../data/discoverEc2.json';
+import CredentialsStatus from '../data/credentialsStatus.json';
 
 const router = require('express').Router();
 
@@ -15,12 +17,12 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/database-h
     generateResponse(res, 200, DatabaseHosts);
 });
 
-router.get(`${BASE_URL}/v1/database-hosts/:id`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/database-hosts/:id`, async (req: {}, res: any) => {
     await delay(3000);
     generateResponse(res, 200, ResourceDetails);
 });
 
-router.get(`${BASE_URL}/v1/database-hosts/:id/databases`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/database-hosts/:id/databases`, async (req: {}, res: any) => {
     await delay(3000);
     generateResponse(res, 200, DatabaseList);
 });
@@ -56,6 +58,30 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/jobs`, asy
 router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/jobs/:jobId`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, JobMonitoringSubTask);
+    }, 3000);
+});
+
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/mssql/discover`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, DiscoverEC2);
+    }, 3000);
+});
+
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/resources/file-systems/credentials-status`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, CredentialsStatus);
+    }, 3000);
+});
+
+router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances/:instanceId/mssql/discover/resource-credentials`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, {noOfDatabases: 10, edition: 'standard'});
+    }, 3000);
+});
+
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/manage/:instanceId`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 500, {"message": "failing"});
     }, 3000);
 });
 

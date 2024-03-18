@@ -218,6 +218,45 @@ async function associateResource(credentialsId: string, accountId: string, resou
         }>();
 }
 
+async function createAwsCredential(
+    accountId: string,
+    token: string,
+    arn: string,
+    externalId: string,
+    credentialsName: string,
+    accountType: string,
+    isDemo: boolean
+) {
+    try {
+        return await gotInstanceForInternalRequest
+            .post(`accounts/${accountId}/credentials/v1/aws/assume-role`, {
+                prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
+                headers: {
+                    [HEADERS.AUTHORIZATION]: token,
+                    ...(isDemo && { [HEADERS.SIMULATOR]: 'true' })
+                },
+                json: {
+                    arn,
+                    name: credentialsName,
+                    externalId,
+                    accountType,
+                    metadata: {
+                        policy: {
+                            fsx: 'automate',
+                            databases: 'automate',
+                            vmware: false
+                        }
+                    }
+                }
+            })
+            .json<{
+                credentialsId: string;
+            }>();
+    } catch (error) {
+        logger.info('error creating credential', error);
+    }
+}
+
 export {
     wfCredentials,
     bxpCredentials,
@@ -225,5 +264,6 @@ export {
     getAllBxpCredentials,
     getAllWfCredentials,
     getWfCredentialDetails,
-    associateResource
+    associateResource,
+    createAwsCredential
 };

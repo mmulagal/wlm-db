@@ -45,6 +45,7 @@ import discoverRoutes from './routes/discover';
 //     updateAuditGroupResponse
 // } from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
+import resourceRoutes from './routes/resource';
 import initiateSecrets from './utils/secret';
 import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
@@ -107,7 +108,11 @@ const app = fastify({
         openapi: {
             info: {
                 title: API_TITLE,
-                version: VERSION
+                version: VERSION,
+                description: API_TITLE,
+                contact: {
+                    email: 'ng-wlm-fsx@netapp.com'
+                }
             },
             servers: [
                 {
@@ -187,6 +192,7 @@ const app = fastify({
             chatbotRoutes(instance);
             serviceStatusRoutes(instance);
             discoverRoutes(instance);
+            resourceRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}` }

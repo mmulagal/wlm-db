@@ -10,6 +10,8 @@ import { GENERAL } from '../../../utils/appConstants';
 const InventoryTabs = () => {
     const dispatch = useDispatch();
     const selectedInventoryTab = useAppSelector(state => state.inventory.selectedInventoryTab);
+    const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
+    const { unManagedHosts, unIdentifiableHosts } = useAppSelector(state => state.inventory);
     const [selectedTab, setSelectedTab] = useState(WLF_TABS.MANAGED_HOSTS);
 
     useEffect(() => {
@@ -24,7 +26,9 @@ const InventoryTabs = () => {
     return (
         <div className={styles.inventoryTabs}>
             <div
-                className={selectedTab === WLF_TABS.MANAGED_HOSTS ? `${styles.headers} ${styles.active}` : `${styles.headers}`}
+                className={
+                    selectedTab === WLF_TABS.MANAGED_HOSTS ? `${styles.headers} ${styles.active}` : `${styles.headers}`
+                }
             >
                 <Typography
                     variant="Semibold_14"
@@ -35,12 +39,14 @@ const InventoryTabs = () => {
                     }
                     onClick={() => handleClick(WLF_TABS.MANAGED_HOSTS)}
                 >
-                    {GENERAL.TAB_MANAGED_HOSTS} (24)
+                    {GENERAL.TAB_MANAGED_HOSTS} ({(databaseHostsList || [])?.length || 0})
                 </Typography>
             </div>
             <div
                 className={
-                    selectedTab === WLF_TABS.UNMANAGED_HOSTS ? `${styles.headers} ${styles.active}` : `${styles.headers}`
+                    selectedTab === WLF_TABS.UNMANAGED_HOSTS
+                        ? `${styles.headers} ${styles.active}`
+                        : `${styles.headers}`
                 }
             >
                 <Typography
@@ -52,12 +58,14 @@ const InventoryTabs = () => {
                     }
                     onClick={() => handleClick(WLF_TABS.UNMANAGED_HOSTS)}
                 >
-                    {GENERAL.TAB_UNAMANGED_HOSTS} (8)
+                    {GENERAL.TAB_UNAMANGED_HOSTS} ({unManagedHosts.length})
                 </Typography>
             </div>
             <div
                 className={
-                    selectedTab === WLF_TABS.UNDETECTED_HOSTS ? `${styles.headers} ${styles.active}` : `${styles.headers}`
+                    selectedTab === WLF_TABS.UNDETECTED_HOSTS
+                        ? `${styles.headers} ${styles.active}`
+                        : `${styles.headers}`
                 }
             >
                 <Typography
@@ -69,7 +77,7 @@ const InventoryTabs = () => {
                     }
                     onClick={() => handleClick(WLF_TABS.UNDETECTED_HOSTS)}
                 >
-                    {GENERAL.TAB_UNIDENTIFIABLE_HOSTS} (8)
+                    {GENERAL.TAB_UNIDENTIFIABLE_HOSTS} ({unIdentifiableHosts.length})
                 </Typography>
             </div>
         </div>

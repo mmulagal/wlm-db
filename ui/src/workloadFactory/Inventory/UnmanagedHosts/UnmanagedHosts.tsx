@@ -5,25 +5,33 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useEffect, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { STATUS_CONST } from '../../../utils/consts';
+import { FSX_DEPLOYMENT_MODE, WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 
 import { databaseTableSort, formatFractionalNumber, formatSizeOnePrecision } from '../../../utils/utilityFunctions';
-import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
-import { setUnManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
+import {
+    setMovedToManagedHost,
+    setSelectedHeaderTab,
+    setUnManagedHostColState
+} from '../../../store/workloadFactory/inventorySlice';
+import { useManageHostMutation } from '../../../utils/apiService';
+import store from '../../../store/store';
 
 const UnmanagedHosts = () => {
     const dispatch = useDispatch();
 
-    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
+    const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
+    const unManagedHostList = useAppSelector(state => state.inventory.unManagedHosts);
     const { unManagedHostInitialColumns } = useAppSelector(state => state.inventory);
+    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
 
     const [manageLoading, setManageLoading] = useState<any>({});
+    const [manageHostApi] = useManageHostMutation();
 
     const notAvailable = () => {
         return (
@@ -33,27 +41,59 @@ const UnmanagedHosts = () => {
         );
     };
 
-    const manageHost = (manageRow: any) => {
-        if (!manageLoading[manageRow?.id]) {
-            manageLoading[manageRow?.id] = true;
+    const manageHost = async (rowData: any) => {
+        const state = store.getState();
+        const movedToManagedHost = state.inventory.movedToManagedHost;
+        const name = rowData?.sqlServerInstances?.[0]?.sqlServerName;
+        if (!manageLoading[rowData?.id]) {
+            manageLoading[rowData?.id] = true;
+            setManageLoading(manageLoading);
         }
-        setManageLoading(manageLoading);
-        setTimeout(() => {
-            stopLoading(manageRow);
-        }, 3000);
-    };
-
-    const stopLoading = (manageRow: any) => {
-        if (manageLoading[manageRow?.id]) {
-            manageLoading[manageRow?.id] = false;
+        const result: any = await manageHostApi({
+            credentialId: headerSelectedCred?.data?.credentialsId,
+            regionId: headerSelectedRegion?.label2,
+            instanceId: rowData?.ec2InstanceId
+        });
+        if (result && !result?.error) {
+            if (manageLoading[rowData?.id]) {
+                manageLoading[rowData?.id] = false;
+                setManageLoading(manageLoading);
+            }
+            dispatch(setMovedToManagedHost([...movedToManagedHost, rowData?.ec2InstanceId]));
+            const managedSuccessMsg = (
+                <div className={styles.notification}>
+                    {GENERAL.HOST_MANAGED_MOVED_SUCCESS[0]}
+                    <span className={styles.bold}>{name}</span>
+                    {GENERAL.HOST_MANAGED_MOVED_SUCCESS[1]}
+                    <span className={styles.bold}>{GENERAL.HOST_MANAGED_MOVED_SUCCESS[2]}</span>
+                    {GENERAL.HOST_MANAGED_MOVED_SUCCESS[3]}
+                </div>
+            );
+            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: managedSuccessMsg }));
+        } else {
+            if (manageLoading[rowData?.id]) {
+                manageLoading[rowData?.id] = false;
+                setManageLoading(manageLoading);
+            }
+            const managedFailedMsg = (
+                <div className={styles.notification}>
+                    {GENERAL.HOST_MOVED_FAILED[0]}
+                    <span className={styles.bold}>{name}</span>
+                    {GENERAL.HOST_MOVED_FAILED[1]}
+                    <Button
+                        Component="button"
+                        variant="text"
+                        onClick={() => {
+                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            dispatch(clearNotifications());
+                        }}
+                    >
+                        {GENERAL.JOB_MONITORING}.
+                    </Button>
+                </div>
+            );
+            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));
         }
-        setManageLoading(manageLoading);
-        dispatch(
-            addNotification({
-                notificationType: NOTIFICATION_TYPES.SUCCESS,
-                message: `Host "${manageRow?.name}" successfully moved to managed hosts tab`
-            })
-        );
     };
 
     const DatabasesColDefs: ColumnProps[] = [
@@ -66,29 +106,27 @@ const UnmanagedHosts = () => {
             isSticky: true,
             accessorForTextFilter: 'databaseHostname',
             renderCell: (cellData: any, rowData: any) => {
+                const status = rowData?.sqlServerInstances?.[0]?.sqlServerState;
+                const name = rowData?.sqlServerInstances?.[0]?.sqlServerName;
                 return (
                     <div>
-                        <Typography variant="Semibold_14">{rowData?.name || GENERAL.NOT_AVAILABLE}</Typography>
+                        <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
                         <div className={styles.firstColText}>
-                            {rowData?.status === STATUS_CONST.UP && (
+                            {status === GENERAL.JOB_STATUS_RUNNING && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
                             )}
-                            {rowData?.status === STATUS_CONST.DOWN && (
+                            {status !== GENERAL.JOB_STATUS_RUNNING && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['down']}`}></div>
                             )}
-                            {rowData?.status === STATUS_CONST.INITIALIZING && (
-                                <div
-                                    className={`${styles.statusIcon} ${styles['circle']} ${styles['initializing']}`}
-                                ></div>
-                            )}
-                            {rowData?.status === STATUS_CONST.FAILED && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['failed']}`}></div>
-                            )}
-                            <Typography variant="Regular_13">{rowData?.status || GENERAL.NOT_AVAILABLE}</Typography>
-                            <div className={CommonStyles.separator} />
                             <Typography variant="Regular_13">
-                                {rowData?.topology?.serverType || GENERAL.NOT_AVAILABLE}
+                                {status
+                                    ? status === GENERAL.JOB_STATUS_RUNNING
+                                        ? GENERAL.DB_HOST_UP
+                                        : GENERAL.DB_HOST_DOWN
+                                    : GENERAL.NOT_AVAILABLE}
                             </Typography>
+                            <div className={CommonStyles.separator} />
+                            <Typography variant="Regular_13">{GENERAL.MSSQL}</Typography>
                         </div>
                     </div>
                 );
@@ -100,8 +138,16 @@ const UnmanagedHosts = () => {
             accessor: 'topology.fileSystemType',
             width: '200px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find((item: any) => item.type === 'FSXN');
+                const hasEbs = rowData?.sqlServerInstances?.[0]?.storage?.find((item: any) => item.type === 'EBS');
+                return hasEbs && hasFsx
+                    ? `${GENERAL.FSX_FOR_ONTAP}, ${GENERAL.EBS}`
+                    : hasEbs
+                    ? GENERAL.EBS
+                    : hasFsx
+                    ? GENERAL.FSX_FOR_ONTAP
+                    : 'N/A';
             }
         },
         {
@@ -239,47 +285,28 @@ const UnmanagedHosts = () => {
         {
             id: '8',
             Header: GENERAL.DB_HOST_INSTANCE_NAME,
-            accessor: 'topology',
+            accessor: 'ec2InstanceName',
             isSortable: true,
-            width: '235px',
-            renderCell: (cellData: any) => {
-                let instanceIds: any = [];
-                let instanceNames: any = [];
-                cellData?.ec2Details?.map((row: any) => {
-                    instanceIds.push(row?.id);
-                    instanceNames.push(row?.name);
-                });
-                return (
-                    <>
-                        {cellData?.ec2Details && (
-                            <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                    ID: {instanceIds.join(',')}
-                                </TooltipInfo>
-                                <Typography variant="Regular_14">{instanceNames.join(',')}</Typography>
-                            </div>
-                        )}
-                        {!cellData?.ec2Details && notAvailable()}
-                    </>
-                );
-            }
+            width: '235px'
         },
         {
             id: '9',
             Header: GENERAL.DB_HOST_VPC,
-            accessor: 'topology',
+            accessor: 'vpc',
             isSortable: true,
-            width: '235px',
+            width: '212px',
             renderCell: (cellData: any) => {
                 return (
                     <>
-                        {cellData?.vpcId && (
+                        {cellData?.name && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData?.vpcId}</TooltipInfo>
-                                <Typography variant="Regular_14">{cellData?.vpcName}</Typography>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>
+                                    {cellData?.cidrBlock}
+                                </TooltipInfo>
+                                <Typography variant="Regular_14">{cellData?.name}</Typography>
                             </div>
                         )}
-                        {!cellData?.vpcId && notAvailable()}
+                        {!cellData?.name && notAvailable()}
                     </>
                 );
             }
@@ -287,20 +314,33 @@ const UnmanagedHosts = () => {
         {
             id: '10',
             Header: GENERAL.DB_HOST_AVAILABILITY,
-            accessor: 'topology',
+            accessor: 'sqlServerInstances',
             isSortable: true,
-            width: '235px',
+            width: '212px',
+            filterOptions: [
+                { label: GENERAL.SINGLE_AZ, value: FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 },
+                { label: GENERAL.MULTI_AZ, value: FSX_DEPLOYMENT_MODE.MULTI_AZ_1 }
+            ],
             renderCell: (cellData: any) => {
-                const azList = cellData?.availabilityZones ? cellData.availabilityZones.join(',') : '';
+                const azList = cellData?.[0]?.deploymentTypes?.[0]?.zones
+                    ? cellData?.[0]?.deploymentTypes?.[0]?.zones.join(',')
+                    : '';
+                const deploymentType = cellData?.[0]?.deploymentTypes?.[0]?.type;
                 return (
                     <>
-                        {cellData?.fileSystemDeploymentMode && (
+                        {deploymentType && (
                             <div className={styles.colText}>
                                 <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
-                                <Typography variant="Regular_14">{cellData?.fileSystemDeploymentMode}</Typography>
+                                <Typography variant="Regular_14">
+                                    {deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+                                        ? GENERAL.SINGLE_AZ
+                                        : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                                        ? GENERAL.MULTI_AZ
+                                        : ''}
+                                </Typography>
                             </div>
                         )}
-                        {!cellData?.fileSystemDeploymentMode && notAvailable()}
+                        {!deploymentType && notAvailable()}
                     </>
                 );
             }
@@ -320,7 +360,7 @@ const UnmanagedHosts = () => {
     const tableProps = useTable({
         isSorting: false,
         columns: DatabasesColDefs,
-        rows: databaseTableSort(databaseHostsList) || [],
+        rows: databaseTableSort(unManagedHostList) || [],
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
@@ -328,22 +368,32 @@ const UnmanagedHosts = () => {
         manageColumnsProps: {
             width: '182px',
             renderCell: (cellData: any, rowData: any) => {
+                const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find((item: any) => item.type === 'FSXN');
                 return (
-                    <div className={styles.manageHostCol} onClick={() => manageHost(rowData)}>
-                        {rowData?.id in manageLoading && manageLoading[rowData?.id] && (
-                            <Spinner className={styles.loading} />
+                    <>
+                        {hasFsx && (
+                            <div
+                                className={styles.manageHostCol}
+                                onClick={() => {
+                                    // manageHost(rowData);
+                                }}
+                            >
+                                {rowData?.id in manageLoading && manageLoading[rowData?.id] && (
+                                    <Spinner className={styles.loading} />
+                                )}
+                                {!manageLoading[rowData?.id] && (
+                                    <Typography variant="Regular_14" className={styles.textStyle}>
+                                        {GENERAL.MANAGE_HOST}
+                                    </Typography>
+                                )}
+                            </div>
                         )}
-                        {!manageLoading[rowData?.id] && (
-                            <Typography variant="Regular_14" className={styles.textStyle}>
-                                Manage host
-                            </Typography>
-                        )}
-                    </div>
+                    </>
                 );
             }
         },
         initialColumnState: unManagedHostInitialColumns,
-        isLazyLoading: databaseHostsLoading
+        isLazyLoading: isDiscoverInProgress
     });
 
     useEffect(() => {
@@ -352,7 +402,7 @@ const UnmanagedHosts = () => {
 
     useEffect(() => {
         if (resetPage) {
-            if ((databaseHostsList || []).length % pageSize === 1) {
+            if ((unManagedHostList || []).length % pageSize === 1) {
                 tableProps.pagination?.gotoPage(0);
             }
         }

@@ -9,7 +9,8 @@
             width: 192px;
             height: 32px;
             border-radius: 32px;
-            border: 1px solid var(--Light-Buttons-button-secondary, #0067c5);
+            border: 1px solid var(--blue-70);
+            margin-left: -12px;
             cursor: pointer;
 
             .textStyle {
@@ -17,16 +18,64 @@
                 justify-content: center;
                 align-items: center;
                 margin-top: 2px;
-                color: var(--Light-Buttons-button-secondary, #0067c5);
+                color: var(--blue-70);
+            }
+
+            .loading {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 20px;
+                height: 20px;
+                margin-top: 5px;
+                margin-left: 46%;
             }
         }
 
         .detectManage:hover {
-            border: 1px solid var(--Light-Buttons-button-secondary-hover, #1e4a93);
+            border: 1px solid var(--blue-80);
 
             .textStyle {
-                color: var(--Light-Buttons-button-secondary-hover, #1e4a93);
+                color: var(--blue-80);
             }
+        }
+
+        .detectManageDisable {
+            width: 192px;
+            height: 32px;
+            border-radius: 32px;
+            border: 1px solid var(--text-button-disabled);
+            margin-left: -12px;
+
+            .textStyle {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-top: 2px;
+                color: var(--text-button-disabled);
+            }
+        }
+
+        .detectManageDisable:hover {
+            border: 1px solid var(--text-button-disabled);
+
+            .textStyle {
+                color: var(--text-button-disabled);
+            }
+        }
+
+        .statusCol {
+            display: flex;
+            gap: 16px;
+            .statusIcon {
+                width: 20px;
+                height: 20px;
+            }
+        }
+
+        .colText {
+            display: flex;
+            gap: 16px;
         }
     }
 }
@@ -34,4 +83,11 @@
 .headerDialog {
     display: flex;
     justify-content: space-between;
+}
+
+.notification {
+    font-weight: 400;
+    .bold {
+        font-weight: 540;
+    }
 }

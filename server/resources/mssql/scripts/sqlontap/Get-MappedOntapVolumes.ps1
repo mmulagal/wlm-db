@@ -1,27 +1,45 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [string]$FSxSecretName,
-
-    [Parameter(Mandatory = $true)]
     [string]$FSxID,
 
     [Parameter(Mandatory = $true)]
     [string]$FSxRegion
 )
 
+add-type @"
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+public class TrustAllCertsPolicy : ICertificatePolicy {
+    public bool CheckValidationResult(
+        ServicePoint srvPoint, X509Certificate certificate,
+        WebRequest request, int certificateProblem) {
+            return true;
+        }
+}
+"@
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 # Read fsxadmin password from secrets and encode the username:password with base64String
-$SecretInfo = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId ${FSxSecretName}).SecretString
-$FSxUserName = $SecretInfo.username
-$FSxPassword = $SecretInfo.password
+$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+$FSxUserName = $SsmParameter.fsx.username
+$FSxPassword = $SsmParameter.fsx.password
 $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${FSxUserName}:${FSxPassword}"))
 $FSxHostName = "management.${FSxID}.fsx.${FSxRegion}.amazonaws.com"
 
 # Get region Certificateificate for FSx
+$isprivatesubnet = $False
 $FSxCertificateificateUri = "https://fsx-aws-Certificates.s3.amazonaws.com/bundle-${FSxRegion}.pem"
-Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\cfn\FSxCertificate.pem
-$Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStoreLocation Cert:\LocalMachine\Root
-$regionCertificateificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+try {
+        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\cfn\FSxCertificate.pem
+        $Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStoreLocation Cert:\LocalMachine\Root
+        $regionCertificateificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+    }
+catch {
+        $isprivatesubnet = $True      
+    }
 
 # Get Windows drives associated with databases
 $sqlresponse =  sqlcmd -Q "SET NOCOUNT ON; SELECT DISTINCT vs.logical_volume_name FROM sys.master_files AS mf CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs WHERE vs.volume_mount_point != 'C:\' AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF' AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB' FOR JSON PATH;" -y 0;
@@ -60,7 +78,11 @@ function Invoke-ONTAPGetRequest {
         "ContentType" = "application/json"
     }
 
-    return Invoke-RestMethod @Params -Certificate $regionCertificateificate
+    if($isprivatesubnet -eq $False) {
+        return Invoke-RestMethod @Params -Certificate $regionCertificateificate
+    }else {
+        return Invoke-RestMethod @Params 
+    }
 }
 
 function Get-LunFromSerialNumber($LunSerialNumbers) {

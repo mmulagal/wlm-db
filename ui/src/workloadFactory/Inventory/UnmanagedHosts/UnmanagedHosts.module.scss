@@ -26,7 +26,7 @@
             width: 20px;
             height: 20px;
             margin-top: 5px;
-            margin-left: 40%;
+            margin-left: 46%;
         }
     }
 
@@ -143,5 +143,12 @@
         margin-left: 115px;
         width: 24px !important;
         height: 24px !important;
+    }
+}
+
+.notification {
+    font-weight: 400;
+    .bold {
+        font-weight: 540;
     }
 }

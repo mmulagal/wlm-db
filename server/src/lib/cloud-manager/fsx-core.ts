@@ -83,7 +83,8 @@ interface listCredentialsResponse {
 async function listFsxOntapCredentials(accountId: string, fsxId: string) {
     logger.info('Listing FSx for ONTAP credentials ', { accountId, fsxId });
 
-    const { token } = await getWfServiceToken();
+    // Since list credentials API doesn't support service token, we are using user token here.
+    const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
 
     const response = await gotInstanceForInternalRequest
         .get(`accounts/${accountId}/fsx/v2/file-systems/${fsxId}/ontap-credentials`, {
@@ -96,8 +97,8 @@ async function listFsxOntapCredentials(accountId: string, fsxId: string) {
     return response;
 }
 
-async function listFSXFileSystemForDemo(credentialsId: string, region: string) {
-    logger.info('Get FSX file systems list for demo', { credentialsId, region });
+async function listFSXFileSystem(credentialsId: string, region: string, isDemo?: boolean) {
+    logger.info('Get FSX file systems list', { credentialsId, region, isDemo });
 
     const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
@@ -108,7 +109,7 @@ async function listFSXFileSystemForDemo(credentialsId: string, region: string) {
             {
                 headers: {
                     [HEADERS.AUTHORIZATION]: token,
-                    [HEADERS.SIMULATOR]: 'true'
+                    ...(isDemo && { [HEADERS.SIMULATOR]: 'true' })
                 }
             }
         )
@@ -116,7 +117,8 @@ async function listFSXFileSystemForDemo(credentialsId: string, region: string) {
     return items;
 }
 
-async function createFSXForDemo(requestBody: FSXREQUESTBODY) {
+async function createFSX(requestBody: FSXREQUESTBODY, isDemo?: boolean) {
+    logger.info('Register fsx in fsx-core', { requestBody, isDemo });
     const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
 
@@ -125,11 +127,11 @@ async function createFSXForDemo(requestBody: FSXREQUESTBODY) {
         {
             headers: {
                 [HEADERS.AUTHORIZATION]: token,
-                [HEADERS.SIMULATOR]: 'true'
+                ...(isDemo && { [HEADERS.SIMULATOR]: 'true' })
             },
             json: requestBody
         }
     );
 }
 
-export { registerFsxOntapCredentials, listFsxOntapCredentials, listFSXFileSystemForDemo, createFSXForDemo };
+export { registerFsxOntapCredentials, listFsxOntapCredentials, listFSXFileSystem, createFSX };

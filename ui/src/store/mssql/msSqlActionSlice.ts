@@ -23,7 +23,18 @@ const initialState: any = {
     isRecommendedInstance: null, // To load default instance type on recommended templates load
     refetchJobSummaryApi: false,
     permissionWarning: false,
-    deployRedirectToCfLink: null // This link is when user has less permissions
+    deployRedirectToCfLink: null, // This link is when user has less permissions
+    // DB create related checks
+    isDbCreatePressed: false,
+    isDbCreateHit: 0,
+    dbCreateNameAdded: true,
+    dbCreateDataNameAdded: true,
+    dbCreateLogNameAdded: true,
+    dbCreateDataSizeValid: true,
+    dbCreateLogSizeValid: true,
+    // Detect Host check - Inventory
+    isDetectHostLoading: false, // If Detect host is loading on registerResourceCredentials API call
+    isDetectHostError: '' // registerResourceCredentials API throws error
 };
 
 const msSqlActionSlice = createSlice({
@@ -76,17 +87,16 @@ const msSqlActionSlice = createSlice({
             state.refetchApiCount.expected = action.payload;
         },
         setRefetchApiCountRan(state, action: PayloadAction<any>) {
-            if(action.payload) {
+            if (action.payload) {
                 state.refetchApiCount.ran.push(action.payload);
-            }
-            else{
+            } else {
                 state.refetchApiCount.ran = [];
             }
         },
         setRefetchApiCountLoading(state, action: PayloadAction<any>) {
             state.refetchApiCount.isLoading = action.payload;
         },
-        setIsRecommendedInstance(state, action:PayloadAction<any>) {
+        setIsRecommendedInstance(state, action: PayloadAction<any>) {
             state.isRecommendedInstance = action.payload;
         },
         setRefetchJobSummaryApi(state, action: PayloadAction<any>) {
@@ -97,6 +107,33 @@ const msSqlActionSlice = createSlice({
         },
         setDeployRedirectToCfLink(state, action: PayloadAction<any>) {
             state.deployRedirectToCfLink = action.payload;
+        },
+        setDbCreatePressed(state, action: PayloadAction<any>) {
+            state.isDbCreatePressed = action.payload;
+        },
+        setDbCreateHit(state, action: PayloadAction<any>) {
+            state.isDbCreateHit = action.payload;
+        },
+        setDbCreateNameAdded(state, action: PayloadAction<any>) {
+            state.dbCreateNameAdded = action.payload;
+        },
+        setDbCreateDataNameAdded(state, action: PayloadAction<any>) {
+            state.dbCreateDataNameAdded = action.payload;
+        },
+        setDbCreateLogNameAdded(state, action: PayloadAction<any>) {
+            state.dbCreateLogNameAdded = action.payload;
+        },
+        setDbCreateDataSizeValid(state, action: PayloadAction<any>) {
+            state.dbCreateDataSizeValid = action.payload;
+        },
+        setDbCreateLogSizeValid(state, action: PayloadAction<any>) {
+            state.dbCreateLogSizeValid = action.payload;
+        },
+        setIsDetectHostLoading(state, action: PayloadAction<any>) {
+            state.isDetectHostLoading = action.payload;
+        },
+        setIsDetectHostError(state, action: PayloadAction<any>) {
+            state.isDetectHostError = action.payload;
         }
     }
 });
@@ -122,6 +159,15 @@ export const {
     setIsRecommendedInstance,
     setRefetchJobSummaryApi,
     setPermissionWarning,
-    setDeployRedirectToCfLink
+    setDeployRedirectToCfLink,
+    setDbCreatePressed,
+    setDbCreateHit,
+    setDbCreateNameAdded,
+    setDbCreateDataNameAdded,
+    setDbCreateLogNameAdded,
+    setDbCreateDataSizeValid,
+    setDbCreateLogSizeValid,
+    setIsDetectHostLoading,
+    setIsDetectHostError
 } = msSqlActionSlice.actions;
 export default msSqlActionSlice;

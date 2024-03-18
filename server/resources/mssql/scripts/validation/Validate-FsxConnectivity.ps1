@@ -11,10 +11,10 @@ param(
     [string]$FSxRegion,
 
     [Parameter(Mandatory=$true)]
-    [string]$FSxAdministratorPasswordSecret,
+    [string]$Stackname,
 
     [Parameter(Mandatory=$true)]
-    [string]$Stackname,
+    [string]$Parentstackname,
 
     [Parameter(Mandatory=$true)]
     [string]$ResourceID,
@@ -24,6 +24,19 @@ param(
 )
 
 Start-Transcript -Path C:\cfn\log\Validate-FsxConnectivity.ps1.txt -Append
+
+add-type @"
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+public class TrustAllCertsPolicy : ICertificatePolicy {
+    public bool CheckValidationResult(
+        ServicePoint srvPoint, X509Certificate certificate,
+        WebRequest request, int certificateProblem) {
+            return true;
+        }
+}
+"@
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
 
 if (${PerformFSxCheck} -ne 'true' ) {
     Write-Output @{ status= "Skipped"; reason= "Deployment creates new FSx." } | ConvertTo-Json -Compress
@@ -37,25 +50,31 @@ $InstanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} 
 
 $ErrorActionPreference = "Stop"
 try {
-$AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $FSxAdministratorPasswordSecret).SecretString
+$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+$Username = $SsmParameter.fsx.username
+$Password = $SsmParameter.fsx.password
 }catch{
     $Failed = $true
-    $FailureReason = '"{0}"' -f "Unable to fetch secret, check secret name $FSxAdministratorPasswordSecret and access to Secrets Manager."
+    $FailureReason = '"{0}"' -f "Unable to fetch SSM parameter, /netapp/wlmdb/$Parentstackname and access to SSM parameter store"
     Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
     exit(1)
 }
-$Username = $AdminUser.username
-$Password = $AdminUser.password
 $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${Username}:${Password}"))
 $FSxHostName = "management.${FSxFileSystemId}.fsx.${FSxRegion}.amazonaws.com"
 
 # Get region Certificateificate for FSx
+$isprivatesubnet = $False
 $FSxCertificateificateUri = "https://fsx-aws-Certificates.s3.amazonaws.com/bundle-${FSxRegion}.pem"
-Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\cfn\FSxCertificate.pem
-$Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStoreLocation Cert:\LocalMachine\Root
-$regionCertificateificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+try {
+        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\cfn\FSxCertificate.pem
+        $Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStoreLocation Cert:\LocalMachine\Root
+        $regionCertificateificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+    }
+catch {
+        $isprivatesubnet = $True      
+    }
 
 $Params = @{
     "URI"         = "https://management.${FSxFileSystemId}.fsx.${FSxRegion}.amazonaws.com/api/cluster?fields=version"
@@ -65,7 +84,11 @@ $Params = @{
 }
 
 try {
-Invoke-RestMethod @Params -Certificate $regionCertificateificate
+    if($isprivatesubnet -eq $False) {
+        Invoke-RestMethod @Params -Certificate $regionCertificateificate
+    }else {
+        Invoke-RestMethod @Params 
+    }
 Write-Output @{ status= "Completed"; reason= "Done." } | ConvertTo-Json -Compress
 Start-Process "cfn-signal.exe" -ArgumentList "-e 0 $WaitHandler" -Wait -NoNewWindow
 }catch{

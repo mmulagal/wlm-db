@@ -1,19 +1,15 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import {
-    getDatabaseHostsSummary,
-    getDatabaseHostSummary,
-    getDatabases,
-    getDriveInfo
-} from '../operations/database-hosts-operations';
+import { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases } from '../operations/database-hosts-operations';
+import { deployDatabase, getDriveInfo } from '../operations/createdb-operations';
 import {
     DatabaseHostDetailsSchema,
     DatabasesListSchema,
     DatabaseHostsSummarySchema,
+    DatabasesCreateSchema,
     GetDriveInfoSchema
 } from './schemas/database-hosts-schemas';
 
-const DATABASE_HOSTS_API_PATH = '/v1/database-hosts';
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 
 export default function databaseHostsRoutes(fastify: FastifyInstance) {
@@ -37,7 +33,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         })
         .get(
-            `${DATABASE_HOSTS_API_PATH}/:databaseHostId`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId`,
             { schema: DatabaseHostDetailsSchema },
             async (request, reply) => {
                 const {
@@ -49,7 +45,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${DATABASE_HOSTS_API_PATH}/:databaseHostId/databases`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/databases`,
             { schema: DatabasesListSchema },
             async (request, reply) => {
                 const {
@@ -59,11 +55,35 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
-        .get(`${API_PREFIX_PATH}/:databaseHostId/driveInfo`, { schema: GetDriveInfoSchema }, async (request, reply) => {
-            const {
-                params: { accountId, databaseHostId, credentialsId, region }
-            } = request;
-            const response = await getDriveInfo(accountId, databaseHostId, credentialsId, region);
-            return reply.send(response);
-        });
+        .post(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database`,
+            { schema: DatabasesCreateSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region },
+                    body: { databaseName, dataFileConfig, logFileConfig }
+                } = request;
+                const response = await deployDatabase(
+                    accountId,
+                    databaseHostId,
+                    credentialsId,
+                    region,
+                    databaseName,
+                    dataFileConfig,
+                    logFileConfig
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/drive-information`,
+            { schema: GetDriveInfoSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region }
+                } = request;
+                const response = await getDriveInfo(accountId, databaseHostId, credentialsId, region);
+                return reply.send(response);
+            }
+        );
 }

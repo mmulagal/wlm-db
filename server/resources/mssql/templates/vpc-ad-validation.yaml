@@ -1,3 +1,5 @@
+#prettier-ignore
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: This template creates AWS resources for validating Active Directory credentials
             under the provided VPC. You will be billed for the AWS resources used if you create
@@ -22,13 +24,11 @@ Metadata:
                   - PerformADCheck
                   - DomainDNSName
                   - DomainAdminUser
-                  - DomainAdminSecretName
             - Label:
                   default: Amazon FSx for ONTAP Volume Configuration
               Parameters:
                   - PerformFSxCheck
                   - FSxFileSystemId
-                  - FSxAdministratorPasswordSecret
             - Label:
                   default: AWS Launch Wizard Configuration
               Parameters:
@@ -39,8 +39,8 @@ Metadata:
                 default: Unique ID for your resource tags
             AMI:
                 default: AMI ID of the validation node
-            DomainAdminSecretName:
-                default: Domain Admin password secret string name
+            InstanceType:
+                default: Instance type of the validation node
             DomainAdminUser:
                 default: Domain Admin user name
             DomainDNSName:
@@ -67,8 +67,6 @@ Metadata:
                 default: Boolean to check whether to validate FSx for ONTAP credentials and reachability from subnet
             FSxFileSystemId:
                 default: FSx for ONTAP Filesystem ID
-            FSxAdministratorPasswordSecret:
-                default: Secret String for FSx for ONTAP user account
 Parameters:
     UniqueID:
         Default: UID123
@@ -77,15 +75,15 @@ Parameters:
     AMI:
         Type: String
         Default: ami-061d37dd032d5c737
-    DomainAdminSecretName:
-        Description: Secret string name for the domain admin password.
-        Type: String
     DomainAdminUser:
         Description: User name for the account that will be used as Domain Administrator.
             This is separate from the default "Administrator" account.
         MaxLength: '20'
         MinLength: '5'
         Type: String
+    InstanceType:
+        Type: String
+        Default: t3.micro
     DomainDNSName:
         Description: Fully qualified domain name (FQDN). For example, example.com.
         MaxLength: '255'
@@ -133,9 +131,6 @@ Parameters:
         Type: String
     FSxFileSystemId:
         Description: ID for the FSx for ONTAP file system.
-        Type: String
-    FSxAdministratorPasswordSecret:
-        Description: Secret string for the FSx for ONTAP user account.
         Type: String
 Conditions:
     isGovRegion: !Or
@@ -279,21 +274,21 @@ Resources:
                 FetchResources:
                     files:
                         C:\cfn\scripts\Unzip-Archive.ps1:
-                            source: {{ ScriptUnzipArchive }}
+                            source: {{{ ScriptUnzipArchive }}}
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
-                            source: {{ AmazonLaunchWizardForCFN }}
+                            source: {{{ AmazonLaunchWizardForCFN }}}
                         C:\cfn\scripts\Validate-VPC.ps1:
-                            source: {{ ScriptVpcCheck }}
+                            source: {{{ ScriptVpcCheck }}}
                         C:\cfn\scripts\Update-DNSServers.ps1:
-                            source: {{ ScriptUpdateDnsServers }}
+                            source: {{{ ScriptUpdateDnsServers }}}
                         C:\cfn\scripts\Rename-Computer.ps1:
-                            source: {{ ScriptRenameComputer }}
+                            source: {{{ ScriptRenameComputer }}}
                         C:\cfn\scripts\Restart-Computer.ps1:
-                            source: {{ ScriptRestartComputer }}
+                            source: {{{ ScriptRestartComputer }}}
                         C:\cfn\scripts\Validate-Credentials.ps1:
-                            source: {{ ScriptAdValidation }}
+                            source: {{{ ScriptAdValidation }}}
                         C:\cfn\scripts\Validate-FsxConnectivity.ps1:
-                            source: {{ ScriptFSxValidation }}
+                            source: {{{ ScriptFSxValidation }}}
                 LaunchWizardCFNSetup:
                     commands:
                         b-unpack-launchwizard-module:
@@ -335,11 +330,11 @@ Resources:
                                   - !Ref 'DomainDNSName'
                                   - ' -UserName '
                                   - !Ref 'DomainAdminUser'
-                                  - ' -DomainAdminSecretName '
-                                  - !Ref 'DomainAdminSecretName'
-                                  - ' -isSecretManagerSupported  1'
+                                  - ' -isSecretManagerSupported  0'
                                   - ' -Stackname '
                                   - !Ref 'AWS::StackName'
+                                  - ' -Parentstackname '
+                                  - !Ref 'ParentStackName'
                                   - ' -ResourceID ValidationNode1'
                                   - ' -WaitHandler '
                                   - '"'
@@ -356,10 +351,10 @@ Resources:
                                     - !Ref 'FSxFileSystemId'
                                     - ' -FSxRegion '
                                     - !Ref 'AWS::Region'
-                                    - ' -FSxAdministratorPasswordSecret '
-                                    - !Ref 'FSxAdministratorPasswordSecret'
                                     - ' -Stackname '
                                     - !Ref 'AWS::StackName'
+                                    - ' -Parentstackname '
+                                    - !Ref 'ParentStackName'
                                     - ' -ResourceID ValidationNode1'
                                     - ' -WaitHandler '
                                     - '"'
@@ -372,18 +367,18 @@ Resources:
                             waitAfterCompletion: '0'
         Properties:
             ImageId: !Ref 'AMI'
+            InstanceType: !Ref 'InstanceType'
             IamInstanceProfile: !Ref 'ValidationInstanceProfile'
             LaunchTemplate:
                 LaunchTemplateId: !Ref 'DisableIMDSv1'
                 Version: !GetAtt 'DisableIMDSv1.DefaultVersionNumber'
-            InstanceType: t2.micro
             NetworkInterfaces:
                 - DeviceIndex: '0'
                   SubnetId: !Ref 'SubnetID'
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
-            InstanceInitiatedShutdownBehavior: terminate
+            InstanceInitiatedShutdownBehavior: stop
             UserData: !Base64
                 Fn::Join:
                     - ''
@@ -417,6 +412,12 @@ Resources:
                       - 'Write-Output $StatusCode'
                       - "\n"
                       - 'if ($StatusCode -eq 200) {'
+                      - "\n"
+                      - '$stackname = "'
+                      - !Ref 'ParentStackName'
+                      - '"'
+                      - "\n"
+                      - 'Write-SSMParameter  -Name "/netapp/wlmdb/$stackname" -Value (Get-SSMParameter -Name "/netapp/wlmdb/$stackname" -WithDecryption $True).Value -Type "SecureString" -Overwrite $true'
                       - "\n"
                       - 'cfn-init.exe -v -c config -s '
                       - !Ref 'AWS::StackId'
@@ -539,13 +540,13 @@ Resources:
                 FetchResources:
                     files:
                         C:\cfn\scripts\Unzip-Archive.ps1:
-                            source: {{ ScriptUnzipArchive }}
+                            source: {{{ ScriptUnzipArchive }}}
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
-                            source: {{ AmazonLaunchWizardForCFN }}
+                            source: {{{ AmazonLaunchWizardForCFN }}}
                         C:\cfn\scripts\Validate-VPC.ps1:
-                            source: {{ ScriptVpcCheck }}
+                            source: {{{ ScriptVpcCheck }}}
                         C:\cfn\scripts\Validate-FsxConnectivity.ps1:
-                            source: {{ ScriptFSxValidation }}
+                            source: {{{ ScriptFSxValidation }}}
                 LaunchWizardCFNSetup:
                     commands:
                         b-unpack-launchwizard-module:
@@ -579,10 +580,10 @@ Resources:
                                     - !Ref 'FSxFileSystemId'
                                     - ' -FSxRegion '
                                     - !Ref 'AWS::Region'
-                                    - ' -FSxAdministratorPasswordSecret '
-                                    - !Ref 'FSxAdministratorPasswordSecret'
                                     - ' -Stackname '
                                     - !Ref 'AWS::StackName'
+                                    - ' -Parentstackname '
+                                    - !Ref 'ParentStackName'
                                     - ' -ResourceID ValidationNode2'
                                     - ' -WaitHandler '
                                     - '"'
@@ -595,18 +596,18 @@ Resources:
                             waitAfterCompletion: '0'
         Properties:
             ImageId: !Ref 'AMI'
+            InstanceType: !Ref 'InstanceType'
             IamInstanceProfile: !Ref 'ValidationInstanceProfile'
             LaunchTemplate:
                 LaunchTemplateId: !Ref 'DisableIMDSv1'
                 Version: !GetAtt 'DisableIMDSv1.DefaultVersionNumber'
-            InstanceType: t2.micro
             NetworkInterfaces:
                 - DeviceIndex: '0'
                   SubnetId: !Ref 'SubnetID'
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
-            InstanceInitiatedShutdownBehavior: terminate
+            InstanceInitiatedShutdownBehavior: stop
             UserData: !Base64
                 Fn::Join:
                     - ''

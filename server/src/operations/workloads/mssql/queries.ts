@@ -57,10 +57,8 @@ const SERVER_NAME = `${SET_NOCOUNT} SELECT @@SERVERNAME as serverName ${FOR_JSON
 const SERVER_INSTALL_DATE = `${SET_NOCOUNT} SELECT create_date AS creationDate FROM sys.server_principals WITH (NOLOCK) WHERE name = N'NT AUTHORITY\\SYSTEM' OR name = N'NT AUTHORITY\\NETWORK SERVICE' ${FOR_JSON_PATH}`;
 
 const SERVER_VERSION_DETAILS = `${SET_NOCOUNT} SELECT @@version AS serverDetails`;
-const SERVER_EDITION = ` ${SET_NOCOUNT} SELECT SERVERPROPERTY('Edition') AS ServerEdition ${FOR_JSON_PATH}`;
+const SERVER_PROPERTIES = ` ${SET_NOCOUNT} SELECT SERVERPROPERTY('Edition') AS ServerEdition, SERVERPROPERTY('IsClustered') as isClustered, SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode ${FOR_JSON_PATH}`;
 const SERVER_STATE = `${SET_NOCOUNT} EXEC master.dbo.xp_servicecontrol 'QUERYSTATE','MSSQLServer'`;
-const IS_SERVER_CLUSTERED = `${SET_NOCOUNT} SELECT SERVERPROPERTY('IsClustered') as isClustered ${FOR_JSON_PATH}`;
-const SERVER_NODE = `${SET_NOCOUNT} SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode ${FOR_JSON_PATH}`;
 const CLUSTER_NODES = `${SET_NOCOUNT} SELECT NodeName, is_current_owner FROM sys.dm_os_cluster_nodes ${FOR_JSON_PATH}`;
 const NUMBER_OF_CONNECTIONS = `${SET_NOCOUNT} SELECT COUNT(1) AS numberOfConnections FROM sys.dm_exec_sessions WHERE host_process_id is NOT NULL ${FOR_JSON_PATH}`;
 
@@ -154,13 +152,16 @@ EXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft
 SELECT LEFT(@LogPath,1) AS CurrentLogDrive 
 ${FOR_JSON_PATH}`;
 
+const DATABASE_NAME_EXISTS = (databaseName: string) =>
+    `${SET_NOCOUNT} SELECT name FROM sys.databases WHERE name = '${databaseName}' ${FOR_JSON_PATH}`;
+
 export {
     DATABASES,
     DATABASES_COUNT,
     CPU_UTILISATION,
     DISK_UTILISATION,
     SERVER_VERSION_DETAILS,
-    SERVER_EDITION,
+    SERVER_PROPERTIES,
     NUMBER_OF_CONNECTIONS,
     TABLES_QUERY,
     TABLES_COUNT_QUERY,
@@ -168,8 +169,6 @@ export {
     SERVER_GUID,
     SERVER_NAME,
     SERVER_STATE,
-    IS_SERVER_CLUSTERED,
-    SERVER_NODE,
     CLUSTER_NODES,
     DB_SIZE,
     SERVER_IO_LATENCY,
@@ -178,5 +177,6 @@ export {
     PERFORMANCE_METRICS,
     SQL_BACKUPS,
     DEFAULT_SQL_DATA_DRIVE,
-    DEFAULT_SQL_LOG_DRIVE
+    DEFAULT_SQL_LOG_DRIVE,
+    DATABASE_NAME_EXISTS
 };

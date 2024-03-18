@@ -7,7 +7,7 @@
                     "AmiLaunchIndex": 0,
                     "ImageId": "ami-09f1eff904333827a",
                     "InstanceId": "i-006dfc76b11ef264e",
-                    "InstanceType": "m5.xlarge",
+                    "InstanceType": "c5a.16xlarge",
                     "KeyName": "test_key",
                     "LaunchTime": "2023-11-15T02:37:37+00:00",
                     "Monitoring": {
@@ -198,7 +198,7 @@
                     "AmiLaunchIndex": 0,
                     "ImageId": "ami-09f1eff904348827a",
                     "InstanceId": "i-006dfc78111ef264e",
-                    "InstanceType": "m5.xlarge",
+                    "InstanceType": "m6in.16xlarge",
                     "KeyName": "test_key",
                     "LaunchTime": "2023-11-15T02:37:37+00:00",
                     "Monitoring": {

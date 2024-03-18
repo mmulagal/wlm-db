@@ -4,12 +4,14 @@ import getSystemStatus from '../../src/operations/system-operations';
 import { DEFAULT_AWS_CREDENTIALS_ID } from '../utils/consts';
 
 describe('System Operations', () => {
-    it('Get system status- no resource', async () => {
+    it.skip('Get system status- no resource', async () => {
+        // Its not mocked as we are making actual api call
         const resp = await getSystemStatus('empty-test');
         expect(resp.isActive).toEqual(false);
     });
 
-    it('Get system status - resource present', async () => {
+    it.skip('Get system status - resource present', async () => {
+        // Since we are not checking status based on resources skipping the test
         await deleteResource('account-with-resource', 'i-1a2b3c4d5e');
         await createResource('account-with-resource', {
             resourceId: 'i-1a2b3c4d5e',

@@ -26,11 +26,11 @@ import {
     HttpErrorCodes
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
-import { callSsmExecution } from '../workloads/mssql/mssql-operations';
 import { Metadata, ResourceDetails } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { getFsxArn } from '../../utils/utils';
-import { listFSXFileSystemForDemo } from '../../lib/cloud-manager/fsx-core';
+import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
+import { callSsmExecution } from './ssm-operations';
 
 const logger = getLogger();
 
@@ -182,7 +182,7 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
 async function getFSXFileSystemListForDemo(credentialsId: string, region: string, vpcId: string) {
     logger.info('Get FSX file systems list for demo', { credentialsId, region, vpcId });
 
-    const items = await listFSXFileSystemForDemo(credentialsId, region);
+    const items = await listFSXFileSystem(credentialsId, region, true);
     logger.debug('file system list api response', {
         items
     });
@@ -216,7 +216,6 @@ async function getStorageDataUsingSSM(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    fsxSecret: string,
     apiEndpoint: string,
     apiFilter: string,
     apiQuery: string,
@@ -228,11 +227,11 @@ async function getStorageDataUsingSSM(
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         commands = [
-            `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+            `C:\\SSM\\OntapRestGet.ps1 -FSxID test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
         ];
     } else {
         commands = [
-            `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+            `C:\\SSM\\OntapRestGet.ps1  -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
         ];
     }
 
@@ -300,8 +299,6 @@ async function getOntapVolumesSnapshotCount(
         metadata
     });
 
-    const { fsxSecret } = metadata as unknown as Metadata;
-
     const cacheKey = `${activeNodeInstanceId}-snapshot-count`;
     if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheKey)) {
         const response = readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheKey);
@@ -317,7 +314,7 @@ async function getOntapVolumesSnapshotCount(
             const apiQuery = 'fields=snapshot_count';
 
             const commands = [
-                `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+                `C:\\SSM\\OntapRestGet.ps1 -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
             ];
 
             const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId!);
@@ -412,8 +409,6 @@ async function getMappedOntapVolumes(
         activeNodeInstanceId
     });
 
-    const { fsxSecret } = metadata;
-
     const cacheKey = `${activeNodeInstanceId}-mapped-volumes`;
     if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheKey)) {
         const response = readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheKey);
@@ -421,9 +416,7 @@ async function getMappedOntapVolumes(
     }
 
     try {
-        const commands = [
-            `C:\\SSM\\Get-MappedOntapVolumes.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region}`
-        ];
+        const commands = [`C:\\SSM\\Get-MappedOntapVolumes.ps1 -FSxID ${fileSystemId} -FSxRegion ${region}`];
 
         const response = await callSsmExecution(credentialsId, region!, commands, activeNodeInstanceId!);
 
@@ -497,7 +490,7 @@ async function getFsxStorageCapacity(credentialsId: string, region: string, fsxI
         writeToCache(AWS_FSX_TYPE, cacheKey, fsxStorage);
         return fsxStorage;
     } catch (error: any) {
-        const errorMessage = `Error fetching FSx storage capacity: ${error}`;
+        const errorMessage = `Unable to retrieve FSx for NetApp ONTAP storage capacity: ${error}`;
         logger.error(errorMessage);
         if (error.name === 'FileSystemNotFound') {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);

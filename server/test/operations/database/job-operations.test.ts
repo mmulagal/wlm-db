@@ -2,6 +2,7 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import {
     Job,
     registerJobs,
+    registerJob,
     getJobs,
     getJobDetails,
     updateJobDetails,
@@ -16,8 +17,6 @@ beforeEach(async () => {
     await registerJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
         {
             name: 'test-job-ops-1',
-            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-            region: DEFAULT_AWS_REGION,
             description: 'test-job-description',
             resourceName: 'test-resource',
             initiator: 'test-user',
@@ -27,8 +26,6 @@ beforeEach(async () => {
         },
         {
             name: 'test-job-ops-2',
-            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-            region: DEFAULT_AWS_REGION,
             description: 'test-job-description',
             resourceName: 'test-resource',
             initiator: 'test-user',
@@ -46,8 +43,6 @@ describe('Job operations', () => {
         const response = await registerJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
             {
                 name: 'test-job-ops-register-1',
-                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-                region: DEFAULT_AWS_REGION,
                 description: 'test-job-description',
                 resourceName: 'test-resource',
                 initiator: 'test-user',
@@ -57,8 +52,6 @@ describe('Job operations', () => {
             },
             {
                 name: 'test-job-ops-register-2',
-                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-                region: DEFAULT_AWS_REGION,
                 description: 'test-job-description',
                 resourceName: 'test-resource',
                 initiator: 'test-user',
@@ -79,8 +72,6 @@ describe('Job operations', () => {
         await registerJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
             {
                 name: 'test-job-ops-1',
-                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-                region: DEFAULT_AWS_REGION,
                 description: 'test-filtered-job-description',
                 resourceName: 'test-resource',
                 initiator: 'filterMe',
@@ -128,8 +119,6 @@ describe('Job operations', () => {
         await registerJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
             {
                 name: 'test-sub-job-1',
-                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-                region: DEFAULT_AWS_REGION,
                 description: 'test-sub-job-description',
                 resourceName: 'test-resource',
                 initiator: 'test-user',
@@ -140,8 +129,6 @@ describe('Job operations', () => {
             },
             {
                 name: 'test-sub-job-2',
-                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-                region: DEFAULT_AWS_REGION,
                 description: 'test-sub-job-description',
                 resourceName: 'test-resource',
                 initiator: 'test-user',
@@ -161,8 +148,6 @@ describe('Job operations', () => {
             await registerJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
                 {
                     name: 'test-level-3-job-1',
-                    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-                    region: DEFAULT_AWS_REGION,
                     description: 'test-level-3-job-description',
                     resourceName: 'test-resource',
                     initiator: 'test-user',
@@ -173,8 +158,6 @@ describe('Job operations', () => {
                 },
                 {
                     name: 'test-level-3-job-2',
-                    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-                    region: DEFAULT_AWS_REGION,
                     description: 'test-level-3-job-description',
                     resourceName: 'test-resource',
                     initiator: 'test-user',
@@ -185,8 +168,6 @@ describe('Job operations', () => {
                 },
                 {
                     name: 'test-level-3-job-3',
-                    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-                    region: DEFAULT_AWS_REGION,
                     description: 'test-level-3-job-description',
                     resourceName: 'test-resource',
                     initiator: 'test-user',
@@ -197,8 +178,6 @@ describe('Job operations', () => {
                 },
                 {
                     name: 'test-level-3-job-4',
-                    credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-                    region: DEFAULT_AWS_REGION,
                     description: 'test-level-3-job-description',
                     resourceName: 'test-resource',
                     initiator: 'test-user',
@@ -231,6 +210,18 @@ describe('Job operations', () => {
         expect(response).toHaveProperty('completed');
         expect(response).toHaveProperty('failed');
     });
+    it('Register single job', async () => {
+        const response = await registerJob(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, {
+            name: 'test-job-ops-1',
+            description: 'test-filtered-job-description',
+            resourceName: 'test-resource',
+            initiator: 'filterMe',
+            startTime: Date.now(),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.DEPLOYMENT
+        });
+        expect(response).toBeDefined();
+    });
 });
 
 describe('getJobSummaryByTime', async () => {
@@ -240,8 +231,6 @@ describe('getJobSummaryByTime', async () => {
     await registerJobs('ACCOUNT_ID', DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
         {
             name: 'test-job-ops-1',
-            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-            region: DEFAULT_AWS_REGION,
             resourceName: 'test-resource',
             startTime: Date.now() - THIRTY_DAYS,
             endTime: Date.now() - THIRTY_DAYS,
@@ -250,8 +239,6 @@ describe('getJobSummaryByTime', async () => {
         },
         {
             name: 'test-job-ops-2',
-            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-            region: DEFAULT_AWS_REGION,
             resourceName: 'test-resource',
             startTime: Date.now(),
             endTime: Date.now(),

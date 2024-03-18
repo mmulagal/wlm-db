@@ -1,27 +1,32 @@
-const GET_DRIVE_INFO = `
-#Get the list of all used and available drive letters
-$usedDriveLetters = Get-PSDrive -PSProvider FileSystem | Select-Object -ExpandProperty Name
-$availableDriveLetters = [char[]]([int][char]'D'..[int][char]'Z') | Where-Object { $_ -notin $usedDriveLetters }
+const GET_DRIVE_INFO = (deploymentType: string) => `#Get the list of all used drive letters
+$disks = Get-Disk
+$usedDriveDetails = @()
+$deploymentType = '${deploymentType}'
+foreach ($disk in $disks) {
+    $volume = Get-Partition | Where-Object { $_.DiskNumber -eq $disk.Number } | Get-Volume
+    if ($deploymentType -eq 'FCI') {
+        $labels = Get-ClusterResource | Where-Object { $_.ResourceType -eq "Physical Disk" } | Where-Object { $_.Name -eq $volume.FileSystemLabel }
+    }
 
-#Updating manufacturer detail and availabble space of each existing drives
-$driveInfo = $usedDriveLetters | ForEach-Object {
-    $driveLetter = $_
-    $drive = Get-PSDrive -Name $driveLetter
-    $diskNumber = (Get-Partition -DriveLetter $driveLetter).DiskNumber
-    try{
-        $manufacturer = (Get-PhysicalDisk | Where-Object { $_.DeviceId -eq $diskNumber }).Manufacturer
+    $output = [PSCustomObject]@{
+        driveLetter = $volume.DriveLetter
+        availableSize = $volume.SizeRemaining
+        manufacturer = $disk.Manufacturer
     }
-    catch {
-        $manufacturer = 'N/A'
+
+    if ($deploymentType -eq 'FCI') {
+        $output | Add-Member -NotePropertyName "owner" -NotePropertyValue $labels.OwnerGroup.Name
     }
-    $freeSpace = $drive.Free
-    [PSCustomObject]@{
-        DriveLetter = $driveLetter
-        FreeSpace = $freeSpace
-        manufacturer = $manufacturer 
-    }
+
+    $usedDriveDetails += $output
 }
 
+$usedDrivesInfoJson = $usedDriveDetails | ConvertTo-Json
+Write-Host $usedDrivesInfoJson
+
+`;
+
+const GET_DEFAULT_DRIVES = `
 #Get default data drive of SQL server
 $defaultDataDrive = sqlcmd -Q @"
     SET NOCOUNT ON;
@@ -38,14 +43,7 @@ $defaultLogDrive = sqlcmd -Q @"
     SELECT LEFT(@LogPath,1) AS CurrentLogDrive FOR JSON PATH;
 "@ -y 0
 
-$jsonObject = @{
-    AvailableDriveLetters = $availableDriveLetters
-    ExistingDriveInfo = $driveInfo
-    DefaultDataDrive = $defaultDataDrive
-    DefaultLogDrive = $defaultLogDrive
-} | ConvertTo-Json
-
-Write-Output $jsonObject
+Write-Output $defaultDataDrive $defaultLogDrive | ConvertTo-Json
 `;
 
-export { GET_DRIVE_INFO };
+export { GET_DRIVE_INFO, GET_DEFAULT_DRIVES };

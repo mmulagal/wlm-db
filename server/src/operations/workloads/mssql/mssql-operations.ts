@@ -1,9 +1,9 @@
 import Promise from 'bluebird';
 import createError from 'http-errors';
 import { attempt, isEmpty } from 'lodash-es';
-import { STORAGE_TYPE, resource } from '@prisma/client';
-import config from 'config';
-import { SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT, DB_ROWS_COUNT, SSM_QUERY_CONCURRENCY_LIMIT } from './const';
+import { STORAGE_TYPE } from '@prisma/client';
+import { ConnectionStatus } from '@aws-sdk/client-ssm';
+import { PSSCRIPT, DB_ROWS_COUNT, SSM_QUERY_CONCURRENCY_LIMIT } from './const';
 import {
     CPU_UTILISATION,
     DISK_UTILISATION,
@@ -16,8 +16,6 @@ import {
     SERVER_VERSION_DETAILS,
     NUMBER_OF_CONNECTIONS,
     SERVER_STATE,
-    IS_SERVER_CLUSTERED,
-    SERVER_NODE,
     CLUSTER_NODES,
     TABLES_COUNT_QUERY,
     TABLES_QUERY,
@@ -26,9 +24,10 @@ import {
     SERVER_INSTALL_DATE,
     PERFORMANCE_METRICS,
     SQL_BACKUPS,
-    SERVER_EDITION
+    SERVER_PROPERTIES,
+    DATABASE_NAME_EXISTS
 } from './queries';
-import { executeSSMDocument, isSSMConnectionSuccessful } from '../../aws/ssm-operations';
+import { callSsmExecution, getSSMConnectionStatus } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { UtilisationResponseBodyInterface } from '../../../routes/types/database.types';
 import {
@@ -40,7 +39,6 @@ import {
     ACCOUNT_ID,
     RESOURCE_RETRIVAL_ERROR,
     WF,
-    SSM_COMMAND_CACHE_TYPE,
     ServerState
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
@@ -49,7 +47,6 @@ import { generateHash, sqlResponseParsing } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
-import { hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
 import { Metadata } from '../../../utils/common-types';
 
 const logger = getLogger();
@@ -62,11 +59,9 @@ async function getResourceDetails(resourceId: string) {
     let region;
     let credentialsId;
     try {
-        [{ credentials_id: credentialsId, metadata, region }] = (await getResources(
-            accountId,
-            resourceId,
-            DatabaseTypes.MS_SQL_SERVER
-        )) as resource[];
+        ({
+            items: [{ credentials_id: credentialsId, metadata, region }]
+        } = await getResources(accountId, resourceId, undefined, undefined, DatabaseTypes.MS_SQL_SERVER));
     } catch (error) {
         throw createError(HttpErrorCodes.NOT_FOUND, `Error Tenancy resource not found for resource id: ${resourceId}`);
     }
@@ -76,66 +71,6 @@ async function getResourceDetails(resourceId: string) {
         ({ node1InstanceId, node2InstanceId } = metadata as unknown as Metadata);
     }
     return [credentialsId, region, node1InstanceId, node2InstanceId];
-}
-
-async function callSsmExecution(
-    credentialsId: string,
-    region: string,
-    commands: Array<string>,
-    activeNodeInstanceId: string,
-    accountId?: string,
-    cacheData: boolean = true
-) {
-    logger.info('Calling SSM command execution', credentialsId, region, commands, activeNodeInstanceId);
-
-    const cacheHashKey = generateHash(activeNodeInstanceId + commands);
-
-    if (cacheData && !process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
-        logger.info('Reading from cache', activeNodeInstanceId, cacheHashKey);
-        return readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheHashKey) as string;
-    }
-
-    let response;
-    const defaultParams = {
-        DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
-        Documentversion: '1',
-        Parameters: {
-            // DBS-1449 - Adding execution timeout in sec
-            executionTimeout: [config.get<string>('ssm.execution-timeout')],
-            commands
-        }
-    };
-    const params = {
-        ...defaultParams,
-        InstanceIds: [activeNodeInstanceId]
-    };
-    try {
-        logger.debug('SSM query execution from primary node', credentialsId, region, activeNodeInstanceId);
-        response = await executeSSMDocument(credentialsId, region, params, accountId);
-        if (response?.StandardErrorContent) {
-            logger.error(
-                'SSM query execution from primary node failed',
-                activeNodeInstanceId,
-                response?.StandardErrorContent
-            );
-            throw new Error('SSM query execution from primary node failed');
-        }
-    } catch (error) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Query execution failed ${error}`);
-    }
-    if (response?.StandardErrorContent) {
-        logger.debug('Query Execution failed on active node. Error:', response?.StandardErrorContent);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Query Execution failed on active node. Error:${response?.StandardErrorContent}`
-        );
-    }
-    const output = response?.StandardOutputContent;
-    if (cacheData) {
-        logger.info('Writing to cache', activeNodeInstanceId, cacheHashKey);
-        writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
-    }
-    return output;
 }
 
 async function getDatabasesCount(credentialsId: string, region: string, activeNodeInstanceId: string) {
@@ -156,12 +91,11 @@ async function getDataBasesSummary(resourceId: string, activeNodeInstanceId?: st
     }
 
     if (!activeNodeInstanceId) {
-        ({ activeNodeInstanceId } = await isSSMConnectionSuccessful(
-            credentialsId!,
-            region!,
-            node1InstanceId,
-            node2InstanceId!
-        ));
+        ({ activeNodeInstanceId } = await getActiveSqlNode(credentialsId!, region!, node1InstanceId, node2InstanceId!));
+    }
+
+    if (!activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get active instance information');
     }
 
     let dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId!);
@@ -211,12 +145,7 @@ async function getResourceUtilisation(resourceId: string, metricType: string, ac
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource utilisation information');
     }
     if (!activeNodeInstanceId && node1InstanceId) {
-        ({ activeNodeInstanceId } = await isSSMConnectionSuccessful(
-            credentialsId!,
-            region!,
-            node1InstanceId,
-            node2InstanceId!
-        ));
+        ({ activeNodeInstanceId } = await getActiveSqlNode(credentialsId!, region!, node1InstanceId, node2InstanceId!));
     }
 
     if (!activeNodeInstanceId) {
@@ -293,7 +222,7 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
     logger.info('Get tables list for resource:', resourceId, databaseName);
     const [credentialsId, region, node1InstanceId, node2InstanceId] = await getResourceDetails(resourceId);
 
-    const { activeNodeInstanceId } = await isSSMConnectionSuccessful(
+    const { activeNodeInstanceId } = await getActiveSqlNode(
         credentialsId!,
         region!,
         node1InstanceId!,
@@ -335,7 +264,7 @@ async function getServerSummary(resourceId: string) {
 
     const [credentialsId, region, node1InstanceId, node2InstanceId] = await getResourceDetails(resourceId);
 
-    const { activeNodeInstanceId } = await isSSMConnectionSuccessful(
+    const { activeNodeInstanceId } = await getActiveSqlNode(
         credentialsId!,
         region!,
         node1InstanceId!,
@@ -346,41 +275,29 @@ async function getServerSummary(resourceId: string) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get server summary');
     }
 
-    const [
-        serverDetailsInfo,
-        severEditionInfo,
-        connectionsInfo,
-        isClusteredInfo,
-        nodeInfo,
-        clusterNodesInfo,
-        serverNameInfo,
-        serverInstallDate
-    ] = await Promise.all(
-        [
-            SERVER_VERSION_DETAILS,
-            SERVER_EDITION,
-            NUMBER_OF_CONNECTIONS,
-            IS_SERVER_CLUSTERED,
-            SERVER_NODE,
-            CLUSTER_NODES,
-            SERVER_NAME,
-            SERVER_INSTALL_DATE
-        ].map(query =>
-            callSsmExecution(credentialsId, region, [`${PSSCRIPT} -Query "${query}"`], activeNodeInstanceId).catch(
-                error =>
-                    logger.error(
-                        `Error while executing query: ${node1InstanceId} ${node2InstanceId} ${query} Error: ${error}`
-                    )
+    const [serverDetailsInfo, serverProperties, connectionsInfo, clusterNodesInfo, serverNameInfo, serverInstallDate] =
+        await Promise.all(
+            [
+                SERVER_VERSION_DETAILS,
+                SERVER_PROPERTIES,
+                NUMBER_OF_CONNECTIONS,
+                CLUSTER_NODES,
+                SERVER_NAME,
+                SERVER_INSTALL_DATE
+            ].map(query =>
+                callSsmExecution(credentialsId, region, [`${PSSCRIPT} -Query "${query}"`], activeNodeInstanceId).catch(
+                    error =>
+                        logger.error(
+                            `Error while executing query: ${node1InstanceId} ${node2InstanceId} ${query} Error: ${error}`
+                        )
+                )
             )
-        )
-    );
+        );
 
     const serverDetails = serverDetailsInfo ? serverDetailsInfo?.replaceAll('\r\n', '') : '';
-    const [{ ServerEdition }] = severEditionInfo ? sqlResponseParsing(severEditionInfo) : '';
+    let [{ ServerEdition, isClustered, activeNode }] = serverProperties ? sqlResponseParsing(serverProperties) : '';
     const serverInfo = serverDetails?.split('\t');
     const [{ numberOfConnections: activeConnections }] = connectionsInfo ? sqlResponseParsing(connectionsInfo) : '';
-    let [{ activeNode }] = nodeInfo ? sqlResponseParsing(nodeInfo) : '';
-    const [{ isClustered }] = isClusteredInfo ? sqlResponseParsing(isClusteredInfo) : '';
     const [{ serverName: clusterName }] = serverNameInfo ? sqlResponseParsing(serverNameInfo!) : '';
     const [{ creationDate }] = serverInstallDate ? sqlResponseParsing(serverInstallDate!) : '';
     const serverStatus = serverDetails ? ServerState.UP : ServerState.DOWN;
@@ -480,7 +397,9 @@ async function discoverMsSqlServer(
         activeNodeInstanceId,
         standbyNodeInstanceId
     );
-    const [resourceDetails] = await getResources(accountId, resourceId);
+    const {
+        items: [resourceDetails]
+    } = await getResources(accountId, resourceId);
 
     if (!isEmpty(resourceDetails)) {
         throw createError(409, 'MSSQL server already exists in your tenancy account');
@@ -560,6 +479,20 @@ async function getServerIOLatency(resourceId: string, activeNodeInstanceId: stri
     }
 }
 
+async function isActiveSqlNode(credentialsId: string, region: string, instanceId: string) {
+    logger.info('Check SQL node is active', { credentialsId, region, instanceId });
+
+    const commands = [`${PSSCRIPT} -Query "${SERVER_NAME}"`];
+    try {
+        await callSsmExecution(credentialsId, region, commands, instanceId);
+        return true;
+    } catch (error) {
+        logger.error(`Error while fetching SQL node status for node ${instanceId}`, { error });
+    }
+
+    return false;
+}
+
 // TODO: remove if this is not being used
 async function getServerState(resourceId: string) {
     logger.info('Fetch SQL server state for resource', resourceId);
@@ -570,12 +503,7 @@ async function getServerState(resourceId: string) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
     }
 
-    const { activeNodeInstanceId } = await isSSMConnectionSuccessful(
-        credentialsId!,
-        region!,
-        node1InstanceId,
-        node2InstanceId!
-    );
+    const { activeNodeInstanceId } = await getActiveSqlNode(credentialsId!, region!, node1InstanceId, node2InstanceId!);
 
     const commands = [`${PSSCRIPT} -Query "${SERVER_STATE}"`];
     const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId!);
@@ -666,6 +594,118 @@ async function getNativeSQLBackedupDatabases(resourceId: string, activeNodeInsta
     }
 }
 
+async function getActiveSqlNode(
+    credentialsId: string,
+    region: string,
+    node1InstanceId: string,
+    node2InstanceId?: string,
+    resourceId?: string
+) {
+    logger.info('Getting active SQL node', {
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId,
+        resourceId
+    });
+    try {
+        let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node1InstanceId);
+        const resourceError = `Resource ID ${resourceId}`;
+        let errorMessage = '';
+        // Connection to activenode is successful
+        let isSqlNodeActive = false;
+        if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
+            isSqlNodeActive = await isActiveSqlNode(credentialsId, region, node1InstanceId);
+            if (isSqlNodeActive) {
+                return {
+                    isSSMConnected: true,
+                    activeNodeInstanceId: node1InstanceId,
+                    standbyNodeInstanceId: node2InstanceId
+                };
+            }
+        } else {
+            errorMessage = `SSM connection to node or SQL server status check for ${node1InstanceId} has failed.`;
+            errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
+            logger.error(errorMessage, { connectionStatus, isSqlNodeActive });
+        }
+
+        // Check for connection to standby node
+        if (node2InstanceId) {
+            connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
+            if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
+                isSqlNodeActive = await isActiveSqlNode(credentialsId, region, node2InstanceId);
+                if (isSqlNodeActive) {
+                    return {
+                        isSSMConnected: true,
+                        activeNodeInstanceId: node2InstanceId,
+                        standbyNodeInstanceId: node1InstanceId
+                    };
+                }
+            }
+        }
+
+        errorMessage = `SSM connection to nodes and SQL server status check for nodes ${node1InstanceId} ${
+            node2InstanceId ? `and ${node1InstanceId}` : ''
+        } has failed.`;
+        errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
+        logger.error(errorMessage, { connectionStatus, isSqlNodeActive });
+    } catch (error) {
+        logger.error(
+            `Error while checking SSM connection or SQL server status for resource ID ${resourceId}`,
+            { credentialsId, region, node1InstanceId, node2InstanceId },
+            error
+        );
+    }
+
+    return { isSSMConnected: false };
+}
+
+async function checkDatabaseExists(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseName: string,
+    activeNodeInstanceId: string
+) {
+    logger.info('Checking Database name exists', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseName,
+        activeNodeInstanceId
+    });
+
+    let command;
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        command = [
+            `${PSSCRIPT} -Query "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = "tempdb18" FOR JSON PATH"'`
+        ];
+    } else {
+        command = [`${PSSCRIPT} -Query "${DATABASE_NAME_EXISTS(databaseName)}"`];
+    }
+
+    const checkDatabaseExistsResponse = await callSsmExecution(
+        credentialsId,
+        region,
+        command,
+        activeNodeInstanceId,
+        accountId,
+        false
+    );
+
+    logger.debug('checking database name exists done', checkDatabaseExistsResponse);
+
+    const parsedDatabaseExistsResponse = checkDatabaseExistsResponse
+        ? sqlResponseParsing(checkDatabaseExistsResponse)
+        : {};
+    if (parsedDatabaseExistsResponse && parsedDatabaseExistsResponse.length) {
+        throw createError(412, `Provided database ${databaseName} already exists`);
+    }
+    return parsedDatabaseExistsResponse;
+}
+
 export {
     getSqlServerDetails,
     getResourceUtilisation,
@@ -675,7 +715,6 @@ export {
     getDatabasesCount,
     getTablesSummary,
     discoverMsSqlServer,
-    callSsmExecution,
     getTablesCount,
     getMsSqlResourceId,
     deleteResourceById,
@@ -683,5 +722,7 @@ export {
     getServerState,
     getNativeSQLProtection,
     getPerformanceMetrics,
-    getNativeSQLBackedupDatabases
+    getNativeSQLBackedupDatabases,
+    getActiveSqlNode,
+    checkDatabaseExists
 };

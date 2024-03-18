@@ -141,6 +141,7 @@ export const GENERAL = {
     MULTI_AZ_CHECK_MESSAGE:
         'The selected VPC is not optimized. You should choose a VPC with subnets in 2 availability zones so that each cluster node will be in a dedicated availability zone.',
     QUERY_ERROR: 'Query error',
+    DB_CREATE_SUCCESS_MSG: 'DB creation is in progress',
     PERMISSION_REQUIRED: 'Permissions required',
     CLOUDFORMATION_TEMPLATE_URL: ['CloudFormation template ', 'URL'],
     SAME_ROUTE_SUBNET_ERROR:
@@ -219,8 +220,13 @@ export const GENERAL = {
     ARN: 'ARN',
     //Cloud watch
     CLOUD_WATCH_MONITORING: 'CloudWatch monitoring',
+    RESOURCE_ROLLBACK: 'Resource rollback',
     CLOUD_WATCH_TEXT:
         'Set up monitors and automated insights for this SQL deployment using CloudWatch Application Insights.',
+    //Resource Text
+    RESOURCE_TEXT_ONE: 'When a deployment fails, your provisioned resources will not be rolled back by default.',
+    RESOURCE_TEXT_TWO:
+        'The provisioned resources will be deleted when you delete your deployment from the AWS console.',
     //FSX Accordion
     CREATE_NEW_FSXN: 'Create new FSxN',
     CREATE_NEW_FSXN_SYSTEM: 'Create new file system',
@@ -412,6 +418,7 @@ export const GENERAL = {
     DB_HOST_ESTIMATED_COST: 'Estimated cost',
     DB_HOST_ALLOCATED_CAPACITY: 'Allocated capacity',
     DB_HOST_INSTANCE_NAME: 'Instance name',
+    DB_HOST_INSTANCE_ID: 'Instance ID',
     DB_HOST_VPC: 'VPC',
     DB_HOST_AVAILABILITY: 'Availability',
     DB_HOST_TYPE: 'Type',
@@ -514,6 +521,8 @@ export const GENERAL = {
     JM_FAILED: 'Failed',
     NO_DATA: 'No data',
     JM_RUNNING: 'Running',
+    JM_TYPE_DEPLOYMENT: 'Deployment',
+    JM_TYPE_CREATE_RESOURCE: 'Create resource',
     JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
     DEMO_TITLE: 'Redirect to CloudFormation',
@@ -539,40 +548,55 @@ export const GENERAL = {
     DB_HOSTS_DISTRIBUTION: 'Database hosts distribution',
     DETECTED_DB_HOSTS_DISTRIBUTION: 'Detected database hosts distribution',
     DETECTED_HOSTS: 'Detected hosts',
-    UNDETECTED_HOSTS: 'Undetected hosts',
+    UNIDENTIFIABLE_HOSTS: 'Unidentifiable hosts',
+    UNIDENTIFIABLE_HOST: 'Unidentifiable host',
     UNMANAGED_HOSTS: 'Unmanaged hosts',
     MANAGED_BY_WLF: 'Managed by Workload Factory',
     MANAGED_HOSTS_HEADING: 'Managed hosts',
     MANAGED_HOST_HEADING: 'Managed host',
     // Create USER DB
-    FILE_SETTINGS_FIRST_TEXT: 'Select between new drive letter or existing drive letter per file.',
+    FILE_SETTINGS_FIRST_TEXT: 'Select a new drive letter or an existing drive letter for the data file.',
     FILE_SETTINGS_SECOND_TEXT:
-        'When selecting new drive letter for Data file it is recommended to select a different new drive letter for the Log file.',
+        'If you select a new drive letter, we recommend selecting a new drive letter for the log file.',
     CREATE_DB_NAME_TOOLTIP: [
-        'SQL databases should have names that are no more than 30 characters long.',
+        'SQL databases should have names that are no more than 123 characters long.',
         'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
         'Names should not be Transact-SQL reserved words.'
     ],
+    CREATE_DB_DATA_FILE_NAME_TOOLTIP: [
+        'Data file name should have names that are no more than 128 characters long.',
+        'Names can only contain alphanumeric characters, including letters, numbers and underscrores.'
+    ],
+    CREATE_DB_LOG_FILE_NAME_TOOLTIP: [
+        'Log file name should have names that are no more than 128 characters long.',
+        'Names can only contain alphanumeric characters, including letters, numbers and underscrores.'
+    ],
     DB_NAME_ERROR_CHECK: 'Check database name criteria',
+    DB_DATA_NAME_ERROR_CHECK: 'Check data file name criteria',
+    DB_LOG_NAME_ERROR_CHECK: 'Check log file name criteria',
     DB_ADVANCED_CREATE: 'Advanced create',
     DB_QUICK_CREATE: 'Quick create',
-    QUICK_DB_CREATE_CONTENT:
-        'Use a recommended best-practice configuration. Quick mode enhance performance and restore time by allocating new drive letters for you, segregating the user database layout into distinct volumes and LUNs per data and log files and optimize performance. Particularly recommended for large databases.',
+    QUICK_DB_CREATE_CONTENT: [
+        'Recommended for large databases. Quick create mode selects an optimal configuration for you.',
+        'Quick create enhances database performance by allocating new drive letters for you and segregating the user database layout into distinct volumes and LUNs per data and log files.'
+    ],
     ADVANCED_DB_CREATE_CONTENT:
-        'You set your storage layout configuration by precisely configuring drive letter options for database data and log files. Allocating new drive letters, segregates the user database layout into distinct volumes and LUNs per data and log files and optimize performance. Alternatively, select existing drive letters  (hosting multiple user data and log files on the same drive), recommended for small-medium databases.',
-    FILE_SIZE_TEXT:
-        'The Log size minimum value is 1 GiB.  Recommended size (default) is approximately 25% of data size.',
+        'Recommended for small to medium databases. With Advanced create mode, you set your storage layout configuration to optimize performance by configuring new and existing drive letter options for data and log files.',
+    FILE_SIZE_TEXT: [
+        'Data and log file sizes have a minimum value of 1 GiB.',
+        'The recommended log file size (default) is 25% of the data file size. The default log file size value is editable.'
+    ],
     CREATE_USER_DB_TITLE: 'Create user database',
     DB_CREATE_HOST: 'Host:',
     CREATE: 'Create',
-    DB_CREATE_NOTIFICATION: ['Database ', ' in host ', ' is in deployment status.'],
+    DB_CREATE_NOTIFICATION: ['Creation of ', ' in ', ' is in progress. Track progress in '],
     DATABASE_INFORMATION: 'Database information',
     FILE_SETTINGS: 'File settings',
     DB_CREATE_DATABASE_NAME: 'Database name',
-    DB_CREATE_FILES_SIZE: 'Files size',
+    COLLATION: 'Collation',
+    DB_CREATE_FILES_SIZE: 'File sizes',
     DB_CREATE_FILE_SETTINGS_MODE: 'File settings mode',
-    DB_CREATE_FILE_NAMES: 'File names',
-    DB_CREATE_FILE_NAMES_AND_DRIVES: 'File names & drives',
+    DB_CREATE_FILE_NAMES_AND_PATH: 'File names & path',
     DATA_FILE_SIZE: 'Data file size:',
     LOG_FILE_SIZE: 'Log file size:',
     DATA_FILE_NAME: 'Data file name',
@@ -582,8 +606,76 @@ export const GENERAL = {
     DATA_FILE_PATH: 'Data file path:',
     LOG_FILE_PATH: 'Log file path:',
     SELECT_DRIVE_LETTER: 'Select drive letter',
-    LOG_SIZE_ERROR: 'Log size should be less than data size.',
-    DATA_SIZE_ERROR: 'The valid range is 1 GiB - '
+    LOG_SIZE_MIN_ERROR: 'Log file size should be 1 GiB or more.',
+    NO_DATA_SIZE_ERROR: 'Data file size should be 1 GiB or more.',
+    LOG_SIZE_ERROR: 'Log file size should be less than data file size.',
+    DATA_SIZE_MIN_ERROR: 'Minimum space required to create the file is not available in the drive',
+    DATA_SIZE_ERROR: 'The valid range is 1 GiB - ',
+    DRIVE_LETTER_CREATE_ERROR: 'Action required: Drive letters are missing. Use Advanced Create mode to select drives.',
+    DRIVE_LETTER_QUICK_CREATE_ERROR:
+        'Insufficient drive letters available on system to create new drives. Use Advanced Create mode to reuse existing drives.',
+    RESOURCE_ROLLBACK_TOOLTIP:
+        'When a deployment fails, your provisioned resources will not be rolled back by default. The provisioned resources will be deleted when you delete your deployment from the AWS console.',
+    DATA_SIZE_TOOLTIP: ['Host ', ' data size range is '],
+    NON_CLUSTERED_DRIVE: 'Non clustered drive or drive not part of SQL server',
+    NON_NETAPP_DRIVE: 'Not a NetApp drive',
+    CF_COPIED: 'CloudFormation copied successfully.',
+    CF_DOWNLOAD: 'CloudFormation downloaded successfully.',
+    CF_NOTICE: 'Notice: access to the YAML configuration file expires after 7 days.',
+    SSM_NO_CONNECTION_MSG: 'Can’t connect to your instance. See',
+    SSM_NO_CONNECTION_LINK: 'Troubleshooting SSM agent',
+    SAME_NEW_DRIVE_ERROR: 'Data and log file drive letters should be different for new drives.',
+    FSX_FOR_ONTAP: 'FSx for ONTAP',
+    EBS: 'EBS',
+    SINGLE_AZ: 'Single AZ',
+    MULTI_AZ: 'Multi AZ',
+    // Const for unidentifiable data
+    DETECT_HOST: 'Detect host',
+    MANAGE_HOST: 'Manage host',
+    DETECT_HOST_STEPS: ['Step 1 / 2', 'Step 2 out of 2'],
+    FAILED_TO_DETECT_HOST: 'Failed to detect host',
+    DONE: 'Done',
+    DETECT: 'Detect',
+    SSM_CONNECTIVITY: 'SSM connectivity',
+    SSM_ONLINE: 'Online',
+    SSM_CONNECTION_LOST: 'Connection lost',
+    DETECT_HOST_DESC: 'Detect and manage Microsoft SQL Server deployed on EC2 instance ',
+    DETECT_MSSQL_HEADING: 'Microsoft SQL Server',
+    DETECT_MSSQL_USERNAME: 'Microsoft SQL Server user name',
+    DETECT_MSSQL_PASSWORD: 'Microsoft SQL Server password',
+    DETECT_FSX_HEADING: 'FSx for ONTAP system',
+    DETECT_FSX_USERNAME: 'ONTAP user name',
+    DETECT_FSX_PASSWORD: 'ONTAP password',
+    DETECTED_HOST_INFO: 'Detected host information',
+    DETECT_HOSTNAME: 'Host name',
+    DETECT_HOST_TYPE: 'Host type',
+    DETECT_NO_OF_DB: 'Number of databases',
+    DETECT_SQL_VERSION: 'SQL version',
+    DETECT_DEPLOYMENT_MODEL: 'Deployment model',
+    DETECT_EDITION: 'Edition',
+    EBS_DETECT_SUCCESS_MSG: [
+        'Host ',
+        ' detected successfully.',
+        'The host is now listed in the ',
+        ' Unmanaged hosts ',
+        ' tab.'
+    ],
+    FSX_DETECT_SUCCESS_MSG: [
+        'Detected host management',
+        'Would you like to manage the detected host via workload factory?'
+    ],
+    FSX_AFTER_DETECT_OPTIONS: ['Yes, Manage host via Workload Factory.', 'No, move host to the Unmanaged hosts tab.'],
+    HOST_MOVED_SUCCESS: [
+        'Host ',
+        ' successfully detected and moved to the ',
+        ' Unmanaged hosts ',
+        ' Managed hosts ',
+        'tab.'
+    ],
+    HOST_MANAGED_MOVED_SUCCESS: ['Host ', ' successfully moved to the ', ' Managed hosts ', 'tab.'],
+    HOST_MOVED_FAILED: ['Host ', ' failed to become a managed host. For more details view ', ' Job Monitoring.'],
+    FCI: 'FCI',
+    STANDALONE: 'Standalone'
 };
 
 export const CODE_VIEWER = {

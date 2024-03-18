@@ -7,11 +7,12 @@ import {
 import { isEmpty } from 'lodash-es';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { generateHash } from '../../utils/utils';
-import { DEFAULT_AWS_REGION, AWS_PRICING_TYPE } from '../../utils/consts';
+import { AWS_PRICING_TYPE } from '../../utils/consts';
 
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
+const AWS_PRICING_REGION = 'us-east-1';
 
 async function getProducts(
     productFilters: GetProductsCommandInput,
@@ -29,7 +30,13 @@ async function getProducts(
     }
 
     // We don't need credentials as our SaaS account is already having pricing:getProducts permission
-    const pricingClient = new PricingClient({ region: DEFAULT_AWS_REGION });
+    /*
+        The pricing SDK is supported in only the following regions.
+        us-east-1
+        eu-central-1
+        ap-south-1
+    */
+    const pricingClient = new PricingClient({ region: AWS_PRICING_REGION });
     const command = new GetProductsCommand(productFilters);
 
     const pricingResult = await pricingClient.send(command);

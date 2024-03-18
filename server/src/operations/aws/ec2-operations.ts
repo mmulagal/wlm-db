@@ -10,7 +10,12 @@ import {
     VpcEndpoint
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
-import { AWSQueryFields, ENDPOINTS_DEPLOYMENT, WLMDB_COST_ALLOCATION_TAG } from '../../utils/consts';
+import {
+    AWSQueryFields,
+    ENDPOINTS_DEPLOYMENT,
+    VALIDATION_NODE_INSTANCETYPE,
+    WLMDB_COST_ALLOCATION_TAG
+} from '../../utils/consts';
 import {
     describeVpc,
     describeSecurityGroups,
@@ -22,7 +27,9 @@ import {
     describeNetworkInterfaces,
     createTag,
     describeTags,
-    describeEndpoints
+    describeEndpoints,
+    modifyVpcAttributes,
+    describeInstanceTypeOfferings
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
@@ -447,7 +454,10 @@ async function getVpcEndpoints(credentialsId: string, region: string, vpcId: str
                     `com.amazonaws.${region}.ssmmessages`,
                     `com.amazonaws.${region}.ec2messages`,
                     `com.amazonaws.${region}.monitoring`,
-                    `com.amazonaws.${region}.sqs`
+                    `com.amazonaws.${region}.sqs`,
+                    `com.amazonaws.${region}.logs`,
+                    `com.amazonaws.${region}.fsx`,
+                    `com.amazonaws.${region}.ec2`
                 ]
             }
         ]
@@ -485,6 +495,39 @@ async function getServicesWithNoEndpoint(credentialsId: string, region: string, 
     return servicesWithNoEndpoint;
 }
 
+async function enableVpcDnsAttributes(credentialsId: string, region: string, vpcId: string) {
+    logger.info('Enable vpc dns attributes', credentialsId, region, vpcId);
+
+    // <p>You cannot modify the DNS resolution and DNS hostnames attributes in the same request. Use separate requests for each attribute.</p>
+    const [dnsHostnameResponse, dnsSupportResponse] = await Promise.all([
+        modifyVpcAttributes(credentialsId, region, { VpcId: vpcId, EnableDnsSupport: { Value: true } }),
+        modifyVpcAttributes(credentialsId, region, { VpcId: vpcId, EnableDnsHostnames: { Value: true } })
+    ]);
+
+    logger.debug('Enable vpc dns attributes response ', dnsHostnameResponse, dnsSupportResponse);
+
+    return [dnsHostnameResponse, dnsSupportResponse];
+}
+
+async function getValidationNodeInstanceType(credentialsId: string, region: string, availabilityZones: string[]) {
+    logger.info('Get instance type offerings ', credentialsId, region, availabilityZones);
+
+    const response = await describeInstanceTypeOfferings(credentialsId, region, {
+        LocationType: 'availability-zone',
+        Filters: [{ Name: 'instance-type', Values: ['t2.micro', 't3.micro'] }]
+    });
+
+    const t2microSupportedZones = response.InstanceTypeOfferings?.filter(e =>
+        e.InstanceType?.includes(VALIDATION_NODE_INSTANCETYPE.T2MICRO)
+    ).map(e => e.Location as string);
+
+    const instanceType = availabilityZones.every(a => t2microSupportedZones?.includes(a))
+        ? VALIDATION_NODE_INSTANCETYPE.T2MICRO
+        : VALIDATION_NODE_INSTANCETYPE.T3MICRO;
+
+    return instanceType;
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -498,5 +541,7 @@ export {
     getVpcEndpoints,
     getVpcSecurityGroups,
     getServicesWithNoEndpoint,
-    findResourceNameFromTags
+    findResourceNameFromTags,
+    enableVpcDnsAttributes,
+    getValidationNodeInstanceType
 };

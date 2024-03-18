@@ -1,12 +1,5 @@
  [CmdletBinding()]
 param(
-
-    [Parameter(Mandatory=$true)]
-    [string]$AdminSecret,
-
-	[Parameter(Mandatory=$true)]
-    [string]$SqlUserSecret,
-
 	[Parameter(Mandatory=$true)]
     [string]$MSSQLMediaBucket,
 
@@ -26,7 +19,10 @@ param(
     [string]$ResourceID,   
 
     [Parameter(Mandatory=$true)]
-    [string]$Stackname
+    [string]$Stackname,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Parentstackname
 )
 
 #get Instance ID
@@ -40,59 +36,76 @@ $HostName = hostname
 
 $DomainNetBIOSName = $env:USERDOMAIN
 # Creating Credential Object for Administrator
-$AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret).SecretString
+$SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+$AdminPassword = $SsmParameter.domain.password
 $ClusterAdminUser = $DomainNetBIOSName+'\'+$DomainAdminUser
-$Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminUser.Password -AsPlainText -Force)))
+$Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminPassword -AsPlainText -Force)))
+
+Write-Output "Credentials: $ClusterAdminUser : $AdminPassword"
 
 #Retrieving MSSQL service account
-$SqlUserAccount = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $SqlUserSecret).SecretString
 $SqlUserName = $DomainNetBIOSName + '\' + $SqlUser
-$SqlUserPassword = $SqlUserAccount.Password
+$SqlUserPassword = $SsmParameter.sql[0].password
 
-if((get-ec2image $AMIID).UsageOperation -eq 'RunInstances:0002')
-{
-    #Acquiring MSSQL installation media from S3
-Write-Output "Acquiring MSSQL installation media from S3 bucket and running PrepareFailoverCluster action"    
-$mediaIsoPath = 'c:\cfn\mssql-setup-media\SQL_server.iso'
-$mediaExtractPath = 'C:\SQLServerSetup'
-    try{
-        Copy-S3Object -BucketName $MSSQLMediaBucket -Key $MSSQLMediaKey -LocalFile $mediaIsoPath
-    }catch{
-        $_ | Write-AWSLaunchWizardException
-    }
-#Mounting and extracting installation media files
-New-Item -Path $mediaExtractPath -ItemType Directory
-$mountResult = Mount-DiskImage -ImagePath $mediaIsoPath -PassThru
-$volumeInfo = $mountResult | Get-Volume
-$driveInfo = Get-PSDrive -Name $volumeInfo.DriveLetter
-Copy-Item -Path ( Join-Path -Path $driveInfo.Root -ChildPath '*' ) -Destination $mediaExtractPath -Recurse
-Dismount-DiskImage -ImagePath $mediaIsoPath
-    #Prepare FCI installation
-$arguments = '/ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /SUPPRESSPAIDEDITIONNOTICE="True" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="MSSQLSERVER" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="MSSQLSERVER" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher" ' -f $SqlUserName, $SqlUserPassword
-Invoke-Command -scriptblock {
-    Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\preparefci_output.txt -RedirectStandardError C:\cfn\log\preparefci_error.txt 
-} -Credential $Credentials -ComputerName $HostName -Authentication credssp
-}
-else {
-Write-Output "Running PrepareFailoverCluster action"      
+# if((get-ec2image $AMIID).UsageOperation -eq 'RunInstances:0002')
+# {
+#     #Acquiring MSSQL installation media from S3
+# Write-Output "Acquiring MSSQL installation media from S3 bucket and running PrepareFailoverCluster action"    
+# $mediaIsoPath = 'c:\cfn\mssql-setup-media\SQL_server.iso'
+# $mediaExtractPath = 'C:\SQLServerSetup'
+#     try{
+#         Copy-S3Object -BucketName $MSSQLMediaBucket -Key $MSSQLMediaKey -LocalFile $mediaIsoPath
+#     }catch{
+#         $_ | Write-AWSLaunchWizardException
+#     }
+# #Mounting and extracting installation media files
+# New-Item -Path $mediaExtractPath -ItemType Directory
+# $mountResult = Mount-DiskImage -ImagePath $mediaIsoPath -PassThru
+# $volumeInfo = $mountResult | Get-Volume
+# $driveInfo = Get-PSDrive -Name $volumeInfo.DriveLetter
+# Copy-Item -Path ( Join-Path -Path $driveInfo.Root -ChildPath '*' ) -Destination $mediaExtractPath -Recurse
+# Dismount-DiskImage -ImagePath $mediaIsoPath
+#     #Prepare FCI installation
+# $arguments = '/ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /SUPPRESSPAIDEDITIONNOTICE="True" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="MSSQLSERVER" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="MSSQLSERVER" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher" ' -f $SqlUserName, $SqlUserPassword
+# Invoke-Command -scriptblock {
+#     Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\preparefci_output.txt -RedirectStandardError C:\cfn\log\preparefci_error.txt 
+# } -Credential $Credentials -ComputerName $HostName -Authentication credssp
+# }
+# else {
+Write-Output "Running PrepareFailoverCluster action" 
+
+Write-Output "https://learn.microsoft.com/en-us/answers/questions/1276441/invok-command-on-localhost-not-working"
+Write-Output "DBS-2299: Enable PSRemoting Service to Start Automatic and Enable PSREmoting on both host" 
+Set-Service winrm -StartupType Automatic
+Start-Service winrm
+Enable-PSRemoting -Force     
+
 $arguments = '/ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="MSSQLSERVER" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="MSSQLSERVER" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher" ' -f $SqlUserName, $SqlUserPassword
 Invoke-Command -scriptblock {
     Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\preparefci_output.txt -RedirectStandardError C:\cfn\log\preparefci_error.txt 
 
 } -Credential $Credentials -ComputerName $HostName -Authentication credssp
-}
+
 
 Start-Sleep -Seconds 15
 $Service = Get-Service -Name 'MSSQLSERVER' -ErrorAction SilentlyContinue
 if ([string]::IsNullOrEmpty($Service)) {
     Start-Sleep -Seconds 180
     Write-Output "Configuring SQLServer(MSSQLSERVER) service by skipping Cluster verify errors. Validation of cluster and SQL service will be done at completion of configuration"
-    if((get-ec2image $AMIID).UsageOperation -eq 'RunInstances:0002') {
-        $arguments = '/SkipRules=Cluster_VerifyForErrors /ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /SUPPRESSPAIDEDITIONNOTICE="True" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="MSSQLSERVER" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="MSSQLSERVER" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher" ' -f $SqlUserName, $SqlUserPassword
-    }
-    else {
-        $arguments = '/SkipRules=Cluster_VerifyForErrors /ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="MSSQLSERVER" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="MSSQLSERVER" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher" ' -f $SqlUserName, $SqlUserPassword
-    }
+    # if((get-ec2image $AMIID).UsageOperation -eq 'RunInstances:0002') {
+    #     $arguments = '/SkipRules=Cluster_VerifyForErrors /ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /SUPPRESSPAIDEDITIONNOTICE="True" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="MSSQLSERVER" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="MSSQLSERVER" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher" ' -f $SqlUserName, $SqlUserPassword
+    # }
+    # else {
+    #     $arguments = '/SkipRules=Cluster_VerifyForErrors /ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="MSSQLSERVER" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="MSSQLSERVER" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher" ' -f $SqlUserName, $SqlUserPassword
+    # }
+
+    Write-Output "https://learn.microsoft.com/en-us/answers/questions/1276441/invok-command-on-localhost-not-working"
+    Write-Output "DBS-2299: Enable PSRemoting Service to Start Automatic and Enable PSREmoting on both host" 
+    Set-Service winrm -StartupType Automatic
+    Start-Service winrm
+    Enable-PSRemoting -Force 
+
+    $arguments = '/SkipRules=Cluster_VerifyForErrors /ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="MSSQLSERVER" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="MSSQLSERVER" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher" ' -f $SqlUserName, $SqlUserPassword
     Invoke-Command -scriptblock {
     Start-Service -Name 'Remote Registry'
     Start-Sleep -Seconds 180

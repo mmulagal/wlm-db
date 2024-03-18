@@ -17,6 +17,24 @@
             "RequestedDateTime": "2023-08-28T14:57:41.365Z"
         }
     },
+    "memoryCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "f171a4a7-3693-41bb-8c31-memoryCommand",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "f3cb24b5-725a-475c-bc46-memoryCommand",
+            "DocumentName": "AWS-RunPowerShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": ["i-0880a21327284f67c"],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
     "emptyCommandResponse": {
         "$metadata": {
             "httpStatusCode": 200,
@@ -524,24 +542,24 @@
     },
     "getHostAndSqlServerInfoResponse": {
         "$metadata": {
-          "httpStatusCode": 200,
-          "requestId": "0bc3b860-4278-4eec-8fab-ff33ed0cacb9",
-          "extendedRequestId": "undefined",
-          "cfId": "undefined",
-          "attempts": 1,
-          "totalRetryDelay": 0
+            "httpStatusCode": 200,
+            "requestId": "0bc3b860-4278-4eec-8fab-ff33ed0cacb9",
+            "extendedRequestId": "undefined",
+            "cfId": "undefined",
+            "attempts": 1,
+            "totalRetryDelay": 0
         },
         "Command": {
             "CommandId": "7f937c8c-3f95-460b-ad99-788b354bffa8",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2024-02-18T16:58:41.365Z",
-            "InstanceId": [ "i-006dfc76b11ef264e" ],
+            "InstanceId": ["i-006dfc76b11ef264e"],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
             "RequestedDateTime": "2024-02-18T16:55:41.365Z"
         }
-      },
+    },
     "getDriveInfoCommandResponse": {
         "$metadata": {
             "httpStatusCode": 200,
@@ -551,6 +569,132 @@
         },
         "Command": {
             "CommandId": "f3cb24b5-725a-475c-bc46-getDriveInfo",
+            "DocumentName": "AWS-RunPowerShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": ["i-0880a21327284f67c"],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
+    "getDefaultDriveLettersCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "f171a4a7-3693-41bb-8c31-getDefaultDriveLetters",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "f3cb24b5-725a-475c-bc46-getDefaultDriveLetters",
+            "DocumentName": "AWS-RunPowerShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": ["i-0880a21327284f67c"],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
+    "getClusterDriveLetters": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "f171a4a7-3693-41bb-8c31-getClusterDriveLetters",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "f3cb24b5-725a-475c-bc46-getClusterDriveLetters",
+            "DocumentName": "AWS-RunPowerShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": ["i-0880a21327284f67c"],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
+    "createDBResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "f171a4a7-3693-41bb-8c31-createDB",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "f3cb24b5-725a-2345-bc46-createDB",
+            "DocumentName": "AWS-RunPowerShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": ["i-0880a21327284f67c"],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
+    "configureLunsResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "f171a4a7-3693-41bb-8c31-configureLuns",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "f3cb24b5-725a-2345-abc46-configureLuns",
+            "DocumentName": "AWS-RunPowerShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": ["i-0880a21327284f67c"],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
+    "newDBInitalizeResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "f171a4a7-3693-41bb-8c31-newDBInitialise",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "f3cb24b5-725a-2345-abd46-newDBInitialise",
+            "DocumentName": "AWS-RunPowerShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": ["i-0880a21327284f67c"],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
+    "cleanUpDBResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "f171a4a7-3693-41bb-8c31-cleanUpDB",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "f3cb24b5-725a-2345-abd46-cleanUpDB",
+            "DocumentName": "AWS-RunPowerShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": ["i-0880a21327284f67c"],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
+    "checkDBExistsResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "f171a4a7-3693-41bb-8c31-checkDBExists",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "f3cb24b5-725a-2345-abd46-checkDBExists",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
             "InstanceIds": ["i-0880a21327284f67c"],

@@ -5,16 +5,13 @@ param(
     [string]$DomainAdminUser,
 
     [Parameter(Mandatory=$true)]
-    [string]$AdminSecret,
-
-    [Parameter(Mandatory=$true)]
     [string]$DomainDNSName,
 
     [Parameter(Mandatory=$true)]
     [string]$ServiceAccountUser,
 
     [Parameter(Mandatory=$true)]
-    [string]$SqlUserSecret,
+    [string]$Parentstackname,
 
     [Parameter(Mandatory=$false)]
     [string]$ADServerNetBIOSName=$env:COMPUTERNAME
@@ -26,10 +23,11 @@ param(
         $DomainNetBIOSName = $env:USERDOMAIN
         $DomainAdminFullUser = $DomainNetBIOSName + '\' + $DomainAdminUser
         $ServiceAccountFullUser = $DomainNetBIOSName + '\' + $ServiceAccountUser
-        $DomainAdminSecurePassword = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret | Select-Object -ExpandProperty 'SecretString')
-        $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,(ConvertTo-SecureString $DomainAdminSecurePassword.password -AsPlainText -Force)))
-        $ServiceAccountPassword = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $SqlUserSecret | Select-Object -ExpandProperty 'SecretString')
-        $ServiceAccountSecurePassword = ConvertTo-SecureString $ServiceAccountPassword.password -AsPlainText -Force
+        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+        $DomainAdminSecurePassword = $SsmParameter.domain.password
+        $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,(ConvertTo-SecureString $DomainAdminSecurePassword -AsPlainText -Force)))
+        $ServiceAccountPassword = $SsmParameter.sql[0].password
+        $ServiceAccountSecurePassword = ConvertTo-SecureString $ServiceAccountPassword -AsPlainText -Force
         $UserPrincipalName = $ServiceAccountUser + "@" + $DomainDNSName
        $createUserSB = {
             $ErrorActionPreference = "Stop"

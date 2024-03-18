@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { getDatabases, getDriveInfo } from '../../src/operations/database-hosts-operations';
+import { getDatabases } from '../../src/operations/database-hosts-operations';
 import '../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../simulator/scopes/aws/fsx-scope';
@@ -27,7 +27,8 @@ beforeAll(async () => {
         storageType: 'FSXN',
         metadata: {
             node1InstanceId: 'i-07e76a4b916548dc0',
-            node2InstanceId: 'i-0880a21327284f67c'
+            node2InstanceId: 'i-0880a21327284f67c',
+            sqlDeploymentType: 'FCI'
         }
     });
 });
@@ -40,15 +41,6 @@ afterAll(async () => {
 describe('Database host operations', () => {
     it('Get databases in a server', async () => {
         const resp = await getDatabases(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
-        expect(resp).toBeDefined();
-    });
-    it('Get drive info for a database host', async () => {
-        const resp = await getDriveInfo(
-            ACCOUNT_ID,
-            '36E53042-04E8-40C9-AE69-26E56CB0D216',
-            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
-            'ap-southeast-1'
-        );
         expect(resp).toBeDefined();
     });
 });

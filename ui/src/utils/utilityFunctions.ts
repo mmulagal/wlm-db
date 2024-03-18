@@ -10,11 +10,13 @@ import {
     CREDENTIAL_STAGE_LINK,
     DB_HOME_DATA_TYPE,
     DEFAULT_MASTER_KEY,
+    DETECT_HOST_VAR,
     DISABLED_STATE,
     ENABLED_STATE,
     JM_DOWNLOAD,
     JOBS_REPORT,
     JOB_MONITORING_STATUS,
+    JOB_MONITORING_TYPE,
     PENDING_DELETION,
     PRODUCTION,
     RECOMMENDED_TEMPLATES,
@@ -312,6 +314,8 @@ export const sortListOfDict = (dataList: any, field: string, ascOrder = true) =>
 };
 
 export const formatSizeOnePrecision = (value: number | string) => numeral(value).format('0.[0] ib');
+
+export const formatSizeRoundOff = (value: number | string) => numeral(value).format('0 ib');
 
 export const formatSizeSplit = (value: number | string) => {
     const formatted = formatSizeOnePrecision(value);
@@ -925,6 +929,16 @@ export const jobMonitoringStatusMapping = (val: string) => {
     return statusValue;
 };
 
+export const jobMonitoringTypeMapping = (val: string) => {
+    let typeValue = val;
+    if (val === JOB_MONITORING_TYPE.DEPLOYMENT) {
+        typeValue = GENERAL.JM_TYPE_DEPLOYMENT;
+    } else if (val === JOB_MONITORING_TYPE.CREATE_RESOURCE) {
+        typeValue = GENERAL.JM_TYPE_CREATE_RESOURCE;
+    }
+    return typeValue;
+};
+
 export const downloadCsv = (data: any) => {
     const csv = 'data:text/csv;charset=utf-8,' + data;
     const excel = encodeURI(csv); //Links to CSV
@@ -964,6 +978,8 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
                     result += value.split(';href')[0] + ',';
                 } else if (key === 'status' && value) {
                     result += jobMonitoringStatusMapping(value) + ',';
+                } else if (key === 'type' && value) {
+                    result += jobMonitoringTypeMapping(value) + ',';
                 } else {
                     if (value) {
                         result += value + ',';
@@ -1005,7 +1021,7 @@ export const getShiftedHoursList = (baseList: Array<String | number>) => {
     return [...baseList.slice(shift), ...baseList.slice(0, shift)];
 };
 
-export const groupByTime = (days: number, data: any, baseList: Array<number>) => {
+export const groupByTime = (days: number, data: any, baseList: Array<number>, daysList: any = []) => {
     const dayGrouping: any = {};
     if (days === 1) {
         // grouping for lats 24 hours
@@ -1013,11 +1029,17 @@ export const groupByTime = (days: number, data: any, baseList: Array<number>) =>
             if (perObj?.timeInterval || perObj?.timeInterval === 0) {
                 let hr = perObj?.timeInterval;
                 const min = perObj?.minutes;
+                const objDate = perObj?.date;
                 if (min > 0) {
                     hr += 1;
                 }
                 const index = Math.ceil(hr / 4) % baseList.length;
-                const newTimeInterval = baseList[index];
+                let newTimeInterval = baseList[index];
+                // This logic is to check count before putting data in x-axis last point. If it is yesterday count than add in x-axix first point.
+                const currDate = new Date().getDate();
+                if (daysList.length >= 6 && newTimeInterval === daysList[5] && objDate && objDate !== currDate) {
+                    newTimeInterval = daysList[0];
+                }
                 if (newTimeInterval in dayGrouping) {
                     dayGrouping[newTimeInterval] = {
                         completed: dayGrouping[newTimeInterval]?.completed + (perObj?.completed || 0),
@@ -1063,7 +1085,8 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
         data = data.map((e: any) => ({
             ...e,
             timeInterval: new Date(e.endTime).getHours(),
-            minutes: new Date(e.endTime).getMinutes()
+            minutes: new Date(e.endTime).getMinutes(),
+            date: new Date(e.endTime).getDate()
         }));
     } else {
         data = data.map((e: any) => ({ ...e, timeInterval: new Date(e.endTime).getDate() }));
@@ -1092,7 +1115,7 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
     }
 
     // Group data by time used in x-axis line chart
-    const dayGrouping = groupByTime(days, data, baseList);
+    const dayGrouping = groupByTime(days, data, baseList, daysList);
 
     daysList.map(day => {
         groupedData['time'].push(day);
@@ -1181,4 +1204,71 @@ export const initialColStateManagedHosts = {
     11: {
         isHidden: true
     }
+};
+
+export const removePasswordInConfig = (payload: any) => {
+    if (payload?.dbCredentials?.password) {
+        payload = { ...payload, dbCredentials: { ...payload.dbCredentials, password: '' } };
+    }
+    if (payload?.activeDirectory?.password) {
+        payload = { ...payload, activeDirectory: { ...payload.activeDirectory, password: '' } };
+    }
+    if (payload?.fsxN?.fsxNPassword) {
+        payload = { ...payload, fsxN: { ...payload.fsxN, fsxNPassword: '' } };
+    }
+    return payload;
+};
+
+export const removeOldApisError = (data: any) => {
+    const state = store.getState();
+    const credId = state.headers.headerSelectedCred?.data?.credentialsId;
+    const regionId = state.headers.headerSelectedRegion?.label2;
+    if (data?.endpointName === 'getDatabaseHosts') {
+        if (
+            data?.originalArgs &&
+            (data?.originalArgs?.credentialId !== credId || data?.originalArgs?.region !== regionId)
+        ) {
+            return true;
+        } else {
+            return false;
+        }
+    } else if (data?.endpointName === 'discoverHosts') {
+        if (
+            data?.originalArgs &&
+            (data?.originalArgs?.credentialsId !== credId || data?.originalArgs?.regionId !== regionId)
+        ) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+};
+
+// This function will create post payload for register credential API (registerResourceCredentials)
+export const createDetectHostPayload = (instanceID: string, fsxId: string) => {
+    const state = store.getState();
+    const detectManageUserName = state?.inventory?.detectManageUserName;
+    const detectManagePassword = state?.inventory?.detectManagePassword;
+    const detectOntapUsername = state?.inventory?.detectOntapUsername;
+    const detectOntapPassword = state?.inventory?.detectOntapPassword;
+    let credList = [];
+    if (detectManageUserName && detectManagePassword) {
+        credList.push({
+            resourceId: instanceID,
+            resourceType: DETECT_HOST_VAR.MSSQL,
+            username: detectManageUserName,
+            password: detectManagePassword
+        });
+    }
+    if (detectOntapUsername && detectOntapPassword) {
+        credList.push({
+            resourceId: fsxId,
+            resourceType: DETECT_HOST_VAR.FSX,
+            username: detectOntapUsername,
+            password: detectOntapPassword
+        });
+    }
+    return { credentials: credList };
 };

@@ -53,7 +53,8 @@ async function listJobs(
     startTime?: number,
     endTime?: number,
     pageSize?: number,
-    nextToken?: string
+    nextToken?: string,
+    resourceName?: string
 ) {
     logger.info('Listing jobs', {
         accountId,
@@ -68,7 +69,8 @@ async function listJobs(
         startTime,
         endTime,
         pageSize,
-        nextToken
+        nextToken,
+        resourceName
     });
 
     accountId = checkAccount(accountId);
@@ -91,6 +93,7 @@ async function listJobs(
                 }
             }),
             ...(initiator && { initiator }),
+            ...(resourceName && { resource_name: resourceName }),
             start_time: {
                 gte: new Date(startTime),
                 lte: new Date(endTime)
@@ -135,6 +138,14 @@ async function createJobs(accountId: string, jobs: readOnlyJob[]) {
     return prisma.client.job.createMany({
         data: jobs,
         skipDuplicates: true
+    });
+}
+
+async function createJob(accountId: string, job: readOnlyJob) {
+    logger.info('Creating job', { accountId, job });
+    job.account_id = checkAccount(accountId);
+    return prisma.client.job.create({
+        data: job
     });
 }
 
@@ -277,5 +288,6 @@ export {
     deleteJobsOfAccount,
     deleteOlderJobs,
     getJobCountByStatus,
-    groupJobsByTimeAndStatus
+    groupJobsByTimeAndStatus,
+    createJob
 };

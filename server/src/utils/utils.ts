@@ -4,7 +4,7 @@
  */
 import { attempt, trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
-import crypto, { randomUUID } from 'crypto';
+import crypto from 'crypto';
 import { Tag } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { getAsyncLocalStorageResource } from './async-local-storage';
@@ -30,14 +30,6 @@ import {
 
 import getLogger, { hideSecretsValues } from './logger';
 import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
-import {
-    fsxStackData,
-    masterStackData,
-    sqlFciServerStackData,
-    sqlStandaloneStackData,
-    validationStack1Data,
-    validationStack2Data
-} from './job-monitoring-mockdata';
 
 const logger = getLogger();
 
@@ -308,47 +300,6 @@ function checkAccount(accountId: string) {
     return accountId;
 }
 
-async function createJobMockData(
-    accountId: string,
-    resourceName: string,
-    stackName: string,
-    sqlDeploymentMode: string,
-    fsxFileSystemId: string | undefined
-) {
-    logger.info('Generate mock data for job table', accountId, resourceName, stackName);
-    accountId = checkAccount(accountId);
-    const masterStackId = randomUUID();
-    const serverStackId = randomUUID();
-    const fsxStackId = randomUUID();
-    const validationStack1Id = randomUUID();
-    const validationStack2Id = randomUUID();
-
-    const data: any[] = [];
-
-    const fsxType = fsxFileSystemId ? 'ExistingFSxStack' : 'NewFSxStack';
-
-    data.push(
-        ...masterStackData(accountId, resourceName, stackName, masterStackId),
-        ...fsxStackData(accountId, resourceName, stackName, fsxStackId, masterStackId, fsxType),
-        ...validationStack1Data(
-            accountId,
-            resourceName,
-            stackName,
-            validationStack1Id,
-            masterStackId,
-            sqlDeploymentMode
-        )
-    );
-    if (sqlDeploymentMode.toLowerCase() === 'fci') {
-        data.push(
-            ...sqlFciServerStackData(accountId, resourceName, serverStackId, masterStackId),
-            ...validationStack2Data(accountId, resourceName, stackName, validationStack2Id, masterStackId)
-        );
-    } else {
-        data.push(...sqlStandaloneStackData(accountId, resourceName, stackName, serverStackId, masterStackId));
-    }
-    return data;
-}
 function calculateSQLandWindowsVersion(sqlAmiName: string) {
     logger.info('Calculate sql and windows version from the sql AMI name', sqlAmiName);
 
@@ -427,6 +378,10 @@ function sqlResponseParsing(response: string) {
     }
 }
 
+function convertGiBToBytes(sizeInGiB: number) {
+    return sizeInGiB * 1024 * 1024 * 1024;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -448,11 +403,11 @@ export {
     generateRandomIP,
     isActiveInstance,
     checkAccount,
-    createJobMockData,
     calculateSQLandWindowsVersion,
     getDescriptionForMatchingName,
     convertMetricsIntoJson,
     getResourceNameFromTags,
     getArtifactsRegionBucketName,
-    sqlResponseParsing
+    sqlResponseParsing,
+    convertGiBToBytes
 };

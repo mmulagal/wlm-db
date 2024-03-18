@@ -45,7 +45,7 @@
                 "JunctionPath": "/",
                 "OntapVolumeType": "RW",
                 "SecurityStyle": "UNIX",
-                "SizeInMegabytes": 1024,
+                "SizeInMegabytes": 25600,
                 "SnapshotPolicy": "default",
                 "StorageEfficiencyEnabled": false,
                 "StorageVirtualMachineId": "svm-03985e26ffd55441d",

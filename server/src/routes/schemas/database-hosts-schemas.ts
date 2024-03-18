@@ -5,27 +5,23 @@ import {
     DatabaseHostSummaryParams,
     DatabaseHostSummaryResponse,
     DatabasesListResponse,
-    DriveInfoResponseBody,
-    DatabaseHostSummaryParamsWithRegion
+    CreateDatabseRequestBody,
+    DatabasesCreateResponse,
+    CreateDatabaseParams,
+    DriveInfoResponseBody
 } from '../types/database-hosts.types';
-import { AccountIdParams, ManagedHostParams } from '../types/generic.types';
-
-// Base Request for Deployment Routes
-const baseRequest = {
-    tags: [RouteTags.DEPLOYMENT],
-    params: AccountIdParams
-};
+import { CredentialsIdParams } from '../types/generic.types';
 
 // Base Request for Deployment with credential and region Routes
 const databaseHostsRequest = {
     tags: [RouteTags.DEPLOYMENT],
-    params: ManagedHostParams
+    params: CredentialsIdParams
 };
 
 // Get Database hosts summary details
 const DatabaseHostsSummarySchema = {
     ...databaseHostsRequest,
-    summary: 'Get databse hosts details',
+    summary: 'Get database hosts details',
     description: 'Get database hosts summary details',
     querystring: DatabaseHostQueryString,
     response: {
@@ -35,7 +31,7 @@ const DatabaseHostsSummarySchema = {
 
 // Get Database host summary details
 const DatabaseHostDetailsSchema = {
-    ...baseRequest,
+    ...databaseHostsRequest,
     summary: 'Fetch database server details ',
     description:
         'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server.',
@@ -48,7 +44,7 @@ const DatabaseHostDetailsSchema = {
 
 // Get databases in a database server
 const DatabasesListSchema = {
-    ...baseRequest,
+    ...databaseHostsRequest,
     summary: 'Fetch details about databases in a server ',
     description:
         'Fetch details about databases in a server - name, protection status, availability status, size and type of database',
@@ -58,14 +54,32 @@ const DatabasesListSchema = {
     }
 };
 
+// Create database in a database server
+const DatabasesCreateSchema = {
+    tags: [RouteTags.DEPLOYMENT],
+    params: CreateDatabaseParams,
+    summary: 'Create a new user databases in a server ',
+    description: 'Create a new user database in a server',
+    body: CreateDatabseRequestBody,
+    response: {
+        200: DatabasesCreateResponse
+    }
+};
+
 const GetDriveInfoSchema = {
-    ...baseRequest,
+    ...databaseHostsRequest,
     summary: 'Get database host drive information',
     description: 'Fetch drive info about the database host',
-    params: DatabaseHostSummaryParamsWithRegion,
+    params: DatabaseHostSummaryParams,
     response: {
         200: DriveInfoResponseBody
     }
 };
 
-export { DatabaseHostsSummarySchema, DatabaseHostDetailsSchema, DatabasesListSchema, GetDriveInfoSchema };
+export {
+    DatabaseHostsSummarySchema,
+    DatabaseHostDetailsSchema,
+    DatabasesListSchema,
+    GetDriveInfoSchema,
+    DatabasesCreateSchema
+};

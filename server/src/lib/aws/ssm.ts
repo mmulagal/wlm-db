@@ -9,7 +9,9 @@ import {
     GetParametersByPathCommandInput,
     GetConnectionStatusCommandInput,
     GetConnectionStatusCommand,
-    GetConnectionStatusCommandOutput
+    GetConnectionStatusCommandOutput,
+    PutParameterCommand,
+    PutParameterCommandInput
 } from '@aws-sdk/client-ssm';
 
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
@@ -86,4 +88,21 @@ async function getConnectionStatus(credentialsId: string, region: string, params
     return response;
 }
 
-export { getSSMClient, sendSSMCommand, getCommandInvocation, describeFSxOntapRegions, getConnectionStatus };
+async function putParameter(credentialsId: string, region: string, params: PutParameterCommandInput) {
+    logger.info('Put SSM Parameter');
+
+    const ssmClient = await getSSMClient(credentialsId, region);
+    const response = await ssmClient.send(new PutParameterCommand(params));
+
+    logger.debug('SSM PutParameter response', response);
+    return response;
+}
+
+export {
+    getSSMClient,
+    sendSSMCommand,
+    getCommandInvocation,
+    describeFSxOntapRegions,
+    getConnectionStatus,
+    putParameter
+};

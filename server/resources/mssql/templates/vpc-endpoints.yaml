@@ -1,3 +1,4 @@
+#prettier-ignore
 ---
 AWSTemplateFormatVersion: 2010-09-09
 
@@ -18,6 +19,9 @@ Metadata:
                   - SsmEndpointExists
                   - SqsEndpointExists
                   - CloudwatchEndpointExists
+                  - CloudwatchLogsEndpointExists
+                  - FsxEndpointExists
+                  - Ec2EndpointExists
         ParameterLabels:
             VPCId:
                 default: Existing VPC ID for deployment.
@@ -37,6 +41,12 @@ Metadata:
                 default: Boolean to check if a SQS endpoint exists in the vpc.
             CloudwatchEndpointExists:
                 default: Boolean to check if a Cloudwatch endpoint exists in the vpc.
+            CloudwatchLogsEndpointExists:
+                default: Boolean to check if a Cloudwatch logs endpoint exists in the vpc.
+            FsxEndpointExists:
+                default: Boolean to check if a FSxN endpoint exists in the vpc.
+            Ec2EndpointExists:
+                default: Boolean to check if a EC2 endpoint exists in the vpc.
 
 Parameters:
     VPCId:
@@ -57,6 +67,15 @@ Parameters:
         Description: Specify the standby subnet for your file system.
         Type: String
         Default: subnet-123456
+    
+    PreferredRouteTableId:
+        Description: Specify routetable id for the preferred subnet.
+        Type: String
+
+    StandbyRouteTableId:
+        Description: Specify routetable id for the standby subnet.
+        Type: String
+        Default: rtb-123456
     
     S3EndpointExists:
         Description: Boolean to convey if an S3 endpoint exists in the vpc.
@@ -82,6 +101,31 @@ Parameters:
         Description: Boolean to convey if a Cloudwatch endpoint exists in the vpc.
         Type: String
         Default: 'false'
+    
+    CloudwatchLogsEndpointExists:
+        Description: Boolean to convey if a Cloudwatch logs endpoint exists in the vpc.
+        Type: String
+        Default: 'false'
+
+    FsxEndpointExists:
+        Description: Boolean to convey if a FSxN endpoint exists in the vpc.
+        Type: String
+        Default: 'false'
+    
+    Ec2EndpointExists:
+        Description: Boolean to convey if a EC2 endpoint exists in the vpc.
+        Type: String
+        Default: 'false'
+    
+    Ec2MessagesEndpointExists:
+        Description: Boolean to convey if  EC2 messages endpoint exists in the vpc.
+        Type: String
+        Default: 'false'
+
+    SSMMessagesEndpointExists:
+        Description: Boolean to convey if SSM messages endpoint exists in the vpc.
+        Type: String
+        Default: 'false'
 
 Conditions:
     SingleZone: !Equals [!Ref StandbySubnetId, 'subnet-123456']
@@ -90,6 +134,11 @@ Conditions:
     CreateSqsEndpoint: !Equals [!Ref SqsEndpointExists, 'false']
     CreateS3Endpoint: !Equals [!Ref S3EndpointExists, 'false']
     CreateCloudwatchEndpoint: !Equals [!Ref CloudwatchEndpointExists, 'false']
+    CreateCloudwatchLogsEndpoint: !Equals [!Ref CloudwatchLogsEndpointExists, 'false']
+    CreateFsxEndpoint: !Equals [!Ref FsxEndpointExists, 'false']
+    CreateEc2Endpoint: !Equals [!Ref Ec2EndpointExists, 'false']
+    CreateEc2MessagesEndpoint: !Equals [!Ref Ec2MessagesEndpointExists, 'false']
+    CreateSSMMessagesEndpoint: !Equals [!Ref SSMMessagesEndpointExists, 'false']
 
 Resources:
     HttpsSecurityGroup:
@@ -110,6 +159,8 @@ Resources:
         VpcId: !Ref VPCId
         VpcEndpointType: Gateway
         ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+        RouteTableIds:
+            !If [SingleZone, [!Ref PreferredRouteTableId], [!Ref PreferredRouteTableId, !Ref StandbyRouteTableId]]
     
     CloudformationEndpoint:
       Condition: CreateCloudformationEndpoint
@@ -151,7 +202,7 @@ Resources:
           - !Ref HttpsSecurityGroup
     
     SsmMessagesEndpoint:
-      Condition: CreateSsmEndpoint
+      Condition: CreateSSMMessagesEndpoint
       Type: AWS::EC2::VPCEndpoint
       Properties:
         VpcId: !Ref VPCId
@@ -164,7 +215,7 @@ Resources:
           - !Ref HttpsSecurityGroup
     
     Ec2MessagesEndpoint:
-      Condition: CreateSsmEndpoint
+      Condition: CreateEc2MessagesEndpoint
       Type: AWS::EC2::VPCEndpoint
       Properties:
         VpcId: !Ref VPCId
@@ -183,6 +234,45 @@ Resources:
         VpcId: !Ref VPCId
         VpcEndpointType: Interface
         ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.monitoring'
+        SubnetIds:
+            !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
+        PrivateDnsEnabled: true
+        SecurityGroupIds: 
+          - !Ref HttpsSecurityGroup
+    
+    CloudwatchLogsEndpoint:
+      Condition: CreateCloudwatchLogsEndpoint
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        VpcId: !Ref VPCId
+        VpcEndpointType: Interface
+        ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.logs'
+        SubnetIds:
+            !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
+        PrivateDnsEnabled: true
+        SecurityGroupIds: 
+          - !Ref HttpsSecurityGroup
+
+    FsxEndpoint:
+      Condition: CreateFsxEndpoint
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        VpcId: !Ref VPCId
+        VpcEndpointType: Interface
+        ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.fsx'
+        SubnetIds:
+            !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
+        PrivateDnsEnabled: true
+        SecurityGroupIds: 
+          - !Ref HttpsSecurityGroup
+    
+    Ec2Endpoint:
+      Condition: CreateEc2Endpoint
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        VpcId: !Ref VPCId
+        VpcEndpointType: Interface
+        ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.ec2'
         SubnetIds:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true

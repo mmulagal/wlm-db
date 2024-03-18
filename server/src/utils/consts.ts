@@ -134,7 +134,8 @@ enum RouteTags {
     BATCH = 'Batch',
     PRICING = 'Pricing',
     CHATBOT = 'Chatbot',
-    DISCOVER = 'Discover'
+    DISCOVER = 'Discover',
+    RESOURCE = 'Resource'
 }
 
 enum HttpErrorCodes {
@@ -520,13 +521,15 @@ const SIGNED_TEMPLATES_BUCKET_NAME = process.env.TEMPLATE_BUCKET_NAME || config.
 const TEMPLATE_BUCKET_REGION = process.env.WLMDB_BUCKET_REGION || config.get<string>('bucket.region');
 const CF_DEPLOY_ROLE_NAME = 'CfDeployRoleName';
 const VALIDATION_AMI = 'ValidationAmi';
+const VALIDATION_INSTANCE_TYPE = 'ValidationNodeInstanceType';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = `https://${DEFAULT_AWS_REGION}.console.aws.amazon.com/cloudformation/home`;
 const CLOUD_FORMATION_CLI_COMMAND = 'aws cloudformation create-stack';
 const DISABLE_ROLLBACK = true;
-const MASTER_STACK_TIMEOUT_MINUTES = 180;
+// In private network, time taken is longer
+const MASTER_STACK_TIMEOUT_MINUTES = 240;
 const FSX_SSD_MIN_SIZE = 1024; // in GiB
 const FSX_SSD_MAX_SIZE = 211106; // in GiB
 
@@ -641,19 +644,29 @@ const TEMPLATE_CLOUDFORMATION_ENDPOINT = 'CloudformationEndpointExists';
 const TEMPLATE_SSM_ENDPOINT = 'SsmEndpointExists';
 const TEMPLATE_SQS_ENDPOINT = 'SqsEndpointExists';
 const TEMPLATE_CLOUDWATCH_ENDPOINT = 'CloudwatchEndpointExists';
+const TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT = 'CloudwatchLogsEndpointExists';
+const TEMPLATE_FSX_ENDPOINT = 'FsxEndpointExists';
+const TEMPLATE_EC2_ENDPOINT = 'Ec2EndpointExists';
+const TEMPLATE_EC2MESSAGES_ENDPOINT = 'Ec2MessagesEndpointExists';
+const TEMPLATE_SSMMESSAGES_ENDPOINT = 'SSMMessagesEndpointExists';
 
 const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
     s3: TEMPLATE_S3_ENDPOINT,
     cloudformation: TEMPLATE_CLOUDFORMATION_ENDPOINT,
     ssm: TEMPLATE_SSM_ENDPOINT,
     sqs: TEMPLATE_SQS_ENDPOINT,
-    monitoring: TEMPLATE_CLOUDWATCH_ENDPOINT
+    monitoring: TEMPLATE_CLOUDWATCH_ENDPOINT,
+    logs: TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT,
+    fsx: TEMPLATE_FSX_ENDPOINT,
+    ec2: TEMPLATE_EC2_ENDPOINT,
+    ec2messages: TEMPLATE_EC2MESSAGES_ENDPOINT,
+    ssmmessages: TEMPLATE_SSMMESSAGES_ENDPOINT
 };
 
 const SQL_RESOURCE_ASSETS = [
     {
         name: 'DSC',
-        url: `${WLMDB}/DSC.zip`
+        url: `${WLMDB}/scripts/DSC.zip`
     },
     // {
     //     name: 'DSCSignature',
@@ -732,6 +745,10 @@ const SQL_RESOURCE_ASSETS = [
     //     url: 'scripts/sqlontap.zip.sig'
     // },
     {
+        name: 'ScriptDBCREATE',
+        url: `${WLMDB}/scripts/dbcreate.zip`
+    },
+    {
         name: 'ScriptVpcCheck',
         url: `${WLMDB}/validation/Validate-VPCConnectivity.ps1`
     },
@@ -754,6 +771,10 @@ const SQL_RESOURCE_ASSETS = [
     {
         name: 'ScriptFSxValidation',
         url: `${WLMDB}/validation/Validate-FsxConnectivity.ps1`
+    },
+    {
+        name: 'DependentPackages',
+        url: `${WLMDB}/Installer/dependent-packages.zip`
     }
 ];
 
@@ -965,7 +986,7 @@ const SQL_SOFTWARE_TYPES = new Map<string, string>([
 ]);
 const WLMDB_COST_ALLOCATION_TAG = 'wlmdb-cost-resource';
 
-const SQS_MSG_RETENTION = '7200'; // Amazon SQS automatically deletes messages that have been in a queue for more than the maximum message retention period.
+const SQS_MSG_RETENTION = '3600'; // Amazon SQS automatically deletes messages that have been in a queue for more than the maximum message retention period.
 const MSSQL_SYSTEM_DATABASES = [
     'master',
     'mastlog',
@@ -1051,11 +1072,41 @@ const subJobDescriptions: SubJobDescriptions = {
     'Ec2MessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2Messages endpoint',
     'SqsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SQS endpoint',
     'SsmEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSM endpoint',
-    'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint'
+    'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint',
+    'FsxEndpoint(AWS::EC2::VPCEndpoint)': 'Creating FSxN endpoint',
+    'CloudwatchLogsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch logs endpoint',
+    'Ec2Endpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2 endpoint'
 };
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
+const RESOURCE_SOURCE = {
+    DEPLOY: 'deployment',
+    DISCOVER: 'discovery'
+};
 
-const ENDPOINTS_DEPLOYMENT = ['s3', 'cloudformation', 'sqs', 'ssm', 'ssmmessages', 'ec2messages', 'monitoring'];
+const ENDPOINTS_DEPLOYMENT = [
+    's3',
+    'cloudformation',
+    'sqs',
+    'ssm',
+    'ssmmessages',
+    'ec2messages',
+    'monitoring',
+    'logs',
+    'fsx',
+    'ec2'
+];
+
+const SSM_PARAMETERS_BASE_PATH = '/netapp/wlmdb';
+const COMPLETE = 'Complete';
+
+const CUSTOM_SSM_EXECUTION_TIMEOUT = '180';
+
+const VALIDATION_NODE_INSTANCETYPE = {
+    T2MICRO: 't2.micro',
+    T3MICRO: 't3.micro'
+};
+
+const ONLINE = 'ONLINE';
 
 export {
     WLMDB,
@@ -1281,6 +1332,7 @@ export {
     subJobDescriptions,
     CF_STACK_RESOURCE_TYPE,
     AWS_PRICING_TYPE,
+    RESOURCE_SOURCE,
     AWS_FSX_TYPE,
     ENDPOINTS_DEPLOYMENT,
     TEMPLATE_S3_ENDPOINT,
@@ -1291,5 +1343,11 @@ export {
     MAP_SERVICE_TEMPLATE_PARAMETER,
     ARTIFACT_BUCKET_NAME,
     SIGNED_TEMPLATES_BUCKET_NAME,
-    TEMPLATE_BUCKET_REGION
+    TEMPLATE_BUCKET_REGION,
+    SSM_PARAMETERS_BASE_PATH,
+    COMPLETE,
+    CUSTOM_SSM_EXECUTION_TIMEOUT,
+    VALIDATION_NODE_INSTANCETYPE,
+    VALIDATION_INSTANCE_TYPE,
+    ONLINE
 };

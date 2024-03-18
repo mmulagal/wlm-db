@@ -274,14 +274,22 @@ async function deleteDeployment(accountId: string, deploymentId: string) {
 async function listResources(
     accountId: string,
     resourceId?: string,
-    resourceType?: string,
-    pageSize?: number,
-    nextToken?: string,
-    region?: string,
     credentialsId?: string,
-    fsxId?: string
+    region?: string,
+    resourceType?: string,
+    fsxId?: string,
+    pageSize?: number,
+    nextToken?: string
 ) {
-    logger.info('Listing resources', { accountId, resourceId, resourceType, region, credentialsId, fsxId });
+    logger.info('Listing resources', {
+        accountId,
+        resourceId,
+        resourceType,
+        region,
+        credentialsId,
+        pageSize,
+        nextToken
+    });
     accountId = checkAccount(accountId);
     return prisma.client.resource.findMany({
         where: {
@@ -300,6 +308,24 @@ async function listResources(
             cursor: { id: nextToken },
             skip: 1
         })
+    });
+}
+
+async function countResources(accountId: string, credentialsId?: string, region?: string, resourceType?: string) {
+    logger.info('Counting managed resources', { accountId, credentialsId, region, resourceType });
+
+    accountId = checkAccount(accountId);
+
+    return prisma.client.resource.aggregate({
+        _count: {
+            id: true
+        },
+        where: {
+            account_id: accountId,
+            ...(credentialsId && { credentials_id: credentialsId }),
+            ...(region && { region }),
+            ...(resourceType && { resource_type: resourceType })
+        }
     });
 }
 
@@ -471,6 +497,22 @@ async function deleteDeploymentJobById(accountId: string, jobId: string) {
     });
 }
 
+async function updateResourceMetaData(accountId: string, resourceId: string, metaData: any) {
+    logger.info('Updating resource metadata', { accountId, resourceId });
+
+    accountId = checkAccount(accountId);
+
+    return prisma.client.resource.updateMany({
+        where: {
+            account_id: accountId,
+            resource_id: resourceId
+        },
+        data: {
+            ...(!isEmpty(metaData) && { metadata: metaData })
+        }
+    });
+}
+
 export {
     Resource,
     listDeployments,
@@ -480,6 +522,7 @@ export {
     updateDeployment,
     createEvent,
     listResources,
+    countResources,
     createResource,
     deleteResource,
     listConfig,
@@ -490,5 +533,6 @@ export {
     deploymentJobsCount,
     deleteDeploymentJobById,
     checkAccount,
-    listEvents
+    listEvents,
+    updateResourceMetaData
 };

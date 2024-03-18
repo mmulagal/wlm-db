@@ -8,14 +8,16 @@ import {
     SendCommandCommand,
     SSMClient,
     GetParametersByPathCommand,
-    GetConnectionStatusCommand
+    GetConnectionStatusCommand,
+    PutParameterCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
-import { hostAndSqlInfoPowerShellScript } from '../../../../src/operations/workloads/mssql/discover-consts';
+import { HOST_AND_SQL_INFO_PS1 } from '../../../../src/operations/workloads/mssql/discover-consts';
 import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands-response.json';
 import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
 import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
 import getConnectionStatusResponse from '../../responses/aws/ssm-connection-status.json';
+import putParameterResponse from '../../responses/aws/ssm-put-parameter.json';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -94,12 +96,12 @@ const serVerParams = {
 };
 const tablesCountParams = {
     commands: [
-        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Database Aaronview -Query "SET NOCOUNT ON; SELECT COUNT(DISTINCT name) AS totalCount FROM sys.tables FOR JSON PATH"'
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Database RetailBanking -Query "SET NOCOUNT ON; SELECT COUNT(DISTINCT name) AS totalCount FROM sys.tables FOR JSON PATH"'
     ]
 };
 const tablesListParams = {
     commands: [
-        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Database Aaronview -Query "SET NOCOUNT ON; SELECT \n                        t.NAME AS tableName,\n                        t.type_desc AS tableType,\n                        s.Name AS tableSchema,\n                        SUM(a.total_pages) * 8 * 1024 AS tableSize\n                    FROM \n                        sys.tables t\n                    INNER JOIN      \n                        sys.indexes i ON t.OBJECT_ID = i.object_id\n                    INNER JOIN \n                        sys.partitions p ON i.object_id = p.OBJECT_ID AND i.index_id = p.index_id\n                    INNER JOIN \n                        sys.allocation_units a ON p.partition_id = a.container_id\n                    LEFT OUTER JOIN \n                        sys.schemas s ON t.schema_id = s.schema_id\n                    GROUP BY \n                        t.Name, s.Name, p.Rows, t.type_desc\n                    ORDER BY \n                        t.Name offset 0 rows fetch next 75 rows only FOR JSON PATH"'
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Database RetailBanking -Query "SET NOCOUNT ON; SELECT \n                        t.NAME AS tableName,\n                        t.type_desc AS tableType,\n                        s.Name AS tableSchema,\n                        SUM(a.total_pages) * 8 * 1024 AS tableSize\n                    FROM \n                        sys.tables t\n                    INNER JOIN      \n                        sys.indexes i ON t.OBJECT_ID = i.object_id\n                    INNER JOIN \n                        sys.partitions p ON i.object_id = p.OBJECT_ID AND i.index_id = p.index_id\n                    INNER JOIN \n                        sys.allocation_units a ON p.partition_id = a.container_id\n                    LEFT OUTER JOIN \n                        sys.schemas s ON t.schema_id = s.schema_id\n                    GROUP BY \n                        t.Name, s.Name, p.Rows, t.type_desc\n                    ORDER BY \n                        t.Name offset 0 rows fetch next 75 rows only FOR JSON PATH"'
     ]
 };
 const diskSizeParams = {
@@ -144,19 +146,17 @@ const nativeSqlBackupDatabasesParams = {
 
 const getOntapSnapshotCountParams = {
     commands: [
-        "C:\\SSM\\OntapRestGet.ps1 -FSxSecretName WLMDB-SqlStandaloneStack-1699407080711-fsx -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1 -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'uuid=939a4ec9-7c14-11ee-b185-8329e8fcbf44' -OntapResourceQuery 'fields=snapshot_count'"
+        "C:\\SSM\\OntapRestGet.ps1 -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1 -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'uuid=939a4ec9-7c14-11ee-b185-8329e8fcbf44' -OntapResourceQuery 'fields=snapshot_count'"
     ]
 };
 
 const getOntapMappedVolumesParams = {
-    commands: [
-        'C:\\SSM\\Get-MappedOntapVolumes.ps1 -FSxSecretName WLMDB-SqlStandaloneStack-1699407080711-fsx -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1'
-    ]
+    commands: ['C:\\SSM\\Get-MappedOntapVolumes.ps1 -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1']
 };
 
 const getStorageParams = {
     commands: [
-        "C:\\SSM\\OntapRestGet.ps1 -FSxSecretName undefined -FSxID test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'tiering.object_tags=\"wlmDeploymentId=undefined\"' -OntapResourceQuery 'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used'"
+        "C:\\SSM\\OntapRestGet.ps1 -FSxID test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'tiering.object_tags=\"wlmDeploymentId=undefined\"' -OntapResourceQuery 'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used'"
     ]
 };
 
@@ -174,23 +174,59 @@ const getServerInstallDate = {
 
 const getServerEdition = {
     commands: [
-        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query " SET NOCOUNT ON; SELECT SERVERPROPERTY(\'Edition\') AS ServerEdition FOR JSON PATH"'
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \" SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition') AS ServerEdition, SERVERPROPERTY('IsClustered') as isClustered, SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode FOR JSON PATH\""
     ]
 };
 
 const getHostAndSqlServerInfo = {
-    commands: hostAndSqlInfoPowerShellScript
+    commands: HOST_AND_SQL_INFO_PS1
 };
 
 const getDriveInfo = {
     commands: [
-        "\n#Get the list of all used and available drive letters\n$usedDriveLetters = Get-PSDrive -PSProvider FileSystem | Select-Object -ExpandProperty Name\n$availableDriveLetters = [char[]]([int][char]'D'..[int][char]'Z') | Where-Object { $_ -notin $usedDriveLetters }\n\n#Updating manufacturer detail and availabble space of each existing drives\n$driveInfo = $usedDriveLetters | ForEach-Object {\n    $driveLetter = $_\n    $drive = Get-PSDrive -Name $driveLetter\n    $diskNumber = (Get-Partition -DriveLetter $driveLetter).DiskNumber\n    try{\n        $manufacturer = (Get-PhysicalDisk | Where-Object { $_.DeviceId -eq $diskNumber }).Manufacturer\n    }\n    catch {\n        $manufacturer = 'N/A'\n    }\n    $freeSpace = $drive.Free\n    [PSCustomObject]@{\n        DriveLetter = $driveLetter\n        FreeSpace = $freeSpace\n        manufacturer = $manufacturer \n    }\n}\n\n#Get default data drive of SQL server\n$defaultDataDrive = sqlcmd -Q @\"\n    SET NOCOUNT ON;\n    DECLARE @DataPath NVARCHAR(500);\n    EXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultData', @DataPath OUTPUT;\n    SELECT LEFT(@DataPath,1) AS CurrentDataDrive FOR JSON PATH;\n\"@ -y 0\n\n#Get default log drive of SQL server\n$defaultLogDrive = sqlcmd -Q @\"\n    SET NOCOUNT ON;\n    DECLARE @LogPath NVARCHAR(500);\n    EXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultLog', @LogPath OUTPUT;\n    SELECT LEFT(@LogPath,1) AS CurrentLogDrive FOR JSON PATH;\n\"@ -y 0\n\n$jsonObject = @{\n    AvailableDriveLetters = $availableDriveLetters\n    ExistingDriveInfo = $driveInfo\n    DefaultDataDrive = $defaultDataDrive\n    DefaultLogDrive = $defaultLogDrive\n} | ConvertTo-Json\n\nWrite-Output $jsonObject\n"
+        "#Get the list of all used drive letters\n$disks = Get-Disk\n$usedDriveDetails = @()\n$deploymentType = 'FCI'\nforeach ($disk in $disks) {\n    $volume = Get-Partition | Where-Object { $_.DiskNumber -eq $disk.Number } | Get-Volume\n    if ($deploymentType -eq 'FCI') {\n        $labels = Get-ClusterResource | Where-Object { $_.ResourceType -eq \"Physical Disk\" } | Where-Object { $_.Name -eq $volume.FileSystemLabel }\n    }\n\n    $output = [PSCustomObject]@{\n        driveLetter = $volume.DriveLetter\n        availableSize = $volume.SizeRemaining\n        manufacturer = $disk.Manufacturer\n    }\n\n    if ($deploymentType -eq 'FCI') {\n        $output | Add-Member -NotePropertyName \"owner\" -NotePropertyValue $labels.OwnerGroup.Name\n    }\n\n    $usedDriveDetails += $output\n}\n\n$usedDrivesInfoJson = $usedDriveDetails | ConvertTo-Json\nWrite-Host $usedDrivesInfoJson\n\n"
     ]
 };
 
-const getDefaultDataDrive = {
+const getDefaultDriveLetters = {
     commands: [
-        "\n    if($false){\n    $results = sqlcmd -d \"$false\" -Q \"SET NOCOUNT ON; DECLARE @DataPath NVARCHAR(500);\nEXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultData', @DataPath OUTPUT;\nSELECT LEFT(@DataPath,1) AS CurrentDataDrive\nFOR JSON PATH\" -y 0\n    }\n    else{\n    $results = sqlcmd -Q \"SET NOCOUNT ON; DECLARE @DataPath NVARCHAR(500);\nEXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultData', @DataPath OUTPUT;\nSELECT LEFT(@DataPath,1) AS CurrentDataDrive\nFOR JSON PATH\" -y 0\n    }\n    Write-Output $results "
+        "\n#Get default data drive of SQL server\n$defaultDataDrive = sqlcmd -Q @\"\n    SET NOCOUNT ON;\n    DECLARE @DataPath NVARCHAR(500);\n    EXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultData', @DataPath OUTPUT;\n    SELECT LEFT(@DataPath,1) AS CurrentDataDrive FOR JSON PATH;\n\"@ -y 0\n\n#Get default log drive of SQL server\n$defaultLogDrive = sqlcmd -Q @\"\n    SET NOCOUNT ON;\n    DECLARE @LogPath NVARCHAR(500);\n    EXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'DefaultLog', @LogPath OUTPUT;\n    SELECT LEFT(@LogPath,1) AS CurrentLogDrive FOR JSON PATH;\n\"@ -y 0\n\nWrite-Output $defaultDataDrive $defaultLogDrive | ConvertTo-Json\n"
+    ]
+};
+
+const getClusterDriveLetters = {
+    commands: [
+        "\n$diskqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_Disk'\n$partqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_DiskPartition'\n\n$clusterDrivesDetail = Get-ClusterResource | Where-Object { $_.ResourceType.Name -eq 'Physical Disk' } `\n  | ForEach-Object { Get-WmiObject MSCluster_Resource -Namespace root/mscluster -Filter \"Name='$_'\" } `\n  | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($diskqry -f $_) } `\n  | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($partqry -f $_) } `\n  | Select-Object  Path, VolumeLabel\n\n$clusterDriveInfo = foreach ($clusterDriveDetails in $clusterDrivesDetail) {\n    $driveName = $clusterDriveDetails.VolumeLabel\n    $driveOwnerGroup = Get-ClusterResource | Where-Object { $_.Name -eq $driveName } | Select-Object -ExpandProperty OwnerGroup\n    $drivePath = $clusterDriveDetails.Path\n\n    [PSCustomObject]@{\n        driveLetter = $drivePath\n        owner = $driveOwnerGroup \n    }\n}\n\n$clusterDriveInfoJson = $clusterDriveInfo | Select-Object -Property driveLetter, @{Name='owner'; Expression={$_.owner.Name}} | ConvertTo-Json\nWrite-Output $clusterDriveInfoJson\n"
+    ]
+};
+
+const configureLuns = {
+    commands: [
+        'C:\\SSM\\Configure-LUNs.ps1 -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataLunSize 1074  -FSxLogLunSize 1074 -LogNew false -DataNew false'
+    ]
+};
+
+const createDatabase = {
+    commands: [
+        'C:\\SSM\\Create-Database.ps1 -SQLServer Draculla  -DBName tempdb9  -DataPath J:\\MSSQL\\data\\tempdb9_data.mdf  -LogPath K:\\MSSQL\\data\\tempdb9_log.ldf'
+    ]
+};
+
+const newDBInitialize = {
+    commands: [
+        'C:\\SSM\\NewDB_Initialize-Iscsidisk.ps1 -DBName tempdb9  -IsClustered false  -DataDrive J  -LogDrive K -LogNew true -DataNew true'
+    ]
+};
+
+const cleanUpDB = {
+    commands: [
+        'C:\\SSM\\Cleanup-ONTAP.ps1 -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataVolumeName wlmdb_sqldata_1708948249  -FSxLogVolumeName wlmdb_sqllog_1708948249 -IGROUP wlmdb_sqligroup_1708791218786'
+    ]
+};
+
+const checkDBExists = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = "tempdb18" FOR JSON PATH"\''
     ]
 };
 
@@ -200,7 +236,7 @@ ssmMock
     .on(SendCommandCommand, { Parameters: cpuParams })
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
     .on(SendCommandCommand, { Parameters: memeoryParams })
-    .resolves(listSendCommandCommandResponse.resourceCommandResponse)
+    .resolves(listSendCommandCommandResponse.memoryCommandResponse)
     .on(SendCommandCommand, { Parameters: dbCountParams })
     .resolves(listSendCommandCommandResponse.dbCountCommandResponse)
     .on(SendCommandCommand, { Parameters: dbSummaryParams1 })
@@ -259,11 +295,26 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getHostAndSqlServerInfoResponse)
     .on(SendCommandCommand, { Parameters: getDriveInfo })
     .resolves(listSendCommandCommandResponse.getDriveInfoCommandResponse)
-    .on(SendCommandCommand, { Parameters: getDefaultDataDrive });
+    .on(SendCommandCommand, { Parameters: getDefaultDriveLetters })
+    .resolves(listSendCommandCommandResponse.getDefaultDriveLettersCommandResponse)
+    .on(SendCommandCommand, { Parameters: getClusterDriveLetters })
+    .resolves(listSendCommandCommandResponse.getClusterDriveLetters)
+    .on(SendCommandCommand, { Parameters: createDatabase })
+    .resolves(listSendCommandCommandResponse.createDBResponse)
+    .on(SendCommandCommand, { Parameters: configureLuns })
+    .resolves(listSendCommandCommandResponse.configureLunsResponse)
+    .on(SendCommandCommand, { Parameters: newDBInitialize })
+    .resolves(listSendCommandCommandResponse.newDBInitalizeResponse)
+    .on(SendCommandCommand, { Parameters: cleanUpDB })
+    .resolves(listSendCommandCommandResponse.cleanUpDBResponse)
+    .on(SendCommandCommand, { Parameters: checkDBExists })
+    .resolves(listSendCommandCommandResponse.checkDBExistsResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)
     .resolves(getCommandInvocationResponse.resourceInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-memoryCommand' })
+    .resolves(getCommandInvocationResponse.memoryInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbSummary1' })
     .resolves(getCommandInvocationResponse.dbSummaryInvocationResponse1)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbSummary2' })
@@ -321,7 +372,22 @@ ssmMock
     .on(GetCommandInvocationCommand, { Parameters: '7f937c8c-3f95-460b-ad99-788b354bffa8' })
     .resolves(getCommandInvocationResponse.getHostAndSqlServerInfoResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getDriveInfo' })
-    .resolves(getCommandInvocationResponse.getDriveInfoResponse);
+    .resolves(getCommandInvocationResponse.getDriveInfoResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getDefaultDriveLetters' })
+    .resolves(getCommandInvocationResponse.getDefaultDrivesResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getClusterDriveLetters' })
+    .resolves(getCommandInvocationResponse.getClusterdDrivesResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-bc46-createDB' })
+    .resolves(getCommandInvocationResponse.createDBInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abc46-configureLuns' })
+    .resolves(getCommandInvocationResponse.configureLunsInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-newDBInitialise' })
+    .resolves(getCommandInvocationResponse.newDBInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-cleanUpDB' })
+    .resolves(getCommandInvocationResponse.cleanUpDBInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-checkDBExists' })
+    .resolves(getCommandInvocationResponse.checkDBInvocationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
+ssmMock.on(PutParameterCommand).resolves(putParameterResponse);

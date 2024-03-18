@@ -2,11 +2,21 @@ interface Metadata {
     node1InstanceId: string;
     node2InstanceId?: string;
     sqlDeploymentType?: string;
-    fsxSecret?: string;
+    stackname?: string;
     activeDirectoryName?: string;
     activeDirectoryAddress?: string;
     creationDate?: string;
     fsxSvmId?: string;
+    // this is used to retreive the newly created user databases in database list for demo
+    userDatabase?: Array<UserDatabase>;
+}
+
+interface UserDatabase {
+    name: string;
+    size: number;
+    status: string;
+    type: string;
+    protection: { isAWSBackupEnabled: boolean; isFsxOntapSnapshotsEnabled: boolean; isSqlNativeEnabled: boolean };
 }
 
 interface ResourceDetails {
@@ -86,4 +96,31 @@ interface NetworkInterface {
     availabilityZone?: string;
 }
 
-export { Metadata, ResourceDetails, DeploymentDetails, NetworkViolation, SecurityGroup, Subnet, VPC, NetworkInterface };
+interface SSMParamterObject {
+    path: string;
+    value: {
+        [key: string]:
+            | {
+                  username: string;
+                  password: string;
+              }
+            | {
+                  sqlinstancename: string;
+                  username: string;
+                  password: string;
+              }[];
+    };
+}
+
+export {
+    Metadata,
+    ResourceDetails,
+    DeploymentDetails,
+    NetworkViolation,
+    SecurityGroup,
+    Subnet,
+    VPC,
+    NetworkInterface,
+    SSMParamterObject,
+    UserDatabase
+};

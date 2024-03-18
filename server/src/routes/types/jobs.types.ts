@@ -1,11 +1,6 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-
-const JobsGenericParams = Type.Object({
-    accountId: Type.String(),
-    credentialsId: Type.String(),
-    region: Type.String()
-});
+import { CredentialsIdParams } from './generic.types';
 
 const JobSummaryQueryString = Type.Object({
     startTime: Type.Optional(Type.Number()),
@@ -41,7 +36,8 @@ const ListJobsQueryString = Type.Object({
     endTime: Type.Optional(Type.Number()),
     limit: Type.Optional(Type.Number()),
     nextToken: Type.Optional(Type.String()),
-    includeSubJobs: Type.Optional(Type.Boolean())
+    includeSubJobs: Type.Optional(Type.Boolean()),
+    resourceName: Type.Optional(Type.String())
 });
 
 type ListJobsQueryType = Static<typeof ListJobsQueryString>;
@@ -112,8 +108,6 @@ const UpdateJobResponse = Type.Object({
 
 const CreateJobObject = Type.Object({
     name: Type.String(),
-    credentialsId: Type.String(),
-    region: Type.String(),
     status: Type.String({
         enum: Object.values(JOBSTATUS)
     }),
@@ -138,10 +132,9 @@ const CreateJobResponse = Type.Object({
     count: Type.Number()
 });
 
-const JobsParams = Type.Composite([JobsGenericParams, Type.Object({ jobId: Type.String({ minLength: 1 }) })]);
+const JobsParams = Type.Composite([CredentialsIdParams, Type.Object({ jobId: Type.String({ minLength: 1 }) })]);
 
 export {
-    JobsGenericParams,
     ListJobsQueryString,
     ListJobsQueryType,
     ListJobsResponse,

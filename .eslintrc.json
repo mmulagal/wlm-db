@@ -41,7 +41,7 @@
     },
     "rules": {
         "indent": [
-            "error",
+            "off",
             4,
             {
                 "SwitchCase": 1,

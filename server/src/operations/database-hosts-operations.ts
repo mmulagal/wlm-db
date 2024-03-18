@@ -1,5 +1,5 @@
-import { STORAGE_TYPE, resource } from '@prisma/client';
-import { DescribeInstancesCommandOutput } from '@aws-sdk/client-ec2';
+import { resource, STORAGE_TYPE } from '@prisma/client';
+import { DescribeInstancesCommandOutput, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { listResources } from '../lib/database/db';
@@ -10,8 +10,7 @@ import {
     ProtectionResponseType,
     StorageResponseType,
     UsageCostResponseType,
-    DatabasesListResponseType,
-    DriveInfoResponseBodyType
+    DatabasesListResponseType
 } from '../routes/types/database-hosts.types';
 import { describeInstance, describeSubnets, describeVpc, getAmis } from '../lib/aws/ec2';
 import { describeFSxN } from '../lib/aws/fsx';
@@ -48,22 +47,17 @@ import {
     getPerformanceMetrics,
     getDataBasesSummary,
     getNativeSQLBackedupDatabases,
-    callSsmExecution
+    getActiveSqlNode
 } from './workloads/mssql/mssql-operations';
 import {
     getStorageDataUsingSSM,
     isAWSBackupEnabled,
     getOntapVolumesSnapshotCount,
-    getCostAllocationTagFsxResource,
-    getFsxStorageCapacity
+    getCostAllocationTagFsxResource
 } from './aws/fsx-operations';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
-import { isSSMConnectionSuccessful } from './aws/ssm-operations';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
-import { GET_DRIVE_INFO } from './workloads/mssql/ssm-script-utils';
-import { getResources } from './database/database-operations';
-import { sqlResponseParsing } from '../utils/utils';
 
 const logger = getLogger();
 
@@ -113,8 +107,7 @@ async function getTopology(
     resourceId: string,
     resourceData: resource,
     activeNodeInstanceId: string,
-    standbyNodeInstanceId?: string,
-    additionalFields?: { [key: string]: boolean }
+    standbyNodeInstanceId?: string
 ): Promise<TopologyResponseType> {
     logger.info('Fetching topology data', {
         accountId,
@@ -122,8 +115,7 @@ async function getTopology(
         resourceId,
         resourceData,
         activeNodeInstanceId,
-        standbyNodeInstanceId,
-        additionalFields
+        standbyNodeInstanceId
     });
 
     if (isEmpty(resourceData)) {
@@ -164,31 +156,34 @@ async function getTopology(
         let fileSystemThroughputCapacity;
         let subnetIds: Array<string> | undefined;
         let availabilityZones: Array<string> | undefined;
+        let vpcCidr: string | undefined;
 
-        if (additionalFields?.allTopology || additionalFields?.vpc) {
-            try {
-                const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
-                logger.info('CHECK>>>', fsxInfo);
-                vpcId = fsxInfo?.FileSystems?.[0].VpcId;
-                fileSystemName = fsxInfo?.FileSystems?.[0].Tags?.reduce(
-                    (a = '', tag) => (tag.Key === 'Name' ? tag.Value : a),
-                    ''
-                );
+        try {
+            const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
+            vpcId = fsxInfo?.FileSystems?.[0].VpcId;
+            fileSystemName = fsxInfo?.FileSystems?.[0].Tags?.reduce(
+                (a = '', tag) => (tag.Key === 'Name' ? tag.Value : a),
+                ''
+            );
 
-                fileSystemDeploymentMode = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DeploymentType;
-                fileSystemStatus = fsxInfo?.FileSystems?.[0].Lifecycle;
-                fileSystemStorageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity;
-                fileSystemThroughputCapacity = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
-                subnetIds = fsxInfo?.FileSystems?.[0].SubnetIds;
+            fileSystemDeploymentMode = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DeploymentType;
+            fileSystemStatus = fsxInfo?.FileSystems?.[0].Lifecycle;
+            fileSystemStorageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity;
+            fileSystemThroughputCapacity = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
+            subnetIds = fsxInfo?.FileSystems?.[0].SubnetIds;
 
-                const { Subnets: subnets } = await describeSubnets(credentialsId, region, {
-                    SubnetIds: subnetIds
-                });
-                availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
-                logger.info('availabilityZones', availabilityZones);
-            } catch (error) {
-                logger.error(`Error while fetching details for fsx. Error: ${error}`);
-            }
+            const { Subnets: subnets } = await describeSubnets(credentialsId, region, {
+                SubnetIds: subnetIds
+            });
+            availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
+            const vpcParams: DescribeVpcsCommandInput = {
+                VpcIds: [vpcId!]
+            };
+            const { Vpcs: vpcs = [] } = await describeVpc(credentialsId, region, vpcParams);
+            vpcCidr = vpcs[0]?.CidrBlock;
+            logger.info('availabilityZones', availabilityZones);
+        } catch (error) {
+            logger.error(`Error while fetching details for fsx. Error: ${error}`);
         }
 
         const instanceIds = node2InstanceId ? [node1InstanceId, node2InstanceId] : [node1InstanceId];
@@ -204,43 +199,41 @@ async function getTopology(
         let standbyAvailabilityZone;
         let standbySubnetId;
         let standbyVolumeId;
-        let activeDirectoryDetails;
         let activeNodeInstanceName;
         let standbyNodeInstanceName;
-        if (additionalFields?.allTopology) {
-            if (!isEmpty(activeNodeInstanceId)) {
-                // fetch instance details only if there is atleast one active node
-                try {
-                    ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
-                    const node1 = ec2InstanceDetails.Reservations?.[0].Instances?.[0];
-                    const node2 = ec2InstanceDetails.Reservations?.[1].Instances?.[0];
-                    const [activeNode, standbyNode] =
-                        node1?.InstanceId === activeNodeInstanceId ? [node1, node2] : [node2, node1];
-                    if (!isEmpty(activeNode)) {
-                        keyPairName = activeNode.KeyName;
-                        activeInstanceType = activeNode.InstanceType;
-                        activeAvailabilityZone = activeNode.Placement?.AvailabilityZone;
-                        activeSubnetId = activeNode.SubnetId;
-                        activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
-                        activeNodeInstanceName = findResourceNameFromTags(activeNode.Tags);
 
-                        if (!isEmpty(standbyNode)) {
-                            standbyInstanceType = standbyNode.InstanceType;
-                            standbyAvailabilityZone = standbyNode.Placement?.AvailabilityZone;
-                            standbySubnetId = standbyNode.SubnetId;
-                            standbyVolumeId = standbyNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
-                            standbyNodeInstanceName = findResourceNameFromTags(standbyNode.Tags);
-                        }
+        if (!isEmpty(activeNodeInstanceId)) {
+            // fetch instance details only if there is atleast one active node
+            try {
+                ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
+                const node1 = ec2InstanceDetails.Reservations?.[0].Instances?.[0];
+                const node2 = ec2InstanceDetails.Reservations?.[1]?.Instances?.[0];
+                const [activeNode, standbyNode] =
+                    node1?.InstanceId === activeNodeInstanceId ? [node1, node2] : [node2, node1];
+                if (!isEmpty(activeNode)) {
+                    keyPairName = activeNode.KeyName;
+                    activeInstanceType = activeNode.InstanceType;
+                    activeAvailabilityZone = activeNode.Placement?.AvailabilityZone;
+                    activeSubnetId = activeNode.SubnetId;
+                    activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
+                    activeNodeInstanceName = findResourceNameFromTags(activeNode.Tags);
+
+                    if (!isEmpty(standbyNode)) {
+                        standbyInstanceType = standbyNode.InstanceType;
+                        standbyAvailabilityZone = standbyNode.Placement?.AvailabilityZone;
+                        standbySubnetId = standbyNode.SubnetId;
+                        standbyVolumeId = standbyNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
+                        standbyNodeInstanceName = findResourceNameFromTags(standbyNode.Tags);
                     }
-                } catch (error) {
-                    logger.error(`Error while fetching details for ec2 instances. Error: ${error}`);
                 }
+            } catch (error) {
+                logger.error(`Error while fetching details for ec2 instances. Error: ${error}`);
             }
-            activeDirectoryDetails = {
-                name: activeDirectoryName || '',
-                address: activeDirectoryAddress || ''
-            };
         }
+        const activeDirectoryDetails = {
+            name: activeDirectoryName || '',
+            address: activeDirectoryAddress || ''
+        };
         let vpcName;
         if (vpcId) {
             const { Vpcs } = await describeVpc(credentialsId, region, {
@@ -269,6 +262,7 @@ async function getTopology(
             ...(vpcId && { vpcId }),
             ...(vpcName && { vpcName }),
             ...(availabilityZones && { availabilityZones }),
+            ...(vpcCidr && { vpcCidr }),
             ...(keyPairName && { keyPairName }),
             ...(activeNodeInstanceId && {
                 ec2Details: [
@@ -307,27 +301,19 @@ async function getStorageData(
     try {
         const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
 
-        const { fsxSecret } = metadata as unknown as Metadata;
-
-        // DeploymentID is same as AWS CloudFormation stack name.  We retrieve
-        // deploymentID from the fsxSecret, which has an additional '-fsx'
-        // suffix to stack name (e.g., WLMDB-SqlFciStack-1698992271319-fsx).
-        //     ONTAP tags have '_' instead of '-' in the stack name.  So we
-        // tune tag accordingly with replaceAll.
-        const deploymentId = fsxSecret?.replace('-fsx', '')?.replaceAll('-', '_');
+        const { stackname } = metadata as unknown as Metadata;
 
         const info = await getStorageDataUsingSSM(
             credentialsId,
             region!,
             fileSystemId!,
-            fsxSecret!,
             'storage/volumes',
-            `tiering.object_tags="wlmDeploymentId=${deploymentId}"`,
+            `tiering.object_tags="wlmDeploymentId=${stackname?.replaceAll('-', '_')}"`,
             'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
             activeNodeInstanceId
         );
 
-        logger.info(`Storage data for volumes with deploymentId ${deploymentId}:`, info);
+        logger.info(`Storage data for volumes with deploymentId ${stackname}:`, info);
 
         let totalSize = 0;
         let totalUsed = 0;
@@ -594,12 +580,12 @@ async function getDatabaseHostsSummary(
     const resourceDetails = await listResources(
         accountId,
         undefined,
-        RESOURCESTYPE.MSSQL,
-        API_PAGE_SIZE,
-        nextToken,
-        awsRegion,
         customerCredentialsId,
-        fsxId
+        awsRegion,
+        RESOURCESTYPE.MSSQL,
+        fsxId,
+        API_PAGE_SIZE,
+        nextToken
     );
 
     if (isEmpty(resourceDetails)) {
@@ -618,9 +604,6 @@ async function getDatabaseHostsSummary(
     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
-    const additionalFields = {
-        vpc: Boolean(getUsageEstimation || vpcId)
-    };
 
     const databaseHosts: DatabaseHostSummaryResponseType[] = [];
     try {
@@ -637,7 +620,7 @@ async function getDatabaseHostsSummary(
                 const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
                 // Check SSM Connection status
-                const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
+                const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await getActiveSqlNode(
                     credentialsId,
                     region!,
                     node1InstanceId,
@@ -656,8 +639,7 @@ async function getDatabaseHostsSummary(
                                 resourceId,
                                 resourceDetail,
                                 activeNodeInstanceId!,
-                                standbyNodeInstanceId,
-                                additionalFields
+                                standbyNodeInstanceId
                             ),
                             ...(isSSMConnected && getPerformance && activeNodeInstanceId
                                 ? [getServerIOLatency(resourceId, activeNodeInstanceId)]
@@ -754,9 +736,6 @@ async function getDatabaseHostSummary(
     const getResourceutilization = fieldsValues?.includes(
         DatabaseHostsQueryFields.RESOURCE_UTILIZATION.toLocaleLowerCase()
     );
-    const additionalFields = {
-        allTopology: true
-    };
 
     const {
         resource_id: resourceId,
@@ -769,7 +748,7 @@ async function getDatabaseHostSummary(
         const { node1InstanceId, node2InstanceId, creationDate } = metadata as unknown as Metadata;
 
         // Check SSM Connection status
-        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await isSSMConnectionSuccessful(
+        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await getActiveSqlNode(
             credentialsId,
             region!,
             node1InstanceId,
@@ -801,8 +780,7 @@ async function getDatabaseHostSummary(
                     resourceId,
                     resourceDetail,
                     activeNodeInstanceId!,
-                    standbyNodeInstanceId,
-                    additionalFields
+                    standbyNodeInstanceId
                 ),
                 ...(isSSMConnected && getPerformance && activeNodeInstanceId
                     ? [getPerformanceMetrics(resourceId, activeNodeInstanceId)]
@@ -889,10 +867,10 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
     }
 
     const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
-    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+    const { node1InstanceId, node2InstanceId, userDatabase = [] } = metadata as unknown as Metadata;
 
     // Check SSM Connection status
-    const { isSSMConnected, activeNodeInstanceId } = await isSSMConnectionSuccessful(
+    const { isSSMConnected, activeNodeInstanceId } = await getActiveSqlNode(
         credentialsId,
         region!,
         node1InstanceId,
@@ -945,6 +923,15 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
                 }
             })
         );
+
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            const demoResponse = [...response, ...userDatabase];
+            return {
+                count: demoResponse.length,
+                nextToken: '',
+                items: demoResponse
+            };
+        }
         return {
             count: response.length,
             nextToken: '',
@@ -957,110 +944,4 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
     }
 }
 
-async function getDriveInfoFromSSM(
-    accountId: string,
-    databaseHostId: string,
-    credentialsId: string,
-    region: string,
-    node1InstanceId: string,
-    node2InstanceId?: string
-) {
-    logger.info('Getting drive information from SSM');
-    // Check SSM Connection status
-    const { isSSMConnected, activeNodeInstanceId } = await isSSMConnectionSuccessful(
-        credentialsId,
-        region!,
-        node1InstanceId,
-        node2InstanceId
-    );
-    if (!isSSMConnected && activeNodeInstanceId === undefined) {
-        const errorMessage = `Error while fetching drive details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
-    }
-    const driveInfoCommand = [GET_DRIVE_INFO];
-
-    // Not caching the response as multiple creation will require real time data
-    const driveInfoResponse = await callSsmExecution(
-        credentialsId,
-        region,
-        driveInfoCommand,
-        activeNodeInstanceId!,
-        undefined,
-        false
-    );
-
-    const parsedDriveResponse = driveInfoResponse ? sqlResponseParsing(driveInfoResponse) : {};
-
-    const {
-        DefaultDataDrive: defaultDataDrive,
-        DefaultLogDrive: defaultLogDrive,
-        ExistingDriveInfo: existingDriveInfo,
-        AvailableDriveLetters: availableDriveLetters
-    } = parsedDriveResponse;
-
-    const parsedDefaultDataDrive =
-        defaultDataDrive && !defaultDataDrive[0].includes('error') ? sqlResponseParsing(defaultDataDrive)[0] : {};
-    const parsedDefaultLogDrive =
-        defaultLogDrive && !defaultLogDrive[0].includes('error') ? sqlResponseParsing(defaultLogDrive)[0] : {};
-
-    const currentDataDrive = parsedDefaultDataDrive.CurrentDataDrive;
-    const currentLogDrive = parsedDefaultLogDrive.CurrentLogDrive;
-
-    const UpdatedExistingDriveInfo = existingDriveInfo.map(
-        (element: { DriveLetter: any; FreeSpace: any; manufacturer: any }) => {
-            const { DriveLetter, FreeSpace, manufacturer } = element;
-            return {
-                driveLetter: DriveLetter,
-                availableSize: FreeSpace,
-                isNetappDrive: manufacturer === 'NETAPP'
-            };
-        }
-    );
-    return { UpdatedExistingDriveInfo, availableDriveLetters, currentDataDrive, currentLogDrive };
-}
-
-async function getDriveInfo(
-    accountId: string,
-    databaseHostId: string,
-    credentialsId: string,
-    region: string
-): Promise<DriveInfoResponseBodyType> {
-    logger.info(
-        'Fetching drive details and storage capacity of the database host  ',
-        accountId,
-        databaseHostId,
-        credentialsId,
-        region
-    );
-
-    const [resourceDetail] = await getResources(accountId, databaseHostId, RESOURCESTYPE.MSSQL, credentialsId, region);
-
-    if (isEmpty(resourceDetail)) {
-        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
-    }
-
-    const { co_relation_id: fileSystemId, metadata } = resourceDetail;
-    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-
-    const [fsxStorageCapacity, driveResponse] = await Promise.all([
-        getFsxStorageCapacity(credentialsId, region!, fileSystemId!),
-        getDriveInfoFromSSM(accountId, databaseHostId, credentialsId, region, node1InstanceId, node2InstanceId)
-    ]);
-
-    const { UpdatedExistingDriveInfo, availableDriveLetters, currentDataDrive, currentLogDrive } = driveResponse;
-    const { storage } = fsxStorageCapacity ?? {};
-
-    const response: DriveInfoResponseBodyType = {
-        existingDriveInfo: UpdatedExistingDriveInfo,
-        availableDriveLetters,
-        ...(storage !== undefined && { fsxStorageCapacity: storage * 1024 * 1024 * 1024 }),
-        ...(currentDataDrive !== undefined && { defaultDataDrive: currentDataDrive }),
-        ...(currentLogDrive !== undefined && { defaultLogDrive: currentLogDrive })
-    };
-
-    return response;
-}
-
-export { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases, getDriveInfo };
+export { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases };

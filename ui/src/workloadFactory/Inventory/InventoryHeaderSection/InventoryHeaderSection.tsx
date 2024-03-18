@@ -6,9 +6,14 @@ import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
 import { GENERAL } from '../../../utils/appConstants';
 import InventoryChart from '../InventoryChart/InventoryChart';
 import SquareComponent from '../../DatabaseHomePage/SquareComponent/SquareComponent';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const InventoryHeaderSection = () => {
     const navigate = useNavigate();
+    const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
+    const isManagedHostInProgress = useAppSelector(state => state.databaseHome.getDatabaseHosts.databaseHostsLoading);
+    const { unManagedHosts, unIdentifiableHosts } = useAppSelector(state => state.inventory);
+    const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
     return (
         <div className={styles.inventoryHeader}>
             {/* Top button area */}
@@ -40,13 +45,23 @@ const InventoryHeaderSection = () => {
 
                     <div className={styles.valueArea}>
                         <div className={styles.firstBlock}>
-                            <SquareComponent value={'15'} color="var(--chart-4)" text={GENERAL.DETECTED_HOSTS} />
+                            <SquareComponent
+                                value={((databaseHostsList || [])?.length || 0) + unManagedHosts.length}
+                                color="var(--chart-4)"
+                                text={GENERAL.DETECTED_HOSTS}
+                                isLoading={isDiscoverInProgress}
+                            />
                         </div>
 
                         <div className={styles.separator} />
 
                         <div className={styles.secondBlock}>
-                            <SquareComponent value={'5'} color="var(--chart-2)" text={GENERAL.UNDETECTED_HOSTS} />
+                            <SquareComponent
+                                value={unIdentifiableHosts.length}
+                                color="var(--chart-2)"
+                                text={GENERAL.UNIDENTIFIABLE_HOSTS}
+                                isLoading={isDiscoverInProgress}
+                            />
                         </div>
                     </div>
                 </div>
@@ -58,13 +73,23 @@ const InventoryHeaderSection = () => {
 
                     <div className={styles.valueArea}>
                         <div className={styles.thirdBlock}>
-                            <SquareComponent value={'10'} color="var(--chart-9)" text={GENERAL.MANAGED_BY_WLF} />
+                            <SquareComponent
+                                value={((databaseHostsList || [])?.length || 0).toString()}
+                                color="var(--chart-9)"
+                                text={GENERAL.MANAGED_BY_WLF}
+                                isLoading={isManagedHostInProgress}
+                            />
                         </div>
 
                         <div className={styles.separator} />
 
                         <div className={styles.secondBlock}>
-                            <SquareComponent value={'5'} color="#DE9EFF" text={GENERAL.UNMANAGED_HOSTS} />
+                            <SquareComponent
+                                value={unManagedHosts.length}
+                                color="#DE9EFF"
+                                text={GENERAL.UNMANAGED_HOSTS}
+                                isLoading={isDiscoverInProgress}
+                            />
                         </div>
                     </div>
                 </div>

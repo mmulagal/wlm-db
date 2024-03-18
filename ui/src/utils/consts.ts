@@ -104,7 +104,8 @@ export const WORKLOADS = 'workloads';
 export const FROM_DIALOG = {
     LOAD_CONFIG: 'load_config',
     SAVE_CONFIG: 'save_config',
-    HEADER_CROSS: 'header_cross'
+    HEADER_CROSS: 'header_cross',
+    DETECT_HOST: 'detect_host'
 };
 
 export const API_NAME = {
@@ -147,6 +148,11 @@ export const JOB_MONITORING_STATUS = {
     FAILED: 'FAILED',
     IN_PROGRESS: 'IN_PROGRESS',
     COMPLETED: 'COMPLETED'
+};
+
+export const JOB_MONITORING_TYPE = {
+    DEPLOYMENT: 'DEPLOYMENT',
+    CREATE_RESOURCE: 'CREATE_RESOURCE'
 };
 
 export const MAX_SAVED_CONFIG = 100;
@@ -287,3 +293,21 @@ curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/$
 --header 'Content-Type: application/json' \\
 --data-raw '${payload}'
 `;
+
+export const CREATE_RESOURCE = 'CREATE_RESOURCE'; // Job monitoring type for DB create
+
+export const SSM_TROUBLESHOOTING_LINK =
+    'https://docs.aws.amazon.com/systems-manager/latest/userguide/troubleshooting-ssm-agent.html';
+
+export const GIB_IN_BYTE = 1073741824; // 1024 * 1024 * 1024
+export const TIB_IN_BYTE = 1099511627776; // 1024 * 1024 * 1024 * 1024
+
+export const DETECT_HOST_VAR = {
+    FSXN: 'FSXN',
+    EBS: 'EBS',
+    SSM_CONNECTED: 'connected',
+    MOVE_TO_MANAGE: 'move_to_manage',
+    MOVE_TO_UNMANAGE: 'move_to_unmanage',
+    FSX: 'FSX',
+    MSSQL: 'MSSQL'
+};

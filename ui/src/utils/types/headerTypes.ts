@@ -20,4 +20,5 @@ export interface HeaderTypeEntities {
         statusError: null;
     };
     refreshTime: string | null;
+    dashboardRefresh: boolean;
 }

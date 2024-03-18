@@ -275,7 +275,7 @@ const PARAMETERS = [
         description: 'Throughput capacity for the FSx for ONTAP volume.',
         type: 'Number',
         default: 128,
-        allowedValues: [128, 256, 512, 1024, 2048]
+        allowedValues: [128, 256, 512, 1024, 2048, 4096]
     },
     {
         name: 'FileSystemEncryptionKeyId',
@@ -308,6 +308,12 @@ const PARAMETERS = [
     {
         name: 'ValidationAmi',
         description: 'Validation node AMI image ID.',
+        type: 'String',
+        minLength: 1
+    },
+    {
+        name: 'ValidationNodeInstanceType',
+        description: 'Validation node instance type.',
         type: 'String',
         minLength: 1
     },
@@ -381,6 +387,36 @@ const PARAMETERS = [
     {
         name: 'CloudwatchEndpointExists',
         description: 'Boolean to convey if a Cloudwatch endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
+    },
+    {
+        name: 'CloudwatchLogsEndpointExists',
+        description: 'Boolean to convey if a Cloudwatch Logs endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
+    },
+    {
+        name: 'FsxEndpointExists',
+        description: 'Boolean to convey if a FSxN endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
+    },
+    {
+        name: 'Ec2EndpointExists',
+        description: 'Boolean to convey if a EC2 endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
+    },
+    {
+        name: 'Ec2MessagesEndpointExists',
+        description: 'Boolean to convey if EC2 messages endpoint exists in the vpc.',
+        type: 'String',
+        default: 'false'
+    },
+    {
+        name: 'SSMMessagesEndpointExists',
+        description: 'Boolean to convey if SSM messages endpoint exists in the vpc.',
         type: 'String',
         default: 'false'
     }

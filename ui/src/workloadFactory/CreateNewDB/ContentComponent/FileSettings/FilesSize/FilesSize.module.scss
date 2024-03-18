@@ -8,7 +8,6 @@
         flex-direction: column;
         gap: 8px;
         .firstSection {
-            display: flex;
             gap: 16px;
         }
     }
@@ -32,10 +31,6 @@
 
         [class*='FieldErrorWarning-module_base'] {
             width: 300px !important;
-
-            [class*='TooltipInfo-module_base'] {
-                display: none;
-            }
         }
 
         .selectField {
@@ -65,5 +60,8 @@
 
     .dataSizeTooltip {
         width: 300px;
+        .bold {
+            font-weight: 540;
+        }
     }
 }

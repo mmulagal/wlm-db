@@ -10,7 +10,8 @@ import {
     jobMonitoringApi,
     policiesApi,
     resourceApi,
-    workloadFactoryResourceApi
+    workloadFactoryResourceApi,
+    inventoryApi
 } from '../utils/apiService';
 import authSlice from './authSlice';
 import mssqlSlice from './mssql/mssqlSlice';
@@ -18,7 +19,7 @@ import mssqlFormSlice from './mssql/mssqlFormSlice';
 import msSqlActionSlice from './mssql/msSqlActionSlice';
 import resourceSlice from './resource/resourceSlice';
 import { GENERAL } from '../utils/appConstants';
-import { customErrorMessages, requiredFieldError } from '../utils/utilityFunctions';
+import { customErrorMessages, removeOldApisError, requiredFieldError } from '../utils/utilityFunctions';
 import databaseHomeSlice from './workloadFactory/databaseHomeSlice';
 import chatbotSlice, { setShowRetry } from './chatbot/chatbotSlice';
 import workloadFactoryResourceSlice from './workloadFactory/workloadFactoryResourceSlice';
@@ -50,13 +51,30 @@ const rootReducer = combineReducers({
     [headersSlice.name]: headersSlice.reducer,
     [createNewUserSlice.name]: createNewUserSlice.reducer,
     [policiesApi.reducerPath]: policiesApi.reducer,
-    [createUserDbApi.reducerPath]: createUserDbApi.reducer
+    [createUserDbApi.reducerPath]: createUserDbApi.reducer,
+    [inventoryApi.reducerPath]: inventoryApi.reducer
 });
 
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action: any) => {
     // RTK Query uses `createAsyncThunk` from redux-toolkit under the hood, so we're able to utilize these matchers
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
         let errorMsg = action.payload.error || action.payload.data?.message || action.payload.data?.responseMessage;
+
+        // This error msg is blocked to have in notification. This error will be part of detect host dialog error.
+        if (
+            action?.meta?.arg?.endpointName === 'registerResourceCredentials' ||
+            action?.meta?.arg?.endpointName === 'manageHost'
+        ) {
+            return;
+        }
+
+        if (
+            (action?.meta?.arg?.endpointName === 'discoverHosts' ||
+                action?.meta?.arg?.endpointName === 'getDatabaseHosts') &&
+            removeOldApisError(action?.meta?.arg)
+        ) {
+            return;
+        }
 
         const reqFieldChk = requiredFieldError(errorMsg);
         if (reqFieldChk) {
@@ -95,6 +113,7 @@ const store = configureStore({
             .concat(headersApi.middleware)
             .concat(policiesApi.middleware)
             .concat(createUserDbApi.middleware)
+            .concat(inventoryApi.middleware)
             .concat(rtkQueryErrorLogger)
 });
 
