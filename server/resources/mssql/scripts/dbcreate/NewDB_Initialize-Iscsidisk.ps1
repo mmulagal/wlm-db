@@ -192,7 +192,6 @@ Start-Service -Name ShellHWDetection
     exit 1     
 } 
 
-exit 
 try{
 if ($IsClustered -ne "false") {
 # Add new disks to Cluster Storage
