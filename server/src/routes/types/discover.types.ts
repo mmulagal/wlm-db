@@ -121,12 +121,12 @@ const DiscoverInstanceParams = Type.Composite([
 const MsSqlInstancesRequestBody = Type.Object({
     instancesDetails: Type.Array(
         Type.Object({
-            instanceId: Type.String({
+            ec2InstanceId: Type.String({
                 description: 'Ec2 instance ID associated with the MS SQL Server instance.'
             }),
             fsxnId: Type.Optional(
                 Type.String({
-                    description: 'Netapp FileSystem ID associated with the MS SQL Server instance.'
+                    description: 'FSx for NetApp ONTAP FileSystem ID associated with the MS SQL Server instance.'
                 })
             ),
             ebsVolumeId: Type.Optional(
@@ -136,7 +136,7 @@ const MsSqlInstancesRequestBody = Type.Object({
             ),
             fsxwId: Type.Optional(
                 Type.String({
-                    description: 'Windows FileSystem ID associated with the MS SQL Server instance.'
+                    description: 'FSx for Windows FileSystem ID associated with the MS SQL Server instance.'
                 })
             )
         })

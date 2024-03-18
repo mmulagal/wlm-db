@@ -43,7 +43,7 @@ const PricingServiceRequest = Type.Object({
             diskSize: Type.Number({ description: 'Database "data" volume size in GiB' }),
             throughput: Type.Number({ description: 'Throughput is in MBps' }),
             iops: Type.Number(),
-            deploymentOption: Type.String({ enum: [SINGLE_AZ, MULTI_AZ] }),
+            deploymentOption: Type.String({ enum: ['Single-AZ', 'Multi-AZ'] }),
             storageCapacity: Type.Number({
                 description:
                     'The total FSxN storage capacity in GB. "storageCapacity" and "diskSize" are mutually exclusive'

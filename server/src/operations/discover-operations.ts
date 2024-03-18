@@ -478,16 +478,16 @@ async function fetchUnmanagedHostsInformation(
     accountId: string,
     credentialsId: string,
     region: string,
-    instancesDetails: { instanceId: string; fsxnId?: string; ebsVolumeId?: string; fsxwId?: string }[] = []
+    instancesDetails: { ec2InstanceId: string; fsxnId?: string; ebsVolumeId?: string; fsxwId?: string }[] = []
 ) {
     logger.info('Fetching hosts information:', { accountId, credentialsId, region, instancesDetails });
 
-    const resourceDetailsList = instancesDetails.map(({ instanceId, fsxnId, ebsVolumeId, fsxwId }) => ({
+    const resourceDetailsList = instancesDetails.map(({ ec2InstanceId, fsxnId, ebsVolumeId, fsxwId }) => ({
         id: null,
         account_id: accountId,
-        resource_id: getMsSqlResourceId(instanceId),
+        resource_id: getMsSqlResourceId(ec2InstanceId),
         resource_type: RESOURCESTYPE.MSSQL,
-        resource_name: instanceId,
+        resource_name: ec2InstanceId,
         cloud_provider_name: CloudProviders.AWS,
         co_relation_id: fsxnId || null,
         cloud_provider_account_id: null,
@@ -496,7 +496,7 @@ async function fetchUnmanagedHostsInformation(
         storage_type: STORAGE_TYPE.FSXN,
         metadata: {
             creationDate: Date.now(),
-            node1InstanceId: instanceId
+            node1InstanceId: ec2InstanceId
         },
         ebsVolumeId,
         fsxwId
