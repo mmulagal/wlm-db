@@ -57,7 +57,6 @@ const Collation = () => {
                                 isSearchable={generateCollationValues.length > 5}
                                 options={generateCollationValues}
                                 className={styles.selectField}
-                                variant="two-lines"
                             />
                         </div>
                     </DsTypography>
