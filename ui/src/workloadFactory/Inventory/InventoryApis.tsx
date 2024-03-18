@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
-import { addDatabaseHosts, addDatabaseHostsList, addDatabaseHostsLoading } from '../../store/workloadFactory/databaseHomeSlice';
+import {
+    addDatabaseHosts,
+    addDatabaseHostsList,
+    addDatabaseHostsLoading
+} from '../../store/workloadFactory/databaseHomeSlice';
 import {
     useDiscoverHostsQuery,
     useGetDatabaseHostsQuery,
@@ -291,6 +295,7 @@ const InventoryApis = () => {
                     host = { ...host, sqlServerInstances: sortListOfDict(host?.sqlServerInstances, 'sqlServerState') };
                 }
                 const isWindowAuthentication = host?.sqlServerInstances?.[0]?.windowsAuthentication;
+                const isSqlAuthentication = host?.sqlServerInstances?.[0]?.sqlAuthentication;
                 const isManaged = databaseHostsData?.find(managedHost =>
                     managedHost?.topology?.ec2Details?.find(instances => instances.id === host?.ec2InstanceId)
                 );
@@ -308,7 +313,7 @@ const InventoryApis = () => {
                     unManagedHosts.push(host);
                 } else if (
                     host.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED ||
-                    !isWindowAuthentication ||
+                    (!isWindowAuthentication && !isSqlAuthentication) ||
                     fsxCredentialValidationFailed
                 ) {
                     unIdentifiableHosts.push(host);

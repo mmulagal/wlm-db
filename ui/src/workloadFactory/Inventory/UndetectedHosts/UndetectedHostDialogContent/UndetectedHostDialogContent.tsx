@@ -36,7 +36,7 @@ const UndetectedHostDialogContent = ({ rowData }: DialogProps) => {
             </div>
 
             {/* MSSQL credential is asked when it is not yet registered */}
-            {!rowData?.sqlServerInstances?.[0]?.windowsAuthentication && (
+            {!rowData?.sqlServerInstances?.[0]?.sqlAuthentication && (
                 <div className={styles.firstSection}>
                     <Typography variant="Semibold_14">{GENERAL.DETECT_MSSQL_HEADING}</Typography>
                     <div className={styles.textFieldContainer}>
