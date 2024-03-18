@@ -8,7 +8,8 @@ import {
 import {
     useDiscoverHostsQuery,
     useGetDatabaseHostsQuery,
-    useGetFsxCredentialStatusQuery
+    useGetFsxCredentialStatusQuery,
+    useGetMssqlInstanceDataMutation
 } from '../../utils/apiService';
 import { mergeDatabaseHostsData, resetDBHomePageState, sortListOfDict } from '../../utils/utilityFunctions';
 import {
@@ -18,11 +19,13 @@ import {
     setIsRefreshed,
     setMovedToManagedHost,
     setMovedToUnmanagedHost,
+    setMssqlInstancesData,
     setUnIdentifiableHosts,
     setUnManagedHosts
 } from '../../store/workloadFactory/inventorySlice';
 import { setHeaderSelectedCred, setHeaderSelectedRegion } from '../../store/workloadFactory/headersSlice';
 import { DETECT_HOST_VAR } from '../../utils/consts';
+import store from '../../store/store';
 
 const InventoryApis = () => {
     const dispatch = useAppDispatch();
@@ -36,6 +39,8 @@ const InventoryApis = () => {
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
     const movedToUnmanagedHost = useAppSelector(state => state.inventory.movedToUnmanagedHost);
     const movedToManagedHost = useAppSelector(state => state.inventory.movedToManagedHost);
+    const unManagedHostList = useAppSelector(state => state.inventory.unManagedHosts);
+    const mssqlInstancesData = useAppSelector(state => state.inventory.mssqlInstancesData);
 
     const [hostCursor, setHostCursor] = useState(null);
     const [discoveryCursor, setDiscoveryCursor] = useState(null);
@@ -46,6 +51,7 @@ const InventoryApis = () => {
     const [skipManagedHostCall, setSkipManagedHostCall] = useState(false);
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
+    const [runningInstanceList, setRunningInstanceList] = useState<Array<String>>([]);
 
     const isCredRegionMissing = !headerSelectedCred || !headerSelectedRegion;
 
@@ -96,6 +102,8 @@ const InventoryApis = () => {
             skip: skipApiCall || !fsxIdsList?.length
         }
     );
+
+    const [getMssqlInstanceDataApi] = useGetMssqlInstanceDataMutation();
 
     useEffect(() => {
         setSkipApiCall(true);
@@ -327,6 +335,98 @@ const InventoryApis = () => {
             dispatch(setUnManagedHosts(unManagedHosts));
         }
     }, [discoveredHostData, databaseHostsData, fsxCredentialStatusObj, movedToUnmanagedHost, movedToManagedHost]);
+
+    const getMssqlData = async (instancesPayload: any, nextToken: string | null = '') => {
+        try {
+            const result: any = await getMssqlInstanceDataApi({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                regionId: headerSelectedRegion?.label2,
+                payload: { instancesDetails: instancesPayload },
+                nextToken: nextToken
+            });
+            const state = store.getState();
+            const mssqlInstancesData = state.inventory.mssqlInstancesData;
+            if (result && !result?.error) {
+                let mssqlInstancesDataRes: any = {};
+                result?.data?.items?.map((host: any) => {
+                    if (mssqlInstancesData[host?.id]) {
+                        mssqlInstancesDataRes[host?.id] = {
+                            loading: false,
+                            data: host,
+                            error: host?.errors
+                        };
+                    }
+                });
+                dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataRes }));
+                if (result?.nextToken) {
+                    getMssqlData(instancesPayload, result?.nextToken);
+                }
+            } else {
+                let mssqlInstancesDataErr: any = {};
+                instancesPayload?.map((host: any) => {
+                    mssqlInstancesDataErr[host?.instanceId] = {
+                        loading: false,
+                        data: null,
+                        error: result?.error?.data?.message
+                    };
+                });
+                dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataErr }));
+            }
+        } catch (error) {
+            let mssqlInstancesDataErr: any = {};
+            instancesPayload?.map((host: any) => {
+                mssqlInstancesDataErr[host?.instanceId] = {
+                    loading: false,
+                    data: null,
+                    error: error
+                };
+            });
+            dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataErr }));
+        }
+    };
+
+    useEffect(() => {
+        if (unManagedHostList && unManagedHostList.length > 0) {
+            let instancesPayload: any = [];
+            unManagedHostList.map((host: any) => {
+                const instanceId = host?.ec2InstanceId || '';
+                if (instanceId && !runningInstanceList.find(inst => inst === instanceId)) {
+                    setRunningInstanceList([...runningInstanceList, host?.ec2InstanceId]);
+                    let fsxId = '';
+                    let ebsId = '';
+                    if (host?.sqlServerInstances?.[0]?.storage) {
+                        host?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
+                            if (storageObj.type === DETECT_HOST_VAR.FSXN) {
+                                fsxId = storageObj.id;
+                            }
+                            if (storageObj.type === DETECT_HOST_VAR.EBS) {
+                                ebsId = storageObj.id;
+                            }
+                        });
+                    }
+                    let instanceObj = {
+                        instanceId: host?.ec2InstanceId,
+                        fsxnId: fsxId,
+                        ebsVolumeId: ebsId
+                        // fsxwId: ''
+                    };
+                    instancesPayload.push(instanceObj);
+                }
+            });
+            let mssqlInstancesDataLoad: any = {};
+            instancesPayload?.map((host: any) => {
+                mssqlInstancesDataLoad[host?.instanceId] = {
+                    loading: true,
+                    data: null,
+                    error: null
+                };
+            });
+            dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataLoad }));
+            setTimeout(() => {
+                getMssqlData(instancesPayload);
+            }, 1);
+        }
+    }, [unManagedHostList]);
 
     return <></>;
 };

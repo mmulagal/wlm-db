@@ -8,7 +8,12 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { FSX_DEPLOYMENT_MODE, WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 
-import { databaseTableSort, formatFractionalNumber, formatSizeOnePrecision } from '../../../utils/utilityFunctions';
+import {
+    databaseTableSort,
+    formatFractionalNumber,
+    formatSizeOnePrecision,
+    mergeDatabaseHostsData
+} from '../../../utils/utilityFunctions';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
 import {
@@ -24,6 +29,7 @@ const UnmanagedHosts = () => {
 
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const unManagedHostList = useAppSelector(state => state.inventory.unManagedHosts);
+    const mssqlInstancesData = useAppSelector(state => state.inventory.mssqlInstancesData);
     const { unManagedHostInitialColumns } = useAppSelector(state => state.inventory);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
@@ -32,6 +38,47 @@ const UnmanagedHosts = () => {
 
     const [manageLoading, setManageLoading] = useState<any>({});
     const [manageHostApi] = useManageHostMutation();
+    const [tableData, setTableData] = useState<any>([]);
+
+    const formatUnamanagedHostList = (data: any) => {
+        return data.map((item: any) => {
+            const perRowInstanceData = mssqlInstancesData[item?.ec2InstanceId];
+            if (!perRowInstanceData?.error && !perRowInstanceData?.loading && perRowInstanceData?.data) {
+                return {
+                    ...item,
+                    id: perRowInstanceData?.data?.id,
+                    name: perRowInstanceData?.data?.name,
+                    status: perRowInstanceData?.data?.status,
+                    databaseCount: perRowInstanceData?.data?.databaseCount,
+                    topology: perRowInstanceData?.data?.topology || {},
+                    databaseServer: perRowInstanceData?.data?.databaseServer || {},
+                    protection: perRowInstanceData?.data?.protection || {},
+                    performance: perRowInstanceData?.data?.performance || {},
+                    storage: perRowInstanceData?.data?.storage || {},
+                    estimatedUsageCost: perRowInstanceData?.data?.estimatedUsageCost || {},
+                    resourceUtilization: perRowInstanceData?.data?.resourceUtilization || {},
+                    loading: false
+                };
+            } else if (perRowInstanceData?.loading) {
+                return {
+                    ...item,
+                    id: item?.ec2InstanceId,
+                    loading: true
+                };
+            } else {
+                return {
+                    ...item,
+                    id: item?.ec2InstanceId,
+                    loading: false
+                };
+            }
+        });
+    };
+
+    useEffect(() => {
+        // Format data again on unIdentifiableHosts or fsxCredentialStatusObj change
+        setTableData(mergeDatabaseHostsData(formatUnamanagedHostList(unManagedHostList)));
+    }, [unManagedHostList, mssqlInstancesData]);
 
     const notAvailable = () => {
         return (
@@ -360,7 +407,7 @@ const UnmanagedHosts = () => {
     const tableProps = useTable({
         isSorting: false,
         columns: DatabasesColDefs,
-        rows: databaseTableSort(unManagedHostList) || [],
+        rows: tableData || [],
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
