@@ -1,13 +1,7 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import {
-    getDatabaseHostsSummary,
-    getDatabaseHostSummary,
-    getDatabases,
-    deployDatabase,
-    getDriveInfo,
-    getCollationDetails
-} from '../operations/database-hosts-operations';
+import { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases } from '../operations/database-hosts-operations';
+import { deployDatabase, getCollationDetails, getDriveInfo } from '../operations/createdb-operations';
 import {
     DatabaseHostDetailsSchema,
     DatabasesListSchema,
@@ -96,4 +90,4 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         );
-};
+}
