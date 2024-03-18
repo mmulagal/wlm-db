@@ -1,4 +1,4 @@
-  [CmdletBinding()]
+[CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
     [string]$DBName,
@@ -16,9 +16,12 @@ param(
     [string]$LogNew,
 
     [Parameter(Mandatory=$true)]
-    [string]$DataNew   
+    [string]$DataNew,  
+    
+    [Parameter(Mandatory=$false)]
+    [string]$Virtualmount    
 )
-$silenttranscript = (Start-Transcript -Path C:\cfn\log\NewDB_initializeiscsi.log.txt -Append)
+$null = (Start-Transcript -Path C:\cfn\log\NewDB_initializeiscsi.log.txt -Append)
 $ErrorActionPreference = "Stop"
 
 
@@ -26,10 +29,10 @@ $result = [ordered]@{}
 
 #Refresh the cached information on iSCSI target
 #This command hangs in few cases for any issue with iSCSI. Even passing -AsJob won't help as multiple jobs would be stuck. 
-#Update-IscsiTarget
+
 
 echo "RESCAN" | Out-File -FilePath C:\SSM\rescan.txt
-$rescan =(diskpart /s C:\SSM\rescan.txt)
+$null =(diskpart /s C:\SSM\rescan.txt)
 Start-Sleep 2
 
 #Create a list of drive letters if not passed
@@ -50,6 +53,24 @@ if (-Not $LogDrive) {
         $LogDrive = (ls function:[d-z]: -n | ?{ !(test-path $_) } | random)
     }
 }
+
+
+if ($DBName.Length -gt 25) {
+     $TruncatedName = $DBName.Substring(0,25)
+     $datalabel = $TruncatedName+"-Data"
+     $loglabel = $TruncatedName+"-Log"
+} else {
+     $datalabel = $DBName+"-Data"
+     $loglabel = $DBName+"-Log"
+  }
+$LogDriveLetter = $LogDrive.Substring(0,1)
+$DataDriveLetter = $DataDrive.Substring(0,1)
+#Folders in case of virtual drives on running out of drive letters
+if ($Virtualmount -ne "false") {
+$datafolder = $DataDrive+':\'+$datalabel
+$logfolder = $LogDrive+':\'+$loglabel
+}
+
 
 try {
 if(($LogNew -eq "false") -And ($DataNew -eq "false")) { throw }
@@ -122,27 +143,45 @@ Stop-Service -Name ShellHWDetection
 
 
 try {
-    if ($DBName.Length -gt 25) {
-        $TruncatedName = $DBName.Substring(0,25)
-        $datalabel = $TruncatedName+"-Data"
-        $loglabel = $TruncatedName+"-Log"
-    } else {
-      $datalabel = $DBName+"-Data"
-      $loglabel = $DBName+"-Log"
-    }
-$LogDriveLetter = $LogDrive.Substring(0,1)
-$DataDriveLetter = $DataDrive.Substring(0,1)
-
 
 if(($LogNew -ne "false") -And ($DataNew -ne "false")) {
-$logpartition = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel)
-$datapartition = (New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel)
+if ($Virtualmount -And ($Virtualmount -ne "false")) { 
+#Mount new ISCSI disks to a folder in selected drive 
+$null = (New-Item -ItemType Directory -Path $datafolder -Force)
+$null = (New-Item -ItemType Directory -Path $logfolder -Force)
+$null = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize  | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
+$null = (New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
+Start-Sleep 5
+$null = (Get-Partition -DiskNumber ($disklist[0]).Number |  Where-Object Type -eq Basic | Add-PartitionAccessPath -AccessPath $logfolder)
+$null = (Get-Partition -DiskNumber ($disklist[1]).Number |  Where-Object Type -eq Basic  | Add-PartitionAccessPath -AccessPath $datafolder)
+$null = (Get-Partition -DiskNumber ($disklist[0]).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+$null = (Get-Partition -DiskNumber ($disklist[1]).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true) 
+
+
 }
+else {
+    $null = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel)
+    $null = (New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel)
+} }
 elseif($LogNew -ne "false") {
-    $logpartition = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel)
-    } else {
-    $datapartition = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel)    
+    if ($Virtualmount -And ($Virtualmount -ne "false")) { 
+        $null = (New-Item -ItemType Directory -Path $logfolder -Force)
+        $null = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize  | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
+        $null = (Get-Partition -DiskNumber ($disklist[0]).Number |  Where-Object Type -eq Basic  | Add-PartitionAccessPath -AccessPath $logfolder)
+        $null = (Get-Partition -DiskNumber ($disklist[0]).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
     }
+    else {
+    $null = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel)
+}} else {
+    if ($Virtualmount -And ($Virtualmount -ne "false")) { 
+        $null = (New-Item -ItemType Directory -Path $datafolder -Force)
+        $null = (New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
+        $null =(Get-Partition -DiskNumber ($disklist[1]).Number |  Where-Object Type -eq Basic | Add-PartitionAccessPath -AccessPath $datafolder)
+        $null = (Get-Partition -DiskNumber ($disklist[0]).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+    }
+    else {
+    $null = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel)    
+    }}
 Start-Service -Name ShellHWDetection
 }catch{
     $result.Add('Status','Failed')
@@ -153,6 +192,7 @@ Start-Service -Name ShellHWDetection
     exit 1     
 } 
 
+exit 
 try{
 if ($IsClustered -ne "false") {
 # Add new disks to Cluster Storage
@@ -185,12 +225,12 @@ if( ($LogNew -ne "false")-And ($DataNew -ne "false")) {
     #Add  new cluster disks added to SQL Server Group    
     $datavol = $datadisk.Name
     $logvol = $logdisk.Name
-    $movelog = (Move-ClusterResource -Name $logvol -Group $SQLGroup)
-    $movedata = (Move-ClusterResource -Name $datavol -Group $SQLGroup) 
+    $null = (Move-ClusterResource -Name $logvol -Group $SQLGroup)
+    $null = (Move-ClusterResource -Name $datavol -Group $SQLGroup) 
 
     #Add dependency on new disks in SQL Server Resource
-    $adddataSQL = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $datavol)
-    $addlogSQL = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol)
+    $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $datavol)
+    $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol)
 
     #Rename new cluster disks to user friendly name
     (Get-ClusterResource -Name $datavol).name = $datalabel
@@ -198,10 +238,10 @@ if( ($LogNew -ne "false")-And ($DataNew -ne "false")) {
 } elseif($LogNew -ne "false") { 
     #Add  new cluster disks added to SQL Server Group    
     $logvol = $logdisk.Name
-    $movelog = (Move-ClusterResource -Name $logvol -Group $SQLGroup)
+    $null = (Move-ClusterResource -Name $logvol -Group $SQLGroup)
 
     #Add dependency on new disks in SQL Server Resource
-    $addlog = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol)
+    $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol)
 
     #Rename new cluster disks to user friendly name
     (Get-ClusterResource -Name $logvol).name = $loglabel
@@ -209,10 +249,10 @@ if( ($LogNew -ne "false")-And ($DataNew -ne "false")) {
 else{
     #Add  new cluster disks added to SQL Server Group    
     $datavol = $datadisk.Name
-    $movedata = (Move-ClusterResource -Name $datavol -Group $SQLGroup) 
+    $null = (Move-ClusterResource -Name $datavol -Group $SQLGroup) 
 
     #Add dependency on new disks in SQL Server Resource
-    $adddata= (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $datavol)
+    $null= (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $datavol)
 
     #Rename new cluster disks to user friendly name
     (Get-ClusterResource -Name $datavol).name = $datalabel
@@ -231,4 +271,6 @@ else{
 $result.Add('Status','Complete')
 $result.Add('Message','Completed preparing iSCSI drives for new SQL database')
 $resultjson = ($result | ConvertTo-Json) 
-$resultjson 
+$resultjson  
+ 
+ 
