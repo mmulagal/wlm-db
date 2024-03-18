@@ -9,32 +9,35 @@ import { generateOptionType } from '../../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { setSelectedCollation } from '../../../../../store/workloadFactory/createNewDBSlice';
+import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
 
 const Collation = () => {
     const dispatch = useDispatch();
 
-    const { selectedCollation } = useAppSelector(state => state.createNewUser);
+    const { selectedCollation, collationList, collationListLoading } = useAppSelector(state => state.createNewUser);
 
     const generateCollationValues = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        const collationValues = ['SQL_Latin1', 'SQL_Latin2'];
-        collationValues?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+        collationList?.collationList?.map((val: any, idx: number) => {
+            const option = generateOptionType(val?.name, val?.name, val?.description, false, '');
+            if (val?.name === collationList?.defaultCollation) {
+                dispatch(setSelectedCollation(option));
+            }
             options.push(option);
         });
         return options;
-    }, []);
-
-    useEffect(() => {
-        dispatch(setSelectedCollation(generateCollationValues[0]));
-    }, [generateCollationValues]);
+    }, [collationList]);
 
     const setHeader = () => {
+        if (!selectedCollation?.label) {
+            return <ActionRequired />;
+        }
         return <DsTypography variant="Regular_14">{`Default: ${selectedCollation?.label}`}</DsTypography>;
     };
     return (
         <div className={styles.collation}>
             <AccordionCard
+                isLoading={collationListLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="5"
                 title={<div className={CommonStyles.title}>{GENERAL.COLLATION}</div>}
@@ -43,8 +46,10 @@ const Collation = () => {
                     <DsTypography>
                         <div className={styles.collationField}>
                             <SelectField
-                                label={'Collation'}
+                                isLoading={collationListLoading}
+                                label={GENERAL.COLLATION}
                                 isClearable={false}
+                                placeholder={GENERAL.SELECT_COLLATION}
                                 defaultValue={selectedCollation ? [selectedCollation] : [generateCollationValues[0]]}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedCollation(selectedOptions));
@@ -52,6 +57,7 @@ const Collation = () => {
                                 isSearchable={generateCollationValues.length > 5}
                                 options={generateCollationValues}
                                 className={styles.selectField}
+                                variant="two-lines"
                             />
                         </div>
                     </DsTypography>
