@@ -181,7 +181,7 @@ function getProductsInputForFSxN(region: string, deploymentOption: string): Prod
     logger.info('Geting FSxN pricing metrics', { region, deploymentOption });
 
     return {
-        name: 'fsxOperationals',
+        name: 'fsxnStorage',
         input: {
             Filters: [
                 getRegionCodeFilter(region),
@@ -532,7 +532,7 @@ function calculateFsxnCost(fsxnStorage: PricingServiceRequestType['fsxnStorage']
     }
 
     const {
-        ssdStorage: { pricePerUnit: fsxnStorageRate = 0 } = {},
+        storageSsd: { pricePerUnit: fsxnStorageRate = 0 } = {},
         throughput: { pricePerUnit: fsxnThroughputRate = 0 } = {},
         iops: { pricePerUnit: fsxnIopsRate = 0 } = {},
         readRequest: { pricePerUnit: fsxnReadRequestsRate = 0 } = {},
@@ -578,9 +578,9 @@ function calculateEbsCost(
     });
 
     const {
-        storage: { pricePerUnit: storageRate },
-        iops: { pricePerUnit: iopsRate },
-        throughput: { pricePerUnit: throughputRate }
+        storage: { pricePerUnit: storageRate = 0 } = {},
+        iops: { pricePerUnit: iopsRate = 0 } = {},
+        throughput: { pricePerUnit: throughputRate = 0 } = {}
     } = ebsStorageRates;
 
     const monthlyStorageCost = volumeSizeGB * storageRate;
