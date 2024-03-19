@@ -188,7 +188,8 @@ const FileConfig = Type.Object({
 const CreateDatabseRequestBody = Type.Object({
     databaseName: Type.String({ minLength: 1, maxLength: 123 }),
     dataFileConfig: FileConfig,
-    logFileConfig: FileConfig
+    logFileConfig: FileConfig,
+    collation: Type.String()
 });
 
 const DatabasesCreateResponse = Type.Object({
@@ -213,6 +214,17 @@ const DriveInfoResponseBody = Type.Object({
     fsxStorageCapacity: Type.Optional(Type.Number())
 });
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
+
+const CollationInfoResponseBody = Type.Object({
+    collationList: Type.Array(
+        Type.Object({
+            name: Type.String(),
+            description: Type.Optional(Type.String())
+        })
+    ),
+    defaultCollation: Type.String()
+});
+type CollationInfoResponseBodyType = Static<typeof CollationInfoResponseBody>;
 
 export {
     DatabaseHostObjectParams,
@@ -255,5 +267,7 @@ export {
     CreateDatabaseParams,
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
-    FileConfigType
+    FileConfigType,
+    CollationInfoResponseBodyType,
+    CollationInfoResponseBody
 };

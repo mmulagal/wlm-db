@@ -1,13 +1,14 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases } from '../operations/database-hosts-operations';
-import { deployDatabase, getDriveInfo } from '../operations/createdb-operations';
+import { deployDatabase, getCollationDetails, getDriveInfo } from '../operations/createdb-operations';
 import {
     DatabaseHostDetailsSchema,
     DatabasesListSchema,
     DatabaseHostsSummarySchema,
     DatabasesCreateSchema,
-    GetDriveInfoSchema
+    GetDriveInfoSchema,
+    GetCollationDetailsSchema
 } from './schemas/database-hosts-schemas';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
@@ -53,7 +54,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, databaseHostId, credentialsId, region },
-                    body: { databaseName, dataFileConfig, logFileConfig }
+                    body: { databaseName, dataFileConfig, logFileConfig, collation }
                 } = request;
                 const response = await deployDatabase(
                     accountId,
@@ -62,7 +63,8 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     region,
                     databaseName,
                     dataFileConfig,
-                    logFileConfig
+                    logFileConfig,
+                    collation
                 );
                 return reply.send(response);
             }
@@ -75,6 +77,17 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     params: { accountId, databaseHostId, credentialsId, region }
                 } = request;
                 const response = await getDriveInfo(accountId, databaseHostId, credentialsId, region);
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/collation`,
+            { schema: GetCollationDetailsSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region }
+                } = request;
+                const response = await getCollationDetails(accountId, databaseHostId, credentialsId, region);
                 return reply.send(response);
             }
         );

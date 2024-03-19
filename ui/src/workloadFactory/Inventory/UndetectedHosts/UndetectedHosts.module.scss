@@ -20,6 +20,16 @@
                 margin-top: 2px;
                 color: var(--blue-70);
             }
+
+            .loading {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 20px;
+                height: 20px;
+                margin-top: 5px;
+                margin-left: 46%;
+            }
         }
 
         .detectManage:hover {

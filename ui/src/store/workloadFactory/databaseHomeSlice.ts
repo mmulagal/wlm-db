@@ -61,6 +61,9 @@ const databaseHomeSlice = createSlice({
         addDatabaseHosts: (state, action: PayloadAction<any>) => {
             state.getDatabaseHosts = action.payload;
         },
+        addDatabaseHostsLoading: (state, action: PayloadAction<any>) => {
+            state.getDatabaseHosts.databaseHostsLoading = action.payload;
+        },
         addJobsSummary: (state, action: PayloadAction<any>) => {
             state.getJobsSummary = action.payload;
         },
@@ -87,6 +90,7 @@ const databaseHomeSlice = createSlice({
 
 export const {
     addDatabaseHosts,
+    addDatabaseHostsLoading,
     selectedTabSelection,
     addJobsSummary,
     addDatabaseHostsList,

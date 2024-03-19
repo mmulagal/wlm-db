@@ -14,13 +14,19 @@ import { inventoryDemoData } from './demoInventoryData';
 
 const logger = getLogger();
 
-function createDemoResources(accountId: string, region: string, credentialsId: string, awsAccountId: string) {
+function createDemoResources(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    awsAccountId: string,
+    demoServerName?: string
+) {
     logger.info('Creating demo database resources and corresponding details.');
     const stackName = randomize('A', 10);
     const stackId = randomize('A0', 10);
     const sqlDeploymentMode = 'FCI';
     const fsxFilSystemId = `fs-${randomize('a0', 10)}`;
-    const serverName = `sqldatabase${randomize('a', 4)}`;
+    const serverName = demoServerName || `sqldatabase${randomize('a', 4)}`;
 
     createDeploymentMockDataInDB(
         accountId!,
@@ -95,8 +101,8 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
     if (isEmpty(jobs)) {
         // create 2 new resources and configurations
         logger.info('Creating demo resources');
-        createDemoResources(accountId, 'us-east-1', credentialsId, awsAccountId);
-        createDemoResources(accountId, 'us-east-1', credentialsId, awsAccountId);
+        createDemoResources(accountId, 'us-east-1', credentialsId, awsAccountId, 'SQLServer-Prod-01');
+        createDemoResources(accountId, 'us-east-1', credentialsId, awsAccountId, 'SQLServer-Dev-01');
     }
     if (isEmpty(configs)) {
         logger.info('Creating demo and templates');

@@ -30,7 +30,8 @@ export const createUserDbPayload = (newUserDb: any) => {
                     : newUserDb?.newUserLogFileSize,
             drive: newUserDb?.driveLetterLogFile?.value || '',
             isExisting: newUserDb?.isExistingLogDrive
-        }
+        },
+        collation: newUserDb?.selectedCollation?.label || ''
     };
     return payload;
 };
@@ -60,8 +61,10 @@ export const handleCreateUserDb = (state: any, dispatch: any) => {
         // Fields validation checks
         const dbNameStateValue =
             !state?.createNewUser?.newUserDBName || !isValidDatabaseName(state?.createNewUser?.newUserDBName);
-        const dbDataNameStateValue = !state?.createNewUser?.newUserDBFileName || !isValidFileName(state?.createNewUser?.newUserDBFileName);
-        const dbLogNameStateValue = !state?.createNewUser?.newUserLogFileName || !isValidFileName(state?.createNewUser?.newUserLogFileName);
+        const dbDataNameStateValue =
+            !state?.createNewUser?.newUserDBFileName || !isValidFileName(state?.createNewUser?.newUserDBFileName);
+        const dbLogNameStateValue =
+            !state?.createNewUser?.newUserLogFileName || !isValidFileName(state?.createNewUser?.newUserLogFileName);
         const dbDataSizeState = !state?.createNewUser?.newUserDataSize || !state?.createNewUser?.isDataSizeValid;
         const dbLogSizeState = !state?.createNewUser?.newUserLogFileSize || !state?.createNewUser?.isLogSizeValid;
         const driveLettersState =
@@ -77,6 +80,7 @@ export const handleCreateUserDb = (state: any, dispatch: any) => {
             }
             return false;
         };
+        const collation = state?.createNewUser?.selectedCollation?.label;
 
         //Check for Create DB username value
         if (dbNameStateValue) {
@@ -125,6 +129,13 @@ export const handleCreateUserDb = (state: any, dispatch: any) => {
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
                         message: GENERAL.DRIVE_LETTER_CREATE_ERROR
+                    })
+                );
+            } else if (!collation) {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: GENERAL.COLLATION_ERROR
                     })
                 );
             } else {
