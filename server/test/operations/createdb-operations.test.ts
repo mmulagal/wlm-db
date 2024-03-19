@@ -4,7 +4,8 @@ import {
     createDatabase,
     configureLuns,
     newDBInitialization,
-    cleanUpDatabaseDeployment
+    cleanUpDatabaseDeployment,
+    getCollationDetails
 } from '../../src/operations/createdb-operations';
 import '../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -178,5 +179,15 @@ describe('Create database operations', () => {
         );
 
         expect(resp.Status).toBe('Complete');
+    });
+
+    it('Get collation details for a database host', async () => {
+        const resp = await getCollationDetails(
+            ACCOUNT_ID,
+            '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1'
+        );
+        expect(resp).toBeDefined();
     });
 });
