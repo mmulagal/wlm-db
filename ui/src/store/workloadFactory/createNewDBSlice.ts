@@ -4,6 +4,8 @@ export const initialCreateNewUserState: any = {
     selectedNewUserConfig: 'Quick create',
     driveInfoList: null,
     driveInfoListLoading: false,
+    collationList: null,
+    collationListLoading: false,
     newUserDBName: '',
     newUserDataSize: '',
     newUserDataSizeUnit: '',
@@ -18,7 +20,7 @@ export const initialCreateNewUserState: any = {
     isExistingLogDrive: false,
     isDataSizeValid: true,
     isLogSizeValid: true,
-    selectedCollation: ''
+    selectedCollation: {}
 };
 
 const createNewUserSlice = createSlice({
@@ -36,6 +38,12 @@ const createNewUserSlice = createSlice({
         },
         setDriveInfoListLoading: (state, action: PayloadAction<any>) => {
             state.driveInfoListLoading = action.payload;
+        },
+        setCollationList: (state, action: PayloadAction<any>) => {
+            state.collationList = action.payload;
+        },
+        setCollationListLoading: (state, action: PayloadAction<any>) => {
+            state.collationListLoading = action.payload;
         },
         setNewUserDBName: (state, action: PayloadAction<any>) => {
             state.newUserDBName = action.payload;
@@ -89,6 +97,8 @@ export const {
     setSelectedNewUserConfig,
     setDriveInfoList,
     setDriveInfoListLoading,
+    setCollationList,
+    setCollationListLoading,
     setNewUserDBName,
     setNewUserDataSize,
     setNewUserDataSizeUnit,

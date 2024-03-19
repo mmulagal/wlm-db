@@ -1262,7 +1262,7 @@ async function getCollationDetails(accountId: string, databaseHostId: string, cr
             }
         }
 
-        const { defaultCollation, mssqlVersion } = await getDefaultCollation(
+        const { defaultCollation, mssqlVersion } = await getDefaultCollationAndVersion(
             credentialsId,
             region,
             activeNodeInstanceId as string
@@ -1298,7 +1298,7 @@ async function getCollationDetails(accountId: string, databaseHostId: string, cr
     }
 }
 
-async function getDefaultCollation(
+async function getDefaultCollationAndVersion(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,

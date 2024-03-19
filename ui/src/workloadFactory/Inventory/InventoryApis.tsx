@@ -1,21 +1,28 @@
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
-import { addDatabaseHosts, addDatabaseHostsList } from '../../store/workloadFactory/databaseHomeSlice';
+import {
+    addDatabaseHosts,
+    addDatabaseHostsList,
+    addDatabaseHostsLoading
+} from '../../store/workloadFactory/databaseHomeSlice';
 import {
     useDiscoverHostsQuery,
     useGetDatabaseHostsQuery,
     useGetFsxCredentialStatusQuery
 } from '../../utils/apiService';
-import { mergeDatabaseHostsData, resetDBHomePageState } from '../../utils/utilityFunctions';
+import { mergeDatabaseHostsData, resetDBHomePageState, sortListOfDict } from '../../utils/utilityFunctions';
 import {
     setDiscoveredHosts,
     setFsxCredentialStatus,
     setFsxIdsList,
     setIsRefreshed,
+    setMovedToManagedHost,
+    setMovedToUnmanagedHost,
     setUnIdentifiableHosts,
     setUnManagedHosts
 } from '../../store/workloadFactory/inventorySlice';
 import { setHeaderSelectedCred, setHeaderSelectedRegion } from '../../store/workloadFactory/headersSlice';
+import { DETECT_HOST_VAR } from '../../utils/consts';
 
 const InventoryApis = () => {
     const dispatch = useAppDispatch();
@@ -27,6 +34,8 @@ const InventoryApis = () => {
     const databaseHostState = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { fsxIdsList, fsxCredentialStatusObj, isRefreshed } = useAppSelector(state => state.inventory);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
+    const movedToUnmanagedHost = useAppSelector(state => state.inventory.movedToUnmanagedHost);
+    const movedToManagedHost = useAppSelector(state => state.inventory.movedToManagedHost);
 
     const [hostCursor, setHostCursor] = useState(null);
     const [discoveryCursor, setDiscoveryCursor] = useState(null);
@@ -42,6 +51,7 @@ const InventoryApis = () => {
 
     useEffect(() => {
         resetDBHomePageState(dispatch);
+        dispatch(addDatabaseHostsLoading(databaseHostsLoading));
     }, [credId, regionId]);
 
     const {
@@ -108,6 +118,8 @@ const InventoryApis = () => {
         );
         dispatch(setUnManagedHosts([]));
         dispatch(setUnIdentifiableHosts([]));
+        dispatch(setMovedToManagedHost([]));
+        dispatch(setMovedToUnmanagedHost([]));
         if (headerSelectedCred && headerSelectedRegion) {
             setSkipApiCall(false);
             setSkipDiscoveryCall(false);
@@ -161,12 +173,16 @@ const InventoryApis = () => {
 
     useEffect(() => {
         if (discoverHostError) {
-            dispatch(setDiscoveredHosts({ discoveredHostData: null, databaseHostsLoading, databaseHostsError }));
+            dispatch(setDiscoveredHosts({ ...discoveredHostState, discoverHostLoading, discoverHostError }));
         } else {
             if (!discoverHostLoading) {
                 let oldList = discoveredHostData || [];
                 let newList = discoveredHosts?.items || [];
-                if (discoveredHosts && discoveredHosts?.credentialId === credId && discoveredHosts?.regionId === regionId) {
+                if (
+                    discoveredHosts &&
+                    discoveredHosts?.credentialId === credId &&
+                    discoveredHosts?.regionId === regionId
+                ) {
                     dispatch(
                         setDiscoveredHosts({
                             discoveredHostData: [...oldList, ...newList],
@@ -222,6 +238,8 @@ const InventoryApis = () => {
             dispatch(setUnIdentifiableHosts([]));
             dispatch(setHeaderSelectedCred(null));
             dispatch(setHeaderSelectedRegion(null));
+            dispatch(setMovedToManagedHost([]));
+            dispatch(setMovedToUnmanagedHost([]));
             setTimeout(() => {
                 dispatch(setHeaderSelectedCred(headerSelectedCred));
                 dispatch(setHeaderSelectedRegion(headerSelectedRegion));
@@ -231,36 +249,6 @@ const InventoryApis = () => {
             dispatch(setIsRefreshed(false));
         }
     }, [isRefreshed]);
-
-    useEffect(() => {
-        setDiscoveryCursor(null);
-        setHostCursor(null);
-        dispatch(
-            setDiscoveredHosts({
-                discoveredHostData: null,
-                discoverHostLoading: true,
-                discoverHostError
-            })
-        );
-        dispatch(addDatabaseHostsList([]));
-        dispatch(
-            addDatabaseHosts({
-                databaseHostsData: null,
-                databaseHostsLoading: true,
-                databaseHostsError
-            })
-        );
-        dispatch(setUnManagedHosts([]));
-        dispatch(setUnIdentifiableHosts([]));
-        if (headerSelectedCred && headerSelectedRegion) {
-            setSkipApiCall(false);
-            setSkipDiscoveryCall(false);
-            setSkipManagedHostCall(false);
-            setCredId(headerSelectedCred?.data?.credentialsId);
-            setRegionId(headerSelectedRegion?.label2);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [headerSelectedCred, headerSelectedRegion]);
 
     // To merge database host and database jobs data
     useEffect(() => {
@@ -288,7 +276,7 @@ const InventoryApis = () => {
             discoveredHostData.map((host: any) => {
                 if (host?.sqlServerInstances?.[0]?.storage) {
                     host?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
-                        if (storageObj.type === 'FSXN') {
+                        if (storageObj.type === DETECT_HOST_VAR.FSXN) {
                             fsxIds.push(storageObj.id);
                         }
                     });
@@ -303,18 +291,31 @@ const InventoryApis = () => {
             let unManagedHosts: any[] = [];
             let unIdentifiableHosts: any[] = [];
             discoveredHostData.map((host: any) => {
+                if (host?.sqlServerInstances && host?.sqlServerInstances?.length > 1) {
+                    host = { ...host, sqlServerInstances: sortListOfDict(host?.sqlServerInstances, 'sqlServerState') };
+                }
                 const isWindowAuthentication = host?.sqlServerInstances?.[0]?.windowsAuthentication;
+                const isSqlAuthentication = host?.sqlServerInstances?.[0]?.sqlAuthentication;
                 const isManaged = databaseHostsData?.find(managedHost =>
                     managedHost?.topology?.ec2Details?.find(instances => instances.id === host?.ec2InstanceId)
                 );
                 let fsxCredentialValidationFailed = host?.sqlServerInstances?.[0]?.storage?.find(
-                    (item: any) => item.type === 'FSXN' && !fsxCredentialStatusObj[item.id]
+                    (item: any) => item.type === DETECT_HOST_VAR.FSXN && !fsxCredentialStatusObj[item.id]
                 );
                 // FSx credential validation always passed for demo mode
                 if (isDemoMode) {
                     fsxCredentialValidationFailed = false;
                 }
-                if (host.ssmState !== 'connected' || !isWindowAuthentication || fsxCredentialValidationFailed) {
+
+                if (movedToManagedHost.includes(host?.ec2InstanceId)) {
+                    // ToDo: push in managed
+                } else if (movedToUnmanagedHost.includes(host?.ec2InstanceId)) {
+                    unManagedHosts.push(host);
+                } else if (
+                    host.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED ||
+                    (!isWindowAuthentication && !isSqlAuthentication) ||
+                    fsxCredentialValidationFailed
+                ) {
                     unIdentifiableHosts.push(host);
                 } else {
                     if (!isManaged) {
@@ -325,7 +326,7 @@ const InventoryApis = () => {
             dispatch(setUnIdentifiableHosts(unIdentifiableHosts));
             dispatch(setUnManagedHosts(unManagedHosts));
         }
-    }, [discoveredHostData, databaseHostsData, fsxCredentialStatusObj]);
+    }, [discoveredHostData, databaseHostsData, fsxCredentialStatusObj, movedToUnmanagedHost, movedToManagedHost]);
 
     return <></>;
 };
