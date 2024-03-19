@@ -719,7 +719,7 @@
         "Status": "Success",
         "StatusDetails": "Success"
     },
-    "collationDetailsInvoationResponse": {
+    "collationDetailsInvocationResponse": {
         "$metadata": {
             "httpStatusCode": 200,
             "requestId": "17601055-7787-4476-8450-2abb4851432a",
