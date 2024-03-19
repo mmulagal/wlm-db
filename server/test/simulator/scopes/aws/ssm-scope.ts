@@ -232,7 +232,7 @@ const checkDBExists = {
 
 const getCollationDetails = {
     commands: [
-        "\n#Get default collation of SQL server\n$defaultSqlCollation = sqlcmd -Q @\"\n    SET NOCOUNT ON;\n    SELECT CONVERT(nvarchar(128), SERVERPROPERTY('collation'));\n\"@ -y 0\n\n#Get default version of SQL server\n$sqlVersion = sqlcmd -Q @\"\n    SET NOCOUNT ON;\n    SELECT @@VERSION;\n\"@ -y 0\n\nWrite-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json\n"
+        '\n#Get default collation of SQL server\n$defaultSqlCollation = sqlcmd -Q @"\n    SET NOCOUNT ON;\n    SELECT CONVERT(nvarchar(128), SERVERPROPERTY(\'collation\'));\n"@ -y 0\n\n#Get default version of SQL server\n$sqlVersion = sqlcmd -Q @"\n    SET NOCOUNT ON;\n    SELECT @@VERSION;\n"@ -y 0\n\nWrite-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json\n'
     ]
 };
 

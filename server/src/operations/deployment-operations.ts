@@ -88,7 +88,7 @@ import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
 // import { handleNotification } from './cloud-manager/notification-operations';
-import { NetworkViolation } from '../utils/common-types';
+import { MissingPermission, NetworkViolation } from '../utils/common-types';
 import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
 import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
@@ -98,9 +98,9 @@ const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
 
 interface MissingPermissionInterface {
-    missingStatements: string[];
-    blockedByOrganisation: string[];
-    blockedByPermissionBoundary: string[];
+    missingStatements: MissingPermission[];
+    blockedByOrganisation: MissingPermission[];
+    blockedByPermissionBoundary: MissingPermission[];
 }
 
 async function formatTemplateParameters(
@@ -475,7 +475,7 @@ async function deployStackOrCreateTemplateURL(
             const responseWithPermissions: CloudFormationDeploymentResponseType = {
                 ...response,
                 missingPermissions: {
-                    missingStatements: [...new Set(permissions.missingStatements || [])],
+                    missingStatements: permissions.missingStatements || [],
                     blockedByOrganisation: [...new Set(permissions.blockedByOrganisation || [])],
                     blockedByPermissionBoundary: [...new Set(permissions.blockedByPermissionBoundary || [])]
                 }
@@ -521,7 +521,7 @@ async function deployStackOrCreateTemplateURL(
                 blockedBySCP = true;
             }
 
-            const errMsg = MISSING_PERMISSIONS(err?.message, ['none'], ['none']);
+            const errMsg = MISSING_PERMISSIONS(err?.message, [], []);
             const responseWithPermissions: CloudFormationDeploymentResponseType = {
                 ...response,
                 missingPermissions: {
@@ -954,5 +954,6 @@ export {
     deploymentStatus,
     deploymentStatusByName,
     getCloudformationTemplate,
-    deployStackOrCreateTemplateURL
+    deployStackOrCreateTemplateURL,
+    checkAllMissingPermissions
 };

@@ -3,6 +3,7 @@ import { ContextEntry, SimulatePrincipalPolicyCommandInput } from '@aws-sdk/clie
 import { getRoleDetails } from '../cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
 import simulatePrincipalPolicy from '../../lib/aws/iam';
+import { MissingPermission } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -39,14 +40,28 @@ export default async function getMissingPermissionsList(
                     OrganizationsDecisionDetail?.AllowedByOrganizations &&
                     isEmpty(MatchedStatements)
             )
-            .map(({ EvalActionName }) => EvalActionName as string) || [];
+            .map(
+                ({ EvalActionName, EvalDecision }) =>
+                    ({
+                        service: EvalActionName?.split(':')[0],
+                        action: EvalActionName?.split(':')[1],
+                        error: EvalDecision as string
+                    } as MissingPermission)
+            ) || [];
     const blockedByOrganisation =
         results
             ?.filter(
                 ({ EvalDecision, OrganizationsDecisionDetail }) =>
                     EvalDecision !== 'allowed' && !OrganizationsDecisionDetail?.AllowedByOrganizations
             )
-            .map(({ EvalActionName }) => EvalActionName as string) || [];
+            .map(
+                ({ EvalActionName, EvalDecision }) =>
+                    ({
+                        service: EvalActionName?.split(':')[0],
+                        action: EvalActionName?.split(':')[1],
+                        error: EvalDecision as string
+                    } as MissingPermission)
+            ) || [];
     const blockedByPermissionBoundary =
         results
             ?.filter(
@@ -56,7 +71,14 @@ export default async function getMissingPermissionsList(
                     !PermissionsBoundaryDecisionDetail?.AllowedByPermissionsBoundary &&
                     !isEmpty(MatchedStatements)
             )
-            .map(({ EvalActionName }) => EvalActionName as string) || [];
+            .map(
+                ({ EvalActionName, EvalDecision }) =>
+                    ({
+                        service: EvalActionName?.split(':')[0],
+                        action: EvalActionName?.split(':')[1],
+                        error: EvalDecision as string
+                    } as MissingPermission)
+            ) || [];
 
     return { missingPermissions, blockedByOrganisation, blockedByPermissionBoundary };
 }
