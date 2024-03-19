@@ -148,7 +148,7 @@ async function formatTemplateParameters(
             : [networkConfiguration.routeTable1Id!, networkConfiguration.routeTable2Id!];
     const { servicesWithNoEndpoint, missingRoutesInS3 } =
         credentialsId && region
-            ? await getServicesWithNoEndpoint(credentialsId!, region!, networkConfiguration.vpcId, routeTables)
+            ? await getServicesWithNoEndpoint(credentialsId, region, networkConfiguration.vpcId, routeTables)
             : { servicesWithNoEndpoint: [], missingRoutesInS3: [] };
 
     const templateParams: Array<Parameter> = [
@@ -623,12 +623,10 @@ async function createCloudFormationTemplateForUserDeployment(
         sqlConfiguration.sqlDeploymentMode === STANDALONE
             ? [networkConfiguration.routeTable1Id!]
             : [networkConfiguration.routeTable1Id!, networkConfiguration.routeTable2Id!];
-    const { servicesWithNoEndpoint, missingRoutesInS3 } = await getServicesWithNoEndpoint(
-        credentialsId!,
-        region!,
-        networkConfiguration.vpcId,
-        routeTables
-    );
+    const { servicesWithNoEndpoint, missingRoutesInS3 } =
+        credentialsId && region
+            ? await getServicesWithNoEndpoint(credentialsId, region, networkConfiguration.vpcId, routeTables)
+            : { servicesWithNoEndpoint: [], missingRoutesInS3: [] };
 
     const templateParamsAsList: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },

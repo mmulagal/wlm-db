@@ -493,10 +493,16 @@ async function getServicesWithNoEndpoint(
     const endpoints = await getVpcEndpoints(credentialsId, region, vpcId);
 
     // If s3 gateway exists, then find if all routetables are associated with the endpoint. If not create new s3 endpoint
-    const routeTableIdsInS3Endpoint = endpoints!
-        .filter(endpoint => endpoint.ServiceName?.includes('s3'))
-        .flatMap(endpoint => endpoint.RouteTableIds);
-    const missingRoutesInS3 = routeTableIds!.filter(rt => routeTableIdsInS3Endpoint.indexOf(rt) < 0);
+    const routeTableIdsInS3Endpoint =
+        endpoints && !isEmpty(endpoints)
+            ? endpoints
+                  .filter(endpoint => endpoint.ServiceName?.includes('s3'))
+                  .flatMap(endpoint => endpoint.RouteTableIds)
+            : [];
+    const missingRoutesInS3 =
+        routeTableIds && !isEmpty(routeTableIds)
+            ? routeTableIds.filter(rt => routeTableIdsInS3Endpoint.indexOf(rt) < 0)
+            : [];
 
     const availableEndpoints = !isEmpty(endpoints)
         ? [...new Set(endpoints!.map(({ ServiceName }: VpcEndpoint) => ServiceName?.split('.')[3]))]
