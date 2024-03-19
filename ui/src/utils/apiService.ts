@@ -334,9 +334,9 @@ export const databaseHomeApi = createApi({
             getDatabaseHosts: builder.query({
                 query: ({ credentialId, region, nextToken = null }) => {
                     if (nextToken) {
-                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,dbCount,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
                     } else {
-                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=performance,storage,protection,usageEstimation`;
+                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,dbCount,performance,storage,protection,usageEstimation`;
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
@@ -372,7 +372,7 @@ export const workloadFactoryResourceApi = createApi({
         return {
             getResourceDetails: builder.query({
                 query: ({ credentialId, region, id }) => ({
-                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}?fields=storage,performance,usageEstimation,resourceUtilization`
+                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}?fields=topology,dbCount,storage,performance,usageEstimation,resourceUtilization`
                 })
             }),
             getDatabaseList: builder.query({

@@ -98,7 +98,7 @@ const EstimatedCost = () => {
             if(selectedFsxnType === GENERAL.CREATE_NEW_FSXN){
                 payload = {
                     compute: computeObj(updatedStr),
-                    storage: {
+                    fsxnStorage: {
                         regionCode: updatedStr || '',
                         diskSize: diskSizeUnit === 'TiB' ? 1024 * diskSize : Number(diskSize),
                         throughput: fsxVolThroughput(),
@@ -273,7 +273,7 @@ const EstimatedCost = () => {
                                             </div>
                                         ) : (
                                             //@ts-ignore
-                                            `$${Number(data?.data?.storage?.capacity).toFixed(2)}` || ''
+                                            `$${Number(data?.data?.storage?.capacityCost).toFixed(2)}` || ''
                                         )}
                                     </Typography>
 
@@ -288,7 +288,7 @@ const EstimatedCost = () => {
                                             </div>
                                         ) : (
                                             //@ts-ignore
-                                            `$${Number(data?.data?.storage?.throughput).toFixed(2)}` || ''
+                                            `$${Number(data?.data?.storage?.operationalCost).toFixed(2)}` || ''
                                         )}
                                     </Typography>
                                 </div>
