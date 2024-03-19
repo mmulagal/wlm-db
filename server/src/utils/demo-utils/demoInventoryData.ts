@@ -164,6 +164,8 @@ function inventoryDemoData(fsxId: string) {
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
                         windowsAuthentication: true,
+                        sqlServerName: 'SQLServer-Prod-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         storage: [
                             {
                                 type: 'FSXN',
@@ -195,6 +197,8 @@ function inventoryDemoData(fsxId: string) {
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
                         windowsAuthentication: true,
+                        sqlServerName: 'SQLServer-Dev-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         storage: [
                             {
                                 type: 'FSXN',
@@ -226,6 +230,8 @@ function inventoryDemoData(fsxId: string) {
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
                         windowsAuthentication: true,
+                        sqlServerName: 'SQLServer-QA-01',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         storage: [
                             {
                                 type: 'FSXN',
@@ -257,6 +263,8 @@ function inventoryDemoData(fsxId: string) {
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
                         windowsAuthentication: true,
+                        sqlServerName: 'SQLServer-QA-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         storage: [
                             {
                                 type: 'FSXN',
@@ -288,6 +296,8 @@ function inventoryDemoData(fsxId: string) {
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
                         windowsAuthentication: true,
+                        sqlServerName: 'SQLServer-UAT-01',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         storage: [
                             {
                                 type: 'FSXN',
@@ -319,6 +329,8 @@ function inventoryDemoData(fsxId: string) {
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
                         windowsAuthentication: true,
+                        sqlServerName: 'SQLServer-UAT-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         storage: [
                             {
                                 type: 'FSXN',
@@ -350,6 +362,8 @@ function inventoryDemoData(fsxId: string) {
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
                         windowsAuthentication: true,
+                        sqlServerName: 'SQLServer-Training-01',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         storage: [
                             {
                                 type: 'FSXN',
@@ -381,6 +395,8 @@ function inventoryDemoData(fsxId: string) {
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
                         windowsAuthentication: true,
+                        sqlServerName: 'SQLServer-Training-02',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         storage: [
                             {
                                 type: 'FSXN',
@@ -412,6 +428,8 @@ function inventoryDemoData(fsxId: string) {
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
                         windowsAuthentication: true,
+                        sqlServerName: 'SQLServer-CRMDB',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         storage: [
                             {
                                 type: 'FSXN',
@@ -443,6 +461,8 @@ function inventoryDemoData(fsxId: string) {
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
                         windowsAuthentication: true,
+                        sqlServerName: 'SQLServer-CRMDB-Test',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         storage: [
                             {
                                 type: 'FSXN',
