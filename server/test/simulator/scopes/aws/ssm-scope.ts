@@ -396,7 +396,7 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-checkDBExists' })
     .resolves(getCommandInvocationResponse.checkDBInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getCollationDetails' })
-    .resolves(getCommandInvocationResponse.collationDetailsInvoationResponse);
+    .resolves(getCommandInvocationResponse.collationDetailsInvocationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
