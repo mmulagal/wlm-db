@@ -87,7 +87,7 @@ async function lookupCredentials(credentialsId: string, accountId?: string) {
         const {
             credentials: { accessKeyId, secretAccessKey, sessionToken },
             metadata
-        } = (await getWfCredentialDetails(credentialsId, 'account-OMkOpCYM')) as wfCredentials;
+        } = (await getWfCredentialDetails(credentialsId, accountId)) as wfCredentials;
 
         return {
             source: WF,

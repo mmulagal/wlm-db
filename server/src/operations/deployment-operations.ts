@@ -470,8 +470,8 @@ async function deployStackOrCreateTemplateURL(
                 ...response,
                 missingPermissions: {
                     missingStatements: permissions.missingStatements || [],
-                    blockedByOrganisation: [...new Set(permissions.blockedByOrganisation || [])],
-                    blockedByPermissionBoundary: [...new Set(permissions.blockedByPermissionBoundary || [])]
+                    blockedByOrganisation: permissions.blockedByOrganisation || [],
+                    blockedByPermissionBoundary: permissions.blockedByPermissionBoundary || []
                 }
             };
 
@@ -948,6 +948,5 @@ export {
     deploymentStatus,
     deploymentStatusByName,
     getCloudformationTemplate,
-    deployStackOrCreateTemplateURL,
-    checkAllMissingPermissions
+    deployStackOrCreateTemplateURL
 };
