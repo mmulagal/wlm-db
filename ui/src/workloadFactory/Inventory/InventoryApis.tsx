@@ -116,6 +116,8 @@ const InventoryApis = () => {
                 discoverHostError
             })
         );
+        dispatch(setMssqlInstancesData({}));
+        setRunningInstanceList([]);
         dispatch(addDatabaseHostsList([]));
         dispatch(
             addDatabaseHosts({
@@ -234,6 +236,8 @@ const InventoryApis = () => {
                     discoverHostError
                 })
             );
+            dispatch(setMssqlInstancesData({}));
+            setRunningInstanceList([]);
             dispatch(addDatabaseHostsList([]));
             dispatch(
                 addDatabaseHosts({
