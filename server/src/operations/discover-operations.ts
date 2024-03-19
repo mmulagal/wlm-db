@@ -481,4 +481,59 @@ async function saveDiscoveredParameters(
     ]);
 }
 
-export { getHostAndSqlServerInfo, saveDiscoveredParameters, getHostAndSqlInfoFromPsOutput };
+async function manageSqlServer(accountId: string, credentialsId: string, region: string, instanceId: string) {
+    logger.info('Manage EC2 hosting SQL Server', { accountId, credentialsId, region, instanceId });
+
+    const discoverInfo = await getHostAndSqlServerInfo(accountId, credentialsId, region, 5, undefined, [instanceId]);
+    await validateEc2InstanceManageability(discoverInfo, instanceId);
+    // TODO: copy scripts, add resource to WLMDB tables etc.
+}
+
+async function validateEc2InstanceManageability(discoverInfo: any, ec2InstanceId: string) {
+    logger.debug('Is EC2 instance manageable', discoverInfo);
+
+    try {
+        const { count, items } = discoverInfo;
+
+        if (count <= 0) {
+            throw new Error(
+                'only existing instances in running state, have Microsoft Windows as host operating system, architecture is x86_64, and hosting SQL Server 2016 above can be managed. Ensure valid instance ID is provided'
+            );
+        }
+
+        const { ssmState, sqlServerInstances } = items[0];
+        if (ssmState === ConnectionStatus.NOT_CONNECTED) {
+            throw new Error('no SSM connectivity');
+        }
+
+        if ((sqlServerInstances?.length || 0) <= 0) {
+            throw new Error('no SQL Server instances found');
+        }
+
+        // Current supported configuration is expected to be one SQL Server instance per EC2.
+        // If the EC2 has more than one SQL Server instance, we are considering only the first one.
+        const { windowsAuthentication, sqlServerAuthentication, storage, sqlServerNodes, sqlServerInstance } =
+            sqlServerInstances![0] as SqlServerInstanceInfoType;
+
+        if (windowsAuthentication === false && sqlServerAuthentication === false) {
+            // eslint-disable-next-line quotes
+            throw new Error(`authentication to SQL Server instance isn't possible`);
+        }
+
+        if (!storage || storage.length <= 0 || storage?.some(elem => elem.type !== STORAGE_TYPE.FSXN)) {
+            throw new Error(`SQL Server instance '${sqlServerInstance}' isn't hosted on FSx for ONTAP`);
+        }
+
+        logger.debug(sqlServerNodes);
+        // Validate and error out if
+        // - any of the nodes are down; nodes should be up for copying various scripts.
+        // - instances are already managed
+    } catch (error: any) {
+        throw createError(
+            HttpErrorCodes.VALIDATION_ERROR,
+            `Unable to manage instance '${ec2InstanceId}'. Reason: ${error.message}.`
+        );
+    }
+}
+
+export { getHostAndSqlServerInfo, saveDiscoveredParameters, getHostAndSqlInfoFromPsOutput, manageSqlServer };

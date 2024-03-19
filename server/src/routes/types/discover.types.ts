@@ -49,7 +49,7 @@ const SqlServerInstanceInfo = Type.Object({
         )
     ),
     windowsAuthentication: Type.Boolean({
-        description: 'Is Windows authentication used for SQL Server?'
+        description: 'Is Windows authentication possible for SQL Server?'
     }),
     sqlServerAuthentication: Type.Optional(
         Type.Boolean({
@@ -101,6 +101,8 @@ const DiscoverMsSqlResponseBody = Type.Object({
     )
 });
 
+const ManageMsSqlResponseBody = Type.Object({});
+
 type SqlServerInstanceInfoType = Static<typeof SqlServerInstanceInfo>;
 type DiscoverResponseInfoType = Static<typeof DiscoverResponseInfo>;
 
@@ -127,6 +129,7 @@ const DiscoverInstanceParams = Type.Composite([
 export {
     DiscoverMsSqlQuery,
     DiscoverMsSqlResponseBody,
+    ManageMsSqlResponseBody,
     SqlServerInstanceInfoType,
     DiscoverResponseInfoType,
     DiscoverCredentialsRequestBody,
