@@ -145,7 +145,7 @@ Stop-Service -Name ShellHWDetection
 try {
 
 if(($LogNew -ne "false") -And ($DataNew -ne "false")) {
-if ($Virtualmount -And ($Virtualmount -ne "false")) { 
+if ($Virtualmount -eq "true") { 
 #Mount new ISCSI disks to a folder in selected drive 
 $null = (New-Item -ItemType Directory -Path $datafolder -Force)
 $null = (New-Item -ItemType Directory -Path $logfolder -Force)
@@ -157,14 +157,13 @@ $null = (Get-Partition -DiskNumber ($disklist[1]).Number |  Where-Object Type -e
 $null = (Get-Partition -DiskNumber ($disklist[0]).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
 $null = (Get-Partition -DiskNumber ($disklist[1]).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true) 
 
-
 }
 else {
     $null = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel)
     $null = (New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel)
 } }
 elseif($LogNew -ne "false") {
-    if ($Virtualmount -And ($Virtualmount -ne "false")) { 
+    if ($Virtualmount -eq "true") { 
         $null = (New-Item -ItemType Directory -Path $logfolder -Force)
         $null = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize  | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
         $null = (Get-Partition -DiskNumber ($disklist[0]).Number |  Where-Object Type -eq Basic  | Add-PartitionAccessPath -AccessPath $logfolder)
@@ -173,7 +172,7 @@ elseif($LogNew -ne "false") {
     else {
     $null = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel)
 }} else {
-    if ($Virtualmount -And ($Virtualmount -ne "false")) { 
+    if ($Virtualmount -eq "true") { 
         $null = (New-Item -ItemType Directory -Path $datafolder -Force)
         $null = (New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
         $null =(Get-Partition -DiskNumber ($disklist[1]).Number |  Where-Object Type -eq Basic | Add-PartitionAccessPath -AccessPath $datafolder)
@@ -270,6 +269,4 @@ else{
 $result.Add('Status','Complete')
 $result.Add('Message','Completed preparing iSCSI drives for new SQL database')
 $resultjson = ($result | ConvertTo-Json) 
-$resultjson  
- 
- 
+$resultjson 
