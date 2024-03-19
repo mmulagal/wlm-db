@@ -922,7 +922,7 @@ async function getDatabaseHostSummary(
                 serverMetadata.creationDate = creationDate || '';
             }
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-                if (topologyData.serverInstallationMode === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
+                if (topologyData?.serverInstallationMode === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
                     delete serverMetadata.clusterName;
                     serverMetadata.activeNode = resourceName || '';
                     serverMetadata.nodeNames = [resourceName || ''];
