@@ -9,12 +9,7 @@ import { CommandInvocationStatus, ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
 import { getResourceNameFromTags, sleep } from '../utils/utils';
-import {
-    getSSMConnectionStatus,
-    pollCommandStatus,
-    ssmPutParameters,
-    isSsmParameterForSqlInstanceAvailable
-} from './aws/ssm-operations';
+import { getSSMConnectionStatus, pollCommandStatus, ssmPutParameters, getEc2SqlParameters } from './aws/ssm-operations';
 import { HttpErrorCodes, RESOURCESTYPE, SSM_PARAMETERS_BASE_PATH } from '../utils/consts';
 import { SQL_SERVER_VERSION_TO_EDITION, HOST_AND_SQL_INFO_PS1 } from './workloads/mssql/discover-consts';
 import { sendSSMCommand } from '../lib/aws/ssm';
@@ -261,15 +256,19 @@ async function getHostAndSqlInfoFromPsOutput(
     let api1EndTime;
 
     api1StartTime = performance.now();
-    const response = await pollCommandStatus(credentialsId, region, commandInvocationParam);
-    if (response?.StandardErrorContent) {
-        logger.error('Failed to collect info using SSM. Reason: ', response?.StandardErrorContent);
+    const [ssmResponse, ec2SqlParametersInfo] = await Promise.all([
+        pollCommandStatus(credentialsId, region, commandInvocationParam),
+        getEc2SqlParameters(credentialsId, region, ssmTarget.ec2InstanceId)
+    ]);
+
+    if (ssmResponse?.StandardErrorContent) {
+        logger.error('Failed to collect info using SSM. Reason: ', ssmResponse?.StandardErrorContent);
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Failed to get details from EC2 instance ${ssmTarget.ec2InstanceId}. Reason: ${response?.StandardErrorContent}`
+            `Failed to get details from EC2 instance ${ssmTarget.ec2InstanceId}. Reason: ${ssmResponse?.StandardErrorContent}`
         );
     }
-    if (response.Status === CommandInvocationStatus.TIMED_OUT) {
+    if (ssmResponse.Status === CommandInvocationStatus.TIMED_OUT) {
         logger.error(`SSM command ${commandId} execution  timed out on node ${ssmTarget.ec2InstanceId}`);
     }
 
@@ -283,9 +282,9 @@ async function getHostAndSqlInfoFromPsOutput(
     const ssmTargetSqlServerInstancesInfo: SqlServerInstanceInfoType[] = [];
 
     try {
-        const powerShellScriptOutput = response?.StandardOutputContent || '';
+        const powerShellScriptOutput = ssmResponse?.StandardOutputContent || '';
         if (powerShellScriptOutput.length > 0) {
-            let responseInJson = JSON.parse(response?.StandardOutputContent || '');
+            let responseInJson = JSON.parse(ssmResponse?.StandardOutputContent || '');
             if (!Array.isArray(responseInJson)) {
                 responseInJson = [responseInJson];
             }
@@ -351,11 +350,8 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerNodes = [sqlServerNodes];
                     }
 
-                    const sqlServerAuthentication = await isSsmParameterForSqlInstanceAvailable(
-                        credentialsId,
-                        region,
-                        ssmTarget.ec2InstanceId,
-                        sqlServerInstance
+                    const sqlServerAuthentication = ec2SqlParametersInfo.some(
+                        (elem: { sqlinstancename: string }) => elem.sqlinstancename === sqlServerInstance
                     );
 
                     ssmTargetSqlServerInstancesInfo.push({

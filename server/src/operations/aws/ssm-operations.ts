@@ -224,35 +224,24 @@ async function ssmPutParameters(credentialsId: string, region: string, credentia
     );
 }
 
-async function isSsmParameterForSqlInstanceAvailable(
-    credentialsId: string,
-    region: string,
-    ec2InstanceId: string,
-    sqlServerInstanceName: string
-) {
+async function getEc2SqlParameters(credentialsId: string, region: string, ec2InstanceId: string) {
     logger.info('Get SSM parameter for SQL Server instance:', {
         credentialsId,
         region,
-        ec2InstanceId,
-        sqlServerInstanceName
+        ec2InstanceId
     });
-
-    let status = false;
 
     try {
         const response = await getParameter(credentialsId, region, `/netapp/wlmdb/${ec2InstanceId}`);
         if (response) {
-            const info = JSON.parse(response);
-            const { sql } = info;
-            if (sql.find((elem: { sqlinstancename: string }) => elem.sqlinstancename === sqlServerInstanceName)) {
-                status = true;
-            }
+            const { sql } = JSON.parse(response);
+            return sql;
         }
     } catch (error) {
         logger.error(`Failed to get SQL Server SSM parameter for instance ${ec2InstanceId}. Reason: ${error}`);
     }
 
-    return status;
+    return [];
 }
 
 export {
@@ -262,5 +251,5 @@ export {
     ssmPutParameters,
     pollCommandStatus,
     callSsmExecution,
-    isSsmParameterForSqlInstanceAvailable
+    getEc2SqlParameters
 };
