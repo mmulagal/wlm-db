@@ -9,8 +9,8 @@ import { CommandInvocationStatus, ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
 import { getResourceNameFromTags, sleep } from '../utils/utils';
-import { getSSMConnectionStatus, pollCommandStatus, ssmPutParameters, getEc2SqlParameters } from './aws/ssm-operations';
-import { HttpErrorCodes, RESOURCESTYPE, SSM_PARAMETERS_BASE_PATH } from '../utils/consts';
+import { getEc2SqlParameters, getSSMConnectionStatus, pollCommandStatus, ssmPutParameters } from './aws/ssm-operations';
+import { CloudProviders, HttpErrorCodes, RESOURCESTYPE, SSM_PARAMETERS_BASE_PATH } from '../utils/consts';
 import { SQL_SERVER_VERSION_TO_EDITION, HOST_AND_SQL_INFO_PS1 } from './workloads/mssql/discover-consts';
 import { sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
@@ -25,6 +25,8 @@ import {
 import getLogger from '../utils/logger';
 import { describeFSxFileSystems, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { returnInventorydata } from '../utils/demo-utils/demoDefaultUtils';
+import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
+import { getDatabaseHostSummary } from './database-hosts-operations';
 
 const logger = getLogger();
 
@@ -481,6 +483,54 @@ async function saveDiscoveredParameters(
     ]);
 }
 
+async function fetchUnmanagedHostsInformation(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instancesDetails: { ec2InstanceId: string; fsxnId?: string; ebsVolumeId?: string; fsxwId?: string }[] = []
+) {
+    logger.info('Fetching hosts information:', { accountId, credentialsId, region, instancesDetails });
+
+    // TODO: /v1/credentials/:credentialsId/regions/:region/mssql/discover (API1) fetches instance-storage mapping and returns it, /v1/credentials/:credentialsId/regions/:region/mssql/instances(API2) expects the same combination in request. In the event there is a mismatch, this function may return incorrect data. Add validation for instance-storage mapping
+
+    const resourceDetailsList = instancesDetails.map(({ ec2InstanceId, fsxnId, ebsVolumeId, fsxwId }) => ({
+        id: null,
+        account_id: accountId,
+        resource_id: getMsSqlResourceId(ec2InstanceId),
+        resource_type: RESOURCESTYPE.MSSQL,
+        resource_name: ec2InstanceId,
+        cloud_provider_name: CloudProviders.AWS,
+        co_relation_id: fsxnId || null,
+        cloud_provider_account_id: null,
+        region,
+        credentials_id: credentialsId,
+        storage_type: STORAGE_TYPE.FSXN,
+        metadata: {
+            creationDate: Date.now(),
+            node1InstanceId: ec2InstanceId
+        },
+        ebsVolumeId,
+        fsxwId
+    }));
+
+    const response = await Promise.all(
+        resourceDetailsList.map(async resourceDetail =>
+            getDatabaseHostSummary(
+                accountId,
+                resourceDetail.resource_id,
+                'dbCount,performance,usageEstimation,resourceUtilization',
+                resourceDetail,
+                false // unmanaged host
+            )
+        )
+    );
+
+    return {
+        count: response.length,
+        items: response
+    };
+}
+
 async function manageSqlServer(accountId: string, credentialsId: string, region: string, instanceId: string) {
     logger.info('Manage EC2 hosting SQL Server', { accountId, credentialsId, region, instanceId });
 
@@ -536,4 +586,10 @@ async function validateEc2InstanceManageability(discoverInfo: any, ec2InstanceId
     }
 }
 
-export { getHostAndSqlServerInfo, saveDiscoveredParameters, getHostAndSqlInfoFromPsOutput, manageSqlServer };
+export {
+    getHostAndSqlServerInfo,
+    saveDiscoveredParameters,
+    getHostAndSqlInfoFromPsOutput,
+    fetchUnmanagedHostsInformation,
+    manageSqlServer
+};

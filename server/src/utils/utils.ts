@@ -57,7 +57,7 @@ function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean
         FSxTempDbVolumeSize,
         FSxQuorumVolumeSize,
         FSxStorageCapacity
-    } = calculateFsxStorageCapacity(FSxDataLunSize);
+    } = calculateFsxnStorageCapacity(FSxDataLunSize);
 
     const stacknameSubstring = sqlDeploymentType === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME;
     const netbios =
@@ -96,8 +96,8 @@ function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean
     return params;
 }
 
-function calculateFsxStorageCapacity(fsxDataLunSize: number) {
-    logger.info('Calculate FSX Storage capacity from the database size', { fsxDataLunSize });
+function calculateFsxnStorageCapacity(fsxDataLunSize: number) {
+    logger.info('Calculate FSX Netapp Storage capacity from the database size', { fsxDataLunSize });
 
     const FSxDataLunSizeInMib = fsxDataLunSize * 1024;
 
@@ -396,7 +396,7 @@ export {
     getSnsArn,
     getFsxArn,
     generateHash,
-    calculateFsxStorageCapacity,
+    calculateFsxnStorageCapacity,
     sizeInGigaBytes,
     waitForResolution,
     deployedStackUrl,

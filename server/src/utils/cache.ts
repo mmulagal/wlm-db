@@ -86,7 +86,7 @@ function getCacheByType(type: string) {
 }
 
 function writeToCache(type: string, key: string, data: any, ttl?: number | string) {
-    logger.info('Writing to cache:', { key, data });
+    logger.debug('Writing to cache:', { key, data });
 
     const cache = getCacheByType(type);
 
@@ -98,7 +98,7 @@ function writeToCache(type: string, key: string, data: any, ttl?: number | strin
 }
 
 function readFromCacheByKey(type: string, key: string) {
-    logger.info('Reading from cache by key:', key);
+    logger.debug('Reading from cache by key:', key);
 
     const cache = getCacheByType(type);
 
@@ -106,7 +106,7 @@ function readFromCacheByKey(type: string, key: string) {
 }
 
 function hasCache(type: string, key: string) {
-    logger.info('Has cache', { key });
+    logger.debug('Has cache', { key });
 
     const cache = getCacheByType(type);
 
