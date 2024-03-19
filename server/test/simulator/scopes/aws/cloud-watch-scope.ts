@@ -32,4 +32,33 @@ cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'StorageEfficiencySa
         }
     ]
 });
-//
+
+cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'DeduplicationSavedStorage' }).resolves({
+    Datapoints: [
+        {
+            Timestamp: new Date(),
+            Average: 155104012697.6,
+            Unit: 'Bytes'
+        },
+        {
+            Timestamp: new Date(),
+            Average: 155051607517.86667,
+            Unit: 'Bytes'
+        }
+    ]
+});
+
+cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'StorageCapacityUtilization' }).resolves({
+    Datapoints: [
+        {
+            Timestamp: new Date(),
+            Average: 155104012697.6,
+            Unit: 'Bytes'
+        },
+        {
+            Timestamp: new Date(),
+            Average: 155051607517.86667,
+            Unit: 'Bytes'
+        }
+    ]
+});

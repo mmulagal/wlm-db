@@ -63,7 +63,8 @@ async function calculateFsxnStorageEfficiency(region: string, credentialsId: str
 
     if (storageEfficiencySavingsAverage !== undefined && storageUsedSum !== undefined) {
         const totalLogicalDataStored = storageEfficiencySavingsAverage + storageUsedSum; // includes both the data that's actually using physical storage space (storageUsedSum) and the data that's been saved due to storage efficiency features (storageEfficiencySavingsAverage).
-        const storageEfficiencySavingsPercentage = (storageEfficiencySavingsAverage / totalLogicalDataStored) * 100;
+        const storageEfficiencySavingsPercentage =
+            totalLogicalDataStored > 0 ? (storageEfficiencySavingsAverage / totalLogicalDataStored) * 100 : 0;
 
         return { storageEfficiencySavingsAverage, storageEfficiencySavingsPercentage };
     }
@@ -72,13 +73,10 @@ async function calculateFsxnStorageEfficiency(region: string, credentialsId: str
     throw new Error(errorMessage);
 }
 
-// calculateFsxwStorageEfficiency('ap-southeast-1', 'test', 'fs-042689df35b71395a');
 async function calculateFsxwStorageEfficiency(region: string, credentialsId: string, fileSystemId: string) {
     logger.info('Calculating storage efficiency for FSx for Windows:', { region, credentialsId, fileSystemId });
 
     // https://docs.aws.amazon.com/fsx/latest/WindowsGuide/fsx-windows-metrics.html
-
-    /* To calculate storage efficiency savings as a percentage of all data stored, over a one minute period, divide StorageEfficiencySavings by the sum of StorageEfficiencySavings and the StorageUsed file system metric, using the Sum statistic for StorageUsed. */
 
     const deduplicationSavedStorageAverageParams: GetMetricStatisticsCommandInput = {
         EndTime: new Date(),
@@ -136,22 +134,22 @@ async function calculateFsxwStorageEfficiency(region: string, credentialsId: str
         throw new Error(errorMessage);
     }
     if (deduplicationSavedStorageAverage !== undefined && storageCapacityUtilizationAverage !== undefined) {
-        const totalLogicalDataStored = deduplicationSavedStorageAverage / (storageCapacityUtilizationAverage / 100);
-        /* The storageCapacityUtilizationAverage metric represents the percentage of the total storage capacity that is currently in use. It's a value between 0 and 100.
+        const totalLogicalDataStored = (deduplicationSavedStorageAverage * 100) / storageCapacityUtilizationAverage;
+        /*
 
- When you divide storageCapacityUtilizationAverage by 100, you convert this percentage into a decimal fraction. For example, if storageCapacityUtilizationAverage is 75 (meaning 75%), dividing by 100 gives you 0.75.
+        The storageCapacityUtilizationAverage metric represents the percentage of the total storage capacity that is currently in use. It's a value between 0 and 100. if the data were 100 then the storage capacity utilization is storageCapacityUtilizationAverage. what would be the value if the saved storage is deduplicationSavedStorageAverage ?
 
- Then, when you divide deduplicationSavedStorageAverage by this fraction, you're effectively calculating what the total storage capacity would be if deduplicationSavedStorageAverage represented that percentage of the total.
- For example, if deduplicationSavedStorageAverage is 30GB and storageCapacityUtilizationAverage is 75%, then totalLogicalDataStored would be 40GB, because 30GB is 75% of 40GB. */
+        100 -> storageCapacityUtilizationAverage
+        ?   -> deduplicationSavedStorageAverage
+
+        100 * deduplicationSavedStorageAverage = storageCapacityUtilizationAverage * ?
+        ? = (100 * deduplicationSavedStorageAverage) / storageCapacityUtilizationAverage
+        totalLogicalDataStored = (100 * deduplicationSavedStorageAverage) / storageCapacityUtilizationAverage;
+
+        */
 
         const storageSavingsPercentage =
             totalLogicalDataStored > 0 ? (deduplicationSavedStorageAverage / totalLogicalDataStored) * 100 : 0;
-        logger.info('>>storageSavingsPercentage', {
-            storageCapacityUtilizationAverage,
-            deduplicationSavedStorageAverage,
-            totalLogicalDataStored,
-            storageSavingsPercentage
-        });
         return { deduplicationSavedStorageAverage, storageSavingsPercentage };
     }
     const errorMessage = 'Storage efficiency savings average and used storage sum not found';
