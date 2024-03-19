@@ -101,8 +101,8 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
     if (isEmpty(jobs)) {
         // create 2 new resources and configurations
         logger.info('Creating demo resources');
-        createDemoResources(accountId, 'us-east-1', credentialsId, awsAccountId, 'SQL-Prod-01');
-        createDemoResources(accountId, 'us-east-1', credentialsId, awsAccountId, 'SQL-Dev-01');
+        createDemoResources(accountId, 'us-east-1', credentialsId, awsAccountId, 'SQLServer-Prod-01');
+        createDemoResources(accountId, 'us-east-1', credentialsId, awsAccountId, 'SQLServer-Dev-01');
     }
     if (isEmpty(configs)) {
         logger.info('Creating demo and templates');
