@@ -88,7 +88,7 @@ import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
 // import { handleNotification } from './cloud-manager/notification-operations';
-import { MissingPermission, NetworkViolation } from '../utils/common-types';
+import { MissingPermissionInterface, NetworkViolation } from '../utils/common-types';
 import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
 import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
@@ -96,12 +96,6 @@ import { createDeploymentMockDataInDB, createFileSystemForDemo } from './demo-op
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
-
-interface MissingPermissionInterface {
-    missingStatements: MissingPermission[];
-    blockedByOrganisation: MissingPermission[];
-    blockedByPermissionBoundary: MissingPermission[];
-}
 
 async function formatTemplateParameters(
     networkConfiguration: CFNetworkConfigurationType,
