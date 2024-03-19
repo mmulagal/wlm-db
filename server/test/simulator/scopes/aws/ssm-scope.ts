@@ -9,7 +9,8 @@ import {
     SSMClient,
     GetParametersByPathCommand,
     GetConnectionStatusCommand,
-    PutParameterCommand
+    PutParameterCommand,
+    GetParameterCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
 import { HOST_AND_SQL_INFO_PS1 } from '../../../../src/operations/workloads/mssql/discover-consts';
@@ -18,6 +19,7 @@ import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-inv
 import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
 import getConnectionStatusResponse from '../../responses/aws/ssm-connection-status.json';
 import putParameterResponse from '../../responses/aws/ssm-put-parameter.json';
+import getParameerResponse from '../../responses/aws/ssm-get-parameter.json';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -401,3 +403,4 @@ ssmMock
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);
+ssmMock.on(GetParameterCommand).resolves(getParameerResponse);

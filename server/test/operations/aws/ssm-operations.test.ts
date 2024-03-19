@@ -2,7 +2,8 @@ import { faker } from '@faker-js/faker';
 import {
     executeSSMDocument,
     getFSxOntapRegionsList,
-    ssmPutParameters
+    ssmPutParameters,
+    getEc2SqlParameters
 } from '../../../src/operations/aws/ssm-operations';
 import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
@@ -13,6 +14,7 @@ import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import { SSMParamterObject } from '../../../src/utils/common-types';
+import getParameterResponse from '../../simulator/responses/aws/ssm-get-parameter.json';
 
 const credentialsId = `${faker.string.alpha(20)}`;
 
@@ -178,5 +180,12 @@ describe('executeSsmDocument', () => {
 
         const response = await ssmPutParameters(credentialsId, 'us-east-1', params);
         expect(response).toBeUndefined();
+    });
+
+    it('Get EC2 SQL parameters from SSM parameter store', async () => {
+        const response1 = await getEc2SqlParameters(credentialsId, 'us-east-1', 'i-test-ec2');
+        const response2 = JSON.parse(getParameterResponse.Parameter.Value);
+
+        expect(response1).toEqual(response2.sql);
     });
 });
