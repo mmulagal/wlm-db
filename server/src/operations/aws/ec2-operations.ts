@@ -453,7 +453,6 @@ async function getVpcEndpoints(credentialsId: string, region: string, vpcId: str
                     `com.amazonaws.${region}.ssm`,
                     `com.amazonaws.${region}.ssmmessages`,
                     `com.amazonaws.${region}.ec2messages`,
-                    `com.amazonaws.${region}.monitoring`,
                     `com.amazonaws.${region}.sqs`,
                     `com.amazonaws.${region}.logs`,
                     `com.amazonaws.${region}.fsx`,
@@ -483,16 +482,30 @@ async function getVpcSecurityGroups(credentialsId: string, region: string, vpcId
     return { securityGroups };
 }
 
-async function getServicesWithNoEndpoint(credentialsId: string, region: string, vpcId: string) {
-    logger.info('Get services with no endpoint ', credentialsId, region, vpcId);
+async function getServicesWithNoEndpoint(
+    credentialsId: string,
+    region: string,
+    vpcId: string,
+    routeTableIds: string[]
+) {
+    logger.info('Get services with no endpoint ', credentialsId, region, vpcId, routeTableIds);
 
     const endpoints = await getVpcEndpoints(credentialsId, region, vpcId);
+
+    // If s3 gateway exists, then find if all routetables are associated with the endpoint. If not create new s3 endpoint
+    const routeTableIdsInS3Endpoint = endpoints!
+        .filter(endpoint => endpoint.ServiceName?.includes('s3'))
+        .flatMap(endpoint => endpoint.RouteTableIds);
+    const missingRoutesInS3 = routeTableIds!.filter(rt => routeTableIdsInS3Endpoint.indexOf(rt) < 0);
+
     const availableEndpoints = !isEmpty(endpoints)
         ? [...new Set(endpoints!.map(({ ServiceName }: VpcEndpoint) => ServiceName?.split('.')[3]))]
         : [];
-    const servicesWithNoEndpoint = ENDPOINTS_DEPLOYMENT.filter(endpoint => !availableEndpoints.includes(endpoint));
+    const servicesWithNoEndpoint = ENDPOINTS_DEPLOYMENT.filter(
+        endpoint => !availableEndpoints.includes(endpoint) || (endpoint.includes('s3') && missingRoutesInS3.length > 0)
+    );
 
-    return servicesWithNoEndpoint;
+    return { servicesWithNoEndpoint, missingRoutesInS3 };
 }
 
 async function enableVpcDnsAttributes(credentialsId: string, region: string, vpcId: string) {
