@@ -1,4 +1,13 @@
-import { Button, DsFlashingDotsLoader, Spinner, Table, TableTopBar, TooltipInfo, Typography, useTable } from '@netapp/design-system';
+import {
+    Button,
+    DsFlashingDotsLoader,
+    Spinner,
+    Table,
+    TableTopBar,
+    TooltipInfo,
+    Typography,
+    useTable
+} from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './UnmanagedHosts.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
@@ -186,8 +195,12 @@ const UnmanagedHosts = () => {
             width: '200px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find((item: any) => item.type === DETECT_HOST_VAR.FSXN);
-                const hasEbs = rowData?.sqlServerInstances?.[0]?.storage?.find((item: any) => item.type === DETECT_HOST_VAR.EBS);
+                const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find(
+                    (item: any) => item.type === DETECT_HOST_VAR.FSXN
+                );
+                const hasEbs = rowData?.sqlServerInstances?.[0]?.storage?.find(
+                    (item: any) => item.type === DETECT_HOST_VAR.EBS
+                );
                 return hasEbs && hasFsx
                     ? `${GENERAL.FSX_FOR_ONTAP}, ${GENERAL.EBS}`
                     : hasEbs
@@ -337,7 +350,7 @@ const UnmanagedHosts = () => {
                         {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
                         {!cellData && !rowData?.loading && notAvailable()}
                     </>
-                )
+                );
             }
         },
         {
@@ -355,16 +368,18 @@ const UnmanagedHosts = () => {
                 });
                 return (
                     <>
-                        {
-                            instanceNames.length > 0 ? (
-                                <div className={styles.colText}>
-                                    {instanceIds.length > 0 && <TooltipInfo onVisibleChange={function noRefCheck() {}}>
+                        {instanceNames.length > 0 ? (
+                            <div className={styles.colText}>
+                                {instanceIds.length > 0 && (
+                                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>
                                         ID: {instanceIds.join(',')}
-                                    </TooltipInfo>}
-                                    <Typography variant="Regular_14">{instanceNames.join(',')}</Typography>
-                                </div>
-                            ) : rowData?.ec2InstanceName || notAvailable()
-                        }
+                                    </TooltipInfo>
+                                )}
+                                <Typography variant="Regular_14">{instanceNames.join(',')}</Typography>
+                            </div>
+                        ) : (
+                            rowData?.ec2InstanceName || notAvailable()
+                        )}
                     </>
                 );
             }
@@ -438,7 +453,7 @@ const UnmanagedHosts = () => {
                         {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
                         {!cellData && !rowData?.loading && notAvailable()}
                     </>
-                )
+                );
             }
         }
     ];
