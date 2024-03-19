@@ -36,8 +36,14 @@ const TaskTable = ({ taskList = [] }: any) => {
                                 {task.status === JOB_MONITORING_STATUS.FAILED && (
                                     <Popover
                                         popoverClass={CommonStyles['popover']}
-                                        children={<Typography variant="Regular_14">{task?.error}</Typography>}
+                                        children={
+                                            <Typography variant="Regular_14" style={{ wordBreak: 'break-word' }}>
+                                                {task?.error}
+                                            </Typography>
+                                        }
                                         trigger="hover"
+                                        delayHide={200}
+                                        interactive={true}
                                         container={<ErrorIcon className={styles.statusIcon} />}
                                     />
                                 )}
