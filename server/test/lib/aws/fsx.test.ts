@@ -17,7 +17,7 @@ import {
     describeFSxVolumes,
     describeFSxStorageVirtualMachines,
     describeFSxBackups,
-    describeFSxN,
+    describeFSx,
     listResourceTags,
     createTag
 } from '../../../src/lib/aws/fsx';
@@ -54,7 +54,7 @@ describe('Testcases for Amazon FSx resources', () => {
     });
 
     it('Describe a FSxN filesystem', async () => {
-        const response = await describeFSxN(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, {
+        const response = await describeFSx(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, {
             FileSystemIds: [FSX_FILESYSTEM_ID]
         });
 

@@ -12,7 +12,8 @@ import {
     createTag,
     describeEndpoints,
     describeInstanceTypeOfferings,
-    modifyVpcAttributes
+    modifyVpcAttributes,
+    describeVolumes
 } from '../../../src/lib/aws/ec2';
 import { SQL_AMI_NAMES, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
@@ -35,6 +36,8 @@ import ec2Instances from '../../simulator/responses/aws/describe-instance.json';
 import vpcEndpoints from '../../simulator/responses/aws/describe-endpoints.json';
 import instanceTypeOfferings from '../../simulator/responses/aws/describe-instancetype-offerings.json';
 import modifyVpcAttributesResponse from '../../simulator/responses/aws/modify-vpc-attributes.json';
+import describeVolumesResponse from '../../simulator/responses/aws/describe-volumes.json';
+
 import { DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
 
 const REGION = DEFAULT_AWS_REGION;
@@ -163,5 +166,11 @@ describe('EC2 Lib', () => {
         });
 
         expect(response).toEqual(modifyVpcAttributesResponse);
+    });
+
+    it('Describe volumes response', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const response = await describeVolumes(credentialsId, DEFAULT_AWS_REGION, { VolumeIds: ['test-volume-id'] });
+        expect(response).toEqual(describeVolumesResponse);
     });
 });
