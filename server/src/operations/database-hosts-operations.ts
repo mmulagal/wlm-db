@@ -684,7 +684,7 @@ async function getDatabaseHostsSummary(
 
     const shouldQueryTopology = fieldsValues?.includes(DatabaseHostsQueryFields.TOPOLOGY);
 
-    const shouldQueryDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT);
+    const shouldQueryDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLocaleLowerCase());
 
     const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
@@ -809,7 +809,7 @@ async function getDatabaseHostSummary(
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
 
-    const shouldQueryDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT);
+    const shouldQueryDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLocaleLowerCase());
     const shouldQueryTopology = fieldsValues?.includes(DatabaseHostsQueryFields.TOPOLOGY);
     const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);

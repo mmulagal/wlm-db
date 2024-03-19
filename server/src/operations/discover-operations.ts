@@ -491,6 +491,8 @@ async function fetchUnmanagedHostsInformation(
 ) {
     logger.info('Fetching hosts information:', { accountId, credentialsId, region, instancesDetails });
 
+    // TODO: /v1/credentials/:credentialsId/regions/:region/mssql/discover (API1) fetches instance-storage mapping and returns it, /v1/credentials/:credentialsId/regions/:region/mssql/instances(API2) expects the same combination in request. In the event there is a mismatch, this function may return incorrect data. Add validation for instance-storage mapping
+
     const resourceDetailsList = instancesDetails.map(({ ec2InstanceId, fsxnId, ebsVolumeId, fsxwId }) => ({
         id: null,
         account_id: accountId,
