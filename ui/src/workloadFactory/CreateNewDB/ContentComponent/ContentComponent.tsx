@@ -8,10 +8,15 @@ import FileSettingsMode from './FileSettings/FileSettingsMode/FileSettingsMode';
 import FileNames from './FileSettings/FileNames/FileNames';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
-import { useGetDriveInfoQuery } from '../../../utils/apiService';
+import { useGetCollationListQuery, useGetDriveInfoQuery } from '../../../utils/apiService';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { setDriveInfoList, setDriveInfoListLoading } from '../../../store/workloadFactory/createNewDBSlice';
+import {
+    setCollationList,
+    setCollationListLoading,
+    setDriveInfoList,
+    setDriveInfoListLoading
+} from '../../../store/workloadFactory/createNewDBSlice';
 import Collation from './DatabaseInformation/Collation/Collation';
 
 const ContentComponent = () => {
@@ -27,10 +32,21 @@ const ContentComponent = () => {
         id: resourceId
     });
 
+    const { data: collationList, isFetching: collationListLoading } = useGetCollationListQuery({
+        credentialId: selectedCredId?.data?.credentialsId,
+        region: selectedRegionCode?.data?.regionCode,
+        id: resourceId
+    });
+
     useEffect(() => {
         dispatch(setDriveInfoList(driveInfoList));
         dispatch(setDriveInfoListLoading(driveInfoListLoading));
     }, [driveInfoList, driveInfoListLoading]);
+
+    useEffect(() => {
+        dispatch(setCollationList(collationList));
+        dispatch(setCollationListLoading(collationListLoading));
+    }, [collationList, collationListLoading]);
 
     return (
         <div className={`${styles.contentComponent} ${CommonStyles['accordion-group']}`}>

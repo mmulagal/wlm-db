@@ -8,7 +8,8 @@ import {
     CreateDatabseRequestBody,
     DatabasesCreateResponse,
     CreateDatabaseParams,
-    DriveInfoResponseBody
+    DriveInfoResponseBody,
+    CollationInfoResponseBody
 } from '../types/database-hosts.types';
 import { CredentialsIdParams } from '../types/generic.types';
 
@@ -76,10 +77,21 @@ const GetDriveInfoSchema = {
     }
 };
 
+const GetCollationDetailsSchema = {
+    ...databaseHostsRequest,
+    summary: 'Get database host collation details',
+    description: 'Fetch collation details about the database host',
+    params: DatabaseHostSummaryParams,
+    response: {
+        200: CollationInfoResponseBody
+    }
+};
+
 export {
     DatabaseHostsSummarySchema,
     DatabaseHostDetailsSchema,
     DatabasesListSchema,
     GetDriveInfoSchema,
-    DatabasesCreateSchema
+    DatabasesCreateSchema,
+    GetCollationDetailsSchema
 };

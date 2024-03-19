@@ -6,7 +6,8 @@ import {
     getCommandInvocation,
     describeFSxOntapRegions,
     getConnectionStatus,
-    putParameter
+    putParameter,
+    getParameter
 } from '../../../src/lib/aws/ssm';
 import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 import ssmCommandOutput from '../../simulator/responses/aws/ssm-sendcommands-response.json';
@@ -20,6 +21,7 @@ import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import putParameterResponse from '../../simulator/responses/aws/ssm-put-parameter.json';
+import getParameterResponse from '../../simulator/responses/aws/ssm-get-parameter.json';
 
 const credentialsId = `${faker.string.alpha(20)}`;
 
@@ -61,5 +63,10 @@ describe('sendSSMCommand', () => {
 
         const response = await putParameter(credentialsId, 'us-east-1', params);
         expect(response).toEqual(putParameterResponse);
+    });
+
+    it('Get parameters from SSM parameter store', async () => {
+        const response = await getParameter(credentialsId, 'us-east-1', '/netapp/wlmdb/i-test-ec2');
+        expect(response).toEqual(getParameterResponse.Parameter.Value);
     });
 });

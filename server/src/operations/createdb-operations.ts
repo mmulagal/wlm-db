@@ -3,7 +3,7 @@ import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import getLogger from '../utils/logger';
-import { GET_DEFAULT_DRIVES, GET_DRIVE_INFO } from './workloads/mssql/ssm-script-utils';
+import { GET_DEFAULT_DRIVES, GET_DRIVE_INFO, GET_DEFAULT_COLLATION } from './workloads/mssql/ssm-script-utils';
 import { checkDatabaseExists, getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { convertGiBToBytes, sleep, sqlResponseParsing } from '../utils/utils';
 import {
@@ -30,6 +30,7 @@ import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
 import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
+import { MS_SQL_2016, MS_SQL_2022 } from './workloads/mssql/createdb-collations';
 
 const logger = getLogger();
 
@@ -297,7 +298,8 @@ async function deployDatabase(
     region: string,
     databaseName: string,
     dataFileConfig: FileConfigType,
-    logFileConfig: FileConfigType
+    logFileConfig: FileConfigType,
+    collation: string
 ): Promise<DatabaseCreateResponseType> {
     logger.info('Deploy new database', {
         accountId,
@@ -306,7 +308,8 @@ async function deployDatabase(
         region,
         databaseName,
         dataFileConfig,
-        logFileConfig
+        logFileConfig,
+        collation
     });
 
     const {
@@ -365,6 +368,7 @@ async function deployDatabase(
         databaseName,
         dataFileConfig,
         logFileConfig,
+        collation,
         fileSystemId,
         isClustered,
         sqlServerName,
@@ -384,6 +388,7 @@ async function invokeSSMForDatabaseDeployment(
     databaseName: string,
     dataFileConfig: FileConfigType,
     logFileConfig: FileConfigType,
+    collation: string,
     fileSystemId: string | null,
     isClustered: string,
     sqlServerName: string | null,
@@ -401,6 +406,7 @@ async function invokeSSMForDatabaseDeployment(
         databaseName,
         dataFileConfig,
         logFileConfig,
+        collation,
         node1InstanceId,
         node2InstanceId,
         fsxSvmId,
@@ -448,7 +454,8 @@ async function invokeSSMForDatabaseDeployment(
             isClustered,
             sqlServerName as string,
             parentJobId,
-            activeNodeInstanceId as string
+            activeNodeInstanceId as string,
+            collation
         );
 
         const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
@@ -475,7 +482,8 @@ async function invokeSSMForDatabaseDeployment(
                 sqlServerName,
                 databaseName,
                 dataDrivePath,
-                logDrivePath
+                logDrivePath,
+                collation
             );
             await updateJobDetails(accountId, credentialsId, region, parentJobId, {
                 status: JOBSTATUS.COMPLETED,
@@ -542,6 +550,7 @@ async function invokeSSMForDatabaseDeployment(
                 databaseName,
                 dataDrivePath,
                 logDrivePath,
+                collation,
                 iGroup,
                 fsxDataVolumeName,
                 fsxLogVolumeName
@@ -609,6 +618,7 @@ async function createDatabase(
     databaseName: string,
     dataDrivePath: string,
     logDrivePath: string,
+    collation: string,
     iGroup?: string,
     fsxDataVolumeName?: string,
     fsxLogVolumeName?: string
@@ -624,6 +634,7 @@ async function createDatabase(
         databaseName,
         dataDrivePath,
         logDrivePath,
+        collation,
         iGroup,
         fsxDataVolumeName,
         fsxLogVolumeName
@@ -636,7 +647,7 @@ async function createDatabase(
         ];
     } else {
         createDatabaseCommand = [
-            `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath}`
+            `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath} -Collation ${collation}`
         ];
     }
 
@@ -1005,7 +1016,8 @@ async function validateParams(
     isClustered: string,
     sqlServerName: string,
     parentJobId: string,
-    activeNodeInstanceId: string
+    activeNodeInstanceId: string,
+    collation: string
 ) {
     logger.info('validating parameters for database user creation', {
         accountId,
@@ -1017,7 +1029,8 @@ async function validateParams(
         logFileConfig,
         fileSystemId,
         sqlServerName,
-        parentJobId
+        parentJobId,
+        collation
     });
 
     const {
@@ -1057,6 +1070,14 @@ async function validateParams(
         }
 
         await checkDatabaseExists(accountId, credentialsId, region, databaseHostId, databaseName, activeNodeInstanceId);
+
+        const { collationList } = await getCollationDetails(accountId, databaseHostId, credentialsId, region);
+
+        const collationExists = collationList?.some(item => item?.name?.toLowerCase() === collation.toLowerCase());
+
+        if (!collationExists) {
+            throw createError(412, `Selected collation ${collation} is not available`);
+        }
 
         const { existingDriveInfo, availableDriveLetters } = await getDriveInfo(
             accountId,
@@ -1196,4 +1217,120 @@ async function checkDriveExists(
     return true;
 }
 
-export { deployDatabase, getDriveInfo, createDatabase, newDBInitialization, configureLuns, cleanUpDatabaseDeployment };
+async function getCollationDetails(accountId: string, databaseHostId: string, credentialsId: string, region: string) {
+    logger.info('Getting collation details from the database host', {
+        accountId,
+        databaseHostId,
+        credentialsId,
+        region
+    });
+
+    try {
+        const {
+            items: [resourceDetail]
+        } = await getResources(accountId, databaseHostId, credentialsId, region, RESOURCESTYPE.MSSQL);
+
+        if (isEmpty(resourceDetail)) {
+            const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+        }
+
+        const { metadata } = resourceDetail;
+        const { node1InstanceId, node2InstanceId, sqlDeploymentType } = metadata as unknown as Metadata;
+
+        // Check SSM Connection status
+        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await getActiveSqlNode(
+            credentialsId,
+            region,
+            node1InstanceId,
+            node2InstanceId
+        );
+
+        if (!isSSMConnected && activeNodeInstanceId === undefined) {
+            const errorMessage = `Unable to get collation details for host ${databaseHostId} in account ${accountId} due to SSM connection issues.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
+
+        if (sqlDeploymentType === 'FCI' && standbyNodeInstanceId) {
+            const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId!);
+            if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
+                const errorMessage = `Unable to connect to node to get collation details for host ${databaseHostId} in account ${accountId}`;
+                logger.error(errorMessage);
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            }
+        }
+
+        const { defaultCollation, mssqlVersion } = await getDefaultCollationAndVersion(
+            credentialsId,
+            region,
+            activeNodeInstanceId as string
+        );
+
+        // This regular expression matches four digits in a row, which is the pattern for a year.
+        const regex = /\b\d{4}\b/;
+
+        const [match] = mssqlVersion.match(regex);
+        switch (match) {
+            case '2016':
+            case '2017':
+                return {
+                    collationList: MS_SQL_2016,
+                    defaultCollation
+                };
+            case '2019':
+            case '2022':
+                return {
+                    collationList: MS_SQL_2022,
+                    defaultCollation
+                };
+            default:
+                return {
+                    collationList: MS_SQL_2022,
+                    defaultCollation
+                };
+        }
+    } catch (error: any) {
+        const errorMessage = `Unable to get collation information. ${error?.message}.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+}
+
+async function getDefaultCollationAndVersion(
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string,
+    executionTimeout?: string
+) {
+    logger.info('Getting MSSQL default collation', { credentialsId, region, activeNodeInstanceId });
+    const defaultCollationCommand = [GET_DEFAULT_COLLATION];
+
+    const defaultCollationResponse = await callSsmExecution(
+        credentialsId,
+        region,
+        defaultCollationCommand,
+        activeNodeInstanceId,
+        undefined,
+        false,
+        executionTimeout
+    );
+
+    const [defaultCollation, mssqlVersion] = defaultCollationResponse
+        ? sqlResponseParsing(defaultCollationResponse)
+        : [];
+
+    logger.debug('MSSQL default collation response', { defaultCollation, mssqlVersion });
+    return { defaultCollation, mssqlVersion };
+}
+
+export {
+    deployDatabase,
+    getDriveInfo,
+    createDatabase,
+    newDBInitialization,
+    configureLuns,
+    cleanUpDatabaseDeployment,
+    getCollationDetails
+};

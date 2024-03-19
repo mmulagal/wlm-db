@@ -49,8 +49,14 @@ const SqlServerInstanceInfo = Type.Object({
         )
     ),
     windowsAuthentication: Type.Boolean({
-        description: 'Is Windows Authentication used for SQL Server?'
+        description: 'Is Windows authentication used for SQL Server?'
     }),
+    sqlServerAuthentication: Type.Optional(
+        Type.Boolean({
+            description: 'Is SQL Server authentication possible for SQL Server instnace?',
+            default: false
+        })
+    ),
     storage: Type.Optional(
         Type.Array(
             Type.Object({
@@ -118,6 +124,31 @@ const DiscoverInstanceParams = Type.Composite([
     })
 ]);
 
+const MsSqlInstancesRequestBody = Type.Object({
+    instancesDetails: Type.Array(
+        Type.Object({
+            ec2InstanceId: Type.String({
+                description: 'Ec2 instance ID associated with the MS SQL Server instance.'
+            }),
+            fsxnId: Type.Optional(
+                Type.String({
+                    description: 'FSx for NetApp ONTAP FileSystem ID associated with the MS SQL Server instance.'
+                })
+            ),
+            ebsVolumeId: Type.Optional(
+                Type.String({
+                    description: 'EBS volume ID associated with the MS SQL Server instance.'
+                })
+            ),
+            fsxwId: Type.Optional(
+                Type.String({
+                    description: 'FSx for Windows FileSystem ID associated with the MS SQL Server instance.'
+                })
+            )
+        })
+    )
+});
+
 export {
     DiscoverMsSqlQuery,
     DiscoverMsSqlResponseBody,
@@ -125,5 +156,6 @@ export {
     DiscoverResponseInfoType,
     DiscoverCredentialsRequestBody,
     DiscoverInstanceParams,
-    DiscoverCredentialsType
+    DiscoverCredentialsType,
+    MsSqlInstancesRequestBody
 };

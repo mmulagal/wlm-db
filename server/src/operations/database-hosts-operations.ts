@@ -1,4 +1,4 @@
-import { resource, STORAGE_TYPE } from '@prisma/client';
+import { STORAGE_TYPE } from '@prisma/client';
 import { DescribeInstancesCommandOutput, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
@@ -12,11 +12,11 @@ import {
     UsageCostResponseType,
     DatabasesListResponseType
 } from '../routes/types/database-hosts.types';
-import { describeInstance, describeSubnets, describeVpc, getAmis } from '../lib/aws/ec2';
-import { describeFSxN } from '../lib/aws/fsx';
+import { describeInstance, describeSubnets, describeVolumes, describeVpc, getAmis } from '../lib/aws/ec2';
+import { describeFSx } from '../lib/aws/fsx';
 import { PricingServiceRequestType, PricingServiceResponseType } from '../routes/types/pricing.types';
 
-import calculatePrice from './aws/pricing-operations';
+import { calculatePrice } from './aws/pricing-operations';
 import {
     DatabaseHostsQueryFields,
     HttpErrorCodes,
@@ -42,12 +42,12 @@ import {
     getServerIOLatency,
     getNativeSQLProtection,
     getDatabasesCount,
-    getServerSummary,
-    getResourceUtilisation,
     getPerformanceMetrics,
     getDataBasesSummary,
     getNativeSQLBackedupDatabases,
-    getActiveSqlNode
+    getActiveSqlNode,
+    getServerDetails,
+    getResourceUtilisationDetails
 } from './workloads/mssql/mssql-operations';
 import {
     getStorageDataUsingSSM,
@@ -99,13 +99,21 @@ type EstimationFSxType = {
     throughput: number;
     iops: number;
     deploymentOption: string;
+    storageType: string;
+};
+
+type EstimationEbsType = {
+    size: number;
+    throughput: number;
+    iops: number;
+    volumeType: string;
 };
 
 async function getTopology(
     accountId: string,
     region: string,
     resourceId: string,
-    resourceData: resource,
+    resourceData: ResourceDetails,
     activeNodeInstanceId: string,
     standbyNodeInstanceId?: string
 ): Promise<TopologyResponseType> {
@@ -159,7 +167,7 @@ async function getTopology(
         let vpcCidr: string | undefined;
 
         try {
-            const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
+            const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId!] });
             vpcId = fsxInfo?.FileSystems?.[0].VpcId;
             fileSystemName = fsxInfo?.FileSystems?.[0].Tags?.reduce(
                 (a = '', tag) => (tag.Key === 'Name' ? tag.Value : a),
@@ -386,13 +394,24 @@ async function getProtectionStatus(
     }
 }
 
-async function getBillingOrPriceEstimation(resourceDetail: ResourceDetails, activeNodeInstanceId?: string) {
-    logger.info('Get AWS resources billing or cost data:', { resourceDetail, activeNodeInstanceId });
-    const promises = [
-        getBilling(resourceDetail).catch(error => {
-            logger.error('Failed to get billing data for resource: :', JSON.stringify(error));
-        })
-    ];
+async function getBillingOrPriceEstimation(
+    resourceDetail: ResourceDetails,
+    activeNodeInstanceId?: string,
+    isManagedResource?: boolean
+) {
+    logger.info('Get AWS resources billing or cost data:', {
+        resourceDetail,
+        activeNodeInstanceId,
+        isManagedResource
+    });
+    const promises = [];
+    if (isManagedResource) {
+        promises.push(
+            getBilling(resourceDetail).catch(error => {
+                logger.error('Failed to get billing data for resource: :', JSON.stringify(error));
+            })
+        );
+    }
     if (activeNodeInstanceId) {
         promises.push(
             getUsageEstimationData(resourceDetail, activeNodeInstanceId).catch(error => {
@@ -464,13 +483,31 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
     logger.info('Get AWS resources estimation data:', { resourceDetail, activeNodeInstanceId });
 
     try {
-        const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
+        const {
+            region,
+            co_relation_id: fsxnId,
+            credentials_id: credentialsId,
+            metadata,
+            ebsVolumeId,
+            fsxwId
+        } = resourceDetail;
         const { sqlDeploymentType } = metadata as unknown as Metadata;
 
-        const [ec2ResourceInfo, fsxResourceInfo] = await Promise.all([
-            getEc2ResourceInfo(credentialsId, region!, activeNodeInstanceId),
-            getFsxResourceInfo(credentialsId, region!, fileSystemId!)
+        if (!region) {
+            throw new Error('Unable to fetch usage estimation data as region is not available');
+        }
+
+        const [ec2Info, fsxnInfo, ebsInfo, fsxwInfo] = await Promise.all([
+            getEc2ResourceInfo(credentialsId, region, activeNodeInstanceId),
+            ...(fsxnId ? [getFsxResourceInfo(credentialsId, region, fsxnId!)] : [Promise.resolve()]),
+            ...(ebsVolumeId ? [getEbsResourceInfo(credentialsId, region, ebsVolumeId!)] : [Promise.resolve()]),
+            ...(fsxwId ? [getFsxResourceInfo(credentialsId, region, fsxwId!)] : [Promise.resolve()])
         ]);
+
+        const ec2ResourceInfo = ec2Info as EstimationEc2Type;
+        const fsxnResourceInfo = fsxnInfo as EstimationFSxType;
+        const ebsResourceInfo = ebsInfo as EstimationEbsType;
+        const fsxwResourceInfo = fsxwInfo as EstimationFSxType;
 
         const pricingRequest: PricingServiceRequestType = {
             compute: {
@@ -479,27 +516,54 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
                 sqlDeploymentMode: sqlDeploymentType?.toLowerCase() === FCI ? FCI : STANDALONE,
                 sqlSoftwareType: ec2ResourceInfo.sqlSoftwareType
             },
-            storage: {
-                regionCode: region!,
-                storageCapacity: fsxResourceInfo.storageCapacity,
-                throughput: fsxResourceInfo.throughput,
-                iops: fsxResourceInfo.iops,
-                deploymentOption: fsxResourceInfo.deploymentOption,
-                diskSize: 0 // As we are calculating post deployment cost usage, we don't need disk size, we can use storageCapacity instead.
-            },
+            ...(fsxnResourceInfo && {
+                fsxnStorage: {
+                    regionCode: region!,
+                    storageCapacity: fsxnResourceInfo.storageCapacity,
+                    throughput: fsxnResourceInfo.throughput,
+                    iops: fsxnResourceInfo.iops,
+                    deploymentOption: fsxnResourceInfo.deploymentOption,
+                    diskSize: 0 // As we are calculating post deployment cost usage, we don't need disk size, we can use storageCapacity instead.
+                }
+            }),
+            ...(ebsResourceInfo && {
+                ebsStorage: {
+                    regionCode: region!,
+                    size: ebsResourceInfo.size,
+                    throughput: ebsResourceInfo.throughput,
+                    iops: ebsResourceInfo.iops,
+                    volumeType: ebsResourceInfo.volumeType
+                }
+            }),
             vpc: {
                 regionCode: region!
-            }
+            },
+            ...(fsxwResourceInfo && {
+                fsxwStorage: {
+                    regionCode: region!,
+                    storageCapacity: fsxwResourceInfo.storageCapacity,
+                    throughput: fsxwResourceInfo.throughput,
+                    iops: fsxwResourceInfo.iops,
+                    deploymentOption: fsxwResourceInfo.deploymentOption,
+                    storageType: fsxnResourceInfo.storageType,
+                    diskSize: 0 // As we are calculating post deployment cost usage, we don't need disk size, we can use storageCapacity instead.
+                }
+            })
         };
 
         const pricingResponse: PricingServiceResponseType = await calculatePrice(
             pricingRequest.compute,
-            pricingRequest.storage,
-            pricingRequest.vpc
+            pricingRequest.fsxnStorage,
+            pricingRequest.vpc,
+            pricingRequest.ebsStorage,
+            pricingRequest.fsxwStorage
         );
         return {
             compute: pricingResponse?.compute || 0,
-            storage: (pricingResponse?.storage?.capacity || 0) + (pricingResponse?.storage?.throughput || 0),
+            storage:
+                (pricingResponse?.storage?.capacityCost || 0) + (pricingResponse?.storage?.operationalCost || 0) ||
+                pricingResponse.ebsStorage?.ebsStorageCost ||
+                0,
             connectivity: pricingResponse?.vpc || 0,
             others: 0, // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
             estimationType: PRICING
@@ -546,15 +610,38 @@ async function getFsxResourceInfo(
 ): Promise<EstimationFSxType> {
     logger.info('Getting FSxN resource info:', { credentialsId, region, filesystemId });
 
-    const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [filesystemId] });
+    const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [filesystemId] });
     logger.info('Estimation info for FSxN:', fsxInfo);
 
-    const storageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity || 0;
-    const throughput = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
-    const iops = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DiskIopsConfiguration?.Iops;
-    const deploymentOption = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DeploymentType;
+    const [{ StorageCapacity, OntapConfiguration, StorageType }] = fsxInfo?.FileSystems || [];
+    const storageCapacity = StorageCapacity || 0;
+    const throughput = OntapConfiguration?.ThroughputCapacity;
+    const iops = OntapConfiguration?.DiskIopsConfiguration?.Iops;
+    const deploymentOption = OntapConfiguration?.DeploymentType;
 
-    return { storageCapacity, throughput: throughput!, iops: iops!, deploymentOption: deploymentOption! };
+    return {
+        storageCapacity,
+        throughput: throughput!,
+        iops: iops!,
+        deploymentOption: deploymentOption!,
+        storageType: StorageType!
+    };
+}
+
+async function getEbsResourceInfo(
+    credentialsId: string,
+    region: string,
+    ebsVolumeId: string
+): Promise<EstimationEbsType> {
+    logger.info('Getting EBS resource info:', { credentialsId, region, ebsVolumeId });
+
+    const volumes = await describeVolumes(credentialsId, region, { VolumeIds: [ebsVolumeId] });
+    if (!volumes.Volumes || volumes.Volumes.length === 0) {
+        throw new Error(`Volume ${ebsVolumeId} not found`);
+    }
+    const [volume] = volumes.Volumes;
+    const { Size: size, VolumeType: volumeType, Iops: iops, Throughput: throughput } = volume;
+    return { size: size!, throughput: throughput!, iops: iops!, volumeType: volumeType! };
 }
 
 async function getDatabaseHostsSummary(
@@ -595,6 +682,10 @@ async function getDatabaseHostsSummary(
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
 
+    const shouldQueryTopology = fieldsValues?.includes(DatabaseHostsQueryFields.TOPOLOGY);
+
+    const shouldQueryDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLocaleLowerCase());
+
     const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
@@ -625,17 +716,21 @@ async function getDatabaseHostsSummary(
                 const [dbCount, topologyData, performanceData, storageData, protectionData, usageEstimationData] =
                     await Promise.all(
                         [
-                            ...(isSSMConnected && activeNodeInstanceId
+                            ...(isSSMConnected && activeNodeInstanceId && shouldQueryDbCount
                                 ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId)]
                                 : [Promise.resolve()]),
-                            getTopology(
-                                accountId,
-                                region!,
-                                resourceId,
-                                resourceDetail,
-                                activeNodeInstanceId!,
-                                standbyNodeInstanceId
-                            ),
+                            ...(shouldQueryTopology
+                                ? [
+                                      getTopology(
+                                          accountId,
+                                          region!,
+                                          resourceId,
+                                          resourceDetail,
+                                          activeNodeInstanceId!,
+                                          standbyNodeInstanceId
+                                      )
+                                  ]
+                                : [Promise.resolve()]),
                             ...(isSSMConnected && getPerformance && activeNodeInstanceId
                                 ? [getServerIOLatency(resourceId, activeNodeInstanceId)]
                                 : [Promise.resolve()]), // Fetch io latency data
@@ -646,7 +741,7 @@ async function getDatabaseHostsSummary(
                                 ? [getProtectionStatus(resourceDetail, activeNodeInstanceId)]
                                 : [Promise.resolve()]), // Fetch protection status
                             ...(getUsageEstimation
-                                ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId)]
+                                ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId, true)]
                                 : [Promise.resolve()]) // Fetch billing or pricing estimate data
                         ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
                     );
@@ -685,12 +780,15 @@ async function getDatabaseHostsSummary(
 async function getDatabaseHostSummary(
     accountId: string,
     databaseHostId: string,
-    fields?: string
+    fields?: string,
+    resourceDetail?: ResourceDetails,
+    isManagedResource: boolean = true
 ): Promise<DatabaseHostSummaryResponseType> {
-    logger.info('Fetching details about a database installtion ', accountId, databaseHostId, fields);
+    logger.info('Fetching details about a database installtion ', accountId, databaseHostId, fields, isManagedResource);
 
-    const [resourceDetail] = await listResources(accountId, databaseHostId);
-
+    if (isEmpty(resourceDetail)) {
+        [resourceDetail] = await listResources(accountId, databaseHostId);
+    }
     if (isEmpty(resourceDetail)) {
         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
         logger.error(errorMessage);
@@ -711,6 +809,8 @@ async function getDatabaseHostSummary(
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
 
+    const shouldQueryDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLocaleLowerCase());
+    const shouldQueryTopology = fieldsValues?.includes(DatabaseHostsQueryFields.TOPOLOGY);
     const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
@@ -736,92 +836,119 @@ async function getDatabaseHostSummary(
             node2InstanceId,
             resourceId
         );
-
         const errormessages: { [index: string]: string } = {};
+        if (credentialsId && region) {
+            const [
+                dbCount,
+                serverMetadata,
+                topologyData,
+                performanceData,
+                storageData,
+                usageEstimationData,
+                memoryUtilizationData,
+                diskUtilizationData,
+                cpuUtilizationData
+            ] = await Promise.all(
+                [
+                    ...(isSSMConnected && activeNodeInstanceId && shouldQueryDbCount
+                        ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId)]
+                        : [Promise.resolve()]),
+                    ...(isSSMConnected && activeNodeInstanceId
+                        ? [getServerDetails(credentialsId, region, activeNodeInstanceId)]
+                        : [Promise.resolve()]), // Fetch server metadata
+                    ...(shouldQueryTopology
+                        ? [
+                              getTopology(
+                                  accountId,
+                                  region!,
+                                  resourceId,
+                                  resourceDetail,
+                                  activeNodeInstanceId!,
+                                  standbyNodeInstanceId
+                              )
+                          ]
+                        : [Promise.resolve()]),
+                    ...(isSSMConnected && getPerformance && activeNodeInstanceId
+                        ? [getPerformanceMetrics(credentialsId, region, activeNodeInstanceId)]
+                        : [Promise.resolve()]), // Fetch io latency data
+                    ...(isSSMConnected && getStorageSavings && activeNodeInstanceId
+                        ? [getStorageData(resourceDetail, activeNodeInstanceId)]
+                        : [Promise.resolve()]), // Fetch storage savings data
+                    ...(getUsageEstimation
+                        ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId, isManagedResource)]
+                        : [Promise.resolve()]), // Fetch pricing estimate data
+                    ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
+                        ? [
+                              getResourceUtilisationDetails(
+                                  credentialsId,
+                                  region,
+                                  DATABASE_METRIC_TYPE.MEMORY,
+                                  activeNodeInstanceId
+                              )
+                          ]
+                        : [Promise.resolve()]),
+                    ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
+                        ? [
+                              getResourceUtilisationDetails(
+                                  credentialsId,
+                                  region,
+                                  DATABASE_METRIC_TYPE.DISK,
+                                  activeNodeInstanceId
+                              )
+                          ]
+                        : [Promise.resolve()]),
+                    ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
+                        ? [
+                              getResourceUtilisationDetails(
+                                  credentialsId,
+                                  region,
+                                  DATABASE_METRIC_TYPE.CPU,
+                                  activeNodeInstanceId
+                              )
+                          ]
+                        : [Promise.resolve()])
+                ].map((p, index) =>
+                    p.catch(error => {
+                        if (DATABASE_HOSTS_INDEX_MAPPING[index]) {
+                            errormessages[DATABASE_HOSTS_INDEX_MAPPING[index]] = JSON.stringify(error);
+                        }
+                        logger.error(`Error while fetching data: ${error}.`);
+                    })
+                )
+            );
 
-        const [
-            dbCount,
-            serverMetadata,
-            topologyData,
-            performanceData,
-            storageData,
-            usageEstimationData,
-            memoryUtilizationData,
-            diskUtilizationData,
-            cpuUtilizationData
-        ] = await Promise.all(
-            [
-                ...(isSSMConnected && activeNodeInstanceId
-                    ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId)]
-                    : [Promise.resolve()]),
-                ...(isSSMConnected ? [getServerSummary(resourceId)] : [Promise.resolve()]), // Fetch server metadata
-                getTopology(
-                    accountId,
-                    region!,
-                    resourceId,
-                    resourceDetail,
-                    activeNodeInstanceId!,
-                    standbyNodeInstanceId
-                ),
-                ...(isSSMConnected && getPerformance && activeNodeInstanceId
-                    ? [getPerformanceMetrics(resourceId, activeNodeInstanceId)]
-                    : [Promise.resolve()]), // Fetch io latency data
-                ...(isSSMConnected && getStorageSavings && activeNodeInstanceId
-                    ? [getStorageData(resourceDetail, activeNodeInstanceId)]
-                    : [Promise.resolve()]), // Fetch storage savings data
-                ...(getUsageEstimation
-                    ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId)]
-                    : [Promise.resolve()]), // Fetch pricing estimate data
-                ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
-                    ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY, activeNodeInstanceId)]
-                    : [Promise.resolve()]),
-                ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
-                    ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.DISK, activeNodeInstanceId)]
-                    : [Promise.resolve()]),
-                ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
-                    ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.CPU, activeNodeInstanceId)]
-                    : [Promise.resolve()])
-            ].map((p, index) =>
-                p.catch(error => {
-                    if (DATABASE_HOSTS_INDEX_MAPPING[index]) {
-                        errormessages[DATABASE_HOSTS_INDEX_MAPPING[index]] = JSON.stringify(error);
-                    }
-                    logger.error(`Error while fetching data: ${error}.`);
-                })
-            )
-        );
-
-        // CreationDate needs to be picked up from resource table: https://jira.ngage.netapp.com/browse/DBS-1586
-        if (serverMetadata) {
-            serverMetadata.creationDate = creationDate || '';
-        }
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-            if (topologyData.serverInstallationMode === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
-                delete serverMetadata.clusterName;
-                serverMetadata.activeNode = resourceName || '';
-                serverMetadata.nodeNames = [resourceName || ''];
-            } else {
-                serverMetadata.clusterName = resourceName || '';
+            // CreationDate needs to be picked up from resource table: https://jira.ngage.netapp.com/browse/DBS-1586
+            if (serverMetadata) {
+                serverMetadata.creationDate = creationDate || '';
             }
-        }
-        databaseHostDetails.id = resourceId;
-        databaseHostDetails.name = resourceName || '';
-        databaseHostDetails.status = serverMetadata ? ServerState.UP : ServerState.DOWN;
-        databaseHostDetails.databaseCount = dbCount?.totalCount || 0;
-        databaseHostDetails.databaseServer = serverMetadata;
-        databaseHostDetails.topology = topologyData!;
-        databaseHostDetails.performance = getPerformance ? { rwMetrics: performanceData! } : {};
-        databaseHostDetails.storage = storageData!;
-        databaseHostDetails.estimatedUsageCost = usageEstimationData!;
-        if (getResourceutilization && cpuUtilizationData && memoryUtilizationData && diskUtilizationData) {
-            databaseHostDetails.resourceUtilization = {
-                cpu: cpuUtilizationData! || {},
-                memory: memoryUtilizationData! || {},
-                disk: diskUtilizationData! || {}
-            };
-        }
-        if (!isEmpty(errormessages)) {
-            databaseHostDetails.errors = errormessages;
+            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+                if (topologyData?.serverInstallationMode === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
+                    delete serverMetadata.clusterName;
+                    serverMetadata.activeNode = resourceName || '';
+                    serverMetadata.nodeNames = [resourceName || ''];
+                } else {
+                    serverMetadata.clusterName = resourceName || '';
+                }
+            }
+            databaseHostDetails.id = resourceId;
+            databaseHostDetails.name = resourceName || '';
+            databaseHostDetails.status = serverMetadata ? ServerState.UP : ServerState.DOWN;
+            databaseHostDetails.databaseCount = dbCount?.totalCount || 0;
+            databaseHostDetails.databaseServer = serverMetadata;
+            databaseHostDetails.topology = topologyData!;
+            databaseHostDetails.performance = getPerformance ? { rwMetrics: performanceData! } : {};
+            databaseHostDetails.storage = storageData!;
+            databaseHostDetails.estimatedUsageCost = usageEstimationData!;
+            if (getResourceutilization && cpuUtilizationData && memoryUtilizationData && diskUtilizationData) {
+                databaseHostDetails.resourceUtilization = {
+                    cpu: cpuUtilizationData! || {},
+                    memory: memoryUtilizationData! || {},
+                    disk: diskUtilizationData! || {}
+                };
+            }
+            if (!isEmpty(errormessages)) {
+                databaseHostDetails.errors = errormessages;
+            }
         }
     } catch (error) {
         logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
