@@ -188,7 +188,8 @@ const FileConfig = Type.Object({
 const CreateDatabseRequestBody = Type.Object({
     databaseName: Type.String({ minLength: 1, maxLength: 123 }),
     dataFileConfig: FileConfig,
-    logFileConfig: FileConfig
+    logFileConfig: FileConfig,
+    collation: Type.String()
 });
 
 const DatabasesCreateResponse = Type.Object({

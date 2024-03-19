@@ -298,7 +298,8 @@ async function deployDatabase(
     region: string,
     databaseName: string,
     dataFileConfig: FileConfigType,
-    logFileConfig: FileConfigType
+    logFileConfig: FileConfigType,
+    collation: string
 ): Promise<DatabaseCreateResponseType> {
     logger.info('Deploy new database', {
         accountId,
@@ -307,7 +308,8 @@ async function deployDatabase(
         region,
         databaseName,
         dataFileConfig,
-        logFileConfig
+        logFileConfig,
+        collation
     });
 
     const {
@@ -366,6 +368,7 @@ async function deployDatabase(
         databaseName,
         dataFileConfig,
         logFileConfig,
+        collation,
         fileSystemId,
         isClustered,
         sqlServerName,
@@ -385,6 +388,7 @@ async function invokeSSMForDatabaseDeployment(
     databaseName: string,
     dataFileConfig: FileConfigType,
     logFileConfig: FileConfigType,
+    collation: string,
     fileSystemId: string | null,
     isClustered: string,
     sqlServerName: string | null,
@@ -402,6 +406,7 @@ async function invokeSSMForDatabaseDeployment(
         databaseName,
         dataFileConfig,
         logFileConfig,
+        collation,
         node1InstanceId,
         node2InstanceId,
         fsxSvmId,
@@ -449,7 +454,8 @@ async function invokeSSMForDatabaseDeployment(
             isClustered,
             sqlServerName as string,
             parentJobId,
-            activeNodeInstanceId as string
+            activeNodeInstanceId as string,
+            collation
         );
 
         const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
@@ -476,7 +482,8 @@ async function invokeSSMForDatabaseDeployment(
                 sqlServerName,
                 databaseName,
                 dataDrivePath,
-                logDrivePath
+                logDrivePath,
+                collation
             );
             await updateJobDetails(accountId, credentialsId, region, parentJobId, {
                 status: JOBSTATUS.COMPLETED,
@@ -543,6 +550,7 @@ async function invokeSSMForDatabaseDeployment(
                 databaseName,
                 dataDrivePath,
                 logDrivePath,
+                collation,
                 iGroup,
                 fsxDataVolumeName,
                 fsxLogVolumeName
@@ -610,6 +618,7 @@ async function createDatabase(
     databaseName: string,
     dataDrivePath: string,
     logDrivePath: string,
+    collation: string,
     iGroup?: string,
     fsxDataVolumeName?: string,
     fsxLogVolumeName?: string
@@ -625,6 +634,7 @@ async function createDatabase(
         databaseName,
         dataDrivePath,
         logDrivePath,
+        collation,
         iGroup,
         fsxDataVolumeName,
         fsxLogVolumeName
@@ -637,7 +647,7 @@ async function createDatabase(
         ];
     } else {
         createDatabaseCommand = [
-            `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath}`
+            `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath} -Collation ${collation}`
         ];
     }
 
@@ -1006,7 +1016,8 @@ async function validateParams(
     isClustered: string,
     sqlServerName: string,
     parentJobId: string,
-    activeNodeInstanceId: string
+    activeNodeInstanceId: string,
+    collation: string
 ) {
     logger.info('validating parameters for database user creation', {
         accountId,
@@ -1018,7 +1029,8 @@ async function validateParams(
         logFileConfig,
         fileSystemId,
         sqlServerName,
-        parentJobId
+        parentJobId,
+        collation
     });
 
     const {
@@ -1058,6 +1070,14 @@ async function validateParams(
         }
 
         await checkDatabaseExists(accountId, credentialsId, region, databaseHostId, databaseName, activeNodeInstanceId);
+
+        const { collationList } = await getCollationDetails(accountId, databaseHostId, credentialsId, region);
+
+        const collationExists = collationList?.some(item => item?.name?.toLowerCase() === collation.toLowerCase());
+
+        if (!collationExists) {
+            throw createError(412, `Selected collation ${collation} is not available`);
+        }
 
         const { existingDriveInfo, availableDriveLetters } = await getDriveInfo(
             accountId,
