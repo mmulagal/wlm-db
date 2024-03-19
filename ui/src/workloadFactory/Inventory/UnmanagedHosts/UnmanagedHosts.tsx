@@ -21,6 +21,7 @@ import {
     databaseTableSort,
     formatFractionalNumber,
     formatSizeOnePrecision,
+    formatUnamanagedHostList,
     mergeDatabaseHostsData
 } from '../../../utils/utilityFunctions';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
@@ -49,44 +50,9 @@ const UnmanagedHosts = () => {
     const [manageHostApi] = useManageHostMutation();
     const [tableData, setTableData] = useState<any>([]);
 
-    const formatUnamanagedHostList = (data: any) => {
-        return data.map((item: any) => {
-            const perRowInstanceData = mssqlInstancesData[item?.ec2InstanceId];
-            if (!perRowInstanceData?.error && !perRowInstanceData?.loading && perRowInstanceData?.data) {
-                return {
-                    ...item,
-                    id: perRowInstanceData?.data?.id,
-                    name: perRowInstanceData?.data?.name,
-                    status: perRowInstanceData?.data?.status,
-                    databaseCount: perRowInstanceData?.data?.databaseCount,
-                    topology: perRowInstanceData?.data?.topology || {},
-                    databaseServer: perRowInstanceData?.data?.databaseServer || {},
-                    protection: perRowInstanceData?.data?.protection || {},
-                    performance: perRowInstanceData?.data?.performance || {},
-                    storage: perRowInstanceData?.data?.storage || {},
-                    estimatedUsageCost: perRowInstanceData?.data?.estimatedUsageCost || {},
-                    resourceUtilization: perRowInstanceData?.data?.resourceUtilization || {},
-                    loading: false
-                };
-            } else if (perRowInstanceData?.loading) {
-                return {
-                    ...item,
-                    id: item?.ec2InstanceId,
-                    loading: true
-                };
-            } else {
-                return {
-                    ...item,
-                    id: item?.ec2InstanceId,
-                    loading: false
-                };
-            }
-        });
-    };
-
     useEffect(() => {
         // Format data again on unIdentifiableHosts or fsxCredentialStatusObj change
-        setTableData(mergeDatabaseHostsData(formatUnamanagedHostList(unManagedHostList)));
+        setTableData(formatUnamanagedHostList(unManagedHostList, mssqlInstancesData));
     }, [unManagedHostList, mssqlInstancesData]);
 
     const notAvailable = () => {

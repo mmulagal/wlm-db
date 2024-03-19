@@ -408,12 +408,21 @@ const InventoryApis = () => {
                             }
                         });
                     }
-                    let instanceObj = {
-                        instanceId: host?.ec2InstanceId,
-                        fsxnId: fsxId,
-                        ebsVolumeId: ebsId
-                        // fsxwId: ''
-                    };
+                    let instanceObj: any = { instanceId: host?.ec2InstanceId };
+
+                    if (fsxId) {
+                        instanceObj = {
+                            ...instanceObj,
+                            fsxnId: fsxId
+                        };
+                    }
+
+                    if (ebsId) {
+                        instanceObj = {
+                            ...instanceObj,
+                            ebsVolumeId: ebsId
+                        };
+                    }
                     instancesPayload.push(instanceObj);
                 }
             });
