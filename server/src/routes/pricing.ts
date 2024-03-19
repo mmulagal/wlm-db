@@ -1,7 +1,7 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import CalculatePriceSchema from './schemas/pricing-schema';
-import calculatePrice from '../operations/aws/pricing-operations';
+import { calculatePrice } from '../operations/aws/pricing-operations';
 
 export default function pricingRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -10,10 +10,10 @@ export default function pricingRoutes(fastify: FastifyInstance) {
 
     server.post(API_PATH_PRICING, { schema: CalculatePriceSchema }, async (request, reply) => {
         const {
-            body: { compute, storage, vpc }
+            body: { compute, fsxnStorage, vpc, ebsStorage, fsxwStorage }
         } = request;
 
-        const response = await calculatePrice(compute, storage, vpc);
+        const response = await calculatePrice(compute, fsxnStorage, vpc, ebsStorage, fsxwStorage);
         return reply.send(response);
     });
 }

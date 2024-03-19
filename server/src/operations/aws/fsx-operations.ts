@@ -12,7 +12,7 @@ import {
     describeFSxBackups,
     listResourceTags,
     createTag,
-    describeFSxN
+    describeFSx
 } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
@@ -483,7 +483,7 @@ async function getFsxStorageCapacity(credentialsId: string, region: string, fsxI
     }
 
     try {
-        const { FileSystems: fileSystems } = await describeFSxN(credentialsId, region!, {
+        const { FileSystems: fileSystems } = await describeFSx(credentialsId, region!, {
             FileSystemIds: [fsxId]
         });
 

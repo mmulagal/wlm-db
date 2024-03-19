@@ -1,9 +1,11 @@
 import { RouteTags } from '../../utils/consts';
+import { DatabaseHostSummaryListResponse } from '../types/database-hosts.types';
 import {
     DiscoverMsSqlResponseBody,
     DiscoverMsSqlQuery,
     DiscoverInstanceParams,
-    DiscoverCredentialsRequestBody
+    DiscoverCredentialsRequestBody,
+    MsSqlInstancesRequestBody
 } from '../types/discover.types';
 import { GenericHeaders, CredentialsIdParams } from '../types/generic.types';
 
@@ -41,4 +43,15 @@ const DiscoverCredentialsSchema = {
     }
 };
 
-export { DiscoverMsSqlSchema, DiscoverCredentialsSchema };
+const MsSqlInstancesSchema = {
+    Headers: GenericHeaders,
+    tags: [RouteTags.DISCOVER],
+    params: CredentialsIdParams,
+    body: MsSqlInstancesRequestBody,
+    summary: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
+    description: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
+    response: {
+        200: DatabaseHostSummaryListResponse
+    }
+};
+export { DiscoverMsSqlSchema, DiscoverCredentialsSchema, MsSqlInstancesSchema };
