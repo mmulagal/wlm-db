@@ -97,7 +97,8 @@ describe('Create database operations', () => {
             'ap-southeast-1',
             createDBRequest.databaseName,
             createDBRequest.dataFileConfig,
-            createDBRequest.logFileConfig
+            createDBRequest.logFileConfig,
+            'SQL_Latin1_General_CP1_CI_AS'
         );
         expect(resp.jobId).toBeDefined();
     });
@@ -113,7 +114,8 @@ describe('Create database operations', () => {
             reqData.sqlServerName,
             reqData.databaseName,
             reqData.dataDrivePath,
-            reqData.logDrivePath
+            reqData.logDrivePath,
+            'SQL_Latin1_General_CP1_CI_AS'
         );
 
         expect(resp.Status).toBe('Complete');

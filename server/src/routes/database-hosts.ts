@@ -54,7 +54,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, databaseHostId, credentialsId, region },
-                    body: { databaseName, dataFileConfig, logFileConfig }
+                    body: { databaseName, dataFileConfig, logFileConfig, collation }
                 } = request;
                 const response = await deployDatabase(
                     accountId,
@@ -63,7 +63,8 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     region,
                     databaseName,
                     dataFileConfig,
-                    logFileConfig
+                    logFileConfig,
+                    collation
                 );
                 return reply.send(response);
             }
