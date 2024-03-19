@@ -1,11 +1,18 @@
 import { BASE_URL, generateResponse } from '../utils/appUtils';
 import driveInfo from '../data/driveInfo.json';
+import collationList from '../data/collation.json';
 
 const router = require('express').Router();
 
 router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/database-hosts/:id/drive-information`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, driveInfo);
+    }, 2000);  
+});
+
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/database-hosts/:id/collation`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, collationList);
     }, 2000);  
 });
 

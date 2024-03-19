@@ -612,6 +612,8 @@ export const GENERAL = {
     DATA_SIZE_MIN_ERROR: 'Minimum space required to create the file is not available in the drive',
     DATA_SIZE_ERROR: 'The valid range is 1 GiB - ',
     DRIVE_LETTER_CREATE_ERROR: 'Action required: Drive letters are missing. Use Advanced Create mode to select drives.',
+    COLLATION_ERROR: 'Action required: Select collation',
+    SELECT_COLLATION: 'Select a collation',
     DRIVE_LETTER_QUICK_CREATE_ERROR:
         'Insufficient drive letters available on system to create new drives. Use Advanced Create mode to reuse existing drives.',
     RESOURCE_ROLLBACK_TOOLTIP:

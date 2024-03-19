@@ -510,6 +510,11 @@ export const createUserDbApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getCollationList: builder.query({
+                query: ({ credentialId, region, id }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}/collation`
+                })
             })
         };
     }
@@ -620,7 +625,7 @@ export const { useGetHeadersCredentialsQuery, useGetHeadersRegionsQuery, useGetS
 
 export const { useGetWlmdbPoliciesQuery } = policiesApi;
 
-export const { useGetDriveInfoQuery, useCreateUserDBMutation } = createUserDbApi;
+export const { useGetDriveInfoQuery, useCreateUserDBMutation, useGetCollationListQuery } = createUserDbApi;
 
 export const {
     useDiscoverHostsQuery,
