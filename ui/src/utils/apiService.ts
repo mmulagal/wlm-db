@@ -372,7 +372,7 @@ export const workloadFactoryResourceApi = createApi({
         return {
             getResourceDetails: builder.query({
                 query: ({ credentialId, region, id }) => ({
-                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}?fields=topology,dbCount,storage,performance,usageEstimation,resourceUtilization`
+                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}?fields=topology,storage,performance,usageEstimation,resourceUtilization`
                 })
             }),
             getDatabaseList: builder.query({
