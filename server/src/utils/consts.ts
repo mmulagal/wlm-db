@@ -1109,6 +1109,10 @@ const VALIDATION_NODE_INSTANCETYPE = {
 
 const ONLINE = 'ONLINE';
 
+const BLOCKED_BY_SCP = 'blocked by scp';
+
+const SIMULATE_IAM_POLICY = 'SimulatePrincipalPolicy';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1350,5 +1354,7 @@ export {
     CUSTOM_SSM_EXECUTION_TIMEOUT,
     VALIDATION_NODE_INSTANCETYPE,
     VALIDATION_INSTANCE_TYPE,
-    ONLINE
+    ONLINE,
+    BLOCKED_BY_SCP,
+    SIMULATE_IAM_POLICY
 };
