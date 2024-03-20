@@ -107,7 +107,8 @@ async function getTopology(
     resourceId: string,
     resourceData: resource,
     activeNodeInstanceId: string,
-    standbyNodeInstanceId?: string
+    standbyNodeInstanceId?: string,
+    vpcIdFilterString?: string
 ): Promise<TopologyResponseType> {
     logger.info('Fetching topology data', {
         accountId,
@@ -115,7 +116,8 @@ async function getTopology(
         resourceId,
         resourceData,
         activeNodeInstanceId,
-        standbyNodeInstanceId
+        standbyNodeInstanceId,
+        vpcIdFilterString
     });
 
     if (isEmpty(resourceData)) {
@@ -656,7 +658,7 @@ async function getDatabaseHostsSummary(
                         ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
                     );
 
-                if (vpcId && vpcId === topologyData.vpcId) {
+                if (!vpcId) {
                     databaseHosts.push({
                         id: resourceId,
                         name: resourceName || '',
@@ -668,7 +670,7 @@ async function getDatabaseHostsSummary(
                         ...(protectionData && { protection: protectionData }),
                         ...(usageEstimationData && { estimatedUsageCost: usageEstimationData })
                     });
-                } else if (!vpcId) {
+                } else if (vpcId === topologyData.vpcId) {
                     databaseHosts.push({
                         id: resourceId,
                         name: resourceName || '',
