@@ -43,8 +43,8 @@ export default async function getMissingPermissionsList(
             .map(
                 ({ EvalActionName, EvalDecision }) =>
                     ({
-                        service: EvalActionName?.split(':')[0],
-                        action: EvalActionName?.split(':')[1],
+                        service: EvalActionName?.split(':') ? [0] : EvalActionName,
+                        action: EvalActionName?.split(':') ? [1] : EvalActionName,
                         error: EvalDecision as string
                     } as MissingPermission)
             ) || [];
@@ -57,8 +57,8 @@ export default async function getMissingPermissionsList(
             .map(
                 ({ EvalActionName, EvalDecision }) =>
                     ({
-                        service: EvalActionName?.split(':')[0],
-                        action: EvalActionName?.split(':')[1],
+                        service: EvalActionName?.split(':') ? [0] : EvalActionName,
+                        action: EvalActionName?.split(':') ? [1] : EvalActionName,
                         error: EvalDecision as string
                     } as MissingPermission)
             ) || [];
@@ -74,8 +74,8 @@ export default async function getMissingPermissionsList(
             .map(
                 ({ EvalActionName, EvalDecision }) =>
                     ({
-                        service: EvalActionName?.split(':')[0],
-                        action: EvalActionName?.split(':')[1],
+                        service: EvalActionName?.split(':') ? [0] : EvalActionName,
+                        action: EvalActionName?.split(':') ? [1] : EvalActionName,
                         error: EvalDecision as string
                     } as MissingPermission)
             ) || [];
