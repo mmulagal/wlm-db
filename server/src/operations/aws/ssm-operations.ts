@@ -48,12 +48,11 @@ async function pollCommandStatus(
             case CommandInvocationStatus.CANCELLED:
             case CommandInvocationStatus.SUCCESS:
                 return response;
-            case CommandInvocationStatus.FAILED: {
+            case CommandInvocationStatus.FAILED:
                 logger.error(
                     `SSM execution ${status} for command ${pollParams.CommandId} on instance ${pollParams.InstanceId}`
                 );
                 return response;
-            }
             case CommandInvocationStatus.CANCELLING:
             case CommandInvocationStatus.DELAYED:
             case CommandInvocationStatus.IN_PROGRESS:

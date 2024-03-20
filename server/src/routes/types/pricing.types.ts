@@ -82,7 +82,6 @@ const PricingServiceResponse = Type.Object({
             size: Type.Number()
         })
     ),
-
     fsxwStorage: Type.Optional(
         Type.Object({
             capacityCost: Type.Number(),

@@ -488,7 +488,6 @@ async function fetchUnmanagedHostsInformation(
     accountId: string,
     credentialsId: string,
     region: string,
-
     instancesDetails: { ec2InstanceId: string; fsxnId?: string; ebsVolumeId?: string; fsxwId?: string }[] = []
 ) {
     logger.info('Fetching hosts information:', { accountId, credentialsId, region, instancesDetails });
