@@ -18,11 +18,9 @@ import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE, WLF_TABS } from '../../../utils/c
 import { useDispatch } from 'react-redux';
 
 import {
-    databaseTableSort,
     formatFractionalNumber,
     formatSizeOnePrecision,
-    formatUnamanagedHostList,
-    mergeDatabaseHostsData
+    formatUnamanagedHostList
 } from '../../../utils/utilityFunctions';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';

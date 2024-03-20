@@ -1284,25 +1284,27 @@ export const formatUnamanagedHostList = (data: any, mssqlInstancesData: any) => 
                 name: perRowInstanceData?.data?.name,
                 status: perRowInstanceData?.data?.status,
                 databaseCount: perRowInstanceData?.data?.databaseCount,
-                topology: perRowInstanceData?.data?.topology || {},
-                databaseServer: perRowInstanceData?.data?.databaseServer || {},
-                protection: perRowInstanceData?.data?.protection || {},
-                performance: perRowInstanceData?.data?.performance || {},
-                storage: perRowInstanceData?.data?.storage || {},
-                estimatedUsageCost: perRowInstanceData?.data?.estimatedUsageCost || {},
-                resourceUtilization: perRowInstanceData?.data?.resourceUtilization || {},
+                topology: perRowInstanceData?.data?.topology,
+                databaseServer: perRowInstanceData?.data?.databaseServer,
+                protection: perRowInstanceData?.data?.protection,
+                performance: perRowInstanceData?.data?.performance,
+                storage: perRowInstanceData?.data?.storage,
+                estimatedUsageCost: perRowInstanceData?.data?.estimatedUsageCost,
+                resourceUtilization: perRowInstanceData?.data?.resourceUtilization,
                 loading: false
             });
         } else if (perRowInstanceData?.loading) {
             return {
                 ...item,
                 id: item?.ec2InstanceId,
+                name: item?.ec2InstanceId,
                 loading: true
             };
         } else {
             return {
                 ...item,
                 id: item?.ec2InstanceId,
+                name: item?.ec2InstanceId,
                 loading: false
             };
         }

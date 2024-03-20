@@ -353,8 +353,8 @@ const InventoryApis = () => {
             if (result && !result?.error) {
                 let mssqlInstancesDataRes: any = {};
                 result?.data?.items?.map((host: any) => {
-                    if (mssqlInstancesData[host?.id]) {
-                        mssqlInstancesDataRes[host?.id] = {
+                    if (mssqlInstancesData[host?.name]) {
+                        mssqlInstancesDataRes[host?.name] = {
                             loading: false,
                             data: host,
                             error: host?.errors
@@ -368,7 +368,7 @@ const InventoryApis = () => {
             } else {
                 let mssqlInstancesDataErr: any = {};
                 instancesPayload?.map((host: any) => {
-                    mssqlInstancesDataErr[host?.instanceId] = {
+                    mssqlInstancesDataErr[host?.ec2InstanceId] = {
                         loading: false,
                         data: null,
                         error: result?.error?.data?.message
@@ -379,7 +379,7 @@ const InventoryApis = () => {
         } catch (error) {
             let mssqlInstancesDataErr: any = {};
             instancesPayload?.map((host: any) => {
-                mssqlInstancesDataErr[host?.instanceId] = {
+                mssqlInstancesDataErr[host?.ec2InstanceId] = {
                     loading: false,
                     data: null,
                     error: error
@@ -408,7 +408,7 @@ const InventoryApis = () => {
                             }
                         });
                     }
-                    let instanceObj: any = { instanceId: host?.ec2InstanceId };
+                    let instanceObj: any = { ec2InstanceId: host?.ec2InstanceId };
 
                     if (fsxId) {
                         instanceObj = {
@@ -427,17 +427,19 @@ const InventoryApis = () => {
                 }
             });
             let mssqlInstancesDataLoad: any = {};
-            instancesPayload?.map((host: any) => {
-                mssqlInstancesDataLoad[host?.instanceId] = {
-                    loading: true,
-                    data: null,
-                    error: null
-                };
-            });
-            dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataLoad }));
-            setTimeout(() => {
-                getMssqlData(instancesPayload);
-            }, 1);
+            if (instancesPayload && instancesPayload.length > 0) {
+                instancesPayload?.map((host: any) => {
+                    mssqlInstancesDataLoad[host?.ec2InstanceId] = {
+                        loading: true,
+                        data: null,
+                        error: null
+                    };
+                });
+                dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataLoad }));
+                setTimeout(() => {
+                    getMssqlData(instancesPayload);
+                }, 1);
+            }
         }
     }, [unManagedHostList]);
 
