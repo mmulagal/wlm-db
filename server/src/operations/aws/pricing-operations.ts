@@ -438,9 +438,7 @@ async function calculatePrice(
         ec2Storage: {
             storage: { pricePerUnit: ec2StorageRate }
         },
-        vpc: {
-            unknown: { pricePerUnit: vpcRate }
-        },
+        vpc: { vpc: { pricePerUnit: vpcRate = undefined } = {} } = {},
         ebsStorage: ebsStorageRates = undefined
     } = productRates;
 
