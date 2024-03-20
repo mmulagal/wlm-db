@@ -46,6 +46,7 @@ const AwsAccount = () => {
     const isWorkloadFactoryStatus = useAppSelector(state => state.auth.isWorkloadFactory);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
     const permissionWarning = useAppSelector(state => state.msSqlAction.permissionWarning);
+    const permissionData = useAppSelector(state => state.msSqlAction.permissionData);
     const { policiesList } = useAppSelector(state => state.mssql.getPolicies);
 
     // To check whether account present or not
@@ -332,7 +333,7 @@ const AwsAccount = () => {
                                         <div className={styles.noaccount_options}>
                                             <Typography variant="Semibold_14">{GENERAL.ERROR}</Typography>
                                             <Typography variant="Regular_14" className={styles.noteText}>
-                                                <MissingPermissionsMsg />
+                                                <MissingPermissionsMsg permissionData={permissionData} />
                                             </Typography>
                                         </div>
                                     </div>
