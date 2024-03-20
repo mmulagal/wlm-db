@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { ContextEntry } from '@aws-sdk/client-iam';
+import { ContextEntry, PolicyEvaluationDecisionType } from '@aws-sdk/client-iam';
 import randomize from 'randomatic';
 import fs from 'fs';
 import path from 'path';
@@ -66,6 +66,9 @@ import {
     DEFAULT_AWS_REGION,
     VALIDATION_INSTANCE_TYPE,
     VALIDATION_NODE_INSTANCETYPE,
+    BLOCKED_BY_SCP,
+    IAM,
+    SIMULATE_IAM_POLICY,
     TEMPLATE_S3GATEWAY_ROUTETABLES
 } from '../utils/consts';
 import {
@@ -526,8 +529,18 @@ async function deployStackOrCreateTemplateURL(
             const responseWithPermissions: CloudFormationDeploymentResponseType = {
                 ...response,
                 missingPermissions: {
-                    missingStatements: !blockedBySCP ? [err?.message] : [],
-                    blockedByOrganisation: blockedBySCP ? [err?.message] : [],
+                    missingStatements: !blockedBySCP
+                        ? [
+                              {
+                                  service: IAM,
+                                  action: SIMULATE_IAM_POLICY,
+                                  error: PolicyEvaluationDecisionType.EXPLICIT_DENY
+                              }
+                          ]
+                        : [],
+                    blockedByOrganisation: blockedBySCP
+                        ? [{ service: IAM, action: SIMULATE_IAM_POLICY, error: BLOCKED_BY_SCP }]
+                        : [],
                     blockedByPermissionBoundary: []
                 }
             };
