@@ -656,19 +656,7 @@ async function getDatabaseHostsSummary(
                         ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
                     );
 
-                if (!vpcId) {
-                    databaseHosts.push({
-                        id: resourceId,
-                        name: resourceName || '',
-                        status: dbCount ? ServerState.UP : ServerState.DOWN,
-                        databaseCount: dbCount?.totalCount || 0,
-                        topology: topologyData!,
-                        ...(performanceData && { performance: performanceData }),
-                        ...(storageData && { storage: storageData }),
-                        ...(protectionData && { protection: protectionData }),
-                        ...(usageEstimationData && { estimatedUsageCost: usageEstimationData })
-                    });
-                } else if (vpcId === topologyData.vpcId) {
+                if (!vpcId || vpcId === topologyData.vpcId) {
                     databaseHosts.push({
                         id: resourceId,
                         name: resourceName || '',
