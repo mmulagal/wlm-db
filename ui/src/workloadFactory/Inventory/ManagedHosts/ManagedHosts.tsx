@@ -16,8 +16,7 @@ import { addDatabaseHosts, selectedTabSelection } from '../../../store/workloadF
 import {
     databaseTableSort,
     formatFractionalNumber,
-    formatSizeOnePrecision,
-    formatUnamanagedHostList
+    formatSizeOnePrecision
 } from '../../../utils/utilityFunctions';
 import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 import { updateResourceId } from '../../../store/authSlice';
