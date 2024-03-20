@@ -65,7 +65,8 @@ import {
     TEMPLATE_BUCKET_REGION,
     DEFAULT_AWS_REGION,
     VALIDATION_INSTANCE_TYPE,
-    VALIDATION_NODE_INSTANCETYPE
+    VALIDATION_NODE_INSTANCETYPE,
+    TEMPLATE_S3GATEWAY_ROUTETABLES
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -141,6 +142,15 @@ async function formatTemplateParameters(
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
 
+    const routeTables =
+        sqlConfiguration.sqlDeploymentMode === STANDALONE
+            ? [networkConfiguration.routeTable1Id!]
+            : [networkConfiguration.routeTable1Id!, networkConfiguration.routeTable2Id!];
+    const { servicesWithNoEndpoint, missingRoutesInS3 } =
+        credentialsId && region
+            ? await getServicesWithNoEndpoint(credentialsId, region, networkConfiguration.vpcId, routeTables)
+            : { servicesWithNoEndpoint: [], missingRoutesInS3: [] };
+
     const templateParams: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
@@ -150,7 +160,8 @@ async function formatTemplateParameters(
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
-        { ParameterKey: TEMPLATE_METRICS, ParameterValue: metrics }
+        { ParameterKey: TEMPLATE_METRICS, ParameterValue: metrics },
+        { ParameterKey: TEMPLATE_S3GATEWAY_ROUTETABLES, ParameterValue: missingRoutesInS3.toString() }
     ];
 
     if (fsxConfiguration.fsxPassword) {
@@ -164,12 +175,8 @@ async function formatTemplateParameters(
         }
     }
 
-    const missingServices =
-        credentialsId && region
-            ? await getServicesWithNoEndpoint(credentialsId!, region!, networkConfiguration.vpcId)
-            : [];
     Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
-        if (!missingServices.includes(key)) {
+        if (!servicesWithNoEndpoint.includes(key)) {
             templateParams.push({
                 ParameterKey: value,
                 ParameterValue: 'true'
@@ -612,6 +619,15 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
 
+    const routeTables =
+        sqlConfiguration.sqlDeploymentMode === STANDALONE
+            ? [networkConfiguration.routeTable1Id!]
+            : [networkConfiguration.routeTable1Id!, networkConfiguration.routeTable2Id!];
+    const { servicesWithNoEndpoint, missingRoutesInS3 } =
+        credentialsId && region
+            ? await getServicesWithNoEndpoint(credentialsId, region, networkConfiguration.vpcId, routeTables)
+            : { servicesWithNoEndpoint: [], missingRoutesInS3: [] };
+
     const templateParamsAsList: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
@@ -620,7 +636,8 @@ async function createCloudFormationTemplateForUserDeployment(
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
-        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
+        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
+        { ParameterKey: TEMPLATE_S3GATEWAY_ROUTETABLES, ParameterValue: missingRoutesInS3.toString() }
     ];
     let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${validationNodeInstanceType}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
     if (fsxConfiguration.fsxPassword) {
@@ -634,9 +651,8 @@ async function createCloudFormationTemplateForUserDeployment(
         }
     }
 
-    const missingServices = await getServicesWithNoEndpoint(credentialsId!, region!, networkConfiguration.vpcId);
     Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
-        if (!missingServices.includes(key)) {
+        if (!servicesWithNoEndpoint.includes(key)) {
             templateParams += `&param_${value}='true'`;
         }
     });
