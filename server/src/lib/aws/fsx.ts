@@ -75,7 +75,6 @@ async function describeFSxVolumes(
     fsxFsId: string
 ): Promise<DescribeVolumesCommandOutput> {
     logger.info('Describe FSx volumes:', { credentialsId, region, fsxFsId });
-
     const input: DescribeVolumesCommandInput = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
 
     const client = await getFSxClient(credentialsId, region);
