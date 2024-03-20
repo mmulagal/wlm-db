@@ -96,9 +96,18 @@ export const GENERAL = {
     ERROR: 'Error:',
     NO_CRED: 'No Credentials.',
     CREATE_PERMISSION_ERROR: [
-        'Workload Factory is unable to validate sufficient permissions. Redirect to ',
+        'Workload Factory is unable to validate sufficient permissions. ',
+        'View missing permissions.',
+        'Redirect to ',
         'AWS CloudFormation',
-        ' to complete this task. Ensure that you have the CloudFormation '
+        ' to complete this task.'
+    ],
+    MISSING_BLOCKED_PERMISSIONS: [
+        'Creation failed due to ',
+        'missing & blocked permissions ',
+        ' ensure your policy is set correctly.',
+        'Redirect to AWS CloudFormation through the Codebox on the right to complete this task. Ensure that you have the CloudFormation ',
+        'required permissions.'
     ],
     CREATE_PERMISSION_ERROR_CHATBOT:
         'Workload Factory is unable to validate sufficient permissions. Redirect to AWS CloudFormation through the Codebox on the right to complete this task. Ensure that you have the CloudFormation ',
@@ -677,7 +686,11 @@ export const GENERAL = {
     HOST_MANAGED_MOVED_SUCCESS: ['Host ', ' successfully moved to the ', ' Managed hosts ', 'tab.'],
     HOST_MOVED_FAILED: ['Host ', ' failed to become a managed host. For more details view ', ' Job Monitoring.'],
     FCI: 'FCI',
-    STANDALONE: 'Standalone'
+    STANDALONE: 'Standalone',
+    SERVICE: 'Service',
+    PERMISSIONS: 'Permissions',
+    ERROR_PERMISSION: 'Error',
+    COPY_ALL_UNSUPPORTED_PERMS: 'Copy all unsupported permissions'
 };
 
 export const CODE_VIEWER = {
