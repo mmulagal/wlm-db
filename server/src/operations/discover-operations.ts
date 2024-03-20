@@ -518,7 +518,7 @@ async function fetchUnmanagedHostsInformation(
             getDatabaseHostSummary(
                 accountId,
                 resourceDetail.resource_id,
-                'dbCount,performance,usageEstimation,resourceUtilization',
+                'dbCount,topology,performance,usageEstimation,resourceUtilization',
                 resourceDetail,
                 false // unmanaged host
             )
