@@ -3,6 +3,7 @@ import config from 'config';
 import { join } from 'path';
 import moment from 'moment';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
+import { MissingPermission } from './common-types';
 
 type SubJobDescriptions = {
     [key: string]: string;
@@ -589,9 +590,9 @@ const WLM_ASSETS: Record<string, string> = {
 
 // Template error messages
 const MISSING_PERMISSIONS = (
-    permissions: Array<string>,
-    blockedByOrganisation: Array<string>,
-    blockedByPermissionBoundary: Array<string>
+    permissions: MissingPermission[],
+    blockedByOrganisation: MissingPermission[],
+    blockedByPermissionBoundary: MissingPermission[]
 ) =>
     `Required permissions are not available to deploy cloud formation template. Missing permissions: ${permissions}. Blocked by organisation: ${blockedByOrganisation}. Blocked by permission boundary: ${blockedByPermissionBoundary}`;
 
