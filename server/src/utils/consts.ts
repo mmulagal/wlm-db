@@ -858,12 +858,6 @@ const MASTER_TEMPLATE_DISTRIBUTION = {
     location: './resources/mssql/templates/wlm-master.yaml'
 };
 
-enum DATABASE_METRIC_TYPE {
-    CPU = 'cpu',
-    DISK = 'disk',
-    MEMORY = 'memory'
-}
-
 enum SSM_QUERY_EXECUTION_STATUS {
     FAILED = 'Failed',
     SUCCESS = 'Success'
@@ -1211,7 +1205,6 @@ export {
     TEMPLATE_TYPES,
     SQL_TEMPLATES_DISTRIBUTION,
     MASTER_TEMPLATE_DISTRIBUTION,
-    DATABASE_METRIC_TYPE,
     SSM_QUERY_EXECUTION_STATUS,
     SqlServerDeploymentModel,
     TEMPLATE_CLOUD_PROVIDER_ID,

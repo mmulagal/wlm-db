@@ -5,33 +5,25 @@ import { STORAGE_TYPE } from '@prisma/client';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import { PSSCRIPT, DB_ROWS_COUNT, SSM_QUERY_CONCURRENCY_LIMIT } from './const';
 import {
-    CPU_UTILISATION,
-    DISK_UTILISATION,
-    MEMORY_UTILISATION,
     DATABASES,
     DATABASES_COUNT,
     SERVER_NAME,
     SERVER_GUID,
-    DB_SIZE,
-    NUMBER_OF_CONNECTIONS,
     SERVER_STATE,
-    CLUSTER_NODES,
     TABLES_COUNT_QUERY,
     TABLES_QUERY,
     SERVER_IO_LATENCY,
     NATIVE_SQL_BACKUPS,
-    SERVER_INSTALL_DATE,
     PERFORMANCE_METRICS,
     SQL_BACKUPS,
-    SERVER_PROPERTIES,
-    DATABASE_NAME_EXISTS
+    DATABASE_NAME_EXISTS,
+    SERVER_DETAILS
 } from './queries';
 import { callSsmExecution, getSSMConnectionStatus } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { UtilisationResponseBodyInterface } from '../../../routes/types/database.types';
 import {
     DatabaseTypes,
-    DATABASE_METRIC_TYPE,
     SqlServerDeploymentModel,
     HttpErrorCodes,
     CloudProviders,
@@ -47,6 +39,7 @@ import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
 import { Metadata } from '../../../utils/common-types';
+import { RESOURCE_UTILIZATION } from './ssm-script-utils';
 
 const logger = getLogger();
 
@@ -119,23 +112,9 @@ async function getDataBasesSummary(resourceId: string, activeNodeInstanceId?: st
     return { databases: cleanDBSummanry };
 }
 
-function resourceUtilisationQuery(metricType: string) {
-    switch (metricType) {
-        case DATABASE_METRIC_TYPE.CPU:
-            return CPU_UTILISATION;
-        case DATABASE_METRIC_TYPE.DISK:
-            return DISK_UTILISATION;
-        case DATABASE_METRIC_TYPE.MEMORY:
-            return MEMORY_UTILISATION;
-        default:
-            return '';
-    }
-}
-
-async function getResourceUtilisation(resourceId: string, metricType: string) {
-    logger.info(`Get ${metricType} resource utilization for resource: `, {
-        resourceId,
-        metricType
+async function getResourceUtilisation(resourceId: string) {
+    logger.info(`Get system resources utilization for resource: `, {
+        resourceId
     });
 
     const [credentialsId, region, node1InstanceId, node2InstanceId] = await getResourceDetails(resourceId);
@@ -144,76 +123,46 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
     }
     const { activeNodeInstanceId } = await getActiveSqlNode(credentialsId!, region!, node1InstanceId, node2InstanceId!);
 
-    return getResourceUtilisationDetails(credentialsId, region, metricType, activeNodeInstanceId);
+    return getResourceUtilisationDetails(credentialsId, region, activeNodeInstanceId);
 }
 
-async function getResourceUtilisationDetails(
-    credentialsId: string,
-    region: string,
-    metricType: string,
-    activeNodeInstanceId?: string
-) {
-    logger.info(`Get ${metricType} resource utilization for resource: `, {
+async function getResourceUtilisationDetails(credentialsId: string, region: string, activeNodeInstanceId?: string) {
+    logger.info(`Get system resources utilization for resource: `, {
         credentialsId,
         region,
-        metricType,
         activeNodeInstanceId
     });
 
     if (!activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get active instance information');
     }
-    logger.info('Fetching utilization from primary', credentialsId, region, activeNodeInstanceId, metricType);
+    logger.info('Fetching resources utilization from primary', credentialsId, region, activeNodeInstanceId);
 
-    let commands: string[] = [];
-    const metricQuery = resourceUtilisationQuery(metricType);
-    commands = [`sqlcmd -Q "${metricQuery}" -y 0`];
+    const commands = [RESOURCE_UTILIZATION];
+    const resurceUtilizationData = await callSsmExecution(
+        credentialsId,
+        region,
+        commands,
+        activeNodeInstanceId,
+        undefined,
+        false
+    );
+    const parsedResourceUtilizationData = resurceUtilizationData ? sqlResponseParsing(resurceUtilizationData) : '';
 
-    if (metricType === DATABASE_METRIC_TYPE.DISK) {
-        const dbSizecommand = [`sqlcmd -Q "${DB_SIZE}" -y 0`];
-        const diskUtilizationCommand = [`sqlcmd -Q "${DISK_UTILISATION}" -y 0`];
+    const cpuUtilization = sqlResponseParsing(parsedResourceUtilizationData.cpu)[0];
+    const dbSizeData = sqlResponseParsing(parsedResourceUtilizationData.dbSize);
+    const diskData = sqlResponseParsing(parsedResourceUtilizationData.disk);
+    const memoryUtilization = sqlResponseParsing(parsedResourceUtilizationData.memory)[0];
 
-        const [diskdata, size] = await Promise.all([
-            callSsmExecution(credentialsId, region, diskUtilizationCommand, activeNodeInstanceId, undefined, false),
-            callSsmExecution(credentialsId, region, dbSizecommand, activeNodeInstanceId, undefined, false)
-        ]);
+    const diskUtilization: UtilisationResponseBodyInterface = {
+        used: dbSizeData[0]?.TotalSize?.toString(),
+        total: diskData[0]?.total?.toString(),
+        remaining: (Number(diskData[0].total) - dbSizeData[0].TotalSize).toString(),
+        percentUsed: Math.round((dbSizeData[0].TotalSize * 100) / Number(diskData[0].total)).toString()
+    };
 
-        const [sizeValue] = size ? sqlResponseParsing(size) : [];
-        const [diskDataValue] = diskdata ? sqlResponseParsing(diskdata) : [];
-        const diskUtilization: UtilisationResponseBodyInterface = {
-            used: sizeValue?.TotalSize?.toString(),
-            total: diskDataValue?.total?.toString(),
-            remaining: (Number(diskDataValue.total) - sizeValue.TotalSize).toString(),
-            percentUsed: Math.round((sizeValue.TotalSize * 100) / Number(diskDataValue.total)).toString()
-        };
-        return diskUtilization;
-    }
-
-    try {
-        const response = await callSsmExecution(
-            credentialsId,
-            region,
-            commands,
-            activeNodeInstanceId,
-            undefined,
-            false
-        );
-        logger.debug('Utilization response', metricType, response);
-        if (!response) {
-            throw createError(
-                HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                ` ${metricType} utilization data response is empty.`
-            );
-        }
-        return sqlResponseParsing(response)[0];
-    } catch (error) {
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while fetching ${metricType} utilization: ${activeNodeInstanceId}. Error: ${error}`
-        );
-    }
+    return { cpuUtilization, diskUtilization, memoryUtilization };
 }
-
 async function getTablesCount(
     credentialsId: string,
     region: string,
@@ -297,25 +246,28 @@ async function getServerDetails(credentialsId: string, region: string, activeNod
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get server summary');
     }
 
-    const [serverProperties, connectionsInfo, clusterNodesInfo, serverInstallDate] = await Promise.all(
-        [SERVER_PROPERTIES, NUMBER_OF_CONNECTIONS, CLUSTER_NODES, SERVER_INSTALL_DATE].map(query =>
-            callSsmExecution(credentialsId, region, [`sqlcmd -Q "${query}" -y 0`], activeNodeInstanceId).catch(error =>
-                logger.error(`Error while executing query: ${activeNodeInstanceId} ${query} Error: ${error}`)
-            )
-        )
-    );
+    const command = [`sqlcmd -Q "${SERVER_DETAILS}" -y 0`];
+    const serverAllDetails = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
 
-    let [{ serverDetails, ServerEdition, isClustered, activeNode, serverName: clusterName }] = serverProperties
-        ? sqlResponseParsing(serverProperties)
-        : '';
+    let [
+        {
+            serverDetails,
+            ServerEdition,
+            isClustered,
+            activeNode,
+            clusterName,
+            numberOfConnections,
+            clusterNodesInfo,
+            totalCount
+        }
+    ] = serverAllDetails ? sqlResponseParsing(serverAllDetails) : '';
     const serverInfo = serverDetails ? serverDetails?.replaceAll('\r\n', '').split('\t') : '';
-    const [{ numberOfConnections: activeConnections }] = connectionsInfo ? sqlResponseParsing(connectionsInfo) : '';
-    const [{ creationDate }] = serverInstallDate ? sqlResponseParsing(serverInstallDate!) : '';
+    const activeConnections = numberOfConnections;
     const serverStatus = serverInfo ? ServerState.UP : ServerState.DOWN;
 
     let standbyNode: string = '';
     if (isClustered && clusterNodesInfo) {
-        const [node1, node2] = sqlResponseParsing(clusterNodesInfo);
+        const [node1, node2] = clusterNodesInfo;
 
         if (node1?.is_current_owner) {
             activeNode = node1?.NodeName;
@@ -336,8 +288,8 @@ async function getServerDetails(credentialsId: string, region: string, activeNod
         activeNode,
         ...(isClustered ? { standbyNode, clusterName } : {}),
         operatingSystem: serverDetails.match('Windows Server \\d+')?.[0] || '',
-        creationDate,
-        nodeNames: standbyNode ? [activeNode!, standbyNode!] : [activeNode!]
+        nodeNames: standbyNode ? [activeNode!, standbyNode!] : [activeNode!],
+        dbCount: totalCount
     };
 }
 

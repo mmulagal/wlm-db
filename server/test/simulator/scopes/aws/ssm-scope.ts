@@ -230,6 +230,18 @@ const checkDBExists = {
     ]
 };
 
+const serverDetails = {
+    commands: [
+        "sqlcmd -Q \"SET NOCOUNT ON; SELECT  (SELECT NodeName, is_current_owner FROM sys.dm_os_cluster_nodes FOR JSON PATH) AS clusterNodesInfo, SERVERPROPERTY('Edition') AS ServerEdition, SERVERPROPERTY('IsClustered') AS isClustered, SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS activeNode,  COUNT(1) AS numberOfConnections, @@version AS serverDetails, @@SERVERNAME AS clusterName, COUNT(DISTINCT d.database_id) AS totalCount FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id FOR JSON PATH\" -y 0"
+    ]
+};
+
+const resourceUtilization = {
+    commands: [
+        "$cpu =  sqlcmd -Q \"SET NOCOUNT ON; set quoted_identifier ON;DECLARE @ts BIGINT;\nDECLARE @lastNmin TINYINT;\nSET @lastNmin = 1;\nSELECT @ts =(SELECT cpu_ticks/(cpu_ticks/ms_ticks) FROM sys.dm_os_sys_info); \nSELECT TOP(@lastNmin)\n        SQLProcessUtilization AS [percentUsed], \n        SQLProcessUtilization AS [used],\n        SQLProcessUtilization+SystemIdle+(100 - SystemIdle - SQLProcessUtilization) AS [total],\n        100-SQLProcessUtilization AS [remaining]\nFROM (SELECT record.value('(./Record/@id)[1]','int')AS record_id, \nrecord.value('(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]','int')AS [SystemIdle], \nrecord.value('(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]','int')AS [SQLProcessUtilization], \n[timestamp]      \nFROM (SELECT[timestamp], convert(xml, record) AS [record]             \nFROM sys.dm_os_ring_buffers             \nWHERE ring_buffer_type =N'RING_BUFFER_SCHEDULER_MONITOR'AND record LIKE'%%')AS x )AS y \nORDER BY record_id DESC FOR JSON PATH\" -y 0\n\n$disk = sqlcmd -Q \"SET NOCOUNT ON; WITH presel AS (SELECT database_id, FILE_ID,LEFT(mf1.physical_name,3) AS Volume, ROW_NUMBER() OVER (PARTITION BY LEFT(mf1.physical_name,3) ORDER BY mf1.database_id) AS RowNum\nFROM sys.master_files mf1)\n,roundtwo AS (SELECT DISTINCT pr.database_id, pr.FILE_ID\nFROM presel pr\nWHERE pr.RowNum = 1)\nSELECT SUM(ovs.total_bytes) AS total, SUM(ovs.available_bytes) AS remaining\nFROM roundtwo mf\nCROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.FILE_ID) ovs FOR JSON PATH\" -y 0 \n\n$dbSize = sqlcmd -Q \"SET NOCOUNT ON; SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files FOR JSON PATH\" -y 0\n\n$memory = sqlcmd -Q \"SET NOCOUNT ON; SELECT\n    (processmem.physical_memory_in_use_kb * 1024) AS used,\n    (sysmem.total_physical_memory_kb * 1024) AS total,\n    ((sysmem.total_physical_memory_kb * 1024)-(processmem.physical_memory_in_use_kb * 1024)) as remaining,\n    ((processmem.physical_memory_in_use_kb/1024) * 100 / (sysmem.total_physical_memory_kb/1024)) as percentUsed\n    FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem FOR JSON PATH\" -y 0\n\n$jsonObject = [PSCustomObject]@{\ncpu = $cpu\ndisk = $disk\ndbSize = $dbSize\nmemory = $memory\n}\n\n# Convert the object to JSON\n$jsonString = $jsonObject | ConvertTo-Json\n\n# Output the JSON string\n$jsonString\n"
+    ]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -308,7 +320,11 @@ ssmMock
     .on(SendCommandCommand, { Parameters: cleanUpDB })
     .resolves(listSendCommandCommandResponse.cleanUpDBResponse)
     .on(SendCommandCommand, { Parameters: checkDBExists })
-    .resolves(listSendCommandCommandResponse.checkDBExistsResponse);
+    .resolves(listSendCommandCommandResponse.checkDBExistsResponse)
+    .on(SendCommandCommand, { Parameters: serverDetails })
+    .resolves(listSendCommandCommandResponse.serverDetailsResponse)
+    .on(SendCommandCommand, { Parameters: resourceUtilization })
+    .resolves(listSendCommandCommandResponse.resourceUtilizationResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -386,7 +402,11 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-cleanUpDB' })
     .resolves(getCommandInvocationResponse.cleanUpDBInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-checkDBExists' })
-    .resolves(getCommandInvocationResponse.checkDBInvocationResponse);
+    .resolves(getCommandInvocationResponse.checkDBInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-serverDetails' })
+    .resolves(getCommandInvocationResponse.serverDetailsResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-resourceUtilization' })
+    .resolves(getCommandInvocationResponse.serverUtilizationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
