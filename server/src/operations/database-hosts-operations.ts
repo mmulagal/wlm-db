@@ -561,7 +561,8 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
         return {
             compute: pricingResponse?.compute || 0,
             storage:
-                (pricingResponse?.storage?.capacityCost || 0) + (pricingResponse?.storage?.operationalCost || 0) ||
+                (pricingResponse?.fsxnStorage?.capacityCost || 0) +
+                    (pricingResponse?.fsxnStorage?.operationalCost || 0) ||
                 pricingResponse.ebsStorage?.ebsStorageCost ||
                 0,
             connectivity: pricingResponse?.vpc || 0,
