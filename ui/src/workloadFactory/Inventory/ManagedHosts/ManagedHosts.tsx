@@ -1,4 +1,12 @@
-import { Table, TableTopBar, TooltipInfo, Typography, useDialog, useTable } from '@netapp/design-system';
+import {
+    DsFlashingDotsLoader,
+    Table,
+    TableTopBar,
+    TooltipInfo,
+    Typography,
+    useDialog,
+    useTable
+} from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './ManagedHosts.module.scss';
@@ -13,11 +21,7 @@ import { useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
 import { addDatabaseHosts, selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
-import {
-    databaseTableSort,
-    formatFractionalNumber,
-    formatSizeOnePrecision
-} from '../../../utils/utilityFunctions';
+import { databaseTableSort, formatFractionalNumber, formatSizeOnePrecision } from '../../../utils/utilityFunctions';
 import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
@@ -130,7 +134,9 @@ const ManagedHosts = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div>
-                        <Typography variant="Semibold_14">{rowData?.name || GENERAL.NOT_AVAILABLE}</Typography>
+                        <Typography variant="Semibold_14">
+                            {rowData?.name || (rowData?.loading && rowData?.id) || GENERAL.NOT_AVAILABLE}
+                        </Typography>
                         <div className={styles.firstColText}>
                             {rowData?.status === STATUS_CONST.UP && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
@@ -146,10 +152,16 @@ const ManagedHosts = () => {
                             {rowData?.status === STATUS_CONST.FAILED && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['failed']}`}></div>
                             )}
-                            <Typography variant="Regular_13">{rowData?.status || GENERAL.NOT_AVAILABLE}</Typography>
+                            <Typography variant="Regular_13">
+                                {rowData?.status}
+                                {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
+                                {!rowData?.status && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+                            </Typography>
                             <div className={CommonStyles.separator} />
                             <Typography variant="Regular_13">
-                                {rowData?.topology?.serverType || GENERAL.NOT_AVAILABLE}
+                                {rowData?.topology?.serverType}
+                                {!rowData?.topology?.serverType && rowData?.loading && <DsFlashingDotsLoader />}
+                                {!rowData?.topology?.serverType && !rowData?.loading && GENERAL.NOT_AVAILABLE}
                             </Typography>
                         </div>
                     </div>
@@ -162,8 +174,14 @@ const ManagedHosts = () => {
             accessor: 'topology.fileSystemType',
             width: '212px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (
+                    <>
+                        {cellData}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+                    </>
+                );
             }
         },
         {
@@ -173,6 +191,7 @@ const ManagedHosts = () => {
             isSortable: true,
             width: '212px',
             renderCell: (cellData: any, rowData: any) => {
+                const isLoading = rowData?.loading;
                 const protectionData = rowData?.protection;
                 const totalDbCount = rowData?.databaseCount || 0;
                 let protectedChk = false;
@@ -218,7 +237,8 @@ const ManagedHosts = () => {
                                 </div>
                             </div>
                         )}
-                        {!protectionData && notAvailable()}
+                        {!protectionData && isLoading && <DsFlashingDotsLoader />}
+                        {!protectionData && !isLoading && notAvailable()}
                     </>
                 );
             }
@@ -229,7 +249,7 @@ const ManagedHosts = () => {
             accessor: 'performanceText',
             width: '212px',
             filterOptions: 'auto',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
                         {cellData && (
@@ -237,7 +257,8 @@ const ManagedHosts = () => {
                                 {cellData}
                             </Typography>
                         )}
-                        {!cellData && notAvailable()}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && notAvailable()}
                     </>
                 );
             }
@@ -248,7 +269,7 @@ const ManagedHosts = () => {
             accessor: 'storageSavingsText',
             isSortable: true,
             width: '212px',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
                         {cellData && (
@@ -256,7 +277,8 @@ const ManagedHosts = () => {
                                 {cellData}
                             </Typography>
                         )}
-                        {!cellData && notAvailable()}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && notAvailable()}
                     </>
                 );
             }
@@ -283,7 +305,8 @@ const ManagedHosts = () => {
                                 )}`}</Typography>
                             </div>
                         )}
-                        {!costData && notAvailable()}
+                        {!costData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!costData && !rowData?.loading && notAvailable()}
                     </>
                 );
             }
@@ -294,8 +317,14 @@ const ManagedHosts = () => {
             accessor: 'storage.size',
             isSortable: true,
             width: '212px',
-            renderCell: (cellData: string) => {
-                return cellData ? formatSizeOnePrecision(cellData) : GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (
+                    <>
+                        {cellData && formatSizeOnePrecision(cellData)}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && notAvailable()}
+                    </>
+                );
             }
         },
         {
@@ -304,7 +333,7 @@ const ManagedHosts = () => {
             accessor: 'topology',
             isSortable: true,
             width: '212px',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
                 let instanceIds: any = [];
                 let instanceNames: any = [];
                 cellData?.ec2Details?.map((row: any) => {
@@ -321,7 +350,8 @@ const ManagedHosts = () => {
                                 <Typography variant="Regular_14">{instanceNames.join(',')}</Typography>
                             </div>
                         )}
-                        {!cellData?.ec2Details && notAvailable()}
+                        {!cellData?.ec2Details && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData?.ec2Details && rowData?.loading && notAvailable()}
                     </>
                 );
             }
@@ -332,7 +362,7 @@ const ManagedHosts = () => {
             accessor: 'topology',
             isSortable: true,
             width: '212px',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
                         {cellData?.vpcId && (
@@ -343,7 +373,8 @@ const ManagedHosts = () => {
                                 <Typography variant="Regular_14">{cellData?.vpcName}</Typography>
                             </div>
                         )}
-                        {!cellData?.vpcId && notAvailable()}
+                        {!cellData?.vpcId && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData?.vpcId && rowData?.loading && notAvailable()}
                     </>
                 );
             }
@@ -376,7 +407,8 @@ const ManagedHosts = () => {
                                 </Typography>
                             </div>
                         )}
-                        {!cellData && notAvailable()}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && rowData?.loading && notAvailable()}
                     </>
                 );
             }
@@ -388,8 +420,14 @@ const ManagedHosts = () => {
             isSortable: true,
             width: '212px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (
+                    <>
+                        {cellData}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && notAvailable()}
+                    </>
+                );
             }
         }
     ];

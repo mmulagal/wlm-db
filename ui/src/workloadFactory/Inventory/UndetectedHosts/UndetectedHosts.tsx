@@ -154,7 +154,12 @@ const UndetectedHosts = () => {
                     manageLoading[rowData?.instanceID] = false;
                     setManageLoading(manageLoading);
                 }
-                dispatch(setMovedToManagedHost([...movedToManagedHost, rowData?.instanceID]));
+                dispatch(
+                    setMovedToManagedHost([
+                        ...movedToManagedHost,
+                        { instanceId: rowData?.instanceID, resourceId: result?.data?.id }
+                    ])
+                );
                 const managedSuccessMsg = (
                     <div className={styles.notification}>
                         {GENERAL.HOST_MOVED_SUCCESS[0]}
@@ -190,7 +195,7 @@ const UndetectedHosts = () => {
                 );
                 dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));
             }
-            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_UNMANAGE));
+            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         } else {
             // If no than it will just move instance to tab 2 from tab 3
             dispatch(setMovedToUnmanagedHost([...movedToUnmanagedHost, rowData?.instanceID]));
@@ -204,7 +209,7 @@ const UndetectedHosts = () => {
                 </div>
             );
             dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: unmanagedSuccessMsg }));
-            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_UNMANAGE));
+            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         }
     };
 

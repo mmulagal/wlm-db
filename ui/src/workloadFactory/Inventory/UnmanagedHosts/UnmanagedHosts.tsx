@@ -79,7 +79,12 @@ const UnmanagedHosts = () => {
                 manageLoading[rowData?.id] = false;
                 setManageLoading(manageLoading);
             }
-            dispatch(setMovedToManagedHost([...movedToManagedHost, rowData?.ec2InstanceId]));
+            dispatch(
+                setMovedToManagedHost([
+                    ...movedToManagedHost,
+                    { instanceId: rowData?.ec2InstanceId, resourceId: result?.data?.id }
+                ])
+            );
             const managedSuccessMsg = (
                 <div className={styles.notification}>
                     {GENERAL.HOST_MANAGED_MOVED_SUCCESS[0]}
@@ -440,7 +445,7 @@ const UnmanagedHosts = () => {
                             <div
                                 className={styles.manageHostCol}
                                 onClick={() => {
-                                    // manageHost(rowData);
+                                    manageHost(rowData);
                                 }}
                             >
                                 {rowData?.id in manageLoading && manageLoading[rowData?.id] && (
