@@ -977,6 +977,5 @@ export {
     deploymentStatus,
     deploymentStatusByName,
     getCloudformationTemplate,
-    deployStackOrCreateTemplateURL,
-    checkAllMissingPermissions
+    deployStackOrCreateTemplateURL
 };
