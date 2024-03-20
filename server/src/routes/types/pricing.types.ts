@@ -43,7 +43,7 @@ const PricingServiceRequest = Type.Object({
             diskSize: Type.Number({ description: 'Database "data" volume size in GiB' }),
             throughput: Type.Number({ description: 'Throughput is in MBps' }),
             iops: Type.Number(),
-            deploymentOption: Type.String({ enum: [SINGLE_AZ, MULTI_AZ] }),
+            deploymentOption: Type.String({ enum: ['Single-AZ', 'Multi-AZ'] }),
             storageCapacity: Type.Number({
                 description:
                     'The total FSxN storage capacity in GB. "storageCapacity" and "diskSize" are mutually exclusive'
@@ -55,7 +55,7 @@ const PricingServiceRequest = Type.Object({
 
 const PricingServiceResponse = Type.Object({
     compute: Type.Number(),
-    storage: Type.Optional(
+    fsxnStorage: Type.Optional(
         Type.Object({
             capacityCost: Type.Number(),
             operationalCost: Type.Number(),
@@ -79,6 +79,14 @@ const PricingServiceResponse = Type.Object({
     ebsStorage: Type.Optional(
         Type.Object({
             ebsStorageCost: Type.Number(),
+            size: Type.Number()
+        })
+    ),
+
+    fsxwStorage: Type.Optional(
+        Type.Object({
+            capacityCost: Type.Number(),
+            operationalCost: Type.Number(),
             size: Type.Number()
         })
     ),

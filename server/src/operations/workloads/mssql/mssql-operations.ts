@@ -122,7 +122,6 @@ async function getResourceUtilisation(resourceId: string) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource utilisation information');
     }
     const { activeNodeInstanceId } = await getActiveSqlNode(credentialsId!, region!, node1InstanceId, node2InstanceId!);
-
     return getResourceUtilisationDetails(credentialsId, region, activeNodeInstanceId);
 }
 

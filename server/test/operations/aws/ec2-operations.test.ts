@@ -70,7 +70,10 @@ describe('EC2 Operations', () => {
     });
 
     it('Get services without endpoints', async () => {
-        const response = await getServicesWithNoEndpoint(credentialsId, DEFAULT_AWS_REGION, 'vpc-123445');
+        const response = await getServicesWithNoEndpoint(credentialsId, DEFAULT_AWS_REGION, 'vpc-123445', [
+            'rtb-1',
+            'rtb-2'
+        ]);
         expect(response).toBeDefined();
     });
 

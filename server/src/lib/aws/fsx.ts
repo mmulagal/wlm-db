@@ -75,6 +75,7 @@ async function describeFSxVolumes(
     fsxFsId: string
 ): Promise<DescribeVolumesCommandOutput> {
     logger.info('Describe FSX volumes:', { credentialsId, region, fsxFsId });
+
     const input: DescribeVolumesCommandInput = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
 
     const client = await getFSxClient(credentialsId, region);
@@ -104,7 +105,7 @@ async function describeFSxBackups(
     region: string,
     volumeIds: Array<string>
 ): Promise<DescribeBackupsCommandOutput> {
-    logger.info('Describe Amazon FSx backups:', { credentialsId, region, volumeIds });
+    logger.info('Describe FSx backups:', { credentialsId, region, volumeIds });
 
     const input: DescribeBackupsCommandInput = {
         Filters: [{ Name: 'volume-id', Values: volumeIds }]
@@ -114,7 +115,7 @@ async function describeFSxBackups(
 
     const response = await client.send(new DescribeBackupsCommand(input));
 
-    logger.debug('Describe Amazon FSx backups:', response);
+    logger.debug('Describe FSx backups:', response);
 
     return response;
 }
@@ -133,11 +134,11 @@ async function listResourceTags(
 
         const response = await client.send(command);
 
-        logger.debug('List Amazon FSx resource tags:', response);
+        logger.debug('List FSx resource tags:', response);
 
         return response;
     } catch (error) {
-        logger.error('Error getting fsx tags', error);
+        logger.error('Error getting FSx tags', error);
     }
 }
 

@@ -9,7 +9,8 @@ import {
     SSMClient,
     GetParametersByPathCommand,
     GetConnectionStatusCommand,
-    PutParameterCommand
+    PutParameterCommand,
+    GetParameterCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
 import { HOST_AND_SQL_INFO_PS1 } from '../../../../src/operations/workloads/mssql/discover-consts';
@@ -18,6 +19,7 @@ import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-inv
 import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
 import getConnectionStatusResponse from '../../responses/aws/ssm-connection-status.json';
 import putParameterResponse from '../../responses/aws/ssm-put-parameter.json';
+import getParameerResponse from '../../responses/aws/ssm-get-parameter.json';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -146,7 +148,7 @@ const nativeSqlBackupDatabasesParams = {
 
 const getOntapSnapshotCountParams = {
     commands: [
-        "C:\\SSM\\OntapRestGet.ps1 -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1 -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'uuid=939a4ec9-7c14-11ee-b185-8329e8fcbf44' -OntapResourceQuery 'fields=snapshot_count'"
+        "C:\\SSM\\OntapRestGet.ps1 -FSxID test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'uuid=ea8b0326-302e-11ee-8387-19b38f44ff5b' -OntapResourceQuery 'fields=snapshot_count'"
     ]
 };
 
@@ -242,6 +244,12 @@ const resourceUtilization = {
     ]
 };
 
+const getCollationDetails = {
+    commands: [
+        '\n#Get default collation of SQL server\n$defaultSqlCollation = sqlcmd -Q @"\n    SET NOCOUNT ON;\n    SELECT CONVERT(nvarchar(128), SERVERPROPERTY(\'collation\'));\n"@ -y 0\n\n#Get default version of SQL server\n$sqlVersion = sqlcmd -Q @"\n    SET NOCOUNT ON;\n    SELECT @@VERSION;\n"@ -y 0\n\nWrite-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json\n'
+    ]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -324,7 +332,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: serverDetails })
     .resolves(listSendCommandCommandResponse.serverDetailsResponse)
     .on(SendCommandCommand, { Parameters: resourceUtilization })
-    .resolves(listSendCommandCommandResponse.resourceUtilizationResponse);
+    .resolves(listSendCommandCommandResponse.resourceUtilizationResponse)
+    .on(SendCommandCommand, { Parameters: getCollationDetails })
+    .resolves(listSendCommandCommandResponse.getCollationDetailsResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -406,8 +416,11 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-serverDetails' })
     .resolves(getCommandInvocationResponse.serverDetailsResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-resourceUtilization' })
-    .resolves(getCommandInvocationResponse.serverUtilizationResponse);
+    .resolves(getCommandInvocationResponse.serverUtilizationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getCollationDetails' })
+    .resolves(getCommandInvocationResponse.collationDetailsInvocationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);
+ssmMock.on(GetParameterCommand).resolves(getParameerResponse);

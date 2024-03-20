@@ -13,7 +13,11 @@ import { useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
 import { addDatabaseHosts, selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
-import { databaseTableSort, formatFractionalNumber, formatSizeOnePrecision } from '../../../utils/utilityFunctions';
+import {
+    databaseTableSort,
+    formatFractionalNumber,
+    formatSizeOnePrecision
+} from '../../../utils/utilityFunctions';
 import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';

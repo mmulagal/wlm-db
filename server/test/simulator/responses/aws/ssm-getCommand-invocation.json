@@ -768,5 +768,23 @@
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
+    },
+    "collationDetailsInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[\r\n    \"SQL_Latin1_General_CP1_CI_AS\",\r\n    \"Microsoft SQL Server 2016 (SP3-GDR) (KB5029186) - 13.0.6435.1 (X64) \",\r\n    \"\\tJul 30 2023 19:53:42 \",\r\n    \"\\tCopyright (c) Microsoft Corporation\",\r\n    \"\\tStandard Edition (64-bit) on Windows Server 2016 Datacenter 10.0 \\u003cX64\\u003e (Build 14393: ) (Hypervisor)\",\r\n    \"\"\r\n]\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
     }
 }

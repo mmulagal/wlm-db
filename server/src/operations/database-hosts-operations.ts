@@ -560,7 +560,8 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
         return {
             compute: pricingResponse?.compute || 0,
             storage:
-                (pricingResponse?.storage?.capacityCost || 0) + (pricingResponse?.storage?.operationalCost || 0) ||
+                (pricingResponse?.fsxnStorage?.capacityCost || 0) +
+                    (pricingResponse?.fsxnStorage?.operationalCost || 0) ||
                 pricingResponse.ebsStorage?.ebsStorageCost ||
                 0,
             connectivity: pricingResponse?.vpc || 0,
@@ -683,7 +684,7 @@ async function getDatabaseHostsSummary(
 
     const shouldQueryTopology = fieldsValues?.includes(DatabaseHostsQueryFields.TOPOLOGY);
 
-    const shouldQueryDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT);
+    const shouldQueryDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLocaleLowerCase());
 
     const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
@@ -869,13 +870,7 @@ async function getDatabaseHostSummary(
                             ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId, isManagedResource)]
                             : [Promise.resolve()]), // Fetch pricing estimate data
                         ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
-                            ? [
-                                  getResourceUtilisationDetails(
-                                      credentialsId,
-                                      region,
-                                      activeNodeInstanceId
-                                  )
-                              ]
+                            ? [getResourceUtilisationDetails(credentialsId, region, activeNodeInstanceId)]
                             : [Promise.resolve()])
                     ].map((p, index) =>
                         p.catch(error => {
@@ -892,7 +887,7 @@ async function getDatabaseHostSummary(
                 serverMetadata.creationDate = creationDate || '';
             }
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-                if (topologyData.serverInstallationMode === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
+                if (topologyData?.serverInstallationMode === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
                     delete serverMetadata.clusterName;
                     serverMetadata.activeNode = resourceName || '';
                     serverMetadata.nodeNames = [resourceName || ''];

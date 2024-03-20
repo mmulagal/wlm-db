@@ -9,7 +9,8 @@ import { CommandInvocationStatus, ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
 import { getResourceNameFromTags, sleep } from '../utils/utils';
-import { getSSMConnectionStatus, pollCommandStatus, ssmPutParameters } from './aws/ssm-operations';
+
+import { getEc2SqlParameters, getSSMConnectionStatus, pollCommandStatus, ssmPutParameters } from './aws/ssm-operations';
 import { CloudProviders, HttpErrorCodes, RESOURCESTYPE, SSM_PARAMETERS_BASE_PATH } from '../utils/consts';
 import { SQL_SERVER_VERSION_TO_EDITION, HOST_AND_SQL_INFO_PS1 } from './workloads/mssql/discover-consts';
 import { sendSSMCommand } from '../lib/aws/ssm';
@@ -258,15 +259,19 @@ async function getHostAndSqlInfoFromPsOutput(
     let api1EndTime;
 
     api1StartTime = performance.now();
-    const response = await pollCommandStatus(credentialsId, region, commandInvocationParam);
-    if (response?.StandardErrorContent) {
-        logger.error('Failed to collect info using SSM. Reason: ', response?.StandardErrorContent);
+    const [ssmResponse, ec2SqlParametersInfo] = await Promise.all([
+        pollCommandStatus(credentialsId, region, commandInvocationParam),
+        getEc2SqlParameters(credentialsId, region, ssmTarget.ec2InstanceId)
+    ]);
+
+    if (ssmResponse?.StandardErrorContent) {
+        logger.error('Failed to collect info using SSM. Reason: ', ssmResponse?.StandardErrorContent);
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Failed to get details from EC2 instance ${ssmTarget.ec2InstanceId}. Reason: ${response?.StandardErrorContent}`
+            `Failed to get details from EC2 instance ${ssmTarget.ec2InstanceId}. Reason: ${ssmResponse?.StandardErrorContent}`
         );
     }
-    if (response.Status === CommandInvocationStatus.TIMED_OUT) {
+    if (ssmResponse.Status === CommandInvocationStatus.TIMED_OUT) {
         logger.error(`SSM command ${commandId} execution  timed out on node ${ssmTarget.ec2InstanceId}`);
     }
 
@@ -280,9 +285,9 @@ async function getHostAndSqlInfoFromPsOutput(
     const ssmTargetSqlServerInstancesInfo: SqlServerInstanceInfoType[] = [];
 
     try {
-        const powerShellScriptOutput = response?.StandardOutputContent || '';
+        const powerShellScriptOutput = ssmResponse?.StandardOutputContent || '';
         if (powerShellScriptOutput.length > 0) {
-            let responseInJson = JSON.parse(response?.StandardOutputContent || '');
+            let responseInJson = JSON.parse(ssmResponse?.StandardOutputContent || '');
             if (!Array.isArray(responseInJson)) {
                 responseInJson = [responseInJson];
             }
@@ -348,6 +353,10 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerNodes = [sqlServerNodes];
                     }
 
+                    const sqlServerAuthentication = ec2SqlParametersInfo.some(
+                        (elem: { sqlinstancename: string }) => elem.sqlinstancename === sqlServerInstance
+                    );
+
                     ssmTargetSqlServerInstancesInfo.push({
                         sqlServerVersion,
                         ...(sqlServerName && { sqlServerName }),
@@ -356,6 +365,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerState,
                         sqlServerEdition,
                         windowsAuthentication,
+                        sqlServerAuthentication,
                         storage: uniqBy(storageTypes, 'id'),
                         deploymentTypes: uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones }))
                     });
@@ -478,16 +488,19 @@ async function fetchUnmanagedHostsInformation(
     accountId: string,
     credentialsId: string,
     region: string,
-    instancesDetails: { instanceId: string; fsxnId?: string; ebsVolumeId?: string; fsxwId?: string }[] = []
+
+    instancesDetails: { ec2InstanceId: string; fsxnId?: string; ebsVolumeId?: string; fsxwId?: string }[] = []
 ) {
     logger.info('Fetching hosts information:', { accountId, credentialsId, region, instancesDetails });
 
-    const resourceDetailsList = instancesDetails.map(({ instanceId, fsxnId, ebsVolumeId, fsxwId }) => ({
+    // TODO: /v1/credentials/:credentialsId/regions/:region/mssql/discover (API1) fetches instance-storage mapping and returns it, /v1/credentials/:credentialsId/regions/:region/mssql/instances(API2) expects the same combination in request. In the event there is a mismatch, this function may return incorrect data. Add validation for instance-storage mapping
+
+    const resourceDetailsList = instancesDetails.map(({ ec2InstanceId, fsxnId, ebsVolumeId, fsxwId }) => ({
         id: null,
         account_id: accountId,
-        resource_id: getMsSqlResourceId(instanceId),
+        resource_id: getMsSqlResourceId(ec2InstanceId),
         resource_type: RESOURCESTYPE.MSSQL,
-        resource_name: instanceId,
+        resource_name: ec2InstanceId,
         cloud_provider_name: CloudProviders.AWS,
         co_relation_id: fsxnId || null,
         cloud_provider_account_id: null,
@@ -496,7 +509,7 @@ async function fetchUnmanagedHostsInformation(
         storage_type: STORAGE_TYPE.FSXN,
         metadata: {
             creationDate: Date.now(),
-            node1InstanceId: instanceId
+            node1InstanceId: ec2InstanceId
         },
         ebsVolumeId,
         fsxwId
@@ -507,7 +520,7 @@ async function fetchUnmanagedHostsInformation(
             getDatabaseHostSummary(
                 accountId,
                 resourceDetail.resource_id,
-                'performance,usageEstimation,resourceUtilization',
+                'dbCount,performance,usageEstimation,resourceUtilization',
                 resourceDetail,
                 false // unmanaged host
             )

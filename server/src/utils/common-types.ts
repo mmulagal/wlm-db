@@ -114,6 +114,17 @@ interface SSMParamterObject {
     };
 }
 
+interface MissingPermission {
+    service: string;
+    action: string;
+    error: string;
+}
+interface MissingPermissionInterface {
+    missingStatements: MissingPermission[];
+    blockedByOrganisation: MissingPermission[];
+    blockedByPermissionBoundary: MissingPermission[];
+}
+
 export {
     Metadata,
     ResourceDetails,
@@ -124,5 +135,7 @@ export {
     VPC,
     NetworkInterface,
     SSMParamterObject,
-    UserDatabase
+    UserDatabase,
+    MissingPermission,
+    MissingPermissionInterface
 };

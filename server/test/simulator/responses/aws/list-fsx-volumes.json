@@ -32,7 +32,13 @@
             },
             "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:volume/fs-03773e21b2f0e39b4/fsvol-0245cba066cb77500",
             "VolumeId": "fsvol-0245cba066cb77500",
-            "VolumeType": "ONTAP"
+            "VolumeType": "ONTAP",
+            "Tags": [
+                {
+                    "Key": "cloudformation:logical-id",
+                    "Value": "FSxDataVolumeConfiguration"
+                }
+            ]
         },
         {
             "CreationTime": "2023-08-01T05:46:14.000Z",

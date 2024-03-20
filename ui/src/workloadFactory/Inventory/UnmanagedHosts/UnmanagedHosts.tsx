@@ -1,29 +1,57 @@
-import { Button, Spinner, Table, TableTopBar, TooltipInfo, Typography, useTable } from '@netapp/design-system';
+import {
+    Button,
+    DsFlashingDotsLoader,
+    Spinner,
+    Table,
+    TableTopBar,
+    TooltipInfo,
+    Typography,
+    useTable
+} from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './UnmanagedHosts.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useEffect, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { FSX_DEPLOYMENT_MODE, STATUS_CONST } from '../../../utils/consts';
+import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE, WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 
-import { databaseTableSort, formatFractionalNumber, formatSizeOnePrecision } from '../../../utils/utilityFunctions';
-import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import {
+    formatFractionalNumber,
+    formatSizeOnePrecision,
+    formatUnamanagedHostList
+} from '../../../utils/utilityFunctions';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
-import { setUnManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
+import {
+    setMovedToManagedHost,
+    setSelectedHeaderTab,
+    setUnManagedHostColState
+} from '../../../store/workloadFactory/inventorySlice';
+import { useManageHostMutation } from '../../../utils/apiService';
+import store from '../../../store/store';
 
 const UnmanagedHosts = () => {
     const dispatch = useDispatch();
 
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const unManagedHostList = useAppSelector(state => state.inventory.unManagedHosts);
+    const mssqlInstancesData = useAppSelector(state => state.inventory.mssqlInstancesData);
     const { unManagedHostInitialColumns } = useAppSelector(state => state.inventory);
+    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
 
     const [manageLoading, setManageLoading] = useState<any>({});
+    const [manageHostApi] = useManageHostMutation();
+    const [tableData, setTableData] = useState<any>([]);
+
+    useEffect(() => {
+        // Format data again on unIdentifiableHosts or fsxCredentialStatusObj change
+        setTableData(formatUnamanagedHostList(unManagedHostList, mssqlInstancesData));
+    }, [unManagedHostList, mssqlInstancesData]);
 
     const notAvailable = () => {
         return (
@@ -33,27 +61,59 @@ const UnmanagedHosts = () => {
         );
     };
 
-    const manageHost = (manageRow: any) => {
-        if (!manageLoading[manageRow?.id]) {
-            manageLoading[manageRow?.id] = true;
+    const manageHost = async (rowData: any) => {
+        const state = store.getState();
+        const movedToManagedHost = state.inventory.movedToManagedHost;
+        const name = rowData?.sqlServerInstances?.[0]?.sqlServerName;
+        if (!manageLoading[rowData?.id]) {
+            manageLoading[rowData?.id] = true;
+            setManageLoading(manageLoading);
         }
-        setManageLoading(manageLoading);
-        setTimeout(() => {
-            stopLoading(manageRow);
-        }, 3000);
-    };
-
-    const stopLoading = (manageRow: any) => {
-        if (manageLoading[manageRow?.id]) {
-            manageLoading[manageRow?.id] = false;
+        const result: any = await manageHostApi({
+            credentialId: headerSelectedCred?.data?.credentialsId,
+            regionId: headerSelectedRegion?.label2,
+            instanceId: rowData?.ec2InstanceId
+        });
+        if (result && !result?.error) {
+            if (manageLoading[rowData?.id]) {
+                manageLoading[rowData?.id] = false;
+                setManageLoading(manageLoading);
+            }
+            dispatch(setMovedToManagedHost([...movedToManagedHost, rowData?.ec2InstanceId]));
+            const managedSuccessMsg = (
+                <div className={styles.notification}>
+                    {GENERAL.HOST_MANAGED_MOVED_SUCCESS[0]}
+                    <span className={styles.bold}>{name}</span>
+                    {GENERAL.HOST_MANAGED_MOVED_SUCCESS[1]}
+                    <span className={styles.bold}>{GENERAL.HOST_MANAGED_MOVED_SUCCESS[2]}</span>
+                    {GENERAL.HOST_MANAGED_MOVED_SUCCESS[3]}
+                </div>
+            );
+            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: managedSuccessMsg }));
+        } else {
+            if (manageLoading[rowData?.id]) {
+                manageLoading[rowData?.id] = false;
+                setManageLoading(manageLoading);
+            }
+            const managedFailedMsg = (
+                <div className={styles.notification}>
+                    {GENERAL.HOST_MOVED_FAILED[0]}
+                    <span className={styles.bold}>{name}</span>
+                    {GENERAL.HOST_MOVED_FAILED[1]}
+                    <Button
+                        Component="button"
+                        variant="text"
+                        onClick={() => {
+                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            dispatch(clearNotifications());
+                        }}
+                    >
+                        {GENERAL.JOB_MONITORING}.
+                    </Button>
+                </div>
+            );
+            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));
         }
-        setManageLoading(manageLoading);
-        dispatch(
-            addNotification({
-                notificationType: NOTIFICATION_TYPES.SUCCESS,
-                message: `Host "${manageRow?.name}" successfully moved to managed hosts tab`
-            })
-        );
     };
 
     const DatabasesColDefs: ColumnProps[] = [
@@ -67,7 +127,7 @@ const UnmanagedHosts = () => {
             accessorForTextFilter: 'databaseHostname',
             renderCell: (cellData: any, rowData: any) => {
                 const status = rowData?.sqlServerInstances?.[0]?.sqlServerState;
-                const name = rowData?.sqlServerInstances?.[0]?.sqlServerName;
+                const name = rowData?.sqlServerInstances?.[0]?.sqlServerName || rowData?.name;
                 return (
                     <div>
                         <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
@@ -99,15 +159,19 @@ const UnmanagedHosts = () => {
             width: '200px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find((item: any) => item.type === 'FSXN');
-                const hasEbs = rowData?.sqlServerInstances?.[0]?.storage?.find((item: any) => item.type === 'EBS');
+                const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find(
+                    (item: any) => item.type === DETECT_HOST_VAR.FSXN
+                );
+                const hasEbs = rowData?.sqlServerInstances?.[0]?.storage?.find(
+                    (item: any) => item.type === DETECT_HOST_VAR.EBS
+                );
                 return hasEbs && hasFsx
                     ? `${GENERAL.FSX_FOR_ONTAP}, ${GENERAL.EBS}`
                     : hasEbs
                     ? GENERAL.EBS
                     : hasFsx
                     ? GENERAL.FSX_FOR_ONTAP
-                    : 'N/A';
+                    : cellData || GENERAL.NOT_AVAILABLE;
             }
         },
         {
@@ -117,6 +181,7 @@ const UnmanagedHosts = () => {
             isSortable: true,
             width: '188px',
             renderCell: (cellData: any, rowData: any) => {
+                const isLoading = rowData?.loading;
                 const protectionData = rowData?.protection;
                 const totalDbCount = rowData?.databaseCount || 0;
                 let protectedChk = false;
@@ -162,7 +227,8 @@ const UnmanagedHosts = () => {
                                 </div>
                             </div>
                         )}
-                        {!protectionData && notAvailable()}
+                        {!protectionData && isLoading && <DsFlashingDotsLoader />}
+                        {!protectionData && !isLoading && notAvailable()}
                     </>
                 );
             }
@@ -173,7 +239,7 @@ const UnmanagedHosts = () => {
             accessor: 'performanceText',
             width: '188px',
             filterOptions: 'auto',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
                         {cellData && (
@@ -181,7 +247,8 @@ const UnmanagedHosts = () => {
                                 {cellData}
                             </Typography>
                         )}
-                        {!cellData && notAvailable()}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && notAvailable()}
                     </>
                 );
             }
@@ -192,7 +259,7 @@ const UnmanagedHosts = () => {
             accessor: 'storageSavingsText',
             isSortable: true,
             width: '188px',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
                         {cellData && (
@@ -200,7 +267,8 @@ const UnmanagedHosts = () => {
                                 {cellData}
                             </Typography>
                         )}
-                        {!cellData && notAvailable()}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && notAvailable()}
                     </>
                 );
             }
@@ -227,7 +295,8 @@ const UnmanagedHosts = () => {
                                 )}`}</Typography>
                             </div>
                         )}
-                        {!costData && notAvailable()}
+                        {!costData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!costData && !rowData?.loading && notAvailable()}
                     </>
                 );
             }
@@ -238,16 +307,46 @@ const UnmanagedHosts = () => {
             accessor: 'storage.size',
             isSortable: true,
             width: '194px',
-            renderCell: (cellData: string) => {
-                return cellData ? formatSizeOnePrecision(cellData) : GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (
+                    <>
+                        {cellData && formatSizeOnePrecision(cellData)}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && notAvailable()}
+                    </>
+                );
             }
         },
         {
             id: '8',
             Header: GENERAL.DB_HOST_INSTANCE_NAME,
-            accessor: 'ec2InstanceName',
+            accessor: 'topology',
             isSortable: true,
-            width: '235px'
+            width: '235px',
+            renderCell: (cellData: any, rowData: any) => {
+                let instanceIds: any = [];
+                let instanceNames: any = [];
+                cellData?.ec2Details?.map((row: any) => {
+                    instanceIds.push(row?.id);
+                    instanceNames.push(row?.name);
+                });
+                return (
+                    <>
+                        {instanceNames.length > 0 ? (
+                            <div className={styles.colText}>
+                                {instanceIds.length > 0 && (
+                                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>
+                                        ID: {instanceIds.join(',')}
+                                    </TooltipInfo>
+                                )}
+                                <Typography variant="Regular_14">{instanceNames.join(',')}</Typography>
+                            </div>
+                        ) : (
+                            rowData?.ec2InstanceName || notAvailable()
+                        )}
+                    </>
+                );
+            }
         },
         {
             id: '9',
@@ -311,8 +410,14 @@ const UnmanagedHosts = () => {
             accessor: 'topology.serverInstallationMode',
             isSortable: true,
             width: '235px',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (
+                    <>
+                        {cellData}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && notAvailable()}
+                    </>
+                );
             }
         }
     ];
@@ -320,7 +425,7 @@ const UnmanagedHosts = () => {
     const tableProps = useTable({
         isSorting: false,
         columns: DatabasesColDefs,
-        rows: databaseTableSort(unManagedHostList) || [],
+        rows: tableData || [],
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
@@ -328,22 +433,27 @@ const UnmanagedHosts = () => {
         manageColumnsProps: {
             width: '182px',
             renderCell: (cellData: any, rowData: any) => {
+                const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find((item: any) => item.type === 'FSXN');
                 return (
-                    <div
-                        className={styles.manageHostCol}
-                        onClick={() => {
-                            //manageHost(rowData)
-                        }}
-                    >
-                        {rowData?.id in manageLoading && manageLoading[rowData?.id] && (
-                            <Spinner className={styles.loading} />
+                    <>
+                        {hasFsx && (
+                            <div
+                                className={styles.manageHostCol}
+                                onClick={() => {
+                                    // manageHost(rowData);
+                                }}
+                            >
+                                {rowData?.id in manageLoading && manageLoading[rowData?.id] && (
+                                    <Spinner className={styles.loading} />
+                                )}
+                                {!manageLoading[rowData?.id] && (
+                                    <Typography variant="Regular_14" className={styles.textStyle}>
+                                        {GENERAL.MANAGE_HOST}
+                                    </Typography>
+                                )}
+                            </div>
                         )}
-                        {!manageLoading[rowData?.id] && (
-                            <Typography variant="Regular_14" className={styles.textStyle}>
-                                Manage host
-                            </Typography>
-                        )}
-                    </div>
+                    </>
                 );
             }
         },

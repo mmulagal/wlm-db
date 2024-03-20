@@ -612,6 +612,8 @@ export const GENERAL = {
     DATA_SIZE_MIN_ERROR: 'Minimum space required to create the file is not available in the drive',
     DATA_SIZE_ERROR: 'The valid range is 1 GiB - ',
     DRIVE_LETTER_CREATE_ERROR: 'Action required: Drive letters are missing. Use Advanced Create mode to select drives.',
+    COLLATION_ERROR: 'Action required: Select collation',
+    SELECT_COLLATION: 'Select a collation',
     DRIVE_LETTER_QUICK_CREATE_ERROR:
         'Insufficient drive letters available on system to create new drives. Use Advanced Create mode to reuse existing drives.',
     RESOURCE_ROLLBACK_TOOLTIP:
@@ -631,6 +633,7 @@ export const GENERAL = {
     MULTI_AZ: 'Multi AZ',
     // Const for unidentifiable data
     DETECT_HOST: 'Detect host',
+    MANAGE_HOST: 'Manage host',
     DETECT_HOST_STEPS: ['Step 1 / 2', 'Step 2 out of 2'],
     FAILED_TO_DETECT_HOST: 'Failed to detect host',
     DONE: 'Done',
@@ -671,6 +674,8 @@ export const GENERAL = {
         ' Managed hosts ',
         'tab.'
     ],
+    HOST_MANAGED_MOVED_SUCCESS: ['Host ', ' successfully moved to the ', ' Managed hosts ', 'tab.'],
+    HOST_MOVED_FAILED: ['Host ', ' failed to become a managed host. For more details view ', ' Job Monitoring.'],
     FCI: 'FCI',
     STANDALONE: 'Standalone'
 };

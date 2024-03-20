@@ -334,9 +334,9 @@ export const databaseHomeApi = createApi({
             getDatabaseHosts: builder.query({
                 query: ({ credentialId, region, nextToken = null }) => {
                     if (nextToken) {
-                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,dbCount,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
                     } else {
-                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=performance,storage,protection,usageEstimation`;
+                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,dbCount,performance,storage,protection,usageEstimation`;
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
@@ -372,7 +372,7 @@ export const workloadFactoryResourceApi = createApi({
         return {
             getResourceDetails: builder.query({
                 query: ({ credentialId, region, id }) => ({
-                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}?fields=storage,performance,usageEstimation,resourceUtilization`
+                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}?fields=topology,dbCount,storage,performance,usageEstimation,resourceUtilization`
                 })
             }),
             getDatabaseList: builder.query({
@@ -510,6 +510,11 @@ export const createUserDbApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getCollationList: builder.query({
+                query: ({ credentialId, region, id }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}/collation`
+                })
             })
         };
     }
@@ -559,6 +564,15 @@ export const inventoryApi = createApi({
             registerResourceCredentials: builder.mutation({
                 query: ({ credentialId, regionId, instanceId, payload }) => ({
                     url: `credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/mssql/discover/resource-credentials`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
+            getMssqlInstanceData: builder.mutation({
+                query: ({ credentialId, regionId, payload, nextToken = null }) => ({
+                    url: nextToken
+                        ? `credentials/${credentialId}/regions/${regionId}/mssql/instances&nextToken=${nextToken}`
+                        : `credentials/${credentialId}/regions/${regionId}/mssql/instances`,
                     method: 'POST',
                     body: payload
                 })
@@ -620,12 +634,13 @@ export const { useGetHeadersCredentialsQuery, useGetHeadersRegionsQuery, useGetS
 
 export const { useGetWlmdbPoliciesQuery } = policiesApi;
 
-export const { useGetDriveInfoQuery, useCreateUserDBMutation } = createUserDbApi;
+export const { useGetDriveInfoQuery, useCreateUserDBMutation, useGetCollationListQuery } = createUserDbApi;
 
 export const {
     useDiscoverHostsQuery,
     useGetFsxCredentialStatusQuery,
     useGetHostsDetailsQuery,
     useManageHostMutation,
-    useRegisterResourceCredentialsMutation
+    useRegisterResourceCredentialsMutation,
+    useGetMssqlInstanceDataMutation
 } = inventoryApi;

@@ -385,12 +385,6 @@ const PARAMETERS = [
         default: 'false'
     },
     {
-        name: 'CloudwatchEndpointExists',
-        description: 'Boolean to convey if a Cloudwatch endpoint exists in the vpc.',
-        type: 'String',
-        default: 'false'
-    },
-    {
         name: 'CloudwatchLogsEndpointExists',
         description: 'Boolean to convey if a Cloudwatch Logs endpoint exists in the vpc.',
         type: 'String',
@@ -419,6 +413,11 @@ const PARAMETERS = [
         description: 'Boolean to convey if SSM messages endpoint exists in the vpc.',
         type: 'String',
         default: 'false'
+    },
+    {
+        name: 'S3EndpointRouteTables',
+        description: 'Route table ids to attach to S3 gateway endpoint.',
+        type: 'String'
     }
 ];
 

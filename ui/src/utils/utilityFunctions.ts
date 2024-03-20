@@ -343,6 +343,41 @@ export const formatFractionalNumber = (value: number | undefined, precision: num
     return value;
 };
 
+export const formatHostData = (val: any) => {
+    // Protection text added to enable filter
+    let protectionText = '';
+    if (
+        val?.protection?.isAwsBackUpEnabled ||
+        val?.protection?.isFsxOntapSnapshotsEnabled ||
+        val?.protection?.isSqlNativeEnabled
+    ) {
+        protectionText = GENERAL.PROTECTED;
+    } else if (val?.protection) {
+        protectionText = GENERAL.NOT_PROTECTED;
+    }
+    const storagePercent = val?.storage ? (val.storage?.spaceSavings / val.storage?.used) * 100 : 0;
+    val = {
+        ...val,
+        type: DB_HOME_DATA_TYPE.HOSTS,
+        databaseHostname: (val?.name || '') + (val?.status || ''),
+        protectionText: protectionText,
+        // Total cost to enable search in table
+        totalCost: (
+            (val?.estimatedUsageCost?.compute || 0) +
+            (val?.estimatedUsageCost?.storage || 0) +
+            (val?.estimatedUsageCost?.connectivity || 0) +
+            (val?.estimatedUsageCost?.others || 0)
+        ).toString(),
+        // performance table text to search in table
+        performanceText: val?.performance && val.performance?.assessment,
+        // Storage saving table text to search in table
+        storageSavingsText:
+            val?.storage &&
+            formatFractionalNumber(storagePercent, 2) + '% (' + formatSizeOnePrecision(val.storage?.spaceSavings) + ')'
+    };
+    return val;
+};
+
 export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null) => {
     if (!hostsData) {
         return [];
@@ -351,41 +386,7 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null) => 
     const mergedList: any[] = [];
     hostsData?.map(val => {
         if (!uniqueIds.includes(val?.id)) {
-            // Protection text added to enable filter
-            let protectionText = '';
-            if (
-                val?.protection?.isAwsBackUpEnabled ||
-                val?.protection?.isFsxOntapSnapshotsEnabled ||
-                val?.protection?.isSqlNativeEnabled
-            ) {
-                protectionText = GENERAL.PROTECTED;
-            } else if (val?.protection) {
-                protectionText = GENERAL.NOT_PROTECTED;
-            }
-            const storagePercent = val?.storage ? (val.storage?.spaceSavings / val.storage?.used) * 100 : 0;
-            val = {
-                ...val,
-                type: DB_HOME_DATA_TYPE.HOSTS,
-                databaseHostname: (val?.name || '') + (val?.status || ''),
-                protectionText: protectionText,
-                // Total cost to enable search in table
-                totalCost: (
-                    (val?.estimatedUsageCost?.compute || 0) +
-                    (val?.estimatedUsageCost?.storage || 0) +
-                    (val?.estimatedUsageCost?.connectivity || 0) +
-                    (val?.estimatedUsageCost?.others || 0)
-                ).toString(),
-                // performance table text to search in table
-                performanceText: val?.performance && val.performance?.assessment,
-                // Storage saving table text to search in table
-                storageSavingsText:
-                    val?.storage &&
-                    formatFractionalNumber(storagePercent, 2) +
-                        '% (' +
-                        formatSizeOnePrecision(val.storage?.spaceSavings) +
-                        ')'
-            };
-            mergedList.push(val);
+            mergedList.push(formatHostData(val));
             uniqueIds.push(val?.id);
         }
     });
@@ -1271,4 +1272,41 @@ export const createDetectHostPayload = (instanceID: string, fsxId: string) => {
         });
     }
     return { credentials: credList };
+};
+
+export const formatUnamanagedHostList = (data: any, mssqlInstancesData: any) => {
+    return data.map((item: any) => {
+        const perRowInstanceData = mssqlInstancesData[item?.ec2InstanceId];
+        if (!perRowInstanceData?.error && !perRowInstanceData?.loading && perRowInstanceData?.data) {
+            return formatHostData({
+                ...item,
+                id: perRowInstanceData?.data?.id,
+                name: perRowInstanceData?.data?.name,
+                status: perRowInstanceData?.data?.status,
+                databaseCount: perRowInstanceData?.data?.databaseCount,
+                topology: perRowInstanceData?.data?.topology,
+                databaseServer: perRowInstanceData?.data?.databaseServer,
+                protection: perRowInstanceData?.data?.protection,
+                performance: perRowInstanceData?.data?.performance,
+                storage: perRowInstanceData?.data?.storage,
+                estimatedUsageCost: perRowInstanceData?.data?.estimatedUsageCost,
+                resourceUtilization: perRowInstanceData?.data?.resourceUtilization,
+                loading: false
+            });
+        } else if (perRowInstanceData?.loading) {
+            return {
+                ...item,
+                id: item?.ec2InstanceId,
+                name: item?.ec2InstanceId,
+                loading: true
+            };
+        } else {
+            return {
+                ...item,
+                id: item?.ec2InstanceId,
+                name: item?.ec2InstanceId,
+                loading: false
+            };
+        }
+    });
 };

@@ -10,6 +10,7 @@ import JobMonitoringDownloads from '../data/jobMonitoringDownload.json';
 import JobMonitoringSubTask from '../data/JobMonitoringSubTask.json';
 import DiscoverEC2 from '../data/discoverEc2.json';
 import CredentialsStatus from '../data/credentialsStatus.json';
+import MssqlInstances from '../data/mssqlInstances.json';
 
 const router = require('express').Router();
 
@@ -81,7 +82,13 @@ router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances
 
 router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/manage/:instanceId`, async (req: {}, res: any) => {
     setTimeout(() => {
-        generateResponse(res, 200, {});
+        generateResponse(res, 500, {"message": "failing"});
+    }, 3000);
+});
+
+router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/mssql/instances`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, MssqlInstances);
     }, 3000);
 });
 

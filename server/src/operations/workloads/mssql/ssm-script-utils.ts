@@ -96,4 +96,20 @@ $jsonString = $jsonObject | ConvertTo-Json
 $jsonString
 `;
 
-export { GET_DRIVE_INFO, GET_DEFAULT_DRIVES, RESOURCE_UTILIZATION };
+const GET_DEFAULT_COLLATION = `
+#Get default collation of SQL server
+$defaultSqlCollation = sqlcmd -Q @"
+    SET NOCOUNT ON;
+    SELECT CONVERT(nvarchar(128), SERVERPROPERTY('collation'));
+"@ -y 0
+
+#Get default version of SQL server
+$sqlVersion = sqlcmd -Q @"
+    SET NOCOUNT ON;
+    SELECT @@VERSION;
+"@ -y 0
+
+Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
+`;
+
+export { GET_DRIVE_INFO, GET_DEFAULT_DRIVES, GET_DEFAULT_COLLATION, RESOURCE_UTILIZATION };
