@@ -17,7 +17,7 @@ async function calculateFsxnStorageEfficiency(region: string, credentialsId: str
         EndTime: new Date(),
         MetricName: 'StorageEfficiencySavings',
         Namespace: 'AWS/FSx',
-        Period: 60, // 1 minute
+        Period: 24 * 60 * 60, // 1 day
         StartTime: new Date(Date.now() - ms('1d')),
         Statistics: ['Average'],
         Dimensions: [
@@ -32,7 +32,7 @@ async function calculateFsxnStorageEfficiency(region: string, credentialsId: str
         EndTime: new Date(),
         MetricName: 'StorageUsed',
         Namespace: 'AWS/FSx',
-        Period: 60, // 1 minute
+        Period: 24 * 60 * 60, // 1 day
         StartTime: new Date(Date.now() - ms('1d')),
         Statistics: ['Sum'],
         Dimensions: [
@@ -91,7 +91,7 @@ async function calculateFsxwStorageEfficiency(region: string, credentialsId: str
         EndTime: new Date(),
         MetricName: 'DeduplicationSavedStorage',
         Namespace: 'AWS/FSx',
-        Period: 60, // 1 minute
+        Period: 24 * 60 * 60, // 1 day
         StartTime: new Date(Date.now() - ms('1d')),
         Statistics: ['Average'],
         Dimensions: [
@@ -106,7 +106,7 @@ async function calculateFsxwStorageEfficiency(region: string, credentialsId: str
         EndTime: new Date(),
         MetricName: 'StorageCapacityUtilization',
         Namespace: 'AWS/FSx',
-        Period: 60, // 1 minute
+        Period: 24 * 60 * 60, // 1 day
         StartTime: new Date(Date.now() - ms('1d')),
         Statistics: ['Average'],
         Dimensions: [
