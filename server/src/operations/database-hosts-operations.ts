@@ -107,8 +107,7 @@ async function getTopology(
     resourceId: string,
     resourceData: resource,
     activeNodeInstanceId: string,
-    standbyNodeInstanceId?: string,
-    vpcIdFilterString?: string
+    standbyNodeInstanceId?: string
 ): Promise<TopologyResponseType> {
     logger.info('Fetching topology data', {
         accountId,
@@ -116,8 +115,7 @@ async function getTopology(
         resourceId,
         resourceData,
         activeNodeInstanceId,
-        standbyNodeInstanceId,
-        vpcIdFilterString
+        standbyNodeInstanceId
     });
 
     if (isEmpty(resourceData)) {
