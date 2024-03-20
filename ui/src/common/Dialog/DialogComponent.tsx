@@ -11,6 +11,7 @@ type DialogProps = {
     callback?: any;
     closeCallback?: any;
     dialogFrom?: string;
+    customClass?: string;
 };
 
 const DialogComponent = ({
@@ -20,7 +21,8 @@ const DialogComponent = ({
     secondaryButton,
     callback,
     closeCallback,
-    dialogFrom
+    dialogFrom,
+    customClass
 }: DialogProps) => {
     const { closeDialog } = useDialog();
 
@@ -69,7 +71,7 @@ const DialogComponent = ({
     };
 
     return (
-        <DialogLayout>
+        <DialogLayout className={customClass}>
             <DialogHeader>{header}</DialogHeader>
             <DialogContent>{content}</DialogContent>
             <DialogFooter error={detectHostError}>

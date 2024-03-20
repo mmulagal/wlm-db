@@ -13,7 +13,7 @@ import { FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
 type Res = {
     data: {
         compute: '',
-        storage: {
+        fsxnStorage: {
             capacity: '',
             throughput: '',
             size: {
@@ -98,7 +98,7 @@ const EstimatedCost = () => {
             if(selectedFsxnType === GENERAL.CREATE_NEW_FSXN){
                 payload = {
                     compute: computeObj(updatedStr),
-                    storage: {
+                    fsxnStorage: {
                         regionCode: updatedStr || '',
                         diskSize: diskSizeUnit === 'TiB' ? 1024 * diskSize : Number(diskSize),
                         throughput: fsxVolThroughput(),
@@ -259,7 +259,7 @@ const EstimatedCost = () => {
                                 <div className={styles.secondRow}>
                                     <Typography variant="Regular_14">{GENERAL.TYPE}: FSx for NetApp ONTAP</Typography>
                                     <Typography variant="Regular_14">
-                                        {GENERAL.SIZE}: {data?.data?.storage?.size?.total + ' GiB'}
+                                        {GENERAL.SIZE}: {data?.data?.fsxnStorage?.size?.total + ' GiB'}
                                     </Typography>
                                     <Typography variant="Regular_14">
                                         {GENERAL.THROUGHPUT}: {throughputValue}
@@ -273,7 +273,7 @@ const EstimatedCost = () => {
                                             </div>
                                         ) : (
                                             //@ts-ignore
-                                            `$${Number(data?.data?.storage?.capacity).toFixed(2)}` || ''
+                                            `$${Number(data?.data?.fsxnStorage?.capacityCost).toFixed(2)}` || ''
                                         )}
                                     </Typography>
 
@@ -288,7 +288,7 @@ const EstimatedCost = () => {
                                             </div>
                                         ) : (
                                             //@ts-ignore
-                                            `$${Number(data?.data?.storage?.throughput).toFixed(2)}` || ''
+                                            `$${Number(data?.data?.fsxnStorage?.operationalCost).toFixed(2)}` || ''
                                         )}
                                     </Typography>
                                 </div>

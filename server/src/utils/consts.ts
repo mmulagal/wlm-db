@@ -31,7 +31,8 @@ const FSX_BATCH_CONCURRENCY_VALUE = 10;
 
 enum FileSystemDeploymentType {
     SINGLE_AZ_1,
-    MULTI_AZ_1
+    MULTI_AZ_1,
+    SINGLE_AZ_2
 }
 
 // version
@@ -644,19 +645,18 @@ const TEMPLATE_S3_ENDPOINT = 'S3EndpointExists';
 const TEMPLATE_CLOUDFORMATION_ENDPOINT = 'CloudformationEndpointExists';
 const TEMPLATE_SSM_ENDPOINT = 'SsmEndpointExists';
 const TEMPLATE_SQS_ENDPOINT = 'SqsEndpointExists';
-const TEMPLATE_CLOUDWATCH_ENDPOINT = 'CloudwatchEndpointExists';
 const TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT = 'CloudwatchLogsEndpointExists';
 const TEMPLATE_FSX_ENDPOINT = 'FsxEndpointExists';
 const TEMPLATE_EC2_ENDPOINT = 'Ec2EndpointExists';
 const TEMPLATE_EC2MESSAGES_ENDPOINT = 'Ec2MessagesEndpointExists';
 const TEMPLATE_SSMMESSAGES_ENDPOINT = 'SSMMessagesEndpointExists';
+const TEMPLATE_S3GATEWAY_ROUTETABLES = 'S3EndpointRouteTables';
 
 const MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
     s3: TEMPLATE_S3_ENDPOINT,
     cloudformation: TEMPLATE_CLOUDFORMATION_ENDPOINT,
     ssm: TEMPLATE_SSM_ENDPOINT,
     sqs: TEMPLATE_SQS_ENDPOINT,
-    monitoring: TEMPLATE_CLOUDWATCH_ENDPOINT,
     logs: TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT,
     fsx: TEMPLATE_FSX_ENDPOINT,
     ec2: TEMPLATE_EC2_ENDPOINT,
@@ -930,11 +930,13 @@ const AWS_FSX_TYPE = 'AWS_FSX';
 const ADMIN_ROLE = 'Role-1';
 const USER_ROLE = 'Role-2';
 enum DatabaseHostsQueryFields {
+    TOPOLOGY = 'topology',
     PERFORMANCE = 'performance',
     PROTECTION = 'protection',
     STORAGE = 'storage',
     USAGE_ESTIMATION = 'usageEstimation',
-    RESOURCE_UTILIZATION = 'resourceUtilization'
+    RESOURCE_UTILIZATION = 'resourceUtilization',
+    DB_COUNT = 'dbCount'
 }
 
 enum ServerState {
@@ -1069,7 +1071,6 @@ const subJobDescriptions: SubJobDescriptions = {
     'HttpsSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating security group to allow HTTPs access',
     'S3Endpoint(AWS::EC2::VPCEndpoint)': 'Creating S3 gateway endpoint',
     'CloudformationEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudFormation endpoint',
-    'CloudwatchEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch endpoint',
     'Ec2MessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2Messages endpoint',
     'SqsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SQS endpoint',
     'SsmEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSM endpoint',
@@ -1084,18 +1085,7 @@ const RESOURCE_SOURCE = {
     DISCOVER: 'discovery'
 };
 
-const ENDPOINTS_DEPLOYMENT = [
-    's3',
-    'cloudformation',
-    'sqs',
-    'ssm',
-    'ssmmessages',
-    'ec2messages',
-    'monitoring',
-    'logs',
-    'fsx',
-    'ec2'
-];
+const ENDPOINTS_DEPLOYMENT = ['s3', 'cloudformation', 'sqs', 'ssm', 'ssmmessages', 'ec2messages', 'logs', 'fsx', 'ec2'];
 
 const SSM_PARAMETERS_BASE_PATH = '/netapp/wlmdb';
 const COMPLETE = 'Complete';
@@ -1344,7 +1334,6 @@ export {
     TEMPLATE_CLOUDFORMATION_ENDPOINT,
     TEMPLATE_SSM_ENDPOINT,
     TEMPLATE_SQS_ENDPOINT,
-    TEMPLATE_CLOUDWATCH_ENDPOINT,
     MAP_SERVICE_TEMPLATE_PARAMETER,
     ARTIFACT_BUCKET_NAME,
     SIGNED_TEMPLATES_BUCKET_NAME,
@@ -1356,5 +1345,6 @@ export {
     VALIDATION_INSTANCE_TYPE,
     ONLINE,
     BLOCKED_BY_SCP,
-    SIMULATE_IAM_POLICY
+    SIMULATE_IAM_POLICY,
+    TEMPLATE_S3GATEWAY_ROUTETABLES
 };

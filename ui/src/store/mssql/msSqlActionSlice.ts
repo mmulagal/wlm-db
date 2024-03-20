@@ -23,6 +23,7 @@ const initialState: any = {
     isRecommendedInstance: null, // To load default instance type on recommended templates load
     refetchJobSummaryApi: false,
     permissionWarning: false,
+    permissionData: {},
     deployRedirectToCfLink: null, // This link is when user has less permissions
     // DB create related checks
     isDbCreatePressed: false,
@@ -105,6 +106,9 @@ const msSqlActionSlice = createSlice({
         setPermissionWarning(state, action: PayloadAction<any>) {
             state.permissionWarning = action.payload;
         },
+        setPermissionData(state, action: PayloadAction<any>) {
+            state.permissionData = action.payload;
+        },
         setDeployRedirectToCfLink(state, action: PayloadAction<any>) {
             state.deployRedirectToCfLink = action.payload;
         },
@@ -159,6 +163,7 @@ export const {
     setIsRecommendedInstance,
     setRefetchJobSummaryApi,
     setPermissionWarning,
+    setPermissionData,
     setDeployRedirectToCfLink,
     setDbCreatePressed,
     setDbCreateHit,

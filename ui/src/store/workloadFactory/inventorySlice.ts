@@ -24,7 +24,8 @@ const initialInventoryState: any = {
     isRefreshed: false,
     valuesNotFilled: false, // Detect host dialog fields check
     movedToUnmanagedHost: [], // Instances that is moved from Unidentifiable rows moved to unmanaged host in inventory
-    movedToManagedHost: [] // Instances that is moved from Unidentifiable rows moved to managed host in inventory
+    movedToManagedHost: [], // Instances that is moved from Unidentifiable rows moved to managed host in inventory
+    mssqlInstancesData: {}
 };
 
 const inventorySlice = createSlice({
@@ -85,6 +86,9 @@ const inventorySlice = createSlice({
         },
         setMovedToManagedHost: (state, action: PayloadAction<any>) => {
             state.movedToManagedHost = action.payload;
+        },
+        setMssqlInstancesData: (state, action: PayloadAction<any>) => {
+            state.mssqlInstancesData = action.payload;
         }
     }
 });
@@ -107,7 +111,8 @@ export const {
     setIsRefreshed,
     setValuesForForm,
     setMovedToUnmanagedHost,
-    setMovedToManagedHost
+    setMovedToManagedHost,
+    setMssqlInstancesData
 } = inventorySlice.actions;
 
 export default inventorySlice;
