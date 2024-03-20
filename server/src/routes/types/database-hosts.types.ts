@@ -95,7 +95,12 @@ const StorageResponse = Type.Object({
     used: Type.Number({ description: 'The virtual space used before storage efficiency, in bytes.' }),
     spaceSavings: Type.Number({
         description: 'Total disk space saved in the volume due to storage efficiency, in bytes.'
-    })
+    }),
+    spaceSavingsPercentage: Type.Optional(
+        Type.Number({
+            description: 'Total disk space saved in the volume due to storage efficiency, in percentage.'
+        })
+    )
 });
 type StorageResponseType = Static<typeof StorageResponse>;
 

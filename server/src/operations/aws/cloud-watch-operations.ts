@@ -2,6 +2,7 @@ import { GetMetricStatisticsCommandInput } from '@aws-sdk/client-cloudwatch';
 import ms from 'ms';
 import getMetricStatistics from '../../lib/aws/cloud-watch';
 import getLogger from '../../utils/logger';
+import { describeFSx } from '../../lib/aws/fsx';
 
 const logger = getLogger();
 
@@ -26,16 +27,7 @@ async function calculateFsxnStorageEfficiency(region: string, credentialsId: str
             }
         ]
     };
-    const storageEfficiencySavingsData = await getMetricStatistics(credentialsId, region, storageEfficiencyParams);
 
-    let storageEfficiencySavingsAverage;
-    if (storageEfficiencySavingsData.Datapoints?.length) {
-        [{ Average: storageEfficiencySavingsAverage }] = storageEfficiencySavingsData.Datapoints;
-    } else {
-        const errorMessage = 'Storage efficiency savings data not found';
-        logger.error(errorMessage);
-        throw new Error(errorMessage);
-    }
     const storageUsedParams: GetMetricStatisticsCommandInput = {
         EndTime: new Date(),
         MetricName: 'StorageUsed',
@@ -50,8 +42,20 @@ async function calculateFsxnStorageEfficiency(region: string, credentialsId: str
             }
         ]
     };
-    const storageUsedData = await getMetricStatistics(credentialsId, region, storageUsedParams);
+    const [fsxnInfo, storageEfficiencySavingsData, storageUsedData] = await Promise.all([
+        describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId!] }),
+        getMetricStatistics(credentialsId, region, storageEfficiencyParams),
+        getMetricStatistics(credentialsId, region, storageUsedParams)
+    ]);
 
+    let storageEfficiencySavingsAverage;
+    if (storageEfficiencySavingsData.Datapoints?.length) {
+        [{ Average: storageEfficiencySavingsAverage }] = storageEfficiencySavingsData.Datapoints;
+    } else {
+        const errorMessage = 'Storage efficiency savings data not found';
+        logger.error(errorMessage);
+        throw new Error(errorMessage);
+    }
     let storageUsedSum;
     if (storageUsedData.Datapoints) {
         [{ Sum: storageUsedSum }] = storageUsedData.Datapoints;
@@ -66,7 +70,12 @@ async function calculateFsxnStorageEfficiency(region: string, credentialsId: str
         const storageEfficiencySavingsPercentage =
             totalLogicalDataStored > 0 ? (storageEfficiencySavingsAverage / totalLogicalDataStored) * 100 : 0;
 
-        return { storageEfficiencySavingsAverage, storageEfficiencySavingsPercentage };
+        return {
+            totalSize: fsxnInfo?.FileSystems?.[0].StorageCapacity || 0,
+            totalUsed: storageUsedSum,
+            totalSpaceSavings: storageEfficiencySavingsAverage,
+            totalSpaceSavingsPercentage: storageEfficiencySavingsPercentage
+        };
     }
     const errorMessage = 'Storage efficiency savings average and used storage sum not found';
     logger.error(errorMessage);
@@ -92,20 +101,7 @@ async function calculateFsxwStorageEfficiency(region: string, credentialsId: str
             }
         ]
     };
-    const deduplicationSavedStorageAverageData = await getMetricStatistics(
-        credentialsId,
-        region,
-        deduplicationSavedStorageAverageParams
-    );
 
-    let deduplicationSavedStorageAverage;
-    if (deduplicationSavedStorageAverageData.Datapoints?.length) {
-        [{ Average: deduplicationSavedStorageAverage }] = deduplicationSavedStorageAverageData.Datapoints;
-    } else {
-        const errorMessage = 'Deduplication storage savings data not found';
-        logger.error(errorMessage);
-        throw new Error(errorMessage);
-    }
     const storageCapacityUtilizationParams: GetMetricStatisticsCommandInput = {
         EndTime: new Date(),
         MetricName: 'StorageCapacityUtilization',
@@ -120,11 +116,21 @@ async function calculateFsxwStorageEfficiency(region: string, credentialsId: str
             }
         ]
     };
-    const storageCapacityUtilizationData = await getMetricStatistics(
-        credentialsId,
-        region,
-        storageCapacityUtilizationParams
-    );
+    const [fsxwInfo, deduplicationSavedStorageAverageData, storageCapacityUtilizationData] = await Promise.all([
+        describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId!] }),
+        getMetricStatistics(credentialsId, region, deduplicationSavedStorageAverageParams),
+        getMetricStatistics(credentialsId, region, storageCapacityUtilizationParams)
+    ]);
+
+    let deduplicationSavedStorageAverage;
+    if (deduplicationSavedStorageAverageData.Datapoints?.length) {
+        [{ Average: deduplicationSavedStorageAverage }] = deduplicationSavedStorageAverageData.Datapoints;
+    } else {
+        const errorMessage = 'Deduplication storage savings data not found';
+        logger.error(errorMessage);
+        throw new Error(errorMessage);
+    }
+
     let storageCapacityUtilizationAverage;
     if (storageCapacityUtilizationData.Datapoints) {
         [{ Average: storageCapacityUtilizationAverage }] = storageCapacityUtilizationData.Datapoints;
@@ -150,7 +156,13 @@ async function calculateFsxwStorageEfficiency(region: string, credentialsId: str
 
         const storageSavingsPercentage =
             totalLogicalDataStored > 0 ? (deduplicationSavedStorageAverage / totalLogicalDataStored) * 100 : 0;
-        return { deduplicationSavedStorageAverage, storageSavingsPercentage };
+
+        return {
+            totalSize: fsxwInfo?.FileSystems?.[0].StorageCapacity || 0,
+            totalUsed: storageCapacityUtilizationAverage,
+            totalSpaceSavings: deduplicationSavedStorageAverage,
+            totalSpaceSavingsPercentage: storageSavingsPercentage
+        };
     }
     const errorMessage = 'Storage efficiency savings average and used storage sum not found';
     logger.error(errorMessage);
