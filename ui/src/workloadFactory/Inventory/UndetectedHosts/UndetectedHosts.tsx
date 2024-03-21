@@ -133,12 +133,12 @@ const UndetectedHosts = () => {
     }, [unIdentifiableHosts, fsxCredentialStatusObj]);
 
     // This function is used to check if user wants to manage the detected host vis workload factory
-    const handleMoveToManage = async (rowData: any) => {
+    const handleMoveToManage = async (rowData: any, fsxId: any) => {
         const state = store.getState();
         const detectHostRadio = state.inventory.detectHostRadio;
         const movedToManagedHost = state.inventory.movedToManagedHost;
         const movedToUnmanagedHost = state.inventory.movedToUnmanagedHost;
-        if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE) {
+        if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE && fsxId) {
             // If yes than it will call another manage API to manage this instance. On success this instance will be moved to tab 1 from tab3
             if (!manageLoading[rowData?.instanceID]) {
                 manageLoading[rowData?.instanceID] = true;
@@ -241,7 +241,7 @@ const UndetectedHosts = () => {
                                 }
                                 content={<UndetectedSecondDialog data={rowData} apiResult={result?.data} />}
                                 primaryButton={GENERAL.DONE}
-                                callback={() => handleMoveToManage(rowData)}
+                                callback={() => handleMoveToManage(rowData, fsxId)}
                             />
                         );
                     }, 0);
