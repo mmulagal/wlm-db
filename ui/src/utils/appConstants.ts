@@ -104,10 +104,12 @@ export const GENERAL = {
     ],
     MISSING_BLOCKED_PERMISSIONS: [
         'Creation failed due to ',
-        'missing & blocked permissions ',
-        ' ensure your policy is set correctly.',
-        'Redirect to AWS CloudFormation through the Codebox on the right to complete this task. Ensure that you have the CloudFormation ',
-        'required permissions.'
+        'missing & blocked permissions. ',
+        ' Go to the AWS console to set permissions correctly.',
+        'Optionally, ensure that you have the ',
+        ' to create your deployment with AWS CloudFormation.',
+        'Click Redirect to CloudFormation via Codebox to complete the task.',
+        'required permissions'
     ],
     CREATE_PERMISSION_ERROR_CHATBOT:
         'Workload Factory is unable to validate sufficient permissions. Redirect to AWS CloudFormation through the Codebox on the right to complete this task. Ensure that you have the CloudFormation ',

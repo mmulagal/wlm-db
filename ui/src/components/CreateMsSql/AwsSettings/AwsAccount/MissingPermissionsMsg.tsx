@@ -56,7 +56,7 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
 
     return (
         <div className={styles.noteText}>
-            {blockedPermissions ? (
+            {!blockedPermissions ? (
                 <>
                     {GENERAL.CREATE_PERMISSION_ERROR[0]}
                     <Button
@@ -99,9 +99,12 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
                     <div>
                         {GENERAL.MISSING_BLOCKED_PERMISSIONS[3]}
                         <Button Component="button" variant="text" onClick={() => openDialog('operate')}>
-                            {GENERAL.REQUIRED_PERMISSIONS}
+                            {GENERAL.MISSING_BLOCKED_PERMISSIONS[6]}
                         </Button>
+                        {GENERAL.MISSING_BLOCKED_PERMISSIONS[4]}
                     </div>
+
+                    <div>{GENERAL.MISSING_BLOCKED_PERMISSIONS[5]}</div>
                 </>
             )}
         </div>
