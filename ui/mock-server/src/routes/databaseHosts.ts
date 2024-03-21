@@ -83,7 +83,7 @@ router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances
 
 router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances/:instanceId/mssql/manage`, async (req: {}, res: any) => {
     setTimeout(() => {
-        generateResponse(res, 200, {id: '1234'});
+        generateResponse(res, 200, {resourceId: '1234'});
     }, 3000);
 });
 

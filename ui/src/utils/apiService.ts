@@ -558,7 +558,7 @@ export const inventoryApi = createApi({
             manageHost: builder.mutation({
                 query: ({ credentialId, regionId, instanceId }) => ({
                     url: `credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/mssql/manage`,
-                    method: 'GET'
+                    method: 'POST'
                 })
             }),
             registerResourceCredentials: builder.mutation({
@@ -579,7 +579,7 @@ export const inventoryApi = createApi({
             }),
             getMssqlResourceData: builder.mutation({
                 query: ({ credentialId, regionId, id }) => ({
-                    url: `credentials/${credentialId}/regions/${regionId}/database-hosts/${id}?fields=topology,dbCount,storage,performance,protection,usageEstimation`,
+                    url: `credentials/${credentialId}/regions/${regionId}/database-hosts/${id}?fields=topology,serverDetails,storage,performance,protection,usageEstimation`,
                     method: 'GET'
                 })
             })

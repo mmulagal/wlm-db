@@ -82,7 +82,7 @@ const UnmanagedHosts = () => {
             dispatch(
                 setMovedToManagedHost([
                     ...movedToManagedHost,
-                    { instanceId: rowData?.ec2InstanceId, resourceId: result?.data?.id }
+                    { instanceId: rowData?.ec2InstanceId, resourceId: result?.data?.resourceId }
                 ])
             );
             const managedSuccessMsg = (

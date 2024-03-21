@@ -14,7 +14,6 @@ import {
 } from '../../utils/apiService';
 import {
     addNewManagedHostData,
-    formatHostData,
     mergeDatabaseHostsData,
     resetDBHomePageState,
     sortListOfDict
@@ -34,7 +33,6 @@ import {
 import { setHeaderSelectedCred, setHeaderSelectedRegion } from '../../store/workloadFactory/headersSlice';
 import { DETECT_HOST_VAR } from '../../utils/consts';
 import store from '../../store/store';
-import { GENERAL } from '../../utils/appConstants';
 
 const InventoryApis = () => {
     const dispatch = useAppDispatch();
