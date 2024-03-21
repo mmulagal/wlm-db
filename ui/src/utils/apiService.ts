@@ -265,6 +265,9 @@ export const resourceApi = createApi({
             getMSSQLMemoryUtilization: builder.query({
                 query: id => ({ url: `mssql/resources/${id}/utilization/memory` })
             }),
+            getAllMSSQLUtilization: builder.query({
+                query: id => ({ url: `mssql/resources/${id}/resources-utilization` })
+            }),
             batchTables: builder.mutation<DatabaseTables[], BatchEntry[][]>({
                 async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
                     return await handleRootListItems<DatabaseTables>(
@@ -372,7 +375,7 @@ export const workloadFactoryResourceApi = createApi({
         return {
             getResourceDetails: builder.query({
                 query: ({ credentialId, region, id }) => ({
-                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}?fields=topology,storage,performance,usageEstimation,resourceUtilization`
+                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}?fields=serverDetails,topology,storage,performance,usageEstimation,resourceUtilization`
                 })
             }),
             getDatabaseList: builder.query({

@@ -17,7 +17,11 @@ import {
     PERFORMANCE_METRICS,
     SQL_BACKUPS,
     DATABASE_NAME_EXISTS,
-    SERVER_DETAILS
+    SERVER_DETAILS,
+    CPU_UTILISATION,
+    DB_SIZE,
+    DISK_UTILISATION,
+    MEMORY_UTILISATION
 } from './queries';
 import { callSsmExecution, getSSMConnectionStatus } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -30,7 +34,8 @@ import {
     ACCOUNT_ID,
     RESOURCE_RETRIVAL_ERROR,
     WF,
-    ServerState
+    ServerState,
+    DATABASE_METRIC_TYPE
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import { createResource, deleteResource, listRelationshipsResources } from '../../../lib/database/db';
@@ -112,21 +117,8 @@ async function getDataBasesSummary(resourceId: string, activeNodeInstanceId?: st
     return { databases: cleanDBSummanry };
 }
 
-async function getResourceUtilisation(resourceId: string) {
-    logger.info(`Get system resources utilization for resource: `, {
-        resourceId
-    });
-
-    const [credentialsId, region, node1InstanceId, node2InstanceId] = await getResourceDetails(resourceId);
-    if (!credentialsId || !region || !node1InstanceId) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource utilisation information');
-    }
-    const { activeNodeInstanceId } = await getActiveSqlNode(credentialsId!, region!, node1InstanceId, node2InstanceId!);
-    return getResourceUtilisationDetails(credentialsId, region, activeNodeInstanceId);
-}
-
-async function getResourceUtilisationDetails(credentialsId: string, region: string, activeNodeInstanceId?: string) {
-    logger.info(`Get system resources utilization for resource: `, {
+async function getAllResourceUtilisationDetails(credentialsId: string, region: string, activeNodeInstanceId?: string) {
+    logger.info('Get system resources utilization for resource:', {
         credentialsId,
         region,
         activeNodeInstanceId
@@ -162,6 +154,116 @@ async function getResourceUtilisationDetails(credentialsId: string, region: stri
 
     return { cpuUtilization, diskUtilization, memoryUtilization };
 }
+
+async function getAllResourceUtilisation(resourceId: string, metricType?: string) {
+    logger.info('Get system resources utilization for resource: ', {
+        resourceId,
+        metricType
+    });
+
+    const [credentialsId, region, node1InstanceId, node2InstanceId] = await getResourceDetails(resourceId);
+    if (!credentialsId || !region || !node1InstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource utilisation information');
+    }
+    const { activeNodeInstanceId } = await getActiveSqlNode(credentialsId!, region!, node1InstanceId, node2InstanceId!);
+    return getAllResourceUtilisationDetails(credentialsId, region, activeNodeInstanceId);
+}
+
+function resourceUtilisationQuery(metricType: string) {
+    switch (metricType) {
+        case DATABASE_METRIC_TYPE.CPU:
+            return CPU_UTILISATION;
+        case DATABASE_METRIC_TYPE.DISK:
+            return DISK_UTILISATION;
+        case DATABASE_METRIC_TYPE.MEMORY:
+            return MEMORY_UTILISATION;
+        default:
+            return '';
+    }
+}
+
+async function getResourceUtilisation(resourceId: string, metricType: string) {
+    logger.info(`Get ${metricType} resource utilization for resource: `, {
+        resourceId,
+        metricType
+    });
+
+    const [credentialsId, region, node1InstanceId, node2InstanceId] = await getResourceDetails(resourceId);
+    if (!credentialsId || !region || !node1InstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource utilisation information');
+    }
+    const { activeNodeInstanceId } = await getActiveSqlNode(credentialsId!, region!, node1InstanceId, node2InstanceId!);
+
+    return getResourceUtilisationDetails(credentialsId, region, metricType, activeNodeInstanceId);
+}
+
+async function getResourceUtilisationDetails(
+    credentialsId: string,
+    region: string,
+    metricType: string,
+    activeNodeInstanceId?: string
+) {
+    logger.info(`Get ${metricType} resource utilization for resource: `, {
+        credentialsId,
+        region,
+        metricType,
+        activeNodeInstanceId
+    });
+
+    if (!activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get active instance information');
+    }
+    logger.info('Fetching utilization from primary', credentialsId, region, activeNodeInstanceId, metricType);
+
+    let commands: string[] = [];
+    const metricQuery = resourceUtilisationQuery(metricType);
+    commands = [`sqlcmd -Q "${metricQuery}" -y 0`];
+
+    if (metricType === DATABASE_METRIC_TYPE.DISK) {
+        const dbSizecommand = [`sqlcmd -Q "${DB_SIZE}" -y 0`];
+        const diskUtilizationCommand = [`sqlcmd -Q "${DISK_UTILISATION}" -y 0`];
+
+        const [diskdata, size] = await Promise.all([
+            callSsmExecution(credentialsId, region, diskUtilizationCommand, activeNodeInstanceId, undefined, false),
+            callSsmExecution(credentialsId, region, dbSizecommand, activeNodeInstanceId, undefined, false)
+        ]);
+
+        const [sizeValue] = size ? sqlResponseParsing(size) : [];
+        const [diskDataValue] = diskdata ? sqlResponseParsing(diskdata) : [];
+        const diskUtilization: UtilisationResponseBodyInterface = {
+            used: sizeValue?.TotalSize?.toString(),
+            total: diskDataValue?.total?.toString(),
+            remaining: (Number(diskDataValue.total) - sizeValue.TotalSize).toString(),
+            percentUsed: Math.round((sizeValue.TotalSize * 100) / Number(diskDataValue.total)).toString()
+        };
+        return diskUtilization;
+    }
+
+    try {
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            commands,
+            activeNodeInstanceId,
+            undefined,
+            false
+        );
+        logger.debug('Utilization response', metricType, response);
+        if (!response) {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                ` ${metricType} utilization data response is empty.`
+            );
+        }
+        return sqlResponseParsing(response)[0];
+    } catch (error) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while fetching ${metricType} utilization: ${activeNodeInstanceId}. Error: ${error}`
+        );
+    }
+}
+
 async function getTablesCount(
     credentialsId: string,
     region: string,
@@ -668,6 +770,8 @@ async function checkDatabaseExists(
 
 export {
     getSqlServerDetails,
+    getAllResourceUtilisation,
+    getAllResourceUtilisationDetails,
     getResourceUtilisation,
     getResourceUtilisationDetails,
     getDataBasesSummary,

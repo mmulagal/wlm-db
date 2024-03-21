@@ -9,7 +9,8 @@ import {
     DatabaseDeleteResponseBody,
     MsSqlServerDiscoveryResponse,
     MsSqlServerDiscoverRequestBody,
-    ResourceUtilizationResponseBody
+    ResourceUtilizationResponseBody,
+    UtilisationResponseBody
 } from '../types/database.types';
 import { GenericHeaders, CredentialsIdParams } from '../types/generic.types';
 
@@ -19,10 +20,17 @@ const baseRequest = {
     params: DatabaseParams
 };
 
-const resourceUtilizationBaseRequest = {
+const allResourceUtilizationBaseRequest = {
     ...baseRequest,
     response: {
         200: ResourceUtilizationResponseBody
+    }
+};
+
+const resourceUtilizationBaseRequest = {
+    ...baseRequest,
+    response: {
+        200: UtilisationResponseBody
     }
 };
 
@@ -66,8 +74,26 @@ const GetServerSummarySchema = {
     }
 };
 
-const DatabaseResourcesUtilisationResponseSchema = {
+const DatabaseCpuUtilisationResponseSchema = {
     ...resourceUtilizationBaseRequest,
+    summary: 'Get MSSQL CPU utilisation',
+    description: 'Database Resource CPU Utilisation'
+};
+
+const DatabaseStorageUtilisationResponseSchema = {
+    ...resourceUtilizationBaseRequest,
+    summary: 'Get MSSQL Storage utilisation',
+    description: 'Database Resource Storage Utilisation'
+};
+
+const DatabaseMemoryUtilisationResponseSchema = {
+    ...resourceUtilizationBaseRequest,
+    summary: 'Get MSSQL Memory utilisation',
+    description: 'Database Resource Memory Utilisation'
+};
+
+const DatabaseResourcesUtilisationResponseSchema = {
+    ...allResourceUtilizationBaseRequest,
     summary: 'Get MSSQL resources utilisation',
     description: 'Database utilization of CPU , Storage and Memory resources'
 };
@@ -85,6 +111,9 @@ const GetTablesSchema = {
 export {
     GetDatabasesSchema,
     DatabaseResourcesUtilisationResponseSchema,
+    DatabaseCpuUtilisationResponseSchema,
+    DatabaseStorageUtilisationResponseSchema,
+    DatabaseMemoryUtilisationResponseSchema,
     PostSqlServerSchema,
     DeleteDatabaseSchema,
     GetServerSummarySchema,

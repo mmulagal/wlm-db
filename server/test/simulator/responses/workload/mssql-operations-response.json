@@ -11,6 +11,26 @@
         "total": "9895604649984",
         "used": "2473901162496"
     },
+    "allResourceUtilizationResponse": {
+        "cpuUtilization": {
+            "percentUsed": 25,
+            "used": 8589934592,
+            "total": 9895604649984,
+            "remaining": 8589934592
+        },
+        "diskUtilization": {
+            "used": "2473901162496",
+            "total": "9895604649984",
+            "remaining": "7421703487488",
+            "percentUsed": "25"
+        },
+        "memoryUtilization": {
+            "used": 8589934592,
+            "total": 17179869184,
+            "remaining": 8589934592,
+            "percentUsed": 50
+        }
+    },
     "databaseSummaryResponse": {
         "databases": [
             {
@@ -132,7 +152,7 @@
     },
     "serverSummaryResponse": {
         "serverVersion": "Microsoft SQL Server 2019",
-        "serverEdition": "SQL Server Standard Edition (64-bit)",
+        "serverEdition": "SQL Server Standard Edition",
         "serverEngine": "",
         "serverStatus": "Up",
         "activeConnections": 8,

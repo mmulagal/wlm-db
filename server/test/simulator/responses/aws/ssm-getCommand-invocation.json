@@ -739,7 +739,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"clusterNodesInfo\":[{\"NodeName\":\"SQLNODE1-65579\",\"is_current_owner\":true},{\"NodeName\":\"SQLNODE2-65579\",\"is_current_owner\":false}],\"ServerEdition\":\"Standard Edition (64-bit)\",\"isClustered\":1,\"activeNode\":\"SQLNODE1-65579\",\"numberOfConnections\":8,\"serverDetails\":\"Microsoft SQL Server 2019 (SP3-OD) (KB5006943) - 13.0.6404.1 (X64) \\n\\tOct 18 2021 09:37:01 \\n\\tCopyright (c) Microsoft Corporation\\n\\tStandard Edition (64-bit) on Windows Server 2019 Datacenter 10.0 <X64> (Build 14393: ) (Hypervisor)\\n\",\"clusterName\":\"FciClusterName\",\"totalCount\":8}]\r\n",
+        "StandardOutputContent": "[{\"clusterNodesInfo\":[{\"NodeName\":\"SQLNODE1-65579\",\"is_current_owner\":true},{\"NodeName\":\"SQLNODE2-65579\",\"is_current_owner\":false}],\"ServerEdition\":\"Standard Edition\",\"isClustered\":1,\"activeNode\":\"SQLNODE1-65579\",\"numberOfConnections\":8,\"serverDetails\":\"Microsoft SQL Server 2019 (SP3-OD) (KB5006943) - 13.0.6404.1 (X64) \\n\\tOct 18 2021 09:37:01 \\n\\tCopyright (c) Microsoft Corporation\\n\\tStandard Edition (64-bit) on Windows Server 2019 Datacenter 10.0 <X64> (Build 14393: ) (Hypervisor)\\n\",\"clusterName\":\"FciClusterName\",\"totalCount\":8}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"

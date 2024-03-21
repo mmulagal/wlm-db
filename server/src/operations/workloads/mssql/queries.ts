@@ -153,7 +153,40 @@ ${FOR_JSON_PATH}`;
 const DATABASE_NAME_EXISTS = (databaseName: string) =>
     `${SET_NOCOUNT} SELECT name FROM sys.databases WHERE name = '${databaseName}' ${FOR_JSON_PATH}`;
 
-const SERVER_DETAILS = `${SET_NOCOUNT} SELECT  (SELECT NodeName, is_current_owner FROM sys.dm_os_cluster_nodes FOR JSON PATH) AS clusterNodesInfo, SERVERPROPERTY('Edition') AS ServerEdition, SERVERPROPERTY('IsClustered') AS isClustered, SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS activeNode,  COUNT(1) AS numberOfConnections, @@version AS serverDetails, @@SERVERNAME AS clusterName, COUNT(DISTINCT d.database_id) AS totalCount FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id ${FOR_JSON_PATH}`;
+const SERVER_DETAILS = `
+    ${SET_NOCOUNT}
+    SELECT
+        (
+            SELECT NodeName, is_current_owner
+            FROM sys.dm_os_cluster_nodes
+            FOR JSON PATH
+        ) AS clusterNodesInfo,
+        (
+        SELECT COUNT(1) 
+        FROM sys.dm_exec_sessions 
+        WHERE host_process_id is NOT NULL
+        ) AS numberOfConnections,
+        SERVERPROPERTY('Edition') AS ServerEdition,
+        SERVERPROPERTY('IsClustered') AS isClustered,
+        SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS activeNode,
+        @@version AS serverDetails,
+        @@SERVERNAME AS clusterName,
+        COUNT(DISTINCT d.database_id) AS totalCount
+    FROM
+        (
+            SELECT
+                database_id,
+                logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),
+                rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),
+                databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))
+            FROM
+                sys.master_files
+            GROUP BY
+                database_id
+        ) t
+    JOIN
+        sys.databases d ON d.database_id = t.database_id
+    ${FOR_JSON_PATH}`;
 
 export {
     DATABASES,

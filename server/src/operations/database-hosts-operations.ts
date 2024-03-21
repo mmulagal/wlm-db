@@ -46,7 +46,7 @@ import {
     getNativeSQLBackedupDatabases,
     getActiveSqlNode,
     getServerDetails,
-    getResourceUtilisationDetails
+    getAllResourceUtilisationDetails
 } from './workloads/mssql/mssql-operations';
 import {
     getStorageDataUsingSSM,
@@ -808,6 +808,10 @@ async function getDatabaseHostSummary(
         // remove the empty spaces in the string & split the fields by comma separated array values
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
+
+    const shouldQueryServerDetails = fieldsValues?.includes(
+        DatabaseHostsQueryFields.SERVER_DETAILS.toLocaleLowerCase()
+    );
     const shouldQueryTopology = fieldsValues?.includes(DatabaseHostsQueryFields.TOPOLOGY);
     const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
@@ -844,7 +848,7 @@ async function getDatabaseHostSummary(
             [serverMetadata, topologyData, performanceData, storageData, usageEstimationData, resourceUtilizationData] =
                 await Promise.all(
                     [
-                        ...(isSSMConnected && activeNodeInstanceId
+                        ...(isSSMConnected && activeNodeInstanceId && shouldQueryServerDetails
                             ? [getServerDetails(credentialsId, region, activeNodeInstanceId)]
                             : [Promise.resolve()]), // Fetch server metadata
                         ...(shouldQueryTopology
@@ -869,7 +873,7 @@ async function getDatabaseHostSummary(
                             ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId, isManagedResource)]
                             : [Promise.resolve()]), // Fetch pricing estimate data
                         ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
-                            ? [getResourceUtilisationDetails(credentialsId, region, activeNodeInstanceId)]
+                            ? [getAllResourceUtilisationDetails(credentialsId, region, activeNodeInstanceId)]
                             : [Promise.resolve()])
                     ].map((p, index) =>
                         p.catch(error => {
@@ -881,10 +885,6 @@ async function getDatabaseHostSummary(
                     )
                 );
 
-            // CreationDate needs to be picked up from resource table: https://jira.ngage.netapp.com/browse/DBS-1586
-            if (serverMetadata) {
-                serverMetadata.creationDate = creationDate || '';
-            }
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
                 if (topologyData?.serverInstallationMode === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
                     delete serverMetadata.clusterName;
@@ -894,11 +894,15 @@ async function getDatabaseHostSummary(
                     serverMetadata.clusterName = resourceName || '';
                 }
             }
+            if (shouldQueryServerDetails && serverMetadata) {
+                databaseHostDetails.status = serverMetadata ? ServerState.UP : ServerState.DOWN;
+                databaseHostDetails.databaseCount = serverMetadata?.dbCount || 0;
+                databaseHostDetails.databaseServer = serverMetadata;
+                serverMetadata.creationDate = creationDate || '';
+                // CreationDate needs to be picked up from resource table: https://jira.ngage.netapp.com/browse/DBS-1586
+            }
             databaseHostDetails.id = resourceId;
             databaseHostDetails.name = resourceName || '';
-            databaseHostDetails.status = serverMetadata ? ServerState.UP : ServerState.DOWN;
-            databaseHostDetails.databaseCount = serverMetadata?.dbCount || 0;
-            databaseHostDetails.databaseServer = serverMetadata;
             databaseHostDetails.topology = topologyData!;
             databaseHostDetails.performance = getPerformance ? { rwMetrics: performanceData! } : {};
             databaseHostDetails.storage = storageData!;

@@ -26,9 +26,11 @@ import {
     deleteResourceById,
     getServerIOLatency,
     getNativeSQLProtection,
-    checkDatabaseExists
+    checkDatabaseExists,
+    getAllResourceUtilisation
 } from '../../../src/operations/workloads/mssql/mssql-operations';
 import { createResource, deleteResource, listResources } from '../../../src/lib/database/db';
+import { DATABASE_METRIC_TYPE } from '../../../src/utils/consts';
 
 beforeAll(async () => {
     await createResource(ACCOUNT_ID, {
@@ -55,8 +57,23 @@ afterAll(async () => {
 });
 describe('MSSQL Resource methods', () => {
     it('Get memory utilization', async () => {
-        const resp = await getResourceUtilisation('36E53042-04E8-40C9-AE69-26E56CB0D216');
-        expect(resp).toBeDefined;
+        const resp = await getResourceUtilisation('36E53042-04E8-40C9-AE69-26E56CB0D216', DATABASE_METRIC_TYPE.MEMORY);
+        expect(resp.percentUsed).toEqual(50);
+    });
+
+    it('Get cpu utilization', async () => {
+        const resp = await getResourceUtilisation('36E53042-04E8-40C9-AE69-26E56CB0D216', DATABASE_METRIC_TYPE.CPU);
+        expect(resp.percentUsed).toEqual(mssqlResponse.getResourceUtilizationResponse.percentUsed);
+    });
+
+    it('Get disk utilization', async () => {
+        const resp = await getResourceUtilisation('36E53042-04E8-40C9-AE69-26E56CB0D216', DATABASE_METRIC_TYPE.DISK);
+        expect(resp).toEqual(mssqlResponse.diskUtilizationResponse);
+    });
+
+    it('Get all resources utilization', async () => {
+        const resp = await getAllResourceUtilisation('36E53042-04E8-40C9-AE69-26E56CB0D216');
+        expect(resp).toEqual(mssqlResponse.allResourceUtilizationResponse);
     });
 
     it('Get databases summary', async () => {

@@ -7,7 +7,10 @@ import {
     GetServerSummarySchema,
     GetTablesSchema,
     DeleteDatabaseSchema,
-    PostSqlServerSchema
+    PostSqlServerSchema,
+    DatabaseMemoryUtilisationResponseSchema,
+    DatabaseCpuUtilisationResponseSchema,
+    DatabaseStorageUtilisationResponseSchema
 } from './schemas/database-schemas';
 import {
     getDataBasesSummary,
@@ -15,9 +18,10 @@ import {
     getServerSummary,
     getTablesSummary,
     discoverMsSqlServer,
-    deleteResourceById
+    deleteResourceById,
+    getAllResourceUtilisation
 } from '../operations/workloads/mssql/mssql-operations';
-import { DatabaseTypes } from '../utils/consts';
+import { DATABASE_METRIC_TYPE, DatabaseTypes } from '../utils/consts';
 
 const MSSQL_DISCOVER_API_PATH: string = '/v1/mssql/credentials/:credentialsId/regions/:region';
 const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';
@@ -52,13 +56,46 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
     });
 
     server.get(
+        `${MSSQL_DATA_API_PATH}/utilization/cpu`,
+        { schema: DatabaseCpuUtilisationResponseSchema },
+        async request => {
+            const {
+                params: { resourceId }
+            } = request;
+            return getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.CPU);
+        }
+    );
+
+    server.get(
+        `${MSSQL_DATA_API_PATH}/utilization/memory`,
+        { schema: DatabaseMemoryUtilisationResponseSchema },
+        async request => {
+            const {
+                params: { resourceId }
+            } = request;
+            return getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY);
+        }
+    );
+
+    server.get(
+        `${MSSQL_DATA_API_PATH}/utilization/disk`,
+        { schema: DatabaseStorageUtilisationResponseSchema },
+        async request => {
+            const {
+                params: { resourceId }
+            } = request;
+            return getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.DISK);
+        }
+    );
+
+    server.get(
         `${MSSQL_DATA_API_PATH}/resources-utilization`,
         { schema: DatabaseResourcesUtilisationResponseSchema },
         async request => {
             const {
                 params: { resourceId }
             } = request;
-            return getResourceUtilisation(resourceId);
+            return getAllResourceUtilisation(resourceId);
         }
     );
 
