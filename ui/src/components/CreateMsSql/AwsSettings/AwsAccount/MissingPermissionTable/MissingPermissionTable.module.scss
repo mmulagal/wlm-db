@@ -8,6 +8,10 @@
         margin-top: 40px;
     }
 
+    [class*='PaginationPanel-module_pagination-panel'] {
+        width: 972px !important;
+    }
+
     .copy {
         height: 20px;
         .copy-popover {
