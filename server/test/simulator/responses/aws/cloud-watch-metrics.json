@@ -1,0 +1,131 @@
+{
+  "$metadata": {
+    "httpStatusCode": 200,
+    "requestId": "5e6feba2-1777-4869-9b5a-c108fbaf1662",
+    "attempts": 1,
+    "totalRetryDelay": 0
+  },
+  "Label": "LogicalDataStored",
+  "Datapoints": [
+    {
+      "Timestamp": "2024-03-18T22:04:00.000Z",
+      "Average": 155104012697.6,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T17:04:00.000Z",
+      "Average": 155051607517.86667,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T12:04:00.000Z",
+      "Average": 154974935517.86667,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T07:04:00.000Z",
+      "Average": 154714932633.6,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T02:04:00.000Z",
+      "Average": 156353931946.66666,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T20:04:00.000Z",
+      "Average": 155093322410.66666,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T15:04:00.000Z",
+      "Average": 154986808524.8,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T10:04:00.000Z",
+      "Average": 154978331716.26666,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T05:04:00.000Z",
+      "Average": 154423894562.13333,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T00:04:00.000Z",
+      "Average": 155838177006.93332,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T23:04:00.000Z",
+      "Average": 155105290990.93332,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T18:04:00.000Z",
+      "Average": 155079792708.26666,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T13:04:00.000Z",
+      "Average": 154979061555.2,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T08:04:00.000Z",
+      "Average": 154814664908.8,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T03:04:00.000Z",
+      "Average": 157010849655.46667,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T21:04:00.000Z",
+      "Average": 155099317657.6,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T16:04:00.000Z",
+      "Average": 154986086263.46667,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T11:04:00.000Z",
+      "Average": 154975718741.33334,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T06:04:00.000Z",
+      "Average": 154547935573.33334,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T01:04:00.000Z",
+      "Average": 156135120213.33334,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T19:04:00.000Z",
+      "Average": 155087265655.46667,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T14:04:00.000Z",
+      "Average": 154982403822.93332,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T09:04:00.000Z",
+      "Average": 154938733841.06668,
+      "Unit": "Bytes"
+    },
+    {
+      "Timestamp": "2024-03-18T04:04:00.000Z",
+      "Average": 154096355123.2,
+      "Unit": "Bytes"
+    }
+  ]
+}
