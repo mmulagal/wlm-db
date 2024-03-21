@@ -24,7 +24,7 @@ describe('List permissions required', () => {
         ]);
         let isSnsFound = false;
         for (const perm of missingPermissions) {
-            if (perm.includes(SNS)) {
+            if (perm.service.includes(SNS)) {
                 isSnsFound = true;
                 break;
             }

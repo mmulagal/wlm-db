@@ -20,6 +20,8 @@ const CreateDatabaseParams = Type.Object({
 // Query parameter to fetch protection, performance, storage and cost details
 const DatabaseHostQueryString = Type.Object({
     fields: Type.Optional(Type.String()),
+    vpcId: Type.Optional(Type.String()),
+    fsxId: Type.Optional(Type.String()),
     nextToken: Type.Optional(Type.String()),
     pageSize: Type.Optional(Type.Number())
 });

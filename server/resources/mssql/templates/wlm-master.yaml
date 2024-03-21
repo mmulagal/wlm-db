@@ -20,9 +20,9 @@ Metadata:
           - CloudformationEndpointExists
           - SsmEndpointExists
           - SqsEndpointExists
-          - CloudwatchEndpointExists
           - Ec2MessagesEndpointExists
           - SSMMessagesEndpointExists
+          - S3EndpointRouteTables
       - Label:
           default: Amazon EC2 Configuration
         Parameters:
@@ -170,8 +170,6 @@ Metadata:
         default: Boolean to check if a SSM endpoint exists in the vpc.
       SqsEndpointExists:
         default: Boolean to check if a SQS endpoint exists in the vpc.
-      CloudwatchEndpointExists:
-        default: Boolean to check if a Cloudwatch endpoint exists in the vpc.
 Parameters: 
   UniqueID:
     Description: Automation execution unique ID.
@@ -299,8 +297,6 @@ Parameters:
 
   {{{SqsEndpointExists}}}
 
-  {{{CloudwatchEndpointExists}}}
-
   {{{CloudwatchLogsEndpointExists}}}
 
   {{{FsxEndpointExists}}}
@@ -310,6 +306,8 @@ Parameters:
   {{{Ec2MessagesEndpointExists}}}
 
   {{{SSMMessagesEndpointExists}}}
+
+  {{{S3EndpointRouteTables}}}
        
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -532,10 +530,7 @@ Resources:
           Ref: VPCCIDR
         PreferredSubnetId:
           Ref: PrivateSubnet1ID
-        PreferredRouteTableId:
-          Ref: RouteTable1Id
-        StandbySubnetId: !If [IsFailoverCluster, !Ref PrivateSubnet2ID, !Ref AWS::NoValue]
-        StandbyRouteTableId: !If [IsFailoverCluster, !Ref RouteTable2Id, !Ref AWS::NoValue]
+        StandbySubnetId: !If [IsFailoverCluster, !Ref PrivateSubnet2ID, !Ref AWS::NoValue]      
         S3EndpointExists:
           Ref: S3EndpointExists
         CloudformationEndpointExists:
@@ -544,8 +539,6 @@ Resources:
           Ref: SsmEndpointExists
         SqsEndpointExists:
           Ref: SqsEndpointExists
-        CloudwatchEndpointExists:
-          Ref: CloudwatchEndpointExists
         CloudwatchLogsEndpointExists:
           Ref: CloudwatchLogsEndpointExists
         FsxEndpointExists:
@@ -556,6 +549,8 @@ Resources:
           Ref: Ec2MessagesEndpointExists
         SSMMessagesEndpointExists:
           Ref: SSMMessagesEndpointExists
+        S3EndpointRouteTables:
+          Ref: S3EndpointRouteTables
       NotificationARNs:
         Fn::If:
         - IncludeNotification

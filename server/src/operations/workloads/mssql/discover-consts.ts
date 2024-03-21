@@ -57,14 +57,13 @@ const HOST_AND_SQL_INFO_PS1 = [
         $state = $_.State
         $path = $_.PathName  -Replace "-s.*",""
         $body['windowsAuthentication'] = $False
-
-        if ( (Get-Service -Name ClusSvc -ErrorAction SilentlyContinue) -AND (Get-Cluster -ErrorAction SilentlyContinue) ) {
-          $sqlServerNodes = Get-ClusterResource -Name "SQL Server"  | Get-ClusterOwnerNode | Select OwnerNodes  | forEach  { $_.OwnerNodes.NodeName }
-        } else {
-          $sqlServerNodes = hostname
-        }
+        $sqlServerNodes = hostname
 
         try {
+          if ( (Get-Service -Name ClusSvc -ErrorAction SilentlyContinue) -AND (Get-Cluster -ErrorAction SilentlyContinue) ) {
+            $sqlServerNodes = Get-ClusterResource -Name "SQL Server"  | Get-ClusterOwnerNode | Select OwnerNodes  | forEach  { $_.OwnerNodes.NodeName }
+          }
+
           if ($state -eq "Running") {
             Get-Command sqlcmd > Out-Null
             $serverInstance = If ($instance -ne "MSSQLSERVER" -And $instance -ne "SQLEXPRESS") { "$Env:ComputerName\\$instance" } Else { "$Env:ComputerName" }

@@ -277,6 +277,7 @@ async function listResources(
     credentialsId?: string,
     region?: string,
     resourceType?: string,
+    fsxId?: string,
     pageSize?: number,
     nextToken?: string
 ) {
@@ -296,7 +297,8 @@ async function listResources(
             ...(resourceId && { resource_id: resourceId }),
             ...(resourceType && { resource_type: resourceType }),
             ...(region && { region }),
-            ...(credentialsId && { credentials_id: credentialsId })
+            ...(credentialsId && { credentials_id: credentialsId }),
+            ...(fsxId && { co_relation_id: fsxId })
         },
         orderBy: {
             id: 'asc'
