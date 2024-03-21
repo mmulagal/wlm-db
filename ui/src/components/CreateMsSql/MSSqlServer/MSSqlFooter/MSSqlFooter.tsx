@@ -52,7 +52,7 @@ const MSSqlFooter = () => {
                             // If url comes it means it has view permissions so it will open AWS account accordion
                             dispatch(setPermissionWarning(true));
                             dispatch(setDeployRedirectToCfLink(url));
-                            dispatch(setPermissionData(data?.data?.permissions));
+                            dispatch(setPermissionData(data?.data?.missingPermissions));
                         }
                     }
                 })

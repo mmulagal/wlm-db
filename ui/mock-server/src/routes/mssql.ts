@@ -24,7 +24,7 @@ router.post(
                 'arn:aws:cloudformation:ap-southeast-1:464262061435:stack/WLMDB-SQLFCIStack-1694406372501/5bd05510-505b-11ee-82a3-02e1070421d0',
             cloudFormationUrl: 'cloud_formation_url',
             // warningMessage: 'Required IAM permissions are not available to deploy the cloud formation template',
-            permissions: {
+            missingPermissions: {
                 missingStatements: [
                     {
                         service: 'ec2',
@@ -67,7 +67,7 @@ router.post(
                         error: 'implicitDeny'
                     }
                 ],
-                blockedByOrganisation: [],
+                blockedByOrganisation: ['EC'],
                 blockedByPermissionBoundary: []
             }
         };
