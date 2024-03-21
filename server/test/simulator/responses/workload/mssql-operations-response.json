@@ -11,6 +11,26 @@
         "total": "9895604649984",
         "used": "2473901162496"
     },
+    "allResourceUtilizationResponse": {
+        "cpuUtilization": {
+            "percentUsed": 25,
+            "used": 8589934592,
+            "total": 9895604649984,
+            "remaining": 8589934592
+        },
+        "diskUtilization": {
+            "used": "2473901162496",
+            "total": "9895604649984",
+            "remaining": "7421703487488",
+            "percentUsed": "25"
+        },
+        "memoryUtilization": {
+            "used": 8589934592,
+            "total": 17179869184,
+            "remaining": 8589934592,
+            "percentUsed": 50
+        }
+    },
     "databaseSummaryResponse": {
         "databases": [
             {
@@ -131,19 +151,19 @@
         ]
     },
     "serverSummaryResponse": {
-        "serverId": "36E53042-04E8-40C9-AE69-26E56CB0D216",
         "serverVersion": "Microsoft SQL Server 2019",
         "serverEdition": "SQL Server Standard Edition",
         "serverEngine": "",
         "serverStatus": "Up",
         "activeConnections": 8,
         "deploymentModel": "Always On Failover Cluster Instance",
-        "clusterName": "EC2AMAZ-GAAT3OE\\DUMMY_SQL",
-        "activeNode": "SQLNODE1-39362",
-        "standbyNode": "SQLNODE2-39362",
-        "creationDate": "2023-02-20T09:23:59.600",
+        "activeNode": "SQLNODE1-65579",
+        "standbyNode": "SQLNODE2-65579",
+        "clusterName": "FciClusterName",
         "operatingSystem": "Windows Server 2019",
-        "nodeNames": ["SQLNODE1-39362", "SQLNODE2-39362"]
+        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
+        "dbCount": 8,
+        "serverId": "36E53042-04E8-40C9-AE69-26E56CB0D216"
     },
     "mssqlRegistrationResponse": {
         "resourceId": "5c791ae7-0e86-486b-8dc2-bafef485b875",
