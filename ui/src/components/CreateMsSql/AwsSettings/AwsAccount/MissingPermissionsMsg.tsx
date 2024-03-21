@@ -6,6 +6,7 @@ import ViewDialog from '../../../../common/ViewDialog/ViewDialog';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import styles from './AwsAccount.module.scss';
 import MissingPermissionTable from './MissingPermissionTable/MissingPermissionTable';
+import { useEffect, useState } from 'react';
 
 type permissionProp = {
     permissionData?: any;
@@ -20,11 +21,27 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
         (permissionData?.blockedByOrganisation && permissionData?.blockedByOrganisation.length) ||
         (permissionData?.blockedByPermissionBoundary && permissionData?.blockedByPermissionBoundary.length);
 
+    const [dataToDisplay, setDataToDisplay] = useState([]);
+    const [permissionCount, setPermissionCount] = useState(0);
+
+    useEffect(() => {
+        if (blockedPermissions) {
+            const mergedData = permissionData?.missingStatements.concat(
+                permissionData?.blockedByOrganisation,
+                permissionData?.blockedByPermissionBoundary
+            );
+            setDataToDisplay(mergedData);
+            setPermissionCount(mergedData.length);
+        } else {
+            setDataToDisplay(permissionData?.missingStatements);
+        }
+    }, []);
+
     const setHeading = (type: string) => {
         if (blockedPermissions && type === 'operate') {
             return GENERAL.REQUIRED_OPERATE_PERMISSIONS;
         } else if (blockedPermissions && type !== 'operate') {
-            return 'X Missing & blocked permissions';
+            return `${permissionCount} Missing & blocked permissions`;
         } else {
             return 'Unsupported permissions';
         }
@@ -41,7 +58,7 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
                     ) : (
                         <MissingPermissionTable
                             missingBlockedPermissions={blockedPermissions}
-                            content={permissionData}
+                            content={dataToDisplay}
                         />
                     )
                 }
