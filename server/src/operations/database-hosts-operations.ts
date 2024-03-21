@@ -49,7 +49,6 @@ import {
     getAllResourceUtilisationDetails
 } from './workloads/mssql/mssql-operations';
 import {
-    getStorageDataUsingSSM,
     isAWSBackupEnabled,
     getOntapVolumesSnapshotCount,
     getCostAllocationTagFsxResource
@@ -57,6 +56,7 @@ import {
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
+import { calculateFsxnStorageEfficiency, calculateFsxwStorageEfficiency } from './aws/cloud-watch-operations';
 
 const logger = getLogger();
 
@@ -73,20 +73,20 @@ const DATABASE_HOSTS_INDEX_MAPPING: { [index: number]: string } = {
     9: 'cpuUtilization'
 };
 
-type VolumeSpaceRecord = {
-    uuid: string;
-    name: string;
-    efficiency: {
-        space_savings: {
-            total: number;
-            total_percent: number;
-        };
-    };
-    space: {
-        size: number;
-        used: number;
-    };
-};
+// type VolumeSpaceRecord = {
+//     uuid: string;
+//     name: string;
+//     efficiency: {
+//         space_savings: {
+//             total: number;
+//             total_percent: number;
+//         };
+//     };
+//     space: {
+//         size: number;
+//         used: number;
+//     };
+// };
 
 type EstimationEc2Type = {
     resourceType: string;
@@ -299,45 +299,31 @@ async function getTopology(
     return topologyData;
 }
 
-async function getStorageData(
+async function getStorageDataUsingCloudwatch(
     resourceDetail: ResourceDetails,
     activeNodeInstanceId: string
 ): Promise<StorageResponseType | undefined> {
     logger.info('Getting storage data:', { resourceDetail, activeNodeInstanceId });
 
     try {
-        const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
-
-        const { stackname } = metadata as unknown as Metadata;
-
-        const info = await getStorageDataUsingSSM(
-            credentialsId,
-            region!,
-            fileSystemId!,
-            'storage/volumes',
-            `tiering.object_tags="wlmDeploymentId=${stackname?.replaceAll('-', '_')}"`,
-            'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
-            activeNodeInstanceId
-        );
-
-        logger.info(`Storage data for volumes with deploymentId ${stackname}:`, info);
-
         let totalSize = 0;
         let totalUsed = 0;
         let totalSpaceSavings = 0;
-        info?.records?.forEach(({ efficiency, space }: VolumeSpaceRecord) => {
-            const { size, used } = space;
-            const { total } = efficiency.space_savings;
-
-            totalSize += size;
-            totalUsed += used;
-            totalSpaceSavings += total;
-        });
-
+        let totalSpaceSavingsPercentage = 0;
+        const { region, co_relation_id: fsxnId, credentials_id: credentialsId, fsxwId } = resourceDetail;
+        if (fsxnId && region) {
+            ({ totalSize, totalUsed, totalSpaceSavings, totalSpaceSavingsPercentage } =
+                await calculateFsxnStorageEfficiency(region, credentialsId, fsxnId));
+        }
+        if (fsxwId && region) {
+            ({ totalSize, totalUsed, totalSpaceSavings, totalSpaceSavingsPercentage } =
+                await calculateFsxwStorageEfficiency(region, credentialsId, fsxwId));
+        }
         return {
             size: totalSize,
             used: totalUsed,
-            spaceSavings: totalSpaceSavings
+            spaceSavings: totalSpaceSavings,
+            spaceSavingsPercentage: totalSpaceSavingsPercentage
         };
     } catch (error) {
         const errorMessage = `Error while getting storage savings for resource ${resourceDetail} ${JSON.stringify(
@@ -351,6 +337,59 @@ async function getStorageData(
         throw createError(HttpErrorCodes.SERVICE_UNAVAILABLE, errorMessage);
     }
 }
+
+// async function getStorageData(
+//     resourceDetail: ResourceDetails,
+//     activeNodeInstanceId: string
+// ): Promise<StorageResponseType | undefined> {
+//     logger.info('Getting storage data:', { resourceDetail, activeNodeInstanceId });
+
+//     try {
+//         const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
+
+//         const { stackname } = metadata as unknown as Metadata;
+
+//         const info = await getStorageDataUsingSSM(
+//             credentialsId,
+//             region!,
+//             fileSystemId!,
+//             'storage/volumes',
+//             `tiering.object_tags="wlmDeploymentId=${stackname?.replaceAll('-', '_')}"`,
+//             'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
+//             activeNodeInstanceId
+//         );
+
+//         logger.info(`Storage data for volumes with deploymentId ${stackname}:`, info);
+
+//         let totalSize = 0;
+//         let totalUsed = 0;
+//         let totalSpaceSavings = 0;
+//         info?.records?.forEach(({ efficiency, space }: VolumeSpaceRecord) => {
+//             const { size, used } = space;
+//             const { total } = efficiency.space_savings;
+
+//             totalSize += size;
+//             totalUsed += used;
+//             totalSpaceSavings += total;
+//         });
+
+//         return {
+//             size: totalSize,
+//             used: totalUsed,
+//             spaceSavings: totalSpaceSavings
+//         };
+//     } catch (error) {
+//         const errorMessage = `Error while getting storage savings for resource ${resourceDetail} ${JSON.stringify(
+//             error
+//         )}`;
+//         let { message } = error as { message: string };
+//         if (message?.toLocaleLowerCase().includes('ThrottlingException: Rate exceeded'.toLowerCase())) {
+//             message += '. Retry the operation.';
+//             throw createError(HttpErrorCodes.SERVICE_UNAVAILABLE, message);
+//         }
+//         throw createError(HttpErrorCodes.SERVICE_UNAVAILABLE, errorMessage);
+//     }
+// }
 
 async function getProtectionStatus(
     resourceDetail: ResourceDetails,
@@ -740,7 +779,7 @@ async function getDatabaseHostsSummary(
                                 ? [getServerIOLatency(resourceId, activeNodeInstanceId)]
                                 : [Promise.resolve()]), // Fetch io latency data
                             ...(isSSMConnected && getStorageSavings && activeNodeInstanceId
-                                ? [getStorageData(resourceDetail, activeNodeInstanceId)]
+                                ? [getStorageDataUsingCloudwatch(resourceDetail, activeNodeInstanceId)]
                                 : [Promise.resolve()]), // Fetch storage savings data
                             ...(isSSMConnected && getProtection && activeNodeInstanceId
                                 ? [getProtectionStatus(resourceDetail, activeNodeInstanceId)]
@@ -874,7 +913,7 @@ async function getDatabaseHostSummary(
                             ? [getPerformanceMetrics(credentialsId, region, activeNodeInstanceId)]
                             : [Promise.resolve()]), // Fetch io latency data
                         ...(isSSMConnected && getStorageSavings && activeNodeInstanceId
-                            ? [getStorageData(resourceDetail, activeNodeInstanceId)]
+                            ? [getStorageDataUsingCloudwatch(resourceDetail, activeNodeInstanceId)]
                             : [Promise.resolve()]), // Fetch storage savings data
                         ...(getUsageEstimation
                             ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId, isManagedResource)]
