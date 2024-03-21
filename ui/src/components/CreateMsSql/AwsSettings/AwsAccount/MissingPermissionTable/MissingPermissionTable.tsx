@@ -37,7 +37,7 @@ const MissingPermissionTable = ({ missingBlockedPermissions, content }: MissingP
             Header: GENERAL.ERROR_PERMISSION,
             accessor: 'error',
             id: '3',
-            width: '464px',
+            width: '492px',
             filterOptions: 'auto'
         }
     ];
@@ -62,7 +62,7 @@ const MissingPermissionTable = ({ missingBlockedPermissions, content }: MissingP
             Header: GENERAL.ERROR_PERMISSION,
             accessor: 'error',
             id: '3',
-            width: '464px',
+            width: '492px',
             isSortable: true
         }
     ];
@@ -77,7 +77,7 @@ const MissingPermissionTable = ({ missingBlockedPermissions, content }: MissingP
 
         columns: missingBlockedPermissions ? MissingAndBlockedPerDefs : MissingPerDefs,
         rows: content?.missingStatements,
-        pageSize: 10
+        pageSize: 50
     });
     return (
         <div className={styles.missingPermissionTable}>

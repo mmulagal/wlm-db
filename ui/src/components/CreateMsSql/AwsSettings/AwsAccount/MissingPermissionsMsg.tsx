@@ -80,7 +80,7 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
                         Component="button"
                         variant="text"
                         className={CommonStyles.buttonClass}
-                        onClick={() => openDialog('operate')}
+                        onClick={() => openDialog('missing')}
                     >
                         {GENERAL.CREATE_PERMISSION_ERROR[1]}
                     </Button>
