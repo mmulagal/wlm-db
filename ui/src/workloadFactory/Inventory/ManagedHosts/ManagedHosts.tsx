@@ -421,10 +421,10 @@ const ManagedHosts = () => {
                             ? GENERAL.MULTI_AZ
                             : '';
                 } else {
-                    azList = cellData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones
-                        ? cellData?.[0]?.deploymentTypes?.[0]?.zones.join(',')
+                    azList = rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones
+                        ? rowData?.[0]?.deploymentTypes?.[0]?.zones.join(',')
                         : '';
-                    const deploymentType = cellData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
+                    const deploymentType = rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
                     azType =
                         deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
                             ? GENERAL.SINGLE_AZ

@@ -157,7 +157,7 @@ const UndetectedHosts = () => {
                 dispatch(
                     setMovedToManagedHost([
                         ...movedToManagedHost,
-                        { instanceId: rowData?.instanceID, resourceId: result?.data?.id }
+                        { instanceId: rowData?.instanceID, resourceId: result?.data?.resourceId }
                     ])
                 );
                 const managedSuccessMsg = (
