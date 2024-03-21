@@ -19,7 +19,10 @@
                     "windowsAuthentication": false,
                     "sqlAuthentication": false,
                     "storage": [],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "sqlServerNodes": [
+                        "sqlnode1-12742"
+                    ]
                 }
             ]
         },
@@ -41,7 +44,10 @@
                     "windowsAuthentication": false,
                     "sqlAuthentication": false,
                     "storage": [],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "sqlServerNodes": [
+                        "sqlnode1-127422"
+                    ]
                 }
             ]
         },
@@ -69,7 +75,10 @@
                             "id": "vol08b0788a4333c0233"
                         }
                     ],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "sqlServerNodes": [
+                        "sqlnode1-127423"
+                    ]
                 }
             ]
         },
@@ -91,7 +100,11 @@
                     "windowsAuthentication": false,
                     "sqlAuthentication": false,
                     "storage": [],
-                    "deploymentTypes": []
+                    "deploymentTypes": [],
+                    "sqlServerNodes": [
+                        "sqlnode1-1272",
+                        "sqlnode2-1272"
+                    ]
                 }
             ]
         },
@@ -151,6 +164,10 @@
                                 "ap-southeast-1b"
                             ]
                         }
+                    ],
+                    "sqlServerNodes": [
+                        "sqlnode1-127432",
+                        "sqlnode2-127432"
                     ]
                 }
             ]
@@ -187,6 +204,10 @@
                                 "ap-southeast-1a"
                             ]
                         }
+                    ],
+                    "sqlServerNodes": [
+                        "sqlnode1-127342",
+                        "sqlnode2-127432"
                     ]
                 }
             ]
@@ -223,6 +244,10 @@
                                 "ap-southeast-1a"
                             ]
                         }
+                    ],
+                    "sqlServerNodes": [
+                        "sqlnode1-1272",
+                        "sqlnode2-142"
                     ]
                 }
             ]

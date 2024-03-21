@@ -15,7 +15,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { WLF_TABS, STATUS_CONST, FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
+import { WLF_TABS, STATUS_CONST, FSX_DEPLOYMENT_MODE, DETECT_HOST_VAR } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
@@ -132,11 +132,10 @@ const ManagedHosts = () => {
             isSticky: true,
             accessorForTextFilter: 'databaseHostname',
             renderCell: (cellData: any, rowData: any) => {
+                const name = rowData?.sqlServerInstances?.[0]?.sqlServerName || rowData?.name;
                 return (
                     <div>
-                        <Typography variant="Semibold_14">
-                            {rowData?.name || (rowData?.loading && rowData?.id) || GENERAL.NOT_AVAILABLE}
-                        </Typography>
+                        <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
                         <div className={styles.firstColText}>
                             {rowData?.status === STATUS_CONST.UP && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
@@ -175,13 +174,23 @@ const ManagedHosts = () => {
             width: '212px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                return (
-                    <>
-                        {cellData}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
-                    </>
-                );
+                if (!cellData) {
+                    const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find(
+                        (item: any) => item.type === DETECT_HOST_VAR.FSXN
+                    );
+                    const hasEbs = rowData?.sqlServerInstances?.[0]?.storage?.find(
+                        (item: any) => item.type === DETECT_HOST_VAR.EBS
+                    );
+                    return hasEbs && hasFsx
+                        ? `${GENERAL.FSX_FOR_ONTAP}, ${GENERAL.EBS}`
+                        : hasEbs
+                        ? GENERAL.EBS
+                        : hasFsx
+                        ? GENERAL.FSX_FOR_ONTAP
+                        : cellData || GENERAL.NOT_AVAILABLE;
+                } else {
+                    return cellData;
+                }
             }
         },
         {
@@ -342,16 +351,18 @@ const ManagedHosts = () => {
                 });
                 return (
                     <>
-                        {cellData?.ec2Details && (
+                        {instanceNames.length > 0 ? (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                    ID: {instanceIds.join(',')}
-                                </TooltipInfo>
+                                {instanceIds.length > 0 && (
+                                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>
+                                        ID: {instanceIds.join(',')}
+                                    </TooltipInfo>
+                                )}
                                 <Typography variant="Regular_14">{instanceNames.join(',')}</Typography>
                             </div>
+                        ) : (
+                            rowData?.ec2InstanceName || notAvailable()
                         )}
-                        {!cellData?.ec2Details && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData?.ec2Details && rowData?.loading && notAvailable()}
                     </>
                 );
             }
@@ -363,18 +374,27 @@ const ManagedHosts = () => {
             isSortable: true,
             width: '212px',
             renderCell: (cellData: any, rowData: any) => {
+                let vpcName = '';
+                let vpcCidr = '';
+                if (cellData?.vpcName) {
+                    vpcName = cellData?.vpcName;
+                    vpcCidr = cellData?.vpcCidr;
+                } else if (rowData?.vpc?.name) {
+                    vpcName = rowData?.vpc?.name;
+                    vpcCidr = rowData?.vpc?.cidrBlock;
+                }
                 return (
                     <>
-                        {cellData?.vpcId && (
+                        {vpcName && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                    {cellData?.vpcCidr}
-                                </TooltipInfo>
-                                <Typography variant="Regular_14">{cellData?.vpcName}</Typography>
+                                {vpcCidr && (
+                                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>{vpcCidr}</TooltipInfo>
+                                )}
+                                <Typography variant="Regular_14">{vpcName}</Typography>
                             </div>
                         )}
-                        {!cellData?.vpcId && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData?.vpcId && rowData?.loading && notAvailable()}
+                        {!vpcName && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!vpcName && !rowData?.loading && notAvailable()}
                     </>
                 );
             }
@@ -390,25 +410,39 @@ const ManagedHosts = () => {
                 { label: GENERAL.MULTI_AZ, value: FSX_DEPLOYMENT_MODE.MULTI_AZ_1 }
             ],
             renderCell: (cellData: any, rowData: any) => {
-                const azList = rowData?.topology?.availabilityZones
-                    ? rowData?.topology?.availabilityZones.join(',')
-                    : '';
+                let azList = [];
+                let azType = '';
+                if (cellData) {
+                    azList = rowData?.topology?.availabilityZones ? rowData?.topology?.availabilityZones.join(',') : '';
+                    azType =
+                        cellData === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+                            ? GENERAL.SINGLE_AZ
+                            : cellData === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                            ? GENERAL.MULTI_AZ
+                            : '';
+                } else {
+                    azList = cellData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones
+                        ? cellData?.[0]?.deploymentTypes?.[0]?.zones.join(',')
+                        : '';
+                    const deploymentType = cellData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
+                    azType =
+                        deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+                            ? GENERAL.SINGLE_AZ
+                            : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                            ? GENERAL.MULTI_AZ
+                            : '';
+                }
+
                 return (
                     <>
-                        {cellData && (
+                        {azType && (
                             <div className={styles.colText}>
                                 <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
-                                <Typography variant="Regular_14">
-                                    {cellData === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-                                        ? GENERAL.SINGLE_AZ
-                                        : cellData === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-                                        ? GENERAL.MULTI_AZ
-                                        : ''}
-                                </Typography>
+                                <Typography variant="Regular_14">{azType}</Typography>
                             </div>
                         )}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && rowData?.loading && notAvailable()}
+                        {!azType && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!azType && !rowData?.loading && notAvailable()}
                     </>
                 );
             }
@@ -421,11 +455,19 @@ const ManagedHosts = () => {
             width: '212px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
+                const nodes = rowData?.sqlServerInstances?.[0]?.sqlServerNodes;
+                let type = '';
+                if (nodes && nodes.length > 1) {
+                    type = GENERAL.FCI;
+                } else if (nodes && nodes.length === 1) {
+                    type = GENERAL.STANDALONE;
+                }
+                const rowValue = cellData || type;
                 return (
                     <>
-                        {cellData}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && !rowData?.loading && notAvailable()}
+                        {rowValue}
+                        {!rowValue && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!rowValue && !rowData?.loading && notAvailable()}
                     </>
                 );
             }

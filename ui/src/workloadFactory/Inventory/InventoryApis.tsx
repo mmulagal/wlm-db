@@ -34,6 +34,7 @@ import {
 import { setHeaderSelectedCred, setHeaderSelectedRegion } from '../../store/workloadFactory/headersSlice';
 import { DETECT_HOST_VAR } from '../../utils/consts';
 import store from '../../store/store';
+import { GENERAL } from '../../utils/appConstants';
 
 const InventoryApis = () => {
     const dispatch = useAppDispatch();
@@ -462,10 +463,11 @@ const InventoryApis = () => {
         }
     }, [unManagedHostList]);
 
-    const getManagedMssqlData = async (resourceId: string) => {
+    const getManagedMssqlData = async (resourceId: string, host: any) => {
         const state = store.getState();
         const fullDatabaseHostsList = state.databaseHome.databaseHostsList;
         const newResource = {
+            ...host,
             loading: true,
             id: resourceId,
             error: null
@@ -485,6 +487,7 @@ const InventoryApis = () => {
                 dispatch(addDatabaseHostsList(addNewManagedHostData(fullDatabaseHostsList, resultData)));
             } else {
                 const failedResource = {
+                    ...host,
                     loading: false,
                     id: resourceId,
                     error: null
@@ -493,6 +496,7 @@ const InventoryApis = () => {
             }
         } catch (error) {
             const failedResource = {
+                ...host,
                 loading: false,
                 id: resourceId,
                 error: null
@@ -507,7 +511,17 @@ const InventoryApis = () => {
                 const resourceId = host?.resourceId || '';
                 if (resourceId && !runningResourceList.find(res => res === resourceId)) {
                     setRunningResourceList([...runningResourceList, host?.resourceId]);
-                    getManagedMssqlData(host?.resourceId);
+                    getManagedMssqlData(host?.resourceId, host);
+                } else if (!resourceId) {
+                    const state = store.getState();
+                    const fullDatabaseHostsList = state.databaseHome.databaseHostsList;
+                    const newResource = {
+                        ...host,
+                        loading: false,
+                        id: resourceId,
+                        error: null
+                    };
+                    dispatch(addDatabaseHostsList(addNewManagedHostData(fullDatabaseHostsList, newResource)));
                 }
             });
         }
