@@ -67,7 +67,7 @@ router.post(
                         error: 'implicitDeny'
                     }
                 ],
-                blockedByOrganisation: ['EC'],
+                blockedByOrganisation: [],
                 blockedByPermissionBoundary: []
             }
         };
