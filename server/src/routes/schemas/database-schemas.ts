@@ -5,11 +5,12 @@ import {
     Tablesparams,
     DatabasesResponseBody,
     TablesResponseBody,
-    UtilisationResponseBody,
     ServerSummaryResponse,
     DatabaseDeleteResponseBody,
     MsSqlServerDiscoveryResponse,
-    MsSqlServerDiscoverRequestBody
+    MsSqlServerDiscoverRequestBody,
+    ResourceUtilizationResponseBody,
+    UtilisationResponseBody
 } from '../types/database.types';
 import { GenericHeaders, CredentialsIdParams } from '../types/generic.types';
 
@@ -19,7 +20,14 @@ const baseRequest = {
     params: DatabaseParams
 };
 
-const resourceUtilizationBaseRequest = {
+const AllResourceUtilizationBaseRequest = {
+    ...baseRequest,
+    response: {
+        200: ResourceUtilizationResponseBody
+    }
+};
+
+const ResourceUtilizationBaseRequest = {
     ...baseRequest,
     response: {
         200: UtilisationResponseBody
@@ -67,21 +75,27 @@ const GetServerSummarySchema = {
 };
 
 const DatabaseCpuUtilisationResponseSchema = {
-    ...resourceUtilizationBaseRequest,
+    ...ResourceUtilizationBaseRequest,
     summary: 'Get MSSQL CPU utilisation',
     description: 'Database Resource CPU Utilisation'
 };
 
 const DatabaseStorageUtilisationResponseSchema = {
-    ...resourceUtilizationBaseRequest,
+    ...ResourceUtilizationBaseRequest,
     summary: 'Get MSSQL Storage utilisation',
     description: 'Database Resource Storage Utilisation'
 };
 
 const DatabaseMemoryUtilisationResponseSchema = {
-    ...resourceUtilizationBaseRequest,
+    ...ResourceUtilizationBaseRequest,
     summary: 'Get MSSQL Memory utilisation',
     description: 'Database Resource Memory Utilisation'
+};
+
+const DatabaseResourcesUtilisationResponseSchema = {
+    ...AllResourceUtilizationBaseRequest,
+    summary: 'Get MSSQL resources utilisation',
+    description: 'Database utilization of CPU , Storage and Memory resources'
 };
 
 const GetTablesSchema = {
@@ -96,6 +110,7 @@ const GetTablesSchema = {
 
 export {
     GetDatabasesSchema,
+    DatabaseResourcesUtilisationResponseSchema,
     DatabaseCpuUtilisationResponseSchema,
     DatabaseStorageUtilisationResponseSchema,
     DatabaseMemoryUtilisationResponseSchema,

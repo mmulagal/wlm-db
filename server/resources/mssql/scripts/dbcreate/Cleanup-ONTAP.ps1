@@ -77,7 +77,7 @@ if($IsClustered -ne "false") {
 
 # Get FSx certificate
 $isprivatesubnet = $False
-$connection =  Test-Connection -ComputerName https://fsx-aws-certificates.s3.amazonaws.com -Quiet
+$connection =  Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet
 if($connection -eq $False) {
     $isprivatesubnet = $True
     $restcert = ''
