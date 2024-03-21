@@ -6,8 +6,8 @@ function inventoryDemoData(fsxId: string) {
         items: [
             // ssm not connected
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
-                ssmState: 'not connected',
+                ec2InstanceId: 'i-1d9i5v18g5392mf1v',
+                ssmState: 'notconnected',
                 ec2InstanceName: 'app-server-1',
                 vpc: {
                     id: 'vpc-046f7e26255458373',
@@ -18,7 +18,7 @@ function inventoryDemoData(fsxId: string) {
             // ssm not connected
             {
                 ec2InstanceId: `i-${randomize('a0', 17)}`,
-                ssmState: 'not connected',
+                ssmState: 'notconnected',
                 ec2InstanceName: 'app-server-2',
                 vpc: {
                     id: 'vpc-84b3afe6',
@@ -28,7 +28,7 @@ function inventoryDemoData(fsxId: string) {
             },
             // sql server stopped
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
+                ec2InstanceId: 'i-57efw8txsh9rxvxe9',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-3',
                 vpc: {
@@ -50,7 +50,7 @@ function inventoryDemoData(fsxId: string) {
             },
             // sql server stopped
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
+                ec2InstanceId: 'i-8ct4l5ecneb7jn2oz',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-4',
                 vpc: {

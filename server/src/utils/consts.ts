@@ -127,17 +127,17 @@ enum DeploymentState {
 
 enum RouteTags {
     AWS = 'AWS',
-    GENERIC = 'Generic',
-    SYSTEM = 'System',
-    DEPLOYMENT = 'Deployment',
-    JOB_MONITORING = 'Job Monitoring',
-    WORKING_ENVIRONMENT = 'Working Environment',
-    DATABASE = 'Database',
     BATCH = 'Batch',
-    PRICING = 'Pricing',
     CHATBOT = 'Chatbot',
+    DATABASE = 'Database',
+    DEPLOYMENT = 'Deployment',
     DISCOVER = 'Discover',
-    RESOURCE = 'Resource'
+    GENERIC = 'Generic',
+    JOB_MONITORING = 'Job Monitoring',
+    PRICING = 'Pricing',
+    RESOURCE = 'Resource',
+    SYSTEM = 'System',
+    WORKING_ENVIRONMENT = 'Working Environment'
 }
 
 enum HttpErrorCodes {
