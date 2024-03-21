@@ -20,13 +20,30 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
         (permissionData?.blockedByOrganisation && permissionData?.blockedByOrganisation.length) ||
         (permissionData?.blockedByPermissionBoundary && permissionData?.blockedByPermissionBoundary.length);
 
+    const setHeading = (type: string) => {
+        if (blockedPermissions && type === 'operate') {
+            return GENERAL.REQUIRED_OPERATE_PERMISSIONS;
+        } else if (blockedPermissions && type !== 'operate') {
+            return 'X Missing & blocked permissions';
+        } else {
+            return 'Unsupported permissions';
+        }
+    };
+
     const openDialog = (type: string) => {
         const data = JSON.stringify(type === 'view' ? policiesList?.view : policiesList?.operate, null, 2);
         setDialog(
             <DialogComponent
-                header={blockedPermissions ? 'X Missing & blocked permissions ' : 'Unsupported permissions'}
+                header={setHeading(type)}
                 content={
-                    <MissingPermissionTable missingBlockedPermissions={blockedPermissions} content={permissionData} />
+                    type === 'operate' ? (
+                        <ViewDialog data={data} />
+                    ) : (
+                        <MissingPermissionTable
+                            missingBlockedPermissions={blockedPermissions}
+                            content={permissionData}
+                        />
+                    )
                 }
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
@@ -91,7 +108,7 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
                         Component="button"
                         variant="text"
                         className={CommonStyles.buttonClass}
-                        onClick={() => openDialog('operate')}
+                        onClick={() => openDialog('blocked')}
                     >
                         {GENERAL.MISSING_BLOCKED_PERMISSIONS[1]}
                     </Button>
