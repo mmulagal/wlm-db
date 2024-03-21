@@ -1,14 +1,27 @@
-import { Button, Spinner, Table, TableTopBar, TooltipInfo, Typography, useTable } from '@netapp/design-system';
+import {
+    Button,
+    DsFlashingDotsLoader,
+    Spinner,
+    Table,
+    TableTopBar,
+    TooltipInfo,
+    Typography,
+    useTable
+} from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './UnmanagedHosts.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useEffect, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { FSX_DEPLOYMENT_MODE, WLF_TABS } from '../../../utils/consts';
+import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE, WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 
-import { databaseTableSort, formatFractionalNumber, formatSizeOnePrecision } from '../../../utils/utilityFunctions';
+import {
+    formatFractionalNumber,
+    formatSizeOnePrecision,
+    formatUnamanagedHostList
+} from '../../../utils/utilityFunctions';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
 import {
@@ -24,6 +37,7 @@ const UnmanagedHosts = () => {
 
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const unManagedHostList = useAppSelector(state => state.inventory.unManagedHosts);
+    const mssqlInstancesData = useAppSelector(state => state.inventory.mssqlInstancesData);
     const { unManagedHostInitialColumns } = useAppSelector(state => state.inventory);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
@@ -32,6 +46,12 @@ const UnmanagedHosts = () => {
 
     const [manageLoading, setManageLoading] = useState<any>({});
     const [manageHostApi] = useManageHostMutation();
+    const [tableData, setTableData] = useState<any>([]);
+
+    useEffect(() => {
+        // Format data again on unIdentifiableHosts or fsxCredentialStatusObj change
+        setTableData(formatUnamanagedHostList(unManagedHostList, mssqlInstancesData));
+    }, [unManagedHostList, mssqlInstancesData]);
 
     const notAvailable = () => {
         return (
@@ -107,7 +127,7 @@ const UnmanagedHosts = () => {
             accessorForTextFilter: 'databaseHostname',
             renderCell: (cellData: any, rowData: any) => {
                 const status = rowData?.sqlServerInstances?.[0]?.sqlServerState;
-                const name = rowData?.sqlServerInstances?.[0]?.sqlServerName;
+                const name = rowData?.sqlServerInstances?.[0]?.sqlServerName || rowData?.name;
                 return (
                     <div>
                         <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
@@ -139,15 +159,19 @@ const UnmanagedHosts = () => {
             width: '200px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find((item: any) => item.type === 'FSXN');
-                const hasEbs = rowData?.sqlServerInstances?.[0]?.storage?.find((item: any) => item.type === 'EBS');
+                const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find(
+                    (item: any) => item.type === DETECT_HOST_VAR.FSXN
+                );
+                const hasEbs = rowData?.sqlServerInstances?.[0]?.storage?.find(
+                    (item: any) => item.type === DETECT_HOST_VAR.EBS
+                );
                 return hasEbs && hasFsx
                     ? `${GENERAL.FSX_FOR_ONTAP}, ${GENERAL.EBS}`
                     : hasEbs
                     ? GENERAL.EBS
                     : hasFsx
                     ? GENERAL.FSX_FOR_ONTAP
-                    : 'N/A';
+                    : cellData || GENERAL.NOT_AVAILABLE;
             }
         },
         {
@@ -157,6 +181,7 @@ const UnmanagedHosts = () => {
             isSortable: true,
             width: '188px',
             renderCell: (cellData: any, rowData: any) => {
+                const isLoading = rowData?.loading;
                 const protectionData = rowData?.protection;
                 const totalDbCount = rowData?.databaseCount || 0;
                 let protectedChk = false;
@@ -202,7 +227,8 @@ const UnmanagedHosts = () => {
                                 </div>
                             </div>
                         )}
-                        {!protectionData && notAvailable()}
+                        {!protectionData && isLoading && <DsFlashingDotsLoader />}
+                        {!protectionData && !isLoading && notAvailable()}
                     </>
                 );
             }
@@ -213,7 +239,7 @@ const UnmanagedHosts = () => {
             accessor: 'performanceText',
             width: '188px',
             filterOptions: 'auto',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
                         {cellData && (
@@ -221,7 +247,8 @@ const UnmanagedHosts = () => {
                                 {cellData}
                             </Typography>
                         )}
-                        {!cellData && notAvailable()}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && notAvailable()}
                     </>
                 );
             }
@@ -232,7 +259,7 @@ const UnmanagedHosts = () => {
             accessor: 'storageSavingsText',
             isSortable: true,
             width: '188px',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
                         {cellData && (
@@ -240,7 +267,8 @@ const UnmanagedHosts = () => {
                                 {cellData}
                             </Typography>
                         )}
-                        {!cellData && notAvailable()}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && notAvailable()}
                     </>
                 );
             }
@@ -267,7 +295,8 @@ const UnmanagedHosts = () => {
                                 )}`}</Typography>
                             </div>
                         )}
-                        {!costData && notAvailable()}
+                        {!costData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!costData && !rowData?.loading && notAvailable()}
                     </>
                 );
             }
@@ -278,16 +307,46 @@ const UnmanagedHosts = () => {
             accessor: 'storage.size',
             isSortable: true,
             width: '194px',
-            renderCell: (cellData: string) => {
-                return cellData ? formatSizeOnePrecision(cellData) : GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (
+                    <>
+                        {cellData && formatSizeOnePrecision(cellData)}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && notAvailable()}
+                    </>
+                );
             }
         },
         {
             id: '8',
             Header: GENERAL.DB_HOST_INSTANCE_NAME,
-            accessor: 'ec2InstanceName',
+            accessor: 'topology',
             isSortable: true,
-            width: '235px'
+            width: '235px',
+            renderCell: (cellData: any, rowData: any) => {
+                let instanceIds: any = [];
+                let instanceNames: any = [];
+                cellData?.ec2Details?.map((row: any) => {
+                    instanceIds.push(row?.id);
+                    instanceNames.push(row?.name);
+                });
+                return (
+                    <>
+                        {instanceNames.length > 0 ? (
+                            <div className={styles.colText}>
+                                {instanceIds.length > 0 && (
+                                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>
+                                        ID: {instanceIds.join(',')}
+                                    </TooltipInfo>
+                                )}
+                                <Typography variant="Regular_14">{instanceNames.join(',')}</Typography>
+                            </div>
+                        ) : (
+                            rowData?.ec2InstanceName || notAvailable()
+                        )}
+                    </>
+                );
+            }
         },
         {
             id: '9',
@@ -351,8 +410,14 @@ const UnmanagedHosts = () => {
             accessor: 'topology.serverInstallationMode',
             isSortable: true,
             width: '235px',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (
+                    <>
+                        {cellData}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && notAvailable()}
+                    </>
+                );
             }
         }
     ];
@@ -360,7 +425,7 @@ const UnmanagedHosts = () => {
     const tableProps = useTable({
         isSorting: false,
         columns: DatabasesColDefs,
-        rows: databaseTableSort(unManagedHostList) || [],
+        rows: tableData || [],
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,

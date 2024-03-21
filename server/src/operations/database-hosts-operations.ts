@@ -155,7 +155,7 @@ async function getTopology(
         ec2Details: []
     };
 
-    if (!isEmpty(node1InstanceId)) {
+    if (node1InstanceId) {
         let vpcId;
         let fileSystemStatus;
         let fileSystemName;
@@ -561,7 +561,8 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
         return {
             compute: pricingResponse?.compute || 0,
             storage:
-                (pricingResponse?.storage?.capacityCost || 0) + (pricingResponse?.storage?.operationalCost || 0) ||
+                (pricingResponse?.fsxnStorage?.capacityCost || 0) +
+                    (pricingResponse?.fsxnStorage?.operationalCost || 0) ||
                 pricingResponse.ebsStorage?.ebsStorageCost ||
                 0,
             connectivity: pricingResponse?.vpc || 0,
@@ -649,7 +650,9 @@ async function getDatabaseHostsSummary(
     fields?: string,
     nextToken?: string,
     awsRegion?: string,
-    customerCredentialsId?: string
+    customerCredentialsId?: string,
+    vpcId?: string,
+    fsxId?: string
 ): Promise<DatabaseHostSummaryListResponseType> {
     logger.info(
         'Fetching all database hosts deployed in account ',
@@ -657,7 +660,9 @@ async function getDatabaseHostsSummary(
         fields,
         nextToken,
         awsRegion,
-        customerCredentialsId
+        customerCredentialsId,
+        vpcId,
+        fsxId
     );
 
     const resourceDetails = await listResources(
@@ -666,6 +671,7 @@ async function getDatabaseHostsSummary(
         customerCredentialsId,
         awsRegion,
         RESOURCESTYPE.MSSQL,
+        fsxId,
         API_PAGE_SIZE,
         nextToken
     );
@@ -746,17 +752,19 @@ async function getDatabaseHostsSummary(
                         ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
                     );
 
-                databaseHosts.push({
-                    id: resourceId,
-                    name: resourceName || '',
-                    status: dbCount ? ServerState.UP : ServerState.DOWN,
-                    databaseCount: dbCount?.totalCount || 0,
-                    topology: topologyData!,
-                    ...(performanceData && { performance: performanceData }),
-                    ...(storageData && { storage: storageData }),
-                    ...(protectionData && { protection: protectionData }),
-                    ...(usageEstimationData && { estimatedUsageCost: usageEstimationData })
-                });
+                if (!vpcId || vpcId === topologyData.vpcId) {
+                    databaseHosts.push({
+                        id: resourceId,
+                        name: resourceName || '',
+                        status: dbCount ? ServerState.UP : ServerState.DOWN,
+                        databaseCount: dbCount?.totalCount || 0,
+                        topology: topologyData!,
+                        ...(performanceData && { performance: performanceData }),
+                        ...(storageData && { storage: storageData }),
+                        ...(protectionData && { protection: protectionData }),
+                        ...(usageEstimationData && { estimatedUsageCost: usageEstimationData })
+                    });
+                }
             })
         );
     } catch (error) {

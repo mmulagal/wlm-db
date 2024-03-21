@@ -18,10 +18,10 @@ Metadata:
                   - CloudformationEndpointExists
                   - SsmEndpointExists
                   - SqsEndpointExists
-                  - CloudwatchEndpointExists
                   - CloudwatchLogsEndpointExists
                   - FsxEndpointExists
                   - Ec2EndpointExists
+                  - S3EndpointRouteTables
         ParameterLabels:
             VPCId:
                 default: Existing VPC ID for deployment.
@@ -39,8 +39,6 @@ Metadata:
                 default: Boolean to check if a SSM endpoint exists in the vpc.
             SqsEndpointExists:
                 default: Boolean to check if a SQS endpoint exists in the vpc.
-            CloudwatchEndpointExists:
-                default: Boolean to check if a Cloudwatch endpoint exists in the vpc.
             CloudwatchLogsEndpointExists:
                 default: Boolean to check if a Cloudwatch logs endpoint exists in the vpc.
             FsxEndpointExists:
@@ -68,14 +66,9 @@ Parameters:
         Type: String
         Default: subnet-123456
     
-    PreferredRouteTableId:
-        Description: Specify routetable id for the preferred subnet.
+    S3EndpointRouteTables:
+        Description: Route table ids to attach to S3 gateway endpoint.
         Type: String
-
-    StandbyRouteTableId:
-        Description: Specify routetable id for the standby subnet.
-        Type: String
-        Default: rtb-123456
     
     S3EndpointExists:
         Description: Boolean to convey if an S3 endpoint exists in the vpc.
@@ -94,11 +87,6 @@ Parameters:
     
     SqsEndpointExists:
         Description: Boolean to convey if a SQS endpoint exists in the vpc.
-        Type: String
-        Default: 'false'
-    
-    CloudwatchEndpointExists:
-        Description: Boolean to convey if a Cloudwatch endpoint exists in the vpc.
         Type: String
         Default: 'false'
     
@@ -133,15 +121,18 @@ Conditions:
     CreateSsmEndpoint: !Equals [!Ref SsmEndpointExists, 'false']
     CreateSqsEndpoint: !Equals [!Ref SqsEndpointExists, 'false']
     CreateS3Endpoint: !Equals [!Ref S3EndpointExists, 'false']
-    CreateCloudwatchEndpoint: !Equals [!Ref CloudwatchEndpointExists, 'false']
     CreateCloudwatchLogsEndpoint: !Equals [!Ref CloudwatchLogsEndpointExists, 'false']
     CreateFsxEndpoint: !Equals [!Ref FsxEndpointExists, 'false']
     CreateEc2Endpoint: !Equals [!Ref Ec2EndpointExists, 'false']
     CreateEc2MessagesEndpoint: !Equals [!Ref Ec2MessagesEndpointExists, 'false']
     CreateSSMMessagesEndpoint: !Equals [!Ref SSMMessagesEndpointExists, 'false']
+    CreateSG: {"Fn::Or": [{"Condition": "CreateCloudformationEndpoint"}, {"Condition": "CreateSsmEndpoint" },{"Condition": "CreateSqsEndpoint" },
+                {"Condition": "CreateS3Endpoint"}, {"Condition": "CreateCloudwatchLogsEndpoint"}, {"Condition": "CreateFsxEndpoint"},
+                {"Condition": "CreateEc2Endpoint"}, {"Condition": "CreateEc2MessagesEndpoint"}, {"Condition": "CreateSSMMessagesEndpoint"}]}
 
 Resources:
     HttpsSecurityGroup:
+      Condition: CreateSG
       Type: AWS::EC2::SecurityGroup
       Properties:
         GroupDescription: 'Allow HTTPS traffic from the VPC'
@@ -159,9 +150,8 @@ Resources:
         VpcId: !Ref VPCId
         VpcEndpointType: Gateway
         ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
-        RouteTableIds:
-            !If [SingleZone, [!Ref PreferredRouteTableId], [!Ref PreferredRouteTableId, !Ref StandbyRouteTableId]]
-    
+        RouteTableIds: !Split [",", !Ref S3EndpointRouteTables] 
+        
     CloudformationEndpoint:
       Condition: CreateCloudformationEndpoint
       Type: AWS::EC2::VPCEndpoint
@@ -221,19 +211,6 @@ Resources:
         VpcId: !Ref VPCId
         VpcEndpointType: Interface
         ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.ec2messages'
-        SubnetIds:
-            !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
-        PrivateDnsEnabled: true
-        SecurityGroupIds: 
-          - !Ref HttpsSecurityGroup
-    
-    CloudwatchEndpoint:
-      Condition: CreateCloudwatchEndpoint
-      Type: AWS::EC2::VPCEndpoint
-      Properties:
-        VpcId: !Ref VPCId
-        VpcEndpointType: Interface
-        ServiceName:  !Sub 'com.amazonaws.${AWS::Region}.monitoring'
         SubnetIds:
             !If [SingleZone, [!Ref PreferredSubnetId], [!Ref PreferredSubnetId, !Ref StandbySubnetId]]
         PrivateDnsEnabled: true
