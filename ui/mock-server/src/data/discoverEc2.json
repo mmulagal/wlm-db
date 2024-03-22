@@ -17,7 +17,7 @@
                     "sqlServerState": "Stopped",
                     "sqlServerVersion": "15.0.4298.1",
                     "windowsAuthentication": false,
-                    "sqlAuthentication": false,
+                    "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": [],
                     "sqlServerNodes": [
@@ -42,7 +42,7 @@
                     "sqlServerState": "Stopped",
                     "sqlServerVersion": "16.0.4080.1",
                     "windowsAuthentication": false,
-                    "sqlAuthentication": false,
+                    "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": [],
                     "sqlServerNodes": [
@@ -67,7 +67,7 @@
                     "sqlServerState": "Running",
                     "sqlServerVersion": "15.0.4345.5",
                     "windowsAuthentication": true,
-                    "sqlAuthentication": true,
+                    "sqlServerAuthentication": true,
                     "sqlServerName": "SQL Server 1",
                     "storage": [
                         {
@@ -98,7 +98,7 @@
                     "sqlServerState": "Stopped",
                     "sqlServerVersion": "16.0.4080.1",
                     "windowsAuthentication": false,
-                    "sqlAuthentication": false,
+                    "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": [],
                     "sqlServerNodes": [
@@ -124,7 +124,7 @@
                     "sqlServerState": "Stopped",
                     "sqlServerVersion": "16.0.1000.6",
                     "windowsAuthentication": false,
-                    "sqlAuthentication": false,
+                    "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 },
@@ -134,7 +134,7 @@
                     "sqlServerState": "Stopped",
                     "sqlServerVersion": "16.0.1000.6",
                     "windowsAuthentication": false,
-                    "sqlAuthentication": false,
+                    "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 },
@@ -144,7 +144,7 @@
                     "sqlServerState": "Running",
                     "sqlServerVersion": "16.0.4095.4",
                     "windowsAuthentication": false,
-                    "sqlAuthentication": false,
+                    "sqlServerAuthentication": false,
                     "sqlServerName": "SQL Server 2",
                     "storage": [
                         {
@@ -188,7 +188,7 @@
                     "sqlServerState": "Running",
                     "sqlServerVersion": "16.0.4015.1",
                     "windowsAuthentication": false,
-                    "sqlAuthentication": false,
+                    "sqlServerAuthentication": false,
                     "sqlServerName": "SQL Server 3",
                     "storage": [
                         {
@@ -228,7 +228,7 @@
                     "sqlServerState": "Running",
                     "sqlServerVersion": "16.0.4015.1",
                     "windowsAuthentication": true,
-                    "sqlAuthentication": true,
+                    "sqlServerAuthentication": true,
                     "sqlServerName": "SQL Server 4",
                     "storage": [
                         {
