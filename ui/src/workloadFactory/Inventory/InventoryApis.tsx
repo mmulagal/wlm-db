@@ -320,7 +320,7 @@ const InventoryApis = () => {
                     host = { ...host, sqlServerInstances: sortListOfDict(host?.sqlServerInstances, 'sqlServerState') };
                 }
                 const isWindowAuthentication = host?.sqlServerInstances?.[0]?.windowsAuthentication;
-                const isSqlAuthentication = host?.sqlServerInstances?.[0]?.sqlAuthentication;
+                const isSqlAuthentication = host?.sqlServerInstances?.[0]?.sqlServerAuthentication;
                 const isManaged = databaseHostsData?.find(managedHost =>
                     managedHost?.topology?.ec2Details?.find(instances => instances.id === host?.ec2InstanceId)
                 );
