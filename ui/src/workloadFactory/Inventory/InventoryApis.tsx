@@ -461,6 +461,7 @@ const InventoryApis = () => {
         }
     }, [unManagedHostList]);
 
+    // It is to get other fields data for moved managed host row. It uses database-hosts api to fetch details.
     const getManagedMssqlData = async (resourceId: string, host: any) => {
         const state = store.getState();
         const fullDatabaseHostsList = state.databaseHome.databaseHostsList;
@@ -503,6 +504,7 @@ const InventoryApis = () => {
         }
     };
 
+    // If any host is moved to managed host than it will be moved and it will get added in databaseHostsList
     useEffect(() => {
         if (movedManagedHostList && movedManagedHostList.length > 0) {
             movedManagedHostList.map((host: any) => {

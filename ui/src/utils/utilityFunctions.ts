@@ -1311,6 +1311,7 @@ export const formatUnamanagedHostList = (data: any, mssqlInstancesData: any) => 
     });
 };
 
+//  This function is to add new row in existing database host managed list
 export const addNewManagedHostData = (existingList: any, newItem: any) => {
     let newItemFound = false;
     const newList = existingList?.map((per: any) => {
