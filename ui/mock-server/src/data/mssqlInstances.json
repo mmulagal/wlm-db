@@ -3,7 +3,7 @@
     "items": [
       {
         "id": "i-02dbf20711b3c8311",
-        "name": "Database hostname 1",
+        "name": "i-02dbf20711b3c8311",
         "status": "Up",
         "databaseCount": 0,
         "databaseServer": {
@@ -112,7 +112,7 @@
       },
       {
         "id": "i-0d6acde2918b1ee11",
-        "name": "Database hostname 1",
+        "name": "i-0d6acde2918b1ee11",
         "status": "Up",
         "databaseCount": 0,
         "databaseServer": {
@@ -221,7 +221,7 @@
       },
       {
         "id": "i-0ccb393ef1e834df",
-        "name": "Database hostname 1",
+        "name": "i-0ccb393ef1e834df",
         "status": "Up",
         "databaseCount": 0,
         "databaseServer": {
@@ -330,7 +330,7 @@
       },
       {
         "id": "i-02dadc332885523434",
-        "name": "Database hostname 1",
+        "name": "i-02dadc332885523434",
         "status": "Up",
         "databaseCount": 0,
         "databaseServer": {
@@ -439,7 +439,7 @@
       },
       {
         "id": "i-0291bc7476b72344d",
-        "name": "Database hostname 1",
+        "name": "i-0291bc7476b72344d",
         "status": "Up",
         "databaseCount": 0,
         "databaseServer": {

@@ -79,7 +79,12 @@ const UnmanagedHosts = () => {
                 manageLoading[rowData?.id] = false;
                 setManageLoading(manageLoading);
             }
-            dispatch(setMovedToManagedHost([...movedToManagedHost, rowData?.ec2InstanceId]));
+            dispatch(
+                setMovedToManagedHost([
+                    ...movedToManagedHost,
+                    { instanceId: rowData?.ec2InstanceId, resourceId: result?.data?.resourceId }
+                ])
+            );
             const managedSuccessMsg = (
                 <div className={styles.notification}>
                     {GENERAL.HOST_MANAGED_MOVED_SUCCESS[0]}
@@ -411,11 +416,19 @@ const UnmanagedHosts = () => {
             isSortable: true,
             width: '235px',
             renderCell: (cellData: string, rowData: any) => {
+                const nodes = rowData?.sqlServerInstances?.[0]?.sqlServerNodes;
+                let type = '';
+                if (nodes && nodes.length > 1) {
+                    type = GENERAL.FCI;
+                } else if (nodes && nodes.length === 1) {
+                    type = GENERAL.STANDALONE;
+                }
+                const rowValue = cellData || type;
                 return (
                     <>
-                        {cellData}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && !rowData?.loading && notAvailable()}
+                        {rowValue}
+                        {!rowValue && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!rowValue && !rowData?.loading && notAvailable()}
                     </>
                 );
             }
@@ -433,14 +446,16 @@ const UnmanagedHosts = () => {
         manageColumnsProps: {
             width: '182px',
             renderCell: (cellData: any, rowData: any) => {
-                const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find((item: any) => item.type === 'FSXN');
+                const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find(
+                    (item: any) => item.type === DETECT_HOST_VAR.FSXN
+                );
                 return (
                     <>
                         {hasFsx && (
                             <div
                                 className={styles.manageHostCol}
                                 onClick={() => {
-                                    // manageHost(rowData);
+                                    manageHost(rowData);
                                 }}
                             >
                                 {rowData?.id in manageLoading && manageLoading[rowData?.id] && (
