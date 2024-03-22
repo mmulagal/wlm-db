@@ -11,13 +11,14 @@ import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } fro
 import { getResourceNameFromTags, sleep } from '../utils/utils';
 import { getEc2SqlParameters, getSSMConnectionStatus, pollCommandStatus, ssmPutParameters } from './aws/ssm-operations';
 import { CloudProviders, HttpErrorCodes, RESOURCESTYPE, SSM_PARAMETERS_BASE_PATH } from '../utils/consts';
-import { SQL_SERVER_VERSION_TO_EDITION, HOST_AND_SQL_INFO_PS1 } from './workloads/mssql/discover-consts';
+import { SQL_SERVER_VERSION_TO_YEAR, HOST_AND_SQL_INFO_PS1 } from './workloads/mssql/discover-consts';
 import { sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
 import { registerFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
 import { SSMParamterObject } from '../utils/common-types';
 
 import {
+    DiscoverMsSqlResponseBodyType,
     SqlServerInstanceInfoType,
     DiscoverResponseInfoType,
     DiscoverCredentialsType
@@ -47,7 +48,7 @@ interface DeployType {
     subnetIds: string[] | undefined;
 }
 
-const MINIMUM_SQL_SERVER_EDITION_SUPPORTED = 2016;
+const MINIMUM_SQL_SERVER_SUPPORTED = 2016;
 
 async function getHostAndSqlServerInfo(
     accountId: string,
@@ -56,7 +57,7 @@ async function getHostAndSqlServerInfo(
     pageSize: number,
     nextToken: string = '',
     instances: string[] = []
-) {
+): Promise<DiscoverMsSqlResponseBodyType> {
     logger.info('getHostAndSqlServerInfo():', { accountId, credentialsId, region, nextToken });
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         return returnInventorydata();
@@ -293,9 +294,9 @@ async function getHostAndSqlInfoFromPsOutput(
             for (const sqlServerInstanceInfo of responseInJson) {
                 // If an SQL Server version is unknown, default to 2015, which
                 // causes no data to be returned for the SQL Server instance.
-                const sqlServerEdition =
-                    SQL_SERVER_VERSION_TO_EDITION.get(sqlServerInstanceInfo?.sqlServerMajorVersion) || 2015;
-                if (sqlServerEdition >= MINIMUM_SQL_SERVER_EDITION_SUPPORTED) {
+                const sqlServerProductYear =
+                    SQL_SERVER_VERSION_TO_YEAR.get(sqlServerInstanceInfo?.sqlServerMajorVersion) || 2015;
+                if (sqlServerProductYear >= MINIMUM_SQL_SERVER_SUPPORTED) {
                     api1StartTime = performance.now();
                     const storageTypes = [];
                     const deploymentTypes = [];
@@ -338,11 +339,13 @@ async function getHostAndSqlInfoFromPsOutput(
                     let {
                         sqlServerVersion,
                         sqlServerName,
+                        sqlServerEdition,
                         sqlServerNodes,
                         sqlServerInstance,
                         sqlServerState,
                         windowsAuthentication,
-                        scriptExecutionTime
+                        scriptExecutionTime,
+                        databaseCount
                     } = sqlServerInstanceInfo;
                     logger.info(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
@@ -362,11 +365,13 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerNodes,
                         sqlServerInstance,
                         sqlServerState,
-                        sqlServerEdition,
+                        sqlServerProductYear,
+                        ...(sqlServerEdition && { sqlServerEdition }),
                         windowsAuthentication,
                         sqlServerAuthentication,
                         storage: uniqBy(storageTypes, 'id'),
-                        deploymentTypes: uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones }))
+                        deploymentTypes: uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones })),
+                        ...(databaseCount && { databaseCount })
                     });
                 }
             }

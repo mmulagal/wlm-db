@@ -1,6 +1,7 @@
 import randomize from 'randomatic';
+import { DiscoverMsSqlResponseBodyType } from '../../routes/types/discover.types';
 
-function inventoryDemoData(fsxId: string) {
+function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
     return {
         count: 16,
         items: [
@@ -38,7 +39,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2019,
+                        sqlServerEdition: 'Developer Edition (64-bit)',
+                        sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER',
                         sqlServerState: 'Stopped',
                         sqlServerVersion: '15.0.4298.1',
@@ -60,7 +62,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Developer Edition (64-bit)',
+                        sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER',
                         sqlServerState: 'Stopped',
                         sqlServerVersion: '16.0.4080.1',
@@ -82,7 +85,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Developer Edition (64-bit)',
+                        sqlServerProductYear: 2017,
                         sqlServerInstance: 'INST_D',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.1000.6',
@@ -101,7 +105,8 @@ function inventoryDemoData(fsxId: string) {
                         ]
                     },
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4095.4',
@@ -133,7 +138,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerProductYear: 2017,
                         sqlServerInstance: 'MSSQLSERVER_NOSTORAGE',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4105.2',
@@ -159,7 +165,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Developer Edition (64-bit)',
+                        sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER_1',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -192,7 +199,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER_2',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -225,7 +233,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerProductYear: 2017,
                         sqlServerInstance: 'MSSQLSERVER_3',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -258,7 +267,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER_4',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -291,7 +301,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER_5',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -324,7 +335,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER_6',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -357,7 +369,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER_7',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -390,7 +403,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerProductYear: 2017,
                         sqlServerInstance: 'MSSQLSERVER_8',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -423,7 +437,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER_9',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -456,7 +471,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER_10',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
