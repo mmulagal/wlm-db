@@ -692,7 +692,12 @@ export const GENERAL = {
     SERVICE: 'Service',
     PERMISSIONS: 'Permissions',
     ERROR_PERMISSION: 'Error',
-    COPY_ALL_UNSUPPORTED_PERMS: 'Copy all unsupported permissions'
+    COPY_ALL_UNSUPPORTED_PERMS: 'Copy all unsupported permissions',
+    BLOCKED_BY_ORG: 'Blocked by organization:',
+    BLOCKED_BY_PERMISSION_BOUNDARY: 'Blocked by permission boundary:',
+    MISSING_PERMISSION: 'Missing permission:',
+    MISSING_AND_BLOCKED_PERMISSIONS: 'Missing & blocked permissions',
+    UNSUPPORTED_PERMISSIONS: 'Unsupported permissions'
 };
 
 export const CODE_VIEWER = {
