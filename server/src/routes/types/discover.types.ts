@@ -120,6 +120,13 @@ const DiscoverCredentialsRequestBody = Type.Object({
     credentials: Type.Array(DiscoverCredentials)
 });
 
+const DiscoverCredentialsResponse = Type.Object({
+    databaseCount: Type.Optional(Type.String()),
+    sqlServerEdition: Type.Optional(Type.String()),
+    sqlServerError: Type.Optional(Type.String()),
+    fsxnError: Type.Optional(Type.String())
+});
+
 type DiscoverCredentialsType = Static<typeof DiscoverCredentials>;
 
 const DiscoverInstanceParams = Type.Composite([
@@ -164,5 +171,6 @@ export {
     DiscoverCredentialsRequestBody,
     DiscoverInstanceParams,
     DiscoverCredentialsType,
-    MsSqlInstancesRequestBody
+    MsSqlInstancesRequestBody,
+    DiscoverCredentialsResponse
 };
