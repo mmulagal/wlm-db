@@ -619,10 +619,6 @@ async function processCloudFormationMessages() {
                                                 // user has initiated stack deletion
 
                                                 // DBS-1929 : Job monitoring says "COMPLETE", eventough the STACK is failed and rolledback
-                                                let masterJobStatus: JOBSTATUS =
-                                                    logicalResourceId === TRACK_STATUS_CUSTOM_RESOURCE
-                                                        ? JOBSTATUS.COMPLETED
-                                                        : JOBSTATUS.IN_PROGRESS;
                                                 const masterJobName = `${trackdatabaseType} deployment with stack ${stackName}`;
                                                 const masterJob = await getMatchingMasterJob(
                                                     accountId,
@@ -630,28 +626,44 @@ async function processCloudFormationMessages() {
                                                     region,
                                                     masterJobName
                                                 );
-                                                if (masterJob && masterJob.status !== JOBSTATUS.FAILED) {
-                                                    const subJobs = await listJobs(
-                                                        accountId,
-                                                        credentialsId,
-                                                        region,
-                                                        masterJob.id,
-                                                        undefined,
-                                                        undefined
-                                                    );
-                                                    if (isEmpty(subJobs)) {
-                                                        masterJobStatus = JOBSTATUS.FAILED;
+
+                                                // Ignore delete stack when job has reached end state (completed or failed).
+                                                if (masterJob?.status === JOBSTATUS.IN_PROGRESS) {
+                                                    // Lets say some of subjobs were not triggered due to Limit exceeded. No CF notification is sent.
+                                                    // In CF, stack is marked as failed. Job will remain in IN_PROGRESS.
+                                                    // When user deletes the stack, IN_PROGRESS will be marked as FAILED.
+                                                    let masterJobStatus: JOBSTATUS =
+                                                        logicalResourceId === TRACK_STATUS_CUSTOM_RESOURCE &&
+                                                        masterJob?.status === JOBSTATUS.IN_PROGRESS
+                                                            ? JOBSTATUS.FAILED
+                                                            : JOBSTATUS.IN_PROGRESS;
+
+                                                    if (masterJob) {
+                                                        const subJobs = await listJobs(
+                                                            accountId,
+                                                            credentialsId,
+                                                            region,
+                                                            masterJob.id,
+                                                            undefined,
+                                                            undefined
+                                                        );
+
+                                                        // Seen an instance where none of the subjobs were triggered due to perm issue.
+                                                        // No notification is sent, mark the job as failed when stack is deleted.
+                                                        if (isEmpty(subJobs)) {
+                                                            masterJobStatus = JOBSTATUS.FAILED;
+                                                        }
+                                                        // Update master job with failed status
+                                                        await modifyMasterJobStatus(
+                                                            accountId,
+                                                            credentialsId,
+                                                            region,
+                                                            trackdatabaseType,
+                                                            stackName,
+                                                            masterJobStatus,
+                                                            messageTimestamp
+                                                        );
                                                     }
-                                                    // Update master job with failed status
-                                                    await modifyMasterJobStatus(
-                                                        accountId,
-                                                        credentialsId,
-                                                        region,
-                                                        trackdatabaseType,
-                                                        stackName,
-                                                        masterJobStatus,
-                                                        messageTimestamp
-                                                    );
                                                 }
 
                                                 if (logicalResourceId === TRACK_STATUS_CUSTOM_RESOURCE) {
@@ -802,6 +814,7 @@ async function processCloudFormationMessages() {
                                             logicalResourceId,
                                             false,
                                             stackSqlDeploymentType!,
+                                            stackName,
                                             resourceStatus
                                         );
                                     }
@@ -848,7 +861,6 @@ async function processCloudFormationMessages() {
                                      * If mainCFStatusClass in master status status and new notification status DO NOT MATCH then masterDeploymentStatus is updated.
                                      * Example: masterDeploymentStatus = 'CREATE_FAILED' and resourceStatus = 'UPDATE_IN_PROGRESS', then masterDeploymentStatus WILL BE UPDATED TO 'UPDATE_IN_PROGRESS'.
                                      */
-
                                     if (DEPLOYMENT_JOBS_FAILED_STATUS.includes(resourceStatus)) {
                                         // if any of the underlying resource is in CREATE_FAILED, DELETE_FAILED, ROLLBACK_FAILED, UPDATE_FAILED, UPDATE_ROLLBACK_FAILED mark the parent stack stack status as FAILED
                                         try {
@@ -868,11 +880,14 @@ async function processCloudFormationMessages() {
 
                                         // https://jira.ngage.netapp.com/browse/DBS-1942
                                         // If master job is marked failed and stack is rolled back or deleted, dont change the state
-                                        if (
-                                            masterJob &&
-                                            !resourceStatus?.includes('DELETE') &&
-                                            masterJob.status !== JOBSTATUS.FAILED
-                                        ) {
+                                        if (masterJob) {
+                                            let masterJobStatus = jobStatus;
+                                            if (resourceStatus.includes('DELETE')) {
+                                                masterJobStatus =
+                                                    masterJobStatus === JOBSTATUS.IN_PROGRESS
+                                                        ? JOBSTATUS.FAILED
+                                                        : masterJobStatus;
+                                            }
                                             const subJobs =
                                                 (await listJobs(
                                                     accountId,
@@ -883,9 +898,9 @@ async function processCloudFormationMessages() {
                                                     undefined
                                                 )) || [];
                                             const subJobStatus = subJobs.map(subJob => subJob.status);
-                                            const masterJobStatus = subJobStatus.includes(JOBSTATUS.IN_PROGRESS)
+                                            masterJobStatus = subJobStatus.includes(JOBSTATUS.IN_PROGRESS)
                                                 ? JOBSTATUS.IN_PROGRESS
-                                                : jobStatus;
+                                                : masterJobStatus;
                                             await modifyMasterJobStatus(
                                                 accountId,
                                                 credentialsId,
@@ -900,7 +915,7 @@ async function processCloudFormationMessages() {
                                         }
                                     } else if (
                                         !masterDeploymentStatus.startsWith(mainCFStatusClass) &&
-                                        !masterDeploymentStatus.includes('FAILED')
+                                        masterDeploymentStatus.includes('FAILED')
                                     ) {
                                         try {
                                             await updateDeployment(accountId, id, {
@@ -917,18 +932,21 @@ async function processCloudFormationMessages() {
 
                                         // https://jira.ngage.netapp.com/browse/DBS-1942
                                         // If master job is marked failed and stack is rolled back or deleted, dont change the state
-                                        if (
-                                            masterJob &&
-                                            !resourceStatus?.includes('DELETE') &&
-                                            masterJob.status !== JOBSTATUS.FAILED
-                                        ) {
+                                        if (masterJob) {
+                                            let masterJobStatus = jobStatus;
+                                            if (resourceStatus.includes('DELETE')) {
+                                                masterJobStatus =
+                                                    masterJobStatus === JOBSTATUS.IN_PROGRESS
+                                                        ? JOBSTATUS.FAILED
+                                                        : masterJobStatus;
+                                            }
                                             await modifyMasterJobStatus(
                                                 accountId,
                                                 credentialsId,
                                                 region,
                                                 String(databaseType),
                                                 stackName,
-                                                jobStatus,
+                                                masterJobStatus,
                                                 messageTimestamp,
                                                 masterJob,
                                                 resourceStatusReason
