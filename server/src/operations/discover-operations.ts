@@ -365,6 +365,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerNodes,
                         sqlServerInstance,
                         sqlServerState,
+                        sqlServerProductYear,
                         ...(sqlServerEdition && { sqlServerEdition }),
                         windowsAuthentication,
                         sqlServerAuthentication,
