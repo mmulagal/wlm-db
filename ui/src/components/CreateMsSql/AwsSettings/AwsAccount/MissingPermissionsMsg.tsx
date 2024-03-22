@@ -26,14 +26,35 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
 
     useEffect(() => {
         if (blockedPermissions) {
-            const mergedData = permissionData?.missingStatements.concat(
-                permissionData?.blockedByOrganisation,
-                permissionData?.blockedByPermissionBoundary
+            const updatedMissingPermissions =
+                permissionData?.missingStatements.length &&
+                permissionData?.missingStatements.map((obj: any) => {
+                    return { ...obj, error: `Missing permission: ${obj.error}` };
+                });
+
+            const updatedBlockedByOrganization =
+                permissionData?.blockedByOrganisation.length &&
+                permissionData?.blockedByOrganisation.map((obj: any) => {
+                    return { ...obj, error: `Blocked by organization: ${obj.error}` };
+                });
+
+            const updatedBlockedByPermissionBoundary =
+                permissionData?.blockedByPermissionBoundary.length &&
+                permissionData?.blockedByPermissionBoundary.map((obj: any) => {
+                    return { ...obj, error: `Blocked by permission boundary: ${obj.error}` };
+                });
+            const mergedData = updatedMissingPermissions.concat(
+                updatedBlockedByOrganization,
+                updatedBlockedByPermissionBoundary
             );
             setDataToDisplay(mergedData);
             setPermissionCount(mergedData.length);
         } else {
-            setDataToDisplay(permissionData?.missingStatements);
+            const updatedMissingPermissions = permissionData?.missingStatements.map((obj: any) => {
+                return { ...obj, error: `Missing permission: ${obj.error}` };
+            });
+
+            setDataToDisplay(updatedMissingPermissions);
         }
     }, []);
 
