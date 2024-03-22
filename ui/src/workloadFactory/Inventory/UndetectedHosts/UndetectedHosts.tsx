@@ -106,7 +106,11 @@ const UndetectedHosts = () => {
     };
 
     useEffect(() => {
-        if (!entryData?.sqlServerInstances?.[0]?.sqlServerAuthentication && entryData?.fsxId && !entryData?.isFsxRegistered) {
+        if (
+            !entryData?.sqlServerInstances?.[0]?.sqlServerAuthentication &&
+            entryData?.fsxId &&
+            !entryData?.isFsxRegistered
+        ) {
             if (detectManageUserName && detectManagePassword && detectOntapUsername && detectOntapPassword) {
                 valueRef.current = true;
             } else {
@@ -243,7 +247,9 @@ const UndetectedHosts = () => {
                                     header={
                                         <div className={styles.headerDialog}>
                                             <Typography variant="Regular_20">{GENERAL.DETECT_HOST}</Typography>
-                                            <Typography variant="Semibold_14">{GENERAL.DETECT_HOST_STEPS[1]}</Typography>
+                                            <Typography variant="Semibold_14">
+                                                {GENERAL.DETECT_HOST_STEPS[1]}
+                                            </Typography>
                                         </div>
                                     }
                                     content={<UndetectedSecondDialog data={rowData} apiResult={result?.data} />}

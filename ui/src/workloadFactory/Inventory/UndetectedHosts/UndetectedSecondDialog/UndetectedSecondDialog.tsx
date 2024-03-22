@@ -37,8 +37,10 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
         type = GENERAL.STANDALONE;
     }
 
-    const noOfDatabases = data?.sqlServerInstances?.[0]?.databaseCount || apiResult?.databaseCount || GENERAL.NOT_AVAILABLE;
-    const edition = data?.sqlServerInstances?.[0]?.sqlServerEdition || apiResult?.sqlServerEdition || GENERAL.NOT_AVAILABLE;
+    const noOfDatabases =
+        data?.sqlServerInstances?.[0]?.databaseCount || apiResult?.databaseCount || GENERAL.NOT_AVAILABLE;
+    const edition =
+        data?.sqlServerInstances?.[0]?.sqlServerEdition || apiResult?.sqlServerEdition || GENERAL.NOT_AVAILABLE;
 
     return (
         <div className={styles.secondDialog}>
@@ -70,9 +72,7 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
                         <Typography variant="Regular_14" style={{ width: '148px' }}>
                             {GENERAL.DETECT_NO_OF_DB}
                         </Typography>
-                        <Typography variant="Semibold_14">
-                            {noOfDatabases}
-                        </Typography>
+                        <Typography variant="Semibold_14">{noOfDatabases}</Typography>
                     </div>
 
                     <div className={styles.separator} />
