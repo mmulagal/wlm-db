@@ -29,19 +29,19 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
             const updatedMissingPermissions =
                 permissionData?.missingStatements.length &&
                 permissionData?.missingStatements.map((obj: any) => {
-                    return { ...obj, error: `Missing permission: ${obj.error}` };
+                    return { ...obj, error: `${GENERAL.MISSING_PERMISSION} ${obj.error}` };
                 });
 
             const updatedBlockedByOrganization =
                 permissionData?.blockedByOrganisation.length &&
                 permissionData?.blockedByOrganisation.map((obj: any) => {
-                    return { ...obj, error: `Blocked by organization: ${obj.error}` };
+                    return { ...obj, error: `${GENERAL.BLOCKED_BY_ORG} ${obj.error}` };
                 });
 
             const updatedBlockedByPermissionBoundary =
                 permissionData?.blockedByPermissionBoundary.length &&
                 permissionData?.blockedByPermissionBoundary.map((obj: any) => {
-                    return { ...obj, error: `Blocked by permission boundary: ${obj.error}` };
+                    return { ...obj, error: `${GENERAL.BLOCKED_BY_PERMISSION_BOUNDARY} ${obj.error}` };
                 });
             const mergedData = updatedMissingPermissions.concat(
                 updatedBlockedByOrganization,
@@ -51,7 +51,7 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
             setPermissionCount(mergedData.length);
         } else {
             const updatedMissingPermissions = permissionData?.missingStatements.map((obj: any) => {
-                return { ...obj, error: `Missing permission: ${obj.error}` };
+                return { ...obj, error: `${GENERAL.MISSING_PERMISSION} ${obj.error}` };
             });
 
             setDataToDisplay(updatedMissingPermissions);
@@ -62,9 +62,9 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
         if (blockedPermissions && type === 'operate') {
             return GENERAL.REQUIRED_OPERATE_PERMISSIONS;
         } else if (blockedPermissions && type !== 'operate') {
-            return `${permissionCount} Missing & blocked permissions`;
+            return `${permissionCount} ${GENERAL.MISSING_AND_BLOCKED_PERMISSIONS}`;
         } else {
-            return 'Unsupported permissions';
+            return GENERAL.UNSUPPORTED_PERMISSIONS;
         }
     };
 
