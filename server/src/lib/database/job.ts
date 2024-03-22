@@ -283,17 +283,18 @@ const subtractHour = (date: Date, hour: number) => {
     return date;
 };
 
-async function listInProgressJobs(parentJobId: string | null = null) {
-    logger.info('Listing all jobs which are in progress ', parentJobId);
+async function listLongRunningJobs() {
+    logger.info('Listing all parent deployment jobs which are in progress ');
 
     return prisma.client.job.findMany({
         where: {
             type: JOBTYPE.DEPLOYMENT,
-            parent_job_id: parentJobId,
+            parent_job_id: null,
             status: JOBSTATUS.IN_PROGRESS,
             start_time: {
-                lte: subtractHour(new Date(), Math.floor(MASTER_STACK_TIMEOUT_MINUTES / 60))
-            }
+                lt: subtractHour(new Date(), Math.floor(MASTER_STACK_TIMEOUT_MINUTES / 60))
+            },
+            end_time: null
         }
     });
 }
@@ -310,5 +311,5 @@ export {
     getJobCountByStatus,
     groupJobsByTimeAndStatus,
     createJob,
-    listInProgressJobs
+    listLongRunningJobs
 };
