@@ -178,7 +178,8 @@
                 "Action": [
                     "ssm:GetParameter", 
                     "ssm:GetParameters", 
-                    "ssm:PutParameter"
+                    "ssm:PutParameter",
+                    "ssm:DeleteParameters"
                 ],
                 "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
             }
@@ -228,7 +229,8 @@
                 "Action": [
                     "ssm:GetParameter", 
                     "ssm:GetParameters", 
-                    "ssm:PutParameter"
+                    "ssm:PutParameter",
+                    "ssm:DeleteParameters"
                 ],
                 "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
             }

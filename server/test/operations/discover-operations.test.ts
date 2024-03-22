@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import {
     getHostAndSqlServerInfo,
-    saveDiscoveredParameters,
+    validateAndStoreDiscoveredParameters,
     manageSqlServer
 } from '../../src/operations/discover-operations';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
@@ -40,18 +40,18 @@ describe('Discover operations', () => {
         const params = [
             {
                 resourceId: 'instanceId', // required
-                resourceType: 'sql', // required
+                resourceType: 'MSSQL', // required
                 username: 'username',
                 password: 'password'
             }
         ];
-        const response = await saveDiscoveredParameters(
+        const response = await validateAndStoreDiscoveredParameters(
             ACCOUNT_ID,
             credentialsId,
             'us-east-1',
             'i-0e5af83448e1b83ef',
             params
         );
-        expect(response).toBeUndefined();
+        expect(response).toBeDefined();
     });
 });
