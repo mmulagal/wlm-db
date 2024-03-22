@@ -11,9 +11,12 @@ import {
     GetConnectionStatusCommand,
     GetConnectionStatusCommandOutput,
     PutParameterCommand,
-    PutParameterCommandInput
+    PutParameterCommandInput,
+    GetParameterCommand,
+    GetParameterCommandInput,
+    GetParameterCommandOutput,
+    DeleteParametersCommand
 } from '@aws-sdk/client-ssm';
-
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
 import getLogger from '../../utils/logger';
@@ -98,11 +101,41 @@ async function putParameter(credentialsId: string, region: string, params: PutPa
     return response;
 }
 
+async function getParameter(credentialsId: string, region: string, ssmParameterName: string) {
+    logger.info('Get SSM paramter', { credentialsId, region, ssmParameterName });
+
+    const input: GetParameterCommandInput = {
+        Name: ssmParameterName,
+        WithDecryption: true
+    };
+
+    try {
+        const ssmClient = await getSSMClient(credentialsId, region);
+        const response: GetParameterCommandOutput = await ssmClient.send(new GetParameterCommand(input));
+        return response?.Parameter?.Value;
+    } catch (error: any) {
+        if (error?.name === 'ParameterNotFound') {
+            logger.debug('SSM parameter not found');
+        } else {
+            logger.error('Failed to get SSM parameter', error);
+        }
+    }
+}
+
+async function deleteParameters(credentialsId: string, region: string, ssmParameterNames: string[]) {
+    logger.info('Delete SSM paramters', { credentialsId, region, ssmParameterNames });
+
+    const ssmClient = await getSSMClient(credentialsId, region);
+    return ssmClient.send(new DeleteParametersCommand({ Names: ssmParameterNames }));
+}
+
 export {
     getSSMClient,
     sendSSMCommand,
     getCommandInvocation,
     describeFSxOntapRegions,
     getConnectionStatus,
-    putParameter
+    putParameter,
+    getParameter,
+    deleteParameters
 };

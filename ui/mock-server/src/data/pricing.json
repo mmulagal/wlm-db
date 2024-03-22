@@ -1,6 +1,12 @@
 {
     "compute": 243,
-    "storage": { "storageCapacity": 128, "throughput": 184.32 },
+    "fsxnStorage": { "storageCapacity": 128, "operationalCost": 184.32, "capacityCost": 20, "size": {
+        "data": 1128.6005859375,
+        "log": 282.150390625,
+        "tempdb": 112.8603515625,
+        "total": 1536,
+        "quorum": 11.71875
+    } },
     "vpc": 241,
     "total": 5000
 }

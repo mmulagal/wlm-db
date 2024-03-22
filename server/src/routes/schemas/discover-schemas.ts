@@ -1,24 +1,32 @@
 import { RouteTags } from '../../utils/consts';
+import { DatabaseHostSummaryListResponse } from '../types/database-hosts.types';
 import {
     DiscoverMsSqlResponseBody,
     DiscoverMsSqlQuery,
     DiscoverInstanceParams,
-    DiscoverCredentialsRequestBody
+    DiscoverCredentialsRequestBody,
+    ManageMsSqlResponseBody,
+    MsSqlInstancesRequestBody,
+    DiscoverCredentialsResponse
 } from '../types/discover.types';
 import { GenericHeaders, CredentialsIdParams } from '../types/generic.types';
 
-const DiscoverMsSqlSchema = {
+const DiscoveryBaseRequest = {
     Headers: GenericHeaders,
-    tags: [RouteTags.DISCOVER],
+    tags: [RouteTags.DISCOVER]
+};
+
+const DiscoverMsSqlSchema = {
+    ...DiscoveryBaseRequest,
     params: CredentialsIdParams,
     querystring: DiscoverMsSqlQuery,
-    summary: 'Discover EC2 instances running on Microsoft Windows platform and hosting Microsoft SQL Server.',
+    summary: 'Discover EC2 instances hosting Microsoft SQL Server.',
     description: `Discover AWS EC2 instances hosting Microsoft SQL Server.
         EC2 instances meeting the following constraints are
         considered for discovery:
         <ul>
             <li> Instance is in running state.
-            <li> Host operatin system is Microsoft Windows.
+            <li> Host operating system is Microsoft Windows.
             <li> Architecture is x86_64.
         </ul>
         <p>If SSM connectivity is available, only those EC2 running
@@ -26,6 +34,23 @@ const DiscoverMsSqlSchema = {
         connectivity SQL Server edition constraint is not applicable.`,
     response: {
         200: DiscoverMsSqlResponseBody
+    }
+};
+
+const ManageMsSqlSchema = {
+    ...DiscoveryBaseRequest,
+    params: DiscoverInstanceParams,
+    summary: 'Manage EC2 instances hosting Microsoft SQL Server.',
+    description: `Manage AWS EC2 instances hosting Microsoft SQL Server.
+    EC2 instances meeting the following constraints are managed:
+    <ul>
+        <li> Instance is in running state.
+        <li> Host operating system is Microsoft Windows.
+        <li> Architecture is x86_64.
+        <li> Underlying storage is FSx for NetApp.
+    </ul>`,
+    response: {
+        200: ManageMsSqlResponseBody /* Ideal to provide WLMDB resourceId as response */
     }
 };
 
@@ -37,8 +62,19 @@ const DiscoverCredentialsSchema = {
     summary: 'Discover credentials',
     description: 'Store the credentials for a given discovered resource in SSM Parameter Store',
     response: {
-        201: {}
+        200: DiscoverCredentialsResponse
     }
 };
 
-export { DiscoverMsSqlSchema, DiscoverCredentialsSchema };
+const MsSqlInstancesSchema = {
+    Headers: GenericHeaders,
+    tags: [RouteTags.DISCOVER],
+    params: CredentialsIdParams,
+    body: MsSqlInstancesRequestBody,
+    summary: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
+    description: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
+    response: {
+        200: DatabaseHostSummaryListResponse
+    }
+};
+export { DiscoverMsSqlSchema, DiscoverCredentialsSchema, ManageMsSqlSchema, MsSqlInstancesSchema };

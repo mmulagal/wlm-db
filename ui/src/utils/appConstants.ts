@@ -96,9 +96,20 @@ export const GENERAL = {
     ERROR: 'Error:',
     NO_CRED: 'No Credentials.',
     CREATE_PERMISSION_ERROR: [
-        'Workload Factory is unable to validate sufficient permissions. Redirect to ',
+        'Workload Factory is unable to validate sufficient permissions. ',
+        'View missing permissions.',
+        'Redirect to ',
         'AWS CloudFormation',
-        ' to complete this task. Ensure that you have the CloudFormation '
+        ' to complete this task.'
+    ],
+    MISSING_BLOCKED_PERMISSIONS: [
+        'Creation failed due to ',
+        'missing & blocked permissions. ',
+        ' Go to the AWS console to set permissions correctly.',
+        'Optionally, ensure that you have the ',
+        ' to create your deployment with AWS CloudFormation.',
+        'Click Redirect to CloudFormation via Codebox to complete the task.',
+        'required permissions'
     ],
     CREATE_PERMISSION_ERROR_CHATBOT:
         'Workload Factory is unable to validate sufficient permissions. Redirect to AWS CloudFormation through the Codebox on the right to complete this task. Ensure that you have the CloudFormation ',
@@ -612,6 +623,8 @@ export const GENERAL = {
     DATA_SIZE_MIN_ERROR: 'Minimum space required to create the file is not available in the drive',
     DATA_SIZE_ERROR: 'The valid range is 1 GiB - ',
     DRIVE_LETTER_CREATE_ERROR: 'Action required: Drive letters are missing. Use Advanced Create mode to select drives.',
+    COLLATION_ERROR: 'Action required: Select collation',
+    SELECT_COLLATION: 'Select a collation',
     DRIVE_LETTER_QUICK_CREATE_ERROR:
         'Insufficient drive letters available on system to create new drives. Use Advanced Create mode to reuse existing drives.',
     RESOURCE_ROLLBACK_TOOLTIP:
@@ -631,6 +644,7 @@ export const GENERAL = {
     MULTI_AZ: 'Multi AZ',
     // Const for unidentifiable data
     DETECT_HOST: 'Detect host',
+    MANAGE_HOST: 'Manage host',
     DETECT_HOST_STEPS: ['Step 1 / 2', 'Step 2 out of 2'],
     FAILED_TO_DETECT_HOST: 'Failed to detect host',
     DONE: 'Done',
@@ -671,8 +685,19 @@ export const GENERAL = {
         ' Managed hosts ',
         'tab.'
     ],
+    HOST_MANAGED_MOVED_SUCCESS: ['Host ', ' successfully moved to the ', ' Managed hosts ', 'tab.'],
+    HOST_MOVED_FAILED: ['Host ', ' failed to become a managed host. For more details view ', ' Job Monitoring.'],
     FCI: 'FCI',
-    STANDALONE: 'Standalone'
+    STANDALONE: 'Standalone',
+    SERVICE: 'Service',
+    PERMISSIONS: 'Permissions',
+    ERROR_PERMISSION: 'Error',
+    COPY_ALL_UNSUPPORTED_PERMS: 'Copy all unsupported permissions',
+    BLOCKED_BY_ORG: 'Blocked by organization:',
+    BLOCKED_BY_PERMISSION_BOUNDARY: 'Blocked by permission boundary:',
+    MISSING_PERMISSION: 'Missing permission:',
+    MISSING_AND_BLOCKED_PERMISSIONS: 'Missing & blocked permissions',
+    UNSUPPORTED_PERMISSIONS: 'Unsupported permissions'
 };
 
 export const CODE_VIEWER = {

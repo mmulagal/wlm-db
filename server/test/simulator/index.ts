@@ -34,6 +34,7 @@ async function initiateSimulator() {
     await import('./scopes/cloud-manager/workload-factory-auth-scope');
     await import('./scopes/aws/cost-explorer-scope');
     await import('./scopes/aws/tags-scope');
+    await import('./scopes/aws/cloud-watch-scope');
     // Load server
     await import('../../src/index');
 }

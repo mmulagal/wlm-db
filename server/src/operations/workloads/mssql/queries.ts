@@ -55,9 +55,7 @@ const SERVER_GUID = `${SET_NOCOUNT} SELECT service_broker_guid AS serverGuid FRO
 const SERVER_NAME = `${SET_NOCOUNT} SELECT @@SERVERNAME as serverName ${FOR_JSON_PATH}`;
 
 const SERVER_INSTALL_DATE = `${SET_NOCOUNT} SELECT create_date AS creationDate FROM sys.server_principals WITH (NOLOCK) WHERE name = N'NT AUTHORITY\\SYSTEM' OR name = N'NT AUTHORITY\\NETWORK SERVICE' ${FOR_JSON_PATH}`;
-
-const SERVER_VERSION_DETAILS = `${SET_NOCOUNT} SELECT @@version AS serverDetails`;
-const SERVER_PROPERTIES = ` ${SET_NOCOUNT} SELECT SERVERPROPERTY('Edition') AS ServerEdition, SERVERPROPERTY('IsClustered') as isClustered, SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode ${FOR_JSON_PATH}`;
+const SERVER_PROPERTIES = ` ${SET_NOCOUNT} SELECT SERVERPROPERTY('Edition') AS ServerEdition, SERVERPROPERTY('IsClustered') as isClustered, SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode, @@version AS serverDetails, @@SERVERNAME as serverName ${FOR_JSON_PATH}`;
 const SERVER_STATE = `${SET_NOCOUNT} EXEC master.dbo.xp_servicecontrol 'QUERYSTATE','MSSQLServer'`;
 const CLUSTER_NODES = `${SET_NOCOUNT} SELECT NodeName, is_current_owner FROM sys.dm_os_cluster_nodes ${FOR_JSON_PATH}`;
 const NUMBER_OF_CONNECTIONS = `${SET_NOCOUNT} SELECT COUNT(1) AS numberOfConnections FROM sys.dm_exec_sessions WHERE host_process_id is NOT NULL ${FOR_JSON_PATH}`;
@@ -155,12 +153,46 @@ ${FOR_JSON_PATH}`;
 const DATABASE_NAME_EXISTS = (databaseName: string) =>
     `${SET_NOCOUNT} SELECT name FROM sys.databases WHERE name = '${databaseName}' ${FOR_JSON_PATH}`;
 
+const SERVER_DETAILS = `
+    ${SET_NOCOUNT}
+    SELECT
+        (
+            SELECT NodeName, is_current_owner
+            FROM sys.dm_os_cluster_nodes
+            FOR JSON PATH
+        ) AS clusterNodesInfo,
+        (
+        SELECT COUNT(1) 
+        FROM sys.dm_exec_sessions 
+        WHERE host_process_id is NOT NULL
+        ) AS numberOfConnections,
+        SERVERPROPERTY('Edition') AS ServerEdition,
+        SERVERPROPERTY('IsClustered') AS isClustered,
+        SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS activeNode,
+        @@version AS serverDetails,
+        @@SERVERNAME AS clusterName,
+        COUNT(DISTINCT d.database_id) AS totalCount
+    FROM
+        (
+            SELECT
+                database_id,
+                logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),
+                rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),
+                databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))
+            FROM
+                sys.master_files
+            GROUP BY
+                database_id
+        ) t
+    JOIN
+        sys.databases d ON d.database_id = t.database_id
+    ${FOR_JSON_PATH}`;
+
 export {
     DATABASES,
     DATABASES_COUNT,
     CPU_UTILISATION,
     DISK_UTILISATION,
-    SERVER_VERSION_DETAILS,
     SERVER_PROPERTIES,
     NUMBER_OF_CONNECTIONS,
     TABLES_QUERY,
@@ -178,5 +210,6 @@ export {
     SQL_BACKUPS,
     DEFAULT_SQL_DATA_DRIVE,
     DEFAULT_SQL_LOG_DRIVE,
-    DATABASE_NAME_EXISTS
+    DATABASE_NAME_EXISTS,
+    SERVER_DETAILS
 };

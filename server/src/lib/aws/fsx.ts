@@ -37,7 +37,7 @@ async function getFSxClient(credentialsId: string, region: string, accountId?: s
 }
 
 async function describeFSxFileSystems(credentialsId: string, region: string) {
-    logger.info('Describe Amazon FSx for NetApp ONTAP filesystems:', { credentialsId, region });
+    logger.info('Describe FSx filesystems:', { credentialsId, region });
 
     const client = await getFSxClient(credentialsId, region);
 
@@ -50,21 +50,21 @@ async function describeFSxFileSystems(credentialsId: string, region: string) {
         }
     }
 
-    logger.debug('Describe Amazon FSx for NetApp ONTAp filesystem response:', fileSystems);
+    logger.debug('Describe FSx filesystem response:', fileSystems);
 
     return fileSystems;
 }
 
-async function describeFSxN(
+async function describeFSx(
     credentialsId: string,
     region: string,
     input: DescribeFileSystemsCommandInput
 ): Promise<DescribeFileSystemsCommandOutput> {
-    logger.info('Describe a FSxN filesystem:', { credentialsId, region, input });
+    logger.info('Describe a FSx filesystem:', { credentialsId, region, input });
 
     const client = await getFSxClient(credentialsId, region);
     const response = await client.send(new DescribeFileSystemsCommand(input));
-    logger.info('Describe a FSxN file system response:', response);
+    logger.info('Describe a FSx file system response:', response);
 
     return response;
 }
@@ -74,19 +74,19 @@ async function describeFSxVolumes(
     region: string,
     fsxFsId: string
 ): Promise<DescribeVolumesCommandOutput> {
-    logger.info('Describe Amazon FSx for NetApp ONTAP volumes:', { credentialsId, region, fsxFsId });
+    logger.info('Describe FSx volumes:', { credentialsId, region, fsxFsId });
     const input: DescribeVolumesCommandInput = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
 
     const client = await getFSxClient(credentialsId, region);
 
     const response = await client.send(new DescribeVolumesCommand(input));
-    logger.debug('Decribe Amazon FSx for NetApp ONTAP volumes response:', response);
+    logger.debug('Decribe FSx volumes response:', response);
 
     return response;
 }
 
 async function describeFSxStorageVirtualMachines(credentialsId: string, region: string, fsxFsId?: string) {
-    logger.info('Describe Amazon FSx for NetApp ONTAP volumes:', { credentialsId, region, fsxFsId });
+    logger.info('Describe FSx volumes:', { credentialsId, region, fsxFsId });
 
     let input: DescribeStorageVirtualMachinesCommandInput = {};
     if (typeof fsxFsId !== 'undefined') {
@@ -94,7 +94,7 @@ async function describeFSxStorageVirtualMachines(credentialsId: string, region: 
     }
     const client = await getFSxClient(credentialsId, region);
     const response = await client.send(new DescribeStorageVirtualMachinesCommand(input));
-    logger.debug('Decribe Amazon FSx for NetApp ONTAP storage virtual machines  response:', response);
+    logger.debug('Decribe FSx storage virtual machines  response:', response);
 
     return response;
 }
@@ -104,7 +104,7 @@ async function describeFSxBackups(
     region: string,
     volumeIds: Array<string>
 ): Promise<DescribeBackupsCommandOutput> {
-    logger.info('Describe Amazon FSx backups:', { credentialsId, region, volumeIds });
+    logger.info('Describe FSx backups:', { credentialsId, region, volumeIds });
 
     const input: DescribeBackupsCommandInput = {
         Filters: [{ Name: 'volume-id', Values: volumeIds }]
@@ -114,7 +114,7 @@ async function describeFSxBackups(
 
     const response = await client.send(new DescribeBackupsCommand(input));
 
-    logger.debug('Describe Amazon FSx backups:', response);
+    logger.debug('Describe FSx backups:', response);
 
     return response;
 }
@@ -133,11 +133,11 @@ async function listResourceTags(
 
         const response = await client.send(command);
 
-        logger.debug('List Amazon FSx resource tags:', response);
+        logger.debug('List FSx resource tags:', response);
 
         return response;
     } catch (error) {
-        logger.error('Error getting fsx tags', error);
+        logger.error('Error getting FSx tags', error);
     }
 }
 
@@ -164,7 +164,7 @@ export {
     describeFSxVolumes,
     describeFSxStorageVirtualMachines,
     describeFSxBackups,
-    describeFSxN,
+    describeFSx,
     listResourceTags,
     createTag
 };

@@ -2,14 +2,15 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import { STORAGE_TYPE } from '@prisma/client';
 import {
-    DatabaseCpuUtilisationResponseSchema,
-    DatabaseMemoryUtilisationResponseSchema,
-    DatabaseStorageUtilisationResponseSchema,
+    DatabaseResourcesUtilisationResponseSchema,
     GetDatabasesSchema,
     GetServerSummarySchema,
     GetTablesSchema,
     DeleteDatabaseSchema,
-    PostSqlServerSchema
+    PostSqlServerSchema,
+    DatabaseMemoryUtilisationResponseSchema,
+    DatabaseCpuUtilisationResponseSchema,
+    DatabaseStorageUtilisationResponseSchema
 } from './schemas/database-schemas';
 import {
     getDataBasesSummary,
@@ -17,9 +18,10 @@ import {
     getServerSummary,
     getTablesSummary,
     discoverMsSqlServer,
-    deleteResourceById
+    deleteResourceById,
+    getAllResourceUtilisation
 } from '../operations/workloads/mssql/mssql-operations';
-import { DATABASE_METRIC_TYPE /* DatabaseTypes */, DatabaseTypes } from '../utils/consts';
+import { DATABASE_METRIC_TYPE, DatabaseTypes } from '../utils/consts';
 
 const MSSQL_DISCOVER_API_PATH: string = '/v1/mssql/credentials/:credentialsId/regions/:region';
 const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';
@@ -83,6 +85,17 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
                 params: { resourceId }
             } = request;
             return getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.DISK);
+        }
+    );
+
+    server.get(
+        `${MSSQL_DATA_API_PATH}/resources-utilization`,
+        { schema: DatabaseResourcesUtilisationResponseSchema },
+        async request => {
+            const {
+                params: { resourceId }
+            } = request;
+            return getAllResourceUtilisation(resourceId);
         }
     );
 

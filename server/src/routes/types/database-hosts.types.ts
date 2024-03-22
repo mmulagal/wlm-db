@@ -20,6 +20,8 @@ const CreateDatabaseParams = Type.Object({
 // Query parameter to fetch protection, performance, storage and cost details
 const DatabaseHostQueryString = Type.Object({
     fields: Type.Optional(Type.String()),
+    vpcId: Type.Optional(Type.String()),
+    fsxId: Type.Optional(Type.String()),
     nextToken: Type.Optional(Type.String()),
     pageSize: Type.Optional(Type.Number())
 });
@@ -95,7 +97,12 @@ const StorageResponse = Type.Object({
     used: Type.Number({ description: 'The virtual space used before storage efficiency, in bytes.' }),
     spaceSavings: Type.Number({
         description: 'Total disk space saved in the volume due to storage efficiency, in bytes.'
-    })
+    }),
+    spaceSavingsPercentage: Type.Optional(
+        Type.Number({
+            description: 'Total disk space saved in the volume due to storage efficiency, in percentage.'
+        })
+    )
 });
 type StorageResponseType = Static<typeof StorageResponse>;
 
@@ -141,7 +148,7 @@ const DatabaseHostSummaryResponse = Type.Object({
     id: Type.String(),
     name: Type.String(),
     status: Type.String({ enum: ['Up', 'Down', 'N/A'] }),
-    databaseCount: Type.Number(),
+    databaseCount: Type.Optional(Type.Number()),
     databaseServer: Type.Optional(DatabaseServerMetadataResponse),
     topology: Type.Optional(TopologyResponse),
     protection: Type.Optional(ProtectionResponse),
@@ -188,7 +195,8 @@ const FileConfig = Type.Object({
 const CreateDatabseRequestBody = Type.Object({
     databaseName: Type.String({ minLength: 1, maxLength: 123 }),
     dataFileConfig: FileConfig,
-    logFileConfig: FileConfig
+    logFileConfig: FileConfig,
+    collation: Type.String()
 });
 
 const DatabasesCreateResponse = Type.Object({
@@ -213,6 +221,17 @@ const DriveInfoResponseBody = Type.Object({
     fsxStorageCapacity: Type.Optional(Type.Number())
 });
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
+
+const CollationInfoResponseBody = Type.Object({
+    collationList: Type.Array(
+        Type.Object({
+            name: Type.String(),
+            description: Type.Optional(Type.String())
+        })
+    ),
+    defaultCollation: Type.String()
+});
+type CollationInfoResponseBodyType = Static<typeof CollationInfoResponseBody>;
 
 export {
     DatabaseHostObjectParams,
@@ -255,5 +274,7 @@ export {
     CreateDatabaseParams,
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
-    FileConfigType
+    FileConfigType,
+    CollationInfoResponseBodyType,
+    CollationInfoResponseBody
 };

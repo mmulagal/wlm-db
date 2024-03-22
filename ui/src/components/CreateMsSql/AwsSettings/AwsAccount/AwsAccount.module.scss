@@ -130,3 +130,17 @@
         }
     }
 }
+
+[class*='FlexLayout-module_base'] {
+    width: auto !important;
+    min-width: 500px !important;
+}
+
+.setWidth {
+    width: 1064px;
+
+    [class*='DialogLayout-module_dialog-content'] {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+}

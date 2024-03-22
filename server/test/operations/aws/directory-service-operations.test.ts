@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import { getAdsList } from '../../../src/operations/aws/directory-service-operations';
 
 import '../../simulator/scopes/aws/directory-service-scope';
+import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';

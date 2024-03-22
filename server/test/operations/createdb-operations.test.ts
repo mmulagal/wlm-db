@@ -4,7 +4,8 @@ import {
     createDatabase,
     configureLuns,
     newDBInitialization,
-    cleanUpDatabaseDeployment
+    cleanUpDatabaseDeployment,
+    getCollationDetails
 } from '../../src/operations/createdb-operations';
 import '../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -96,7 +97,8 @@ describe('Create database operations', () => {
             'ap-southeast-1',
             createDBRequest.databaseName,
             createDBRequest.dataFileConfig,
-            createDBRequest.logFileConfig
+            createDBRequest.logFileConfig,
+            'SQL_Latin1_General_CP1_CI_AS'
         );
         expect(resp.jobId).toBeDefined();
     });
@@ -112,7 +114,8 @@ describe('Create database operations', () => {
             reqData.sqlServerName,
             reqData.databaseName,
             reqData.dataDrivePath,
-            reqData.logDrivePath
+            reqData.logDrivePath,
+            'SQL_Latin1_General_CP1_CI_AS'
         );
 
         expect(resp.Status).toBe('Complete');
@@ -178,5 +181,15 @@ describe('Create database operations', () => {
         );
 
         expect(resp.Status).toBe('Complete');
+    });
+
+    it('Get collation details for a database host', async () => {
+        const resp = await getCollationDetails(
+            ACCOUNT_ID,
+            '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1'
+        );
+        expect(resp).toBeDefined();
     });
 });

@@ -13,6 +13,9 @@ param(
   [Parameter(Mandatory = $true)]
   [string]$LogPath,
 
+  [Parameter(Mandatory = $true)]
+  [string]$Collation,
+
   [Parameter(Mandatory = $false)]
   [string]$InstanceName,
 
@@ -127,8 +130,8 @@ $logdircreate = (New-Item -ItemType Directory -Path $LogDir -Force)
 
 
 try {
-  #Query to create database with required data and log path
-  $Query = 'SET NOCOUNT ON;CREATE DATABASE '+$DBName+' ON (NAME = '+$DataLogicalName+',FILENAME = '''+$DataPath+''') LOG ON (NAME = '+$LogLogicalName+',FILENAME = '''+$LogPath+''')'
+  #Query to create database with required data and log path and collation if available
+  $Query = 'SET NOCOUNT ON;CREATE DATABASE '+$DBName+' ON (NAME = '+$DataLogicalName+',FILENAME = '''+$DataPath+''') LOG ON (NAME = '+$LogLogicalName+',FILENAME = '''+$LogPath+''') COLLATE '+$Collation+';'
   $Dbcreatelog = 'C:\cfn\log\dbcreate.log'
   $Dbcreateerrlog = 'C:\cfn\log\dbcreate_err.log'
   if ($ResourceID) {

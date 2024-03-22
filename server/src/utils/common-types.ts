@@ -20,7 +20,7 @@ interface UserDatabase {
 }
 
 interface ResourceDetails {
-    id: string;
+    id: string | null; // the value is null when the resource is not found in the database; in case of unmanaged hosts the DB record is not created.
     account_id: string;
     resource_id: string;
     resource_name: string | null;
@@ -32,6 +32,8 @@ interface ResourceDetails {
     credentials_id: string;
     storage_type: string;
     metadata: unknown;
+    ebsVolumeId?: string; // internal field used to store the ebs volume id for the unmanaged MSSQL resource
+    fsxwId?: string; // internal field used to store the windows fsx ID for the unmanaged MSSQL resource
 }
 
 interface DeploymentDetails {
@@ -112,6 +114,17 @@ interface SSMParamterObject {
     };
 }
 
+interface MissingPermission {
+    service: string;
+    action: string;
+    error: string;
+}
+interface MissingPermissionInterface {
+    missingStatements: MissingPermission[];
+    blockedByOrganisation: MissingPermission[];
+    blockedByPermissionBoundary: MissingPermission[];
+}
+
 export {
     Metadata,
     ResourceDetails,
@@ -122,5 +135,7 @@ export {
     VPC,
     NetworkInterface,
     SSMParamterObject,
-    UserDatabase
+    UserDatabase,
+    MissingPermission,
+    MissingPermissionInterface
 };

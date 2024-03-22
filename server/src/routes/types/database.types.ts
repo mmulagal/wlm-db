@@ -66,6 +66,14 @@ const UtilisationResponseBody = Type.Object({
 
 type UtilisationResponseBodyInterface = Static<typeof UtilisationResponseBody>;
 
+const ResourceUtilizationResponseBody = Type.Object({
+    cpuUtilization: UtilisationResponseBody,
+    diskUtilization: UtilisationResponseBody,
+    memoryUtilization: UtilisationResponseBody
+});
+
+type ResourceUtilizationResponseBodyInterface = Static<typeof ResourceUtilizationResponseBody>;
+
 const TablesResponseBody = Type.Object({
     tables: Type.Array(
         Type.Object({
@@ -83,6 +91,8 @@ export {
     DatabasesResponseBody,
     UtilisationResponseBody,
     UtilisationResponseBodyInterface,
+    ResourceUtilizationResponseBody,
+    ResourceUtilizationResponseBodyInterface,
     ServerSummaryResponse,
     Tablesparams,
     TablesResponseBody,

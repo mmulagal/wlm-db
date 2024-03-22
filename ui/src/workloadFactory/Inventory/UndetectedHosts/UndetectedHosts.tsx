@@ -6,7 +6,8 @@ import {
     useDialog,
     Popover,
     Button,
-    TooltipInfo
+    TooltipInfo,
+    Spinner
 } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './UndetectedHosts.module.scss';
@@ -18,7 +19,13 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { DETECT_HOST_VAR, FROM_DIALOG, FSX_DEPLOYMENT_MODE, SSM_TROUBLESHOOTING_LINK } from '../../../utils/consts';
+import {
+    DETECT_HOST_VAR,
+    FROM_DIALOG,
+    FSX_DEPLOYMENT_MODE,
+    SSM_TROUBLESHOOTING_LINK,
+    WLF_TABS
+} from '../../../utils/consts';
 import { useManageHostMutation, useRegisterResourceCredentialsMutation } from '../../../utils/apiService';
 import { setIsDetectHostError, setIsDetectHostLoading } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
@@ -30,11 +37,12 @@ import {
     setMovedToManagedHost,
     setMovedToUnmanagedHost,
     setRadioValueDetect,
+    setSelectedHeaderTab,
     setValuesForForm
 } from '../../../store/workloadFactory/inventorySlice';
 import { createDetectHostPayload } from '../../../utils/utilityFunctions';
 import { useEffect, useRef, useState } from 'react';
-import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import store from '../../../store/store';
 
 const UndetectedHosts = () => {
@@ -59,6 +67,7 @@ const UndetectedHosts = () => {
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
 
     const [tableData, setTableData] = useState<any>([]);
+    const [manageLoading, setManageLoading] = useState<any>({});
 
     const formatUnIdentifiableData = (data: any) => {
         return data.map((item: any) => {
@@ -98,7 +107,7 @@ const UndetectedHosts = () => {
 
     useEffect(() => {
         if (
-            !entryData?.sqlServerInstances?.[0]?.windowsAuthentication &&
+            !entryData?.sqlServerInstances?.[0]?.sqlServerAuthentication &&
             entryData?.fsxId &&
             !entryData?.isFsxRegistered
         ) {
@@ -107,7 +116,7 @@ const UndetectedHosts = () => {
             } else {
                 valueRef.current = false;
             }
-        } else if (!entryData?.sqlServerInstances?.[0]?.windowsAuthentication) {
+        } else if (!entryData?.sqlServerInstances?.[0]?.sqlServerAuthentication) {
             if (detectManageUserName && detectManagePassword) {
                 valueRef.current = true;
             } else {
@@ -128,20 +137,33 @@ const UndetectedHosts = () => {
     }, [unIdentifiableHosts, fsxCredentialStatusObj]);
 
     // This function is used to check if user wants to manage the detected host vis workload factory
-    const handleMoveToManage = async (rowData: any) => {
+    const handleMoveToManage = async (rowData: any, fsxId: any) => {
         const state = store.getState();
         const detectHostRadio = state.inventory.detectHostRadio;
         const movedToManagedHost = state.inventory.movedToManagedHost;
         const movedToUnmanagedHost = state.inventory.movedToUnmanagedHost;
-        if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE) {
+        if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE && fsxId) {
             // If yes than it will call another manage API to manage this instance. On success this instance will be moved to tab 1 from tab3
+            if (!manageLoading[rowData?.instanceID]) {
+                manageLoading[rowData?.instanceID] = true;
+                setManageLoading(manageLoading);
+            }
             const result: any = await manageHostApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
                 regionId: headerSelectedRegion?.label2,
                 instanceId: rowData?.instanceId
             });
             if (result && !result?.error) {
-                dispatch(setMovedToManagedHost([...movedToManagedHost, rowData?.instanceID]));
+                if (manageLoading[rowData?.instanceID]) {
+                    manageLoading[rowData?.instanceID] = false;
+                    setManageLoading(manageLoading);
+                }
+                dispatch(
+                    setMovedToManagedHost([
+                        ...movedToManagedHost,
+                        { instanceId: rowData?.instanceID, resourceId: result?.data?.resourceId }
+                    ])
+                );
                 const managedSuccessMsg = (
                     <div className={styles.notification}>
                         {GENERAL.HOST_MOVED_SUCCESS[0]}
@@ -152,8 +174,32 @@ const UndetectedHosts = () => {
                     </div>
                 );
                 dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: managedSuccessMsg }));
+            } else {
+                if (manageLoading[rowData?.instanceID]) {
+                    manageLoading[rowData?.instanceID] = false;
+                    setManageLoading(manageLoading);
+                }
+                dispatch(setMovedToUnmanagedHost([...movedToUnmanagedHost, rowData?.instanceID]));
+                const managedFailedMsg = (
+                    <div className={styles.notification}>
+                        {GENERAL.HOST_MOVED_FAILED[0]}
+                        <span className={styles.bold}>{rowData?.instance}</span>
+                        {GENERAL.HOST_MOVED_FAILED[1]}
+                        <Button
+                            Component="button"
+                            variant="text"
+                            onClick={() => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                dispatch(clearNotifications());
+                            }}
+                        >
+                            {GENERAL.JOB_MONITORING}.
+                        </Button>
+                    </div>
+                );
+                dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));
             }
-            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_UNMANAGE));
+            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         } else {
             // If no than it will just move instance to tab 2 from tab 3
             dispatch(setMovedToUnmanagedHost([...movedToUnmanagedHost, rowData?.instanceID]));
@@ -167,7 +213,7 @@ const UndetectedHosts = () => {
                 </div>
             );
             dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: unmanagedSuccessMsg }));
-            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_UNMANAGE));
+            dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         }
     };
 
@@ -187,23 +233,33 @@ const UndetectedHosts = () => {
                     payload: createDetectHostPayload(rowData?.instanceID, fsxId)
                 });
                 if (result && !result?.error) {
-                    dispatch(setIsDetectHostLoading(false));
-                    setTimeout(() => {
-                        setDialog(
-                            <DialogComponent
-                                header={
-                                    <div className={styles.headerDialog}>
-                                        <Typography variant="Regular_20">{GENERAL.DETECT_HOST}</Typography>
-                                        <Typography variant="Semibold_14">{GENERAL.DETECT_HOST_STEPS[1]}</Typography>
-                                    </div>
-                                }
-                                content={<UndetectedSecondDialog data={rowData} apiResult={result?.data} />}
-                                primaryButton={GENERAL.DONE}
-                                callback={() => handleMoveToManage(rowData)}
-                            />
-                        );
-                    }, 0);
-                    resetDialogValues();
+                    if (result?.data?.sqlServerError || result?.data?.fsxnError) {
+                        let error = [];
+                        error.push(result?.data?.sqlServerError || '');
+                        error.push(result?.data?.fsxnError || '');
+                        dispatch(setIsDetectHostError(error.join(' ')));
+                        dispatch(setIsDetectHostLoading(false));
+                    } else {
+                        dispatch(setIsDetectHostLoading(false));
+                        setTimeout(() => {
+                            setDialog(
+                                <DialogComponent
+                                    header={
+                                        <div className={styles.headerDialog}>
+                                            <Typography variant="Regular_20">{GENERAL.DETECT_HOST}</Typography>
+                                            <Typography variant="Semibold_14">
+                                                {GENERAL.DETECT_HOST_STEPS[1]}
+                                            </Typography>
+                                        </div>
+                                    }
+                                    content={<UndetectedSecondDialog data={rowData} apiResult={result?.data} />}
+                                    primaryButton={GENERAL.DONE}
+                                    callback={() => handleMoveToManage(rowData, fsxId)}
+                                />
+                            );
+                        }, 0);
+                        resetDialogValues();
+                    }
                 } else {
                     dispatch(setIsDetectHostError(result?.error?.data?.message || GENERAL.FAILED_TO_DETECT_HOST));
                     dispatch(setIsDetectHostLoading(false));
@@ -265,9 +321,13 @@ const UndetectedHosts = () => {
                                     handleManageDetect(rowData);
                                 }}
                             >
-                                <Typography variant="Regular_14" className={styles.textStyle}>
-                                    {GENERAL.DETECT_HOST}
-                                </Typography>
+                                {rowData?.instanceID in manageLoading && manageLoading[rowData?.instanceID] ? (
+                                    <Spinner className={styles.loading} />
+                                ) : (
+                                    <Typography variant="Regular_14" className={styles.textStyle}>
+                                        {GENERAL.DETECT_HOST}
+                                    </Typography>
+                                )}
                             </div>
                         )}
                         {rowData?.detectOption === 'disable' && (

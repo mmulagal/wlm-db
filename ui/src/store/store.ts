@@ -61,7 +61,12 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
         let errorMsg = action.payload.error || action.payload.data?.message || action.payload.data?.responseMessage;
 
         // This error msg is blocked to have in notification. This error will be part of detect host dialog error.
-        if (action?.meta?.arg?.endpointName === 'registerResourceCredentials') {
+        // getMssqlInstanceData - it is for each row in unmanaged host so not adding
+        if (
+            action?.meta?.arg?.endpointName === 'registerResourceCredentials' ||
+            action?.meta?.arg?.endpointName === 'manageHost' ||
+            action?.meta?.arg?.endpointName === 'getMssqlInstanceData'
+        ) {
             return;
         }
 

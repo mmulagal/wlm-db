@@ -3,7 +3,7 @@ import { LazyJsonString } from '@smithy/smithy-client';
 import { compact, isEmpty } from 'lodash-es';
 import { PricingServiceRequestType, PricingServiceResponseType } from '../../routes/types/pricing.types';
 import getLogger from '../../utils/logger';
-import { calculateFsxStorageCapacity, sizeInGigaBytes } from '../../utils/utils';
+import { calculateFsxnStorageCapacity, sizeInGigaBytes } from '../../utils/utils';
 import {
     DEFAULT_AWS_REGION,
     FCI,
@@ -17,35 +17,6 @@ import {
 import getProducts from '../../lib/aws/pricing';
 
 const logger = getLogger();
-
-interface PriceObject {
-    unit: string;
-    pricePerUnit: {
-        USD: string;
-    };
-}
-
-interface Terms {
-    OnDemand: {
-        [key: string]: {
-            priceDimensions: {
-                [key: string]: PriceObject;
-            };
-        };
-    };
-}
-
-interface Product {
-    product: {
-        productFamily: string;
-        attributes: {
-            [key: string]: string;
-        };
-        sku: string;
-    };
-    serviceCode: string;
-    terms: Terms;
-}
 
 interface ProductInput {
     name: string;
@@ -76,12 +47,6 @@ const storageProductFamily: Filter = {
     Type: FilterType.TERM_MATCH,
     Field: 'productFamily',
     Value: 'Storage'
-};
-
-const readWriteRequestProductFamily: Filter = {
-    Type: FilterType.TERM_MATCH,
-    Field: 'productFamily',
-    Value: 'Request'
 };
 
 function getPriceUtil(rate: number, quantity: number, resourceCount = 1): number {
@@ -182,7 +147,7 @@ function getEc2StorageInput(compute: PricingServiceRequestType['compute']): Prod
                 {
                     Type: FilterType.TERM_MATCH,
                     Field: 'volumeApiName',
-                    Value: 'gp2'
+                    Value: 'gp3'
                 }
             ],
             ...ec2Service,
@@ -191,131 +156,40 @@ function getEc2StorageInput(compute: PricingServiceRequestType['compute']): Prod
     };
 }
 
-function getFSxNStorageInput(storage: PricingServiceRequestType['storage']): ProductInput {
-    logger.info('Geting FSxN Storage Input', { storage });
+function getEbsStorageInput(region: string, volumeType: string): ProductInput {
+    logger.info('Getting ec2 storage (EBS) input');
 
     return {
-        name: 'fsxStorage',
+        name: 'ebsStorage',
         input: {
             Filters: [
-                getRegionCodeFilter(storage?.regionCode),
-                getDeploymentOption(storage?.deploymentOption),
+                getRegionCodeFilter(region),
                 storageProductFamily,
                 {
                     Type: FilterType.TERM_MATCH,
-                    Field: 'fileSystemType',
-                    Value: 'ONTAP'
-                },
-                {
-                    Type: FilterType.TERM_MATCH,
-                    Field: 'StorageType',
-                    Value: 'SSD'
+                    Field: 'volumeApiName',
+                    Value: volumeType
                 }
             ],
-            ...fsxService,
+            ...ec2Service,
             ...AWS_PRICING_FORMAT_VERSION
         }
     };
 }
 
-function getFSxNThroughputInput(storage: PricingServiceRequestType['storage']): ProductInput {
-    logger.info('Geting FSxN Throughput Input', { storage });
+function getProductsInputForFSxN(region: string, deploymentOption: string): ProductInput {
+    logger.info('Geting FSxN pricing metrics', { region, deploymentOption });
 
     return {
-        name: 'fsxThroughput',
+        name: 'fsxnStorage',
         input: {
             Filters: [
-                getRegionCodeFilter(storage?.regionCode),
-                getDeploymentOption(storage?.deploymentOption),
-                {
-                    Type: FilterType.TERM_MATCH,
-                    Field: 'productFamily',
-                    Value: 'Provisioned Throughput'
-                },
+                getRegionCodeFilter(region),
+                getDeploymentOption(deploymentOption),
                 {
                     Type: FilterType.TERM_MATCH,
                     Field: 'fileSystemType',
                     Value: 'ONTAP'
-                }
-            ],
-            ...fsxService,
-            ...AWS_PRICING_FORMAT_VERSION
-        }
-    };
-}
-
-function getFSxNIopsInput(storage: PricingServiceRequestType['storage']): ProductInput {
-    logger.info('Geting FSxN Iops Input', { storage });
-
-    return {
-        name: 'fsxIops',
-        input: {
-            Filters: [
-                getRegionCodeFilter(storage?.regionCode),
-                getDeploymentOption(storage?.deploymentOption),
-                {
-                    Type: FilterType.TERM_MATCH,
-                    Field: 'productFamily',
-                    Value: 'Provisioned IOPS'
-                },
-                {
-                    Type: FilterType.TERM_MATCH,
-                    Field: 'fileSystemType',
-                    Value: 'ONTAP'
-                }
-            ],
-            ...fsxService,
-            ...AWS_PRICING_FORMAT_VERSION
-        }
-    };
-}
-
-function getFSxNReadRequestsInput(storage: PricingServiceRequestType['storage']): ProductInput {
-    logger.info('Geting FSxN read requests Input', { storage });
-
-    return {
-        name: 'fsxReadRequests',
-        input: {
-            Filters: [
-                getRegionCodeFilter(storage?.regionCode),
-                getDeploymentOption(storage?.deploymentOption),
-                readWriteRequestProductFamily,
-                {
-                    Type: FilterType.TERM_MATCH,
-                    Field: 'fileSystemType',
-                    Value: 'ONTAP'
-                },
-                {
-                    Type: FilterType.TERM_MATCH,
-                    Field: 'requestType',
-                    Value: 'Read'
-                }
-            ],
-            ...fsxService,
-            ...AWS_PRICING_FORMAT_VERSION
-        }
-    };
-}
-
-function getFSxNWriteRequestsInput(storage: PricingServiceRequestType['storage']): ProductInput {
-    logger.info('Geting FSxN write requests Input', { storage });
-
-    return {
-        name: 'fsxWriteRequests',
-        input: {
-            Filters: [
-                getRegionCodeFilter(storage?.regionCode),
-                getDeploymentOption(storage?.deploymentOption),
-                readWriteRequestProductFamily,
-                {
-                    Type: FilterType.TERM_MATCH,
-                    Field: 'fileSystemType',
-                    Value: 'ONTAP'
-                },
-                {
-                    Type: FilterType.TERM_MATCH,
-                    Field: 'requestType',
-                    Value: 'Write'
                 }
             ],
             ...fsxService,
@@ -349,65 +223,6 @@ function getVpcInput(vpcInfo: PricingServiceRequestType['vpc']): ProductInput {
     };
 }
 
-function parseResponse(response: GetProductsCommandOutput): number {
-    logger.info('Parse Pricing Response', { response });
-
-    /**
-     * Sample response:
-     * [{
-            "product": {
-                "productFamily": "Storage",
-                "attributes": {
-                    ...
-                },
-                "sku": "NXJD8KBTG7YXFF7F"
-            },
-            "serviceCode": "AmazonFSx",
-            "terms": {
-                "OnDemand": {
-                    "NXJD8KBTG7YXFF7F.JRTCKXETXF": {
-                        "priceDimensions": {
-                            "NXJD8KBTG7YXFF7F.JRTCKXETXF.6YS6EN2CT7": {
-                                "unit": "GB-Mo",
-                                "pricePerUnit": {
-                                    "USD": "0.2500000000"
-                                }
-                            }
-                        },
-                        ...
-                    }
-                }
-            },
-            "version": "20230905212148",
-            "publicationDate": "2023-09-05T21:21:48Z"
-        }]
-     */
-
-    if (isEmpty(response?.PriceList)) {
-        logger.error('Invalid AWS SDK response:', { data: response?.PriceList });
-        return 0;
-    }
-
-    const [serializedResponse]: Product[] = (response?.PriceList || []).map(k =>
-        (k as LazyJsonString).deserializeJSON()
-    );
-
-    const { OnDemand }: Terms = serializedResponse?.terms || {};
-
-    const [{ priceDimensions }] = Object.values(OnDemand);
-
-    const [
-        {
-            unit,
-            pricePerUnit: { USD: rate }
-        }
-    ]: PriceObject[] = Object.values(priceDimensions);
-
-    logger.debug({ rate, unit });
-
-    return Number(rate);
-}
-
 function calculateEc2Cost(instanceRate: number, storageRate: number, deploymentMode: string): number {
     logger.debug('Calculating compute cost');
 
@@ -418,13 +233,13 @@ function calculateEc2Cost(instanceRate: number, storageRate: number, deploymentM
     );
 }
 
-function calculateFsxStorageCost(instanceRate: number, diskSize: number): number {
-    logger.debug('Calculating fsx storage cost', { instanceRate, diskSize });
+function calculateFsxnStorageCost(instanceRate: number, diskSize: number): number {
+    logger.debug('Calculating fsx netapp storage cost', { instanceRate, diskSize });
 
     return getPriceUtil(instanceRate, diskSize);
 }
 
-function calculateFsxThroughputCost(
+function calculateFsxOperationalCost(
     fsxThroughputRate: number,
     fsxIopsRate: number,
     fsxReadRequestsRate: number,
@@ -434,7 +249,7 @@ function calculateFsxThroughputCost(
     storageReadRequest: number = MAX_READ_REQUEST_FSXN,
     storageWriteRequest: number = MAX_WRITE_REQUEST_FSXN
 ): number {
-    logger.debug('Calculating fsx storage cost', {
+    logger.debug('Calculating fsx operational cost', {
         fsxThroughputRate,
         fsxIopsRate,
         fsxReadRequestsRate,
@@ -455,42 +270,128 @@ function calculateFsxThroughputCost(
 
 function getInputs(
     compute: PricingServiceRequestType['compute'],
-    storage: PricingServiceRequestType['storage'],
-    vpc: PricingServiceRequestType['vpc']
+    fsxnStorage: PricingServiceRequestType['fsxnStorage'],
+    ebsStorage: PricingServiceRequestType['ebsStorage'],
+    vpc: PricingServiceRequestType['vpc'],
+    fsxwStorage: PricingServiceRequestType['fsxwStorage']
 ): ProductInput[] {
     logger.info('Getting product inputs', {
         compute,
-        storage,
+        fsxnStorage,
         vpc
     });
 
     return [
         getEc2InstaceInput(compute),
         getEc2StorageInput(compute),
-        ...((storage && [
-            getFSxNStorageInput(storage),
-            getFSxNThroughputInput(storage),
-            getFSxNIopsInput(storage),
-            getFSxNReadRequestsInput(storage),
-            getFSxNWriteRequestsInput(storage)
-        ]) ||
-            []),
-        ...((vpc && [getVpcInput(vpc)]) || [])
+        ...((fsxnStorage && [getProductsInputForFSxN(fsxnStorage.regionCode, fsxnStorage.deploymentOption!)]) || []),
+        ...((ebsStorage && [getEbsStorageInput(ebsStorage.regionCode, ebsStorage.volumeType)]) || []),
+        ...((vpc && [getVpcInput(vpc)]) || []),
+        ...((fsxwStorage && [getProductsInputForFSxWindows(fsxwStorage.regionCode, fsxwStorage.deploymentOption!)]) ||
+            [])
     ];
 }
 
-async function calculatePrice(
-    compute: PricingServiceRequestType['compute'],
-    storage: PricingServiceRequestType['storage'],
-    vpc: PricingServiceRequestType['vpc']
-): Promise<PricingServiceResponseType> {
-    logger.info('Calculating price for AWS resources', {
-        compute,
-        storage,
-        vpc
-    });
+function getMetricFromProductFamily(productFamily: string): string {
+    logger.debug('Getting metric from product family', { productFamily });
 
-    const inputList: ProductInput[] = compact(getInputs(compute, storage, vpc));
+    switch (productFamily) {
+        case 'Compute Instance':
+            return 'compute';
+        case 'Storage':
+            return 'storage';
+        case 'Provisioned Throughput':
+            return 'throughput';
+        case 'System Operation':
+            return 'iops';
+        case 'Provisioned IOPS':
+            return 'iops';
+        case 'Read Request':
+            return 'readRequest';
+        case 'Write Request':
+            return 'writeRequest';
+        case 'SSDStorage':
+            return 'storageSsd';
+        case 'HDDStorage':
+            return 'storageHdd';
+        default:
+            return 'unknown';
+    }
+}
+
+function getProductsInputForFSxWindows(region: string, deploymentOption: string): ProductInput {
+    logger.debug('Getting products input for FSx Windows', { region, deploymentOption });
+
+    return {
+        name: 'fsxwStorage',
+        input: {
+            Filters: [
+                {
+                    Type: FilterType.TERM_MATCH,
+                    Field: 'fileSystemType',
+                    Value: 'Windows'
+                },
+                {
+                    Type: FilterType.TERM_MATCH,
+                    Field: 'deploymentOption',
+                    Value: deploymentOption
+                },
+                {
+                    Type: FilterType.TERM_MATCH,
+                    Field: 'regionCode',
+                    Value: region
+                }
+            ],
+            ...fsxService,
+            ...AWS_PRICING_FORMAT_VERSION
+        }
+    };
+}
+
+function parseProductsResponse(response: GetProductsCommandOutput): {
+    [metric: string]: { pricePerUnit: number; unit: string };
+} {
+    logger.debug('Parsing products response', response);
+
+    const pricingDetails: { [metric: string]: { pricePerUnit: number; unit: string } } = {};
+    if (response.PriceList) {
+        response.PriceList.forEach(priceItem => {
+            const item = (priceItem as LazyJsonString).deserializeJSON();
+            const { terms, product } = item;
+
+            if (terms && product) {
+                const term = terms[Object.keys(terms)[0]];
+                const termDetails = term[Object.keys(term)[0]];
+                const { priceDimensions } = termDetails;
+                const priceDimension = priceDimensions[Object.keys(priceDimensions)[0]];
+                const { pricePerUnit } = priceDimension;
+                const { requestType, storageType } = product.attributes;
+                if (storageType === 'SSD') {
+                    product.productFamily = 'SSDStorage';
+                } else if (storageType === 'HDD') {
+                    product.productFamily = 'HDDStorage';
+                } else if (storageType && !['SSD', 'HDD'].includes(storageType)) {
+                    // FSx for ONTAP has capacity pool as another storage type
+                    product.productFamily = 'OtherStorage';
+                }
+                const metric = ['Write', 'Read'].includes(requestType)
+                    ? getMetricFromProductFamily(`${requestType} Request`)
+                    : getMetricFromProductFamily(product.productFamily);
+                pricingDetails[metric as keyof typeof pricingDetails] = {
+                    pricePerUnit: Number(pricePerUnit.USD),
+                    unit: priceDimension.unit
+                };
+            }
+        });
+    }
+
+    return pricingDetails;
+}
+
+async function getProductRates(
+    inputList: ProductInput[]
+): Promise<{ [productType: string]: { [metric: string]: { pricePerUnit: number; unit: string } } }> {
+    logger.debug('Getting product rates', inputList);
 
     const productsResponse = await Promise.all(
         inputList.map(
@@ -504,84 +405,312 @@ async function calculatePrice(
     const parsedResponse = productsResponse.reduce(
         (acc, product) => ({
             ...acc,
-            [product.name]: parseResponse(product.output)
+            [product.name]: parseProductsResponse(product.output)
         }),
-        {} as { [key: string]: number }
+        {} as { [productType: string]: { [metric: string]: { pricePerUnit: number; unit: string } } }
     );
 
+    return parsedResponse;
+}
+
+async function calculatePrice(
+    compute: PricingServiceRequestType['compute'],
+    fsxnStorage: PricingServiceRequestType['fsxnStorage'],
+    vpc: PricingServiceRequestType['vpc'],
+    ebsStorage?: PricingServiceRequestType['ebsStorage'],
+    fsxwStorage?: PricingServiceRequestType['fsxwStorage']
+): Promise<PricingServiceResponseType> {
+    logger.info('Calculating price for AWS resources', {
+        compute,
+        fsxnStorage,
+        vpc,
+        ebsStorage,
+        fsxwStorage
+    });
+
+    const inputList: ProductInput[] = compact(getInputs(compute, fsxnStorage, ebsStorage, vpc, fsxwStorage));
+    const productRates = await getProductRates(inputList);
+
     const {
-        ec2Instance: ec2InstanceRate,
-        ec2Storage: ec2StorageRate,
-        fsxStorage: fsxStorageRate,
-        fsxThroughput: fsxThroughputRate,
-        fsxIops: fsxIopsRate,
-        fsxReadRequests: fsxReadRequestsRate,
-        fsxWriteRequests: fsxWriteRequestsRate,
-        vpc: vpcRate
-    } = parsedResponse;
+        ec2Instance: {
+            compute: { pricePerUnit: ec2InstanceRate }
+        },
+        ec2Storage: {
+            storage: { pricePerUnit: ec2StorageRate }
+        },
+        vpc: { vpc: { pricePerUnit: vpcRate = undefined } = {} } = {},
+        ebsStorage: ebsStorageRates = undefined
+    } = productRates;
 
     const ec2Cost = calculateEc2Cost(ec2InstanceRate, ec2StorageRate, compute?.sqlDeploymentMode);
     const vpcCost = vpcRate ? getPriceUtil(vpcRate, HOURS_IN_MONTH, 1) : 0;
 
-    let fsxStorageCost = 0;
-    let fsxThroughputCost = 0;
-    let fsxDiskSizes;
-    let fsxDisksize;
-    if (storage) {
-        // If the input size is database size, we need to calculate the total FSX storage capacity
-        // In cases where the input is total FSx Storage capacity, we don't this calculation.
-        if (storage.diskSize) {
-            fsxDiskSizes = calculateFsxStorageCapacity(storage.diskSize);
-            fsxDisksize = fsxDiskSizes.FSxStorageCapacity;
-        } else {
-            fsxDisksize = storage?.storageCapacity;
-        }
+    let fsxnStorageCost = 0;
+    let fsxnOperationalCost = 0;
+    let fsxnDiskSizes;
+    if (fsxnStorage) {
+        ({ fsxnStorageCost, fsxnOperationalCost, fsxnDiskSizes } = calculateFsxnCost(
+            fsxnStorage,
+            productRates.fsxnStorage
+        ));
+    }
 
-        fsxDisksize = fsxDisksize || MIN_DISKSIZE;
-        const fsxThroughput = storage?.throughput || MIN_THROUGHPUT;
-        let fsxIops = storage?.iops || 3 * fsxDisksize;
-
-        fsxStorageCost = calculateFsxStorageCost(fsxStorageRate, fsxDisksize);
-        if (fsxIops > 3 * fsxDisksize) {
-            fsxIops -= 3 * fsxDisksize; // Iops cost is only charged when its greater than 3 * diskSize and charging is only on the difference
-        } else {
-            fsxIops = 0; // Iops cost is 0 if it is less than or equal to  3 * diskSize
-        }
-
-        fsxThroughputCost = calculateFsxThroughputCost(
-            fsxThroughputRate,
-            fsxIopsRate,
-            fsxReadRequestsRate,
-            fsxWriteRequestsRate,
-            fsxThroughput,
-            fsxIops
+    let ebsStorageCost = 0;
+    if (!isEmpty(ebsStorage)) {
+        ebsStorageCost = calculateEbsCost(
+            ebsStorage?.volumeType,
+            ebsStorage?.size,
+            ebsStorage?.iops,
+            ebsStorage?.throughput,
+            ebsStorageRates
         );
-        logger.info('FSx  throughput cost value for demo', fsxThroughputCost);
+    }
+
+    let fsxwStorageCost = 0;
+    let fsxwOperationalCost = 0;
+    if (fsxwStorage) {
+        ({ fsxwStorageCost, fsxwOperationalCost } = calculateFsxwCost(fsxwStorage, productRates.fsxwStorage));
     }
 
     return {
         compute: ec2Cost,
-        ...(storage && {
-            storage: {
-                capacity: fsxStorageCost,
-                throughput: fsxThroughputCost,
+        ...(fsxnStorage && {
+            fsxnStorage: {
+                capacityCost: fsxnStorageCost,
+                operationalCost: fsxnOperationalCost,
                 // This is optional and only needed to display in UI
-                ...(fsxDiskSizes && {
+                ...(fsxnDiskSizes && {
                     size: {
-                        data: sizeInGigaBytes(fsxDiskSizes?.FSxDataVolumeSize),
-                        log: sizeInGigaBytes(fsxDiskSizes?.FSxLogVolumeSize),
-                        tempdb: sizeInGigaBytes(fsxDiskSizes?.FSxTempDbVolumeSize),
-                        total: fsxDiskSizes?.FSxStorageCapacity,
-                        ...(fsxDiskSizes?.FSxQuorumVolumeSize && {
-                            quorum: sizeInGigaBytes(fsxDiskSizes?.FSxQuorumVolumeSize)
+                        data: sizeInGigaBytes(fsxnDiskSizes?.FSxDataVolumeSize),
+                        log: sizeInGigaBytes(fsxnDiskSizes?.FSxLogVolumeSize),
+                        tempdb: sizeInGigaBytes(fsxnDiskSizes?.FSxTempDbVolumeSize),
+                        total: fsxnDiskSizes?.FSxStorageCapacity,
+                        ...(fsxnDiskSizes?.FSxQuorumVolumeSize && {
+                            quorum: sizeInGigaBytes(fsxnDiskSizes?.FSxQuorumVolumeSize)
                         })
                     }
                 })
             }
         }),
         ...(vpc && { vpc: vpcCost }),
-        total: ec2Cost + vpcCost + fsxStorageCost + fsxThroughputCost
+        ...(ebsStorage && {
+            ebsStorage: {
+                ebsStorageCost,
+                size: sizeInGigaBytes(ebsStorage.size) || 0
+            }
+        }),
+        ...(fsxwStorage && {
+            fsxwStorage: {
+                capacityCost: fsxwStorageCost,
+                operationalCost: fsxwOperationalCost,
+                size: sizeInGigaBytes(fsxwStorage.storageCapacity) || 0
+            }
+        }),
+        total: ec2Cost + vpcCost + fsxnStorageCost + fsxnOperationalCost + ebsStorageCost + fsxwStorageCost
     };
 }
 
-export default calculatePrice;
+function calculateFsxnCost(fsxnStorage: PricingServiceRequestType['fsxnStorage'], fsxnStorageRates: any) {
+    logger.info('Calculating cost for FSx Netapp storage', { fsxnStorage, fsxnStorageRates });
+
+    if (!isEmpty(fsxnStorage) && !fsxnStorage.diskSize && !fsxnStorage.storageCapacity) {
+        throw new Error('FSx Netapp storage is not available');
+    }
+    // If the input size is database size, we need to calculate the total FSX storage capacity
+    // In cases where the input is total FSx Storage capacity, we don't this calculation.
+    let fsxnStorageCost = 0;
+    let fsxnOperationalCost = 0;
+    let fsxnDiskSizes;
+    let fsxnDisksize;
+    if (fsxnStorage?.diskSize) {
+        fsxnDiskSizes = calculateFsxnStorageCapacity(fsxnStorage.diskSize);
+        fsxnDisksize = fsxnDiskSizes.FSxStorageCapacity;
+    } else {
+        fsxnDisksize = fsxnStorage?.storageCapacity;
+    }
+
+    const {
+        storageSsd: { pricePerUnit: fsxnStorageRate = 0 } = {},
+        throughput: { pricePerUnit: fsxnThroughputRate = 0 } = {},
+        iops: { pricePerUnit: fsxnIopsRate = 0 } = {},
+        readRequest: { pricePerUnit: fsxnReadRequestsRate = 0 } = {},
+        writeRequest: { pricePerUnit: fsxnWriteRequestsRate = 0 } = {}
+    } = fsxnStorageRates;
+
+    fsxnDisksize = fsxnDisksize || MIN_DISKSIZE;
+    const fsxnThroughput = fsxnStorage?.throughput || MIN_THROUGHPUT;
+    let fsxnIops = fsxnStorage?.iops || 3 * fsxnDisksize;
+
+    fsxnStorageCost = calculateFsxnStorageCost(fsxnStorageRate, fsxnDisksize);
+    if (fsxnIops > 3 * fsxnDisksize) {
+        fsxnIops -= 3 * fsxnDisksize; // Iops cost is only charged when its greater than 3 * diskSize and charging is only on the difference
+    } else {
+        fsxnIops = 0; // Iops cost is 0 if it is less than or equal to  3 * diskSize
+    }
+
+    fsxnOperationalCost = calculateFsxOperationalCost(
+        fsxnThroughputRate,
+        fsxnIopsRate,
+        fsxnReadRequestsRate,
+        fsxnWriteRequestsRate,
+        fsxnThroughput,
+        fsxnIops
+    );
+    logger.info('FSx Netapp operational cost value for demo', fsxnOperationalCost);
+
+    return { fsxnStorageCost, fsxnOperationalCost, fsxnDiskSizes };
+}
+
+function calculateEbsCost(
+    volumeType: string,
+    volumeSizeGB: number,
+    provisionedIOPS?: number,
+    provisionedThroughputMBps?: number,
+    ebsStorageRates?: any
+): number {
+    logger.info('Calculating cost for EBS volumes', {
+        volumeType,
+        volumeSizeGB,
+        provisionedIOPS,
+        provisionedThroughputMBps
+    });
+
+    const {
+        storage: { pricePerUnit: storageRate = 0 } = {},
+        iops: { pricePerUnit: iopsRate = 0 } = {},
+        throughput: { pricePerUnit: throughputRate = 0 } = {}
+    } = ebsStorageRates;
+
+    const monthlyStorageCost = volumeSizeGB * storageRate;
+
+    let monthlyIopsCost = 0;
+    let monthlyThroughputCost = 0;
+
+    if (volumeType === 'gp3' && provisionedIOPS && provisionedThroughputMBps) {
+        if (provisionedThroughputMBps > 3000) {
+            if (volumeSizeGB < 1000) {
+                // For gp3 volumes, you get a baseline performance of 3,000 IOPS for volumes up to 1,000 GiB in size at no additional cost. If you provision more than 3,000 IOPS for a volume of this size, you are charged an additional cost.
+                monthlyIopsCost = (provisionedIOPS - 3000) * storageRate;
+            } else if (volumeSizeGB >= 1000) {
+                /*
+                    If your volume size is 1,000 GiB or larger, you get an additional baseline performance of 3 IOPS per GiB of volume size at no additional cost. If you provision more IOPS than this baseline, you are charged an additional cost.
+                    Eg: the volume size is 2000 GiB and the provisioned IOPS is 7000.
+                    So, for a 2000 GiB volume, the baseline IOPS you get for free would be 2000 * 3 = 6000 IOPS.
+
+                    Now, if you provision more IOPS than this baseline, you are charged an additional cost. In this case, you have provisioned 7000 IOPS, which is 1000 IOPS more than the baseline of 6000 IOPS.
+
+                */
+                const baselineIops = volumeSizeGB * 3;
+                monthlyIopsCost = (provisionedIOPS - baselineIops) * storageRate;
+            }
+        }
+        if (volumeSizeGB < 1000 && provisionedThroughputMBps > 125) {
+            // For gp3 volumes, you get a baseline performance of 125 MB/s of throughput for volumes up to 1,000 GiB in size at no additional cost. If you provision more than 125 MB/s of throughput for a volume of this size, you are charged an additional cost.
+            monthlyThroughputCost = (provisionedThroughputMBps - 125) * throughputRate;
+        } else if (volumeSizeGB >= 1000 && provisionedThroughputMBps > volumeSizeGB * 0.25) {
+            /* If your volume size is 1,000 GiB or larger, you get an additional baseline performance of 0.25 MB/s of throughput per GiB of volume size at no additional cost. If you provision more throughput than this baseline, you are charged an additional cost. The 0.25 MB/s of throughput per GiB is equivalent to dividing the volume size by 4. For example, for a 1,000 GiB gp3 volume, you get 125 MB/s of throughput for free (1,000 GiB / 4 = 250 MB/s), and for a 2,000 GiB gp3 volume, you get 500 MB/s of throughput for free (2,000 GiB / 4 = 500 MB/s), and so on.
+            Eg: the volume size is 2000 GiB and the provisioned throughput is 600 MB/s.
+            For a 2000 GiB volume, the baseline throughput you get for free would be 2000 * 0.25 = 500 MB/s.
+            Now, if you provision more throughput than this baseline, you are charged an additional cost. In this case, you have provisioned 600 MB/s, which is 100 MB/s more than the baseline of 500 MB/s.
+            */
+            const baselineThroughput = volumeSizeGB * 0.25;
+            monthlyThroughputCost = (provisionedThroughputMBps - baselineThroughput) * throughputRate;
+        }
+    }
+
+    if ((volumeType === 'io1' || volumeType === 'io2') && provisionedIOPS) {
+        monthlyIopsCost = provisionedIOPS * iopsRate;
+    }
+    const totalMonthlyCost = monthlyStorageCost + monthlyIopsCost + monthlyThroughputCost;
+    return totalMonthlyCost;
+}
+
+function calculateFsxwCost(fsxwStorage: PricingServiceRequestType['fsxwStorage'], fsxwStorageRates: any) {
+    logger.info('Calculating cost for FSx Windows storage', { fsxwStorage, fsxwStorageRates });
+
+    let fsxwStorageCost = 0;
+    let fsxwOperationalCost = 0;
+
+    const {
+        throughput: { pricePerUnit: fsxwThroughputRate = 0 } = {},
+        iops: { pricePerUnit: fsxwIopsRate = 0 } = {},
+        readRequest: { pricePerUnit: fsxwReadRequestsRate = 0 } = {},
+        writeRequest: { pricePerUnit: fsxwWriteRequestsRate = 0 } = {}
+    } = fsxwStorageRates;
+
+    if (!isEmpty(fsxwStorage)) {
+        fsxwStorageCost = calculateFsxWindowsCapacityPrice(
+            fsxwStorage.storageCapacity,
+            fsxwStorage.storageType,
+            fsxwStorage.iops,
+            fsxwStorage.throughput,
+            1,
+            fsxwStorageRates
+        );
+        fsxwOperationalCost = calculateFsxOperationalCost(
+            fsxwThroughputRate,
+            fsxwIopsRate,
+            fsxwReadRequestsRate,
+            fsxwWriteRequestsRate,
+            fsxwStorage.throughput,
+            fsxwStorage.iops
+        );
+    }
+
+    return { fsxwStorageCost, fsxwOperationalCost };
+}
+
+/**
+ * Calculates the price for FSx Windows capacity.
+ * @param region - The AWS region.
+ * @param capacity - The capacity of FSx Windows storage in GB.
+ * @param storageType - The type of storage. 'ssd' or 'hdd'.
+ * @param iops - The input/output operations per second.
+ * @param throughput - The throughput in MBps.
+ * @param deploymentMode - The deployment mode of FSx Windows. 'Single-AZ' or 'Multi-AZ' (default is 'Single-AZ').
+ * @param duration - The duration of the calculation in months (default is 1).
+ * @returns The calculated price for FSx Windows capacity.
+ */
+function calculateFsxWindowsCapacityPrice(
+    capacity: number,
+    storageType: string,
+    iops: number,
+    throughput: number,
+    duration = 1,
+    fsxsStorageRates?: any
+) {
+    logger.info('Calculating FSx Windows capacity price', {
+        capacity,
+        storageType,
+        iops,
+        throughput,
+        duration,
+        fsxsStorageRates
+    });
+
+    const {
+        iops: { pricePerUnit: iopsRate },
+        throughput: { pricePerUnit: throughputRate },
+        storageSsd: { pricePerUnit: ssdStorageRate },
+        storageHdd: { pricePerUnit: hddStorageRate }
+    } = fsxsStorageRates;
+
+    // throughput calculation
+    const minimumNoOfFsxFileSystemsForStorageCapacity = capacity / (64 * 1024);
+    const minimumNoOfFsxFileSystemsForThroughputCapacity = throughput / (2 * 1024);
+    const requiredNoOfFileSystems = Math.max(
+        minimumNoOfFsxFileSystemsForStorageCapacity,
+        minimumNoOfFsxFileSystemsForThroughputCapacity
+    );
+    const roundedValue = Math.ceil(requiredNoOfFileSystems);
+    const minimumRequiredThroughput = roundedValue * 8;
+    const provisionedThroughput = Math.max(throughput, minimumRequiredThroughput);
+    const capacityPrice =
+        storageType?.toLocaleLowerCase() === 'ssd' ? ssdStorageRate * capacity : hddStorageRate * capacity;
+    const iopsPrice = iopsRate * Math.max(iops - 3 * capacity, 0);
+    const throughputPrice = throughputRate * provisionedThroughput;
+
+    return (capacityPrice + iopsPrice + throughputPrice) * duration;
+}
+
+export { getProductRates, calculatePrice, calculateFsxWindowsCapacityPrice };

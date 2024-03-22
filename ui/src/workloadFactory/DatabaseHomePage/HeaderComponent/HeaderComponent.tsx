@@ -24,7 +24,7 @@ import {
     setHeaderSelectedRegion,
     setRefreshTime
 } from '../../../store/workloadFactory/headersSlice';
-import { workloadFactoryResourceApi } from '../../../utils/apiService';
+import { inventoryApi, workloadFactoryResourceApi } from '../../../utils/apiService';
 import { setJobsList, setSubJobsData } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
 import { WLF_TABS } from '../../../utils/consts';
@@ -120,6 +120,7 @@ const HeaderComponent = () => {
             dispatch(setDashboardRefresh(true));
         } else if (selectedHeaderTab === WLF_TABS.INVENTORY) {
             resetDBHomePageState(dispatch);
+            dispatch(inventoryApi.util.resetApiState());
             dispatch(setIsRefreshed(true));
         } else if (selectedHeaderTab === WLF_TABS.OVERVIEW) {
             resetDBHomePageState(dispatch);

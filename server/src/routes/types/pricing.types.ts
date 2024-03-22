@@ -8,7 +8,7 @@ const PricingServiceRequest = Type.Object({
         sqlSoftwareType: Type.String({ enum: [SQL_STD, SQL_ENT, SQL_WEB] }),
         sqlDeploymentMode: Type.String({ enum: [FCI, STANDALONE] })
     }),
-    storage: Type.Optional(
+    fsxnStorage: Type.Optional(
         Type.Object({
             regionCode: Type.String({ minLength: 1 }),
             diskSize: Type.Number({ description: 'Database "data" volume size in GiB' }),
@@ -23,19 +23,42 @@ const PricingServiceRequest = Type.Object({
             )
         })
     ),
+    ebsStorage: Type.Optional(
+        Type.Object({
+            regionCode: Type.String({ minLength: 1 }),
+            size: Type.Number({ description: 'Volume size in GiB' }),
+            throughput: Type.Optional(Type.Number({ description: 'Throughput is in MBps' })),
+            iops: Type.Optional(Type.Number()),
+            volumeType: Type.String(Type.String({ enum: ['gp2', 'io1', 'st1', 'sc1', 'gp3', 'io2'] }))
+        })
+    ),
     vpc: Type.Optional(
         Type.Object({
             regionCode: Type.String({ minLength: 1 })
+        })
+    ),
+    fsxwStorage: Type.Optional(
+        Type.Object({
+            regionCode: Type.String({ minLength: 1 }),
+            diskSize: Type.Number({ description: 'Database "data" volume size in GiB' }),
+            throughput: Type.Number({ description: 'Throughput is in MBps' }),
+            iops: Type.Number(),
+            deploymentOption: Type.String({ enum: ['Single-AZ', 'Multi-AZ'] }),
+            storageCapacity: Type.Number({
+                description:
+                    'The total FSxN storage capacity in GB. "storageCapacity" and "diskSize" are mutually exclusive'
+            }),
+            storageType: Type.String({ enum: ['HDD', 'SSD'] })
         })
     )
 });
 
 const PricingServiceResponse = Type.Object({
     compute: Type.Number(),
-    storage: Type.Optional(
+    fsxnStorage: Type.Optional(
         Type.Object({
-            capacity: Type.Number(),
-            throughput: Type.Number(),
+            capacityCost: Type.Number(),
+            operationalCost: Type.Number(),
             size: Type.Optional(
                 Type.Object(
                     {
@@ -53,6 +76,19 @@ const PricingServiceResponse = Type.Object({
         })
     ),
     vpc: Type.Optional(Type.Number()),
+    ebsStorage: Type.Optional(
+        Type.Object({
+            ebsStorageCost: Type.Number(),
+            size: Type.Number()
+        })
+    ),
+    fsxwStorage: Type.Optional(
+        Type.Object({
+            capacityCost: Type.Number(),
+            operationalCost: Type.Number(),
+            size: Type.Number()
+        })
+    ),
     total: Type.Number()
 });
 
