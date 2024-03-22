@@ -1,0 +1,14 @@
+.sandboxType {
+    box-shadow: 2px 2px 6px var(--grey-15);
+    height: 360px;
+    width: 1064px;
+    background-color: var(--content-background);
+
+    .progressStyle {
+        margin: 40px 0 0 40px;
+        width: 300px;
+        [class*='ProgressBar_Suc-progressbar'] {
+            height: 12px !important;
+        }
+    }
+}

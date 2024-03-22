@@ -1,0 +1,36 @@
+.sandboxStorageSaving {
+    box-shadow: 2px 2px 6px var(--grey-15);
+    height: 120px;
+    width: 1064px;
+    background-color: var(--content-background);
+
+    .progressBar {
+        width: 438px;
+        height: 16px;
+        background-color: var(--content-background);
+        display: flex;
+        align-items: center;
+
+        margin: 40px 0 0 40px;
+
+        .progress {
+            height: 100%;
+        }
+
+        .leftCurveBar {
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+
+        .rightCurveBar {
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        .separator {
+            width: 1px;
+            height: 100%;
+            background-color: var(--content-background);
+        }
+    }
+}

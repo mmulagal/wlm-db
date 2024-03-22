@@ -29,6 +29,7 @@ import { setJobsList, setSubJobsData } from '../../../store/workloadFactory/jobM
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
 import { WLF_TABS } from '../../../utils/consts';
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
+import Sandbox from '../../Sandbox/Sandbox';
 
 const HeaderComponent = () => {
     const dispatch = useDispatch();
@@ -224,6 +225,21 @@ const HeaderComponent = () => {
                             <Typography
                                 variant="Regular_14"
                                 className={
+                                    selectedHeaderTab === WLF_TABS.TEST_DATA_MANAGEMENT
+                                        ? `${styles.headerPart4} ${styles.active}`
+                                        : `${styles.headerPart4}`
+                                }
+                                onClick={() => {
+                                    handleClick(WLF_TABS.TEST_DATA_MANAGEMENT);
+                                    refreshPage();
+                                }}
+                            >
+                                Test data management
+                            </Typography>
+
+                            <Typography
+                                variant="Regular_14"
+                                className={
                                     selectedHeaderTab === WLF_TABS.JOB_MONITORING
                                         ? `${styles.headerPart3} ${styles.active}`
                                         : `${styles.headerPart3}`
@@ -243,6 +259,7 @@ const HeaderComponent = () => {
                 {selectedHeaderTab === WLF_TABS.INVENTORY && <Inventory />}
                 {selectedHeaderTab === WLF_TABS.JOB_MONITORING && <JobMonitoring />}
                 {selectedHeaderTab === WLF_TABS.OVERVIEW && <DatabaseHostOverview />}
+                {selectedHeaderTab === WLF_TABS.TEST_DATA_MANAGEMENT && <Sandbox />}
             </div>
         )
     );
