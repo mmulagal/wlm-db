@@ -62,7 +62,7 @@ function MenuPopover({
         if (!item.subMenu) {
             const menuItem = (
                 <li
-                    id={item.id}
+                    id={item?.id}
                     key={`menu-item-${index}`}
                     className={item.disabled ? styles.menuDisabled : styles.menuEnabled}
                     onClick={() => {
@@ -154,7 +154,7 @@ function MenuPopover({
                                                         <CustomContentInfo
                                                             tooltipText={infoText}
                                                             CustomContent={
-                                                                <div className={styles.menuInfoHover} id={id}>
+                                                                <div className={styles.menuInfoHover}>
                                                                     {displayName}
                                                                 </div>
                                                             }
