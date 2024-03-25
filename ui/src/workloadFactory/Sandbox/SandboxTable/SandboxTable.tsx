@@ -2,8 +2,10 @@ import { Table, useTable, Typography, TableTopBar, Button } from '@netapp/design
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './SandboxTable.module.scss';
+import { useNavigate } from 'react-router-dom';
 
 const SandboxTable = () => {
+    const navigate = useNavigate();
     const data = [
         {
             id: '1',
@@ -155,7 +157,12 @@ const SandboxTable = () => {
                 singularTitle="Sandbox"
                 actionsRight={
                     <div className={styles.sandboxButton}>
-                        <Button variant={'primary'} className={'continue-button'} isThin={true} onClick={() => {}}>
+                        <Button
+                            variant={'primary'}
+                            className={'continue-button'}
+                            isThin={true}
+                            onClick={() => navigate('../create-new-sandbox')}
+                        >
                             {'Create new sandbox'}
                         </Button>
                     </div>
