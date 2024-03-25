@@ -879,12 +879,12 @@ async function processCloudFormationMessages() {
                                         }
 
                                         // https://jira.ngage.netapp.com/browse/DBS-1942
-                                        // If master job is marked failed and stack is rolled back or deleted, dont change the state
+                                        // If master job is marked failed or is in progress and stack is rolled back or deleted, dont change the state (failed)
                                         if (masterJob) {
                                             let masterJobStatus = masterJob.status;
                                             if (resourceStatus.includes('DELETE')) {
                                                 masterJobStatus =
-                                                    masterJobStatus === JOBSTATUS.IN_PROGRESS
+                                                    masterJobStatus !== JOBSTATUS.COMPLETED
                                                         ? JOBSTATUS.FAILED
                                                         : jobStatus;
                                             }
@@ -933,12 +933,12 @@ async function processCloudFormationMessages() {
                                         // https://jira.ngage.netapp.com/browse/DBS-1942
                                         // If master job is marked failed and stack is rolled back or deleted, dont change the state
                                         if (masterJob) {
-                                            let masterJobStatus = jobStatus;
+                                            let masterJobStatus = masterJob.status;
                                             if (resourceStatus.includes('DELETE')) {
                                                 masterJobStatus =
-                                                    masterJobStatus === JOBSTATUS.IN_PROGRESS
+                                                    masterJobStatus !== JOBSTATUS.COMPLETED
                                                         ? JOBSTATUS.FAILED
-                                                        : masterJobStatus;
+                                                        : jobStatus;
                                             }
                                             await modifyMasterJobStatus(
                                                 accountId,
