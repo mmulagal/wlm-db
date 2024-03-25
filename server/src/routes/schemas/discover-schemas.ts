@@ -6,7 +6,8 @@ import {
     DiscoverInstanceParams,
     DiscoverCredentialsRequestBody,
     ManageMsSqlResponseBody,
-    MsSqlInstancesRequestBody
+    MsSqlInstancesRequestBody,
+    DiscoverCredentialsResponse
 } from '../types/discover.types';
 import { GenericHeaders, CredentialsIdParams } from '../types/generic.types';
 
@@ -61,7 +62,7 @@ const DiscoverCredentialsSchema = {
     summary: 'Discover credentials',
     description: 'Store the credentials for a given discovered resource in SSM Parameter Store',
     response: {
-        201: {}
+        200: DiscoverCredentialsResponse
     }
 };
 

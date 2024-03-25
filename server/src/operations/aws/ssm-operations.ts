@@ -94,6 +94,7 @@ async function executeSSMDocument(
         InstanceId: instanceIds
     };
 
+    // Sleep for 1 second to avoid immediate polling
     await sleep(1000);
     const response = await pollCommandStatus(credentialsId, region, pollParams);
 
