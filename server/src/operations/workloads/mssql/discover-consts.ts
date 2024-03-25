@@ -123,4 +123,45 @@ const HOST_AND_SQL_INFO_PS1 = [
     `
 ];
 
-export { HOST_AND_SQL_INFO_PS1, SQL_SERVER_VERSION_TO_YEAR };
+const CLUSTER_NETWORK_IP_INFO_PS1 = [
+    `
+  $ErrorActionPreference = "Stop"
+  $body = @{}
+  $clusterNetworkIps = $null
+  $failureInfo = $null
+  try {
+    $clusterServiceStatus = (Get-Service -Name clussvc).Status
+
+    if ($clusterServiceStatus -eq "Running") {
+      $clusterNetworkIps = (Get-ClusterNetworkInterface).Ipv4Addresses
+      $body['clusterNetworkIps'] = $clusterNetworkIps
+    } else {
+      $body['clusterNetworkIps'] = @()
+    }
+  } catch {
+    # Prevent any possible errors from clobbering JSON output
+    $body['failureInfo'] = $_.Exception.Message
+  } finally {
+    Echo $body | ConvertTo-Json -Compress
+  }
+`
+];
+
+// TODO: BucketName should change to path under wlmdb.artifacts.REGION.bucket/wlmdb/scripts after Discovery.zip copied there.
+const DISCOVERY_SCRIPTS_COPY_PS1 = [
+    `
+  $ErrorActionPreference = "Stop"
+  $body = @{}
+  try {
+    $Null = Read-S3Object -BucketName bucketkrithi -Key Discovery.zip -File $Env:Temp\\Discovery.zip
+    $Null = Expand-Archive -Path $Env:Temp\\Discovery.zip -DestinationPath c:\\SSM -Force
+    $Null = C:\\SSM\\HideAllSSMScripts.ps1
+  } catch {
+    $body['failureInfo'] = $_.Exception.Message
+  } finally {
+    Echo $body | ConvertTo-Json -Compress
+  }
+  `
+];
+
+export { HOST_AND_SQL_INFO_PS1, SQL_SERVER_VERSION_TO_YEAR, CLUSTER_NETWORK_IP_INFO_PS1, DISCOVERY_SCRIPTS_COPY_PS1 };
