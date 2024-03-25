@@ -14,7 +14,7 @@
                         "State": "disabled"
                     },
                     "Placement": {
-                        "AvailabilityZone": "ap-southeast-1c",
+                        "AvailabilityZone": "availability-zone-3",
                         "GroupName": "",
                         "Tenancy": "default"
                     },
@@ -205,7 +205,7 @@
                         "State": "disabled"
                     },
                     "Placement": {
-                        "AvailabilityZone": "ap-southeast-1d",
+                        "AvailabilityZone": "availability-zone-4",
                         "GroupName": "",
                         "Tenancy": "default"
                     },

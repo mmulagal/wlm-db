@@ -103,7 +103,7 @@
             ],
             "Tags": [
                 { "Key": "AmazonFSx", "Value": "ManagedByAmazonFSx" },
-                { "Key": "Name", "Value": "wlmdb-new-rtb-private2-ap-southeast-1b" }
+                { "Key": "Name", "Value": "wlmdb-new-rtb-private2-availability-zone-2" }
             ],
             "VpcId": "vpc-0cc5f7db796df218c",
             "OwnerId": "464262061435"
@@ -167,7 +167,7 @@
                     "State": "active"
                 }
             ],
-            "Tags": [{ "Key": "Name", "Value": "wlmdb-new-rtb-private1-ap-southeast-1a" }],
+            "Tags": [{ "Key": "Name", "Value": "wlmdb-new-rtb-private1-availability-zone-1" }],
             "VpcId": "vpc-0cc5f7db796df218c",
             "OwnerId": "464262061435"
         }
