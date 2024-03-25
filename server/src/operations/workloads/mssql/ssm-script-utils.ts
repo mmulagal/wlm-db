@@ -118,10 +118,108 @@ $sqlVersion = sqlcmd -Q @"
 Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
 `;
 
+const validateSQLInstanceConnectivity = (ec2instanceId: string, sqlinstancename: string) => `
+    #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
+
+    $ec2instanceId = '${ec2instanceId}'
+    $sqlinstancename = '${sqlinstancename}'
+
+    $sqlcmd = @"
+        SET NOCOUNT ON;
+        SELECT 
+            SERVERPROPERTY('edition') AS sqlEdition,
+            (SELECT COUNT(*) FROM sys.databases) AS noOfDatabases
+        FOR JSON PATH
+"@
+
+    if ($responeObject -eq $null) {
+        $responeObject = @{}
+    }
+
+    $SQLCredStore = "/netapp/wlmdb/$ec2instanceId"
+
+    try {
+        $credobject =  (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
+        $sqlList = $credobject.sql
+        $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
+        if ($sqlCredentials -eq $null) {
+            $errorMessage = "No SQL instance found with the name $sqlinstancename"
+            throw $errorMessage
+        }
+        $username = $sqlCredentials.username
+        $password = $sqlCredentials.password
+
+        if ($username -eq $null -or $password -eq $null) {
+            $errorMessage = "SQL credentials not found for the instance $sqlinstancename"
+            throw $errorMessage
+        }
+        $sqlresult = Sqlcmd -U $username -P $password -Q $sqlcmd -y 0
+        $sqlresult | ConvertFrom-Json | ForEach-Object {
+            $responeObject.add('sqlEdition', $_.sqlEdition)
+            $responeObject.add('noOfDatabases', $_.noOfDatabases)
+        }
+        $responeObject.add('sqlInstanceConnectivity', $True)
+    } catch {
+        $responeObject.add('sqlerror', $_.Exception.Message)
+        $responeObject.add('sqlInstanceConnectivity', $False)
+    }
+`;
+
+const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
+    #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
+
+    $FSxID = '${fsxid}'
+    $FSxRegion = '${fsxregion}'
+
+    if ($responeObject -eq $null) {
+        $responeObject = @{}
+    }
+
+    try {
+        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+        $FSxUserName = $SsmParameter.fsx.username
+        $FSxPassword = $SsmParameter.fsx.password
+        $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
+        $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
+
+        $isprivatesubnet = $False
+        $connection =  Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet
+        if($connection -eq $False) {
+            $isprivatesubnet = $True
+            $regionCertificateificate = ''
+        } else {
+            $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
+            Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\\cfn\\FSxCertificate.pem
+            $Certificate = Import-Certificate -FilePath C:\\cfn\\FSxCertificate.pem -CertStoreLocation Cert:\\LocalMachine\\Root
+            $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+        }
+
+        $Params = @{
+            "URI"         = 'https://management.' + $FSxID + '.fsx.' + $FSxRegion + '.amazonaws.com/api/cluster?fields=version'
+            "Method"      = "GET"
+            "Headers"     = @{"Authorization" = 'Basic ' + $FSxCredentialsInBase64 }
+            "ContentType" = "application/json"
+        }
+
+        if ($isprivatesubnet -eq $False) {
+            $ontapresult = Invoke-RestMethod @Params -Certificate $regionCertificateificate
+        } else {
+            $ontapresult = Invoke-RestMethod @Params -skipCertificateCheck
+        }
+
+        $responeObject.add('ontapconnectivity', $True)
+    } catch {
+        $responeObject.add('ontaperror', $_.Exception.Message)
+        $responeObject.add('ontapconnectivity', $False)
+    }
+`;
+
 export {
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST,
     GET_DEFAULT_DRIVES,
     GET_DEFAULT_COLLATION,
-    RESOURCE_UTILIZATION
+    RESOURCE_UTILIZATION,
+    validateSQLInstanceConnectivity,
+    validateOntapConnectivity
 };

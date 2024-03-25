@@ -3,21 +3,28 @@ import config from 'config';
 
 import { STORAGE_TYPE } from '@prisma/client';
 import { FileSystem } from '@aws-sdk/client-fsx';
-import { compact, uniqBy } from 'lodash-es';
+import { attempt, compact, uniqBy, isEmpty } from 'lodash-es';
 import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
 import { getResourceNameFromTags, sleep } from '../utils/utils';
-import { getEc2SqlParameters, getSSMConnectionStatus, pollCommandStatus, ssmPutParameters } from './aws/ssm-operations';
+import {
+    getEc2SqlParameters,
+    callSsmExecution,
+    getSSMConnectionStatus,
+    pollCommandStatus,
+    ssmPutParameters
+} from './aws/ssm-operations';
 import { CloudProviders, HttpErrorCodes, RESOURCESTYPE, SSM_PARAMETERS_BASE_PATH } from '../utils/consts';
-import { SQL_SERVER_VERSION_TO_EDITION, HOST_AND_SQL_INFO_PS1 } from './workloads/mssql/discover-consts';
-import { sendSSMCommand } from '../lib/aws/ssm';
+import { SQL_SERVER_VERSION_TO_YEAR, HOST_AND_SQL_INFO_PS1 } from './workloads/mssql/discover-consts';
+import { deleteParameters, getParameter, sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
 import { registerFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
 import { SSMParamterObject } from '../utils/common-types';
 
 import {
+    DiscoverMsSqlResponseBodyType,
     SqlServerInstanceInfoType,
     DiscoverResponseInfoType,
     DiscoverCredentialsType
@@ -27,6 +34,8 @@ import { describeFSxFileSystems, describeFSxStorageVirtualMachines } from '../li
 import { returnInventorydata } from '../utils/demo-utils/demoDefaultUtils';
 import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
 import { getDatabaseHostSummary } from './database-hosts-operations';
+import { validateOntapConnectivity, validateSQLInstanceConnectivity } from './workloads/mssql/ssm-script-utils';
+import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../utils/async-local-storage';
 
 const logger = getLogger();
 
@@ -47,7 +56,10 @@ interface DeployType {
     subnetIds: string[] | undefined;
 }
 
-const MINIMUM_SQL_SERVER_EDITION_SUPPORTED = 2016;
+const MINIMUM_SQL_SERVER_SUPPORTED = 2016;
+
+const NEW_SSM_PARAMETERS = 'NEW_SSM_PARAMETERS';
+const SSM_PARAM_PREFIX = '/netapp/wlmdb/';
 
 async function getHostAndSqlServerInfo(
     accountId: string,
@@ -56,7 +68,7 @@ async function getHostAndSqlServerInfo(
     pageSize: number,
     nextToken: string = '',
     instances: string[] = []
-) {
+): Promise<DiscoverMsSqlResponseBodyType> {
     logger.info('getHostAndSqlServerInfo():', { accountId, credentialsId, region, nextToken });
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         return returnInventorydata();
@@ -293,9 +305,9 @@ async function getHostAndSqlInfoFromPsOutput(
             for (const sqlServerInstanceInfo of responseInJson) {
                 // If an SQL Server version is unknown, default to 2015, which
                 // causes no data to be returned for the SQL Server instance.
-                const sqlServerEdition =
-                    SQL_SERVER_VERSION_TO_EDITION.get(sqlServerInstanceInfo?.sqlServerMajorVersion) || 2015;
-                if (sqlServerEdition >= MINIMUM_SQL_SERVER_EDITION_SUPPORTED) {
+                const sqlServerProductYear =
+                    SQL_SERVER_VERSION_TO_YEAR.get(sqlServerInstanceInfo?.sqlServerMajorVersion) || 2015;
+                if (sqlServerProductYear >= MINIMUM_SQL_SERVER_SUPPORTED) {
                     api1StartTime = performance.now();
                     const storageTypes = [];
                     const deploymentTypes = [];
@@ -338,11 +350,13 @@ async function getHostAndSqlInfoFromPsOutput(
                     let {
                         sqlServerVersion,
                         sqlServerName,
+                        sqlServerEdition,
                         sqlServerNodes,
                         sqlServerInstance,
                         sqlServerState,
                         windowsAuthentication,
-                        scriptExecutionTime
+                        scriptExecutionTime,
+                        databaseCount
                     } = sqlServerInstanceInfo;
                     logger.info(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
@@ -362,11 +376,13 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerNodes,
                         sqlServerInstance,
                         sqlServerState,
-                        sqlServerEdition,
+                        sqlServerProductYear,
+                        ...(sqlServerEdition && { sqlServerEdition }),
                         windowsAuthentication,
                         sqlServerAuthentication,
                         storage: uniqBy(storageTypes, 'id'),
-                        deploymentTypes: uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones }))
+                        deploymentTypes: uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones })),
+                        ...(databaseCount && { databaseCount })
                     });
                 }
             }
@@ -460,27 +476,45 @@ function prepareParametersToStore(instanceId: string, credentials: DiscoverCrede
     }, []);
 }
 
-async function saveDiscoveredParameters(
+async function validateAndStoreDiscoveredParameters(
     accountId: string,
     credentialsId: string,
     region: string,
     instanceId: string,
     credentials: DiscoverCredentialsType[]
 ) {
-    logger.info('Put SSM parameters', { accountId, credentialsId, region, instanceId });
+    logger.info('Validate and Put SSM parameters', { accountId, credentialsId, region, instanceId });
 
-    const fsxCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.FSX);
+    try {
+        const fsxCredentials = credentials.find(cred => cred.resourceType === RESOURCESTYPE.FSX);
+        const sqlCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.MSSQL);
+        if (isEmpty(fsxCredentials) && isEmpty(sqlCredentials)) {
+            throw new Error('Credentials cannot be empty');
+        }
 
-    const creds = prepareParametersToStore(instanceId, credentials);
+        const detectResponse = await validateCredentials(
+            credentialsId,
+            region,
+            instanceId,
+            fsxCredentials,
+            sqlCredentials
+        );
 
-    await Promise.all([
-        Promise.all(
-            fsxCredentials.map(cred =>
-                registerFsxOntapCredentials(accountId, credentialsId, region, cred.resourceId, cred.password)
-            )
-        ),
-        ssmPutParameters(credentialsId, region, creds)
-    ]);
+        if (fsxCredentials && !detectResponse?.ontapError) {
+            await registerFsxOntapCredentials(
+                accountId,
+                credentialsId,
+                region,
+                fsxCredentials.resourceId,
+                fsxCredentials.password
+            );
+        }
+
+        return detectResponse;
+    } catch (error: any) {
+        logger.error('Failed to validate credentials', error);
+        throw createError(HttpErrorCodes.BAD_REQUEST, error.message);
+    }
 }
 
 async function fetchUnmanagedHostsInformation(
@@ -586,9 +620,130 @@ async function validateEc2InstanceManageability(discoverInfo: any, ec2InstanceId
     }
 }
 
+async function validateCredentials(
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    fsxCredentials: DiscoverCredentialsType | undefined,
+    sqlCredentials: DiscoverCredentialsType[]
+) {
+    logger.info('validateCredentials', { instanceId, fsxCredentials, sqlCredentials });
+
+    await verifyAndCreateCredentials(credentialsId, region, instanceId, fsxCredentials, sqlCredentials);
+
+    const connectionStatus = await getSSMConnectionStatus(credentialsId, region, instanceId);
+    if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
+        const errorMessage = `Unable to validate the credentials through SSM, for host ${instanceId}`;
+        logger.error(errorMessage);
+
+        await deleteSSMParameter(credentialsId, region, [
+            `${SSM_PARAM_PREFIX}${fsxCredentials?.resourceId}`,
+            `${SSM_PARAM_PREFIX}${instanceId}`
+        ]);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    let command = 'pwsh -Command {$WarningPreference = "SilentlyContinue";';
+
+    if (fsxCredentials) {
+        command += `${validateOntapConnectivity(fsxCredentials.resourceId, region)};\n`;
+    }
+
+    if (sqlCredentials.length) {
+        command += sqlCredentials.reduce(
+            (acc: string, { resourceId }) => `${acc}${validateSQLInstanceConnectivity(instanceId, resourceId)};\n`,
+            ''
+        );
+    }
+
+    command += '$responeObject | ConvertTo-Json -Compress }';
+
+    const ssmresponse = await callSsmExecution(credentialsId, region, [command], instanceId);
+
+    const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
+    let parsedResponse = attempt(JSON.parse, cleanResponse);
+
+    parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
+
+    if (!parsedResponse) {
+        throw new Error(`Failed to validate credentials. Reason: ${cleanResponse}`);
+    }
+
+    const response: Record<string, string> = {};
+    const paramesToDelete: string[] = [];
+
+    if (fsxCredentials && parsedResponse.ontapconnectivity === false) {
+        paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+        response.fsxnError = parsedResponse.ontapError;
+    }
+
+    if (sqlCredentials.length) {
+        if (parsedResponse.sqlInstanceConnectivity === false) {
+            paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
+            response.sqlServerError = parsedResponse.sqlerror;
+        }
+
+        if (parsedResponse.sqlInstanceConnectivity === true) {
+            response.sqlServerEdition = parsedResponse.sqlEdition;
+            response.databaseCount = parsedResponse.noOfDatabases;
+        }
+    }
+
+    await deleteSSMParameter(credentialsId, region, paramesToDelete);
+
+    return response;
+}
+
+async function verifyAndCreateCredentials(
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    fsxCredentials: DiscoverCredentialsType | undefined,
+    sqlCredentials: DiscoverCredentialsType[]
+) {
+    logger.info('verifyAndCreateCredentials', { instanceId, fsxCredentials, sqlCredentials });
+
+    if (fsxCredentials) {
+        const SSMParameter = await getParameter(
+            credentialsId,
+            region,
+            `${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`
+        );
+        if (!SSMParameter) {
+            const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
+            setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), fsxCredentials.resourceId]);
+        }
+    }
+
+    if (sqlCredentials.length) {
+        const SSMParameters = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${instanceId}`);
+        if (!SSMParameters) {
+            const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
+            setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), instanceId]);
+        }
+    }
+
+    const creds = prepareParametersToStore(instanceId, [
+        ...(fsxCredentials ? [fsxCredentials] : []),
+        ...sqlCredentials
+    ]);
+    await ssmPutParameters(credentialsId, region, creds);
+}
+
+async function deleteSSMParameter(credentialsId: string, region: string, ssmParameterNames: string[]) {
+    logger.info('deleteSSMParameter', { ssmParameterNames });
+
+    const newlyAddedSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
+    const filteredSSMParameters = ssmParameterNames.filter(param => newlyAddedSSMParameters.includes(param));
+
+    if (filteredSSMParameters.length) {
+        await deleteParameters(credentialsId, region, filteredSSMParameters);
+    }
+}
+
 export {
     getHostAndSqlServerInfo,
-    saveDiscoveredParameters,
+    validateAndStoreDiscoveredParameters,
     getHostAndSqlInfoFromPsOutput,
     fetchUnmanagedHostsInformation,
     manageSqlServer

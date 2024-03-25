@@ -1327,3 +1327,20 @@ export const addNewManagedHostData = (existingList: any, newItem: any) => {
         return newList;
     }
 };
+
+//Function to check if array includes an object or not
+export const checkValueSaved = (options: any, value: any) => {
+    let containsValue = false;
+    for (let i = 0; i < options.length; i++) {
+        const objA: any = options[i];
+        for (const key in value) {
+            if (key === 'value') {
+                if (objA[key] === value[key]) {
+                    containsValue = true;
+                    break;
+                }
+            }
+        }
+    }
+    return containsValue;
+};
