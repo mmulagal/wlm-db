@@ -1071,6 +1071,10 @@ async function validateParams(
 
         await checkDatabaseExists(accountId, credentialsId, region, databaseHostId, databaseName, activeNodeInstanceId);
 
+        if (!collation) {
+            throw createError(412, 'Collation should not be empty');
+        }
+
         const { collationList } = await getCollationDetails(accountId, databaseHostId, credentialsId, region);
 
         const collationExists = collationList?.some(item => item?.name?.toLowerCase() === collation.toLowerCase());
