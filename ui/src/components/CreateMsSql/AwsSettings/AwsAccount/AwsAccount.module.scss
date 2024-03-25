@@ -131,10 +131,11 @@
     }
 }
 
-[class*='FlexLayout-module_base'] {
-    width: auto !important;
-    min-width: 500px !important;
-}
+// [class*='FlexLayout-module_base'] {
+//     width: auto !important;
+//     min-width: 500px !important;
+// }
+
 
 .setWidth {
     width: 1064px;
