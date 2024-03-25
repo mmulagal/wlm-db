@@ -686,7 +686,8 @@ export const GENERAL = {
         'tab.'
     ],
     HOST_MANAGED_MOVED_SUCCESS: ['Host ', ' successfully moved to the ', ' Managed hosts ', 'tab.'],
-    HOST_MOVED_FAILED: ['Host ', ' failed to become a managed host. For more details view ', ' Job Monitoring.'],
+    HOST_MOVED_FAILED: ['Host ', ' failed to become a managed host. ', 'For more details view ', ' Job Monitoring.'],
+    HOST_MOVED_INFO: ['Host ', ' successfully moved to unmanaged host but failed to become a managed host. ', 'For more details view ', ' Job Monitoring.'],
     FCI: 'FCI',
     STANDALONE: 'Standalone',
     SERVICE: 'Service',
