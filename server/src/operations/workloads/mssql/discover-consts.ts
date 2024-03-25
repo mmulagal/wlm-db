@@ -92,6 +92,12 @@ const HOST_AND_SQL_INFO_PS1 = [
                     $scsiTarget | ForEach-Object {
                       New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $_ }
                     }
+                  } else { 
+                            $smbShares = Get-SMBMapping | select "RemotePath" 
+                            $smbShares | ForEach-Object {
+                                New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $_.RemotePath 
+                                }
+                    }
                   }
                 }
               }

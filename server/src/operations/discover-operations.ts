@@ -2,7 +2,7 @@ import createError from 'http-errors';
 import config from 'config';
 
 import { STORAGE_TYPE } from '@prisma/client';
-import { FileSystem } from '@aws-sdk/client-fsx';
+import { FileSystem, FileSystemType } from '@aws-sdk/client-fsx';
 import { attempt, compact, uniqBy, isEmpty } from 'lodash-es';
 import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus } from '@aws-sdk/client-ssm';
@@ -54,6 +54,7 @@ interface SsmTargetsInfo {
 interface DeployType {
     deploymentType: string | undefined;
     subnetIds: string[] | undefined;
+    windowsMountEndpoint?: string[] | undefined;
 }
 
 const MINIMUM_SQL_SERVER_SUPPORTED = 2016;
@@ -189,6 +190,19 @@ async function getHostAndSqlServerInfo(
                 subnetIds: SubnetIds!
             });
         });
+
+        fsxList
+            .filter(fsx => fsx.FileSystemType === FileSystemType.WINDOWS)
+            .map(fsx =>
+                fsIdWithDeploymentType.set(fsx.FileSystemId!, {
+                    deploymentType: fsx.WindowsConfiguration?.DeploymentType,
+                    subnetIds: fsx.SubnetIds!,
+                    windowsMountEndpoint: [
+                        `\\${fsx.WindowsConfiguration?.RemoteAdministrationEndpoint}`,
+                        `\\${fsx.WindowsConfiguration?.PreferredFileServerIp}`
+                    ]
+                })
+            );
         api1EndTime = performance.now();
         logger.info(`API1Performance: Endpoint/FSx/Deployment map creation time: ${api1EndTime - api1StartTime}ms`);
 
