@@ -486,6 +486,11 @@ async function validateAndStoreDiscoveredParameters(
     logger.info('Validate and Put SSM parameters', { accountId, credentialsId, region, instanceId });
 
     try {
+        if (!accountId || !credentialsId || !region || !instanceId) {
+            logger.error('Invalid input parameters', { accountId, credentialsId, region, instanceId });
+            throw new Error('Invalid input parameters');
+        }
+
         const fsxCredentials = credentials.find(cred => cred.resourceType === RESOURCESTYPE.FSX);
         const sqlCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.MSSQL);
         if (isEmpty(fsxCredentials) && isEmpty(sqlCredentials)) {
@@ -734,10 +739,14 @@ async function deleteSSMParameter(credentialsId: string, region: string, ssmPara
     logger.info('deleteSSMParameter', { ssmParameterNames });
 
     const newlyAddedSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
-    const filteredSSMParameters = ssmParameterNames.filter(param => newlyAddedSSMParameters.includes(param));
+    if (!isEmpty(newlyAddedSSMParameters) && !isEmpty(ssmParameterNames)) {
+        const filteredSSMParameters = (ssmParameterNames || []).filter(param =>
+            (newlyAddedSSMParameters || []).includes(param)
+        );
 
-    if (filteredSSMParameters.length) {
-        await deleteParameters(credentialsId, region, filteredSSMParameters);
+        if (filteredSSMParameters?.length) {
+            await deleteParameters(credentialsId, region, filteredSSMParameters);
+        }
     }
 }
 
