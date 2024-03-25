@@ -3,7 +3,12 @@ import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import getLogger from '../utils/logger';
-import { GET_DEFAULT_DRIVES, GET_DRIVE_INFO, GET_DEFAULT_COLLATION } from './workloads/mssql/ssm-script-utils';
+import {
+    GET_DEFAULT_DRIVES,
+    GET_ACTIVE_NODE_DRIVE_INFO,
+    GET_DEFAULT_COLLATION,
+    GET_STANDBY_NODE_DRIVE_LIST
+} from './workloads/mssql/ssm-script-utils';
 import { checkDatabaseExists, getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { convertGiBToBytes, sleep, sqlResponseParsing } from '../utils/utils';
 import {
@@ -31,6 +36,7 @@ import { updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
 import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
 import { MS_SQL_2016, MS_SQL_2022 } from './workloads/mssql/createdb-collations';
+import { updateResourceMetaData } from '../lib/database/db';
 
 const logger = getLogger();
 
@@ -84,25 +90,26 @@ async function getDriveInfoFromNodes(
         activeNodeInstanceId,
         standbyNodeInstanceId
     });
-    const driveInfoCommand = [GET_DRIVE_INFO(sqlDeploymentType)];
+    const activeNodeDriveInfoCommand = [GET_ACTIVE_NODE_DRIVE_INFO(sqlDeploymentType)];
+    const standbyNodeDriveListCommand = [GET_STANDBY_NODE_DRIVE_LIST];
 
     const existingDriveActiveNodePromise = callSsmExecution(
         credentialsId,
         region,
-        driveInfoCommand,
+        activeNodeDriveInfoCommand,
         activeNodeInstanceId,
         undefined,
         false,
         executionTimeout
     );
 
-    // Getting drive info of drives present on standby node to eliminate presenting existing drive letter as available drive letter
+    // Getting list of drives present on standby node to eliminate presenting existing drive letter as available drive letter
     const existingDriveStandbyNodePromise =
         sqlDeploymentType === 'FCI'
             ? callSsmExecution(
                   credentialsId,
                   region,
-                  driveInfoCommand,
+                  standbyNodeDriveListCommand,
                   standbyNodeInstanceId!,
                   undefined,
                   false,
@@ -124,32 +131,26 @@ async function getDriveInfoFromNodes(
         ? parsedActiveNodeResponse
         : [parsedActiveNodeResponse];
 
-    const standbyNodeExistingDrives = parsedstandbyNodeResponse
-        ? Array.isArray(parsedstandbyNodeResponse)
-            ? parsedstandbyNodeResponse
-            : [parsedstandbyNodeResponse]
-        : undefined;
+    const standbyNodeExistingDrives = Array.isArray(parsedstandbyNodeResponse?.DriveLetters)
+        ? parsedstandbyNodeResponse?.DriveLetters
+        : [parsedstandbyNodeResponse?.DriveLetters];
 
-    const updatedDriveInfo = (activeNodeExistingDrives || [])
-        .concat(standbyNodeExistingDrives || [])
-        .filter(drive => drive.driveLetter !== null)
-        .reduce((result, drive) => {
-            const existingDrive = result.find((d: { driveLetter: any }) => d.driveLetter === drive.driveLetter);
-            if (!existingDrive) {
-                const updatedDrive: any = {
-                    driveLetter: drive.driveLetter,
-                    availableSize: drive.availableSize,
-                    isNetappDrive: drive.manufacturer !== null && drive.manufacturer.includes('NETAPP')
-                };
-                if (sqlDeploymentType === 'FCI') {
-                    updatedDrive.isDriveClustered = drive.owner?.includes('SQL Server') ?? false;
-                }
-                result.push(updatedDrive);
-            }
-            return result;
-        }, []);
-
-    const updatedExitingDrives: any[] = updatedDriveInfo;
+    const updatedExitingDrives = [
+        ...activeNodeExistingDrives.map(item => ({
+            driveLetter: item.LogicalDisk.charAt(0),
+            availableSize: item.FileSystem,
+            isNetappDrive: item.Manufacturer?.includes('NETAPP') ?? false,
+            isDriveClustered: item.Owner?.includes('SQL Server') ?? false
+        })),
+        ...standbyNodeExistingDrives
+            .filter((item: any) => !activeNodeExistingDrives.some(obj => obj.LogicalDisk === item))
+            .map((item: string) => ({
+                driveLetter: item.charAt(0),
+                availableSize: 0,
+                isNetappDrive: false,
+                isDriveClustered: false
+            }))
+    ];
 
     // Constructing list of available drive letters
     const availableDriveLetters = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).filter(
@@ -189,7 +190,7 @@ async function getDriveInfoFromSSM(
     if (!isSSMConnected && activeNodeInstanceId === undefined) {
         const errorMessage = `Unable to access drive details for host ${databaseHostId} in account ${accountId} due to SSM connection issues.`;
         logger.error(errorMessage);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        throw createError(errorMessage);
     }
 
     if (sqlDeploymentType === 'FCI' && standbyNodeInstanceId) {
@@ -197,7 +198,7 @@ async function getDriveInfoFromSSM(
         if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
             const errorMessage = `Unable to connect to node to access drive details for host ${databaseHostId} in account ${accountId}`;
             logger.error(errorMessage);
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            throw createError(errorMessage);
         }
     }
 
@@ -219,7 +220,7 @@ async function getDriveInfoFromSSM(
     } catch (error) {
         const errorMessage = `Unable to get drive information ${error}.`;
         logger.error(errorMessage);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        throw createError(errorMessage);
     }
     return { getDriveInfoFromNodesResponse, getDefaultDrivesResponse };
 }
@@ -562,6 +563,8 @@ async function invokeSSMForDatabaseDeployment(
                 error: undefined
             });
 
+            updateCreateDbMetrics(accountId, resourceId, metaData as Metadata);
+
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
                 // this is used to retreive the newly created user databases in database list for demo using meta data
                 await updateUserDBIntoResourceData(accountId, resourceId, databaseName, metaData as Metadata);
@@ -605,6 +608,13 @@ async function invokeSSMForDatabaseDeployment(
             error: err?.message
         });
     }
+}
+
+async function updateCreateDbMetrics(accountId: string, resourceId: string, metaData: Metadata) {
+    logger.debug('Update create database metrics for resource', resourceId);
+    metaData.createDbMetrics = metaData.createDbMetrics || { numberofUserDbsCreated: 0 };
+    metaData.createDbMetrics.numberofUserDbsCreated += 1;
+    await updateResourceMetaData(accountId, resourceId, metaData);
 }
 
 async function createDatabase(

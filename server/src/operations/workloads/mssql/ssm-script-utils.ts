@@ -1,29 +1,35 @@
-const GET_DRIVE_INFO = (deploymentType: string) => `#Get the list of all used drive letters
-$disks = Get-Disk
-$usedDriveDetails = @()
+const GET_ACTIVE_NODE_DRIVE_INFO = (
+    deploymentType: string
+) => `$disks = Get-wmiObject -Query "SELECT * FROM Win32_DiskDrive"
+$results = @()
 $deploymentType = '${deploymentType}'
 foreach ($disk in $disks) {
-    $volume = Get-Partition | Where-Object { $_.DiskNumber -eq $disk.Number } | Get-Volume
-    if ($deploymentType -eq 'FCI') {
-        $labels = Get-ClusterResource | Where-Object { $_.ResourceType -eq "Physical Disk" } | Where-Object { $_.Name -eq $volume.FileSystemLabel }
+    $object = New-Object PSObject -Property @{
+        "Manufacturer" = $disk.Model
     }
-
-    $output = [PSCustomObject]@{
-        driveLetter = $volume.DriveLetter
-        availableSize = $volume.SizeRemaining
-        manufacturer = $disk.Manufacturer
+    $partitions = get-wmiObject -Query "ASSOCIATORS OF {Win32_DiskDrive.DeviceID='$($disk.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
+    foreach ($partition in $partitions) {
+        $logicalDisks = get-wmiObject -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($partition.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition"
+        foreach ($logicalDisk in $logicalDisks) {
+            $object | Add-Member -MemberType NoteProperty -Name "LogicalDisk" -Value $logicalDisk.DeviceID
+            $object | Add-Member -MemberType NoteProperty -Name "FileSystem" -Value $logicalDisk.FreeSpace
+            if($deploymentType -eq 'FCI'){
+                $clusterResource = Get-WmiObject -Namespace "root\\MSCluster" -Class "MSCluster_Resource" | Where-Object {$_.Name -eq $logicalDisk.VolumeName}
+                $object | Add-Member -MemberType NoteProperty -Name "Owner" -Value $clusterResource.OwnerGroup
+            }
+        }
     }
-
-    if ($deploymentType -eq 'FCI') {
-        $output | Add-Member -NotePropertyName "owner" -NotePropertyValue $labels.OwnerGroup.Name
-    }
-
-    $usedDriveDetails += $output
+    $results += $object
 }
+ 
+$results | convertTo-json
+`;
 
-$usedDrivesInfoJson = $usedDriveDetails | ConvertTo-Json
-Write-Host $usedDrivesInfoJson
-
+const GET_STANDBY_NODE_DRIVE_LIST = `$driveLetters = Get-WmiObject Win32_Volume | Select-Object -ExpandProperty DriveLetter
+$driveLettersObject = [PSCustomObject]@{
+    DriveLetters = $driveLetters
+}
+$driveLettersObject | ConvertTo-Json
 `;
 
 const GET_DEFAULT_DRIVES = `
@@ -112,4 +118,10 @@ $sqlVersion = sqlcmd -Q @"
 Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
 `;
 
-export { GET_DRIVE_INFO, GET_DEFAULT_DRIVES, GET_DEFAULT_COLLATION, RESOURCE_UTILIZATION };
+export {
+    GET_ACTIVE_NODE_DRIVE_INFO,
+    GET_STANDBY_NODE_DRIVE_LIST,
+    GET_DEFAULT_DRIVES,
+    GET_DEFAULT_COLLATION,
+    RESOURCE_UTILIZATION
+};
