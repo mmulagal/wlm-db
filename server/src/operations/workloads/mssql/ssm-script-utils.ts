@@ -1,6 +1,6 @@
 const GET_ACTIVE_NODE_DRIVE_INFO = (
     deploymentType: string
-) => `$disks = Get-wmiObject -Query "SELECT * FROM Win32_DiskDrive"
+) => `$disks = Get-wmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
 $results = @()
 $deploymentType = '${deploymentType}'
 foreach ($disk in $disks) {
@@ -25,12 +25,60 @@ foreach ($disk in $disks) {
 $results | convertTo-json
 `;
 
+/* Sample Resposne of GET_ACTIVE_NODE_DRIVE_INFO
+[
+    {
+        "Manufacturer":  "NETAPP LUN C-Mode  Multi-Path Disk Device",
+        "LogicalDisk":  "L:",
+        "FileSystem":  80386654208,
+        "Owner":  "SQL Server (MSSQLSERVER)"
+    },
+    {
+        "Manufacturer":  "NETAPP LUN C-Mode  Multi-Path Disk Device",
+        "LogicalDisk":  "Q:",
+        "FileSystem":  10653229056,
+        "Owner":  "Cluster Group"
+    },
+    {
+        "Manufacturer":  "NETAPP LUN C-Mode  Multi-Path Disk Device",
+        "LogicalDisk":  "F:",
+        "FileSystem":  11181883392,
+        "Owner":  "SQL Server (MSSQLSERVER)"
+    },
+    {
+        "Manufacturer":  "NETAPP LUN C-Mode  Multi-Path Disk Device",
+        "LogicalDisk":  "P:",
+        "FileSystem":  1068367872,
+        "Owner":  "SQL Server (MSSQLSERVER)"
+    },
+    {
+        "Manufacturer":  "NETAPP LUN C-Mode  Multi-Path Disk Device",
+        "LogicalDisk":  "R:",
+        "FileSystem":  1068367872,
+        "Owner":  "SQL Server (MSSQLSERVER)"
+    },
+*/
+
 const GET_STANDBY_NODE_DRIVE_LIST = `$driveLetters = Get-WmiObject Win32_Volume | Select-Object -ExpandProperty DriveLetter
 $driveLettersObject = [PSCustomObject]@{
     DriveLetters = $driveLetters
 }
 $driveLettersObject | ConvertTo-Json
 `;
+
+/* Sample Response of GET_STANDBY_NODE_DRIVE_LIST
+{
+    "DriveLetters":  [
+                         "C:",
+                         "S:",
+                         "L:",
+                         "T:",
+                         "Q:",
+                         "D:",
+                         "E:",
+                     ]
+}
+*/
 
 const GET_DEFAULT_DRIVES = `
 #Get default data drive of SQL server
