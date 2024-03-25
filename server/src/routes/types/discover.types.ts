@@ -17,7 +17,7 @@ const DiscoverMsSqlQuery = Type.Object({
 });
 
 const SqlServerInstanceInfo = Type.Object({
-    sqlServerEdition: Type.Number({ description: 'MS SQL Server edition' }),
+    sqlServerEdition: Type.Optional(Type.String({ description: 'MS SQL Server edition' })),
     sqlServerInstance: Type.String({ description: 'MS SQL Server instance name' }),
     sqlServerState: Type.String({
         // Reference: https://learn.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicecontrollerstatus?view=dotnet-plat-ext-8.0
@@ -35,6 +35,7 @@ const SqlServerInstanceInfo = Type.Object({
         enum: ['ContinuePending', 'Paused', 'PausePending', 'Running', 'StartPending', 'Stopped', 'StopPending']
     }),
     sqlServerVersion: Type.String({ description: 'MS SQL Server version' }),
+    sqlServerProductYear: Type.Number({ description: 'Year of SQL Server' }),
     sqlServerName: Type.Optional(
         Type.String({
             description: 'Name of SQL Server. For a clustered instance, this is the name of the virtual server.'
@@ -48,6 +49,7 @@ const SqlServerInstanceInfo = Type.Object({
             })
         )
     ),
+    databaseCount: Type.Optional(Type.Number({ description: 'Number of databases in the SQL Server instance' })),
     windowsAuthentication: Type.Boolean({
         description: 'Is Windows authentication possible for SQL Server?'
     }),
@@ -61,7 +63,10 @@ const SqlServerInstanceInfo = Type.Object({
         Type.Array(
             Type.Object({
                 type: Type.String({ description: 'Underlying storage types of the SQL Server instance' }),
-                id: Type.String()
+                id: Type.String({ description: 'ID of the storage' }),
+                svmId: Type.Optional(
+                    Type.String({ description: 'ID of Storage Virtual Machine, if underlying storage is FSx ONTAP' })
+                )
             })
         )
     ),
@@ -101,8 +106,11 @@ const DiscoverMsSqlResponseBody = Type.Object({
     )
 });
 
-const ManageMsSqlResponseBody = Type.Object({});
+const ManageMsSqlResponseBody = Type.Object({
+    resourceId: Type.String({ description: 'ID of the managed resource' })
+});
 
+type DiscoverMsSqlResponseBodyType = Static<typeof DiscoverMsSqlResponseBody>;
 type SqlServerInstanceInfoType = Static<typeof SqlServerInstanceInfo>;
 type DiscoverResponseInfoType = Static<typeof DiscoverResponseInfo>;
 
@@ -115,6 +123,13 @@ const DiscoverCredentials = Type.Object({
 
 const DiscoverCredentialsRequestBody = Type.Object({
     credentials: Type.Array(DiscoverCredentials)
+});
+
+const DiscoverCredentialsResponse = Type.Object({
+    databaseCount: Type.Optional(Type.String()),
+    sqlServerEdition: Type.Optional(Type.String()),
+    sqlServerError: Type.Optional(Type.String()),
+    fsxnError: Type.Optional(Type.String())
 });
 
 type DiscoverCredentialsType = Static<typeof DiscoverCredentials>;
@@ -155,10 +170,12 @@ export {
     DiscoverMsSqlQuery,
     DiscoverMsSqlResponseBody,
     ManageMsSqlResponseBody,
+    DiscoverMsSqlResponseBodyType,
     SqlServerInstanceInfoType,
     DiscoverResponseInfoType,
     DiscoverCredentialsRequestBody,
     DiscoverInstanceParams,
     DiscoverCredentialsType,
-    MsSqlInstancesRequestBody
+    MsSqlInstancesRequestBody,
+    DiscoverCredentialsResponse
 };

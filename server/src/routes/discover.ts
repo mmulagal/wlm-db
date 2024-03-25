@@ -10,7 +10,7 @@ import {
     fetchUnmanagedHostsInformation,
     getHostAndSqlServerInfo,
     manageSqlServer,
-    saveDiscoveredParameters
+    validateAndStoreDiscoveredParameters
 } from '../operations/discover-operations';
 
 import getLogger from '../utils/logger';
@@ -59,7 +59,7 @@ export default function discoverRoutes(fastify: FastifyInstance) {
                 body: { credentials }
             } = request;
 
-            return saveDiscoveredParameters(accountId, credentialsId, region, instanceId, credentials);
+            return validateAndStoreDiscoveredParameters(accountId, credentialsId, region, instanceId, credentials);
         }
     );
 

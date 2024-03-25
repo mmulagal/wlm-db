@@ -302,35 +302,37 @@ async function createOrUpdateChildJobs(
         (childJob && childJobName === childJob.name)
     ) {
         // https://jira.ngage.netapp.com/browse/DBS-1942
-        // If nested job is marked failed and stack is rolled back or deleted, dont change the state
-        if (!resourceStatus?.includes('DELETE') && childJob.status !== JOBSTATUS.FAILED) {
-            try {
-                logger.info('Update child job:', {
-                    parentJobId: parentJob.id,
-                    parentJobName: parentJob.name,
-                    childJobId: childJob.id,
-                    childJobName: childJob.name,
-                    jobStatus
-                });
-                const response = await updateJobDetails(accountId, credentialsId, region, childJob.id, {
-                    status: jobStatus,
-                    error: jobStatus === JOBSTATUS.FAILED ? resourceStatusReason : undefined,
-                    endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined
-                });
-                logger.debug('Update child job response:', response);
-            } catch (error) {
-                logger.error('Error while updating child job with status:', {
-                    parentJobId: parentJob.id,
-                    parentJobName: parentJob.name,
-                    childJobId: childJob.id,
-                    childJobName,
-                    jobStatus,
-                    error
-                });
-            }
+        // If stack is deleted, then if childjob status is in_progress, mark as failed else retain old status
+        if (resourceStatus?.includes('DELETE')) {
+            jobStatus = childJob.status === JOBSTATUS.IN_PROGRESS ? JOBSTATUS.FAILED : childJob.status;
+        }
+        try {
+            logger.info('Update child job:', {
+                parentJobId: parentJob.id,
+                parentJobName: parentJob.name,
+                childJobId: childJob.id,
+                childJobName: childJob.name,
+                jobStatus
+            });
+            const response = await updateJobDetails(accountId, credentialsId, region, childJob.id, {
+                status: jobStatus,
+                error: jobStatus === JOBSTATUS.FAILED ? resourceStatusReason : undefined,
+                endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined
+            });
+            logger.debug('Update child job response:', response);
+        } catch (error) {
+            logger.error('Error while updating child job with status:', {
+                parentJobId: parentJob.id,
+                parentJobName: parentJob.name,
+                childJobId: childJob.id,
+                childJobName,
+                jobStatus,
+                error
+            });
         }
     }
 }
+
 async function processCloudFormationMessages() {
     logger.info('Processing cloud formation messages');
 

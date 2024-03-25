@@ -6,7 +6,8 @@ import {
     DiscoverInstanceParams,
     DiscoverCredentialsRequestBody,
     ManageMsSqlResponseBody,
-    MsSqlInstancesRequestBody
+    MsSqlInstancesRequestBody,
+    DiscoverCredentialsResponse
 } from '../types/discover.types';
 import { GenericHeaders, CredentialsIdParams } from '../types/generic.types';
 
@@ -49,7 +50,7 @@ const ManageMsSqlSchema = {
         <li> Underlying storage is FSx for NetApp.
     </ul>`,
     response: {
-        200: ManageMsSqlResponseBody /* Ideal to provide WLMDB resourceId as response */
+        200: ManageMsSqlResponseBody
     }
 };
 
@@ -61,7 +62,7 @@ const DiscoverCredentialsSchema = {
     summary: 'Discover credentials',
     description: 'Store the credentials for a given discovered resource in SSM Parameter Store',
     response: {
-        201: {}
+        200: DiscoverCredentialsResponse
     }
 };
 
@@ -76,4 +77,4 @@ const MsSqlInstancesSchema = {
         200: DatabaseHostSummaryListResponse
     }
 };
-export { DiscoverMsSqlSchema, DiscoverCredentialsSchema, ManageMsSqlSchema, MsSqlInstancesSchema };
+export { DiscoverCredentialsSchema, DiscoverMsSqlSchema, ManageMsSqlSchema, MsSqlInstancesSchema };

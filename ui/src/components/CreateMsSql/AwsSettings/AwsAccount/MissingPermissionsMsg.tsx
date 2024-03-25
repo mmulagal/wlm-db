@@ -33,7 +33,7 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
                 });
 
             const updatedBlockedByOrganization =
-                permissionData?.blockedByOrganisation.length &&
+                permissionData?.blockedByOrganisation.length > 0 &&
                 permissionData?.blockedByOrganisation.map((obj: any) => {
                     return { ...obj, error: `${GENERAL.BLOCKED_BY_ORG} ${obj.error}` };
                 });
@@ -43,12 +43,28 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
                 permissionData?.blockedByPermissionBoundary.map((obj: any) => {
                     return { ...obj, error: `${GENERAL.BLOCKED_BY_PERMISSION_BOUNDARY} ${obj.error}` };
                 });
-            const mergedData = updatedMissingPermissions.concat(
-                updatedBlockedByOrganization,
-                updatedBlockedByPermissionBoundary
-            );
-            setDataToDisplay(mergedData);
-            setPermissionCount(mergedData.length);
+            let mergeData = [];
+            if (
+                updatedMissingPermissions.length &&
+                updatedBlockedByOrganization.length &&
+                updatedBlockedByPermissionBoundary.length
+            ) {
+                mergeData = updatedMissingPermissions.concat(
+                    updatedBlockedByOrganization,
+                    updatedBlockedByPermissionBoundary
+                );
+            } else if (updatedMissingPermissions.length && updatedBlockedByOrganization.length) {
+                mergeData = updatedMissingPermissions.concat(updatedBlockedByOrganization);
+            } else if (updatedMissingPermissions.length && updatedBlockedByPermissionBoundary.length) {
+                mergeData = updatedMissingPermissions.concat(updatedBlockedByPermissionBoundary);
+            } else if (updatedBlockedByOrganization.length && updatedBlockedByPermissionBoundary.length) {
+                mergeData = updatedBlockedByOrganization.concat(updatedBlockedByPermissionBoundary);
+            } else {
+                mergeData = updatedMissingPermissions;
+            }
+
+            setDataToDisplay(mergeData);
+            setPermissionCount(mergeData.length);
         } else {
             const updatedMissingPermissions = permissionData?.missingStatements.map((obj: any) => {
                 return { ...obj, error: `${GENERAL.MISSING_PERMISSION} ${obj.error}` };
@@ -56,7 +72,7 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
 
             setDataToDisplay(updatedMissingPermissions);
         }
-    }, []);
+    }, [permissionData]);
 
     const setHeading = (type: string) => {
         if (blockedPermissions && type === 'operate') {

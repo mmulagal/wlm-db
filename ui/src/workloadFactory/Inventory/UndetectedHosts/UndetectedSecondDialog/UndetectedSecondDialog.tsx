@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux';
 import { setRadioValueDetect } from '../../../../store/workloadFactory/inventorySlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
-import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE } from '../../../../utils/consts';
+import { DETECT_HOST_VAR } from '../../../../utils/consts';
 
 const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any }) => {
     const detectHostRadio = useAppSelector(state => state.inventory.detectHostRadio);
@@ -37,6 +37,11 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
         type = GENERAL.STANDALONE;
     }
 
+    const noOfDatabases =
+        data?.sqlServerInstances?.[0]?.databaseCount || apiResult?.databaseCount || GENERAL.NOT_AVAILABLE;
+    const edition =
+        data?.sqlServerInstances?.[0]?.sqlServerEdition || apiResult?.sqlServerEdition || GENERAL.NOT_AVAILABLE;
+
     return (
         <div className={styles.secondDialog}>
             <Typography variant="Semibold_14">{GENERAL.DETECTED_HOST_INFO}</Typography>
@@ -67,9 +72,7 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
                         <Typography variant="Regular_14" style={{ width: '148px' }}>
                             {GENERAL.DETECT_NO_OF_DB}
                         </Typography>
-                        <Typography variant="Semibold_14">
-                            {apiResult?.noOfDatabases || GENERAL.NOT_AVAILABLE}
-                        </Typography>
+                        <Typography variant="Semibold_14">{noOfDatabases}</Typography>
                     </div>
 
                     <div className={styles.separator} />
@@ -78,7 +81,7 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
                 <div className={styles.rightSide}>
                     <div className={styles.separator} />
 
-                    <div className={styles.entry} style={{ gap: '80px' }}>
+                    <div className={styles.entry} style={{ gap: '57px' }}>
                         <Typography variant="Regular_14" style={{ width: '124px' }}>
                             {GENERAL.DETECT_SQL_VERSION}
                         </Typography>
@@ -89,7 +92,7 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
 
                     <div className={styles.separator} />
 
-                    <div className={styles.entry} style={{ gap: '80px' }}>
+                    <div className={styles.entry} style={{ gap: '57px' }}>
                         <Typography variant="Regular_14" style={{ width: '124px' }}>
                             {GENERAL.DETECT_DEPLOYMENT_MODEL}
                         </Typography>
@@ -98,11 +101,11 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
 
                     <div className={styles.separator} />
 
-                    <div className={styles.entry} style={{ gap: '80px' }}>
+                    <div className={styles.entry} style={{ gap: '57px' }}>
                         <Typography variant="Regular_14" style={{ width: '124px' }}>
                             {GENERAL.DETECT_EDITION}
                         </Typography>
-                        <Typography variant="Semibold_14">{apiResult?.edition || GENERAL.NOT_AVAILABLE}</Typography>
+                        <Typography variant="Semibold_14">{edition}</Typography>
                     </div>
 
                     <div className={styles.separator} />

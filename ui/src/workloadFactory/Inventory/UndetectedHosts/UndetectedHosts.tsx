@@ -106,7 +106,11 @@ const UndetectedHosts = () => {
     };
 
     useEffect(() => {
-        if (!entryData?.sqlServerInstances?.[0]?.sqlServerAuthentication && entryData?.fsxId && !entryData?.isFsxRegistered) {
+        if (
+            !entryData?.sqlServerInstances?.[0]?.sqlServerAuthentication &&
+            entryData?.fsxId &&
+            !entryData?.isFsxRegistered
+        ) {
             if (detectManageUserName && detectManagePassword && detectOntapUsername && detectOntapPassword) {
                 valueRef.current = true;
             } else {
@@ -147,7 +151,7 @@ const UndetectedHosts = () => {
             const result: any = await manageHostApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
                 regionId: headerSelectedRegion?.label2,
-                instanceId: rowData?.instanceId
+                instanceId: rowData?.instanceID
             });
             if (result && !result?.error) {
                 if (manageLoading[rowData?.instanceID]) {
@@ -225,27 +229,37 @@ const UndetectedHosts = () => {
                 const result: any = await registerResourceCred({
                     credentialId: headerSelectedCred?.data?.credentialsId,
                     regionId: headerSelectedRegion?.label2,
-                    instanceId: rowData?.instanceId,
+                    instanceId: rowData?.instanceID,
                     payload: createDetectHostPayload(rowData?.instanceID, fsxId)
                 });
                 if (result && !result?.error) {
-                    dispatch(setIsDetectHostLoading(false));
-                    setTimeout(() => {
-                        setDialog(
-                            <DialogComponent
-                                header={
-                                    <div className={styles.headerDialog}>
-                                        <Typography variant="Regular_20">{GENERAL.DETECT_HOST}</Typography>
-                                        <Typography variant="Semibold_14">{GENERAL.DETECT_HOST_STEPS[1]}</Typography>
-                                    </div>
-                                }
-                                content={<UndetectedSecondDialog data={rowData} apiResult={result?.data} />}
-                                primaryButton={GENERAL.DONE}
-                                callback={() => handleMoveToManage(rowData, fsxId)}
-                            />
-                        );
-                    }, 0);
-                    resetDialogValues();
+                    if (result?.data?.sqlServerError || result?.data?.fsxnError) {
+                        let error = [];
+                        error.push(result?.data?.sqlServerError || '');
+                        error.push(result?.data?.fsxnError || '');
+                        dispatch(setIsDetectHostError(error.join(' ')));
+                        dispatch(setIsDetectHostLoading(false));
+                    } else {
+                        dispatch(setIsDetectHostLoading(false));
+                        setTimeout(() => {
+                            setDialog(
+                                <DialogComponent
+                                    header={
+                                        <div className={styles.headerDialog}>
+                                            <Typography variant="Regular_20">{GENERAL.DETECT_HOST}</Typography>
+                                            <Typography variant="Semibold_14">
+                                                {GENERAL.DETECT_HOST_STEPS[1]}
+                                            </Typography>
+                                        </div>
+                                    }
+                                    content={<UndetectedSecondDialog data={rowData} apiResult={result?.data} />}
+                                    primaryButton={GENERAL.DONE}
+                                    callback={() => handleMoveToManage(rowData, fsxId)}
+                                />
+                            );
+                        }, 0);
+                        resetDialogValues();
+                    }
                 } else {
                     dispatch(setIsDetectHostError(result?.error?.data?.message || GENERAL.FAILED_TO_DETECT_HOST));
                     dispatch(setIsDetectHostLoading(false));
