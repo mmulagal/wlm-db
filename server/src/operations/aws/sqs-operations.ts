@@ -881,12 +881,12 @@ async function processCloudFormationMessages() {
                                         // https://jira.ngage.netapp.com/browse/DBS-1942
                                         // If master job is marked failed and stack is rolled back or deleted, dont change the state
                                         if (masterJob) {
-                                            let masterJobStatus = jobStatus;
+                                            let masterJobStatus = masterJob.status;
                                             if (resourceStatus.includes('DELETE')) {
                                                 masterJobStatus =
                                                     masterJobStatus === JOBSTATUS.IN_PROGRESS
                                                         ? JOBSTATUS.FAILED
-                                                        : masterJobStatus;
+                                                        : jobStatus;
                                             }
                                             const subJobs =
                                                 (await listJobs(
