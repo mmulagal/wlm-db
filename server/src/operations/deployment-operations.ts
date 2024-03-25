@@ -444,6 +444,11 @@ async function deployStackOrCreateTemplateURL(
     const { sqlServerName, sqlAmiName } = sqlConfiguration;
     const { databaseSize } = fsxConfiguration;
     const [sqlVersion] = calculateSQLandWindowsVersion(sqlAmiName);
+
+    if (databaseSize > 133120) {
+        throw createError(412, 'Supported Fsxn disk size should be between 120GiB to 130TiB');
+    }
+
     // TODO we can make describe image aws sdk call for sqlAmiName instead of UI sending it in payload as it is error prone
     let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
@@ -971,11 +976,38 @@ async function checkAllMissingPermissions(credentialsId: string, region: string,
     return { permissions: missedPermissions };
 }
 
+async function getFSXAvailableRegionsForThrougput(accountId: string) {
+    logger.info('Getting FSX Available regions for throughput', accountId);
+
+    // Its the static list which supported fsx provisioning for 4GBps of throughput capacity
+    return {
+        regions: [
+            {
+                regionCode: 'us-east-1',
+                regionName: 'US East (N. Virginia)'
+            },
+            {
+                regionCode: 'us-east-2',
+                regionName: 'US East (Ohio)'
+            },
+            {
+                regionCode: 'eu-west-1',
+                regionName: 'Europe (Ireland)'
+            },
+            {
+                regionCode: 'us-west-2',
+                regionName: 'US West (Oregon)'
+            }
+        ]
+    };
+}
+
 export {
     createCloudFormationTemplateForUserDeployment,
     deployCloudFormationTemplate,
     deploymentStatus,
     deploymentStatusByName,
     getCloudformationTemplate,
-    deployStackOrCreateTemplateURL
+    deployStackOrCreateTemplateURL,
+    getFSXAvailableRegionsForThrougput
 };

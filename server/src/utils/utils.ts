@@ -59,6 +59,13 @@ function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean
         FSxStorageCapacity
     } = calculateFsxnStorageCapacity(FSxDataLunSize);
 
+    let fsxStorageCapacity = FSxStorageCapacity;
+
+    // If the FSX total storage crosses 192Tib Means keeping it to 192TiB (196608GiB).
+    if (FSxStorageCapacity > 196608) {
+        fsxStorageCapacity = 196608;
+    }
+
     const stacknameSubstring = sqlDeploymentType === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME;
     const netbios =
         sqlDeploymentType === 'fci'
@@ -80,7 +87,7 @@ function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean
         SQLigroupname: `${prefix}_sqligroup_${suffix}`,
         SQLSvmName: `${prefix}_sqlsvm_${suffix}`,
         NodeNetBIOSNames: netbios,
-        FSxStorageCapacity,
+        FSxStorageCapacity: fsxStorageCapacity,
         FSxDataLunSize: FSxDataLunSizeInMib
     };
     if (sqlDeploymentType === 'fci') {
