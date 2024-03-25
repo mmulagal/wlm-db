@@ -1,4 +1,5 @@
 import { STORAGE_TYPE } from '@prisma/client';
+import numeral from 'numeral';
 import { DescribeInstancesCommandOutput, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
@@ -320,7 +321,7 @@ async function getStorageDataUsingCloudwatch(
                 await calculateFsxwStorageEfficiency(region, credentialsId, fsxwId));
         }
         return {
-            size: totalSize,
+            size: numeral(`${totalSize}GiB`).value() || 0,
             used: totalUsed,
             spaceSavings: totalSpaceSavings,
             spaceSavingsPercentage: totalSpaceSavingsPercentage
