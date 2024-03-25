@@ -1310,3 +1310,37 @@ export const formatUnamanagedHostList = (data: any, mssqlInstancesData: any) => 
         }
     });
 };
+
+//  This function is to add new row in existing database host managed list
+export const addNewManagedHostData = (existingList: any, newItem: any) => {
+    let newItemFound = false;
+    const newList = existingList?.map((per: any) => {
+        if (newItem?.id === per?.id) {
+            newItemFound = true;
+            return formatHostData(newItem);
+        }
+        return per;
+    });
+    if (!newItemFound) {
+        return [...existingList, ...[formatHostData(newItem)]];
+    } else {
+        return newList;
+    }
+};
+
+//Function to check if array includes an object or not
+export const checkValueSaved = (options: any, value: any) => {
+    let containsValue = false;
+    for (let i = 0; i < options.length; i++) {
+        const objA: any = options[i];
+        for (const key in value) {
+            if (key === 'value') {
+                if (objA[key] === value[key]) {
+                    containsValue = true;
+                    break;
+                }
+            }
+        }
+    }
+    return containsValue;
+};

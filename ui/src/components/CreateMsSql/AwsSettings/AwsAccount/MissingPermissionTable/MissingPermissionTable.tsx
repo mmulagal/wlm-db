@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { Popover } from '@netapp/design-system/dist/components/Popover';
@@ -14,7 +14,7 @@ type MissingPerm = {
 };
 
 const MissingPermissionTable = ({ missingBlockedPermissions, content }: MissingPerm) => {
-    const dataForCopy = content?.missingStatements.map((item: any) => `${item.service}:${item.action}`);
+    const dataForCopy = content.map((item: any) => `${item.service}:${item.action}`);
 
     //Only For Missing Permissions
     const MissingPerDefs: ColumnProps[] = [
@@ -76,7 +76,7 @@ const MissingPermissionTable = ({ missingBlockedPermissions, content }: MissingP
         isSorting: false,
 
         columns: missingBlockedPermissions ? MissingAndBlockedPerDefs : MissingPerDefs,
-        rows: content?.missingStatements,
+        rows: content,
         pageSize: 50
     });
     return (

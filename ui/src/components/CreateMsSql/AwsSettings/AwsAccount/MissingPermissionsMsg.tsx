@@ -6,6 +6,7 @@ import ViewDialog from '../../../../common/ViewDialog/ViewDialog';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import styles from './AwsAccount.module.scss';
 import MissingPermissionTable from './MissingPermissionTable/MissingPermissionTable';
+import { useEffect, useState } from 'react';
 
 type permissionProp = {
     permissionData?: any;
@@ -20,13 +21,66 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
         (permissionData?.blockedByOrganisation && permissionData?.blockedByOrganisation.length) ||
         (permissionData?.blockedByPermissionBoundary && permissionData?.blockedByPermissionBoundary.length);
 
+    const [dataToDisplay, setDataToDisplay] = useState([]);
+    const [permissionCount, setPermissionCount] = useState(0);
+
+    useEffect(() => {
+        if (blockedPermissions) {
+            const updatedMissingPermissions =
+                permissionData?.missingStatements.length &&
+                permissionData?.missingStatements.map((obj: any) => {
+                    return { ...obj, error: `${GENERAL.MISSING_PERMISSION} ${obj.error}` };
+                });
+
+            const updatedBlockedByOrganization =
+                permissionData?.blockedByOrganisation.length > 0 &&
+                permissionData?.blockedByOrganisation.map((obj: any) => {
+                    return { ...obj, error: `${GENERAL.BLOCKED_BY_ORG} ${obj.error}` };
+                });
+
+            const updatedBlockedByPermissionBoundary =
+                permissionData?.blockedByPermissionBoundary.length &&
+                permissionData?.blockedByPermissionBoundary.map((obj: any) => {
+                    return { ...obj, error: `${GENERAL.BLOCKED_BY_PERMISSION_BOUNDARY} ${obj.error}` };
+                });
+            let mergeData = [];
+            if (
+                updatedMissingPermissions.length &&
+                updatedBlockedByOrganization.length &&
+                updatedBlockedByPermissionBoundary.length
+            ) {
+                mergeData = updatedMissingPermissions.concat(
+                    updatedBlockedByOrganization,
+                    updatedBlockedByPermissionBoundary
+                );
+            } else if (updatedMissingPermissions.length && updatedBlockedByOrganization.length) {
+                mergeData = updatedMissingPermissions.concat(updatedBlockedByOrganization);
+            } else if (updatedMissingPermissions.length && updatedBlockedByPermissionBoundary.length) {
+                mergeData = updatedMissingPermissions.concat(updatedBlockedByPermissionBoundary);
+            } else if (updatedBlockedByOrganization.length && updatedBlockedByPermissionBoundary.length) {
+                mergeData = updatedBlockedByOrganization.concat(updatedBlockedByPermissionBoundary);
+            } else {
+                mergeData = updatedMissingPermissions;
+            }
+
+            setDataToDisplay(mergeData);
+            setPermissionCount(mergeData.length);
+        } else {
+            const updatedMissingPermissions = permissionData?.missingStatements.map((obj: any) => {
+                return { ...obj, error: `${GENERAL.MISSING_PERMISSION} ${obj.error}` };
+            });
+
+            setDataToDisplay(updatedMissingPermissions);
+        }
+    }, [permissionData]);
+
     const setHeading = (type: string) => {
         if (blockedPermissions && type === 'operate') {
             return GENERAL.REQUIRED_OPERATE_PERMISSIONS;
         } else if (blockedPermissions && type !== 'operate') {
-            return 'X Missing & blocked permissions';
+            return `${permissionCount} ${GENERAL.MISSING_AND_BLOCKED_PERMISSIONS}`;
         } else {
-            return 'Unsupported permissions';
+            return GENERAL.UNSUPPORTED_PERMISSIONS;
         }
     };
 
@@ -41,7 +95,7 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
                     ) : (
                         <MissingPermissionTable
                             missingBlockedPermissions={blockedPermissions}
-                            content={permissionData}
+                            content={dataToDisplay}
                         />
                     )
                 }

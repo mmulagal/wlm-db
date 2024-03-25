@@ -6,6 +6,7 @@ import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
 import {
+    checkValueSaved,
     generateOptionType,
     getCurrentDateTime,
     regionsSort,
@@ -24,7 +25,7 @@ import {
     setHeaderSelectedRegion,
     setRefreshTime
 } from '../../../store/workloadFactory/headersSlice';
-import { workloadFactoryResourceApi } from '../../../utils/apiService';
+import { inventoryApi, workloadFactoryResourceApi } from '../../../utils/apiService';
 import { setJobsList, setSubJobsData } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
 import { WLF_TABS } from '../../../utils/consts';
@@ -72,7 +73,18 @@ const HeaderComponent = () => {
             options.push(option);
         });
         if (options.length > 0 && !headerSelectedCred) {
-            dispatch(setHeaderSelectedCred(options[0]));
+            if (localStorage.getItem('selectedCred')) {
+                //@ts-ignore
+                const value = JSON.parse(localStorage.getItem('selectedCred'));
+
+                if (checkValueSaved(options, value)) {
+                    dispatch(setHeaderSelectedCred(value));
+                } else {
+                    dispatch(setHeaderSelectedCred(options[0]));
+                }
+            } else {
+                dispatch(setHeaderSelectedCred(options[0]));
+            }
         }
         return options;
     }, [credentialData]);
@@ -87,7 +99,18 @@ const HeaderComponent = () => {
             options.push(option);
         });
         if (options.length > 0 && !headerSelectedRegion) {
-            dispatch(setHeaderSelectedRegion(options[0]));
+            if (localStorage.getItem('selectedRegion')) {
+                //@ts-ignore
+                const regionValue = JSON.parse(localStorage.getItem('selectedRegion'));
+
+                if (checkValueSaved(options, regionValue)) {
+                    dispatch(setHeaderSelectedRegion(regionValue));
+                } else {
+                    dispatch(setHeaderSelectedRegion(options[0]));
+                }
+            } else {
+                dispatch(setHeaderSelectedRegion(options[0]));
+            }
         }
         return options;
     }, [regionsData]);
@@ -120,6 +143,7 @@ const HeaderComponent = () => {
             dispatch(setDashboardRefresh(true));
         } else if (selectedHeaderTab === WLF_TABS.INVENTORY) {
             resetDBHomePageState(dispatch);
+            dispatch(inventoryApi.util.resetApiState());
             dispatch(setIsRefreshed(true));
         } else if (selectedHeaderTab === WLF_TABS.OVERVIEW) {
             resetDBHomePageState(dispatch);
@@ -150,6 +174,10 @@ const HeaderComponent = () => {
                                     isClearable={false}
                                     value={headerSelectedCred ? [headerSelectedCred] : [generateAWSAccounts[0]]}
                                     onChange={(selectedOptions: any): void => {
+                                        if (localStorage.getItem('selectedCred')) {
+                                            localStorage.removeItem('selectedCred');
+                                        }
+                                        localStorage.setItem('selectedCred', JSON.stringify(selectedOptions));
                                         dispatch(setHeaderSelectedCred(selectedOptions));
                                     }}
                                     placeholder="Select a Credential"
@@ -166,6 +194,10 @@ const HeaderComponent = () => {
                                     isClearable={false}
                                     value={headerSelectedRegion ? [headerSelectedRegion] : [generateRegionsData[0]]}
                                     onChange={(selectedOptions: any): void => {
+                                        if (localStorage.getItem('selectedRegion')) {
+                                            localStorage.removeItem('selectedRegion');
+                                        }
+                                        localStorage.setItem('selectedRegion', JSON.stringify(selectedOptions));
                                         dispatch(setHeaderSelectedRegion(selectedOptions));
                                     }}
                                     placeholder="Select a Region"

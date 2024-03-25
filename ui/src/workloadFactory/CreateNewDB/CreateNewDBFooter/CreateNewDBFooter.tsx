@@ -86,7 +86,7 @@ const CreateNewUserFooter = () => {
 
     return (
         <>
-            <Button isThin onClick={handleCreate}>
+            <Button isThin onClick={handleCreate} id={'db-create-button'}>
                 {GENERAL.CREATE}
             </Button>
             <Button isThin variant="secondary" onClick={closeHandler}>

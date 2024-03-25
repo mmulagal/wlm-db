@@ -9,7 +9,7 @@ const initialInventoryState: any = {
     detectManagePassword: '',
     detectOntapUsername: '',
     detectOntapPassword: '',
-    detectHostRadio: DETECT_HOST_VAR.MOVE_TO_UNMANAGE,
+    detectHostRadio: DETECT_HOST_VAR.MOVE_TO_MANAGE,
     managedHostInitialColumns: initialColStateManagedHosts,
     unManagedHostInitialColumns: initialColStateManagedHosts,
     discoveredHosts: {
@@ -17,6 +17,7 @@ const initialInventoryState: any = {
         discoverHostLoading: false,
         discoverHostError: null
     },
+    movedManagedHosts: [],
     unManagedHosts: [],
     unIdentifiableHosts: [],
     fsxCredentialStatusObj: null,
@@ -66,6 +67,9 @@ const inventorySlice = createSlice({
         setDiscoveredHosts: (state, action: PayloadAction<any>) => {
             state.discoveredHosts = action.payload;
         },
+        setMovedManagedHosts: (state, action: PayloadAction<any>) => {
+            state.movedManagedHosts = action.payload;
+        },
         setUnManagedHosts: (state, action: PayloadAction<any>) => {
             state.unManagedHosts = action.payload;
         },
@@ -104,6 +108,7 @@ export const {
     setManagedHostColState,
     setUnManagedHostColState,
     setDiscoveredHosts,
+    setMovedManagedHosts,
     setUnManagedHosts,
     setUnIdentifiableHosts,
     setFsxCredentialStatus,

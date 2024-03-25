@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux';
 import { setRadioValueDetect } from '../../../../store/workloadFactory/inventorySlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
-import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE } from '../../../../utils/consts';
+import { DETECT_HOST_VAR } from '../../../../utils/consts';
 
 const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any }) => {
     const detectHostRadio = useAppSelector(state => state.inventory.detectHostRadio);
@@ -15,7 +15,7 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
 
     let fsxType = false;
     let ebsType = false;
-    // To check is SQL server has FSx and EBS storage 
+    // To check is SQL server has FSx and EBS storage
     if (data?.sqlServerInstances?.[0]?.storage) {
         data?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
             if (storageObj.type === DETECT_HOST_VAR.FSXN) {
@@ -27,15 +27,20 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
         });
     }
     const hostType = fsxType ? GENERAL.FSX_FOR_ONTAP : ebsType ? GENERAL.EBS : GENERAL.NOT_AVAILABLE;
-    const deploymentType = data?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
     const hostName = data?.sqlServerInstances?.[0]?.sqlServerName || GENERAL.NOT_AVAILABLE;
 
-    const type =
-        deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-            ? GENERAL.FCI
-            : deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-            ? GENERAL.STANDALONE
-            : GENERAL.NOT_AVAILABLE;
+    const nodes = data?.sqlServerInstances?.[0]?.sqlServerNodes;
+    let type = '';
+    if (nodes && nodes.length > 1) {
+        type = GENERAL.FCI;
+    } else if (nodes && nodes.length === 1) {
+        type = GENERAL.STANDALONE;
+    }
+
+    const noOfDatabases =
+        data?.sqlServerInstances?.[0]?.databaseCount || apiResult?.databaseCount || GENERAL.NOT_AVAILABLE;
+    const edition =
+        data?.sqlServerInstances?.[0]?.sqlServerEdition || apiResult?.sqlServerEdition || GENERAL.NOT_AVAILABLE;
 
     return (
         <div className={styles.secondDialog}>
@@ -67,9 +72,7 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
                         <Typography variant="Regular_14" style={{ width: '148px' }}>
                             {GENERAL.DETECT_NO_OF_DB}
                         </Typography>
-                        <Typography variant="Semibold_14">
-                            {apiResult?.noOfDatabases || GENERAL.NOT_AVAILABLE}
-                        </Typography>
+                        <Typography variant="Semibold_14">{noOfDatabases}</Typography>
                     </div>
 
                     <div className={styles.separator} />
@@ -78,7 +81,7 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
                 <div className={styles.rightSide}>
                     <div className={styles.separator} />
 
-                    <div className={styles.entry} style={{ gap: '80px' }}>
+                    <div className={styles.entry} style={{ gap: '57px' }}>
                         <Typography variant="Regular_14" style={{ width: '124px' }}>
                             {GENERAL.DETECT_SQL_VERSION}
                         </Typography>
@@ -89,20 +92,20 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
 
                     <div className={styles.separator} />
 
-                    <div className={styles.entry} style={{ gap: '80px' }}>
+                    <div className={styles.entry} style={{ gap: '57px' }}>
                         <Typography variant="Regular_14" style={{ width: '124px' }}>
                             {GENERAL.DETECT_DEPLOYMENT_MODEL}
                         </Typography>
-                        <Typography variant="Semibold_14">{type}</Typography>
+                        <Typography variant="Semibold_14">{type || GENERAL.NOT_AVAILABLE}</Typography>
                     </div>
 
                     <div className={styles.separator} />
 
-                    <div className={styles.entry} style={{ gap: '80px' }}>
+                    <div className={styles.entry} style={{ gap: '57px' }}>
                         <Typography variant="Regular_14" style={{ width: '124px' }}>
                             {GENERAL.DETECT_EDITION}
                         </Typography>
-                        <Typography variant="Semibold_14">{apiResult?.edition || GENERAL.NOT_AVAILABLE}</Typography>
+                        <Typography variant="Semibold_14">{edition}</Typography>
                     </div>
 
                     <div className={styles.separator} />
@@ -140,7 +143,6 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
                             id="1"
                             variant="Default"
                             onClick={() => handleRadio(DETECT_HOST_VAR.MOVE_TO_MANAGE)}
-                            isDisabled={true}
                         />
                         <DsRadioButton
                             isSelected={detectHostRadio === DETECT_HOST_VAR.MOVE_TO_UNMANAGE}

@@ -1,0 +1,12 @@
+{
+    "$metadata": {
+      "httpStatusCode": 200,
+      "requestId": "253514b9-7051-4c18-abc6-a58c53e3ded7",
+      "extendedRequestId": null,
+      "cfId": null,
+      "attempts": 1,
+      "totalRetryDelay": 0
+    },
+    "DeletedParameters": [],
+    "InvalidParameters": [ "MyPSParameterName" ]
+}
