@@ -49,6 +49,7 @@ import { returnInventorydata } from '../utils/demo-utils/demoDefaultUtils';
 import { getDatabaseHostSummary } from './database-hosts-operations';
 import { validateOntapConnectivity, validateSQLInstanceConnectivity } from './workloads/mssql/ssm-script-utils';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../utils/async-local-storage';
+import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
 
 const logger = getLogger();
 
