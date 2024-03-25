@@ -151,7 +151,7 @@ const UndetectedHosts = () => {
             const result: any = await manageHostApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
                 regionId: headerSelectedRegion?.label2,
-                instanceId: rowData?.instanceId
+                instanceId: rowData?.instanceID
             });
             if (result && !result?.error) {
                 if (manageLoading[rowData?.instanceID]) {
@@ -229,7 +229,7 @@ const UndetectedHosts = () => {
                 const result: any = await registerResourceCred({
                     credentialId: headerSelectedCred?.data?.credentialsId,
                     regionId: headerSelectedRegion?.label2,
-                    instanceId: rowData?.instanceId,
+                    instanceId: rowData?.instanceID,
                     payload: createDetectHostPayload(rowData?.instanceID, fsxId)
                 });
                 if (result && !result?.error) {
