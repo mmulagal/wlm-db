@@ -182,19 +182,10 @@ const UndetectedHosts = () => {
                 dispatch(setMovedToUnmanagedHost([...movedToUnmanagedHost, rowData?.instanceID]));
                 const managedFailedMsg = (
                     <div className={styles.notification}>
-                        {GENERAL.HOST_MOVED_FAILED[0]}
+                        {GENERAL.HOST_MOVED_INFO[0]}
                         <span className={styles.bold}>{rowData?.instance}</span>
-                        {GENERAL.HOST_MOVED_FAILED[1]}
-                        <Button
-                            Component="button"
-                            variant="text"
-                            onClick={() => {
-                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                                dispatch(clearNotifications());
-                            }}
-                        >
-                            {GENERAL.JOB_MONITORING}.
-                        </Button>
+                        {GENERAL.HOST_MOVED_INFO[1]}
+                        {result?.error?.data?.message || ''}
                     </div>
                 );
                 dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));
