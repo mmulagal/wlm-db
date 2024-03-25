@@ -198,8 +198,8 @@ async function getHostAndSqlServerInfo(
                     deploymentType: fsx.WindowsConfiguration?.DeploymentType,
                     subnetIds: fsx.SubnetIds!,
                     windowsMountEndpoint: [
-                        `\\${fsx.WindowsConfiguration?.RemoteAdministrationEndpoint}`,
-                        `\\${fsx.WindowsConfiguration?.PreferredFileServerIp}`
+                        `\\\\${fsx.WindowsConfiguration?.RemoteAdministrationEndpoint}\\share`,
+                        `\\\\${fsx.WindowsConfiguration?.PreferredFileServerIp}\\share`
                     ]
                 })
             );
@@ -354,6 +354,23 @@ async function getHostAndSqlInfoFromPsOutput(
                             });
                         }
                     }
+
+                    // Add FSxW details
+                    const windowsFsxMountsPS = driveInfo.map(
+                        (di: { SerialNumberOrScsiTarget: any }) => di.SerialNumberOrScsiTarget
+                    );
+                    fsIdWithDeploymentType.forEach((details: DeployType, fsxId: string) => {
+                        const matchedPoints = details.windowsMountEndpoint?.filter(value =>
+                            windowsFsxMountsPS.includes(value)
+                        );
+                        if (matchedPoints) {
+                            storageTypes.push({
+                                type: STORAGE_TYPE.FSXW,
+                                id: fsxId
+                            });
+                        }
+                    });
+
                     api1EndTime = performance.now();
                     logger.info(
                         `API1Performance: Time taken to parse PowerShell script output: ${
