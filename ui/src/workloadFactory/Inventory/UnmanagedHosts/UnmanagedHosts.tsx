@@ -105,7 +105,7 @@ const UnmanagedHosts = () => {
                     {GENERAL.HOST_MOVED_FAILED[0]}
                     <span className={styles.bold}>{name}</span>
                     {GENERAL.HOST_MOVED_FAILED[1]}
-                    {result?.error?.data?.message}
+                    {result?.error?.data?.message || ''}
                 </div>
             );
             dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));

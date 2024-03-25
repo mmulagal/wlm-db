@@ -185,7 +185,7 @@ const UndetectedHosts = () => {
                         {GENERAL.HOST_MOVED_INFO[0]}
                         <span className={styles.bold}>{rowData?.instance}</span>
                         {GENERAL.HOST_MOVED_INFO[1]}
-                        {result?.error?.data?.message}
+                        {result?.error?.data?.message || ''}
                     </div>
                 );
                 dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));
