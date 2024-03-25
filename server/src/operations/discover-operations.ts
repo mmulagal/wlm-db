@@ -191,6 +191,7 @@ async function getHostAndSqlServerInfo(
             });
         });
 
+        // Fetch windows mount points from FSxW
         fsxList
             .filter(fsx => fsx.FileSystemType === FileSystemType.WINDOWS)
             .map(fsx =>
@@ -198,8 +199,8 @@ async function getHostAndSqlServerInfo(
                     deploymentType: fsx.WindowsConfiguration?.DeploymentType,
                     subnetIds: fsx.SubnetIds!,
                     windowsMountEndpoint: [
-                        `\\\\${fsx.WindowsConfiguration?.RemoteAdministrationEndpoint}\\share`,
-                        `\\\\${fsx.WindowsConfiguration?.PreferredFileServerIp}\\share`
+                        `\\\\${fsx.WindowsConfiguration?.RemoteAdministrationEndpoint}`,
+                        `\\\\${fsx.WindowsConfiguration?.PreferredFileServerIp}`
                     ]
                 })
             );
@@ -356,6 +357,9 @@ async function getHostAndSqlInfoFromPsOutput(
                     }
 
                     // Add FSxW details
+                    // Match get-smbmapping with FSxW (RemoteAdministrationEndpoint and PreferredFileServerIp)
+                    // let windowsFsxMountsPS = ['//ip/share', '//fsxid/share]
+                    // fsIdWithDeploymentType = {'fsxid', {windowsMountEndpoint:['//fsxid']}
                     const windowsFsxMountsPS = driveInfo.map(
                         (di: { SerialNumberOrScsiTarget: any }) => di.SerialNumberOrScsiTarget
                     );
