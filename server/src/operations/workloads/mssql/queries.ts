@@ -129,6 +129,46 @@ const PERFORMANCE_METRICS = `${SET_NOCOUNT} DECLARE @SQLRestartDateTime Datetime
         , CASE WHEN SUM(num_of_writes) = 0 THEN 0 ELSE ROUND((SUM(io_stall_write_ms) / SUM(num_of_writes)), 2) END AS WRITE_LATENCY
     FROM sys.dm_io_virtual_file_stats(null,null)  ${FOR_JSON_PATH}`;
 
+// Since TempDB is recreated every time, we can use that to calculate the our start up time hence database_id=2
+const PERFORMANCE_METRICS_WITH_LATENCY = `${SET_NOCOUNT} DECLARE @SQLRestartDateTime Datetime
+DECLARE @TimeInSeconds Float
+SELECT @SQLRestartDateTime = create_date FROM sys.databases WHERE database_id = 2
+SET @TimeInSeconds = Datediff(s,@SQLRestartDateTime,GetDate())
+
+SELECT   
+    READ_IOPS,
+    WRITE_IOPS,
+    READ_THROUGHPUT,
+    WRITE_THROUGHPUT,
+    READ_LATENCY,
+    WRITE_LATENCY,
+    SERVER_IO_LATENCY,
+    [assessment] = 
+            CASE 
+                WHEN SERVER_IO_LATENCY = 0 THEN 'N/A' 
+                ELSE 
+                    CASE WHEN SERVER_IO_LATENCY <= 1 THEN 'Excellent ( <=1 ms )'
+                         WHEN SERVER_IO_LATENCY < 5 THEN 'Very good ( <5 ms )'
+                         WHEN SERVER_IO_LATENCY < 10 THEN 'Good ( <10 ms )'
+                         WHEN SERVER_IO_LATENCY < 20 THEN 'Poor ( <20 ms )'
+                         WHEN SERVER_IO_LATENCY < 100 THEN 'Bad ( <100 ms )'
+                         WHEN SERVER_IO_LATENCY < 500 THEN 'Very bad ( <500 ms )'
+                         WHEN SERVER_IO_LATENCY >= 500 THEN 'Awful ( >=500 ms )'
+                    END 
+            END
+FROM (
+    SELECT   
+        ROUND(CAST(SUM(num_of_reads) AS FLOAT)/@TimeInSeconds,2) AS READ_IOPS,
+        ROUND(CAST(SUM(num_of_writes) AS FLOAT)/@TimeInSeconds,2) AS WRITE_IOPS,
+        ROUND(CAST(SUM(num_of_bytes_read) AS FLOAT)/@TimeInSeconds/1000000,3) AS READ_THROUGHPUT,
+        ROUND(CAST(SUM(num_of_bytes_written) AS FLOAT)/@TimeInSeconds/1000000,3) AS WRITE_THROUGHPUT,
+        CASE WHEN SUM(num_of_reads) = 0 THEN 0 ELSE ROUND((SUM(io_stall_read_ms) / SUM(num_of_reads)), 2) END AS READ_LATENCY,
+        CASE WHEN SUM(num_of_writes) = 0 THEN 0 ELSE ROUND((SUM(io_stall_write_ms) / SUM(num_of_writes)), 2) END AS WRITE_LATENCY,
+        CASE WHEN (SUM(num_of_reads) = 0 AND SUM(num_of_writes) = 0) THEN 0 ELSE ROUND((CAST (SUM(io_stall) AS FLOAT) / (SUM(num_of_reads) + SUM(num_of_writes))), 2) END
+        AS SERVER_IO_LATENCY
+    FROM sys.dm_io_virtual_file_stats(null,null)
+) AS subquery ${FOR_JSON_PATH}`;
+
 const SQL_BACKUPS = `${SET_NOCOUNT} SELECT
     DISTINCT backupset.database_name as backedupDatabases
     FROM msdb.dbo.backupset AS backupset
@@ -153,6 +193,41 @@ ${FOR_JSON_PATH}`;
 const DATABASE_NAME_EXISTS = (databaseName: string) =>
     `${SET_NOCOUNT} SELECT name FROM sys.databases WHERE name = '${databaseName}' ${FOR_JSON_PATH}`;
 
+const SERVER_DETAILS = `
+    ${SET_NOCOUNT}
+    SELECT
+        (
+            SELECT NodeName, is_current_owner
+            FROM sys.dm_os_cluster_nodes
+            FOR JSON PATH
+        ) AS clusterNodesInfo,
+        (
+        SELECT COUNT(1) 
+        FROM sys.dm_exec_sessions 
+        WHERE host_process_id is NOT NULL
+        ) AS numberOfConnections,
+        SERVERPROPERTY('Edition') AS ServerEdition,
+        SERVERPROPERTY('IsClustered') AS isClustered,
+        SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS activeNode,
+        @@version AS serverDetails,
+        @@SERVERNAME AS clusterName,
+        COUNT(DISTINCT d.database_id) AS totalCount
+    FROM
+        (
+            SELECT
+                database_id,
+                logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),
+                rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),
+                databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))
+            FROM
+                sys.master_files
+            GROUP BY
+                database_id
+        ) t
+    JOIN
+        sys.databases d ON d.database_id = t.database_id
+    ${FOR_JSON_PATH}`;
+
 export {
     DATABASES,
     DATABASES_COUNT,
@@ -172,8 +247,10 @@ export {
     NATIVE_SQL_BACKUPS,
     SERVER_INSTALL_DATE,
     PERFORMANCE_METRICS,
+    PERFORMANCE_METRICS_WITH_LATENCY,
     SQL_BACKUPS,
     DEFAULT_SQL_DATA_DRIVE,
     DEFAULT_SQL_LOG_DRIVE,
-    DATABASE_NAME_EXISTS
+    DATABASE_NAME_EXISTS,
+    SERVER_DETAILS
 };

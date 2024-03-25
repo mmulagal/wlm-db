@@ -9,7 +9,7 @@ const initialInventoryState: any = {
     detectManagePassword: '',
     detectOntapUsername: '',
     detectOntapPassword: '',
-    detectHostRadio: DETECT_HOST_VAR.MOVE_TO_UNMANAGE,
+    detectHostRadio: DETECT_HOST_VAR.MOVE_TO_MANAGE,
     managedHostInitialColumns: initialColStateManagedHosts,
     unManagedHostInitialColumns: initialColStateManagedHosts,
     discoveredHosts: {
@@ -17,6 +17,7 @@ const initialInventoryState: any = {
         discoverHostLoading: false,
         discoverHostError: null
     },
+    movedManagedHosts: [],
     unManagedHosts: [],
     unIdentifiableHosts: [],
     fsxCredentialStatusObj: null,
@@ -24,7 +25,8 @@ const initialInventoryState: any = {
     isRefreshed: false,
     valuesNotFilled: false, // Detect host dialog fields check
     movedToUnmanagedHost: [], // Instances that is moved from Unidentifiable rows moved to unmanaged host in inventory
-    movedToManagedHost: [] // Instances that is moved from Unidentifiable rows moved to managed host in inventory
+    movedToManagedHost: [], // Instances that is moved from Unidentifiable rows moved to managed host in inventory
+    mssqlInstancesData: {}
 };
 
 const inventorySlice = createSlice({
@@ -65,6 +67,9 @@ const inventorySlice = createSlice({
         setDiscoveredHosts: (state, action: PayloadAction<any>) => {
             state.discoveredHosts = action.payload;
         },
+        setMovedManagedHosts: (state, action: PayloadAction<any>) => {
+            state.movedManagedHosts = action.payload;
+        },
         setUnManagedHosts: (state, action: PayloadAction<any>) => {
             state.unManagedHosts = action.payload;
         },
@@ -85,6 +90,9 @@ const inventorySlice = createSlice({
         },
         setMovedToManagedHost: (state, action: PayloadAction<any>) => {
             state.movedToManagedHost = action.payload;
+        },
+        setMssqlInstancesData: (state, action: PayloadAction<any>) => {
+            state.mssqlInstancesData = action.payload;
         }
     }
 });
@@ -100,6 +108,7 @@ export const {
     setManagedHostColState,
     setUnManagedHostColState,
     setDiscoveredHosts,
+    setMovedManagedHosts,
     setUnManagedHosts,
     setUnIdentifiableHosts,
     setFsxCredentialStatus,
@@ -107,7 +116,8 @@ export const {
     setIsRefreshed,
     setValuesForForm,
     setMovedToUnmanagedHost,
-    setMovedToManagedHost
+    setMovedToManagedHost,
+    setMssqlInstancesData
 } = inventorySlice.actions;
 
 export default inventorySlice;

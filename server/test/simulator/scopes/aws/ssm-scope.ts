@@ -10,7 +10,8 @@ import {
     GetParametersByPathCommand,
     GetConnectionStatusCommand,
     PutParameterCommand,
-    GetParameterCommand
+    GetParameterCommand,
+    DeleteParametersCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
 import { HOST_AND_SQL_INFO_PS1 } from '../../../../src/operations/workloads/mssql/discover-consts';
@@ -20,6 +21,7 @@ import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regi
 import getConnectionStatusResponse from '../../responses/aws/ssm-connection-status.json';
 import putParameterResponse from '../../responses/aws/ssm-put-parameter.json';
 import getParameerResponse from '../../responses/aws/ssm-get-parameter.json';
+import deleteParametersResponse from '../../responses/aws/ssm-delete-parameters.json';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -168,6 +170,12 @@ const getPerformanceMetrics = {
     ]
 };
 
+const getPerformanceWithLatencyMetrics = {
+    commands: [
+        "sqlcmd -Q \"SET NOCOUNT ON; DECLARE @SQLRestartDateTime Datetime\n    DECLARE @TimeInSeconds Float\n    SELECT @SQLRestartDateTime = create_date FROM sys.databases WHERE database_id = 2\n    SET @TimeInSeconds = Datediff(s,@SQLRestartDateTime,GetDate())\n    SELECT   \n    READ_IOPS,\n    WRITE_IOPS,\n    READ_THROUGHPUT,\n    WRITE_THROUGHPUT,\n    READ_LATENCY,\n    WRITE_LATENCY,\n    SERVER_IO_LATENCY,\n    [assessment] = \n            CASE \n                WHEN SERVER_IO_LATENCY = 0 THEN 'N/A' \n                ELSE \n                    CASE WHEN SERVER_IO_LATENCY <= 1 THEN 'Excellent ( <=1 ms )'\n                         WHEN SERVER_IO_LATENCY < 5 THEN 'Very good ( <5 ms )'\n                         WHEN SERVER_IO_LATENCY < 10 THEN 'Good ( <10 ms )'\n                         WHEN SERVER_IO_LATENCY < 20 THEN 'Poor ( <20 ms )'\n                         WHEN SERVER_IO_LATENCY < 100 THEN 'Bad ( <100 ms )'\n                         WHEN SERVER_IO_LATENCY < 500 THEN 'Very bad ( <500 ms )'\n                         WHEN SERVER_IO_LATENCY >= 500 THEN 'Awful ( >=500 ms )'\n                    END \n            END\nFROM (\n    SELECT   \n        ROUND(CAST(SUM(num_of_reads) AS FLOAT)/@TimeInSeconds,2) AS READ_IOPS,\n        ROUND(CAST(SUM(num_of_writes) AS FLOAT)/@TimeInSeconds,2) AS WRITE_IOPS,\n        ROUND(CAST(SUM(num_of_bytes_read) AS FLOAT)/@TimeInSeconds/1000000,3) AS READ_THROUGHPUT,\n        ROUND(CAST(SUM(num_of_bytes_written) AS FLOAT)/@TimeInSeconds/1000000,3) AS WRITE_THROUGHPUT,\n        CASE WHEN SUM(num_of_reads) = 0 THEN 0 ELSE ROUND((SUM(io_stall_read_ms) / SUM(num_of_reads)), 2) END AS READ_LATENCY,\n        CASE WHEN SUM(num_of_writes) = 0 THEN 0 ELSE ROUND((SUM(io_stall_write_ms) / SUM(num_of_writes)), 2) END AS WRITE_LATENCY,\n        CASE WHEN (SUM(num_of_reads) = 0 AND SUM(num_of_writes) = 0) THEN 0 ELSE ROUND((CAST (SUM(io_stall) AS FLOAT) / (SUM(num_of_reads) + SUM(num_of_writes))), 2) END\n        AS SERVER_IO_LATENCY\n    FROM sys.dm_io_virtual_file_stats(null,null)\n) AS subquery  FOR JSON PATH\" -y 0"
+    ]
+};
+
 const getServerInstallDate = {
     commands: [
         "sqlcmd -Q \"SET NOCOUNT ON; SELECT create_date AS creationDate FROM sys.server_principals WITH (NOLOCK) WHERE name = N'NT AUTHORITY\\SYSTEM' OR name = N'NT AUTHORITY\\NETWORK SERVICE' FOR JSON PATH\" -y 0"
@@ -232,6 +240,18 @@ const checkDBExists = {
     ]
 };
 
+const serverDetails = {
+    commands: [
+        "sqlcmd -Q \"\n    SET NOCOUNT ON;\n    SELECT\n        (\n            SELECT NodeName, is_current_owner\n            FROM sys.dm_os_cluster_nodes\n            FOR JSON PATH\n        ) AS clusterNodesInfo,\n        (\n        SELECT COUNT(1) \n        FROM sys.dm_exec_sessions \n        WHERE host_process_id is NOT NULL\n        ) AS numberOfConnections,\n        SERVERPROPERTY('Edition') AS ServerEdition,\n        SERVERPROPERTY('IsClustered') AS isClustered,\n        SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS activeNode,\n        @@version AS serverDetails,\n        @@SERVERNAME AS clusterName,\n        COUNT(DISTINCT d.database_id) AS totalCount\n    FROM\n        (\n            SELECT\n                database_id,\n                logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n                rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n                databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM\n                sys.master_files\n            GROUP BY\n                database_id\n        ) t\n    JOIN\n        sys.databases d ON d.database_id = t.database_id\n    FOR JSON PATH\" -y 0"
+    ]
+};
+
+const resourceUtilization = {
+    commands: [
+        "$cpu =  sqlcmd -Q \"SET NOCOUNT ON; set quoted_identifier ON;DECLARE @ts BIGINT;\nDECLARE @lastNmin TINYINT;\nSET @lastNmin = 1;\nSELECT @ts =(SELECT cpu_ticks/(cpu_ticks/ms_ticks) FROM sys.dm_os_sys_info); \nSELECT TOP(@lastNmin)\n        SQLProcessUtilization AS [percentUsed], \n        SQLProcessUtilization AS [used],\n        SQLProcessUtilization+SystemIdle+(100 - SystemIdle - SQLProcessUtilization) AS [total],\n        100-SQLProcessUtilization AS [remaining]\nFROM (SELECT record.value('(./Record/@id)[1]','int')AS record_id, \nrecord.value('(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]','int')AS [SystemIdle], \nrecord.value('(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]','int')AS [SQLProcessUtilization], \n[timestamp]      \nFROM (SELECT[timestamp], convert(xml, record) AS [record]             \nFROM sys.dm_os_ring_buffers             \nWHERE ring_buffer_type =N'RING_BUFFER_SCHEDULER_MONITOR'AND record LIKE'%%')AS x )AS y \nORDER BY record_id DESC FOR JSON PATH\" -y 0\n\n$disk = sqlcmd -Q \"SET NOCOUNT ON; WITH presel AS (SELECT database_id, FILE_ID,LEFT(mf1.physical_name,3) AS Volume, ROW_NUMBER() OVER (PARTITION BY LEFT(mf1.physical_name,3) ORDER BY mf1.database_id) AS RowNum\nFROM sys.master_files mf1)\n,roundtwo AS (SELECT DISTINCT pr.database_id, pr.FILE_ID\nFROM presel pr\nWHERE pr.RowNum = 1)\nSELECT SUM(ovs.total_bytes) AS total, SUM(ovs.available_bytes) AS remaining\nFROM roundtwo mf\nCROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.FILE_ID) ovs FOR JSON PATH\" -y 0 \n\n$dbSize = sqlcmd -Q \"SET NOCOUNT ON; SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files FOR JSON PATH\" -y 0\n\n$memory = sqlcmd -Q \"SET NOCOUNT ON; SELECT\n    (processmem.physical_memory_in_use_kb * 1024) AS used,\n    (sysmem.total_physical_memory_kb * 1024) AS total,\n    ((sysmem.total_physical_memory_kb * 1024)-(processmem.physical_memory_in_use_kb * 1024)) as remaining,\n    ((processmem.physical_memory_in_use_kb/1024) * 100 / (sysmem.total_physical_memory_kb/1024)) as percentUsed\n    FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem FOR JSON PATH\" -y 0\n\n$jsonObject = [PSCustomObject]@{\ncpu = $cpu\ndisk = $disk\ndbSize = $dbSize\nmemory = $memory\n}\n\n# Convert the object to JSON\n$jsonString = $jsonObject | ConvertTo-Json\n\n# Output the JSON string\n$jsonString\n"
+    ]
+};
+
 const getCollationDetails = {
     commands: [
         '\n#Get default collation of SQL server\n$defaultSqlCollation = sqlcmd -Q @"\n    SET NOCOUNT ON;\n    SELECT CONVERT(nvarchar(128), SERVERPROPERTY(\'collation\'));\n"@ -y 0\n\n#Get default version of SQL server\n$sqlVersion = sqlcmd -Q @"\n    SET NOCOUNT ON;\n    SELECT @@VERSION;\n"@ -y 0\n\nWrite-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json\n'
@@ -293,7 +313,7 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse)
     .on(SendCommandCommand, { Parameters: getStorageParams })
     .resolves(listSendCommandCommandResponse.storageCommandResponse)
-    .on(SendCommandCommand, { Parameters: getPerformanceMetrics })
+    .on(SendCommandCommand, { Parameters: getPerformanceWithLatencyMetrics })
     .resolves(listSendCommandCommandResponse.getPerformancemetricsCommandResponse)
     .on(SendCommandCommand, { Parameters: getServerInstallDate })
     .resolves(listSendCommandCommandResponse.getServerInstallDateCommandResponse)
@@ -317,6 +337,10 @@ ssmMock
     .resolves(listSendCommandCommandResponse.cleanUpDBResponse)
     .on(SendCommandCommand, { Parameters: checkDBExists })
     .resolves(listSendCommandCommandResponse.checkDBExistsResponse)
+    .on(SendCommandCommand, { Parameters: serverDetails })
+    .resolves(listSendCommandCommandResponse.serverDetailsResponse)
+    .on(SendCommandCommand, { Parameters: resourceUtilization })
+    .resolves(listSendCommandCommandResponse.resourceUtilizationResponse)
     .on(SendCommandCommand, { Parameters: getCollationDetails })
     .resolves(listSendCommandCommandResponse.getCollationDetailsResponse);
 
@@ -397,6 +421,10 @@ ssmMock
     .resolves(getCommandInvocationResponse.cleanUpDBInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-checkDBExists' })
     .resolves(getCommandInvocationResponse.checkDBInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-serverDetails' })
+    .resolves(getCommandInvocationResponse.serverDetailsResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-resourceUtilization' })
+    .resolves(getCommandInvocationResponse.serverUtilizationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getCollationDetails' })
     .resolves(getCommandInvocationResponse.collationDetailsInvocationResponse);
 
@@ -404,3 +432,4 @@ ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);
 ssmMock.on(GetParameterCommand).resolves(getParameerResponse);
+ssmMock.on(DeleteParametersCommand).resolves(deleteParametersResponse);

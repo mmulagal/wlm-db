@@ -46,6 +46,7 @@ const Collation = () => {
                     <DsTypography>
                         <div className={styles.collationField}>
                             <SelectField
+                                id={'db-create-collation'}
                                 isLoading={collationListLoading}
                                 label={GENERAL.COLLATION}
                                 isClearable={false}

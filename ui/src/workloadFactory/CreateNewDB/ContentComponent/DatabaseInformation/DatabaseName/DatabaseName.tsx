@@ -114,6 +114,7 @@ const DatabaseName = () => {
                     <DsTypography>
                         <div className={styles.dbNameField}>
                             <TextField
+                                id={'db-create-database-name'}
                                 ref={nameRef}
                                 info={
                                     <div className={styles.dbNameTooltip}>

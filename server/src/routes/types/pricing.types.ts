@@ -55,7 +55,7 @@ const PricingServiceRequest = Type.Object({
 
 const PricingServiceResponse = Type.Object({
     compute: Type.Number(),
-    storage: Type.Optional(
+    fsxnStorage: Type.Optional(
         Type.Object({
             capacityCost: Type.Number(),
             operationalCost: Type.Number(),
@@ -79,6 +79,13 @@ const PricingServiceResponse = Type.Object({
     ebsStorage: Type.Optional(
         Type.Object({
             ebsStorageCost: Type.Number(),
+            size: Type.Number()
+        })
+    ),
+    fsxwStorage: Type.Optional(
+        Type.Object({
+            capacityCost: Type.Number(),
+            operationalCost: Type.Number(),
             size: Type.Number()
         })
     ),

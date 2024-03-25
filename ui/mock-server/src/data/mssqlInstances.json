@@ -1,0 +1,552 @@
+{
+    "count": 5,
+    "items": [
+      {
+        "id": "i-02dbf20711b3c8311",
+        "name": "i-02dbf20711b3c8311",
+        "status": "Up",
+        "databaseCount": 0,
+        "databaseServer": {
+          "operatingSystem": "Windows Server 2019",
+          "serverEdition": "Microsoft SQL Server 2022 (RTM-CU6) (KB5027505)",
+          "serverVersion": "16.0.4055.4",
+          "clusterName": "cluster1",
+          "activeNode": "SQLDBAPQHU",
+          "nodeNames": [
+            "SQLDBAPQHU"
+          ],
+          "activeConnections": 0,
+          "creationDate": "2022-11-21T02:47:42"
+        },
+        "topology": {
+          "awsAccount": "aws",
+          "region": "US East (N.Virginia)",
+          "serverType": "Microsoft SQL Server",
+          "serverInstallationMode": "Standalone",
+          "fileSystemType": "EBS",
+          "fileSystemId": "fsx-id-1",
+          "fileSystemName": "fsx",
+          "fileSystemDeploymentMode": "SINGLE_AZ_1",
+          "fileSystemStatus": "Running",
+          "fileSystemStorageCapacity": 0,
+          "fileSystemThroughputCapacity": 0,
+          "vpcId": "vpc1",
+          "vpcName": "vpc1",
+          "vpcCidr": "vpc1",
+          "availabilityZones": [
+            "ap-southeast-1a"
+          ],
+          "keyPairName": "keypair",
+          "ec2Details": [
+            {
+              "id": "id1",
+              "name": "ec2-name1",
+              "ebsVolumeId": "ebs-volume1",
+              "instanceType": "ec2",
+              "availabilityZone": "ap-southeast-1a",
+              "subnetId": "subnet1"
+            }
+          ],
+          "activeDirectoryDetails": {
+            "name": "AD1",
+            "address": "10.0.9.8"
+          }
+        },
+        "protection": {
+          "isAwsBackUpEnabled": true,
+          "isFsxOntapSnapshotsEnabled": true,
+          "isSqlNativeEnabled": true,
+          "protectedDatabases": 8
+        },
+        "performance": {
+          "latency": 10,
+          "assessment": "High",
+          "rwMetrics": {
+            "latency": {
+              "read": 0,
+              "write": 0
+            },
+            "iops": {
+              "read": 0,
+              "write": 0
+            },
+            "throughput": {
+              "read": 0,
+              "write": 0
+            }
+          }
+        },
+        "storage": {
+          "size": 3932364972032,
+          "used": 181537648640,
+          "spaceSavings": 10737418240
+        },
+        "estimatedUsageCost": {
+          "compute": 700,
+          "storage": 200,
+          "connectivity": 100,
+          "others": 24,
+          "estimationType": "pricing"
+        },
+        "resourceUtilization": {
+          "cpu": {
+            "percentUsed": "string",
+            "used": "string",
+            "total": "string",
+            "remaining": "string"
+          },
+          "memory": {
+            "percentUsed": "string",
+            "used": "string",
+            "total": "string",
+            "remaining": "string"
+          },
+          "disk": {
+            "percentUsed": "string",
+            "used": "string",
+            "total": "string",
+            "remaining": "string"
+          }
+        },
+        "errors": ""
+      },
+      {
+        "id": "i-0d6acde2918b1ee11",
+        "name": "i-0d6acde2918b1ee11",
+        "status": "Up",
+        "databaseCount": 0,
+        "databaseServer": {
+          "operatingSystem": "Windows Server 2019",
+          "serverEdition": "Microsoft SQL Server 2022 (RTM-CU6) (KB5027505)",
+          "serverVersion": "16.0.4055.4",
+          "clusterName": "cluster1",
+          "activeNode": "SQLDBAPQHU",
+          "nodeNames": [
+            "SQLDBAPQHU"
+          ],
+          "activeConnections": 0,
+          "creationDate": "2022-11-21T02:47:42"
+        },
+        "topology": {
+          "awsAccount": "aws",
+          "region": "US East (N.Virginia)",
+          "serverType": "Microsoft SQL Server",
+          "serverInstallationMode": "Standalone",
+          "fileSystemType": "EBS",
+          "fileSystemId": "fsx-id-1",
+          "fileSystemName": "fsx",
+          "fileSystemDeploymentMode": "SINGLE_AZ_1",
+          "fileSystemStatus": "Running",
+          "fileSystemStorageCapacity": 0,
+          "fileSystemThroughputCapacity": 0,
+          "vpcId": "vpc1",
+          "vpcName": "vpc1",
+          "vpcCidr": "vpc1",
+          "availabilityZones": [
+            "ap-southeast-1a"
+          ],
+          "keyPairName": "keypair",
+          "ec2Details": [
+            {
+              "id": "id1",
+              "name": "ec2-name1",
+              "ebsVolumeId": "ebs-volume1",
+              "instanceType": "ec2",
+              "availabilityZone": "ap-southeast-1a",
+              "subnetId": "subnet1"
+            }
+          ],
+          "activeDirectoryDetails": {
+            "name": "AD1",
+            "address": "10.0.9.8"
+          }
+        },
+        "protection": {
+          "isAwsBackUpEnabled": true,
+          "isFsxOntapSnapshotsEnabled": true,
+          "isSqlNativeEnabled": true,
+          "protectedDatabases": 8
+        },
+        "performance": {
+          "latency": 10,
+          "assessment": "High",
+          "rwMetrics": {
+            "latency": {
+              "read": 0,
+              "write": 0
+            },
+            "iops": {
+              "read": 0,
+              "write": 0
+            },
+            "throughput": {
+              "read": 0,
+              "write": 0
+            }
+          }
+        },
+        "storage": {
+          "size": 3932364972032,
+          "used": 181537648640,
+          "spaceSavings": 10737418240
+        },
+        "estimatedUsageCost": {
+          "compute": 700,
+          "storage": 200,
+          "connectivity": 100,
+          "others": 24,
+          "estimationType": "pricing"
+        },
+        "resourceUtilization": {
+          "cpu": {
+            "percentUsed": "string",
+            "used": "string",
+            "total": "string",
+            "remaining": "string"
+          },
+          "memory": {
+            "percentUsed": "string",
+            "used": "string",
+            "total": "string",
+            "remaining": "string"
+          },
+          "disk": {
+            "percentUsed": "string",
+            "used": "string",
+            "total": "string",
+            "remaining": "string"
+          }
+        },
+        "errors": ""
+      },
+      {
+        "id": "i-0ccb393ef1e834df",
+        "name": "i-0ccb393ef1e834df",
+        "status": "Up",
+        "databaseCount": 0,
+        "databaseServer": {
+          "operatingSystem": "Windows Server 2019",
+          "serverEdition": "Microsoft SQL Server 2022 (RTM-CU6) (KB5027505)",
+          "serverVersion": "16.0.4055.4",
+          "clusterName": "cluster1",
+          "activeNode": "SQLDBAPQHU",
+          "nodeNames": [
+            "SQLDBAPQHU"
+          ],
+          "activeConnections": 0,
+          "creationDate": "2022-11-21T02:47:42"
+        },
+        "topology": {
+          "awsAccount": "aws",
+          "region": "US East (N.Virginia)",
+          "serverType": "Microsoft SQL Server",
+          "serverInstallationMode": "Standalone",
+          "fileSystemType": "EBS",
+          "fileSystemId": "fsx-id-1",
+          "fileSystemName": "fsx",
+          "fileSystemDeploymentMode": "SINGLE_AZ_1",
+          "fileSystemStatus": "Running",
+          "fileSystemStorageCapacity": 0,
+          "fileSystemThroughputCapacity": 0,
+          "vpcId": "vpc1",
+          "vpcName": "vpc1",
+          "vpcCidr": "vpc1",
+          "availabilityZones": [
+            "ap-southeast-1a"
+          ],
+          "keyPairName": "keypair",
+          "ec2Details": [
+            {
+              "id": "id1",
+              "name": "ec2-name1",
+              "ebsVolumeId": "ebs-volume1",
+              "instanceType": "ec2",
+              "availabilityZone": "ap-southeast-1a",
+              "subnetId": "subnet1"
+            }
+          ],
+          "activeDirectoryDetails": {
+            "name": "AD1",
+            "address": "10.0.9.8"
+          }
+        },
+        "protection": {
+          "isAwsBackUpEnabled": true,
+          "isFsxOntapSnapshotsEnabled": true,
+          "isSqlNativeEnabled": true,
+          "protectedDatabases": 8
+        },
+        "performance": {
+          "latency": 10,
+          "assessment": "High",
+          "rwMetrics": {
+            "latency": {
+              "read": 0,
+              "write": 0
+            },
+            "iops": {
+              "read": 0,
+              "write": 0
+            },
+            "throughput": {
+              "read": 0,
+              "write": 0
+            }
+          }
+        },
+        "storage": {
+          "size": 3932364972032,
+          "used": 181537648640,
+          "spaceSavings": 10737418240
+        },
+        "estimatedUsageCost": {
+          "compute": 700,
+          "storage": 200,
+          "connectivity": 100,
+          "others": 24,
+          "estimationType": "pricing"
+        },
+        "resourceUtilization": {
+          "cpu": {
+            "percentUsed": "string",
+            "used": "string",
+            "total": "string",
+            "remaining": "string"
+          },
+          "memory": {
+            "percentUsed": "string",
+            "used": "string",
+            "total": "string",
+            "remaining": "string"
+          },
+          "disk": {
+            "percentUsed": "string",
+            "used": "string",
+            "total": "string",
+            "remaining": "string"
+          }
+        },
+        "errors": ""
+      },
+      {
+        "id": "i-02dadc332885523434",
+        "name": "i-02dadc332885523434",
+        "status": "Up",
+        "databaseCount": 0,
+        "databaseServer": {
+          "operatingSystem": "Windows Server 2019",
+          "serverEdition": "Microsoft SQL Server 2022 (RTM-CU6) (KB5027505)",
+          "serverVersion": "16.0.4055.4",
+          "clusterName": "cluster1",
+          "activeNode": "SQLDBAPQHU",
+          "nodeNames": [
+            "SQLDBAPQHU"
+          ],
+          "activeConnections": 0,
+          "creationDate": "2022-11-21T02:47:42"
+        },
+        "topology": {
+          "awsAccount": "aws",
+          "region": "US East (N.Virginia)",
+          "serverType": "Microsoft SQL Server",
+          "serverInstallationMode": "Standalone",
+          "fileSystemType": "EBS",
+          "fileSystemId": "fsx-id-1",
+          "fileSystemName": "fsx",
+          "fileSystemDeploymentMode": "SINGLE_AZ_1",
+          "fileSystemStatus": "Running",
+          "fileSystemStorageCapacity": 0,
+          "fileSystemThroughputCapacity": 0,
+          "vpcId": "vpc1",
+          "vpcName": "vpc1",
+          "vpcCidr": "vpc1",
+          "availabilityZones": [
+            "ap-southeast-1a"
+          ],
+          "keyPairName": "keypair",
+          "ec2Details": [
+            {
+              "id": "id1",
+              "name": "ec2-name1",
+              "ebsVolumeId": "ebs-volume1",
+              "instanceType": "ec2",
+              "availabilityZone": "ap-southeast-1a",
+              "subnetId": "subnet1"
+            }
+          ],
+          "activeDirectoryDetails": {
+            "name": "AD1",
+            "address": "10.0.9.8"
+          }
+        },
+        "protection": {
+          "isAwsBackUpEnabled": true,
+          "isFsxOntapSnapshotsEnabled": true,
+          "isSqlNativeEnabled": true,
+          "protectedDatabases": 8
+        },
+        "performance": {
+          "latency": 10,
+          "assessment": "High",
+          "rwMetrics": {
+            "latency": {
+              "read": 0,
+              "write": 0
+            },
+            "iops": {
+              "read": 0,
+              "write": 0
+            },
+            "throughput": {
+              "read": 0,
+              "write": 0
+            }
+          }
+        },
+        "storage": {
+          "size": 3932364972032,
+          "used": 181537648640,
+          "spaceSavings": 10737418240
+        },
+        "estimatedUsageCost": {
+          "compute": 700,
+          "storage": 200,
+          "connectivity": 100,
+          "others": 24,
+          "estimationType": "pricing"
+        },
+        "resourceUtilization": {
+          "cpu": {
+            "percentUsed": "string",
+            "used": "string",
+            "total": "string",
+            "remaining": "string"
+          },
+          "memory": {
+            "percentUsed": "string",
+            "used": "string",
+            "total": "string",
+            "remaining": "string"
+          },
+          "disk": {
+            "percentUsed": "string",
+            "used": "string",
+            "total": "string",
+            "remaining": "string"
+          }
+        },
+        "errors": ""
+      },
+      {
+        "id": "i-0291bc7476b72344d",
+        "name": "i-0291bc7476b72344d",
+        "status": "Up",
+        "databaseCount": 0,
+        "databaseServer": {
+          "operatingSystem": "Windows Server 2019",
+          "serverEdition": "Microsoft SQL Server 2022 (RTM-CU6) (KB5027505)",
+          "serverVersion": "16.0.4055.4",
+          "clusterName": "cluster1",
+          "activeNode": "SQLDBAPQHU",
+          "nodeNames": [
+            "SQLDBAPQHU"
+          ],
+          "activeConnections": 0,
+          "creationDate": "2022-11-21T02:47:42"
+        },
+        "topology": {
+          "awsAccount": "aws",
+          "region": "US East (N.Virginia)",
+          "serverType": "Microsoft SQL Server",
+          "serverInstallationMode": "Standalone",
+          "fileSystemType": "EBS",
+          "fileSystemId": "fsx-id-1",
+          "fileSystemName": "fsx",
+          "fileSystemDeploymentMode": "SINGLE_AZ_1",
+          "fileSystemStatus": "Running",
+          "fileSystemStorageCapacity": 0,
+          "fileSystemThroughputCapacity": 0,
+          "vpcId": "vpc1",
+          "vpcName": "vpc1",
+          "vpcCidr": "vpc1",
+          "availabilityZones": [
+            "ap-southeast-1a"
+          ],
+          "keyPairName": "keypair",
+          "ec2Details": [
+            {
+              "id": "id1",
+              "name": "ec2-name1",
+              "ebsVolumeId": "ebs-volume1",
+              "instanceType": "ec2",
+              "availabilityZone": "ap-southeast-1a",
+              "subnetId": "subnet1"
+            }
+          ],
+          "activeDirectoryDetails": {
+            "name": "AD1",
+            "address": "10.0.9.8"
+          }
+        },
+        "protection": {
+          "isAwsBackUpEnabled": true,
+          "isFsxOntapSnapshotsEnabled": true,
+          "isSqlNativeEnabled": true,
+          "protectedDatabases": 8
+        },
+        "performance": {
+          "latency": 10,
+          "assessment": "High",
+          "rwMetrics": {
+            "latency": {
+              "read": 0,
+              "write": 0
+            },
+            "iops": {
+              "read": 0,
+              "write": 0
+            },
+            "throughput": {
+              "read": 0,
+              "write": 0
+            }
+          }
+        },
+        "storage": {
+          "size": 3932364972032,
+          "used": 181537648640,
+          "spaceSavings": 10737418240
+        },
+        "estimatedUsageCost": {
+          "compute": 700,
+          "storage": 200,
+          "connectivity": 100,
+          "others": 24,
+          "estimationType": "pricing"
+        },
+        "resourceUtilization": {
+          "cpu": {
+            "percentUsed": "string",
+            "used": "string",
+            "total": "string",
+            "remaining": "string"
+          },
+          "memory": {
+            "percentUsed": "string",
+            "used": "string",
+            "total": "string",
+            "remaining": "string"
+          },
+          "disk": {
+            "percentUsed": "string",
+            "used": "string",
+            "total": "string",
+            "remaining": "string"
+          }
+        },
+        "errors": ""
+      }
+    ],
+    "nextToken": ""
+}
+ 

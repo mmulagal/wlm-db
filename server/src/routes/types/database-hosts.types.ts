@@ -20,6 +20,8 @@ const CreateDatabaseParams = Type.Object({
 // Query parameter to fetch protection, performance, storage and cost details
 const DatabaseHostQueryString = Type.Object({
     fields: Type.Optional(Type.String()),
+    vpcId: Type.Optional(Type.String()),
+    fsxId: Type.Optional(Type.String()),
     nextToken: Type.Optional(Type.String()),
     pageSize: Type.Optional(Type.Number())
 });
@@ -74,10 +76,16 @@ const RWPerformanceResponse = Type.Object({
     read: Type.Number({ description: 'Database server read performance for latency, IOPS or throughput' }),
     write: Type.Number({ description: 'Database server write performance for latency, IOPS or throughput' })
 });
+
+const LatencyResponse = Type.Composite([
+    RWPerformanceResponse,
+    Type.Object({ server_io: Type.Number({ description: 'Database server IO performance for latency' }) })
+]);
+
 type RWPerformanceResponseType = Static<typeof RWPerformanceResponse>;
 
 const DetailedPerformanceResponse = Type.Object({
-    latency: RWPerformanceResponse,
+    latency: LatencyResponse,
     iops: RWPerformanceResponse,
     throughput: RWPerformanceResponse
 });
@@ -95,7 +103,12 @@ const StorageResponse = Type.Object({
     used: Type.Number({ description: 'The virtual space used before storage efficiency, in bytes.' }),
     spaceSavings: Type.Number({
         description: 'Total disk space saved in the volume due to storage efficiency, in bytes.'
-    })
+    }),
+    spaceSavingsPercentage: Type.Optional(
+        Type.Number({
+            description: 'Total disk space saved in the volume due to storage efficiency, in percentage.'
+        })
+    )
 });
 type StorageResponseType = Static<typeof StorageResponse>;
 

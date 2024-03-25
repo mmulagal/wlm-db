@@ -1,13 +1,14 @@
 import randomize from 'randomatic';
+import { DiscoverMsSqlResponseBodyType } from '../../routes/types/discover.types';
 
-function inventoryDemoData(fsxId: string) {
+function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
     return {
         count: 16,
         items: [
             // ssm not connected
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
-                ssmState: 'not connected',
+                ec2InstanceId: 'i-1d9i5v18g5392mf1v',
+                ssmState: 'notconnected',
                 ec2InstanceName: 'app-server-1',
                 vpc: {
                     id: 'vpc-046f7e26255458373',
@@ -18,7 +19,7 @@ function inventoryDemoData(fsxId: string) {
             // ssm not connected
             {
                 ec2InstanceId: `i-${randomize('a0', 17)}`,
-                ssmState: 'not connected',
+                ssmState: 'notconnected',
                 ec2InstanceName: 'app-server-2',
                 vpc: {
                     id: 'vpc-84b3afe6',
@@ -28,7 +29,7 @@ function inventoryDemoData(fsxId: string) {
             },
             // sql server stopped
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
+                ec2InstanceId: 'i-57efw8txsh9rxvxe9',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-3',
                 vpc: {
@@ -38,7 +39,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2019,
+                        sqlServerEdition: 'Developer Edition (64-bit)',
+                        sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER',
                         sqlServerState: 'Stopped',
                         sqlServerVersion: '15.0.4298.1',
@@ -50,7 +52,7 @@ function inventoryDemoData(fsxId: string) {
             },
             // sql server stopped
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
+                ec2InstanceId: 'i-8ct4l5ecneb7jn2oz',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-4',
                 vpc: {
@@ -60,7 +62,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Developer Edition (64-bit)',
+                        sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER',
                         sqlServerState: 'Stopped',
                         sqlServerVersion: '16.0.4080.1',
@@ -82,7 +85,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Developer Edition (64-bit)',
+                        sqlServerProductYear: 2017,
                         sqlServerInstance: 'INST_D',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.1000.6',
@@ -101,7 +105,8 @@ function inventoryDemoData(fsxId: string) {
                         ]
                     },
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4095.4',
@@ -133,7 +138,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerProductYear: 2017,
                         sqlServerInstance: 'MSSQLSERVER_NOSTORAGE',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4105.2',
@@ -159,7 +165,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Developer Edition (64-bit)',
+                        sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER_1',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -192,7 +199,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER_2',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -225,7 +233,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerProductYear: 2017,
                         sqlServerInstance: 'MSSQLSERVER_3',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -258,7 +267,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER_4',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -291,7 +301,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER_5',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -324,7 +335,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER_6',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -357,7 +369,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER_7',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -390,7 +403,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerProductYear: 2017,
                         sqlServerInstance: 'MSSQLSERVER_8',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -423,7 +437,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER_9',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
@@ -456,7 +471,8 @@ function inventoryDemoData(fsxId: string) {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 2022,
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER_10',
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',

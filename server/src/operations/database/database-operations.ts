@@ -227,6 +227,7 @@ async function getResources(
             credentialsId,
             region,
             resourceType,
+            undefined,
             pageSize,
             nextToken
         );
