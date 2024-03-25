@@ -283,7 +283,7 @@ const subtractHour = (date: Date, hour: number) => {
     return date;
 };
 
-async function listLongRunningJobs() {
+function listLongRunningJobs() {
     logger.info('Listing all parent deployment jobs which are in progress ');
 
     return prisma.client.job.findMany({

@@ -52,7 +52,7 @@ import { tagEc2Resource } from './ec2-operations';
 import { tagFsxResource } from './fsx-operations';
 import { decryptString } from './kms-operations';
 import { registerFsxOntapCredentials } from '../../lib/cloud-manager/fsx-core';
-import { createJobs, listLongRunningJobs, listJobs } from '../../lib/database/job';
+import { createJobs, listJobs } from '../../lib/database/job';
 import { updateJobDetails } from '../database/job-operations';
 
 const logger = getLogger();
@@ -335,12 +335,6 @@ async function createOrUpdateChildJobs(
 
 async function processCloudFormationMessages() {
     logger.info('Processing cloud formation messages');
-
-    try {
-        await updateLongRunningJobs();
-    } catch (error) {
-        logger.info('Error while updating long running jobs');
-    }
 
     if (process.env.AWS_ROLE_ARN) {
         const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
@@ -1054,25 +1048,6 @@ function modifyStackAck(
         LogicalResourceId,
         PhysicalResourceId
     };
-}
-
-async function updateLongRunningJobs() {
-    logger.info('Checking for long running (> 4 HOURS) parent deployment jobs');
-    const runningJobs = await listLongRunningJobs();
-    try {
-        await Promise.all(
-            runningJobs.map(async runningJob => {
-                logger.info('Marking job as failed ', runningJob.name);
-                updateJobDetails(runningJob.account_id, runningJob.credentials_id, runningJob.region, runningJob.id, {
-                    status: JOBSTATUS.FAILED,
-                    endTime: new Date().valueOf(),
-                    error: 'Stack creation failed. Check cloud formation for failure reason.'
-                });
-            })
-        );
-    } catch (error) {
-        logger.info('Error while marking job as failed ', error);
-    }
 }
 
 export { processCloudFormationMessages };
