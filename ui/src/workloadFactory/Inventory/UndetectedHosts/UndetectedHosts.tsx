@@ -348,11 +348,11 @@ const UndetectedHosts = () => {
 
     const UnidentifiedHostsColDefs: ColumnProps[] = [
         {
-            Header: GENERAL.DATABASE_HOST_NAME,
-            accessor: 'name',
+            Header: GENERAL.DB_HOST_INSTANCE_ID,
+            accessor: 'instanceID',
             id: '1',
-            isSortable: true,
-            width: '240px'
+            width: '240px',
+            isSortable: true
         },
         {
             Header: GENERAL.DB_HOST_INSTANCE_NAME,
@@ -362,11 +362,11 @@ const UndetectedHosts = () => {
             width: '240px'
         },
         {
-            Header: GENERAL.DB_HOST_INSTANCE_ID,
-            accessor: 'instanceID',
+            Header: GENERAL.DATABASE_HOST_NAME,
+            accessor: 'name',
             id: '3',
-            width: '240px',
-            isSortable: true
+            isSortable: true,
+            width: '240px'
         },
         {
             id: '4',
