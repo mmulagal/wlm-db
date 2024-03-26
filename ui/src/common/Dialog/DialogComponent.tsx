@@ -89,7 +89,7 @@ const DialogComponent = ({
             <DialogFooter>
                 {detectHostError && (
                     <div className={styles.errorMsg}>
-                        <ErrorIcon className={styles.icon} />
+                        <ErrorIcon className={styles.errorIcon} />
                         <DsTypography variant="Semibold_13">{GENERAL.ERROR}</DsTypography>&nbsp;
                         <DsTypography variant="Regular_13" className={styles.errorMsgText}>
                             {detectHostError}
