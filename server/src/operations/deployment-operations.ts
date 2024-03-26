@@ -466,6 +466,15 @@ async function deployStackOrCreateTemplateURL(
 
     // If the fsx throughput selected as 4 GBps means, file system must be configured with 160,000 SSD IOPS.
     if (fsxVolThroughput === FSX_VOL_THROUGHPUT) {
+        // FSX 4gbps throughput capacity supported regions
+        const { regions: fsx4GbSupportedRegions } = await getFSXAvailableRegionsForThrougput();
+        const regionExists = fsx4GbSupportedRegions.some(regions => regions.regionCode === region);
+        if (!regionExists) {
+            throw createError(
+                412,
+                `Fsxn provisioning with 4 GBps of throughput capacity is not supported for the region ${region}`
+            );
+        }
         // check ssd and iops size
         if (fsxIOPS !== FSX_IOPS) {
             throw createError(412, 'Supported Fsxn IOPs should be 160000');
@@ -1009,7 +1018,7 @@ async function checkAllMissingPermissions(credentialsId: string, region: string,
     return { permissions: missedPermissions };
 }
 
-async function getFSXAvailableRegionsForThrougput(accountId: string) {
+async function getFSXAvailableRegionsForThrougput(accountId?: string) {
     logger.info('Getting FSX Available regions for throughput', accountId);
 
     // Its the static list which supported fsx provisioning for 4GBps of throughput capacity
