@@ -142,7 +142,7 @@ const SandboxTable = () => {
         selectAllProps: false,
         //@ts-ignore
         manageColumnsProps: false,
-
+        isHorizontalScroll: true,
         isSorting: false,
         columns: SandboxColDefs,
         rows: data,

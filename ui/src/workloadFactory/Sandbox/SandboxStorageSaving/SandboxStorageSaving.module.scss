@@ -1,17 +1,56 @@
 .sandboxStorageSaving {
     box-shadow: 2px 2px 6px var(--grey-15);
-    height: 116px;
-    width: 1064px;
+
     background-color: var(--content-background);
 
+    .largeContainer {
+        height: 116px;
+        width: 1064px;
+        display: flex;
+
+        .secondSegment {
+            padding: 36px 40px 20px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            .secondRow {
+                display: flex;
+                gap: 32px;
+
+                .bottomRow {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+
+                    .square {
+                        width: 12px;
+                        height: 12px;
+                    }
+                }
+            }
+        }
+    }
+
+    .firstSegment {
+        height: 116px;
+        padding-top: 24px;
+        padding-bottom: 24px;
+        padding-left: 40px;
+        display: flex;
+        gap: 20px;
+
+        .rightSection {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+
     .progressBar {
-        width: 438px;
+        width: 655px;
         height: 16px;
         background-color: var(--content-background);
         display: flex;
         align-items: center;
-
-        margin: 40px 0 0 40px;
 
         .progress {
             height: 100%;
@@ -31,6 +70,35 @@
             width: 1px;
             height: 100%;
             background-color: var(--content-background);
+        }
+    }
+
+    .smallContainer {
+        width: 651px;
+        height: 116px;
+        display: flex;
+        gap: 20px;
+
+        .separator {
+            border-right: 1px solid var(--field-border-disabled);
+            height: 58px;
+            margin-top: 24px;
+        }
+
+        .consumedSaving {
+            display: flex;
+            flex-direction: column;
+            width: 127px;
+            padding-top: 24px;
+        }
+        .valueContainer {
+            display: flex;
+            gap: 11px;
+
+            .setUnit {
+                position: relative;
+                bottom: -15px;
+            }
         }
     }
 }
