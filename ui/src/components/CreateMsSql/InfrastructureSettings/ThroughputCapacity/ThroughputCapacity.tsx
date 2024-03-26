@@ -34,8 +34,6 @@ const ThroughputCapacity = () => {
         }
     }, [throughputRegionList, selectedRegionData]);
 
-    // const units = ['128 MBps', '256 MBps', '512 MBps', '1 GBps', '2 GBps', '4 GBps'];
-
     const [isDisable, setIsDisable] = useState(false);
 
     //Function to generate the options for Select Field
