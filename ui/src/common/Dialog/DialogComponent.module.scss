@@ -1,8 +1,8 @@
 .errorMsg {
     display: flex;
-    width: 300px;
-    margin-right: 95px;
-    min-width: 300px;
+    width: 290px;
+    margin-right: 100px;
+    min-width: 290px;
 
     .errorMsgText {
         white-space: nowrap;
@@ -11,8 +11,8 @@
     }
 }
 
-.icon {
-    width: 25px;
-    height: 21px;
+.errorIcon {
+    width: 40px;
+    height: 20px;
     margin-right: 5px;
 }
