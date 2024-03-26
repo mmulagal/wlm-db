@@ -46,7 +46,6 @@ import {
 import getLogger from '../utils/logger';
 import { describeFSxFileSystems, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { returnInventorydata } from '../utils/demo-utils/demoDefaultUtils';
-import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
 import { getDatabaseHostSummary } from './database-hosts-operations';
 import {
     installPowerShellModule,
@@ -54,6 +53,7 @@ import {
     validateSQLInstanceConnectivity
 } from './workloads/mssql/ssm-script-utils';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../utils/async-local-storage';
+import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
 
 const logger = getLogger();
 
@@ -344,10 +344,13 @@ async function getHostAndSqlInfoFromPsOutput(
 
                     for (const di of driveInfo) {
                         const ebsVolumeId = ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem));
+                        const volIdRegex = /^(vol)([a-zA-Z0-9]+)/; // volumeId derived from SerialNumberOrScsiTarget is of the format,vol012ab34ed, but, AWS ebs volume IDs are always in vol-012ab34ed format, so we need to convert it to the correct format.
                         if (ebsVolumeId) {
                             storageTypes.push({
                                 type: STORAGE_TYPE.EBS,
-                                id: ebsVolumeId
+                                id: volIdRegex.test(ebsVolumeId)
+                                    ? ebsVolumeId.replace(volIdRegex, '$1-$2')
+                                    : ebsVolumeId // convert the volumeId to the correct format.
                             });
                         } else if (endPointIpWithFsxOntapInfo.has(di?.SerialNumberOrScsiTarget)) {
                             const { fsxId, svmId } = endPointIpWithFsxOntapInfo.get(di?.SerialNumberOrScsiTarget)!;
@@ -560,7 +563,7 @@ async function fetchUnmanagedHostsInformation(
     const resourceDetailsList = instancesDetails.map(({ ec2InstanceId, fsxnId, ebsVolumeId, fsxwId }) => ({
         id: null,
         account_id: accountId,
-        resource_id: getMsSqlResourceId(ec2InstanceId),
+        resource_id: ec2InstanceId,
         resource_type: RESOURCESTYPE.MSSQL,
         resource_name: ec2InstanceId,
         cloud_provider_name: CloudProviders.AWS,
@@ -582,7 +585,7 @@ async function fetchUnmanagedHostsInformation(
             getDatabaseHostSummary(
                 accountId,
                 resourceDetail.resource_id,
-                'serverDetails,performance,usageEstimation,resourceUtilization',
+                'serverDetails,performance,usageEstimation,resourceUtilization,storage',
                 resourceDetail,
                 false // unmanaged host
             )
