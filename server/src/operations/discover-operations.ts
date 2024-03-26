@@ -34,7 +34,7 @@ import {
 } from './workloads/mssql/discover-consts';
 import { deleteParameters, getParameter, sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
-import { registerFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
+import { listFsxOntapCredentials, registerFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
 import { SSMParamterObject } from '../utils/common-types';
 
 import {
@@ -703,7 +703,15 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
             )
         );
     }
-    const [ssmScriptsCopyResponse1, ssmScriptsCopyResponse2] = await Promise.all(discoveryPromiseList);
+    const [ssmScriptsCopyResponse1, ssmScriptsCopyResponse2] = await Promise.all([
+        ...discoveryPromiseList,
+        verifyAndAddFSxOntapCredentials(
+            accountId,
+            credentialsId,
+            region,
+            discoverInfo?.items?.[0].sqlServerInstances?.[0]?.storage
+        )
+    ]);
 
     logger.debug('ssmScriptsCopyResponses:', { ssmScriptsCopyResponse1, ssmScriptsCopyResponse2 });
     if (ssmScriptsCopyResponse1?.includes('failureInfo')) {
@@ -929,6 +937,49 @@ async function deleteSSMParameter(credentialsId: string, region: string, ssmPara
 
         if (filteredSSMParameters?.length) {
             await deleteParameters(credentialsId, region, filteredSSMParameters);
+        }
+    }
+}
+
+async function verifyAndAddFSxOntapCredentials(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    storage: SqlServerInstanceInfoType['storage']
+) {
+    logger.info('verifyAndAddFSxOntapCredentials', { storage });
+
+    const fsxStorage = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
+    if (fsxStorage) {
+        // Check if the FSx credentials are already present in SSM
+        const fsxCredentials = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${fsxStorage.id}`);
+
+        if (!fsxCredentials) {
+            let credentials;
+
+            try {
+                ({ credentials } = await listFsxOntapCredentials(accountId, fsxStorage?.id));
+
+                if (isEmpty(credentials)) {
+                    throw new Error('FSx for ONTAP storage credentials not found');
+                }
+            } catch (error: any) {
+                throw createError(
+                    HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                    `FSx for ONTAP storage '${fsxStorage.id}' isn't registered with FSxN core service. This cannot be managed`
+                );
+            }
+
+            const preparedCreds = prepareParametersToStore('', [
+                {
+                    resourceId: fsxStorage.id,
+                    resourceType: RESOURCESTYPE.FSX,
+                    username: credentials?.userName,
+                    password: credentials.password
+                }
+            ]);
+
+            await ssmPutParameters(credentialsId, region, preparedCreds);
         }
     }
 }
