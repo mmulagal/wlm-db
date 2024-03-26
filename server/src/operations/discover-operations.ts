@@ -48,7 +48,11 @@ import { describeFSxFileSystems, describeFSxStorageVirtualMachines } from '../li
 import { returnInventorydata } from '../utils/demo-utils/demoDefaultUtils';
 import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
 import { getDatabaseHostSummary } from './database-hosts-operations';
-import { validateOntapConnectivity, validateSQLInstanceConnectivity } from './workloads/mssql/ssm-script-utils';
+import {
+    installPowerShellModule,
+    validateOntapConnectivity,
+    validateSQLInstanceConnectivity
+} from './workloads/mssql/ssm-script-utils';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../utils/async-local-storage';
 
 const logger = getLogger();
@@ -79,6 +83,7 @@ const MINIMUM_SQL_SERVER_SUPPORTED = 2016;
 
 const NEW_SSM_PARAMETERS = 'NEW_SSM_PARAMETERS';
 const SSM_PARAM_PREFIX = '/netapp/wlmdb/';
+const PSMODULE_AWS_SSM = 'AWS.Tools.SimpleSystemsManagement';
 
 async function getHostAndSqlServerInfo(
     accountId: string,
@@ -817,6 +822,10 @@ async function validateCredentials(
 
     let command = 'pwsh -Command {$WarningPreference = "SilentlyContinue";';
 
+    if (fsxCredentials || sqlCredentials.length) {
+        command += `${installPowerShellModule(PSMODULE_AWS_SSM)};\n`;
+    }
+
     if (fsxCredentials) {
         command += `${validateOntapConnectivity(fsxCredentials.resourceId, region)};\n`;
     }
@@ -844,20 +853,24 @@ async function validateCredentials(
     const response: Record<string, string> = {};
     const paramesToDelete: string[] = [];
 
-    if (fsxCredentials && parsedResponse.ontapconnectivity === false) {
-        paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
-        response.fsxnError = parsedResponse.ontapError;
-    }
-
-    if (sqlCredentials.length) {
-        if (parsedResponse.sqlInstanceConnectivity === false) {
-            paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
-            response.sqlServerError = parsedResponse.sqlerror;
+    if (parsedResponse.requiredModuleError) {
+        response.requiredModuleError = parsedResponse.requiredModuleError;
+    } else {
+        if (fsxCredentials && parsedResponse.ontapconnectivity === false) {
+            paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+            response.fsxnError = parsedResponse?.ontapError;
         }
 
-        if (parsedResponse.sqlInstanceConnectivity === true) {
-            response.sqlServerEdition = parsedResponse.sqlEdition;
-            response.databaseCount = parsedResponse.noOfDatabases;
+        if (sqlCredentials.length) {
+            if (parsedResponse.sqlInstanceConnectivity === false) {
+                paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
+                response.sqlServerError = parsedResponse?.sqlerror;
+            }
+
+            if (parsedResponse.sqlInstanceConnectivity === true) {
+                response.sqlServerEdition = parsedResponse?.sqlEdition;
+                response.databaseCount = parsedResponse?.noOfDatabases;
+            }
         }
     }
 
