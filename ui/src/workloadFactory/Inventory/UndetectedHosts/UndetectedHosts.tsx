@@ -215,13 +215,13 @@ const UndetectedHosts = () => {
         } else {
             dispatch(setValuesForForm(false));
             dispatch(setIsDetectHostLoading(true));
-
+            const sqlServerInstance = rowData?.sqlServerInstances?.[0]?.sqlServerInstance || '';
             try {
                 const result: any = await registerResourceCred({
                     credentialId: headerSelectedCred?.data?.credentialsId,
                     regionId: headerSelectedRegion?.label2,
                     instanceId: rowData?.instanceID,
-                    payload: createDetectHostPayload(rowData?.instanceID, fsxId)
+                    payload: createDetectHostPayload(sqlServerInstance, fsxId)
                 });
                 if (result && !result?.error) {
                     if (result?.data?.sqlServerError || result?.data?.fsxnError) {
