@@ -314,15 +314,19 @@ const InventoryApis = () => {
     const getPrimaryClusterNode = (newDiscoveredHostData: any, removeRows: any, managedHostsList: string[]) => {
         let testedNodes: string[] = [];
         newDiscoveredHostData.map((host: any) => {
-            if(host?.nodesList) {
+            if (host?.nodesList) {
                 if (testedNodes.includes(host?.ec2InstanceId)) {
                     return;
                 }
 
                 // To find partner node in a cluster
                 const partnerNode = newDiscoveredHostData.filter((perHost: any) => {
-                    const isSameCluster = host?.nodesList.filter((val:any) => {
-                        return perHost?.ec2InstanceId !== host?.ec2InstanceId && perHost?.nodesList && perHost.nodesList.includes(val)
+                    const isSameCluster = host?.nodesList.filter((val: any) => {
+                        return (
+                            perHost?.ec2InstanceId !== host?.ec2InstanceId &&
+                            perHost?.nodesList &&
+                            perHost.nodesList.includes(val)
+                        );
                     });
                     if (isSameCluster && isSameCluster.length > 0) {
                         return perHost;
@@ -332,7 +336,7 @@ const InventoryApis = () => {
                 })?.[0];
 
                 if (!partnerNode) {
-                    return
+                    return;
                 }
 
                 testedNodes.push(host?.ec2InstanceId);
@@ -372,18 +376,22 @@ const InventoryApis = () => {
                 let fsxCredentialValidationFailedNode1 = host?.sqlServerInstances?.[0]?.storage?.find(
                     (item: any) => item.type === DETECT_HOST_VAR.FSXN && !fsxCredentialStatusObj[item.id]
                 );
-                const unmanagedHost1 = !(host.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED ||
-                (!isWindowAuthenticationNode1 && !isSqlAuthenticationNode1) ||
-                fsxCredentialValidationFailedNode1);
+                const unmanagedHost1 = !(
+                    host.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED ||
+                    (!isWindowAuthenticationNode1 && !isSqlAuthenticationNode1) ||
+                    fsxCredentialValidationFailedNode1
+                );
 
                 const isWindowAuthenticationNode2 = partnerNode?.sqlServerInstances?.[0]?.windowsAuthentication;
                 const isSqlAuthenticationNode2 = partnerNode?.sqlServerInstances?.[0]?.sqlServerAuthentication;
                 let fsxCredentialValidationFailedNode2 = partnerNode?.sqlServerInstances?.[0]?.storage?.find(
                     (item: any) => item.type === DETECT_HOST_VAR.FSXN && !fsxCredentialStatusObj[item.id]
                 );
-                const unmanagedHost2 = !(partnerNode.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED ||
-                (!isWindowAuthenticationNode2 && !isSqlAuthenticationNode2) ||
-                fsxCredentialValidationFailedNode2);
+                const unmanagedHost2 = !(
+                    partnerNode.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED ||
+                    (!isWindowAuthenticationNode2 && !isSqlAuthenticationNode2) ||
+                    fsxCredentialValidationFailedNode2
+                );
 
                 if ((unmanagedHost1 && unmanagedHost2) || (unmanagedHost1 && !unmanagedHost2)) {
                     removeRows.push(partnerNode?.ec2InstanceId);
@@ -405,7 +413,7 @@ const InventoryApis = () => {
                 }
 
                 // In case if both nodes are in Undetected Tab than it needs to show both.
-            };
+            }
         });
         return;
     };
@@ -414,27 +422,28 @@ const InventoryApis = () => {
         if (discoveredHostData && discoveredHostData.length) {
             let newDiscoveredHostData: any = [];
             let managedHostsList: string[] = [];
-            databaseHostsData?.map(managedHost =>
-                {
-                    if (managedHost?.topology?.ec2Details?.[0]?.id) {
-                        managedHostsList.push(managedHost?.topology?.ec2Details?.[0]?.id);
-                    }  
+            databaseHostsData?.map(managedHost => {
+                if (managedHost?.topology?.ec2Details?.[0]?.id) {
+                    managedHostsList.push(managedHost?.topology?.ec2Details?.[0]?.id);
                 }
-            );
+            });
             discoveredHostData.map((host: any) => {
-                if(host?.sqlServerInstances) {
+                if (host?.sqlServerInstances) {
                     // sort sqlServerInstances so every time it picks first running
                     if (host?.sqlServerInstances && host?.sqlServerInstances?.length > 1) {
-                        host = { ...host, sqlServerInstances: sortListOfDict(host?.sqlServerInstances, 'sqlServerState') };
+                        host = {
+                            ...host,
+                            sqlServerInstances: sortListOfDict(host?.sqlServerInstances, 'sqlServerState')
+                        };
                     }
-                    let perHostNodesList:any = [];
-                    host?.sqlServerInstances?.map((perSql:any) => {
+                    let perHostNodesList: any = [];
+                    host?.sqlServerInstances?.map((perSql: any) => {
                         if (perSql?.sqlServerNodes) {
                             perHostNodesList = [...perHostNodesList, ...perSql?.sqlServerNodes];
                         }
                     });
                     host = { ...host, nodesList: perHostNodesList };
-                };
+                }
                 newDiscoveredHostData.push(host);
             });
 
