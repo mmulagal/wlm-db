@@ -312,10 +312,94 @@ const InventoryApis = () => {
 
     useEffect(() => {
         if (discoveredHostData && discoveredHostData.length) {
+            const newDiscoveredHostData: any = [];
+            discoveredHostData.map((host: any) => {
+                if(host?.sqlServerInstances) {
+                    let perHostNodesList:any = [];
+                    host?.sqlServerInstances?.map((perSql:any) => {
+                        if (perSql?.sqlServerNodes) {
+                            perHostNodesList = [...perHostNodesList, ...perSql?.sqlServerNodes];
+                        }
+                    });
+                    host = { ...host, nodesList: perHostNodesList };
+                };
+                newDiscoveredHostData.push(host);
+            });
+
+            let removeRows: any[] = [];
+            let testedNodes: string[] = [];
+            newDiscoveredHostData.map((host: any) => {
+                if(host?.nodesList) {
+                    if (testedNodes.includes(host?.ec2InstanceId)) {
+                        return;
+                    }
+                    const partnerNode = newDiscoveredHostData.filter((perHost: any) => {
+                        const isSameCluster = host?.nodesList.filter((val:any) => {
+                            return perHost?.ec2InstanceId !== host?.ec2InstanceId && perHost?.nodesList && perHost.nodesList.includes(val)
+                        });
+                        if (isSameCluster && isSameCluster.length > 0) {
+                            return perHost;
+                        } else {
+                            return;
+                        }
+                    })?.[0];
+
+                    if (!partnerNode) {
+                        return
+                    }
+
+                    testedNodes.push(host?.ec2InstanceId);
+                    testedNodes.push(partnerNode?.ec2InstanceId);
+
+                    const isManagedNode1 = databaseHostsData?.find(managedHost =>
+                        managedHost?.topology?.ec2Details?.find(instances => instances.id === host?.ec2InstanceId)
+                    );
+                    const isManagedNode2 = databaseHostsData?.find(managedHost =>
+                        managedHost?.topology?.ec2Details?.find(instances => instances.id === partnerNode?.ec2InstanceId)
+                    );
+
+                    if ((isManagedNode1 && isManagedNode2) || (isManagedNode1 && !isManagedNode2)) {
+                        removeRows.push(partnerNode?.ec2InstanceId);
+                        return;
+                    } else if (!isManagedNode1 && isManagedNode2) {
+                        removeRows.push(host?.ec2InstanceId);
+                        return;
+                    }
+
+                    const managedHostNode1 = movedToManagedHost.find(
+                        (perHost: any) => perHost?.instanceId === host?.ec2InstanceId
+                    );
+                    const managedHostNode2 = movedToManagedHost.find(
+                        (perHost: any) => perHost?.instanceId === partnerNode?.ec2InstanceId
+                    );
+
+                    if ((managedHostNode1 && managedHostNode2) || (managedHostNode1 && !managedHostNode2)) {
+                        removeRows.push(partnerNode?.ec2InstanceId);
+                        return;
+                    } else if (!managedHostNode1 && managedHostNode2) {
+                        removeRows.push(host?.ec2InstanceId);
+                        return;
+                    }
+
+                    const unmanagedHostNode1 = movedToUnmanagedHost.includes(host?.ec2InstanceId);
+                    const unmanagedHostNode2 = movedToUnmanagedHost.includes(partnerNode?.ec2InstanceId);
+                    if ((unmanagedHostNode1 && unmanagedHostNode2) || (unmanagedHostNode1 && !unmanagedHostNode2)) {
+                        removeRows.push(partnerNode?.ec2InstanceId);
+                        return;
+                    } else if (!unmanagedHostNode1 && unmanagedHostNode2) {
+                        removeRows.push(host?.ec2InstanceId);
+                        return;
+                    }
+                };
+            });
+
             let movedManagedHosts: any[] = [];
             let unManagedHosts: any[] = [];
             let unIdentifiableHosts: any[] = [];
-            discoveredHostData.map((host: any) => {
+            newDiscoveredHostData.map((host: any) => {
+                if (removeRows.includes(host?.ec2InstanceId)) {
+                    return;
+                }
                 if (host?.sqlServerInstances && host?.sqlServerInstances?.length > 1) {
                     host = { ...host, sqlServerInstances: sortListOfDict(host?.sqlServerInstances, 'sqlServerState') };
                 }
