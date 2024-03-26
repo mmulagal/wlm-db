@@ -120,7 +120,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
             return reply.send(response!);
         })
         .get(
-            '/v1/fsx-throughput-available-regions',
+            '/v1/fsx-4gbps-supported-regions',
             { schema: FsxAvailableRegionsForThroughputSchema },
             async (request, reply) => {
                 const {

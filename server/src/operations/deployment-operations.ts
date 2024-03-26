@@ -69,7 +69,11 @@ import {
     BLOCKED_BY_SCP,
     IAM,
     SIMULATE_IAM_POLICY,
-    TEMPLATE_S3GATEWAY_ROUTETABLES
+    TEMPLATE_S3GATEWAY_ROUTETABLES,
+    FSX_VOL_THROUGHPUT,
+    FSX_IOPS,
+    DATABASE_MIN_LUN_SIZE_IN_GIB,
+    DATABASE_MAX_LUN_SIZE_IN_GIB
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -115,8 +119,18 @@ async function formatTemplateParameters(
     skipPasswords?: boolean
 ) {
     const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
-        : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
+        ? generateDeploymentParams(
+              fsxConfiguration.databaseSize,
+              true,
+              sqlConfiguration.sqlDeploymentMode,
+              fsxConfiguration.fsxVolThroughput
+          )
+        : generateDeploymentParams(
+              fsxConfiguration.databaseSize,
+              false,
+              sqlConfiguration.sqlDeploymentMode,
+              fsxConfiguration.fsxVolThroughput
+          );
 
     const { roleName = '', providerAccountId = '' } = credentialsId
         ? await getRoleDetails(credentialsId)
@@ -442,11 +456,20 @@ async function deployStackOrCreateTemplateURL(
 
     const { workloadInstanceType } = ec2Configuration;
     const { sqlServerName, sqlAmiName } = sqlConfiguration;
-    const { databaseSize } = fsxConfiguration;
+    const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
     const [sqlVersion] = calculateSQLandWindowsVersion(sqlAmiName);
 
-    if (databaseSize > 133120) {
+    // Here 120 & 133120 is in GiB
+    if (databaseSize < DATABASE_MIN_LUN_SIZE_IN_GIB || databaseSize > DATABASE_MAX_LUN_SIZE_IN_GIB) {
         throw createError(412, 'Supported Fsxn disk size should be between 120GiB to 130TiB');
+    }
+
+    // If the fsx throughput selected as 4 GBps means, file system must be configured with 160,000 SSD IOPS.
+    if (fsxVolThroughput === FSX_VOL_THROUGHPUT) {
+        // check ssd and iops size
+        if (fsxIOPS !== FSX_IOPS) {
+            throw createError(412, 'Supported Fsxn IOPs should be 160000');
+        }
     }
 
     // TODO we can make describe image aws sdk call for sqlAmiName instead of UI sending it in payload as it is error prone
@@ -603,8 +626,18 @@ async function createCloudFormationTemplateForUserDeployment(
     }
 
     const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
-        : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
+        ? generateDeploymentParams(
+              fsxConfiguration.databaseSize,
+              true,
+              sqlConfiguration.sqlDeploymentMode,
+              fsxConfiguration.fsxVolThroughput
+          )
+        : generateDeploymentParams(
+              fsxConfiguration.databaseSize,
+              false,
+              sqlConfiguration.sqlDeploymentMode,
+              fsxConfiguration.fsxVolThroughput
+          );
 
     const { roleName, providerAccountId } = await getRoleDetails(credentialsId);
 
@@ -980,6 +1013,7 @@ async function getFSXAvailableRegionsForThrougput(accountId: string) {
     logger.info('Getting FSX Available regions for throughput', accountId);
 
     // Its the static list which supported fsx provisioning for 4GBps of throughput capacity
+    // https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/performance.html
     return {
         regions: [
             {

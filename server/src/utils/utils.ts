@@ -25,7 +25,10 @@ import {
     subJobDescriptions,
     SqlServerDeploymentModel,
     ARTIFACT_BUCKET_NAME,
-    HttpErrorCodes
+    HttpErrorCodes,
+    MAX_FSX_STORAGE_IN_GIB,
+    FSX_VOL_THROUGHPUT,
+    FSX_STORAGE_MIN_CAPACITY_IN_GIB
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -45,7 +48,14 @@ function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: strin
         .filter(ami => (dbEdition ? ami.toLowerCase().includes(dbEdition.toLowerCase()) : true));
 }
 
-function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean, sqlDeploymentType: string = 'fci') {
+function generateDeploymentParams(
+    FSxDataLunSize: number,
+    isExistingFSx: boolean,
+    sqlDeploymentType: string = 'fci',
+    fsxVolThroughput: number
+) {
+    logger.info('Generate deployment params', { FSxDataLunSize, isExistingFSx, sqlDeploymentType, fsxVolThroughput });
+
     const prefix = WLMDB;
     const suffix = Date.now();
     const randomDigits = generateRandomNumberInRange(10000, 99999);
@@ -61,9 +71,15 @@ function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean
 
     let fsxStorageCapacity = FSxStorageCapacity;
 
-    // If the FSX total storage crosses 192Tib Means keeping it to 192TiB (196608GiB).
-    if (FSxStorageCapacity > 196608) {
-        fsxStorageCapacity = 196608;
+    // If the FSX total storage crosses 192Tib Means keeping it to 192TiB (196608GiB). This is because when the 130TiB is given as a data lun size, total storage capacity of is going beyond 196608 which is 197695.
+    if (FSxStorageCapacity > MAX_FSX_STORAGE_IN_GIB) {
+        fsxStorageCapacity = MAX_FSX_STORAGE_IN_GIB;
+    }
+
+    // To provision 4 GBps of throughput capacity, your file system must be configured with a minimum of 5,120 GiB of SSD storage capacity.
+    // https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/performance.html
+    if (fsxVolThroughput === FSX_VOL_THROUGHPUT && fsxStorageCapacity < FSX_STORAGE_MIN_CAPACITY_IN_GIB) {
+        throw createError(412, 'Supported Fsxn Storage Capactiy should be minumum of 5,120 GiB');
     }
 
     const stacknameSubstring = sqlDeploymentType === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME;
