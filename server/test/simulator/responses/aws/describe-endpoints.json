@@ -1,85 +1,78 @@
 {
     "$metadata": {
-      "httpStatusCode": 200,
-      "requestId": "11172f2f-6553-4906-9bce-f61ce0e022c8",
-      "attempts": 1,
-      "totalRetryDelay": 0
+        "httpStatusCode": 200,
+        "requestId": "11172f2f-6553-4906-9bce-f61ce0e022c8",
+        "attempts": 1,
+        "totalRetryDelay": 0
     },
     "VpcEndpoints": [
-      {
-        "VpcEndpointId": "vpce-072911d02a4c600a7",
-        "VpcEndpointType": "Gateway",
-        "VpcId": "vpc-059a145321d63b5ab",
-        "ServiceName": "com.amazonaws.ap-southeast-1.s3",
-        "State": "available",
-        "PolicyDocument": "{\"Version\":\"2008-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":\"*\",\"Resource\":\"*\"}]}",
-        "RouteTableIds": [
-          "rtb-0702a673612368778",
-          "rtb-0ad93dba3e2ccf10c"
-        ],
-        "SubnetIds": [],
-        "Groups": [],
-        "PrivateDnsEnabled": false,
-        "RequesterManaged": false,
-        "NetworkInterfaceIds": [],
-        "DnsEntries": [],
-        "CreationTimestamp": "2024-01-10T05:21:58.000Z",
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": "wlm-vpce-s3"
-          }
-        ],
-        "OwnerId": "464262061435"
-      },
-      {
-        "VpcEndpointId": "vpce-0583307c1aea1a02b",
-        "VpcEndpointType": "Interface",
-        "VpcId": "vpc-059a145321d63b5ab",
-        "ServiceName": "com.amazonaws.ap-southeast-1.cloudformation",
-        "State": "available",
-        "PolicyDocument": "{\n  \"Statement\": [\n    {\n      \"Action\": \"*\", \n      \"Effect\": \"Allow\", \n      \"Principal\": \"*\", \n      \"Resource\": \"*\"\n    }\n  ]\n}",
-        "RouteTableIds": [],
-        "SubnetIds": [
-          "subnet-009b1323071fa30e4"
-        ],
-        "Groups": [
-          {
-            "GroupId": "sg-077853a8fc19fc6fc",
-            "GroupName": "default"
-          }
-        ],
-        "IpAddressType": "ipv4",
-        "DnsOptions": {
-          "DnsRecordIpType": "ipv4"
+        {
+            "VpcEndpointId": "vpce-072911d02a4c600a7",
+            "VpcEndpointType": "Gateway",
+            "VpcId": "vpc-059a145321d63b5ab",
+            "ServiceName": "com.amazonaws.ap-southeast-1.s3",
+            "State": "available",
+            "PolicyDocument": "{\"Version\":\"2008-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":\"*\",\"Resource\":\"*\"}]}",
+            "RouteTableIds": ["rtb-0702a673612368778", "rtb-0ad93dba3e2ccf10c"],
+            "SubnetIds": [],
+            "Groups": [],
+            "PrivateDnsEnabled": false,
+            "RequesterManaged": false,
+            "NetworkInterfaceIds": [],
+            "DnsEntries": [],
+            "CreationTimestamp": "2024-01-10T05:21:58.000Z",
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "wlm-vpce-s3"
+                }
+            ],
+            "OwnerId": "464262061435"
         },
-        "PrivateDnsEnabled": true,
-        "RequesterManaged": false,
-        "NetworkInterfaceIds": [
-          "eni-025add5e6e29453e5"
-        ],
-        "DnsEntries": [
-          {
-            "DnsName": "vpce-0583307c1aea1a02b-2ihd6xos.cloudformation.ap-southeast-1.vpce.amazonaws.com",
-            "HostedZoneId": "Z18LLCSTV4NVNL"
-          },
-          {
-            "DnsName": "vpce-0583307c1aea1a02b-2ihd6xos-ap-southeast-1a.cloudformation.ap-southeast-1.vpce.amazonaws.com",
-            "HostedZoneId": "Z18LLCSTV4NVNL"
-          },
-          {
-            "DnsName": "cloudformation.ap-southeast-1.amazonaws.com",
-            "HostedZoneId": "Z06325931STQ1GD1Q66QX"
-          }
-        ],
-        "CreationTimestamp": "2024-01-29T05:40:46.577Z",
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": "cloudformation-endpoint"
-          }
-        ],
-        "OwnerId": "464262061435"
-      }
+        {
+            "VpcEndpointId": "vpce-0583307c1aea1a02b",
+            "VpcEndpointType": "Interface",
+            "VpcId": "vpc-059a145321d63b5ab",
+            "ServiceName": "com.amazonaws.ap-southeast-1.cloudformation",
+            "State": "available",
+            "PolicyDocument": "{\n  \"Statement\": [\n    {\n      \"Action\": \"*\", \n      \"Effect\": \"Allow\", \n      \"Principal\": \"*\", \n      \"Resource\": \"*\"\n    }\n  ]\n}",
+            "RouteTableIds": [],
+            "SubnetIds": ["subnet-009b1323071fa30e4"],
+            "Groups": [
+                {
+                    "GroupId": "sg-077853a8fc19fc6fc",
+                    "GroupName": "default"
+                }
+            ],
+            "IpAddressType": "ipv4",
+            "DnsOptions": {
+                "DnsRecordIpType": "ipv4"
+            },
+            "PrivateDnsEnabled": true,
+            "RequesterManaged": false,
+            "NetworkInterfaceIds": ["eni-025add5e6e29453e5"],
+            "DnsEntries": [
+                {
+                    "DnsName": "vpce-0583307c1aea1a02b-2ihd6xos.cloudformation.ap-southeast-1.vpce.amazonaws.com",
+                    "HostedZoneId": "Z18LLCSTV4NVNL"
+                },
+                {
+                    "DnsName": "vpce-0583307c1aea1a02b-2ihd6xos-availability-zone-1.cloudformation.ap-southeast-1.vpce.amazonaws.com",
+                    "HostedZoneId": "Z18LLCSTV4NVNL"
+                },
+                {
+                    "DnsName": "cloudformation.ap-southeast-1.amazonaws.com",
+                    "HostedZoneId": "Z06325931STQ1GD1Q66QX"
+                }
+            ],
+            "CreationTimestamp": "2024-01-29T05:40:46.577Z",
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "cloudformation-endpoint"
+                }
+            ],
+            "OwnerId": "464262061435"
+        }
     ]
-  }
+}

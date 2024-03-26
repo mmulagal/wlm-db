@@ -1,7 +1,7 @@
 {
     "Subnets": [
         {
-            "AvailabilityZone": "us-east-1d",
+            "AvailabilityZone": "availability-zone-1",
             "AvailabilityZoneId": "use1-az4",
             "AvailableIpAddressCount": 251,
             "CidrBlock": "192.168.16.0/24",
@@ -30,7 +30,7 @@
             }
         },
         {
-            "AvailabilityZone": "us-east-2d",
+            "AvailabilityZone": "availability-zone-2",
             "AvailabilityZoneId": "use1-az4",
             "AvailableIpAddressCount": 251,
             "CidrBlock": "192.168.17.0/24",
