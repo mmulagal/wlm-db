@@ -563,7 +563,7 @@ async function invokeSSMForDatabaseDeployment(
                 error: undefined
             });
 
-            updateCreateDbMetrics(accountId, resourceId, metaData as Metadata);
+            await updateCreateDbMetrics(accountId, resourceId, metaData as Metadata);
 
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
                 // this is used to retreive the newly created user databases in database list for demo using meta data
