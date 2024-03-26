@@ -686,7 +686,13 @@ export const GENERAL = {
         'tab.'
     ],
     HOST_MANAGED_MOVED_SUCCESS: ['Host ', ' successfully moved to the ', ' Managed hosts ', 'tab.'],
-    HOST_MOVED_FAILED: ['Host ', ' failed to become a managed host. For more details view ', ' Job Monitoring.'],
+    HOST_MOVED_FAILED: ['Host ', ' failed to become a managed host. ', 'For more details view ', ' Job Monitoring.'],
+    HOST_MOVED_INFO: [
+        'Host ',
+        ' successfully moved to unmanaged host but failed to become a managed host. ',
+        'For more details view ',
+        ' Job Monitoring.'
+    ],
     FCI: 'FCI',
     STANDALONE: 'Standalone',
     SERVICE: 'Service',
@@ -694,8 +700,8 @@ export const GENERAL = {
     ERROR_PERMISSION: 'Error',
     COPY_ALL_UNSUPPORTED_PERMS: 'Copy all unsupported permissions',
     BLOCKED_BY_ORG: 'Blocked by organization:',
-    BLOCKED_BY_PERMISSION_BOUNDARY: 'Blocked by permission boundary:',
-    MISSING_PERMISSION: 'Missing permission:',
+    BLOCKED_BY_PERMISSION_BOUNDARY: 'Blocked',
+    MISSING_PERMISSION: 'Missing',
     MISSING_AND_BLOCKED_PERMISSIONS: 'Missing & blocked permissions',
     UNSUPPORTED_PERMISSIONS: 'Unsupported permissions'
 };

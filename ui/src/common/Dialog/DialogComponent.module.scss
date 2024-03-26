@@ -1,0 +1,18 @@
+.errorMsg {
+    display: flex;
+    width: 290px;
+    margin-right: 100px;
+    min-width: 290px;
+
+    .errorMsgText {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.errorIcon {
+    width: 40px;
+    height: 20px;
+    margin-right: 5px;
+}
