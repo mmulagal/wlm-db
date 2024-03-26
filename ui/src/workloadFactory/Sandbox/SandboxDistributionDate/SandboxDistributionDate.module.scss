@@ -2,6 +2,7 @@
     box-shadow: 2px 2px 6px var(--grey-15);
     height: 376px;
     width: 520px;
+    min-width: 520px;
     background-color: var(--content-background);
 
     .headSection {
@@ -18,10 +19,38 @@
         display: flex;
         gap: 40px;
     }
+
+    .rightSide {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        margin-top: 8px;
+
+        .individualRow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            .square {
+                width: 12px;
+                height: 12px;
+            }
+
+            .days {
+                width: 80px;
+            }
+
+            .separator {
+                border-right: 1px solid var(--field-border-disabled);
+                height: 18px;
+            }
+        }
+    }
 }
 
 @media screen and (max-width: 1500px) {
     .sandboxDate {
         width: 456px;
+        min-width: 456px;
     }
 }
