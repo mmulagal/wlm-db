@@ -11,6 +11,7 @@ import {
     useGetRegionsQuery,
     useGetSGListQuery,
     useGetSnsTopicsQuery,
+    useGetThroughputRegionListQuery,
     useGetVPCListQuery,
     useGetWlmdbPoliciesQuery
 } from '../../../utils/apiService';
@@ -27,7 +28,8 @@ import {
     addSGList,
     addSavedConfigList,
     addSnsList,
-    addVpcList
+    addVpcList,
+    getThroughputRegionList
 } from '../../../store/mssql/mssqlSlice';
 import { useEffect, useState } from 'react';
 import { API_NAME, AWS_ASSUME_ROLE, DATABASE_TYPE, OS_TYPE, VPC_API_FIELDS } from '../../../utils/consts';
@@ -73,11 +75,13 @@ const MssqlApis = () => {
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
 
+    const { data: policiesList, isFetching: policiesLoading, isError: policiesError } = useGetWlmdbPoliciesQuery({});
+
     const {
-        data: policiesList,
-        isFetching: policiesLoading,
-        isError: policiesError
-    } = useGetWlmdbPoliciesQuery({});
+        data: throughputRegionList,
+        isFetching: throughputRegionListLoading,
+        isError: throughputRegionListError
+    } = useGetThroughputRegionListQuery({});
 
     // API call to get credentials list for user account
     const {
@@ -223,6 +227,14 @@ const MssqlApis = () => {
         dispatch(addPolicies({ policiesList, policiesLoading, policiesError }));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [policiesList, policiesLoading, policiesError]);
+
+    // To get Throughput region list
+    useEffect(() => {
+        dispatch(
+            getThroughputRegionList({ throughputRegionList, throughputRegionListLoading, throughputRegionListError })
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [throughputRegionList, throughputRegionListLoading, throughputRegionListError]);
 
     // To add credentials information in MssqlEntities
     useEffect(() => {

@@ -23,6 +23,7 @@ import keyPairData from '../data/key-pairs.json';
 import instanceTypeData from '../data/instance-types.json';
 import fsxnData from '../data/fsxn.json';
 import pricingData from '../data/pricing.json';
+import throughputRegionData from '../data/throughputRegion.json';
 
 const router = require('express').Router();
 
@@ -39,9 +40,12 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/vpcs`, asy
 });
 
 // Get SG mock response
-router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/vpcs/:vpcId/security-groups`, async (req: {}, res: any) => {
-    generateResponse(res, 200, sgData);
-});
+router.get(
+    `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/vpcs/:vpcId/security-groups`,
+    async (req: {}, res: any) => {
+        generateResponse(res, 200, sgData);
+    }
+);
 
 // Get ADs mock response
 router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/ads`, async (req: {}, res: AdsRes) => {
@@ -93,6 +97,12 @@ router.get(
         generateResponse(res, 200, retData);
     }
 );
+
+// Get Throughput region list mock response
+router.get(`${BASE_URL}/v1/fsx-4gbps-supported-regions`, async (req: {}, res: any) => {
+    const retData = throughputRegionData;
+    generateResponse(res, 200, retData);
+});
 
 //Get Pricing Data
 router.post(`${BASE_URL}/v1/pricing`, async (req: {}, res: any) => {

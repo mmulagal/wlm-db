@@ -38,7 +38,7 @@ export interface AD {
     status?: string;
     vpcSettings?: {
         securityGroupId?: string;
-    }
+    };
 }
 
 export interface Ami {
@@ -96,7 +96,7 @@ export interface FSxN {
         diskIopsConfiguration?: {
             iops: string;
             mode: string;
-        }
+        };
     };
     storageVirtualMachines?: [];
 }
@@ -104,12 +104,13 @@ export interface FSxN {
 export interface MssqlEntities {
     getPolicies: {
         policiesList: {
-            view?: {},
-            operate?: {}
+            view?: {};
+            operate?: {};
         } | null;
         policiesLoading: false;
         policiesError: null;
     };
+    getThroughputRegions: any;
     getCredentials: {
         credentialData: Credentials[] | null;
         credentialLoading: false;
@@ -190,11 +191,10 @@ export interface TagObj {
     value: string;
 }
 
-
 export interface MssqlRequestBody {
     [x: string]: any;
     networkConfiguration: {
-        vpcId: string; 
+        vpcId: string;
         vpcCidr: string;
         availabilityZone1: string;
         privateSubnet1Id: string;
@@ -202,11 +202,11 @@ export interface MssqlRequestBody {
         availabilityZone2: string;
         privateSubnet2Id: string;
         routeTable2Id: string;
-    },
+    };
     ec2Configuration: {
         workloadInstanceType: string;
         keyPairName: string;
-    },
+    };
     adConfiguration: {
         adScenarioType: string;
         domainUsername: string;
@@ -214,9 +214,9 @@ export interface MssqlRequestBody {
         domainDnsname: string;
         dnsIpaddress: string;
         securityGroupId: string;
-    },
+    };
     fsxConfiguration: {
-        fsxDeploymentMode: string,
+        fsxDeploymentMode: string;
         fsxFileSystemId: string;
         fsxUsername: string;
         fsxPassword: string;
@@ -225,17 +225,16 @@ export interface MssqlRequestBody {
         fsxVolThroughput: string;
         fsxIOPS: string;
         encryptionKey: string;
-    },
+    };
     sqlConfiguration: {
-        sqlDeploymentMode: string,
+        sqlDeploymentMode: string;
         sqlAmiId: string;
         sqlAmiName: string;
         serviceAccountName: string;
         serviceAccountPassword: string;
         sqlServerName: string;
-    }
+    };
     topicArn?: string;
-    enableCloudWatch?: boolean,
-    tags?: Array<TagObj>
+    enableCloudWatch?: boolean;
+    tags?: Array<TagObj>;
 }
-
