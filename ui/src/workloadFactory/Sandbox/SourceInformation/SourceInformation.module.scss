@@ -3,4 +3,24 @@
     height: 116px;
     width: 520px;
     background-color: var(--content-background);
+    padding: 24px 40px;
+    display: flex;
+    gap: 80px;
+
+    .wrapperContainer {
+        display: flex;
+        gap: 20px;
+
+        .insideContainer {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+}
+
+@media screen and (max-width: 1500px) {
+    .sourceInformation {
+        width: 456px;
+        gap: 25px;
+    }
 }

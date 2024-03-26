@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './SandboxHeader.module.scss';
+import { ReactComponent as Illustration } from '../../../assets/Illustration.svg';
 import { Button, DsTypography } from '@netapp/design-system';
 import useResize from '../../../common/hooks/useResize';
 
@@ -9,7 +10,9 @@ const SandboxHeader = () => {
         <>
             {window.innerWidth > 1500 && (
                 <div className={styles.sandboxHeader}>
-                    <div className={styles.imageHolder}>image</div>
+                    <div className={styles.imageHolder}>
+                        <Illustration />
+                    </div>
                     <div className={styles.contentHolder}>
                         <DsTypography variant="Semibold_16">Sandboxes</DsTypography>
                         <DsTypography variant="Regular_16">
@@ -27,7 +30,10 @@ const SandboxHeader = () => {
             )}
             {window.innerWidth <= 1500 && (
                 <div className={styles.sandboxHeaderLowerResolution}>
-                    <div className={styles.imageHolder}>image</div>
+                    <div className={styles.imageHolder}>
+                        {' '}
+                        <Illustration />
+                    </div>
                     <div className={styles.secondLevel}>
                         <div className={styles.contentHolder}>
                             <DsTypography variant="Semibold_16">Sandboxes</DsTypography>
