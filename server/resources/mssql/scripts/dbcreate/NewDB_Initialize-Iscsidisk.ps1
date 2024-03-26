@@ -28,11 +28,10 @@ $ErrorActionPreference = "Stop"
 $result = [ordered]@{}
 
 #Refresh the cached information on iSCSI target
-#This command hangs in few cases for any issue with iSCSI. Even passing -AsJob won't help as multiple jobs would be stuck. 
+#Update-IscsiTarget
+#This command hangs in few cases for any issue with iSCSI. Even passing -AsJob won't help as multiple jobs would be stuck. Using disk RESCAN
 
-
-echo "RESCAN" | Out-File -FilePath C:\SSM\rescan.txt
-$null =(diskpart /s C:\SSM\rescan.txt)
+$null =(echo "RESCAN" | diskpart )
 Start-Sleep 2
 
 #Create a list of drive letters if not passed
