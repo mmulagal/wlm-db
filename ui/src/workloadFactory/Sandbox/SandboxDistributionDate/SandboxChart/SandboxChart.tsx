@@ -42,7 +42,7 @@ const SandboxChart = () => {
         return () => {
             myDoughnut.destroy();
         };
-    });
+    }, []);
 
     return (
         <div className={styles.sandboxChart} id="chart-item">
