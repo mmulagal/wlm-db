@@ -56,3 +56,14 @@
         z-index: 4;
     }
 }
+
+@media screen and (max-width: 1500px) {
+    .createNewSandbox {
+        .leftSide {
+            width: calc(100vw - 576px);
+        }
+        .rightSide {
+            width: 576px;
+        }
+    }
+}

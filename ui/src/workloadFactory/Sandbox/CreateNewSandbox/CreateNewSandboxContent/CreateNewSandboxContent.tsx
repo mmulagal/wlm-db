@@ -1,5 +1,9 @@
-import { DsTypography } from '@netapp/design-system';
+import { AccordionController, DsTypography } from '@netapp/design-system';
 import styles from './CreateNewSandboxContent.module.scss';
+import SelectSource from './SelectSource/SelectSource';
+import SelectTarget from './SelectTarget/SelectTarget';
+import Mount from './Mount/Mount';
+import DefineTag from './DefineTag/DefineTag';
 
 const CreateNewSandboxContent = () => {
     return (
@@ -7,6 +11,15 @@ const CreateNewSandboxContent = () => {
             <DsTypography variant="Semibold_16" className={styles.heading}>
                 Create Sandbox
             </DsTypography>
+
+            <div className={styles.accordionContainer}>
+                <AccordionController isGrouped>
+                    <SelectSource />
+                    <SelectTarget />
+                    <Mount />
+                    <DefineTag />
+                </AccordionController>
+            </div>
         </div>
     );
 };

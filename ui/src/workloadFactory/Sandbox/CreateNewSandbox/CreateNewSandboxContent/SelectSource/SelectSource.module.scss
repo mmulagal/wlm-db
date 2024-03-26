@@ -1,0 +1,30 @@
+.selectSource {
+    .headerSetter {
+        left: 0%;
+    }
+
+    .firstRow {
+        display: flex;
+        gap: 24px;
+    }
+
+    .secondRow {
+        margin-top: 24px;
+    }
+
+    .selectField {
+        width: 395px;
+    }
+
+    .smallFirstRow {
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+}
+
+@media screen and (max-width: 1500px) {
+    .selectSource {
+    }
+}
