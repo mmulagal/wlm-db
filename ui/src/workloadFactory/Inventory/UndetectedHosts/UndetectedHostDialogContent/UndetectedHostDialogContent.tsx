@@ -36,32 +36,33 @@ const UndetectedHostDialogContent = ({ rowData }: DialogProps) => {
             </div>
 
             {/* MSSQL credential is asked when it is not yet registered */}
-            {!rowData?.sqlServerInstances?.[0]?.sqlServerAuthentication && (
-                <div className={styles.firstSection}>
-                    <Typography variant="Semibold_14">{GENERAL.DETECT_MSSQL_HEADING}</Typography>
-                    <div className={styles.textFieldContainer}>
-                        <TextField
-                            label={GENERAL.DETECT_MSSQL_USERNAME}
-                            value={detectManageUserName}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                dispatch(setDetectManageUserName(e.target.value));
-                            }}
-                            className={styles.textFieldStyle}
-                            error={topRowValuesNotFilled && !detectManageUserName ? GENERAL.ACTION_REQUIRED : ''}
-                        />
+            {!rowData?.sqlServerInstances?.[0]?.sqlServerAuthentication &&
+                !rowData?.sqlServerInstances?.[0]?.windowsAuthentication && (
+                    <div className={styles.firstSection}>
+                        <Typography variant="Semibold_14">{GENERAL.DETECT_MSSQL_HEADING}</Typography>
+                        <div className={styles.textFieldContainer}>
+                            <TextField
+                                label={GENERAL.DETECT_MSSQL_USERNAME}
+                                value={detectManageUserName}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    dispatch(setDetectManageUserName(e.target.value));
+                                }}
+                                className={styles.textFieldStyle}
+                                error={topRowValuesNotFilled && !detectManageUserName ? GENERAL.ACTION_REQUIRED : ''}
+                            />
 
-                        <PasswordField
-                            label={GENERAL.DETECT_MSSQL_PASSWORD}
-                            value={detectManagePassword}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                dispatch(setDetectManagePassword(e.target.value));
-                            }}
-                            className={styles.textFieldStyle}
-                            error={topRowValuesNotFilled && !detectManagePassword ? GENERAL.ACTION_REQUIRED : ''}
-                        />
+                            <PasswordField
+                                label={GENERAL.DETECT_MSSQL_PASSWORD}
+                                value={detectManagePassword}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    dispatch(setDetectManagePassword(e.target.value));
+                                }}
+                                className={styles.textFieldStyle}
+                                error={topRowValuesNotFilled && !detectManagePassword ? GENERAL.ACTION_REQUIRED : ''}
+                            />
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
 
             {/* FSx credential is asked when this instance has FSx and its credential is not yet registered */}
             {rowData?.fsxId && !rowData?.isFsxRegistered && (
