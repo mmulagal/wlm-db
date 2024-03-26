@@ -10,7 +10,7 @@
                 "InstanceOwnerId": "237036677077",
                 "Status": "attached"
             },
-            "AvailabilityZone": "ap-southeast-1a",
+            "AvailabilityZone": "availability-zone-1",
             "Description": "[Do not detach or untag] Amazon FSx network interface for fs-0f3b8ed8a601288ae",
             "Groups": [
                 {
@@ -65,7 +65,7 @@
                 "InstanceOwnerId": "161453452670",
                 "Status": "attached"
             },
-            "AvailabilityZone": "ap-southeast-1b",
+            "AvailabilityZone": "availability-zone-2",
             "Description": "[Do not detach or untag] Amazon FSx network interface for fs-061ed5de76a2bd0ee",
             "Groups": [
                 {
@@ -120,7 +120,7 @@
                 "InstanceOwnerId": "amazon-rds",
                 "Status": "attached"
             },
-            "AvailabilityZone": "ap-southeast-1c",
+            "AvailabilityZone": "availability-zone-3",
             "Description": "RDSNetworkInterface",
             "Groups": [
                 {
@@ -167,7 +167,7 @@
                 "InstanceOwnerId": "464262061435",
                 "Status": "attached"
             },
-            "AvailabilityZone": "ap-southeast-1b",
+            "AvailabilityZone": "availability-zone-2",
             "Description": "",
             "Groups": [
                 {

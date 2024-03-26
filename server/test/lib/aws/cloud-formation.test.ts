@@ -54,7 +54,7 @@ describe('Create cloud formation stack', () => {
         {
             // Parameter
             ParameterKey: 'AvailabilityZones',
-            ParameterValue: 'ap-southeast-1a,ap-southeast-1c'
+            ParameterValue: 'availability-zone-1,availability-zone-3'
         },
         {
             // Parameter
