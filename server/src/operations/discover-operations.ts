@@ -830,7 +830,7 @@ async function validateCredentials(
 
     command += '$responeObject | ConvertTo-Json -Compress }';
 
-    const ssmresponse = await callSsmExecution(credentialsId, region, [command], instanceId);
+    const ssmresponse = await callSsmExecution(credentialsId, region, [command], instanceId, undefined, false);
 
     const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
     let parsedResponse = attempt(JSON.parse, cleanResponse);
