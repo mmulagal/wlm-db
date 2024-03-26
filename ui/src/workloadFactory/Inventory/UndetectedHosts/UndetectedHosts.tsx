@@ -108,6 +108,7 @@ const UndetectedHosts = () => {
     useEffect(() => {
         if (
             !entryData?.sqlServerInstances?.[0]?.sqlServerAuthentication &&
+            !entryData?.sqlServerInstances?.[0]?.windowsAuthentication &&
             entryData?.fsxId &&
             !entryData?.isFsxRegistered
         ) {
@@ -116,7 +117,10 @@ const UndetectedHosts = () => {
             } else {
                 valueRef.current = false;
             }
-        } else if (!entryData?.sqlServerInstances?.[0]?.sqlServerAuthentication) {
+        } else if (
+            !entryData?.sqlServerInstances?.[0]?.sqlServerAuthentication &&
+            !entryData?.sqlServerInstances?.[0]?.windowsAuthentication
+        ) {
             if (detectManageUserName && detectManagePassword) {
                 valueRef.current = true;
             } else {
