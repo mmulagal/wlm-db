@@ -100,7 +100,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['ap-southeast-1c', 'ap-southeast-1b']
+                                zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ]
                     },
@@ -120,7 +120,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['ap-southeast-1c', 'ap-southeast-1b']
+                                zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ]
                     }
@@ -147,7 +147,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         deploymentTypes: [
                             {
                                 type: 'SINGLE_AZ_1',
-                                zones: ['ap-southeast-1c']
+                                zones: ['availability-zone-3']
                             }
                         ]
                     }
@@ -182,7 +182,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['ap-southeast-1c', 'ap-southeast-1b']
+                                zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ]
                     }
@@ -216,7 +216,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['ap-southeast-1c', 'ap-southeast-1b']
+                                zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ]
                     }
@@ -250,7 +250,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['ap-southeast-1c', 'ap-southeast-1b']
+                                zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ]
                     }
@@ -284,7 +284,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['ap-southeast-1c', 'ap-southeast-1b']
+                                zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ]
                     }
@@ -318,7 +318,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['ap-southeast-1c', 'ap-southeast-1b']
+                                zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ]
                     }
@@ -352,7 +352,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['ap-southeast-1c', 'ap-southeast-1b']
+                                zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ]
                     }
@@ -386,7 +386,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['ap-southeast-1c', 'ap-southeast-1b']
+                                zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ]
                     }
@@ -420,7 +420,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['ap-southeast-1c', 'ap-southeast-1b']
+                                zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ]
                     }
@@ -454,7 +454,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['ap-southeast-1c', 'ap-southeast-1b']
+                                zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ]
                     }
@@ -488,7 +488,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['ap-southeast-1c', 'ap-southeast-1b']
+                                zones: ['availability-zone-3', 'availability-zone-2']
                             }
                         ]
                     }
