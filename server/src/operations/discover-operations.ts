@@ -339,10 +339,13 @@ async function getHostAndSqlInfoFromPsOutput(
 
                     for (const di of driveInfo) {
                         const ebsVolumeId = ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem));
+                        const volIdRegex = /^(vol)([a-zA-Z0-9]+)/; // volumeId derived from SerialNumberOrScsiTarget is of the format,vol012ab34ed, but, AWS ebs volume IDs are always in vol-012ab34ed format, so we need to convert it to the correct format.
                         if (ebsVolumeId) {
                             storageTypes.push({
                                 type: STORAGE_TYPE.EBS,
-                                id: ebsVolumeId
+                                id: volIdRegex.test(ebsVolumeId)
+                                    ? ebsVolumeId.replace(volIdRegex, '$1-$2')
+                                    : ebsVolumeId // convert the volumeId to the correct format.
                             });
                         } else if (endPointIpWithFsxOntapInfo.has(di?.SerialNumberOrScsiTarget)) {
                             const { fsxId, svmId } = endPointIpWithFsxOntapInfo.get(di?.SerialNumberOrScsiTarget)!;
@@ -577,7 +580,7 @@ async function fetchUnmanagedHostsInformation(
             getDatabaseHostSummary(
                 accountId,
                 resourceDetail.resource_id,
-                'serverDetails,performance,usageEstimation,resourceUtilization',
+                'serverDetails,performance,usageEstimation,resourceUtilization,storage',
                 resourceDetail,
                 false // unmanaged host
             )

@@ -79,7 +79,7 @@ const RWPerformanceResponse = Type.Object({
 
 const LatencyResponse = Type.Composite([
     RWPerformanceResponse,
-    Type.Object({ server_io: Type.Number({ description: 'Database server IO performance for latency' }) })
+    Type.Object({ serverIo: Type.Number({ description: 'Database server IO performance for latency' }) })
 ]);
 
 type RWPerformanceResponseType = Static<typeof RWPerformanceResponse>;

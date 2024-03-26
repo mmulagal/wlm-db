@@ -626,7 +626,7 @@ async function getPerformanceMetrics(credentialsId: string, region: string, acti
             latency: {
                 read: parsedResponse.READ_LATENCY,
                 write: parsedResponse.WRITE_LATENCY,
-                server_io: parsedResponse.SERVER_IO_LATENCY
+                serverIo: parsedResponse.SERVER_IO_LATENCY
             },
             iops: { read: parsedResponse.READ_IOPS, write: parsedResponse.WRITE_IOPS },
             throughput: { read: parsedResponse.READ_THROUGHPUT, write: parsedResponse.WRITE_THROUGHPUT }
