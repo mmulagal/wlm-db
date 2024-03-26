@@ -12,6 +12,12 @@
         border-bottom: 1px solid var(--border);
         justify-content: space-between;
     }
+
+    .mainSection {
+        padding: 40px 40px 56px 40px;
+        display: flex;
+        gap: 40px;
+    }
 }
 
 @media screen and (max-width: 1500px) {
