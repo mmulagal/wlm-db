@@ -8,13 +8,17 @@ export const initialSandboxState: any = {
     mountPath: '',
     selectedTargetHost: null,
     selectedTargetInstance: null,
-    selectedTargetDatabase: 'DBname_sandbox'
+    selectedTargetDatabase: 'DBname_sandbox',
+    selectedTag: 'Dev'
 };
 
 const sandboxSlice = createSlice({
     name: 'sandbox',
     initialState: initialSandboxState,
     reducers: {
+        setSelectedTag: (state, action: PayloadAction<any>) => {
+            state.selectedTag = action.payload;
+        },
         setSelectedSourceHost: (state, action: PayloadAction<any>) => {
             state.selectedSourceHost = action.payload;
         },
@@ -45,6 +49,7 @@ const sandboxSlice = createSlice({
 export const {
     setSelectedSourceHost,
     setMountPath,
+    setSelectedTag,
     setSelectedMount,
     setSelectedSourceInstance,
     setSelectedSourceDatabase,
