@@ -4,14 +4,16 @@ import {
     deployStackOrCreateTemplateURL,
     deploymentStatus,
     deploymentStatusByName,
-    getCloudformationTemplate
+    getCloudformationTemplate,
+    getFSXAvailableRegionsForThrougput
 } from '../operations/deployment-operations';
 import {
     CloudFormationTemplateSchema,
     DeploymentStatusListSchema,
     DeploymentStatusSchema,
     DeployTemplateSchema,
-    DeploymentSummaryListSchema
+    DeploymentSummaryListSchema,
+    FsxAvailableRegionsForThroughputSchema
 } from './schemas/deployment-schemas';
 import { getDeploymentJobsSummary } from '../operations/jobs-operations';
 
@@ -116,5 +118,16 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
             } = request;
             const response = await getDeploymentJobsSummary(accountId, statuses, nextToken);
             return reply.send(response!);
-        });
+        })
+        .get(
+            '/v1/fsx-4gbps-supported-regions',
+            { schema: FsxAvailableRegionsForThroughputSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId }
+                } = request;
+                const response = await getFSXAvailableRegionsForThrougput(accountId);
+                return reply.send(response!);
+            }
+        );
 }

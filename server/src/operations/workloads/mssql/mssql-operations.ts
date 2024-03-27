@@ -682,7 +682,7 @@ async function getActiveSqlNode(
         // Connection to activenode is successful
         let isSqlNodeActive = false;
         if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-            isSqlNodeActive = true;
+            isSqlNodeActive = await isActiveSqlNode(credentialsId, region, node1InstanceId);
             if (isSqlNodeActive) {
                 return {
                     isSSMConnected: true,

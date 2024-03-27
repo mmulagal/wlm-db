@@ -19,9 +19,7 @@ const DeploymentTabs = ({ selectedTab, onTabChange }: DeploymentTabsProps) => {
                 onClick={() => onTabChange('wizard')}
             >
                 <WizardIcon />
-                <Typography variant="Semibold_16" color={selectedTab === 'wizard' ? '#0067c5' : '#404040'}>
-                    Database wizard
-                </Typography>
+                <Typography variant="Semibold_16">Database wizard</Typography>
             </div>
             <div
                 className={`${styles['single-tab']} ${
@@ -31,9 +29,7 @@ const DeploymentTabs = ({ selectedTab, onTabChange }: DeploymentTabsProps) => {
                 id="chatbot-tab"
             >
                 <ChatbotIcon />
-                <Typography variant="Semibold_16" color={selectedTab === 'chatbot' ? '#0067c5' : '#404040'}>
-                    Database chatbot
-                </Typography>
+                <Typography variant="Semibold_16">Database chatbot</Typography>
             </div>
         </div>
     );

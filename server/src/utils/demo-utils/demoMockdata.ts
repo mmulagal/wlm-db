@@ -21,8 +21,8 @@ function masterStackData(
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 360000),
+            end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
         }
     ];
@@ -48,8 +48,8 @@ function sqlFciServerStackData(
             parent_job_id: masterStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 120000),
+            end_time: new Date(Date.now() - 80000),
             initiator: 'SYSTEM'
         },
         {
@@ -63,8 +63,8 @@ function sqlFciServerStackData(
             parent_job_id: serverStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 120000),
+            end_time: new Date(Date.now() - 80000),
             initiator: 'SYSTEM'
         },
         {
@@ -78,8 +78,8 @@ function sqlFciServerStackData(
             parent_job_id: serverStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 120000),
+            end_time: new Date(Date.now() - 80000),
             initiator: 'SYSTEM'
         },
         {
@@ -93,8 +93,8 @@ function sqlFciServerStackData(
             parent_job_id: serverStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 120000),
+            end_time: new Date(Date.now() - 80000),
             initiator: 'SYSTEM'
         },
         {
@@ -108,8 +108,8 @@ function sqlFciServerStackData(
             parent_job_id: serverStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 120000),
+            end_time: new Date(Date.now() - 80000),
             initiator: 'SYSTEM'
         },
         {
@@ -123,8 +123,8 @@ function sqlFciServerStackData(
             parent_job_id: serverStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 120000),
+            end_time: new Date(Date.now() - 80000),
             initiator: 'SYSTEM'
         },
         {
@@ -138,8 +138,8 @@ function sqlFciServerStackData(
             parent_job_id: serverStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 120000),
+            end_time: new Date(Date.now() - 80000),
             initiator: 'SYSTEM'
         },
         {
@@ -153,8 +153,8 @@ function sqlFciServerStackData(
             parent_job_id: serverStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 120000),
+            end_time: new Date(Date.now() - 80000),
             initiator: 'SYSTEM'
         }
     ];
@@ -185,8 +185,8 @@ function fsxStackData(
             parent_job_id: masterStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 180000),
+            end_time: new Date(Date.now() - 150000),
             initiator: 'SYSTEM'
         },
         {
@@ -200,8 +200,8 @@ function fsxStackData(
             parent_job_id: existingFSxStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 180000),
+            end_time: new Date(Date.now() - 150000),
             initiator: 'SYSTEM'
         },
         {
@@ -215,8 +215,8 @@ function fsxStackData(
             parent_job_id: existingFSxStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 180000),
+            end_time: new Date(Date.now() - 150000),
             initiator: 'SYSTEM'
         },
         {
@@ -230,8 +230,8 @@ function fsxStackData(
             parent_job_id: existingFSxStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 180000),
+            end_time: new Date(Date.now() - 150000),
             initiator: 'SYSTEM'
         },
         {
@@ -245,8 +245,8 @@ function fsxStackData(
             parent_job_id: existingFSxStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 180000),
+            end_time: new Date(Date.now() - 150000),
             initiator: 'SYSTEM'
         },
         {
@@ -260,8 +260,8 @@ function fsxStackData(
             parent_job_id: existingFSxStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 180000),
+            end_time: new Date(Date.now() - 150000),
             initiator: 'SYSTEM'
         },
         {
@@ -275,8 +275,8 @@ function fsxStackData(
             parent_job_id: existingFSxStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 180000),
+            end_time: new Date(Date.now() - 150000),
             initiator: 'SYSTEM'
         }
     ];
@@ -303,8 +303,8 @@ function validationStack2Data(
             parent_job_id: masterStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 240000),
+            end_time: new Date(Date.now() - 200000),
             initiator: 'SYSTEM'
         },
         {
@@ -319,8 +319,8 @@ function validationStack2Data(
             parent_job_id: validationStack2Id,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 240000),
+            end_time: new Date(Date.now() - 200000),
             initiator: 'SYSTEM'
         },
         {
@@ -334,8 +334,8 @@ function validationStack2Data(
             parent_job_id: validationStack2Id,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 240000),
+            end_time: new Date(Date.now() - 200000),
             initiator: 'SYSTEM'
         },
         {
@@ -349,8 +349,8 @@ function validationStack2Data(
             parent_job_id: validationStack2Id,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 240000),
+            end_time: new Date(Date.now() - 200000),
             initiator: 'SYSTEM'
         },
         {
@@ -364,8 +364,8 @@ function validationStack2Data(
             parent_job_id: validationStack2Id,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 240000),
+            end_time: new Date(Date.now() - 200000),
             initiator: 'SYSTEM'
         },
         {
@@ -379,8 +379,8 @@ function validationStack2Data(
             parent_job_id: validationStack2Id,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 240000),
+            end_time: new Date(Date.now() - 200000),
             initiator: 'SYSTEM'
         },
         {
@@ -394,12 +394,13 @@ function validationStack2Data(
             parent_job_id: validationStack2Id,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 240000),
+            end_time: new Date(Date.now() - 200000),
             initiator: 'SYSTEM'
         }
     ];
 }
+
 function validationStack1Data(
     accountId: string,
     resourceName: string,
@@ -425,8 +426,8 @@ function validationStack1Data(
             parent_job_id: masterStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 300000),
+            end_time: new Date(Date.now() - 280000),
             initiator: 'SYSTEM'
         },
         {
@@ -441,8 +442,8 @@ function validationStack1Data(
             parent_job_id: validationStack1Id,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 300000),
+            end_time: new Date(Date.now() - 280000),
             initiator: 'SYSTEM'
         },
         {
@@ -456,8 +457,8 @@ function validationStack1Data(
             parent_job_id: validationStack1Id,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 300000),
+            end_time: new Date(Date.now() - 280000),
             initiator: 'SYSTEM'
         },
         {
@@ -471,8 +472,8 @@ function validationStack1Data(
             parent_job_id: validationStack1Id,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 300000),
+            end_time: new Date(Date.now() - 280000),
             initiator: 'SYSTEM'
         },
         {
@@ -486,8 +487,8 @@ function validationStack1Data(
             parent_job_id: validationStack1Id,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 300000),
+            end_time: new Date(Date.now() - 280000),
             initiator: 'SYSTEM'
         },
         {
@@ -501,8 +502,8 @@ function validationStack1Data(
             parent_job_id: validationStack1Id,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 300000),
+            end_time: new Date(Date.now() - 280000),
             initiator: 'SYSTEM'
         },
         {
@@ -516,8 +517,8 @@ function validationStack1Data(
             parent_job_id: validationStack1Id,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 300000),
+            end_time: new Date(Date.now() - 280000),
             initiator: 'SYSTEM'
         }
     ];
@@ -544,7 +545,7 @@ function sqlStandaloneStackData(
             parent_job_id: masterStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
+            start_time: new Date(Date.now() - 120000),
             end_time: new Date(),
             initiator: 'SYSTEM'
         },
@@ -559,7 +560,7 @@ function sqlStandaloneStackData(
             parent_job_id: serverStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
+            start_time: new Date(Date.now() - 120000),
             end_time: new Date(),
             initiator: 'SYSTEM'
         },
@@ -574,7 +575,7 @@ function sqlStandaloneStackData(
             parent_job_id: serverStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
+            start_time: new Date(Date.now() - 120000),
             end_time: new Date(),
             initiator: 'SYSTEM'
         },
@@ -589,7 +590,7 @@ function sqlStandaloneStackData(
             parent_job_id: serverStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
+            start_time: new Date(Date.now() - 120000),
             end_time: new Date(),
             initiator: 'SYSTEM'
         },
@@ -604,7 +605,7 @@ function sqlStandaloneStackData(
             parent_job_id: serverStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
+            start_time: new Date(Date.now() - 120000),
             end_time: new Date(),
             initiator: 'SYSTEM'
         },
@@ -619,7 +620,7 @@ function sqlStandaloneStackData(
             parent_job_id: serverStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
+            start_time: new Date(Date.now() - 120000),
             end_time: new Date(),
             initiator: 'SYSTEM'
         }
@@ -646,8 +647,8 @@ function endpointData(
             parent_job_id: masterStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 360000),
+            end_time: new Date(Date.now() - 330000),
             initiator: 'SYSTEM'
         },
         {
@@ -661,8 +662,8 @@ function endpointData(
             parent_job_id: endpointStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 360000),
+            end_time: new Date(Date.now() - 330000),
             initiator: 'SYSTEM'
         },
         {
@@ -676,8 +677,8 @@ function endpointData(
             parent_job_id: endpointStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 360000),
+            end_time: new Date(Date.now() - 330000),
             initiator: 'SYSTEM'
         },
         {
@@ -691,8 +692,8 @@ function endpointData(
             parent_job_id: endpointStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 360000),
+            end_time: new Date(Date.now() - 330000),
             initiator: 'SYSTEM'
         },
         {
@@ -706,8 +707,8 @@ function endpointData(
             parent_job_id: endpointStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 360000),
+            end_time: new Date(Date.now() - 330000),
             initiator: 'SYSTEM'
         },
         {
@@ -721,8 +722,8 @@ function endpointData(
             parent_job_id: endpointStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 360000),
+            end_time: new Date(Date.now() - 330000),
             initiator: 'SYSTEM'
         },
         {
@@ -736,8 +737,8 @@ function endpointData(
             parent_job_id: endpointStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 360000),
+            end_time: new Date(Date.now() - 330000),
             initiator: 'SYSTEM'
         },
         {
@@ -751,8 +752,8 @@ function endpointData(
             parent_job_id: endpointStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 360000),
+            end_time: new Date(Date.now() - 330000),
             initiator: 'SYSTEM'
         },
         {
@@ -766,8 +767,8 @@ function endpointData(
             parent_job_id: endpointStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 360000),
+            end_time: new Date(Date.now() - 330000),
             initiator: 'SYSTEM'
         },
         {
@@ -781,8 +782,8 @@ function endpointData(
             parent_job_id: endpointStackId,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(),
-            end_time: new Date(),
+            start_time: new Date(Date.now() - 360000),
+            end_time: new Date(Date.now() - 330000),
             initiator: 'SYSTEM'
         }
     ];
