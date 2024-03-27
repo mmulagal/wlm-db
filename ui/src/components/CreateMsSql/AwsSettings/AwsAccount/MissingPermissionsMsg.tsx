@@ -24,39 +24,65 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
     const [dataToDisplay, setDataToDisplay] = useState([]);
     const [permissionCount, setPermissionCount] = useState(0);
 
+    const modifyPermissions = (obj: any) => {
+        if (obj.error === 'implicitDeny') {
+            return { ...obj, error: `${GENERAL.MISSING_PERMISSION}` };
+        } else if (obj.error === 'explicitDeny') {
+            return { ...obj, error: `${GENERAL.BLOCKED_BY_PERMISSION_BOUNDARY}` };
+        } else {
+            return { ...obj, error: `${obj.error}` };
+        }
+    };
+
     useEffect(() => {
         if (blockedPermissions) {
             const updatedMissingPermissions =
                 permissionData?.missingStatements.length &&
                 permissionData?.missingStatements.map((obj: any) => {
-                    return { ...obj, error: `${GENERAL.MISSING_PERMISSION} ${obj.error}` };
+                    return modifyPermissions(obj);
                 });
 
             const updatedBlockedByOrganization =
-                permissionData?.blockedByOrganisation.length &&
+                permissionData?.blockedByOrganisation.length > 0 &&
                 permissionData?.blockedByOrganisation.map((obj: any) => {
-                    return { ...obj, error: `${GENERAL.BLOCKED_BY_ORG} ${obj.error}` };
+                    return modifyPermissions(obj);
                 });
 
             const updatedBlockedByPermissionBoundary =
                 permissionData?.blockedByPermissionBoundary.length &&
                 permissionData?.blockedByPermissionBoundary.map((obj: any) => {
-                    return { ...obj, error: `${GENERAL.BLOCKED_BY_PERMISSION_BOUNDARY} ${obj.error}` };
+                    return modifyPermissions(obj);
                 });
-            const mergedData = updatedMissingPermissions.concat(
-                updatedBlockedByOrganization,
-                updatedBlockedByPermissionBoundary
-            );
-            setDataToDisplay(mergedData);
-            setPermissionCount(mergedData.length);
+            let mergeData = [];
+            if (
+                updatedMissingPermissions.length &&
+                updatedBlockedByOrganization.length &&
+                updatedBlockedByPermissionBoundary.length
+            ) {
+                mergeData = updatedMissingPermissions.concat(
+                    updatedBlockedByOrganization,
+                    updatedBlockedByPermissionBoundary
+                );
+            } else if (updatedMissingPermissions.length && updatedBlockedByOrganization.length) {
+                mergeData = updatedMissingPermissions.concat(updatedBlockedByOrganization);
+            } else if (updatedMissingPermissions.length && updatedBlockedByPermissionBoundary.length) {
+                mergeData = updatedMissingPermissions.concat(updatedBlockedByPermissionBoundary);
+            } else if (updatedBlockedByOrganization.length && updatedBlockedByPermissionBoundary.length) {
+                mergeData = updatedBlockedByOrganization.concat(updatedBlockedByPermissionBoundary);
+            } else {
+                mergeData = updatedMissingPermissions;
+            }
+
+            setDataToDisplay(mergeData);
+            setPermissionCount(mergeData.length);
         } else {
             const updatedMissingPermissions = permissionData?.missingStatements.map((obj: any) => {
-                return { ...obj, error: `${GENERAL.MISSING_PERMISSION} ${obj.error}` };
+                return modifyPermissions(obj);
             });
 
             setDataToDisplay(updatedMissingPermissions);
         }
-    }, []);
+    }, [permissionData]);
 
     const setHeading = (type: string) => {
         if (blockedPermissions && type === 'operate') {

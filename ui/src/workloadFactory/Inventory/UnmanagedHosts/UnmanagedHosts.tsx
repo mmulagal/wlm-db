@@ -105,16 +105,7 @@ const UnmanagedHosts = () => {
                     {GENERAL.HOST_MOVED_FAILED[0]}
                     <span className={styles.bold}>{name}</span>
                     {GENERAL.HOST_MOVED_FAILED[1]}
-                    <Button
-                        Component="button"
-                        variant="text"
-                        onClick={() => {
-                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                            dispatch(clearNotifications());
-                        }}
-                    >
-                        {GENERAL.JOB_MONITORING}.
-                    </Button>
+                    {result?.error?.data?.message || ''}
                 </div>
             );
             dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));

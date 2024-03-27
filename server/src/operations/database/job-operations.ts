@@ -12,7 +12,8 @@ import {
     listJobs,
     listUniqueJob,
     updateJob,
-    createJob
+    createJob,
+    listLongRunningJobs
 } from '../../lib/database/job';
 import getLogger from '../../utils/logger';
 import { trimAccountIdForDemo } from './database-operations';
@@ -356,6 +357,25 @@ async function getJobSummaryByTime(
     }, []);
 }
 
+async function updateLongRunningJobs() {
+    logger.info('Checking for long running (> 4 HOURS) parent deployment jobs');
+    const runningJobs = await listLongRunningJobs();
+    try {
+        await Promise.all(
+            runningJobs.map(async runningJob => {
+                logger.info('Marking job as failed ', runningJob.name);
+                updateJobDetails(runningJob.account_id, runningJob.credentials_id, runningJob.region, runningJob.id, {
+                    status: JOBSTATUS.FAILED,
+                    endTime: new Date().valueOf(),
+                    error: 'Stack creation failed. Check cloud formation for failure reason.'
+                });
+            })
+        );
+    } catch (error) {
+        logger.info('Error while marking job as failed ', error);
+    }
+}
+
 export {
     Job,
     registerJobs,
@@ -365,5 +385,6 @@ export {
     deleteJobsWithAllSubJobs,
     getJobSummary,
     getJobSummaryByTime,
-    registerJob
+    registerJob,
+    updateLongRunningJobs
 };

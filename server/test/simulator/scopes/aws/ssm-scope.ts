@@ -170,6 +170,12 @@ const getPerformanceMetrics = {
     ]
 };
 
+const getPerformanceWithLatencyMetrics = {
+    commands: [
+        "sqlcmd -Q \"SET NOCOUNT ON; DECLARE @SQLRestartDateTime Datetime\n    DECLARE @TimeInSeconds Float\n    SELECT @SQLRestartDateTime = create_date FROM sys.databases WHERE database_id = 2\n    SET @TimeInSeconds = Datediff(s,@SQLRestartDateTime,GetDate())\n    SELECT   \n    READ_IOPS,\n    WRITE_IOPS,\n    READ_THROUGHPUT,\n    WRITE_THROUGHPUT,\n    READ_LATENCY,\n    WRITE_LATENCY,\n    SERVER_IO_LATENCY,\n    [assessment] = \n            CASE \n                WHEN SERVER_IO_LATENCY = 0 THEN 'N/A' \n                ELSE \n                    CASE WHEN SERVER_IO_LATENCY <= 1 THEN 'Excellent ( <=1 ms )'\n                         WHEN SERVER_IO_LATENCY < 5 THEN 'Very good ( <5 ms )'\n                         WHEN SERVER_IO_LATENCY < 10 THEN 'Good ( <10 ms )'\n                         WHEN SERVER_IO_LATENCY < 20 THEN 'Poor ( <20 ms )'\n                         WHEN SERVER_IO_LATENCY < 100 THEN 'Bad ( <100 ms )'\n                         WHEN SERVER_IO_LATENCY < 500 THEN 'Very bad ( <500 ms )'\n                         WHEN SERVER_IO_LATENCY >= 500 THEN 'Awful ( >=500 ms )'\n                    END \n            END\nFROM (\n    SELECT   \n        ROUND(CAST(SUM(num_of_reads) AS FLOAT)/@TimeInSeconds,2) AS READ_IOPS,\n        ROUND(CAST(SUM(num_of_writes) AS FLOAT)/@TimeInSeconds,2) AS WRITE_IOPS,\n        ROUND(CAST(SUM(num_of_bytes_read) AS FLOAT)/@TimeInSeconds/1000000,3) AS READ_THROUGHPUT,\n        ROUND(CAST(SUM(num_of_bytes_written) AS FLOAT)/@TimeInSeconds/1000000,3) AS WRITE_THROUGHPUT,\n        CASE WHEN SUM(num_of_reads) = 0 THEN 0 ELSE ROUND((SUM(io_stall_read_ms) / SUM(num_of_reads)), 2) END AS READ_LATENCY,\n        CASE WHEN SUM(num_of_writes) = 0 THEN 0 ELSE ROUND((SUM(io_stall_write_ms) / SUM(num_of_writes)), 2) END AS WRITE_LATENCY,\n        CASE WHEN (SUM(num_of_reads) = 0 AND SUM(num_of_writes) = 0) THEN 0 ELSE ROUND((CAST (SUM(io_stall) AS FLOAT) / (SUM(num_of_reads) + SUM(num_of_writes))), 2) END\n        AS SERVER_IO_LATENCY\n    FROM sys.dm_io_virtual_file_stats(null,null)\n) AS subquery  FOR JSON PATH\" -y 0"
+    ]
+};
+
 const getServerInstallDate = {
     commands: [
         "sqlcmd -Q \"SET NOCOUNT ON; SELECT create_date AS creationDate FROM sys.server_principals WITH (NOLOCK) WHERE name = N'NT AUTHORITY\\SYSTEM' OR name = N'NT AUTHORITY\\NETWORK SERVICE' FOR JSON PATH\" -y 0"
@@ -307,7 +313,7 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse)
     .on(SendCommandCommand, { Parameters: getStorageParams })
     .resolves(listSendCommandCommandResponse.storageCommandResponse)
-    .on(SendCommandCommand, { Parameters: getPerformanceMetrics })
+    .on(SendCommandCommand, { Parameters: getPerformanceWithLatencyMetrics })
     .resolves(listSendCommandCommandResponse.getPerformancemetricsCommandResponse)
     .on(SendCommandCommand, { Parameters: getServerInstallDate })
     .resolves(listSendCommandCommandResponse.getServerInstallDateCommandResponse)

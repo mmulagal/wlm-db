@@ -1248,7 +1248,7 @@ export const removeOldApisError = (data: any) => {
 };
 
 // This function will create post payload for register credential API (registerResourceCredentials)
-export const createDetectHostPayload = (instanceID: string, fsxId: string) => {
+export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string) => {
     const state = store.getState();
     const detectManageUserName = state?.inventory?.detectManageUserName;
     const detectManagePassword = state?.inventory?.detectManagePassword;
@@ -1257,7 +1257,7 @@ export const createDetectHostPayload = (instanceID: string, fsxId: string) => {
     let credList = [];
     if (detectManageUserName && detectManagePassword) {
         credList.push({
-            resourceId: instanceID,
+            resourceId: sqlServerInstance,
             resourceType: DETECT_HOST_VAR.MSSQL,
             username: detectManageUserName,
             password: detectManagePassword

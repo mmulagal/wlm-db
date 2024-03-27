@@ -141,11 +141,14 @@ enum RouteTags {
 }
 
 enum HttpErrorCodes {
+    // Client errors
     BAD_REQUEST = 400,
     UNAUTHORIZED = 401,
     FORBIDDEN = 403,
     NOT_FOUND = 404,
     VALIDATION_ERROR = 422,
+
+    // Server errors
     INTERNAL_SERVER_ERROR = 500,
     SERVICE_UNAVAILABLE = 503
 }
@@ -1104,6 +1107,8 @@ const BLOCKED_BY_SCP = 'blocked by scp';
 
 const SIMULATE_IAM_POLICY = 'SimulatePrincipalPolicy';
 
+const FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL = '5h';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1347,5 +1352,6 @@ export {
     ONLINE,
     BLOCKED_BY_SCP,
     SIMULATE_IAM_POLICY,
-    TEMPLATE_S3GATEWAY_ROUTETABLES
+    TEMPLATE_S3GATEWAY_ROUTETABLES,
+    FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL
 };
