@@ -480,7 +480,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"READ_IOPS\":10000,\"WRITE_IOPS\":12000,\"READ_THROUGHPUT\":300,\"WRITE_THROUGHPUT\":100,\"READ_LATENCY\":20,\"WRITE_LATENCY\":25}]\r\n",
+        "StandardOutputContent": "[{\"READ_IOPS\":10000,\"WRITE_IOPS\":12000,\"READ_THROUGHPUT\":300,\"WRITE_THROUGHPUT\":100,\"READ_LATENCY\":20,\"WRITE_LATENCY\":25,\"SERVER_IO_LATENCY\":25}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
