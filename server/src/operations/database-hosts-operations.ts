@@ -397,20 +397,32 @@ async function getProtectionStatus(
         region,
         co_relation_id: fileSystemId,
         metadata,
-        credentials_id: credentialsId
+        credentials_id: credentialsId,
+        fsxwId,
+        ebsVolumeId
     } = resourceDetail;
 
     try {
-        const [awsBackup, ontapProtection, nativeSqlProtection] = await Promise.all([
-            isAWSBackupEnabled(credentialsId, region!, fileSystemId!, metadata as Metadata, activeNodeInstanceId),
-            getOntapVolumesSnapshotCount(
-                credentialsId,
-                region!,
-                fileSystemId!,
-                metadata as Metadata,
-                activeNodeInstanceId
-            ),
-            getNativeSQLProtection(resourceId, activeNodeInstanceId)
+        const [nativeSqlProtection, awsBackup, ontapProtection] = await Promise.all([
+            getNativeSQLProtection(resourceId, activeNodeInstanceId),
+            ...(!(fsxwId || ebsVolumeId)
+                ? [
+                      isAWSBackupEnabled(
+                          credentialsId,
+                          region!,
+                          fileSystemId!,
+                          metadata as Metadata,
+                          activeNodeInstanceId
+                      ),
+                      getOntapVolumesSnapshotCount(
+                          credentialsId,
+                          region!,
+                          fileSystemId!,
+                          metadata as Metadata,
+                          activeNodeInstanceId
+                      )
+                  ]
+                : [])
         ]);
 
         return {
