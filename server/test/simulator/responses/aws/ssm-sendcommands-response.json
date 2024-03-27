@@ -596,24 +596,6 @@
             "RequestedDateTime": "2023-08-28T14:57:41.365Z"
         }
     },
-    "getClusterDriveLetters": {
-        "$metadata": {
-            "httpStatusCode": 200,
-            "requestId": "f171a4a7-3693-41bb-8c31-getClusterDriveLetters",
-            "attempts": 1,
-            "totalRetryDelay": 0
-        },
-        "Command": {
-            "CommandId": "f3cb24b5-725a-475c-bc46-getClusterDriveLetters",
-            "DocumentName": "AWS-RunPowerShellScript",
-            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
-            "MaxConcurrency": "50",
-            "MaxErrors": "0",
-            "OutputS3Region": "ap-southeast-1",
-            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
-        }
-    },
     "createDBResponse": {
         "$metadata": {
             "httpStatusCode": 200,
@@ -741,7 +723,6 @@
             "RequestedDateTime": "2023-08-28T14:57:41.365Z"
         }
     },
-
     "getCollationDetailsResponse": {
         "$metadata": {
             "httpStatusCode": 200,
@@ -751,6 +732,42 @@
         },
         "Command": {
             "CommandId": "f3cb24b5-725a-475c-bc46-getCollationDetails",
+            "DocumentName": "AWS-RunPowerShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": ["i-0880a21327284f67c"],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
+    "getActiveNodeDriveDetails": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "f171a4a7-3693-41bb-8c31-getActiveNodeDriveDetails",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "f3cb24b5-725a-475c-bc46-getActiveNodeDriveDetails",
+            "DocumentName": "AWS-RunPowerShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": ["i-0880a21327284f67c"],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
+    "getStandbyNodeDriveList": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "f171a4a7-3693-41bb-8c31-getStandbyNodeDriveList",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "f3cb24b5-725a-475c-bc46-getStandbyNodeDriveList",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
             "InstanceIds": ["i-0880a21327284f67c"],

@@ -1,11 +1,19 @@
 import config from 'config';
 import ms from 'ms';
 import { deleteOlderJobs } from '../lib/database/job';
+import { FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL } from '../utils/consts';
 import getLogger from '../utils/logger';
+import { updateLongRunningJobs } from './database/job-operations';
 
 const logger = getLogger();
 
-export default function purgeOlderJobs() {
+async function failLongRunningDeploymentJobs() {
+    logger.info('Marking long running (> 4 hours) deployment jobs as failed');
+
+    setInterval(async () => updateLongRunningJobs(), Number(ms(FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL)));
+}
+
+function purgeOlderJobs() {
     logger.info('Purging older jobs');
 
     const purgeInterval = ms(config.get('db.jobs.purge.interval'));
@@ -13,3 +21,5 @@ export default function purgeOlderJobs() {
 
     setInterval(async () => deleteOlderJobs(Date.now() - Number(purgeAfter)), Number(purgeInterval));
 }
+
+export { purgeOlderJobs, failLongRunningDeploymentJobs };

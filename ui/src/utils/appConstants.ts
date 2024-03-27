@@ -418,7 +418,7 @@ export const GENERAL = {
     CLONE_DB: 'Clone',
     PROTECT_DB: 'Protect',
     // database host headers
-    DATABASE_HOST_NAME: 'Database host name',
+    DATABASE_HOST_NAME: 'Database server name',
     DB_HOST_PROTECTION: 'Protection',
     DB_OVERVIEW_INFO: 'Information',
     DB_HOST_PERFORMANCE: 'Performance',
@@ -428,8 +428,8 @@ export const GENERAL = {
     DB_SS_TT_2: 'Calculation is based on unique FSx for ONTAP instance',
     DB_HOST_ESTIMATED_COST: 'Estimated cost',
     DB_HOST_ALLOCATED_CAPACITY: 'Allocated capacity',
-    DB_HOST_INSTANCE_NAME: 'Instance name',
-    DB_HOST_INSTANCE_ID: 'Instance ID',
+    DB_HOST_INSTANCE_NAME: 'EC2 instance name',
+    DB_HOST_INSTANCE_ID: 'EC2 instance ID',
     DB_HOST_VPC: 'VPC',
     DB_HOST_AVAILABILITY: 'Availability',
     DB_HOST_TYPE: 'Type',
@@ -686,7 +686,13 @@ export const GENERAL = {
         'tab.'
     ],
     HOST_MANAGED_MOVED_SUCCESS: ['Host ', ' successfully moved to the ', ' Managed hosts ', 'tab.'],
-    HOST_MOVED_FAILED: ['Host ', ' failed to become a managed host. For more details view ', ' Job Monitoring.'],
+    HOST_MOVED_FAILED: ['Host ', ' failed to become a managed host. ', 'For more details view ', ' Job Monitoring.'],
+    HOST_MOVED_INFO: [
+        'Host ',
+        ' successfully moved to unmanaged host but failed to become a managed host. ',
+        'For more details view ',
+        ' Job Monitoring.'
+    ],
     FCI: 'FCI',
     STANDALONE: 'Standalone',
     SERVICE: 'Service',
@@ -694,10 +700,10 @@ export const GENERAL = {
     ERROR_PERMISSION: 'Error',
     COPY_ALL_UNSUPPORTED_PERMS: 'Copy all unsupported permissions',
     BLOCKED_BY_ORG: 'Blocked by organization:',
-    BLOCKED_BY_PERMISSION_BOUNDARY: 'Blocked by permission boundary:',
-    MISSING_PERMISSION: 'Missing permission:',
+    BLOCKED_BY_PERMISSION_BOUNDARY: 'Blocked',
+    MISSING_PERMISSION: 'Missing',
     MISSING_AND_BLOCKED_PERMISSIONS: 'Missing & blocked permissions',
-    UNSUPPORTED_PERMISSIONS: 'Unsupported permissions'
+    UNSUPPORTED_PERMISSIONS: 'Missing permissions'
 };
 
 export const CODE_VIEWER = {

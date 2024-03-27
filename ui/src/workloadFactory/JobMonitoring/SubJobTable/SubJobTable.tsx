@@ -9,7 +9,12 @@ import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
 import TaskTable from '../TaskTable/TaskTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { CREATE_RESOURCE, JOB_MONITORING_STATUS } from '../../../utils/consts';
-import { expandTableRow, formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
+import {
+    expandTableRow,
+    formatDateWithTime,
+    jobMonitoringStatusMapping,
+    sortListOfDict
+} from '../../../utils/utilityFunctions';
 import { useEffect, useState } from 'react';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -18,10 +23,15 @@ const SubJobTable = ({ jobId, statusType }: any) => {
     const [subTaskList, setSubTaskList] = useState<any>({});
     const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
     const subJobsDataLoading = useAppSelector(state => state.jobMonitoring.subJobsDataLoading);
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     useEffect(() => {
-        setSubTaskList(subJobsData?.subJobs);
-    }, [subJobsData]);
+        let sortedSubTaskList = subJobsData?.subJobs;
+        if (isDemoMode) {
+            sortedSubTaskList = sortListOfDict(subJobsData?.subJobs, 'startTime', false);
+        }
+        setSubTaskList(sortedSubTaskList);
+    }, [subJobsData, isDemoMode]);
 
     const ExpandedRow = ({ rowData }: any) => {
         return <TaskTable taskList={rowData?.subJobs || []} />;

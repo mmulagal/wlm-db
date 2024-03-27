@@ -63,7 +63,10 @@ const SqlServerInstanceInfo = Type.Object({
         Type.Array(
             Type.Object({
                 type: Type.String({ description: 'Underlying storage types of the SQL Server instance' }),
-                id: Type.String()
+                id: Type.String({ description: 'ID of the storage' }),
+                svmId: Type.Optional(
+                    Type.String({ description: 'ID of Storage Virtual Machine, if underlying storage is FSx ONTAP' })
+                )
             })
         )
     ),
@@ -103,7 +106,9 @@ const DiscoverMsSqlResponseBody = Type.Object({
     )
 });
 
-const ManageMsSqlResponseBody = Type.Object({});
+const ManageMsSqlResponseBody = Type.Object({
+    resourceId: Type.String({ description: 'ID of the managed resource' })
+});
 
 type DiscoverMsSqlResponseBodyType = Static<typeof DiscoverMsSqlResponseBody>;
 type SqlServerInstanceInfoType = Static<typeof SqlServerInstanceInfo>;

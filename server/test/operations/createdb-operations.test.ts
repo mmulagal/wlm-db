@@ -16,6 +16,7 @@ import '../simulator/scopes/opentelemetry-scope';
 import '../simulator/scopes/aws/ssm-scope';
 import { ACCOUNT_ID } from '../../src/utils/consts';
 import { createResource, deleteResource } from '../../src/lib/database/db';
+import createDbResponse from '../simulator/responses/workload/createdb-response.json';
 
 const createDBRequest = {
     databaseName: 'tempdb8',
@@ -86,7 +87,7 @@ describe('Create database operations', () => {
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1'
         );
-        expect(resp).toBeDefined();
+        expect(resp).toEqual(createDbResponse.getDriveInfoResponseData);
     });
 
     it('Create user databases in a server', async () => {

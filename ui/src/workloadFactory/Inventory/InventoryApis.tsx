@@ -310,20 +310,157 @@ const InventoryApis = () => {
         }
     }, [discoveredHostData]);
 
+    // This function is used to find nodes available in managed or unmanaged tab. In that case Partner node will be added in removeRows list.
+    const getPrimaryClusterNode = (newDiscoveredHostData: any, removeRows: any, managedHostsList: string[]) => {
+        let testedNodes: string[] = [];
+        newDiscoveredHostData.map((host: any) => {
+            if (host?.nodesList) {
+                if (testedNodes.includes(host?.ec2InstanceId)) {
+                    return;
+                }
+
+                // To find partner node in a cluster
+                const partnerNode = newDiscoveredHostData.filter((perHost: any) => {
+                    const isSameCluster = host?.nodesList.filter((val: any) => {
+                        return (
+                            perHost?.ec2InstanceId !== host?.ec2InstanceId &&
+                            perHost?.nodesList &&
+                            perHost.nodesList.includes(val)
+                        );
+                    });
+                    if (isSameCluster && isSameCluster.length > 0) {
+                        return perHost;
+                    } else {
+                        return;
+                    }
+                })?.[0];
+
+                if (!partnerNode) {
+                    return;
+                }
+
+                testedNodes.push(host?.ec2InstanceId);
+                testedNodes.push(partnerNode?.ec2InstanceId);
+
+                // To check if node or partner node is already in managed host. Ignore other node if is already available in Managed host.
+                const isManagedNode1 = managedHostsList.includes(host?.ec2InstanceId);
+                const isManagedNode2 = managedHostsList.includes(partnerNode?.ec2InstanceId);
+
+                if ((isManagedNode1 && isManagedNode2) || (isManagedNode1 && !isManagedNode2)) {
+                    removeRows.push(partnerNode?.ec2InstanceId);
+                    return;
+                } else if (!isManagedNode1 && isManagedNode2) {
+                    removeRows.push(host?.ec2InstanceId);
+                    return;
+                }
+
+                // To check if node or partner node is moved to managed host. Ignore other node if is already moved in Managed host.
+                const managedHostNode1 = movedToManagedHost.find(
+                    (perHost: any) => perHost?.instanceId === host?.ec2InstanceId
+                );
+                const managedHostNode2 = movedToManagedHost.find(
+                    (perHost: any) => perHost?.instanceId === partnerNode?.ec2InstanceId
+                );
+
+                if ((managedHostNode1 && managedHostNode2) || (managedHostNode1 && !managedHostNode2)) {
+                    removeRows.push(partnerNode?.ec2InstanceId);
+                    return;
+                } else if (!managedHostNode1 && managedHostNode2) {
+                    removeRows.push(host?.ec2InstanceId);
+                    return;
+                }
+
+                // To check if node or partner node is available to unmanaged host. Ignore other node if is already available in UnManaged host.
+                const isWindowAuthenticationNode1 = host?.sqlServerInstances?.[0]?.windowsAuthentication;
+                const isSqlAuthenticationNode1 = host?.sqlServerInstances?.[0]?.sqlServerAuthentication;
+                let fsxCredentialValidationFailedNode1 = host?.sqlServerInstances?.[0]?.storage?.find(
+                    (item: any) => item.type === DETECT_HOST_VAR.FSXN && !fsxCredentialStatusObj[item.id]
+                );
+                const unmanagedHost1 = !(
+                    host.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED ||
+                    (!isWindowAuthenticationNode1 && !isSqlAuthenticationNode1) ||
+                    fsxCredentialValidationFailedNode1
+                );
+
+                const isWindowAuthenticationNode2 = partnerNode?.sqlServerInstances?.[0]?.windowsAuthentication;
+                const isSqlAuthenticationNode2 = partnerNode?.sqlServerInstances?.[0]?.sqlServerAuthentication;
+                let fsxCredentialValidationFailedNode2 = partnerNode?.sqlServerInstances?.[0]?.storage?.find(
+                    (item: any) => item.type === DETECT_HOST_VAR.FSXN && !fsxCredentialStatusObj[item.id]
+                );
+                const unmanagedHost2 = !(
+                    partnerNode.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED ||
+                    (!isWindowAuthenticationNode2 && !isSqlAuthenticationNode2) ||
+                    fsxCredentialValidationFailedNode2
+                );
+
+                if ((unmanagedHost1 && unmanagedHost2) || (unmanagedHost1 && !unmanagedHost2)) {
+                    removeRows.push(partnerNode?.ec2InstanceId);
+                    return;
+                } else if (!unmanagedHost1 && unmanagedHost2) {
+                    removeRows.push(host?.ec2InstanceId);
+                    return;
+                }
+
+                // To check if node or partner node is moved to unmanaged host. Ignore other node if is already moved to UnManaged host.
+                const unmanagedHostNode1 = movedToUnmanagedHost.includes(host?.ec2InstanceId);
+                const unmanagedHostNode2 = movedToUnmanagedHost.includes(partnerNode?.ec2InstanceId);
+                if ((unmanagedHostNode1 && unmanagedHostNode2) || (unmanagedHostNode1 && !unmanagedHostNode2)) {
+                    removeRows.push(partnerNode?.ec2InstanceId);
+                    return;
+                } else if (!unmanagedHostNode1 && unmanagedHostNode2) {
+                    removeRows.push(host?.ec2InstanceId);
+                    return;
+                }
+
+                // In case if both nodes are in Undetected Tab than it needs to show both.
+            }
+        });
+        return;
+    };
+
     useEffect(() => {
         if (discoveredHostData && discoveredHostData.length) {
+            let newDiscoveredHostData: any = [];
+            let managedHostsList: string[] = [];
+            databaseHostsData?.map(managedHost => {
+                if (managedHost?.topology?.ec2Details?.[0]?.id) {
+                    managedHostsList.push(managedHost?.topology?.ec2Details?.[0]?.id);
+                }
+            });
+            discoveredHostData.map((host: any) => {
+                if (host?.sqlServerInstances) {
+                    // sort sqlServerInstances so every time it picks first running
+                    if (host?.sqlServerInstances && host?.sqlServerInstances?.length > 1) {
+                        host = {
+                            ...host,
+                            sqlServerInstances: sortListOfDict(host?.sqlServerInstances, 'sqlServerState')
+                        };
+                    }
+                    let perHostNodesList: any = [];
+                    host?.sqlServerInstances?.map((perSql: any) => {
+                        if (perSql?.sqlServerNodes) {
+                            perHostNodesList = [...perHostNodesList, ...perSql?.sqlServerNodes];
+                        }
+                    });
+                    host = { ...host, nodesList: perHostNodesList };
+                }
+                newDiscoveredHostData.push(host);
+            });
+
+            let removeRows: any[] = [];
+
+            // This function is used to find nodes available in managed or unmanaged tab. In that case Partner node will be added in removeRows list.
+            getPrimaryClusterNode(newDiscoveredHostData, removeRows, managedHostsList);
+
             let movedManagedHosts: any[] = [];
             let unManagedHosts: any[] = [];
             let unIdentifiableHosts: any[] = [];
-            discoveredHostData.map((host: any) => {
-                if (host?.sqlServerInstances && host?.sqlServerInstances?.length > 1) {
-                    host = { ...host, sqlServerInstances: sortListOfDict(host?.sqlServerInstances, 'sqlServerState') };
+            newDiscoveredHostData.map((host: any) => {
+                if (removeRows.includes(host?.ec2InstanceId)) {
+                    return;
                 }
                 const isWindowAuthentication = host?.sqlServerInstances?.[0]?.windowsAuthentication;
                 const isSqlAuthentication = host?.sqlServerInstances?.[0]?.sqlServerAuthentication;
-                const isManaged = databaseHostsData?.find(managedHost =>
-                    managedHost?.topology?.ec2Details?.find(instances => instances.id === host?.ec2InstanceId)
-                );
                 let fsxCredentialValidationFailed = host?.sqlServerInstances?.[0]?.storage?.find(
                     (item: any) => item.type === DETECT_HOST_VAR.FSXN && !fsxCredentialStatusObj[item.id]
                 );
@@ -347,7 +484,7 @@ const InventoryApis = () => {
                 ) {
                     unIdentifiableHosts.push(host);
                 } else {
-                    if (!isManaged) {
+                    if (!managedHostsList.includes(host?.ec2InstanceId)) {
                         unManagedHosts.push(host);
                     }
                 }
