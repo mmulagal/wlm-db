@@ -316,9 +316,9 @@ async function getStorageDataUsingCloudwatch(
         }
         return {
             size: numeral(`${totalSize}GiB`).value() || 0,
-            used: totalUsed,
-            spaceSavings: totalSpaceSavings,
-            spaceSavingsPercentage: totalSpaceSavingsPercentage
+            used: totalUsed || 0,
+            spaceSavings: totalSpaceSavings || 0,
+            spaceSavingsPercentage: totalSpaceSavingsPercentage || 0
         };
     } catch (error) {
         const errorMessage = `Error while getting storage savings for resource ${resourceDetail} ${JSON.stringify(
