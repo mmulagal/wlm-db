@@ -5,10 +5,16 @@ import { Button, DsTypography } from '@netapp/design-system';
 import useResize from '../../../common/hooks/useResize';
 import { useNavigate } from 'react-router-dom';
 
+import { useDispatch } from 'react-redux';
+import { setShowBanner } from '../../../store/workloadFactory/sandboxSlice';
+
 const SandboxHeader = () => {
     const windowSize = useResize();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+
     const handleBanner = () => {
+        dispatch(setShowBanner(true));
         localStorage.setItem('showBanner', JSON.stringify(true));
     };
     return (
