@@ -142,14 +142,16 @@ async function getDriveInfoFromNodes(
             isNetappDrive: item.Manufacturer?.includes('NETAPP') ?? false,
             isDriveClustered: item.Owner?.includes('SQL Server') ?? false
         })),
-        ...standbyNodeExistingDrives
-            .filter((item: any) => !activeNodeExistingDrives.some(obj => obj.LogicalDisk === item))
-            .map((item: string) => ({
-                driveLetter: item.charAt(0),
-                availableSize: 0,
-                isNetappDrive: false,
-                isDriveClustered: false
-            }))
+        ...(standbyNodeExistingDrives !== undefined && sqlDeploymentType === 'FCI'
+            ? standbyNodeExistingDrives
+                  .filter((item: any) => !activeNodeExistingDrives.some(obj => obj.LogicalDisk === item))
+                  .map((item: string) => ({
+                      driveLetter: item.charAt(0),
+                      availableSize: 0,
+                      isNetappDrive: false,
+                      isDriveClustered: false
+                  }))
+            : [])
     ];
 
     // Constructing list of available drive letters

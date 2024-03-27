@@ -112,6 +112,7 @@ function generateDeploymentParams(
             }
         };
     }
+
     return params;
 }
 
@@ -401,6 +402,21 @@ function convertGiBToBytes(sizeInGiB: number) {
     return sizeInGiB * 1024 * 1024 * 1024;
 }
 
+function splitDomainUsername(input: string) {
+    // Check for domainname/user
+    const domainregex1 = /(?<domain>.*)[\\|/](?<username>.*)$/;
+    // Check for user@domainname
+    const domainregex2 = /(?<username>.*)@(?<domain>.*)$/;
+
+    const details = domainregex1.test(input)
+        ? domainregex1.exec(input)?.groups || { domain: '', username: input }
+        : domainregex2.test(input)
+        ? domainregex2.exec(input)?.groups || { domain: '', username: input }
+        : { domain: '', username: input };
+
+    return details;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -428,5 +444,6 @@ export {
     getResourceNameFromTags,
     getArtifactsRegionBucketName,
     sqlResponseParsing,
-    convertGiBToBytes
+    convertGiBToBytes,
+    splitDomainUsername
 };

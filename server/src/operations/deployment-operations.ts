@@ -73,7 +73,8 @@ import {
     FSX_VOL_THROUGHPUT,
     FSX_IOPS,
     DATABASE_MIN_LUN_SIZE_IN_GIB,
-    DATABASE_MAX_LUN_SIZE_IN_GIB
+    DATABASE_MAX_LUN_SIZE_IN_GIB,
+    TEMPLATE_USERNAME_MAPPING
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -81,7 +82,8 @@ import {
     derivePropertiesFromARN,
     generateDeploymentParams,
     isNetworkConfigurationViolated,
-    sleep
+    sleep,
+    splitDomainUsername
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
@@ -152,7 +154,6 @@ async function formatTemplateParameters(
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
-
     const routeTables =
         sqlConfiguration.sqlDeploymentMode === STANDALONE
             ? [networkConfiguration.routeTable1Id!]
@@ -203,6 +204,24 @@ async function formatTemplateParameters(
             });
         }
     });
+
+    const adUsernameDetails = splitDomainUsername(adConfiguration.domainUsername);
+    const fsxUsernameDetails = splitDomainUsername(fsxConfiguration.fsxUsername);
+    const sqlUsernameDetails = splitDomainUsername(sqlConfiguration.serviceAccountName);
+    templateParams.push(
+        {
+            ParameterKey: TEMPLATE_USERNAME_MAPPING.DomainAdminUser,
+            ParameterValue: adUsernameDetails?.username || adConfiguration.domainUsername
+        },
+        {
+            ParameterKey: TEMPLATE_USERNAME_MAPPING.FSxAdminUsername,
+            ParameterValue: fsxUsernameDetails?.username || fsxConfiguration.fsxUsername
+        },
+        {
+            ParameterKey: TEMPLATE_USERNAME_MAPPING.SQLServiceAccountName,
+            ParameterValue: sqlUsernameDetails?.username || sqlConfiguration.serviceAccountName
+        }
+    );
 
     const clubbedParamList = {
         ...networkConfiguration,
