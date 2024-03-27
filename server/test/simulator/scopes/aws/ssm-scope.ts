@@ -170,6 +170,12 @@ const getPerformanceMetrics = {
     ]
 };
 
+const getPerformanceWithLatencyMetrics = {
+    commands: [
+        "sqlcmd -Q \"SET NOCOUNT ON; DECLARE @SQLRestartDateTime Datetime\n    DECLARE @TimeInSeconds Float\n    SELECT @SQLRestartDateTime = create_date FROM sys.databases WHERE database_id = 2\n    SET @TimeInSeconds = Datediff(s,@SQLRestartDateTime,GetDate())\n    SELECT   \n    READ_IOPS,\n    WRITE_IOPS,\n    READ_THROUGHPUT,\n    WRITE_THROUGHPUT,\n    READ_LATENCY,\n    WRITE_LATENCY,\n    SERVER_IO_LATENCY,\n    [assessment] = \n            CASE \n                WHEN SERVER_IO_LATENCY = 0 THEN 'N/A' \n                ELSE \n                    CASE WHEN SERVER_IO_LATENCY <= 1 THEN 'Excellent ( <=1 ms )'\n                         WHEN SERVER_IO_LATENCY < 5 THEN 'Very good ( <5 ms )'\n                         WHEN SERVER_IO_LATENCY < 10 THEN 'Good ( <10 ms )'\n                         WHEN SERVER_IO_LATENCY < 20 THEN 'Poor ( <20 ms )'\n                         WHEN SERVER_IO_LATENCY < 100 THEN 'Bad ( <100 ms )'\n                         WHEN SERVER_IO_LATENCY < 500 THEN 'Very bad ( <500 ms )'\n                         WHEN SERVER_IO_LATENCY >= 500 THEN 'Awful ( >=500 ms )'\n                    END \n            END\nFROM (\n    SELECT   \n        ROUND(CAST(SUM(num_of_reads) AS FLOAT)/@TimeInSeconds,2) AS READ_IOPS,\n        ROUND(CAST(SUM(num_of_writes) AS FLOAT)/@TimeInSeconds,2) AS WRITE_IOPS,\n        ROUND(CAST(SUM(num_of_bytes_read) AS FLOAT)/@TimeInSeconds/1000000,3) AS READ_THROUGHPUT,\n        ROUND(CAST(SUM(num_of_bytes_written) AS FLOAT)/@TimeInSeconds/1000000,3) AS WRITE_THROUGHPUT,\n        CASE WHEN SUM(num_of_reads) = 0 THEN 0 ELSE ROUND((SUM(io_stall_read_ms) / SUM(num_of_reads)), 2) END AS READ_LATENCY,\n        CASE WHEN SUM(num_of_writes) = 0 THEN 0 ELSE ROUND((SUM(io_stall_write_ms) / SUM(num_of_writes)), 2) END AS WRITE_LATENCY,\n        CASE WHEN (SUM(num_of_reads) = 0 AND SUM(num_of_writes) = 0) THEN 0 ELSE ROUND((CAST (SUM(io_stall) AS FLOAT) / (SUM(num_of_reads) + SUM(num_of_writes))), 2) END\n        AS SERVER_IO_LATENCY\n    FROM sys.dm_io_virtual_file_stats(null,null)\n) AS subquery  FOR JSON PATH\" -y 0"
+    ]
+};
+
 const getServerInstallDate = {
     commands: [
         "sqlcmd -Q \"SET NOCOUNT ON; SELECT create_date AS creationDate FROM sys.server_principals WITH (NOLOCK) WHERE name = N'NT AUTHORITY\\SYSTEM' OR name = N'NT AUTHORITY\\NETWORK SERVICE' FOR JSON PATH\" -y 0"
@@ -198,9 +204,15 @@ const getDefaultDriveLetters = {
     ]
 };
 
-const getClusterDriveLetters = {
+const getActiveNodeDriveDetails = {
     commands: [
-        "\n$diskqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_Disk'\n$partqry = 'ASSOCIATORS OF {{{0}}} WHERE ResultClass=MSCluster_DiskPartition'\n\n$clusterDrivesDetail = Get-ClusterResource | Where-Object { $_.ResourceType.Name -eq 'Physical Disk' } `\n  | ForEach-Object { Get-WmiObject MSCluster_Resource -Namespace root/mscluster -Filter \"Name='$_'\" } `\n  | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($diskqry -f $_) } `\n  | ForEach-Object { Get-WmiObject -Namespace root/mscluster -Query ($partqry -f $_) } `\n  | Select-Object  Path, VolumeLabel\n\n$clusterDriveInfo = foreach ($clusterDriveDetails in $clusterDrivesDetail) {\n    $driveName = $clusterDriveDetails.VolumeLabel\n    $driveOwnerGroup = Get-ClusterResource | Where-Object { $_.Name -eq $driveName } | Select-Object -ExpandProperty OwnerGroup\n    $drivePath = $clusterDriveDetails.Path\n\n    [PSCustomObject]@{\n        driveLetter = $drivePath\n        owner = $driveOwnerGroup \n    }\n}\n\n$clusterDriveInfoJson = $clusterDriveInfo | Select-Object -Property driveLetter, @{Name='owner'; Expression={$_.owner.Name}} | ConvertTo-Json\nWrite-Output $clusterDriveInfoJson\n"
+        '$disks = Get-wmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"\n$results = @()\n$deploymentType = \'FCI\'\nforeach ($disk in $disks) {\n    $object = New-Object PSObject -Property @{\n        "Manufacturer" = $disk.Model\n    }\n    $partitions = get-wmiObject -Query "ASSOCIATORS OF {Win32_DiskDrive.DeviceID=\'$($disk.DeviceID)\'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"\n    foreach ($partition in $partitions) {\n        $logicalDisks = get-wmiObject -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID=\'$($partition.DeviceID)\'} WHERE AssocClass = Win32_LogicalDiskToPartition"\n        foreach ($logicalDisk in $logicalDisks) {\n            $object | Add-Member -MemberType NoteProperty -Name "LogicalDisk" -Value $logicalDisk.DeviceID\n            $object | Add-Member -MemberType NoteProperty -Name "FileSystem" -Value $logicalDisk.FreeSpace\n            if($deploymentType -eq \'FCI\'){\n                $clusterResource = Get-WmiObject -Namespace "root\\MSCluster" -Class "MSCluster_Resource" | Where-Object {$_.Name -eq $logicalDisk.VolumeName}\n                $object | Add-Member -MemberType NoteProperty -Name "Owner" -Value $clusterResource.OwnerGroup\n            }\n        }\n    }\n    $results += $object\n}\n \n$results | convertTo-json\n'
+    ]
+};
+
+const getStandbyNodeDriveList = {
+    commands: [
+        '$driveLetters = Get-WmiObject Win32_Volume | Select-Object -ExpandProperty DriveLetter\n$driveLettersObject = [PSCustomObject]@{\n    DriveLetters = $driveLetters\n}\n$driveLettersObject | ConvertTo-Json\n'
     ]
 };
 
@@ -307,7 +319,7 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse)
     .on(SendCommandCommand, { Parameters: getStorageParams })
     .resolves(listSendCommandCommandResponse.storageCommandResponse)
-    .on(SendCommandCommand, { Parameters: getPerformanceMetrics })
+    .on(SendCommandCommand, { Parameters: getPerformanceWithLatencyMetrics })
     .resolves(listSendCommandCommandResponse.getPerformancemetricsCommandResponse)
     .on(SendCommandCommand, { Parameters: getServerInstallDate })
     .resolves(listSendCommandCommandResponse.getServerInstallDateCommandResponse)
@@ -315,12 +327,12 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getServerEdition)
     .on(SendCommandCommand, { Parameters: getHostAndSqlServerInfo })
     .resolves(listSendCommandCommandResponse.getHostAndSqlServerInfoResponse)
-    .on(SendCommandCommand, { Parameters: getDriveInfo })
-    .resolves(listSendCommandCommandResponse.getDriveInfoCommandResponse)
+    .on(SendCommandCommand, { Parameters: getActiveNodeDriveDetails })
+    .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails)
+    .on(SendCommandCommand, { Parameters: getStandbyNodeDriveList })
+    .resolves(listSendCommandCommandResponse.getStandbyNodeDriveList)
     .on(SendCommandCommand, { Parameters: getDefaultDriveLetters })
     .resolves(listSendCommandCommandResponse.getDefaultDriveLettersCommandResponse)
-    .on(SendCommandCommand, { Parameters: getClusterDriveLetters })
-    .resolves(listSendCommandCommandResponse.getClusterDriveLetters)
     .on(SendCommandCommand, { Parameters: createDatabase })
     .resolves(listSendCommandCommandResponse.createDBResponse)
     .on(SendCommandCommand, { Parameters: configureLuns })
@@ -399,8 +411,10 @@ ssmMock
     .resolves(getCommandInvocationResponse.serverEditionResponse)
     .on(GetCommandInvocationCommand, { Parameters: '7f937c8c-3f95-460b-ad99-788b354bffa8' })
     .resolves(getCommandInvocationResponse.getHostAndSqlServerInfoResponse)
-    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getDriveInfo' })
-    .resolves(getCommandInvocationResponse.getDriveInfoResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getActiveNodeDriveDetails' })
+    .resolves(getCommandInvocationResponse.getActiveNodeDriveDetailsResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getStandbyNodeDriveList' })
+    .resolves(getCommandInvocationResponse.getStandbyNodeDriveListResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getDefaultDriveLetters' })
     .resolves(getCommandInvocationResponse.getDefaultDrivesResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getClusterDriveLetters' })
