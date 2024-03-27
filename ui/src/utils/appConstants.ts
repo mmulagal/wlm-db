@@ -703,7 +703,7 @@ export const GENERAL = {
     BLOCKED_BY_PERMISSION_BOUNDARY: 'Blocked',
     MISSING_PERMISSION: 'Missing',
     MISSING_AND_BLOCKED_PERMISSIONS: 'Missing & blocked permissions',
-    UNSUPPORTED_PERMISSIONS: 'Unsupported permissions'
+    UNSUPPORTED_PERMISSIONS: 'Missing permissions'
 };
 
 export const CODE_VIEWER = {
