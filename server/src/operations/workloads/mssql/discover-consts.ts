@@ -93,7 +93,7 @@ const HOST_AND_SQL_INFO_PS1 = [
                       New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $_ }
                     }
                   } else { 
-                            $smbShares = Get-SMBMapping | select "RemotePath" 
+                            $smbShares =   Get-SMBMapping | Where { $sqlDrives.Contains($_.LocalPath.Trim(':')) } | Select 'RemotePath' 
                             $smbShares | ForEach-Object {
                                 New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $_.RemotePath 
                                 }

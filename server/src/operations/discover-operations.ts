@@ -81,7 +81,7 @@ async function getHostAndSqlServerInfo(
         Filters: [
             { Name: 'platform', Values: ['windows'] },
             { Name: 'architecture', Values: ['x86_64'] },
-            { Name: 'instance-state-name', Values: [InstanceStateName.running] }
+            { Name: 'instance-state-name', Values: [InstanceStateName.running] },
         ],
         MaxResults: pageSize,
         NextToken: nextToken
@@ -194,16 +194,11 @@ async function getHostAndSqlServerInfo(
         // Fetch windows mount points from FSxW
         fsxList
             .filter(fsx => fsx.FileSystemType === FileSystemType.WINDOWS)
-            .map(fsx =>
-                fsIdWithDeploymentType.set(fsx.FileSystemId!, {
-                    deploymentType: fsx.WindowsConfiguration?.DeploymentType,
-                    subnetIds: fsx.SubnetIds!,
-                    windowsMountEndpoint: [
-                        `\\\\${fsx.WindowsConfiguration?.RemoteAdministrationEndpoint}`,
-                        `\\\\${fsx.WindowsConfiguration?.PreferredFileServerIp}`
-                    ]
-                })
+            .map(fsx =>  {
+                endPointIpWithFsxId.set(`\\\\${fsx.WindowsConfiguration?.RemoteAdministrationEndpoint}`, fsx.FileSystemId!),
+                endPointIpWithFsxId.set(`\\\\${fsx.WindowsConfiguration?.PreferredFileServerIp}`, fsx.FileSystemId!) }
             );
+
         api1EndTime = performance.now();
         logger.info(`API1Performance: Endpoint/FSx/Deployment map creation time: ${api1EndTime - api1StartTime}ms`);
 
@@ -353,27 +348,24 @@ async function getHostAndSqlInfoFromPsOutput(
                                 zones: compact(subnetIds?.map(subnetId => subnetListMap.get(subnetId))),
                                 ids: subnetIds?.join()
                             });
+                        } else {
+                            // Add FSxW details
+                            // Match get-smbmapping with FSxW (RemoteAdministrationEndpoint and PreferredFileServerIp)
+                            // let fsxEndpoints = ['//ip', '//fsxid]
+                            // SerialNumberOrScsiTarget = ['//ip/share', '//fsxid/share]
+                            const fsxEndpoints = Object.keys(endPointIpWithFsxId)
+                            const matchedEndpoints = fsxEndpoints.filter((value: string) =>
+                            di?.SerialNumberOrScsiTarget.includes(value)
+                            );
+                            if (! isEmpty(matchedEndpoints)) {
+                                storageTypes.push({
+                                    type: STORAGE_TYPE.FSXW,
+                                    id: endPointIpWithFsxId.get(matchedEndpoints[0])
+                                });
+                            }
+                            
                         }
                     }
-
-                    // Add FSxW details
-                    // Match get-smbmapping with FSxW (RemoteAdministrationEndpoint and PreferredFileServerIp)
-                    // let windowsFsxMountsPS = ['//ip/share', '//fsxid/share]
-                    // fsIdWithDeploymentType = {'fsxid', {windowsMountEndpoint:['//fsxid']}
-                    const windowsFsxMountsPS = driveInfo.map(
-                        (di: { SerialNumberOrScsiTarget: any }) => di.SerialNumberOrScsiTarget
-                    );
-                    fsIdWithDeploymentType.forEach((details: DeployType, fsxId: string) => {
-                        const matchedPoints = details.windowsMountEndpoint?.filter(value =>
-                            windowsFsxMountsPS.includes(value)
-                        );
-                        if (matchedPoints) {
-                            storageTypes.push({
-                                type: STORAGE_TYPE.FSXW,
-                                id: fsxId
-                            });
-                        }
-                    });
 
                     api1EndTime = performance.now();
                     logger.info(
