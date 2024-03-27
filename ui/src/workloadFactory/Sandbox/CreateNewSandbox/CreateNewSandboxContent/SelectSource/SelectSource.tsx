@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { AccordionCard, AccordionCardContent, DsTypography, SelectField } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
@@ -56,14 +56,34 @@ const SelectSource = () => {
         return options;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    useEffect(() => {
+        if (
+            selectedSourceHost === null &&
+            selectedSourceInstance === null &&
+            selectedSourceDatabase === null &&
+            generateSourceInstance &&
+            generateSourceDatabase &&
+            generateHostName
+        ) {
+            dispatch(setSelectedSourceHost(generateHostName[0]));
+            dispatch(setSelectedSourceInstance(generateSourceInstance[0]));
+            dispatch(setSelectedSourceDatabase(generateSourceDatabase[0]));
+        }
+    }, [generateSourceInstance, generateSourceDatabase, generateHostName]);
     const setHeader = () => {
         return (
-            <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
-                <div>{'Source host: host name'}</div>
+            <DsTypography
+                variant="Regular_14"
+                title={`${selectedSourceHost ? selectedSourceHost.label : ''}, ${
+                    selectedSourceInstance ? selectedSourceInstance.label : ''
+                }, ${selectedSourceDatabase ? selectedSourceDatabase.label : ''}`}
+                className={CommonStyles.setHeaderStyle}
+            >
+                <div>Source host: {selectedSourceHost ? selectedSourceHost.label : ''}</div>
                 <div className={CommonStyles.separator} />
-                <div>Source instance: instance name</div>
+                <div>Source instance: {selectedSourceInstance ? selectedSourceInstance.label : ''}</div>
                 <div className={CommonStyles.separator} />
-                <div>Source database: database name</div>
+                <div>Source database: {selectedSourceDatabase ? selectedSourceDatabase.label : ''}</div>
             </DsTypography>
         );
     };
@@ -78,60 +98,8 @@ const SelectSource = () => {
             >
                 <AccordionCardContent>
                     <DsTypography>
-                        {windowSize.width > 1500 && (
-                            <>
-                                <div className={styles.firstRow}>
-                                    <SelectField
-                                        label={'Source host'}
-                                        isClearable={false}
-                                        defaultValue={selectedSourceHost ? selectedSourceHost : [generateHostName[0]]}
-                                        onChange={(selectedOptions: any): void => {
-                                            dispatch(setSelectedSourceHost(selectedOptions));
-                                        }}
-                                        isSearchable={true}
-                                        options={generateHostName}
-                                        className={styles.selectField}
-                                    />
-
-                                    <SelectField
-                                        label={'Source Instance'}
-                                        isClearable={false}
-                                        defaultValue={
-                                            selectedSourceInstance
-                                                ? selectedSourceInstance
-                                                : [generateSourceInstance[0]]
-                                        }
-                                        onChange={(selectedOptions: any): void => {
-                                            dispatch(setSelectedSourceInstance(selectedOptions));
-                                        }}
-                                        isSearchable={true}
-                                        options={generateSourceInstance}
-                                        className={styles.selectField}
-                                    />
-                                </div>
-
-                                <div className={styles.secondRow}>
-                                    <SelectField
-                                        label={'Source database'}
-                                        isClearable={false}
-                                        defaultValue={
-                                            selectedSourceDatabase
-                                                ? selectedSourceDatabase
-                                                : [generateSourceDatabase[0]]
-                                        }
-                                        onChange={(selectedOptions: any): void => {
-                                            dispatch(setSelectedSourceDatabase(selectedOptions));
-                                        }}
-                                        isSearchable={true}
-                                        options={generateSourceDatabase}
-                                        className={styles.selectField}
-                                    />
-                                </div>
-                            </>
-                        )}
-
-                        {windowSize.width <= 1500 && (
-                            <div className={styles.smallFirstRow}>
+                        <>
+                            <div className={windowSize.width > 1500 ? styles.firstRow : styles.firstRowSmallScreen}>
                                 <SelectField
                                     label={'Source host'}
                                     isClearable={false}
@@ -158,21 +126,45 @@ const SelectSource = () => {
                                     className={styles.selectField}
                                 />
 
-                                <SelectField
-                                    label={'Source database'}
-                                    isClearable={false}
-                                    defaultValue={
-                                        selectedSourceDatabase ? selectedSourceDatabase : [generateSourceDatabase[0]]
-                                    }
-                                    onChange={(selectedOptions: any): void => {
-                                        dispatch(setSelectedSourceDatabase(selectedOptions));
-                                    }}
-                                    isSearchable={true}
-                                    options={generateSourceDatabase}
-                                    className={styles.selectField}
-                                />
+                                {windowSize.width <= 1500 && (
+                                    <SelectField
+                                        label={'Source database'}
+                                        isClearable={false}
+                                        defaultValue={
+                                            selectedSourceDatabase
+                                                ? selectedSourceDatabase
+                                                : [generateSourceDatabase[0]]
+                                        }
+                                        onChange={(selectedOptions: any): void => {
+                                            dispatch(setSelectedSourceDatabase(selectedOptions));
+                                        }}
+                                        isSearchable={true}
+                                        options={generateSourceDatabase}
+                                        className={styles.selectField}
+                                    />
+                                )}
                             </div>
-                        )}
+
+                            {windowSize.width > 1500 && (
+                                <div className={styles.secondRow}>
+                                    <SelectField
+                                        label={'Source database'}
+                                        isClearable={false}
+                                        defaultValue={
+                                            selectedSourceDatabase
+                                                ? selectedSourceDatabase
+                                                : [generateSourceDatabase[0]]
+                                        }
+                                        onChange={(selectedOptions: any): void => {
+                                            dispatch(setSelectedSourceDatabase(selectedOptions));
+                                        }}
+                                        isSearchable={true}
+                                        options={generateSourceDatabase}
+                                        className={styles.selectField}
+                                    />
+                                </div>
+                            )}
+                        </>
                     </DsTypography>
                 </AccordionCardContent>
             </AccordionCard>

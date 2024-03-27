@@ -5,7 +5,10 @@ export const initialSandboxState: any = {
     selectedSourceInstance: null,
     selectedSourceDatabase: null,
     selectedMount: 'Auto-assign mount point',
-    mountPath: ''
+    mountPath: '',
+    selectedTargetHost: null,
+    selectedTargetInstance: null,
+    selectedTargetDatabase: 'DBname_sandbox'
 };
 
 const sandboxSlice = createSlice({
@@ -26,6 +29,15 @@ const sandboxSlice = createSlice({
         },
         setMountPath: (state, action: PayloadAction<any>) => {
             state.mountPath = action.payload;
+        },
+        setSelectedTargetHost: (state, action: PayloadAction<any>) => {
+            state.selectedTargetHost = action.payload;
+        },
+        setSelectedTargetInstance: (state, action: PayloadAction<any>) => {
+            state.selectedTargetInstance = action.payload;
+        },
+        setSelectedTargetDatabase: (state, action: PayloadAction<any>) => {
+            state.selectedTargetDatabase = action.payload;
         }
     }
 });
@@ -35,7 +47,10 @@ export const {
     setMountPath,
     setSelectedMount,
     setSelectedSourceInstance,
-    setSelectedSourceDatabase
+    setSelectedSourceDatabase,
+    setSelectedTargetHost,
+    setSelectedTargetInstance,
+    setSelectedTargetDatabase
 } = sandboxSlice.actions;
 
 export default sandboxSlice;

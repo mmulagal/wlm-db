@@ -8,6 +8,12 @@
         gap: 24px;
     }
 
+    .firstRowSmallScreen {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
     .secondRow {
         margin-top: 24px;
     }

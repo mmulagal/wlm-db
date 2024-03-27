@@ -2,6 +2,29 @@
     .headerSetter {
         left: 0%;
     }
+
+    .firstRow {
+        display: flex;
+        gap: 24px;
+    }
+
+    .firstRowSmallScreen {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .secondRow {
+        margin-top: 24px;
+    }
+
+    .selectField {
+        width: 395px;
+    }
+
+    .keyField {
+        width: 395px;
+    }
 }
 
 @media screen and (max-width: 1500px) {
