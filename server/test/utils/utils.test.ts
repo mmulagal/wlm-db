@@ -7,7 +7,8 @@ import {
     checkAndRetrieveJsonObject,
     generateHash,
     getFsxArn,
-    isNetworkConfigurationViolated
+    isNetworkConfigurationViolated,
+    splitDomainUsername
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
@@ -65,5 +66,9 @@ describe(' Secrets Manager string', () => {
     it('Generate Fsx ARN', async () => {
         const response = await isNetworkConfigurationViolated(networkConfiguration, FCI);
         expect(response.isViolated).toBe(false);
+    });
+    it('Split domain from username', async () => {
+        const response = splitDomainUsername('thisdomain\\thatuser');
+        expect(response.username).toBe('thatuser');
     });
 });

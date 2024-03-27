@@ -538,6 +538,12 @@ const MASTER_STACK_TIMEOUT_MINUTES = 240;
 const FSX_SSD_MIN_SIZE = 1024; // in GiB
 const FSX_SSD_MAX_SIZE = 211106; // in GiB
 
+const TEMPLATE_USERNAME_MAPPING: Record<string, string> = {
+    DomainAdminUser: 'DomainAdminUser',
+    FSxAdminUsername: 'FSxAdminUsername',
+    SQLServiceAccountName: 'SQLServiceAccountName'
+};
+
 const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     vpcId: 'VPCID',
     vpcCidr: 'VPCCIDR',
@@ -548,7 +554,6 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     routeTable2Id: 'RouteTable2Id',
 
     adScenarioType: 'ADScenarioType',
-    domainUsername: 'DomainAdminUser',
     domainPassword: 'DomainAdminPassword',
     domainDnsname: 'DomainDNSName',
     dnsIpaddress: 'DNSIpAddresses',
@@ -556,7 +561,6 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
 
     fsxDeploymentMode: 'DeploymentMode',
     fsxFileSystemId: 'FSxFileSystemId',
-    fsxUsername: 'FSxAdminUsername',
     fsxPassword: 'FSxAdminPassword',
     fsxVolThroughput: 'FSxVolumeThroughputCapacity',
     fsxIOPS: 'FSxDiskIops',
@@ -565,7 +569,6 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
 
     sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
-    serviceAccountName: 'SQLServiceAccountName',
     serviceAccountPassword: 'SQLServiceAccountPassword',
     sqlServerName: 'SqlServerName',
 
@@ -1350,5 +1353,6 @@ export {
     ONLINE,
     BLOCKED_BY_SCP,
     SIMULATE_IAM_POLICY,
-    TEMPLATE_S3GATEWAY_ROUTETABLES
+    TEMPLATE_S3GATEWAY_ROUTETABLES,
+    TEMPLATE_USERNAME_MAPPING
 };
