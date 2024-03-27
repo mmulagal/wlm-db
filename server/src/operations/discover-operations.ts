@@ -54,7 +54,6 @@ interface SsmTargetsInfo {
 interface DeployType {
     deploymentType: string | undefined;
     subnetIds: string[] | undefined;
-    windowsMountEndpoint?: string[] | undefined;
 }
 
 const MINIMUM_SQL_SERVER_SUPPORTED = 2016;
@@ -81,7 +80,7 @@ async function getHostAndSqlServerInfo(
         Filters: [
             { Name: 'platform', Values: ['windows'] },
             { Name: 'architecture', Values: ['x86_64'] },
-            { Name: 'instance-state-name', Values: [InstanceStateName.running] },
+            { Name: 'instance-state-name', Values: [InstanceStateName.running] }
         ],
         MaxResults: pageSize,
         NextToken: nextToken
@@ -194,10 +193,13 @@ async function getHostAndSqlServerInfo(
         // Fetch windows mount points from FSxW
         fsxList
             .filter(fsx => fsx.FileSystemType === FileSystemType.WINDOWS)
-            .map(fsx =>  {
-                endPointIpWithFsxId.set(`\\\\${fsx.WindowsConfiguration?.RemoteAdministrationEndpoint}`, fsx.FileSystemId!),
-                endPointIpWithFsxId.set(`\\\\${fsx.WindowsConfiguration?.PreferredFileServerIp}`, fsx.FileSystemId!) }
-            );
+            .forEach(fsx => {
+                endPointIpWithFsxId.set(
+                    `\\${fsx.WindowsConfiguration?.RemoteAdministrationEndpoint}`,
+                    fsx.FileSystemId!
+                );
+                endPointIpWithFsxId.set(`\\${fsx.WindowsConfiguration?.PreferredFileServerIp}`, fsx.FileSystemId!);
+            });
 
         api1EndTime = performance.now();
         logger.info(`API1Performance: Endpoint/FSx/Deployment map creation time: ${api1EndTime - api1StartTime}ms`);
@@ -353,17 +355,16 @@ async function getHostAndSqlInfoFromPsOutput(
                             // Match get-smbmapping with FSxW (RemoteAdministrationEndpoint and PreferredFileServerIp)
                             // let fsxEndpoints = ['//ip', '//fsxid]
                             // SerialNumberOrScsiTarget = ['//ip/share', '//fsxid/share]
-                            const fsxEndpoints = Object.keys(endPointIpWithFsxId)
-                            const matchedEndpoints = fsxEndpoints.filter((value: string) =>
-                            di?.SerialNumberOrScsiTarget.includes(value)
+                            const fsxEndpoints = Array.from(endPointIpWithFsxId.keys());
+                            const matchedEndpoints = fsxEndpoints.filter(value =>
+                                di?.SerialNumberOrScsiTarget.includes(value)
                             );
-                            if (! isEmpty(matchedEndpoints)) {
+                            if (!isEmpty(matchedEndpoints)) {
                                 storageTypes.push({
                                     type: STORAGE_TYPE.FSXW,
                                     id: endPointIpWithFsxId.get(matchedEndpoints[0])
                                 });
                             }
-                            
                         }
                     }
 
