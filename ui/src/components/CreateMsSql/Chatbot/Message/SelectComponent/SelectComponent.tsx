@@ -5,6 +5,7 @@ import { generateOptionType, openCredentialTab } from '../../../../../utils/util
 import { useDispatch } from 'react-redux';
 import { setSuggestionBubbles } from '../../../../../store/chatbot/chatbotSlice';
 import { GENERAL } from '../../../../../utils/appConstants';
+import { useAppSelector } from '../../../../../store/storeHooks';
 
 type selectComponentPropType = {
     options: any;
@@ -43,6 +44,7 @@ const SelectComponent = ({
     const [optionsToShow, setOptionsToShow] = useState<any>([]);
     const [isCreating, setIsCreating] = useState(false);
     const dispatch = useDispatch();
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     //@ts-ignore
     useEffect(() => {
@@ -104,7 +106,13 @@ const SelectComponent = ({
 
     return (
         <div className={styles['select-component']}>
-            <div className={styles['select-component-heading']}>
+            <div
+                className={
+                    isDarkTheme
+                        ? `${styles['select-component-heading']} ${styles.darkThemeSelectColor}`
+                        : styles['select-component-heading']
+                }
+            >
                 <Typography variant="Regular_14" className={styles.fixColor}>
                     {heading}
                 </Typography>

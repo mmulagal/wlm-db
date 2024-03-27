@@ -538,6 +538,12 @@ const MASTER_STACK_TIMEOUT_MINUTES = 240;
 const FSX_SSD_MIN_SIZE = 1024; // in GiB
 const FSX_SSD_MAX_SIZE = 211106; // in GiB
 
+const TEMPLATE_USERNAME_MAPPING: Record<string, string> = {
+    DomainAdminUser: 'DomainAdminUser',
+    FSxAdminUsername: 'FSxAdminUsername',
+    SQLServiceAccountName: 'SQLServiceAccountName'
+};
+
 const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     vpcId: 'VPCID',
     vpcCidr: 'VPCCIDR',
@@ -548,7 +554,6 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     routeTable2Id: 'RouteTable2Id',
 
     adScenarioType: 'ADScenarioType',
-    domainUsername: 'DomainAdminUser',
     domainPassword: 'DomainAdminPassword',
     domainDnsname: 'DomainDNSName',
     dnsIpaddress: 'DNSIpAddresses',
@@ -556,7 +561,6 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
 
     fsxDeploymentMode: 'DeploymentMode',
     fsxFileSystemId: 'FSxFileSystemId',
-    fsxUsername: 'FSxAdminUsername',
     fsxPassword: 'FSxAdminPassword',
     fsxVolThroughput: 'FSxVolumeThroughputCapacity',
     fsxIOPS: 'FSxDiskIops',
@@ -565,7 +569,6 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
 
     sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
-    serviceAccountName: 'SQLServiceAccountName',
     serviceAccountPassword: 'SQLServiceAccountPassword',
     sqlServerName: 'SqlServerName',
 
@@ -1107,6 +1110,12 @@ const BLOCKED_BY_SCP = 'blocked by scp';
 
 const SIMULATE_IAM_POLICY = 'SimulatePrincipalPolicy';
 
+const MAX_FSX_STORAGE_IN_GIB = 196608;
+const FSX_VOL_THROUGHPUT = 4096;
+const FSX_STORAGE_MIN_CAPACITY_IN_GIB = 5120;
+const FSX_IOPS = 160000;
+const DATABASE_MAX_LUN_SIZE_IN_GIB = 133120;
+const DATABASE_MIN_LUN_SIZE_IN_GIB = 120;
 const FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL = '5h';
 
 export {
@@ -1353,5 +1362,12 @@ export {
     BLOCKED_BY_SCP,
     SIMULATE_IAM_POLICY,
     TEMPLATE_S3GATEWAY_ROUTETABLES,
+    MAX_FSX_STORAGE_IN_GIB,
+    FSX_VOL_THROUGHPUT,
+    FSX_STORAGE_MIN_CAPACITY_IN_GIB,
+    FSX_IOPS,
+    DATABASE_MAX_LUN_SIZE_IN_GIB,
+    DATABASE_MIN_LUN_SIZE_IN_GIB,
+    TEMPLATE_USERNAME_MAPPING,
     FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL
 };

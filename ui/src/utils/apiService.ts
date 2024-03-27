@@ -155,6 +155,9 @@ export const awsApi = createApi({
     refetchOnMountOrArgChange: true, // Will always refetch data and will not get from cache
     endpoints: builder => {
         return {
+            getThroughputRegionList: builder.query({
+                query: () => ({ url: `fsx-4gbps-supported-regions` })
+            }),
             getCredentials: builder.query({
                 query: ({ credentialsType }) => ({ url: `credentials/${credentialsType}` })
             }),
@@ -590,6 +593,7 @@ export const inventoryApi = createApi({
 export const {
     useGetCredentialsQuery,
     useGetRegionsQuery,
+    useGetThroughputRegionListQuery,
     useGetVPCListQuery,
     useGetSGListQuery,
     useGetAdsListQuery,

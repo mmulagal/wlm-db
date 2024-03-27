@@ -1,0 +1,20 @@
+{
+    "regions": [
+        {
+            "regionCode": "us-east-1",
+            "regionName": "US East (N. Virginia)"
+        },
+        {
+            "regionCode": "us-east-2",
+            "regionName": "US East (Ohio)"
+        },
+        {
+            "regionCode": "eu-west-1",
+            "regionName": "Europe (Ireland)"
+        },
+        {
+            "regionCode": "us-west-2",
+            "regionName": "US West (Oregon)"
+        }
+    ]
+}

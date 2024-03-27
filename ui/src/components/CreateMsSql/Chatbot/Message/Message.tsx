@@ -12,6 +12,7 @@ import { useDispatch } from 'react-redux';
 import { setExpectingResponse } from '../../../../store/chatbot/chatbotSlice';
 import CardComponent from './CardComponent/CardComponent';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 type optionsType = {
     value?: string | number;
@@ -52,6 +53,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
     const [errorFields, setErrorFields] = useState<string[]>([]);
     const isLastMessage = idx === messages.length - 1;
     const dispatch = useDispatch();
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     //@ts-ignore
     const item = fieldObj;
@@ -233,7 +235,11 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                 >
                     <div
                         className={`${styles['message-icon']} ${
-                            msgObj.sender === 'bot' ? styles['bot-icon'] : styles['user-icon']
+                            msgObj.sender === 'bot'
+                                ? styles['bot-icon']
+                                : isDarkTheme
+                                ? styles['user-icon-dark-theme']
+                                : styles['user-icon']
                         }`}
                     >
                         {msgObj.sender === 'bot' ? <ChatBotIcon /> : <UserIcon id="chatbot-user-icon" />}
@@ -326,7 +332,11 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                         <Typography
                             variant="Regular_14"
                             className={`${styles['message-text']} ${
-                                msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
+                                msgObj.sender === 'bot' && isDarkTheme
+                                    ? styles['user-text']
+                                    : msgObj.sender === 'bot' && !isDarkTheme
+                                    ? styles['bot-text']
+                                    : styles['user-text']
                             }`}
                         >
                             <div className={styles.textDiv}>

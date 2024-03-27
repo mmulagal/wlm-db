@@ -160,6 +160,15 @@ const DeploymentSummaryListResponse = Type.Object({
     nextToken: Type.Optional(Type.String())
 });
 
+const FSxAvailableRegion = Type.Object({
+    regionCode: Type.String(),
+    regionName: Type.String()
+});
+
+const FsxAvailableRegionsForThroughputListResponse = Type.Object({
+    regions: Type.Array(FSxAvailableRegion)
+});
+
 type DeploymentStatusObjectParamsType = Static<typeof DeploymentStatusObjectParams>;
 
 const DeploymentStatusListResponse = Type.Array(DeploymentStatusResponse);
@@ -196,5 +205,6 @@ export {
     DeploymentSummaryQueryString,
     DeploymentSummaryListResponse,
     CloudFormationTemplateHeader,
-    MissingPermission
+    MissingPermission,
+    FsxAvailableRegionsForThroughputListResponse
 };

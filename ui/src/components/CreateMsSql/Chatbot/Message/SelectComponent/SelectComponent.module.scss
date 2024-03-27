@@ -23,6 +23,10 @@
         }
     }
 
+    .darkThemeSelectColor {
+        background-color: var(--table-header-background) !important;
+    }
+
     .dropdown-container {
         display: flex;
         flex-direction: row;

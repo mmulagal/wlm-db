@@ -7,6 +7,11 @@ const initialState: MssqlEntities = {
         policiesLoading: false,
         policiesError: null
     },
+    getThroughputRegions: {
+        throughputRegionList: null,
+        throughputRegionListLoading: false,
+        throughputRegionListError: null
+    },
     getCredentials: {
         credentialData: null,
         credentialLoading: false,
@@ -73,6 +78,9 @@ const mssqlSlice = createSlice({
     name: 'mssql',
     initialState,
     reducers: {
+        getThroughputRegionList: (state, action: PayloadAction<any>) => {
+            state.getThroughputRegions = action.payload;
+        },
         addPolicies: (state, action: PayloadAction<any>) => {
             state.getPolicies = action.payload;
         },
@@ -128,6 +136,7 @@ export const {
     addKeyPairList,
     addInstanceTypeList,
     addFsxnList,
-    addSavedConfigList
+    addSavedConfigList,
+    getThroughputRegionList
 } = mssqlSlice.actions;
 export default mssqlSlice;

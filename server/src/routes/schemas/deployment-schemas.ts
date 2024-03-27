@@ -10,7 +10,8 @@ import {
     CloudFormationStaticTemplateResponse,
     DeploymentSummaryQueryString,
     DeploymentSummaryListResponse,
-    CloudFormationTemplateHeader
+    CloudFormationTemplateHeader,
+    FsxAvailableRegionsForThroughputListResponse
 } from '../types/deployment.types';
 import { AccountIdParams } from '../types/generic.types';
 
@@ -77,10 +78,21 @@ const DeploymentStatusSchema = {
     }
 };
 
+const FsxAvailableRegionsForThroughputSchema = {
+    tags: [RouteTags.DEPLOYMENT],
+    params: AccountIdParams,
+    summary: 'Get list of fsx available regions for 4 GBps of throughput capacity',
+    description: 'API to get region list to provision FSX 4 GBps of throughput capacity',
+    response: {
+        200: FsxAvailableRegionsForThroughputListResponse
+    }
+};
+
 export {
     DeployTemplateSchema,
     DeploymentStatusListSchema,
     DeploymentStatusSchema,
     CloudFormationTemplateSchema,
-    DeploymentSummaryListSchema
+    DeploymentSummaryListSchema,
+    FsxAvailableRegionsForThroughputSchema
 };
