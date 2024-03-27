@@ -545,7 +545,7 @@ async function getServerIOLatency(resourceId: string, activeNodeInstanceId: stri
 async function isActiveSqlNode(credentialsId: string, region: string, instanceId: string) {
     logger.info('Check SQL node is active', { credentialsId, region, instanceId });
 
-    const commands = [`${PSSCRIPT} -Query "${SERVER_NAME}"`];
+    const commands = [`sqlcmd -Q "${SERVER_NAME}" -y 0`];
     try {
         await callSsmExecution(credentialsId, region, commands, instanceId);
         return true;
