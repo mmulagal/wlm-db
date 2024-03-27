@@ -2,7 +2,7 @@ import createError from 'http-errors';
 import config from 'config';
 
 import { STORAGE_TYPE } from '@prisma/client';
-import { FileSystem } from '@aws-sdk/client-fsx';
+import { FileSystem, FileSystemType } from '@aws-sdk/client-fsx';
 import { attempt, compact, uniqBy, isEmpty } from 'lodash-es';
 import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus } from '@aws-sdk/client-ssm';
@@ -213,6 +213,18 @@ async function getHostAndSqlServerInfo(
                 subnetIds: SubnetIds!
             });
         });
+
+        // Fetch windows mount points from FSxW
+        fsxList
+            .filter(fsx => fsx.FileSystemType === FileSystemType.WINDOWS)
+            .forEach(fsx => {
+                endPointIpWithFsxId.set(
+                    `\\${fsx.WindowsConfiguration?.RemoteAdministrationEndpoint}`,
+                    fsx.FileSystemId!
+                );
+                endPointIpWithFsxId.set(`\\${fsx.WindowsConfiguration?.PreferredFileServerIp}`, fsx.FileSystemId!);
+            });
+
         api1EndTime = performance.now();
         logger.info(`API1Performance: Endpoint/FSx/Deployment map creation time: ${api1EndTime - api1StartTime}ms`);
 
@@ -366,8 +378,24 @@ async function getHostAndSqlInfoFromPsOutput(
                                 zones: compact(subnetIds?.map(subnetId => subnetListMap.get(subnetId))),
                                 ids: subnetIds?.join()
                             });
+                        } else {
+                            // Add FSxW details
+                            // Match get-smbmapping with FSxW (RemoteAdministrationEndpoint and PreferredFileServerIp)
+                            // let fsxEndpoints = ['//ip', '//fsxid]
+                            // SerialNumberOrScsiTarget = ['//ip/share', '//fsxid/share]
+                            const fsxEndpoints = Array.from(endPointIpWithFsxId.keys());
+                            const matchedEndpoints = fsxEndpoints.filter(value =>
+                                di?.SerialNumberOrScsiTarget.includes(value)
+                            );
+                            if (!isEmpty(matchedEndpoints)) {
+                                storageTypes.push({
+                                    type: STORAGE_TYPE.FSXW,
+                                    id: endPointIpWithFsxId.get(matchedEndpoints[0])
+                                });
+                            }
                         }
                     }
+
                     api1EndTime = performance.now();
                     logger.info(
                         `API1Performance: Time taken to parse PowerShell script output: ${
