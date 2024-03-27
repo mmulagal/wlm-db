@@ -3,9 +3,11 @@ import styles from './SandboxHeader.module.scss';
 import { ReactComponent as Illustration } from '../../../assets/Illustration.svg';
 import { Button, DsTypography } from '@netapp/design-system';
 import useResize from '../../../common/hooks/useResize';
+import { useNavigate } from 'react-router-dom';
 
 const SandboxHeader = () => {
     const windowSize = useResize();
+    const navigate = useNavigate();
     return (
         <>
             {window.innerWidth > 1500 && (
@@ -23,7 +25,9 @@ const SandboxHeader = () => {
                         </DsTypography>
                     </div>
                     <div className={styles.buttonHolder}>
-                        <Button variant="primary">Create new sandbox</Button>
+                        <Button variant="primary" onClick={() => navigate('../create-new-sandbox')}>
+                            Create new sandbox
+                        </Button>
                         <Button variant="text">Don't show again</Button>
                     </div>
                 </div>
@@ -46,7 +50,11 @@ const SandboxHeader = () => {
                             </DsTypography>
                         </div>
                         <div className={styles.buttonHolder}>
-                            <Button variant="primary" style={{ height: '32px' }}>
+                            <Button
+                                variant="primary"
+                                style={{ height: '32px' }}
+                                onClick={() => navigate('../create-new-sandbox')}
+                            >
                                 Create new sandbox
                             </Button>
                             <Button variant="text" isThin>
