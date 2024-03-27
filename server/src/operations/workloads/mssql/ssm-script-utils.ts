@@ -1,30 +1,84 @@
-const GET_DRIVE_INFO = (deploymentType: string) => `#Get the list of all used drive letters
-$disks = Get-Disk
-$usedDriveDetails = @()
+const GET_ACTIVE_NODE_DRIVE_INFO = (
+    deploymentType: string
+) => `$disks = Get-wmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
+$results = @()
 $deploymentType = '${deploymentType}'
 foreach ($disk in $disks) {
-    $volume = Get-Partition | Where-Object { $_.DiskNumber -eq $disk.Number } | Get-Volume
-    if ($deploymentType -eq 'FCI') {
-        $labels = Get-ClusterResource | Where-Object { $_.ResourceType -eq "Physical Disk" } | Where-Object { $_.Name -eq $volume.FileSystemLabel }
+    $object = New-Object PSObject -Property @{
+        "Manufacturer" = $disk.Model
     }
-
-    $output = [PSCustomObject]@{
-        driveLetter = $volume.DriveLetter
-        availableSize = $volume.SizeRemaining
-        manufacturer = $disk.Manufacturer
+    $partitions = get-wmiObject -Query "ASSOCIATORS OF {Win32_DiskDrive.DeviceID='$($disk.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
+    foreach ($partition in $partitions) {
+        $logicalDisks = get-wmiObject -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($partition.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition"
+        foreach ($logicalDisk in $logicalDisks) {
+            $object | Add-Member -MemberType NoteProperty -Name "LogicalDisk" -Value $logicalDisk.DeviceID
+            $object | Add-Member -MemberType NoteProperty -Name "FileSystem" -Value $logicalDisk.FreeSpace
+            if($deploymentType -eq 'FCI'){
+                $clusterResource = Get-WmiObject -Namespace "root\\MSCluster" -Class "MSCluster_Resource" | Where-Object {$_.Name -eq $logicalDisk.VolumeName}
+                $object | Add-Member -MemberType NoteProperty -Name "Owner" -Value $clusterResource.OwnerGroup
+            }
+        }
     }
-
-    if ($deploymentType -eq 'FCI') {
-        $output | Add-Member -NotePropertyName "owner" -NotePropertyValue $labels.OwnerGroup.Name
-    }
-
-    $usedDriveDetails += $output
+    $results += $object
 }
-
-$usedDrivesInfoJson = $usedDriveDetails | ConvertTo-Json
-Write-Host $usedDrivesInfoJson
-
+ 
+$results | convertTo-json
 `;
+
+/* Sample Resposne of GET_ACTIVE_NODE_DRIVE_INFO
+[
+    {
+        "Manufacturer":  "NETAPP LUN C-Mode  Multi-Path Disk Device",
+        "LogicalDisk":  "L:",
+        "FileSystem":  80386654208,
+        "Owner":  "SQL Server (MSSQLSERVER)"
+    },
+    {
+        "Manufacturer":  "NETAPP LUN C-Mode  Multi-Path Disk Device",
+        "LogicalDisk":  "Q:",
+        "FileSystem":  10653229056,
+        "Owner":  "Cluster Group"
+    },
+    {
+        "Manufacturer":  "NETAPP LUN C-Mode  Multi-Path Disk Device",
+        "LogicalDisk":  "F:",
+        "FileSystem":  11181883392,
+        "Owner":  "SQL Server (MSSQLSERVER)"
+    },
+    {
+        "Manufacturer":  "NETAPP LUN C-Mode  Multi-Path Disk Device",
+        "LogicalDisk":  "P:",
+        "FileSystem":  1068367872,
+        "Owner":  "SQL Server (MSSQLSERVER)"
+    },
+    {
+        "Manufacturer":  "NETAPP LUN C-Mode  Multi-Path Disk Device",
+        "LogicalDisk":  "R:",
+        "FileSystem":  1068367872,
+        "Owner":  "SQL Server (MSSQLSERVER)"
+    },
+*/
+
+const GET_STANDBY_NODE_DRIVE_LIST = `$driveLetters = Get-WmiObject Win32_Volume | Select-Object -ExpandProperty DriveLetter
+$driveLettersObject = [PSCustomObject]@{
+    DriveLetters = $driveLetters
+}
+$driveLettersObject | ConvertTo-Json
+`;
+
+/* Sample Response of GET_STANDBY_NODE_DRIVE_LIST
+{
+    "DriveLetters":  [
+                         "C:",
+                         "S:",
+                         "L:",
+                         "T:",
+                         "Q:",
+                         "D:",
+                         "E:",
+                     ]
+}
+*/
 
 const GET_DEFAULT_DRIVES = `
 #Get default data drive of SQL server
@@ -222,7 +276,8 @@ const installPowerShellModule = (module: string) => `
 `;
 
 export {
-    GET_DRIVE_INFO,
+    GET_ACTIVE_NODE_DRIVE_INFO,
+    GET_STANDBY_NODE_DRIVE_LIST,
     GET_DEFAULT_DRIVES,
     GET_DEFAULT_COLLATION,
     RESOURCE_UTILIZATION,

@@ -60,16 +60,12 @@ import { calculateFsxnStorageEfficiency, calculateFsxwStorageEfficiency } from '
 const logger = getLogger();
 
 const DATABASE_HOSTS_INDEX_MAPPING: { [index: number]: string } = {
-    0: 'serverState',
-    1: 'databasesCount',
-    2: 'serverSummary',
-    3: 'topology',
-    4: 'performance',
-    5: 'storage',
-    6: 'billing',
-    7: 'memUtilization',
-    8: 'diskUtilization',
-    9: 'cpuUtilization'
+    0: 'serverDetails',
+    1: 'topology',
+    2: 'performance',
+    3: 'storage',
+    4: 'billing/pricing',
+    5: 'resourceUtilization'
 };
 
 // type VolumeSpaceRecord = {
