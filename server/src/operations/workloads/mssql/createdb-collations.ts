@@ -17347,6 +17347,17427 @@ const MS_SQL_2016 = [
     }
 ];
 
+const MS_SQL_2017 = [
+    { name: 'Albanian_BIN', description: 'Albanian, binary sort' },
+    {
+        name: 'Albanian_BIN2',
+        description: 'Albanian, binary code point comparison sort'
+    },
+    {
+        name: 'Albanian_CI_AI',
+        description: 'Albanian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Albanian_CI_AI_WS',
+        description: 'Albanian, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Albanian_CI_AI_KS',
+        description: 'Albanian, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Albanian_CI_AI_KS_WS',
+        description: 'Albanian, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Albanian_CI_AS',
+        description: 'Albanian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Albanian_CI_AS_WS',
+        description: 'Albanian, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Albanian_CI_AS_KS',
+        description: 'Albanian, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Albanian_CI_AS_KS_WS',
+        description: 'Albanian, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Albanian_CS_AI',
+        description: 'Albanian, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Albanian_CS_AI_WS',
+        description: 'Albanian, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Albanian_CS_AI_KS',
+        description: 'Albanian, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Albanian_CS_AI_KS_WS',
+        description: 'Albanian, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Albanian_CS_AS',
+        description: 'Albanian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Albanian_CS_AS_WS',
+        description: 'Albanian, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Albanian_CS_AS_KS',
+        description: 'Albanian, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Albanian_CS_AS_KS_WS',
+        description: 'Albanian, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Albanian_100_BIN', description: 'Albanian-100, binary sort' },
+    {
+        name: 'Albanian_100_BIN2',
+        description: 'Albanian-100, binary code point comparison sort'
+    },
+    {
+        name: 'Albanian_100_CI_AI',
+        description: 'Albanian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Albanian_100_CI_AI_WS',
+        description: 'Albanian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Albanian_100_CI_AI_KS',
+        description: 'Albanian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Albanian_100_CI_AI_KS_WS',
+        description: 'Albanian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Albanian_100_CI_AS',
+        description: 'Albanian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Albanian_100_CI_AS_WS',
+        description: 'Albanian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Albanian_100_CI_AS_KS',
+        description: 'Albanian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Albanian_100_CI_AS_KS_WS',
+        description: 'Albanian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Albanian_100_CS_AI',
+        description: 'Albanian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Albanian_100_CS_AI_WS',
+        description: 'Albanian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Albanian_100_CS_AI_KS',
+        description: 'Albanian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Albanian_100_CS_AI_KS_WS',
+        description: 'Albanian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Albanian_100_CS_AS',
+        description: 'Albanian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Albanian_100_CS_AS_WS',
+        description: 'Albanian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Albanian_100_CS_AS_KS',
+        description: 'Albanian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Albanian_100_CS_AS_KS_WS',
+        description: 'Albanian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Albanian_100_CI_AI_SC',
+        description:
+            'Albanian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Albanian_100_CI_AI_WS_SC',
+        description:
+            'Albanian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Albanian_100_CI_AI_KS_SC',
+        description:
+            'Albanian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Albanian_100_CI_AI_KS_WS_SC',
+        description:
+            'Albanian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Albanian_100_CI_AS_SC',
+        description:
+            'Albanian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Albanian_100_CI_AS_WS_SC',
+        description:
+            'Albanian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Albanian_100_CI_AS_KS_SC',
+        description:
+            'Albanian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Albanian_100_CI_AS_KS_WS_SC',
+        description:
+            'Albanian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Albanian_100_CS_AI_SC',
+        description:
+            'Albanian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Albanian_100_CS_AI_WS_SC',
+        description:
+            'Albanian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Albanian_100_CS_AI_KS_SC',
+        description:
+            'Albanian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Albanian_100_CS_AI_KS_WS_SC',
+        description:
+            'Albanian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Albanian_100_CS_AS_SC',
+        description:
+            'Albanian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Albanian_100_CS_AS_WS_SC',
+        description:
+            'Albanian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Albanian_100_CS_AS_KS_SC',
+        description:
+            'Albanian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Albanian_100_CS_AS_KS_WS_SC',
+        description:
+            'Albanian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Arabic_BIN', description: 'Arabic, binary sort' },
+    {
+        name: 'Arabic_BIN2',
+        description: 'Arabic, binary code point comparison sort'
+    },
+    {
+        name: 'Arabic_CI_AI',
+        description: 'Arabic, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Arabic_CI_AI_WS',
+        description: 'Arabic, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Arabic_CI_AI_KS',
+        description: 'Arabic, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Arabic_CI_AI_KS_WS',
+        description: 'Arabic, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Arabic_CI_AS',
+        description: 'Arabic, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Arabic_CI_AS_WS',
+        description: 'Arabic, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Arabic_CI_AS_KS',
+        description: 'Arabic, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Arabic_CI_AS_KS_WS',
+        description: 'Arabic, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Arabic_CS_AI',
+        description: 'Arabic, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Arabic_CS_AI_WS',
+        description: 'Arabic, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Arabic_CS_AI_KS',
+        description: 'Arabic, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Arabic_CS_AI_KS_WS',
+        description: 'Arabic, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Arabic_CS_AS',
+        description: 'Arabic, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Arabic_CS_AS_WS',
+        description: 'Arabic, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Arabic_CS_AS_KS',
+        description: 'Arabic, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Arabic_CS_AS_KS_WS',
+        description: 'Arabic, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Arabic_100_BIN', description: 'Arabic-100, binary sort' },
+    {
+        name: 'Arabic_100_BIN2',
+        description: 'Arabic-100, binary code point comparison sort'
+    },
+    {
+        name: 'Arabic_100_CI_AI',
+        description: 'Arabic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Arabic_100_CI_AI_WS',
+        description: 'Arabic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Arabic_100_CI_AI_KS',
+        description: 'Arabic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Arabic_100_CI_AI_KS_WS',
+        description: 'Arabic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Arabic_100_CI_AS',
+        description: 'Arabic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Arabic_100_CI_AS_WS',
+        description: 'Arabic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Arabic_100_CI_AS_KS',
+        description: 'Arabic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Arabic_100_CI_AS_KS_WS',
+        description: 'Arabic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Arabic_100_CS_AI',
+        description: 'Arabic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Arabic_100_CS_AI_WS',
+        description: 'Arabic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Arabic_100_CS_AI_KS',
+        description: 'Arabic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Arabic_100_CS_AI_KS_WS',
+        description: 'Arabic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Arabic_100_CS_AS',
+        description: 'Arabic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Arabic_100_CS_AS_WS',
+        description: 'Arabic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Arabic_100_CS_AS_KS',
+        description: 'Arabic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Arabic_100_CS_AS_KS_WS',
+        description: 'Arabic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Arabic_100_CI_AI_SC',
+        description:
+            'Arabic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Arabic_100_CI_AI_WS_SC',
+        description:
+            'Arabic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Arabic_100_CI_AI_KS_SC',
+        description:
+            'Arabic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Arabic_100_CI_AI_KS_WS_SC',
+        description:
+            'Arabic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Arabic_100_CI_AS_SC',
+        description:
+            'Arabic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Arabic_100_CI_AS_WS_SC',
+        description:
+            'Arabic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Arabic_100_CI_AS_KS_SC',
+        description:
+            'Arabic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Arabic_100_CI_AS_KS_WS_SC',
+        description:
+            'Arabic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Arabic_100_CS_AI_SC',
+        description:
+            'Arabic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Arabic_100_CS_AI_WS_SC',
+        description:
+            'Arabic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Arabic_100_CS_AI_KS_SC',
+        description:
+            'Arabic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Arabic_100_CS_AI_KS_WS_SC',
+        description:
+            'Arabic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Arabic_100_CS_AS_SC',
+        description:
+            'Arabic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Arabic_100_CS_AS_WS_SC',
+        description:
+            'Arabic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Arabic_100_CS_AS_KS_SC',
+        description:
+            'Arabic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Arabic_100_CS_AS_KS_WS_SC',
+        description:
+            'Arabic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Assamese_100_BIN', description: 'Assamese-100, binary sort' },
+    {
+        name: 'Assamese_100_BIN2',
+        description: 'Assamese-100, binary code point comparison sort'
+    },
+    {
+        name: 'Assamese_100_CI_AI',
+        description: 'Assamese-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Assamese_100_CI_AI_WS',
+        description: 'Assamese-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Assamese_100_CI_AI_KS',
+        description: 'Assamese-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Assamese_100_CI_AI_KS_WS',
+        description: 'Assamese-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Assamese_100_CI_AS',
+        description: 'Assamese-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Assamese_100_CI_AS_WS',
+        description: 'Assamese-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Assamese_100_CI_AS_KS',
+        description: 'Assamese-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Assamese_100_CI_AS_KS_WS',
+        description: 'Assamese-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Assamese_100_CS_AI',
+        description: 'Assamese-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Assamese_100_CS_AI_WS',
+        description: 'Assamese-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Assamese_100_CS_AI_KS',
+        description: 'Assamese-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Assamese_100_CS_AI_KS_WS',
+        description: 'Assamese-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Assamese_100_CS_AS',
+        description: 'Assamese-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Assamese_100_CS_AS_WS',
+        description: 'Assamese-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Assamese_100_CS_AS_KS',
+        description: 'Assamese-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Assamese_100_CS_AS_KS_WS',
+        description: 'Assamese-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Assamese_100_CI_AI_SC',
+        description:
+            'Assamese-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Assamese_100_CI_AI_WS_SC',
+        description:
+            'Assamese-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Assamese_100_CI_AI_KS_SC',
+        description:
+            'Assamese-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Assamese_100_CI_AI_KS_WS_SC',
+        description:
+            'Assamese-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Assamese_100_CI_AS_SC',
+        description:
+            'Assamese-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Assamese_100_CI_AS_WS_SC',
+        description:
+            'Assamese-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Assamese_100_CI_AS_KS_SC',
+        description:
+            'Assamese-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Assamese_100_CI_AS_KS_WS_SC',
+        description:
+            'Assamese-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Assamese_100_CS_AI_SC',
+        description:
+            'Assamese-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Assamese_100_CS_AI_WS_SC',
+        description:
+            'Assamese-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Assamese_100_CS_AI_KS_SC',
+        description:
+            'Assamese-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Assamese_100_CS_AI_KS_WS_SC',
+        description:
+            'Assamese-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Assamese_100_CS_AS_SC',
+        description:
+            'Assamese-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Assamese_100_CS_AS_WS_SC',
+        description:
+            'Assamese-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Assamese_100_CS_AS_KS_SC',
+        description:
+            'Assamese-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Assamese_100_CS_AS_KS_WS_SC',
+        description:
+            'Assamese-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_BIN',
+        description: 'Azeri-Cyrillic-100, binary sort'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_BIN2',
+        description: 'Azeri-Cyrillic-100, binary code point comparison sort'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CI_AI',
+        description: 'Azeri-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CI_AI_WS',
+        description: 'Azeri-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CI_AI_KS',
+        description: 'Azeri-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CI_AI_KS_WS',
+        description: 'Azeri-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CI_AS',
+        description: 'Azeri-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CI_AS_WS',
+        description: 'Azeri-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CI_AS_KS',
+        description: 'Azeri-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CI_AS_KS_WS',
+        description: 'Azeri-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CS_AI',
+        description: 'Azeri-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CS_AI_WS',
+        description: 'Azeri-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CS_AI_KS',
+        description: 'Azeri-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CS_AI_KS_WS',
+        description: 'Azeri-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CS_AS',
+        description: 'Azeri-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CS_AS_WS',
+        description: 'Azeri-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CS_AS_KS',
+        description: 'Azeri-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CS_AS_KS_WS',
+        description: 'Azeri-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CI_AI_SC',
+        description:
+            'Azeri-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CI_AI_WS_SC',
+        description:
+            'Azeri-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CI_AI_KS_SC',
+        description:
+            'Azeri-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CI_AI_KS_WS_SC',
+        description:
+            'Azeri-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CI_AS_SC',
+        description:
+            'Azeri-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CI_AS_WS_SC',
+        description:
+            'Azeri-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CI_AS_KS_SC',
+        description:
+            'Azeri-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CI_AS_KS_WS_SC',
+        description:
+            'Azeri-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CS_AI_SC',
+        description:
+            'Azeri-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CS_AI_WS_SC',
+        description:
+            'Azeri-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CS_AI_KS_SC',
+        description:
+            'Azeri-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CS_AI_KS_WS_SC',
+        description:
+            'Azeri-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CS_AS_SC',
+        description:
+            'Azeri-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CS_AS_WS_SC',
+        description:
+            'Azeri-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CS_AS_KS_SC',
+        description:
+            'Azeri-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Cyrillic_100_CS_AS_KS_WS_SC',
+        description:
+            'Azeri-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Azeri_Latin_100_BIN', description: 'Azeri-Latin-100, binary sort' },
+    {
+        name: 'Azeri_Latin_100_BIN2',
+        description: 'Azeri-Latin-100, binary code point comparison sort'
+    },
+    {
+        name: 'Azeri_Latin_100_CI_AI',
+        description: 'Azeri-Latin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Azeri_Latin_100_CI_AI_WS',
+        description: 'Azeri-Latin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Azeri_Latin_100_CI_AI_KS',
+        description: 'Azeri-Latin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Azeri_Latin_100_CI_AI_KS_WS',
+        description: 'Azeri-Latin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Azeri_Latin_100_CI_AS',
+        description: 'Azeri-Latin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Azeri_Latin_100_CI_AS_WS',
+        description: 'Azeri-Latin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Azeri_Latin_100_CI_AS_KS',
+        description: 'Azeri-Latin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Azeri_Latin_100_CI_AS_KS_WS',
+        description: 'Azeri-Latin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Azeri_Latin_100_CS_AI',
+        description: 'Azeri-Latin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Azeri_Latin_100_CS_AI_WS',
+        description: 'Azeri-Latin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Azeri_Latin_100_CS_AI_KS',
+        description: 'Azeri-Latin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Azeri_Latin_100_CS_AI_KS_WS',
+        description: 'Azeri-Latin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Azeri_Latin_100_CS_AS',
+        description: 'Azeri-Latin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Azeri_Latin_100_CS_AS_WS',
+        description: 'Azeri-Latin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Azeri_Latin_100_CS_AS_KS',
+        description: 'Azeri-Latin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Azeri_Latin_100_CS_AS_KS_WS',
+        description: 'Azeri-Latin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Azeri_Latin_100_CI_AI_SC',
+        description:
+            'Azeri-Latin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Latin_100_CI_AI_WS_SC',
+        description:
+            'Azeri-Latin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Latin_100_CI_AI_KS_SC',
+        description:
+            'Azeri-Latin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Latin_100_CI_AI_KS_WS_SC',
+        description:
+            'Azeri-Latin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Latin_100_CI_AS_SC',
+        description:
+            'Azeri-Latin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Latin_100_CI_AS_WS_SC',
+        description:
+            'Azeri-Latin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Latin_100_CI_AS_KS_SC',
+        description:
+            'Azeri-Latin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Latin_100_CI_AS_KS_WS_SC',
+        description:
+            'Azeri-Latin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Latin_100_CS_AI_SC',
+        description:
+            'Azeri-Latin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Latin_100_CS_AI_WS_SC',
+        description:
+            'Azeri-Latin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Latin_100_CS_AI_KS_SC',
+        description:
+            'Azeri-Latin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Latin_100_CS_AI_KS_WS_SC',
+        description:
+            'Azeri-Latin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Latin_100_CS_AS_SC',
+        description:
+            'Azeri-Latin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Latin_100_CS_AS_WS_SC',
+        description:
+            'Azeri-Latin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Latin_100_CS_AS_KS_SC',
+        description:
+            'Azeri-Latin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Azeri_Latin_100_CS_AS_KS_WS_SC',
+        description:
+            'Azeri-Latin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Bashkir_100_BIN', description: 'Bashkir-100, binary sort' },
+    {
+        name: 'Bashkir_100_BIN2',
+        description: 'Bashkir-100, binary code point comparison sort'
+    },
+    {
+        name: 'Bashkir_100_CI_AI',
+        description: 'Bashkir-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Bashkir_100_CI_AI_WS',
+        description: 'Bashkir-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Bashkir_100_CI_AI_KS',
+        description: 'Bashkir-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Bashkir_100_CI_AI_KS_WS',
+        description: 'Bashkir-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Bashkir_100_CI_AS',
+        description: 'Bashkir-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Bashkir_100_CI_AS_WS',
+        description: 'Bashkir-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Bashkir_100_CI_AS_KS',
+        description: 'Bashkir-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Bashkir_100_CI_AS_KS_WS',
+        description: 'Bashkir-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Bashkir_100_CS_AI',
+        description: 'Bashkir-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Bashkir_100_CS_AI_WS',
+        description: 'Bashkir-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Bashkir_100_CS_AI_KS',
+        description: 'Bashkir-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Bashkir_100_CS_AI_KS_WS',
+        description: 'Bashkir-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Bashkir_100_CS_AS',
+        description: 'Bashkir-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Bashkir_100_CS_AS_WS',
+        description: 'Bashkir-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Bashkir_100_CS_AS_KS',
+        description: 'Bashkir-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Bashkir_100_CS_AS_KS_WS',
+        description: 'Bashkir-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Bashkir_100_CI_AI_SC',
+        description:
+            'Bashkir-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bashkir_100_CI_AI_WS_SC',
+        description:
+            'Bashkir-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bashkir_100_CI_AI_KS_SC',
+        description:
+            'Bashkir-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bashkir_100_CI_AI_KS_WS_SC',
+        description:
+            'Bashkir-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bashkir_100_CI_AS_SC',
+        description:
+            'Bashkir-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bashkir_100_CI_AS_WS_SC',
+        description:
+            'Bashkir-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bashkir_100_CI_AS_KS_SC',
+        description:
+            'Bashkir-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bashkir_100_CI_AS_KS_WS_SC',
+        description:
+            'Bashkir-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bashkir_100_CS_AI_SC',
+        description:
+            'Bashkir-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bashkir_100_CS_AI_WS_SC',
+        description:
+            'Bashkir-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bashkir_100_CS_AI_KS_SC',
+        description:
+            'Bashkir-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bashkir_100_CS_AI_KS_WS_SC',
+        description:
+            'Bashkir-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bashkir_100_CS_AS_SC',
+        description:
+            'Bashkir-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bashkir_100_CS_AS_WS_SC',
+        description:
+            'Bashkir-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bashkir_100_CS_AS_KS_SC',
+        description:
+            'Bashkir-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bashkir_100_CS_AS_KS_WS_SC',
+        description:
+            'Bashkir-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Bengali_100_BIN', description: 'Bengali-100, binary sort' },
+    {
+        name: 'Bengali_100_BIN2',
+        description: 'Bengali-100, binary code point comparison sort'
+    },
+    {
+        name: 'Bengali_100_CI_AI',
+        description: 'Bengali-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Bengali_100_CI_AI_WS',
+        description: 'Bengali-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Bengali_100_CI_AI_KS',
+        description: 'Bengali-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Bengali_100_CI_AI_KS_WS',
+        description: 'Bengali-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Bengali_100_CI_AS',
+        description: 'Bengali-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Bengali_100_CI_AS_WS',
+        description: 'Bengali-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Bengali_100_CI_AS_KS',
+        description: 'Bengali-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Bengali_100_CI_AS_KS_WS',
+        description: 'Bengali-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Bengali_100_CS_AI',
+        description: 'Bengali-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Bengali_100_CS_AI_WS',
+        description: 'Bengali-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Bengali_100_CS_AI_KS',
+        description: 'Bengali-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Bengali_100_CS_AI_KS_WS',
+        description: 'Bengali-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Bengali_100_CS_AS',
+        description: 'Bengali-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Bengali_100_CS_AS_WS',
+        description: 'Bengali-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Bengali_100_CS_AS_KS',
+        description: 'Bengali-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Bengali_100_CS_AS_KS_WS',
+        description: 'Bengali-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Bengali_100_CI_AI_SC',
+        description:
+            'Bengali-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bengali_100_CI_AI_WS_SC',
+        description:
+            'Bengali-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bengali_100_CI_AI_KS_SC',
+        description:
+            'Bengali-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bengali_100_CI_AI_KS_WS_SC',
+        description:
+            'Bengali-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bengali_100_CI_AS_SC',
+        description:
+            'Bengali-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bengali_100_CI_AS_WS_SC',
+        description:
+            'Bengali-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bengali_100_CI_AS_KS_SC',
+        description:
+            'Bengali-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bengali_100_CI_AS_KS_WS_SC',
+        description:
+            'Bengali-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bengali_100_CS_AI_SC',
+        description:
+            'Bengali-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bengali_100_CS_AI_WS_SC',
+        description:
+            'Bengali-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bengali_100_CS_AI_KS_SC',
+        description:
+            'Bengali-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bengali_100_CS_AI_KS_WS_SC',
+        description:
+            'Bengali-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bengali_100_CS_AS_SC',
+        description:
+            'Bengali-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bengali_100_CS_AS_WS_SC',
+        description:
+            'Bengali-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bengali_100_CS_AS_KS_SC',
+        description:
+            'Bengali-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bengali_100_CS_AS_KS_WS_SC',
+        description:
+            'Bengali-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_BIN',
+        description: 'Bosnian-Cyrillic-100, binary sort'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_BIN2',
+        description: 'Bosnian-Cyrillic-100, binary code point comparison sort'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CI_AI',
+        description:
+            'Bosnian-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CI_AI_WS',
+        description: 'Bosnian-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CI_AI_KS',
+        description: 'Bosnian-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CI_AI_KS_WS',
+        description: 'Bosnian-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CI_AS',
+        description: 'Bosnian-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CI_AS_WS',
+        description: 'Bosnian-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CI_AS_KS',
+        description: 'Bosnian-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CI_AS_KS_WS',
+        description: 'Bosnian-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CS_AI',
+        description: 'Bosnian-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CS_AI_WS',
+        description: 'Bosnian-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CS_AI_KS',
+        description: 'Bosnian-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CS_AI_KS_WS',
+        description: 'Bosnian-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CS_AS',
+        description: 'Bosnian-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CS_AS_WS',
+        description: 'Bosnian-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CS_AS_KS',
+        description: 'Bosnian-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CS_AS_KS_WS',
+        description: 'Bosnian-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CI_AI_SC',
+        description:
+            'Bosnian-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CI_AI_WS_SC',
+        description:
+            'Bosnian-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CI_AI_KS_SC',
+        description:
+            'Bosnian-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CI_AI_KS_WS_SC',
+        description:
+            'Bosnian-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CI_AS_SC',
+        description:
+            'Bosnian-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CI_AS_WS_SC',
+        description:
+            'Bosnian-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CI_AS_KS_SC',
+        description:
+            'Bosnian-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CI_AS_KS_WS_SC',
+        description:
+            'Bosnian-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CS_AI_SC',
+        description:
+            'Bosnian-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CS_AI_WS_SC',
+        description:
+            'Bosnian-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CS_AI_KS_SC',
+        description:
+            'Bosnian-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CS_AI_KS_WS_SC',
+        description:
+            'Bosnian-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CS_AS_SC',
+        description:
+            'Bosnian-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CS_AS_WS_SC',
+        description:
+            'Bosnian-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CS_AS_KS_SC',
+        description:
+            'Bosnian-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Cyrillic_100_CS_AS_KS_WS_SC',
+        description:
+            'Bosnian-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Latin_100_BIN',
+        description: 'Bosnian-Latin-100, binary sort'
+    },
+    {
+        name: 'Bosnian_Latin_100_BIN2',
+        description: 'Bosnian-Latin-100, binary code point comparison sort'
+    },
+    {
+        name: 'Bosnian_Latin_100_CI_AI',
+        description: 'Bosnian-Latin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Bosnian_Latin_100_CI_AI_WS',
+        description: 'Bosnian-Latin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Bosnian_Latin_100_CI_AI_KS',
+        description: 'Bosnian-Latin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Bosnian_Latin_100_CI_AI_KS_WS',
+        description: 'Bosnian-Latin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Bosnian_Latin_100_CI_AS',
+        description: 'Bosnian-Latin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Bosnian_Latin_100_CI_AS_WS',
+        description: 'Bosnian-Latin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Bosnian_Latin_100_CI_AS_KS',
+        description: 'Bosnian-Latin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Bosnian_Latin_100_CI_AS_KS_WS',
+        description: 'Bosnian-Latin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Bosnian_Latin_100_CS_AI',
+        description: 'Bosnian-Latin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Bosnian_Latin_100_CS_AI_WS',
+        description: 'Bosnian-Latin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Bosnian_Latin_100_CS_AI_KS',
+        description: 'Bosnian-Latin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Bosnian_Latin_100_CS_AI_KS_WS',
+        description: 'Bosnian-Latin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Bosnian_Latin_100_CS_AS',
+        description: 'Bosnian-Latin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Bosnian_Latin_100_CS_AS_WS',
+        description: 'Bosnian-Latin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Bosnian_Latin_100_CS_AS_KS',
+        description: 'Bosnian-Latin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Bosnian_Latin_100_CS_AS_KS_WS',
+        description: 'Bosnian-Latin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Bosnian_Latin_100_CI_AI_SC',
+        description:
+            'Bosnian-Latin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Latin_100_CI_AI_WS_SC',
+        description:
+            'Bosnian-Latin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Latin_100_CI_AI_KS_SC',
+        description:
+            'Bosnian-Latin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Latin_100_CI_AI_KS_WS_SC',
+        description:
+            'Bosnian-Latin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Latin_100_CI_AS_SC',
+        description:
+            'Bosnian-Latin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Latin_100_CI_AS_WS_SC',
+        description:
+            'Bosnian-Latin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Latin_100_CI_AS_KS_SC',
+        description:
+            'Bosnian-Latin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Latin_100_CI_AS_KS_WS_SC',
+        description:
+            'Bosnian-Latin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Latin_100_CS_AI_SC',
+        description:
+            'Bosnian-Latin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Latin_100_CS_AI_WS_SC',
+        description:
+            'Bosnian-Latin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Latin_100_CS_AI_KS_SC',
+        description:
+            'Bosnian-Latin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Latin_100_CS_AI_KS_WS_SC',
+        description:
+            'Bosnian-Latin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Latin_100_CS_AS_SC',
+        description:
+            'Bosnian-Latin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Latin_100_CS_AS_WS_SC',
+        description:
+            'Bosnian-Latin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Latin_100_CS_AS_KS_SC',
+        description:
+            'Bosnian-Latin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Bosnian_Latin_100_CS_AS_KS_WS_SC',
+        description:
+            'Bosnian-Latin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Breton_100_BIN', description: 'Breton-100, binary sort' },
+    {
+        name: 'Breton_100_BIN2',
+        description: 'Breton-100, binary code point comparison sort'
+    },
+    {
+        name: 'Breton_100_CI_AI',
+        description: 'Breton-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Breton_100_CI_AI_WS',
+        description: 'Breton-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Breton_100_CI_AI_KS',
+        description: 'Breton-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Breton_100_CI_AI_KS_WS',
+        description: 'Breton-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Breton_100_CI_AS',
+        description: 'Breton-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Breton_100_CI_AS_WS',
+        description: 'Breton-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Breton_100_CI_AS_KS',
+        description: 'Breton-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Breton_100_CI_AS_KS_WS',
+        description: 'Breton-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Breton_100_CS_AI',
+        description: 'Breton-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Breton_100_CS_AI_WS',
+        description: 'Breton-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Breton_100_CS_AI_KS',
+        description: 'Breton-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Breton_100_CS_AI_KS_WS',
+        description: 'Breton-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Breton_100_CS_AS',
+        description: 'Breton-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Breton_100_CS_AS_WS',
+        description: 'Breton-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Breton_100_CS_AS_KS',
+        description: 'Breton-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Breton_100_CS_AS_KS_WS',
+        description: 'Breton-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Breton_100_CI_AI_SC',
+        description:
+            'Breton-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Breton_100_CI_AI_WS_SC',
+        description:
+            'Breton-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Breton_100_CI_AI_KS_SC',
+        description:
+            'Breton-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Breton_100_CI_AI_KS_WS_SC',
+        description:
+            'Breton-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Breton_100_CI_AS_SC',
+        description:
+            'Breton-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Breton_100_CI_AS_WS_SC',
+        description:
+            'Breton-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Breton_100_CI_AS_KS_SC',
+        description:
+            'Breton-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Breton_100_CI_AS_KS_WS_SC',
+        description:
+            'Breton-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Breton_100_CS_AI_SC',
+        description:
+            'Breton-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Breton_100_CS_AI_WS_SC',
+        description:
+            'Breton-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Breton_100_CS_AI_KS_SC',
+        description:
+            'Breton-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Breton_100_CS_AI_KS_WS_SC',
+        description:
+            'Breton-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Breton_100_CS_AS_SC',
+        description:
+            'Breton-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Breton_100_CS_AS_WS_SC',
+        description:
+            'Breton-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Breton_100_CS_AS_KS_SC',
+        description:
+            'Breton-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Breton_100_CS_AS_KS_WS_SC',
+        description:
+            'Breton-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_BIN',
+        description: 'Chinese-Hong-Kong-Stroke-90, binary sort'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_BIN2',
+        description: 'Chinese-Hong-Kong-Stroke-90, binary code point comparison sort'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CI_AI',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CI_AI_WS',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CI_AI_KS',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CI_AI_KS_WS',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CI_AS',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CI_AS_WS',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CI_AS_KS',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CI_AS_KS_WS',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CS_AI',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CS_AI_WS',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CS_AI_KS',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CS_AI_KS_WS',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CS_AS',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CS_AS_WS',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CS_AS_KS',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CS_AS_KS_WS',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CI_AI_SC',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CI_AI_WS_SC',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CI_AI_KS_SC',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CI_AI_KS_WS_SC',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CI_AS_SC',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CI_AS_WS_SC',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CI_AS_KS_SC',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CI_AS_KS_WS_SC',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CS_AI_SC',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CS_AI_WS_SC',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CS_AI_KS_SC',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CS_AI_KS_WS_SC',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CS_AS_SC',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CS_AS_WS_SC',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CS_AS_KS_SC',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Hong_Kong_Stroke_90_CS_AS_KS_WS_SC',
+        description:
+            'Chinese-Hong-Kong-Stroke-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Chinese_PRC_BIN', description: 'Chinese-PRC, binary sort' },
+    {
+        name: 'Chinese_PRC_BIN2',
+        description: 'Chinese-PRC, binary code point comparison sort'
+    },
+    {
+        name: 'Chinese_PRC_CI_AI',
+        description: 'Chinese-PRC, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_CI_AI_WS',
+        description: 'Chinese-PRC, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_CI_AI_KS',
+        description: 'Chinese-PRC, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_CI_AI_KS_WS',
+        description: 'Chinese-PRC, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_CI_AS',
+        description: 'Chinese-PRC, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_CI_AS_WS',
+        description: 'Chinese-PRC, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_CI_AS_KS',
+        description: 'Chinese-PRC, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_CI_AS_KS_WS',
+        description: 'Chinese-PRC, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_CS_AI',
+        description: 'Chinese-PRC, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_CS_AI_WS',
+        description: 'Chinese-PRC, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_CS_AI_KS',
+        description: 'Chinese-PRC, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_CS_AI_KS_WS',
+        description: 'Chinese-PRC, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_CS_AS',
+        description: 'Chinese-PRC, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_CS_AS_WS',
+        description: 'Chinese-PRC, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_CS_AS_KS',
+        description: 'Chinese-PRC, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_CS_AS_KS_WS',
+        description: 'Chinese-PRC, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Chinese_PRC_90_BIN', description: 'Chinese-PRC-90, binary sort' },
+    {
+        name: 'Chinese_PRC_90_BIN2',
+        description: 'Chinese-PRC-90, binary code point comparison sort'
+    },
+    {
+        name: 'Chinese_PRC_90_CI_AI',
+        description: 'Chinese-PRC-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_90_CI_AI_WS',
+        description: 'Chinese-PRC-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_90_CI_AI_KS',
+        description: 'Chinese-PRC-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_90_CI_AI_KS_WS',
+        description: 'Chinese-PRC-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_90_CI_AS',
+        description: 'Chinese-PRC-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_90_CI_AS_WS',
+        description: 'Chinese-PRC-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_90_CI_AS_KS',
+        description: 'Chinese-PRC-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_90_CI_AS_KS_WS',
+        description: 'Chinese-PRC-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_90_CS_AI',
+        description: 'Chinese-PRC-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_90_CS_AI_WS',
+        description: 'Chinese-PRC-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_90_CS_AI_KS',
+        description: 'Chinese-PRC-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_90_CS_AI_KS_WS',
+        description: 'Chinese-PRC-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_90_CS_AS',
+        description: 'Chinese-PRC-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_90_CS_AS_WS',
+        description: 'Chinese-PRC-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_90_CS_AS_KS',
+        description: 'Chinese-PRC-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_90_CS_AS_KS_WS',
+        description: 'Chinese-PRC-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_90_CI_AI_SC',
+        description:
+            'Chinese-PRC-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_90_CI_AI_WS_SC',
+        description:
+            'Chinese-PRC-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_90_CI_AI_KS_SC',
+        description:
+            'Chinese-PRC-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_90_CI_AI_KS_WS_SC',
+        description:
+            'Chinese-PRC-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_90_CI_AS_SC',
+        description:
+            'Chinese-PRC-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_90_CI_AS_WS_SC',
+        description:
+            'Chinese-PRC-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_90_CI_AS_KS_SC',
+        description:
+            'Chinese-PRC-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_90_CI_AS_KS_WS_SC',
+        description:
+            'Chinese-PRC-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_90_CS_AI_SC',
+        description:
+            'Chinese-PRC-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_90_CS_AI_WS_SC',
+        description:
+            'Chinese-PRC-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_90_CS_AI_KS_SC',
+        description:
+            'Chinese-PRC-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_90_CS_AI_KS_WS_SC',
+        description:
+            'Chinese-PRC-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_90_CS_AS_SC',
+        description:
+            'Chinese-PRC-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_90_CS_AS_WS_SC',
+        description:
+            'Chinese-PRC-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_90_CS_AS_KS_SC',
+        description:
+            'Chinese-PRC-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_90_CS_AS_KS_WS_SC',
+        description:
+            'Chinese-PRC-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_BIN',
+        description: 'Chinese-PRC-Stroke, binary sort'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_BIN2',
+        description: 'Chinese-PRC-Stroke, binary code point comparison sort'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_CI_AI',
+        description: 'Chinese-PRC-Stroke, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_CI_AI_WS',
+        description: 'Chinese-PRC-Stroke, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_CI_AI_KS',
+        description: 'Chinese-PRC-Stroke, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_CI_AI_KS_WS',
+        description: 'Chinese-PRC-Stroke, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_CI_AS',
+        description: 'Chinese-PRC-Stroke, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_CI_AS_WS',
+        description: 'Chinese-PRC-Stroke, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_CI_AS_KS',
+        description: 'Chinese-PRC-Stroke, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_CI_AS_KS_WS',
+        description: 'Chinese-PRC-Stroke, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_CS_AI',
+        description: 'Chinese-PRC-Stroke, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_CS_AI_WS',
+        description: 'Chinese-PRC-Stroke, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_CS_AI_KS',
+        description: 'Chinese-PRC-Stroke, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_CS_AI_KS_WS',
+        description: 'Chinese-PRC-Stroke, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_CS_AS',
+        description: 'Chinese-PRC-Stroke, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_CS_AS_WS',
+        description: 'Chinese-PRC-Stroke, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_CS_AS_KS',
+        description: 'Chinese-PRC-Stroke, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_CS_AS_KS_WS',
+        description: 'Chinese-PRC-Stroke, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_BIN',
+        description: 'Chinese-PRC-Stroke-90, binary sort'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_BIN2',
+        description: 'Chinese-PRC-Stroke-90, binary code point comparison sort'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CI_AI',
+        description:
+            'Chinese-PRC-Stroke-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CI_AI_WS',
+        description:
+            'Chinese-PRC-Stroke-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CI_AI_KS',
+        description:
+            'Chinese-PRC-Stroke-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CI_AI_KS_WS',
+        description: 'Chinese-PRC-Stroke-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CI_AS',
+        description:
+            'Chinese-PRC-Stroke-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CI_AS_WS',
+        description: 'Chinese-PRC-Stroke-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CI_AS_KS',
+        description: 'Chinese-PRC-Stroke-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CI_AS_KS_WS',
+        description: 'Chinese-PRC-Stroke-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CS_AI',
+        description:
+            'Chinese-PRC-Stroke-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CS_AI_WS',
+        description: 'Chinese-PRC-Stroke-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CS_AI_KS',
+        description: 'Chinese-PRC-Stroke-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CS_AI_KS_WS',
+        description: 'Chinese-PRC-Stroke-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CS_AS',
+        description: 'Chinese-PRC-Stroke-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CS_AS_WS',
+        description: 'Chinese-PRC-Stroke-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CS_AS_KS',
+        description: 'Chinese-PRC-Stroke-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CS_AS_KS_WS',
+        description: 'Chinese-PRC-Stroke-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CI_AI_SC',
+        description:
+            'Chinese-PRC-Stroke-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CI_AI_WS_SC',
+        description:
+            'Chinese-PRC-Stroke-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CI_AI_KS_SC',
+        description:
+            'Chinese-PRC-Stroke-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CI_AI_KS_WS_SC',
+        description:
+            'Chinese-PRC-Stroke-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CI_AS_SC',
+        description:
+            'Chinese-PRC-Stroke-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CI_AS_WS_SC',
+        description:
+            'Chinese-PRC-Stroke-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CI_AS_KS_SC',
+        description:
+            'Chinese-PRC-Stroke-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CI_AS_KS_WS_SC',
+        description:
+            'Chinese-PRC-Stroke-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CS_AI_SC',
+        description:
+            'Chinese-PRC-Stroke-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CS_AI_WS_SC',
+        description:
+            'Chinese-PRC-Stroke-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CS_AI_KS_SC',
+        description:
+            'Chinese-PRC-Stroke-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CS_AI_KS_WS_SC',
+        description:
+            'Chinese-PRC-Stroke-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CS_AS_SC',
+        description:
+            'Chinese-PRC-Stroke-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CS_AS_WS_SC',
+        description:
+            'Chinese-PRC-Stroke-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CS_AS_KS_SC',
+        description:
+            'Chinese-PRC-Stroke-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_PRC_Stroke_90_CS_AS_KS_WS_SC',
+        description:
+            'Chinese-PRC-Stroke-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_BIN',
+        description: 'Chinese-Simplified-Pinyin-100, binary sort'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_BIN2',
+        description: 'Chinese-Simplified-Pinyin-100, binary code point comparison sort'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CI_AI',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CI_AI_WS',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CI_AI_KS',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CI_AI_KS_WS',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CI_AS',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CI_AS_WS',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CI_AS_KS',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CI_AS_KS_WS',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CS_AI',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CS_AI_WS',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CS_AI_KS',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CS_AI_KS_WS',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CS_AS',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CS_AS_WS',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CS_AS_KS',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CS_AS_KS_WS',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CI_AI_SC',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CI_AI_WS_SC',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CI_AI_KS_SC',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CI_AI_KS_WS_SC',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CI_AS_SC',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CI_AS_WS_SC',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CI_AS_KS_SC',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CI_AS_KS_WS_SC',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CS_AI_SC',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CS_AI_WS_SC',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CS_AI_KS_SC',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CS_AI_KS_WS_SC',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CS_AS_SC',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CS_AS_WS_SC',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CS_AS_KS_SC',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Pinyin_100_CS_AS_KS_WS_SC',
+        description:
+            'Chinese-Simplified-Pinyin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_BIN',
+        description: 'Chinese-Simplified-Stroke-Order-100, binary sort'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_BIN2',
+        description: 'Chinese-Simplified-Stroke-Order-100, binary code point comparison sort'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CI_AI',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CI_AI_WS',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CI_AI_KS',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CI_AI_KS_WS',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CI_AS',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CI_AS_WS',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CI_AS_KS',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CI_AS_KS_WS',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CS_AI',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CS_AI_WS',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CS_AI_KS',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CS_AI_KS_WS',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CS_AS',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CS_AS_WS',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CS_AS_KS',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CS_AS_KS_WS',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CI_AI_SC',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CI_AI_WS_SC',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CI_AI_KS_SC',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CI_AI_KS_WS_SC',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CI_AS_SC',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CI_AS_WS_SC',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CI_AS_KS_SC',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CI_AS_KS_WS_SC',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CS_AI_SC',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CS_AI_WS_SC',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CS_AI_KS_SC',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CS_AI_KS_WS_SC',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CS_AS_SC',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CS_AS_WS_SC',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CS_AS_KS_SC',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Simplified_Stroke_Order_100_CS_AS_KS_WS_SC',
+        description:
+            'Chinese-Simplified-Stroke-Order-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_BIN',
+        description: 'Chinese-Taiwan-Bopomofo, binary sort'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_BIN2',
+        description: 'Chinese-Taiwan-Bopomofo, binary code point comparison sort'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_CI_AI',
+        description:
+            'Chinese-Taiwan-Bopomofo, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_CI_AI_WS',
+        description:
+            'Chinese-Taiwan-Bopomofo, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_CI_AI_KS',
+        description:
+            'Chinese-Taiwan-Bopomofo, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_CI_AI_KS_WS',
+        description:
+            'Chinese-Taiwan-Bopomofo, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_CI_AS',
+        description:
+            'Chinese-Taiwan-Bopomofo, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_CI_AS_WS',
+        description:
+            'Chinese-Taiwan-Bopomofo, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_CI_AS_KS',
+        description:
+            'Chinese-Taiwan-Bopomofo, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_CI_AS_KS_WS',
+        description: 'Chinese-Taiwan-Bopomofo, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_CS_AI',
+        description:
+            'Chinese-Taiwan-Bopomofo, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_CS_AI_WS',
+        description:
+            'Chinese-Taiwan-Bopomofo, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_CS_AI_KS',
+        description:
+            'Chinese-Taiwan-Bopomofo, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_CS_AI_KS_WS',
+        description: 'Chinese-Taiwan-Bopomofo, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_CS_AS',
+        description:
+            'Chinese-Taiwan-Bopomofo, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_CS_AS_WS',
+        description: 'Chinese-Taiwan-Bopomofo, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_CS_AS_KS',
+        description: 'Chinese-Taiwan-Bopomofo, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_CS_AS_KS_WS',
+        description: 'Chinese-Taiwan-Bopomofo, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_BIN',
+        description: 'Chinese-Taiwan-Bopomofo-90, binary sort'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_BIN2',
+        description: 'Chinese-Taiwan-Bopomofo-90, binary code point comparison sort'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CI_AI',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CI_AI_WS',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CI_AI_KS',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CI_AI_KS_WS',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CI_AS',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CI_AS_WS',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CI_AS_KS',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CI_AS_KS_WS',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CS_AI',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CS_AI_WS',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CS_AI_KS',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CS_AI_KS_WS',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CS_AS',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CS_AS_WS',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CS_AS_KS',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CS_AS_KS_WS',
+        description: 'Chinese-Taiwan-Bopomofo-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CI_AI_SC',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CI_AI_WS_SC',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CI_AI_KS_SC',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CI_AI_KS_WS_SC',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CI_AS_SC',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CI_AS_WS_SC',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CI_AS_KS_SC',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CI_AS_KS_WS_SC',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CS_AI_SC',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CS_AI_WS_SC',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CS_AI_KS_SC',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CS_AI_KS_WS_SC',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CS_AS_SC',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CS_AS_WS_SC',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CS_AS_KS_SC',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Bopomofo_90_CS_AS_KS_WS_SC',
+        description:
+            'Chinese-Taiwan-Bopomofo-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_BIN',
+        description: 'Chinese-Taiwan-Stroke, binary sort'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_BIN2',
+        description: 'Chinese-Taiwan-Stroke, binary code point comparison sort'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_CI_AI',
+        description:
+            'Chinese-Taiwan-Stroke, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_CI_AI_WS',
+        description:
+            'Chinese-Taiwan-Stroke, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_CI_AI_KS',
+        description:
+            'Chinese-Taiwan-Stroke, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_CI_AI_KS_WS',
+        description: 'Chinese-Taiwan-Stroke, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_CI_AS',
+        description:
+            'Chinese-Taiwan-Stroke, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_CI_AS_WS',
+        description: 'Chinese-Taiwan-Stroke, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_CI_AS_KS',
+        description: 'Chinese-Taiwan-Stroke, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_CI_AS_KS_WS',
+        description: 'Chinese-Taiwan-Stroke, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_CS_AI',
+        description:
+            'Chinese-Taiwan-Stroke, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_CS_AI_WS',
+        description: 'Chinese-Taiwan-Stroke, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_CS_AI_KS',
+        description: 'Chinese-Taiwan-Stroke, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_CS_AI_KS_WS',
+        description: 'Chinese-Taiwan-Stroke, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_CS_AS',
+        description: 'Chinese-Taiwan-Stroke, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_CS_AS_WS',
+        description: 'Chinese-Taiwan-Stroke, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_CS_AS_KS',
+        description: 'Chinese-Taiwan-Stroke, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_CS_AS_KS_WS',
+        description: 'Chinese-Taiwan-Stroke, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_BIN',
+        description: 'Chinese-Taiwan-Stroke-90, binary sort'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_BIN2',
+        description: 'Chinese-Taiwan-Stroke-90, binary code point comparison sort'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CI_AI',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CI_AI_WS',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CI_AI_KS',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CI_AI_KS_WS',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CI_AS',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CI_AS_WS',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CI_AS_KS',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CI_AS_KS_WS',
+        description: 'Chinese-Taiwan-Stroke-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CS_AI',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CS_AI_WS',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CS_AI_KS',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CS_AI_KS_WS',
+        description: 'Chinese-Taiwan-Stroke-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CS_AS',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CS_AS_WS',
+        description: 'Chinese-Taiwan-Stroke-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CS_AS_KS',
+        description: 'Chinese-Taiwan-Stroke-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CS_AS_KS_WS',
+        description: 'Chinese-Taiwan-Stroke-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CI_AI_SC',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CI_AI_WS_SC',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CI_AI_KS_SC',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CI_AI_KS_WS_SC',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CI_AS_SC',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CI_AS_WS_SC',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CI_AS_KS_SC',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CI_AS_KS_WS_SC',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CS_AI_SC',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CS_AI_WS_SC',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CS_AI_KS_SC',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CS_AI_KS_WS_SC',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CS_AS_SC',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CS_AS_WS_SC',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CS_AS_KS_SC',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Taiwan_Stroke_90_CS_AS_KS_WS_SC',
+        description:
+            'Chinese-Taiwan-Stroke-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_BIN',
+        description: 'Chinese-Traditional-Bopomofo-100, binary sort'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_BIN2',
+        description: 'Chinese-Traditional-Bopomofo-100, binary code point comparison sort'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CI_AI',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CI_AI_WS',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CI_AI_KS',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CI_AI_KS_WS',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CI_AS',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CI_AS_WS',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CI_AS_KS',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CI_AS_KS_WS',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CS_AI',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CS_AI_WS',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CS_AI_KS',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CS_AI_KS_WS',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CS_AS',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CS_AS_WS',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CS_AS_KS',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CS_AS_KS_WS',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CI_AI_SC',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CI_AI_WS_SC',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CI_AI_KS_SC',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CI_AI_KS_WS_SC',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CI_AS_SC',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CI_AS_WS_SC',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CI_AS_KS_SC',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CI_AS_KS_WS_SC',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CS_AI_SC',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CS_AI_WS_SC',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CS_AI_KS_SC',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CS_AI_KS_WS_SC',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CS_AS_SC',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CS_AS_WS_SC',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CS_AS_KS_SC',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Bopomofo_100_CS_AS_KS_WS_SC',
+        description:
+            'Chinese-Traditional-Bopomofo-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_BIN',
+        description: 'Chinese-Traditional-Pinyin-100, binary sort'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_BIN2',
+        description: 'Chinese-Traditional-Pinyin-100, binary code point comparison sort'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CI_AI',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CI_AI_WS',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CI_AI_KS',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CI_AI_KS_WS',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CI_AS',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CI_AS_WS',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CI_AS_KS',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CI_AS_KS_WS',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CS_AI',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CS_AI_WS',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CS_AI_KS',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CS_AI_KS_WS',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CS_AS',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CS_AS_WS',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CS_AS_KS',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CS_AS_KS_WS',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CI_AI_SC',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CI_AI_WS_SC',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CI_AI_KS_SC',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CI_AI_KS_WS_SC',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CI_AS_SC',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CI_AS_WS_SC',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CI_AS_KS_SC',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CI_AS_KS_WS_SC',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CS_AI_SC',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CS_AI_WS_SC',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CS_AI_KS_SC',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CS_AI_KS_WS_SC',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CS_AS_SC',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CS_AS_WS_SC',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CS_AS_KS_SC',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Pinyin_100_CS_AS_KS_WS_SC',
+        description:
+            'Chinese-Traditional-Pinyin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_BIN',
+        description: 'Chinese-Traditional-Stroke-Count-100, binary sort'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_BIN2',
+        description: 'Chinese-Traditional-Stroke-Count-100, binary code point comparison sort'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CI_AI',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CI_AI_WS',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CI_AI_KS',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CI_AI_KS_WS',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CI_AS',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CI_AS_WS',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CI_AS_KS',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CI_AS_KS_WS',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CS_AI',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CS_AI_WS',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CS_AI_KS',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CS_AI_KS_WS',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CS_AS',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CS_AS_WS',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CS_AS_KS',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CS_AS_KS_WS',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CI_AI_SC',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CI_AI_WS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CI_AI_KS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CI_AI_KS_WS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CI_AS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CI_AS_WS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CI_AS_KS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CI_AS_KS_WS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CS_AI_SC',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CS_AI_WS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CS_AI_KS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CS_AI_KS_WS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CS_AS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CS_AS_WS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CS_AS_KS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Count_100_CS_AS_KS_WS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Count-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_BIN',
+        description: 'Chinese-Traditional-Stroke-Order-100, binary sort'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_BIN2',
+        description: 'Chinese-Traditional-Stroke-Order-100, binary code point comparison sort'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CI_AI',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CI_AI_WS',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CI_AI_KS',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CI_AI_KS_WS',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CI_AS',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CI_AS_WS',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CI_AS_KS',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CI_AS_KS_WS',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CS_AI',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CS_AI_WS',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CS_AI_KS',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CS_AI_KS_WS',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CS_AS',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CS_AS_WS',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CS_AS_KS',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CS_AS_KS_WS',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CI_AI_SC',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CI_AI_WS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CI_AI_KS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CI_AI_KS_WS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CI_AS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CI_AS_WS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CI_AS_KS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CI_AS_KS_WS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CS_AI_SC',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CS_AI_WS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CS_AI_KS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CS_AI_KS_WS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CS_AS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CS_AS_WS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CS_AS_KS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Chinese_Traditional_Stroke_Order_100_CS_AS_KS_WS_SC',
+        description:
+            'Chinese-Traditional-Stroke-Order-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Corsican_100_BIN', description: 'Corsican-100, binary sort' },
+    {
+        name: 'Corsican_100_BIN2',
+        description: 'Corsican-100, binary code point comparison sort'
+    },
+    {
+        name: 'Corsican_100_CI_AI',
+        description: 'Corsican-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Corsican_100_CI_AI_WS',
+        description: 'Corsican-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Corsican_100_CI_AI_KS',
+        description: 'Corsican-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Corsican_100_CI_AI_KS_WS',
+        description: 'Corsican-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Corsican_100_CI_AS',
+        description: 'Corsican-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Corsican_100_CI_AS_WS',
+        description: 'Corsican-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Corsican_100_CI_AS_KS',
+        description: 'Corsican-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Corsican_100_CI_AS_KS_WS',
+        description: 'Corsican-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Corsican_100_CS_AI',
+        description: 'Corsican-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Corsican_100_CS_AI_WS',
+        description: 'Corsican-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Corsican_100_CS_AI_KS',
+        description: 'Corsican-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Corsican_100_CS_AI_KS_WS',
+        description: 'Corsican-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Corsican_100_CS_AS',
+        description: 'Corsican-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Corsican_100_CS_AS_WS',
+        description: 'Corsican-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Corsican_100_CS_AS_KS',
+        description: 'Corsican-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Corsican_100_CS_AS_KS_WS',
+        description: 'Corsican-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Corsican_100_CI_AI_SC',
+        description:
+            'Corsican-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Corsican_100_CI_AI_WS_SC',
+        description:
+            'Corsican-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Corsican_100_CI_AI_KS_SC',
+        description:
+            'Corsican-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Corsican_100_CI_AI_KS_WS_SC',
+        description:
+            'Corsican-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Corsican_100_CI_AS_SC',
+        description:
+            'Corsican-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Corsican_100_CI_AS_WS_SC',
+        description:
+            'Corsican-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Corsican_100_CI_AS_KS_SC',
+        description:
+            'Corsican-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Corsican_100_CI_AS_KS_WS_SC',
+        description:
+            'Corsican-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Corsican_100_CS_AI_SC',
+        description:
+            'Corsican-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Corsican_100_CS_AI_WS_SC',
+        description:
+            'Corsican-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Corsican_100_CS_AI_KS_SC',
+        description:
+            'Corsican-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Corsican_100_CS_AI_KS_WS_SC',
+        description:
+            'Corsican-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Corsican_100_CS_AS_SC',
+        description:
+            'Corsican-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Corsican_100_CS_AS_WS_SC',
+        description:
+            'Corsican-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Corsican_100_CS_AS_KS_SC',
+        description:
+            'Corsican-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Corsican_100_CS_AS_KS_WS_SC',
+        description:
+            'Corsican-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Croatian_BIN', description: 'Croatian, binary sort' },
+    {
+        name: 'Croatian_BIN2',
+        description: 'Croatian, binary code point comparison sort'
+    },
+    {
+        name: 'Croatian_CI_AI',
+        description: 'Croatian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Croatian_CI_AI_WS',
+        description: 'Croatian, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Croatian_CI_AI_KS',
+        description: 'Croatian, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Croatian_CI_AI_KS_WS',
+        description: 'Croatian, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Croatian_CI_AS',
+        description: 'Croatian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Croatian_CI_AS_WS',
+        description: 'Croatian, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Croatian_CI_AS_KS',
+        description: 'Croatian, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Croatian_CI_AS_KS_WS',
+        description: 'Croatian, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Croatian_CS_AI',
+        description: 'Croatian, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Croatian_CS_AI_WS',
+        description: 'Croatian, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Croatian_CS_AI_KS',
+        description: 'Croatian, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Croatian_CS_AI_KS_WS',
+        description: 'Croatian, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Croatian_CS_AS',
+        description: 'Croatian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Croatian_CS_AS_WS',
+        description: 'Croatian, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Croatian_CS_AS_KS',
+        description: 'Croatian, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Croatian_CS_AS_KS_WS',
+        description: 'Croatian, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Croatian_100_BIN', description: 'Croatian-100, binary sort' },
+    {
+        name: 'Croatian_100_BIN2',
+        description: 'Croatian-100, binary code point comparison sort'
+    },
+    {
+        name: 'Croatian_100_CI_AI',
+        description: 'Croatian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Croatian_100_CI_AI_WS',
+        description: 'Croatian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Croatian_100_CI_AI_KS',
+        description: 'Croatian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Croatian_100_CI_AI_KS_WS',
+        description: 'Croatian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Croatian_100_CI_AS',
+        description: 'Croatian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Croatian_100_CI_AS_WS',
+        description: 'Croatian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Croatian_100_CI_AS_KS',
+        description: 'Croatian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Croatian_100_CI_AS_KS_WS',
+        description: 'Croatian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Croatian_100_CS_AI',
+        description: 'Croatian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Croatian_100_CS_AI_WS',
+        description: 'Croatian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Croatian_100_CS_AI_KS',
+        description: 'Croatian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Croatian_100_CS_AI_KS_WS',
+        description: 'Croatian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Croatian_100_CS_AS',
+        description: 'Croatian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Croatian_100_CS_AS_WS',
+        description: 'Croatian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Croatian_100_CS_AS_KS',
+        description: 'Croatian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Croatian_100_CS_AS_KS_WS',
+        description: 'Croatian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Croatian_100_CI_AI_SC',
+        description:
+            'Croatian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Croatian_100_CI_AI_WS_SC',
+        description:
+            'Croatian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Croatian_100_CI_AI_KS_SC',
+        description:
+            'Croatian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Croatian_100_CI_AI_KS_WS_SC',
+        description:
+            'Croatian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Croatian_100_CI_AS_SC',
+        description:
+            'Croatian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Croatian_100_CI_AS_WS_SC',
+        description:
+            'Croatian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Croatian_100_CI_AS_KS_SC',
+        description:
+            'Croatian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Croatian_100_CI_AS_KS_WS_SC',
+        description:
+            'Croatian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Croatian_100_CS_AI_SC',
+        description:
+            'Croatian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Croatian_100_CS_AI_WS_SC',
+        description:
+            'Croatian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Croatian_100_CS_AI_KS_SC',
+        description:
+            'Croatian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Croatian_100_CS_AI_KS_WS_SC',
+        description:
+            'Croatian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Croatian_100_CS_AS_SC',
+        description:
+            'Croatian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Croatian_100_CS_AS_WS_SC',
+        description:
+            'Croatian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Croatian_100_CS_AS_KS_SC',
+        description:
+            'Croatian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Croatian_100_CS_AS_KS_WS_SC',
+        description:
+            'Croatian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Cyrillic_General_BIN',
+        description: 'Cyrillic-General, binary sort'
+    },
+    {
+        name: 'Cyrillic_General_BIN2',
+        description: 'Cyrillic-General, binary code point comparison sort'
+    },
+    {
+        name: 'Cyrillic_General_CI_AI',
+        description: 'Cyrillic-General, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Cyrillic_General_CI_AI_WS',
+        description: 'Cyrillic-General, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Cyrillic_General_CI_AI_KS',
+        description: 'Cyrillic-General, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Cyrillic_General_CI_AI_KS_WS',
+        description: 'Cyrillic-General, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Cyrillic_General_CI_AS',
+        description: 'Cyrillic-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Cyrillic_General_CI_AS_WS',
+        description: 'Cyrillic-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Cyrillic_General_CI_AS_KS',
+        description: 'Cyrillic-General, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Cyrillic_General_CI_AS_KS_WS',
+        description: 'Cyrillic-General, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Cyrillic_General_CS_AI',
+        description: 'Cyrillic-General, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Cyrillic_General_CS_AI_WS',
+        description: 'Cyrillic-General, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Cyrillic_General_CS_AI_KS',
+        description: 'Cyrillic-General, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Cyrillic_General_CS_AI_KS_WS',
+        description: 'Cyrillic-General, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Cyrillic_General_CS_AS',
+        description: 'Cyrillic-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Cyrillic_General_CS_AS_WS',
+        description: 'Cyrillic-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Cyrillic_General_CS_AS_KS',
+        description: 'Cyrillic-General, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Cyrillic_General_CS_AS_KS_WS',
+        description: 'Cyrillic-General, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_BIN',
+        description: 'Cyrillic-General-100, binary sort'
+    },
+    {
+        name: 'Cyrillic_General_100_BIN2',
+        description: 'Cyrillic-General-100, binary code point comparison sort'
+    },
+    {
+        name: 'Cyrillic_General_100_CI_AI',
+        description:
+            'Cyrillic-General-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_CI_AI_WS',
+        description: 'Cyrillic-General-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_CI_AI_KS',
+        description: 'Cyrillic-General-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_CI_AI_KS_WS',
+        description: 'Cyrillic-General-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_CI_AS',
+        description: 'Cyrillic-General-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_CI_AS_WS',
+        description: 'Cyrillic-General-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_CI_AS_KS',
+        description: 'Cyrillic-General-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_CI_AS_KS_WS',
+        description: 'Cyrillic-General-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_CS_AI',
+        description: 'Cyrillic-General-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_CS_AI_WS',
+        description: 'Cyrillic-General-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_CS_AI_KS',
+        description: 'Cyrillic-General-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_CS_AI_KS_WS',
+        description: 'Cyrillic-General-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_CS_AS',
+        description: 'Cyrillic-General-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_CS_AS_WS',
+        description: 'Cyrillic-General-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_CS_AS_KS',
+        description: 'Cyrillic-General-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_CS_AS_KS_WS',
+        description: 'Cyrillic-General-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Cyrillic_General_100_CI_AI_SC',
+        description:
+            'Cyrillic-General-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Cyrillic_General_100_CI_AI_WS_SC',
+        description:
+            'Cyrillic-General-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Cyrillic_General_100_CI_AI_KS_SC',
+        description:
+            'Cyrillic-General-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Cyrillic_General_100_CI_AI_KS_WS_SC',
+        description:
+            'Cyrillic-General-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Cyrillic_General_100_CI_AS_SC',
+        description:
+            'Cyrillic-General-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Cyrillic_General_100_CI_AS_WS_SC',
+        description:
+            'Cyrillic-General-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Cyrillic_General_100_CI_AS_KS_SC',
+        description:
+            'Cyrillic-General-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Cyrillic_General_100_CI_AS_KS_WS_SC',
+        description:
+            'Cyrillic-General-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Cyrillic_General_100_CS_AI_SC',
+        description:
+            'Cyrillic-General-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Cyrillic_General_100_CS_AI_WS_SC',
+        description:
+            'Cyrillic-General-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Cyrillic_General_100_CS_AI_KS_SC',
+        description:
+            'Cyrillic-General-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Cyrillic_General_100_CS_AI_KS_WS_SC',
+        description:
+            'Cyrillic-General-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Cyrillic_General_100_CS_AS_SC',
+        description:
+            'Cyrillic-General-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Cyrillic_General_100_CS_AS_WS_SC',
+        description:
+            'Cyrillic-General-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Cyrillic_General_100_CS_AS_KS_SC',
+        description:
+            'Cyrillic-General-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Cyrillic_General_100_CS_AS_KS_WS_SC',
+        description:
+            'Cyrillic-General-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Czech_BIN', description: 'Czech, binary sort' },
+    {
+        name: 'Czech_BIN2',
+        description: 'Czech, binary code point comparison sort'
+    },
+    {
+        name: 'Czech_CI_AI',
+        description: 'Czech, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Czech_CI_AI_WS',
+        description: 'Czech, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Czech_CI_AI_KS',
+        description: 'Czech, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Czech_CI_AI_KS_WS',
+        description: 'Czech, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Czech_CI_AS',
+        description: 'Czech, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Czech_CI_AS_WS',
+        description: 'Czech, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Czech_CI_AS_KS',
+        description: 'Czech, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Czech_CI_AS_KS_WS',
+        description: 'Czech, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Czech_CS_AI',
+        description: 'Czech, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Czech_CS_AI_WS',
+        description: 'Czech, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Czech_CS_AI_KS',
+        description: 'Czech, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Czech_CS_AI_KS_WS',
+        description: 'Czech, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Czech_CS_AS',
+        description: 'Czech, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Czech_CS_AS_WS',
+        description: 'Czech, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Czech_CS_AS_KS',
+        description: 'Czech, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Czech_CS_AS_KS_WS',
+        description: 'Czech, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Czech_100_BIN', description: 'Czech-100, binary sort' },
+    {
+        name: 'Czech_100_BIN2',
+        description: 'Czech-100, binary code point comparison sort'
+    },
+    {
+        name: 'Czech_100_CI_AI',
+        description: 'Czech-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Czech_100_CI_AI_WS',
+        description: 'Czech-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Czech_100_CI_AI_KS',
+        description: 'Czech-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Czech_100_CI_AI_KS_WS',
+        description: 'Czech-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Czech_100_CI_AS',
+        description: 'Czech-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Czech_100_CI_AS_WS',
+        description: 'Czech-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Czech_100_CI_AS_KS',
+        description: 'Czech-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Czech_100_CI_AS_KS_WS',
+        description: 'Czech-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Czech_100_CS_AI',
+        description: 'Czech-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Czech_100_CS_AI_WS',
+        description: 'Czech-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Czech_100_CS_AI_KS',
+        description: 'Czech-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Czech_100_CS_AI_KS_WS',
+        description: 'Czech-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Czech_100_CS_AS',
+        description: 'Czech-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Czech_100_CS_AS_WS',
+        description: 'Czech-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Czech_100_CS_AS_KS',
+        description: 'Czech-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Czech_100_CS_AS_KS_WS',
+        description: 'Czech-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Czech_100_CI_AI_SC',
+        description:
+            'Czech-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Czech_100_CI_AI_WS_SC',
+        description:
+            'Czech-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Czech_100_CI_AI_KS_SC',
+        description:
+            'Czech-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Czech_100_CI_AI_KS_WS_SC',
+        description:
+            'Czech-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Czech_100_CI_AS_SC',
+        description:
+            'Czech-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Czech_100_CI_AS_WS_SC',
+        description:
+            'Czech-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Czech_100_CI_AS_KS_SC',
+        description:
+            'Czech-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Czech_100_CI_AS_KS_WS_SC',
+        description:
+            'Czech-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Czech_100_CS_AI_SC',
+        description:
+            'Czech-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Czech_100_CS_AI_WS_SC',
+        description:
+            'Czech-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Czech_100_CS_AI_KS_SC',
+        description:
+            'Czech-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Czech_100_CS_AI_KS_WS_SC',
+        description:
+            'Czech-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Czech_100_CS_AS_SC',
+        description:
+            'Czech-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Czech_100_CS_AS_WS_SC',
+        description:
+            'Czech-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Czech_100_CS_AS_KS_SC',
+        description:
+            'Czech-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Czech_100_CS_AS_KS_WS_SC',
+        description:
+            'Czech-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Greenlandic_100_BIN',
+        description: 'Danish-Greenlandic-100, binary sort'
+    },
+    {
+        name: 'Danish_Greenlandic_100_BIN2',
+        description: 'Danish-Greenlandic-100, binary code point comparison sort'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CI_AI',
+        description:
+            'Danish-Greenlandic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CI_AI_WS',
+        description:
+            'Danish-Greenlandic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CI_AI_KS',
+        description:
+            'Danish-Greenlandic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CI_AI_KS_WS',
+        description: 'Danish-Greenlandic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CI_AS',
+        description:
+            'Danish-Greenlandic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CI_AS_WS',
+        description: 'Danish-Greenlandic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CI_AS_KS',
+        description: 'Danish-Greenlandic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CI_AS_KS_WS',
+        description: 'Danish-Greenlandic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CS_AI',
+        description:
+            'Danish-Greenlandic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CS_AI_WS',
+        description: 'Danish-Greenlandic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CS_AI_KS',
+        description: 'Danish-Greenlandic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CS_AI_KS_WS',
+        description: 'Danish-Greenlandic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CS_AS',
+        description: 'Danish-Greenlandic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CS_AS_WS',
+        description: 'Danish-Greenlandic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CS_AS_KS',
+        description: 'Danish-Greenlandic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CS_AS_KS_WS',
+        description: 'Danish-Greenlandic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CI_AI_SC',
+        description:
+            'Danish-Greenlandic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CI_AI_WS_SC',
+        description:
+            'Danish-Greenlandic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CI_AI_KS_SC',
+        description:
+            'Danish-Greenlandic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CI_AI_KS_WS_SC',
+        description:
+            'Danish-Greenlandic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CI_AS_SC',
+        description:
+            'Danish-Greenlandic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CI_AS_WS_SC',
+        description:
+            'Danish-Greenlandic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CI_AS_KS_SC',
+        description:
+            'Danish-Greenlandic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CI_AS_KS_WS_SC',
+        description:
+            'Danish-Greenlandic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CS_AI_SC',
+        description:
+            'Danish-Greenlandic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CS_AI_WS_SC',
+        description:
+            'Danish-Greenlandic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CS_AI_KS_SC',
+        description:
+            'Danish-Greenlandic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CS_AI_KS_WS_SC',
+        description:
+            'Danish-Greenlandic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CS_AS_SC',
+        description:
+            'Danish-Greenlandic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CS_AS_WS_SC',
+        description:
+            'Danish-Greenlandic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CS_AS_KS_SC',
+        description:
+            'Danish-Greenlandic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Greenlandic_100_CS_AS_KS_WS_SC',
+        description:
+            'Danish-Greenlandic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Danish_Norwegian_BIN',
+        description: 'Danish-Norwegian, binary sort'
+    },
+    {
+        name: 'Danish_Norwegian_BIN2',
+        description: 'Danish-Norwegian, binary code point comparison sort'
+    },
+    {
+        name: 'Danish_Norwegian_CI_AI',
+        description: 'Danish-Norwegian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Danish_Norwegian_CI_AI_WS',
+        description: 'Danish-Norwegian, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Danish_Norwegian_CI_AI_KS',
+        description: 'Danish-Norwegian, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Danish_Norwegian_CI_AI_KS_WS',
+        description: 'Danish-Norwegian, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Danish_Norwegian_CI_AS',
+        description: 'Danish-Norwegian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Danish_Norwegian_CI_AS_WS',
+        description: 'Danish-Norwegian, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Danish_Norwegian_CI_AS_KS',
+        description: 'Danish-Norwegian, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Danish_Norwegian_CI_AS_KS_WS',
+        description: 'Danish-Norwegian, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Danish_Norwegian_CS_AI',
+        description: 'Danish-Norwegian, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Danish_Norwegian_CS_AI_WS',
+        description: 'Danish-Norwegian, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Danish_Norwegian_CS_AI_KS',
+        description: 'Danish-Norwegian, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Danish_Norwegian_CS_AI_KS_WS',
+        description: 'Danish-Norwegian, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Danish_Norwegian_CS_AS',
+        description: 'Danish-Norwegian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Danish_Norwegian_CS_AS_WS',
+        description: 'Danish-Norwegian, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Danish_Norwegian_CS_AS_KS',
+        description: 'Danish-Norwegian, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Danish_Norwegian_CS_AS_KS_WS',
+        description: 'Danish-Norwegian, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Dari_100_BIN', description: 'Dari-100, binary sort' },
+    {
+        name: 'Dari_100_BIN2',
+        description: 'Dari-100, binary code point comparison sort'
+    },
+    {
+        name: 'Dari_100_CI_AI',
+        description: 'Dari-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Dari_100_CI_AI_WS',
+        description: 'Dari-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Dari_100_CI_AI_KS',
+        description: 'Dari-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Dari_100_CI_AI_KS_WS',
+        description: 'Dari-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Dari_100_CI_AS',
+        description: 'Dari-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Dari_100_CI_AS_WS',
+        description: 'Dari-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Dari_100_CI_AS_KS',
+        description: 'Dari-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Dari_100_CI_AS_KS_WS',
+        description: 'Dari-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Dari_100_CS_AI',
+        description: 'Dari-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Dari_100_CS_AI_WS',
+        description: 'Dari-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Dari_100_CS_AI_KS',
+        description: 'Dari-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Dari_100_CS_AI_KS_WS',
+        description: 'Dari-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Dari_100_CS_AS',
+        description: 'Dari-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Dari_100_CS_AS_WS',
+        description: 'Dari-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Dari_100_CS_AS_KS',
+        description: 'Dari-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Dari_100_CS_AS_KS_WS',
+        description: 'Dari-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Dari_100_CI_AI_SC',
+        description:
+            'Dari-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Dari_100_CI_AI_WS_SC',
+        description:
+            'Dari-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Dari_100_CI_AI_KS_SC',
+        description:
+            'Dari-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Dari_100_CI_AI_KS_WS_SC',
+        description:
+            'Dari-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Dari_100_CI_AS_SC',
+        description:
+            'Dari-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Dari_100_CI_AS_WS_SC',
+        description:
+            'Dari-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Dari_100_CI_AS_KS_SC',
+        description:
+            'Dari-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Dari_100_CI_AS_KS_WS_SC',
+        description:
+            'Dari-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Dari_100_CS_AI_SC',
+        description:
+            'Dari-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Dari_100_CS_AI_WS_SC',
+        description:
+            'Dari-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Dari_100_CS_AI_KS_SC',
+        description:
+            'Dari-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Dari_100_CS_AI_KS_WS_SC',
+        description:
+            'Dari-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Dari_100_CS_AS_SC',
+        description:
+            'Dari-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Dari_100_CS_AS_WS_SC',
+        description:
+            'Dari-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Dari_100_CS_AS_KS_SC',
+        description:
+            'Dari-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Dari_100_CS_AS_KS_WS_SC',
+        description:
+            'Dari-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Divehi_90_BIN', description: 'Divehi-90, binary sort' },
+    {
+        name: 'Divehi_90_BIN2',
+        description: 'Divehi-90, binary code point comparison sort'
+    },
+    {
+        name: 'Divehi_90_CI_AI',
+        description: 'Divehi-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Divehi_90_CI_AI_WS',
+        description: 'Divehi-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Divehi_90_CI_AI_KS',
+        description: 'Divehi-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Divehi_90_CI_AI_KS_WS',
+        description: 'Divehi-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Divehi_90_CI_AS',
+        description: 'Divehi-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Divehi_90_CI_AS_WS',
+        description: 'Divehi-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Divehi_90_CI_AS_KS',
+        description: 'Divehi-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Divehi_90_CI_AS_KS_WS',
+        description: 'Divehi-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Divehi_90_CS_AI',
+        description: 'Divehi-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Divehi_90_CS_AI_WS',
+        description: 'Divehi-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Divehi_90_CS_AI_KS',
+        description: 'Divehi-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Divehi_90_CS_AI_KS_WS',
+        description: 'Divehi-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Divehi_90_CS_AS',
+        description: 'Divehi-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Divehi_90_CS_AS_WS',
+        description: 'Divehi-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Divehi_90_CS_AS_KS',
+        description: 'Divehi-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Divehi_90_CS_AS_KS_WS',
+        description: 'Divehi-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Divehi_90_CI_AI_SC',
+        description:
+            'Divehi-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_90_CI_AI_WS_SC',
+        description:
+            'Divehi-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_90_CI_AI_KS_SC',
+        description:
+            'Divehi-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_90_CI_AI_KS_WS_SC',
+        description:
+            'Divehi-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_90_CI_AS_SC',
+        description:
+            'Divehi-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_90_CI_AS_WS_SC',
+        description:
+            'Divehi-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_90_CI_AS_KS_SC',
+        description:
+            'Divehi-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_90_CI_AS_KS_WS_SC',
+        description:
+            'Divehi-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_90_CS_AI_SC',
+        description:
+            'Divehi-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_90_CS_AI_WS_SC',
+        description:
+            'Divehi-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_90_CS_AI_KS_SC',
+        description:
+            'Divehi-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_90_CS_AI_KS_WS_SC',
+        description:
+            'Divehi-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_90_CS_AS_SC',
+        description:
+            'Divehi-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_90_CS_AS_WS_SC',
+        description:
+            'Divehi-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_90_CS_AS_KS_SC',
+        description:
+            'Divehi-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_90_CS_AS_KS_WS_SC',
+        description:
+            'Divehi-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Divehi_100_BIN', description: 'Divehi-100, binary sort' },
+    {
+        name: 'Divehi_100_BIN2',
+        description: 'Divehi-100, binary code point comparison sort'
+    },
+    {
+        name: 'Divehi_100_CI_AI',
+        description: 'Divehi-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Divehi_100_CI_AI_WS',
+        description: 'Divehi-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Divehi_100_CI_AI_KS',
+        description: 'Divehi-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Divehi_100_CI_AI_KS_WS',
+        description: 'Divehi-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Divehi_100_CI_AS',
+        description: 'Divehi-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Divehi_100_CI_AS_WS',
+        description: 'Divehi-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Divehi_100_CI_AS_KS',
+        description: 'Divehi-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Divehi_100_CI_AS_KS_WS',
+        description: 'Divehi-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Divehi_100_CS_AI',
+        description: 'Divehi-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Divehi_100_CS_AI_WS',
+        description: 'Divehi-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Divehi_100_CS_AI_KS',
+        description: 'Divehi-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Divehi_100_CS_AI_KS_WS',
+        description: 'Divehi-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Divehi_100_CS_AS',
+        description: 'Divehi-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Divehi_100_CS_AS_WS',
+        description: 'Divehi-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Divehi_100_CS_AS_KS',
+        description: 'Divehi-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Divehi_100_CS_AS_KS_WS',
+        description: 'Divehi-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Divehi_100_CI_AI_SC',
+        description:
+            'Divehi-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_100_CI_AI_WS_SC',
+        description:
+            'Divehi-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_100_CI_AI_KS_SC',
+        description:
+            'Divehi-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_100_CI_AI_KS_WS_SC',
+        description:
+            'Divehi-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_100_CI_AS_SC',
+        description:
+            'Divehi-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_100_CI_AS_WS_SC',
+        description:
+            'Divehi-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_100_CI_AS_KS_SC',
+        description:
+            'Divehi-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_100_CI_AS_KS_WS_SC',
+        description:
+            'Divehi-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_100_CS_AI_SC',
+        description:
+            'Divehi-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_100_CS_AI_WS_SC',
+        description:
+            'Divehi-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_100_CS_AI_KS_SC',
+        description:
+            'Divehi-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_100_CS_AI_KS_WS_SC',
+        description:
+            'Divehi-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_100_CS_AS_SC',
+        description:
+            'Divehi-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_100_CS_AS_WS_SC',
+        description:
+            'Divehi-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_100_CS_AS_KS_SC',
+        description:
+            'Divehi-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Divehi_100_CS_AS_KS_WS_SC',
+        description:
+            'Divehi-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Estonian_BIN', description: 'Estonian, binary sort' },
+    {
+        name: 'Estonian_BIN2',
+        description: 'Estonian, binary code point comparison sort'
+    },
+    {
+        name: 'Estonian_CI_AI',
+        description: 'Estonian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Estonian_CI_AI_WS',
+        description: 'Estonian, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Estonian_CI_AI_KS',
+        description: 'Estonian, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Estonian_CI_AI_KS_WS',
+        description: 'Estonian, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Estonian_CI_AS',
+        description: 'Estonian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Estonian_CI_AS_WS',
+        description: 'Estonian, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Estonian_CI_AS_KS',
+        description: 'Estonian, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Estonian_CI_AS_KS_WS',
+        description: 'Estonian, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Estonian_CS_AI',
+        description: 'Estonian, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Estonian_CS_AI_WS',
+        description: 'Estonian, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Estonian_CS_AI_KS',
+        description: 'Estonian, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Estonian_CS_AI_KS_WS',
+        description: 'Estonian, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Estonian_CS_AS',
+        description: 'Estonian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Estonian_CS_AS_WS',
+        description: 'Estonian, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Estonian_CS_AS_KS',
+        description: 'Estonian, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Estonian_CS_AS_KS_WS',
+        description: 'Estonian, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Estonian_100_BIN', description: 'Estonian-100, binary sort' },
+    {
+        name: 'Estonian_100_BIN2',
+        description: 'Estonian-100, binary code point comparison sort'
+    },
+    {
+        name: 'Estonian_100_CI_AI',
+        description: 'Estonian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Estonian_100_CI_AI_WS',
+        description: 'Estonian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Estonian_100_CI_AI_KS',
+        description: 'Estonian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Estonian_100_CI_AI_KS_WS',
+        description: 'Estonian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Estonian_100_CI_AS',
+        description: 'Estonian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Estonian_100_CI_AS_WS',
+        description: 'Estonian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Estonian_100_CI_AS_KS',
+        description: 'Estonian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Estonian_100_CI_AS_KS_WS',
+        description: 'Estonian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Estonian_100_CS_AI',
+        description: 'Estonian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Estonian_100_CS_AI_WS',
+        description: 'Estonian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Estonian_100_CS_AI_KS',
+        description: 'Estonian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Estonian_100_CS_AI_KS_WS',
+        description: 'Estonian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Estonian_100_CS_AS',
+        description: 'Estonian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Estonian_100_CS_AS_WS',
+        description: 'Estonian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Estonian_100_CS_AS_KS',
+        description: 'Estonian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Estonian_100_CS_AS_KS_WS',
+        description: 'Estonian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Estonian_100_CI_AI_SC',
+        description:
+            'Estonian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Estonian_100_CI_AI_WS_SC',
+        description:
+            'Estonian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Estonian_100_CI_AI_KS_SC',
+        description:
+            'Estonian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Estonian_100_CI_AI_KS_WS_SC',
+        description:
+            'Estonian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Estonian_100_CI_AS_SC',
+        description:
+            'Estonian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Estonian_100_CI_AS_WS_SC',
+        description:
+            'Estonian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Estonian_100_CI_AS_KS_SC',
+        description:
+            'Estonian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Estonian_100_CI_AS_KS_WS_SC',
+        description:
+            'Estonian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Estonian_100_CS_AI_SC',
+        description:
+            'Estonian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Estonian_100_CS_AI_WS_SC',
+        description:
+            'Estonian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Estonian_100_CS_AI_KS_SC',
+        description:
+            'Estonian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Estonian_100_CS_AI_KS_WS_SC',
+        description:
+            'Estonian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Estonian_100_CS_AS_SC',
+        description:
+            'Estonian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Estonian_100_CS_AS_WS_SC',
+        description:
+            'Estonian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Estonian_100_CS_AS_KS_SC',
+        description:
+            'Estonian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Estonian_100_CS_AS_KS_WS_SC',
+        description:
+            'Estonian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Finnish_Swedish_BIN', description: 'Finnish-Swedish, binary sort' },
+    {
+        name: 'Finnish_Swedish_BIN2',
+        description: 'Finnish-Swedish, binary code point comparison sort'
+    },
+    {
+        name: 'Finnish_Swedish_CI_AI',
+        description: 'Finnish-Swedish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Finnish_Swedish_CI_AI_WS',
+        description: 'Finnish-Swedish, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Finnish_Swedish_CI_AI_KS',
+        description: 'Finnish-Swedish, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Finnish_Swedish_CI_AI_KS_WS',
+        description: 'Finnish-Swedish, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Finnish_Swedish_CI_AS',
+        description: 'Finnish-Swedish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Finnish_Swedish_CI_AS_WS',
+        description: 'Finnish-Swedish, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Finnish_Swedish_CI_AS_KS',
+        description: 'Finnish-Swedish, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Finnish_Swedish_CI_AS_KS_WS',
+        description: 'Finnish-Swedish, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Finnish_Swedish_CS_AI',
+        description: 'Finnish-Swedish, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Finnish_Swedish_CS_AI_WS',
+        description: 'Finnish-Swedish, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Finnish_Swedish_CS_AI_KS',
+        description: 'Finnish-Swedish, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Finnish_Swedish_CS_AI_KS_WS',
+        description: 'Finnish-Swedish, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Finnish_Swedish_CS_AS',
+        description: 'Finnish-Swedish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Finnish_Swedish_CS_AS_WS',
+        description: 'Finnish-Swedish, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Finnish_Swedish_CS_AS_KS',
+        description: 'Finnish-Swedish, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Finnish_Swedish_CS_AS_KS_WS',
+        description: 'Finnish-Swedish, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_BIN',
+        description: 'Finnish-Swedish-100, binary sort'
+    },
+    {
+        name: 'Finnish_Swedish_100_BIN2',
+        description: 'Finnish-Swedish-100, binary code point comparison sort'
+    },
+    {
+        name: 'Finnish_Swedish_100_CI_AI',
+        description:
+            'Finnish-Swedish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_CI_AI_WS',
+        description: 'Finnish-Swedish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_CI_AI_KS',
+        description: 'Finnish-Swedish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_CI_AI_KS_WS',
+        description: 'Finnish-Swedish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_CI_AS',
+        description: 'Finnish-Swedish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_CI_AS_WS',
+        description: 'Finnish-Swedish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_CI_AS_KS',
+        description: 'Finnish-Swedish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_CI_AS_KS_WS',
+        description: 'Finnish-Swedish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_CS_AI',
+        description: 'Finnish-Swedish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_CS_AI_WS',
+        description: 'Finnish-Swedish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_CS_AI_KS',
+        description: 'Finnish-Swedish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_CS_AI_KS_WS',
+        description: 'Finnish-Swedish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_CS_AS',
+        description: 'Finnish-Swedish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_CS_AS_WS',
+        description: 'Finnish-Swedish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_CS_AS_KS',
+        description: 'Finnish-Swedish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_CS_AS_KS_WS',
+        description: 'Finnish-Swedish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Finnish_Swedish_100_CI_AI_SC',
+        description:
+            'Finnish-Swedish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Finnish_Swedish_100_CI_AI_WS_SC',
+        description:
+            'Finnish-Swedish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Finnish_Swedish_100_CI_AI_KS_SC',
+        description:
+            'Finnish-Swedish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Finnish_Swedish_100_CI_AI_KS_WS_SC',
+        description:
+            'Finnish-Swedish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Finnish_Swedish_100_CI_AS_SC',
+        description:
+            'Finnish-Swedish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Finnish_Swedish_100_CI_AS_WS_SC',
+        description:
+            'Finnish-Swedish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Finnish_Swedish_100_CI_AS_KS_SC',
+        description:
+            'Finnish-Swedish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Finnish_Swedish_100_CI_AS_KS_WS_SC',
+        description:
+            'Finnish-Swedish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Finnish_Swedish_100_CS_AI_SC',
+        description:
+            'Finnish-Swedish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Finnish_Swedish_100_CS_AI_WS_SC',
+        description:
+            'Finnish-Swedish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Finnish_Swedish_100_CS_AI_KS_SC',
+        description:
+            'Finnish-Swedish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Finnish_Swedish_100_CS_AI_KS_WS_SC',
+        description:
+            'Finnish-Swedish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Finnish_Swedish_100_CS_AS_SC',
+        description:
+            'Finnish-Swedish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Finnish_Swedish_100_CS_AS_WS_SC',
+        description:
+            'Finnish-Swedish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Finnish_Swedish_100_CS_AS_KS_SC',
+        description:
+            'Finnish-Swedish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Finnish_Swedish_100_CS_AS_KS_WS_SC',
+        description:
+            'Finnish-Swedish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'French_BIN', description: 'French, binary sort' },
+    {
+        name: 'French_BIN2',
+        description: 'French, binary code point comparison sort'
+    },
+    {
+        name: 'French_CI_AI',
+        description: 'French, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'French_CI_AI_WS',
+        description: 'French, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'French_CI_AI_KS',
+        description: 'French, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'French_CI_AI_KS_WS',
+        description: 'French, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'French_CI_AS',
+        description: 'French, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'French_CI_AS_WS',
+        description: 'French, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'French_CI_AS_KS',
+        description: 'French, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'French_CI_AS_KS_WS',
+        description: 'French, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'French_CS_AI',
+        description: 'French, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'French_CS_AI_WS',
+        description: 'French, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'French_CS_AI_KS',
+        description: 'French, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'French_CS_AI_KS_WS',
+        description: 'French, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'French_CS_AS',
+        description: 'French, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'French_CS_AS_WS',
+        description: 'French, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'French_CS_AS_KS',
+        description: 'French, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'French_CS_AS_KS_WS',
+        description: 'French, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'French_100_BIN', description: 'French-100, binary sort' },
+    {
+        name: 'French_100_BIN2',
+        description: 'French-100, binary code point comparison sort'
+    },
+    {
+        name: 'French_100_CI_AI',
+        description: 'French-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'French_100_CI_AI_WS',
+        description: 'French-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'French_100_CI_AI_KS',
+        description: 'French-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'French_100_CI_AI_KS_WS',
+        description: 'French-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'French_100_CI_AS',
+        description: 'French-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'French_100_CI_AS_WS',
+        description: 'French-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'French_100_CI_AS_KS',
+        description: 'French-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'French_100_CI_AS_KS_WS',
+        description: 'French-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'French_100_CS_AI',
+        description: 'French-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'French_100_CS_AI_WS',
+        description: 'French-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'French_100_CS_AI_KS',
+        description: 'French-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'French_100_CS_AI_KS_WS',
+        description: 'French-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'French_100_CS_AS',
+        description: 'French-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'French_100_CS_AS_WS',
+        description: 'French-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'French_100_CS_AS_KS',
+        description: 'French-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'French_100_CS_AS_KS_WS',
+        description: 'French-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'French_100_CI_AI_SC',
+        description:
+            'French-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'French_100_CI_AI_WS_SC',
+        description:
+            'French-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'French_100_CI_AI_KS_SC',
+        description:
+            'French-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'French_100_CI_AI_KS_WS_SC',
+        description:
+            'French-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'French_100_CI_AS_SC',
+        description:
+            'French-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'French_100_CI_AS_WS_SC',
+        description:
+            'French-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'French_100_CI_AS_KS_SC',
+        description:
+            'French-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'French_100_CI_AS_KS_WS_SC',
+        description:
+            'French-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'French_100_CS_AI_SC',
+        description:
+            'French-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'French_100_CS_AI_WS_SC',
+        description:
+            'French-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'French_100_CS_AI_KS_SC',
+        description:
+            'French-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'French_100_CS_AI_KS_WS_SC',
+        description:
+            'French-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'French_100_CS_AS_SC',
+        description:
+            'French-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'French_100_CS_AS_WS_SC',
+        description:
+            'French-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'French_100_CS_AS_KS_SC',
+        description:
+            'French-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'French_100_CS_AS_KS_WS_SC',
+        description:
+            'French-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Frisian_100_BIN', description: 'Frisian-100, binary sort' },
+    {
+        name: 'Frisian_100_BIN2',
+        description: 'Frisian-100, binary code point comparison sort'
+    },
+    {
+        name: 'Frisian_100_CI_AI',
+        description: 'Frisian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Frisian_100_CI_AI_WS',
+        description: 'Frisian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Frisian_100_CI_AI_KS',
+        description: 'Frisian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Frisian_100_CI_AI_KS_WS',
+        description: 'Frisian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Frisian_100_CI_AS',
+        description: 'Frisian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Frisian_100_CI_AS_WS',
+        description: 'Frisian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Frisian_100_CI_AS_KS',
+        description: 'Frisian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Frisian_100_CI_AS_KS_WS',
+        description: 'Frisian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Frisian_100_CS_AI',
+        description: 'Frisian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Frisian_100_CS_AI_WS',
+        description: 'Frisian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Frisian_100_CS_AI_KS',
+        description: 'Frisian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Frisian_100_CS_AI_KS_WS',
+        description: 'Frisian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Frisian_100_CS_AS',
+        description: 'Frisian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Frisian_100_CS_AS_WS',
+        description: 'Frisian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Frisian_100_CS_AS_KS',
+        description: 'Frisian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Frisian_100_CS_AS_KS_WS',
+        description: 'Frisian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Frisian_100_CI_AI_SC',
+        description:
+            'Frisian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Frisian_100_CI_AI_WS_SC',
+        description:
+            'Frisian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Frisian_100_CI_AI_KS_SC',
+        description:
+            'Frisian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Frisian_100_CI_AI_KS_WS_SC',
+        description:
+            'Frisian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Frisian_100_CI_AS_SC',
+        description:
+            'Frisian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Frisian_100_CI_AS_WS_SC',
+        description:
+            'Frisian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Frisian_100_CI_AS_KS_SC',
+        description:
+            'Frisian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Frisian_100_CI_AS_KS_WS_SC',
+        description:
+            'Frisian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Frisian_100_CS_AI_SC',
+        description:
+            'Frisian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Frisian_100_CS_AI_WS_SC',
+        description:
+            'Frisian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Frisian_100_CS_AI_KS_SC',
+        description:
+            'Frisian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Frisian_100_CS_AI_KS_WS_SC',
+        description:
+            'Frisian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Frisian_100_CS_AS_SC',
+        description:
+            'Frisian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Frisian_100_CS_AS_WS_SC',
+        description:
+            'Frisian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Frisian_100_CS_AS_KS_SC',
+        description:
+            'Frisian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Frisian_100_CS_AS_KS_WS_SC',
+        description:
+            'Frisian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Georgian_Modern_Sort_BIN',
+        description: 'Georgian-Modern-Sort, binary sort'
+    },
+    {
+        name: 'Georgian_Modern_Sort_BIN2',
+        description: 'Georgian-Modern-Sort, binary code point comparison sort'
+    },
+    {
+        name: 'Georgian_Modern_Sort_CI_AI',
+        description:
+            'Georgian-Modern-Sort, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_CI_AI_WS',
+        description: 'Georgian-Modern-Sort, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_CI_AI_KS',
+        description: 'Georgian-Modern-Sort, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_CI_AI_KS_WS',
+        description: 'Georgian-Modern-Sort, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_CI_AS',
+        description: 'Georgian-Modern-Sort, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_CI_AS_WS',
+        description: 'Georgian-Modern-Sort, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_CI_AS_KS',
+        description: 'Georgian-Modern-Sort, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_CI_AS_KS_WS',
+        description: 'Georgian-Modern-Sort, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_CS_AI',
+        description: 'Georgian-Modern-Sort, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_CS_AI_WS',
+        description: 'Georgian-Modern-Sort, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_CS_AI_KS',
+        description: 'Georgian-Modern-Sort, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_CS_AI_KS_WS',
+        description: 'Georgian-Modern-Sort, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_CS_AS',
+        description: 'Georgian-Modern-Sort, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_CS_AS_WS',
+        description: 'Georgian-Modern-Sort, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_CS_AS_KS',
+        description: 'Georgian-Modern-Sort, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_CS_AS_KS_WS',
+        description: 'Georgian-Modern-Sort, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_BIN',
+        description: 'Georgian-Modern-Sort-100, binary sort'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_BIN2',
+        description: 'Georgian-Modern-Sort-100, binary code point comparison sort'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CI_AI',
+        description:
+            'Georgian-Modern-Sort-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CI_AI_WS',
+        description:
+            'Georgian-Modern-Sort-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CI_AI_KS',
+        description:
+            'Georgian-Modern-Sort-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CI_AI_KS_WS',
+        description:
+            'Georgian-Modern-Sort-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CI_AS',
+        description:
+            'Georgian-Modern-Sort-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CI_AS_WS',
+        description:
+            'Georgian-Modern-Sort-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CI_AS_KS',
+        description:
+            'Georgian-Modern-Sort-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CI_AS_KS_WS',
+        description: 'Georgian-Modern-Sort-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CS_AI',
+        description:
+            'Georgian-Modern-Sort-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CS_AI_WS',
+        description:
+            'Georgian-Modern-Sort-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CS_AI_KS',
+        description:
+            'Georgian-Modern-Sort-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CS_AI_KS_WS',
+        description: 'Georgian-Modern-Sort-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CS_AS',
+        description:
+            'Georgian-Modern-Sort-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CS_AS_WS',
+        description: 'Georgian-Modern-Sort-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CS_AS_KS',
+        description: 'Georgian-Modern-Sort-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CS_AS_KS_WS',
+        description: 'Georgian-Modern-Sort-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CI_AI_SC',
+        description:
+            'Georgian-Modern-Sort-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CI_AI_WS_SC',
+        description:
+            'Georgian-Modern-Sort-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CI_AI_KS_SC',
+        description:
+            'Georgian-Modern-Sort-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CI_AI_KS_WS_SC',
+        description:
+            'Georgian-Modern-Sort-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CI_AS_SC',
+        description:
+            'Georgian-Modern-Sort-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CI_AS_WS_SC',
+        description:
+            'Georgian-Modern-Sort-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CI_AS_KS_SC',
+        description:
+            'Georgian-Modern-Sort-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CI_AS_KS_WS_SC',
+        description:
+            'Georgian-Modern-Sort-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CS_AI_SC',
+        description:
+            'Georgian-Modern-Sort-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CS_AI_WS_SC',
+        description:
+            'Georgian-Modern-Sort-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CS_AI_KS_SC',
+        description:
+            'Georgian-Modern-Sort-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CS_AI_KS_WS_SC',
+        description:
+            'Georgian-Modern-Sort-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CS_AS_SC',
+        description:
+            'Georgian-Modern-Sort-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CS_AS_WS_SC',
+        description:
+            'Georgian-Modern-Sort-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CS_AS_KS_SC',
+        description:
+            'Georgian-Modern-Sort-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Georgian_Modern_Sort_100_CS_AS_KS_WS_SC',
+        description:
+            'Georgian-Modern-Sort-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'German_PhoneBook_BIN',
+        description: 'German-PhoneBook, binary sort'
+    },
+    {
+        name: 'German_PhoneBook_BIN2',
+        description: 'German-PhoneBook, binary code point comparison sort'
+    },
+    {
+        name: 'German_PhoneBook_CI_AI',
+        description: 'German-PhoneBook, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'German_PhoneBook_CI_AI_WS',
+        description: 'German-PhoneBook, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'German_PhoneBook_CI_AI_KS',
+        description: 'German-PhoneBook, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'German_PhoneBook_CI_AI_KS_WS',
+        description: 'German-PhoneBook, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'German_PhoneBook_CI_AS',
+        description: 'German-PhoneBook, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'German_PhoneBook_CI_AS_WS',
+        description: 'German-PhoneBook, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'German_PhoneBook_CI_AS_KS',
+        description: 'German-PhoneBook, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'German_PhoneBook_CI_AS_KS_WS',
+        description: 'German-PhoneBook, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'German_PhoneBook_CS_AI',
+        description: 'German-PhoneBook, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'German_PhoneBook_CS_AI_WS',
+        description: 'German-PhoneBook, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'German_PhoneBook_CS_AI_KS',
+        description: 'German-PhoneBook, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'German_PhoneBook_CS_AI_KS_WS',
+        description: 'German-PhoneBook, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'German_PhoneBook_CS_AS',
+        description: 'German-PhoneBook, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'German_PhoneBook_CS_AS_WS',
+        description: 'German-PhoneBook, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'German_PhoneBook_CS_AS_KS',
+        description: 'German-PhoneBook, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'German_PhoneBook_CS_AS_KS_WS',
+        description: 'German-PhoneBook, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_BIN',
+        description: 'German-PhoneBook-100, binary sort'
+    },
+    {
+        name: 'German_PhoneBook_100_BIN2',
+        description: 'German-PhoneBook-100, binary code point comparison sort'
+    },
+    {
+        name: 'German_PhoneBook_100_CI_AI',
+        description:
+            'German-PhoneBook-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_CI_AI_WS',
+        description: 'German-PhoneBook-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_CI_AI_KS',
+        description: 'German-PhoneBook-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_CI_AI_KS_WS',
+        description: 'German-PhoneBook-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_CI_AS',
+        description: 'German-PhoneBook-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_CI_AS_WS',
+        description: 'German-PhoneBook-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_CI_AS_KS',
+        description: 'German-PhoneBook-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_CI_AS_KS_WS',
+        description: 'German-PhoneBook-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_CS_AI',
+        description: 'German-PhoneBook-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_CS_AI_WS',
+        description: 'German-PhoneBook-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_CS_AI_KS',
+        description: 'German-PhoneBook-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_CS_AI_KS_WS',
+        description: 'German-PhoneBook-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_CS_AS',
+        description: 'German-PhoneBook-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_CS_AS_WS',
+        description: 'German-PhoneBook-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_CS_AS_KS',
+        description: 'German-PhoneBook-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_CS_AS_KS_WS',
+        description: 'German-PhoneBook-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'German_PhoneBook_100_CI_AI_SC',
+        description:
+            'German-PhoneBook-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'German_PhoneBook_100_CI_AI_WS_SC',
+        description:
+            'German-PhoneBook-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'German_PhoneBook_100_CI_AI_KS_SC',
+        description:
+            'German-PhoneBook-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'German_PhoneBook_100_CI_AI_KS_WS_SC',
+        description:
+            'German-PhoneBook-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'German_PhoneBook_100_CI_AS_SC',
+        description:
+            'German-PhoneBook-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'German_PhoneBook_100_CI_AS_WS_SC',
+        description:
+            'German-PhoneBook-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'German_PhoneBook_100_CI_AS_KS_SC',
+        description:
+            'German-PhoneBook-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'German_PhoneBook_100_CI_AS_KS_WS_SC',
+        description:
+            'German-PhoneBook-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'German_PhoneBook_100_CS_AI_SC',
+        description:
+            'German-PhoneBook-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'German_PhoneBook_100_CS_AI_WS_SC',
+        description:
+            'German-PhoneBook-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'German_PhoneBook_100_CS_AI_KS_SC',
+        description:
+            'German-PhoneBook-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'German_PhoneBook_100_CS_AI_KS_WS_SC',
+        description:
+            'German-PhoneBook-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'German_PhoneBook_100_CS_AS_SC',
+        description:
+            'German-PhoneBook-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'German_PhoneBook_100_CS_AS_WS_SC',
+        description:
+            'German-PhoneBook-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'German_PhoneBook_100_CS_AS_KS_SC',
+        description:
+            'German-PhoneBook-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'German_PhoneBook_100_CS_AS_KS_WS_SC',
+        description:
+            'German-PhoneBook-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Greek_BIN', description: 'Greek, binary sort' },
+    {
+        name: 'Greek_BIN2',
+        description: 'Greek, binary code point comparison sort'
+    },
+    {
+        name: 'Greek_CI_AI',
+        description: 'Greek, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Greek_CI_AI_WS',
+        description: 'Greek, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Greek_CI_AI_KS',
+        description: 'Greek, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Greek_CI_AI_KS_WS',
+        description: 'Greek, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Greek_CI_AS',
+        description: 'Greek, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Greek_CI_AS_WS',
+        description: 'Greek, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Greek_CI_AS_KS',
+        description: 'Greek, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Greek_CI_AS_KS_WS',
+        description: 'Greek, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Greek_CS_AI',
+        description: 'Greek, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Greek_CS_AI_WS',
+        description: 'Greek, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Greek_CS_AI_KS',
+        description: 'Greek, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Greek_CS_AI_KS_WS',
+        description: 'Greek, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Greek_CS_AS',
+        description: 'Greek, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Greek_CS_AS_WS',
+        description: 'Greek, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Greek_CS_AS_KS',
+        description: 'Greek, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Greek_CS_AS_KS_WS',
+        description: 'Greek, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Greek_100_BIN', description: 'Greek-100, binary sort' },
+    {
+        name: 'Greek_100_BIN2',
+        description: 'Greek-100, binary code point comparison sort'
+    },
+    {
+        name: 'Greek_100_CI_AI',
+        description: 'Greek-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Greek_100_CI_AI_WS',
+        description: 'Greek-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Greek_100_CI_AI_KS',
+        description: 'Greek-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Greek_100_CI_AI_KS_WS',
+        description: 'Greek-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Greek_100_CI_AS',
+        description: 'Greek-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Greek_100_CI_AS_WS',
+        description: 'Greek-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Greek_100_CI_AS_KS',
+        description: 'Greek-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Greek_100_CI_AS_KS_WS',
+        description: 'Greek-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Greek_100_CS_AI',
+        description: 'Greek-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Greek_100_CS_AI_WS',
+        description: 'Greek-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Greek_100_CS_AI_KS',
+        description: 'Greek-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Greek_100_CS_AI_KS_WS',
+        description: 'Greek-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Greek_100_CS_AS',
+        description: 'Greek-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Greek_100_CS_AS_WS',
+        description: 'Greek-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Greek_100_CS_AS_KS',
+        description: 'Greek-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Greek_100_CS_AS_KS_WS',
+        description: 'Greek-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Greek_100_CI_AI_SC',
+        description:
+            'Greek-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Greek_100_CI_AI_WS_SC',
+        description:
+            'Greek-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Greek_100_CI_AI_KS_SC',
+        description:
+            'Greek-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Greek_100_CI_AI_KS_WS_SC',
+        description:
+            'Greek-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Greek_100_CI_AS_SC',
+        description:
+            'Greek-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Greek_100_CI_AS_WS_SC',
+        description:
+            'Greek-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Greek_100_CI_AS_KS_SC',
+        description:
+            'Greek-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Greek_100_CI_AS_KS_WS_SC',
+        description:
+            'Greek-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Greek_100_CS_AI_SC',
+        description:
+            'Greek-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Greek_100_CS_AI_WS_SC',
+        description:
+            'Greek-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Greek_100_CS_AI_KS_SC',
+        description:
+            'Greek-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Greek_100_CS_AI_KS_WS_SC',
+        description:
+            'Greek-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Greek_100_CS_AS_SC',
+        description:
+            'Greek-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Greek_100_CS_AS_WS_SC',
+        description:
+            'Greek-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Greek_100_CS_AS_KS_SC',
+        description:
+            'Greek-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Greek_100_CS_AS_KS_WS_SC',
+        description:
+            'Greek-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Hebrew_BIN', description: 'Hebrew, binary sort' },
+    {
+        name: 'Hebrew_BIN2',
+        description: 'Hebrew, binary code point comparison sort'
+    },
+    {
+        name: 'Hebrew_CI_AI',
+        description: 'Hebrew, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hebrew_CI_AI_WS',
+        description: 'Hebrew, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hebrew_CI_AI_KS',
+        description: 'Hebrew, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hebrew_CI_AI_KS_WS',
+        description: 'Hebrew, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hebrew_CI_AS',
+        description: 'Hebrew, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hebrew_CI_AS_WS',
+        description: 'Hebrew, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hebrew_CI_AS_KS',
+        description: 'Hebrew, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hebrew_CI_AS_KS_WS',
+        description: 'Hebrew, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hebrew_CS_AI',
+        description: 'Hebrew, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hebrew_CS_AI_WS',
+        description: 'Hebrew, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hebrew_CS_AI_KS',
+        description: 'Hebrew, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hebrew_CS_AI_KS_WS',
+        description: 'Hebrew, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hebrew_CS_AS',
+        description: 'Hebrew, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hebrew_CS_AS_WS',
+        description: 'Hebrew, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hebrew_CS_AS_KS',
+        description: 'Hebrew, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hebrew_CS_AS_KS_WS',
+        description: 'Hebrew, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Hebrew_100_BIN', description: 'Hebrew-100, binary sort' },
+    {
+        name: 'Hebrew_100_BIN2',
+        description: 'Hebrew-100, binary code point comparison sort'
+    },
+    {
+        name: 'Hebrew_100_CI_AI',
+        description: 'Hebrew-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hebrew_100_CI_AI_WS',
+        description: 'Hebrew-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hebrew_100_CI_AI_KS',
+        description: 'Hebrew-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hebrew_100_CI_AI_KS_WS',
+        description: 'Hebrew-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hebrew_100_CI_AS',
+        description: 'Hebrew-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hebrew_100_CI_AS_WS',
+        description: 'Hebrew-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hebrew_100_CI_AS_KS',
+        description: 'Hebrew-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hebrew_100_CI_AS_KS_WS',
+        description: 'Hebrew-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hebrew_100_CS_AI',
+        description: 'Hebrew-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hebrew_100_CS_AI_WS',
+        description: 'Hebrew-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hebrew_100_CS_AI_KS',
+        description: 'Hebrew-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hebrew_100_CS_AI_KS_WS',
+        description: 'Hebrew-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hebrew_100_CS_AS',
+        description: 'Hebrew-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hebrew_100_CS_AS_WS',
+        description: 'Hebrew-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hebrew_100_CS_AS_KS',
+        description: 'Hebrew-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hebrew_100_CS_AS_KS_WS',
+        description: 'Hebrew-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hebrew_100_CI_AI_SC',
+        description:
+            'Hebrew-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hebrew_100_CI_AI_WS_SC',
+        description:
+            'Hebrew-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hebrew_100_CI_AI_KS_SC',
+        description:
+            'Hebrew-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hebrew_100_CI_AI_KS_WS_SC',
+        description:
+            'Hebrew-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hebrew_100_CI_AS_SC',
+        description:
+            'Hebrew-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hebrew_100_CI_AS_WS_SC',
+        description:
+            'Hebrew-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hebrew_100_CI_AS_KS_SC',
+        description:
+            'Hebrew-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hebrew_100_CI_AS_KS_WS_SC',
+        description:
+            'Hebrew-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hebrew_100_CS_AI_SC',
+        description:
+            'Hebrew-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hebrew_100_CS_AI_WS_SC',
+        description:
+            'Hebrew-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hebrew_100_CS_AI_KS_SC',
+        description:
+            'Hebrew-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hebrew_100_CS_AI_KS_WS_SC',
+        description:
+            'Hebrew-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hebrew_100_CS_AS_SC',
+        description:
+            'Hebrew-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hebrew_100_CS_AS_WS_SC',
+        description:
+            'Hebrew-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hebrew_100_CS_AS_KS_SC',
+        description:
+            'Hebrew-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hebrew_100_CS_AS_KS_WS_SC',
+        description:
+            'Hebrew-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Hungarian_BIN', description: 'Hungarian, binary sort' },
+    {
+        name: 'Hungarian_BIN2',
+        description: 'Hungarian, binary code point comparison sort'
+    },
+    {
+        name: 'Hungarian_CI_AI',
+        description: 'Hungarian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_CI_AI_WS',
+        description: 'Hungarian, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_CI_AI_KS',
+        description: 'Hungarian, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_CI_AI_KS_WS',
+        description: 'Hungarian, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_CI_AS',
+        description: 'Hungarian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_CI_AS_WS',
+        description: 'Hungarian, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_CI_AS_KS',
+        description: 'Hungarian, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_CI_AS_KS_WS',
+        description: 'Hungarian, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_CS_AI',
+        description: 'Hungarian, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_CS_AI_WS',
+        description: 'Hungarian, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_CS_AI_KS',
+        description: 'Hungarian, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_CS_AI_KS_WS',
+        description: 'Hungarian, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_CS_AS',
+        description: 'Hungarian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_CS_AS_WS',
+        description: 'Hungarian, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_CS_AS_KS',
+        description: 'Hungarian, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_CS_AS_KS_WS',
+        description: 'Hungarian, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Hungarian_100_BIN', description: 'Hungarian-100, binary sort' },
+    {
+        name: 'Hungarian_100_BIN2',
+        description: 'Hungarian-100, binary code point comparison sort'
+    },
+    {
+        name: 'Hungarian_100_CI_AI',
+        description: 'Hungarian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_100_CI_AI_WS',
+        description: 'Hungarian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_100_CI_AI_KS',
+        description: 'Hungarian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_100_CI_AI_KS_WS',
+        description: 'Hungarian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_100_CI_AS',
+        description: 'Hungarian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_100_CI_AS_WS',
+        description: 'Hungarian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_100_CI_AS_KS',
+        description: 'Hungarian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_100_CI_AS_KS_WS',
+        description: 'Hungarian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_100_CS_AI',
+        description: 'Hungarian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_100_CS_AI_WS',
+        description: 'Hungarian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_100_CS_AI_KS',
+        description: 'Hungarian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_100_CS_AI_KS_WS',
+        description: 'Hungarian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_100_CS_AS',
+        description: 'Hungarian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_100_CS_AS_WS',
+        description: 'Hungarian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_100_CS_AS_KS',
+        description: 'Hungarian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_100_CS_AS_KS_WS',
+        description: 'Hungarian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_100_CI_AI_SC',
+        description:
+            'Hungarian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_100_CI_AI_WS_SC',
+        description:
+            'Hungarian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_100_CI_AI_KS_SC',
+        description:
+            'Hungarian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_100_CI_AI_KS_WS_SC',
+        description:
+            'Hungarian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_100_CI_AS_SC',
+        description:
+            'Hungarian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_100_CI_AS_WS_SC',
+        description:
+            'Hungarian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_100_CI_AS_KS_SC',
+        description:
+            'Hungarian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_100_CI_AS_KS_WS_SC',
+        description:
+            'Hungarian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_100_CS_AI_SC',
+        description:
+            'Hungarian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_100_CS_AI_WS_SC',
+        description:
+            'Hungarian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_100_CS_AI_KS_SC',
+        description:
+            'Hungarian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_100_CS_AI_KS_WS_SC',
+        description:
+            'Hungarian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_100_CS_AS_SC',
+        description:
+            'Hungarian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_100_CS_AS_WS_SC',
+        description:
+            'Hungarian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_100_CS_AS_KS_SC',
+        description:
+            'Hungarian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_100_CS_AS_KS_WS_SC',
+        description:
+            'Hungarian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_Technical_BIN',
+        description: 'Hungarian-Technical, binary sort'
+    },
+    {
+        name: 'Hungarian_Technical_BIN2',
+        description: 'Hungarian-Technical, binary code point comparison sort'
+    },
+    {
+        name: 'Hungarian_Technical_CI_AI',
+        description:
+            'Hungarian-Technical, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_Technical_CI_AI_WS',
+        description: 'Hungarian-Technical, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_Technical_CI_AI_KS',
+        description: 'Hungarian-Technical, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_Technical_CI_AI_KS_WS',
+        description: 'Hungarian-Technical, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_Technical_CI_AS',
+        description: 'Hungarian-Technical, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_Technical_CI_AS_WS',
+        description: 'Hungarian-Technical, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_Technical_CI_AS_KS',
+        description: 'Hungarian-Technical, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_Technical_CI_AS_KS_WS',
+        description: 'Hungarian-Technical, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_Technical_CS_AI',
+        description: 'Hungarian-Technical, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_Technical_CS_AI_WS',
+        description: 'Hungarian-Technical, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_Technical_CS_AI_KS',
+        description: 'Hungarian-Technical, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_Technical_CS_AI_KS_WS',
+        description: 'Hungarian-Technical, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_Technical_CS_AS',
+        description: 'Hungarian-Technical, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_Technical_CS_AS_WS',
+        description: 'Hungarian-Technical, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_Technical_CS_AS_KS',
+        description: 'Hungarian-Technical, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_Technical_CS_AS_KS_WS',
+        description: 'Hungarian-Technical, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_BIN',
+        description: 'Hungarian-Technical-100, binary sort'
+    },
+    {
+        name: 'Hungarian_Technical_100_BIN2',
+        description: 'Hungarian-Technical-100, binary code point comparison sort'
+    },
+    {
+        name: 'Hungarian_Technical_100_CI_AI',
+        description:
+            'Hungarian-Technical-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_CI_AI_WS',
+        description:
+            'Hungarian-Technical-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_CI_AI_KS',
+        description:
+            'Hungarian-Technical-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_CI_AI_KS_WS',
+        description:
+            'Hungarian-Technical-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_CI_AS',
+        description:
+            'Hungarian-Technical-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_CI_AS_WS',
+        description:
+            'Hungarian-Technical-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_CI_AS_KS',
+        description:
+            'Hungarian-Technical-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_CI_AS_KS_WS',
+        description: 'Hungarian-Technical-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_CS_AI',
+        description:
+            'Hungarian-Technical-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_CS_AI_WS',
+        description:
+            'Hungarian-Technical-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_CS_AI_KS',
+        description:
+            'Hungarian-Technical-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_CS_AI_KS_WS',
+        description: 'Hungarian-Technical-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_CS_AS',
+        description:
+            'Hungarian-Technical-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_CS_AS_WS',
+        description: 'Hungarian-Technical-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_CS_AS_KS',
+        description: 'Hungarian-Technical-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_CS_AS_KS_WS',
+        description: 'Hungarian-Technical-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Hungarian_Technical_100_CI_AI_SC',
+        description:
+            'Hungarian-Technical-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_Technical_100_CI_AI_WS_SC',
+        description:
+            'Hungarian-Technical-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_Technical_100_CI_AI_KS_SC',
+        description:
+            'Hungarian-Technical-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_Technical_100_CI_AI_KS_WS_SC',
+        description:
+            'Hungarian-Technical-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_Technical_100_CI_AS_SC',
+        description:
+            'Hungarian-Technical-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_Technical_100_CI_AS_WS_SC',
+        description:
+            'Hungarian-Technical-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_Technical_100_CI_AS_KS_SC',
+        description:
+            'Hungarian-Technical-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_Technical_100_CI_AS_KS_WS_SC',
+        description:
+            'Hungarian-Technical-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_Technical_100_CS_AI_SC',
+        description:
+            'Hungarian-Technical-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_Technical_100_CS_AI_WS_SC',
+        description:
+            'Hungarian-Technical-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_Technical_100_CS_AI_KS_SC',
+        description:
+            'Hungarian-Technical-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_Technical_100_CS_AI_KS_WS_SC',
+        description:
+            'Hungarian-Technical-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_Technical_100_CS_AS_SC',
+        description:
+            'Hungarian-Technical-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_Technical_100_CS_AS_WS_SC',
+        description:
+            'Hungarian-Technical-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_Technical_100_CS_AS_KS_SC',
+        description:
+            'Hungarian-Technical-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Hungarian_Technical_100_CS_AS_KS_WS_SC',
+        description:
+            'Hungarian-Technical-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Icelandic_BIN', description: 'Icelandic, binary sort' },
+    {
+        name: 'Icelandic_BIN2',
+        description: 'Icelandic, binary code point comparison sort'
+    },
+    {
+        name: 'Icelandic_CI_AI',
+        description: 'Icelandic, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Icelandic_CI_AI_WS',
+        description: 'Icelandic, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Icelandic_CI_AI_KS',
+        description: 'Icelandic, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Icelandic_CI_AI_KS_WS',
+        description: 'Icelandic, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Icelandic_CI_AS',
+        description: 'Icelandic, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Icelandic_CI_AS_WS',
+        description: 'Icelandic, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Icelandic_CI_AS_KS',
+        description: 'Icelandic, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Icelandic_CI_AS_KS_WS',
+        description: 'Icelandic, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Icelandic_CS_AI',
+        description: 'Icelandic, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Icelandic_CS_AI_WS',
+        description: 'Icelandic, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Icelandic_CS_AI_KS',
+        description: 'Icelandic, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Icelandic_CS_AI_KS_WS',
+        description: 'Icelandic, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Icelandic_CS_AS',
+        description: 'Icelandic, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Icelandic_CS_AS_WS',
+        description: 'Icelandic, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Icelandic_CS_AS_KS',
+        description: 'Icelandic, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Icelandic_CS_AS_KS_WS',
+        description: 'Icelandic, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Icelandic_100_BIN', description: 'Icelandic-100, binary sort' },
+    {
+        name: 'Icelandic_100_BIN2',
+        description: 'Icelandic-100, binary code point comparison sort'
+    },
+    {
+        name: 'Icelandic_100_CI_AI',
+        description: 'Icelandic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Icelandic_100_CI_AI_WS',
+        description: 'Icelandic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Icelandic_100_CI_AI_KS',
+        description: 'Icelandic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Icelandic_100_CI_AI_KS_WS',
+        description: 'Icelandic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Icelandic_100_CI_AS',
+        description: 'Icelandic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Icelandic_100_CI_AS_WS',
+        description: 'Icelandic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Icelandic_100_CI_AS_KS',
+        description: 'Icelandic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Icelandic_100_CI_AS_KS_WS',
+        description: 'Icelandic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Icelandic_100_CS_AI',
+        description: 'Icelandic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Icelandic_100_CS_AI_WS',
+        description: 'Icelandic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Icelandic_100_CS_AI_KS',
+        description: 'Icelandic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Icelandic_100_CS_AI_KS_WS',
+        description: 'Icelandic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Icelandic_100_CS_AS',
+        description: 'Icelandic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Icelandic_100_CS_AS_WS',
+        description: 'Icelandic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Icelandic_100_CS_AS_KS',
+        description: 'Icelandic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Icelandic_100_CS_AS_KS_WS',
+        description: 'Icelandic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Icelandic_100_CI_AI_SC',
+        description:
+            'Icelandic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Icelandic_100_CI_AI_WS_SC',
+        description:
+            'Icelandic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Icelandic_100_CI_AI_KS_SC',
+        description:
+            'Icelandic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Icelandic_100_CI_AI_KS_WS_SC',
+        description:
+            'Icelandic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Icelandic_100_CI_AS_SC',
+        description:
+            'Icelandic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Icelandic_100_CI_AS_WS_SC',
+        description:
+            'Icelandic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Icelandic_100_CI_AS_KS_SC',
+        description:
+            'Icelandic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Icelandic_100_CI_AS_KS_WS_SC',
+        description:
+            'Icelandic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Icelandic_100_CS_AI_SC',
+        description:
+            'Icelandic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Icelandic_100_CS_AI_WS_SC',
+        description:
+            'Icelandic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Icelandic_100_CS_AI_KS_SC',
+        description:
+            'Icelandic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Icelandic_100_CS_AI_KS_WS_SC',
+        description:
+            'Icelandic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Icelandic_100_CS_AS_SC',
+        description:
+            'Icelandic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Icelandic_100_CS_AS_WS_SC',
+        description:
+            'Icelandic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Icelandic_100_CS_AS_KS_SC',
+        description:
+            'Icelandic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Icelandic_100_CS_AS_KS_WS_SC',
+        description:
+            'Icelandic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_90_BIN',
+        description: 'Indic-General-90, binary sort'
+    },
+    {
+        name: 'Indic_General_90_BIN2',
+        description: 'Indic-General-90, binary code point comparison sort'
+    },
+    {
+        name: 'Indic_General_90_CI_AI',
+        description: 'Indic-General-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Indic_General_90_CI_AI_WS',
+        description: 'Indic-General-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Indic_General_90_CI_AI_KS',
+        description: 'Indic-General-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Indic_General_90_CI_AI_KS_WS',
+        description: 'Indic-General-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Indic_General_90_CI_AS',
+        description: 'Indic-General-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Indic_General_90_CI_AS_WS',
+        description: 'Indic-General-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Indic_General_90_CI_AS_KS',
+        description: 'Indic-General-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Indic_General_90_CI_AS_KS_WS',
+        description: 'Indic-General-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Indic_General_90_CS_AI',
+        description: 'Indic-General-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Indic_General_90_CS_AI_WS',
+        description: 'Indic-General-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Indic_General_90_CS_AI_KS',
+        description: 'Indic-General-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Indic_General_90_CS_AI_KS_WS',
+        description: 'Indic-General-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Indic_General_90_CS_AS',
+        description: 'Indic-General-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Indic_General_90_CS_AS_WS',
+        description: 'Indic-General-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Indic_General_90_CS_AS_KS',
+        description: 'Indic-General-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Indic_General_90_CS_AS_KS_WS',
+        description: 'Indic-General-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Indic_General_90_CI_AI_SC',
+        description:
+            'Indic-General-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_90_CI_AI_WS_SC',
+        description:
+            'Indic-General-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_90_CI_AI_KS_SC',
+        description:
+            'Indic-General-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_90_CI_AI_KS_WS_SC',
+        description:
+            'Indic-General-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_90_CI_AS_SC',
+        description:
+            'Indic-General-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_90_CI_AS_WS_SC',
+        description:
+            'Indic-General-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_90_CI_AS_KS_SC',
+        description:
+            'Indic-General-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_90_CI_AS_KS_WS_SC',
+        description:
+            'Indic-General-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_90_CS_AI_SC',
+        description:
+            'Indic-General-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_90_CS_AI_WS_SC',
+        description:
+            'Indic-General-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_90_CS_AI_KS_SC',
+        description:
+            'Indic-General-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_90_CS_AI_KS_WS_SC',
+        description:
+            'Indic-General-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_90_CS_AS_SC',
+        description:
+            'Indic-General-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_90_CS_AS_WS_SC',
+        description:
+            'Indic-General-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_90_CS_AS_KS_SC',
+        description:
+            'Indic-General-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_90_CS_AS_KS_WS_SC',
+        description:
+            'Indic-General-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_100_BIN',
+        description: 'Indic-General-100, binary sort'
+    },
+    {
+        name: 'Indic_General_100_BIN2',
+        description: 'Indic-General-100, binary code point comparison sort'
+    },
+    {
+        name: 'Indic_General_100_CI_AI',
+        description: 'Indic-General-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Indic_General_100_CI_AI_WS',
+        description: 'Indic-General-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Indic_General_100_CI_AI_KS',
+        description: 'Indic-General-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Indic_General_100_CI_AI_KS_WS',
+        description: 'Indic-General-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Indic_General_100_CI_AS',
+        description: 'Indic-General-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Indic_General_100_CI_AS_WS',
+        description: 'Indic-General-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Indic_General_100_CI_AS_KS',
+        description: 'Indic-General-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Indic_General_100_CI_AS_KS_WS',
+        description: 'Indic-General-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Indic_General_100_CS_AI',
+        description: 'Indic-General-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Indic_General_100_CS_AI_WS',
+        description: 'Indic-General-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Indic_General_100_CS_AI_KS',
+        description: 'Indic-General-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Indic_General_100_CS_AI_KS_WS',
+        description: 'Indic-General-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Indic_General_100_CS_AS',
+        description: 'Indic-General-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Indic_General_100_CS_AS_WS',
+        description: 'Indic-General-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Indic_General_100_CS_AS_KS',
+        description: 'Indic-General-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Indic_General_100_CS_AS_KS_WS',
+        description: 'Indic-General-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Indic_General_100_CI_AI_SC',
+        description:
+            'Indic-General-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_100_CI_AI_WS_SC',
+        description:
+            'Indic-General-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_100_CI_AI_KS_SC',
+        description:
+            'Indic-General-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_100_CI_AI_KS_WS_SC',
+        description:
+            'Indic-General-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_100_CI_AS_SC',
+        description:
+            'Indic-General-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_100_CI_AS_WS_SC',
+        description:
+            'Indic-General-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_100_CI_AS_KS_SC',
+        description:
+            'Indic-General-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_100_CI_AS_KS_WS_SC',
+        description:
+            'Indic-General-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_100_CS_AI_SC',
+        description:
+            'Indic-General-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_100_CS_AI_WS_SC',
+        description:
+            'Indic-General-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_100_CS_AI_KS_SC',
+        description:
+            'Indic-General-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_100_CS_AI_KS_WS_SC',
+        description:
+            'Indic-General-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_100_CS_AS_SC',
+        description:
+            'Indic-General-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_100_CS_AS_WS_SC',
+        description:
+            'Indic-General-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_100_CS_AS_KS_SC',
+        description:
+            'Indic-General-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Indic_General_100_CS_AS_KS_WS_SC',
+        description:
+            'Indic-General-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Japanese_BIN', description: 'Japanese, binary sort' },
+    {
+        name: 'Japanese_BIN2',
+        description: 'Japanese, binary code point comparison sort'
+    },
+    {
+        name: 'Japanese_CI_AI',
+        description: 'Japanese, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_CI_AI_WS',
+        description: 'Japanese, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_CI_AI_KS',
+        description: 'Japanese, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_CI_AI_KS_WS',
+        description: 'Japanese, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_CI_AS',
+        description: 'Japanese, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_CI_AS_WS',
+        description: 'Japanese, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_CI_AS_KS',
+        description: 'Japanese, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_CI_AS_KS_WS',
+        description: 'Japanese, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_CS_AI',
+        description: 'Japanese, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_CS_AI_WS',
+        description: 'Japanese, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_CS_AI_KS',
+        description: 'Japanese, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_CS_AI_KS_WS',
+        description: 'Japanese, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_CS_AS',
+        description: 'Japanese, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_CS_AS_WS',
+        description: 'Japanese, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_CS_AS_KS',
+        description: 'Japanese, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_CS_AS_KS_WS',
+        description: 'Japanese, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Japanese_90_BIN', description: 'Japanese-90, binary sort' },
+    {
+        name: 'Japanese_90_BIN2',
+        description: 'Japanese-90, binary code point comparison sort'
+    },
+    {
+        name: 'Japanese_90_CI_AI',
+        description: 'Japanese-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_90_CI_AI_WS',
+        description: 'Japanese-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_90_CI_AI_KS',
+        description: 'Japanese-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_90_CI_AI_KS_WS',
+        description: 'Japanese-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_90_CI_AS',
+        description: 'Japanese-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_90_CI_AS_WS',
+        description: 'Japanese-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_90_CI_AS_KS',
+        description: 'Japanese-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_90_CI_AS_KS_WS',
+        description: 'Japanese-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_90_CS_AI',
+        description: 'Japanese-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_90_CS_AI_WS',
+        description: 'Japanese-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_90_CS_AI_KS',
+        description: 'Japanese-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_90_CS_AI_KS_WS',
+        description: 'Japanese-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_90_CS_AS',
+        description: 'Japanese-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_90_CS_AS_WS',
+        description: 'Japanese-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_90_CS_AS_KS',
+        description: 'Japanese-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_90_CS_AS_KS_WS',
+        description: 'Japanese-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_90_CI_AI_SC',
+        description:
+            'Japanese-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_90_CI_AI_WS_SC',
+        description:
+            'Japanese-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_90_CI_AI_KS_SC',
+        description:
+            'Japanese-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_90_CI_AI_KS_WS_SC',
+        description:
+            'Japanese-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_90_CI_AS_SC',
+        description:
+            'Japanese-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_90_CI_AS_WS_SC',
+        description:
+            'Japanese-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_90_CI_AS_KS_SC',
+        description:
+            'Japanese-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_90_CI_AS_KS_WS_SC',
+        description:
+            'Japanese-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_90_CS_AI_SC',
+        description:
+            'Japanese-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_90_CS_AI_WS_SC',
+        description:
+            'Japanese-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_90_CS_AI_KS_SC',
+        description:
+            'Japanese-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_90_CS_AI_KS_WS_SC',
+        description:
+            'Japanese-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_90_CS_AS_SC',
+        description:
+            'Japanese-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_90_CS_AS_WS_SC',
+        description:
+            'Japanese-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_90_CS_AS_KS_SC',
+        description:
+            'Japanese-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_90_CS_AS_KS_WS_SC',
+        description:
+            'Japanese-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_BIN',
+        description: 'Japanese-Bushu-Kakusu-100, binary sort'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_BIN2',
+        description: 'Japanese-Bushu-Kakusu-100, binary code point comparison sort'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CI_AI',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CI_AI_WS',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CI_AI_KS',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CI_AI_KS_WS',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CI_AS',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CI_AS_WS',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CI_AS_KS',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CI_AS_KS_WS',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CS_AI',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CS_AI_WS',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CS_AI_KS',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CS_AI_KS_WS',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CS_AS',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CS_AS_WS',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CS_AS_KS',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CS_AS_KS_WS',
+        description: 'Japanese-Bushu-Kakusu-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CI_AI_SC',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CI_AI_WS_SC',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CI_AI_KS_SC',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CI_AI_KS_WS_SC',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CI_AS_SC',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CI_AS_WS_SC',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CI_AS_KS_SC',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CI_AS_KS_WS_SC',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CS_AI_SC',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CS_AI_WS_SC',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CS_AI_KS_SC',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CS_AI_KS_WS_SC',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CS_AS_SC',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CS_AS_WS_SC',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CS_AS_KS_SC',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_100_CS_AS_KS_WS_SC',
+        description:
+            'Japanese-Bushu-Kakusu-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_BIN',
+        description: 'Japanese-Bushu-Kakusu-140, binary sort'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_BIN2',
+        description: 'Japanese-Bushu-Kakusu-140, binary code point comparison sort'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CI_AI_VSS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CI_AI_WS_VSS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CI_AI_KS_VSS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CI_AI_KS_WS_VSS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CI_AS_VSS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CI_AS_WS_VSS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CI_AS_KS_VSS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CI_AS_KS_WS_VSS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CS_AI_VSS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CS_AI_WS_VSS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CS_AI_KS_VSS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CS_AI_KS_WS_VSS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CS_AS_VSS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CS_AS_WS_VSS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CS_AS_KS_VSS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CS_AS_KS_WS_VSS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CI_AI',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CI_AI_WS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CI_AI_KS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CI_AI_KS_WS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CI_AS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CI_AS_WS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CI_AS_KS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CI_AS_KS_WS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CS_AI',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CS_AI_WS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CS_AI_KS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CS_AI_KS_WS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CS_AS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CS_AS_WS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CS_AS_KS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_Bushu_Kakusu_140_CS_AS_KS_WS',
+        description:
+            'Japanese-Bushu-Kakusu-140, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_Unicode_BIN',
+        description: 'Japanese-Unicode, binary sort'
+    },
+    {
+        name: 'Japanese_Unicode_BIN2',
+        description: 'Japanese-Unicode, binary code point comparison sort'
+    },
+    {
+        name: 'Japanese_Unicode_CI_AI',
+        description: 'Japanese-Unicode, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_Unicode_CI_AI_WS',
+        description: 'Japanese-Unicode, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_Unicode_CI_AI_KS',
+        description: 'Japanese-Unicode, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_Unicode_CI_AI_KS_WS',
+        description: 'Japanese-Unicode, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_Unicode_CI_AS',
+        description: 'Japanese-Unicode, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_Unicode_CI_AS_WS',
+        description: 'Japanese-Unicode, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_Unicode_CI_AS_KS',
+        description: 'Japanese-Unicode, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_Unicode_CI_AS_KS_WS',
+        description: 'Japanese-Unicode, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_Unicode_CS_AI',
+        description: 'Japanese-Unicode, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_Unicode_CS_AI_WS',
+        description: 'Japanese-Unicode, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_Unicode_CS_AI_KS',
+        description: 'Japanese-Unicode, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_Unicode_CS_AI_KS_WS',
+        description: 'Japanese-Unicode, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_Unicode_CS_AS',
+        description: 'Japanese-Unicode, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_Unicode_CS_AS_WS',
+        description: 'Japanese-Unicode, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_Unicode_CS_AS_KS',
+        description: 'Japanese-Unicode, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_Unicode_CS_AS_KS_WS',
+        description: 'Japanese-Unicode, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_BIN',
+        description: 'Japanese-XJIS-100, binary sort'
+    },
+    {
+        name: 'Japanese_XJIS_100_BIN2',
+        description: 'Japanese-XJIS-100, binary code point comparison sort'
+    },
+    {
+        name: 'Japanese_XJIS_100_CI_AI',
+        description: 'Japanese-XJIS-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_CI_AI_WS',
+        description: 'Japanese-XJIS-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_CI_AI_KS',
+        description: 'Japanese-XJIS-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_CI_AI_KS_WS',
+        description: 'Japanese-XJIS-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_CI_AS',
+        description: 'Japanese-XJIS-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_CI_AS_WS',
+        description: 'Japanese-XJIS-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_CI_AS_KS',
+        description: 'Japanese-XJIS-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_CI_AS_KS_WS',
+        description: 'Japanese-XJIS-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_CS_AI',
+        description: 'Japanese-XJIS-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_CS_AI_WS',
+        description: 'Japanese-XJIS-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_CS_AI_KS',
+        description: 'Japanese-XJIS-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_CS_AI_KS_WS',
+        description: 'Japanese-XJIS-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_CS_AS',
+        description: 'Japanese-XJIS-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_CS_AS_WS',
+        description: 'Japanese-XJIS-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_CS_AS_KS',
+        description: 'Japanese-XJIS-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_CS_AS_KS_WS',
+        description: 'Japanese-XJIS-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_100_CI_AI_SC',
+        description:
+            'Japanese-XJIS-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_XJIS_100_CI_AI_WS_SC',
+        description:
+            'Japanese-XJIS-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_XJIS_100_CI_AI_KS_SC',
+        description:
+            'Japanese-XJIS-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_XJIS_100_CI_AI_KS_WS_SC',
+        description:
+            'Japanese-XJIS-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_XJIS_100_CI_AS_SC',
+        description:
+            'Japanese-XJIS-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_XJIS_100_CI_AS_WS_SC',
+        description:
+            'Japanese-XJIS-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_XJIS_100_CI_AS_KS_SC',
+        description:
+            'Japanese-XJIS-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_XJIS_100_CI_AS_KS_WS_SC',
+        description:
+            'Japanese-XJIS-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_XJIS_100_CS_AI_SC',
+        description:
+            'Japanese-XJIS-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_XJIS_100_CS_AI_WS_SC',
+        description:
+            'Japanese-XJIS-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_XJIS_100_CS_AI_KS_SC',
+        description:
+            'Japanese-XJIS-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_XJIS_100_CS_AI_KS_WS_SC',
+        description:
+            'Japanese-XJIS-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_XJIS_100_CS_AS_SC',
+        description:
+            'Japanese-XJIS-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_XJIS_100_CS_AS_WS_SC',
+        description:
+            'Japanese-XJIS-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_XJIS_100_CS_AS_KS_SC',
+        description:
+            'Japanese-XJIS-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_XJIS_100_CS_AS_KS_WS_SC',
+        description:
+            'Japanese-XJIS-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Japanese_XJIS_140_BIN',
+        description: 'Japanese-XJIS-140, binary sort'
+    },
+    {
+        name: 'Japanese_XJIS_140_BIN2',
+        description: 'Japanese-XJIS-140, binary code point comparison sort'
+    },
+    {
+        name: 'Japanese_XJIS_140_CI_AI_VSS',
+        description:
+            'Japanese-XJIS-140, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CI_AI_WS_VSS',
+        description:
+            'Japanese-XJIS-140, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CI_AI_KS_VSS',
+        description:
+            'Japanese-XJIS-140, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CI_AI_KS_WS_VSS',
+        description:
+            'Japanese-XJIS-140, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CI_AS_VSS',
+        description:
+            'Japanese-XJIS-140, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CI_AS_WS_VSS',
+        description:
+            'Japanese-XJIS-140, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CI_AS_KS_VSS',
+        description:
+            'Japanese-XJIS-140, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CI_AS_KS_WS_VSS',
+        description:
+            'Japanese-XJIS-140, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CS_AI_VSS',
+        description:
+            'Japanese-XJIS-140, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CS_AI_WS_VSS',
+        description:
+            'Japanese-XJIS-140, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CS_AI_KS_VSS',
+        description:
+            'Japanese-XJIS-140, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CS_AI_KS_WS_VSS',
+        description:
+            'Japanese-XJIS-140, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CS_AS_VSS',
+        description:
+            'Japanese-XJIS-140, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CS_AS_WS_VSS',
+        description:
+            'Japanese-XJIS-140, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CS_AS_KS_VSS',
+        description:
+            'Japanese-XJIS-140, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CS_AS_KS_WS_VSS',
+        description:
+            'Japanese-XJIS-140, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters, variation selector sensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CI_AI',
+        description:
+            'Japanese-XJIS-140, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CI_AI_WS',
+        description:
+            'Japanese-XJIS-140, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CI_AI_KS',
+        description:
+            'Japanese-XJIS-140, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CI_AI_KS_WS',
+        description:
+            'Japanese-XJIS-140, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CI_AS',
+        description:
+            'Japanese-XJIS-140, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CI_AS_WS',
+        description:
+            'Japanese-XJIS-140, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CI_AS_KS',
+        description:
+            'Japanese-XJIS-140, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CI_AS_KS_WS',
+        description:
+            'Japanese-XJIS-140, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CS_AI',
+        description:
+            'Japanese-XJIS-140, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CS_AI_WS',
+        description:
+            'Japanese-XJIS-140, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CS_AI_KS',
+        description:
+            'Japanese-XJIS-140, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CS_AI_KS_WS',
+        description:
+            'Japanese-XJIS-140, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CS_AS',
+        description:
+            'Japanese-XJIS-140, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CS_AS_WS',
+        description:
+            'Japanese-XJIS-140, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CS_AS_KS',
+        description:
+            'Japanese-XJIS-140, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters, variation selector insensitive'
+    },
+    {
+        name: 'Japanese_XJIS_140_CS_AS_KS_WS',
+        description:
+            'Japanese-XJIS-140, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters, variation selector insensitive'
+    },
+    { name: 'Kazakh_90_BIN', description: 'Kazakh-90, binary sort' },
+    {
+        name: 'Kazakh_90_BIN2',
+        description: 'Kazakh-90, binary code point comparison sort'
+    },
+    {
+        name: 'Kazakh_90_CI_AI',
+        description: 'Kazakh-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Kazakh_90_CI_AI_WS',
+        description: 'Kazakh-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Kazakh_90_CI_AI_KS',
+        description: 'Kazakh-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Kazakh_90_CI_AI_KS_WS',
+        description: 'Kazakh-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Kazakh_90_CI_AS',
+        description: 'Kazakh-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Kazakh_90_CI_AS_WS',
+        description: 'Kazakh-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Kazakh_90_CI_AS_KS',
+        description: 'Kazakh-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Kazakh_90_CI_AS_KS_WS',
+        description: 'Kazakh-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Kazakh_90_CS_AI',
+        description: 'Kazakh-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Kazakh_90_CS_AI_WS',
+        description: 'Kazakh-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Kazakh_90_CS_AI_KS',
+        description: 'Kazakh-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Kazakh_90_CS_AI_KS_WS',
+        description: 'Kazakh-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Kazakh_90_CS_AS',
+        description: 'Kazakh-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Kazakh_90_CS_AS_WS',
+        description: 'Kazakh-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Kazakh_90_CS_AS_KS',
+        description: 'Kazakh-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Kazakh_90_CS_AS_KS_WS',
+        description: 'Kazakh-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Kazakh_90_CI_AI_SC',
+        description:
+            'Kazakh-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_90_CI_AI_WS_SC',
+        description:
+            'Kazakh-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_90_CI_AI_KS_SC',
+        description:
+            'Kazakh-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_90_CI_AI_KS_WS_SC',
+        description:
+            'Kazakh-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_90_CI_AS_SC',
+        description:
+            'Kazakh-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_90_CI_AS_WS_SC',
+        description:
+            'Kazakh-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_90_CI_AS_KS_SC',
+        description:
+            'Kazakh-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_90_CI_AS_KS_WS_SC',
+        description:
+            'Kazakh-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_90_CS_AI_SC',
+        description:
+            'Kazakh-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_90_CS_AI_WS_SC',
+        description:
+            'Kazakh-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_90_CS_AI_KS_SC',
+        description:
+            'Kazakh-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_90_CS_AI_KS_WS_SC',
+        description:
+            'Kazakh-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_90_CS_AS_SC',
+        description:
+            'Kazakh-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_90_CS_AS_WS_SC',
+        description:
+            'Kazakh-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_90_CS_AS_KS_SC',
+        description:
+            'Kazakh-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_90_CS_AS_KS_WS_SC',
+        description:
+            'Kazakh-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Kazakh_100_BIN', description: 'Kazakh-100, binary sort' },
+    {
+        name: 'Kazakh_100_BIN2',
+        description: 'Kazakh-100, binary code point comparison sort'
+    },
+    {
+        name: 'Kazakh_100_CI_AI',
+        description: 'Kazakh-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Kazakh_100_CI_AI_WS',
+        description: 'Kazakh-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Kazakh_100_CI_AI_KS',
+        description: 'Kazakh-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Kazakh_100_CI_AI_KS_WS',
+        description: 'Kazakh-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Kazakh_100_CI_AS',
+        description: 'Kazakh-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Kazakh_100_CI_AS_WS',
+        description: 'Kazakh-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Kazakh_100_CI_AS_KS',
+        description: 'Kazakh-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Kazakh_100_CI_AS_KS_WS',
+        description: 'Kazakh-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Kazakh_100_CS_AI',
+        description: 'Kazakh-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Kazakh_100_CS_AI_WS',
+        description: 'Kazakh-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Kazakh_100_CS_AI_KS',
+        description: 'Kazakh-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Kazakh_100_CS_AI_KS_WS',
+        description: 'Kazakh-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Kazakh_100_CS_AS',
+        description: 'Kazakh-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Kazakh_100_CS_AS_WS',
+        description: 'Kazakh-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Kazakh_100_CS_AS_KS',
+        description: 'Kazakh-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Kazakh_100_CS_AS_KS_WS',
+        description: 'Kazakh-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Kazakh_100_CI_AI_SC',
+        description:
+            'Kazakh-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_100_CI_AI_WS_SC',
+        description:
+            'Kazakh-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_100_CI_AI_KS_SC',
+        description:
+            'Kazakh-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_100_CI_AI_KS_WS_SC',
+        description:
+            'Kazakh-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_100_CI_AS_SC',
+        description:
+            'Kazakh-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_100_CI_AS_WS_SC',
+        description:
+            'Kazakh-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_100_CI_AS_KS_SC',
+        description:
+            'Kazakh-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_100_CI_AS_KS_WS_SC',
+        description:
+            'Kazakh-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_100_CS_AI_SC',
+        description:
+            'Kazakh-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_100_CS_AI_WS_SC',
+        description:
+            'Kazakh-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_100_CS_AI_KS_SC',
+        description:
+            'Kazakh-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_100_CS_AI_KS_WS_SC',
+        description:
+            'Kazakh-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_100_CS_AS_SC',
+        description:
+            'Kazakh-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_100_CS_AS_WS_SC',
+        description:
+            'Kazakh-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_100_CS_AS_KS_SC',
+        description:
+            'Kazakh-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Kazakh_100_CS_AS_KS_WS_SC',
+        description:
+            'Kazakh-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Khmer_100_BIN', description: 'Khmer-100, binary sort' },
+    {
+        name: 'Khmer_100_BIN2',
+        description: 'Khmer-100, binary code point comparison sort'
+    },
+    {
+        name: 'Khmer_100_CI_AI',
+        description: 'Khmer-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Khmer_100_CI_AI_WS',
+        description: 'Khmer-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Khmer_100_CI_AI_KS',
+        description: 'Khmer-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Khmer_100_CI_AI_KS_WS',
+        description: 'Khmer-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Khmer_100_CI_AS',
+        description: 'Khmer-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Khmer_100_CI_AS_WS',
+        description: 'Khmer-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Khmer_100_CI_AS_KS',
+        description: 'Khmer-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Khmer_100_CI_AS_KS_WS',
+        description: 'Khmer-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Khmer_100_CS_AI',
+        description: 'Khmer-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Khmer_100_CS_AI_WS',
+        description: 'Khmer-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Khmer_100_CS_AI_KS',
+        description: 'Khmer-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Khmer_100_CS_AI_KS_WS',
+        description: 'Khmer-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Khmer_100_CS_AS',
+        description: 'Khmer-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Khmer_100_CS_AS_WS',
+        description: 'Khmer-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Khmer_100_CS_AS_KS',
+        description: 'Khmer-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Khmer_100_CS_AS_KS_WS',
+        description: 'Khmer-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Khmer_100_CI_AI_SC',
+        description:
+            'Khmer-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Khmer_100_CI_AI_WS_SC',
+        description:
+            'Khmer-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Khmer_100_CI_AI_KS_SC',
+        description:
+            'Khmer-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Khmer_100_CI_AI_KS_WS_SC',
+        description:
+            'Khmer-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Khmer_100_CI_AS_SC',
+        description:
+            'Khmer-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Khmer_100_CI_AS_WS_SC',
+        description:
+            'Khmer-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Khmer_100_CI_AS_KS_SC',
+        description:
+            'Khmer-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Khmer_100_CI_AS_KS_WS_SC',
+        description:
+            'Khmer-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Khmer_100_CS_AI_SC',
+        description:
+            'Khmer-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Khmer_100_CS_AI_WS_SC',
+        description:
+            'Khmer-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Khmer_100_CS_AI_KS_SC',
+        description:
+            'Khmer-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Khmer_100_CS_AI_KS_WS_SC',
+        description:
+            'Khmer-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Khmer_100_CS_AS_SC',
+        description:
+            'Khmer-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Khmer_100_CS_AS_WS_SC',
+        description:
+            'Khmer-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Khmer_100_CS_AS_KS_SC',
+        description:
+            'Khmer-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Khmer_100_CS_AS_KS_WS_SC',
+        description:
+            'Khmer-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Korean_90_BIN', description: 'Korean-90, binary sort' },
+    {
+        name: 'Korean_90_BIN2',
+        description: 'Korean-90, binary code point comparison sort'
+    },
+    {
+        name: 'Korean_90_CI_AI',
+        description: 'Korean-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_90_CI_AI_WS',
+        description: 'Korean-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_90_CI_AI_KS',
+        description: 'Korean-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_90_CI_AI_KS_WS',
+        description: 'Korean-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_90_CI_AS',
+        description: 'Korean-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_90_CI_AS_WS',
+        description: 'Korean-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_90_CI_AS_KS',
+        description: 'Korean-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_90_CI_AS_KS_WS',
+        description: 'Korean-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_90_CS_AI',
+        description: 'Korean-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_90_CS_AI_WS',
+        description: 'Korean-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_90_CS_AI_KS',
+        description: 'Korean-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_90_CS_AI_KS_WS',
+        description: 'Korean-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_90_CS_AS',
+        description: 'Korean-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_90_CS_AS_WS',
+        description: 'Korean-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_90_CS_AS_KS',
+        description: 'Korean-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_90_CS_AS_KS_WS',
+        description: 'Korean-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_90_CI_AI_SC',
+        description:
+            'Korean-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_90_CI_AI_WS_SC',
+        description:
+            'Korean-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_90_CI_AI_KS_SC',
+        description:
+            'Korean-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_90_CI_AI_KS_WS_SC',
+        description:
+            'Korean-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_90_CI_AS_SC',
+        description:
+            'Korean-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_90_CI_AS_WS_SC',
+        description:
+            'Korean-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_90_CI_AS_KS_SC',
+        description:
+            'Korean-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_90_CI_AS_KS_WS_SC',
+        description:
+            'Korean-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_90_CS_AI_SC',
+        description:
+            'Korean-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_90_CS_AI_WS_SC',
+        description:
+            'Korean-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_90_CS_AI_KS_SC',
+        description:
+            'Korean-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_90_CS_AI_KS_WS_SC',
+        description:
+            'Korean-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_90_CS_AS_SC',
+        description:
+            'Korean-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_90_CS_AS_WS_SC',
+        description:
+            'Korean-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_90_CS_AS_KS_SC',
+        description:
+            'Korean-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_90_CS_AS_KS_WS_SC',
+        description:
+            'Korean-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Korean_100_BIN', description: 'Korean-100, binary sort' },
+    {
+        name: 'Korean_100_BIN2',
+        description: 'Korean-100, binary code point comparison sort'
+    },
+    {
+        name: 'Korean_100_CI_AI',
+        description: 'Korean-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_100_CI_AI_WS',
+        description: 'Korean-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_100_CI_AI_KS',
+        description: 'Korean-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_100_CI_AI_KS_WS',
+        description: 'Korean-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_100_CI_AS',
+        description: 'Korean-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_100_CI_AS_WS',
+        description: 'Korean-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_100_CI_AS_KS',
+        description: 'Korean-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_100_CI_AS_KS_WS',
+        description: 'Korean-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_100_CS_AI',
+        description: 'Korean-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_100_CS_AI_WS',
+        description: 'Korean-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_100_CS_AI_KS',
+        description: 'Korean-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_100_CS_AI_KS_WS',
+        description: 'Korean-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_100_CS_AS',
+        description: 'Korean-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_100_CS_AS_WS',
+        description: 'Korean-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_100_CS_AS_KS',
+        description: 'Korean-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_100_CS_AS_KS_WS',
+        description: 'Korean-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_100_CI_AI_SC',
+        description:
+            'Korean-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_100_CI_AI_WS_SC',
+        description:
+            'Korean-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_100_CI_AI_KS_SC',
+        description:
+            'Korean-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_100_CI_AI_KS_WS_SC',
+        description:
+            'Korean-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_100_CI_AS_SC',
+        description:
+            'Korean-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_100_CI_AS_WS_SC',
+        description:
+            'Korean-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_100_CI_AS_KS_SC',
+        description:
+            'Korean-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_100_CI_AS_KS_WS_SC',
+        description:
+            'Korean-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_100_CS_AI_SC',
+        description:
+            'Korean-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_100_CS_AI_WS_SC',
+        description:
+            'Korean-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_100_CS_AI_KS_SC',
+        description:
+            'Korean-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_100_CS_AI_KS_WS_SC',
+        description:
+            'Korean-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_100_CS_AS_SC',
+        description:
+            'Korean-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_100_CS_AS_WS_SC',
+        description:
+            'Korean-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_100_CS_AS_KS_SC',
+        description:
+            'Korean-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Korean_100_CS_AS_KS_WS_SC',
+        description:
+            'Korean-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Korean_Wansung_BIN', description: 'Korean-Wansung, binary sort' },
+    {
+        name: 'Korean_Wansung_BIN2',
+        description: 'Korean-Wansung, binary code point comparison sort'
+    },
+    {
+        name: 'Korean_Wansung_CI_AI',
+        description: 'Korean-Wansung, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_Wansung_CI_AI_WS',
+        description: 'Korean-Wansung, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_Wansung_CI_AI_KS',
+        description: 'Korean-Wansung, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_Wansung_CI_AI_KS_WS',
+        description: 'Korean-Wansung, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_Wansung_CI_AS',
+        description: 'Korean-Wansung, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_Wansung_CI_AS_WS',
+        description: 'Korean-Wansung, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_Wansung_CI_AS_KS',
+        description: 'Korean-Wansung, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_Wansung_CI_AS_KS_WS',
+        description: 'Korean-Wansung, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_Wansung_CS_AI',
+        description: 'Korean-Wansung, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_Wansung_CS_AI_WS',
+        description: 'Korean-Wansung, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_Wansung_CS_AI_KS',
+        description: 'Korean-Wansung, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_Wansung_CS_AI_KS_WS',
+        description: 'Korean-Wansung, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_Wansung_CS_AS',
+        description: 'Korean-Wansung, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_Wansung_CS_AS_WS',
+        description: 'Korean-Wansung, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Korean_Wansung_CS_AS_KS',
+        description: 'Korean-Wansung, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Korean_Wansung_CS_AS_KS_WS',
+        description: 'Korean-Wansung, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Lao_100_BIN', description: 'Lao-100, binary sort' },
+    {
+        name: 'Lao_100_BIN2',
+        description: 'Lao-100, binary code point comparison sort'
+    },
+    {
+        name: 'Lao_100_CI_AI',
+        description: 'Lao-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Lao_100_CI_AI_WS',
+        description: 'Lao-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Lao_100_CI_AI_KS',
+        description: 'Lao-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Lao_100_CI_AI_KS_WS',
+        description: 'Lao-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Lao_100_CI_AS',
+        description: 'Lao-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Lao_100_CI_AS_WS',
+        description: 'Lao-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Lao_100_CI_AS_KS',
+        description: 'Lao-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Lao_100_CI_AS_KS_WS',
+        description: 'Lao-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Lao_100_CS_AI',
+        description: 'Lao-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Lao_100_CS_AI_WS',
+        description: 'Lao-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Lao_100_CS_AI_KS',
+        description: 'Lao-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Lao_100_CS_AI_KS_WS',
+        description: 'Lao-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Lao_100_CS_AS',
+        description: 'Lao-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Lao_100_CS_AS_WS',
+        description: 'Lao-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Lao_100_CS_AS_KS',
+        description: 'Lao-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Lao_100_CS_AS_KS_WS',
+        description: 'Lao-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Lao_100_CI_AI_SC',
+        description:
+            'Lao-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Lao_100_CI_AI_WS_SC',
+        description:
+            'Lao-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Lao_100_CI_AI_KS_SC',
+        description:
+            'Lao-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Lao_100_CI_AI_KS_WS_SC',
+        description:
+            'Lao-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Lao_100_CI_AS_SC',
+        description:
+            'Lao-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Lao_100_CI_AS_WS_SC',
+        description:
+            'Lao-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Lao_100_CI_AS_KS_SC',
+        description:
+            'Lao-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Lao_100_CI_AS_KS_WS_SC',
+        description:
+            'Lao-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Lao_100_CS_AI_SC',
+        description:
+            'Lao-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Lao_100_CS_AI_WS_SC',
+        description:
+            'Lao-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Lao_100_CS_AI_KS_SC',
+        description:
+            'Lao-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Lao_100_CS_AI_KS_WS_SC',
+        description:
+            'Lao-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Lao_100_CS_AS_SC',
+        description:
+            'Lao-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Lao_100_CS_AS_WS_SC',
+        description:
+            'Lao-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Lao_100_CS_AS_KS_SC',
+        description:
+            'Lao-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Lao_100_CS_AS_KS_WS_SC',
+        description:
+            'Lao-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Latin1_General_BIN', description: 'Latin1-General, binary sort' },
+    {
+        name: 'Latin1_General_BIN2',
+        description: 'Latin1-General, binary code point comparison sort'
+    },
+    {
+        name: 'Latin1_General_CI_AI',
+        description: 'Latin1-General, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Latin1_General_CI_AI_WS',
+        description: 'Latin1-General, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Latin1_General_CI_AI_KS',
+        description: 'Latin1-General, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Latin1_General_CI_AI_KS_WS',
+        description: 'Latin1-General, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Latin1_General_CI_AS',
+        description: 'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Latin1_General_CI_AS_WS',
+        description: 'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Latin1_General_CI_AS_KS',
+        description: 'Latin1-General, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Latin1_General_CI_AS_KS_WS',
+        description: 'Latin1-General, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Latin1_General_CS_AI',
+        description: 'Latin1-General, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Latin1_General_CS_AI_WS',
+        description: 'Latin1-General, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Latin1_General_CS_AI_KS',
+        description: 'Latin1-General, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Latin1_General_CS_AI_KS_WS',
+        description: 'Latin1-General, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Latin1_General_CS_AS',
+        description: 'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Latin1_General_CS_AS_WS',
+        description: 'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Latin1_General_CS_AS_KS',
+        description: 'Latin1-General, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Latin1_General_CS_AS_KS_WS',
+        description: 'Latin1-General, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Latin1_General_100_BIN',
+        description: 'Latin1-General-100, binary sort'
+    },
+    {
+        name: 'Latin1_General_100_BIN2',
+        description: 'Latin1-General-100, binary code point comparison sort'
+    },
+    {
+        name: 'Latin1_General_100_CI_AI',
+        description: 'Latin1-General-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Latin1_General_100_CI_AI_WS',
+        description: 'Latin1-General-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Latin1_General_100_CI_AI_KS',
+        description: 'Latin1-General-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Latin1_General_100_CI_AI_KS_WS',
+        description: 'Latin1-General-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Latin1_General_100_CI_AS',
+        description: 'Latin1-General-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Latin1_General_100_CI_AS_WS',
+        description: 'Latin1-General-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Latin1_General_100_CI_AS_KS',
+        description: 'Latin1-General-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Latin1_General_100_CI_AS_KS_WS',
+        description: 'Latin1-General-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Latin1_General_100_CS_AI',
+        description: 'Latin1-General-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Latin1_General_100_CS_AI_WS',
+        description: 'Latin1-General-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Latin1_General_100_CS_AI_KS',
+        description: 'Latin1-General-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Latin1_General_100_CS_AI_KS_WS',
+        description: 'Latin1-General-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Latin1_General_100_CS_AS',
+        description: 'Latin1-General-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Latin1_General_100_CS_AS_WS',
+        description: 'Latin1-General-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Latin1_General_100_CS_AS_KS',
+        description: 'Latin1-General-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Latin1_General_100_CS_AS_KS_WS',
+        description: 'Latin1-General-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Latin1_General_100_CI_AI_SC',
+        description:
+            'Latin1-General-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Latin1_General_100_CI_AI_WS_SC',
+        description:
+            'Latin1-General-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Latin1_General_100_CI_AI_KS_SC',
+        description:
+            'Latin1-General-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Latin1_General_100_CI_AI_KS_WS_SC',
+        description:
+            'Latin1-General-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Latin1_General_100_CI_AS_SC',
+        description:
+            'Latin1-General-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Latin1_General_100_CI_AS_WS_SC',
+        description:
+            'Latin1-General-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Latin1_General_100_CI_AS_KS_SC',
+        description:
+            'Latin1-General-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Latin1_General_100_CI_AS_KS_WS_SC',
+        description:
+            'Latin1-General-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Latin1_General_100_CS_AI_SC',
+        description:
+            'Latin1-General-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Latin1_General_100_CS_AI_WS_SC',
+        description:
+            'Latin1-General-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Latin1_General_100_CS_AI_KS_SC',
+        description:
+            'Latin1-General-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Latin1_General_100_CS_AI_KS_WS_SC',
+        description:
+            'Latin1-General-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Latin1_General_100_CS_AS_SC',
+        description:
+            'Latin1-General-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Latin1_General_100_CS_AS_WS_SC',
+        description:
+            'Latin1-General-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Latin1_General_100_CS_AS_KS_SC',
+        description:
+            'Latin1-General-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Latin1_General_100_CS_AS_KS_WS_SC',
+        description:
+            'Latin1-General-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Latvian_BIN', description: 'Latvian, binary sort' },
+    {
+        name: 'Latvian_BIN2',
+        description: 'Latvian, binary code point comparison sort'
+    },
+    {
+        name: 'Latvian_CI_AI',
+        description: 'Latvian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Latvian_CI_AI_WS',
+        description: 'Latvian, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Latvian_CI_AI_KS',
+        description: 'Latvian, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Latvian_CI_AI_KS_WS',
+        description: 'Latvian, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Latvian_CI_AS',
+        description: 'Latvian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Latvian_CI_AS_WS',
+        description: 'Latvian, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Latvian_CI_AS_KS',
+        description: 'Latvian, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Latvian_CI_AS_KS_WS',
+        description: 'Latvian, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Latvian_CS_AI',
+        description: 'Latvian, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Latvian_CS_AI_WS',
+        description: 'Latvian, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Latvian_CS_AI_KS',
+        description: 'Latvian, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Latvian_CS_AI_KS_WS',
+        description: 'Latvian, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Latvian_CS_AS',
+        description: 'Latvian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Latvian_CS_AS_WS',
+        description: 'Latvian, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Latvian_CS_AS_KS',
+        description: 'Latvian, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Latvian_CS_AS_KS_WS',
+        description: 'Latvian, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Latvian_100_BIN', description: 'Latvian-100, binary sort' },
+    {
+        name: 'Latvian_100_BIN2',
+        description: 'Latvian-100, binary code point comparison sort'
+    },
+    {
+        name: 'Latvian_100_CI_AI',
+        description: 'Latvian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Latvian_100_CI_AI_WS',
+        description: 'Latvian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Latvian_100_CI_AI_KS',
+        description: 'Latvian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Latvian_100_CI_AI_KS_WS',
+        description: 'Latvian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Latvian_100_CI_AS',
+        description: 'Latvian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Latvian_100_CI_AS_WS',
+        description: 'Latvian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Latvian_100_CI_AS_KS',
+        description: 'Latvian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Latvian_100_CI_AS_KS_WS',
+        description: 'Latvian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Latvian_100_CS_AI',
+        description: 'Latvian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Latvian_100_CS_AI_WS',
+        description: 'Latvian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Latvian_100_CS_AI_KS',
+        description: 'Latvian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Latvian_100_CS_AI_KS_WS',
+        description: 'Latvian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Latvian_100_CS_AS',
+        description: 'Latvian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Latvian_100_CS_AS_WS',
+        description: 'Latvian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Latvian_100_CS_AS_KS',
+        description: 'Latvian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Latvian_100_CS_AS_KS_WS',
+        description: 'Latvian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Latvian_100_CI_AI_SC',
+        description:
+            'Latvian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Latvian_100_CI_AI_WS_SC',
+        description:
+            'Latvian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Latvian_100_CI_AI_KS_SC',
+        description:
+            'Latvian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Latvian_100_CI_AI_KS_WS_SC',
+        description:
+            'Latvian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Latvian_100_CI_AS_SC',
+        description:
+            'Latvian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Latvian_100_CI_AS_WS_SC',
+        description:
+            'Latvian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Latvian_100_CI_AS_KS_SC',
+        description:
+            'Latvian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Latvian_100_CI_AS_KS_WS_SC',
+        description:
+            'Latvian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Latvian_100_CS_AI_SC',
+        description:
+            'Latvian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Latvian_100_CS_AI_WS_SC',
+        description:
+            'Latvian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Latvian_100_CS_AI_KS_SC',
+        description:
+            'Latvian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Latvian_100_CS_AI_KS_WS_SC',
+        description:
+            'Latvian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Latvian_100_CS_AS_SC',
+        description:
+            'Latvian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Latvian_100_CS_AS_WS_SC',
+        description:
+            'Latvian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Latvian_100_CS_AS_KS_SC',
+        description:
+            'Latvian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Latvian_100_CS_AS_KS_WS_SC',
+        description:
+            'Latvian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Lithuanian_BIN', description: 'Lithuanian, binary sort' },
+    {
+        name: 'Lithuanian_BIN2',
+        description: 'Lithuanian, binary code point comparison sort'
+    },
+    {
+        name: 'Lithuanian_CI_AI',
+        description: 'Lithuanian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Lithuanian_CI_AI_WS',
+        description: 'Lithuanian, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Lithuanian_CI_AI_KS',
+        description: 'Lithuanian, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Lithuanian_CI_AI_KS_WS',
+        description: 'Lithuanian, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Lithuanian_CI_AS',
+        description: 'Lithuanian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Lithuanian_CI_AS_WS',
+        description: 'Lithuanian, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Lithuanian_CI_AS_KS',
+        description: 'Lithuanian, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Lithuanian_CI_AS_KS_WS',
+        description: 'Lithuanian, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Lithuanian_CS_AI',
+        description: 'Lithuanian, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Lithuanian_CS_AI_WS',
+        description: 'Lithuanian, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Lithuanian_CS_AI_KS',
+        description: 'Lithuanian, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Lithuanian_CS_AI_KS_WS',
+        description: 'Lithuanian, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Lithuanian_CS_AS',
+        description: 'Lithuanian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Lithuanian_CS_AS_WS',
+        description: 'Lithuanian, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Lithuanian_CS_AS_KS',
+        description: 'Lithuanian, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Lithuanian_CS_AS_KS_WS',
+        description: 'Lithuanian, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Lithuanian_100_BIN', description: 'Lithuanian-100, binary sort' },
+    {
+        name: 'Lithuanian_100_BIN2',
+        description: 'Lithuanian-100, binary code point comparison sort'
+    },
+    {
+        name: 'Lithuanian_100_CI_AI',
+        description: 'Lithuanian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Lithuanian_100_CI_AI_WS',
+        description: 'Lithuanian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Lithuanian_100_CI_AI_KS',
+        description: 'Lithuanian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Lithuanian_100_CI_AI_KS_WS',
+        description: 'Lithuanian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Lithuanian_100_CI_AS',
+        description: 'Lithuanian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Lithuanian_100_CI_AS_WS',
+        description: 'Lithuanian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Lithuanian_100_CI_AS_KS',
+        description: 'Lithuanian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Lithuanian_100_CI_AS_KS_WS',
+        description: 'Lithuanian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Lithuanian_100_CS_AI',
+        description: 'Lithuanian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Lithuanian_100_CS_AI_WS',
+        description: 'Lithuanian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Lithuanian_100_CS_AI_KS',
+        description: 'Lithuanian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Lithuanian_100_CS_AI_KS_WS',
+        description: 'Lithuanian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Lithuanian_100_CS_AS',
+        description: 'Lithuanian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Lithuanian_100_CS_AS_WS',
+        description: 'Lithuanian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Lithuanian_100_CS_AS_KS',
+        description: 'Lithuanian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Lithuanian_100_CS_AS_KS_WS',
+        description: 'Lithuanian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Lithuanian_100_CI_AI_SC',
+        description:
+            'Lithuanian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Lithuanian_100_CI_AI_WS_SC',
+        description:
+            'Lithuanian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Lithuanian_100_CI_AI_KS_SC',
+        description:
+            'Lithuanian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Lithuanian_100_CI_AI_KS_WS_SC',
+        description:
+            'Lithuanian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Lithuanian_100_CI_AS_SC',
+        description:
+            'Lithuanian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Lithuanian_100_CI_AS_WS_SC',
+        description:
+            'Lithuanian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Lithuanian_100_CI_AS_KS_SC',
+        description:
+            'Lithuanian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Lithuanian_100_CI_AS_KS_WS_SC',
+        description:
+            'Lithuanian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Lithuanian_100_CS_AI_SC',
+        description:
+            'Lithuanian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Lithuanian_100_CS_AI_WS_SC',
+        description:
+            'Lithuanian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Lithuanian_100_CS_AI_KS_SC',
+        description:
+            'Lithuanian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Lithuanian_100_CS_AI_KS_WS_SC',
+        description:
+            'Lithuanian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Lithuanian_100_CS_AS_SC',
+        description:
+            'Lithuanian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Lithuanian_100_CS_AS_WS_SC',
+        description:
+            'Lithuanian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Lithuanian_100_CS_AS_KS_SC',
+        description:
+            'Lithuanian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Lithuanian_100_CS_AS_KS_WS_SC',
+        description:
+            'Lithuanian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_90_BIN',
+        description: 'Macedonian-FYROM-90, binary sort'
+    },
+    {
+        name: 'Macedonian_FYROM_90_BIN2',
+        description: 'Macedonian-FYROM-90, binary code point comparison sort'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CI_AI',
+        description:
+            'Macedonian-FYROM-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CI_AI_WS',
+        description: 'Macedonian-FYROM-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CI_AI_KS',
+        description: 'Macedonian-FYROM-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CI_AI_KS_WS',
+        description: 'Macedonian-FYROM-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CI_AS',
+        description: 'Macedonian-FYROM-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CI_AS_WS',
+        description: 'Macedonian-FYROM-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CI_AS_KS',
+        description: 'Macedonian-FYROM-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CI_AS_KS_WS',
+        description: 'Macedonian-FYROM-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CS_AI',
+        description: 'Macedonian-FYROM-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CS_AI_WS',
+        description: 'Macedonian-FYROM-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CS_AI_KS',
+        description: 'Macedonian-FYROM-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CS_AI_KS_WS',
+        description: 'Macedonian-FYROM-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CS_AS',
+        description: 'Macedonian-FYROM-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CS_AS_WS',
+        description: 'Macedonian-FYROM-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CS_AS_KS',
+        description: 'Macedonian-FYROM-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CS_AS_KS_WS',
+        description: 'Macedonian-FYROM-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CI_AI_SC',
+        description:
+            'Macedonian-FYROM-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CI_AI_WS_SC',
+        description:
+            'Macedonian-FYROM-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CI_AI_KS_SC',
+        description:
+            'Macedonian-FYROM-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CI_AI_KS_WS_SC',
+        description:
+            'Macedonian-FYROM-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CI_AS_SC',
+        description:
+            'Macedonian-FYROM-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CI_AS_WS_SC',
+        description:
+            'Macedonian-FYROM-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CI_AS_KS_SC',
+        description:
+            'Macedonian-FYROM-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CI_AS_KS_WS_SC',
+        description:
+            'Macedonian-FYROM-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CS_AI_SC',
+        description:
+            'Macedonian-FYROM-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CS_AI_WS_SC',
+        description:
+            'Macedonian-FYROM-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CS_AI_KS_SC',
+        description:
+            'Macedonian-FYROM-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CS_AI_KS_WS_SC',
+        description:
+            'Macedonian-FYROM-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CS_AS_SC',
+        description:
+            'Macedonian-FYROM-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CS_AS_WS_SC',
+        description:
+            'Macedonian-FYROM-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CS_AS_KS_SC',
+        description:
+            'Macedonian-FYROM-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_90_CS_AS_KS_WS_SC',
+        description:
+            'Macedonian-FYROM-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_100_BIN',
+        description: 'Macedonian-FYROM-100, binary sort'
+    },
+    {
+        name: 'Macedonian_FYROM_100_BIN2',
+        description: 'Macedonian-FYROM-100, binary code point comparison sort'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CI_AI',
+        description:
+            'Macedonian-FYROM-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CI_AI_WS',
+        description: 'Macedonian-FYROM-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CI_AI_KS',
+        description: 'Macedonian-FYROM-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CI_AI_KS_WS',
+        description: 'Macedonian-FYROM-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CI_AS',
+        description: 'Macedonian-FYROM-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CI_AS_WS',
+        description: 'Macedonian-FYROM-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CI_AS_KS',
+        description: 'Macedonian-FYROM-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CI_AS_KS_WS',
+        description: 'Macedonian-FYROM-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CS_AI',
+        description: 'Macedonian-FYROM-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CS_AI_WS',
+        description: 'Macedonian-FYROM-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CS_AI_KS',
+        description: 'Macedonian-FYROM-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CS_AI_KS_WS',
+        description: 'Macedonian-FYROM-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CS_AS',
+        description: 'Macedonian-FYROM-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CS_AS_WS',
+        description: 'Macedonian-FYROM-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CS_AS_KS',
+        description: 'Macedonian-FYROM-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CS_AS_KS_WS',
+        description: 'Macedonian-FYROM-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CI_AI_SC',
+        description:
+            'Macedonian-FYROM-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CI_AI_WS_SC',
+        description:
+            'Macedonian-FYROM-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CI_AI_KS_SC',
+        description:
+            'Macedonian-FYROM-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CI_AI_KS_WS_SC',
+        description:
+            'Macedonian-FYROM-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CI_AS_SC',
+        description:
+            'Macedonian-FYROM-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CI_AS_WS_SC',
+        description:
+            'Macedonian-FYROM-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CI_AS_KS_SC',
+        description:
+            'Macedonian-FYROM-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CI_AS_KS_WS_SC',
+        description:
+            'Macedonian-FYROM-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CS_AI_SC',
+        description:
+            'Macedonian-FYROM-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CS_AI_WS_SC',
+        description:
+            'Macedonian-FYROM-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CS_AI_KS_SC',
+        description:
+            'Macedonian-FYROM-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CS_AI_KS_WS_SC',
+        description:
+            'Macedonian-FYROM-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CS_AS_SC',
+        description:
+            'Macedonian-FYROM-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CS_AS_WS_SC',
+        description:
+            'Macedonian-FYROM-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CS_AS_KS_SC',
+        description:
+            'Macedonian-FYROM-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Macedonian_FYROM_100_CS_AS_KS_WS_SC',
+        description:
+            'Macedonian-FYROM-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Maltese_100_BIN', description: 'Maltese-100, binary sort' },
+    {
+        name: 'Maltese_100_BIN2',
+        description: 'Maltese-100, binary code point comparison sort'
+    },
+    {
+        name: 'Maltese_100_CI_AI',
+        description: 'Maltese-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Maltese_100_CI_AI_WS',
+        description: 'Maltese-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Maltese_100_CI_AI_KS',
+        description: 'Maltese-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Maltese_100_CI_AI_KS_WS',
+        description: 'Maltese-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Maltese_100_CI_AS',
+        description: 'Maltese-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Maltese_100_CI_AS_WS',
+        description: 'Maltese-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Maltese_100_CI_AS_KS',
+        description: 'Maltese-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Maltese_100_CI_AS_KS_WS',
+        description: 'Maltese-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Maltese_100_CS_AI',
+        description: 'Maltese-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Maltese_100_CS_AI_WS',
+        description: 'Maltese-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Maltese_100_CS_AI_KS',
+        description: 'Maltese-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Maltese_100_CS_AI_KS_WS',
+        description: 'Maltese-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Maltese_100_CS_AS',
+        description: 'Maltese-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Maltese_100_CS_AS_WS',
+        description: 'Maltese-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Maltese_100_CS_AS_KS',
+        description: 'Maltese-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Maltese_100_CS_AS_KS_WS',
+        description: 'Maltese-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Maltese_100_CI_AI_SC',
+        description:
+            'Maltese-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Maltese_100_CI_AI_WS_SC',
+        description:
+            'Maltese-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Maltese_100_CI_AI_KS_SC',
+        description:
+            'Maltese-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Maltese_100_CI_AI_KS_WS_SC',
+        description:
+            'Maltese-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Maltese_100_CI_AS_SC',
+        description:
+            'Maltese-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Maltese_100_CI_AS_WS_SC',
+        description:
+            'Maltese-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Maltese_100_CI_AS_KS_SC',
+        description:
+            'Maltese-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Maltese_100_CI_AS_KS_WS_SC',
+        description:
+            'Maltese-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Maltese_100_CS_AI_SC',
+        description:
+            'Maltese-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Maltese_100_CS_AI_WS_SC',
+        description:
+            'Maltese-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Maltese_100_CS_AI_KS_SC',
+        description:
+            'Maltese-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Maltese_100_CS_AI_KS_WS_SC',
+        description:
+            'Maltese-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Maltese_100_CS_AS_SC',
+        description:
+            'Maltese-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Maltese_100_CS_AS_WS_SC',
+        description:
+            'Maltese-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Maltese_100_CS_AS_KS_SC',
+        description:
+            'Maltese-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Maltese_100_CS_AS_KS_WS_SC',
+        description:
+            'Maltese-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Maori_100_BIN', description: 'Maori-100, binary sort' },
+    {
+        name: 'Maori_100_BIN2',
+        description: 'Maori-100, binary code point comparison sort'
+    },
+    {
+        name: 'Maori_100_CI_AI',
+        description: 'Maori-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Maori_100_CI_AI_WS',
+        description: 'Maori-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Maori_100_CI_AI_KS',
+        description: 'Maori-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Maori_100_CI_AI_KS_WS',
+        description: 'Maori-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Maori_100_CI_AS',
+        description: 'Maori-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Maori_100_CI_AS_WS',
+        description: 'Maori-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Maori_100_CI_AS_KS',
+        description: 'Maori-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Maori_100_CI_AS_KS_WS',
+        description: 'Maori-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Maori_100_CS_AI',
+        description: 'Maori-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Maori_100_CS_AI_WS',
+        description: 'Maori-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Maori_100_CS_AI_KS',
+        description: 'Maori-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Maori_100_CS_AI_KS_WS',
+        description: 'Maori-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Maori_100_CS_AS',
+        description: 'Maori-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Maori_100_CS_AS_WS',
+        description: 'Maori-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Maori_100_CS_AS_KS',
+        description: 'Maori-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Maori_100_CS_AS_KS_WS',
+        description: 'Maori-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Maori_100_CI_AI_SC',
+        description:
+            'Maori-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Maori_100_CI_AI_WS_SC',
+        description:
+            'Maori-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Maori_100_CI_AI_KS_SC',
+        description:
+            'Maori-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Maori_100_CI_AI_KS_WS_SC',
+        description:
+            'Maori-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Maori_100_CI_AS_SC',
+        description:
+            'Maori-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Maori_100_CI_AS_WS_SC',
+        description:
+            'Maori-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Maori_100_CI_AS_KS_SC',
+        description:
+            'Maori-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Maori_100_CI_AS_KS_WS_SC',
+        description:
+            'Maori-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Maori_100_CS_AI_SC',
+        description:
+            'Maori-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Maori_100_CS_AI_WS_SC',
+        description:
+            'Maori-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Maori_100_CS_AI_KS_SC',
+        description:
+            'Maori-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Maori_100_CS_AI_KS_WS_SC',
+        description:
+            'Maori-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Maori_100_CS_AS_SC',
+        description:
+            'Maori-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Maori_100_CS_AS_WS_SC',
+        description:
+            'Maori-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Maori_100_CS_AS_KS_SC',
+        description:
+            'Maori-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Maori_100_CS_AS_KS_WS_SC',
+        description:
+            'Maori-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Mapudungan_100_BIN', description: 'Mapudungan-100, binary sort' },
+    {
+        name: 'Mapudungan_100_BIN2',
+        description: 'Mapudungan-100, binary code point comparison sort'
+    },
+    {
+        name: 'Mapudungan_100_CI_AI',
+        description: 'Mapudungan-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Mapudungan_100_CI_AI_WS',
+        description: 'Mapudungan-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Mapudungan_100_CI_AI_KS',
+        description: 'Mapudungan-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Mapudungan_100_CI_AI_KS_WS',
+        description: 'Mapudungan-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Mapudungan_100_CI_AS',
+        description: 'Mapudungan-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Mapudungan_100_CI_AS_WS',
+        description: 'Mapudungan-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Mapudungan_100_CI_AS_KS',
+        description: 'Mapudungan-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Mapudungan_100_CI_AS_KS_WS',
+        description: 'Mapudungan-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Mapudungan_100_CS_AI',
+        description: 'Mapudungan-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Mapudungan_100_CS_AI_WS',
+        description: 'Mapudungan-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Mapudungan_100_CS_AI_KS',
+        description: 'Mapudungan-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Mapudungan_100_CS_AI_KS_WS',
+        description: 'Mapudungan-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Mapudungan_100_CS_AS',
+        description: 'Mapudungan-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Mapudungan_100_CS_AS_WS',
+        description: 'Mapudungan-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Mapudungan_100_CS_AS_KS',
+        description: 'Mapudungan-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Mapudungan_100_CS_AS_KS_WS',
+        description: 'Mapudungan-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Mapudungan_100_CI_AI_SC',
+        description:
+            'Mapudungan-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Mapudungan_100_CI_AI_WS_SC',
+        description:
+            'Mapudungan-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Mapudungan_100_CI_AI_KS_SC',
+        description:
+            'Mapudungan-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Mapudungan_100_CI_AI_KS_WS_SC',
+        description:
+            'Mapudungan-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Mapudungan_100_CI_AS_SC',
+        description:
+            'Mapudungan-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Mapudungan_100_CI_AS_WS_SC',
+        description:
+            'Mapudungan-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Mapudungan_100_CI_AS_KS_SC',
+        description:
+            'Mapudungan-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Mapudungan_100_CI_AS_KS_WS_SC',
+        description:
+            'Mapudungan-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Mapudungan_100_CS_AI_SC',
+        description:
+            'Mapudungan-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Mapudungan_100_CS_AI_WS_SC',
+        description:
+            'Mapudungan-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Mapudungan_100_CS_AI_KS_SC',
+        description:
+            'Mapudungan-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Mapudungan_100_CS_AI_KS_WS_SC',
+        description:
+            'Mapudungan-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Mapudungan_100_CS_AS_SC',
+        description:
+            'Mapudungan-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Mapudungan_100_CS_AS_WS_SC',
+        description:
+            'Mapudungan-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Mapudungan_100_CS_AS_KS_SC',
+        description:
+            'Mapudungan-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Mapudungan_100_CS_AS_KS_WS_SC',
+        description:
+            'Mapudungan-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Modern_Spanish_BIN', description: 'Modern-Spanish, binary sort' },
+    {
+        name: 'Modern_Spanish_BIN2',
+        description: 'Modern-Spanish, binary code point comparison sort'
+    },
+    {
+        name: 'Modern_Spanish_CI_AI',
+        description: 'Modern-Spanish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Modern_Spanish_CI_AI_WS',
+        description: 'Modern-Spanish, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Modern_Spanish_CI_AI_KS',
+        description: 'Modern-Spanish, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Modern_Spanish_CI_AI_KS_WS',
+        description: 'Modern-Spanish, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Modern_Spanish_CI_AS',
+        description: 'Modern-Spanish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Modern_Spanish_CI_AS_WS',
+        description: 'Modern-Spanish, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Modern_Spanish_CI_AS_KS',
+        description: 'Modern-Spanish, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Modern_Spanish_CI_AS_KS_WS',
+        description: 'Modern-Spanish, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Modern_Spanish_CS_AI',
+        description: 'Modern-Spanish, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Modern_Spanish_CS_AI_WS',
+        description: 'Modern-Spanish, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Modern_Spanish_CS_AI_KS',
+        description: 'Modern-Spanish, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Modern_Spanish_CS_AI_KS_WS',
+        description: 'Modern-Spanish, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Modern_Spanish_CS_AS',
+        description: 'Modern-Spanish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Modern_Spanish_CS_AS_WS',
+        description: 'Modern-Spanish, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Modern_Spanish_CS_AS_KS',
+        description: 'Modern-Spanish, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Modern_Spanish_CS_AS_KS_WS',
+        description: 'Modern-Spanish, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_BIN',
+        description: 'Modern-Spanish-100, binary sort'
+    },
+    {
+        name: 'Modern_Spanish_100_BIN2',
+        description: 'Modern-Spanish-100, binary code point comparison sort'
+    },
+    {
+        name: 'Modern_Spanish_100_CI_AI',
+        description: 'Modern-Spanish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_CI_AI_WS',
+        description: 'Modern-Spanish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_CI_AI_KS',
+        description: 'Modern-Spanish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_CI_AI_KS_WS',
+        description: 'Modern-Spanish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_CI_AS',
+        description: 'Modern-Spanish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_CI_AS_WS',
+        description: 'Modern-Spanish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_CI_AS_KS',
+        description: 'Modern-Spanish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_CI_AS_KS_WS',
+        description: 'Modern-Spanish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_CS_AI',
+        description: 'Modern-Spanish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_CS_AI_WS',
+        description: 'Modern-Spanish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_CS_AI_KS',
+        description: 'Modern-Spanish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_CS_AI_KS_WS',
+        description: 'Modern-Spanish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_CS_AS',
+        description: 'Modern-Spanish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_CS_AS_WS',
+        description: 'Modern-Spanish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_CS_AS_KS',
+        description: 'Modern-Spanish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_CS_AS_KS_WS',
+        description: 'Modern-Spanish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Modern_Spanish_100_CI_AI_SC',
+        description:
+            'Modern-Spanish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Modern_Spanish_100_CI_AI_WS_SC',
+        description:
+            'Modern-Spanish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Modern_Spanish_100_CI_AI_KS_SC',
+        description:
+            'Modern-Spanish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Modern_Spanish_100_CI_AI_KS_WS_SC',
+        description:
+            'Modern-Spanish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Modern_Spanish_100_CI_AS_SC',
+        description:
+            'Modern-Spanish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Modern_Spanish_100_CI_AS_WS_SC',
+        description:
+            'Modern-Spanish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Modern_Spanish_100_CI_AS_KS_SC',
+        description:
+            'Modern-Spanish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Modern_Spanish_100_CI_AS_KS_WS_SC',
+        description:
+            'Modern-Spanish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Modern_Spanish_100_CS_AI_SC',
+        description:
+            'Modern-Spanish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Modern_Spanish_100_CS_AI_WS_SC',
+        description:
+            'Modern-Spanish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Modern_Spanish_100_CS_AI_KS_SC',
+        description:
+            'Modern-Spanish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Modern_Spanish_100_CS_AI_KS_WS_SC',
+        description:
+            'Modern-Spanish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Modern_Spanish_100_CS_AS_SC',
+        description:
+            'Modern-Spanish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Modern_Spanish_100_CS_AS_WS_SC',
+        description:
+            'Modern-Spanish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Modern_Spanish_100_CS_AS_KS_SC',
+        description:
+            'Modern-Spanish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Modern_Spanish_100_CS_AS_KS_WS_SC',
+        description:
+            'Modern-Spanish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Mohawk_100_BIN', description: 'Mohawk-100, binary sort' },
+    {
+        name: 'Mohawk_100_BIN2',
+        description: 'Mohawk-100, binary code point comparison sort'
+    },
+    {
+        name: 'Mohawk_100_CI_AI',
+        description: 'Mohawk-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Mohawk_100_CI_AI_WS',
+        description: 'Mohawk-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Mohawk_100_CI_AI_KS',
+        description: 'Mohawk-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Mohawk_100_CI_AI_KS_WS',
+        description: 'Mohawk-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Mohawk_100_CI_AS',
+        description: 'Mohawk-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Mohawk_100_CI_AS_WS',
+        description: 'Mohawk-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Mohawk_100_CI_AS_KS',
+        description: 'Mohawk-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Mohawk_100_CI_AS_KS_WS',
+        description: 'Mohawk-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Mohawk_100_CS_AI',
+        description: 'Mohawk-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Mohawk_100_CS_AI_WS',
+        description: 'Mohawk-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Mohawk_100_CS_AI_KS',
+        description: 'Mohawk-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Mohawk_100_CS_AI_KS_WS',
+        description: 'Mohawk-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Mohawk_100_CS_AS',
+        description: 'Mohawk-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Mohawk_100_CS_AS_WS',
+        description: 'Mohawk-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Mohawk_100_CS_AS_KS',
+        description: 'Mohawk-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Mohawk_100_CS_AS_KS_WS',
+        description: 'Mohawk-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Mohawk_100_CI_AI_SC',
+        description:
+            'Mohawk-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Mohawk_100_CI_AI_WS_SC',
+        description:
+            'Mohawk-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Mohawk_100_CI_AI_KS_SC',
+        description:
+            'Mohawk-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Mohawk_100_CI_AI_KS_WS_SC',
+        description:
+            'Mohawk-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Mohawk_100_CI_AS_SC',
+        description:
+            'Mohawk-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Mohawk_100_CI_AS_WS_SC',
+        description:
+            'Mohawk-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Mohawk_100_CI_AS_KS_SC',
+        description:
+            'Mohawk-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Mohawk_100_CI_AS_KS_WS_SC',
+        description:
+            'Mohawk-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Mohawk_100_CS_AI_SC',
+        description:
+            'Mohawk-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Mohawk_100_CS_AI_WS_SC',
+        description:
+            'Mohawk-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Mohawk_100_CS_AI_KS_SC',
+        description:
+            'Mohawk-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Mohawk_100_CS_AI_KS_WS_SC',
+        description:
+            'Mohawk-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Mohawk_100_CS_AS_SC',
+        description:
+            'Mohawk-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Mohawk_100_CS_AS_WS_SC',
+        description:
+            'Mohawk-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Mohawk_100_CS_AS_KS_SC',
+        description:
+            'Mohawk-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Mohawk_100_CS_AS_KS_WS_SC',
+        description:
+            'Mohawk-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Nepali_100_BIN', description: 'Nepali-100, binary sort' },
+    {
+        name: 'Nepali_100_BIN2',
+        description: 'Nepali-100, binary code point comparison sort'
+    },
+    {
+        name: 'Nepali_100_CI_AI',
+        description: 'Nepali-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Nepali_100_CI_AI_WS',
+        description: 'Nepali-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Nepali_100_CI_AI_KS',
+        description: 'Nepali-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Nepali_100_CI_AI_KS_WS',
+        description: 'Nepali-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Nepali_100_CI_AS',
+        description: 'Nepali-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Nepali_100_CI_AS_WS',
+        description: 'Nepali-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Nepali_100_CI_AS_KS',
+        description: 'Nepali-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Nepali_100_CI_AS_KS_WS',
+        description: 'Nepali-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Nepali_100_CS_AI',
+        description: 'Nepali-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Nepali_100_CS_AI_WS',
+        description: 'Nepali-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Nepali_100_CS_AI_KS',
+        description: 'Nepali-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Nepali_100_CS_AI_KS_WS',
+        description: 'Nepali-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Nepali_100_CS_AS',
+        description: 'Nepali-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Nepali_100_CS_AS_WS',
+        description: 'Nepali-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Nepali_100_CS_AS_KS',
+        description: 'Nepali-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Nepali_100_CS_AS_KS_WS',
+        description: 'Nepali-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Nepali_100_CI_AI_SC',
+        description:
+            'Nepali-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Nepali_100_CI_AI_WS_SC',
+        description:
+            'Nepali-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Nepali_100_CI_AI_KS_SC',
+        description:
+            'Nepali-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Nepali_100_CI_AI_KS_WS_SC',
+        description:
+            'Nepali-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Nepali_100_CI_AS_SC',
+        description:
+            'Nepali-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Nepali_100_CI_AS_WS_SC',
+        description:
+            'Nepali-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Nepali_100_CI_AS_KS_SC',
+        description:
+            'Nepali-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Nepali_100_CI_AS_KS_WS_SC',
+        description:
+            'Nepali-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Nepali_100_CS_AI_SC',
+        description:
+            'Nepali-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Nepali_100_CS_AI_WS_SC',
+        description:
+            'Nepali-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Nepali_100_CS_AI_KS_SC',
+        description:
+            'Nepali-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Nepali_100_CS_AI_KS_WS_SC',
+        description:
+            'Nepali-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Nepali_100_CS_AS_SC',
+        description:
+            'Nepali-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Nepali_100_CS_AS_WS_SC',
+        description:
+            'Nepali-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Nepali_100_CS_AS_KS_SC',
+        description:
+            'Nepali-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Nepali_100_CS_AS_KS_WS_SC',
+        description:
+            'Nepali-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Norwegian_100_BIN', description: 'Norwegian-100, binary sort' },
+    {
+        name: 'Norwegian_100_BIN2',
+        description: 'Norwegian-100, binary code point comparison sort'
+    },
+    {
+        name: 'Norwegian_100_CI_AI',
+        description: 'Norwegian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Norwegian_100_CI_AI_WS',
+        description: 'Norwegian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Norwegian_100_CI_AI_KS',
+        description: 'Norwegian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Norwegian_100_CI_AI_KS_WS',
+        description: 'Norwegian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Norwegian_100_CI_AS',
+        description: 'Norwegian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Norwegian_100_CI_AS_WS',
+        description: 'Norwegian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Norwegian_100_CI_AS_KS',
+        description: 'Norwegian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Norwegian_100_CI_AS_KS_WS',
+        description: 'Norwegian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Norwegian_100_CS_AI',
+        description: 'Norwegian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Norwegian_100_CS_AI_WS',
+        description: 'Norwegian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Norwegian_100_CS_AI_KS',
+        description: 'Norwegian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Norwegian_100_CS_AI_KS_WS',
+        description: 'Norwegian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Norwegian_100_CS_AS',
+        description: 'Norwegian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Norwegian_100_CS_AS_WS',
+        description: 'Norwegian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Norwegian_100_CS_AS_KS',
+        description: 'Norwegian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Norwegian_100_CS_AS_KS_WS',
+        description: 'Norwegian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Norwegian_100_CI_AI_SC',
+        description:
+            'Norwegian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Norwegian_100_CI_AI_WS_SC',
+        description:
+            'Norwegian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Norwegian_100_CI_AI_KS_SC',
+        description:
+            'Norwegian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Norwegian_100_CI_AI_KS_WS_SC',
+        description:
+            'Norwegian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Norwegian_100_CI_AS_SC',
+        description:
+            'Norwegian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Norwegian_100_CI_AS_WS_SC',
+        description:
+            'Norwegian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Norwegian_100_CI_AS_KS_SC',
+        description:
+            'Norwegian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Norwegian_100_CI_AS_KS_WS_SC',
+        description:
+            'Norwegian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Norwegian_100_CS_AI_SC',
+        description:
+            'Norwegian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Norwegian_100_CS_AI_WS_SC',
+        description:
+            'Norwegian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Norwegian_100_CS_AI_KS_SC',
+        description:
+            'Norwegian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Norwegian_100_CS_AI_KS_WS_SC',
+        description:
+            'Norwegian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Norwegian_100_CS_AS_SC',
+        description:
+            'Norwegian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Norwegian_100_CS_AS_WS_SC',
+        description:
+            'Norwegian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Norwegian_100_CS_AS_KS_SC',
+        description:
+            'Norwegian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Norwegian_100_CS_AS_KS_WS_SC',
+        description:
+            'Norwegian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Pashto_100_BIN', description: 'Pashto-100, binary sort' },
+    {
+        name: 'Pashto_100_BIN2',
+        description: 'Pashto-100, binary code point comparison sort'
+    },
+    {
+        name: 'Pashto_100_CI_AI',
+        description: 'Pashto-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Pashto_100_CI_AI_WS',
+        description: 'Pashto-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Pashto_100_CI_AI_KS',
+        description: 'Pashto-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Pashto_100_CI_AI_KS_WS',
+        description: 'Pashto-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Pashto_100_CI_AS',
+        description: 'Pashto-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Pashto_100_CI_AS_WS',
+        description: 'Pashto-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Pashto_100_CI_AS_KS',
+        description: 'Pashto-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Pashto_100_CI_AS_KS_WS',
+        description: 'Pashto-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Pashto_100_CS_AI',
+        description: 'Pashto-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Pashto_100_CS_AI_WS',
+        description: 'Pashto-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Pashto_100_CS_AI_KS',
+        description: 'Pashto-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Pashto_100_CS_AI_KS_WS',
+        description: 'Pashto-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Pashto_100_CS_AS',
+        description: 'Pashto-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Pashto_100_CS_AS_WS',
+        description: 'Pashto-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Pashto_100_CS_AS_KS',
+        description: 'Pashto-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Pashto_100_CS_AS_KS_WS',
+        description: 'Pashto-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Pashto_100_CI_AI_SC',
+        description:
+            'Pashto-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Pashto_100_CI_AI_WS_SC',
+        description:
+            'Pashto-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Pashto_100_CI_AI_KS_SC',
+        description:
+            'Pashto-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Pashto_100_CI_AI_KS_WS_SC',
+        description:
+            'Pashto-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Pashto_100_CI_AS_SC',
+        description:
+            'Pashto-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Pashto_100_CI_AS_WS_SC',
+        description:
+            'Pashto-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Pashto_100_CI_AS_KS_SC',
+        description:
+            'Pashto-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Pashto_100_CI_AS_KS_WS_SC',
+        description:
+            'Pashto-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Pashto_100_CS_AI_SC',
+        description:
+            'Pashto-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Pashto_100_CS_AI_WS_SC',
+        description:
+            'Pashto-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Pashto_100_CS_AI_KS_SC',
+        description:
+            'Pashto-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Pashto_100_CS_AI_KS_WS_SC',
+        description:
+            'Pashto-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Pashto_100_CS_AS_SC',
+        description:
+            'Pashto-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Pashto_100_CS_AS_WS_SC',
+        description:
+            'Pashto-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Pashto_100_CS_AS_KS_SC',
+        description:
+            'Pashto-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Pashto_100_CS_AS_KS_WS_SC',
+        description:
+            'Pashto-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Persian_100_BIN', description: 'Persian-100, binary sort' },
+    {
+        name: 'Persian_100_BIN2',
+        description: 'Persian-100, binary code point comparison sort'
+    },
+    {
+        name: 'Persian_100_CI_AI',
+        description: 'Persian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Persian_100_CI_AI_WS',
+        description: 'Persian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Persian_100_CI_AI_KS',
+        description: 'Persian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Persian_100_CI_AI_KS_WS',
+        description: 'Persian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Persian_100_CI_AS',
+        description: 'Persian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Persian_100_CI_AS_WS',
+        description: 'Persian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Persian_100_CI_AS_KS',
+        description: 'Persian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Persian_100_CI_AS_KS_WS',
+        description: 'Persian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Persian_100_CS_AI',
+        description: 'Persian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Persian_100_CS_AI_WS',
+        description: 'Persian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Persian_100_CS_AI_KS',
+        description: 'Persian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Persian_100_CS_AI_KS_WS',
+        description: 'Persian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Persian_100_CS_AS',
+        description: 'Persian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Persian_100_CS_AS_WS',
+        description: 'Persian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Persian_100_CS_AS_KS',
+        description: 'Persian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Persian_100_CS_AS_KS_WS',
+        description: 'Persian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Persian_100_CI_AI_SC',
+        description:
+            'Persian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Persian_100_CI_AI_WS_SC',
+        description:
+            'Persian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Persian_100_CI_AI_KS_SC',
+        description:
+            'Persian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Persian_100_CI_AI_KS_WS_SC',
+        description:
+            'Persian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Persian_100_CI_AS_SC',
+        description:
+            'Persian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Persian_100_CI_AS_WS_SC',
+        description:
+            'Persian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Persian_100_CI_AS_KS_SC',
+        description:
+            'Persian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Persian_100_CI_AS_KS_WS_SC',
+        description:
+            'Persian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Persian_100_CS_AI_SC',
+        description:
+            'Persian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Persian_100_CS_AI_WS_SC',
+        description:
+            'Persian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Persian_100_CS_AI_KS_SC',
+        description:
+            'Persian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Persian_100_CS_AI_KS_WS_SC',
+        description:
+            'Persian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Persian_100_CS_AS_SC',
+        description:
+            'Persian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Persian_100_CS_AS_WS_SC',
+        description:
+            'Persian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Persian_100_CS_AS_KS_SC',
+        description:
+            'Persian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Persian_100_CS_AS_KS_WS_SC',
+        description:
+            'Persian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Polish_BIN', description: 'Polish, binary sort' },
+    {
+        name: 'Polish_BIN2',
+        description: 'Polish, binary code point comparison sort'
+    },
+    {
+        name: 'Polish_CI_AI',
+        description: 'Polish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Polish_CI_AI_WS',
+        description: 'Polish, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Polish_CI_AI_KS',
+        description: 'Polish, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Polish_CI_AI_KS_WS',
+        description: 'Polish, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Polish_CI_AS',
+        description: 'Polish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Polish_CI_AS_WS',
+        description: 'Polish, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Polish_CI_AS_KS',
+        description: 'Polish, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Polish_CI_AS_KS_WS',
+        description: 'Polish, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Polish_CS_AI',
+        description: 'Polish, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Polish_CS_AI_WS',
+        description: 'Polish, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Polish_CS_AI_KS',
+        description: 'Polish, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Polish_CS_AI_KS_WS',
+        description: 'Polish, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Polish_CS_AS',
+        description: 'Polish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Polish_CS_AS_WS',
+        description: 'Polish, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Polish_CS_AS_KS',
+        description: 'Polish, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Polish_CS_AS_KS_WS',
+        description: 'Polish, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Polish_100_BIN', description: 'Polish-100, binary sort' },
+    {
+        name: 'Polish_100_BIN2',
+        description: 'Polish-100, binary code point comparison sort'
+    },
+    {
+        name: 'Polish_100_CI_AI',
+        description: 'Polish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Polish_100_CI_AI_WS',
+        description: 'Polish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Polish_100_CI_AI_KS',
+        description: 'Polish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Polish_100_CI_AI_KS_WS',
+        description: 'Polish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Polish_100_CI_AS',
+        description: 'Polish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Polish_100_CI_AS_WS',
+        description: 'Polish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Polish_100_CI_AS_KS',
+        description: 'Polish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Polish_100_CI_AS_KS_WS',
+        description: 'Polish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Polish_100_CS_AI',
+        description: 'Polish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Polish_100_CS_AI_WS',
+        description: 'Polish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Polish_100_CS_AI_KS',
+        description: 'Polish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Polish_100_CS_AI_KS_WS',
+        description: 'Polish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Polish_100_CS_AS',
+        description: 'Polish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Polish_100_CS_AS_WS',
+        description: 'Polish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Polish_100_CS_AS_KS',
+        description: 'Polish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Polish_100_CS_AS_KS_WS',
+        description: 'Polish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Polish_100_CI_AI_SC',
+        description:
+            'Polish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Polish_100_CI_AI_WS_SC',
+        description:
+            'Polish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Polish_100_CI_AI_KS_SC',
+        description:
+            'Polish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Polish_100_CI_AI_KS_WS_SC',
+        description:
+            'Polish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Polish_100_CI_AS_SC',
+        description:
+            'Polish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Polish_100_CI_AS_WS_SC',
+        description:
+            'Polish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Polish_100_CI_AS_KS_SC',
+        description:
+            'Polish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Polish_100_CI_AS_KS_WS_SC',
+        description:
+            'Polish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Polish_100_CS_AI_SC',
+        description:
+            'Polish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Polish_100_CS_AI_WS_SC',
+        description:
+            'Polish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Polish_100_CS_AI_KS_SC',
+        description:
+            'Polish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Polish_100_CS_AI_KS_WS_SC',
+        description:
+            'Polish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Polish_100_CS_AS_SC',
+        description:
+            'Polish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Polish_100_CS_AS_WS_SC',
+        description:
+            'Polish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Polish_100_CS_AS_KS_SC',
+        description:
+            'Polish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Polish_100_CS_AS_KS_WS_SC',
+        description:
+            'Polish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Romanian_BIN', description: 'Romanian, binary sort' },
+    {
+        name: 'Romanian_BIN2',
+        description: 'Romanian, binary code point comparison sort'
+    },
+    {
+        name: 'Romanian_CI_AI',
+        description: 'Romanian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Romanian_CI_AI_WS',
+        description: 'Romanian, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Romanian_CI_AI_KS',
+        description: 'Romanian, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Romanian_CI_AI_KS_WS',
+        description: 'Romanian, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Romanian_CI_AS',
+        description: 'Romanian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Romanian_CI_AS_WS',
+        description: 'Romanian, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Romanian_CI_AS_KS',
+        description: 'Romanian, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Romanian_CI_AS_KS_WS',
+        description: 'Romanian, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Romanian_CS_AI',
+        description: 'Romanian, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Romanian_CS_AI_WS',
+        description: 'Romanian, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Romanian_CS_AI_KS',
+        description: 'Romanian, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Romanian_CS_AI_KS_WS',
+        description: 'Romanian, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Romanian_CS_AS',
+        description: 'Romanian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Romanian_CS_AS_WS',
+        description: 'Romanian, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Romanian_CS_AS_KS',
+        description: 'Romanian, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Romanian_CS_AS_KS_WS',
+        description: 'Romanian, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Romanian_100_BIN', description: 'Romanian-100, binary sort' },
+    {
+        name: 'Romanian_100_BIN2',
+        description: 'Romanian-100, binary code point comparison sort'
+    },
+    {
+        name: 'Romanian_100_CI_AI',
+        description: 'Romanian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Romanian_100_CI_AI_WS',
+        description: 'Romanian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Romanian_100_CI_AI_KS',
+        description: 'Romanian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Romanian_100_CI_AI_KS_WS',
+        description: 'Romanian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Romanian_100_CI_AS',
+        description: 'Romanian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Romanian_100_CI_AS_WS',
+        description: 'Romanian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Romanian_100_CI_AS_KS',
+        description: 'Romanian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Romanian_100_CI_AS_KS_WS',
+        description: 'Romanian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Romanian_100_CS_AI',
+        description: 'Romanian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Romanian_100_CS_AI_WS',
+        description: 'Romanian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Romanian_100_CS_AI_KS',
+        description: 'Romanian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Romanian_100_CS_AI_KS_WS',
+        description: 'Romanian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Romanian_100_CS_AS',
+        description: 'Romanian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Romanian_100_CS_AS_WS',
+        description: 'Romanian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Romanian_100_CS_AS_KS',
+        description: 'Romanian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Romanian_100_CS_AS_KS_WS',
+        description: 'Romanian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Romanian_100_CI_AI_SC',
+        description:
+            'Romanian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Romanian_100_CI_AI_WS_SC',
+        description:
+            'Romanian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Romanian_100_CI_AI_KS_SC',
+        description:
+            'Romanian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Romanian_100_CI_AI_KS_WS_SC',
+        description:
+            'Romanian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Romanian_100_CI_AS_SC',
+        description:
+            'Romanian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Romanian_100_CI_AS_WS_SC',
+        description:
+            'Romanian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Romanian_100_CI_AS_KS_SC',
+        description:
+            'Romanian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Romanian_100_CI_AS_KS_WS_SC',
+        description:
+            'Romanian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Romanian_100_CS_AI_SC',
+        description:
+            'Romanian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Romanian_100_CS_AI_WS_SC',
+        description:
+            'Romanian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Romanian_100_CS_AI_KS_SC',
+        description:
+            'Romanian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Romanian_100_CS_AI_KS_WS_SC',
+        description:
+            'Romanian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Romanian_100_CS_AS_SC',
+        description:
+            'Romanian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Romanian_100_CS_AS_WS_SC',
+        description:
+            'Romanian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Romanian_100_CS_AS_KS_SC',
+        description:
+            'Romanian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Romanian_100_CS_AS_KS_WS_SC',
+        description:
+            'Romanian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Romansh_100_BIN', description: 'Romansh-100, binary sort' },
+    {
+        name: 'Romansh_100_BIN2',
+        description: 'Romansh-100, binary code point comparison sort'
+    },
+    {
+        name: 'Romansh_100_CI_AI',
+        description: 'Romansh-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Romansh_100_CI_AI_WS',
+        description: 'Romansh-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Romansh_100_CI_AI_KS',
+        description: 'Romansh-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Romansh_100_CI_AI_KS_WS',
+        description: 'Romansh-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Romansh_100_CI_AS',
+        description: 'Romansh-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Romansh_100_CI_AS_WS',
+        description: 'Romansh-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Romansh_100_CI_AS_KS',
+        description: 'Romansh-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Romansh_100_CI_AS_KS_WS',
+        description: 'Romansh-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Romansh_100_CS_AI',
+        description: 'Romansh-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Romansh_100_CS_AI_WS',
+        description: 'Romansh-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Romansh_100_CS_AI_KS',
+        description: 'Romansh-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Romansh_100_CS_AI_KS_WS',
+        description: 'Romansh-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Romansh_100_CS_AS',
+        description: 'Romansh-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Romansh_100_CS_AS_WS',
+        description: 'Romansh-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Romansh_100_CS_AS_KS',
+        description: 'Romansh-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Romansh_100_CS_AS_KS_WS',
+        description: 'Romansh-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Romansh_100_CI_AI_SC',
+        description:
+            'Romansh-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Romansh_100_CI_AI_WS_SC',
+        description:
+            'Romansh-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Romansh_100_CI_AI_KS_SC',
+        description:
+            'Romansh-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Romansh_100_CI_AI_KS_WS_SC',
+        description:
+            'Romansh-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Romansh_100_CI_AS_SC',
+        description:
+            'Romansh-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Romansh_100_CI_AS_WS_SC',
+        description:
+            'Romansh-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Romansh_100_CI_AS_KS_SC',
+        description:
+            'Romansh-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Romansh_100_CI_AS_KS_WS_SC',
+        description:
+            'Romansh-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Romansh_100_CS_AI_SC',
+        description:
+            'Romansh-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Romansh_100_CS_AI_WS_SC',
+        description:
+            'Romansh-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Romansh_100_CS_AI_KS_SC',
+        description:
+            'Romansh-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Romansh_100_CS_AI_KS_WS_SC',
+        description:
+            'Romansh-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Romansh_100_CS_AS_SC',
+        description:
+            'Romansh-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Romansh_100_CS_AS_WS_SC',
+        description:
+            'Romansh-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Romansh_100_CS_AS_KS_SC',
+        description:
+            'Romansh-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Romansh_100_CS_AS_KS_WS_SC',
+        description:
+            'Romansh-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Sami_Norway_100_BIN', description: 'Sami-Norway-100, binary sort' },
+    {
+        name: 'Sami_Norway_100_BIN2',
+        description: 'Sami-Norway-100, binary code point comparison sort'
+    },
+    {
+        name: 'Sami_Norway_100_CI_AI',
+        description: 'Sami-Norway-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Sami_Norway_100_CI_AI_WS',
+        description: 'Sami-Norway-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Sami_Norway_100_CI_AI_KS',
+        description: 'Sami-Norway-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Sami_Norway_100_CI_AI_KS_WS',
+        description: 'Sami-Norway-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Sami_Norway_100_CI_AS',
+        description: 'Sami-Norway-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Sami_Norway_100_CI_AS_WS',
+        description: 'Sami-Norway-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Sami_Norway_100_CI_AS_KS',
+        description: 'Sami-Norway-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Sami_Norway_100_CI_AS_KS_WS',
+        description: 'Sami-Norway-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Sami_Norway_100_CS_AI',
+        description: 'Sami-Norway-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Sami_Norway_100_CS_AI_WS',
+        description: 'Sami-Norway-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Sami_Norway_100_CS_AI_KS',
+        description: 'Sami-Norway-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Sami_Norway_100_CS_AI_KS_WS',
+        description: 'Sami-Norway-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Sami_Norway_100_CS_AS',
+        description: 'Sami-Norway-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Sami_Norway_100_CS_AS_WS',
+        description: 'Sami-Norway-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Sami_Norway_100_CS_AS_KS',
+        description: 'Sami-Norway-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Sami_Norway_100_CS_AS_KS_WS',
+        description: 'Sami-Norway-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Sami_Norway_100_CI_AI_SC',
+        description:
+            'Sami-Norway-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Norway_100_CI_AI_WS_SC',
+        description:
+            'Sami-Norway-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Norway_100_CI_AI_KS_SC',
+        description:
+            'Sami-Norway-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Norway_100_CI_AI_KS_WS_SC',
+        description:
+            'Sami-Norway-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Norway_100_CI_AS_SC',
+        description:
+            'Sami-Norway-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Norway_100_CI_AS_WS_SC',
+        description:
+            'Sami-Norway-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Norway_100_CI_AS_KS_SC',
+        description:
+            'Sami-Norway-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Norway_100_CI_AS_KS_WS_SC',
+        description:
+            'Sami-Norway-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Norway_100_CS_AI_SC',
+        description:
+            'Sami-Norway-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Norway_100_CS_AI_WS_SC',
+        description:
+            'Sami-Norway-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Norway_100_CS_AI_KS_SC',
+        description:
+            'Sami-Norway-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Norway_100_CS_AI_KS_WS_SC',
+        description:
+            'Sami-Norway-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Norway_100_CS_AS_SC',
+        description:
+            'Sami-Norway-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Norway_100_CS_AS_WS_SC',
+        description:
+            'Sami-Norway-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Norway_100_CS_AS_KS_SC',
+        description:
+            'Sami-Norway-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Norway_100_CS_AS_KS_WS_SC',
+        description:
+            'Sami-Norway-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_BIN',
+        description: 'Sami-Sweden-Finland-100, binary sort'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_BIN2',
+        description: 'Sami-Sweden-Finland-100, binary code point comparison sort'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CI_AI',
+        description:
+            'Sami-Sweden-Finland-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CI_AI_WS',
+        description:
+            'Sami-Sweden-Finland-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CI_AI_KS',
+        description:
+            'Sami-Sweden-Finland-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CI_AI_KS_WS',
+        description:
+            'Sami-Sweden-Finland-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CI_AS',
+        description:
+            'Sami-Sweden-Finland-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CI_AS_WS',
+        description:
+            'Sami-Sweden-Finland-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CI_AS_KS',
+        description:
+            'Sami-Sweden-Finland-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CI_AS_KS_WS',
+        description: 'Sami-Sweden-Finland-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CS_AI',
+        description:
+            'Sami-Sweden-Finland-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CS_AI_WS',
+        description:
+            'Sami-Sweden-Finland-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CS_AI_KS',
+        description:
+            'Sami-Sweden-Finland-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CS_AI_KS_WS',
+        description: 'Sami-Sweden-Finland-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CS_AS',
+        description:
+            'Sami-Sweden-Finland-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CS_AS_WS',
+        description: 'Sami-Sweden-Finland-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CS_AS_KS',
+        description: 'Sami-Sweden-Finland-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CS_AS_KS_WS',
+        description: 'Sami-Sweden-Finland-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CI_AI_SC',
+        description:
+            'Sami-Sweden-Finland-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CI_AI_WS_SC',
+        description:
+            'Sami-Sweden-Finland-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CI_AI_KS_SC',
+        description:
+            'Sami-Sweden-Finland-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CI_AI_KS_WS_SC',
+        description:
+            'Sami-Sweden-Finland-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CI_AS_SC',
+        description:
+            'Sami-Sweden-Finland-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CI_AS_WS_SC',
+        description:
+            'Sami-Sweden-Finland-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CI_AS_KS_SC',
+        description:
+            'Sami-Sweden-Finland-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CI_AS_KS_WS_SC',
+        description:
+            'Sami-Sweden-Finland-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CS_AI_SC',
+        description:
+            'Sami-Sweden-Finland-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CS_AI_WS_SC',
+        description:
+            'Sami-Sweden-Finland-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CS_AI_KS_SC',
+        description:
+            'Sami-Sweden-Finland-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CS_AI_KS_WS_SC',
+        description:
+            'Sami-Sweden-Finland-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CS_AS_SC',
+        description:
+            'Sami-Sweden-Finland-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CS_AS_WS_SC',
+        description:
+            'Sami-Sweden-Finland-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CS_AS_KS_SC',
+        description:
+            'Sami-Sweden-Finland-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Sami_Sweden_Finland_100_CS_AS_KS_WS_SC',
+        description:
+            'Sami-Sweden-Finland-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_BIN',
+        description: 'Serbian-Cyrillic-100, binary sort'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_BIN2',
+        description: 'Serbian-Cyrillic-100, binary code point comparison sort'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CI_AI',
+        description:
+            'Serbian-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CI_AI_WS',
+        description: 'Serbian-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CI_AI_KS',
+        description: 'Serbian-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CI_AI_KS_WS',
+        description: 'Serbian-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CI_AS',
+        description: 'Serbian-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CI_AS_WS',
+        description: 'Serbian-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CI_AS_KS',
+        description: 'Serbian-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CI_AS_KS_WS',
+        description: 'Serbian-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CS_AI',
+        description: 'Serbian-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CS_AI_WS',
+        description: 'Serbian-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CS_AI_KS',
+        description: 'Serbian-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CS_AI_KS_WS',
+        description: 'Serbian-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CS_AS',
+        description: 'Serbian-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CS_AS_WS',
+        description: 'Serbian-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CS_AS_KS',
+        description: 'Serbian-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CS_AS_KS_WS',
+        description: 'Serbian-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CI_AI_SC',
+        description:
+            'Serbian-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CI_AI_WS_SC',
+        description:
+            'Serbian-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CI_AI_KS_SC',
+        description:
+            'Serbian-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CI_AI_KS_WS_SC',
+        description:
+            'Serbian-Cyrillic-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CI_AS_SC',
+        description:
+            'Serbian-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CI_AS_WS_SC',
+        description:
+            'Serbian-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CI_AS_KS_SC',
+        description:
+            'Serbian-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CI_AS_KS_WS_SC',
+        description:
+            'Serbian-Cyrillic-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CS_AI_SC',
+        description:
+            'Serbian-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CS_AI_WS_SC',
+        description:
+            'Serbian-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CS_AI_KS_SC',
+        description:
+            'Serbian-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CS_AI_KS_WS_SC',
+        description:
+            'Serbian-Cyrillic-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CS_AS_SC',
+        description:
+            'Serbian-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CS_AS_WS_SC',
+        description:
+            'Serbian-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CS_AS_KS_SC',
+        description:
+            'Serbian-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Cyrillic_100_CS_AS_KS_WS_SC',
+        description:
+            'Serbian-Cyrillic-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Latin_100_BIN',
+        description: 'Serbian-Latin-100, binary sort'
+    },
+    {
+        name: 'Serbian_Latin_100_BIN2',
+        description: 'Serbian-Latin-100, binary code point comparison sort'
+    },
+    {
+        name: 'Serbian_Latin_100_CI_AI',
+        description: 'Serbian-Latin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Serbian_Latin_100_CI_AI_WS',
+        description: 'Serbian-Latin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Serbian_Latin_100_CI_AI_KS',
+        description: 'Serbian-Latin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Serbian_Latin_100_CI_AI_KS_WS',
+        description: 'Serbian-Latin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Serbian_Latin_100_CI_AS',
+        description: 'Serbian-Latin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Serbian_Latin_100_CI_AS_WS',
+        description: 'Serbian-Latin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Serbian_Latin_100_CI_AS_KS',
+        description: 'Serbian-Latin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Serbian_Latin_100_CI_AS_KS_WS',
+        description: 'Serbian-Latin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Serbian_Latin_100_CS_AI',
+        description: 'Serbian-Latin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Serbian_Latin_100_CS_AI_WS',
+        description: 'Serbian-Latin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Serbian_Latin_100_CS_AI_KS',
+        description: 'Serbian-Latin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Serbian_Latin_100_CS_AI_KS_WS',
+        description: 'Serbian-Latin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Serbian_Latin_100_CS_AS',
+        description: 'Serbian-Latin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Serbian_Latin_100_CS_AS_WS',
+        description: 'Serbian-Latin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Serbian_Latin_100_CS_AS_KS',
+        description: 'Serbian-Latin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Serbian_Latin_100_CS_AS_KS_WS',
+        description: 'Serbian-Latin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Serbian_Latin_100_CI_AI_SC',
+        description:
+            'Serbian-Latin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Latin_100_CI_AI_WS_SC',
+        description:
+            'Serbian-Latin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Latin_100_CI_AI_KS_SC',
+        description:
+            'Serbian-Latin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Latin_100_CI_AI_KS_WS_SC',
+        description:
+            'Serbian-Latin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Latin_100_CI_AS_SC',
+        description:
+            'Serbian-Latin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Latin_100_CI_AS_WS_SC',
+        description:
+            'Serbian-Latin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Latin_100_CI_AS_KS_SC',
+        description:
+            'Serbian-Latin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Latin_100_CI_AS_KS_WS_SC',
+        description:
+            'Serbian-Latin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Latin_100_CS_AI_SC',
+        description:
+            'Serbian-Latin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Latin_100_CS_AI_WS_SC',
+        description:
+            'Serbian-Latin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Latin_100_CS_AI_KS_SC',
+        description:
+            'Serbian-Latin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Latin_100_CS_AI_KS_WS_SC',
+        description:
+            'Serbian-Latin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Latin_100_CS_AS_SC',
+        description:
+            'Serbian-Latin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Latin_100_CS_AS_WS_SC',
+        description:
+            'Serbian-Latin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Latin_100_CS_AS_KS_SC',
+        description:
+            'Serbian-Latin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Serbian_Latin_100_CS_AS_KS_WS_SC',
+        description:
+            'Serbian-Latin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Slovak_BIN', description: 'Slovak, binary sort' },
+    {
+        name: 'Slovak_BIN2',
+        description: 'Slovak, binary code point comparison sort'
+    },
+    {
+        name: 'Slovak_CI_AI',
+        description: 'Slovak, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Slovak_CI_AI_WS',
+        description: 'Slovak, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Slovak_CI_AI_KS',
+        description: 'Slovak, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Slovak_CI_AI_KS_WS',
+        description: 'Slovak, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Slovak_CI_AS',
+        description: 'Slovak, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Slovak_CI_AS_WS',
+        description: 'Slovak, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Slovak_CI_AS_KS',
+        description: 'Slovak, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Slovak_CI_AS_KS_WS',
+        description: 'Slovak, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Slovak_CS_AI',
+        description: 'Slovak, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Slovak_CS_AI_WS',
+        description: 'Slovak, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Slovak_CS_AI_KS',
+        description: 'Slovak, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Slovak_CS_AI_KS_WS',
+        description: 'Slovak, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Slovak_CS_AS',
+        description: 'Slovak, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Slovak_CS_AS_WS',
+        description: 'Slovak, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Slovak_CS_AS_KS',
+        description: 'Slovak, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Slovak_CS_AS_KS_WS',
+        description: 'Slovak, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Slovak_100_BIN', description: 'Slovak-100, binary sort' },
+    {
+        name: 'Slovak_100_BIN2',
+        description: 'Slovak-100, binary code point comparison sort'
+    },
+    {
+        name: 'Slovak_100_CI_AI',
+        description: 'Slovak-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Slovak_100_CI_AI_WS',
+        description: 'Slovak-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Slovak_100_CI_AI_KS',
+        description: 'Slovak-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Slovak_100_CI_AI_KS_WS',
+        description: 'Slovak-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Slovak_100_CI_AS',
+        description: 'Slovak-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Slovak_100_CI_AS_WS',
+        description: 'Slovak-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Slovak_100_CI_AS_KS',
+        description: 'Slovak-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Slovak_100_CI_AS_KS_WS',
+        description: 'Slovak-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Slovak_100_CS_AI',
+        description: 'Slovak-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Slovak_100_CS_AI_WS',
+        description: 'Slovak-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Slovak_100_CS_AI_KS',
+        description: 'Slovak-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Slovak_100_CS_AI_KS_WS',
+        description: 'Slovak-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Slovak_100_CS_AS',
+        description: 'Slovak-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Slovak_100_CS_AS_WS',
+        description: 'Slovak-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Slovak_100_CS_AS_KS',
+        description: 'Slovak-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Slovak_100_CS_AS_KS_WS',
+        description: 'Slovak-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Slovak_100_CI_AI_SC',
+        description:
+            'Slovak-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Slovak_100_CI_AI_WS_SC',
+        description:
+            'Slovak-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Slovak_100_CI_AI_KS_SC',
+        description:
+            'Slovak-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Slovak_100_CI_AI_KS_WS_SC',
+        description:
+            'Slovak-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Slovak_100_CI_AS_SC',
+        description:
+            'Slovak-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Slovak_100_CI_AS_WS_SC',
+        description:
+            'Slovak-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Slovak_100_CI_AS_KS_SC',
+        description:
+            'Slovak-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Slovak_100_CI_AS_KS_WS_SC',
+        description:
+            'Slovak-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Slovak_100_CS_AI_SC',
+        description:
+            'Slovak-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Slovak_100_CS_AI_WS_SC',
+        description:
+            'Slovak-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Slovak_100_CS_AI_KS_SC',
+        description:
+            'Slovak-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Slovak_100_CS_AI_KS_WS_SC',
+        description:
+            'Slovak-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Slovak_100_CS_AS_SC',
+        description:
+            'Slovak-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Slovak_100_CS_AS_WS_SC',
+        description:
+            'Slovak-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Slovak_100_CS_AS_KS_SC',
+        description:
+            'Slovak-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Slovak_100_CS_AS_KS_WS_SC',
+        description:
+            'Slovak-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Slovenian_BIN', description: 'Slovenian, binary sort' },
+    {
+        name: 'Slovenian_BIN2',
+        description: 'Slovenian, binary code point comparison sort'
+    },
+    {
+        name: 'Slovenian_CI_AI',
+        description: 'Slovenian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Slovenian_CI_AI_WS',
+        description: 'Slovenian, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Slovenian_CI_AI_KS',
+        description: 'Slovenian, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Slovenian_CI_AI_KS_WS',
+        description: 'Slovenian, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Slovenian_CI_AS',
+        description: 'Slovenian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Slovenian_CI_AS_WS',
+        description: 'Slovenian, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Slovenian_CI_AS_KS',
+        description: 'Slovenian, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Slovenian_CI_AS_KS_WS',
+        description: 'Slovenian, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Slovenian_CS_AI',
+        description: 'Slovenian, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Slovenian_CS_AI_WS',
+        description: 'Slovenian, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Slovenian_CS_AI_KS',
+        description: 'Slovenian, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Slovenian_CS_AI_KS_WS',
+        description: 'Slovenian, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Slovenian_CS_AS',
+        description: 'Slovenian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Slovenian_CS_AS_WS',
+        description: 'Slovenian, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Slovenian_CS_AS_KS',
+        description: 'Slovenian, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Slovenian_CS_AS_KS_WS',
+        description: 'Slovenian, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Slovenian_100_BIN', description: 'Slovenian-100, binary sort' },
+    {
+        name: 'Slovenian_100_BIN2',
+        description: 'Slovenian-100, binary code point comparison sort'
+    },
+    {
+        name: 'Slovenian_100_CI_AI',
+        description: 'Slovenian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Slovenian_100_CI_AI_WS',
+        description: 'Slovenian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Slovenian_100_CI_AI_KS',
+        description: 'Slovenian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Slovenian_100_CI_AI_KS_WS',
+        description: 'Slovenian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Slovenian_100_CI_AS',
+        description: 'Slovenian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Slovenian_100_CI_AS_WS',
+        description: 'Slovenian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Slovenian_100_CI_AS_KS',
+        description: 'Slovenian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Slovenian_100_CI_AS_KS_WS',
+        description: 'Slovenian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Slovenian_100_CS_AI',
+        description: 'Slovenian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Slovenian_100_CS_AI_WS',
+        description: 'Slovenian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Slovenian_100_CS_AI_KS',
+        description: 'Slovenian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Slovenian_100_CS_AI_KS_WS',
+        description: 'Slovenian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Slovenian_100_CS_AS',
+        description: 'Slovenian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Slovenian_100_CS_AS_WS',
+        description: 'Slovenian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Slovenian_100_CS_AS_KS',
+        description: 'Slovenian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Slovenian_100_CS_AS_KS_WS',
+        description: 'Slovenian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Slovenian_100_CI_AI_SC',
+        description:
+            'Slovenian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Slovenian_100_CI_AI_WS_SC',
+        description:
+            'Slovenian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Slovenian_100_CI_AI_KS_SC',
+        description:
+            'Slovenian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Slovenian_100_CI_AI_KS_WS_SC',
+        description:
+            'Slovenian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Slovenian_100_CI_AS_SC',
+        description:
+            'Slovenian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Slovenian_100_CI_AS_WS_SC',
+        description:
+            'Slovenian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Slovenian_100_CI_AS_KS_SC',
+        description:
+            'Slovenian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Slovenian_100_CI_AS_KS_WS_SC',
+        description:
+            'Slovenian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Slovenian_100_CS_AI_SC',
+        description:
+            'Slovenian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Slovenian_100_CS_AI_WS_SC',
+        description:
+            'Slovenian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Slovenian_100_CS_AI_KS_SC',
+        description:
+            'Slovenian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Slovenian_100_CS_AI_KS_WS_SC',
+        description:
+            'Slovenian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Slovenian_100_CS_AS_SC',
+        description:
+            'Slovenian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Slovenian_100_CS_AS_WS_SC',
+        description:
+            'Slovenian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Slovenian_100_CS_AS_KS_SC',
+        description:
+            'Slovenian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Slovenian_100_CS_AS_KS_WS_SC',
+        description:
+            'Slovenian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Syriac_90_BIN', description: 'Syriac-90, binary sort' },
+    {
+        name: 'Syriac_90_BIN2',
+        description: 'Syriac-90, binary code point comparison sort'
+    },
+    {
+        name: 'Syriac_90_CI_AI',
+        description: 'Syriac-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Syriac_90_CI_AI_WS',
+        description: 'Syriac-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Syriac_90_CI_AI_KS',
+        description: 'Syriac-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Syriac_90_CI_AI_KS_WS',
+        description: 'Syriac-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Syriac_90_CI_AS',
+        description: 'Syriac-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Syriac_90_CI_AS_WS',
+        description: 'Syriac-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Syriac_90_CI_AS_KS',
+        description: 'Syriac-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Syriac_90_CI_AS_KS_WS',
+        description: 'Syriac-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Syriac_90_CS_AI',
+        description: 'Syriac-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Syriac_90_CS_AI_WS',
+        description: 'Syriac-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Syriac_90_CS_AI_KS',
+        description: 'Syriac-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Syriac_90_CS_AI_KS_WS',
+        description: 'Syriac-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Syriac_90_CS_AS',
+        description: 'Syriac-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Syriac_90_CS_AS_WS',
+        description: 'Syriac-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Syriac_90_CS_AS_KS',
+        description: 'Syriac-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Syriac_90_CS_AS_KS_WS',
+        description: 'Syriac-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Syriac_90_CI_AI_SC',
+        description:
+            'Syriac-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_90_CI_AI_WS_SC',
+        description:
+            'Syriac-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_90_CI_AI_KS_SC',
+        description:
+            'Syriac-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_90_CI_AI_KS_WS_SC',
+        description:
+            'Syriac-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_90_CI_AS_SC',
+        description:
+            'Syriac-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_90_CI_AS_WS_SC',
+        description:
+            'Syriac-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_90_CI_AS_KS_SC',
+        description:
+            'Syriac-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_90_CI_AS_KS_WS_SC',
+        description:
+            'Syriac-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_90_CS_AI_SC',
+        description:
+            'Syriac-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_90_CS_AI_WS_SC',
+        description:
+            'Syriac-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_90_CS_AI_KS_SC',
+        description:
+            'Syriac-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_90_CS_AI_KS_WS_SC',
+        description:
+            'Syriac-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_90_CS_AS_SC',
+        description:
+            'Syriac-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_90_CS_AS_WS_SC',
+        description:
+            'Syriac-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_90_CS_AS_KS_SC',
+        description:
+            'Syriac-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_90_CS_AS_KS_WS_SC',
+        description:
+            'Syriac-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Syriac_100_BIN', description: 'Syriac-100, binary sort' },
+    {
+        name: 'Syriac_100_BIN2',
+        description: 'Syriac-100, binary code point comparison sort'
+    },
+    {
+        name: 'Syriac_100_CI_AI',
+        description: 'Syriac-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Syriac_100_CI_AI_WS',
+        description: 'Syriac-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Syriac_100_CI_AI_KS',
+        description: 'Syriac-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Syriac_100_CI_AI_KS_WS',
+        description: 'Syriac-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Syriac_100_CI_AS',
+        description: 'Syriac-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Syriac_100_CI_AS_WS',
+        description: 'Syriac-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Syriac_100_CI_AS_KS',
+        description: 'Syriac-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Syriac_100_CI_AS_KS_WS',
+        description: 'Syriac-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Syriac_100_CS_AI',
+        description: 'Syriac-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Syriac_100_CS_AI_WS',
+        description: 'Syriac-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Syriac_100_CS_AI_KS',
+        description: 'Syriac-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Syriac_100_CS_AI_KS_WS',
+        description: 'Syriac-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Syriac_100_CS_AS',
+        description: 'Syriac-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Syriac_100_CS_AS_WS',
+        description: 'Syriac-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Syriac_100_CS_AS_KS',
+        description: 'Syriac-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Syriac_100_CS_AS_KS_WS',
+        description: 'Syriac-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Syriac_100_CI_AI_SC',
+        description:
+            'Syriac-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_100_CI_AI_WS_SC',
+        description:
+            'Syriac-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_100_CI_AI_KS_SC',
+        description:
+            'Syriac-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_100_CI_AI_KS_WS_SC',
+        description:
+            'Syriac-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_100_CI_AS_SC',
+        description:
+            'Syriac-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_100_CI_AS_WS_SC',
+        description:
+            'Syriac-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_100_CI_AS_KS_SC',
+        description:
+            'Syriac-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_100_CI_AS_KS_WS_SC',
+        description:
+            'Syriac-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_100_CS_AI_SC',
+        description:
+            'Syriac-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_100_CS_AI_WS_SC',
+        description:
+            'Syriac-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_100_CS_AI_KS_SC',
+        description:
+            'Syriac-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_100_CS_AI_KS_WS_SC',
+        description:
+            'Syriac-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_100_CS_AS_SC',
+        description:
+            'Syriac-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_100_CS_AS_WS_SC',
+        description:
+            'Syriac-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_100_CS_AS_KS_SC',
+        description:
+            'Syriac-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Syriac_100_CS_AS_KS_WS_SC',
+        description:
+            'Syriac-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Tamazight_100_BIN', description: 'Tamazight-100, binary sort' },
+    {
+        name: 'Tamazight_100_BIN2',
+        description: 'Tamazight-100, binary code point comparison sort'
+    },
+    {
+        name: 'Tamazight_100_CI_AI',
+        description: 'Tamazight-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Tamazight_100_CI_AI_WS',
+        description: 'Tamazight-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Tamazight_100_CI_AI_KS',
+        description: 'Tamazight-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Tamazight_100_CI_AI_KS_WS',
+        description: 'Tamazight-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Tamazight_100_CI_AS',
+        description: 'Tamazight-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Tamazight_100_CI_AS_WS',
+        description: 'Tamazight-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Tamazight_100_CI_AS_KS',
+        description: 'Tamazight-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Tamazight_100_CI_AS_KS_WS',
+        description: 'Tamazight-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Tamazight_100_CS_AI',
+        description: 'Tamazight-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Tamazight_100_CS_AI_WS',
+        description: 'Tamazight-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Tamazight_100_CS_AI_KS',
+        description: 'Tamazight-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Tamazight_100_CS_AI_KS_WS',
+        description: 'Tamazight-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Tamazight_100_CS_AS',
+        description: 'Tamazight-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Tamazight_100_CS_AS_WS',
+        description: 'Tamazight-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Tamazight_100_CS_AS_KS',
+        description: 'Tamazight-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Tamazight_100_CS_AS_KS_WS',
+        description: 'Tamazight-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Tamazight_100_CI_AI_SC',
+        description:
+            'Tamazight-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tamazight_100_CI_AI_WS_SC',
+        description:
+            'Tamazight-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tamazight_100_CI_AI_KS_SC',
+        description:
+            'Tamazight-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tamazight_100_CI_AI_KS_WS_SC',
+        description:
+            'Tamazight-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tamazight_100_CI_AS_SC',
+        description:
+            'Tamazight-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tamazight_100_CI_AS_WS_SC',
+        description:
+            'Tamazight-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tamazight_100_CI_AS_KS_SC',
+        description:
+            'Tamazight-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tamazight_100_CI_AS_KS_WS_SC',
+        description:
+            'Tamazight-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tamazight_100_CS_AI_SC',
+        description:
+            'Tamazight-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tamazight_100_CS_AI_WS_SC',
+        description:
+            'Tamazight-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tamazight_100_CS_AI_KS_SC',
+        description:
+            'Tamazight-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tamazight_100_CS_AI_KS_WS_SC',
+        description:
+            'Tamazight-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tamazight_100_CS_AS_SC',
+        description:
+            'Tamazight-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tamazight_100_CS_AS_WS_SC',
+        description:
+            'Tamazight-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tamazight_100_CS_AS_KS_SC',
+        description:
+            'Tamazight-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tamazight_100_CS_AS_KS_WS_SC',
+        description:
+            'Tamazight-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Tatar_90_BIN', description: 'Tatar-90, binary sort' },
+    {
+        name: 'Tatar_90_BIN2',
+        description: 'Tatar-90, binary code point comparison sort'
+    },
+    {
+        name: 'Tatar_90_CI_AI',
+        description: 'Tatar-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Tatar_90_CI_AI_WS',
+        description: 'Tatar-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Tatar_90_CI_AI_KS',
+        description: 'Tatar-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Tatar_90_CI_AI_KS_WS',
+        description: 'Tatar-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Tatar_90_CI_AS',
+        description: 'Tatar-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Tatar_90_CI_AS_WS',
+        description: 'Tatar-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Tatar_90_CI_AS_KS',
+        description: 'Tatar-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Tatar_90_CI_AS_KS_WS',
+        description: 'Tatar-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Tatar_90_CS_AI',
+        description: 'Tatar-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Tatar_90_CS_AI_WS',
+        description: 'Tatar-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Tatar_90_CS_AI_KS',
+        description: 'Tatar-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Tatar_90_CS_AI_KS_WS',
+        description: 'Tatar-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Tatar_90_CS_AS',
+        description: 'Tatar-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Tatar_90_CS_AS_WS',
+        description: 'Tatar-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Tatar_90_CS_AS_KS',
+        description: 'Tatar-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Tatar_90_CS_AS_KS_WS',
+        description: 'Tatar-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Tatar_90_CI_AI_SC',
+        description:
+            'Tatar-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_90_CI_AI_WS_SC',
+        description:
+            'Tatar-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_90_CI_AI_KS_SC',
+        description:
+            'Tatar-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_90_CI_AI_KS_WS_SC',
+        description:
+            'Tatar-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_90_CI_AS_SC',
+        description:
+            'Tatar-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_90_CI_AS_WS_SC',
+        description:
+            'Tatar-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_90_CI_AS_KS_SC',
+        description:
+            'Tatar-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_90_CI_AS_KS_WS_SC',
+        description:
+            'Tatar-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_90_CS_AI_SC',
+        description:
+            'Tatar-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_90_CS_AI_WS_SC',
+        description:
+            'Tatar-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_90_CS_AI_KS_SC',
+        description:
+            'Tatar-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_90_CS_AI_KS_WS_SC',
+        description:
+            'Tatar-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_90_CS_AS_SC',
+        description:
+            'Tatar-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_90_CS_AS_WS_SC',
+        description:
+            'Tatar-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_90_CS_AS_KS_SC',
+        description:
+            'Tatar-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_90_CS_AS_KS_WS_SC',
+        description:
+            'Tatar-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Tatar_100_BIN', description: 'Tatar-100, binary sort' },
+    {
+        name: 'Tatar_100_BIN2',
+        description: 'Tatar-100, binary code point comparison sort'
+    },
+    {
+        name: 'Tatar_100_CI_AI',
+        description: 'Tatar-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Tatar_100_CI_AI_WS',
+        description: 'Tatar-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Tatar_100_CI_AI_KS',
+        description: 'Tatar-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Tatar_100_CI_AI_KS_WS',
+        description: 'Tatar-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Tatar_100_CI_AS',
+        description: 'Tatar-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Tatar_100_CI_AS_WS',
+        description: 'Tatar-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Tatar_100_CI_AS_KS',
+        description: 'Tatar-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Tatar_100_CI_AS_KS_WS',
+        description: 'Tatar-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Tatar_100_CS_AI',
+        description: 'Tatar-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Tatar_100_CS_AI_WS',
+        description: 'Tatar-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Tatar_100_CS_AI_KS',
+        description: 'Tatar-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Tatar_100_CS_AI_KS_WS',
+        description: 'Tatar-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Tatar_100_CS_AS',
+        description: 'Tatar-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Tatar_100_CS_AS_WS',
+        description: 'Tatar-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Tatar_100_CS_AS_KS',
+        description: 'Tatar-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Tatar_100_CS_AS_KS_WS',
+        description: 'Tatar-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Tatar_100_CI_AI_SC',
+        description:
+            'Tatar-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_100_CI_AI_WS_SC',
+        description:
+            'Tatar-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_100_CI_AI_KS_SC',
+        description:
+            'Tatar-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_100_CI_AI_KS_WS_SC',
+        description:
+            'Tatar-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_100_CI_AS_SC',
+        description:
+            'Tatar-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_100_CI_AS_WS_SC',
+        description:
+            'Tatar-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_100_CI_AS_KS_SC',
+        description:
+            'Tatar-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_100_CI_AS_KS_WS_SC',
+        description:
+            'Tatar-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_100_CS_AI_SC',
+        description:
+            'Tatar-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_100_CS_AI_WS_SC',
+        description:
+            'Tatar-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_100_CS_AI_KS_SC',
+        description:
+            'Tatar-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_100_CS_AI_KS_WS_SC',
+        description:
+            'Tatar-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_100_CS_AS_SC',
+        description:
+            'Tatar-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_100_CS_AS_WS_SC',
+        description:
+            'Tatar-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_100_CS_AS_KS_SC',
+        description:
+            'Tatar-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tatar_100_CS_AS_KS_WS_SC',
+        description:
+            'Tatar-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Thai_BIN', description: 'Thai, binary sort' },
+    { name: 'Thai_BIN2', description: 'Thai, binary code point comparison sort' },
+    {
+        name: 'Thai_CI_AI',
+        description: 'Thai, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Thai_CI_AI_WS',
+        description: 'Thai, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Thai_CI_AI_KS',
+        description: 'Thai, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Thai_CI_AI_KS_WS',
+        description: 'Thai, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Thai_CI_AS',
+        description: 'Thai, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Thai_CI_AS_WS',
+        description: 'Thai, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Thai_CI_AS_KS',
+        description: 'Thai, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Thai_CI_AS_KS_WS',
+        description: 'Thai, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Thai_CS_AI',
+        description: 'Thai, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Thai_CS_AI_WS',
+        description: 'Thai, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Thai_CS_AI_KS',
+        description: 'Thai, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Thai_CS_AI_KS_WS',
+        description: 'Thai, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Thai_CS_AS',
+        description: 'Thai, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Thai_CS_AS_WS',
+        description: 'Thai, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Thai_CS_AS_KS',
+        description: 'Thai, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Thai_CS_AS_KS_WS',
+        description: 'Thai, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Thai_100_BIN', description: 'Thai-100, binary sort' },
+    {
+        name: 'Thai_100_BIN2',
+        description: 'Thai-100, binary code point comparison sort'
+    },
+    {
+        name: 'Thai_100_CI_AI',
+        description: 'Thai-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Thai_100_CI_AI_WS',
+        description: 'Thai-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Thai_100_CI_AI_KS',
+        description: 'Thai-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Thai_100_CI_AI_KS_WS',
+        description: 'Thai-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Thai_100_CI_AS',
+        description: 'Thai-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Thai_100_CI_AS_WS',
+        description: 'Thai-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Thai_100_CI_AS_KS',
+        description: 'Thai-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Thai_100_CI_AS_KS_WS',
+        description: 'Thai-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Thai_100_CS_AI',
+        description: 'Thai-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Thai_100_CS_AI_WS',
+        description: 'Thai-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Thai_100_CS_AI_KS',
+        description: 'Thai-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Thai_100_CS_AI_KS_WS',
+        description: 'Thai-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Thai_100_CS_AS',
+        description: 'Thai-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Thai_100_CS_AS_WS',
+        description: 'Thai-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Thai_100_CS_AS_KS',
+        description: 'Thai-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Thai_100_CS_AS_KS_WS',
+        description: 'Thai-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Thai_100_CI_AI_SC',
+        description:
+            'Thai-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Thai_100_CI_AI_WS_SC',
+        description:
+            'Thai-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Thai_100_CI_AI_KS_SC',
+        description:
+            'Thai-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Thai_100_CI_AI_KS_WS_SC',
+        description:
+            'Thai-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Thai_100_CI_AS_SC',
+        description:
+            'Thai-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Thai_100_CI_AS_WS_SC',
+        description:
+            'Thai-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Thai_100_CI_AS_KS_SC',
+        description:
+            'Thai-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Thai_100_CI_AS_KS_WS_SC',
+        description:
+            'Thai-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Thai_100_CS_AI_SC',
+        description:
+            'Thai-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Thai_100_CS_AI_WS_SC',
+        description:
+            'Thai-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Thai_100_CS_AI_KS_SC',
+        description:
+            'Thai-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Thai_100_CS_AI_KS_WS_SC',
+        description:
+            'Thai-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Thai_100_CS_AS_SC',
+        description:
+            'Thai-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Thai_100_CS_AS_WS_SC',
+        description:
+            'Thai-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Thai_100_CS_AS_KS_SC',
+        description:
+            'Thai-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Thai_100_CS_AS_KS_WS_SC',
+        description:
+            'Thai-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Tibetan_100_BIN', description: 'Tibetan-100, binary sort' },
+    {
+        name: 'Tibetan_100_BIN2',
+        description: 'Tibetan-100, binary code point comparison sort'
+    },
+    {
+        name: 'Tibetan_100_CI_AI',
+        description: 'Tibetan-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Tibetan_100_CI_AI_WS',
+        description: 'Tibetan-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Tibetan_100_CI_AI_KS',
+        description: 'Tibetan-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Tibetan_100_CI_AI_KS_WS',
+        description: 'Tibetan-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Tibetan_100_CI_AS',
+        description: 'Tibetan-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Tibetan_100_CI_AS_WS',
+        description: 'Tibetan-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Tibetan_100_CI_AS_KS',
+        description: 'Tibetan-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Tibetan_100_CI_AS_KS_WS',
+        description: 'Tibetan-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Tibetan_100_CS_AI',
+        description: 'Tibetan-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Tibetan_100_CS_AI_WS',
+        description: 'Tibetan-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Tibetan_100_CS_AI_KS',
+        description: 'Tibetan-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Tibetan_100_CS_AI_KS_WS',
+        description: 'Tibetan-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Tibetan_100_CS_AS',
+        description: 'Tibetan-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Tibetan_100_CS_AS_WS',
+        description: 'Tibetan-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Tibetan_100_CS_AS_KS',
+        description: 'Tibetan-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Tibetan_100_CS_AS_KS_WS',
+        description: 'Tibetan-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Tibetan_100_CI_AI_SC',
+        description:
+            'Tibetan-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tibetan_100_CI_AI_WS_SC',
+        description:
+            'Tibetan-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tibetan_100_CI_AI_KS_SC',
+        description:
+            'Tibetan-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tibetan_100_CI_AI_KS_WS_SC',
+        description:
+            'Tibetan-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tibetan_100_CI_AS_SC',
+        description:
+            'Tibetan-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tibetan_100_CI_AS_WS_SC',
+        description:
+            'Tibetan-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tibetan_100_CI_AS_KS_SC',
+        description:
+            'Tibetan-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tibetan_100_CI_AS_KS_WS_SC',
+        description:
+            'Tibetan-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tibetan_100_CS_AI_SC',
+        description:
+            'Tibetan-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tibetan_100_CS_AI_WS_SC',
+        description:
+            'Tibetan-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tibetan_100_CS_AI_KS_SC',
+        description:
+            'Tibetan-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tibetan_100_CS_AI_KS_WS_SC',
+        description:
+            'Tibetan-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tibetan_100_CS_AS_SC',
+        description:
+            'Tibetan-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tibetan_100_CS_AS_WS_SC',
+        description:
+            'Tibetan-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Tibetan_100_CS_AS_KS_SC',
+        description:
+            'Tibetan-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Tibetan_100_CS_AS_KS_WS_SC',
+        description:
+            'Tibetan-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Traditional_Spanish_BIN',
+        description: 'Traditional-Spanish, binary sort'
+    },
+    {
+        name: 'Traditional_Spanish_BIN2',
+        description: 'Traditional-Spanish, binary code point comparison sort'
+    },
+    {
+        name: 'Traditional_Spanish_CI_AI',
+        description:
+            'Traditional-Spanish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Traditional_Spanish_CI_AI_WS',
+        description: 'Traditional-Spanish, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Traditional_Spanish_CI_AI_KS',
+        description: 'Traditional-Spanish, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Traditional_Spanish_CI_AI_KS_WS',
+        description: 'Traditional-Spanish, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Traditional_Spanish_CI_AS',
+        description: 'Traditional-Spanish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Traditional_Spanish_CI_AS_WS',
+        description: 'Traditional-Spanish, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Traditional_Spanish_CI_AS_KS',
+        description: 'Traditional-Spanish, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Traditional_Spanish_CI_AS_KS_WS',
+        description: 'Traditional-Spanish, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Traditional_Spanish_CS_AI',
+        description: 'Traditional-Spanish, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Traditional_Spanish_CS_AI_WS',
+        description: 'Traditional-Spanish, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Traditional_Spanish_CS_AI_KS',
+        description: 'Traditional-Spanish, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Traditional_Spanish_CS_AI_KS_WS',
+        description: 'Traditional-Spanish, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Traditional_Spanish_CS_AS',
+        description: 'Traditional-Spanish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Traditional_Spanish_CS_AS_WS',
+        description: 'Traditional-Spanish, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Traditional_Spanish_CS_AS_KS',
+        description: 'Traditional-Spanish, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Traditional_Spanish_CS_AS_KS_WS',
+        description: 'Traditional-Spanish, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_BIN',
+        description: 'Traditional-Spanish-100, binary sort'
+    },
+    {
+        name: 'Traditional_Spanish_100_BIN2',
+        description: 'Traditional-Spanish-100, binary code point comparison sort'
+    },
+    {
+        name: 'Traditional_Spanish_100_CI_AI',
+        description:
+            'Traditional-Spanish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_CI_AI_WS',
+        description:
+            'Traditional-Spanish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_CI_AI_KS',
+        description:
+            'Traditional-Spanish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_CI_AI_KS_WS',
+        description:
+            'Traditional-Spanish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_CI_AS',
+        description:
+            'Traditional-Spanish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_CI_AS_WS',
+        description:
+            'Traditional-Spanish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_CI_AS_KS',
+        description:
+            'Traditional-Spanish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_CI_AS_KS_WS',
+        description: 'Traditional-Spanish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_CS_AI',
+        description:
+            'Traditional-Spanish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_CS_AI_WS',
+        description:
+            'Traditional-Spanish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_CS_AI_KS',
+        description:
+            'Traditional-Spanish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_CS_AI_KS_WS',
+        description: 'Traditional-Spanish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_CS_AS',
+        description:
+            'Traditional-Spanish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_CS_AS_WS',
+        description: 'Traditional-Spanish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_CS_AS_KS',
+        description: 'Traditional-Spanish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_CS_AS_KS_WS',
+        description: 'Traditional-Spanish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Traditional_Spanish_100_CI_AI_SC',
+        description:
+            'Traditional-Spanish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Traditional_Spanish_100_CI_AI_WS_SC',
+        description:
+            'Traditional-Spanish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Traditional_Spanish_100_CI_AI_KS_SC',
+        description:
+            'Traditional-Spanish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Traditional_Spanish_100_CI_AI_KS_WS_SC',
+        description:
+            'Traditional-Spanish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Traditional_Spanish_100_CI_AS_SC',
+        description:
+            'Traditional-Spanish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Traditional_Spanish_100_CI_AS_WS_SC',
+        description:
+            'Traditional-Spanish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Traditional_Spanish_100_CI_AS_KS_SC',
+        description:
+            'Traditional-Spanish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Traditional_Spanish_100_CI_AS_KS_WS_SC',
+        description:
+            'Traditional-Spanish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Traditional_Spanish_100_CS_AI_SC',
+        description:
+            'Traditional-Spanish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Traditional_Spanish_100_CS_AI_WS_SC',
+        description:
+            'Traditional-Spanish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Traditional_Spanish_100_CS_AI_KS_SC',
+        description:
+            'Traditional-Spanish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Traditional_Spanish_100_CS_AI_KS_WS_SC',
+        description:
+            'Traditional-Spanish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Traditional_Spanish_100_CS_AS_SC',
+        description:
+            'Traditional-Spanish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Traditional_Spanish_100_CS_AS_WS_SC',
+        description:
+            'Traditional-Spanish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Traditional_Spanish_100_CS_AS_KS_SC',
+        description:
+            'Traditional-Spanish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Traditional_Spanish_100_CS_AS_KS_WS_SC',
+        description:
+            'Traditional-Spanish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Turkish_BIN', description: 'Turkish, binary sort' },
+    {
+        name: 'Turkish_BIN2',
+        description: 'Turkish, binary code point comparison sort'
+    },
+    {
+        name: 'Turkish_CI_AI',
+        description: 'Turkish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Turkish_CI_AI_WS',
+        description: 'Turkish, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Turkish_CI_AI_KS',
+        description: 'Turkish, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Turkish_CI_AI_KS_WS',
+        description: 'Turkish, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Turkish_CI_AS',
+        description: 'Turkish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Turkish_CI_AS_WS',
+        description: 'Turkish, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Turkish_CI_AS_KS',
+        description: 'Turkish, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Turkish_CI_AS_KS_WS',
+        description: 'Turkish, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Turkish_CS_AI',
+        description: 'Turkish, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Turkish_CS_AI_WS',
+        description: 'Turkish, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Turkish_CS_AI_KS',
+        description: 'Turkish, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Turkish_CS_AI_KS_WS',
+        description: 'Turkish, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Turkish_CS_AS',
+        description: 'Turkish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Turkish_CS_AS_WS',
+        description: 'Turkish, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Turkish_CS_AS_KS',
+        description: 'Turkish, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Turkish_CS_AS_KS_WS',
+        description: 'Turkish, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Turkish_100_BIN', description: 'Turkish-100, binary sort' },
+    {
+        name: 'Turkish_100_BIN2',
+        description: 'Turkish-100, binary code point comparison sort'
+    },
+    {
+        name: 'Turkish_100_CI_AI',
+        description: 'Turkish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Turkish_100_CI_AI_WS',
+        description: 'Turkish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Turkish_100_CI_AI_KS',
+        description: 'Turkish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Turkish_100_CI_AI_KS_WS',
+        description: 'Turkish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Turkish_100_CI_AS',
+        description: 'Turkish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Turkish_100_CI_AS_WS',
+        description: 'Turkish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Turkish_100_CI_AS_KS',
+        description: 'Turkish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Turkish_100_CI_AS_KS_WS',
+        description: 'Turkish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Turkish_100_CS_AI',
+        description: 'Turkish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Turkish_100_CS_AI_WS',
+        description: 'Turkish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Turkish_100_CS_AI_KS',
+        description: 'Turkish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Turkish_100_CS_AI_KS_WS',
+        description: 'Turkish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Turkish_100_CS_AS',
+        description: 'Turkish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Turkish_100_CS_AS_WS',
+        description: 'Turkish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Turkish_100_CS_AS_KS',
+        description: 'Turkish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Turkish_100_CS_AS_KS_WS',
+        description: 'Turkish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Turkish_100_CI_AI_SC',
+        description:
+            'Turkish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Turkish_100_CI_AI_WS_SC',
+        description:
+            'Turkish-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Turkish_100_CI_AI_KS_SC',
+        description:
+            'Turkish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Turkish_100_CI_AI_KS_WS_SC',
+        description:
+            'Turkish-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Turkish_100_CI_AS_SC',
+        description:
+            'Turkish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Turkish_100_CI_AS_WS_SC',
+        description:
+            'Turkish-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Turkish_100_CI_AS_KS_SC',
+        description:
+            'Turkish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Turkish_100_CI_AS_KS_WS_SC',
+        description:
+            'Turkish-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Turkish_100_CS_AI_SC',
+        description:
+            'Turkish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Turkish_100_CS_AI_WS_SC',
+        description:
+            'Turkish-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Turkish_100_CS_AI_KS_SC',
+        description:
+            'Turkish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Turkish_100_CS_AI_KS_WS_SC',
+        description:
+            'Turkish-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Turkish_100_CS_AS_SC',
+        description:
+            'Turkish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Turkish_100_CS_AS_WS_SC',
+        description:
+            'Turkish-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Turkish_100_CS_AS_KS_SC',
+        description:
+            'Turkish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Turkish_100_CS_AS_KS_WS_SC',
+        description:
+            'Turkish-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Turkmen_100_BIN', description: 'Turkmen-100, binary sort' },
+    {
+        name: 'Turkmen_100_BIN2',
+        description: 'Turkmen-100, binary code point comparison sort'
+    },
+    {
+        name: 'Turkmen_100_CI_AI',
+        description: 'Turkmen-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Turkmen_100_CI_AI_WS',
+        description: 'Turkmen-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Turkmen_100_CI_AI_KS',
+        description: 'Turkmen-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Turkmen_100_CI_AI_KS_WS',
+        description: 'Turkmen-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Turkmen_100_CI_AS',
+        description: 'Turkmen-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Turkmen_100_CI_AS_WS',
+        description: 'Turkmen-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Turkmen_100_CI_AS_KS',
+        description: 'Turkmen-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Turkmen_100_CI_AS_KS_WS',
+        description: 'Turkmen-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Turkmen_100_CS_AI',
+        description: 'Turkmen-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Turkmen_100_CS_AI_WS',
+        description: 'Turkmen-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Turkmen_100_CS_AI_KS',
+        description: 'Turkmen-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Turkmen_100_CS_AI_KS_WS',
+        description: 'Turkmen-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Turkmen_100_CS_AS',
+        description: 'Turkmen-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Turkmen_100_CS_AS_WS',
+        description: 'Turkmen-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Turkmen_100_CS_AS_KS',
+        description: 'Turkmen-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Turkmen_100_CS_AS_KS_WS',
+        description: 'Turkmen-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Turkmen_100_CI_AI_SC',
+        description:
+            'Turkmen-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Turkmen_100_CI_AI_WS_SC',
+        description:
+            'Turkmen-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Turkmen_100_CI_AI_KS_SC',
+        description:
+            'Turkmen-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Turkmen_100_CI_AI_KS_WS_SC',
+        description:
+            'Turkmen-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Turkmen_100_CI_AS_SC',
+        description:
+            'Turkmen-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Turkmen_100_CI_AS_WS_SC',
+        description:
+            'Turkmen-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Turkmen_100_CI_AS_KS_SC',
+        description:
+            'Turkmen-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Turkmen_100_CI_AS_KS_WS_SC',
+        description:
+            'Turkmen-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Turkmen_100_CS_AI_SC',
+        description:
+            'Turkmen-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Turkmen_100_CS_AI_WS_SC',
+        description:
+            'Turkmen-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Turkmen_100_CS_AI_KS_SC',
+        description:
+            'Turkmen-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Turkmen_100_CS_AI_KS_WS_SC',
+        description:
+            'Turkmen-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Turkmen_100_CS_AS_SC',
+        description:
+            'Turkmen-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Turkmen_100_CS_AS_WS_SC',
+        description:
+            'Turkmen-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Turkmen_100_CS_AS_KS_SC',
+        description:
+            'Turkmen-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Turkmen_100_CS_AS_KS_WS_SC',
+        description:
+            'Turkmen-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Uighur_100_BIN', description: 'Uighur-100, binary sort' },
+    {
+        name: 'Uighur_100_BIN2',
+        description: 'Uighur-100, binary code point comparison sort'
+    },
+    {
+        name: 'Uighur_100_CI_AI',
+        description: 'Uighur-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Uighur_100_CI_AI_WS',
+        description: 'Uighur-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Uighur_100_CI_AI_KS',
+        description: 'Uighur-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Uighur_100_CI_AI_KS_WS',
+        description: 'Uighur-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Uighur_100_CI_AS',
+        description: 'Uighur-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Uighur_100_CI_AS_WS',
+        description: 'Uighur-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Uighur_100_CI_AS_KS',
+        description: 'Uighur-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Uighur_100_CI_AS_KS_WS',
+        description: 'Uighur-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Uighur_100_CS_AI',
+        description: 'Uighur-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Uighur_100_CS_AI_WS',
+        description: 'Uighur-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Uighur_100_CS_AI_KS',
+        description: 'Uighur-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Uighur_100_CS_AI_KS_WS',
+        description: 'Uighur-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Uighur_100_CS_AS',
+        description: 'Uighur-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Uighur_100_CS_AS_WS',
+        description: 'Uighur-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Uighur_100_CS_AS_KS',
+        description: 'Uighur-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Uighur_100_CS_AS_KS_WS',
+        description: 'Uighur-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Uighur_100_CI_AI_SC',
+        description:
+            'Uighur-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uighur_100_CI_AI_WS_SC',
+        description:
+            'Uighur-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uighur_100_CI_AI_KS_SC',
+        description:
+            'Uighur-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uighur_100_CI_AI_KS_WS_SC',
+        description:
+            'Uighur-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uighur_100_CI_AS_SC',
+        description:
+            'Uighur-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uighur_100_CI_AS_WS_SC',
+        description:
+            'Uighur-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uighur_100_CI_AS_KS_SC',
+        description:
+            'Uighur-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uighur_100_CI_AS_KS_WS_SC',
+        description:
+            'Uighur-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uighur_100_CS_AI_SC',
+        description:
+            'Uighur-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uighur_100_CS_AI_WS_SC',
+        description:
+            'Uighur-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uighur_100_CS_AI_KS_SC',
+        description:
+            'Uighur-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uighur_100_CS_AI_KS_WS_SC',
+        description:
+            'Uighur-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uighur_100_CS_AS_SC',
+        description:
+            'Uighur-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uighur_100_CS_AS_WS_SC',
+        description:
+            'Uighur-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uighur_100_CS_AS_KS_SC',
+        description:
+            'Uighur-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uighur_100_CS_AS_KS_WS_SC',
+        description:
+            'Uighur-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Ukrainian_BIN', description: 'Ukrainian, binary sort' },
+    {
+        name: 'Ukrainian_BIN2',
+        description: 'Ukrainian, binary code point comparison sort'
+    },
+    {
+        name: 'Ukrainian_CI_AI',
+        description: 'Ukrainian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Ukrainian_CI_AI_WS',
+        description: 'Ukrainian, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Ukrainian_CI_AI_KS',
+        description: 'Ukrainian, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Ukrainian_CI_AI_KS_WS',
+        description: 'Ukrainian, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Ukrainian_CI_AS',
+        description: 'Ukrainian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Ukrainian_CI_AS_WS',
+        description: 'Ukrainian, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Ukrainian_CI_AS_KS',
+        description: 'Ukrainian, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Ukrainian_CI_AS_KS_WS',
+        description: 'Ukrainian, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Ukrainian_CS_AI',
+        description: 'Ukrainian, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Ukrainian_CS_AI_WS',
+        description: 'Ukrainian, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Ukrainian_CS_AI_KS',
+        description: 'Ukrainian, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Ukrainian_CS_AI_KS_WS',
+        description: 'Ukrainian, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Ukrainian_CS_AS',
+        description: 'Ukrainian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Ukrainian_CS_AS_WS',
+        description: 'Ukrainian, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Ukrainian_CS_AS_KS',
+        description: 'Ukrainian, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Ukrainian_CS_AS_KS_WS',
+        description: 'Ukrainian, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Ukrainian_100_BIN', description: 'Ukrainian-100, binary sort' },
+    {
+        name: 'Ukrainian_100_BIN2',
+        description: 'Ukrainian-100, binary code point comparison sort'
+    },
+    {
+        name: 'Ukrainian_100_CI_AI',
+        description: 'Ukrainian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Ukrainian_100_CI_AI_WS',
+        description: 'Ukrainian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Ukrainian_100_CI_AI_KS',
+        description: 'Ukrainian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Ukrainian_100_CI_AI_KS_WS',
+        description: 'Ukrainian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Ukrainian_100_CI_AS',
+        description: 'Ukrainian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Ukrainian_100_CI_AS_WS',
+        description: 'Ukrainian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Ukrainian_100_CI_AS_KS',
+        description: 'Ukrainian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Ukrainian_100_CI_AS_KS_WS',
+        description: 'Ukrainian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Ukrainian_100_CS_AI',
+        description: 'Ukrainian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Ukrainian_100_CS_AI_WS',
+        description: 'Ukrainian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Ukrainian_100_CS_AI_KS',
+        description: 'Ukrainian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Ukrainian_100_CS_AI_KS_WS',
+        description: 'Ukrainian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Ukrainian_100_CS_AS',
+        description: 'Ukrainian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Ukrainian_100_CS_AS_WS',
+        description: 'Ukrainian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Ukrainian_100_CS_AS_KS',
+        description: 'Ukrainian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Ukrainian_100_CS_AS_KS_WS',
+        description: 'Ukrainian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Ukrainian_100_CI_AI_SC',
+        description:
+            'Ukrainian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Ukrainian_100_CI_AI_WS_SC',
+        description:
+            'Ukrainian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Ukrainian_100_CI_AI_KS_SC',
+        description:
+            'Ukrainian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Ukrainian_100_CI_AI_KS_WS_SC',
+        description:
+            'Ukrainian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Ukrainian_100_CI_AS_SC',
+        description:
+            'Ukrainian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Ukrainian_100_CI_AS_WS_SC',
+        description:
+            'Ukrainian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Ukrainian_100_CI_AS_KS_SC',
+        description:
+            'Ukrainian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Ukrainian_100_CI_AS_KS_WS_SC',
+        description:
+            'Ukrainian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Ukrainian_100_CS_AI_SC',
+        description:
+            'Ukrainian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Ukrainian_100_CS_AI_WS_SC',
+        description:
+            'Ukrainian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Ukrainian_100_CS_AI_KS_SC',
+        description:
+            'Ukrainian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Ukrainian_100_CS_AI_KS_WS_SC',
+        description:
+            'Ukrainian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Ukrainian_100_CS_AS_SC',
+        description:
+            'Ukrainian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Ukrainian_100_CS_AS_WS_SC',
+        description:
+            'Ukrainian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Ukrainian_100_CS_AS_KS_SC',
+        description:
+            'Ukrainian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Ukrainian_100_CS_AS_KS_WS_SC',
+        description:
+            'Ukrainian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Upper_Sorbian_100_BIN',
+        description: 'Upper-Sorbian-100, binary sort'
+    },
+    {
+        name: 'Upper_Sorbian_100_BIN2',
+        description: 'Upper-Sorbian-100, binary code point comparison sort'
+    },
+    {
+        name: 'Upper_Sorbian_100_CI_AI',
+        description: 'Upper-Sorbian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Upper_Sorbian_100_CI_AI_WS',
+        description: 'Upper-Sorbian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Upper_Sorbian_100_CI_AI_KS',
+        description: 'Upper-Sorbian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Upper_Sorbian_100_CI_AI_KS_WS',
+        description: 'Upper-Sorbian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Upper_Sorbian_100_CI_AS',
+        description: 'Upper-Sorbian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Upper_Sorbian_100_CI_AS_WS',
+        description: 'Upper-Sorbian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Upper_Sorbian_100_CI_AS_KS',
+        description: 'Upper-Sorbian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Upper_Sorbian_100_CI_AS_KS_WS',
+        description: 'Upper-Sorbian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Upper_Sorbian_100_CS_AI',
+        description: 'Upper-Sorbian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Upper_Sorbian_100_CS_AI_WS',
+        description: 'Upper-Sorbian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Upper_Sorbian_100_CS_AI_KS',
+        description: 'Upper-Sorbian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Upper_Sorbian_100_CS_AI_KS_WS',
+        description: 'Upper-Sorbian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Upper_Sorbian_100_CS_AS',
+        description: 'Upper-Sorbian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Upper_Sorbian_100_CS_AS_WS',
+        description: 'Upper-Sorbian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Upper_Sorbian_100_CS_AS_KS',
+        description: 'Upper-Sorbian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Upper_Sorbian_100_CS_AS_KS_WS',
+        description: 'Upper-Sorbian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Upper_Sorbian_100_CI_AI_SC',
+        description:
+            'Upper-Sorbian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Upper_Sorbian_100_CI_AI_WS_SC',
+        description:
+            'Upper-Sorbian-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Upper_Sorbian_100_CI_AI_KS_SC',
+        description:
+            'Upper-Sorbian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Upper_Sorbian_100_CI_AI_KS_WS_SC',
+        description:
+            'Upper-Sorbian-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Upper_Sorbian_100_CI_AS_SC',
+        description:
+            'Upper-Sorbian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Upper_Sorbian_100_CI_AS_WS_SC',
+        description:
+            'Upper-Sorbian-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Upper_Sorbian_100_CI_AS_KS_SC',
+        description:
+            'Upper-Sorbian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Upper_Sorbian_100_CI_AS_KS_WS_SC',
+        description:
+            'Upper-Sorbian-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Upper_Sorbian_100_CS_AI_SC',
+        description:
+            'Upper-Sorbian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Upper_Sorbian_100_CS_AI_WS_SC',
+        description:
+            'Upper-Sorbian-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Upper_Sorbian_100_CS_AI_KS_SC',
+        description:
+            'Upper-Sorbian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Upper_Sorbian_100_CS_AI_KS_WS_SC',
+        description:
+            'Upper-Sorbian-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Upper_Sorbian_100_CS_AS_SC',
+        description:
+            'Upper-Sorbian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Upper_Sorbian_100_CS_AS_WS_SC',
+        description:
+            'Upper-Sorbian-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Upper_Sorbian_100_CS_AS_KS_SC',
+        description:
+            'Upper-Sorbian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Upper_Sorbian_100_CS_AS_KS_WS_SC',
+        description:
+            'Upper-Sorbian-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Urdu_100_BIN', description: 'Urdu-100, binary sort' },
+    {
+        name: 'Urdu_100_BIN2',
+        description: 'Urdu-100, binary code point comparison sort'
+    },
+    {
+        name: 'Urdu_100_CI_AI',
+        description: 'Urdu-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Urdu_100_CI_AI_WS',
+        description: 'Urdu-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Urdu_100_CI_AI_KS',
+        description: 'Urdu-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Urdu_100_CI_AI_KS_WS',
+        description: 'Urdu-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Urdu_100_CI_AS',
+        description: 'Urdu-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Urdu_100_CI_AS_WS',
+        description: 'Urdu-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Urdu_100_CI_AS_KS',
+        description: 'Urdu-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Urdu_100_CI_AS_KS_WS',
+        description: 'Urdu-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Urdu_100_CS_AI',
+        description: 'Urdu-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Urdu_100_CS_AI_WS',
+        description: 'Urdu-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Urdu_100_CS_AI_KS',
+        description: 'Urdu-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Urdu_100_CS_AI_KS_WS',
+        description: 'Urdu-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Urdu_100_CS_AS',
+        description: 'Urdu-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Urdu_100_CS_AS_WS',
+        description: 'Urdu-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Urdu_100_CS_AS_KS',
+        description: 'Urdu-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Urdu_100_CS_AS_KS_WS',
+        description: 'Urdu-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Urdu_100_CI_AI_SC',
+        description:
+            'Urdu-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Urdu_100_CI_AI_WS_SC',
+        description:
+            'Urdu-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Urdu_100_CI_AI_KS_SC',
+        description:
+            'Urdu-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Urdu_100_CI_AI_KS_WS_SC',
+        description:
+            'Urdu-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Urdu_100_CI_AS_SC',
+        description:
+            'Urdu-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Urdu_100_CI_AS_WS_SC',
+        description:
+            'Urdu-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Urdu_100_CI_AS_KS_SC',
+        description:
+            'Urdu-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Urdu_100_CI_AS_KS_WS_SC',
+        description:
+            'Urdu-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Urdu_100_CS_AI_SC',
+        description:
+            'Urdu-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Urdu_100_CS_AI_WS_SC',
+        description:
+            'Urdu-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Urdu_100_CS_AI_KS_SC',
+        description:
+            'Urdu-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Urdu_100_CS_AI_KS_WS_SC',
+        description:
+            'Urdu-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Urdu_100_CS_AS_SC',
+        description:
+            'Urdu-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Urdu_100_CS_AS_WS_SC',
+        description:
+            'Urdu-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Urdu_100_CS_AS_KS_SC',
+        description:
+            'Urdu-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Urdu_100_CS_AS_KS_WS_SC',
+        description:
+            'Urdu-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Uzbek_Latin_90_BIN', description: 'Uzbek-Latin-90, binary sort' },
+    {
+        name: 'Uzbek_Latin_90_BIN2',
+        description: 'Uzbek-Latin-90, binary code point comparison sort'
+    },
+    {
+        name: 'Uzbek_Latin_90_CI_AI',
+        description: 'Uzbek-Latin-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Uzbek_Latin_90_CI_AI_WS',
+        description: 'Uzbek-Latin-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Uzbek_Latin_90_CI_AI_KS',
+        description: 'Uzbek-Latin-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Uzbek_Latin_90_CI_AI_KS_WS',
+        description: 'Uzbek-Latin-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Uzbek_Latin_90_CI_AS',
+        description: 'Uzbek-Latin-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Uzbek_Latin_90_CI_AS_WS',
+        description: 'Uzbek-Latin-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Uzbek_Latin_90_CI_AS_KS',
+        description: 'Uzbek-Latin-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Uzbek_Latin_90_CI_AS_KS_WS',
+        description: 'Uzbek-Latin-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Uzbek_Latin_90_CS_AI',
+        description: 'Uzbek-Latin-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Uzbek_Latin_90_CS_AI_WS',
+        description: 'Uzbek-Latin-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Uzbek_Latin_90_CS_AI_KS',
+        description: 'Uzbek-Latin-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Uzbek_Latin_90_CS_AI_KS_WS',
+        description: 'Uzbek-Latin-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Uzbek_Latin_90_CS_AS',
+        description: 'Uzbek-Latin-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Uzbek_Latin_90_CS_AS_WS',
+        description: 'Uzbek-Latin-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Uzbek_Latin_90_CS_AS_KS',
+        description: 'Uzbek-Latin-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Uzbek_Latin_90_CS_AS_KS_WS',
+        description: 'Uzbek-Latin-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Uzbek_Latin_90_CI_AI_SC',
+        description:
+            'Uzbek-Latin-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_90_CI_AI_WS_SC',
+        description:
+            'Uzbek-Latin-90, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_90_CI_AI_KS_SC',
+        description:
+            'Uzbek-Latin-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_90_CI_AI_KS_WS_SC',
+        description:
+            'Uzbek-Latin-90, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_90_CI_AS_SC',
+        description:
+            'Uzbek-Latin-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_90_CI_AS_WS_SC',
+        description:
+            'Uzbek-Latin-90, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_90_CI_AS_KS_SC',
+        description:
+            'Uzbek-Latin-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_90_CI_AS_KS_WS_SC',
+        description:
+            'Uzbek-Latin-90, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_90_CS_AI_SC',
+        description:
+            'Uzbek-Latin-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_90_CS_AI_WS_SC',
+        description:
+            'Uzbek-Latin-90, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_90_CS_AI_KS_SC',
+        description:
+            'Uzbek-Latin-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_90_CS_AI_KS_WS_SC',
+        description:
+            'Uzbek-Latin-90, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_90_CS_AS_SC',
+        description:
+            'Uzbek-Latin-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_90_CS_AS_WS_SC',
+        description:
+            'Uzbek-Latin-90, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_90_CS_AS_KS_SC',
+        description:
+            'Uzbek-Latin-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_90_CS_AS_KS_WS_SC',
+        description:
+            'Uzbek-Latin-90, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Uzbek_Latin_100_BIN', description: 'Uzbek-Latin-100, binary sort' },
+    {
+        name: 'Uzbek_Latin_100_BIN2',
+        description: 'Uzbek-Latin-100, binary code point comparison sort'
+    },
+    {
+        name: 'Uzbek_Latin_100_CI_AI',
+        description: 'Uzbek-Latin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Uzbek_Latin_100_CI_AI_WS',
+        description: 'Uzbek-Latin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Uzbek_Latin_100_CI_AI_KS',
+        description: 'Uzbek-Latin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Uzbek_Latin_100_CI_AI_KS_WS',
+        description: 'Uzbek-Latin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Uzbek_Latin_100_CI_AS',
+        description: 'Uzbek-Latin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Uzbek_Latin_100_CI_AS_WS',
+        description: 'Uzbek-Latin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Uzbek_Latin_100_CI_AS_KS',
+        description: 'Uzbek-Latin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Uzbek_Latin_100_CI_AS_KS_WS',
+        description: 'Uzbek-Latin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Uzbek_Latin_100_CS_AI',
+        description: 'Uzbek-Latin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Uzbek_Latin_100_CS_AI_WS',
+        description: 'Uzbek-Latin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Uzbek_Latin_100_CS_AI_KS',
+        description: 'Uzbek-Latin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Uzbek_Latin_100_CS_AI_KS_WS',
+        description: 'Uzbek-Latin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Uzbek_Latin_100_CS_AS',
+        description: 'Uzbek-Latin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Uzbek_Latin_100_CS_AS_WS',
+        description: 'Uzbek-Latin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Uzbek_Latin_100_CS_AS_KS',
+        description: 'Uzbek-Latin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Uzbek_Latin_100_CS_AS_KS_WS',
+        description: 'Uzbek-Latin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Uzbek_Latin_100_CI_AI_SC',
+        description:
+            'Uzbek-Latin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_100_CI_AI_WS_SC',
+        description:
+            'Uzbek-Latin-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_100_CI_AI_KS_SC',
+        description:
+            'Uzbek-Latin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_100_CI_AI_KS_WS_SC',
+        description:
+            'Uzbek-Latin-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_100_CI_AS_SC',
+        description:
+            'Uzbek-Latin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_100_CI_AS_WS_SC',
+        description:
+            'Uzbek-Latin-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_100_CI_AS_KS_SC',
+        description:
+            'Uzbek-Latin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_100_CI_AS_KS_WS_SC',
+        description:
+            'Uzbek-Latin-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_100_CS_AI_SC',
+        description:
+            'Uzbek-Latin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_100_CS_AI_WS_SC',
+        description:
+            'Uzbek-Latin-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_100_CS_AI_KS_SC',
+        description:
+            'Uzbek-Latin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_100_CS_AI_KS_WS_SC',
+        description:
+            'Uzbek-Latin-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_100_CS_AS_SC',
+        description:
+            'Uzbek-Latin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_100_CS_AS_WS_SC',
+        description:
+            'Uzbek-Latin-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_100_CS_AS_KS_SC',
+        description:
+            'Uzbek-Latin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Uzbek_Latin_100_CS_AS_KS_WS_SC',
+        description:
+            'Uzbek-Latin-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Vietnamese_BIN', description: 'Vietnamese, binary sort' },
+    {
+        name: 'Vietnamese_BIN2',
+        description: 'Vietnamese, binary code point comparison sort'
+    },
+    {
+        name: 'Vietnamese_CI_AI',
+        description: 'Vietnamese, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Vietnamese_CI_AI_WS',
+        description: 'Vietnamese, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Vietnamese_CI_AI_KS',
+        description: 'Vietnamese, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Vietnamese_CI_AI_KS_WS',
+        description: 'Vietnamese, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Vietnamese_CI_AS',
+        description: 'Vietnamese, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Vietnamese_CI_AS_WS',
+        description: 'Vietnamese, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Vietnamese_CI_AS_KS',
+        description: 'Vietnamese, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Vietnamese_CI_AS_KS_WS',
+        description: 'Vietnamese, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Vietnamese_CS_AI',
+        description: 'Vietnamese, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Vietnamese_CS_AI_WS',
+        description: 'Vietnamese, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Vietnamese_CS_AI_KS',
+        description: 'Vietnamese, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Vietnamese_CS_AI_KS_WS',
+        description: 'Vietnamese, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Vietnamese_CS_AS',
+        description: 'Vietnamese, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Vietnamese_CS_AS_WS',
+        description: 'Vietnamese, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Vietnamese_CS_AS_KS',
+        description: 'Vietnamese, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Vietnamese_CS_AS_KS_WS',
+        description: 'Vietnamese, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    { name: 'Vietnamese_100_BIN', description: 'Vietnamese-100, binary sort' },
+    {
+        name: 'Vietnamese_100_BIN2',
+        description: 'Vietnamese-100, binary code point comparison sort'
+    },
+    {
+        name: 'Vietnamese_100_CI_AI',
+        description: 'Vietnamese-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Vietnamese_100_CI_AI_WS',
+        description: 'Vietnamese-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Vietnamese_100_CI_AI_KS',
+        description: 'Vietnamese-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Vietnamese_100_CI_AI_KS_WS',
+        description: 'Vietnamese-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Vietnamese_100_CI_AS',
+        description: 'Vietnamese-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Vietnamese_100_CI_AS_WS',
+        description: 'Vietnamese-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Vietnamese_100_CI_AS_KS',
+        description: 'Vietnamese-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Vietnamese_100_CI_AS_KS_WS',
+        description: 'Vietnamese-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Vietnamese_100_CS_AI',
+        description: 'Vietnamese-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Vietnamese_100_CS_AI_WS',
+        description: 'Vietnamese-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Vietnamese_100_CS_AI_KS',
+        description: 'Vietnamese-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Vietnamese_100_CS_AI_KS_WS',
+        description: 'Vietnamese-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Vietnamese_100_CS_AS',
+        description: 'Vietnamese-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Vietnamese_100_CS_AS_WS',
+        description: 'Vietnamese-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Vietnamese_100_CS_AS_KS',
+        description: 'Vietnamese-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Vietnamese_100_CS_AS_KS_WS',
+        description: 'Vietnamese-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Vietnamese_100_CI_AI_SC',
+        description:
+            'Vietnamese-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Vietnamese_100_CI_AI_WS_SC',
+        description:
+            'Vietnamese-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Vietnamese_100_CI_AI_KS_SC',
+        description:
+            'Vietnamese-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Vietnamese_100_CI_AI_KS_WS_SC',
+        description:
+            'Vietnamese-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Vietnamese_100_CI_AS_SC',
+        description:
+            'Vietnamese-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Vietnamese_100_CI_AS_WS_SC',
+        description:
+            'Vietnamese-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Vietnamese_100_CI_AS_KS_SC',
+        description:
+            'Vietnamese-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Vietnamese_100_CI_AS_KS_WS_SC',
+        description:
+            'Vietnamese-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Vietnamese_100_CS_AI_SC',
+        description:
+            'Vietnamese-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Vietnamese_100_CS_AI_WS_SC',
+        description:
+            'Vietnamese-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Vietnamese_100_CS_AI_KS_SC',
+        description:
+            'Vietnamese-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Vietnamese_100_CS_AI_KS_WS_SC',
+        description:
+            'Vietnamese-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Vietnamese_100_CS_AS_SC',
+        description:
+            'Vietnamese-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Vietnamese_100_CS_AS_WS_SC',
+        description:
+            'Vietnamese-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Vietnamese_100_CS_AS_KS_SC',
+        description:
+            'Vietnamese-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Vietnamese_100_CS_AS_KS_WS_SC',
+        description:
+            'Vietnamese-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Welsh_100_BIN', description: 'Welsh-100, binary sort' },
+    {
+        name: 'Welsh_100_BIN2',
+        description: 'Welsh-100, binary code point comparison sort'
+    },
+    {
+        name: 'Welsh_100_CI_AI',
+        description: 'Welsh-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Welsh_100_CI_AI_WS',
+        description: 'Welsh-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Welsh_100_CI_AI_KS',
+        description: 'Welsh-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Welsh_100_CI_AI_KS_WS',
+        description: 'Welsh-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Welsh_100_CI_AS',
+        description: 'Welsh-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Welsh_100_CI_AS_WS',
+        description: 'Welsh-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Welsh_100_CI_AS_KS',
+        description: 'Welsh-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Welsh_100_CI_AS_KS_WS',
+        description: 'Welsh-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Welsh_100_CS_AI',
+        description: 'Welsh-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Welsh_100_CS_AI_WS',
+        description: 'Welsh-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Welsh_100_CS_AI_KS',
+        description: 'Welsh-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Welsh_100_CS_AI_KS_WS',
+        description: 'Welsh-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Welsh_100_CS_AS',
+        description: 'Welsh-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Welsh_100_CS_AS_WS',
+        description: 'Welsh-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Welsh_100_CS_AS_KS',
+        description: 'Welsh-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Welsh_100_CS_AS_KS_WS',
+        description: 'Welsh-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Welsh_100_CI_AI_SC',
+        description:
+            'Welsh-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Welsh_100_CI_AI_WS_SC',
+        description:
+            'Welsh-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Welsh_100_CI_AI_KS_SC',
+        description:
+            'Welsh-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Welsh_100_CI_AI_KS_WS_SC',
+        description:
+            'Welsh-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Welsh_100_CI_AS_SC',
+        description:
+            'Welsh-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Welsh_100_CI_AS_WS_SC',
+        description:
+            'Welsh-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Welsh_100_CI_AS_KS_SC',
+        description:
+            'Welsh-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Welsh_100_CI_AS_KS_WS_SC',
+        description:
+            'Welsh-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Welsh_100_CS_AI_SC',
+        description:
+            'Welsh-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Welsh_100_CS_AI_WS_SC',
+        description:
+            'Welsh-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Welsh_100_CS_AI_KS_SC',
+        description:
+            'Welsh-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Welsh_100_CS_AI_KS_WS_SC',
+        description:
+            'Welsh-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Welsh_100_CS_AS_SC',
+        description:
+            'Welsh-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Welsh_100_CS_AS_WS_SC',
+        description:
+            'Welsh-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Welsh_100_CS_AS_KS_SC',
+        description:
+            'Welsh-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Welsh_100_CS_AS_KS_WS_SC',
+        description:
+            'Welsh-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    { name: 'Yakut_100_BIN', description: 'Yakut-100, binary sort' },
+    {
+        name: 'Yakut_100_BIN2',
+        description: 'Yakut-100, binary code point comparison sort'
+    },
+    {
+        name: 'Yakut_100_CI_AI',
+        description: 'Yakut-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Yakut_100_CI_AI_WS',
+        description: 'Yakut-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Yakut_100_CI_AI_KS',
+        description: 'Yakut-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Yakut_100_CI_AI_KS_WS',
+        description: 'Yakut-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Yakut_100_CI_AS',
+        description: 'Yakut-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Yakut_100_CI_AS_WS',
+        description: 'Yakut-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Yakut_100_CI_AS_KS',
+        description: 'Yakut-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Yakut_100_CI_AS_KS_WS',
+        description: 'Yakut-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Yakut_100_CS_AI',
+        description: 'Yakut-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Yakut_100_CS_AI_WS',
+        description: 'Yakut-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Yakut_100_CS_AI_KS',
+        description: 'Yakut-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Yakut_100_CS_AI_KS_WS',
+        description: 'Yakut-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Yakut_100_CS_AS',
+        description: 'Yakut-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive'
+    },
+    {
+        name: 'Yakut_100_CS_AS_WS',
+        description: 'Yakut-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive'
+    },
+    {
+        name: 'Yakut_100_CS_AS_KS',
+        description: 'Yakut-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive'
+    },
+    {
+        name: 'Yakut_100_CS_AS_KS_WS',
+        description: 'Yakut-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive'
+    },
+    {
+        name: 'Yakut_100_CI_AI_SC',
+        description:
+            'Yakut-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Yakut_100_CI_AI_WS_SC',
+        description:
+            'Yakut-100, case-insensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Yakut_100_CI_AI_KS_SC',
+        description:
+            'Yakut-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Yakut_100_CI_AI_KS_WS_SC',
+        description:
+            'Yakut-100, case-insensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Yakut_100_CI_AS_SC',
+        description:
+            'Yakut-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Yakut_100_CI_AS_WS_SC',
+        description:
+            'Yakut-100, case-insensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Yakut_100_CI_AS_KS_SC',
+        description:
+            'Yakut-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Yakut_100_CI_AS_KS_WS_SC',
+        description:
+            'Yakut-100, case-insensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Yakut_100_CS_AI_SC',
+        description:
+            'Yakut-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Yakut_100_CS_AI_WS_SC',
+        description:
+            'Yakut-100, case-sensitive, accent-insensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Yakut_100_CS_AI_KS_SC',
+        description:
+            'Yakut-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Yakut_100_CS_AI_KS_WS_SC',
+        description:
+            'Yakut-100, case-sensitive, accent-insensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Yakut_100_CS_AS_SC',
+        description:
+            'Yakut-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Yakut_100_CS_AS_WS_SC',
+        description:
+            'Yakut-100, case-sensitive, accent-sensitive, kanatype-insensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'Yakut_100_CS_AS_KS_SC',
+        description:
+            'Yakut-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-insensitive, supplementary characters'
+    },
+    {
+        name: 'Yakut_100_CS_AS_KS_WS_SC',
+        description:
+            'Yakut-100, case-sensitive, accent-sensitive, kanatype-sensitive, width-sensitive, supplementary characters'
+    },
+    {
+        name: 'SQL_1xCompat_CP850_CI_AS',
+        description:
+            'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 49 on Code Page 850 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_AltDiction_CP850_CI_AI',
+        description:
+            'Latin1-General, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 57 on Code Page 850 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_AltDiction_CP850_CI_AS',
+        description:
+            'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 61 on Code Page 850 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_AltDiction_CP850_CS_AS',
+        description:
+            'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 55 on Code Page 850 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_AltDiction_Pref_CP850_CI_AS',
+        description:
+            'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 56 on Code Page 850 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_AltDiction2_CP1253_CS_AS',
+        description:
+            'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 122 on Code Page 1253 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Croatian_CP1250_CI_AS',
+        description:
+            'Croatian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 92 on Code Page 1250 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Croatian_CP1250_CS_AS',
+        description:
+            'Croatian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 91 on Code Page 1250 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Czech_CP1250_CI_AS',
+        description:
+            'Czech, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 84 on Code Page 1250 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Czech_CP1250_CS_AS',
+        description:
+            'Czech, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 83 on Code Page 1250 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Danish_Pref_CP1_CI_AS',
+        description:
+            'Danish-Norwegian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 183 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_EBCDIC037_CP1_CS_AS',
+        description:
+            'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 210 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_EBCDIC1141_CP1_CS_AS',
+        description:
+            'German-PhoneBook, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 219 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_EBCDIC273_CP1_CS_AS',
+        description:
+            'German-PhoneBook, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 211 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_EBCDIC277_2_CP1_CS_AS',
+        description:
+            'Danish-Norwegian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 218 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_EBCDIC277_CP1_CS_AS',
+        description:
+            'Danish-Norwegian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 212 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_EBCDIC278_CP1_CS_AS',
+        description:
+            'Finnish-Swedish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 213 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_EBCDIC280_CP1_CS_AS',
+        description:
+            'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 214 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_EBCDIC284_CP1_CS_AS',
+        description:
+            'Modern-Spanish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 215 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_EBCDIC285_CP1_CS_AS',
+        description:
+            'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 216 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_EBCDIC297_CP1_CS_AS',
+        description:
+            'French, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 217 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Estonian_CP1257_CI_AS',
+        description:
+            'Estonian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 156 on Code Page 1257 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Estonian_CP1257_CS_AS',
+        description:
+            'Estonian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 155 on Code Page 1257 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Hungarian_CP1250_CI_AS',
+        description:
+            'Hungarian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 86 on Code Page 1250 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Hungarian_CP1250_CS_AS',
+        description:
+            'Hungarian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 85 on Code Page 1250 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Icelandic_Pref_CP1_CI_AS',
+        description:
+            'Icelandic, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 186 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1_CI_AI',
+        description:
+            'Latin1-General, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 54 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1_CI_AS',
+        description:
+            'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 52 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1_CS_AS',
+        description:
+            'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 51 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1250_CI_AS',
+        description:
+            'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 82 on Code Page 1250 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1250_CS_AS',
+        description:
+            'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 81 on Code Page 1250 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1251_CI_AS',
+        description:
+            'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 106 on Code Page 1251 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1251_CS_AS',
+        description:
+            'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 105 on Code Page 1251 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1253_CI_AI',
+        description:
+            'Latin1-General, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 124 on Code Page 1253 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1253_CI_AS',
+        description:
+            'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 114 on Code Page 1253 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1253_CS_AS',
+        description:
+            'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 113 on Code Page 1253 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1254_CI_AS',
+        description:
+            'Turkish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 130 on Code Page 1254 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1254_CS_AS',
+        description:
+            'Turkish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 129 on Code Page 1254 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1255_CI_AS',
+        description:
+            'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 138 on Code Page 1255 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1255_CS_AS',
+        description:
+            'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 137 on Code Page 1255 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1256_CI_AS',
+        description:
+            'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 146 on Code Page 1256 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1256_CS_AS',
+        description:
+            'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 145 on Code Page 1256 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1257_CI_AS',
+        description:
+            'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 154 on Code Page 1257 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP1257_CS_AS',
+        description:
+            'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 153 on Code Page 1257 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP437_BIN',
+        description:
+            'Latin1-General, binary sort for Unicode Data, SQL Server Sort Order 30 on Code Page 437 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP437_BIN2',
+        description:
+            'Latin1-General, binary code point comparison sort for Unicode Data, SQL Server Sort Order 30 on Code Page 437 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP437_CI_AI',
+        description:
+            'Latin1-General, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 34 on Code Page 437 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP437_CI_AS',
+        description:
+            'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 32 on Code Page 437 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP437_CS_AS',
+        description:
+            'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 31 on Code Page 437 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP850_BIN',
+        description:
+            'Latin1-General, binary sort for Unicode Data, SQL Server Sort Order 40 on Code Page 850 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP850_BIN2',
+        description:
+            'Latin1-General, binary code point comparison sort for Unicode Data, SQL Server Sort Order 40 on Code Page 850 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP850_CI_AI',
+        description:
+            'Latin1-General, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 44 on Code Page 850 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP850_CI_AS',
+        description:
+            'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 42 on Code Page 850 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_CP850_CS_AS',
+        description:
+            'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 41 on Code Page 850 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_Pref_CP1_CI_AS',
+        description:
+            'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 53 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_Pref_CP437_CI_AS',
+        description:
+            'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 33 on Code Page 437 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latin1_General_Pref_CP850_CI_AS',
+        description:
+            'Latin1-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 43 on Code Page 850 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latvian_CP1257_CI_AS',
+        description:
+            'Latvian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 158 on Code Page 1257 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Latvian_CP1257_CS_AS',
+        description:
+            'Latvian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 157 on Code Page 1257 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Lithuanian_CP1257_CI_AS',
+        description:
+            'Lithuanian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 160 on Code Page 1257 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Lithuanian_CP1257_CS_AS',
+        description:
+            'Lithuanian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 159 on Code Page 1257 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_MixDiction_CP1253_CS_AS',
+        description:
+            'Latin1-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 120 on Code Page 1253 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Polish_CP1250_CI_AS',
+        description:
+            'Polish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 88 on Code Page 1250 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Polish_CP1250_CS_AS',
+        description:
+            'Polish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 87 on Code Page 1250 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Romanian_CP1250_CI_AS',
+        description:
+            'Romanian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 90 on Code Page 1250 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Romanian_CP1250_CS_AS',
+        description:
+            'Romanian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 89 on Code Page 1250 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Scandinavian_CP850_CI_AS',
+        description:
+            'Finnish-Swedish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 60 on Code Page 850 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Scandinavian_CP850_CS_AS',
+        description:
+            'Finnish-Swedish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 59 on Code Page 850 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Scandinavian_Pref_CP850_CI_AS',
+        description:
+            'Finnish-Swedish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 58 on Code Page 850 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Slovak_CP1250_CI_AS',
+        description:
+            'Slovak, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 94 on Code Page 1250 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Slovak_CP1250_CS_AS',
+        description:
+            'Slovak, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 93 on Code Page 1250 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Slovenian_CP1250_CI_AS',
+        description:
+            'Slovenian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 96 on Code Page 1250 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Slovenian_CP1250_CS_AS',
+        description:
+            'Slovenian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 95 on Code Page 1250 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_SwedishPhone_Pref_CP1_CI_AS',
+        description:
+            'Finnish-Swedish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 184 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_SwedishStd_Pref_CP1_CI_AS',
+        description:
+            'Finnish-Swedish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 185 on Code Page 1252 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Ukrainian_CP1251_CI_AS',
+        description:
+            'Ukrainian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 108 on Code Page 1251 for non-Unicode Data'
+    },
+    {
+        name: 'SQL_Ukrainian_CP1251_CS_AS',
+        description:
+            'Ukrainian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive for Unicode Data, SQL Server Sort Order 107 on Code Page 1251 for non-Unicode Data'
+    }
+];
+
 const MS_SQL_2022 = [
     {
         name: 'Albanian_BIN',
@@ -42796,4 +60217,4 @@ const MS_SQL_2022 = [
     }
 ];
 
-export { MS_SQL_2016, MS_SQL_2022 };
+export { MS_SQL_2016, MS_SQL_2022, MS_SQL_2017 };

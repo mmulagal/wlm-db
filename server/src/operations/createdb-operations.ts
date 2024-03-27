@@ -35,7 +35,7 @@ import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
 import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
-import { MS_SQL_2016, MS_SQL_2022 } from './workloads/mssql/createdb-collations';
+import { MS_SQL_2016, MS_SQL_2022, MS_SQL_2017 } from './workloads/mssql/createdb-collations';
 import { updateResourceMetaData } from '../lib/database/db';
 
 const logger = getLogger();
@@ -1083,6 +1083,10 @@ async function validateParams(
 
         await checkDatabaseExists(accountId, credentialsId, region, databaseHostId, databaseName, activeNodeInstanceId);
 
+        if (!collation) {
+            throw createError(412, 'Collation should not be empty');
+        }
+
         const { collationList } = await getCollationDetails(accountId, databaseHostId, credentialsId, region);
 
         const collationExists = collationList?.some(item => item?.name?.toLowerCase() === collation.toLowerCase());
@@ -1286,9 +1290,13 @@ async function getCollationDetails(accountId: string, databaseHostId: string, cr
         const [match] = mssqlVersion.match(regex);
         switch (match) {
             case '2016':
-            case '2017':
                 return {
                     collationList: MS_SQL_2016,
+                    defaultCollation
+                };
+            case '2017':
+                return {
+                    collationList: MS_SQL_2017,
                     defaultCollation
                 };
             case '2019':

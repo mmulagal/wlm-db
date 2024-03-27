@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import { Filter, FilterType, GetProductsCommandInput, GetProductsCommandOutput } from '@aws-sdk/client-pricing';
 import { LazyJsonString } from '@smithy/smithy-client';
 import { compact, isEmpty } from 'lodash-es';
@@ -7,6 +8,7 @@ import { calculateFsxnStorageCapacity, sizeInGigaBytes } from '../../utils/utils
 import {
     DEFAULT_AWS_REGION,
     FCI,
+    MAX_FSX_STORAGE_IN_GIB,
     MAX_READ_REQUEST_FSXN,
     MAX_WRITE_REQUEST_FSXN,
     MIN_DISKSIZE,
@@ -428,6 +430,10 @@ async function calculatePrice(
         fsxwStorage
     });
 
+    if (fsxnStorage && fsxnStorage?.diskSize > 133120) {
+        throw createError(412, 'Supported Fsxn disk size should be between 120GiB to 130TiB');
+    }
+
     const inputList: ProductInput[] = compact(getInputs(compute, fsxnStorage, ebsStorage, vpc, fsxwStorage));
     const productRates = await getProductRates(inputList);
 
@@ -558,6 +564,10 @@ function calculateFsxnCost(fsxnStorage: PricingServiceRequestType['fsxnStorage']
     );
     logger.info('FSx Netapp operational cost value for demo', fsxnOperationalCost);
 
+    // If the FSX total storage crosses 192Tib Means keeping it to 192TiB (196608GiB).
+    if (fsxnDiskSizes) {
+        fsxnDiskSizes.FSxStorageCapacity = Math.min(fsxnDiskSizes?.FSxStorageCapacity || 0, MAX_FSX_STORAGE_IN_GIB);
+    }
     return { fsxnStorageCost, fsxnOperationalCost, fsxnDiskSizes };
 }
 
