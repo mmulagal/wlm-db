@@ -8,6 +8,7 @@ import { calculateFsxnStorageCapacity, sizeInGigaBytes } from '../../utils/utils
 import {
     DEFAULT_AWS_REGION,
     FCI,
+    MAX_FSX_STORAGE_IN_GIB,
     MAX_READ_REQUEST_FSXN,
     MAX_WRITE_REQUEST_FSXN,
     MIN_DISKSIZE,
@@ -564,8 +565,8 @@ function calculateFsxnCost(fsxnStorage: PricingServiceRequestType['fsxnStorage']
     logger.info('FSx Netapp operational cost value for demo', fsxnOperationalCost);
 
     // If the FSX total storage crosses 192Tib Means keeping it to 192TiB (196608GiB).
-    if (fsxnDiskSizes && fsxnDiskSizes.FSxStorageCapacity > 196608) {
-        fsxnDiskSizes.FSxStorageCapacity = 196608;
+    if (fsxnDiskSizes) {
+        fsxnDiskSizes.FSxStorageCapacity = Math.min(fsxnDiskSizes?.FSxStorageCapacity || 0, MAX_FSX_STORAGE_IN_GIB);
     }
     return { fsxnStorageCost, fsxnOperationalCost, fsxnDiskSizes };
 }

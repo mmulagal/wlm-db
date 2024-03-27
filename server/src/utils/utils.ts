@@ -69,16 +69,12 @@ function generateDeploymentParams(
         FSxStorageCapacity
     } = calculateFsxnStorageCapacity(FSxDataLunSize);
 
-    let fsxStorageCapacity = FSxStorageCapacity;
-
     // If the FSX total storage crosses 192Tib Means keeping it to 192TiB (196608GiB). This is because when the 130TiB is given as a data lun size, total storage capacity of is going beyond 196608 which is 197695.
-    if (FSxStorageCapacity > MAX_FSX_STORAGE_IN_GIB) {
-        fsxStorageCapacity = MAX_FSX_STORAGE_IN_GIB;
-    }
+    const fsxStorageCapacity = Math.min(FSxStorageCapacity, MAX_FSX_STORAGE_IN_GIB);
 
     // To provision 4 GBps of throughput capacity, your file system must be configured with a minimum of 5,120 GiB of SSD storage capacity.
     // https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/performance.html
-    if (fsxVolThroughput === FSX_VOL_THROUGHPUT && fsxStorageCapacity < FSX_STORAGE_MIN_CAPACITY_IN_GIB) {
+    if (fsxVolThroughput === FSX_VOL_THROUGHPUT && fsxStorageCapacity <= FSX_STORAGE_MIN_CAPACITY_IN_GIB) {
         throw createError(412, 'Supported Fsxn Storage Capactiy should be minumum of 5,120 GiB');
     }
 
