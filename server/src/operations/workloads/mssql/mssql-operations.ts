@@ -588,7 +588,7 @@ async function getNativeSQLProtection(resourceId: string, activeNodeInstanceId: 
         const response = await callSsmExecution(
             credentialsId,
             region,
-            [`${PSSCRIPT} -Query "${NATIVE_SQL_BACKUPS}"`],
+            [`sqlcmd -Q "${NATIVE_SQL_BACKUPS}" -y 0`],
             activeNodeInstanceId
         );
 
