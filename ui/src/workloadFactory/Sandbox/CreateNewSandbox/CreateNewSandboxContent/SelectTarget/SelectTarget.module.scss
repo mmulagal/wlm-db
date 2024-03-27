@@ -8,6 +8,22 @@
         gap: 24px;
     }
 
+    .noticeText {
+        margin-top: 6px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        svg {
+            width: 16px;
+            height: 16px;
+            path {
+                fill: #518bec;
+            }
+        }
+    }
+
     .firstRowSmallScreen {
         display: flex;
         flex-direction: column;
@@ -29,5 +45,13 @@
 
 @media screen and (max-width: 1500px) {
     .selectTarget {
+        .noticeText {
+            width: 456px;
+
+            svg {
+                position: relative;
+                top: -10px;
+            }
+        }
     }
 }

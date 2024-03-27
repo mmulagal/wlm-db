@@ -8,9 +8,11 @@ import SandboxDistributionType from './SandboxDistributionType/SandboxDistributi
 import SandboxTable from './SandboxTable/SandboxTable';
 
 const Sandbox = () => {
+    const bannerToShow = localStorage.getItem('showBanner');
     return (
         <div className={styles.sandbox}>
-            <SandboxHeader />
+            {!bannerToShow && <SandboxHeader />}
+
             <div className={styles.sandboxSecondLevel}>
                 <SourceInformation />
                 <SandboxStorageSaving />

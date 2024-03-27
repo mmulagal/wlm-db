@@ -86,6 +86,12 @@ const SelectTarget = () => {
                 <AccordionCardContent>
                     <DsTypography>
                         <>
+                            <div className={styles.noticeText}>
+                                <InfoIcon />
+                                <DsTypography variant="Regular_14">
+                                    Notice: Destination host should be in the same VPC and FSxN instance as Source host
+                                </DsTypography>
+                            </div>
                             <div className={windowSize.width > 1500 ? styles.firstRow : styles.firstRowSmallScreen}>
                                 <SelectField
                                     label={'Source host'}

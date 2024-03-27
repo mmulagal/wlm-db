@@ -7,12 +7,32 @@ import { ReactComponent as Copy } from '../../../../assets/copyBlackBackground.s
 import styles from './CreateNewSandboxCodebox.module.scss';
 import { CODE_VIEWER } from '../../../../utils/appConstants';
 import CodeBoxScroll from '../../../../common/CodeBoxScroll/CodeBoxScroll';
+import CodeBoxColor from '../../../../common/CodeBoxColor/CodeBoxColor';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { CRED_PLACEHOLDERS } from '../../../../utils/consts';
 
 const CreateNewSandboxCodebox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
 
+    const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
+    const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
+
     // To copy response based on dropdown selection
     const copyResponseData = () => {};
+
+    const setDisplayedDataInCodeBox = () => {
+        const payload = {};
+        return (
+            <>
+                <CodeBoxColor
+                    credID={selectedCredId?.data?.credentialsId || CRED_PLACEHOLDERS.CRED_ID}
+                    region={selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION}
+                    actualData={payload}
+                    endpoint={''}
+                />
+            </>
+        );
+    };
 
     return (
         <div className={styles.createNewSandboxCodebox}>
@@ -48,7 +68,7 @@ const CreateNewSandboxCodebox = () => {
                     </div>
                 </div>
 
-                <CodeBoxScroll dropDownValue={dropDownValue} setDisplayedDataInCodeBox={() => {}} />
+                <CodeBoxScroll dropDownValue={dropDownValue} setDisplayedDataInCodeBox={setDisplayedDataInCodeBox()} />
             </div>
         </div>
     );

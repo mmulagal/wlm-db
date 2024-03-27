@@ -8,9 +8,12 @@ import { useNavigate } from 'react-router-dom';
 const SandboxHeader = () => {
     const windowSize = useResize();
     const navigate = useNavigate();
+    const handleBanner = () => {
+        localStorage.setItem('showBanner', JSON.stringify(true));
+    };
     return (
         <>
-            {window.innerWidth > 1500 && (
+            {windowSize.width > 1500 && (
                 <div className={styles.sandboxHeader}>
                     <div className={styles.imageHolder}>
                         <Illustration />
@@ -28,11 +31,13 @@ const SandboxHeader = () => {
                         <Button variant="primary" onClick={() => navigate('../create-new-sandbox')}>
                             Create new sandbox
                         </Button>
-                        <Button variant="text">Don't show again</Button>
+                        <Button variant="text" onClick={() => handleBanner()}>
+                            Don't show again
+                        </Button>
                     </div>
                 </div>
             )}
-            {window.innerWidth <= 1500 && (
+            {windowSize.width <= 1500 && (
                 <div className={styles.sandboxHeaderLowerResolution}>
                     <div className={styles.imageHolder}>
                         {' '}
@@ -57,7 +62,7 @@ const SandboxHeader = () => {
                             >
                                 Create new sandbox
                             </Button>
-                            <Button variant="text" isThin>
+                            <Button variant="text" isThin onClick={() => handleBanner()}>
                                 Don't show again
                             </Button>
                         </div>
