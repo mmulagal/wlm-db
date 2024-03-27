@@ -2,6 +2,22 @@
     .headerSetter {
         left: 0%;
     }
+
+    .radios {
+        margin-top: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .textField {
+        margin-top: 16px;
+        margin-left: 24px;
+    }
+
+    .keyField {
+        width: 371px;
+    }
 }
 
 @media screen and (max-width: 1500px) {
