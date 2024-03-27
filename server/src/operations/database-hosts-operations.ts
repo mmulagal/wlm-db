@@ -876,8 +876,9 @@ async function getDatabaseHostSummary(
                     serverDetails.clusterName = resourceName || '';
                 }
             }
+            databaseHostDetails.status = ServerState.DOWN;
             if (shouldQueryServerDetails && serverDetails) {
-                databaseHostDetails.status = serverDetails ? ServerState.UP : ServerState.DOWN;
+                databaseHostDetails.status = ServerState.UP;
                 databaseHostDetails.databaseCount = serverDetails?.dbCount || 0;
                 databaseHostDetails.databaseServer = serverDetails;
                 serverDetails.creationDate = creationDate || '';
