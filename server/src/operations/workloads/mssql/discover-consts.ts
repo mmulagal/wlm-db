@@ -85,7 +85,7 @@ const HOST_AND_SQL_INFO_PS1 = [
               Get-Partition | ForEach-Object {
                 $b = $_
                 if (($b.DriveLetter -ne $null) -and ($a.DeviceId -eq $b.diskNumber) -and ($sqlDrives.contains($b.DriveLetter))) {
-                  if ($a.BusType -eq "NVMe") {
+                  if ($a.BusType -eq "NVMe" -or $a.BusType -eq "SAS") {
                     New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $a.serialnumber }
                   } elseif ($a.BusType -eq "iSCSI") {
                     $scsiTarget = (get-disk | Where { $_.BusType -eq  'iSCSI' } | Get-IscsiConnection).TargetAddress | Select -Unique
