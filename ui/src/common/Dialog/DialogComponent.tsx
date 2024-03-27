@@ -1,7 +1,19 @@
-import { Button, DialogContent, DialogFooter, DialogHeader, DialogLayout, useDialog } from '@netapp/design-system';
+import {
+    Button,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogLayout,
+    DsTypography,
+    TooltipInfo,
+    useDialog
+} from '@netapp/design-system';
 import { ReactNode } from 'react';
 import { useAppSelector } from '../../store/storeHooks';
 import { FROM_DIALOG } from '../../utils/consts';
+import styles from './DialogComponent.module.scss';
+import { ReactComponent as ErrorIcon } from '../../assets/error-icon.svg';
+import { GENERAL } from '../../utils/appConstants';
 
 type DialogProps = {
     header: string | any;
@@ -74,7 +86,18 @@ const DialogComponent = ({
         <DialogLayout className={customClass}>
             <DialogHeader>{header}</DialogHeader>
             <DialogContent>{content}</DialogContent>
-            <DialogFooter error={detectHostError}>
+            <DialogFooter>
+                {detectHostError && (
+                    <div className={styles.errorMsg}>
+                        <ErrorIcon className={styles.errorIcon} />
+                        <DsTypography variant="Semibold_13">{GENERAL.ERROR}</DsTypography>&nbsp;
+                        <DsTypography variant="Regular_13" className={styles.errorMsgText}>
+                            {detectHostError}
+                        </DsTypography>
+                        <TooltipInfo>{detectHostError}</TooltipInfo>
+                    </div>
+                )}
+
                 <Button
                     variant={'primary'}
                     className={'continue-button'}

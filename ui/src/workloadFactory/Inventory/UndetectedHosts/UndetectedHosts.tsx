@@ -108,6 +108,7 @@ const UndetectedHosts = () => {
     useEffect(() => {
         if (
             !entryData?.sqlServerInstances?.[0]?.sqlServerAuthentication &&
+            !entryData?.sqlServerInstances?.[0]?.windowsAuthentication &&
             entryData?.fsxId &&
             !entryData?.isFsxRegistered
         ) {
@@ -116,7 +117,10 @@ const UndetectedHosts = () => {
             } else {
                 valueRef.current = false;
             }
-        } else if (!entryData?.sqlServerInstances?.[0]?.sqlServerAuthentication) {
+        } else if (
+            !entryData?.sqlServerInstances?.[0]?.sqlServerAuthentication &&
+            !entryData?.sqlServerInstances?.[0]?.windowsAuthentication
+        ) {
             if (detectManageUserName && detectManagePassword) {
                 valueRef.current = true;
             } else {
@@ -215,13 +219,13 @@ const UndetectedHosts = () => {
         } else {
             dispatch(setValuesForForm(false));
             dispatch(setIsDetectHostLoading(true));
-
+            const sqlServerInstance = rowData?.sqlServerInstances?.[0]?.sqlServerInstance || '';
             try {
                 const result: any = await registerResourceCred({
                     credentialId: headerSelectedCred?.data?.credentialsId,
                     regionId: headerSelectedRegion?.label2,
                     instanceId: rowData?.instanceID,
-                    payload: createDetectHostPayload(rowData?.instanceID, fsxId)
+                    payload: createDetectHostPayload(sqlServerInstance, fsxId)
                 });
                 if (result && !result?.error) {
                     if (result?.data?.sqlServerError || result?.data?.fsxnError) {
@@ -344,11 +348,11 @@ const UndetectedHosts = () => {
 
     const UnidentifiedHostsColDefs: ColumnProps[] = [
         {
-            Header: GENERAL.DATABASE_HOST_NAME,
-            accessor: 'name',
+            Header: GENERAL.DB_HOST_INSTANCE_ID,
+            accessor: 'instanceID',
             id: '1',
-            isSortable: true,
-            width: '240px'
+            width: '240px',
+            isSortable: true
         },
         {
             Header: GENERAL.DB_HOST_INSTANCE_NAME,
@@ -358,11 +362,11 @@ const UndetectedHosts = () => {
             width: '240px'
         },
         {
-            Header: GENERAL.DB_HOST_INSTANCE_ID,
-            accessor: 'instanceID',
+            Header: GENERAL.DATABASE_HOST_NAME,
+            accessor: 'name',
             id: '3',
-            width: '240px',
-            isSortable: true
+            isSortable: true,
+            width: '240px'
         },
         {
             id: '4',

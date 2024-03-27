@@ -113,7 +113,7 @@ Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
 `;
 
 const validateSQLInstanceConnectivity = (ec2instanceId: string, sqlinstancename: string) => `
-    #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
+    #Requires -Module AWS.Tools.SimpleSystemsManagement
 
     $ec2instanceId = '${ec2instanceId}'
     $sqlinstancename = '${sqlinstancename}'
@@ -160,7 +160,7 @@ const validateSQLInstanceConnectivity = (ec2instanceId: string, sqlinstancename:
 `;
 
 const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
-    #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
+    #Requires -Module AWS.Tools.SimpleSystemsManagement
 
     $FSxID = '${fsxid}'
     $FSxRegion = '${fsxregion}'
@@ -208,11 +208,25 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
     }
 `;
 
+const installPowerShellModule = (module: string) => `
+    $modulename = '${module}'
+    if ($responeObject -eq $null) {
+        $responeObject = @{}
+    }
+
+    if (-not (Get-Module -ListAvailable -Name $modulename)) {
+        $responeObject.add('requiredModuleError', "$modulename Module does not exist, installing it now")
+        $null = Start-Job -ScriptBlock { Install-Module -Name $args -Force -AllowClobber } -ArgumentList $modulename
+        return $responeObject | convertto-json
+    }
+`;
+
 export {
     GET_DRIVE_INFO,
     GET_DEFAULT_DRIVES,
     GET_DEFAULT_COLLATION,
     RESOURCE_UTILIZATION,
     validateSQLInstanceConnectivity,
-    validateOntapConnectivity
+    validateOntapConnectivity,
+    installPowerShellModule
 };

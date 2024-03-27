@@ -76,10 +76,16 @@ const RWPerformanceResponse = Type.Object({
     read: Type.Number({ description: 'Database server read performance for latency, IOPS or throughput' }),
     write: Type.Number({ description: 'Database server write performance for latency, IOPS or throughput' })
 });
+
+const LatencyResponse = Type.Composite([
+    RWPerformanceResponse,
+    Type.Object({ serverIo: Type.Number({ description: 'Database server IO performance for latency' }) })
+]);
+
 type RWPerformanceResponseType = Static<typeof RWPerformanceResponse>;
 
 const DetailedPerformanceResponse = Type.Object({
-    latency: RWPerformanceResponse,
+    latency: LatencyResponse,
     iops: RWPerformanceResponse,
     throughput: RWPerformanceResponse
 });
