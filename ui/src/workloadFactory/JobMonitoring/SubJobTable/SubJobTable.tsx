@@ -131,7 +131,6 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             Header: 'Start time',
             accessor: 'startTime',
             isSortable: true,
-            columnSortState: 'desc',
             width: '240px',
             renderCell: (cellData: any) => {
                 const formatDate = cellData ? formatDateWithTime(cellData) : 'N/A';
