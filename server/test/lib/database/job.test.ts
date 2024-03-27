@@ -11,7 +11,8 @@ import {
     groupJobsByTimeAndStatus,
     listJobs,
     listUniqueJob,
-    updateJob
+    updateJob,
+    listLongRunningJobs
 } from '../../../src/lib/database/job';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, THIRTY_DAYS } from '../../utils/consts';
 
@@ -287,6 +288,23 @@ describe('List jobs', () => {
             // expect(error.code).toEqual('P2025')
             expect(error).toBeDefined(); // prismock returns undefined instead of actual error code
         }
+    });
+
+    it('should list long running jobs', async () => {
+        await createJob(ACCOUNT_ID, {
+            account_id: ACCOUNT_ID,
+            credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
+            name: 'test-job-1',
+            description: 'test-job-description',
+            resource_name: 'test-resource',
+            initiator: 'test-user',
+            start_time: new Date(Date.now() - 5 * 60 * 60 * 1000),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.DEPLOYMENT
+        });
+        const response = await listLongRunningJobs();
+        expect(response.length).toBeGreaterThan(0);
     });
 });
 

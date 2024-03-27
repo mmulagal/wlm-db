@@ -9,8 +9,12 @@ interface Metadata {
     fsxSvmId?: string;
     // this is used to retreive the newly created user databases in database list for demo
     userDatabase?: Array<UserDatabase>;
+    createDbMetrics?: CreateDbMetrics;
 }
 
+interface CreateDbMetrics {
+    numberofUserDbsCreated: number;
+}
 interface UserDatabase {
     name: string;
     size: number;

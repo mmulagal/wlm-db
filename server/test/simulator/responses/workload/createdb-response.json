@@ -1,0 +1,88 @@
+{
+    "getDriveInfoResponseData": {
+        "existingDriveInfo": [
+            {
+                "driveLetter": "L",
+                "availableSize": 80386654208,
+                "isNetappDrive": true,
+                "isDriveClustered": true
+            },
+            {
+                "driveLetter": "Q",
+                "availableSize": 10653229056,
+                "isNetappDrive": true,
+                "isDriveClustered": false
+            },
+            {
+                "driveLetter": "F",
+                "availableSize": 11181883392,
+                "isNetappDrive": true,
+                "isDriveClustered": true
+            },
+            {
+                "driveLetter": "P",
+                "availableSize": 1068367872,
+                "isNetappDrive": true,
+                "isDriveClustered": true
+            },
+            {
+                "driveLetter": "R",
+                "availableSize": 1068367872,
+                "isNetappDrive": true,
+                "isDriveClustered": true
+            },
+            {
+                "driveLetter": "V",
+                "availableSize": 1068367872,
+                "isNetappDrive": true,
+                "isDriveClustered": true
+            },
+            {
+                "driveLetter": "J",
+                "availableSize": 1068367872,
+                "isNetappDrive": true,
+                "isDriveClustered": true
+            },
+            {
+                "driveLetter": "E",
+                "availableSize": 1068367872,
+                "isNetappDrive": true,
+                "isDriveClustered": true
+            },
+            {
+                "driveLetter": "C",
+                "availableSize": 66177310720,
+                "isNetappDrive": false,
+                "isDriveClustered": false
+            },
+            {
+                "driveLetter": "H",
+                "availableSize": 1068367872,
+                "isNetappDrive": true,
+                "isDriveClustered": true
+            },
+            {
+                "driveLetter": "S",
+                "availableSize": 321732804608,
+                "isNetappDrive": true,
+                "isDriveClustered": true
+            },
+            {
+                "driveLetter": "T",
+                "availableSize": 32064274432,
+                "isNetappDrive": true,
+                "isDriveClustered": true
+            },
+            {
+                "driveLetter": "Z",
+                "availableSize": 1068367872,
+                "isNetappDrive": true,
+                "isDriveClustered": true
+            }
+        ],
+        "availableDriveLetters": ["D", "G", "I", "K", "M", "N", "O", "U", "W", "X", "Y"],
+        "fsxStorageCapacity": 38482906972160,
+        "defaultDataDrive": "S",
+        "defaultLogDrive": "L"
+    }
+}

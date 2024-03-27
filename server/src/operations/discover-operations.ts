@@ -34,7 +34,7 @@ import {
 } from './workloads/mssql/discover-consts';
 import { deleteParameters, getParameter, sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
-import { registerFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
+import { listFsxOntapCredentials, registerFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
 import { SSMParamterObject } from '../utils/common-types';
 
 import {
@@ -46,10 +46,14 @@ import {
 import getLogger from '../utils/logger';
 import { describeFSxFileSystems, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { returnInventorydata } from '../utils/demo-utils/demoDefaultUtils';
-import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
 import { getDatabaseHostSummary } from './database-hosts-operations';
-import { validateOntapConnectivity, validateSQLInstanceConnectivity } from './workloads/mssql/ssm-script-utils';
+import {
+    installPowerShellModule,
+    validateOntapConnectivity,
+    validateSQLInstanceConnectivity
+} from './workloads/mssql/ssm-script-utils';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../utils/async-local-storage';
+import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
 
 const logger = getLogger();
 
@@ -79,6 +83,7 @@ const MINIMUM_SQL_SERVER_SUPPORTED = 2016;
 
 const NEW_SSM_PARAMETERS = 'NEW_SSM_PARAMETERS';
 const SSM_PARAM_PREFIX = '/netapp/wlmdb/';
+const PSMODULE_AWS_SSM = 'AWS.Tools.SimpleSystemsManagement';
 
 async function getHostAndSqlServerInfo(
     accountId: string,
@@ -339,10 +344,13 @@ async function getHostAndSqlInfoFromPsOutput(
 
                     for (const di of driveInfo) {
                         const ebsVolumeId = ebsVolumeIDs?.find(elem => di?.SerialNumberOrScsiTarget?.includes(elem));
+                        const volIdRegex = /^(vol)([a-zA-Z0-9]+)/; // volumeId derived from SerialNumberOrScsiTarget is of the format,vol012ab34ed, but, AWS ebs volume IDs are always in vol-012ab34ed format, so we need to convert it to the correct format.
                         if (ebsVolumeId) {
                             storageTypes.push({
                                 type: STORAGE_TYPE.EBS,
-                                id: ebsVolumeId
+                                id: volIdRegex.test(ebsVolumeId)
+                                    ? ebsVolumeId.replace(volIdRegex, '$1-$2')
+                                    : ebsVolumeId // convert the volumeId to the correct format.
                             });
                         } else if (endPointIpWithFsxOntapInfo.has(di?.SerialNumberOrScsiTarget)) {
                             const { fsxId, svmId } = endPointIpWithFsxOntapInfo.get(di?.SerialNumberOrScsiTarget)!;
@@ -555,7 +563,7 @@ async function fetchUnmanagedHostsInformation(
     const resourceDetailsList = instancesDetails.map(({ ec2InstanceId, fsxnId, ebsVolumeId, fsxwId }) => ({
         id: null,
         account_id: accountId,
-        resource_id: getMsSqlResourceId(ec2InstanceId),
+        resource_id: ec2InstanceId,
         resource_type: RESOURCESTYPE.MSSQL,
         resource_name: ec2InstanceId,
         cloud_provider_name: CloudProviders.AWS,
@@ -577,7 +585,7 @@ async function fetchUnmanagedHostsInformation(
             getDatabaseHostSummary(
                 accountId,
                 resourceDetail.resource_id,
-                'serverDetails,performance,usageEstimation,resourceUtilization',
+                'serverDetails,performance,usageEstimation,resourceUtilization,storage',
                 resourceDetail,
                 false // unmanaged host
             )
@@ -695,7 +703,15 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
             )
         );
     }
-    const [ssmScriptsCopyResponse1, ssmScriptsCopyResponse2] = await Promise.all(discoveryPromiseList);
+    const [ssmScriptsCopyResponse1, ssmScriptsCopyResponse2] = await Promise.all([
+        ...discoveryPromiseList,
+        verifyAndAddFSxOntapCredentials(
+            accountId,
+            credentialsId,
+            region,
+            discoverInfo?.items?.[0].sqlServerInstances?.[0]?.storage
+        )
+    ]);
 
     logger.debug('ssmScriptsCopyResponses:', { ssmScriptsCopyResponse1, ssmScriptsCopyResponse2 });
     if (ssmScriptsCopyResponse1?.includes('failureInfo')) {
@@ -817,6 +833,10 @@ async function validateCredentials(
 
     let command = 'pwsh -Command {$WarningPreference = "SilentlyContinue";';
 
+    if (fsxCredentials || sqlCredentials.length) {
+        command += `${installPowerShellModule(PSMODULE_AWS_SSM)};\n`;
+    }
+
     if (fsxCredentials) {
         command += `${validateOntapConnectivity(fsxCredentials.resourceId, region)};\n`;
     }
@@ -830,7 +850,7 @@ async function validateCredentials(
 
     command += '$responeObject | ConvertTo-Json -Compress }';
 
-    const ssmresponse = await callSsmExecution(credentialsId, region, [command], instanceId);
+    const ssmresponse = await callSsmExecution(credentialsId, region, [command], instanceId, undefined, false);
 
     const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
     let parsedResponse = attempt(JSON.parse, cleanResponse);
@@ -844,20 +864,24 @@ async function validateCredentials(
     const response: Record<string, string> = {};
     const paramesToDelete: string[] = [];
 
-    if (fsxCredentials && parsedResponse.ontapconnectivity === false) {
-        paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
-        response.fsxnError = parsedResponse.ontapError;
-    }
-
-    if (sqlCredentials.length) {
-        if (parsedResponse.sqlInstanceConnectivity === false) {
-            paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
-            response.sqlServerError = parsedResponse.sqlerror;
+    if (parsedResponse.requiredModuleError) {
+        response.requiredModuleError = parsedResponse.requiredModuleError;
+    } else {
+        if (fsxCredentials && parsedResponse.ontapconnectivity === false) {
+            paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+            response.fsxnError = parsedResponse?.ontapError;
         }
 
-        if (parsedResponse.sqlInstanceConnectivity === true) {
-            response.sqlServerEdition = parsedResponse.sqlEdition;
-            response.databaseCount = parsedResponse.noOfDatabases;
+        if (sqlCredentials.length) {
+            if (parsedResponse.sqlInstanceConnectivity === false) {
+                paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
+                response.sqlServerError = parsedResponse?.sqlerror;
+            }
+
+            if (parsedResponse.sqlInstanceConnectivity === true) {
+                response.sqlServerEdition = parsedResponse?.sqlEdition;
+                response.databaseCount = parsedResponse?.noOfDatabases;
+            }
         }
     }
 
@@ -913,6 +937,49 @@ async function deleteSSMParameter(credentialsId: string, region: string, ssmPara
 
         if (filteredSSMParameters?.length) {
             await deleteParameters(credentialsId, region, filteredSSMParameters);
+        }
+    }
+}
+
+async function verifyAndAddFSxOntapCredentials(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    storage: SqlServerInstanceInfoType['storage']
+) {
+    logger.info('verifyAndAddFSxOntapCredentials', { storage });
+
+    const fsxStorage = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
+    if (fsxStorage) {
+        // Check if the FSx credentials are already present in SSM
+        const fsxCredentials = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${fsxStorage.id}`);
+
+        if (!fsxCredentials) {
+            let credentials;
+
+            try {
+                ({ credentials } = await listFsxOntapCredentials(accountId, fsxStorage?.id));
+
+                if (isEmpty(credentials)) {
+                    throw new Error('FSx for ONTAP storage credentials not found');
+                }
+            } catch (error: any) {
+                throw createError(
+                    HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                    `FSx for ONTAP storage '${fsxStorage.id}' isn't registered with FSxN core service. This cannot be managed`
+                );
+            }
+
+            const preparedCreds = prepareParametersToStore('', [
+                {
+                    resourceId: fsxStorage.id,
+                    resourceType: RESOURCESTYPE.FSX,
+                    username: credentials?.userName,
+                    password: credentials.password
+                }
+            ]);
+
+            await ssmPutParameters(credentialsId, region, preparedCreds);
         }
     }
 }

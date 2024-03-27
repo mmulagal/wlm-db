@@ -79,8 +79,8 @@ describe('EC2 Operations', () => {
 
     it('Get validation node instance tyoe', async () => {
         const response = await getValidationNodeInstanceType(credentialsId, DEFAULT_AWS_REGION, [
-            'ap-southeast-1a',
-            'ap-southeast-1b'
+            'availability-zone-1',
+            'availability-zone-2'
         ]);
         expect(response).toEqual('t3.micro');
     });

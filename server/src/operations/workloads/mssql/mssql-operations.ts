@@ -14,7 +14,7 @@ import {
     TABLES_QUERY,
     SERVER_IO_LATENCY,
     NATIVE_SQL_BACKUPS,
-    PERFORMANCE_METRICS,
+    PERFORMANCE_METRICS_WITH_LATENCY,
     SQL_BACKUPS,
     DATABASE_NAME_EXISTS,
     SERVER_DETAILS,
@@ -603,7 +603,7 @@ async function getNativeSQLProtection(resourceId: string, activeNodeInstanceId: 
 }
 
 async function getPerformanceMetrics(credentialsId: string, region: string, activeNodeInstanceId: string) {
-    logger.info('Fetch SQL server performance metrics (latency, IOPS, throughput) for resource', {
+    logger.info('Fetch SQL server performance metrics (assessment, latency, IOPS, throughput) for resource', {
         credentialsId,
         region,
         activeNodeInstanceId
@@ -613,7 +613,7 @@ async function getPerformanceMetrics(credentialsId: string, region: string, acti
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
     }
 
-    const commands = [`sqlcmd -Q "${PERFORMANCE_METRICS}" -y 0`];
+    const commands = [`sqlcmd -Q "${PERFORMANCE_METRICS_WITH_LATENCY}" -y 0`];
     const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId, undefined, false);
 
     logger.debug('SQL server performance metrics (latency, IOPS, throughput) response', response);
@@ -622,7 +622,12 @@ async function getPerformanceMetrics(credentialsId: string, region: string, acti
         const parsedResponse = sqlResponseParsing(response)[0];
         logger.info(parsedResponse);
         return {
-            latency: { read: parsedResponse.READ_LATENCY, write: parsedResponse.WRITE_LATENCY },
+            assessment: parsedResponse.assessment,
+            latency: {
+                read: parsedResponse.READ_LATENCY,
+                write: parsedResponse.WRITE_LATENCY,
+                serverIo: parsedResponse.SERVER_IO_LATENCY
+            },
             iops: { read: parsedResponse.READ_IOPS, write: parsedResponse.WRITE_IOPS },
             throughput: { read: parsedResponse.READ_THROUGHPUT, write: parsedResponse.WRITE_THROUGHPUT }
         };
@@ -677,7 +682,7 @@ async function getActiveSqlNode(
         // Connection to activenode is successful
         let isSqlNodeActive = false;
         if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-            isSqlNodeActive = true;
+            isSqlNodeActive = await isActiveSqlNode(credentialsId, region, node1InstanceId);
             if (isSqlNodeActive) {
                 return {
                     isSSMConnected: true,

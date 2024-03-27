@@ -834,13 +834,13 @@ function saveFciConfigurationData(
                     name: 'VPC-1',
                     cidrBlock: '172.30.0.0/20',
                     availabilityZones: {
-                        'us-east-1d': [
+                        'availability-zone-1': [
                             {
                                 id: 'subnet-5a37222d',
                                 state: 'available',
                                 vpcId: 'vpc-ba1ed1de',
                                 cidrBlock: '192.168.16.0/24',
-                                availabilityZone: 'us-east-1d',
+                                availabilityZone: 'availability-zone-1',
                                 availableIps: 251,
                                 tags: [
                                     {
@@ -864,13 +864,13 @@ function saveFciConfigurationData(
                                 routeTableId: 'rtb-0dde1132a1c54f5e6'
                             }
                         ],
-                        'us-east-2d': [
+                        'availability-zone-2': [
                             {
                                 id: 'subnet-74a1b303',
                                 state: 'available',
                                 vpcId: 'vpc-ba1ed1de',
                                 cidrBlock: '192.168.17.0/24',
-                                availabilityZone: 'us-east-2d',
+                                availabilityZone: 'availability-zone-2',
                                 availableIps: 251,
                                 tags: [
                                     {
@@ -896,13 +896,13 @@ function saveFciConfigurationData(
         },
         availabilityZones: {
             selectedAzNode1: {
-                value: 'us-east-1d',
-                label: 'us-east-1d',
+                value: 'availability-zone-1',
+                label: 'availability-zone-1',
                 label2: '',
                 isDisabled: false,
                 disabledTitle: '',
                 data: {
-                    availabilityZone: 'us-east-1d',
+                    availabilityZone: 'availability-zone-1',
                     subnets: ['subnet-5a37222d']
                 }
             },
@@ -917,7 +917,7 @@ function saveFciConfigurationData(
                     state: 'available',
                     vpcId: 'vpc-ba1ed1de',
                     cidrBlock: '192.168.16.0/24',
-                    availabilityZone: 'us-east-1d',
+                    availabilityZone: 'availability-zone-1',
                     availableIps: 251,
                     tags: [
                         {
@@ -942,13 +942,13 @@ function saveFciConfigurationData(
                 }
             },
             selectedAzNode2: {
-                value: 'us-east-2d',
-                label: 'us-east-2d',
+                value: 'availability-zone-2',
+                label: 'availability-zone-2',
                 label2: '',
                 isDisabled: false,
                 disabledTitle: '',
                 data: {
-                    availabilityZone: 'us-east-2d',
+                    availabilityZone: 'availability-zone-2',
                     subnets: ['subnet-74a1b303']
                 }
             },
@@ -963,7 +963,7 @@ function saveFciConfigurationData(
                     state: 'available',
                     vpcId: 'vpc-ba1ed1de',
                     cidrBlock: '192.168.17.0/24',
-                    availabilityZone: 'us-east-2d',
+                    availabilityZone: 'availability-zone-2',
                     availableIps: 251,
                     tags: [
                         {
@@ -1175,13 +1175,13 @@ function saveStandaloneConfigurationData(
                     name: 'VPC-1',
                     cidrBlock: '172.30.0.0/20',
                     availabilityZones: {
-                        'us-east-1d': [
+                        'availability-zone-1': [
                             {
                                 id: 'subnet-5a37222d',
                                 state: 'available',
                                 vpcId: 'vpc-ba1ed1de',
                                 cidrBlock: '192.168.16.0/24',
-                                availabilityZone: 'us-east-1d',
+                                availabilityZone: 'availability-zone-1',
                                 availableIps: 251,
                                 tags: [
                                     {
@@ -1205,13 +1205,13 @@ function saveStandaloneConfigurationData(
                                 routeTableId: 'rtb-0dde1132a1c54f5e6'
                             }
                         ],
-                        'us-east-2d': [
+                        'availability-zone-2': [
                             {
                                 id: 'subnet-74a1b303',
                                 state: 'available',
                                 vpcId: 'vpc-ba1ed1de',
                                 cidrBlock: '192.168.17.0/24',
-                                availabilityZone: 'us-east-2d',
+                                availabilityZone: 'availability-zone-2',
                                 availableIps: 251,
                                 tags: [
                                     {
@@ -1237,13 +1237,13 @@ function saveStandaloneConfigurationData(
         },
         availabilityZones: {
             selectedAzNode1: {
-                value: 'us-east-1d',
-                label: 'us-east-1d',
+                value: 'availability-zone-1',
+                label: 'availability-zone-1',
                 label2: '',
                 isDisabled: false,
                 disabledTitle: '',
                 data: {
-                    availabilityZone: 'us-east-1d',
+                    availabilityZone: 'availability-zone-1',
                     subnets: ['subnet-5a37222d']
                 }
             },
@@ -1258,7 +1258,7 @@ function saveStandaloneConfigurationData(
                     state: 'available',
                     vpcId: 'vpc-ba1ed1de',
                     cidrBlock: '192.168.16.0/24',
-                    availabilityZone: 'us-east-1d',
+                    availabilityZone: 'availability-zone-1',
                     availableIps: 251,
                     tags: [
                         {
