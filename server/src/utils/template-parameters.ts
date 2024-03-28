@@ -264,11 +264,11 @@ const PARAMETERS = [
     },
     {
         name: 'FSxDiskIops',
-        description: 'The total number of SSD IOPS provisioned for the file system. The maximum is 80,000 IOPS.',
+        description: 'The total number of SSD IOPS provisioned for the file system. The maximum is 1,60,000 IOPS.',
         type: 'Number',
         default: 3,
         minValue: 3,
-        maxValue: 80000
+        maxValue: 160000
     },
     {
         name: 'FSxVolumeThroughputCapacity',
