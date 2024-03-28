@@ -709,7 +709,7 @@ export const GENERAL = {
     TEMPDB_SIZE: 'Tempdb volume size',
     QUORUM_SIZE: 'Quorum volume size',
     BUFFER_SIZE: 'Buffer',
-    MIN_FSX_CAPACITY_MESSAGE: 'Minimum SSD capacity of FSx for ONTAP'
+    MIN_FSX_CAPACITY_MESSAGE: 'Minimum SSD capacity of FSx for NetApp ONTAP'
 };
 
 export const CODE_VIEWER = {
