@@ -175,21 +175,21 @@ const ManagedHosts = () => {
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 if (!cellData) {
-                    const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find(
-                        (item: any) => item.type === DETECT_HOST_VAR.FSXN
-                    );
-                    const hasEbs = rowData?.sqlServerInstances?.[0]?.storage?.find(
-                        (item: any) => item.type === DETECT_HOST_VAR.EBS
-                    );
-                    return hasEbs && hasFsx
-                        ? `${GENERAL.FSX_FOR_ONTAP}, ${GENERAL.EBS}`
-                        : hasEbs
-                        ? GENERAL.EBS
-                        : hasFsx
-                        ? GENERAL.FSX_FOR_ONTAP
-                        : cellData || GENERAL.NOT_AVAILABLE;
+                    const typeList: string[] = [];
+                    rowData?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
+                        if (storageObj.type === DETECT_HOST_VAR.FSXN && !typeList.includes(GENERAL.FSX_FOR_ONTAP)) {
+                            typeList.push(GENERAL.FSX_FOR_ONTAP);
+                        }
+                        if (storageObj.type === DETECT_HOST_VAR.EBS && !typeList.includes(GENERAL.EBS)) {
+                            typeList.push(GENERAL.EBS);
+                        }
+                        if (storageObj.type === DETECT_HOST_VAR.FSXW && !typeList.includes(GENERAL.FSX_FOR_WINDOWS)) {
+                            typeList.push(GENERAL.FSX_FOR_WINDOWS);
+                        }
+                    });
+                    return typeList ? typeList.join(', ') : cellData || GENERAL.NOT_AVAILABLE;
                 } else {
-                    return cellData;
+                    return cellData || GENERAL.NOT_AVAILABLE;
                 }
             }
         },
@@ -329,7 +329,8 @@ const ManagedHosts = () => {
             renderCell: (cellData: string | number, rowData: any) => {
                 return (
                     <>
-                        {cellData || cellData === 0 ? formatSizeOnePrecision(cellData) : GENERAL.NOT_AVAILABLE}
+                        {!rowData?.loading &&
+                            (cellData || cellData === 0 ? formatSizeOnePrecision(cellData) : GENERAL.NOT_AVAILABLE)}
                         {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
                     </>
                 );
@@ -457,7 +458,7 @@ const ManagedHosts = () => {
                 const nodes = rowData?.sqlServerInstances?.[0]?.sqlServerNodes;
                 let type = '';
                 if (nodes && nodes.length > 1) {
-                    type = GENERAL.FCI;
+                    type = GENERAL.CLUSTER;
                 } else if (nodes && nodes.length === 1) {
                     type = GENERAL.STANDALONE;
                 }
