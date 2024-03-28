@@ -225,13 +225,12 @@ const HOST_AND_SQL_INFO_PS1 = [
           $sqlServerInstanceStorageInfo = ForEach ($sqlInstanceDriveLetter in $sqlInstanceDriveLetterList) {
             New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $DiskTargetInfoMap[$sqlInstanceDriveLetter] }
           }
-          $sqlServerInstanceStorageInfo = $sqlServerInstanceStorageInfo | ConvertTo-Json -Compress
         } else {
           $body['failureInfo'] += "\${instanceName}: SQLCMD.EXE not available\`N"
         }
       }
 
-      $body['sqlServerInstanceStorageInfo'] = $sqlServerInstanceStorageInfo
+      $body['sqlServerInstanceStorageInfo'] = $sqlServerInstanceStorageInfo | ConvertTo-Json -Compress
       $instanceSectionEndTime = Get-Date
       $body['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
       Echo $body | ConvertTo-Json
