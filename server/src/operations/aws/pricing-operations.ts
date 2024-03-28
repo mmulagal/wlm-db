@@ -490,6 +490,7 @@ async function calculatePrice(
                         data: sizeInGigaBytes(fsxnDiskSizes?.FSxDataVolumeSize),
                         log: sizeInGigaBytes(fsxnDiskSizes?.FSxLogVolumeSize),
                         tempdb: sizeInGigaBytes(fsxnDiskSizes?.FSxTempDbVolumeSize),
+                        buffer: sizeInGigaBytes(fsxnDiskSizes?.FSxBufferVolumeSize),
                         total: fsxnDiskSizes?.FSxStorageCapacity,
                         ...(fsxnDiskSizes?.FSxQuorumVolumeSize && {
                             quorum: sizeInGigaBytes(fsxnDiskSizes?.FSxQuorumVolumeSize)
