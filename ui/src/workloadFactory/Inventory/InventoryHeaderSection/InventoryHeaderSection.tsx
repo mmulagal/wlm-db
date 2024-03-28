@@ -11,6 +11,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 const InventoryHeaderSection = () => {
     const navigate = useNavigate();
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
+    const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
     const isManagedHostInProgress = useAppSelector(state => state.databaseHome.getDatabaseHosts.databaseHostsLoading);
     const { unManagedHosts, unIdentifiableHosts } = useAppSelector(state => state.inventory);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
@@ -49,7 +50,7 @@ const InventoryHeaderSection = () => {
                                 value={((databaseHostsList || [])?.length || 0) + unManagedHosts.length}
                                 color="var(--chart-4)"
                                 text={GENERAL.DETECTED_HOSTS}
-                                isLoading={isDiscoverInProgress}
+                                isLoading={isDiscoverInProgress || isManagedHostListLoading}
                             />
                         </div>
 
@@ -60,7 +61,7 @@ const InventoryHeaderSection = () => {
                                 value={unIdentifiableHosts.length}
                                 color="var(--chart-2)"
                                 text={GENERAL.UNIDENTIFIABLE_HOSTS}
-                                isLoading={isDiscoverInProgress}
+                                isLoading={isDiscoverInProgress || isManagedHostListLoading}
                             />
                         </div>
                     </div>
@@ -88,7 +89,7 @@ const InventoryHeaderSection = () => {
                                 value={unManagedHosts.length}
                                 color="#DE9EFF"
                                 text={GENERAL.UNMANAGED_HOSTS}
-                                isLoading={isDiscoverInProgress}
+                                isLoading={isDiscoverInProgress || isManagedHostListLoading}
                             />
                         </div>
                     </div>

@@ -36,6 +36,7 @@ const UnmanagedHosts = () => {
     const dispatch = useDispatch();
 
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
+    const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
     const unManagedHostList = useAppSelector(state => state.inventory.unManagedHosts);
     const mssqlInstancesData = useAppSelector(state => state.inventory.mssqlInstancesData);
     const { unManagedHostInitialColumns } = useAppSelector(state => state.inventory);
@@ -464,7 +465,7 @@ const UnmanagedHosts = () => {
             }
         },
         initialColumnState: unManagedHostInitialColumns,
-        isLazyLoading: isDiscoverInProgress
+        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading
     });
 
     useEffect(() => {

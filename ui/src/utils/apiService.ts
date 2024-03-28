@@ -529,6 +529,25 @@ export const inventoryApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
+            getManagedHostData: builder.query({
+                query: ({ credentialId, regionId, nextToken = null }) => {
+                    if (nextToken) {
+                        return `credentials/${credentialId}/regions/${regionId}/resources/managed-hosts?nextToken=${nextToken}`;
+                    } else {
+                        return `credentials/${credentialId}/regions/${regionId}/resources/managed-hosts`;
+                    }
+                },
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialId,
+                            regionId: args?.regionId
+                        };
+                    }
+                    return response;
+                }
+            }),
             discoverHosts: builder.query({
                 query: ({ regionId, credentialsId, nextToken = null }) => {
                     if (nextToken) {
@@ -647,6 +666,7 @@ export const { useGetWlmdbPoliciesQuery } = policiesApi;
 export const { useGetDriveInfoQuery, useCreateUserDBMutation, useGetCollationListQuery } = createUserDbApi;
 
 export const {
+    useLazyGetManagedHostDataQuery,
     useDiscoverHostsQuery,
     useGetFsxCredentialStatusQuery,
     useGetHostsDetailsQuery,
