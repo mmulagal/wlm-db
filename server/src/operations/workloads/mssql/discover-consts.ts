@@ -186,6 +186,7 @@ const HOST_AND_SQL_INFO_PS1 = [
       $sqlServerInstanceStorageInfo = $null
   
       $isDefaultInstance = -Not $sqlService.Name.Contains('$')
+      $body['isDefaultInstance'] = $isDefaultInstance
       $instanceName = $sqlService.Name -Replace "MSSQL\\$", ""
   
       $sqlServiceBinaryPath = $sqlService.PathName  -Replace "-s.*", ""

@@ -41,6 +41,7 @@ const SqlServerInstanceInfo = Type.Object({
             description: 'Name of SQL Server. For a clustered instance, this is the name of the virtual server.'
         })
     ),
+    isDefaultInstance: Type.Boolean({ description: 'Is this default SQL Server instance' }),
     sqlServerNodes: Type.Optional(
         Type.Array(
             Type.String({
