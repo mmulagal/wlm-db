@@ -14,6 +14,9 @@
         .insideContainer {
             display: flex;
             flex-direction: column;
+            .loadingContainer {
+                height: 35px;
+            }
         }
     }
 }

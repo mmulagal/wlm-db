@@ -1,4 +1,4 @@
-import { DsTypography } from '@netapp/design-system';
+import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import { ReactComponent as Dev } from '../../../assets/Dev.svg';
 import { ReactComponent as Other } from '../../../assets/Other.svg';
 import { ReactComponent as Analytics } from '../../../assets/Analytics.svg';
@@ -9,12 +9,15 @@ import ProgressBar from '../../../common/ProgressBar/ProgressBar';
 import styles from './SandboxDistributionType.module.scss';
 
 const SandboxDistributionType = () => {
+    const loading = false;
     return (
         <div className={styles.sandboxType}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
                     Sandboxes distribution by tag
                 </DsTypography>
+
+                {loading && <FlashingDotsLoader />}
             </div>
 
             <div className={styles.mainSection}>

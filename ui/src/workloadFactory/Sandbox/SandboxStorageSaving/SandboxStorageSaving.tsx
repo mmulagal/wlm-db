@@ -1,10 +1,11 @@
 import useResize from '../../../common/hooks/useResize';
 import { ReactComponent as Savings } from '../../../assets/Savings.svg';
 import styles from './SandboxStorageSaving.module.scss';
-import { DsTypography } from '@netapp/design-system';
+import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 
 const SandboxStorageSaving = () => {
     const windowSize = useResize();
+    const loading = false;
     return (
         <div className={styles.sandboxStorageSaving}>
             {windowSize.width > 1500 && (
@@ -15,7 +16,12 @@ const SandboxStorageSaving = () => {
                         </div>
                         <div className={styles.rightSection}>
                             <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                                78%
+                                {loading && (
+                                    <div className={styles.loadingContainer}>
+                                        <FlashingDotsLoader />
+                                    </div>
+                                )}
+                                {!loading && '78%'}
                             </DsTypography>
                             <DsTypography variant="Regular_14">Sandboxes storage savings</DsTypography>
                         </div>
@@ -75,7 +81,12 @@ const SandboxStorageSaving = () => {
                         </div>
                         <div className={styles.rightSection}>
                             <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                                78%
+                                {loading && (
+                                    <div className={styles.loadingContainer}>
+                                        <FlashingDotsLoader />
+                                    </div>
+                                )}
+                                {!loading && '78%'}
                             </DsTypography>
                             <DsTypography variant="Regular_14">Sandboxes storage savings</DsTypography>
                         </div>
@@ -85,16 +96,25 @@ const SandboxStorageSaving = () => {
 
                     <div className={styles.consumedSaving}>
                         <div className={styles.valueContainer}>
-                            <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                                0.82
-                            </DsTypography>
-                            <DsTypography
-                                variant="Semibold_14"
-                                className={styles.setUnit}
-                                style={{ lineHeight: 'unset' }}
-                            >
-                                TiB
-                            </DsTypography>
+                            {loading && (
+                                <div className={styles.loadingContainer}>
+                                    <FlashingDotsLoader />
+                                </div>
+                            )}
+                            {!loading && (
+                                <>
+                                    <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
+                                        0.82
+                                    </DsTypography>
+                                    <DsTypography
+                                        variant="Semibold_14"
+                                        className={styles.setUnit}
+                                        style={{ lineHeight: 'unset' }}
+                                    >
+                                        TiB
+                                    </DsTypography>
+                                </>
+                            )}
                         </div>
                         <DsTypography variant="Regular_14">Sandboxes savings</DsTypography>
                     </div>
@@ -103,16 +123,25 @@ const SandboxStorageSaving = () => {
 
                     <div className={styles.consumedSaving}>
                         <div className={styles.valueContainer}>
-                            <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                                0.18
-                            </DsTypography>
-                            <DsTypography
-                                variant="Semibold_14"
-                                className={styles.setUnit}
-                                style={{ lineHeight: 'unset' }}
-                            >
-                                TiB
-                            </DsTypography>
+                            {loading && (
+                                <div className={styles.loadingContainer}>
+                                    <FlashingDotsLoader />
+                                </div>
+                            )}
+                            {!loading && (
+                                <>
+                                    <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
+                                        0.18
+                                    </DsTypography>
+                                    <DsTypography
+                                        variant="Semibold_14"
+                                        className={styles.setUnit}
+                                        style={{ lineHeight: 'unset' }}
+                                    >
+                                        TiB
+                                    </DsTypography>
+                                </>
+                            )}
                         </div>
                         <DsTypography variant="Regular_14">Consumed savings</DsTypography>
                     </div>

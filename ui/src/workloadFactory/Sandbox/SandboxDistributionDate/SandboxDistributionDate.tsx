@@ -1,16 +1,19 @@
-import { DsTypography } from '@netapp/design-system';
+import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import styles from './SandboxDistributionDate.module.scss';
 import SandboxChart from './SandboxChart/SandboxChart';
 import useResize from '../../../common/hooks/useResize';
 
 const SandboxDistributionDate = () => {
     const windowSize = useResize();
+    const loading = false;
     return (
         <div className={styles.sandboxDate}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
                     Sandboxes distribution by age
                 </DsTypography>
+
+                {loading && <FlashingDotsLoader />}
             </div>
 
             <div className={styles.mainSection}>
