@@ -22,6 +22,7 @@ import getConnectionStatusResponse from '../../responses/aws/ssm-connection-stat
 import putParameterResponse from '../../responses/aws/ssm-put-parameter.json';
 import getParameerResponse from '../../responses/aws/ssm-get-parameter.json';
 import deleteParametersResponse from '../../responses/aws/ssm-delete-parameters.json';
+import { GET_ONTAP_VOLUME_SNAPSHOT_COUNT_SCRIPT, MAP_ONTAP_VOLUMES_SCRIPT } from '../../../utils/consts';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -138,7 +139,7 @@ const serverIOLatencyParams = {
 
 const nativeSqlBackupParams = {
     commands: [
-        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = 'D'\n    AND backupset.database_name NOT IN ('msdb','tempdb','model','master') FOR JSON PATH\n\""
+        "sqlcmd -Q \"SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = 'D'\n    AND backupset.database_name NOT IN ('msdb','tempdb','model','master') FOR JSON PATH\n\" -y 0"
     ]
 };
 
@@ -149,13 +150,11 @@ const nativeSqlBackupDatabasesParams = {
 };
 
 const getOntapSnapshotCountParams = {
-    commands: [
-        "C:\\SSM\\OntapRestGet.ps1 -FSxID test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'uuid=ea8b0326-302e-11ee-8387-19b38f44ff5b' -OntapResourceQuery 'fields=snapshot_count'"
-    ]
+    commands: [GET_ONTAP_VOLUME_SNAPSHOT_COUNT_SCRIPT]
 };
 
 const getOntapMappedVolumesParams = {
-    commands: ['C:\\SSM\\Get-MappedOntapVolumes.ps1 -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1']
+    commands: [MAP_ONTAP_VOLUMES_SCRIPT]
 };
 
 const getStorageParams = {
