@@ -51,6 +51,7 @@ const UndetectedHosts = () => {
     const { setDialog, closeDialog } = useDialog();
     const unIdentifiableHosts = useAppSelector(state => state.inventory.unIdentifiableHosts);
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
+    const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const fsxCredentialStatusObj = useAppSelector(state => state.inventory.fsxCredentialStatusObj);
 
@@ -479,7 +480,7 @@ const UndetectedHosts = () => {
         rows: tableData,
         pageSize: 10,
         isHorizontalScroll: true,
-        isLazyLoading: isDiscoverInProgress
+        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading
     });
 
     return (

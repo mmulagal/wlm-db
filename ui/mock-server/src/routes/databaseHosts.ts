@@ -11,6 +11,7 @@ import JobMonitoringSubTask from '../data/JobMonitoringSubTask.json';
 import DiscoverEC2 from '../data/discoverEc2.json';
 import CredentialsStatus from '../data/credentialsStatus.json';
 import MssqlInstances from '../data/mssqlInstances.json';
+import ManagedInstanceList from '../data/managedInstanceList.json';
 
 const router = require('express').Router();
 
@@ -91,6 +92,12 @@ router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/mssql/ins
     setTimeout(() => {
         generateResponse(res, 200, MssqlInstances);
     }, 3000);
+});
+
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/resources/managed-hosts`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, ManagedInstanceList);
+    }, 1000);
 });
 
 export default router;

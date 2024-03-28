@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     addDatabaseHosts,
@@ -10,7 +10,8 @@ import {
     useGetDatabaseHostsQuery,
     useGetFsxCredentialStatusQuery,
     useGetMssqlInstanceDataMutation,
-    useGetMssqlResourceDataMutation
+    useGetMssqlResourceDataMutation,
+    useLazyGetManagedHostDataQuery
 } from '../../utils/apiService';
 import {
     addNewManagedHostData,
@@ -22,6 +23,7 @@ import {
     setDiscoveredHosts,
     setFsxCredentialStatus,
     setFsxIdsList,
+    setIsManagedHostListLoading,
     setIsRefreshed,
     setMovedManagedHosts,
     setMovedToManagedHost,
@@ -63,6 +65,69 @@ const InventoryApis = () => {
     const [runningResourceList, setRunningResourceList] = useState<Array<String>>([]);
 
     const isCredRegionMissing = !headerSelectedCred || !headerSelectedRegion;
+
+    const [getManagedHostListAPI] = useLazyGetManagedHostDataQuery();
+    const [managedHostList, setManagedHostList] = useState<any>([]);
+    const [managedHostListLoading, setManagedHostListLoading] = useState(true);
+
+    const credIdRef = useRef();
+    const regionIdRef = useRef();
+
+    useEffect(() => {
+        credIdRef.current = credId;
+        regionIdRef.current = regionId;
+    }, [credId, regionId]);
+
+    const getManagedHostList = async (
+        managedList: string[],
+        managedHostCursor: string | null,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+            try {
+                const result: any = await getManagedHostListAPI({
+                    credentialId: credId,
+                    regionId: regionId,
+                    nextToken: managedHostCursor
+                });
+                if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+                    if (result && !result?.error) {
+                        result?.data?.items?.map((perRow: any) => {
+                            if (perRow?.instances) {
+                                managedList = [...managedList, ...perRow?.instances];
+                            }
+                        });
+                        if (result?.data?.nextToken) {
+                            getManagedHostList(managedList, result?.data?.nextToken, runningCredId, runningRegionId);
+                        } else {
+                            setManagedHostListLoading(false);
+                            dispatch(setIsManagedHostListLoading(false));
+                            setManagedHostList(managedList);
+                        }
+                    } else {
+                        setManagedHostListLoading(false);
+                        dispatch(setIsManagedHostListLoading(false));
+                        setManagedHostList(managedList);
+                    }
+                }
+            } catch (error) {
+                setManagedHostListLoading(false);
+                dispatch(setIsManagedHostListLoading(false));
+                setManagedHostList(managedList);
+            }
+        }
+    };
+
+    useEffect(() => {
+        let managedList: string[] = [];
+        if (credId && regionId) {
+            dispatch(setIsManagedHostListLoading(true));
+            setManagedHostList([]);
+            setManagedHostListLoading(true);
+            getManagedHostList(managedList, null, credId, regionId);
+        }
+    }, [credId, regionId, isRefreshed]);
 
     useEffect(() => {
         resetDBHomePageState(dispatch);
@@ -419,14 +484,8 @@ const InventoryApis = () => {
     };
 
     useEffect(() => {
-        if (discoveredHostData && discoveredHostData.length) {
+        if (!managedHostListLoading && discoveredHostData && discoveredHostData.length) {
             let newDiscoveredHostData: any = [];
-            let managedHostsList: string[] = [];
-            databaseHostsData?.map(managedHost => {
-                if (managedHost?.topology?.ec2Details?.[0]?.id) {
-                    managedHostsList.push(managedHost?.topology?.ec2Details?.[0]?.id);
-                }
-            });
             discoveredHostData.map((host: any) => {
                 if (host?.sqlServerInstances) {
                     // sort sqlServerInstances so every time it picks first running
@@ -450,7 +509,7 @@ const InventoryApis = () => {
             let removeRows: any[] = [];
 
             // This function is used to find nodes available in managed or unmanaged tab. In that case Partner node will be added in removeRows list.
-            getPrimaryClusterNode(newDiscoveredHostData, removeRows, managedHostsList);
+            getPrimaryClusterNode(newDiscoveredHostData, removeRows, managedHostList);
 
             let movedManagedHosts: any[] = [];
             let unManagedHosts: any[] = [];
@@ -478,13 +537,14 @@ const InventoryApis = () => {
                 } else if (movedToUnmanagedHost.includes(host?.ec2InstanceId)) {
                     unManagedHosts.push(host);
                 } else if (
-                    host.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED ||
-                    (!isWindowAuthentication && !isSqlAuthentication) ||
-                    fsxCredentialValidationFailed
+                    !managedHostList.includes(host?.ec2InstanceId) &&
+                    (host.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED ||
+                        (!isWindowAuthentication && !isSqlAuthentication) ||
+                        fsxCredentialValidationFailed)
                 ) {
                     unIdentifiableHosts.push(host);
                 } else {
-                    if (!managedHostsList.includes(host?.ec2InstanceId)) {
+                    if (!managedHostList.includes(host?.ec2InstanceId)) {
                         unManagedHosts.push(host);
                     }
                 }
@@ -493,7 +553,14 @@ const InventoryApis = () => {
             dispatch(setUnManagedHosts(unManagedHosts));
             dispatch(setMovedManagedHosts(movedManagedHosts));
         }
-    }, [discoveredHostData, databaseHostsData, fsxCredentialStatusObj, movedToUnmanagedHost, movedToManagedHost]);
+    }, [
+        discoveredHostData,
+        databaseHostsData,
+        fsxCredentialStatusObj,
+        movedToUnmanagedHost,
+        movedToManagedHost,
+        managedHostListLoading
+    ]);
 
     const getMssqlData = async (instancesPayload: any, nextToken: string | null = '') => {
         try {
@@ -517,8 +584,8 @@ const InventoryApis = () => {
                     }
                 });
                 dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataRes }));
-                if (result?.nextToken) {
-                    getMssqlData(instancesPayload, result?.nextToken);
+                if (result?.data?.nextToken) {
+                    getMssqlData(instancesPayload, result?.data?.nextToken);
                 }
             } else {
                 let mssqlInstancesDataErr: any = {};
