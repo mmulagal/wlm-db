@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 
-import { AccordionCard, AccordionCardContent, Typography, useAccordionContext } from '@netapp/design-system';
+import {
+    AccordionCard,
+    AccordionCardContent,
+    TooltipInfo,
+    Typography,
+    useAccordionContext
+} from '@netapp/design-system';
 import { ReactComponent as ActionRequiredIcon } from '../../../assets/action-required.svg';
 import styles from './EstimatedCost.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
@@ -9,19 +15,20 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { useGetEstimationCostMutation } from '../../../utils/apiService';
 import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 import { FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
+import SizePopover from './SizePopover/SizePopover';
 
 type Res = {
     data: {
-        compute: '',
+        compute: '';
         fsxnStorage: {
-            capacity: '',
-            throughput: '',
+            capacity: '';
+            throughput: '';
             size: {
-                total: ''
-            }
-        },
-        total: ''
-    }
+                total: '';
+            };
+        };
+        total: '';
+    };
 };
 
 const EstimatedCost = () => {
@@ -68,16 +75,16 @@ const EstimatedCost = () => {
             instanceType: instanceTypeName || '',
             sqlSoftwareType: sqlSoftwareTypeValue.value === 'Standard' ? 'SQL std' : 'SQL ent' || '',
             sqlDeploymentMode: deploymentModel?.value
-        }
+        };
     };
 
     useEffect(() => {
         let validDisk = false;
-        if (diskSize && diskSizeUnit && 
-            (
-                (diskSizeUnit === 'TiB' && Number(diskSize) <= 130 && Number(diskSize) >= 1) ||
-                (diskSizeUnit === 'GiB' && Number(diskSize) <= 133120 && Number(diskSize) >= 120)
-            )
+        if (
+            diskSize &&
+            diskSizeUnit &&
+            ((diskSizeUnit === 'TiB' && Number(diskSize) <= 130 && Number(diskSize) >= 1) ||
+                (diskSizeUnit === 'GiB' && Number(diskSize) <= 133120 && Number(diskSize) >= 120))
         ) {
             validDisk = true;
         }
@@ -94,8 +101,8 @@ const EstimatedCost = () => {
             const splitRegion = regionValue?.value.split('|');
             const updatedStr = splitRegion[0].replace(/\s?$/, '');
             let payload;
-            
-            if(selectedFsxnType === GENERAL.CREATE_NEW_FSXN){
+
+            if (selectedFsxnType === GENERAL.CREATE_NEW_FSXN) {
                 payload = {
                     compute: computeObj(updatedStr),
                     fsxnStorage: {
@@ -174,13 +181,13 @@ const EstimatedCost = () => {
                     {GENERAL.ESTIMATED_COST_HEADER}
                 </Typography>
             );
-        }else if (!selectedZone1 || (deploymentModel?.label === GENERAL.FAILOVER_CLUSTER && !selectedZone2)) {
+        } else if (!selectedZone1 || (deploymentModel?.label === GENERAL.FAILOVER_CLUSTER && !selectedZone2)) {
             return (
                 <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
                     {GENERAL.SELECT_AZ}
                 </Typography>
             );
-        }else if (isLoading) {
+        } else if (isLoading) {
             return <LoadingComponent />;
         } else if (isDisabled) {
             return (
@@ -194,7 +201,7 @@ const EstimatedCost = () => {
     };
 
     const costDisableCheck = () => {
-        if(deploymentModel?.label === GENERAL.SINGLE_INSTANCE){
+        if (deploymentModel?.label === GENERAL.SINGLE_INSTANCE) {
             return isDisabled || !regionValue || !selectedZone1;
         } else {
             return isDisabled || !regionValue || !selectedZone1 || !selectedZone2;
@@ -251,16 +258,22 @@ const EstimatedCost = () => {
                             </div>
                         </div>
 
-                        {selectedFsxnType === GENERAL.CREATE_NEW_FSXN &&
+                        {selectedFsxnType === GENERAL.CREATE_NEW_FSXN && (
                             <div className={styles.storageContainer}>
                                 <Typography variant="Semibold_14" className={styles.compute}>
                                     {GENERAL.STORAGE}
                                 </Typography>
                                 <div className={styles.secondRow}>
                                     <Typography variant="Regular_14">{GENERAL.TYPE}: FSx for NetApp ONTAP</Typography>
-                                    <Typography variant="Regular_14">
-                                        {GENERAL.SIZE}: {data?.data?.fsxnStorage?.size?.total + ' GiB'}
-                                    </Typography>
+                                    <div className={styles.sizeRow}>
+                                        <Typography variant="Regular_14">
+                                            {GENERAL.SIZE}: {data?.data?.fsxnStorage?.size?.total + ' GiB'}
+                                        </Typography>
+                                        <TooltipInfo className={styles.tooltipClass}>
+                                            {SizePopover(data?.data?.fsxnStorage?.size)}
+                                        </TooltipInfo>
+                                    </div>
+
                                     <Typography variant="Regular_14">
                                         {GENERAL.THROUGHPUT}: {throughputValue}
                                     </Typography>
@@ -293,8 +306,7 @@ const EstimatedCost = () => {
                                     </Typography>
                                 </div>
                             </div>
-                        }
-                        
+                        )}
 
                         {/* <div className={styles.connectivityContainer}>
                             <Typography variant="Semibold_14" className={styles.compute}>

@@ -326,12 +326,11 @@ const ManagedHosts = () => {
             accessor: 'storage.size',
             isSortable: true,
             width: '212px',
-            renderCell: (cellData: string, rowData: any) => {
+            renderCell: (cellData: string | number, rowData: any) => {
                 return (
                     <>
-                        {cellData && formatSizeOnePrecision(cellData)}
+                        {cellData || cellData === 0 ? formatSizeOnePrecision(cellData) : GENERAL.NOT_AVAILABLE}
                         {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && !rowData?.loading && notAvailable()}
                     </>
                 );
             }
