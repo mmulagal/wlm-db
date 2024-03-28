@@ -114,7 +114,7 @@ Parameters:
         Default: 3
         Type: Number
         MinValue: 3
-        MaxValue: 80000
+        MaxValue: 160000
 
     FSxStorageCapacity:
         Description: Storage capacity of the file system. The minimum is 1024 GiB. The maximum is 192 TiB.
