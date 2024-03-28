@@ -276,37 +276,29 @@ const installPowerShellModule = (module: string) => `
 `;
 
 const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string) => `
-    pwsh -Command {
-        $WarningPreference = 'SilentlyContinue';
-        #Requires -Module AWS.Tools.SimpleSystemsManagement
+    $WarningPreference = 'SilentlyContinue';
+    #Requires -Module AWS.Tools.SimpleSystemsManagement
 
-        $FSxID = '${fsxid}'
-        $FSxRegion = '${fsxregion}'
+    $FSxID = '${fsxid}'
+    $FSxRegion = '${fsxregion}'
 
-        if ($responeObject -eq $null) {
-            $responeObject = @{}
-        }
+    if ($responeObject -eq $null) {
+        $responeObject = @{}
+    }
 
-        try {
-            $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-            $FSxUserName = $SsmParameter.fsx.username
-            $FSxPassword = $SsmParameter.fsx.password
-            $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
-            $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
-            
-            $isprivatesubnet = $False
-            $connection =  Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet
-            if($connection -eq $False) {
-                $isprivatesubnet = $True
-                $regionCertificateificate = ''
-            } else {
-                $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-                Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\\cfn\\FSxCertificate.pem
-                $Certificate = Import-Certificate -FilePath C:\\cfn\\FSxCertificate.pem -CertStoreLocation Cert:\\LocalMachine\\Root
-                $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
-            }
+    try {
+        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+        $FSxUserName = $SsmParameter.fsx.username
+        $FSxPassword = $SsmParameter.fsx.password
+        $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
+        $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
 
-            $sqlquery = @"
+        $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
+        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\\cfn\\FSxCertificate.pem
+        $Certificate = Import-Certificate -FilePath C:\\cfn\\FSxCertificate.pem -CertStoreLocation Cert:\\LocalMachine\\Root
+        $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+
+        $sqlquery = @"
             SET NOCOUNT ON;
             SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
             CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
@@ -316,143 +308,138 @@ const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string) => `
             FOR JSON PATH;
 "@
 
-            $sqlresponse =  sqlcmd -Q $sqlquery -y 0;
+        $sqlresponse =  sqlcmd -Q $sqlquery -y 0;
 
-            if (!($sqlresponse.count -gt 0)) {
-                write-error "Couldn't get database windows volumes"
-                return
-            }
-
-            Function Get-SerialNumberOfWinVolumes {
-                param(
-                    [Parameter(Mandatory = $true)]
-                    [string[]]$sqlresponse
-                )
-
-                $winvolumes = $sqlresponse | convertFrom-Json
-
-                $filterString = ''
-                foreach ($winvolume in $winvolumes) {
-                    $volname = $winvolume.volumename
-                    if ($volname -ne '') {
-                        $filterString += "VolumeName = '$volname' or "
-                    }
-                }
-
-                $filterString = $filterString.TrimEnd(' or ')
-
-                $volumes = Get-CimInstance -Query "SELECT DeviceID, VolumeName FROM Win32_LogicalDisk where $filterString"
-                $Lunserialnumbers = @()
-                foreach ($volume in $volumes) {
-                    $partitions = Get-CimInstance -Query "ASSOCIATORS OF {Win32_LogicalDisk.DeviceID='$($volume.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition"
-                    foreach ($partition in $partitions) {
-                        $diskdrives = Get-CimInstance -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($partition.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
-                        foreach ($diskdrive in $diskdrives) {
-                            $Lunserialnumbers += $diskdrives.SerialNumber
-                        }
-                    }
-                }
-
-                $Lunserialnumbers
-            }
-
-            Function Invoke-ONTAPGetRequest {
-                param(
-                    [Parameter(Mandatory = $false)]
-                    [string]$ApiEndpoint,
-
-                    [Parameter(Mandatory = $false)]
-                    [string]$ApiQueryFilter
-                )
-
-                $Params = @{
-                    "URI"     = 'https://' + $FSxHostName + '/api' + $ApiEndpoint + '?' + $ApiQueryFilter
-                    "Method"  = "GET"
-                    "Headers" =@{"Authorization" = "Basic $FSxCredentialsInBase64"}
-                    "ContentType" = "application/json"
-                }
-
-                if ($isprivatesubnet -eq $False) {
-                    return Invoke-RestMethod @Params -Certificate $regionCertificateificate
-                } else {
-                    return Invoke-RestMethod @Params -SkipCertificateCheck
-                }
-            }
-
-            Function Get-LunFromSerialNumber($SerialNumbers) {
-                Write-Debug "Get ONTAP lun name from serial numbers for: $SerialNumbers"
-
-                $QueryFilter = ''
-                foreach ($SerialNumber in $SerialNumbers) {
-                    if ($SerialNumber -ne '') {
-                        $QueryFilter += $SerialNumber + '|'
-                    }
-                }
-                $QueryFilter = $QueryFilter.TrimEnd('|')
-
-                $Params = @{
-                    "ApiEndPoint" = "/storage/luns"
-                }
-
-                if ($QueryFilter -ne '') {
-                    $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter"}
-                }
-
-                $Response = Invoke-ONTAPGetRequest @Params
-
-                $LunRecords = $Response.records
-
-                [string[]]$LunNames = @()
-                foreach ($record in $LunRecords) {
-                    $LunNames += $record.name
-                }
-
-                Write-Debug "Lun names: $LunNames"
-                return $LunNames
-            }
-
-            Function Get-VolumeIdFromName($Names) {
-                Write-Debug "Get Volume Id from name: $Names"
-
-                $QueryFilter = ''
-                foreach ($Name in $Names) {
-                    if ($Name -ne '') {
-                        $QueryFilter += $Name + '|'
-                    }
-                }
-                $QueryFilter = $QueryFilter.TrimEnd('|')
-
-                $Params = @{
-                    "ApiEndPoint" = "/storage/volumes"
-                }
-
-                if ($QueryFilter -ne '') {
-                    $Params += @{"ApiQueryFilter" = "name=$QueryFilter"}
-                }
-
-                return Invoke-ONTAPGetRequest @Params
-            }
-
-            $SerialNumbers = Get-SerialNumberOfWinVolumes $sqlresponse
-
-            if (!($SerialNumbers.count -gt 0)) {
-                write-error "Couldn't get windows volume serial numbers"
-                return
-            }
-
-            $VolumeNames = Get-LunFromSerialNumber $SerialNumbers
-
-            if (!($VolumeNames.count -gt 0)) {
-                write-error "Couldn't get associated Ontap LUN volume names"
-                return
-            }
-
-            $volumes = Get-VolumeIdFromName $VolumeNames
-
-            return ($volumes | ConvertTo-Json)
-        } catch {
-            Write-Error $_.Exception.Message
+        if (!($sqlresponse.count -gt 0)) {
+            write-error "Couldn't get database windows volumes"
+            return
         }
+
+        Function Get-SerialNumberOfWinVolumes {
+            param(
+                [Parameter(Mandatory = $true)]
+                [string[]]$sqlresponse
+            )
+
+            $winvolumes = $sqlresponse | convertFrom-Json
+
+            $filterString = ''
+            foreach ($winvolume in $winvolumes) {
+                $volname = $winvolume.volumename
+                if ($volname -ne '') {
+                    $filterString += "VolumeName = '$volname' or "
+                }
+            }
+
+            $filterString = $filterString.TrimEnd(' or ')
+
+            $volumes = Get-CimInstance -Query "SELECT DeviceID, VolumeName FROM Win32_LogicalDisk where $filterString"
+            $Lunserialnumbers = @()
+            foreach ($volume in $volumes) {
+                $partitions = Get-CimInstance -Query "ASSOCIATORS OF {Win32_LogicalDisk.DeviceID='$($volume.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition"
+                foreach ($partition in $partitions) {
+                    $diskdrives = Get-CimInstance -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($partition.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
+                    foreach ($diskdrive in $diskdrives) {
+                        $Lunserialnumbers += $diskdrives.SerialNumber
+                    }
+                }
+            }
+
+            $Lunserialnumbers
+        }
+
+        Function Invoke-ONTAPGetRequest {
+            param(
+                [Parameter(Mandatory = $false)]
+                [string]$ApiEndpoint,
+
+                [Parameter(Mandatory = $false)]
+                [string]$ApiQueryFilter
+            )
+
+            $Params = @{
+                "URI"     = 'https://' + $FSxHostName + '/api' + $ApiEndpoint + '?' + $ApiQueryFilter
+                "Method"  = "GET"
+                "Headers" =@{"Authorization" = "Basic $FSxCredentialsInBase64"}
+                "ContentType" = "application/json"
+            }
+
+            return Invoke-RestMethod @Params -Certificate $regionCertificateificate
+        }
+
+        Function Get-LunFromSerialNumber($SerialNumbers) {
+            Write-Debug "Get ONTAP lun name from serial numbers for: $SerialNumbers"
+
+            $QueryFilter = ''
+            foreach ($SerialNumber in $SerialNumbers) {
+                if ($SerialNumber -ne '') {
+                    $QueryFilter += $SerialNumber + '|'
+                }
+            }
+            $QueryFilter = $QueryFilter.TrimEnd('|')
+
+            $Params = @{
+                "ApiEndPoint" = "/storage/luns"
+            }
+
+            if ($QueryFilter -ne '') {
+                $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter"}
+            }
+
+            $Response = Invoke-ONTAPGetRequest @Params
+
+            $LunRecords = $Response.records
+
+            [string[]]$LunNames = @()
+            foreach ($record in $LunRecords) {
+                $LunNames += $record.name
+            }
+
+            Write-Debug "Lun names: $LunNames"
+            return $LunNames
+        }
+
+        Function Get-VolumeIdFromName($Names) {
+            Write-Debug "Get Volume Id from name: $Names"
+
+            $QueryFilter = ''
+            foreach ($Name in $Names) {
+                if ($Name -ne '') {
+                    $QueryFilter += $Name + '|'
+                }
+            }
+            $QueryFilter = $QueryFilter.TrimEnd('|')
+
+            $Params = @{
+                "ApiEndPoint" = "/storage/volumes"
+            }
+
+            if ($QueryFilter -ne '') {
+                $Params += @{"ApiQueryFilter" = "name=$QueryFilter"}
+            }
+
+            return Invoke-ONTAPGetRequest @Params
+        }
+
+        $SerialNumbers = Get-SerialNumberOfWinVolumes $sqlresponse
+
+        if (!($SerialNumbers.count -gt 0)) {
+            write-error "Couldn't get windows volume serial numbers"
+            return
+        }
+
+        $VolumeNames = Get-LunFromSerialNumber $SerialNumbers
+
+        if (!($VolumeNames.count -gt 0)) {
+            write-error "Couldn't get associated Ontap LUN volume names"
+            return
+        }
+
+        $volumes = Get-VolumeIdFromName $VolumeNames
+
+        return ($volumes | ConvertTo-Json)
+    } catch {
+        Write-Error $_.Exception.Message
     }
 `;
 
@@ -463,77 +450,62 @@ const restGetUtilForOntap = (
     apiQueryFilter: string,
     apiQueryFields: string
 ) => `
-    pwsh -Command {
-        $WarningPreference = 'SilentlyContinue';
-        #Requires -Module AWS.Tools.SimpleSystemsManagement
+    $WarningPreference = 'SilentlyContinue';
+    #Requires -Module AWS.Tools.SimpleSystemsManagement
 
-        $FSxID = '${fsxid}'
-        $FSxRegion = '${fsxregion}'
-        $APIEndpoint = '${apiEndpoint}'
-        $APIQueryFilter = '${apiQueryFilter}'
-        $ApiQueryFields = '${apiQueryFields}'
+    $FSxID = '${fsxid}'
+    $FSxRegion = '${fsxregion}'
+    $APIEndpoint = '${apiEndpoint}'
+    $APIQueryFilter = '${apiQueryFilter}'
+    $ApiQueryFields = '${apiQueryFields}'
 
-        if ($responeObject -eq $null) {
-            $responeObject = @{}
+    if ($responeObject -eq $null) {
+        $responeObject = @{}
+    }
+
+    try {
+        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+        $FSxUserName = $SsmParameter.fsx.username
+        $FSxPassword = $SsmParameter.fsx.password
+        $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
+        $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
+        
+        $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
+        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\\cfn\\FSxCertificate.pem
+        $Certificate = Import-Certificate -FilePath C:\\cfn\\FSxCertificate.pem -CertStoreLocation Cert:\\LocalMachine\\Root
+        $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+
+        Function Invoke-ONTAPGetRequest {
+            param(
+                [Parameter(Mandatory = $false)]
+                [string]$ApiEndpoint,
+
+                [Parameter(Mandatory = $false)]
+                [string]$ApiQueryFilter,
+
+                [Parameter(Mandatory = $false)]
+                [string]$ApiQueryFields
+            )
+
+            $Ampersand = ''
+            if ($ApiQueryFields -ne '' -and $ApiQueryFilter -ne '') {
+                $Ampersand = '&';
+            }
+            $Params = @{
+                "URI"     = 'https://' + $FSxHostName + '/api' + $ApiEndpoint + '?' + $ApiQueryFilter + $Ampersand + $ApiQueryFields
+                "Method"  = "GET"
+                "Headers" =@{"Authorization" = "Basic $FSxCredentialsInBase64"}
+                "ContentType" = "application/json"
+            }
+
+            return Invoke-RestMethod @Params -Certificate $regionCertificateificate
         }
 
-        try {
-            $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-            $FSxUserName = $SsmParameter.fsx.username
-            $FSxPassword = $SsmParameter.fsx.password
-            $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
-            $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
-            
-            $isprivatesubnet = $False
-            $connection =  Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet
-            if($connection -eq $False) {
-                $isprivatesubnet = $True
-                $regionCertificateificate = ''
-            } else {
-                $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-                Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\\cfn\\FSxCertificate.pem
-                $Certificate = Import-Certificate -FilePath C:\\cfn\\FSxCertificate.pem -CertStoreLocation Cert:\\LocalMachine\\Root
-                $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
-            }
-
-            Function Invoke-ONTAPGetRequest {
-                # write-host "Invoke-ONTAPGetRequest" $ApiEndpoint $ApiQueryFilter $ApiQueryFields
-                param(
-                    [Parameter(Mandatory = $false)]
-                    [string]$ApiEndpoint,
-
-                    [Parameter(Mandatory = $false)]
-                    [string]$ApiQueryFilter,
-
-                    [Parameter(Mandatory = $false)]
-                    [string]$ApiQueryFields
-                )
-                # write-host "Invoke-ONTAPGetRequest" $ApiEndpoint $ApiQueryFilter $ApiQueryFields
-                $Ampersand = ''
-                if ($ApiQueryFields -ne '' -and $ApiQueryFilter -ne '') {
-                    $Ampersand = '&';
-                }
-                # write-host "Ampersand $Ampersand"
-                $Params = @{
-                    "URI"     = 'https://' + $FSxHostName + '/api' + $ApiEndpoint + '?' + $ApiQueryFilter + $Ampersand + $ApiQueryFields
-                    "Method"  = "GET"
-                    "Headers" =@{"Authorization" = "Basic $FSxCredentialsInBase64"}
-                    "ContentType" = "application/json"
-                }
-                # write-host "url $($Params.URI)"
-                if ($isprivatesubnet -eq $False) {
-                    return Invoke-RestMethod @Params -Certificate $regionCertificateificate
-                } else {
-                    return Invoke-RestMethod @Params -SkipCertificateCheck
-                }
-            }
-
-            $response = Invoke-ONTAPGetRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
-            $response | ConvertTo-Json
-        } catch {
-            $responeObject = @{
-                error = $_.Exception.Message
-            }
+        $response = Invoke-ONTAPGetRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
+        $response | ConvertTo-Json
+    } catch {
+        $responeObject = @{
+            error = $_.Exception.Message
         }
     }
 `;
