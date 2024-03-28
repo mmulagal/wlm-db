@@ -724,6 +724,33 @@ async function createCloudFormationTemplateForUserDeployment(
         }
     }
 
+    const adUsernameDetails = splitDomainUsername(adConfiguration.domainUsername);
+    const fsxUsernameDetails = splitDomainUsername(fsxConfiguration.fsxUsername);
+    const sqlUsernameDetails = splitDomainUsername(sqlConfiguration.serviceAccountName);
+    templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.DomainAdminUser}=${
+        adUsernameDetails?.username || adConfiguration.domainUsername
+    }`;
+    templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.FSxAdminUsername}=${
+        fsxUsernameDetails?.username || fsxConfiguration.fsxUsername
+    }`;
+    templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.SQLServiceAccountName}=${
+        sqlUsernameDetails?.username || sqlConfiguration.serviceAccountName
+    }`;
+    templateParamsAsList.push(
+        {
+            ParameterKey: TEMPLATE_USERNAME_MAPPING.DomainAdminUser,
+            ParameterValue: adUsernameDetails?.username || adConfiguration.domainUsername
+        },
+        {
+            ParameterKey: TEMPLATE_USERNAME_MAPPING.FSxAdminUsername,
+            ParameterValue: fsxUsernameDetails?.username || fsxConfiguration.fsxUsername
+        },
+        {
+            ParameterKey: TEMPLATE_USERNAME_MAPPING.SQLServiceAccountName,
+            ParameterValue: sqlUsernameDetails?.username || sqlConfiguration.serviceAccountName
+        }
+    );
+
     Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
         if (!servicesWithNoEndpoint.includes(key)) {
             templateParams += `&param_${value}='true'`;
