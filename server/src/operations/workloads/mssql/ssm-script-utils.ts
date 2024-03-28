@@ -230,17 +230,10 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
         $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
         $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
 
-        $isprivatesubnet = $False
-        $connection =  Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet
-        if($connection -eq $False) {
-            $isprivatesubnet = $True
-            $regionCertificateificate = ''
-        } else {
-            $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-            Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\\cfn\\FSxCertificate.pem
-            $Certificate = Import-Certificate -FilePath C:\\cfn\\FSxCertificate.pem -CertStoreLocation Cert:\\LocalMachine\\Root
-            $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
-        }
+        $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
+        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\\cfn\\FSxCertificate.pem
+        $Certificate = Import-Certificate -FilePath C:\\cfn\\FSxCertificate.pem -CertStoreLocation Cert:\\LocalMachine\\Root
+        $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
 
         $Params = @{
             "URI"         = 'https://management.' + $FSxID + '.fsx.' + $FSxRegion + '.amazonaws.com/api/cluster?fields=version'
@@ -249,11 +242,7 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
             "ContentType" = "application/json"
         }
 
-        if ($isprivatesubnet -eq $False) {
-            $ontapresult = Invoke-RestMethod @Params -Certificate $regionCertificateificate
-        } else {
-            $ontapresult = Invoke-RestMethod @Params -skipCertificateCheck
-        }
+        $ontapresult = Invoke-RestMethod @Params -Certificate $regionCertificateificate
 
         $responeObject.add('ontapconnectivity', $True)
     } catch {
@@ -270,7 +259,11 @@ const installPowerShellModule = (module: string) => `
 
     if (-not (Get-Module -ListAvailable -Name $modulename)) {
         $responeObject.add('requiredModuleError', "$modulename Module does not exist, installing it now")
-        $null = Start-Job -ScriptBlock { Install-Module -Name $args -Force -AllowClobber } -ArgumentList $modulename
+        $null = Start-Job -ScriptBlock {
+            Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+            Install-Module -Name $args -Force -AllowClobber
+        } -ArgumentList $modulename
         return $responeObject | convertto-json
     }
 `;

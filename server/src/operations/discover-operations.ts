@@ -872,7 +872,7 @@ async function validateCredentials(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
-    let command = 'pwsh -Command {$WarningPreference = "SilentlyContinue";';
+    let command = '$WarningPreference = "SilentlyContinue";';
 
     if (fsxCredentials || sqlCredentials.length) {
         command += `${installPowerShellModule(PSMODULE_AWS_SSM)};\n`;
@@ -889,7 +889,7 @@ async function validateCredentials(
         );
     }
 
-    command += '$responeObject | ConvertTo-Json -Compress }';
+    command += '$responeObject | ConvertTo-Json -Compress';
 
     const ssmresponse = await callSsmExecution(credentialsId, region, [command], instanceId, undefined, false);
 
