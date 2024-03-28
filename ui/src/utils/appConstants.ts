@@ -703,7 +703,13 @@ export const GENERAL = {
     BLOCKED_BY_PERMISSION_BOUNDARY: 'Blocked',
     MISSING_PERMISSION: 'Missing',
     MISSING_AND_BLOCKED_PERMISSIONS: 'Missing & blocked permissions',
-    UNSUPPORTED_PERMISSIONS: 'Missing permissions'
+    UNSUPPORTED_PERMISSIONS: 'Missing permissions',
+    DATA_SIZE: 'Data volume size',
+    LOG_SIZE: 'Log volume size',
+    TEMPDB_SIZE: 'Tempdb volume size',
+    QUORUM_SIZE: 'Quorum volume size',
+    BUFFER_SIZE: 'Buffer',
+    MIN_FSX_CAPACITY_MESSAGE: 'Minimum SSD capacity of FSx for NetApp ONTAP'
 };
 
 export const CODE_VIEWER = {
