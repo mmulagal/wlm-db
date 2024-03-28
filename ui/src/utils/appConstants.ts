@@ -708,6 +708,7 @@ export const GENERAL = {
     LOG_SIZE: 'Log volume size',
     TEMPDB_SIZE: 'Tempdb volume size',
     QUORUM_SIZE: 'Quorum volume size',
+    BUFFER_SIZE: 'Buffer',
     MIN_FSX_CAPACITY_MESSAGE: 'Minimum SSD capacity of FSx for ONTAP'
 };
 

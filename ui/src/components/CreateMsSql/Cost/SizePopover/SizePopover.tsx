@@ -11,7 +11,7 @@ const SizePopover = (data: any) => {
                     {GENERAL.DATA_SIZE}
                 </Typography>
                 <Typography variant="Regular_13" className={styles.middle}>
-                    {`${formatFractionalNumber(data?.data, 2)} GiB`}
+                    {`${formatFractionalNumber(data?.data || 0, 2)} GiB`}
                 </Typography>
             </div>
 
@@ -20,7 +20,7 @@ const SizePopover = (data: any) => {
                     {GENERAL.LOG_SIZE}
                 </Typography>
                 <Typography variant="Regular_13" className={styles.middle}>
-                    {`${formatFractionalNumber(data?.log, 2)} GiB`}
+                    {`${formatFractionalNumber(data?.log || 0, 2)} GiB`}
                 </Typography>
             </div>
 
@@ -29,7 +29,7 @@ const SizePopover = (data: any) => {
                     {GENERAL.TEMPDB_SIZE}
                 </Typography>
                 <Typography variant="Regular_13" className={styles.middle}>
-                    {`${formatFractionalNumber(data?.tempdb, 2)} GiB`}
+                    {`${formatFractionalNumber(data?.tempdb || 0, 2)} GiB`}
                 </Typography>
             </div>
 
@@ -38,7 +38,16 @@ const SizePopover = (data: any) => {
                     {GENERAL.QUORUM_SIZE}
                 </Typography>
                 <Typography variant="Regular_13" className={styles.middle}>
-                    {`${formatFractionalNumber(data?.quorum, 2)} GiB`}
+                    {`${formatFractionalNumber(data?.quorum || 0, 2)} GiB`}
+                </Typography>
+            </div>
+
+            <div className={styles.middleContainer}>
+                <Typography variant="Semibold_13" className={styles.middle}>
+                    {GENERAL.BUFFER_SIZE}
+                </Typography>
+                <Typography variant="Regular_13" className={styles.middle}>
+                    {`${formatFractionalNumber(data?.buffer || 0, 2)} GiB`}
                 </Typography>
             </div>
 
@@ -47,7 +56,7 @@ const SizePopover = (data: any) => {
                     {GENERAL.TOTAL_SIZE}
                 </Typography>
                 <Typography variant="Semibold_13" className={styles.totalSize}>
-                    {`${formatFractionalNumber(data?.total, 2)} GiB`}
+                    {`${formatFractionalNumber(data?.total || 0, 2)} GiB`}
                 </Typography>
             </div>
         </div>
