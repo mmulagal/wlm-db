@@ -30,6 +30,9 @@ import { setJobsList, setSubJobsData } from '../../../store/workloadFactory/jobM
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
 import { WLF_TABS } from '../../../utils/consts';
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
+import InventoryApis from '../../Inventory/InventoryApis';
+import DatabaseHomeApis from '../DatabaseHomeApis';
+import JobMonitoringApi from '../../JobMonitoring/JobMonitoringApi';
 
 const HeaderComponent = () => {
     const dispatch = useDispatch();
@@ -48,6 +51,9 @@ const HeaderComponent = () => {
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
     HeaderComponentApi();
+    InventoryApis();
+    DatabaseHomeApis();
+    JobMonitoringApi();
 
     useEffect(() => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
@@ -232,7 +238,6 @@ const HeaderComponent = () => {
                                 }
                                 onClick={() => {
                                     handleClick(WLF_TABS.DASHBOARD);
-                                    refreshPage();
                                 }}
                             >
                                 {GENERAL.TAB_DASHBOARD}
@@ -246,7 +251,6 @@ const HeaderComponent = () => {
                                 }
                                 onClick={() => {
                                     handleClick(WLF_TABS.INVENTORY);
-                                    refreshPage();
                                 }}
                             >
                                 {GENERAL.TAB_INVENTORY}
@@ -261,7 +265,6 @@ const HeaderComponent = () => {
                                 }
                                 onClick={() => {
                                     handleClick(WLF_TABS.JOB_MONITORING);
-                                    refreshPage();
                                 }}
                             >
                                 {GENERAL.TAB_JOB_MONITORING}

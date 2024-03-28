@@ -13,7 +13,7 @@ const InventoryChart = () => {
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
     const { unManagedHosts, unIdentifiableHosts } = useAppSelector(state => state.inventory);
-    const { databaseHostsData } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const databaseHostsList: any = useAppSelector(state => state.databaseHome.databaseHostsList);
     const { discoverHostLoading } = useAppSelector(state => state.inventory.discoveredHosts);
 
     const doughnutOptions = {
@@ -30,11 +30,11 @@ const InventoryChart = () => {
         data: {
             datasets: [
                 {
-                    data: [(databaseHostsData?.length || 0) + unManagedHosts.length, unIdentifiableHosts.length],
+                    data: [(databaseHostsList?.length || 0) + unManagedHosts.length, unIdentifiableHosts.length],
                     backgroundColor: ['#68C6B3', '#5E8DCD']
                 },
                 {
-                    data: [databaseHostsData?.length || 0, unManagedHosts.length, unIdentifiableHosts.length],
+                    data: [databaseHostsList?.length || 0, unManagedHosts.length, unIdentifiableHosts.length],
                     backgroundColor: ['#A815F3', '#DE9EFF', '#FFF']
                 }
             ]
@@ -54,15 +54,15 @@ const InventoryChart = () => {
                 myDoughnut.destroy();
             }
         };
-    }, [databaseHostsData, unManagedHosts, unIdentifiableHosts]);
+    }, [databaseHostsList, unManagedHosts, unIdentifiableHosts]);
 
-    const totalHosts = (databaseHostsData?.length || 0) + unManagedHosts.length + unIdentifiableHosts.length;
+    const totalHosts = (databaseHostsList?.length || 0) + unManagedHosts.length + unIdentifiableHosts.length;
 
     return (
         <div className={styles.inventoryChart} id="chart-item">
             <div className={styles['center-text']}>
                 <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                    {(databaseHostsData?.length || 0) + unManagedHosts.length + unIdentifiableHosts.length}
+                    {(databaseHostsList?.length || 0) + unManagedHosts.length + unIdentifiableHosts.length}
                 </Typography>
                 <Typography variant="Regular_14">{GENERAL.DATABASE_HOSTS}</Typography>
                 {discoverHostLoading && <DsFlashingDotsLoader />}

@@ -11,8 +11,6 @@ import UnmanagedHosts from './UnmanagedHosts/UnmanagedHosts';
 const Inventory = () => {
     const selectedInventoryTab = useAppSelector(state => state.inventory.selectedInventoryTab);
 
-    InventoryApis();
-
     return (
         <div className={styles.inventory}>
             <InventoryHeaderSection />
