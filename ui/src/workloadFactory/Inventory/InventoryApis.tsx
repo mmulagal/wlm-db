@@ -441,10 +441,17 @@ const InventoryApis = () => {
                 let fsxCredentialValidationFailedNode1 = host?.sqlServerInstances?.[0]?.storage?.find(
                     (item: any) => item.type === DETECT_HOST_VAR.FSXN && !fsxCredentialStatusObj[item.id]
                 );
+                let storageTypeCheckNode1 = host?.sqlServerInstances?.[0]?.storage?.find(
+                    (item: any) =>
+                        item.type === DETECT_HOST_VAR.FSXN ||
+                        item.type === DETECT_HOST_VAR.FSXW ||
+                        item.type === DETECT_HOST_VAR.EBS
+                );
                 const unmanagedHost1 = !(
                     host.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED ||
                     (!isWindowAuthenticationNode1 && !isSqlAuthenticationNode1) ||
-                    fsxCredentialValidationFailedNode1
+                    fsxCredentialValidationFailedNode1 ||
+                    !storageTypeCheckNode1
                 );
 
                 const isWindowAuthenticationNode2 = partnerNode?.sqlServerInstances?.[0]?.windowsAuthentication;
@@ -452,10 +459,17 @@ const InventoryApis = () => {
                 let fsxCredentialValidationFailedNode2 = partnerNode?.sqlServerInstances?.[0]?.storage?.find(
                     (item: any) => item.type === DETECT_HOST_VAR.FSXN && !fsxCredentialStatusObj[item.id]
                 );
+                let storageTypeCheckNode2 = partnerNode?.sqlServerInstances?.[0]?.storage?.find(
+                    (item: any) =>
+                        item.type === DETECT_HOST_VAR.FSXN ||
+                        item.type === DETECT_HOST_VAR.FSXW ||
+                        item.type === DETECT_HOST_VAR.EBS
+                );
                 const unmanagedHost2 = !(
                     partnerNode.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED ||
                     (!isWindowAuthenticationNode2 && !isSqlAuthenticationNode2) ||
-                    fsxCredentialValidationFailedNode2
+                    fsxCredentialValidationFailedNode2 ||
+                    !storageTypeCheckNode2
                 );
 
                 if ((unmanagedHost1 && unmanagedHost2) || (unmanagedHost1 && !unmanagedHost2)) {
@@ -523,6 +537,12 @@ const InventoryApis = () => {
                 let fsxCredentialValidationFailed = host?.sqlServerInstances?.[0]?.storage?.find(
                     (item: any) => item.type === DETECT_HOST_VAR.FSXN && !fsxCredentialStatusObj[item.id]
                 );
+                let storageTypeCheck = host?.sqlServerInstances?.[0]?.storage?.find(
+                    (item: any) =>
+                        item.type === DETECT_HOST_VAR.FSXN ||
+                        item.type === DETECT_HOST_VAR.FSXW ||
+                        item.type === DETECT_HOST_VAR.EBS
+                );
                 // FSx credential validation always passed for demo mode
                 if (isDemoMode) {
                     fsxCredentialValidationFailed = false;
@@ -540,7 +560,8 @@ const InventoryApis = () => {
                     !managedHostList.includes(host?.ec2InstanceId) &&
                     (host.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED ||
                         (!isWindowAuthentication && !isSqlAuthentication) ||
-                        fsxCredentialValidationFailed)
+                        fsxCredentialValidationFailed ||
+                        !storageTypeCheck)
                 ) {
                     unIdentifiableHosts.push(host);
                 } else {
@@ -620,6 +641,7 @@ const InventoryApis = () => {
                     setRunningInstanceList([...runningInstanceList, host?.ec2InstanceId]);
                     let fsxId = '';
                     let ebsId = '';
+                    let fsxwId = '';
                     if (host?.sqlServerInstances?.[0]?.storage) {
                         host?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
                             if (storageObj.type === DETECT_HOST_VAR.FSXN) {
@@ -627,6 +649,9 @@ const InventoryApis = () => {
                             }
                             if (storageObj.type === DETECT_HOST_VAR.EBS) {
                                 ebsId = storageObj.id;
+                            }
+                            if (storageObj.type === DETECT_HOST_VAR.FSXW) {
+                                fsxwId = storageObj.id;
                             }
                         });
                     }
@@ -643,6 +668,13 @@ const InventoryApis = () => {
                         instanceObj = {
                             ...instanceObj,
                             ebsVolumeId: ebsId
+                        };
+                    }
+
+                    if (fsxwId) {
+                        instanceObj = {
+                            ...instanceObj,
+                            fsxwId: fsxwId
                         };
                     }
                     instancesPayload.push(instanceObj);
