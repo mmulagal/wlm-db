@@ -135,6 +135,26 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number) {
     FSxStorageCapacity = Math.max(FSxStorageCapacity, FSX_SSD_MIN_SIZE);
     FSxStorageCapacity = Math.min(FSxStorageCapacity, FSX_SSD_MAX_SIZE);
 
+    logger.info(FSxStorageCapacity);
+    // 20 percent of FSxStorageCapacity
+    let FSxBufferVolumeSize = 0;
+    // FSxBufferVolumeSize in GiB initially later converted to MiB
+    // If the total fsx storage capacity goes beyond 192TiB Means, we will keep the buffer as 0
+    // Otherwise we will calculate the 20 percent of FSxStorageCapacity as the buffer, Even then if that buffer plus fsx storage capacity goes beyond total limit of 192TiB, then we keep the difference
+    // between FSxStorageCapacity and Max FSX Storage limit as buffer
+    if (FSxStorageCapacity >= MAX_FSX_STORAGE_IN_GIB) {
+        FSxBufferVolumeSize = 0;
+    } else {
+        FSxBufferVolumeSize = Math.ceil(0.2 * FSxStorageCapacity);
+        if (FSxStorageCapacity + FSxBufferVolumeSize >= MAX_FSX_STORAGE_IN_GIB) {
+            FSxBufferVolumeSize = Math.ceil((MAX_FSX_STORAGE_IN_GIB - FSxStorageCapacity) * 1024);
+            FSxStorageCapacity += FSxBufferVolumeSize / 1024;
+        } else {
+            FSxBufferVolumeSize = Math.ceil(FSxBufferVolumeSize * 1024);
+            FSxStorageCapacity += FSxBufferVolumeSize / 1024;
+        }
+    }
+
     logger.debug('FSx Storage Capacity', { FSxStorageCapacity });
 
     return {
@@ -143,6 +163,7 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number) {
         FSxLogVolumeSize,
         FSxTempDbVolumeSize,
         FSxQuorumVolumeSize,
+        FSxBufferVolumeSize,
         FSxStorageCapacity
     };
 }
