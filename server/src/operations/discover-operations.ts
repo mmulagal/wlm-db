@@ -357,9 +357,9 @@ async function getHostAndSqlInfoFromPsOutput(
                     const deploymentTypes = [];
                     const ebsVolumeIDs = ssmTarget.ebsVolumeIDs?.map(elem => elem?.replace('-', ''));
 
-                    let driveInfo = sqlServerInstanceInfo?.snqlServerInstanceStorageInfo
-                        ? JSON.parse(sqlServerInstanceInfo?.snqlServerInstanceStorageInfo)
-                        : [];
+                    let driveInfo = isEmpty(sqlServerInstanceInfo?.sqlServerInstanceStorageInfo)
+                        ? []
+                        : JSON.parse(sqlServerInstanceInfo?.sqlServerInstanceStorageInfo);
 
                     if (!Array.isArray(driveInfo)) {
                         driveInfo = [driveInfo];
@@ -421,6 +421,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerNodes,
                         sqlServerInstance,
                         sqlServerState,
+                        isDefaultInstance,
                         windowsAuthentication,
                         scriptExecutionTime,
                         databaseCount
@@ -445,6 +446,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerState,
                         sqlServerProductYear,
                         ...(sqlServerEdition && { sqlServerEdition }),
+                        isDefaultInstance,
                         windowsAuthentication,
                         sqlServerAuthentication,
                         storage: uniqBy(storageTypes, 'id'),
