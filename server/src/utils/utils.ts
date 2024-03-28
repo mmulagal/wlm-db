@@ -135,7 +135,6 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number) {
     FSxStorageCapacity = Math.max(FSxStorageCapacity, FSX_SSD_MIN_SIZE);
     FSxStorageCapacity = Math.min(FSxStorageCapacity, FSX_SSD_MAX_SIZE);
 
-    logger.info(FSxStorageCapacity);
     // 20 percent of FSxStorageCapacity
     let FSxBufferVolumeSize = 0;
     // FSxBufferVolumeSize in GiB initially later converted to MiB
