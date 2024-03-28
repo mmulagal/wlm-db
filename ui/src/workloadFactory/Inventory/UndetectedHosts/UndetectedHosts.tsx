@@ -19,13 +19,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import {
-    DETECT_HOST_VAR,
-    FROM_DIALOG,
-    FSX_DEPLOYMENT_MODE,
-    SSM_TROUBLESHOOTING_LINK,
-    WLF_TABS
-} from '../../../utils/consts';
+import { DETECT_HOST_VAR, FROM_DIALOG, FSX_DEPLOYMENT_MODE, SSM_TROUBLESHOOTING_LINK } from '../../../utils/consts';
 import { useManageHostMutation, useRegisterResourceCredentialsMutation } from '../../../utils/apiService';
 import { setIsDetectHostError, setIsDetectHostLoading } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
@@ -42,7 +36,7 @@ import {
 } from '../../../store/workloadFactory/inventorySlice';
 import { createDetectHostPayload } from '../../../utils/utilityFunctions';
 import { useEffect, useRef, useState } from 'react';
-import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
+import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import store from '../../../store/store';
 
 const UndetectedHosts = () => {
@@ -73,6 +67,7 @@ const UndetectedHosts = () => {
     const formatUnIdentifiableData = (data: any) => {
         return data.map((item: any) => {
             let fsxId = '';
+            let isSqlRunning = item?.sqlServerInstances?.[0]?.sqlServerState === DETECT_HOST_VAR.RUNNING;
             if (item?.sqlServerInstances?.[0]?.storage) {
                 item?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
                     if (storageObj.type === DETECT_HOST_VAR.FSXN) {
@@ -83,11 +78,15 @@ const UndetectedHosts = () => {
 
             let isRegistered = false;
             let detectOption = 'disable';
+            let detectOptionDisableMsg = '';
             if (fsxId) {
                 isRegistered = fsxCredentialStatusObj?.[fsxId];
             }
             if (item?.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED) {
                 detectOption = 'hide';
+            } else if (!isSqlRunning) {
+                detectOption = 'disable';
+                detectOptionDisableMsg = GENERAL.SQL_SERVER_NOT_RUNNING;
             } else if ((fsxId && fsxId in fsxCredentialStatusObj) || !fsxId) {
                 detectOption = 'show';
             }
@@ -101,7 +100,8 @@ const UndetectedHosts = () => {
                 sqlServerInstances: item?.sqlServerInstances,
                 fsxId: fsxId,
                 isFsxRegistered: isRegistered,
-                detectOption: detectOption
+                detectOption: detectOption,
+                detectOptionDisableMsg: detectOptionDisableMsg
             };
         });
     };
@@ -327,7 +327,7 @@ const UndetectedHosts = () => {
                             </div>
                         )}
                         {rowData?.detectOption === 'disable' && (
-                            <div className={styles.detectManageDisable}>
+                            <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
                                 <Typography variant="Regular_14" className={styles.textStyle}>
                                     {GENERAL.DETECT_HOST}
                                 </Typography>

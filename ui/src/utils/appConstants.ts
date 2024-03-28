@@ -640,6 +640,7 @@ export const GENERAL = {
     SAME_NEW_DRIVE_ERROR: 'Data and log file drive letters should be different for new drives.',
     FSX_FOR_ONTAP: 'FSx for ONTAP',
     EBS: 'EBS',
+    FSX_FOR_WINDOWS: 'FSx for Windows',
     SINGLE_AZ: 'Single AZ',
     MULTI_AZ: 'Multi AZ',
     // Const for unidentifiable data
@@ -694,6 +695,7 @@ export const GENERAL = {
         ' Job Monitoring.'
     ],
     FCI: 'FCI',
+    CLUSTER: 'Cluster',
     STANDALONE: 'Standalone',
     SERVICE: 'Service',
     PERMISSIONS: 'Permissions',
@@ -711,7 +713,8 @@ export const GENERAL = {
     BUFFER_SIZE: 'Buffer',
     MIN_FSX_CAPACITY_MESSAGE: 'Minimum SSD capacity of FSx for NetApp ONTAP',
     VPC_MESSAGE:
-        'AWS Service interface endpoints (SQS, FSx, EC2, CloudWatch, Cloud Formation, SSM) and S3 gateway endpoint are created during deployment if not found. Make sure security group for an existing Interface endpoint allows access to HTTPS(443) protocol to the selected subnets. VPC DNS attributes(EnableDnsSupport and EnableDnsHostnames) are modified to enable resolve endpoint address resolution.'
+        'AWS Service interface endpoints (SQS, FSx, EC2, CloudWatch, Cloud Formation, SSM) and S3 gateway endpoint are created during deployment if not found. Make sure security group for an existing Interface endpoint allows access to HTTPS(443) protocol to the selected subnets. VPC DNS attributes(EnableDnsSupport and EnableDnsHostnames) are modified to enable resolve endpoint address resolution.',
+    SQL_SERVER_NOT_RUNNING: 'SQL service is not running'
 };
 
 export const CODE_VIEWER = {
