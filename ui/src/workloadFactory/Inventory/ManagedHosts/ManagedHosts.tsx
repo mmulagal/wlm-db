@@ -187,7 +187,7 @@ const ManagedHosts = () => {
                             typeList.push(GENERAL.FSX_FOR_WINDOWS);
                         }
                     });
-                    return typeList ? typeList.join(',') : cellData || GENERAL.NOT_AVAILABLE;
+                    return typeList ? typeList.join(', ') : cellData || GENERAL.NOT_AVAILABLE;
                 } else {
                     return cellData || GENERAL.NOT_AVAILABLE;
                 }
