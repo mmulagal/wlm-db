@@ -269,9 +269,13 @@ const EstimatedCost = () => {
                                         <Typography variant="Regular_14">
                                             {GENERAL.SIZE}: {data?.data?.fsxnStorage?.size?.total + ' GiB'}
                                         </Typography>
-                                        <TooltipInfo className={styles.tooltipClass}>
-                                            {SizePopover(data?.data?.fsxnStorage?.size)}
-                                        </TooltipInfo>
+                                        {data?.data?.fsxnStorage?.size?.total && (
+                                            <TooltipInfo className={styles.tooltipClass}>
+                                                {Number(data?.data?.fsxnStorage?.size?.total || 0) > 1024
+                                                    ? SizePopover(data?.data?.fsxnStorage?.size)
+                                                    : GENERAL.MIN_FSX_CAPACITY_MESSAGE}
+                                            </TooltipInfo>
+                                        )}
                                     </div>
 
                                     <Typography variant="Regular_14">
