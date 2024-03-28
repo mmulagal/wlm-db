@@ -709,7 +709,9 @@ export const GENERAL = {
     TEMPDB_SIZE: 'Tempdb volume size',
     QUORUM_SIZE: 'Quorum volume size',
     BUFFER_SIZE: 'Buffer',
-    MIN_FSX_CAPACITY_MESSAGE: 'Minimum SSD capacity of FSx for NetApp ONTAP'
+    MIN_FSX_CAPACITY_MESSAGE: 'Minimum SSD capacity of FSx for NetApp ONTAP',
+    VPC_MESSAGE:
+        'AWS Service interface endpoints (SQS, FSx, EC2, CloudWatch, Cloud Formation, SSM) and S3 gateway endpoint are created during deployment if not found. Make sure security group for an existing Interface endpoint allows access to HTTPS(443) protocol to the selected subnets. VPC DNS attributes(EnableDnsSupport and EnableDnsHostnames) are modified to enable resolve endpoint address resolution.'
 };
 
 export const CODE_VIEWER = {
