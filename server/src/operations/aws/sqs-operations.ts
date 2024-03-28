@@ -886,8 +886,11 @@ async function processCloudFormationMessages() {
                                                 masterJobStatus =
                                                     masterJobStatus !== JOBSTATUS.COMPLETED
                                                         ? JOBSTATUS.FAILED
-                                                        : jobStatus;
+                                                        : masterJobStatus;
+                                            } else {
+                                                masterJobStatus = jobStatus;
                                             }
+
                                             const subJobs =
                                                 (await listJobs(
                                                     accountId,
@@ -938,7 +941,9 @@ async function processCloudFormationMessages() {
                                                 masterJobStatus =
                                                     masterJobStatus !== JOBSTATUS.COMPLETED
                                                         ? JOBSTATUS.FAILED
-                                                        : jobStatus;
+                                                        : masterJobStatus;
+                                            } else {
+                                                masterJobStatus = jobStatus;
                                             }
                                             await modifyMasterJobStatus(
                                                 accountId,
