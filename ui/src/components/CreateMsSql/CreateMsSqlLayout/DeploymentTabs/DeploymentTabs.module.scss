@@ -36,4 +36,12 @@
     .selected-tab-dark-theme {
         border-bottom: 3px solid var(--button-secondary);
     }
+
+    .wizardUnselect {
+        svg {
+            path {
+                fill: var(--grey-30);
+            }
+        }
+    }
 }

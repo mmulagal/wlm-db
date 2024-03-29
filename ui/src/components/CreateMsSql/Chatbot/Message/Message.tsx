@@ -281,7 +281,11 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                                         <Typography
                                             variant="Regular_14"
                                             className={`${styles['message-text']} ${
-                                                msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
+                                                msgObj.sender === 'bot' && isDarkTheme
+                                                    ? styles['user-text']
+                                                    : msgObj.sender === 'bot' && !isDarkTheme
+                                                    ? styles['bot-text']
+                                                    : styles['user-text']
                                             }`}
                                         >
                                             {`${fieldObj.message}`}
@@ -311,7 +315,11 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                             <Typography
                                 variant="Regular_14"
                                 className={`${styles['message-text']} ${
-                                    msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
+                                    msgObj.sender === 'bot' && isDarkTheme
+                                        ? styles['user-text']
+                                        : msgObj.sender === 'bot' && !isDarkTheme
+                                        ? styles['bot-text']
+                                        : styles['user-text']
                                 }`}
                             >
                                 {`${fieldObj.message}`}
