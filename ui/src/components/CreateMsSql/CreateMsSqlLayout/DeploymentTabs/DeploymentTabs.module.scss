@@ -11,16 +11,29 @@
         gap: 8px;
         padding-bottom: 8px;
         cursor: pointer;
+
+        .darkModeWizardSelected {
+            svg {
+                path {
+                    fill: var(--text-button-light);
+                }
+            }
+        }
+
+        .darkModeChatbotSelected {
+            svg {
+                path {
+                    fill: var(--icon-tertiary);
+                }
+            }
+        }
     }
     .selected-tab {
         color: var(--blue-70);
         border-bottom: 3px solid var(--button-primary-bg);
     }
-    .non-selected-tab {
-        svg {
-            path {
-                fill: var(--grey-30);
-            }
-        }
+
+    .selected-tab-dark-theme {
+        border-bottom: 3px solid var(--button-secondary);
     }
 }
