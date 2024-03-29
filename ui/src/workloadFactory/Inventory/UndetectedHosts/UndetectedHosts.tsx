@@ -68,7 +68,9 @@ const UndetectedHosts = () => {
         return data.map((item: any) => {
             let fsxId = '';
             let isSqlRunning = item?.sqlServerInstances?.[0]?.sqlServerState === DETECT_HOST_VAR.RUNNING;
-            if (item?.sqlServerInstances?.[0]?.storage) {
+            let hasStorageTypes = false;
+            if (item?.sqlServerInstances?.[0]?.storage && item?.sqlServerInstances?.[0]?.storage.length > 0) {
+                hasStorageTypes = true;
                 item?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
                     if (storageObj.type === DETECT_HOST_VAR.FSXN) {
                         fsxId = storageObj.id;
@@ -77,18 +79,21 @@ const UndetectedHosts = () => {
             }
 
             let isRegistered = false;
-            let detectOption = 'disable';
+            let detectOption = DETECT_HOST_VAR.DISABLE;
             let detectOptionDisableMsg = '';
             if (fsxId) {
                 isRegistered = fsxCredentialStatusObj?.[fsxId];
             }
             if (item?.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED) {
-                detectOption = 'hide';
+                detectOption = DETECT_HOST_VAR.HIDE;
             } else if (!isSqlRunning) {
-                detectOption = 'disable';
+                detectOption = DETECT_HOST_VAR.DISABLE;
                 detectOptionDisableMsg = GENERAL.SQL_SERVER_NOT_RUNNING;
+            } else if (!hasStorageTypes) {
+                detectOption = DETECT_HOST_VAR.DISABLE;
+                detectOptionDisableMsg = GENERAL.STORAGE_NOT_PRESENT;
             } else if ((fsxId && fsxId in fsxCredentialStatusObj) || !fsxId) {
-                detectOption = 'show';
+                detectOption = DETECT_HOST_VAR.SHOW;
             }
 
             return {
@@ -310,7 +315,7 @@ const UndetectedHosts = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
-                        {rowData?.detectOption === 'show' && (
+                        {rowData?.detectOption === DETECT_HOST_VAR.SHOW && (
                             <div
                                 className={styles.detectManage}
                                 onClick={() => {
@@ -326,7 +331,7 @@ const UndetectedHosts = () => {
                                 )}
                             </div>
                         )}
-                        {rowData?.detectOption === 'disable' && (
+                        {rowData?.detectOption === DETECT_HOST_VAR.DISABLE && (
                             <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
                                 <Typography variant="Regular_14" className={styles.textStyle}>
                                     {GENERAL.DETECT_HOST}
