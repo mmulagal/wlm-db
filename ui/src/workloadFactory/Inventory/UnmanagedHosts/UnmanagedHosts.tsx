@@ -39,6 +39,7 @@ const UnmanagedHosts = () => {
 
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
+    const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
 
     const [manageLoading, setManageLoading] = useState<any>({});
     const [manageHostApi] = useManageHostMutation();
@@ -465,6 +466,22 @@ const UnmanagedHosts = () => {
 
     useEffect(() => {
         dispatch(setUnManagedHostColState(tableProps.columnsState));
+
+        let count = 0;
+
+        for (const key in tableProps.columnsState) {
+            if (
+                tableProps.columnsState[key].hasOwnProperty('isHidden') &&
+                tableProps.columnsState[key].isHidden === false
+            ) {
+                count++;
+            }
+        }
+        if (count > 7) {
+            setTableHorizontalScroll(true);
+        } else {
+            setTableHorizontalScroll(false);
+        }
     }, [tableProps.columnsState]);
 
     useEffect(() => {
@@ -485,7 +502,11 @@ const UnmanagedHosts = () => {
             <div className={styles.unmanagedHosts}>
                 <div
                     //  @ts-ignore
-                    className={styles.table}
+                    className={
+                        tableHorizontalScroll
+                            ? `${styles.table} ${styles.tableScroll}`
+                            : `${styles.table} ${styles.tableScrollRevert}`
+                    }
                 >
                     <TableTopBar
                         //@ts-ignore

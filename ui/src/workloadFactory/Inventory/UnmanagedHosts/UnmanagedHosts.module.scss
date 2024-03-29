@@ -44,6 +44,18 @@
         margin-bottom: 40px;
     }
 
+    .tableScroll {
+        [class*='Table-module_scroll'] {
+            width: 2500px !important;
+        }
+    }
+
+    .tableScrollRevert {
+        [class*='Table-module_scroll'] {
+            width: 1607px !important;
+        }
+    }
+
     .firstColText {
         display: flex;
         gap: 8px;
