@@ -665,7 +665,9 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     ]);
 
     if (ssmResponse?.includes('failureInfo')) {
-        logger.error('Failed to get cluster network interface details. Reason:', ssmResponse);
+        logger.error(
+            `Failed to get cluster network interface details for EC2 ${ec2InstanceId}. Reason: ${ssmResponse}`
+        );
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             `Unable to manage instance '${ec2InstanceId}'. Reason: failed to get network interface details.`
