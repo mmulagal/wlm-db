@@ -110,13 +110,22 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
     }
 }
 
-async function returnInventorydata() {
+async function returnInventorydata(instances?: string[]) {
     logger.info('Generate and return inventory data for demo');
     const fsxId = `fs-${randomize('a0', 17)}`;
-    const inventoryDemoDataResponse = inventoryDemoData(fsxId);
+    const ebsVolId = `vol -${randomize('a0', 17)}`;
+    const inventoryData = inventoryDemoData(fsxId, ebsVolId);
+
+    if (instances !== undefined && instances.length > 0) {
+        const instanceDetails = inventoryData.items.find(item => item.ec2InstanceId === instances[0])!;
+        return {
+            count: 1,
+            items: [instanceDetails]
+        };
+    }
     return {
-        count: inventoryDemoDataResponse.count,
-        items: inventoryDemoDataResponse.items
+        count: inventoryData.count,
+        items: inventoryData.items
     };
 }
 
