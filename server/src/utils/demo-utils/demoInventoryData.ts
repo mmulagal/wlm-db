@@ -553,7 +553,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         isDefaultInstance: false,
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4080.1',
-                        windowsAuthentication: true,
+                        windowsAuthentication: false,
                         sqlServerName: 'SQLServer-Prod-2',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         storage: [
