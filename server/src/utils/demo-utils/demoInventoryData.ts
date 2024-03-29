@@ -39,7 +39,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 'Developer Edition (64-bit)',
+                        sqlServerEdition: 'Standard Edition (64-bit)',
                         sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER',
                         isDefaultInstance: true,
@@ -63,7 +63,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 'Developer Edition (64-bit)',
+                        sqlServerEdition: 'Standard Edition (64-bit)',
                         sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER',
                         isDefaultInstance: true,
@@ -87,7 +87,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 'Developer Edition (64-bit)',
+                        sqlServerEdition: 'Standard Edition (64-bit)',
                         sqlServerProductYear: 2017,
                         sqlServerInstance: 'INST_D',
                         sqlServerState: 'Running',
@@ -95,6 +95,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerVersion: '16.0.1000.6',
                         sqlServerName: 'SQLServer-PreProd-02',
                         windowsAuthentication: false,
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
                         storage: [
                             {
                                 type: 'FSXN',
@@ -116,6 +117,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4095.4',
                         windowsAuthentication: true,
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
                         storage: [
                             {
                                 type: 'FSXN',
@@ -151,6 +153,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerName: 'SQLServer-PreProd-01',
                         sqlServerVersion: '16.0.4105.2',
                         windowsAuthentication: false,
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
                         storage: [
                             {
                                 type: 'EBS',

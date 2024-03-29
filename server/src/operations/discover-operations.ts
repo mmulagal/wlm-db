@@ -556,7 +556,8 @@ async function validateAndStoreDiscoveredParameters(
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         return {
-            databaseCount: '10'
+            databaseCount: '10',
+            sqlServerEdition: 'Standard Edition (64-bit)'
         };
     }
 
