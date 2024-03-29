@@ -69,9 +69,9 @@ const UndetectedHosts = () => {
             let fsxId = '';
             let isSqlRunning = item?.sqlServerInstances?.[0]?.sqlServerState === DETECT_HOST_VAR.RUNNING;
             let hasStorageTypes = false;
-            if (item?.sqlServerInstances?.[0]?.storage && item?.sqlServerInstances?.[0]?.storage.length > 0) {
+            if (item?.sqlServerInstances?.[0]?.storage && item?.sqlServerInstances?.[0]?.storage?.length > 0) {
                 hasStorageTypes = true;
-                item?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
+                item?.sqlServerInstances?.[0]?.storage?.map((storageObj: any) => {
                     if (storageObj.type === DETECT_HOST_VAR.FSXN) {
                         fsxId = storageObj.id;
                     }

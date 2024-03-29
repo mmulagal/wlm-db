@@ -364,7 +364,7 @@ const InventoryApis = () => {
             let fsxIds: any = [];
             discoveredHostData.map((host: any) => {
                 if (host?.sqlServerInstances?.[0]?.storage) {
-                    host?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
+                    host?.sqlServerInstances?.[0]?.storage?.map((storageObj: any) => {
                         if (storageObj.type === DETECT_HOST_VAR.FSXN) {
                             fsxIds.push(storageObj.id);
                         }
@@ -643,7 +643,7 @@ const InventoryApis = () => {
                     let ebsId = '';
                     let fsxwId = '';
                     if (host?.sqlServerInstances?.[0]?.storage) {
-                        host?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
+                        host?.sqlServerInstances?.[0]?.storage?.map((storageObj: any) => {
                             if (storageObj.type === DETECT_HOST_VAR.FSXN) {
                                 fsxId = storageObj.id;
                             }
