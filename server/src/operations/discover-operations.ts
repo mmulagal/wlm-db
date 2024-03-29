@@ -10,7 +10,7 @@ import throat from 'throat';
 import { createResource } from '../lib/database/db';
 import { getResources } from './database/database-operations';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
-import { getResourceNameFromTags, sleep } from '../utils/utils';
+import { getArtifactsRegionBucketName, getResourceNameFromTags, sleep } from '../utils/utils';
 import {
     getEc2SqlParameters,
     callSsmExecution,
@@ -24,7 +24,8 @@ import {
     RESOURCESTYPE,
     SSM_PARAMETERS_BASE_PATH,
     SqlServerDeploymentModel,
-    RESOURCE_SOURCE
+    RESOURCE_SOURCE,
+    DBCREATE_RELATIVE_PATH
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -54,6 +55,9 @@ import {
 } from './workloads/mssql/ssm-script-utils';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
+import { preSignedUrl } from '../lib/aws/s3';
+
+const { getPreSignedUrl } = preSignedUrl;
 
 const logger = getLogger();
 
@@ -727,12 +731,16 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     const { storage } = sqlServerInstance;
     const storageInfo = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
 
+    // Get signed url for dbcreate.zip
+    const bucketname = getArtifactsRegionBucketName(region);
+    const dbcreateS3SignedUrl = await getPreSignedUrl(region, bucketname, DBCREATE_RELATIVE_PATH);
+
     // Copy scripts to the EC2 instance
     const discoveryPromiseList = [
         callSsmExecution(
             credentialsId,
             region,
-            DISCOVERY_SCRIPTS_COPY_PS1,
+            DISCOVERY_SCRIPTS_COPY_PS1(dbcreateS3SignedUrl),
             ec2InstanceId,
             accountId,
             true,
@@ -745,7 +753,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
             callSsmExecution(
                 credentialsId,
                 region,
-                DISCOVERY_SCRIPTS_COPY_PS1,
+                DISCOVERY_SCRIPTS_COPY_PS1(dbcreateS3SignedUrl),
                 node2InstanceId,
                 accountId,
                 true,
