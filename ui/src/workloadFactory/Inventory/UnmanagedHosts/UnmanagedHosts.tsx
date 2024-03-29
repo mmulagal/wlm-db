@@ -300,6 +300,7 @@ const UnmanagedHosts = () => {
             accessor: 'storage.size',
             isSortable: true,
             width: '194px',
+            accessorForTextFilter: 'sizeformat',
             renderCell: (cellData: string | number, rowData: any) => {
                 return (
                     <>
@@ -316,6 +317,7 @@ const UnmanagedHosts = () => {
             accessor: 'topology',
             isSortable: true,
             width: '235px',
+            accessorForTextFilter: 'instanceNames',
             renderCell: (cellData: any, rowData: any) => {
                 let instanceIds: any = [];
                 let instanceNames: any = [];
@@ -344,21 +346,21 @@ const UnmanagedHosts = () => {
         {
             id: '9',
             Header: GENERAL.DB_HOST_VPC,
-            accessor: 'vpc',
+            accessor: 'vpcNames',
             isSortable: true,
             width: '212px',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
-                        {cellData?.name && (
+                        {rowData?.vpc?.name && (
                             <div className={styles.colText}>
                                 <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                    {cellData?.cidrBlock}
+                                    {rowData?.vpc?.cidrBlock}
                                 </TooltipInfo>
-                                <Typography variant="Regular_14">{cellData?.name}</Typography>
+                                <Typography variant="Regular_14">{rowData?.vpc?.name}</Typography>
                             </div>
                         )}
-                        {!cellData?.name && notAvailable()}
+                        {!rowData?.vpc?.name && notAvailable()}
                     </>
                 );
             }
@@ -366,18 +368,18 @@ const UnmanagedHosts = () => {
         {
             id: '10',
             Header: GENERAL.DB_HOST_AVAILABILITY,
-            accessor: 'sqlServerInstances',
+            accessor: 'azType',
             isSortable: true,
             width: '212px',
             filterOptions: [
                 { label: GENERAL.SINGLE_AZ, value: FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 },
                 { label: GENERAL.MULTI_AZ, value: FSX_DEPLOYMENT_MODE.MULTI_AZ_1 }
             ],
-            renderCell: (cellData: any) => {
-                const azList = cellData?.[0]?.deploymentTypes?.[0]?.zones
-                    ? cellData?.[0]?.deploymentTypes?.[0]?.zones.join(',')
+            renderCell: (cellData: any, rowData: any) => {
+                const azList = rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones
+                    ? rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones.join(',')
                     : '';
-                const deploymentType = cellData?.[0]?.deploymentTypes?.[0]?.type;
+                const deploymentType = rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
                 return (
                     <>
                         {deploymentType && (
@@ -400,23 +402,15 @@ const UnmanagedHosts = () => {
         {
             id: '11',
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
-            accessor: 'topology.serverInstallationMode',
+            accessor: 'serverInstallationMode',
             isSortable: true,
             width: '235px',
             renderCell: (cellData: string, rowData: any) => {
-                const nodes = rowData?.sqlServerInstances?.[0]?.sqlServerNodes;
-                let type = '';
-                if (nodes && nodes.length > 1) {
-                    type = GENERAL.CLUSTER;
-                } else if (nodes && nodes.length === 1) {
-                    type = GENERAL.STANDALONE;
-                }
-                const rowValue = cellData || type;
                 return (
                     <>
-                        {rowValue}
-                        {!rowValue && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!rowValue && !rowData?.loading && notAvailable()}
+                        {cellData}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && notAvailable()}
                     </>
                 );
             }
