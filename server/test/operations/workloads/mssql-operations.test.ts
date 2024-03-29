@@ -112,7 +112,7 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get MSSQL native backups count ', async () => {
-        const resp = await getNativeSQLProtection('36E53042-04E8-40C9-AE69-26E56CB0D216', ACTIVE_INSTANCE_ID);
+        const resp = await getNativeSQLProtection(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID);
         expect(resp).toEqual(4);
     });
 
