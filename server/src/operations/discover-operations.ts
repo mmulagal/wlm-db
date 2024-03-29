@@ -95,7 +95,7 @@ async function getHostAndSqlServerInfo(
 ): Promise<DiscoverMsSqlResponseBodyType> {
     logger.info('getHostAndSqlServerInfo():', { accountId, credentialsId, region, nextToken });
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        return returnInventorydata();
+        return returnInventorydata(instances);
     }
     let api1StartTime;
     let api1EndTime;
@@ -555,6 +555,13 @@ async function validateAndStoreDiscoveredParameters(
     credentials: DiscoverCredentialsType[]
 ) {
     logger.info('Validate and Put SSM parameters', { accountId, credentialsId, region, instanceId });
+
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        return {
+            databaseCount: '10',
+            sqlServerEdition: 'Standard Edition (64-bit)'
+        };
+    }
 
     try {
         if (!accountId || !credentialsId || !region || !instanceId) {

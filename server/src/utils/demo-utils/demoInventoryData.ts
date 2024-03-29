@@ -1,7 +1,7 @@
 import randomize from 'randomatic';
 import { DiscoverMsSqlResponseBodyType } from '../../routes/types/discover.types';
 
-function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
+function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlResponseBodyType {
     return {
         count: 16,
         items: [
@@ -39,7 +39,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 'Developer Edition (64-bit)',
+                        sqlServerEdition: 'Standard Edition (64-bit)',
                         sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER',
                         isDefaultInstance: true,
@@ -63,7 +63,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 'Developer Edition (64-bit)',
+                        sqlServerEdition: 'Standard Edition (64-bit)',
                         sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER',
                         isDefaultInstance: true,
@@ -77,7 +77,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
             },
             // no windows auth
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
+                ec2InstanceId: 'i-7h2b6f4e8d1g5i3j',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-5',
                 vpc: {
@@ -87,13 +87,15 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 'Developer Edition (64-bit)',
+                        sqlServerEdition: 'Standard Edition (64-bit)',
                         sqlServerProductYear: 2017,
                         sqlServerInstance: 'INST_D',
                         sqlServerState: 'Running',
                         isDefaultInstance: false,
                         sqlServerVersion: '16.0.1000.6',
+                        sqlServerName: 'SQLServer-PreProd-02',
                         windowsAuthentication: false,
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
                         storage: [
                             {
                                 type: 'FSXN',
@@ -115,6 +117,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         sqlServerState: 'Running',
                         sqlServerVersion: '16.0.4095.4',
                         windowsAuthentication: true,
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
                         storage: [
                             {
                                 type: 'FSXN',
@@ -132,7 +135,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
             },
             // no windows auth
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
+                ec2InstanceId: 'i-p9o5n2m4l8k6j7h',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-6',
                 vpc: {
@@ -147,8 +150,16 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         sqlServerInstance: 'MSSQLSERVER_NOSTORAGE',
                         sqlServerState: 'Running',
                         isDefaultInstance: false,
+                        sqlServerName: 'SQLServer-PreProd-01',
                         sqlServerVersion: '16.0.4105.2',
                         windowsAuthentication: false,
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        storage: [
+                            {
+                                type: 'EBS',
+                                id: ebsVolId
+                            }
+                        ],
                         deploymentTypes: [
                             {
                                 type: 'SINGLE_AZ_1',
@@ -160,7 +171,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
             },
             // un managed hosts
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
+                ec2InstanceId: 'i-2a4b7c5d3e1f6g',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-7',
                 vpc: {
@@ -170,8 +181,8 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                 },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 'Developer Edition (64-bit)',
-                        sqlServerProductYear: 2022,
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER_1',
                         isDefaultInstance: false,
                         sqlServerState: 'Running',
@@ -195,7 +206,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                 ]
             },
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
+                ec2InstanceId: 'i-x3y7z1a9b5c2d4e',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-8',
                 vpc: {
@@ -218,6 +229,14 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                             {
                                 type: 'FSXN',
                                 id: fsxId
+                            },
+                            {
+                                type: 'EBS',
+                                id: ebsVolId
+                            },
+                            {
+                                type: 'FSXW',
+                                id: ebsVolId
                             }
                         ],
                         deploymentTypes: [
@@ -230,7 +249,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                 ]
             },
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
+                ec2InstanceId: 'i-q5w3e7r9t1y2u4i',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-9',
                 vpc: {
@@ -251,8 +270,8 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         storage: [
                             {
-                                type: 'FSXN',
-                                id: fsxId
+                                type: 'EBS',
+                                id: ebsVolId
                             }
                         ],
                         deploymentTypes: [
@@ -300,7 +319,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                 ]
             },
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
+                ec2InstanceId: 'i-l2k4j6h8g0f3d5s',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-11',
                 vpc: {
@@ -321,7 +340,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         storage: [
                             {
-                                type: 'FSXN',
+                                type: 'FSXW',
                                 id: fsxId
                             }
                         ],
@@ -335,7 +354,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                 ]
             },
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
+                ec2InstanceId: 'i-9m8n7b6v5c4x3z',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-12',
                 vpc: {
@@ -358,6 +377,10 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                             {
                                 type: 'FSXN',
                                 id: fsxId
+                            },
+                            {
+                                type: 'EBS',
+                                id: ebsVolId
                             }
                         ],
                         deploymentTypes: [
@@ -370,7 +393,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                 ]
             },
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
+                ec2InstanceId: 'i-r6t8y1u2i3o5p7a',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-13',
                 vpc: {
@@ -405,7 +428,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                 ]
             },
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
+                ec2InstanceId: 'i-4s6d8f2g1h0j3k5',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-14',
                 vpc: {
@@ -426,8 +449,8 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         storage: [
                             {
-                                type: 'FSXN',
-                                id: fsxId
+                                type: 'EBS',
+                                id: ebsVolId
                             }
                         ],
                         deploymentTypes: [
@@ -440,7 +463,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                 ]
             },
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
+                ec2InstanceId: 'i-c5x3z1a7s9d2f4g',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-15',
                 vpc: {
@@ -463,6 +486,10 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                             {
                                 type: 'FSXN',
                                 id: fsxId
+                            },
+                            {
+                                type: 'EBS',
+                                id: ebsVolId
                             }
                         ],
                         deploymentTypes: [
@@ -475,7 +502,7 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                 ]
             },
             {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
+                ec2InstanceId: 'i-e7r9t1y2u4i6o8p',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-16',
                 vpc: {
@@ -493,6 +520,41 @@ function inventoryDemoData(fsxId: string): DiscoverMsSqlResponseBodyType {
                         sqlServerVersion: '16.0.4080.1',
                         windowsAuthentication: true,
                         sqlServerName: 'SQLServer-CRMDB-Test',
+                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                ec2InstanceId: 'i-3q5w7e9r1t2y4u6i',
+                ssmState: 'connected',
+                ec2InstanceName: 'app-server-16',
+                vpc: {
+                    id: 'vpc-84b3afe6',
+                    name: 'wlmdb-vpc',
+                    cidrBlock: '172.31.0.0/16'
+                },
+                sqlServerInstances: [
+                    {
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'MSSQLSERVER_10',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        windowsAuthentication: true,
+                        sqlServerName: 'SQLServer-Prod-2',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         storage: [
                             {
