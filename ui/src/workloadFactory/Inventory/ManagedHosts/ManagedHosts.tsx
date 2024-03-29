@@ -176,7 +176,7 @@ const ManagedHosts = () => {
             renderCell: (cellData: string, rowData: any) => {
                 if (!cellData) {
                     const typeList: string[] = [];
-                    rowData?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
+                    rowData?.sqlServerInstances?.[0]?.storage?.map((storageObj: any) => {
                         if (storageObj.type === DETECT_HOST_VAR.FSXN && !typeList.includes(GENERAL.FSX_FOR_ONTAP)) {
                             typeList.push(GENERAL.FSX_FOR_ONTAP);
                         }

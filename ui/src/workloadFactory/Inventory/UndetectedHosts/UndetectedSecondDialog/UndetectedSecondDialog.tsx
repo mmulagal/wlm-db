@@ -18,7 +18,7 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
     let fsxwType = false;
     // To check is SQL server has FSx and EBS storage
     if (data?.sqlServerInstances?.[0]?.storage) {
-        data?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
+        data?.sqlServerInstances?.[0]?.storage?.map((storageObj: any) => {
             if (storageObj.type === DETECT_HOST_VAR.FSXN) {
                 fsxType = true;
             }
