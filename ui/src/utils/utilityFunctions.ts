@@ -13,6 +13,7 @@ import {
     DETECT_HOST_VAR,
     DISABLED_STATE,
     ENABLED_STATE,
+    FSX_DEPLOYMENT_MODE,
     JM_DOWNLOAD,
     JOBS_REPORT,
     JOB_MONITORING_STATUS,
@@ -356,6 +357,41 @@ export const formatHostData = (val: any) => {
         protectionText = GENERAL.NOT_PROTECTED;
     }
     const storagePercent = val?.storage ? (val.storage?.spaceSavings / val.storage?.used) * 100 : 0;
+
+    // instance names list
+    let instanceNames: string[] = [];
+    val?.topology?.ec2Details?.map((row: any) => {
+        instanceNames.push(row?.name);
+    });
+
+    // AZ Type - Single AZ or Multi AZ 
+    let azType = '';
+    if (val?.topology?.fileSystemDeploymentMode) {
+        azType = val?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+                ? GENERAL.SINGLE_AZ
+                : val?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                ? GENERAL.MULTI_AZ
+                : '';
+    } else {
+        const deploymentType = val?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
+        azType =
+            deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+                ? GENERAL.SINGLE_AZ
+                : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                ? GENERAL.MULTI_AZ
+                : '';
+    }
+
+    // server installation mode
+    const nodes = val?.sqlServerInstances?.[0]?.sqlServerNodes;
+    let type = '';
+    if (nodes && nodes.length > 1) {
+        type = GENERAL.CLUSTER;
+    } else if (nodes && nodes.length === 1) {
+        type = GENERAL.STANDALONE;
+    }
+    const serverInstallationMode = val?.topology?.serverInstallationMode || type;
+
     val = {
         ...val,
         type: DB_HOME_DATA_TYPE.HOSTS,
@@ -373,7 +409,12 @@ export const formatHostData = (val: any) => {
         // Storage saving table text to search in table
         storageSavingsText:
             val?.storage &&
-            formatFractionalNumber(storagePercent, 2) + '% (' + formatSizeOnePrecision(val.storage?.spaceSavings) + ')'
+            formatFractionalNumber(storagePercent, 2) + '% (' + formatSizeOnePrecision(val.storage?.spaceSavings) + ')',
+        sizeformat: val?.storage?.size && formatSizeOnePrecision(val?.storage?.size),
+        instanceNames: instanceNames.join(',') || val?.ec2InstanceName,
+        vpcNames: val?.topology?.vpcName || val?.vpc?.name,
+        azType: azType,
+        serverInstallationMode: serverInstallationMode
     };
     return val;
 };

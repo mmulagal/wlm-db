@@ -96,6 +96,20 @@ const UndetectedHosts = () => {
                 detectOption = DETECT_HOST_VAR.SHOW;
             }
 
+            // For column Availability
+            const azList = item?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones
+                    ? item?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones.join(',')
+                    : '';
+            let deploymentType = item?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
+            deploymentType = (deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+            ? GENERAL.SINGLE_AZ
+            : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+            ? GENERAL.MULTI_AZ
+            : '');
+
+            // For SSM connectivity
+            let ssmConnection = (item?.ssmState === DETECT_HOST_VAR.SSM_CONNECTED ? GENERAL.SSM_ONLINE : GENERAL.SSM_CONNECTION_LOST);
+
             return {
                 name: item?.sqlServerInstances?.[0]?.sqlServerName || GENERAL.NOT_AVAILABLE,
                 instance: item?.ec2InstanceName,
@@ -106,7 +120,10 @@ const UndetectedHosts = () => {
                 fsxId: fsxId,
                 isFsxRegistered: isRegistered,
                 detectOption: detectOption,
-                detectOptionDisableMsg: detectOptionDisableMsg
+                detectOptionDisableMsg: detectOptionDisableMsg,
+                azList: azList,
+                deploymentType: deploymentType,
+                ssmConnection: ssmConnection
             };
         });
     };
@@ -377,21 +394,21 @@ const UndetectedHosts = () => {
         {
             id: '4',
             Header: GENERAL.DB_HOST_VPC,
-            accessor: 'vpc',
+            accessor: 'vpc.name',
             isSortable: true,
             width: '212px',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
-                        {cellData?.name && (
+                        {rowData?.vpc?.name && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                    {cellData?.cidrBlock}
+                                <TooltipInfo>
+                                    {rowData?.vpc?.cidrBlock}
                                 </TooltipInfo>
-                                <Typography variant="Regular_14">{cellData?.name}</Typography>
+                                <Typography variant="Regular_14">{rowData?.vpc?.name}</Typography>
                             </div>
                         )}
-                        {!cellData?.name && notAvailable()}
+                        {!rowData?.vpc?.name && notAvailable()}
                     </>
                 );
             }
@@ -399,40 +416,30 @@ const UndetectedHosts = () => {
         {
             id: '5',
             Header: GENERAL.DB_HOST_AVAILABILITY,
-            accessor: 'sqlServerInstances',
+            accessor: 'deploymentType',
             isSortable: true,
             width: '209px',
             filterOptions: [
-                { label: GENERAL.SINGLE_AZ, value: FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 },
-                { label: GENERAL.MULTI_AZ, value: FSX_DEPLOYMENT_MODE.MULTI_AZ_1 }
+                { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
+                { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
             ],
-            renderCell: (cellData: any) => {
-                const azList = cellData?.[0]?.deploymentTypes?.[0]?.zones
-                    ? cellData?.[0]?.deploymentTypes?.[0]?.zones.join(',')
-                    : '';
-                const deploymentType = cellData?.[0]?.deploymentTypes?.[0]?.type;
+            renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
-                        {deploymentType && (
+                        {cellData && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
-                                <Typography variant="Regular_14">
-                                    {deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-                                        ? GENERAL.SINGLE_AZ
-                                        : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-                                        ? GENERAL.MULTI_AZ
-                                        : ''}
-                                </Typography>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{rowData?.azList}</TooltipInfo>
+                                <Typography variant="Regular_14">{cellData}</Typography>
                             </div>
                         )}
-                        {!deploymentType && notAvailable()}
+                        {!cellData && notAvailable()}
                     </>
                 );
             }
         },
         {
             Header: GENERAL.SSM_CONNECTIVITY,
-            accessor: 'ssm',
+            accessor: 'ssmConnection',
             id: '6',
             width: '226px',
             filterOptions: 'auto',
@@ -440,8 +447,8 @@ const UndetectedHosts = () => {
                 return (
                     <div className={styles.statusCol}>
                         <div>
-                            {cellData === DETECT_HOST_VAR.SSM_CONNECTED && <Success />}
-                            {cellData !== DETECT_HOST_VAR.SSM_CONNECTED && (
+                            {cellData === GENERAL.SSM_ONLINE && <Success />}
+                            {cellData !== GENERAL.SSM_ONLINE && (
                                 <Popover
                                     popoverClass={CommonStyles['popover']}
                                     children={
@@ -467,9 +474,7 @@ const UndetectedHosts = () => {
                             )}
                         </div>
                         <div>
-                            {cellData === DETECT_HOST_VAR.SSM_CONNECTED
-                                ? GENERAL.SSM_ONLINE
-                                : GENERAL.SSM_CONNECTION_LOST}
+                            {cellData}
                         </div>
                     </div>
                 );
