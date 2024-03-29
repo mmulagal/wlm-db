@@ -10,13 +10,25 @@ export const initialSandboxState: any = {
     selectedTargetInstance: null,
     selectedTargetDatabase: 'DBname_sandbox',
     selectedTag: 'Dev',
-    hideBanner: false
+    hideBanner: false,
+    isCreateSandboxPressed: false,
+    isDBNameAdded: true,
+    isMountPathAdded: true
 };
 
 const sandboxSlice = createSlice({
     name: 'sandbox',
     initialState: initialSandboxState,
     reducers: {
+        setIsMountPathAdded(state, action: PayloadAction<any>) {
+            state.isMountPathAdded = action.payload;
+        },
+        setIsDBNameAdded(state, action: PayloadAction<any>) {
+            state.isDBNameAdded = action.payload;
+        },
+        setCreateSandboxPressed(state, action: PayloadAction<any>) {
+            state.isCreateSandboxPressed = action.payload;
+        },
         setShowBanner: (state, action: PayloadAction<any>) => {
             state.hideBanner = action.payload;
         },
@@ -60,7 +72,10 @@ export const {
     setSelectedSourceDatabase,
     setSelectedTargetHost,
     setSelectedTargetInstance,
-    setSelectedTargetDatabase
+    setSelectedTargetDatabase,
+    setCreateSandboxPressed,
+    setIsDBNameAdded,
+    setIsMountPathAdded
 } = sandboxSlice.actions;
 
 export default sandboxSlice;

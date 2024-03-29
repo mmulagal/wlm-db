@@ -24,7 +24,30 @@
     }
 
     .selectedTag {
-        background-color: #dee0fa;
+        background-color: var(--tag-3-bg);
+    }
+
+    .tag:hover {
+        background-color: var(--tag-3-bg);
+    }
+
+    .darkTheme {
+        color: var(--blue-25);
+        border: 1px solid var(--blue-25);
+
+        .tagColor {
+            color: var(--blue-25);
+        }
+    }
+
+    .darkTheme:hover {
+        cursor: pointer;
+        background-color: var(--blue-25);
+        color: var(--tag-1-text);
+
+        .tagColor {
+            color: var(--tag-1-text) !important;
+        }
     }
 }
 

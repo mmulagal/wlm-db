@@ -13,14 +13,15 @@ import {
     setSelectedTargetHost,
     setSelectedTargetInstance
 } from '../../../../../store/workloadFactory/sandboxSlice';
+import { GENERAL } from '../../../../../utils/appConstants';
+import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
 
 const SelectTarget = () => {
     const windowSize = useResize();
     const dispatch = useDispatch();
 
-    const { selectedTargetHost, selectedTargetInstance, selectedTargetDatabase } = useAppSelector(
-        state => state.sandbox
-    );
+    const { selectedTargetHost, selectedTargetInstance, selectedTargetDatabase, isCreateSandboxPressed } =
+        useAppSelector(state => state.sandbox);
 
     //Function to generate the options for Select Field
     const generateTargetName = useMemo<optionType[]>((): optionType[] => {
@@ -58,21 +59,29 @@ const SelectTarget = () => {
         }
     }, [generateTargetName, generateTargetInstance]);
     const setHeader = () => {
-        return (
-            <DsTypography
-                variant="Regular_14"
-                title={`${selectedTargetHost ? selectedTargetHost.label : ''}, ${
-                    selectedTargetInstance ? selectedTargetInstance.label : ''
-                }, ${selectedTargetDatabase ? selectedTargetDatabase : ''}`}
-                className={CommonStyles.setHeaderStyle}
-            >
-                <div>Target host: {selectedTargetHost ? selectedTargetHost.label : ''}</div>
-                <div className={CommonStyles.separator} />
-                <div>Target instance: {selectedTargetInstance ? selectedTargetInstance.label : ''}</div>
-                <div className={CommonStyles.separator} />
-                <div>Target database: {selectedTargetDatabase}</div>
-            </DsTypography>
-        );
+        if (!selectedTargetDatabase) {
+            return (
+                <div className={styles.actionRequired}>
+                    <ActionRequired />
+                </div>
+            );
+        } else {
+            return (
+                <DsTypography
+                    variant="Regular_14"
+                    title={`${selectedTargetHost ? selectedTargetHost.label : ''}, ${
+                        selectedTargetInstance ? selectedTargetInstance.label : ''
+                    }, ${selectedTargetDatabase ? selectedTargetDatabase : ''}`}
+                    className={CommonStyles.setHeaderStyle}
+                >
+                    <div>Target host: {selectedTargetHost ? selectedTargetHost.label : ''}</div>
+                    <div className={CommonStyles.separator} />
+                    <div>Target instance: {selectedTargetInstance ? selectedTargetInstance.label : ''}</div>
+                    <div className={CommonStyles.separator} />
+                    <div>Target database: {selectedTargetDatabase}</div>
+                </DsTypography>
+            );
+        }
     };
     return (
         <div className={styles.selectTarget}>
@@ -126,6 +135,7 @@ const SelectTarget = () => {
                                         }}
                                         value={selectedTargetDatabase}
                                         className={styles.keyField}
+                                        error={!selectedTargetDatabase ? GENERAL.ACTION_REQUIRED : ''}
                                     />
                                 )}
                             </div>
@@ -138,6 +148,7 @@ const SelectTarget = () => {
                                         }}
                                         value={selectedTargetDatabase}
                                         className={styles.keyField}
+                                        error={!selectedTargetDatabase ? GENERAL.ACTION_REQUIRED : ''}
                                     />
                                 </div>
                             )}

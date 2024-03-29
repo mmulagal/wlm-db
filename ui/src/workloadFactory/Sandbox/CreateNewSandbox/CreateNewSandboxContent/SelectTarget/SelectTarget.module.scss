@@ -3,6 +3,13 @@
         left: 0%;
     }
 
+    .actionRequired {
+        svg {
+            position: relative;
+            top: 2px;
+        }
+    }
+
     .firstRow {
         display: flex;
         gap: 24px;

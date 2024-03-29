@@ -260,16 +260,16 @@ const HeaderComponent = () => {
                             <Typography
                                 variant="Regular_14"
                                 className={
-                                    selectedHeaderTab === WLF_TABS.TEST_DATA_MANAGEMENT
+                                    selectedHeaderTab === WLF_TABS.SANDBOXES
                                         ? `${styles.headerPart4} ${styles.active}`
                                         : `${styles.headerPart4}`
                                 }
                                 onClick={() => {
-                                    handleClick(WLF_TABS.TEST_DATA_MANAGEMENT);
+                                    handleClick(WLF_TABS.SANDBOXES);
                                     refreshPage();
                                 }}
                             >
-                                Test data management
+                                Sandboxes
                             </Typography>
 
                             <Typography
@@ -293,7 +293,7 @@ const HeaderComponent = () => {
                 {selectedHeaderTab === WLF_TABS.INVENTORY && <Inventory />}
                 {selectedHeaderTab === WLF_TABS.JOB_MONITORING && <JobMonitoring />}
                 {selectedHeaderTab === WLF_TABS.OVERVIEW && <DatabaseHostOverview />}
-                {selectedHeaderTab === WLF_TABS.TEST_DATA_MANAGEMENT && <Sandbox />}
+                {selectedHeaderTab === WLF_TABS.SANDBOXES && <Sandbox />}
             </div>
         )
     );

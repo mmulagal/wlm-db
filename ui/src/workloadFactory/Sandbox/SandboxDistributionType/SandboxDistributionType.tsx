@@ -27,7 +27,7 @@ const SandboxDistributionType = () => {
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
                                 <DsTypography variant="Semibold_14" className={styles.name}>
-                                    Dev
+                                    Development
                                 </DsTypography>
                                 <DsTypography variant="Regular_24" className={styles.value}>
                                     55

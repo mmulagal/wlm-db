@@ -4,6 +4,8 @@ import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import { setMountPath, setSelectedMount } from '../../../../../store/workloadFactory/sandboxSlice';
+import { GENERAL } from '../../../../../utils/appConstants';
+import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
 
 const Mount = () => {
     const { selectedMount, mountPath } = useAppSelector(state => state.sandbox);
@@ -11,6 +13,12 @@ const Mount = () => {
     const setHeader = () => {
         if (selectedMount === 'Auto-assign mount point') {
             return <DsTypography variant="Regular_14">Auto-assign mount point</DsTypography>;
+        } else if (selectedMount === 'Define mount point path' && !mountPath) {
+            return (
+                <div className={styles.actionRequired}>
+                    <ActionRequired />
+                </div>
+            );
         }
         return <DsTypography variant="Regular_14">Volume mount point under path : {mountPath}</DsTypography>;
     };
@@ -55,6 +63,7 @@ const Mount = () => {
                                 value={mountPath}
                                 className={styles.keyField}
                                 isDisabled={selectedMount == 'Auto-assign mount point'}
+                                error={!mountPath ? GENERAL.ACTION_REQUIRED : ''}
                             />
                         </div>
                     </DsTypography>

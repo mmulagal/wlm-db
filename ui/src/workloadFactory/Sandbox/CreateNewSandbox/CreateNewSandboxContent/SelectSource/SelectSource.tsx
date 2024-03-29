@@ -1,6 +1,12 @@
 import { useEffect, useMemo } from 'react';
 
-import { AccordionCard, AccordionCardContent, DsTypography, SelectField } from '@netapp/design-system';
+import {
+    AccordionCard,
+    AccordionCardContent,
+    DsTypography,
+    SelectField,
+    useAccordionContext
+} from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import styles from './SelectSource.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
@@ -9,6 +15,7 @@ import useResize from '../../../../../common/hooks/useResize';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import {
+    setCreateSandboxPressed,
     setSelectedSourceDatabase,
     setSelectedSourceHost,
     setSelectedSourceInstance
@@ -16,10 +23,23 @@ import {
 
 const SelectSource = () => {
     const windowSize = useResize();
+    const accordionContext = useAccordionContext()?.setOpenChildren!;
+    const { isDBNameAdded, isMountPathAdded, isCreateSandboxPressed } = useAppSelector(state => state.sandbox);
     const { selectedSourceHost, selectedSourceInstance, selectedSourceDatabase } = useAppSelector(
         state => state.sandbox
     );
     const dispatch = useDispatch();
+
+    useEffect(() => {
+        if (isCreateSandboxPressed && (!isDBNameAdded || isMountPathAdded)) {
+            accordionContext({
+                2: !isDBNameAdded ? true : false,
+                3: !isMountPathAdded ? true : false
+            });
+            dispatch(setCreateSandboxPressed(false));
+        }
+    }, [accordionContext, isCreateSandboxPressed, isDBNameAdded, isMountPathAdded]);
+
     //Function to generate the options for Select Field
     const generateHostName = useMemo<optionType[]>((): optionType[] => {
         const hostName = ['host name 1', 'host name 2', 'host name 3', 'host name 6', 'host name 4', 'host name 5'];
