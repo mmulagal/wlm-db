@@ -424,7 +424,7 @@ export const formatHostData = (val: any) => {
         performanceText: val?.performance && val.performance?.assessment,
         // Storage saving table text to search in table
         storageSavingsText:
-            val?.storage &&
+            val?.storage?.spaceSavings && val?.storage?.used &&
             formatFractionalNumber(storagePercent, 2) + '% (' + formatSizeOnePrecision(val.storage?.spaceSavings) + ')',
         sizeformat: val?.storage?.size && formatSizeOnePrecision(val?.storage?.size),
         instanceNames: instanceNames.join(',') || val?.ec2InstanceName,
