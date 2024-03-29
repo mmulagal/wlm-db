@@ -881,8 +881,15 @@ async function processCloudFormationMessages() {
                                         // https://jira.ngage.netapp.com/browse/DBS-1942
                                         // If master job is marked failed or is in progress and stack is rolled back or deleted, dont change the state (failed)
                                         if (masterJob) {
-                                            // On delete stack, if master job is marked as failed, dont change the state. If master job is in progress, mark as failed.
-                                            // Else transition the state.
+                                            // jobStatus is an indicator of the current custom resource notificaition.It could either be COMPLETED, IN_PROGRESS or FAILED.
+                                            // If master job is already marked failed in WLMDB DB and stack is now being rolled back or deleted, dont change the state;
+                                            // If master job is in progress and stack is rolled back or deleted, mark the job as failed
+                                            // If master job is completed and stack is rolled back or deleted, retain the status
+                                            // If the custom resource notification is a non delete event, then the master job status is updated to the current status of the resource
+                                            //
+                                            // Master job status should not transition when stack is deleted. For the case when we hit
+                                            // limit exceeded, then further nested stacks are not deployed.
+                                            // Master job hangs in progress status. In this case on delete, mark as failed
                                             let masterJobStatus = masterJob.status;
                                             if (resourceStatus.includes('DELETE')) {
                                                 masterJobStatus =
@@ -938,8 +945,15 @@ async function processCloudFormationMessages() {
                                         // https://jira.ngage.netapp.com/browse/DBS-1942
                                         // If master job is marked failed and stack is rolled back or deleted, dont change the state
                                         if (masterJob) {
-                                            // On delete stack, if master job is marked as failed, dont change the state. If master job is in progress, mark as failed.
-                                            // Else transition the state.
+                                            // jobStatus is an indicator of the current custom resource notificaition.It could either be COMPLETED, IN_PROGRESS or FAILED.
+                                            // If master job is already marked failed in WLMDB DB and stack is now being rolled back or deleted, dont change the state;
+                                            // If master job is in progress and stack is rolled back or deleted, mark the job as failed
+                                            // If master job is completed and stack is rolled back or deleted, retain the status
+                                            // If the custom resource notification is a non delete event, then the master job status is updated to the current status of the resource
+                                            //
+                                            // Master job status should not transition when stack is deleted. For the case when we hit
+                                            // limit exceeded, then further nested stacks are not deployed.
+                                            // Master job hangs in progress status. In this case on delete, mark as failed.
                                             let masterJobStatus = masterJob.status;
                                             if (resourceStatus.includes('DELETE')) {
                                                 masterJobStatus =
