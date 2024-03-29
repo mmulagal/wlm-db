@@ -38,7 +38,7 @@ const DeploymentTabs = ({ selectedTab, onTabChange }: DeploymentTabsProps) => {
             );
         } else {
             return (
-                <div>
+                <div className={styles.wizardUnselect}>
                     <WizardIcon />
                 </div>
             );

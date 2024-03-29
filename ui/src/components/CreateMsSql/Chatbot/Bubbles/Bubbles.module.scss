@@ -22,4 +22,23 @@
         cursor: pointer;
         background-color: var(--tag-3-bg);
     }
+
+    .bubble-item-dark-mode {
+        color: var(--blue-25);
+        border: 1px solid var(--blue-25);
+
+        .bubble-item-dark-mode-label {
+            color: var(--blue-25);
+        }
+    }
+
+    .bubble-item-dark-mode:hover {
+        cursor: pointer;
+        background-color: var(--blue-25);
+        color: var(--tag-1-text);
+
+        .bubble-item-dark-mode-label {
+            color: var(--tag-1-text);
+        }
+    }
 }
