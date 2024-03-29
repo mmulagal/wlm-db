@@ -46,7 +46,7 @@ const DeploymentTabs = ({ selectedTab, onTabChange }: DeploymentTabsProps) => {
     };
 
     const setChatbotIcon = () => {
-        if (true) {
+        if (isDarkTheme) {
             if (selectedTab === 'wizard') {
                 return <ChatbotDarkModeNotSelectedIcon />;
             } else {
