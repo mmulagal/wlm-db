@@ -1,5 +1,4 @@
 import {
-    Button,
     DsFlashingDotsLoader,
     Spinner,
     Table,
@@ -14,7 +13,7 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useEffect, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE, WLF_TABS } from '../../../utils/consts';
+import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 
 import {
@@ -22,13 +21,9 @@ import {
     formatSizeOnePrecision,
     formatUnamanagedHostList
 } from '../../../utils/utilityFunctions';
-import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
+import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
-import {
-    setMovedToManagedHost,
-    setSelectedHeaderTab,
-    setUnManagedHostColState
-} from '../../../store/workloadFactory/inventorySlice';
+import { setMovedToManagedHost, setUnManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
 import { useManageHostMutation } from '../../../utils/apiService';
 import store from '../../../store/store';
 
@@ -44,6 +39,7 @@ const UnmanagedHosts = () => {
 
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
+    const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
 
     const [manageLoading, setManageLoading] = useState<any>({});
     const [manageHostApi] = useManageHostMutation();
@@ -156,19 +152,19 @@ const UnmanagedHosts = () => {
             width: '200px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find(
-                    (item: any) => item.type === DETECT_HOST_VAR.FSXN
-                );
-                const hasEbs = rowData?.sqlServerInstances?.[0]?.storage?.find(
-                    (item: any) => item.type === DETECT_HOST_VAR.EBS
-                );
-                return hasEbs && hasFsx
-                    ? `${GENERAL.FSX_FOR_ONTAP}, ${GENERAL.EBS}`
-                    : hasEbs
-                    ? GENERAL.EBS
-                    : hasFsx
-                    ? GENERAL.FSX_FOR_ONTAP
-                    : cellData || GENERAL.NOT_AVAILABLE;
+                const typeList: string[] = [];
+                rowData?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
+                    if (storageObj.type === DETECT_HOST_VAR.FSXN && !typeList.includes(GENERAL.FSX_FOR_ONTAP)) {
+                        typeList.push(GENERAL.FSX_FOR_ONTAP);
+                    }
+                    if (storageObj.type === DETECT_HOST_VAR.EBS && !typeList.includes(GENERAL.EBS)) {
+                        typeList.push(GENERAL.EBS);
+                    }
+                    if (storageObj.type === DETECT_HOST_VAR.FSXW && !typeList.includes(GENERAL.FSX_FOR_WINDOWS)) {
+                        typeList.push(GENERAL.FSX_FOR_WINDOWS);
+                    }
+                });
+                return typeList ? typeList.join(', ') : cellData || GENERAL.NOT_AVAILABLE;
             }
         },
         {
@@ -307,7 +303,8 @@ const UnmanagedHosts = () => {
             renderCell: (cellData: string | number, rowData: any) => {
                 return (
                     <>
-                        {cellData || cellData === 0 ? formatSizeOnePrecision(cellData) : GENERAL.NOT_AVAILABLE}
+                        {!rowData?.loading &&
+                            (cellData || cellData === 0 ? formatSizeOnePrecision(cellData) : GENERAL.NOT_AVAILABLE)}
                         {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
                     </>
                 );
@@ -410,7 +407,7 @@ const UnmanagedHosts = () => {
                 const nodes = rowData?.sqlServerInstances?.[0]?.sqlServerNodes;
                 let type = '';
                 if (nodes && nodes.length > 1) {
-                    type = GENERAL.FCI;
+                    type = GENERAL.CLUSTER;
                 } else if (nodes && nodes.length === 1) {
                     type = GENERAL.STANDALONE;
                 }
@@ -469,6 +466,22 @@ const UnmanagedHosts = () => {
 
     useEffect(() => {
         dispatch(setUnManagedHostColState(tableProps.columnsState));
+
+        let count = 0;
+
+        for (const key in tableProps.columnsState) {
+            if (
+                tableProps.columnsState[key].hasOwnProperty('isHidden') &&
+                tableProps.columnsState[key].isHidden === false
+            ) {
+                count++;
+            }
+        }
+        if (count > 7) {
+            setTableHorizontalScroll(true);
+        } else {
+            setTableHorizontalScroll(false);
+        }
     }, [tableProps.columnsState]);
 
     useEffect(() => {
@@ -489,7 +502,11 @@ const UnmanagedHosts = () => {
             <div className={styles.unmanagedHosts}>
                 <div
                     //  @ts-ignore
-                    className={styles.table}
+                    className={
+                        tableHorizontalScroll
+                            ? `${styles.table} ${styles.tableScroll}`
+                            : `${styles.table} ${styles.tableScrollRevert}`
+                    }
                 >
                     <TableTopBar
                         //@ts-ignore

@@ -305,9 +305,11 @@ export const TIB_IN_BYTE = 1099511627776; // 1024 * 1024 * 1024 * 1024
 export const DETECT_HOST_VAR = {
     FSXN: 'FSXN',
     EBS: 'EBS',
+    FSXW: 'FSXW',
     SSM_CONNECTED: 'connected',
     MOVE_TO_MANAGE: 'move_to_manage',
     MOVE_TO_UNMANAGE: 'move_to_unmanage',
     FSX: 'FSX',
-    MSSQL: 'MSSQL'
+    MSSQL: 'MSSQL',
+    RUNNING: 'Running'
 };
