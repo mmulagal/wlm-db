@@ -441,7 +441,7 @@ async function getHostAndSqlInfoFromPsOutput(
                     ssmTargetSqlServerInstancesInfo.push({
                         sqlServerVersion,
                         ...(sqlServerName && { sqlServerName }),
-                        sqlServerNodes,
+                        sqlServerNodes: compact(sqlServerNodes),
                         sqlServerInstance,
                         sqlServerState,
                         sqlServerProductYear,
@@ -449,8 +449,10 @@ async function getHostAndSqlInfoFromPsOutput(
                         isDefaultInstance,
                         windowsAuthentication,
                         sqlServerAuthentication,
-                        storage: uniqBy(storageTypes, 'id'),
-                        deploymentTypes: uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones })),
+                        storage: compact(uniqBy(storageTypes, 'id')),
+                        deploymentTypes: compact(
+                            uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones }))
+                        ),
                         ...(databaseCount && { databaseCount })
                     });
                 }
