@@ -881,6 +881,8 @@ async function processCloudFormationMessages() {
                                         // https://jira.ngage.netapp.com/browse/DBS-1942
                                         // If master job is marked failed or is in progress and stack is rolled back or deleted, dont change the state (failed)
                                         if (masterJob) {
+                                            // On delete stack, if master job is marked as failed, dont change the state. If master job is in progress, mark as failed.
+                                            // Else transition the state.
                                             let masterJobStatus = masterJob.status;
                                             if (resourceStatus.includes('DELETE')) {
                                                 masterJobStatus =
@@ -936,6 +938,8 @@ async function processCloudFormationMessages() {
                                         // https://jira.ngage.netapp.com/browse/DBS-1942
                                         // If master job is marked failed and stack is rolled back or deleted, dont change the state
                                         if (masterJob) {
+                                            // On delete stack, if master job is marked as failed, dont change the state. If master job is in progress, mark as failed.
+                                            // Else transition the state.
                                             let masterJobStatus = masterJob.status;
                                             if (resourceStatus.includes('DELETE')) {
                                                 masterJobStatus =
