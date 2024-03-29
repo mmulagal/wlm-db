@@ -576,19 +576,17 @@ async function getServerState(resourceId: string) {
     return response!.replace(/[\r\n.]/g, '');
 }
 
-async function getNativeSQLProtection(resourceId: string, activeNodeInstanceId: string) {
-    logger.info('Fetch SQL native protection status', { resourceId, activeNodeInstanceId });
+async function getNativeSQLProtection(credentialsId: string, region: string, activeNodeInstanceId: string) {
+    logger.info('Fetch SQL native protection status', { credentialsId, region, activeNodeInstanceId });
 
     try {
-        const [credentialsId, region] = await getResourceDetails(resourceId);
-
         if (!credentialsId || !region || !activeNodeInstanceId) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
         }
         const response = await callSsmExecution(
             credentialsId,
             region,
-            [`${PSSCRIPT} -Query "${NATIVE_SQL_BACKUPS}"`],
+            [`sqlcmd -Q "${NATIVE_SQL_BACKUPS}" -y 0`],
             activeNodeInstanceId
         );
 

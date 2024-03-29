@@ -137,19 +137,19 @@ async function getDriveInfoFromNodes(
 
     const updatedExitingDrives = [
         ...activeNodeExistingDrives.map(item => ({
-            driveLetter: item.LogicalDisk.charAt(0),
+            driveLetter: item.LogicalDisk?.charAt(0),
             availableSize: item.FileSystem,
             isNetappDrive: item.Manufacturer?.includes('NETAPP') ?? false,
-            isDriveClustered: item.Owner?.includes('SQL Server') ?? false
+            ...(sqlDeploymentType === 'FCI' && { isDriveClustered: item.Owner?.includes('SQL Server') ?? false })
         })),
         ...(standbyNodeExistingDrives !== undefined && sqlDeploymentType === 'FCI'
             ? standbyNodeExistingDrives
                   .filter((item: any) => !activeNodeExistingDrives.some(obj => obj.LogicalDisk === item))
                   .map((item: string) => ({
-                      driveLetter: item.charAt(0),
+                      driveLetter: item?.charAt(0),
                       availableSize: 0,
                       isNetappDrive: false,
-                      isDriveClustered: false
+                      ...(sqlDeploymentType === 'FCI' && { isDriveClustered: false })
                   }))
             : [])
     ];
@@ -440,7 +440,7 @@ async function invokeSSMForDatabaseDeployment(
             node1InstanceId,
             node2InstanceId
         );
-        if (!isSSMConnected && activeNodeInstanceId === undefined) {
+        if (!isSSMConnected || activeNodeInstanceId === undefined) {
             const errorMessage = `Error while creating database for ${accountId} ${resourceId} due to SSM connection issues.`;
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
         }

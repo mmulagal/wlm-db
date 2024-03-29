@@ -33,6 +33,10 @@
             display: flex;
             gap: 5px;
             flex-direction: column;
+            .sizeRow {
+                display: flex;
+                gap: 8px;
+            }
         }
 
         .thirdRow {

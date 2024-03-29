@@ -10,6 +10,7 @@ import {
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
+import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import {
     formatVpcSubnetsData,
     generateOptionType,
@@ -246,6 +247,12 @@ const RegionVpc = () => {
                                     options={generateVPCOptions}
                                     variant="two-lines"
                                 />
+                                <div className={styles.noticeVpc}>
+                                    <div>
+                                        <InfoIcon />
+                                    </div>
+                                    <Typography variant="Regular_13">{GENERAL.VPC_MESSAGE}</Typography>
+                                </div>
                             </div>
                         )}
                     </Typography>

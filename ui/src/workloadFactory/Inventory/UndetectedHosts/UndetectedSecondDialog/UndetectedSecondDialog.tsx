@@ -15,24 +15,34 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
 
     let fsxType = false;
     let ebsType = false;
+    let fsxwType = false;
     // To check is SQL server has FSx and EBS storage
     if (data?.sqlServerInstances?.[0]?.storage) {
-        data?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
+        data?.sqlServerInstances?.[0]?.storage?.map((storageObj: any) => {
             if (storageObj.type === DETECT_HOST_VAR.FSXN) {
                 fsxType = true;
             }
             if (storageObj.type === DETECT_HOST_VAR.EBS) {
                 ebsType = true;
             }
+            if (storageObj.type === DETECT_HOST_VAR.FSXW) {
+                fsxwType = true;
+            }
         });
     }
-    const hostType = fsxType ? GENERAL.FSX_FOR_ONTAP : ebsType ? GENERAL.EBS : GENERAL.NOT_AVAILABLE;
+    const hostType = fsxType
+        ? GENERAL.FSX_FOR_ONTAP
+        : ebsType
+        ? GENERAL.EBS
+        : fsxwType
+        ? GENERAL.FSX_FOR_WINDOWS
+        : GENERAL.NOT_AVAILABLE;
     const hostName = data?.sqlServerInstances?.[0]?.sqlServerName || GENERAL.NOT_AVAILABLE;
 
     const nodes = data?.sqlServerInstances?.[0]?.sqlServerNodes;
     let type = '';
     if (nodes && nodes.length > 1) {
-        type = GENERAL.FCI;
+        type = GENERAL.CLUSTER;
     } else if (nodes && nodes.length === 1) {
         type = GENERAL.STANDALONE;
     }

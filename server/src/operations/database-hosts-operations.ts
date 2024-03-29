@@ -55,7 +55,10 @@ import {
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
-import { calculateFsxnStorageEfficiency, calculateFsxwStorageEfficiency } from './aws/cloud-watch-operations';
+import {
+    calculateFsxnStorageEfficiencyUsingCloudwatch,
+    calculateFsxwStorageEfficiencyUsingCloudwatch
+} from './aws/cloud-watch-operations';
 
 const logger = getLogger();
 
@@ -294,7 +297,7 @@ async function getTopology(
     return topologyData;
 }
 
-async function getStorageDataUsingCloudwatch(
+async function getStorageData(
     resourceDetail: ResourceDetails,
     activeNodeInstanceId: string
 ): Promise<StorageResponseType | undefined> {
@@ -302,23 +305,28 @@ async function getStorageDataUsingCloudwatch(
 
     try {
         let totalSize = 0;
-        let totalUsed = 0;
-        let totalSpaceSavings = 0;
-        let totalSpaceSavingsPercentage = 0;
-        const { region, co_relation_id: fsxnId, credentials_id: credentialsId, fsxwId } = resourceDetail;
+        let totalUsed;
+        let totalSpaceSavings;
+        let totalSpaceSavingsPercentage;
+        const { region, co_relation_id: fsxnId, credentials_id: credentialsId, fsxwId, ebsVolumeId } = resourceDetail;
         if (fsxnId && region) {
             ({ totalSize, totalUsed, totalSpaceSavings, totalSpaceSavingsPercentage } =
-                await calculateFsxnStorageEfficiency(region, credentialsId, fsxnId));
+                await calculateFsxnStorageEfficiencyUsingCloudwatch(region, credentialsId, fsxnId));
         }
         if (fsxwId && region) {
             ({ totalSize, totalUsed, totalSpaceSavings, totalSpaceSavingsPercentage } =
-                await calculateFsxwStorageEfficiency(region, credentialsId, fsxwId));
+                await calculateFsxwStorageEfficiencyUsingCloudwatch(region, credentialsId, fsxwId));
         }
+        if (ebsVolumeId && region) {
+            const storageData = await getEbsResourceInfo(credentialsId, region, ebsVolumeId);
+            totalSize = storageData.size;
+        }
+
         return {
             size: numeral(`${totalSize}GiB`).value() || 0,
-            used: totalUsed || 0,
-            spaceSavings: totalSpaceSavings || 0,
-            spaceSavingsPercentage: totalSpaceSavingsPercentage || 0
+            used: totalUsed,
+            spaceSavings: totalSpaceSavings,
+            spaceSavingsPercentage: totalSpaceSavingsPercentage
         };
     } catch (error) {
         const errorMessage = `Error while getting storage savings for resource ${resourceDetail} ${JSON.stringify(
@@ -393,24 +401,35 @@ async function getProtectionStatus(
     logger.info('Get protection status', { resourceDetail });
 
     const {
-        resource_id: resourceId,
         region,
         co_relation_id: fileSystemId,
         metadata,
-        credentials_id: credentialsId
+        credentials_id: credentialsId,
+        fsxwId,
+        ebsVolumeId
     } = resourceDetail;
 
     try {
-        const [awsBackup, ontapProtection, nativeSqlProtection] = await Promise.all([
-            isAWSBackupEnabled(credentialsId, region!, fileSystemId!, metadata as Metadata, activeNodeInstanceId),
-            getOntapVolumesSnapshotCount(
-                credentialsId,
-                region!,
-                fileSystemId!,
-                metadata as Metadata,
-                activeNodeInstanceId
-            ),
-            getNativeSQLProtection(resourceId, activeNodeInstanceId)
+        const [nativeSqlProtection, awsBackup, ontapProtection] = await Promise.all([
+            getNativeSQLProtection(credentialsId, region!, activeNodeInstanceId),
+            ...(!(fsxwId || ebsVolumeId)
+                ? [
+                      isAWSBackupEnabled(
+                          credentialsId,
+                          region!,
+                          fileSystemId!,
+                          metadata as Metadata,
+                          activeNodeInstanceId
+                      ),
+                      getOntapVolumesSnapshotCount(
+                          credentialsId,
+                          region!,
+                          fileSystemId!,
+                          metadata as Metadata,
+                          activeNodeInstanceId
+                      )
+                  ]
+                : [])
         ]);
 
         return {
@@ -843,7 +862,7 @@ async function getDatabaseHostSummary(
                         ? [getPerformanceMetrics(credentialsId, region, activeNodeInstanceId)]
                         : [Promise.resolve()]), // Fetch io latency data
                     ...(isSSMConnected && getStorageSavings && activeNodeInstanceId
-                        ? [getStorageDataUsingCloudwatch(resourceDetail, activeNodeInstanceId)]
+                        ? [getStorageData(resourceDetail, activeNodeInstanceId)]
                         : [Promise.resolve()]), // Fetch storage savings data
                     ...(isSSMConnected && getProtection && activeNodeInstanceId
                         ? [getProtectionStatus(resourceDetail, activeNodeInstanceId)]

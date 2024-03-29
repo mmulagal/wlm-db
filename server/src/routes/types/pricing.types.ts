@@ -66,6 +66,7 @@ const PricingServiceResponse = Type.Object({
                         log: Type.Number(),
                         tempdb: Type.Number(),
                         quorum: Type.Optional(Type.Number()),
+                        buffer: Type.Optional(Type.Number()),
                         total: Type.Number()
                     },
                     {

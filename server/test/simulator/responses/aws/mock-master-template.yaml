@@ -472,11 +472,11 @@ Parameters:
   
   FSxDiskIops:
     Description: The total number of SSD IOPS provisioned for the file system. The
-        maximum is 80,000 IOPS.
+        maximum is 1,60,000 IOPS.
     Type: Number
     Default: "3"
     MinValue: 3
-    MaxValue: 80000
+    MaxValue: 160000
 
   
   FSxVolumeThroughputCapacity:

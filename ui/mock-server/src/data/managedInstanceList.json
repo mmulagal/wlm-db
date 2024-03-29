@@ -1,0 +1,25 @@
+{
+    "count": 3,
+    "items": [
+        {
+            "instances": [
+                "i-0db20e831d1ce41e3",
+                "i-0e6a7b54b2b5951e3"
+            ],
+            "resourceId": "d271cefe8dc4b400e2ba9aa7998c32e8d96d4a805253db6c9b10a5ab697c0d62"
+        },
+        {
+            "instances": [
+                "i-02dbf20711b3c8311"
+            ],
+            "resourceId": "abb70906ebc571e61b00d050e9337ca8cb7e12c080947d71b1abe859631abf89"
+        },
+        {
+            "instances": [
+                "i-04e10959ecb1e9c65",
+                "i-04deb6bbec539f817"
+            ],
+            "resourceId": "2a6fe3f6ed15439147f19e68a903f0fc6a8e9fcde16d628f17e885c4bccb1642"
+        }
+    ]
+}

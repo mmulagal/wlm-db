@@ -21,8 +21,6 @@ const DatabaseHomePage = () => {
     const hostCostData: any = useAppSelector(state => state.databaseHome.aggregatedCosts);
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
 
-    DatabaseHomeApis();
-
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
