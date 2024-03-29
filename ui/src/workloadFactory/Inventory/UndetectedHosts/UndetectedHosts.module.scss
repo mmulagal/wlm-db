@@ -9,7 +9,7 @@
             width: 192px;
             height: 32px;
             border-radius: 32px;
-            border: 1px solid var(--blue-70);
+            border: 1px solid var(--text-button-primary);
             margin-left: -12px;
             cursor: pointer;
 
@@ -18,7 +18,7 @@
                 justify-content: center;
                 align-items: center;
                 margin-top: 2px;
-                color: var(--blue-70);
+                color: var(--text-button-primary);
             }
 
             .loading {
@@ -33,10 +33,10 @@
         }
 
         .detectManage:hover {
-            border: 1px solid var(--blue-80);
+            border: 1px solid var(--text-button-primary-hover);
 
             .textStyle {
-                color: var(--blue-80);
+                color: var(--text-button-primary-hover);
             }
         }
 
