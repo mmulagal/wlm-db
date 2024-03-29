@@ -1,7 +1,6 @@
 import {
     FSxClient,
-    DescribeVolumesCommand,
-    DescribeVolumesCommandOutput,
+    paginateDescribeVolumes,
     paginateDescribeFileSystems,
     DescribeStorageVirtualMachinesCommand,
     DescribeBackupsCommandOutput,
@@ -69,20 +68,18 @@ async function describeFSx(
     return response;
 }
 
-async function describeFSxVolumes(
-    credentialsId: string,
-    region: string,
-    fsxFsId: string
-): Promise<DescribeVolumesCommandOutput> {
+async function describeFSxVolumes(credentialsId: string, region: string, fsxFsId: string) {
     logger.info('Describe FSx volumes:', { credentialsId, region, fsxFsId });
     const input: DescribeVolumesCommandInput = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
 
     const client = await getFSxClient(credentialsId, region);
+    const volumes = [];
+    for await (const { Volumes = [] } of paginateDescribeVolumes({ client }, input)) {
+        volumes.push(...Volumes);
+    }
+    logger.debug('Decribe FSx volumes response:', volumes);
 
-    const response = await client.send(new DescribeVolumesCommand(input));
-    logger.debug('Decribe FSx volumes response:', response);
-
-    return response;
+    return { Volumes: volumes };
 }
 
 async function describeFSxStorageVirtualMachines(credentialsId: string, region: string, fsxFsId?: string) {
