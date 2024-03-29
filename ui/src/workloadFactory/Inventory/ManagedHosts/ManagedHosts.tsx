@@ -416,7 +416,8 @@ const ManagedHosts = () => {
                 let azType = '';
                 if (rowData?.topology?.fileSystemDeploymentMode) {
                     azList = rowData?.topology?.availabilityZones ? rowData?.topology?.availabilityZones.join(',') : '';
-                    azType = rowData?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+                    azType =
+                        rowData?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
                             ? GENERAL.SINGLE_AZ
                             : rowData?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
                             ? GENERAL.MULTI_AZ
