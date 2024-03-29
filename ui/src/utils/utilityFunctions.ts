@@ -364,10 +364,11 @@ export const formatHostData = (val: any) => {
         instanceNames.push(row?.name);
     });
 
-    // AZ Type - Single AZ or Multi AZ 
+    // AZ Type - Single AZ or Multi AZ
     let azType = '';
     if (val?.topology?.fileSystemDeploymentMode) {
-        azType = val?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+        azType =
+            val?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
                 ? GENERAL.SINGLE_AZ
                 : val?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
                 ? GENERAL.MULTI_AZ

@@ -98,17 +98,19 @@ const UndetectedHosts = () => {
 
             // For column Availability
             const azList = item?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones
-                    ? item?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones.join(',')
-                    : '';
+                ? item?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones.join(',')
+                : '';
             let deploymentType = item?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
-            deploymentType = (deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-            ? GENERAL.SINGLE_AZ
-            : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-            ? GENERAL.MULTI_AZ
-            : '');
+            deploymentType =
+                deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+                    ? GENERAL.SINGLE_AZ
+                    : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                    ? GENERAL.MULTI_AZ
+                    : '';
 
             // For SSM connectivity
-            let ssmConnection = (item?.ssmState === DETECT_HOST_VAR.SSM_CONNECTED ? GENERAL.SSM_ONLINE : GENERAL.SSM_CONNECTION_LOST);
+            let ssmConnection =
+                item?.ssmState === DETECT_HOST_VAR.SSM_CONNECTED ? GENERAL.SSM_ONLINE : GENERAL.SSM_CONNECTION_LOST;
 
             return {
                 name: item?.sqlServerInstances?.[0]?.sqlServerName || GENERAL.NOT_AVAILABLE,
@@ -402,9 +404,7 @@ const UndetectedHosts = () => {
                     <>
                         {rowData?.vpc?.name && (
                             <div className={styles.colText}>
-                                <TooltipInfo>
-                                    {rowData?.vpc?.cidrBlock}
-                                </TooltipInfo>
+                                <TooltipInfo>{rowData?.vpc?.cidrBlock}</TooltipInfo>
                                 <Typography variant="Regular_14">{rowData?.vpc?.name}</Typography>
                             </div>
                         )}
@@ -473,9 +473,7 @@ const UndetectedHosts = () => {
                                 />
                             )}
                         </div>
-                        <div>
-                            {cellData}
-                        </div>
+                        <div>{cellData}</div>
                     </div>
                 );
             }
