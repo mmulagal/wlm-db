@@ -326,6 +326,7 @@ const ManagedHosts = () => {
             accessor: 'storage.size',
             isSortable: true,
             width: '212px',
+            accessorForTextFilter: 'sizeformat',
             renderCell: (cellData: string | number, rowData: any) => {
                 return (
                     <>
@@ -342,6 +343,7 @@ const ManagedHosts = () => {
             accessor: 'topology',
             isSortable: true,
             width: '212px',
+            accessorForTextFilter: 'instanceNames',
             renderCell: (cellData: any, rowData: any) => {
                 let instanceIds: any = [];
                 let instanceNames: any = [];
@@ -370,15 +372,15 @@ const ManagedHosts = () => {
         {
             id: '9',
             Header: GENERAL.DB_HOST_VPC,
-            accessor: 'topology',
+            accessor: 'vpcNames',
             isSortable: true,
             width: '212px',
             renderCell: (cellData: any, rowData: any) => {
                 let vpcName = '';
                 let vpcCidr = '';
-                if (cellData?.vpcName) {
-                    vpcName = cellData?.vpcName;
-                    vpcCidr = cellData?.vpcCidr;
+                if (rowData?.topology?.vpcName) {
+                    vpcName = rowData?.topology?.vpcName;
+                    vpcCidr = rowData?.topology?.vpcCidr;
                 } else if (rowData?.vpc?.name) {
                     vpcName = rowData?.vpc?.name;
                     vpcCidr = rowData?.vpc?.cidrBlock;
@@ -402,22 +404,22 @@ const ManagedHosts = () => {
         {
             id: '10',
             Header: GENERAL.DB_HOST_AVAILABILITY,
-            accessor: 'topology.fileSystemDeploymentMode',
+            accessor: 'azType',
             isSortable: true,
             width: '212px',
             filterOptions: [
-                { label: GENERAL.SINGLE_AZ, value: FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 },
-                { label: GENERAL.MULTI_AZ, value: FSX_DEPLOYMENT_MODE.MULTI_AZ_1 }
+                { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
+                { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
             ],
             renderCell: (cellData: any, rowData: any) => {
                 let azList = [];
                 let azType = '';
-                if (cellData) {
+                if (rowData?.topology?.fileSystemDeploymentMode) {
                     azList = rowData?.topology?.availabilityZones ? rowData?.topology?.availabilityZones.join(',') : '';
                     azType =
-                        cellData === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+                        rowData?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
                             ? GENERAL.SINGLE_AZ
-                            : cellData === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                            : rowData?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
                             ? GENERAL.MULTI_AZ
                             : '';
                 } else {
@@ -450,24 +452,16 @@ const ManagedHosts = () => {
         {
             id: '11',
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
-            accessor: 'topology.serverInstallationMode',
+            accessor: 'serverInstallationMode',
             isSortable: true,
             width: '212px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                const nodes = rowData?.sqlServerInstances?.[0]?.sqlServerNodes;
-                let type = '';
-                if (nodes && nodes.length > 1) {
-                    type = GENERAL.CLUSTER;
-                } else if (nodes && nodes.length === 1) {
-                    type = GENERAL.STANDALONE;
-                }
-                const rowValue = cellData || type;
                 return (
                     <>
-                        {rowValue}
-                        {!rowValue && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!rowValue && !rowData?.loading && notAvailable()}
+                        {cellData}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && !rowData?.loading && notAvailable()}
                     </>
                 );
             }
