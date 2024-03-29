@@ -253,7 +253,7 @@ $ErrorActionPreference = "Stop"
   $clusterNetworkIps = $null
   $failureInfo = $null
   try {
-    $clusterServiceStatus = (Get-Service -Name clussvc).Status
+    $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
 
     if ($clusterServiceStatus -eq "Running") {
       $clusterNetworkIps = (Get-ClusterNetworkInterface).Ipv4Addresses

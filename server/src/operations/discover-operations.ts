@@ -668,7 +668,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
         logger.error('Failed to get cluster network interface details. Reason:', ssmResponse);
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Reason: failed to get WNFC detetails.`
+            `Unable to manage instance '${ec2InstanceId}'. Reason: failed to get network interface details.`
         );
     }
 
