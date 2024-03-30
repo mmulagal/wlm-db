@@ -271,19 +271,36 @@ $ErrorActionPreference = "Stop"
 ];
 
 // TODO: BucketName should change to path under wlmdb.artifacts.REGION.bucket/wlmdb/scripts after Discovery.zip copied there.
-const DISCOVERY_SCRIPTS_COPY_PS1 = [
+const DISCOVERY_SCRIPTS_COPY_PS1 = (s3SignedUrl: string) => [
     `
-$ErrorActionPreference = "Stop"
-$body = @{}
-try {
-  $Null = Read-S3Object -BucketName bucketkrithi -Key Discovery.zip -File $Env:Temp\\Discovery.zip
-  $Null = Expand-Archive -Path $Env:Temp\\Discovery.zip -DestinationPath c:\\SSM -Force
-  $Null = C:\\SSM\\HideAllSSMScripts.ps1
-} catch {
-  $body['failureInfo'] = $_.Exception.Message
-} finally {
-  Echo $body | ConvertTo-Json -Compress
-}
+    $ErrorActionPreference = "Stop"
+    $s3SignedUrl = '${s3SignedUrl}'
+    $body = @{}
+    $ssmPath = "C:\\SSM"
+    $dbcreatePath = "C:\\SSM\\dbcreate"
+    
+    try {
+    
+      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+      $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile $Env:Temp\\dbcreate.zip
+      $Null = Expand-Archive -Path $Env:Temp\\dbcreate.zip -DestinationPath $ssmPath -Force
+    
+      Copy-Item -Path "C:\\SSM\\dbcreate\\*" -Destination $ssmPath -Recurse -Force
+    
+      Remove-Item $dbcreatePath -Force  -Recurse -ErrorAction SilentlyContinue
+    
+      Get-ChildItem -path $ssmPath -Recurse -Force | foreach {$_.attributes = "Hidden"}
+      Get-ChildItem -path $ssmPath -Recurse -Force | foreach {$_.IsReadOnly = $true} 
+      $FILE=Get-Item $ssmPath -Force
+      $FILE.attributes='Hidden' 
+      $body['status'] = "Success"
+    } catch {
+      $body['status'] = "Failed"
+      $body['failureInfo'] = $_.Exception.Message
+    } finally {
+      Echo $body | ConvertTo-Json -Compress
+    } 
+    
 `
 ];
 
