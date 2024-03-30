@@ -31,7 +31,7 @@ import {
     SQL_SERVER_VERSION_TO_YEAR,
     HOST_AND_SQL_INFO_PS1,
     CLUSTER_NETWORK_IP_INFO_PS1,
-    DISCOVERY_SCRIPTS_COPY_PS1
+    COPY_SCIRPTS_TO_MANAGE_RESOURCE
 } from './workloads/mssql/discover-consts';
 import { deleteParameters, getParameter, sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
@@ -742,7 +742,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
         callSsmExecution(
             credentialsId,
             region,
-            DISCOVERY_SCRIPTS_COPY_PS1(dbcreateS3SignedUrl),
+            COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
             ec2InstanceId,
             accountId,
             true,
@@ -755,7 +755,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
             callSsmExecution(
                 credentialsId,
                 region,
-                DISCOVERY_SCRIPTS_COPY_PS1(dbcreateS3SignedUrl),
+                COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
                 node2InstanceId,
                 accountId,
                 true,

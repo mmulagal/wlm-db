@@ -151,7 +151,7 @@ async function getDriveInfoFromNodes(
                 }
                 return null;
             })
-            .filter(item => item !== null),
+            .filter(Boolean),
         ...(standbyNodeExistingDrives !== undefined && sqlDeploymentType === 'FCI'
             ? standbyNodeExistingDrives
                   .filter((item: any) => !activeNodeExistingDrives.some(obj => obj.LogicalDisk === item))
