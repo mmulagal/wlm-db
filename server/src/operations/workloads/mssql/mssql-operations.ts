@@ -101,7 +101,7 @@ async function getDataBasesSummary(resourceId: string, activeNodeInstanceId?: st
     const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
     const batchQueries: string[] = [];
     for (let i = 0, offset = 0; i < rowscount; i++) {
-        batchQueries.push(`${PSSCRIPT} -Query "${DATABASES(offset, DB_ROWS_COUNT)}"`);
+        batchQueries.push(`sqlcmd -Q "${DATABASES(offset, DB_ROWS_COUNT)}" -y 0`);
         offset += DB_ROWS_COUNT;
     }
 
@@ -645,7 +645,7 @@ async function getNativeSQLBackedupDatabases(resourceId: string, activeNodeInsta
         const response = await callSsmExecution(
             credentialsId,
             region,
-            [`${PSSCRIPT} -Query "${SQL_BACKUPS}"`],
+            [`sqlcmd -Q "${SQL_BACKUPS}" -y 0`],
             activeNodeInstanceId
         );
 
@@ -745,10 +745,10 @@ async function checkDatabaseExists(
     let command;
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         command = [
-            `${PSSCRIPT} -Query "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = "tempdb18" FOR JSON PATH"'`
+            'sqlcmd -Q "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = \'tempdb18\' FOR JSON PATH" -y 0'
         ];
     } else {
-        command = [`${PSSCRIPT} -Query "${DATABASE_NAME_EXISTS(databaseName)}"`];
+        command = [`sqlcmd -Q "${DATABASE_NAME_EXISTS(databaseName)}" -y 0`];
     }
 
     const checkDatabaseExistsResponse = await callSsmExecution(
