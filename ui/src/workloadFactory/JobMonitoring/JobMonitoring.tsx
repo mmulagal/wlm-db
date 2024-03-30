@@ -58,8 +58,6 @@ const JobMonitoring = () => {
         dispatchTimeInterval(1);
     }, [refreshTime]);
 
-    JobMonitoringApi();
-
     return (
         <div className={styles.jobMonitoring}>
             {/* <div className={styles.breadCrumb}>

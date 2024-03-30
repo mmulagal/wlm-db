@@ -29,13 +29,12 @@
         justify-content: center;
         cursor: pointer;
     }
-    
+
     .active {
-        border-bottom: 2px solid var(--blue-70);
+        border-bottom: 2px solid var(--text-button-primary);
     }
 
     .activeText {
-        color: var(--blue-70);
+        color: var(--text-button-primary);
     }
 }
-

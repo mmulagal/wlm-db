@@ -6,7 +6,11 @@ import { describeFSx } from '../../lib/aws/fsx';
 
 const logger = getLogger();
 
-async function calculateFsxnStorageEfficiency(region: string, credentialsId: string, fileSystemId: string) {
+async function calculateFsxnStorageEfficiencyUsingCloudwatch(
+    region: string,
+    credentialsId: string,
+    fileSystemId: string
+) {
     logger.info('Calculating storage efficiency for FSx for NetApp ONTAP:', { region, credentialsId, fileSystemId });
 
     // https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/file-system-metrics.html#fsxn-storage-volume-metrics
@@ -82,7 +86,11 @@ async function calculateFsxnStorageEfficiency(region: string, credentialsId: str
     throw new Error(errorMessage);
 }
 
-async function calculateFsxwStorageEfficiency(region: string, credentialsId: string, fileSystemId: string) {
+async function calculateFsxwStorageEfficiencyUsingCloudwatch(
+    region: string,
+    credentialsId: string,
+    fileSystemId: string
+) {
     logger.info('Calculating storage efficiency for FSx for Windows:', { region, credentialsId, fileSystemId });
 
     // https://docs.aws.amazon.com/fsx/latest/WindowsGuide/fsx-windows-metrics.html
@@ -169,4 +177,4 @@ async function calculateFsxwStorageEfficiency(region: string, credentialsId: str
     throw new Error(errorMessage);
 }
 
-export { calculateFsxnStorageEfficiency, calculateFsxwStorageEfficiency };
+export { calculateFsxnStorageEfficiencyUsingCloudwatch, calculateFsxwStorageEfficiencyUsingCloudwatch };

@@ -1,0 +1,30 @@
+.sizeContainer {
+    width: 332px;
+    gap: 8px;
+
+    .middleContainer {
+        margin-top: 1px;
+        background-color: var(--loader-skeleton-bg);
+        height: 36px;
+        display: flex;
+        gap: 30px;
+    }
+
+    .middle {
+        width: 159px;
+        padding: 6px 0 0 24px;
+    }
+
+    .lastContainer {
+        height: 36px;
+        margin-top: 8px;
+        background-color: var(--table-header-background);
+        display: flex;
+        gap: 30px;
+
+        .totalSize {
+            width: 159px;
+            padding: 6px 0 0 24px;
+        }
+    }
+}

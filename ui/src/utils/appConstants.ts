@@ -151,7 +151,7 @@ export const GENERAL = {
     ADD_NEW_CREDENTIALS: 'To add a new credentials, go to the ',
     MULTI_AZ_CHECK_MESSAGE:
         'The selected VPC is not optimized. You should choose a VPC with subnets in 2 availability zones so that each cluster node will be in a dedicated availability zone.',
-    QUERY_ERROR: 'Query error',
+    QUERY_ERROR: 'Error',
     DB_CREATE_SUCCESS_MSG: 'DB creation is in progress',
     PERMISSION_REQUIRED: 'Permissions required',
     CLOUDFORMATION_TEMPLATE_URL: ['CloudFormation template ', 'URL'],
@@ -640,6 +640,7 @@ export const GENERAL = {
     SAME_NEW_DRIVE_ERROR: 'Data and log file drive letters should be different for new drives.',
     FSX_FOR_ONTAP: 'FSx for ONTAP',
     EBS: 'EBS',
+    FSX_FOR_WINDOWS: 'FSx for Windows',
     SINGLE_AZ: 'Single AZ',
     MULTI_AZ: 'Multi AZ',
     // Const for unidentifiable data
@@ -694,6 +695,7 @@ export const GENERAL = {
         ' Job Monitoring.'
     ],
     FCI: 'FCI',
+    CLUSTER: 'Cluster',
     STANDALONE: 'Standalone',
     SERVICE: 'Service',
     PERMISSIONS: 'Permissions',
@@ -703,7 +705,17 @@ export const GENERAL = {
     BLOCKED_BY_PERMISSION_BOUNDARY: 'Blocked',
     MISSING_PERMISSION: 'Missing',
     MISSING_AND_BLOCKED_PERMISSIONS: 'Missing & blocked permissions',
-    UNSUPPORTED_PERMISSIONS: 'Missing permissions'
+    UNSUPPORTED_PERMISSIONS: 'Missing permissions',
+    DATA_SIZE: 'Data volume size',
+    LOG_SIZE: 'Log volume size',
+    TEMPDB_SIZE: 'Tempdb volume size',
+    QUORUM_SIZE: 'Quorum volume size',
+    BUFFER_SIZE: 'Buffer',
+    MIN_FSX_CAPACITY_MESSAGE: 'Minimum SSD capacity of FSx for NetApp ONTAP',
+    VPC_MESSAGE:
+        'AWS Service interface endpoints (SQS, FSx, EC2, CloudWatch, Cloud Formation, SSM) and S3 gateway endpoint are created during deployment if not found. Make sure security group for an existing Interface endpoint allows access to HTTPS(443) protocol to the selected subnets. VPC DNS attributes(EnableDnsSupport and EnableDnsHostnames) are modified to enable resolve endpoint address resolution.',
+    SQL_SERVER_NOT_RUNNING: 'SQL service is not running',
+    STORAGE_NOT_PRESENT: 'Storage could not be identified'
 };
 
 export const CODE_VIEWER = {

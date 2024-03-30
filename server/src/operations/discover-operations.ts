@@ -95,7 +95,7 @@ async function getHostAndSqlServerInfo(
 ): Promise<DiscoverMsSqlResponseBodyType> {
     logger.info('getHostAndSqlServerInfo():', { accountId, credentialsId, region, nextToken });
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        return returnInventorydata();
+        return returnInventorydata(instances);
     }
     let api1StartTime;
     let api1EndTime;
@@ -339,6 +339,13 @@ async function getHostAndSqlInfoFromPsOutput(
             if (!Array.isArray(responseInJson)) {
                 responseInJson = [responseInJson];
             }
+
+            if (responseInJson?.failureInfo) {
+                logger.error(
+                    `Failed to discover SQL Server details in EC2 ${ssmTarget.ec2InstanceId}: $responseInJson`
+                );
+            }
+
             for (const sqlServerInstanceInfo of responseInJson) {
                 // If an SQL Server version is unknown, default to 2015, which
                 // causes no data to be returned for the SQL Server instance.
@@ -350,7 +357,10 @@ async function getHostAndSqlInfoFromPsOutput(
                     const deploymentTypes = [];
                     const ebsVolumeIDs = ssmTarget.ebsVolumeIDs?.map(elem => elem?.replace('-', ''));
 
-                    let driveInfo = JSON.parse(sqlServerInstanceInfo?.sqlServerInstanceStorageInfo);
+                    let driveInfo = isEmpty(sqlServerInstanceInfo?.sqlServerInstanceStorageInfo)
+                        ? []
+                        : JSON.parse(sqlServerInstanceInfo?.sqlServerInstanceStorageInfo);
+
                     if (!Array.isArray(driveInfo)) {
                         driveInfo = [driveInfo];
                     }
@@ -386,7 +396,7 @@ async function getHostAndSqlInfoFromPsOutput(
                             // SerialNumberOrScsiTarget = ['//ip/share', '//fsxid/share]
                             const fsxEndpoints = Array.from(endPointIpWithFsxInfo.keys());
                             const matchedEndpoints = fsxEndpoints.filter(value =>
-                                di?.SerialNumberOrScsiTarget.includes(value)
+                                di?.SerialNumberOrScsiTarget?.includes(value)
                             );
                             if (!isEmpty(matchedEndpoints)) {
                                 storageTypes.push({
@@ -411,6 +421,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerNodes,
                         sqlServerInstance,
                         sqlServerState,
+                        isDefaultInstance,
                         windowsAuthentication,
                         scriptExecutionTime,
                         databaseCount
@@ -430,15 +441,18 @@ async function getHostAndSqlInfoFromPsOutput(
                     ssmTargetSqlServerInstancesInfo.push({
                         sqlServerVersion,
                         ...(sqlServerName && { sqlServerName }),
-                        sqlServerNodes,
+                        sqlServerNodes: compact(sqlServerNodes),
                         sqlServerInstance,
                         sqlServerState,
                         sqlServerProductYear,
                         ...(sqlServerEdition && { sqlServerEdition }),
+                        isDefaultInstance,
                         windowsAuthentication,
                         sqlServerAuthentication,
-                        storage: uniqBy(storageTypes, 'id'),
-                        deploymentTypes: uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones })),
+                        storage: compact(uniqBy(storageTypes, 'id')),
+                        deploymentTypes: compact(
+                            uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones }))
+                        ),
                         ...(databaseCount && { databaseCount })
                     });
                 }
@@ -542,6 +556,13 @@ async function validateAndStoreDiscoveredParameters(
 ) {
     logger.info('Validate and Put SSM parameters', { accountId, credentialsId, region, instanceId });
 
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        return {
+            databaseCount: '10',
+            sqlServerEdition: 'Standard Edition (64-bit)'
+        };
+    }
+
     try {
         if (!accountId || !credentialsId || !region || !instanceId) {
             logger.error('Invalid input parameters', { accountId, credentialsId, region, instanceId });
@@ -614,7 +635,7 @@ async function fetchUnmanagedHostsInformation(
             getDatabaseHostSummary(
                 accountId,
                 resourceDetail.resource_id,
-                'serverDetails,performance,usageEstimation,resourceUtilization,storage',
+                'serverDetails,performance,usageEstimation,storage',
                 resourceDetail,
                 false // unmanaged host
             )
@@ -651,10 +672,12 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     ]);
 
     if (ssmResponse?.includes('failureInfo')) {
-        logger.error('Failed to get cluster network interface details. Reason:', ssmResponse);
+        logger.error(
+            `Failed to get cluster network interface details for EC2 ${ec2InstanceId}. Reason: ${ssmResponse}`
+        );
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Reason: failed to get WNFC detetails.`
+            `Unable to manage instance '${ec2InstanceId}'. Reason: failed to get network interface details.`
         );
     }
 
@@ -860,7 +883,7 @@ async function validateCredentials(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
-    let command = 'pwsh -Command {$WarningPreference = "SilentlyContinue";';
+    let command = '$WarningPreference = "SilentlyContinue";';
 
     if (fsxCredentials || sqlCredentials.length) {
         command += `${installPowerShellModule(PSMODULE_AWS_SSM)};\n`;
@@ -877,7 +900,7 @@ async function validateCredentials(
         );
     }
 
-    command += '$responeObject | ConvertTo-Json -Compress }';
+    command += '$responeObject | ConvertTo-Json -Compress';
 
     const ssmresponse = await callSsmExecution(credentialsId, region, [command], instanceId, undefined, false);
 

@@ -22,6 +22,7 @@ import getConnectionStatusResponse from '../../responses/aws/ssm-connection-stat
 import putParameterResponse from '../../responses/aws/ssm-put-parameter.json';
 import getParameerResponse from '../../responses/aws/ssm-get-parameter.json';
 import deleteParametersResponse from '../../responses/aws/ssm-delete-parameters.json';
+import { GET_ONTAP_VOLUME_SNAPSHOT_COUNT_SCRIPT, MAP_ONTAP_VOLUMES_SCRIPT } from '../../../utils/consts';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -138,7 +139,7 @@ const serverIOLatencyParams = {
 
 const nativeSqlBackupParams = {
     commands: [
-        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = 'D'\n    AND backupset.database_name NOT IN ('msdb','tempdb','model','master') FOR JSON PATH\n\""
+        "sqlcmd -Q \"SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = 'D'\n    AND backupset.database_name NOT IN ('msdb','tempdb','model','master') FOR JSON PATH\n\" -y 0"
     ]
 };
 
@@ -149,13 +150,11 @@ const nativeSqlBackupDatabasesParams = {
 };
 
 const getOntapSnapshotCountParams = {
-    commands: [
-        "C:\\SSM\\OntapRestGet.ps1 -FSxID test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'uuid=ea8b0326-302e-11ee-8387-19b38f44ff5b' -OntapResourceQuery 'fields=snapshot_count'"
-    ]
+    commands: [GET_ONTAP_VOLUME_SNAPSHOT_COUNT_SCRIPT]
 };
 
 const getOntapMappedVolumesParams = {
-    commands: ['C:\\SSM\\Get-MappedOntapVolumes.ps1 -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1']
+    commands: [MAP_ONTAP_VOLUMES_SCRIPT]
 };
 
 const getStorageParams = {
@@ -249,6 +248,12 @@ const checkDBExists = {
 const serverDetails = {
     commands: [
         "sqlcmd -Q \"\n    SET NOCOUNT ON;\n    SELECT\n        (\n            SELECT NodeName, is_current_owner\n            FROM sys.dm_os_cluster_nodes\n            FOR JSON PATH\n        ) AS clusterNodesInfo,\n        (\n        SELECT COUNT(1) \n        FROM sys.dm_exec_sessions \n        WHERE host_process_id is NOT NULL\n        ) AS numberOfConnections,\n        SERVERPROPERTY('Edition') AS ServerEdition,\n        SERVERPROPERTY('IsClustered') AS isClustered,\n        SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS activeNode,\n        @@version AS serverDetails,\n        @@SERVERNAME AS clusterName,\n        COUNT(DISTINCT d.database_id) AS totalCount\n    FROM\n        (\n            SELECT\n                database_id,\n                logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n                rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n                databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM\n                sys.master_files\n            GROUP BY\n                database_id\n        ) t\n    JOIN\n        sys.databases d ON d.database_id = t.database_id\n    FOR JSON PATH\" -y 0"
+    ]
+};
+
+const clusterNetwokIpInfo = {
+    commands: [
+        "\n$ErrorActionPreference = \"Stop\"\n  $body = @{}\n  $clusterNetworkIps = $null\n  $failureInfo = $null\n  try {\n    $clusterServiceStatus = (Get-Service -Name clussvc).Status\n\n    if ($clusterServiceStatus -eq \"Running\") {\n      $clusterNetworkIps = (Get-ClusterNetworkInterface).Ipv4Addresses\n      $body['clusterNetworkIps'] = $clusterNetworkIps\n    } else {\n      $body['clusterNetworkIps'] = @()\n    }\n  } catch {\n    # Prevent any possible errors from clobbering JSON output\n    $body['failureInfo'] = $_.Exception.Message\n  } finally {\n    Echo $body | ConvertTo-Json -Compress\n  }\n"
     ]
 };
 
@@ -348,7 +353,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: resourceUtilization })
     .resolves(listSendCommandCommandResponse.resourceUtilizationResponse)
     .on(SendCommandCommand, { Parameters: getCollationDetails })
-    .resolves(listSendCommandCommandResponse.getCollationDetailsResponse);
+    .resolves(listSendCommandCommandResponse.getCollationDetailsResponse)
+    .on(SendCommandCommand, { Parameters: clusterNetwokIpInfo })
+    .resolves(listSendCommandCommandResponse.clusterNetwokIpInfo);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -434,7 +441,9 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-2345-abd46-resourceUtilization' })
     .resolves(getCommandInvocationResponse.serverUtilizationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getCollationDetails' })
-    .resolves(getCommandInvocationResponse.collationDetailsInvocationResponse);
+    .resolves(getCommandInvocationResponse.collationDetailsInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-clusterNetwokIpInfo' })
+    .resolves(getCommandInvocationResponse.clusterNetwokIpInfoInvocationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

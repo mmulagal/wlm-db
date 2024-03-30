@@ -19,13 +19,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import {
-    DETECT_HOST_VAR,
-    FROM_DIALOG,
-    FSX_DEPLOYMENT_MODE,
-    SSM_TROUBLESHOOTING_LINK,
-    WLF_TABS
-} from '../../../utils/consts';
+import { DETECT_HOST_VAR, FROM_DIALOG, FSX_DEPLOYMENT_MODE, SSM_TROUBLESHOOTING_LINK } from '../../../utils/consts';
 import { useManageHostMutation, useRegisterResourceCredentialsMutation } from '../../../utils/apiService';
 import { setIsDetectHostError, setIsDetectHostLoading } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
@@ -42,7 +36,7 @@ import {
 } from '../../../store/workloadFactory/inventorySlice';
 import { createDetectHostPayload } from '../../../utils/utilityFunctions';
 import { useEffect, useRef, useState } from 'react';
-import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
+import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import store from '../../../store/store';
 
 const UndetectedHosts = () => {
@@ -73,8 +67,11 @@ const UndetectedHosts = () => {
     const formatUnIdentifiableData = (data: any) => {
         return data.map((item: any) => {
             let fsxId = '';
-            if (item?.sqlServerInstances?.[0]?.storage) {
-                item?.sqlServerInstances?.[0]?.storage.map((storageObj: any) => {
+            let isSqlRunning = item?.sqlServerInstances?.[0]?.sqlServerState === DETECT_HOST_VAR.RUNNING;
+            let hasStorageTypes = false;
+            if (item?.sqlServerInstances?.[0]?.storage && item?.sqlServerInstances?.[0]?.storage?.length > 0) {
+                hasStorageTypes = true;
+                item?.sqlServerInstances?.[0]?.storage?.map((storageObj: any) => {
                     if (storageObj.type === DETECT_HOST_VAR.FSXN) {
                         fsxId = storageObj.id;
                     }
@@ -82,15 +79,38 @@ const UndetectedHosts = () => {
             }
 
             let isRegistered = false;
-            let detectOption = 'disable';
+            let detectOption = DETECT_HOST_VAR.DISABLE;
+            let detectOptionDisableMsg = '';
             if (fsxId) {
                 isRegistered = fsxCredentialStatusObj?.[fsxId];
             }
             if (item?.ssmState !== DETECT_HOST_VAR.SSM_CONNECTED) {
-                detectOption = 'hide';
+                detectOption = DETECT_HOST_VAR.HIDE;
+            } else if (!isSqlRunning) {
+                detectOption = DETECT_HOST_VAR.DISABLE;
+                detectOptionDisableMsg = GENERAL.SQL_SERVER_NOT_RUNNING;
+            } else if (!hasStorageTypes) {
+                detectOption = DETECT_HOST_VAR.DISABLE;
+                detectOptionDisableMsg = GENERAL.STORAGE_NOT_PRESENT;
             } else if ((fsxId && fsxId in fsxCredentialStatusObj) || !fsxId) {
-                detectOption = 'show';
+                detectOption = DETECT_HOST_VAR.SHOW;
             }
+
+            // For column Availability
+            const azList = item?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones
+                ? item?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones.join(',')
+                : '';
+            let deploymentType = item?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
+            deploymentType =
+                deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+                    ? GENERAL.SINGLE_AZ
+                    : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                    ? GENERAL.MULTI_AZ
+                    : '';
+
+            // For SSM connectivity
+            let ssmConnection =
+                item?.ssmState === DETECT_HOST_VAR.SSM_CONNECTED ? GENERAL.SSM_ONLINE : GENERAL.SSM_CONNECTION_LOST;
 
             return {
                 name: item?.sqlServerInstances?.[0]?.sqlServerName || GENERAL.NOT_AVAILABLE,
@@ -101,7 +121,11 @@ const UndetectedHosts = () => {
                 sqlServerInstances: item?.sqlServerInstances,
                 fsxId: fsxId,
                 isFsxRegistered: isRegistered,
-                detectOption: detectOption
+                detectOption: detectOption,
+                detectOptionDisableMsg: detectOptionDisableMsg,
+                azList: azList,
+                deploymentType: deploymentType,
+                ssmConnection: ssmConnection
             };
         });
     };
@@ -310,7 +334,7 @@ const UndetectedHosts = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
-                        {rowData?.detectOption === 'show' && (
+                        {rowData?.detectOption === DETECT_HOST_VAR.SHOW && (
                             <div
                                 className={styles.detectManage}
                                 onClick={() => {
@@ -326,8 +350,8 @@ const UndetectedHosts = () => {
                                 )}
                             </div>
                         )}
-                        {rowData?.detectOption === 'disable' && (
-                            <div className={styles.detectManageDisable}>
+                        {rowData?.detectOption === DETECT_HOST_VAR.DISABLE && (
+                            <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
                                 <Typography variant="Regular_14" className={styles.textStyle}>
                                     {GENERAL.DETECT_HOST}
                                 </Typography>
@@ -372,21 +396,19 @@ const UndetectedHosts = () => {
         {
             id: '4',
             Header: GENERAL.DB_HOST_VPC,
-            accessor: 'vpc',
+            accessor: 'vpc.name',
             isSortable: true,
             width: '212px',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
-                        {cellData?.name && (
+                        {rowData?.vpc?.name && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                    {cellData?.cidrBlock}
-                                </TooltipInfo>
-                                <Typography variant="Regular_14">{cellData?.name}</Typography>
+                                <TooltipInfo>{rowData?.vpc?.cidrBlock}</TooltipInfo>
+                                <Typography variant="Regular_14">{rowData?.vpc?.name}</Typography>
                             </div>
                         )}
-                        {!cellData?.name && notAvailable()}
+                        {!rowData?.vpc?.name && notAvailable()}
                     </>
                 );
             }
@@ -394,40 +416,30 @@ const UndetectedHosts = () => {
         {
             id: '5',
             Header: GENERAL.DB_HOST_AVAILABILITY,
-            accessor: 'sqlServerInstances',
+            accessor: 'deploymentType',
             isSortable: true,
             width: '209px',
             filterOptions: [
-                { label: GENERAL.SINGLE_AZ, value: FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 },
-                { label: GENERAL.MULTI_AZ, value: FSX_DEPLOYMENT_MODE.MULTI_AZ_1 }
+                { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
+                { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
             ],
-            renderCell: (cellData: any) => {
-                const azList = cellData?.[0]?.deploymentTypes?.[0]?.zones
-                    ? cellData?.[0]?.deploymentTypes?.[0]?.zones.join(',')
-                    : '';
-                const deploymentType = cellData?.[0]?.deploymentTypes?.[0]?.type;
+            renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
-                        {deploymentType && (
+                        {cellData && (
                             <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
-                                <Typography variant="Regular_14">
-                                    {deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-                                        ? GENERAL.SINGLE_AZ
-                                        : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-                                        ? GENERAL.MULTI_AZ
-                                        : ''}
-                                </Typography>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{rowData?.azList}</TooltipInfo>
+                                <Typography variant="Regular_14">{cellData}</Typography>
                             </div>
                         )}
-                        {!deploymentType && notAvailable()}
+                        {!cellData && notAvailable()}
                     </>
                 );
             }
         },
         {
             Header: GENERAL.SSM_CONNECTIVITY,
-            accessor: 'ssm',
+            accessor: 'ssmConnection',
             id: '6',
             width: '226px',
             filterOptions: 'auto',
@@ -435,8 +447,8 @@ const UndetectedHosts = () => {
                 return (
                     <div className={styles.statusCol}>
                         <div>
-                            {cellData === DETECT_HOST_VAR.SSM_CONNECTED && <Success />}
-                            {cellData !== DETECT_HOST_VAR.SSM_CONNECTED && (
+                            {cellData === GENERAL.SSM_ONLINE && <Success />}
+                            {cellData !== GENERAL.SSM_ONLINE && (
                                 <Popover
                                     popoverClass={CommonStyles['popover']}
                                     children={
@@ -461,11 +473,7 @@ const UndetectedHosts = () => {
                                 />
                             )}
                         </div>
-                        <div>
-                            {cellData === DETECT_HOST_VAR.SSM_CONNECTED
-                                ? GENERAL.SSM_ONLINE
-                                : GENERAL.SSM_CONNECTION_LOST}
-                        </div>
+                        <div>{cellData}</div>
                     </div>
                 );
             }

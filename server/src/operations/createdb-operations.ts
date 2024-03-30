@@ -138,12 +138,15 @@ async function getDriveInfoFromNodes(
     const updatedExitingDrives = [
         ...activeNodeExistingDrives
             .map(item => {
+                // At rare situation we are not getting any other information than Manufacturer, So handling that scenario by checking whether the disk info also available
                 if (item.LogicalDisk) {
                     return {
                         driveLetter: item.LogicalDisk?.charAt(0),
                         availableSize: item.FileSystem,
                         isNetappDrive: item.Manufacturer?.includes('NETAPP') ?? false,
-                        isDriveClustered: item.Owner?.includes('SQL Server') ?? false
+                        ...(sqlDeploymentType === 'FCI' && {
+                            isDriveClustered: item.Owner?.includes('SQL Server') ?? false
+                        })
                     };
                 }
                 return null;
@@ -156,7 +159,7 @@ async function getDriveInfoFromNodes(
                       driveLetter: item?.charAt(0),
                       availableSize: 0,
                       isNetappDrive: false,
-                      isDriveClustered: false
+                      ...(sqlDeploymentType === 'FCI' && { isDriveClustered: false })
                   }))
             : [])
     ];
