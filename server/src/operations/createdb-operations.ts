@@ -136,12 +136,19 @@ async function getDriveInfoFromNodes(
         : [parsedstandbyNodeResponse?.DriveLetters];
 
     const updatedExitingDrives = [
-        ...activeNodeExistingDrives.map(item => ({
-            driveLetter: item.LogicalDisk?.charAt(0),
-            availableSize: item.FileSystem,
-            isNetappDrive: item.Manufacturer?.includes('NETAPP') ?? false,
-            isDriveClustered: item.Owner?.includes('SQL Server') ?? false
-        })),
+        ...activeNodeExistingDrives
+            .map(item => {
+                if (item.LogicalDisk) {
+                    return {
+                        driveLetter: item.LogicalDisk?.charAt(0),
+                        availableSize: item.FileSystem,
+                        isNetappDrive: item.Manufacturer?.includes('NETAPP') ?? false,
+                        isDriveClustered: item.Owner?.includes('SQL Server') ?? false
+                    };
+                }
+                return null;
+            })
+            .filter(item => item !== null),
         ...(standbyNodeExistingDrives !== undefined && sqlDeploymentType === 'FCI'
             ? standbyNodeExistingDrives
                   .filter((item: any) => !activeNodeExistingDrives.some(obj => obj.LogicalDisk === item))
