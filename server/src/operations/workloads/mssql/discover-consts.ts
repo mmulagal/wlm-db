@@ -277,7 +277,6 @@ const COPY_SCIRPTS_TO_MANAGE_RESOURCE = (s3SignedUrl: string) => [
     $s3SignedUrl = '${s3SignedUrl}'
     $body = @{}
     $ssmPath = "C:\\SSM"
-    $dbcreatePath = "C:\\SSM\\dbcreate"
     
     try {
       [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
