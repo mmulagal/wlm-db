@@ -270,24 +270,18 @@ $ErrorActionPreference = "Stop"
 `
 ];
 
-// TODO: BucketName should change to path under wlmdb.artifacts.REGION.bucket/wlmdb/scripts after Discovery.zip copied there.
-const DISCOVERY_SCRIPTS_COPY_PS1 = (s3SignedUrl: string) => [
+// For now, we copy only the scripts that are needed to create a database.
+const COPY_SCIRPTS_TO_MANAGE_RESOURCE = (s3SignedUrl: string) => [
     `
     $ErrorActionPreference = "Stop"
     $s3SignedUrl = '${s3SignedUrl}'
     $body = @{}
     $ssmPath = "C:\\SSM"
-    $dbcreatePath = "C:\\SSM\\dbcreate"
     
     try {
-    
       [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
       $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile $Env:Temp\\dbcreate.zip
       $Null = Expand-Archive -Path $Env:Temp\\dbcreate.zip -DestinationPath $ssmPath -Force
-    
-      Copy-Item -Path "C:\\SSM\\dbcreate\\*" -Destination $ssmPath -Recurse -Force
-    
-      Remove-Item $dbcreatePath -Force  -Recurse -ErrorAction SilentlyContinue
     
       Get-ChildItem -path $ssmPath -Recurse -Force | foreach {$_.attributes = "Hidden"}
       Get-ChildItem -path $ssmPath -Recurse -Force | foreach {$_.IsReadOnly = $true} 
@@ -304,4 +298,9 @@ const DISCOVERY_SCRIPTS_COPY_PS1 = (s3SignedUrl: string) => [
 `
 ];
 
-export { HOST_AND_SQL_INFO_PS1, SQL_SERVER_VERSION_TO_YEAR, CLUSTER_NETWORK_IP_INFO_PS1, DISCOVERY_SCRIPTS_COPY_PS1 };
+export {
+    HOST_AND_SQL_INFO_PS1,
+    SQL_SERVER_VERSION_TO_YEAR,
+    CLUSTER_NETWORK_IP_INFO_PS1,
+    COPY_SCIRPTS_TO_MANAGE_RESOURCE
+};
