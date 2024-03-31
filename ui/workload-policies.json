@@ -72,6 +72,7 @@
                     "cloudformation:DescribeStacks",
                     "cloudformation:ListStacks",
                     "cloudformation:ValidateTemplate",
+                    "cloudwatch:GetMetricStatistics",
                     "ds:DescribeDirectories",
                     "ec2:CreateLaunchTemplate",
                     "ec2:CreateLaunchTemplateVersion",
@@ -188,6 +189,7 @@
                 "Sid": "CommonGroup",
                 "Effect": "Allow",
                 "Action": [
+                    "cloudwatch:GetMetricStatistics",
                     "sns:ListTopics",
                     "ec2:DescribeInstances",
                     "ec2:DescribeVpcs",

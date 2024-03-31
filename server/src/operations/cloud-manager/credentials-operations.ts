@@ -47,20 +47,24 @@ async function getCredentials(credentialsType: string): Promise<CredentialsRespo
     logger.info('Getting credentials ', credentialsType);
     if (String(getAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER))?.toUpperCase() === BXP.toUpperCase()) {
         const data = await getAllBxpCredentials(credentialsType);
-        return data.map(({ credentialsId, extra: { name, arn } }) => ({
-            credentialsId,
-            name,
-            arn,
-            providerAccountId: arn.match(/\d+/)?.[0] || ''
-        }));
+        return data
+            .filter(el => el?.extra?.arn)
+            .map(({ credentialsId, extra: { name, arn } }) => ({
+                credentialsId,
+                name,
+                arn,
+                providerAccountId: arn.match(/\d+/)?.[0] || ''
+            }));
     }
     const credentialsList = await getAllCredentialsRecursive(credentialsType);
-    return credentialsList.map(({ id, credentials, metadata: { name } }) => ({
-        credentialsId: id,
-        name,
-        arn: credentials,
-        providerAccountId: credentials.match(/\d+/)?.[0] || ''
-    }));
+    return credentialsList
+        .filter(el => el?.credentials)
+        .map(({ id, credentials, metadata: { name } }) => ({
+            credentialsId: id,
+            name,
+            arn: credentials,
+            providerAccountId: credentials.match(/\d+/)?.[0] || ''
+        }));
 }
 
 async function getRoleDetails(credentialsId: string) {
