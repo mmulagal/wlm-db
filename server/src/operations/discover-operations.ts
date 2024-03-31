@@ -338,16 +338,19 @@ async function getHostAndSqlInfoFromPsOutput(
 
     try {
         const powerShellScriptOutput = ssmResponse?.StandardOutputContent || '';
+
         if (powerShellScriptOutput.length > 0) {
             let responseInJson = JSON.parse(ssmResponse?.StandardOutputContent || '');
-            if (!Array.isArray(responseInJson)) {
-                responseInJson = [responseInJson];
+
+            if (powerShellScriptOutput?.includes('failureInfo')) {
+                logger.error(
+                    `Issues found while discovering SQL Server details in EC2 ${ssmTarget.ec2InstanceId}:`,
+                    responseInJson
+                );
             }
 
-            if (responseInJson?.failureInfo) {
-                logger.error(
-                    `Failed to discover SQL Server details in EC2 ${ssmTarget.ec2InstanceId}: $responseInJson`
-                );
+            if (!Array.isArray(responseInJson)) {
+                responseInJson = [responseInJson];
             }
 
             for (const sqlServerInstanceInfo of responseInJson) {
@@ -773,7 +776,9 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
         )
     ]);
 
-    logger.debug('ssmScriptsCopyResponses:', { ssmScriptsCopyResponse1, ssmScriptsCopyResponse2 });
+    logger.info(
+        `Response for copy scripts using PowerShell: ${node1InstanceId} = ${ssmScriptsCopyResponse1}, ${node2InstanceId} = ${ssmScriptsCopyResponse2}`
+    );
     if (ssmScriptsCopyResponse1?.includes('failureInfo')) {
         logger.error('Failed to copy discovery scripts. Reason:', ssmScriptsCopyResponse1);
         throw createError(
@@ -1047,7 +1052,6 @@ async function verifyAndAddFSxOntapCredentials(
 export {
     getHostAndSqlServerInfo,
     validateAndStoreDiscoveredParameters,
-    getHostAndSqlInfoFromPsOutput,
     fetchUnmanagedHostsInformation,
     manageSqlServer
 };
