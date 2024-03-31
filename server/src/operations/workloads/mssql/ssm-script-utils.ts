@@ -11,8 +11,8 @@ foreach ($disk in $disks) {
     foreach ($partition in $partitions) {
         $logicalDisks = get-wmiObject -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($partition.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition"
         foreach ($logicalDisk in $logicalDisks) {
-            $object | Add-Member -MemberType NoteProperty -Name "LogicalDisk" -Value $logicalDisk.DeviceID
-            $object | Add-Member -MemberType NoteProperty -Name "FileSystem" -Value $logicalDisk.FreeSpace
+            $object | Add-Member -MemberType NoteProperty -Name "LogicalDisk" -Value $logicalDisk.DeviceID -Force
+            $object | Add-Member -MemberType NoteProperty -Name "FileSystem" -Value $logicalDisk.FreeSpace -Force
             if($deploymentType -eq 'FCI'){
                 $clusterResource = Get-WmiObject -Namespace "root\\MSCluster" -Class "MSCluster_Resource" | Where-Object {$_.Name -eq $logicalDisk.VolumeName}
                 $object | Add-Member -MemberType NoteProperty -Name "Owner" -Value $clusterResource.OwnerGroup
