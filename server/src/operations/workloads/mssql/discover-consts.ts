@@ -179,7 +179,7 @@ const HOST_AND_SQL_INFO_PS1 = [
     $sqlServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
     $DiskTargetInfoMap = GetDiskDriveDetails
   
-    ForEach ($sqlService in $sqlServiceList) {
+    $instancesInfoList = ForEach ($sqlService in $sqlServiceList) {
       $body = @{}
       $instanceSectionStartTime = Get-Date
   
@@ -240,8 +240,9 @@ const HOST_AND_SQL_INFO_PS1 = [
       $body['sqlServerInstanceStorageInfo'] = $sqlServerInstanceStorageInfo | ConvertTo-Json -Compress
       $instanceSectionEndTime = Get-Date
       $body['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
-      Echo $body | ConvertTo-Json
+      Echo $body
     }
+    Echo $instancesInfoList | ConvertTo-Json
   } catch {
     # Prevent any possible errors from clobbering JSON output
     $body['failureInfo'] += "Exception: $_\`n"

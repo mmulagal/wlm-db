@@ -340,14 +340,14 @@ async function getHostAndSqlInfoFromPsOutput(
         const powerShellScriptOutput = ssmResponse?.StandardOutputContent || '';
 
         if (powerShellScriptOutput.length > 0) {
-            let responseInJson = JSON.parse(ssmResponse?.StandardOutputContent || '');
-
             if (powerShellScriptOutput?.includes('failureInfo')) {
                 logger.error(
                     `Issues found while discovering SQL Server details in EC2 ${ssmTarget.ec2InstanceId}:`,
-                    responseInJson
+                    powerShellScriptOutput
                 );
             }
+
+            let responseInJson = JSON.parse(powerShellScriptOutput);
 
             if (!Array.isArray(responseInJson)) {
                 responseInJson = [responseInJson];
