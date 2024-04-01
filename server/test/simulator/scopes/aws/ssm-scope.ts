@@ -253,7 +253,7 @@ const cleanUpDB = {
 
 const checkDBExists = {
     commands: [
-        'sqlcmd -Q "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = "tempdb18" FOR JSON PATH"\' -y 0'
+        "sqlcmd -Q \"SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = 'tempdb18' FOR JSON PATH\" -y 0"
     ]
 };
 
