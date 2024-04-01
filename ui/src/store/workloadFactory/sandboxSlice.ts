@@ -9,7 +9,7 @@ export const initialSandboxState: any = {
     selectedTargetHost: null,
     selectedTargetInstance: null,
     selectedTargetDatabase: `DBname_sandbox_${Date.now()}`,
-    selectedTag: 'Dev',
+    selectedTag: 'Development',
     hideBanner: false,
     isCreateSandboxPressed: false,
     isDBNameAdded: true,

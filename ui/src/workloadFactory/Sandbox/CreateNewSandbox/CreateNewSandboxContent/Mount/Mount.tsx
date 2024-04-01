@@ -63,7 +63,11 @@ const Mount = () => {
                                 value={mountPath}
                                 className={styles.keyField}
                                 isDisabled={selectedMount == 'Auto-assign mount point'}
-                                error={!mountPath ? GENERAL.ACTION_REQUIRED : ''}
+                                error={
+                                    selectedMount === 'Define mount point path' && !mountPath
+                                        ? GENERAL.ACTION_REQUIRED
+                                        : ''
+                                }
                             />
                         </div>
                     </DsTypography>
