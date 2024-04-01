@@ -8,7 +8,7 @@ export const initialSandboxState: any = {
     mountPath: '',
     selectedTargetHost: null,
     selectedTargetInstance: null,
-    selectedTargetDatabase: 'DBname_sandbox',
+    selectedTargetDatabase: `DBname_sandbox_${Date.now()}`,
     selectedTag: 'Dev',
     hideBanner: false,
     isCreateSandboxPressed: false,

@@ -78,7 +78,7 @@ const SelectTarget = () => {
                     <div className={CommonStyles.separator} />
                     <div>Target instance: {selectedTargetInstance ? selectedTargetInstance.label : ''}</div>
                     <div className={CommonStyles.separator} />
-                    <div>Target database: {selectedTargetDatabase}</div>
+                    <div className={styles.dbName}>Target database: {selectedTargetDatabase}</div>
                 </DsTypography>
             );
         }

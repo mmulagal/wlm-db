@@ -26,7 +26,9 @@ export const handleCreateNewSandbox = (state: any, dispatch: any) => {
 
     if (!selectTargetDBName && !mountPathCheck) {
         console.log('create');
+        return true;
     } else {
         console.log('error');
+        return false;
     }
 };
