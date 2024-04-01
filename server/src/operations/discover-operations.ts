@@ -554,6 +554,26 @@ function prepareParametersToStore(instanceId: string, credentials: DiscoverCrede
     }, []);
 }
 
+function getErrorMessage(detectResponse: Record<string, string>) {
+    logger.debug('Get detect resource error message', { detectResponse });
+
+    let errorMessage = '';
+    if (detectResponse.hasOwnProperty('requiredModuleError') && detectResponse.requiredModuleError) {
+        errorMessage += `requiredModuleError: ${detectResponse.requiredModuleError}, `;
+    }
+
+    if (detectResponse.hasOwnProperty('sqlServerError') && detectResponse.sqlServerError) {
+        errorMessage += `sqlServerError: ${detectResponse.sqlServerError}, `;
+    }
+
+    if (detectResponse.hasOwnProperty('fsxnError') && detectResponse.fsxnError) {
+        errorMessage += `fsxnError: ${detectResponse.fsxnError}`;
+    }
+
+    errorMessage = errorMessage?.replace(', ', '');
+    return errorMessage;
+}
+
 async function validateAndStoreDiscoveredParameters(
     accountId: string,
     credentialsId: string,
@@ -600,13 +620,10 @@ async function validateAndStoreDiscoveredParameters(
             );
         }
 
-        if (
-            (detectResponse.hasOwnProperty('sqlServerError') && detectResponse.sqlServerError) ||
-            (detectResponse.hasOwnProperty('requiredModuleError') && detectResponse.requiredModuleError) ||
-            (detectResponse.hasOwnProperty('fsxnError') && detectResponse.fsxnError)
-        ) {
-            logger.error('Failed to validate credentials', detectResponse);
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, detectResponse);
+        const errorMessage = getErrorMessage(detectResponse);
+        if (errorMessage) {
+            logger.error('Failed to validate credentials', errorMessage);
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
         }
 
         return detectResponse;

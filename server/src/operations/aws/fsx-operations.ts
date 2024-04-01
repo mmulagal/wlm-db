@@ -285,9 +285,11 @@ async function isAWSBackupEnabled(
 
     if (!isEmpty(volumeUuids)) {
         const volumeIds = await getVolumeIdsFromUuids(credentialsId, region, fileSystemId, volumeUuids);
-        const backups = await describeFSxBackups(credentialsId, region, volumeIds as string[]);
-
-        return backups.Backups?.length !== 0;
+        if (!isEmpty(volumeIds)) {
+            const backups = await describeFSxBackups(credentialsId, region, volumeIds as string[]);
+            return backups.Backups?.length !== 0;
+        }
+        return false;
     }
 }
 

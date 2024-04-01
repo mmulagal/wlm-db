@@ -225,11 +225,6 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
         $FSxID = '${fsxid}'
         $FSxRegion = '${fsxregion}'
 
-        $cfnpath = "C:\\cfn"
-        if (-not (Test-Path $cfnpath)) {
-            $null = New-Item -ItemType Directory -Path $cfnpath
-        }
-
         $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
         $FSxUserName = $SsmParameter.fsx.username
         $FSxPassword = $SsmParameter.fsx.password
@@ -237,9 +232,12 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
         $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
 
         $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\\cfn\\FSxCertificate.pem
-        $Certificate = Import-Certificate -FilePath C:\\cfn\\FSxCertificate.pem -CertStoreLocation Cert:\\LocalMachine\\Root
+        $tempfileObject = New-TemporaryFile
+        $tempfile = $tempfileObject.FullName
+        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
+        $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
         $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+        Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
 
         $Params = @{
             "URI"         = 'https://management.' + $FSxID + '.fsx.' + $FSxRegion + '.amazonaws.com/api/cluster?fields=version'
@@ -286,11 +284,6 @@ const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string) => `
         $FSxID = '${fsxid}'
         $FSxRegion = '${fsxregion}'
 
-        $cfnpath = "C:\\cfn"
-        if (-not (Test-Path $cfnpath)) {
-            $null = New-Item -ItemType Directory -Path $cfnpath
-        }
-
         $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
         $FSxUserName = $SsmParameter.fsx.username
         $FSxPassword = $SsmParameter.fsx.password
@@ -298,9 +291,12 @@ const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string) => `
         $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
 
         $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\\cfn\\FSxCertificate.pem
-        $Certificate = Import-Certificate -FilePath C:\\cfn\\FSxCertificate.pem -CertStoreLocation Cert:\\LocalMachine\\Root
+        $tempfileObject = New-TemporaryFile
+        $tempfile = $tempfileObject.FullName
+        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
+        $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
         $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+        Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
 
         $sqlquery = @"
             SET NOCOUNT ON;
@@ -468,11 +464,6 @@ const restGetUtilForOntap = (
         $APIQueryFilter = '${apiQueryFilter}'
         $ApiQueryFields = '${apiQueryFields}'
 
-        $cfnpath = "C:\\cfn"
-        if (-not (Test-Path $cfnpath)) {
-            $null = New-Item -ItemType Directory -Path $cfnpath
-        }
-
         $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
         $FSxUserName = $SsmParameter.fsx.username
         $FSxPassword = $SsmParameter.fsx.password
@@ -480,9 +471,12 @@ const restGetUtilForOntap = (
         $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
         
         $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\\cfn\\FSxCertificate.pem
-        $Certificate = Import-Certificate -FilePath C:\\cfn\\FSxCertificate.pem -CertStoreLocation Cert:\\LocalMachine\\Root
+        $tempfileObject = New-TemporaryFile
+        $tempfile = $tempfileObject.FullName
+        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
+        $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
         $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+        Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
 
         Function Invoke-ONTAPGetRequest {
             param(
