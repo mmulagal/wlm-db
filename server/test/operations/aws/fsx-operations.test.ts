@@ -11,7 +11,7 @@ import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 import {
     getFSxFileSystemsList,
     getOntapVolumesSnapshotCount,
-    isAWSBackupEnabled,
+    isFsxnAwsBackupEnabled,
     getMappedOntapVolumes,
     tagFsxResource
 } from '../../../src/operations/aws/fsx-operations';
@@ -34,7 +34,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
     });
 
     it('AWS backup enabled check', async () => {
-        const response = await isAWSBackupEnabled(
+        const response = await isFsxnAwsBackupEnabled(
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID,

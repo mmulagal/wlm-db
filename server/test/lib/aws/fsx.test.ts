@@ -49,7 +49,14 @@ describe('Testcases for Amazon FSx resources', () => {
     });
 
     it('List FSx Backups', async () => {
-        const response = await describeFSxBackups(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, [VOLUME_ID]);
+        const response = await describeFSxBackups(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, {
+            Filters: [
+                {
+                    Name: 'volume-id',
+                    Values: [VOLUME_ID]
+                }
+            ]
+        });
         expect(response).toEqual(fsxbackups);
     });
 

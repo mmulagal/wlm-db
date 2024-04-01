@@ -48,9 +48,10 @@ import {
     getAllResourceUtilisationDetails
 } from './workloads/mssql/mssql-operations';
 import {
-    isAWSBackupEnabled,
+    isFsxnAwsBackupEnabled,
     getOntapVolumesSnapshotCount,
-    getCostAllocationTagFsxResource
+    getCostAllocationTagFsxResource,
+    isFsxwAwsBackupEnabled
 } from './aws/fsx-operations';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
@@ -153,7 +154,7 @@ async function getTopology(
         ec2Details: []
     };
 
-    if (node1InstanceId) {
+    if (node1InstanceId && fileSystemId) {
         let vpcId;
         let fileSystemStatus;
         let fileSystemName;
@@ -165,7 +166,7 @@ async function getTopology(
         let vpcCidr: string | undefined;
 
         try {
-            const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId!] });
+            const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
             vpcId = fsxInfo?.FileSystems?.[0].VpcId;
             fileSystemName = fsxInfo?.FileSystems?.[0].Tags?.reduce(
                 (a = '', tag) => (tag.Key === 'Name' ? tag.Value : a),
@@ -243,9 +244,9 @@ async function getTopology(
         let vpcName;
         if (vpcId) {
             const { Vpcs } = await describeVpc(credentialsId, region, {
-                VpcIds: [vpcId!]
+                VpcIds: [vpcId]
             });
-            vpcName = findResourceNameFromTags(Vpcs![0]?.Tags);
+            vpcName = findResourceNameFromTags(Vpcs?.[0]?.Tags);
         }
         // Fetch topology data
         topologyData = {
@@ -402,35 +403,44 @@ async function getProtectionStatus(
     logger.info('Get protection status', { resourceDetail });
 
     const {
+        id,
         region,
         co_relation_id: fileSystemId,
         metadata,
         credentials_id: credentialsId,
-        fsxwId,
-        ebsVolumeId
+        fsxwId
     } = resourceDetail;
+    if (!region) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Region not found for resource ${id}`);
+    }
+
+    if (!fileSystemId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `FSX ID not found for resource ${id}`);
+    }
 
     try {
-        const [nativeSqlProtection, awsBackup, ontapProtection] = await Promise.all([
-            getNativeSQLProtection(credentialsId, region!, activeNodeInstanceId),
-            ...(!(fsxwId || ebsVolumeId)
-                ? [
-                      isAWSBackupEnabled(
+        const backupsPromiseArray =
+            fsxwId !== undefined
+                ? [isFsxwAwsBackupEnabled(credentialsId, region, fsxwId), Promise.resolve()]
+                : [
+                      isFsxnAwsBackupEnabled(
                           credentialsId,
-                          region!,
-                          fileSystemId!,
+                          region,
+                          fileSystemId,
                           metadata as Metadata,
                           activeNodeInstanceId
                       ),
                       getOntapVolumesSnapshotCount(
                           credentialsId,
-                          region!,
-                          fileSystemId!,
+                          region,
+                          fileSystemId,
                           metadata as Metadata,
                           activeNodeInstanceId
                       )
-                  ]
-                : [])
+                  ];
+        const [nativeSqlProtection, awsBackup, ontapProtection] = await Promise.all([
+            getNativeSQLProtection(credentialsId, region, activeNodeInstanceId),
+            ...backupsPromiseArray
         ]);
 
         return {
@@ -847,14 +857,14 @@ async function getDatabaseHostSummary(
                     ...(isSSMConnected && activeNodeInstanceId && shouldQueryServerDetails
                         ? [getServerDetails(credentialsId, region, activeNodeInstanceId)]
                         : [Promise.resolve()]), // Fetch server metadata
-                    ...(shouldQueryTopology
+                    ...(shouldQueryTopology && activeNodeInstanceId
                         ? [
                               getTopology(
                                   accountId,
-                                  region!,
+                                  region,
                                   resourceId,
                                   resourceDetail,
-                                  activeNodeInstanceId!,
+                                  activeNodeInstanceId,
                                   standbyNodeInstanceId
                               )
                           ]
@@ -948,11 +958,18 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
 
     const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
     const { node1InstanceId, node2InstanceId, userDatabase = [] } = metadata as unknown as Metadata;
+    if (!region) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Region not found for ${databaseHostId}`);
+    }
+
+    if (!fileSystemId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `FSX ID not found for ${databaseHostId}`);
+    }
 
     // Check SSM Connection status
     const { isSSMConnected, activeNodeInstanceId } = await getActiveSqlNode(
         credentialsId,
-        region!,
+        region,
         node1InstanceId,
         node2InstanceId
     );
@@ -966,17 +983,17 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
         [
             getDataBasesSummary(databaseHostId, activeNodeInstanceId),
             getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId),
-            isAWSBackupEnabled(
+            isFsxnAwsBackupEnabled(
                 credentialsId,
-                region!,
-                fileSystemId!,
+                region,
+                fileSystemId,
                 metadata as unknown as Metadata,
                 activeNodeInstanceId
             ),
             getOntapVolumesSnapshotCount(
                 credentialsId,
-                region!,
-                fileSystemId!,
+                region,
+                fileSystemId,
                 metadata as unknown as Metadata,
                 activeNodeInstanceId
             )
