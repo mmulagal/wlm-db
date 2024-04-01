@@ -7,6 +7,8 @@ import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
+import '../../simulator/scopes/cloud-manager/fsx-core-scope';
+
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 import {
     getFSxFileSystemsList,

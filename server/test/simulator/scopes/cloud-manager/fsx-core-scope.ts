@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import nock from 'nock';
 import { WORKLOAD_FACTORY_ENDPOINT } from '../../../../src/utils/consts';
 import registerCredentialsResponse from '../../responses/cloud-manager/register-credentials-fsx-core.json';
+import listFSXFileSystemsResponse from '../../responses/cloud-manager/list-file-systems.json';
 
 nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
     allowUnmocked: process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
@@ -19,4 +20,9 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
                 password: `${faker.string.alphanumeric(20)}`
             }
         }
+    ])
+    .get(/^\/accounts\/(.+)\/fsx\/v2\/credentials\/(.+)\/regions\/(.+)\/file-systems/)
+    .reply(() => [
+        200,
+        listFSXFileSystemsResponse
     ]);
