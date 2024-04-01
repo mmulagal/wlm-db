@@ -109,7 +109,7 @@ const SandboxTable = () => {
             filterOptions: 'auto'
         },
         {
-            Header: 'Creation date',
+            Header: 'Last updated',
             accessor: 'creationDate',
             id: '5',
             width: '220px',
@@ -123,7 +123,7 @@ const SandboxTable = () => {
             filterOptions: 'auto'
         },
         {
-            Header: 'Tag/Type',
+            Header: 'Tag',
             accessor: 'tag',
             id: '7',
             width: '220px',

@@ -6,6 +6,28 @@ import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 const SandboxStorageSaving = () => {
     const windowSize = useResize();
     const loading = false;
+
+    const handleProgressBar = () => {
+        return (
+            <div className={styles.progressBar}>
+                <div
+                    className={`${styles.progress} ${styles.leftCurveBar}`}
+                    style={{
+                        width: `${70}%`,
+                        backgroundColor: 'var(--chart-4)'
+                    }}
+                ></div>
+                <div className={styles.separator}></div>
+                <div
+                    className={`${styles.progress} ${styles.rightCurveBar}`}
+                    style={{
+                        width: `${30}%`,
+                        backgroundColor: 'var(--chart-9)'
+                    }}
+                ></div>
+            </div>
+        );
+    };
     return (
         <div className={styles.sandboxStorageSaving}>
             {windowSize.width > 1500 && (
@@ -28,23 +50,7 @@ const SandboxStorageSaving = () => {
                     </div>
 
                     <div className={styles.secondSegment}>
-                        <div className={styles.progressBar}>
-                            <div
-                                className={`${styles.progress} ${styles.leftCurveBar}`}
-                                style={{
-                                    width: `${70}%`,
-                                    backgroundColor: 'var(--chart-4)'
-                                }}
-                            ></div>
-                            <div className={styles.separator}></div>
-                            <div
-                                className={`${styles.progress} ${styles.rightCurveBar}`}
-                                style={{
-                                    width: `${30}%`,
-                                    backgroundColor: 'var(--chart-9)'
-                                }}
-                            ></div>
-                        </div>
+                        {handleProgressBar()}
 
                         <div className={styles.secondRow}>
                             <div className={styles.bottomRow}>
