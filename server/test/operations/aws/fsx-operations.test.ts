@@ -57,7 +57,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
                 node2InstanceId: `i-${faker.string.alpha(17)}`
             }
         );
-        expect(response).toBeDefined();
+        expect(response).toBeTruthy();
     });
 
     it('Get Ontap mapped volumes', async () => {
@@ -70,7 +70,8 @@ describe('Testcases for Amazon FSx resources operations', () => {
                 node2InstanceId: `i-${faker.string.alpha(17)}`
             }
         );
-        expect(response).toBeDefined();
+        const expectedResponse = ['939a4ec9-7c14-11ee-b185-8329e8fcbf44'];
+        expect(response).toEqual(expectedResponse);
     });
 
     it('Tag Ec2 instance', async () => {
