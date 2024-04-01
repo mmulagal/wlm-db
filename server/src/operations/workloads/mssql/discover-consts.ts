@@ -288,6 +288,7 @@ const COPY_SCIRPTS_TO_MANAGE_RESOURCE = (s3SignedUrl: string) => [
     $s3SignedUrl = '${s3SignedUrl}'
 
     $SsmFolderPath = "C:\\SSM"
+    $DBCreatePath = "C:\\SSM\\dbcreate"
 
     try {
       # Create cfn folder if it doesn't exist. Might be needed for some scripts.
@@ -298,6 +299,12 @@ const COPY_SCIRPTS_TO_MANAGE_RESOURCE = (s3SignedUrl: string) => [
       [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
       $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile $Env:Temp\\dbcreate.zip
       $Null = Expand-Archive -Path $Env:Temp\\dbcreate.zip -DestinationPath $SsmFolderPath -Force
+      
+      # Move extracted dbcreate scripts from C:\\SSM\\dbcreate to C:\\SSM
+      Copy-Item -Path "C:\\SSM\\dbcreate\\*" -Destination $SsmFolderPath -Recurse -Force
+      
+      # Delete C:\\SSM\\dbcreate, there is no complain about existing files/folders on re-download
+      Remove-Item $DBCreatePath -Force  -Recurse -ErrorAction SilentlyContinue
     
       Get-ChildItem -path $SsmFolderPath -Recurse -Force | ForEach {
         $_.Attributes = $_.Attributes -bor [System.IO.FileAttributes]::Hidden -bor [System.IO.FileAttributes]::ReadOnly
