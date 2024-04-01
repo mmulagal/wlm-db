@@ -20,7 +20,11 @@ const Mount = () => {
                 </div>
             );
         }
-        return <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyleSandbox} title={mountPath}>Volume mount point under path : {mountPath}</DsTypography>;
+        return (
+            <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyleSandbox} title={mountPath}>
+                Volume mount point under path : {mountPath}
+            </DsTypography>
+        );
     };
 
     const handleRadio = (val: string) => {
