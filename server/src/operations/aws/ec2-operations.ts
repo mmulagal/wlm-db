@@ -13,6 +13,7 @@ import { Static } from '@fastify/type-provider-typebox';
 import {
     AWSQueryFields,
     ENDPOINTS_DEPLOYMENT,
+    HttpErrorCodes,
     VALIDATION_NODE_INSTANCETYPE,
     WLMDB_COST_ALLOCATION_TAG
 } from '../../utils/consts';
@@ -462,10 +463,16 @@ async function getVpcEndpoints(credentialsId: string, region: string, vpcId: str
         ]
     };
     const response = await describeEndpoints(credentialsId, region, input);
+    if (isEmpty(response)) {
+        throw createError(
+            HttpErrorCodes.UNAUTHORIZED,
+            'Unable to fetch VPC endpoints. Check if role has "ec2:DescribeVpcEndpoints" permission.'
+        );
+    }
 
     logger.debug('Get vpc endpoints response:', response);
 
-    return response?.VpcEndpoints;
+    return response.VpcEndpoints;
 }
 
 async function getVpcSecurityGroups(credentialsId: string, region: string, vpcId: string) {
