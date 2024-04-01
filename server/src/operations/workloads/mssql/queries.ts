@@ -112,8 +112,7 @@ const NATIVE_SQL_BACKUPS = `${SET_NOCOUNT} SELECT
     INNER JOIN msdb.dbo.backupmediafamily AS backupmedia
     ON backupset.media_set_id = backupmedia.media_set_id
     WHERE backupmedia.device_type = 2
-    AND backupset.type = 'D'
-    AND backupset.database_name NOT IN ('msdb','tempdb','model','master') ${FOR_JSON_PATH}
+    AND backupset.type = 'D' ${FOR_JSON_PATH}
 `;
 
 // Since TempDB is recreated every time, we can use that to calculate the our start up time hence database_id=2
