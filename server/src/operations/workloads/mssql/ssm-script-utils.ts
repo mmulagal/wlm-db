@@ -167,26 +167,25 @@ Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
 `;
 
 const validateSQLInstanceConnectivity = (ec2instanceId: string, sqlinstancename: string) => `
-    #Requires -Module AWS.Tools.SimpleSystemsManagement
-
-    $ec2instanceId = '${ec2instanceId}'
-    $sqlinstancename = '${sqlinstancename}'
-
-    $sqlcmd = @"
-        SET NOCOUNT ON;
-        SELECT 
-            SERVERPROPERTY('edition') AS sqlEdition,
-            (SELECT COUNT(*) FROM sys.databases) AS noOfDatabases
-        FOR JSON PATH
-"@
-
     if ($responeObject -eq $null) {
         $responeObject = @{}
     }
 
-    $SQLCredStore = "/netapp/wlmdb/$ec2instanceId"
-
     try {
+        #Requires -Module AWS.Tools.SimpleSystemsManagement
+
+        $ec2instanceId = '${ec2instanceId}'
+        $sqlinstancename = '${sqlinstancename}'
+
+        $sqlcmd = @"
+            SET NOCOUNT ON;
+            SELECT 
+                SERVERPROPERTY('edition') AS sqlEdition,
+                (SELECT COUNT(*) FROM sys.databases) AS noOfDatabases
+            FOR JSON PATH
+"@
+
+        $SQLCredStore = "/netapp/wlmdb/$ec2instanceId"
         $credobject =  (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
         $sqlList = $credobject.sql
         $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
@@ -214,16 +213,21 @@ const validateSQLInstanceConnectivity = (ec2instanceId: string, sqlinstancename:
 `;
 
 const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
-    #Requires -Module AWS.Tools.SimpleSystemsManagement
-
-    $FSxID = '${fsxid}'
-    $FSxRegion = '${fsxregion}'
-
     if ($responeObject -eq $null) {
         $responeObject = @{}
     }
 
     try {
+        #Requires -Module AWS.Tools.SimpleSystemsManagement
+
+        $FSxID = '${fsxid}'
+        $FSxRegion = '${fsxregion}'
+
+        $cfnpath = "C:\\cfn"
+        if (-not (Test-Path $cfnpath)) {
+            $null = New-Item -ItemType Directory -Path $cfnpath
+        }
+
         $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
         $FSxUserName = $SsmParameter.fsx.username
         $FSxPassword = $SsmParameter.fsx.password
@@ -270,16 +274,21 @@ const installPowerShellModule = (module: string) => `
 
 const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string) => `
     $WarningPreference = 'SilentlyContinue';
-    #Requires -Module AWS.Tools.SimpleSystemsManagement
-
-    $FSxID = '${fsxid}'
-    $FSxRegion = '${fsxregion}'
-
     if ($responeObject -eq $null) {
         $responeObject = @{}
     }
 
     try {
+        #Requires -Module AWS.Tools.SimpleSystemsManagement
+
+        $FSxID = '${fsxid}'
+        $FSxRegion = '${fsxregion}'
+
+        $cfnpath = "C:\\cfn"
+        if (-not (Test-Path $cfnpath)) {
+            $null = New-Item -ItemType Directory -Path $cfnpath
+        }
+
         $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
         $FSxUserName = $SsmParameter.fsx.username
         $FSxPassword = $SsmParameter.fsx.password
@@ -444,19 +453,24 @@ const restGetUtilForOntap = (
     apiQueryFields: string
 ) => `
     $WarningPreference = 'SilentlyContinue';
-    #Requires -Module AWS.Tools.SimpleSystemsManagement
-
-    $FSxID = '${fsxid}'
-    $FSxRegion = '${fsxregion}'
-    $APIEndpoint = '${apiEndpoint}'
-    $APIQueryFilter = '${apiQueryFilter}'
-    $ApiQueryFields = '${apiQueryFields}'
-
     if ($responeObject -eq $null) {
         $responeObject = @{}
     }
 
     try {
+        #Requires -Module AWS.Tools.SimpleSystemsManagement
+
+        $FSxID = '${fsxid}'
+        $FSxRegion = '${fsxregion}'
+        $APIEndpoint = '${apiEndpoint}'
+        $APIQueryFilter = '${apiQueryFilter}'
+        $ApiQueryFields = '${apiQueryFields}'
+
+        $cfnpath = "C:\\cfn"
+        if (-not (Test-Path $cfnpath)) {
+            $null = New-Item -ItemType Directory -Path $cfnpath
+        }
+
         $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
         $FSxUserName = $SsmParameter.fsx.username
         $FSxPassword = $SsmParameter.fsx.password
