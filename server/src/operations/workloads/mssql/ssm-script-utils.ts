@@ -231,7 +231,7 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
 
         $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
         $tempfileObject = New-TemporaryFile
-        $tempfile = "$tempfileObject"
+        $tempfile = $tempfileObject.FullName
         Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
         $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
         $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
@@ -290,7 +290,7 @@ const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string) => `
 
         $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
         $tempfileObject = New-TemporaryFile
-        $tempfile = "$tempfileObject"
+        $tempfile = $tempfileObject.FullName
         Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
         $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
         $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
@@ -470,7 +470,7 @@ const restGetUtilForOntap = (
         
         $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
         $tempfileObject = New-TemporaryFile
-        $tempfile = "$tempfileObject"
+        $tempfile = $tempfileObject.FullName
         Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
         $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
         $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }

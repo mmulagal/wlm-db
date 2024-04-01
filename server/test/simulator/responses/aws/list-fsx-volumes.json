@@ -28,7 +28,7 @@
                     "CoolingPeriod": 31,
                     "Name": "AUTO"
                 },
-                "UUID": "ea8b0326-302e-11ee-8387-19b38f44ff5b"
+                "UUID": "939a4ec9-7c14-11ee-b185-8329e8fcbf44"
             },
             "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:volume/fs-03773e21b2f0e39b4/fsvol-0245cba066cb77500",
             "VolumeId": "fsvol-0245cba066cb77500",

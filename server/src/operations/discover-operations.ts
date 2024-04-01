@@ -567,7 +567,7 @@ function getErrorMessage(detectResponse: Record<string, string>) {
     }
 
     if (detectResponse.hasOwnProperty('fsxnError') && detectResponse.fsxnError) {
-        errorMessage = `fsxnError: ${detectResponse.fsxnError}, `;
+        errorMessage = `fsxnError: ${detectResponse.fsxnError}`;
     }
 
     errorMessage = errorMessage?.replace(', ', '');
