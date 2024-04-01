@@ -1,29 +1,31 @@
 const GET_ACTIVE_NODE_DRIVE_INFO = (
     deploymentType: string
-) => `$disks = Get-wmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
-$results = @()
-$deploymentType = '${deploymentType}'
-foreach ($disk in $disks) {
-    $object = New-Object PSObject -Property @{
-        "Manufacturer" = $disk.Model
-    }
-    $partitions = get-wmiObject -Query "ASSOCIATORS OF {Win32_DiskDrive.DeviceID='$($disk.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
+) => ` $disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
+$deploymentType  = '${deploymentType}'
+$results = foreach ($disk in $disks) {
+    $partitions = Get-WmiObject -Query "ASSOCIATORS OF {Win32_DiskDrive.DeviceID='$($disk.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
+
     foreach ($partition in $partitions) {
-        $logicalDisks = get-wmiObject -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($partition.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition"
+        $logicalDisks = Get-WmiObject -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($partition.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition"
+
         foreach ($logicalDisk in $logicalDisks) {
-            $object | Add-Member -MemberType NoteProperty -Name "LogicalDisk" -Value $logicalDisk.DeviceID
-            $object | Add-Member -MemberType NoteProperty -Name "FileSystem" -Value $logicalDisk.FreeSpace
-            if($deploymentType -eq 'FCI'){
-                $clusterResource = Get-WmiObject -Namespace "root\\MSCluster" -Class "MSCluster_Resource" | Where-Object {$_.Name -eq $logicalDisk.VolumeName}
-                $object | Add-Member -MemberType NoteProperty -Name "Owner" -Value $clusterResource.OwnerGroup
+            $logicalDiskObject = [PSCustomObject]@{
+                Manufacturer = $disk.Model
+                LogicalDisk = $logicalDisk.DeviceID
+                FileSystem = $logicalDisk.FreeSpace
             }
+
+            if ($deploymentType -eq 'FCI') {
+                $clusterResource = Get-WmiObject -Namespace "root\\MSCluster" -Class "MSCluster_Resource" | Where-Object { $_.Name -eq $logicalDisk.VolumeName }
+                $logicalDiskObject | Add-Member -MemberType NoteProperty -Name "Owner" -Value $clusterResource.OwnerGroup
+            }
+
+            $logicalDiskObject
         }
     }
-    $results += $object
 }
- 
-$results | convertTo-json
-`;
+$results | ConvertTo-Json
+ `;
 
 /* Sample Resposne of GET_ACTIVE_NODE_DRIVE_INFO
 [
