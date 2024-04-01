@@ -559,15 +559,15 @@ function getErrorMessage(detectResponse: Record<string, string>) {
 
     let errorMessage = '';
     if (detectResponse.hasOwnProperty('requiredModuleError') && detectResponse.requiredModuleError) {
-        errorMessage = `requiredModuleError: ${detectResponse.requiredModuleError}, `;
+        errorMessage += `requiredModuleError: ${detectResponse.requiredModuleError}, `;
     }
 
     if (detectResponse.hasOwnProperty('sqlServerError') && detectResponse.sqlServerError) {
-        errorMessage = `sqlServerError: ${detectResponse.sqlServerError}, `;
+        errorMessage += `sqlServerError: ${detectResponse.sqlServerError}, `;
     }
 
     if (detectResponse.hasOwnProperty('fsxnError') && detectResponse.fsxnError) {
-        errorMessage = `fsxnError: ${detectResponse.fsxnError}`;
+        errorMessage += `fsxnError: ${detectResponse.fsxnError}`;
     }
 
     errorMessage = errorMessage?.replace(', ', '');
