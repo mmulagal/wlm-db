@@ -13,7 +13,8 @@ import {
     getOntapVolumesSnapshotCount,
     isFsxnAwsBackupEnabled,
     getMappedOntapVolumes,
-    tagFsxResource
+    tagFsxResource,
+    isFsxwAwsBackupEnabled
 } from '../../../src/operations/aws/fsx-operations';
 import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_VPC_ID, ACCOUNT_ID } from '../../utils/consts';
 
@@ -23,7 +24,7 @@ const awsAccountId = `${faker.string.alpha(8)}`;
 
 describe('Testcases for Amazon FSx resources operations', () => {
     // Its not mocked, we are making actual api call to fsx inventory, so headers wont be present to make this test works
-    it.skip('List FSx filesystems and volume details', async () => {
+    it('List FSx filesystems and volume details', async () => {
         const response = await getFSxFileSystemsList(
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
@@ -79,5 +80,14 @@ describe('Testcases for Amazon FSx resources operations', () => {
                 { Key: 'key', Value: 'value' }
             ])
         ).resolves.not.toThrow();
+    });
+
+    it('Check if FSX for Windows AWS backup available', async () => {
+        const response = await isFsxwAwsBackupEnabled(
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            FSX_FILESYSTEM_ID
+        );
+        expect(response).toEqual(true);
     });
 });

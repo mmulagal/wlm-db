@@ -16,7 +16,8 @@ import {
     DescribeVpcEndpointsCommand,
     DescribeInstanceTypeOfferingsCommand,
     ModifyVpcAttributeCommand,
-    DescribeVolumesCommand
+    DescribeVolumesCommand,
+    DescribeSnapshotsCommand
 } from '@aws-sdk/client-ec2';
 import { mockClient } from 'aws-sdk-client-mock';
 import vpcsResponse from '../../responses/aws/list-vpcs.json';
@@ -32,6 +33,7 @@ import describeVpcEndpointsResponse from '../../responses/aws/describe-endpoints
 import describeInstanceTypeOfferings from '../../responses/aws/describe-instancetype-offerings.json';
 import modifyVpcAttributesResponse from '../../responses/aws/modify-vpc-attributes.json';
 import describeVolumesResponse from '../../responses/aws/describe-volumes.json';
+import describeSnapshotsResponse from '../../responses/aws/describe-snapshots.json';
 
 const KeyPairId = `${faker.string.alphanumeric(20)}`;
 const KeyFingerprint = `${faker.string.alphanumeric(20)}`;
@@ -94,3 +96,5 @@ ec2Mock.on(DescribeInstanceTypeOfferingsCommand).resolves(describeInstanceTypeOf
 ec2Mock.on(ModifyVpcAttributeCommand).resolves(modifyVpcAttributesResponse);
 
 ec2Mock.on(DescribeVolumesCommand).resolves(describeVolumesResponse);
+
+ec2Mock.on(DescribeSnapshotsCommand).resolves(describeSnapshotsResponse);

@@ -55,7 +55,7 @@ import {
 } from './aws/fsx-operations';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
-import { findResourceNameFromTags, getCostAllocationTagEC2Resource } from './aws/ec2-operations';
+import { findResourceNameFromTags, getCostAllocationTagEC2Resource, isEbsAwsBackupEnabled } from './aws/ec2-operations';
 import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
@@ -405,39 +405,35 @@ async function getProtectionStatus(
     const {
         id,
         region,
-        co_relation_id: fileSystemId,
+        co_relation_id: fsxnId,
         metadata,
         credentials_id: credentialsId,
-        fsxwId
+        fsxwId,
+        ebsVolumeId
     } = resourceDetail;
     if (!region) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Region not found for resource ${id}`);
     }
 
-    if (!fileSystemId) {
+    if (!fsxnId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `FSX ID not found for resource ${id}`);
     }
 
     try {
-        const backupsPromiseArray =
-            fsxwId !== undefined
-                ? [isFsxwAwsBackupEnabled(credentialsId, region, fsxwId), Promise.resolve()]
-                : [
-                      isFsxnAwsBackupEnabled(
-                          credentialsId,
-                          region,
-                          fileSystemId,
-                          metadata as Metadata,
-                          activeNodeInstanceId
-                      ),
-                      getOntapVolumesSnapshotCount(
-                          credentialsId,
-                          region,
-                          fileSystemId,
-                          metadata as Metadata,
-                          activeNodeInstanceId
-                      )
-                  ];
+        let backupsPromiseArray = [];
+
+        if (fsxnId !== undefined) {
+            backupsPromiseArray = [
+                isFsxnAwsBackupEnabled(credentialsId, region, fsxnId, metadata as Metadata, activeNodeInstanceId),
+                getOntapVolumesSnapshotCount(credentialsId, region, fsxnId, metadata as Metadata, activeNodeInstanceId)
+            ];
+        } else if (fsxwId !== undefined) {
+            backupsPromiseArray = [isFsxwAwsBackupEnabled(credentialsId, region, fsxwId), Promise.resolve()];
+        } else if (ebsVolumeId) {
+            backupsPromiseArray = [isEbsAwsBackupEnabled(credentialsId, region, ebsVolumeId), Promise.resolve()];
+        } else {
+            backupsPromiseArray = [Promise.resolve()];
+        }
         const [nativeSqlProtection, awsBackup, ontapProtection] = await Promise.all([
             getNativeSQLProtection(credentialsId, region, activeNodeInstanceId),
             ...backupsPromiseArray

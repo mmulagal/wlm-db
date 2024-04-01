@@ -9,7 +9,8 @@ import { ListTagsForResourceCommandInput } from '@aws-sdk/client-fsx';
 import fsxFilesystems from '../../simulator/responses/aws/list-fsx-filesystems.json';
 import fsxVolumes from '../../simulator/responses/aws/list-fsx-volumes.json';
 import fsxSvms from '../../simulator/responses/aws/list-fsx-svms.json';
-import fsxbackups from '../../simulator/responses/aws/list-fsx-backups.json';
+import fsxnBackups from '../../simulator/responses/aws/list-fsxn-backups.json';
+import fsxwBackups from '../../simulator/responses/aws/list-fsxw-backups.json';
 import fsxResourceTagsResponse from '../../simulator/responses/aws/list-fsx-resource-tags.json';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 import {
@@ -48,7 +49,7 @@ describe('Testcases for Amazon FSx resources', () => {
         expect(response).toEqual(fsxSvms);
     });
 
-    it('List FSx Backups', async () => {
+    it('List FSx Netapp Volume Backups', async () => {
         const response = await describeFSxBackups(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, {
             Filters: [
                 {
@@ -57,7 +58,19 @@ describe('Testcases for Amazon FSx resources', () => {
                 }
             ]
         });
-        expect(response).toEqual(fsxbackups);
+        expect(response).toEqual(fsxnBackups);
+    });
+
+    it('List FSx windows Backups', async () => {
+        const response = await describeFSxBackups(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, {
+            Filters: [
+                {
+                    Name: 'file-system-id',
+                    Values: [FSX_FILESYSTEM_ID]
+                }
+            ]
+        });
+        expect(response).toEqual(fsxwBackups);
     });
 
     it('Describe a FSxN filesystem', async () => {
