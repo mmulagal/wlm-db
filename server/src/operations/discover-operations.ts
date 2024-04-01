@@ -600,10 +600,19 @@ async function validateAndStoreDiscoveredParameters(
             );
         }
 
+        if (
+            (detectResponse.hasOwnProperty('sqlServerError') && detectResponse.sqlServerError) ||
+            (detectResponse.hasOwnProperty('requiredModuleError') && detectResponse.requiredModuleError) ||
+            (detectResponse.hasOwnProperty('fsxnError') && detectResponse.fsxnError)
+        ) {
+            logger.error('Failed to validate credentials', detectResponse);
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, detectResponse);
+        }
+
         return detectResponse;
     } catch (error: any) {
-        logger.error('Failed to validate credentials', error);
-        throw createError(HttpErrorCodes.BAD_REQUEST, error.message);
+        logger.error('Failed to validate credentials', error.message);
+        throw createError(error?.statusCode || HttpErrorCodes.BAD_REQUEST, error.message);
     }
 }
 
@@ -934,16 +943,14 @@ async function validateCredentials(
     } else {
         if (fsxCredentials && parsedResponse.ontapconnectivity === false) {
             paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
-            response.fsxnError = parsedResponse?.ontapError;
+            response.fsxnError = parsedResponse?.ontaperror;
         }
 
         if (sqlCredentials.length) {
             if (parsedResponse.sqlInstanceConnectivity === false) {
                 paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
                 response.sqlServerError = parsedResponse?.sqlerror;
-            }
-
-            if (parsedResponse.sqlInstanceConnectivity === true) {
+            } else if (parsedResponse.sqlInstanceConnectivity === true) {
                 response.sqlServerEdition = parsedResponse?.sqlEdition;
                 response.databaseCount = parsedResponse?.noOfDatabases;
             }
@@ -1016,7 +1023,7 @@ async function verifyAndAddFSxOntapCredentials(
 
     const fsxStorage = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
     if (fsxStorage) {
-        // Check if the FSx credentials are already present in SSM
+        // Check if the FSx credentials are already present in SSM parameter store
         const fsxCredentials = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${fsxStorage.id}`);
 
         if (!fsxCredentials) {
@@ -1040,7 +1047,7 @@ async function verifyAndAddFSxOntapCredentials(
                     resourceId: fsxStorage.id,
                     resourceType: RESOURCESTYPE.FSX,
                     username: credentials?.userName,
-                    password: credentials.password
+                    password: credentials?.password
                 }
             ]);
 
