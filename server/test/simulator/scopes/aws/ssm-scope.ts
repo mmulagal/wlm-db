@@ -23,6 +23,10 @@ import putParameterResponse from '../../responses/aws/ssm-put-parameter.json';
 import getParameerResponse from '../../responses/aws/ssm-get-parameter.json';
 import deleteParametersResponse from '../../responses/aws/ssm-delete-parameters.json';
 import { GET_ONTAP_VOLUME_SNAPSHOT_COUNT_SCRIPT, MAP_ONTAP_VOLUMES_SCRIPT } from '../../../utils/consts';
+import {
+    GET_ACTIVE_NODE_DRIVE_INFO,
+    GET_STANDBY_NODE_DRIVE_LIST
+} from '../../../../src/operations/workloads/mssql/ssm-script-utils';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -204,15 +208,11 @@ const getDefaultDriveLetters = {
 };
 
 const getActiveNodeDriveDetails = {
-    commands: [
-        '$disks = Get-wmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"\n$results = @()\n$deploymentType = \'FCI\'\nforeach ($disk in $disks) {\n    $object = New-Object PSObject -Property @{\n        "Manufacturer" = $disk.Model\n    }\n    $partitions = get-wmiObject -Query "ASSOCIATORS OF {Win32_DiskDrive.DeviceID=\'$($disk.DeviceID)\'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"\n    foreach ($partition in $partitions) {\n        $logicalDisks = get-wmiObject -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID=\'$($partition.DeviceID)\'} WHERE AssocClass = Win32_LogicalDiskToPartition"\n        foreach ($logicalDisk in $logicalDisks) {\n            $object | Add-Member -MemberType NoteProperty -Name "LogicalDisk" -Value $logicalDisk.DeviceID -Force\n            $object | Add-Member -MemberType NoteProperty -Name "FileSystem" -Value $logicalDisk.FreeSpace -Force\n            if($deploymentType -eq \'FCI\'){\n                $clusterResource = Get-WmiObject -Namespace "root\\MSCluster" -Class "MSCluster_Resource" | Where-Object {$_.Name -eq $logicalDisk.VolumeName}\n                $object | Add-Member -MemberType NoteProperty -Name "Owner" -Value $clusterResource.OwnerGroup\n            }\n        }\n    }\n    $results += $object\n}\n \n$results | convertTo-json\n'
-    ]
+    commands: [GET_ACTIVE_NODE_DRIVE_INFO('FCI')]
 };
 
 const getStandbyNodeDriveList = {
-    commands: [
-        '$driveLetters = Get-WmiObject Win32_Volume | Select-Object -ExpandProperty DriveLetter\n$driveLettersObject = [PSCustomObject]@{\n    DriveLetters = $driveLetters\n}\n$driveLettersObject | ConvertTo-Json\n'
-    ]
+    commands: [GET_STANDBY_NODE_DRIVE_LIST]
 };
 
 const configureLuns = {
