@@ -290,6 +290,11 @@ const COPY_SCIRPTS_TO_MANAGE_RESOURCE = (s3SignedUrl: string) => [
     $SsmFolderPath = "C:\\SSM"
 
     try {
+      # Create cfn folder if it doesn't exist. Might be needed for some scripts.
+      $cfnpath = "C:\\cfn"
+      if (-not (Test-Path $cfnpath)) {
+          $null = New-Item -ItemType Directory -Path $cfnpath
+      }
       [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
       $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile $Env:Temp\\dbcreate.zip
       $Null = Expand-Archive -Path $Env:Temp\\dbcreate.zip -DestinationPath $SsmFolderPath -Force

@@ -23,7 +23,10 @@ import putParameterResponse from '../../responses/aws/ssm-put-parameter.json';
 import getParameerResponse from '../../responses/aws/ssm-get-parameter.json';
 import deleteParametersResponse from '../../responses/aws/ssm-delete-parameters.json';
 import { GET_ONTAP_VOLUME_SNAPSHOT_COUNT_SCRIPT, MAP_ONTAP_VOLUMES_SCRIPT } from '../../../utils/consts';
+import { DEFAULT_AWS_REGION } from '../../../utils/consts';
 import {
+    getMappedOntapVolumesScript,
+    restGetUtilForOntap,
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST
 } from '../../../../src/operations/workloads/mssql/ssm-script-utils';
@@ -154,11 +157,19 @@ const nativeSqlBackupDatabasesParams = {
 };
 
 const getOntapSnapshotCountParams = {
-    commands: [GET_ONTAP_VOLUME_SNAPSHOT_COUNT_SCRIPT]
+    commands: [
+        restGetUtilForOntap(
+            'test-fsx2345',
+            'test-region',
+            '/storage/volumes',
+            'uuid=939a4ec9-7c14-11ee-b185-8329e8fcbf44',
+            'fields=snapshot_count'
+        )
+    ]
 };
 
 const getOntapMappedVolumesParams = {
-    commands: [MAP_ONTAP_VOLUMES_SCRIPT]
+    commands: [getMappedOntapVolumesScript('fs-03773e21b2f0e39b4', DEFAULT_AWS_REGION)]
 };
 
 const getStorageParams = {
