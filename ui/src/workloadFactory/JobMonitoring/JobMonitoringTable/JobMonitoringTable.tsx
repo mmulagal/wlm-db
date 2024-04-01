@@ -408,7 +408,15 @@ const JobMonitoringTable = () => {
         pageSize: 50,
         selectionType: 'none',
         isHorizontalScroll: true,
-        isLazyLoading: jobsListLoading
+        isLazyLoading: jobsListLoading,
+        ...(isDemoMode
+            ? {
+                  initialSortState: {
+                      sortOrder: 'desc',
+                      column: '6'
+                  }
+              }
+            : {})
     });
 
     // logic to get type and status filter values
