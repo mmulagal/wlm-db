@@ -14,7 +14,10 @@ import {
     DeleteParametersCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
-import { HOST_AND_SQL_INFO_PS1 } from '../../../../src/operations/workloads/mssql/discover-consts';
+import {
+    HOST_AND_SQL_INFO_PS1,
+    CLUSTER_NETWORK_IP_INFO_PS1
+} from '../../../../src/operations/workloads/mssql/discover-consts';
 import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands-response.json';
 import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
 import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
@@ -263,9 +266,7 @@ const serverDetails = {
 };
 
 const clusterNetwokIpInfo = {
-    commands: [
-        "\n$ErrorActionPreference = \"Stop\"\n  $body = @{}\n  $clusterNetworkIps = $null\n  $failureInfo = $null\n  try {\n    $clusterServiceStatus = (Get-Service -Name clussvc).Status\n\n    if ($clusterServiceStatus -eq \"Running\") {\n      $clusterNetworkIps = (Get-ClusterNetworkInterface).Ipv4Addresses\n      $body['clusterNetworkIps'] = $clusterNetworkIps\n    } else {\n      $body['clusterNetworkIps'] = @()\n    }\n  } catch {\n    # Prevent any possible errors from clobbering JSON output\n    $body['failureInfo'] = $_.Exception.Message\n  } finally {\n    Echo $body | ConvertTo-Json -Compress\n  }\n"
-    ]
+    commands: CLUSTER_NETWORK_IP_INFO_PS1
 };
 
 const resourceUtilization = {
