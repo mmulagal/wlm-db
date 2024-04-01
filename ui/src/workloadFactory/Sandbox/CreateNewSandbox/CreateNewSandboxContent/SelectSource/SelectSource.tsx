@@ -97,13 +97,13 @@ const SelectSource = () => {
                 title={`${selectedSourceHost ? selectedSourceHost.label : ''}, ${
                     selectedSourceInstance ? selectedSourceInstance.label : ''
                 }, ${selectedSourceDatabase ? selectedSourceDatabase.label : ''}`}
-                className={CommonStyles.setHeaderStyle}
+                className={CommonStyles.setHeaderStyleSandbox}
             >
-                <div>Source host: {selectedSourceHost ? selectedSourceHost.label : ''}</div>
-                <div className={CommonStyles.separator} />
-                <div>Source instance: {selectedSourceInstance ? selectedSourceInstance.label : ''}</div>
-                <div className={CommonStyles.separator} />
-                <div>Source database: {selectedSourceDatabase ? selectedSourceDatabase.label : ''}</div>
+                <span>Source host: {selectedSourceHost ? selectedSourceHost.label : ''}</span>
+                <span className={CommonStyles.separatorSandbox} />
+                <span>Source instance: {selectedSourceInstance ? selectedSourceInstance.label : ''}</span>
+                <span className={CommonStyles.separatorSandbox} />
+                <span>Source database: {selectedSourceDatabase ? selectedSourceDatabase.label : ''}</span>
             </DsTypography>
         );
     };

@@ -72,13 +72,13 @@ const SelectTarget = () => {
                     title={`${selectedTargetHost ? selectedTargetHost.label : ''}, ${
                         selectedTargetInstance ? selectedTargetInstance.label : ''
                     }, ${selectedTargetDatabase ? selectedTargetDatabase : ''}`}
-                    className={CommonStyles.setHeaderStyle}
+                    className={CommonStyles.setHeaderStyleSandbox}
                 >
-                    <div>Target host: {selectedTargetHost ? selectedTargetHost.label : ''}</div>
-                    <div className={CommonStyles.separator} />
-                    <div>Target instance: {selectedTargetInstance ? selectedTargetInstance.label : ''}</div>
-                    <div className={CommonStyles.separator} />
-                    <div className={styles.dbName}>Target database: {selectedTargetDatabase}</div>
+                    <span>Target host: {selectedTargetHost ? selectedTargetHost.label : ''}</span>
+                    <span className={CommonStyles.separatorSandbox} />
+                    <span>Target instance: {selectedTargetInstance ? selectedTargetInstance.label : ''}</span>
+                    <span className={CommonStyles.separatorSandbox} />
+                    <span className={styles.dbName}>Target database: {selectedTargetDatabase}</span>
                 </DsTypography>
             );
         }
