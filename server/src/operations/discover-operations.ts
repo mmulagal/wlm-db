@@ -611,7 +611,7 @@ async function validateAndStoreDiscoveredParameters(
 
         return detectResponse;
     } catch (error: any) {
-        logger.error('Failed to validate credentials', error.message);
+        logger.error('Failed to validate credentials', error);
         throw createError(error?.statusCode || HttpErrorCodes.BAD_REQUEST, error.message);
     }
 }
