@@ -41,8 +41,6 @@ $AdminPassword = $SsmParameter.domain.password
 $ClusterAdminUser = $DomainNetBIOSName+'\'+$DomainAdminUser
 $Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminPassword -AsPlainText -Force)))
 
-Write-Output "Credentials: $ClusterAdminUser : $AdminPassword"
-
 #Retrieving MSSQL service account
 $SqlUserName = $DomainNetBIOSName + '\' + $SqlUser
 $SqlUserPassword = $SsmParameter.sql[0].password

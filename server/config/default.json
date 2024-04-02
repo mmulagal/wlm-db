@@ -48,8 +48,8 @@
     "jwt-token-expiry": "168h",
     "signed-url-expiry-hours": "168",
     "bucket": {
-        "artifacts": "staging.artifacts.REGION.workloads.netapp.com",
-        "signedTemplates": "staging.templates.workloads.netapp.com",
+        "artifacts": "staging-artifacts-REGION-workloads-netapp-com",
+        "signedTemplates": "staging-templates-workloads-netapp-com",
         "region": "us-east-1"
     },
     "ec2": {
