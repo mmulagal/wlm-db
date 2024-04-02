@@ -65,9 +65,11 @@ const TopologyResponse = Type.Object({
 type TopologyResponseType = Static<typeof TopologyResponse>;
 
 const ProtectionResponse = Type.Object({
-    isAwsBackUpEnabled: Type.Boolean({ default: false }),
-    isFsxOntapSnapshotsEnabled: Type.Boolean({ default: false }),
     isSqlNativeEnabled: Type.Boolean({ default: false }),
+    isFsxnAwsBackupEnabled: Type.Boolean({ default: false }),
+    isFsxOntapSnapshotsEnabled: Type.Boolean({ default: false }),
+    isFsxwAwsBackupEnabled: Type.Boolean({ default: false }),
+    isEbsAwsBackupEnabled: Type.Boolean({ default: false }),
     protectedDatabases: Type.Optional(Type.Number({ description: 'Number of protected databases' }))
 });
 type ProtectionResponseType = Static<typeof ProtectionResponse>;

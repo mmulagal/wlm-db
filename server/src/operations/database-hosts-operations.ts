@@ -425,29 +425,30 @@ async function getProtectionStatus(
     }
 
     try {
-        let backupsPromiseArray = [];
-
-        if (fsxnId) {
-            backupsPromiseArray = [
-                isFsxnAwsBackupEnabled(credentialsId, region, fsxnId, metadata as Metadata, activeNodeInstanceId),
-                getOntapVolumesSnapshotCount(credentialsId, region, fsxnId, metadata as Metadata, activeNodeInstanceId)
-            ];
-        } else if (fsxwId) {
-            backupsPromiseArray = [isFsxwAwsBackupEnabled(credentialsId, region, fsxwId), Promise.resolve()];
-        } else if (ebsVolumeId) {
-            backupsPromiseArray = [isEbsAwsBackupEnabled(credentialsId, region, ebsVolumeId), Promise.resolve()];
-        } else {
-            backupsPromiseArray = [Promise.resolve(), Promise.resolve()];
-        }
-        const [nativeSqlProtection, awsBackup, ontapProtection] = await Promise.all([
+        const [nativeSqlProtection, fsxnBackup, ontapProtection, fsxwBackup, ebsBackup] = await Promise.all([
             getNativeSQLProtection(credentialsId, region, activeNodeInstanceId),
-            ...backupsPromiseArray
+            fsxnId
+                ? isFsxnAwsBackupEnabled(credentialsId, region, fsxnId, metadata as Metadata, activeNodeInstanceId)
+                : Promise.resolve(),
+            fsxnId
+                ? getOntapVolumesSnapshotCount(
+                      credentialsId,
+                      region,
+                      fsxnId,
+                      metadata as Metadata,
+                      activeNodeInstanceId
+                  )
+                : Promise.resolve(),
+            fsxwId ? isFsxwAwsBackupEnabled(credentialsId, region, fsxwId) : Promise.resolve(),
+            ebsVolumeId ? isEbsAwsBackupEnabled(credentialsId, region, ebsVolumeId) : Promise.resolve()
         ]);
 
         return {
-            isAwsBackUpEnabled: Boolean(awsBackup),
-            isFsxOntapSnapshotsEnabled: Boolean(ontapProtection),
             isSqlNativeEnabled: Boolean(nativeSqlProtection),
+            isFsxnAwsBackupEnabled: Boolean(fsxnBackup),
+            isFsxOntapSnapshotsEnabled: Boolean(ontapProtection),
+            isFsxwAwsBackupEnabled: Boolean(fsxwBackup),
+            isEbsAwsBackupEnabled: Boolean(ebsBackup),
             protectedDatabases: Number.isNaN(Number(nativeSqlProtection)) ? 0 : Number(nativeSqlProtection)
         };
     } catch (error) {
