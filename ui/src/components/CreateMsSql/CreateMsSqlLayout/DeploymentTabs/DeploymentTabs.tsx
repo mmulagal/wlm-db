@@ -4,6 +4,9 @@ import { ReactComponent as ChatbotIcon } from '../../../../assets/chatbot-tab-ic
 import { ReactComponent as ChatbotLightModeIcon } from '../../../../assets/ChatInLightModeNotSelected.svg';
 import { ReactComponent as ChatbotDarkModeSelectedIcon } from '../../../../assets/ChatInDarkSelected.svg';
 import { ReactComponent as ChatbotDarkModeNotSelectedIcon } from '../../../../assets/ChatInDarkNotSelected.svg';
+
+import { ReactComponent as WizardSelectedInLightMode } from '../../../../assets/WizardSelectedInLightMode.svg';
+import { ReactComponent as WizardUnSelectedInLightMode } from '../../../../assets/WizardUnSelectInLightMode.svg';
 import { Typography } from '@netapp/design-system';
 
 import styles from './DeploymentTabs.module.scss';
@@ -16,32 +19,36 @@ type DeploymentTabsProps = {
 
 const DeploymentTabs = ({ selectedTab, onTabChange }: DeploymentTabsProps) => {
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
-    const darkModeClassSet = () => {
-        if (isDarkTheme) {
-            if (selectedTab === 'wizard') {
-                return styles.darkModeWizardSelected;
-            } else if (selectedTab === 'chatbot') {
-                return styles.darkModeChatbotSelected;
-            } else {
-                return '';
-            }
-        }
-        return '';
-    };
 
     const wizardIcon = () => {
-        if (selectedTab === 'wizard') {
-            return (
-                <div>
-                    <WizardSelectedInLightIcon />
-                </div>
-            );
+        if (isDarkTheme) {
+            if (selectedTab === 'wizard') {
+                return (
+                    <div>
+                        <WizardSelectedInLightIcon />
+                    </div>
+                );
+            } else {
+                return (
+                    <div className={styles.wizardUnselect}>
+                        <WizardIcon />
+                    </div>
+                );
+            }
         } else {
-            return (
-                <div className={styles.wizardUnselect}>
-                    <WizardIcon />
-                </div>
-            );
+            if (selectedTab === 'wizard') {
+                return (
+                    <div>
+                        <WizardSelectedInLightMode />
+                    </div>
+                );
+            } else {
+                return (
+                    <div className={styles.wizardUnselect}>
+                        <WizardUnSelectedInLightMode />
+                    </div>
+                );
+            }
         }
     };
 
@@ -71,13 +78,7 @@ const DeploymentTabs = ({ selectedTab, onTabChange }: DeploymentTabsProps) => {
                 `}
                 onClick={() => onTabChange('wizard')}
             >
-                {isDarkTheme && (
-                    <div className={darkModeClassSet()}>
-                        <WizardIcon />
-                    </div>
-                )}
-
-                {!isDarkTheme && wizardIcon()}
+                {wizardIcon()}
 
                 <Typography variant="Semibold_16">Database wizard</Typography>
             </div>
