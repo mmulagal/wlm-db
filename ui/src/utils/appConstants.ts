@@ -151,7 +151,7 @@ export const GENERAL = {
     ADD_NEW_CREDENTIALS: 'To add a new credentials, go to the ',
     MULTI_AZ_CHECK_MESSAGE:
         'The selected VPC is not optimized. You should choose a VPC with subnets in 2 availability zones so that each cluster node will be in a dedicated availability zone.',
-    QUERY_ERROR: 'Query error',
+    QUERY_ERROR: 'Error',
     DB_CREATE_SUCCESS_MSG: 'DB creation is in progress',
     PERMISSION_REQUIRED: 'Permissions required',
     CLOUDFORMATION_TEMPLATE_URL: ['CloudFormation template ', 'URL'],

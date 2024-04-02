@@ -275,7 +275,6 @@ async function isAWSBackupEnabled(
         metadata
     });
 
-    // const volumeUuids = await getDataVolumes(credentialsId, region, fileSystemId, metadata, activeNodeInstanceId);
     const volumeUuids = await getMappedOntapVolumes(
         credentialsId,
         region,
@@ -286,9 +285,11 @@ async function isAWSBackupEnabled(
 
     if (!isEmpty(volumeUuids)) {
         const volumeIds = await getVolumeIdsFromUuids(credentialsId, region, fileSystemId, volumeUuids);
-        const backups = await describeFSxBackups(credentialsId, region, volumeIds as string[]);
-
-        return backups.Backups?.length !== 0;
+        if (!isEmpty(volumeIds)) {
+            const backups = await describeFSxBackups(credentialsId, region, volumeIds as string[]);
+            return backups.Backups?.length !== 0;
+        }
+        return false;
     }
 }
 
@@ -307,7 +308,6 @@ async function getOntapVolumesSnapshotCount(
     });
 
     try {
-        // const volumeUuids = await getDataVolumes(credentialsId, region, fileSystemId, metadata, activeNodeInstanceId);
         const volumeUuids = await getMappedOntapVolumes(
             credentialsId,
             region,
@@ -347,59 +347,6 @@ async function getOntapVolumesSnapshotCount(
         logger.error('Failed executing SSM script to get ontap snapshots', { err });
     }
 }
-
-// async function getDataVolumes(
-//     credentialsId: string,
-//     region: string,
-//     fileSystemId: string,
-//     metadata: Metadata,
-//     activeNodeInstanceId?: string
-// ) {
-//     logger.info('Get data volumes', {
-//         credentialsId,
-//         region,
-//         fileSystemId,
-//         metadata
-//     });
-
-//     // First check AWS tags, if empty, get through SSM
-
-//     const logicalIdTag = 'cloudformation:logical-id';
-//     const dataTagValue = 'FSxDataVolumeConfiguration';
-
-//     const { Volumes: volumes } = await describeFSxVolumes(credentialsId, region, fileSystemId);
-
-//     const dataVolumes: Volume[] = [];
-//     await Promise.all(
-//         (volumes || []).map(async volume => {
-//             let tags;
-//             if (volume?.Tags) {
-//                 tags = volume.Tags;
-//             } else {
-//                 const input: ListTagsForResourceCommandInput = {
-//                     ResourceARN: volume.ResourceARN!
-//                 };
-//                 ({ Tags: tags } = (await listResourceTags(credentialsId, region, input)) || {});
-//             }
-
-//             const isValidDataTag = tags?.some(
-//                 ({ Key, Value }: Tag) => Key?.includes(logicalIdTag) && Value === dataTagValue
-//             );
-
-//             if (isValidDataTag) {
-//                 dataVolumes.push(volume);
-//             }
-//         })
-//     );
-
-//     const filteredVolumes = dataVolumes?.map(({ OntapConfiguration: { UUID = '' } = {} }) => UUID);
-
-//     if (isEmpty(filteredVolumes)) {
-//         return getMappedOntapVolumes(credentialsId, region, fileSystemId, metadata, activeNodeInstanceId);
-//     }
-
-//     return filteredVolumes;
-// }
 
 async function getMappedOntapVolumes(
     credentialsId: string,

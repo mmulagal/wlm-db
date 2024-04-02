@@ -36,7 +36,7 @@ describe('Testcases for Amazon FSx resources', () => {
 
     it('List FSx Volumes', async () => {
         const response = await describeFSxVolumes(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, FSX_FILESYSTEM_ID);
-        expect(response).toEqual(fsxVolumes);
+        expect(response.Volumes).toEqual(fsxVolumes.Volumes);
     });
 
     it('List FSx SVMs', async () => {

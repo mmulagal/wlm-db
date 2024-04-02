@@ -393,6 +393,21 @@ export const formatHostData = (val: any) => {
     }
     const serverInstallationMode = val?.topology?.serverInstallationMode || type;
 
+    // fileSystemType
+    const typeList: string[] = [];
+    val?.sqlServerInstances?.[0]?.storage?.map((storageObj: any) => {
+        if (storageObj.type === DETECT_HOST_VAR.FSXN && !typeList.includes(GENERAL.FSX_FOR_ONTAP)) {
+            typeList.push(GENERAL.FSX_FOR_ONTAP);
+        }
+        if (storageObj.type === DETECT_HOST_VAR.EBS && !typeList.includes(GENERAL.EBS)) {
+            typeList.push(GENERAL.EBS);
+        }
+        if (storageObj.type === DETECT_HOST_VAR.FSXW && !typeList.includes(GENERAL.FSX_FOR_WINDOWS)) {
+            typeList.push(GENERAL.FSX_FOR_WINDOWS);
+        }
+    });
+    const fileSystemType = typeList.join(', ') || val?.topology?.fileSystemType;
+
     val = {
         ...val,
         type: DB_HOME_DATA_TYPE.HOSTS,
@@ -409,13 +424,14 @@ export const formatHostData = (val: any) => {
         performanceText: val?.performance && val.performance?.assessment,
         // Storage saving table text to search in table
         storageSavingsText:
-            val?.storage &&
+            val?.storage?.spaceSavings && val?.storage?.used &&
             formatFractionalNumber(storagePercent, 2) + '% (' + formatSizeOnePrecision(val.storage?.spaceSavings) + ')',
         sizeformat: val?.storage?.size && formatSizeOnePrecision(val?.storage?.size),
         instanceNames: instanceNames.join(',') || val?.ec2InstanceName,
         vpcNames: val?.topology?.vpcName || val?.vpc?.name,
         azType: azType,
-        serverInstallationMode: serverInstallationMode
+        serverInstallationMode: serverInstallationMode,
+        fileSystemType: fileSystemType
     };
     return val;
 };

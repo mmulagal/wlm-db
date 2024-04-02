@@ -148,9 +148,10 @@ const UnmanagedHosts = () => {
         {
             id: '2',
             Header: GENERAL.DB_HOST_FILE_SYSTEM_TYPE,
-            accessor: 'topology.fileSystemType',
+            accessor: 'fileSystemType',
             width: '200px',
             filterOptions: 'auto',
+            accessorForTextFilter: 'fileSystemType',
             renderCell: (cellData: string, rowData: any) => {
                 const typeList: string[] = [];
                 rowData?.sqlServerInstances?.[0]?.storage?.map((storageObj: any) => {
@@ -372,8 +373,8 @@ const UnmanagedHosts = () => {
             isSortable: true,
             width: '212px',
             filterOptions: [
-                { label: GENERAL.SINGLE_AZ, value: FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 },
-                { label: GENERAL.MULTI_AZ, value: FSX_DEPLOYMENT_MODE.MULTI_AZ_1 }
+                { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
+                { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
             ],
             renderCell: (cellData: any, rowData: any) => {
                 const azList = rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones

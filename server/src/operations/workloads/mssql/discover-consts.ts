@@ -63,24 +63,24 @@ const HOST_AND_SQL_INFO_PS1 = [
       [string]$interfaceNames,
       [string]$driveId
     )
-  
+
     ForEach ($interfaceName in $interfaceNames) {
       If ($interfaceName -match $driveId) {
         return $True
       }
     }
-  
+
     return $False
   }
-  
+
   Function GetDiskDriveDetails() {
     $TARGET_ADDRESS_REGEX = '\\w+\\:\\*(?<targetAddress>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})\\s?\\w.+'
-  
+
     $iScsiInitiatorSessionList = Get-CimInstance -Namespace root\\wmi -ClassName MSiSCSIInitiator_SessionClass |
                                    Where-object { $_.Devices -ne {} } |
                                      Sort-Object -Unique -Property TargetName |
                                        Select-Object Devices, TargetName
-  
+
     $iScsiSessionList = ForEach ($iScsiInitiator in $iScsiInitiatorSessionList) {
       $interfaceNames = @()
       ForEach ($iScsiInitiatorDevice in $iScsiInitiator.Devices) {
@@ -89,46 +89,48 @@ const HOST_AND_SQL_INFO_PS1 = [
           $interfaceNames += $iScsiInitiatorDeviceProperties["DeviceInterfaceName"].Value
         }
       }
-  
+
       @{
         "TargetName" = $iScsiInitiator.TargetName
         "InterfaceNames" = $interfaceNames
       }
     }
-  
+
     $iScsiInitiatorTargetList = $null
     If ((Get-WmiObject win32_service | ?{$_.Name -like 'MSiSCSI'}).State -eq 'Running') {
       $iScsiInitiatorTargetList = Get-CimInstance -Namespace root\\wmi -ClassName MSIscsiInitiator_TargetClass |
                                     Sort-Object -Unique -Property TargetName |
                                       Select-Object TargetName, DiscoveryMechanism
     }
-  
+
     $iScsiTargetList = ForEach ($iScsiInitiatorTarget in $iScsiInitiatorTargetList) {
       @{
         "TargetName" = $iScsiInitiatorTarget.TargetName
         "DiscoveryMechanism" = $iScsiInitiatorTarget.DiscoveryMechanism
       }
     }
-  
+
     $DriveLetteriScsiTargetAddress = @()
-  
+
     ForEach ($DiskDrive in Get-CimInstance -ClassName Win32_DiskDrive) {
       $object = New-Object PSObject -Property @{ "SerialNumber" = $DiskDrive.SerialNumber }
-  
+
       $DiskDriveToPartitionList = Get-CimInstance -Query "ASSOCIATORS OF {Win32_DiskDrive.DeviceID='$($DiskDrive.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
+      $DriveLetters = @()
       ForEach ($DiskDriveToPartition in $DiskDriveToPartitionList) {
         $LogicalDiskToPartitionList = get-CimInstance -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($DiskDriveToPartition.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition"
         ForEach ($LogicalDiskToPartition in $LogicalDiskToPartitionList) {
-          $object | Add-Member -MemberType NoteProperty -Name "DriveLetter" -Value $LogicalDiskToPartition.DeviceID
+          $DriveLetters += $LogicalDiskToPartition.DeviceID
         }
       }
+      $object | Add-Member -MemberType NoteProperty -Name "DriveLetters" -Value $DriveLetters
   
       $DriveId = $DiskDrive.PNPDeviceID.tolower() -replace '\\\\', '#'
-  
+
       ForEach ($iScsiSession in $iScsiSessionList) {
         $iScsiSessionTarget = $iScsiSession.TargetName
         $deviceInterfaceNames = $iScsiSession.InterfaceNames
-  
+
         if (TestIfInterfaceNameMatchesWithDriveId $deviceInterfaceNames $DriveId) {
           ForEach ($iscsiTarget in $iScsiTargetList) {
             if ($iscsiTarget.targetName -eq $iScsiSessionTarget) {
@@ -140,45 +142,49 @@ const HOST_AND_SQL_INFO_PS1 = [
           }
         }
       }
-  
+
       $DriveLetteriScsiTargetAddress += $object
     }
-  
+
     $SmbLogicalDiskList = Get-CimInstance  Win32_LogicalDisk | Where-Object { $_.ProviderName } | Select DeviceID, ProviderName
     ForEach ($SmbLogicalDisk in $SmbLogicalDiskList) {
       $object = New-Object PSObject -Property @{ "DriveLetter" = $SmbLogicalDisk.DeviceID }
       $object | Add-Member -MemberType NoteProperty -Name "TargetAddress" -Value $SmbLogicalDisk.ProviderName
       $DriveLetteriScsiTargetAddress += $object
     }
-  
+
     $DriveTargetMap = @{}
     ForEach ($item in $DriveLetteriScsiTargetAddress) {
-      If ($item.DriveLetter -eq $null) {
+      If ($item.DriveLetters -eq $null) {
         Continue
       }
-  
+
       If ($item.TargetAddress -ne $null) {
-        $DriveTargetMap.Add($item.DriveLetter, $item.TargetAddress)
+        $item.DriveLetters | ForEach-Object {
+          $DriveTargetMap.Add($_, $item.TargetAddress)
+        }
       } ElseIf ($item.SerialNumber -ne $null) {
-        $DriveTargetMap.Add($item.DriveLetter, $item.SerialNumber)
+        $item.DriveLetters | ForEach-Object {
+          $DriveTargetMap.Add($_, $item.SerialNumber)
+        }
       }
     }
-  
+
     return $DriveTargetMap
   }
   
   try {
+    $body = @{}
     $instanceSectionStartTime = Get-Date
-  
     $sqlServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
     $DiskTargetInfoMap = GetDiskDriveDetails
   
-    ForEach ($sqlService in $sqlServiceList) {
+    $instancesInfoList = ForEach ($sqlService in $sqlServiceList) {
       $body = @{}
       $instanceSectionStartTime = Get-Date
   
       If ($DiskTargetInfoMap.Count -le 0) {
-        $body['failureInfo'] += "Failed to get drive letter and disk target details\`N"
+        $body['failureInfo'] += "Failed to get drive letter and disk target details\`n"
       }
   
       $editionDBCountMachineInfo = @($null, $null, $null)
@@ -195,7 +201,7 @@ const HOST_AND_SQL_INFO_PS1 = [
         $body['sqlServerMajorVersion'] = $info.ProductMajorPart
         $body['sqlServerVersion'] = $info.ProductVersion
       } else {
-        $body['failureInfo'] += "\${instanceName}: Path $sqlServiceBinaryPath does not exist\`N"
+        $body['failureInfo'] += "\${instanceName}: Path $sqlServiceBinaryPath does not exist\`n"
       }
   
       $body['sqlServerInstance'] = $instanceName
@@ -220,25 +226,26 @@ const HOST_AND_SQL_INFO_PS1 = [
   
           $sqlInstanceDriveLetterList = sqlcmd -Q " SET NOCOUNT ON; SELECT DISTINCT LEFT(physical_name, 2) AS DriveLetter FROM sys.master_files " -h -1 -b -C -W -S $serverInstance
           if ($? -eq $False) {
-            $body['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`N"
+            $body['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
           }
   
           $sqlServerInstanceStorageInfo = ForEach ($sqlInstanceDriveLetter in $sqlInstanceDriveLetterList) {
             New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $DiskTargetInfoMap[$sqlInstanceDriveLetter] }
           }
         } else {
-          $body['failureInfo'] += "\${instanceName}: SQLCMD.EXE not available\`N"
+          $body['failureInfo'] += "\${instanceName}: SQLCMD.EXE not available\`n"
         }
       }
 
       $body['sqlServerInstanceStorageInfo'] = $sqlServerInstanceStorageInfo | ConvertTo-Json -Compress
       $instanceSectionEndTime = Get-Date
       $body['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
-      Echo $body | ConvertTo-Json
+      Echo $body
     }
+    Echo $instancesInfoList | ConvertTo-Json
   } catch {
     # Prevent any possible errors from clobbering JSON output
-    $body['failureInfo'] += "Exception: $_\`N"
+    $body['failureInfo'] += "Exception: $_\`n"
     $instanceSectionEndTime = Get-Date
     $body['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
     Echo $body | ConvertTo-Json
@@ -248,12 +255,13 @@ const HOST_AND_SQL_INFO_PS1 = [
 
 const CLUSTER_NETWORK_IP_INFO_PS1 = [
     `
-$ErrorActionPreference = "Stop"
+  $ErrorActionPreference = "Stop"
   $body = @{}
+  $scriptStartTime = Get-Date
   $clusterNetworkIps = $null
-  $failureInfo = $null
+  
   try {
-    $clusterServiceStatus = (Get-Service -Name clussvc).Status
+    $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
 
     if ($clusterServiceStatus -eq "Running") {
       $clusterNetworkIps = (Get-ClusterNetworkInterface).Ipv4Addresses
@@ -265,26 +273,58 @@ $ErrorActionPreference = "Stop"
     # Prevent any possible errors from clobbering JSON output
     $body['failureInfo'] = $_.Exception.Message
   } finally {
+    $scriptEndTime = Get-Date
+    $body['scriptExecutionTime'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)
     Echo $body | ConvertTo-Json -Compress
   }
 `
 ];
 
-// TODO: BucketName should change to path under wlmdb.artifacts.REGION.bucket/wlmdb/scripts after Discovery.zip copied there.
-const DISCOVERY_SCRIPTS_COPY_PS1 = [
+// For now, we copy only the scripts that are needed to create a database.
+const COPY_SCIRPTS_TO_MANAGE_RESOURCE = (s3SignedUrl: string) => [
     `
-$ErrorActionPreference = "Stop"
-$body = @{}
-try {
-  $Null = Read-S3Object -BucketName bucketkrithi -Key Discovery.zip -File $Env:Temp\\Discovery.zip
-  $Null = Expand-Archive -Path $Env:Temp\\Discovery.zip -DestinationPath c:\\SSM -Force
-  $Null = C:\\SSM\\HideAllSSMScripts.ps1
-} catch {
-  $body['failureInfo'] = $_.Exception.Message
-} finally {
-  Echo $body | ConvertTo-Json -Compress
-}
+    $ErrorActionPreference = "Stop"
+    $body = @{}
+    $scriptStartTime = Get-Date
+    $s3SignedUrl = '${s3SignedUrl}'
+
+    $SsmFolderPath = "C:\\SSM"
+    $DBCreatePath = "C:\\SSM\\dbcreate"
+
+    try {
+      # Create cfn folder if it doesn't exist. Might be needed for some scripts.
+      $cfnpath = "C:\\cfn"
+      if (-not (Test-Path $cfnpath)) {
+          $null = New-Item -ItemType Directory -Path $cfnpath
+      }
+      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+      $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile $Env:Temp\\dbcreate.zip
+      $Null = Expand-Archive -Path $Env:Temp\\dbcreate.zip -DestinationPath $SsmFolderPath -Force
+      
+      # Move extracted dbcreate scripts from C:\\SSM\\dbcreate to C:\\SSM
+      Copy-Item -Path "C:\\SSM\\dbcreate\\*" -Destination $SsmFolderPath -Recurse -Force
+      
+      # Delete C:\\SSM\\dbcreate, there is no complain about existing files/folders on re-download
+      Remove-Item $DBCreatePath -Force  -Recurse -ErrorAction SilentlyContinue
+    
+      Get-ChildItem -path $SsmFolderPath -Recurse -Force | ForEach {
+        $_.Attributes = $_.Attributes -bor [System.IO.FileAttributes]::Hidden -bor [System.IO.FileAttributes]::ReadOnly
+      }
+
+      (Get-Item $SsmFolderPath -Force).Attributes = [System.IO.FileAttributes]::Hidden
+    } catch {
+      $body['failureInfo'] = $_.Exception.Message
+    } finally {
+      $scriptEndTime = Get-Date
+      $body['scriptExecutionTime'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)
+      Echo $body | ConvertTo-Json -Compress
+    } 
 `
 ];
 
-export { HOST_AND_SQL_INFO_PS1, SQL_SERVER_VERSION_TO_YEAR, CLUSTER_NETWORK_IP_INFO_PS1, DISCOVERY_SCRIPTS_COPY_PS1 };
+export {
+    HOST_AND_SQL_INFO_PS1,
+    SQL_SERVER_VERSION_TO_YEAR,
+    CLUSTER_NETWORK_IP_INFO_PS1,
+    COPY_SCIRPTS_TO_MANAGE_RESOURCE
+};

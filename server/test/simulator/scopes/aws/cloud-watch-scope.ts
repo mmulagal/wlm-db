@@ -7,12 +7,12 @@ cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'StorageUsed' }).res
     Datapoints: [
         {
             Timestamp: new Date(),
-            Sum: 155104012697.1,
+            Sum: 19791209299968,
             Unit: 'Bytes'
         },
         {
             Timestamp: new Date(),
-            Sum: 155051607517.1,
+            Sum: 19791209299968,
             Unit: 'Bytes'
         }
     ]
@@ -22,12 +22,12 @@ cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'StorageEfficiencySa
     Datapoints: [
         {
             Timestamp: new Date(),
-            Average: 155104012697.2,
+            Average: 9895604649984,
             Unit: 'Bytes'
         },
         {
             Timestamp: new Date(),
-            Average: 155051607517.2,
+            Average: 9895604649984,
             Unit: 'Bytes'
         }
     ]
@@ -37,12 +37,12 @@ cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'DeduplicationSavedS
     Datapoints: [
         {
             Timestamp: new Date(),
-            Average: 155104012697.3,
+            Average: 9895604649984,
             Unit: 'Bytes'
         },
         {
             Timestamp: new Date(),
-            Average: 155051607517.3,
+            Average: 9895604649984,
             Unit: 'Bytes'
         }
     ]
@@ -52,12 +52,12 @@ cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'StorageCapacityUtil
     Datapoints: [
         {
             Timestamp: new Date(),
-            Average: 155104012697.4,
+            Average: 9895604649984,
             Unit: 'Bytes'
         },
         {
             Timestamp: new Date(),
-            Average: 155051607517.4,
+            Average: 9895604649984,
             Unit: 'Bytes'
         }
     ]

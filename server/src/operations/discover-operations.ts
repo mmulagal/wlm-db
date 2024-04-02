@@ -10,7 +10,7 @@ import throat from 'throat';
 import { createResource } from '../lib/database/db';
 import { getResources } from './database/database-operations';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
-import { getResourceNameFromTags, sleep } from '../utils/utils';
+import { getArtifactsRegionBucketName, getResourceNameFromTags, sleep } from '../utils/utils';
 import {
     getEc2SqlParameters,
     callSsmExecution,
@@ -24,13 +24,14 @@ import {
     RESOURCESTYPE,
     SSM_PARAMETERS_BASE_PATH,
     SqlServerDeploymentModel,
-    RESOURCE_SOURCE
+    RESOURCE_SOURCE,
+    DBCREATE_RELATIVE_PATH
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
     HOST_AND_SQL_INFO_PS1,
     CLUSTER_NETWORK_IP_INFO_PS1,
-    DISCOVERY_SCRIPTS_COPY_PS1
+    COPY_SCIRPTS_TO_MANAGE_RESOURCE
 } from './workloads/mssql/discover-consts';
 import { deleteParameters, getParameter, sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
@@ -54,6 +55,9 @@ import {
 } from './workloads/mssql/ssm-script-utils';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
+import { preSignedUrl } from '../lib/aws/s3';
+
+const { getPreSignedUrl } = preSignedUrl;
 
 const logger = getLogger();
 
@@ -95,7 +99,7 @@ async function getHostAndSqlServerInfo(
 ): Promise<DiscoverMsSqlResponseBodyType> {
     logger.info('getHostAndSqlServerInfo():', { accountId, credentialsId, region, nextToken });
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        return returnInventorydata();
+        return returnInventorydata(instances);
     }
     let api1StartTime;
     let api1EndTime;
@@ -334,16 +338,19 @@ async function getHostAndSqlInfoFromPsOutput(
 
     try {
         const powerShellScriptOutput = ssmResponse?.StandardOutputContent || '';
+
         if (powerShellScriptOutput.length > 0) {
-            let responseInJson = JSON.parse(ssmResponse?.StandardOutputContent || '');
-            if (!Array.isArray(responseInJson)) {
-                responseInJson = [responseInJson];
+            if (powerShellScriptOutput?.includes('failureInfo')) {
+                logger.error(
+                    `Issues found while discovering SQL Server details in EC2 ${ssmTarget.ec2InstanceId}:`,
+                    powerShellScriptOutput
+                );
             }
 
-            if (responseInJson?.failureInfo) {
-                logger.error(
-                    `Failed to discover SQL Server details in EC2 ${ssmTarget.ec2InstanceId}: $responseInJson`
-                );
+            let responseInJson = JSON.parse(powerShellScriptOutput);
+
+            if (!Array.isArray(responseInJson)) {
+                responseInJson = [responseInJson];
             }
 
             for (const sqlServerInstanceInfo of responseInJson) {
@@ -547,6 +554,26 @@ function prepareParametersToStore(instanceId: string, credentials: DiscoverCrede
     }, []);
 }
 
+function getErrorMessage(detectResponse: Record<string, string>) {
+    logger.debug('Get detect resource error message', { detectResponse });
+
+    let errorMessage = '';
+    if (detectResponse.hasOwnProperty('requiredModuleError') && detectResponse.requiredModuleError) {
+        errorMessage += `requiredModuleError: ${detectResponse.requiredModuleError}, `;
+    }
+
+    if (detectResponse.hasOwnProperty('sqlServerError') && detectResponse.sqlServerError) {
+        errorMessage += `sqlServerError: ${detectResponse.sqlServerError}, `;
+    }
+
+    if (detectResponse.hasOwnProperty('fsxnError') && detectResponse.fsxnError) {
+        errorMessage += `fsxnError: ${detectResponse.fsxnError}`;
+    }
+
+    errorMessage = errorMessage?.replace(', ', '');
+    return errorMessage;
+}
+
 async function validateAndStoreDiscoveredParameters(
     accountId: string,
     credentialsId: string,
@@ -555,6 +582,13 @@ async function validateAndStoreDiscoveredParameters(
     credentials: DiscoverCredentialsType[]
 ) {
     logger.info('Validate and Put SSM parameters', { accountId, credentialsId, region, instanceId });
+
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        return {
+            databaseCount: '10',
+            sqlServerEdition: 'Standard Edition (64-bit)'
+        };
+    }
 
     try {
         if (!accountId || !credentialsId || !region || !instanceId) {
@@ -586,10 +620,16 @@ async function validateAndStoreDiscoveredParameters(
             );
         }
 
+        const errorMessage = getErrorMessage(detectResponse);
+        if (errorMessage) {
+            logger.error('Failed to validate credentials', errorMessage);
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
+        }
+
         return detectResponse;
     } catch (error: any) {
         logger.error('Failed to validate credentials', error);
-        throw createError(HttpErrorCodes.BAD_REQUEST, error.message);
+        throw createError(error?.statusCode || HttpErrorCodes.BAD_REQUEST, error.message);
     }
 }
 
@@ -628,7 +668,7 @@ async function fetchUnmanagedHostsInformation(
             getDatabaseHostSummary(
                 accountId,
                 resourceDetail.resource_id,
-                'serverDetails,performance,usageEstimation,storage',
+                'serverDetails,performance,usageEstimation,storage,protection',
                 resourceDetail,
                 false // unmanaged host
             )
@@ -665,10 +705,12 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     ]);
 
     if (ssmResponse?.includes('failureInfo')) {
-        logger.error('Failed to get cluster network interface details. Reason:', ssmResponse);
+        logger.error(
+            `Failed to get cluster network interface details for EC2 ${ec2InstanceId}. Reason: ${ssmResponse}`
+        );
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Reason: failed to get WNFC detetails.`
+            `Unable to manage instance '${ec2InstanceId}'. Reason: failed to get network interface details.`
         );
     }
 
@@ -720,12 +762,16 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     const { storage } = sqlServerInstance;
     const storageInfo = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
 
+    // Get signed url for dbcreate.zip
+    const bucketname = getArtifactsRegionBucketName(region);
+    const dbcreateS3SignedUrl = await getPreSignedUrl(region, bucketname, DBCREATE_RELATIVE_PATH);
+
     // Copy scripts to the EC2 instance
     const discoveryPromiseList = [
         callSsmExecution(
             credentialsId,
             region,
-            DISCOVERY_SCRIPTS_COPY_PS1,
+            COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
             ec2InstanceId,
             accountId,
             true,
@@ -738,7 +784,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
             callSsmExecution(
                 credentialsId,
                 region,
-                DISCOVERY_SCRIPTS_COPY_PS1,
+                COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
                 node2InstanceId,
                 accountId,
                 true,
@@ -756,7 +802,9 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
         )
     ]);
 
-    logger.debug('ssmScriptsCopyResponses:', { ssmScriptsCopyResponse1, ssmScriptsCopyResponse2 });
+    logger.info(
+        `Response for copy scripts using PowerShell: ${node1InstanceId} = ${ssmScriptsCopyResponse1}, ${node2InstanceId} = ${ssmScriptsCopyResponse2}`
+    );
     if (ssmScriptsCopyResponse1?.includes('failureInfo')) {
         logger.error('Failed to copy discovery scripts. Reason:', ssmScriptsCopyResponse1);
         throw createError(
@@ -912,16 +960,14 @@ async function validateCredentials(
     } else {
         if (fsxCredentials && parsedResponse.ontapconnectivity === false) {
             paramesToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
-            response.fsxnError = parsedResponse?.ontapError;
+            response.fsxnError = parsedResponse?.ontaperror;
         }
 
         if (sqlCredentials.length) {
             if (parsedResponse.sqlInstanceConnectivity === false) {
                 paramesToDelete.push(`${SSM_PARAM_PREFIX}${instanceId}`);
                 response.sqlServerError = parsedResponse?.sqlerror;
-            }
-
-            if (parsedResponse.sqlInstanceConnectivity === true) {
+            } else if (parsedResponse.sqlInstanceConnectivity === true) {
                 response.sqlServerEdition = parsedResponse?.sqlEdition;
                 response.databaseCount = parsedResponse?.noOfDatabases;
             }
@@ -994,7 +1040,7 @@ async function verifyAndAddFSxOntapCredentials(
 
     const fsxStorage = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
     if (fsxStorage) {
-        // Check if the FSx credentials are already present in SSM
+        // Check if the FSx credentials are already present in SSM parameter store
         const fsxCredentials = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${fsxStorage.id}`);
 
         if (!fsxCredentials) {
@@ -1018,7 +1064,7 @@ async function verifyAndAddFSxOntapCredentials(
                     resourceId: fsxStorage.id,
                     resourceType: RESOURCESTYPE.FSX,
                     username: credentials?.userName,
-                    password: credentials.password
+                    password: credentials?.password
                 }
             ]);
 
@@ -1030,7 +1076,6 @@ async function verifyAndAddFSxOntapCredentials(
 export {
     getHostAndSqlServerInfo,
     validateAndStoreDiscoveredParameters,
-    getHostAndSqlInfoFromPsOutput,
     fetchUnmanagedHostsInformation,
     manageSqlServer
 };

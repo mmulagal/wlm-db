@@ -545,7 +545,7 @@ const InventoryApis = () => {
                 );
                 // FSx credential validation always passed for demo mode
                 if (isDemoMode) {
-                    fsxCredentialValidationFailed = false;
+                    fsxCredentialValidationFailed = isWindowAuthentication ? false : true;
                 }
 
                 const managedHost = movedToManagedHost.find(

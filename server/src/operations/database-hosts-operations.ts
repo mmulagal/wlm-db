@@ -67,8 +67,9 @@ const DATABASE_HOSTS_INDEX_MAPPING: { [index: number]: string } = {
     1: 'topology',
     2: 'performance',
     3: 'storage',
-    4: 'billing/pricing',
-    5: 'resourceUtilization'
+    4: 'protection',
+    5: 'billing/pricing',
+    6: 'resourceUtilization'
 };
 
 // type VolumeSpaceRecord = {

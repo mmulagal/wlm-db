@@ -1,29 +1,31 @@
 const GET_ACTIVE_NODE_DRIVE_INFO = (
     deploymentType: string
-) => `$disks = Get-wmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
-$results = @()
-$deploymentType = '${deploymentType}'
-foreach ($disk in $disks) {
-    $object = New-Object PSObject -Property @{
-        "Manufacturer" = $disk.Model
-    }
-    $partitions = get-wmiObject -Query "ASSOCIATORS OF {Win32_DiskDrive.DeviceID='$($disk.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
+) => ` $disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
+$deploymentType  = '${deploymentType}'
+$results = foreach ($disk in $disks) {
+    $partitions = Get-WmiObject -Query "ASSOCIATORS OF {Win32_DiskDrive.DeviceID='$($disk.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
+
     foreach ($partition in $partitions) {
-        $logicalDisks = get-wmiObject -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($partition.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition"
+        $logicalDisks = Get-WmiObject -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($partition.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition"
+
         foreach ($logicalDisk in $logicalDisks) {
-            $object | Add-Member -MemberType NoteProperty -Name "LogicalDisk" -Value $logicalDisk.DeviceID
-            $object | Add-Member -MemberType NoteProperty -Name "FileSystem" -Value $logicalDisk.FreeSpace
-            if($deploymentType -eq 'FCI'){
-                $clusterResource = Get-WmiObject -Namespace "root\\MSCluster" -Class "MSCluster_Resource" | Where-Object {$_.Name -eq $logicalDisk.VolumeName}
-                $object | Add-Member -MemberType NoteProperty -Name "Owner" -Value $clusterResource.OwnerGroup
+            $logicalDiskObject = [PSCustomObject]@{
+                Manufacturer = $disk.Model
+                LogicalDisk = $logicalDisk.DeviceID
+                FileSystem = $logicalDisk.FreeSpace
             }
+
+            if ($deploymentType -eq 'FCI') {
+                $clusterResource = Get-WmiObject -Namespace "root\\MSCluster" -Class "MSCluster_Resource" | Where-Object { $_.Name -eq $logicalDisk.VolumeName }
+                $logicalDiskObject | Add-Member -MemberType NoteProperty -Name "Owner" -Value $clusterResource.OwnerGroup
+            }
+
+            $logicalDiskObject
         }
     }
-    $results += $object
 }
- 
-$results | convertTo-json
-`;
+$results | ConvertTo-Json
+ `;
 
 /* Sample Resposne of GET_ACTIVE_NODE_DRIVE_INFO
 [
@@ -167,26 +169,25 @@ Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
 `;
 
 const validateSQLInstanceConnectivity = (ec2instanceId: string, sqlinstancename: string) => `
-    #Requires -Module AWS.Tools.SimpleSystemsManagement
-
-    $ec2instanceId = '${ec2instanceId}'
-    $sqlinstancename = '${sqlinstancename}'
-
-    $sqlcmd = @"
-        SET NOCOUNT ON;
-        SELECT 
-            SERVERPROPERTY('edition') AS sqlEdition,
-            (SELECT COUNT(*) FROM sys.databases) AS noOfDatabases
-        FOR JSON PATH
-"@
-
     if ($responeObject -eq $null) {
         $responeObject = @{}
     }
 
-    $SQLCredStore = "/netapp/wlmdb/$ec2instanceId"
-
     try {
+        #Requires -Module AWS.Tools.SimpleSystemsManagement
+
+        $ec2instanceId = '${ec2instanceId}'
+        $sqlinstancename = '${sqlinstancename}'
+
+        $sqlcmd = @"
+            SET NOCOUNT ON;
+            SELECT 
+                SERVERPROPERTY('edition') AS sqlEdition,
+                (SELECT COUNT(*) FROM sys.databases) AS noOfDatabases
+            FOR JSON PATH
+"@
+
+        $SQLCredStore = "/netapp/wlmdb/$ec2instanceId"
         $credobject =  (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
         $sqlList = $credobject.sql
         $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
@@ -214,16 +215,16 @@ const validateSQLInstanceConnectivity = (ec2instanceId: string, sqlinstancename:
 `;
 
 const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
-    #Requires -Module AWS.Tools.SimpleSystemsManagement
-
-    $FSxID = '${fsxid}'
-    $FSxRegion = '${fsxregion}'
-
     if ($responeObject -eq $null) {
         $responeObject = @{}
     }
 
     try {
+        #Requires -Module AWS.Tools.SimpleSystemsManagement
+
+        $FSxID = '${fsxid}'
+        $FSxRegion = '${fsxregion}'
+
         $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
         $FSxUserName = $SsmParameter.fsx.username
         $FSxPassword = $SsmParameter.fsx.password
@@ -231,9 +232,12 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
         $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
 
         $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\\cfn\\FSxCertificate.pem
-        $Certificate = Import-Certificate -FilePath C:\\cfn\\FSxCertificate.pem -CertStoreLocation Cert:\\LocalMachine\\Root
+        $tempfileObject = New-TemporaryFile
+        $tempfile = $tempfileObject.FullName
+        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
+        $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
         $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+        Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
 
         $Params = @{
             "URI"         = 'https://management.' + $FSxID + '.fsx.' + $FSxRegion + '.amazonaws.com/api/cluster?fields=version'
@@ -270,16 +274,16 @@ const installPowerShellModule = (module: string) => `
 
 const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string) => `
     $WarningPreference = 'SilentlyContinue';
-    #Requires -Module AWS.Tools.SimpleSystemsManagement
-
-    $FSxID = '${fsxid}'
-    $FSxRegion = '${fsxregion}'
-
     if ($responeObject -eq $null) {
         $responeObject = @{}
     }
 
     try {
+        #Requires -Module AWS.Tools.SimpleSystemsManagement
+
+        $FSxID = '${fsxid}'
+        $FSxRegion = '${fsxregion}'
+
         $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
         $FSxUserName = $SsmParameter.fsx.username
         $FSxPassword = $SsmParameter.fsx.password
@@ -287,9 +291,12 @@ const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string) => `
         $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
 
         $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\\cfn\\FSxCertificate.pem
-        $Certificate = Import-Certificate -FilePath C:\\cfn\\FSxCertificate.pem -CertStoreLocation Cert:\\LocalMachine\\Root
+        $tempfileObject = New-TemporaryFile
+        $tempfile = $tempfileObject.FullName
+        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
+        $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
         $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+        Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
 
         $sqlquery = @"
             SET NOCOUNT ON;
@@ -444,19 +451,19 @@ const restGetUtilForOntap = (
     apiQueryFields: string
 ) => `
     $WarningPreference = 'SilentlyContinue';
-    #Requires -Module AWS.Tools.SimpleSystemsManagement
-
-    $FSxID = '${fsxid}'
-    $FSxRegion = '${fsxregion}'
-    $APIEndpoint = '${apiEndpoint}'
-    $APIQueryFilter = '${apiQueryFilter}'
-    $ApiQueryFields = '${apiQueryFields}'
-
     if ($responeObject -eq $null) {
         $responeObject = @{}
     }
 
     try {
+        #Requires -Module AWS.Tools.SimpleSystemsManagement
+
+        $FSxID = '${fsxid}'
+        $FSxRegion = '${fsxregion}'
+        $APIEndpoint = '${apiEndpoint}'
+        $APIQueryFilter = '${apiQueryFilter}'
+        $ApiQueryFields = '${apiQueryFields}'
+
         $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
         $FSxUserName = $SsmParameter.fsx.username
         $FSxPassword = $SsmParameter.fsx.password
@@ -464,9 +471,12 @@ const restGetUtilForOntap = (
         $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
         
         $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile C:\\cfn\\FSxCertificate.pem
-        $Certificate = Import-Certificate -FilePath C:\\cfn\\FSxCertificate.pem -CertStoreLocation Cert:\\LocalMachine\\Root
+        $tempfileObject = New-TemporaryFile
+        $tempfile = $tempfileObject.FullName
+        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
+        $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
         $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+        Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
 
         Function Invoke-ONTAPGetRequest {
             param(
