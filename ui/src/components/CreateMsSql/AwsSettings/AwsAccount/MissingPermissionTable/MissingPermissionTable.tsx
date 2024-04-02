@@ -14,7 +14,7 @@ type MissingPerm = {
 };
 
 const MissingPermissionTable = ({ missingBlockedPermissions, content }: MissingPerm) => {
-    const dataForCopy = content?.map((item: any) => `${item.service}:${item.action}`);
+    const dataForCopy = content.map((item: any) => `${item.service}:${item.action}`);
 
     //Only For Missing Permissions
     const MissingPerDefs: ColumnProps[] = [

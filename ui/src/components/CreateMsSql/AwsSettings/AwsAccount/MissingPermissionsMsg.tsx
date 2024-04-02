@@ -69,14 +69,8 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
                 mergeData = updatedMissingPermissions.concat(updatedBlockedByPermissionBoundary);
             } else if (updatedBlockedByOrganization.length && updatedBlockedByPermissionBoundary.length) {
                 mergeData = updatedBlockedByOrganization.concat(updatedBlockedByPermissionBoundary);
-            } else if (updatedBlockedByOrganization.length) {
-                mergeData = updatedBlockedByOrganization;
-            } else if (updatedBlockedByPermissionBoundary.length) {
-                mergeData = updatedBlockedByPermissionBoundary;
-            } else if (updatedMissingPermissions.length) {
-                mergeData = updatedMissingPermissions;
             } else {
-                mergeData = [];
+                mergeData = updatedMissingPermissions;
             }
 
             setDataToDisplay(mergeData);
