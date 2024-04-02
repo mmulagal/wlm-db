@@ -127,6 +127,13 @@
                     cursor: pointer;
                 }
 
+                .headerPart4 {
+                    width: 90px;
+                    display: flex;
+                    justify-content: center;
+                    cursor: pointer;
+                }
+
                 .active {
                     border-bottom: 4px solid var(--text-button-primary);
                     color: var(--text-button-primary);

@@ -15,6 +15,7 @@ import { clearNotifications, removeNotification } from './store/notificationSlic
 import JobMonitoring from './workloadFactory/JobMonitoring/JobMonitoring';
 import HeaderComponent from './workloadFactory/DatabaseHomePage/HeaderComponent/HeaderComponent';
 import WizardComponent from './workloadFactory/CreateNewDB/WizardComponent/WizardComponent';
+import CreateNewSandbox from './workloadFactory/Sandbox/CreateNewSandbox/CreateNewSandbox';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -47,6 +48,7 @@ const Home = () => {
                         <Route path={'databases'} element={<HeaderComponent />} />
                         <Route path={'create-new-user'} element={<WizardComponent />} />
                         <Route path={'job-monitor'} element={<JobMonitoring />} />
+                        <Route path={'create-new-sandbox'} element={<CreateNewSandbox />} />
                         <Route path="*" element={<MainComponent />} />
                     </Routes>
                 </Suspense>

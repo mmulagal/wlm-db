@@ -20,6 +20,14 @@
     top: 4px;
 }
 
+.separatorSandbox {
+    border-right: 1px solid var(--grey-15);
+    height: 16px;
+    position: relative;
+    margin-left: 16px;
+    margin-right: 16px;
+}
+
 .text-disabled {
     color: var(--text-disabled) !important;
 }
@@ -37,6 +45,16 @@
     font-size: 14px;
     color: var(--text-primary);
     line-height: none !important;
+}
+
+.setHeaderStyleSandbox {
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: none !important;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 650px;
 }
 
 .buttonClass {

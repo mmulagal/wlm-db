@@ -1,0 +1,62 @@
+.defineTag {
+    .headerSetter {
+        left: 0%;
+    }
+
+    .container {
+        display: flex;
+        gap: 24px;
+    }
+
+    .tag {
+        width: 120px;
+        height: 40px;
+        border: 1px solid var(--tag-1-text);
+        border-radius: 24px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+
+        .tagColor {
+            color: var(--tag-1-text);
+        }
+    }
+
+    .selectedTag {
+        background-color: var(--tag-3-bg);
+    }
+
+    .tag:hover {
+        background-color: var(--tag-3-bg);
+    }
+
+    .darkTheme {
+        color: var(--blue-25);
+        border: 1px solid var(--blue-25);
+
+        .tagColor {
+            color: var(--blue-25);
+        }
+    }
+
+    .darkTheme:hover {
+        cursor: pointer;
+        background-color: var(--blue-25);
+        color: var(--tag-1-text);
+
+        .tagColor {
+            color: var(--tag-1-text) !important;
+        }
+    }
+}
+
+@media screen and (max-width: 1500px) {
+    .defineTag {
+        .container {
+            display: flex;
+            width: 408px;
+            flex-wrap: wrap;
+        }
+    }
+}
