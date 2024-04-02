@@ -229,14 +229,6 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                             {
                                 type: 'FSXN',
                                 id: fsxId
-                            },
-                            {
-                                type: 'EBS',
-                                id: ebsVolId
-                            },
-                            {
-                                type: 'FSXW',
-                                id: ebsVolId
                             }
                         ],
                         deploymentTypes: [
@@ -377,10 +369,6 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                             {
                                 type: 'FSXN',
                                 id: fsxId
-                            },
-                            {
-                                type: 'EBS',
-                                id: ebsVolId
                             }
                         ],
                         deploymentTypes: [
@@ -483,10 +471,6 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerName: 'SQLServer-CRMDB',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
                         storage: [
-                            {
-                                type: 'FSXN',
-                                id: fsxId
-                            },
                             {
                                 type: 'EBS',
                                 id: ebsVolId
