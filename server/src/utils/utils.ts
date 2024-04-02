@@ -448,7 +448,6 @@ export {
     sleep,
     getSnsArn,
     getFsxArn,
-    getEbsArn,
     generateHash,
     calculateFsxnStorageCapacity,
     sizeInGigaBytes,
