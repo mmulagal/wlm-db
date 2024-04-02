@@ -816,7 +816,7 @@ async function getDatabaseHostSummary(
         metadata
     } = resourceDetail;
     try {
-        const { node1InstanceId, node2InstanceId, creationDate } = metadata as unknown as Metadata;
+        const { node1InstanceId, node2InstanceId, creationDate, userDatabase = [] } = metadata as unknown as Metadata;
         // Check SSM Connection status
         const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await getActiveSqlNode(
             credentialsId,
@@ -884,6 +884,8 @@ async function getDatabaseHostSummary(
                 )
             );
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+                serverDetails.dbCount = serverDetails?.dbCount || 0;
+                serverDetails.dbCount += userDatabase.length;
                 if (topologyData?.serverInstallationMode === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
                     delete serverDetails?.clusterName;
                     serverDetails.activeNode = resourceName || '';
