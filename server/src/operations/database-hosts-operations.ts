@@ -424,19 +424,15 @@ async function getProtectionStatus(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Region not found for resource ${id}`);
     }
 
-    if (!fsxnId) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `FSX ID not found for resource ${id}`);
-    }
-
     try {
         let backupsPromiseArray = [];
 
-        if (fsxnId !== undefined) {
+        if (fsxnId) {
             backupsPromiseArray = [
                 isFsxnAwsBackupEnabled(credentialsId, region, fsxnId, metadata as Metadata, activeNodeInstanceId),
                 getOntapVolumesSnapshotCount(credentialsId, region, fsxnId, metadata as Metadata, activeNodeInstanceId)
             ];
-        } else if (fsxwId !== undefined) {
+        } else if (fsxwId) {
             backupsPromiseArray = [isFsxwAwsBackupEnabled(credentialsId, region, fsxwId), Promise.resolve()];
         } else if (ebsVolumeId) {
             backupsPromiseArray = [isEbsAwsBackupEnabled(credentialsId, region, ebsVolumeId), Promise.resolve()];
