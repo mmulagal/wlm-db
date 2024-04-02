@@ -441,7 +441,7 @@ async function getProtectionStatus(
         } else if (ebsVolumeId) {
             backupsPromiseArray = [isEbsAwsBackupEnabled(credentialsId, region, ebsVolumeId), Promise.resolve()];
         } else {
-            backupsPromiseArray = [Promise.resolve()];
+            backupsPromiseArray = [Promise.resolve(), Promise.resolve()];
         }
         const [nativeSqlProtection, awsBackup, ontapProtection] = await Promise.all([
             getNativeSQLProtection(credentialsId, region, activeNodeInstanceId),
