@@ -22,7 +22,4 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
         }
     ])
     .get(/^\/accounts\/(.+)\/fsx\/v2\/credentials\/(.+)\/regions\/(.+)\/file-systems/)
-    .reply(() => [
-        200,
-        listFSXFileSystemsResponse
-    ]);
+    .reply(() => [200, listFSXFileSystemsResponse]);

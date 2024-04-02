@@ -154,7 +154,7 @@ async function getTopology(
         ec2Details: []
     };
 
-    if (node1InstanceId && fileSystemId) {
+    if (node1InstanceId) {
         let vpcId;
         let fileSystemStatus;
         let fileSystemName;
@@ -164,31 +164,39 @@ async function getTopology(
         let subnetIds: Array<string> | undefined;
         let availabilityZones: Array<string> | undefined;
         let vpcCidr: string | undefined;
-
+        let fileSystemTags;
         try {
-            const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
-            vpcId = fsxInfo?.FileSystems?.[0].VpcId;
-            fileSystemName = fsxInfo?.FileSystems?.[0].Tags?.reduce(
-                (a = '', tag) => (tag.Key === 'Name' ? tag.Value : a),
-                ''
-            );
+            if (fileSystemId) {
+                const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
+                const [fileSystem = {}] = fsxInfo?.FileSystems || []; // first item in the list
+                ({
+                    VpcId: vpcId,
+                    Tags: fileSystemTags,
+                    OntapConfiguration: {
+                        DeploymentType: fileSystemDeploymentMode = undefined,
+                        ThroughputCapacity: fileSystemThroughputCapacity = undefined
+                    } = {},
+                    Lifecycle: fileSystemStatus,
+                    StorageCapacity: fileSystemStorageCapacity,
+                    SubnetIds: subnetIds
+                } = fileSystem);
 
-            fileSystemDeploymentMode = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DeploymentType;
-            fileSystemStatus = fsxInfo?.FileSystems?.[0].Lifecycle;
-            fileSystemStorageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity;
-            fileSystemThroughputCapacity = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
-            subnetIds = fsxInfo?.FileSystems?.[0].SubnetIds;
+                fileSystemName = fileSystemTags?.reduce((a = '', tag) => (tag.Key === 'Name' ? tag.Value : a), '');
 
-            const { Subnets: subnets } = await describeSubnets(credentialsId, region, {
-                SubnetIds: subnetIds
-            });
-            availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
-            const vpcParams: DescribeVpcsCommandInput = {
-                VpcIds: [vpcId!]
-            };
-            const { Vpcs: vpcs = [] } = await describeVpc(credentialsId, region, vpcParams);
-            vpcCidr = vpcs[0]?.CidrBlock;
-            logger.info('availabilityZones', availabilityZones);
+                const { Subnets: subnets } = await describeSubnets(credentialsId, region, {
+                    SubnetIds: subnetIds
+                });
+                availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
+                const vpcParams: DescribeVpcsCommandInput = {
+                    VpcIds: [vpcId!]
+                };
+
+                const { Vpcs: [vpc = {}] = [] } = await describeVpc(credentialsId, region, vpcParams);
+                vpcCidr = vpc?.CidrBlock;
+                logger.info('availabilityZones', availabilityZones);
+            } else {
+                logger.error(`FSX ID not found for resource ${resourceId}`);
+            }
         } catch (error) {
             logger.error(`Error while fetching details for fsx. Error: ${error}`);
         }
@@ -229,7 +237,8 @@ async function getTopology(
                         standbyInstanceType = standbyNode.InstanceType;
                         standbyAvailabilityZone = standbyNode.Placement?.AvailabilityZone;
                         standbySubnetId = standbyNode.SubnetId;
-                        standbyVolumeId = standbyNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
+                        const [firstBlockDeviceMapping = {}] = standbyNode.BlockDeviceMappings || [];
+                        ({ Ebs: { VolumeId: standbyVolumeId = undefined } = {} } = firstBlockDeviceMapping);
                         standbyNodeInstanceName = findResourceNameFromTags(standbyNode.Tags);
                     }
                 }
@@ -243,10 +252,10 @@ async function getTopology(
         };
         let vpcName;
         if (vpcId) {
-            const { Vpcs } = await describeVpc(credentialsId, region, {
+            const { Vpcs: [firstVpc = {}] = [] } = await describeVpc(credentialsId, region, {
                 VpcIds: [vpcId]
             });
-            vpcName = findResourceNameFromTags(Vpcs?.[0]?.Tags);
+            vpcName = findResourceNameFromTags(firstVpc?.Tags);
         }
         // Fetch topology data
         topologyData = {
@@ -645,12 +654,15 @@ async function getEc2ResourceInfo(
         InstanceIds: [activeNodeInstanceId]
     });
     logger.info('Estimation info for EC2:', ec2Info);
-    const resourceType = ec2Info?.Reservations?.[0].Instances?.[0].InstanceType;
-    const imageId = ec2Info?.Reservations?.[0].Instances?.[0].ImageId;
-
+    const {
+        Reservations: [
+            { Instances: [{ InstanceType: resourceType = undefined, ImageId: imageId = undefined } = {}] = [] } = {}
+        ] = []
+    } = ec2Info;
     const amiInfo = await getAmis(credentialsId, region, { ImageIds: [imageId!] });
-    logger.info('Estimation info for AMI:', amiInfo);
-    const sqlPlatform = amiInfo?.Images?.[0].PlatformDetails;
+    logger.debug('Estimation info for AMI:', amiInfo);
+
+    const { Images: [{ PlatformDetails: sqlPlatform = undefined } = {}] = [] } = amiInfo;
 
     let sqlSoftwareType: string = SQL_STD; // Let's 'Windows with SQL Server Standard' be default
     if (sqlPlatform === 'Windows with SQL Server Enterprise') {
