@@ -1,6 +1,7 @@
 import { Header } from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
 import styles from './CreateNewSandboxHeader.module.scss';
+import { GENERAL } from '../../../../utils/appConstants';
 
 function CreateNewSandboxHeader() {
     const navigate = useNavigate();
@@ -12,7 +13,7 @@ function CreateNewSandboxHeader() {
                         navigate('../databases');
                     }
                 }}
-                title={<div className={styles.leftSideStyle}>{'Create new sandbox'}</div>}
+                title={<div className={styles.leftSideStyle}>{GENERAL.CREATE_NEW_SANDBOX}</div>}
                 style={{ width: '100vw' }}
             ></Header>
         </div>

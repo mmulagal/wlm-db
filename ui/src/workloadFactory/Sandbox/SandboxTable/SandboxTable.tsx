@@ -3,6 +3,7 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './SandboxTable.module.scss';
 import { useNavigate } from 'react-router-dom';
+import { GENERAL } from '../../../utils/appConstants';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
@@ -81,49 +82,49 @@ const SandboxTable = () => {
 
     const SandboxColDefs: ColumnProps[] = [
         {
-            Header: 'Database name',
+            Header: GENERAL.SANDBOX_DB_NAME,
             accessor: 'name',
             id: '1',
             isSortable: true,
             width: '220px'
         },
         {
-            Header: 'Database host name',
+            Header: GENERAL.SANDBOX_DB_HOST_NAME,
             accessor: 'hostName',
             id: '2',
             width: '220px',
             filterOptions: 'auto'
         },
         {
-            Header: 'Source database name',
+            Header: GENERAL.SANDBOX_SOURCE_DB_NAME,
             accessor: 'source',
             id: '3',
             width: '212px',
             isSortable: true
         },
         {
-            Header: 'Source database host name',
+            Header: GENERAL.SANDBOX_SOURCE_DB_HOST_NAME,
             accessor: 'sourceHost',
             id: '4',
             width: '240px',
             filterOptions: 'auto'
         },
         {
-            Header: 'Last updated',
+            Header: GENERAL.SANDBOX_LAST_UPDATED,
             accessor: 'creationDate',
             id: '5',
             width: '220px',
             isSortable: true
         },
         {
-            Header: 'Age',
+            Header: GENERAL.AGE,
             accessor: 'age',
             id: '6',
             width: '220px',
             filterOptions: 'auto'
         },
         {
-            Header: 'Tag',
+            Header: GENERAL.SANDBOX_TAG,
             accessor: 'tag',
             id: '7',
             width: '220px',
@@ -163,7 +164,7 @@ const SandboxTable = () => {
                             isThin={true}
                             onClick={() => navigate('../create-new-sandbox')}
                         >
-                            {'Create new sandbox'}
+                            {GENERAL.CREATE_NEW_SANDBOX}
                         </Button>
                     </div>
                 }

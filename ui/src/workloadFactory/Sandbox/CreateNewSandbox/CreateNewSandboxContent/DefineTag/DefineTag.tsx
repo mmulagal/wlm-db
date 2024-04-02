@@ -4,6 +4,7 @@ import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import { setSelectedTag } from '../../../../../store/workloadFactory/sandboxSlice';
 import { useAppSelector } from '../../../../../store/storeHooks';
+import { GENERAL } from '../../../../../utils/appConstants';
 
 const DefineTag = () => {
     const dispatch = useDispatch();
@@ -39,7 +40,7 @@ const DefineTag = () => {
                     <div className={`${CommonStyles['heading-content']} ${styles.headerSetter}`}>{setHeader()}</div>
                 )}
                 id="4"
-                title={<div className={CommonStyles.title}>{'Define tag'}</div>}
+                title={<div className={CommonStyles.title}>{GENERAL.DEFINE_TAG}</div>}
             >
                 <AccordionCardContent>
                     <DsTypography>

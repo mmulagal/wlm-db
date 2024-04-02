@@ -4,12 +4,13 @@ import SelectSource from './SelectSource/SelectSource';
 import SelectTarget from './SelectTarget/SelectTarget';
 import Mount from './Mount/Mount';
 import DefineTag from './DefineTag/DefineTag';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const CreateNewSandboxContent = () => {
     return (
         <div className={styles.createNewSandboxContent}>
             <DsTypography variant="Semibold_16" className={styles.heading}>
-                Create Sandbox
+                {GENERAL.CREATE_SANDBOX}
             </DsTypography>
 
             <div className={styles.accordionContainer}>

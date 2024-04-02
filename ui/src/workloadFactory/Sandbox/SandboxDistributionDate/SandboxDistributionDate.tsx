@@ -2,6 +2,7 @@ import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import styles from './SandboxDistributionDate.module.scss';
 import SandboxChart from './SandboxChart/SandboxChart';
 import useResize from '../../../common/hooks/useResize';
+import { GENERAL } from '../../../utils/appConstants';
 
 const SandboxDistributionDate = () => {
     const windowSize = useResize();
@@ -10,7 +11,7 @@ const SandboxDistributionDate = () => {
         <div className={styles.sandboxDate}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Sandboxes distribution by age
+                    {GENERAL.SANDBOXES_DISTRIBUTION_BY_AGE}
                 </DsTypography>
 
                 {loading && <FlashingDotsLoader />}
@@ -23,12 +24,12 @@ const SandboxDistributionDate = () => {
                     <div className={styles.individualRow}>
                         <div className={styles.square} style={{ backgroundColor: '#68C6B3' }} />
                         <DsTypography variant="Regular_14" className={styles.days}>
-                            1-7 Days
+                            {GENERAL.ONE_SEVEN_DAYS}
                         </DsTypography>
                         {windowSize.width > 1500 && (
                             <>
                                 <div className={styles.separator} />
-                                <DsTypography variant="Semibold_14">30 Sandboxes</DsTypography>
+                                <DsTypography variant="Semibold_14">30 {GENERAL.SANDBOXES}</DsTypography>
                             </>
                         )}
                         {windowSize.width <= 1500 && <DsTypography variant="Regular_14">(30)</DsTypography>}
@@ -37,12 +38,12 @@ const SandboxDistributionDate = () => {
                     <div className={styles.individualRow}>
                         <div className={styles.square} style={{ backgroundColor: '#0BAFFC' }} />
                         <DsTypography variant="Regular_14" className={styles.days}>
-                            7-14 Days
+                            {GENERAL.SEVEN_FOURTEEN_DAYS}
                         </DsTypography>
                         {windowSize.width > 1500 && (
                             <>
                                 <div className={styles.separator} />
-                                <DsTypography variant="Semibold_14">30 Sandboxes</DsTypography>
+                                <DsTypography variant="Semibold_14">30 {GENERAL.SANDBOXES}</DsTypography>
                             </>
                         )}
                         {windowSize.width <= 1500 && <DsTypography variant="Regular_14">(30)</DsTypography>}
@@ -51,13 +52,13 @@ const SandboxDistributionDate = () => {
                     <div className={styles.individualRow}>
                         <div className={styles.square} style={{ backgroundColor: '#A815F3' }} />
                         <DsTypography variant="Regular_14" className={styles.days}>
-                            14-30 Days
+                            {GENERAL.FOURTEEN_THIRTY_DAYS}
                         </DsTypography>
 
                         {windowSize.width > 1500 && (
                             <>
                                 <div className={styles.separator} />
-                                <DsTypography variant="Semibold_14">40 Sandboxes</DsTypography>
+                                <DsTypography variant="Semibold_14">40 {GENERAL.SANDBOXES}</DsTypography>
                             </>
                         )}
 
@@ -67,12 +68,12 @@ const SandboxDistributionDate = () => {
                     <div className={styles.individualRow}>
                         <div className={styles.square} style={{ backgroundColor: '#FDC300' }} />
                         <DsTypography variant="Regular_14" className={styles.days}>
-                            +30 Days
+                            {GENERAL.THIRTY_PLUS_DAYS}
                         </DsTypography>
                         {windowSize.width > 1500 && (
                             <>
                                 <div className={styles.separator} />
-                                <DsTypography variant="Semibold_14">20 Sandboxes</DsTypography>
+                                <DsTypography variant="Semibold_14">20 {GENERAL.SANDBOXES}</DsTypography>
                             </>
                         )}
 

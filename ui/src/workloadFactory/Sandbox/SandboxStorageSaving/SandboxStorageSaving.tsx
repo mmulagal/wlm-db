@@ -2,6 +2,7 @@ import useResize from '../../../common/hooks/useResize';
 import { ReactComponent as Savings } from '../../../assets/Savings.svg';
 import styles from './SandboxStorageSaving.module.scss';
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { GENERAL } from '../../../utils/appConstants';
 
 const SandboxStorageSaving = () => {
     const windowSize = useResize();
@@ -45,7 +46,7 @@ const SandboxStorageSaving = () => {
                                 )}
                                 {!loading && '78%'}
                             </DsTypography>
-                            <DsTypography variant="Regular_14">Sandboxes storage savings</DsTypography>
+                            <DsTypography variant="Regular_14">{GENERAL.SANDBOX_STORAGE_SAVINGS}</DsTypography>
                         </div>
                     </div>
 
@@ -60,7 +61,7 @@ const SandboxStorageSaving = () => {
                                 </DsTypography>
 
                                 <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
-                                    {'Sandboxes storage savings'}
+                                    {GENERAL.SANDBOX_STORAGE_SAVINGS}
                                 </DsTypography>
                             </div>
 
@@ -71,7 +72,7 @@ const SandboxStorageSaving = () => {
                                 </DsTypography>
 
                                 <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
-                                    {'Consumed storage'}
+                                    {GENERAL.SANDBOX_CONSUMED_STORAGE}
                                 </DsTypography>
                             </div>
                         </div>
@@ -94,7 +95,7 @@ const SandboxStorageSaving = () => {
                                 )}
                                 {!loading && '78%'}
                             </DsTypography>
-                            <DsTypography variant="Regular_14">Sandboxes storage savings</DsTypography>
+                            <DsTypography variant="Regular_14">{GENERAL.SANDBOX_STORAGE_SAVINGS}</DsTypography>
                         </div>
                     </div>
 
@@ -122,7 +123,7 @@ const SandboxStorageSaving = () => {
                                 </>
                             )}
                         </div>
-                        <DsTypography variant="Regular_14">Sandboxes savings</DsTypography>
+                        <DsTypography variant="Regular_14">{GENERAL.SANDBOX_SAVINGS}</DsTypography>
                     </div>
 
                     <div className={styles.separator} />
@@ -149,7 +150,7 @@ const SandboxStorageSaving = () => {
                                 </>
                             )}
                         </div>
-                        <DsTypography variant="Regular_14">Consumed savings</DsTypography>
+                        <DsTypography variant="Regular_14">{GENERAL.SANDBOX_CONSUMED_SAVING}</DsTypography>
                     </div>
                 </div>
             )}
