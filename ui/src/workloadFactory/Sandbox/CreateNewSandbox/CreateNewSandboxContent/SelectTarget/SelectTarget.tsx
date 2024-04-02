@@ -74,11 +74,17 @@ const SelectTarget = () => {
                     }, ${selectedTargetDatabase ? selectedTargetDatabase : ''}`}
                     className={CommonStyles.setHeaderStyleSandbox}
                 >
-                    <span>Target host: {selectedTargetHost ? selectedTargetHost.label : ''}</span>
+                    <span>
+                        {GENERAL.TARGET_HOST}: {selectedTargetHost ? selectedTargetHost.label : ''}
+                    </span>
                     <span className={CommonStyles.separatorSandbox} />
-                    <span>Target instance: {selectedTargetInstance ? selectedTargetInstance.label : ''}</span>
+                    <span>
+                        {GENERAL.TARGET_INSTANCE}: {selectedTargetInstance ? selectedTargetInstance.label : ''}
+                    </span>
                     <span className={CommonStyles.separatorSandbox} />
-                    <span className={styles.dbName}>Target database: {selectedTargetDatabase}</span>
+                    <span className={styles.dbName}>
+                        {GENERAL.TARGET_DATABASES}: {selectedTargetDatabase}
+                    </span>
                 </DsTypography>
             );
         }
@@ -97,13 +103,11 @@ const SelectTarget = () => {
                         <>
                             <div className={styles.noticeText}>
                                 <InfoIcon />
-                                <DsTypography variant="Regular_14">
-                                    Notice: Destination host should be in the same VPC and FSxN instance as Source host
-                                </DsTypography>
+                                <DsTypography variant="Regular_14">{GENERAL.TARGET_DATABASE_NOTICE}</DsTypography>
                             </div>
                             <div className={windowSize.width > 1500 ? styles.firstRow : styles.firstRowSmallScreen}>
                                 <SelectField
-                                    label={'Source host'}
+                                    label={GENERAL.TARGET_HOST}
                                     isClearable={false}
                                     defaultValue={selectedTargetHost ? selectedTargetHost : [generateTargetName[0]]}
                                     onChange={(selectedOptions: any): void => {
@@ -115,7 +119,7 @@ const SelectTarget = () => {
                                 />
 
                                 <SelectField
-                                    label={'Source Instance'}
+                                    label={GENERAL.TARGET_INSTANCE}
                                     isClearable={false}
                                     defaultValue={
                                         selectedTargetInstance ? selectedTargetInstance : [generateTargetInstance[0]]
@@ -133,6 +137,7 @@ const SelectTarget = () => {
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                             dispatch(setSelectedTargetDatabase(e.target.value));
                                         }}
+                                        label={GENERAL.TARGET_DATABASES}
                                         value={selectedTargetDatabase}
                                         className={styles.keyField}
                                         error={!selectedTargetDatabase ? GENERAL.ACTION_REQUIRED : ''}
@@ -146,6 +151,7 @@ const SelectTarget = () => {
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                             dispatch(setSelectedTargetDatabase(e.target.value));
                                         }}
+                                        label={GENERAL.TARGET_DATABASES}
                                         value={selectedTargetDatabase}
                                         className={styles.keyField}
                                         error={!selectedTargetDatabase ? GENERAL.ACTION_REQUIRED : ''}

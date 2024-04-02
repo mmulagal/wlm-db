@@ -11,9 +11,9 @@ const Mount = () => {
     const { selectedMount, mountPath } = useAppSelector(state => state.sandbox);
     const dispatch = useDispatch();
     const setHeader = () => {
-        if (selectedMount === 'Auto-assign mount point') {
-            return <DsTypography variant="Regular_14">Auto-assign mount point</DsTypography>;
-        } else if (selectedMount === 'Define mount point path' && !mountPath) {
+        if (selectedMount === GENERAL.AUTO_ASSIGN_MOUNT_POINT) {
+            return <DsTypography variant="Regular_14">{GENERAL.AUTO_ASSIGN_MOUNT_POINT}</DsTypography>;
+        } else if (selectedMount === GENERAL.DEFINE_MOUNT_POINT_PATH && !mountPath) {
             return (
                 <div className={styles.actionRequired}>
                     <ActionRequired />
@@ -22,7 +22,7 @@ const Mount = () => {
         }
         return (
             <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyleSandbox} title={mountPath}>
-                Volume mount point under path : {mountPath}
+                {GENERAL.VOLUME_MOUNT_POINT_UNDER_PATH} : {mountPath}
             </DsTypography>
         );
     };
@@ -43,19 +43,19 @@ const Mount = () => {
                     <DsTypography>
                         <div className={styles.radios}>
                             <DsRadioButton
-                                isSelected={selectedMount === 'Auto-assign mount point'}
-                                title={'Auto-assign mount point'}
+                                isSelected={selectedMount === GENERAL.AUTO_ASSIGN_MOUNT_POINT}
+                                title={GENERAL.AUTO_ASSIGN_MOUNT_POINT}
                                 id="1"
                                 variant="Default"
-                                onClick={() => handleRadio('Auto-assign mount point')}
+                                onClick={() => handleRadio(GENERAL.AUTO_ASSIGN_MOUNT_POINT)}
                             />
 
                             <DsRadioButton
-                                isSelected={selectedMount === 'Define mount point path'}
-                                title={'Define mount point path'}
+                                isSelected={selectedMount === GENERAL.DEFINE_MOUNT_POINT_PATH}
+                                title={GENERAL.DEFINE_MOUNT_POINT_PATH}
                                 id="2"
                                 variant="Default"
-                                onClick={() => handleRadio('Define mount point path')}
+                                onClick={() => handleRadio(GENERAL.DEFINE_MOUNT_POINT_PATH)}
                             />
                         </div>
                         <div className={styles.textField}>
@@ -63,12 +63,12 @@ const Mount = () => {
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     dispatch(setMountPath(e.target.value));
                                 }}
-                                placeholder={'Define mount point path'}
+                                placeholder={GENERAL.DEFINE_MOUNT_POINT_PATH}
                                 value={mountPath}
                                 className={styles.keyField}
-                                isDisabled={selectedMount == 'Auto-assign mount point'}
+                                isDisabled={selectedMount == GENERAL.AUTO_ASSIGN_MOUNT_POINT}
                                 error={
-                                    selectedMount === 'Define mount point path' && !mountPath
+                                    selectedMount === GENERAL.DEFINE_MOUNT_POINT_PATH && !mountPath
                                         ? GENERAL.ACTION_REQUIRED
                                         : ''
                                 }

@@ -20,6 +20,7 @@ import {
     setSelectedSourceHost,
     setSelectedSourceInstance
 } from '../../../../../store/workloadFactory/sandboxSlice';
+import { GENERAL } from '../../../../../utils/appConstants';
 
 const SelectSource = () => {
     const windowSize = useResize();
@@ -99,11 +100,17 @@ const SelectSource = () => {
                 }, ${selectedSourceDatabase ? selectedSourceDatabase.label : ''}`}
                 className={CommonStyles.setHeaderStyleSandbox}
             >
-                <span>Source host: {selectedSourceHost ? selectedSourceHost.label : ''}</span>
+                <span>
+                    {GENERAL.SOURCE_HOST}: {selectedSourceHost ? selectedSourceHost.label : ''}
+                </span>
                 <span className={CommonStyles.separatorSandbox} />
-                <span>Source instance: {selectedSourceInstance ? selectedSourceInstance.label : ''}</span>
+                <span>
+                    {GENERAL.SOURCE_INSTANCE}: {selectedSourceInstance ? selectedSourceInstance.label : ''}
+                </span>
                 <span className={CommonStyles.separatorSandbox} />
-                <span>Source database: {selectedSourceDatabase ? selectedSourceDatabase.label : ''}</span>
+                <span>
+                    {GENERAL.SOURCE_DATABASE}: {selectedSourceDatabase ? selectedSourceDatabase.label : ''}
+                </span>
             </DsTypography>
         );
     };
@@ -121,7 +128,7 @@ const SelectSource = () => {
                         <>
                             <div className={windowSize.width > 1500 ? styles.firstRow : styles.firstRowSmallScreen}>
                                 <SelectField
-                                    label={'Source host'}
+                                    label={GENERAL.SOURCE_HOST}
                                     isClearable={false}
                                     defaultValue={selectedSourceHost ? selectedSourceHost : [generateHostName[0]]}
                                     onChange={(selectedOptions: any): void => {
@@ -133,7 +140,7 @@ const SelectSource = () => {
                                 />
 
                                 <SelectField
-                                    label={'Source Instance'}
+                                    label={GENERAL.SOURCE_INSTANCE}
                                     isClearable={false}
                                     defaultValue={
                                         selectedSourceInstance ? selectedSourceInstance : [generateSourceInstance[0]]
@@ -148,7 +155,7 @@ const SelectSource = () => {
 
                                 {windowSize.width <= 1500 && (
                                     <SelectField
-                                        label={'Source database'}
+                                        label={GENERAL.SOURCE_DATABASE}
                                         isClearable={false}
                                         defaultValue={
                                             selectedSourceDatabase
@@ -168,7 +175,7 @@ const SelectSource = () => {
                             {windowSize.width > 1500 && (
                                 <div className={styles.secondRow}>
                                     <SelectField
-                                        label={'Source database'}
+                                        label={GENERAL.SOURCE_DATABASE}
                                         isClearable={false}
                                         defaultValue={
                                             selectedSourceDatabase

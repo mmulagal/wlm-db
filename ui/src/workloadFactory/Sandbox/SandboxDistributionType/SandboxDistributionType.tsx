@@ -7,6 +7,7 @@ import { ReactComponent as QA } from '../../../assets/QA.svg';
 import { ReactComponent as Testing } from '../../../assets/Testing.svg';
 import ProgressBar from '../../../common/ProgressBar/ProgressBar';
 import styles from './SandboxDistributionType.module.scss';
+import { GENERAL } from '../../../utils/appConstants';
 
 const SandboxDistributionType = () => {
     const loading = false;
@@ -14,7 +15,7 @@ const SandboxDistributionType = () => {
         <div className={styles.sandboxType}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Sandboxes distribution by tag
+                    {GENERAL.DISTRIBUTION_BY_TAG}
                 </DsTypography>
 
                 {loading && <FlashingDotsLoader />}
@@ -27,7 +28,7 @@ const SandboxDistributionType = () => {
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
                                 <DsTypography variant="Semibold_14" className={styles.name}>
-                                    Development
+                                    {GENERAL.DEVELOPMENT}
                                 </DsTypography>
                                 <DsTypography variant="Regular_24" className={styles.value}>
                                     55
@@ -44,7 +45,7 @@ const SandboxDistributionType = () => {
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
                                 <DsTypography variant="Semibold_14" className={styles.name}>
-                                    QA
+                                    {GENERAL.QA}
                                 </DsTypography>
                                 <DsTypography variant="Regular_24" className={styles.value}>
                                     40
@@ -61,7 +62,7 @@ const SandboxDistributionType = () => {
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
                                 <DsTypography variant="Semibold_14" className={styles.name}>
-                                    Integration
+                                    {GENERAL.INTEGRATION}
                                 </DsTypography>
                                 <DsTypography variant="Regular_24" className={styles.value}>
                                     5
@@ -80,7 +81,7 @@ const SandboxDistributionType = () => {
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
                                 <DsTypography variant="Semibold_14" className={styles.name}>
-                                    Training
+                                    {GENERAL.TRAINING}
                                 </DsTypography>
                                 <DsTypography variant="Regular_24" className={styles.value}>
                                     15
@@ -97,7 +98,7 @@ const SandboxDistributionType = () => {
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
                                 <DsTypography variant="Semibold_14" className={styles.name}>
-                                    Analytics
+                                    {GENERAL.ANALYTICS}
                                 </DsTypography>
                                 <DsTypography variant="Regular_24" className={styles.value}>
                                     5
@@ -114,7 +115,7 @@ const SandboxDistributionType = () => {
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
                                 <DsTypography variant="Semibold_14" className={styles.name}>
-                                    Other
+                                    {GENERAL.SANDBOX_OTHER}
                                 </DsTypography>
                                 <DsTypography variant="Regular_24" className={styles.value}>
                                     0

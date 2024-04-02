@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import CodeBoxHeading from '../../../../common/CodeBoxHeading/CodeBoxHeading';
 import { ReactComponent as Copy } from '../../../../assets/copyBlackBackground.svg';
 import styles from './CreateNewSandboxCodebox.module.scss';
-import { CODE_VIEWER } from '../../../../utils/appConstants';
+import { CODE_VIEWER, GENERAL } from '../../../../utils/appConstants';
 import CodeBoxScroll from '../../../../common/CodeBoxScroll/CodeBoxScroll';
 import CodeBoxColor from '../../../../common/CodeBoxColor/CodeBoxColor';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -40,7 +40,7 @@ const CreateNewSandboxCodebox = () => {
 
             <div className={styles.createDbHeader}>
                 <DsTypography variant="Regular_16" className={styles.createDBText}>
-                    {'Create new sandbox'}
+                    {GENERAL.CREATE_NEW_SANDBOX}
                 </DsTypography>
             </div>
 

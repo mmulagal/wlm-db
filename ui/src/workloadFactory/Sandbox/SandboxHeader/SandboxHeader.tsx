@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useDispatch } from 'react-redux';
 import { setShowBanner } from '../../../store/workloadFactory/sandboxSlice';
+import { GENERAL } from '../../../utils/appConstants';
 
 const SandboxHeader = () => {
     const windowSize = useResize();
@@ -25,20 +26,15 @@ const SandboxHeader = () => {
                         <Illustration />
                     </div>
                     <div className={styles.contentHolder}>
-                        <DsTypography variant="Semibold_16">Sandboxes</DsTypography>
-                        <DsTypography variant="Regular_16">
-                            Sandbox is an on-demand, isolated database environment designed to replicate real-world
-                            scenarios without affecting production data. It streamlines the development lifecycle by
-                            providing an instantaneous copy of your database for testing, integration, diagnostics and
-                            training, thereby accelerating time-to-market while ensuring data integrity and security.
-                        </DsTypography>
+                        <DsTypography variant="Semibold_16">{GENERAL.SANDBOXES}</DsTypography>
+                        <DsTypography variant="Regular_16">{GENERAL.SANDBOX_HEADER_CONTENT}</DsTypography>
                     </div>
                     <div className={styles.buttonHolder}>
                         <Button variant="primary" onClick={() => navigate('../create-new-sandbox')}>
-                            Create new sandbox
+                            {GENERAL.CREATE_NEW_SANDBOX}
                         </Button>
                         <Button variant="text" onClick={() => handleBanner()}>
-                            Don't show again
+                            {GENERAL.DONT_SHOW_AGAIN}
                         </Button>
                     </div>
                 </div>

@@ -3,6 +3,7 @@ import { ReactComponent as Sandbox } from '../../../assets/Sandbox.svg';
 
 import styles from './SourceInformation.module.scss';
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import { GENERAL } from '../../../utils/appConstants';
 
 const SourceInformation = () => {
     const loading = false;
@@ -20,7 +21,7 @@ const SourceInformation = () => {
                         {!loading && 12}
                     </DsTypography>
                     <DsTypography variant="Regular_14" style={{ width: '119px' }}>
-                        Source databases
+                        {GENERAL.SANDBOX_SOURCE_DATABASES}
                     </DsTypography>
                 </div>
             </div>
@@ -36,7 +37,7 @@ const SourceInformation = () => {
                         )}
                         {!loading && 12}
                     </DsTypography>
-                    <DsTypography variant="Regular_14">Sandboxes</DsTypography>
+                    <DsTypography variant="Regular_14">{GENERAL.SANDBOXES}</DsTypography>
                 </div>
             </div>
         </div>
