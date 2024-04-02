@@ -220,7 +220,7 @@ async function updateUserDBIntoResourceData(
         protection: {
             isAWSBackupEnabled: false,
             isFsxOntapSnapshotsEnabled: false,
-            isSqlNativeEnabled: true
+            isSqlNativeEnabled: false
         }
     };
     metaData.userDatabase = [...(metaData.userDatabase || []), databaseDetails];
