@@ -27,7 +27,9 @@ const SandboxHeader = () => {
                     </div>
                     <div className={styles.contentHolder}>
                         <DsTypography variant="Semibold_16">{GENERAL.SANDBOXES}</DsTypography>
-                        <DsTypography variant="Regular_16">{GENERAL.SANDBOX_HEADER_CONTENT}</DsTypography>
+                        <DsTypography variant="Regular_16" style={{ marginTop: '5px' }}>
+                            {GENERAL.SANDBOX_HEADER_CONTENT}
+                        </DsTypography>
                     </div>
                     <div className={styles.buttonHolder}>
                         <Button variant="primary" onClick={() => navigate('../create-new-sandbox')}>
@@ -47,13 +49,9 @@ const SandboxHeader = () => {
                     </div>
                     <div className={styles.secondLevel}>
                         <div className={styles.contentHolder}>
-                            <DsTypography variant="Semibold_16">Sandboxes</DsTypography>
-                            <DsTypography variant="Regular_14">
-                                Sandbox is an on-demand, isolated database environment designed to replicate real-world
-                                scenarios without affecting production data. It streamlines the development lifecycle by
-                                providing an instantaneous copy of your database for testing, integration, diagnostics
-                                and training, thereby accelerating time-to-market while ensuring data integrity and
-                                security.
+                            <DsTypography variant="Semibold_16">{GENERAL.SANDBOXES}</DsTypography>
+                            <DsTypography variant="Regular_14" style={{ marginTop: '5px' }}>
+                                {GENERAL.SANDBOX_HEADER_CONTENT}
                             </DsTypography>
                         </div>
                         <div className={styles.buttonHolder}>
@@ -62,10 +60,10 @@ const SandboxHeader = () => {
                                 style={{ height: '32px' }}
                                 onClick={() => navigate('../create-new-sandbox')}
                             >
-                                Create new sandbox
+                                {GENERAL.CREATE_NEW_SANDBOX}
                             </Button>
                             <Button variant="text" isThin onClick={() => handleBanner()}>
-                                Don't show again
+                                {GENERAL.DONT_SHOW_AGAIN}
                             </Button>
                         </div>
                     </div>
