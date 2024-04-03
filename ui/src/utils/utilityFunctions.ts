@@ -424,7 +424,8 @@ export const formatHostData = (val: any) => {
         performanceText: val?.performance && val.performance?.assessment,
         // Storage saving table text to search in table
         storageSavingsText:
-            val?.storage?.spaceSavings && val?.storage?.used &&
+            val?.storage?.spaceSavings &&
+            val?.storage?.used &&
             formatFractionalNumber(storagePercent, 2) + '% (' + formatSizeOnePrecision(val.storage?.spaceSavings) + ')',
         sizeformat: val?.storage?.size && formatSizeOnePrecision(val?.storage?.size),
         instanceNames: instanceNames.join(',') || val?.ec2InstanceName,
@@ -1387,13 +1388,33 @@ export const addNewManagedHostData = (existingList: any, newItem: any) => {
 };
 
 //Function to check if array includes an object or not
-export const checkValueSaved = (options: any, value: any) => {
+export const checkValueSavedForRegion = (options: any, value: any) => {
     let containsValue = false;
     for (let i = 0; i < options.length; i++) {
         const objA: any = options[i];
         for (const key in value) {
-            if (key === 'value') {
-                if (objA[key] === value[key]) {
+            if (key === 'data') {
+                if (objA[key]?.regionCode === value[key]?.regionCode) {
+                    containsValue = true;
+                    break;
+                }
+            }
+        }
+    }
+    return containsValue;
+};
+
+//Function to check if array includes an object or not
+export const checkValueSavedForCred = (options: any, value: any) => {
+    let containsValue = false;
+    for (let i = 0; i < options.length; i++) {
+        const objA: any = options[i];
+        for (const key in value) {
+            if (key === 'data') {
+                if (
+                    objA[key]?.credentialsId === value[key]?.credentialsId &&
+                    objA[key]?.providerAccountId === value[key]?.providerAccountId
+                ) {
                     containsValue = true;
                     break;
                 }
