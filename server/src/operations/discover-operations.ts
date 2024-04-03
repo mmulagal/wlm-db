@@ -653,8 +653,8 @@ async function fetchUnmanagedHostsInformation(
     );
     const resourceDetailsList: ResourceDetails[] = [];
 
-    sqlServerInstanceDetails.forEach(sqlServerInstance => {
-        const storageDetails = sqlServerInstance.sqlServerInstances?.map(sqlServer => sqlServer.storage);
+    sqlServerInstanceDetails?.forEach(sqlServerInstance => {
+        const storageDetails = sqlServerInstance?.sqlServerInstances?.map(sqlServer => sqlServer.storage);
         const storageTypeWithId: { type: string; id: string }[] = [];
         storageDetails?.forEach(storageDetail =>
             storageDetail?.forEach(elem =>

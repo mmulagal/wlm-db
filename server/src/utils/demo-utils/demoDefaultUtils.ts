@@ -1,5 +1,5 @@
 import randomize from 'randomatic';
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import { randomUUID } from 'crypto';
 import { USER_TOKEN } from '../consts';
 import getLogger from '../logger';
@@ -111,12 +111,20 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
 }
 
 async function returnInventorydata(instances?: string[]) {
-    logger.info('Generate and return inventory data for demo');
+    logger.info('Generate and return inventory data for demo', instances);
     const fsxId = `fs-${randomize('a0', 17)}`;
     const ebsVolId = `vol -${randomize('a0', 17)}`;
     const inventoryData = inventoryDemoData(fsxId, ebsVolId);
 
     if (instances !== undefined && instances.length > 0) {
+        const { items: inventoryItems } = inventoryData;
+        const items = compact(inventoryItems.map(item => instances.includes(item.ec2InstanceId) && item));
+        if (items.length > 0 && items !== undefined) {
+            return {
+                count: items.length,
+                items
+            };
+        }
         const instanceDetails = inventoryData.items.find(item => item.ec2InstanceId === instances[0])!;
         return {
             count: 1,

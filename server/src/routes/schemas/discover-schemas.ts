@@ -6,8 +6,8 @@ import {
     DiscoverInstanceParams,
     DiscoverCredentialsRequestBody,
     ManageMsSqlResponseBody,
-    MsSqlInstancesRequestBody,
-    DiscoverCredentialsResponse
+    DiscoverCredentialsResponse,
+    MsSqlInstancesRequestQuery
 } from '../types/discover.types';
 import { GenericHeaders, CredentialsIdParams } from '../types/generic.types';
 
@@ -70,7 +70,7 @@ const MsSqlInstancesSchema = {
     Headers: GenericHeaders,
     tags: [RouteTags.DISCOVER],
     params: CredentialsIdParams,
-    body: MsSqlInstancesRequestBody,
+    querystring: MsSqlInstancesRequestQuery,
     summary: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
     description: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
     response: {
