@@ -14,6 +14,7 @@ type bubbleItemType = {
 
 const Bubbles = ({ bubbleList, onBubbleClick }: BubblesPropsType) => {
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
+
     return (
         <div className={styles['bubbles-container']}>
             {bubbleList.map((bubble: bubbleItemType) => {
