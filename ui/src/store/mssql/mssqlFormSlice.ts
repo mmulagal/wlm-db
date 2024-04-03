@@ -41,6 +41,7 @@ export const initialMssqlState: any = {
         selectedLicenseId: null,
         selectedCustomAMI: null
     },
+    sqlServerCollation: {},
     dbName: '',
     dbCredentials: {
         name: SQL_USERNAME,
@@ -148,6 +149,9 @@ const mssqlFormSlice = createSlice({
         },
         setSelectedCustomAMI(state, action: PayloadAction<any>) {
             state.license.selectedCustomAMI = action.payload;
+        },
+        setSqlServerCollation(state, action: PayloadAction<any>) {
+            state.sqlServerCollation = action.payload;
         },
         //DB Name
         setDBName(state, action: PayloadAction<any>) {
@@ -297,6 +301,7 @@ export const {
     setSelectedLicenseType,
     setSelectedLicenseId,
     setSelectedCustomAMI,
+    setSqlServerCollation,
     setDBName,
     setDBCredentialsName,
     setDBCredentialsPassword,

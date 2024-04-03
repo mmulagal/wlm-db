@@ -71,6 +71,28 @@ const initialState: MssqlEntities = {
         configData: [],
         configLoading: false,
         configError: null
+    },
+    getCollationList: {
+        // Will remove this mocked data once API integration is done
+        collationList: {
+            collationList: [
+                {
+                    name: 'Albanian_BIN',
+                    description: 'Albanian, binary sort'
+                },
+                {
+                    name: 'Albanian_BIN2',
+                    description: 'Albanian, binary code point comparison sort'
+                },
+                {
+                    name: 'SQL_Latin1_General_CP1_CI_AS',
+                    description: 'SQL Latin1 General CP1 CI AS'
+                }
+            ],
+            defaultCollation: 'SQL_Latin1_General_CP1_CI_AS'
+        },
+        collationListLoading: false,
+        collationListError: null
     }
 };
 
@@ -119,6 +141,9 @@ const mssqlSlice = createSlice({
         },
         addSavedConfigList: (state, action: PayloadAction<any>) => {
             state.getSavedConfigList = action.payload;
+        },
+        addGetCollationList: (state, action: PayloadAction<any>) => {
+            state.getCollationList = action.payload;
         }
     }
 });
@@ -137,6 +162,7 @@ export const {
     addInstanceTypeList,
     addFsxnList,
     addSavedConfigList,
-    getThroughputRegionList
+    getThroughputRegionList,
+    addGetCollationList
 } = mssqlSlice.actions;
 export default mssqlSlice;
