@@ -36,7 +36,7 @@ import {
 import { deleteParameters, getParameter, sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
 import { listFsxOntapCredentials, registerFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
-import { SSMParamterObject } from '../utils/common-types';
+import { ResourceDetails, SSMParamterObject } from '../utils/common-types';
 
 import {
     DiscoverMsSqlResponseBodyType,
@@ -637,31 +637,60 @@ async function fetchUnmanagedHostsInformation(
     accountId: string,
     credentialsId: string,
     region: string,
-    instancesDetails: { ec2InstanceId: string; fsxnId?: string; ebsVolumeId?: string; fsxwId?: string }[] = []
+    instances: string[] = []
 ) {
-    logger.info('Fetching hosts information:', { accountId, credentialsId, region, instancesDetails });
+    logger.info('Fetching hosts information:', { accountId, credentialsId, region, instances });
 
-    // TODO: /v1/credentials/:credentialsId/regions/:region/mssql/discover (API1) fetches instance-storage mapping and returns it, /v1/credentials/:credentialsId/regions/:region/mssql/instances(API2) expects the same combination in request. In the event there is a mismatch, this function may return incorrect data. Add validation for instance-storage mapping
+    // Modified implementation to fetch SQL Server instance details for EC2 instances with underlying storage details. The code now accepts instances ID array instead of object with ec2InstanceId and storageType. If there are multiple sql instances in an ec2 instance each using a different storage type, the code will return multiple resource details for the same ec2 instance. Every item in resourceDetailsList is an ec2 instance - sql instance pair with storage type. The code will return multiple resource details for the same ec2 instance if there are multiple sql instances in the ec2 instance each using a different storage type.
 
-    const resourceDetailsList = instancesDetails.map(({ ec2InstanceId, fsxnId, ebsVolumeId, fsxwId }) => ({
-        id: null,
-        account_id: accountId,
-        resource_id: ec2InstanceId,
-        resource_type: RESOURCESTYPE.MSSQL,
-        resource_name: ec2InstanceId,
-        cloud_provider_name: CloudProviders.AWS,
-        co_relation_id: fsxnId || null,
-        cloud_provider_account_id: null,
+    const { items: sqlServerInstanceDetails } = await getHostAndSqlServerInfo(
+        accountId,
+        credentialsId,
         region,
-        credentials_id: credentialsId,
-        storage_type: STORAGE_TYPE.FSXN,
-        metadata: {
-            creationDate: Date.now(),
-            node1InstanceId: ec2InstanceId
-        },
-        ebsVolumeId,
-        fsxwId
-    }));
+        instances.length,
+        undefined,
+        instances
+    );
+    const resourceDetailsList: ResourceDetails[] = [];
+
+    sqlServerInstanceDetails.forEach(sqlServerInstance => {
+        const storageDetails = sqlServerInstance.sqlServerInstances?.map(sqlServer => sqlServer.storage);
+        const storageTypeWithId: { type: string; id: string }[] = [];
+        storageDetails?.forEach(storageDetail =>
+            storageDetail?.forEach(elem =>
+                storageTypeWithId.push({
+                    type: elem.type,
+                    id: elem.id
+                })
+            )
+        );
+
+        storageTypeWithId?.forEach(storage => {
+            const ebsVolumeId = storage.type === STORAGE_TYPE.EBS ? storage.id : undefined;
+            const fsxwId = storage.type === STORAGE_TYPE.FSXW ? storage.id : undefined;
+            const fsxnId = storage.type === STORAGE_TYPE.FSXN ? storage.id : undefined;
+
+            resourceDetailsList.push({
+                id: null,
+                account_id: accountId,
+                resource_id: sqlServerInstance.ec2InstanceId,
+                resource_type: RESOURCESTYPE.MSSQL,
+                resource_name: sqlServerInstance.ec2InstanceId,
+                cloud_provider_name: CloudProviders.AWS,
+                co_relation_id: fsxnId || null,
+                cloud_provider_account_id: null,
+                region,
+                credentials_id: credentialsId,
+                storage_type: STORAGE_TYPE.FSXN,
+                metadata: {
+                    creationDate: Date.now(),
+                    node1InstanceId: sqlServerInstance.ec2InstanceId
+                },
+                ebsVolumeId,
+                fsxwId
+            });
+        });
+    });
 
     const response = await Promise.all(
         resourceDetailsList.map(async resourceDetail =>

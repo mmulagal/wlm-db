@@ -66,9 +66,9 @@ export default function discoverRoutes(fastify: FastifyInstance) {
     server.post(`${DISCOVER_MSSQL_API_PATH}/mssql/instances`, { schema: MsSqlInstancesSchema }, async request => {
         const {
             params: { accountId, credentialsId, region },
-            body: { instancesDetails }
+            body: { instances }
         } = request;
 
-        return fetchUnmanagedHostsInformation(accountId, credentialsId, region, instancesDetails);
+        return fetchUnmanagedHostsInformation(accountId, credentialsId, region, instances);
     });
 }
