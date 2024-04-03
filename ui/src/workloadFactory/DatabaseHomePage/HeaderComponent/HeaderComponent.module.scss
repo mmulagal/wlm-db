@@ -67,12 +67,13 @@
                     }
                 }
 
-                [class*='design-system-select__control:hover:not(.design-system-select__control--menu-is-open)'] {
-                    outline: none !important;
-                }
-
                 [class*='Select-module_base'] {
                     margin-bottom: 0 !important;
+                    div {
+                        div {
+                            outline: none !important;
+                        }
+                    }
                 }
                 [class*='design-system-select__control'] {
                     border: none !important;
