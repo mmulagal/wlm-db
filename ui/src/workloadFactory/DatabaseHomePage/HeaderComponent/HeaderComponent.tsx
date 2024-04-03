@@ -176,7 +176,7 @@ const HeaderComponent = () => {
                         </Typography>
 
                         <div className={styles.rightPart}>
-                            <div className={styles.firstSelect}>
+                            <div className={styles.firstSelect} title={headerSelectedCred?.label}>
                                 <SelectField
                                     isLoading={credentialLoading}
                                     isClearable={false}
