@@ -610,7 +610,7 @@ async function validateAndStoreDiscoveredParameters(
             sqlCredentials
         );
 
-        if (fsxCredentials && !detectResponse?.ontapError) {
+        if (!detectResponse?.requiredModuleError && fsxCredentials && !detectResponse?.fsxnError) {
             await registerFsxOntapCredentials(
                 accountId,
                 credentialsId,
