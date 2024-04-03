@@ -10,6 +10,7 @@ import {
     setSelectedLicenseId, 
     setSelectedLicenseType, 
     setSelectedSecurityGroup, 
+    setSqlServerCollation, 
     setThroughputValue 
 } from "../../../store/mssql/mssqlFormSlice";
 import { GENERAL } from "../../../utils/appConstants";
@@ -71,6 +72,19 @@ export const selectDefaultLicense = (amiData:any, dispatch: any) => {
         const option = generateOptionType(amiVal, amiVal, amiName, false, '', data);
         dispatch(setSelectedLicenseType(GENERAL.LICENSE_INCLUDED_AMI));
         dispatch(setSelectedLicenseId(option));
+    }
+}
+
+export const selectDefaultCollation = (collationData:any, dispatch: any) => {
+    if(collationData) {
+        for (var i = 0; i < collationData?.collationList.length; i++) {
+            const val = collationData?.collationList[i];
+            if (val?.name === collationData?.defaultCollation) {
+                const option = generateOptionType(val?.name, val?.name, val?.description, false, '');
+                dispatch(setSqlServerCollation(option));
+                break;
+            }
+        };
     }
 }
 

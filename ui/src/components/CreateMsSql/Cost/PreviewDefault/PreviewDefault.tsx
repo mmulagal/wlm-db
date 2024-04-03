@@ -23,12 +23,14 @@ import {
     setSelectedOperatingSystem,
     setSNSARN,
     setSNSState,
+    setSqlServerCollation,
     setTags
 } from '../../../../store/mssql/mssqlFormSlice';
 import { useEffect } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { DEFAULT_MASTER_KEY, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
 import {
+    selectDefaultCollation,
     selectDefaultEncryption,
     selectDefaultInstanceType,
     selectDefaultLicense,
@@ -45,12 +47,14 @@ const PreviewDefault = () => {
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
     const instanceValue = useAppSelector(state => state.mssqlForm.instanceType);
     const dbName = useAppSelector(state => state.mssqlForm.dbName);
+    const sqlServerCollation = useAppSelector(state => state.mssqlForm.sqlServerCollation);
     const throughputValue = useAppSelector(state => state.mssqlForm.throughput);
     const iopsValue = useAppSelector(state => state.mssqlForm.provisionedIOPS.IOPSValue);
     const amiLicense = useAppSelector(state => state.mssqlForm.license.selectedLicenseId);
     const instanceTypeData = useAppSelector(state => state.mssql.getInstanceTypeList?.instanceTypeData);
     const kmsData = useAppSelector(state => state.mssql.getKmsList.kmsData);
     const amiData = useAppSelector(state => state.mssql.getAmiList.amiData);
+    const collationList = useAppSelector(state => state.mssql.getCollationList.collationList);
     const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
     const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
     const encryptionType = useAppSelector(state => state.mssqlForm.encryption?.encryptionType);
@@ -84,6 +88,7 @@ const PreviewDefault = () => {
                 })
             );
             selectDefaultLicense(amiData, dispatch);
+            selectDefaultCollation(collationList, dispatch);
             dispatch(setDBName(generateRandomDBName()));
             selectDefaultInstanceType(instanceTypeData, dispatch);
             selectDefaultEncryption(kmsData, dispatch);
@@ -134,6 +139,7 @@ const PreviewDefault = () => {
             id: '5'
         },
         { accordionName: GENERAL.LICENSE, defaultValue: amiLicense?.value, editable: GENERAL.NO, id: '6' },
+        { accordionName: GENERAL.SQL_SERVER_COLLATION, defaultValue: sqlServerCollation?.label, editable: GENERAL.YES, id: '17' },
         { accordionName: GENERAL.DATABASE_NAME, defaultValue: dbName, editable: GENERAL.YES, id: '7' },
         {
             accordionName: GENERAL.INSTANCE_TYPE,

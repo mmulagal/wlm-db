@@ -171,6 +171,11 @@ export interface MssqlEntities {
         configLoading: false;
         configError: null;
     };
+    getCollationList: {
+        collationList: any;
+        collationListLoading: false;
+        collationListError: null;
+    };
 }
 
 export interface Subnets {
@@ -232,6 +237,7 @@ export interface MssqlRequestBody {
         sqlAmiName: string;
         serviceAccountName: string;
         serviceAccountPassword: string;
+        // sqlServerCollation: string;
         sqlServerName: string;
     };
     topicArn?: string;

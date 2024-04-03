@@ -758,6 +758,7 @@ export const GENERAL = {
     AUTO_ASSIGN_MOUNT_POINT: 'Auto-assign mount point',
     DEFINE_MOUNT_POINT_PATH: 'Define mount point path',
     VOLUME_MOUNT_POINT_UNDER_PATH: 'Volume mount point under path',
+    SQL_SERVER_COLLATION: 'SQL Server collation',
     DEFINE_TAG: 'Define tag'
 };
 

@@ -35,6 +35,7 @@ import ViewDialog from '../../../common/ViewDialog/ViewDialog';
 import { useEffect, useState } from 'react';
 import { setMovingFromChatbot } from '../../../store/chatbot/chatbotSlice';
 import ResourceRollBack from '../InfrastructureSettings/ResourceRollBack/ResourceRollBack';
+import SqlServerCollation from '../ApplicationSettings/Collation/SqlServerCollation';
 
 const MSSqlAccordions = () => {
     const { setDialog } = useDialog();
@@ -143,6 +144,7 @@ const MSSqlAccordions = () => {
                         <DatabaseEdition />
                         <DatabaseVersion />
                         <License />
+                        <SqlServerCollation />
                         <DatabaseName />
                     </>
                 )}
