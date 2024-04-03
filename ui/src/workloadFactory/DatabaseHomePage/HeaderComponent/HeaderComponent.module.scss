@@ -71,6 +71,11 @@
 
                 [class*='Select-module_base'] {
                     margin-bottom: 0 !important;
+                    div {
+                        div:hover {
+                            outline: none !important;
+                        }
+                    }
                 }
                 [class*='design-system-select__control'] {
                     border: none !important;

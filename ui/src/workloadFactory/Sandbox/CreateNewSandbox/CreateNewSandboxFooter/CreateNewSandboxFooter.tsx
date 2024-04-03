@@ -23,7 +23,7 @@ const CreateNewSandboxFooter = () => {
         if (payload) {
             const msgData = (
                 <div className={styles.notification}>
-                    {GENERAL.DB_CREATE_NOTIFICATION[0]} Sandbox&nbsp;
+                    {GENERAL.DB_CREATE_NOTIFICATION[0]} sandbox&nbsp;
                     <span className={styles.bold}>{'<Sandbox name>'}</span>
                     {GENERAL.DB_CREATE_NOTIFICATION[2]}
                     <Button

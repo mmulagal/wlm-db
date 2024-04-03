@@ -174,8 +174,6 @@ const validateSQLInstanceConnectivity = (ec2instanceId: string, sqlinstancename:
     }
 
     try {
-        #Requires -Module AWS.Tools.SimpleSystemsManagement
-
         $ec2instanceId = '${ec2instanceId}'
         $sqlinstancename = '${sqlinstancename}'
 
@@ -220,8 +218,6 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
     }
 
     try {
-        #Requires -Module AWS.Tools.SimpleSystemsManagement
-
         $FSxID = '${fsxid}'
         $FSxRegion = '${fsxregion}'
 
@@ -264,9 +260,10 @@ const installPowerShellModule = (module: string) => `
     if (-not (Get-Module -ListAvailable -Name $modulename)) {
         $responeObject.add('requiredModuleError', "$modulename Module does not exist, installing it now")
         $null = Start-Job -ScriptBlock {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
             Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-            Install-Module -Name $args -Force -AllowClobber
+            Install-Module -Name $args[0] -Force -AllowClobber
         } -ArgumentList $modulename
         return $responeObject | convertto-json
     }

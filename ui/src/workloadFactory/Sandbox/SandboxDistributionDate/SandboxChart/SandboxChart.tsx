@@ -50,7 +50,7 @@ const SandboxChart = () => {
                 <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
                     120
                 </Typography>
-                <Typography variant="Regular_14">{GENERAL.SANDBOXES}</Typography>
+                <Typography variant="Regular_14">sandboxes</Typography>
             </div>
             {/* @ts-ignore */}
             {false && <div className={styles.emptyCircle}></div>}

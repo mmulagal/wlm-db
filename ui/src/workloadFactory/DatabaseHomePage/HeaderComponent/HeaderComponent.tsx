@@ -6,7 +6,8 @@ import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
 import {
-    checkValueSaved,
+    checkValueSavedForCred,
+    checkValueSavedForRegion,
     generateOptionType,
     getCurrentDateTime,
     regionsSort,
@@ -84,7 +85,7 @@ const HeaderComponent = () => {
                 //@ts-ignore
                 const value = JSON.parse(localStorage.getItem('selectedCred'));
 
-                if (checkValueSaved(options, value)) {
+                if (checkValueSavedForCred(options, value)) {
                     dispatch(setHeaderSelectedCred(value));
                 } else {
                     dispatch(setHeaderSelectedCred(options[0]));
@@ -110,7 +111,7 @@ const HeaderComponent = () => {
                 //@ts-ignore
                 const regionValue = JSON.parse(localStorage.getItem('selectedRegion'));
 
-                if (checkValueSaved(options, regionValue)) {
+                if (checkValueSavedForRegion(options, regionValue)) {
                     dispatch(setHeaderSelectedRegion(regionValue));
                 } else {
                     dispatch(setHeaderSelectedRegion(options[0]));
