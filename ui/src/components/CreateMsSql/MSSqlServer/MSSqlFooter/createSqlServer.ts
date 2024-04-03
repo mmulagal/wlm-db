@@ -162,6 +162,7 @@ const createMssqlPayload = (state: any) => {
             sqlAmiName: licenceName || '',
             serviceAccountName: state.mssqlForm.dbCredentials?.name || '',
             serviceAccountPassword: state.mssqlForm.dbCredentials?.password || '',
+            // sqlServerCollation: state.mssqlForm.sqlServerCollation?.label || '',
             sqlServerName: state.mssqlForm.dbName || ''
         },
         topicArn: state.mssqlForm.simpleNotification.snsState ? state.mssqlForm.simpleNotification?.snsARN?.value : '',
