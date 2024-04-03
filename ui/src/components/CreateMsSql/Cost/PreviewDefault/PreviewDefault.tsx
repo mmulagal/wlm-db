@@ -139,7 +139,12 @@ const PreviewDefault = () => {
             id: '5'
         },
         { accordionName: GENERAL.LICENSE, defaultValue: amiLicense?.value, editable: GENERAL.NO, id: '6' },
-        { accordionName: GENERAL.SQL_SERVER_COLLATION, defaultValue: sqlServerCollation?.label, editable: GENERAL.YES, id: '17' },
+        {
+            accordionName: GENERAL.SQL_SERVER_COLLATION,
+            defaultValue: sqlServerCollation?.label,
+            editable: GENERAL.YES,
+            id: '17'
+        },
         { accordionName: GENERAL.DATABASE_NAME, defaultValue: dbName, editable: GENERAL.YES, id: '7' },
         {
             accordionName: GENERAL.INSTANCE_TYPE,
