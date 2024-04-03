@@ -2,7 +2,7 @@ import Promise from 'bluebird';
 import { describeRegions } from '../../lib/aws/ec2';
 import { createTopic, listTopics, subscribeTopic } from '../../lib/aws/sns';
 import { createQueue } from '../../lib/aws/sqs';
-import { AWS_RESOURCE_NAME_TAG, DEFAULT_AWS_REGION, SQS_MSG_RETENTION, WLMDB } from '../../utils/consts';
+import { AWS_RESOURCE_NAME_TAG, DEFAULT_AWS_REGION, KMS_KEY_ALIAS, SQS_MSG_RETENTION, WLMDB } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { derivePropertiesFromARN, getQueueArn } from '../../utils/utils';
 
@@ -142,12 +142,12 @@ async function checkAndCreateTopic(region: string, queueName: string, policyStat
         logger.error('Error occurred while calling getSnsTopics:', error);
     }
 
-    if (!wlmdbTopicArn) {
+    if (!wlmdbTopicArn && KMS_KEY_ALIAS) {
         const { TopicArn } = await createTopic(region, {
             Name: queueName,
             Attributes: {
                 Policy: JSON.stringify(policyStatement),
-                KmsMasterKeyId: 'alias/aws/sns'
+                KmsMasterKeyId: KMS_KEY_ALIAS
             },
             Tags: [{ Key: AWS_RESOURCE_NAME_TAG, Value: WLMDB }]
         });
