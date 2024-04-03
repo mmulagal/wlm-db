@@ -93,6 +93,8 @@
                     "kms:CreateGrant",
                     "kms:Describe*",
                     "kms:List*",
+                    "kms:GenerateDataKey",
+                    "kms:Decrypt",          
                     "logs:CreateLogGroup",
                     "logs:CreateLogStream",
                     "logs:DescribeLog*",
