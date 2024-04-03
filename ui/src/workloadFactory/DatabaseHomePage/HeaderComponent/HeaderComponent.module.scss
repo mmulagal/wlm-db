@@ -70,6 +70,14 @@
                 }
 
                 [class*='Select-module_base'] {
+                    div {
+                        div {
+                            outline: none !important;
+                        }
+                    }
+                }
+
+                [class*='Select-module_base'] {
                     margin-bottom: 0 !important;
                     div {
                         div:hover {
@@ -77,6 +85,7 @@
                         }
                     }
                 }
+
                 [class*='design-system-select__control'] {
                     border: none !important;
                     border-bottom: 1px solid var(--field-border) !important;
