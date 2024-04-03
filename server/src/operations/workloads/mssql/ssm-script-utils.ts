@@ -174,7 +174,6 @@ const validateSQLInstanceConnectivity = (ec2instanceId: string, sqlinstancename:
     }
 
     try {
-        #Requires -Module AWS.Tools.SimpleSystemsManagement
         $ec2instanceId = '${ec2instanceId}'
         $sqlinstancename = '${sqlinstancename}'
 
@@ -219,7 +218,6 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
     }
 
     try {
-        #Requires -Module AWS.Tools.SimpleSystemsManagement
         $FSxID = '${fsxid}'
         $FSxRegion = '${fsxregion}'
 
