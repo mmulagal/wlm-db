@@ -74,8 +74,8 @@ const HeaderComponent = () => {
     const generateAWSAccounts = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         credentialData?.map((val: any, idx: number) => {
-            const credValue = val.name;
-            const label2 = `Account ID: ${val.providerAccountId}`;
+            const credValue = `${GENERAL.HEADER_CREDENTIAL} | ${val.name}`;
+            const label2 = `${GENERAL.HEADER_ACCOUNT_ID}: ${val.providerAccountId}`;
             const option = generateOptionType(credValue, credValue, label2, false, '', val);
             options.push(option);
         });

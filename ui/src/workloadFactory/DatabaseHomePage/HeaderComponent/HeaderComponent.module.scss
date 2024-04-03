@@ -28,6 +28,7 @@
                 align-items: center;
                 .firstSelect {
                     width: 240px;
+                    --menu-max-height: 250px;
 
                     [class*='design-system-select__single-value'] {
                         max-width: 200px !important;
@@ -35,6 +36,7 @@
                 }
                 .secondSelect {
                     width: 240px;
+                    --menu-max-height: 200px;
 
                     [class*='design-system-select__single-value'] {
                         max-width: 200px !important;
