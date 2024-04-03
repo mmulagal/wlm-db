@@ -548,7 +548,7 @@ export const GENERAL = {
         'The primary and secondary subnets of FSx for ONTAP file system does not reside in the selected availability zones.',
     FSXN_PRIMARY_SUBNET_ERROR:
         'The subnet for node 1 must be in the primary Availability Zone for the FSx for ONTAP file system.',
-    FSXN_DEPLOYMENT_MODE_ERROR: 'Deployment mode not found.',
+    FSXN_DEPLOYMENT_MODE_ERROR: 'Deployment mode not supported.',
     FSXN_NOT_AVAILABLE: 'FSx for ONTAP file system is not in available state.',
     TAB_DASHBOARD: 'Dashboard',
     TAB_INVENTORY: 'Inventory',
@@ -758,7 +758,9 @@ export const GENERAL = {
     AUTO_ASSIGN_MOUNT_POINT: 'Auto-assign mount point',
     DEFINE_MOUNT_POINT_PATH: 'Define mount point path',
     VOLUME_MOUNT_POINT_UNDER_PATH: 'Volume mount point under path',
-    DEFINE_TAG: 'Define tag'
+    DEFINE_TAG: 'Define tag',
+    HEADER_CREDENTIAL: 'Credential',
+    HEADER_ACCOUNT_ID: 'Account ID'
 };
 
 export const CODE_VIEWER = {
