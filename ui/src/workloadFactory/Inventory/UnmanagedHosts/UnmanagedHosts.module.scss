@@ -48,6 +48,12 @@
         [class*='Table-module_scroll'] {
             width: 2500px !important;
         }
+
+        [class*='Table-module_row'] {
+            [class*='Table-module_cell']:first-child {
+                border-right: 1px solid var(--border);
+            }
+        }
     }
 
     .tableScrollRevert {

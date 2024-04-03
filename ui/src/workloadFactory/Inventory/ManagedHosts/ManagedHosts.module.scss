@@ -14,6 +14,22 @@
         margin-bottom: 40px;
     }
 
+    .tableScroll {
+        [class*='Table-module_row'] {
+            [class*='Table-module_cell']:first-child {
+                border-right: 1px solid var(--border);
+            }
+        }
+    }
+
+    .tableScrollRevert {
+        [class*='Table-module_row'] {
+            [class*='Table-module_cell']:first-child {
+                border-right: none;
+            }
+        }
+    }
+
     .firstColText {
         display: flex;
         gap: 8px;
