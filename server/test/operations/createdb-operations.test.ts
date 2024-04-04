@@ -5,8 +5,7 @@ import {
     configureLuns,
     newDBInitialization,
     cleanUpDatabaseDeployment,
-    getCollationDetails,
-    getCollationForMSSQLVersion
+    getCollationDetails
 } from '../../src/operations/createdb-operations';
 import '../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -191,14 +190,6 @@ describe('Create database operations', () => {
             '36E53042-04E8-40C9-AE69-26E56CB0D216',
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1'
-        );
-        expect(resp).toBeDefined();
-    });
-
-    it('Get collation details for mssql version', async () => {
-        const resp = getCollationForMSSQLVersion(
-            '2017',
-            'Microsoft SQL Server 2016 (SP3-OD) (KB5006943) - 13.0.6404.1 (X64)'
         );
         expect(resp).toBeDefined();
     });
