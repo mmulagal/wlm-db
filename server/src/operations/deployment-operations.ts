@@ -475,13 +475,17 @@ async function deployStackOrCreateTemplateURL(
     });
 
     const { workloadInstanceType } = ec2Configuration;
-    const { sqlServerName, sqlAmiName } = sqlConfiguration;
+    const { sqlServerName, sqlAmiName, sqlCollation } = sqlConfiguration;
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
     const [sqlVersion] = calculateSQLandWindowsVersion(sqlAmiName);
 
     // Here 120 & 133120 is in GiB
     if (databaseSize < DATABASE_MIN_LUN_SIZE_IN_GIB || databaseSize > DATABASE_MAX_LUN_SIZE_IN_GIB) {
         throw createError(412, 'Supported Fsxn disk size should be between 120GiB to 130TiB');
+    }
+
+    if (!sqlCollation) {
+        throw createError(412, 'Please provide the collation information');
     }
 
     // If the fsx throughput selected as 4 GBps means, file system must be configured with 160,000 SSD IOPS.
