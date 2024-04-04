@@ -15,6 +15,14 @@ function App() {
     //@ts-ignore
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
+    //@ts-ignore
+    const isActive = useAppSelector(state =>
+        //@ts-ignore
+        state?.features.isInitialized ? !!state?.features.active['Platform.BlueXP/DarkTheme'] : isDarkTheme
+    );
+
+    console.log('isActive', isActive);
+
     return (
         <>
             <ThemeProvider isIframe={true} theme={isDarkTheme ? 'dark' : 'light'}>
