@@ -42,17 +42,16 @@ Example output:
 }
 
 
-
 Possible causes for unavailability of SQL Server details:
 - Insufficient permissions on sys.master_files view.
-Because of this, we won't be able to get the database file locations, due
-to which the script won't  get/return SerialNumberOrScsiTargets.  As a
-result, the storageType can't be determined while processing script output,
-which causes the API to return an empty  response for storageType.
+  Because of this, we won't be able to get the database file locations,
+  due to which the script won't  get/return SerialNumberOrScsiTargets.
+  As a result, the storageType can't be determined while processing script
+  output, which causes the API to return an empty  response for storageType.
 - SQL Instance is not running.
-Because of this, we won't be able to get storagex details.
+  Because of this, we won't be able to get storagex details.
 - No SQL authentication
-Because of this, we won't be able to get storage details.
+  Because of this, we won't be able to get storage details.
 */
 const HOST_AND_SQL_INFO_PS1 = [
     `
@@ -174,13 +173,13 @@ const HOST_AND_SQL_INFO_PS1 = [
   }
   
   try {
-    $body = @{}
+    $responseObject = @{}
     $instanceSectionStartTime = Get-Date
     $sqlServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
     $DiskTargetInfoMap = GetDiskDriveDetails
   
     $instancesInfoList = ForEach ($sqlService in $sqlServiceList) {
-      $body = @{}
+      $responseObject = @{}
       $instanceSectionStartTime = Get-Date
   
       If ($DiskTargetInfoMap.Count -le 0) {
@@ -188,29 +187,37 @@ const HOST_AND_SQL_INFO_PS1 = [
       }
   
       $editionDBCountMachineInfo = @($null, $null, $null)
-      $body['windowsAuthentication'] = $False
+      $responseObject['windowsAuthentication'] = $False
       $sqlServerInstanceStorageInfo = $null
   
       $isDefaultInstance = -Not $sqlService.Name.Contains('$')
-      $body['isDefaultInstance'] = $isDefaultInstance
+      $responseObject['isDefaultInstance'] = $isDefaultInstance
       $instanceName = $sqlService.Name -Replace "MSSQL\\$", ""
   
       $sqlServiceBinaryPath = $sqlService.PathName  -Replace "-s.*", ""
-      if (Test-Path $sqlServiceBinaryPath.Replace('"', '')) {
+      If (Test-Path $sqlServiceBinaryPath.Replace('"', '')) {
         $info = Invoke-Expression -Command "(dir $sqlServiceBinaryPath).VersionInfo"
-        $body['sqlServerMajorVersion'] = $info.ProductMajorPart
-        $body['sqlServerVersion'] = $info.ProductVersion
-      } else {
-        $body['failureInfo'] += "\${instanceName}: Path $sqlServiceBinaryPath does not exist\`n"
+        $responseObject['sqlServerMajorVersion'] = $info.ProductMajorPart
+        $responseObject['sqlServerVersion'] = $info.ProductVersion
+      } Else {
+        $responseObject['failureInfo'] += "\${instanceName}: Path $sqlServiceBinaryPath does not exist\`n"
       }
   
-      $body['sqlServerInstance'] = $instanceName
-      $body['sqlServerState'] = $sqlService.State
-  
-      if ((Get-Service -Name ClusSvc -ErrorAction SilentlyContinue) -And (Get-Cluster -ErrorAction SilentlyContinue)) {
-        $body['sqlServerNodes'] = (Get-ClusterOwnerNode -Resource "SQL Server").OwnerNodes.NodeName
+      $responseObject['sqlServerInstance'] = $instanceName
+      $responseObject['sqlServerState'] = $sqlService.State
+
+      $clusterServiceStatus = (Get-Service -Name ClusSvc -ErrorAction SilentlyContinue).Status
+      if ($clusterServiceStatus -eq "Running") {
+        $clusterName = (Get-Cluster -ErrorAction SilentlyContinue).Name
+        If ($clusterName) {
+          $responseObject['sqlServerNodes'] = (Get-ClusterOwnerNode -ResourceType "SQL Server Availability Group" -ErrorAction SilentlyContinue).OwnerNodes.NodeName
+        } Else {
+          $responseObject['failureInfo'] += "\${instanceName}: Cluster details not available." +
+          " If AOAG cluster, the remote server may be paused or is in the process of being started." +
+          " If FCI cluster, make sure the cluster service is running on all nodes in the cluster.\`n"
+        }
       } else {
-        $body['sqlServerNodes'] = hostname
+        $responseObject['sqlServerNodes'] = hostname
       }
   
       if ($sqlService.State -eq "Running") {
@@ -218,37 +225,37 @@ const HOST_AND_SQL_INFO_PS1 = [
         If ($? -eq $True) {
           $serverInstance = If ($isDefaultInstance) { "$Env:ComputerName" } Else { "$Env:ComputerName\\$instanceName" }
           $editionDBCountMachineInfo = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName')" 2> $null
-          $body['windowsAuthentication'] = $?
+          $responseObject['windowsAuthentication'] = $?
   
-          $body['sqlServerEdition'] = $editionDBCountMachineInfo[0]
-          $body['databaseCount'] = $editionDBCountMachineInfo[1]
-          $body['sqlServerName'] = $editionDBCountMachineInfo[2]
+          $responseObject['sqlServerEdition'] = $editionDBCountMachineInfo[0]
+          $responseObject['databaseCount'] = $editionDBCountMachineInfo[1]
+          $responseObject['sqlServerName'] = $editionDBCountMachineInfo[2]
   
           $sqlInstanceDriveLetterList = sqlcmd -Q " SET NOCOUNT ON; SELECT DISTINCT LEFT(physical_name, 2) AS DriveLetter FROM sys.master_files " -h -1 -b -C -W -S $serverInstance
           if ($? -eq $False) {
-            $body['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
+            $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
           }
   
           $sqlServerInstanceStorageInfo = ForEach ($sqlInstanceDriveLetter in $sqlInstanceDriveLetterList) {
             New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $DiskTargetInfoMap[$sqlInstanceDriveLetter] }
           }
         } else {
-          $body['failureInfo'] += "\${instanceName}: SQLCMD.EXE not available\`n"
+          $responseObject['failureInfo'] += "\${instanceName}: SQLCMD.EXE not available\`n"
         }
       }
 
-      $body['sqlServerInstanceStorageInfo'] = $sqlServerInstanceStorageInfo | ConvertTo-Json -Compress
+      $responseObject['sqlServerInstanceStorageInfo'] = $sqlServerInstanceStorageInfo | ConvertTo-Json -Compress
       $instanceSectionEndTime = Get-Date
-      $body['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
-      Echo $body
+      $responseObject['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
+      Echo $responseObject
     }
     Echo $instancesInfoList | ConvertTo-Json
   } catch {
     # Prevent any possible errors from clobbering JSON output
-    $body['failureInfo'] += "Exception: $_\`n"
+    $responseObject['failureInfo'] += "Exception: $_\`n"
     $instanceSectionEndTime = Get-Date
-    $body['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
-    Echo $body | ConvertTo-Json
+    $responseObject['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
+    Echo $responseObject | ConvertTo-Json
   }
 `
 ];
@@ -256,7 +263,7 @@ const HOST_AND_SQL_INFO_PS1 = [
 const CLUSTER_NETWORK_IP_INFO_PS1 = [
     `
   $ErrorActionPreference = "Stop"
-  $body = @{}
+  $responseObject = @{}
   $scriptStartTime = Get-Date
   $clusterNetworkIps = $null
   
@@ -265,17 +272,17 @@ const CLUSTER_NETWORK_IP_INFO_PS1 = [
 
     if ($clusterServiceStatus -eq "Running") {
       $clusterNetworkIps = (Get-ClusterNetworkInterface).Ipv4Addresses
-      $body['clusterNetworkIps'] = $clusterNetworkIps
+      $responseObject['clusterNetworkIps'] = $clusterNetworkIps
     } else {
-      $body['clusterNetworkIps'] = @()
+      $responseObject['clusterNetworkIps'] = @()
     }
   } catch {
     # Prevent any possible errors from clobbering JSON output
-    $body['failureInfo'] = $_.Exception.Message
+    $responseObject['failureInfo'] = $_.Exception.Message
   } finally {
     $scriptEndTime = Get-Date
-    $body['scriptExecutionTime'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)
-    Echo $body | ConvertTo-Json -Compress
+    $responseObject['scriptExecutionTime'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)
+    Echo $responseObject | ConvertTo-Json -Compress
   }
 `
 ];
@@ -284,7 +291,7 @@ const CLUSTER_NETWORK_IP_INFO_PS1 = [
 const COPY_SCIRPTS_TO_MANAGE_RESOURCE = (s3SignedUrl: string) => [
     `
     $ErrorActionPreference = "Stop"
-    $body = @{}
+    $responseObject = @{}
     $scriptStartTime = Get-Date
     $s3SignedUrl = '${s3SignedUrl}'
 
@@ -313,11 +320,11 @@ const COPY_SCIRPTS_TO_MANAGE_RESOURCE = (s3SignedUrl: string) => [
 
       (Get-Item $SsmFolderPath -Force).Attributes = [System.IO.FileAttributes]::Hidden
     } catch {
-      $body['failureInfo'] = $_.Exception.Message
+      $responseObject['failureInfo'] = $_.Exception.Message
     } finally {
       $scriptEndTime = Get-Date
-      $body['scriptExecutionTime'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)
-      Echo $body | ConvertTo-Json -Compress
+      $responseObject['scriptExecutionTime'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)
+      Echo $responseObject | ConvertTo-Json -Compress
     } 
 `
 ];
