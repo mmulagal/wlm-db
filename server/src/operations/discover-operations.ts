@@ -749,7 +749,10 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
         {
             items: [resourceDetails2]
         }
-    ] = await Promise.all([getResources(accountId, resourceId), getResources(accountId, resourceId2)]);
+    ] = await Promise.all([
+        getResources(accountId, resourceId, credentialsId, region),
+        getResources(accountId, resourceId2, credentialsId, region)
+    ]);
 
     if (!isEmpty(resourceDetails1) || !isEmpty(resourceDetails2)) {
         throw createError(HttpErrorCodes.VALIDATION_ERROR, 'Instances are already managed by Workload Factory.');
