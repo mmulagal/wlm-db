@@ -11,6 +11,7 @@ import {
     useGetRegionsQuery,
     useGetSGListQuery,
     useGetSnsTopicsQuery,
+    useGetSqlServerCollationListQuery,
     useGetThroughputRegionListQuery,
     useGetVPCListQuery,
     useGetWlmdbPoliciesQuery
@@ -20,6 +21,7 @@ import {
     addAmiList,
     addCredentials,
     addFsxnList,
+    addGetCollationList,
     addInstanceTypeList,
     addKeyPairList,
     addKmsKeysList,
@@ -36,7 +38,12 @@ import { API_NAME, AWS_ASSUME_ROLE, DATABASE_TYPE, OS_TYPE, VPC_API_FIELDS } fro
 import { formatKmsData } from '../../../utils/utilityFunctions';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
 import { setRefetchApiCountRan } from '../../../store/mssql/msSqlActionSlice';
-import { selectDefaultEncryption, selectDefaultInstanceType, selectDefaultLicense } from './MSSqlUtils';
+import {
+    selectDefaultCollation,
+    selectDefaultEncryption,
+    selectDefaultInstanceType,
+    selectDefaultLicense
+} from './MSSqlUtils';
 import { setIsReceivingMsg } from '../../../store/chatbot/chatbotSlice';
 
 const MssqlApis = () => {
@@ -61,6 +68,9 @@ const MssqlApis = () => {
 
     // licenseAmiSkip to skip AMI APi call when credentialId, regionCode, os, edition and version is not defined
     const [licenseAmiSkip, setLicenseAmiSkip] = useState(true);
+
+    // collationApiSkip to skip collation API when credentialId, regionCode, os version is not defined
+    const [collationApiSkip, setCollationApiSkip] = useState(true);
 
     // fsxnSkip to skip FSxN API call when credentialId, regionCode, vpcId is not defined
     const [vpcDependentApiSkip, setVpcDependentApiSkip] = useState(true);
@@ -156,6 +166,20 @@ const MssqlApis = () => {
         },
         {
             skip: licenseAmiSkip
+        }
+    );
+
+    // API call to get collation list for selected credentials and region
+    const {
+        data: collationList,
+        isFetching: collationListLoading,
+        isError: collationListError
+    } = useGetSqlServerCollationListQuery(
+        {
+            databaseVersion: dbVersion?.value
+        },
+        {
+            skip: collationApiSkip
         }
     );
 
@@ -269,6 +293,11 @@ const MssqlApis = () => {
         } else {
             setLicenseAmiSkip(true);
         }
+        if (dbVersion?.value) {
+            setCollationApiSkip(false);
+        } else {
+            setCollationApiSkip(true);
+        }
         if (vpcId && regionCode && credId) {
             setVpcDependentApiSkip(false);
         } else {
@@ -368,6 +397,25 @@ const MssqlApis = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [amiData, amiLoading, amiError]);
+
+    useEffect(() => {
+        if (collationListError) {
+            dispatch(addGetCollationList({ undefined, collationListLoading, collationListError }));
+        } else {
+            dispatch(addGetCollationList({ collationList, collationListLoading, collationListError }));
+            if (selectedConfig === SELECT_CONFIG.EASY_CREATE) {
+                selectDefaultCollation(collationList, dispatch);
+            }
+        }
+        if (
+            !collationListLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.COLLATION)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.COLLATION));
+        }
+    }, [collationList, collationListLoading, collationListError]);
 
     // To add SNS information in MssqlEntities
     useEffect(() => {

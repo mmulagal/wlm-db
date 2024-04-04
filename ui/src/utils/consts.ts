@@ -118,7 +118,8 @@ export const API_NAME = {
     KEYPAIR: 'keypair',
     INSTANCE: 'instance',
     AMI: 'ami',
-    FSXN: 'fsxn'
+    FSXN: 'fsxn',
+    COLLATION: 'collation'
 };
 
 export const FSX_DEPLOYMENT_MODE = {
