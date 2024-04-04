@@ -5,6 +5,7 @@ import {
     deploymentStatus,
     deploymentStatusByName,
     getCloudformationTemplate,
+    getCollationDetailsForDeployment,
     getFSXAvailableRegionsForThrougput
 } from '../operations/deployment-operations';
 import {
@@ -13,7 +14,8 @@ import {
     DeploymentStatusSchema,
     DeployTemplateSchema,
     DeploymentSummaryListSchema,
-    FsxAvailableRegionsForThroughputSchema
+    FsxAvailableRegionsForThroughputSchema,
+    CollationListSchema
 } from './schemas/deployment-schemas';
 import { getDeploymentJobsSummary } from '../operations/jobs-operations';
 
@@ -129,5 +131,13 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 const response = await getFSXAvailableRegionsForThrougput(accountId);
                 return reply.send(response!);
             }
-        );
+        )
+        .get('/v1/collations', { schema: CollationListSchema }, async (request, reply) => {
+            const {
+                params: { accountId },
+                query: { version: mssqlVersion }
+            } = request;
+            const response = getCollationDetailsForDeployment(accountId, mssqlVersion);
+            return reply.send(response);
+        });
 }

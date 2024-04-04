@@ -3,7 +3,8 @@ import {
     createCloudFormationTemplateForUserDeployment,
     deployCloudFormationTemplate,
     getCloudformationTemplate,
-    deployStackOrCreateTemplateURL
+    deployStackOrCreateTemplateURL,
+    getCollationDetailsForDeployment
 } from '../../src/operations/deployment-operations';
 import '../simulator/scopes/aws/s3-scope';
 import '../simulator/scopes/aws/ec2-scope';
@@ -25,7 +26,8 @@ import {
     FSX_CONFIGURATION,
     AD_CONFIGURATION,
     EC2_CONFIGURATION,
-    NETWORKING_CONFIGURATION
+    NETWORKING_CONFIGURATION,
+    ACCOUNT_ID
 } from '../utils/consts';
 import { SECRETS } from '../../src/utils/consts';
 
@@ -91,6 +93,10 @@ describe('Cloud formation operations', () => {
             false,
             'chatbot'
         );
+        expect(resp).toBeDefined();
+    });
+    it('Get Collation details for mssql deployment', async () => {
+        const resp = await getCollationDetailsForDeployment(ACCOUNT_ID, 2017);
         expect(resp).toBeDefined();
     });
 });

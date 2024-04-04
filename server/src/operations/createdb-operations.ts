@@ -10,7 +10,7 @@ import {
     GET_STANDBY_NODE_DRIVE_LIST
 } from './workloads/mssql/ssm-script-utils';
 import { checkDatabaseExists, getActiveSqlNode } from './workloads/mssql/mssql-operations';
-import { convertGiBToBytes, sleep, sqlResponseParsing } from '../utils/utils';
+import { convertGiBToBytes, sleep, sqlResponseParsing, getCollationForMSSQLVersion } from '../utils/utils';
 import {
     ACCOUNT_ID,
     COMPLETE,
@@ -35,7 +35,6 @@ import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
 import { CLEANUPSCRIPT, CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
-import { MS_SQL_2016, MS_SQL_2022, MS_SQL_2017 } from './workloads/mssql/createdb-collations';
 import { updateResourceMetaData } from '../lib/database/db';
 
 const logger = getLogger();
@@ -1294,33 +1293,7 @@ async function getCollationDetails(accountId: string, databaseHostId: string, cr
             activeNodeInstanceId as string
         );
 
-        // This regular expression matches four digits in a row, which is the pattern for a year.
-        const regex = /\b\d{4}\b/;
-
-        const [match] = mssqlVersion.match(regex);
-        switch (match) {
-            case '2016':
-                return {
-                    collationList: MS_SQL_2016,
-                    defaultCollation
-                };
-            case '2017':
-                return {
-                    collationList: MS_SQL_2017,
-                    defaultCollation
-                };
-            case '2019':
-            case '2022':
-                return {
-                    collationList: MS_SQL_2022,
-                    defaultCollation
-                };
-            default:
-                return {
-                    collationList: MS_SQL_2022,
-                    defaultCollation
-                };
-        }
+        return getCollationForMSSQLVersion(mssqlVersion, defaultCollation);
     } catch (error: any) {
         const errorMessage = `Unable to get collation information. ${error?.message}.`;
         logger.error(errorMessage);

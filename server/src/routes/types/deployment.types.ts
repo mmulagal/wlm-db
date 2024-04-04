@@ -169,6 +169,20 @@ const FsxAvailableRegionsForThroughputListResponse = Type.Object({
     regions: Type.Array(FSxAvailableRegion)
 });
 
+const CollationListResponse = Type.Object({
+    collationList: Type.Array(
+        Type.Object({
+            name: Type.String(),
+            description: Type.Optional(Type.String())
+        })
+    ),
+    defaultCollation: Type.String()
+});
+
+const CollationListQueryString = Type.Object({
+    version: Type.Number()
+});
+
 type DeploymentStatusObjectParamsType = Static<typeof DeploymentStatusObjectParams>;
 
 const DeploymentStatusListResponse = Type.Array(DeploymentStatusResponse);
@@ -206,5 +220,7 @@ export {
     DeploymentSummaryListResponse,
     CloudFormationTemplateHeader,
     MissingPermission,
-    FsxAvailableRegionsForThroughputListResponse
+    FsxAvailableRegionsForThroughputListResponse,
+    CollationListResponse,
+    CollationListQueryString
 };

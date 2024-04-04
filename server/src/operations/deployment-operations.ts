@@ -83,7 +83,8 @@ import {
     generateDeploymentParams,
     isNetworkConfigurationViolated,
     sleep,
-    splitDomainUsername
+    splitDomainUsername,
+    getCollationForMSSQLVersion
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
@@ -1091,6 +1092,11 @@ function getFSXAvailableRegionsForThrougput(accountId?: string) {
     };
 }
 
+function getCollationDetailsForDeployment(accountId: string, mssqlVersion: number) {
+    logger.info('Getting collation details for mssql deployment', { accountId, mssqlVersion });
+    return getCollationForMSSQLVersion(String(mssqlVersion));
+}
+
 export {
     createCloudFormationTemplateForUserDeployment,
     deployCloudFormationTemplate,
@@ -1098,5 +1104,6 @@ export {
     deploymentStatusByName,
     getCloudformationTemplate,
     deployStackOrCreateTemplateURL,
-    getFSXAvailableRegionsForThrougput
+    getFSXAvailableRegionsForThrougput,
+    getCollationDetailsForDeployment
 };
