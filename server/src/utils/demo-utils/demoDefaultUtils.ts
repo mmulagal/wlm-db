@@ -1,5 +1,5 @@
 import randomize from 'randomatic';
-import { compact, isEmpty } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { randomUUID } from 'crypto';
 import { USER_TOKEN } from '../consts';
 import getLogger from '../logger';
@@ -118,7 +118,7 @@ async function returnInventorydata(instances?: string[]) {
 
     if (instances !== undefined && instances.length > 0) {
         const { items: inventoryItems } = inventoryData;
-        const items = compact(inventoryItems.map(item => instances.includes(item.ec2InstanceId) && item));
+        const items = inventoryItems.filter(item => instances.includes(item.ec2InstanceId));
         if (items.length > 0 && items !== undefined) {
             return {
                 count: items.length,
