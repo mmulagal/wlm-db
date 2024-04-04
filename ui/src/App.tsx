@@ -18,7 +18,7 @@ function App() {
     //@ts-ignore
     const isActive = useAppSelector(state =>
         //@ts-ignore
-        state?.features.isInitialized ? !!state?.features.active['Platform.BlueXP/DarkTheme'] : isDarkTheme
+        state?.features?.isInitialized ? !!state?.features?.active['Platform.BlueXP/DarkTheme'] : false
     );
 
     console.log('isActive', isActive);
