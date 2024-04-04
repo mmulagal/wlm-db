@@ -73,7 +73,6 @@ const initialState: MssqlEntities = {
         configError: null
     },
     getCollationList: {
-        // Will remove this mocked data once API integration is done
         collationList: null,
         collationListLoading: false,
         collationListError: null
