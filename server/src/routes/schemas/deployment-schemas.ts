@@ -11,7 +11,9 @@ import {
     DeploymentSummaryQueryString,
     DeploymentSummaryListResponse,
     CloudFormationTemplateHeader,
-    FsxAvailableRegionsForThroughputListResponse
+    FsxAvailableRegionsForThroughputListResponse,
+    CollationListResponse,
+    CollationListQueryString
 } from '../types/deployment.types';
 import { AccountIdParams } from '../types/generic.types';
 
@@ -88,11 +90,23 @@ const FsxAvailableRegionsForThroughputSchema = {
     }
 };
 
+const CollationListSchema = {
+    tags: [RouteTags.DEPLOYMENT],
+    params: AccountIdParams,
+    summary: 'Get collation list for mssql deployment',
+    description: 'API to get collation details for given mssql version deployment',
+    querystring: CollationListQueryString,
+    response: {
+        200: CollationListResponse
+    }
+};
+
 export {
     DeployTemplateSchema,
     DeploymentStatusListSchema,
     DeploymentStatusSchema,
     CloudFormationTemplateSchema,
     DeploymentSummaryListSchema,
-    FsxAvailableRegionsForThroughputSchema
+    FsxAvailableRegionsForThroughputSchema,
+    CollationListSchema
 };

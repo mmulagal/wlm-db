@@ -1294,37 +1294,43 @@ async function getCollationDetails(accountId: string, databaseHostId: string, cr
             activeNodeInstanceId as string
         );
 
-        // This regular expression matches four digits in a row, which is the pattern for a year.
-        const regex = /\b\d{4}\b/;
-
-        const [match] = mssqlVersion.match(regex);
-        switch (match) {
-            case '2016':
-                return {
-                    collationList: MS_SQL_2016,
-                    defaultCollation
-                };
-            case '2017':
-                return {
-                    collationList: MS_SQL_2017,
-                    defaultCollation
-                };
-            case '2019':
-            case '2022':
-                return {
-                    collationList: MS_SQL_2022,
-                    defaultCollation
-                };
-            default:
-                return {
-                    collationList: MS_SQL_2022,
-                    defaultCollation
-                };
-        }
+        return getCollationForMSSQLVersion(mssqlVersion, defaultCollation);
     } catch (error: any) {
         const errorMessage = `Unable to get collation information. ${error?.message}.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+}
+
+function getCollationForMSSQLVersion(mssqlVersion: string, defaultCollation: string) {
+    // This regular expression matches four digits in a row, which is the pattern for a year.
+    defaultCollation = defaultCollation || 'SQL_Latin1_General_CP1_CI_AS';
+    const regex = /\b\d{4}\b/;
+
+    const [match] = mssqlVersion.match(regex) || [];
+    switch (match) {
+        case '2016':
+            return {
+                collationList: MS_SQL_2016,
+                defaultCollation
+            };
+        case '2017':
+            return {
+                collationList: MS_SQL_2017,
+                defaultCollation
+            };
+        case '2019':
+        case '2022':
+            return {
+                collationList: MS_SQL_2022,
+                defaultCollation
+            };
+        default:
+            logger.error(`Unable to get collation information for the given MSSQL Version ${mssqlVersion}`);
+            throw createError(
+                HttpErrorCodes.NOT_FOUND,
+                `Unable to get collation information for the given MSSQL Version ${mssqlVersion}`
+            );
     }
 }
 
@@ -1362,5 +1368,6 @@ export {
     newDBInitialization,
     configureLuns,
     cleanUpDatabaseDeployment,
-    getCollationDetails
+    getCollationDetails,
+    getCollationForMSSQLVersion
 };
