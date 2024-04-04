@@ -409,7 +409,7 @@ const UnmanagedHosts = () => {
             renderCell: (cellData: string, rowData: any) => {
                 return (
                     <>
-                        {cellData}
+                        {cellData && cellData === 'FCI' ? GENERAL.FAILOVER_CLUSTER_INSTANCES : cellData}
                         {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
                         {!cellData && !rowData?.loading && notAvailable()}
                     </>

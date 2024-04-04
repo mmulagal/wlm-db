@@ -45,7 +45,7 @@ const DatabaseHost = () => {
                         </Typography>
                         <div className={styles.sqlContent}>
                             <Typography variant="Regular_14" className={styles.databaseText}>
-                                SQL
+                                {GENERAL.MICROSOFT_SQL}
                             </Typography>
                             {databaseHostsLoading && <FlashingDotsLoader />}
                         </div>
