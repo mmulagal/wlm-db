@@ -27,6 +27,8 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    MICROSOFT_SQL: 'Microsoft SQL',
+    FAILOVER_CLUSTER_INSTANCES: 'Failover Cluster Instances',
     LOADING_DATA: 'Loading data',
     ACTIVE_NODE: 'Active node',
     ESTIMATED_COST_HEADER: 'The estimated cost will appear after you complete this form',

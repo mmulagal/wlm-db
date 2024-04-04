@@ -74,13 +74,6 @@ const ManagedHosts = () => {
                 id: 'remove',
                 displayName: 'Remove',
                 disabled: row?.status === STATUS_CONST.DOWN || isDemoMode ? false : true
-            },
-            {
-                id: 'observe',
-                displayName: 'Observe',
-                disabled: true,
-                tagAdded: true,
-                tag: <ComingSoon />
             }
         ];
     };
@@ -460,7 +453,7 @@ const ManagedHosts = () => {
             renderCell: (cellData: string, rowData: any) => {
                 return (
                     <>
-                        {cellData}
+                        {cellData && cellData === 'FCI' ? GENERAL.FAILOVER_CLUSTER_INSTANCES : cellData}
                         {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
                         {!cellData && !rowData?.loading && notAvailable()}
                     </>
