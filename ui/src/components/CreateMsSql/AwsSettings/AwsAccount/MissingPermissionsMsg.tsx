@@ -87,16 +87,15 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
             });
 
             setDataToDisplay(updatedMissingPermissions);
+            setPermissionCount(updatedMissingPermissions.length);
         }
     }, [permissionData]);
 
     const setHeading = (type: string) => {
-        if (blockedPermissions && type === 'operate') {
+        if (type === 'operate') {
             return GENERAL.REQUIRED_OPERATE_PERMISSIONS;
-        } else if (blockedPermissions && type !== 'operate') {
-            return `${permissionCount} ${GENERAL.MISSING_AND_BLOCKED_PERMISSIONS}`;
         } else {
-            return GENERAL.UNSUPPORTED_PERMISSIONS;
+            return `${permissionCount} ${GENERAL.MISSING_AND_BLOCKED_PERMISSIONS}`;
         }
     };
 
@@ -106,14 +105,7 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
             <DialogComponent
                 header={setHeading(type)}
                 content={
-                    type === 'operate' ? (
-                        <ViewDialog data={data} />
-                    ) : (
-                        <MissingPermissionTable
-                            missingBlockedPermissions={blockedPermissions}
-                            content={dataToDisplay}
-                        />
-                    )
+                    type === 'operate' ? <ViewDialog data={data} /> : <MissingPermissionTable content={dataToDisplay} />
                 }
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
@@ -143,57 +135,25 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
 
     return (
         <div className={styles.noteText}>
-            {!blockedPermissions ? (
-                <>
-                    {GENERAL.CREATE_PERMISSION_ERROR[0]}
-                    <Button
-                        Component="button"
-                        variant="text"
-                        className={CommonStyles.buttonClass}
-                        onClick={() => openDialog('missing')}
-                    >
-                        {GENERAL.CREATE_PERMISSION_ERROR[1]}
-                    </Button>
-                    <div>
-                        {GENERAL.CREATE_PERMISSION_ERROR[2]}
-                        {deployRedirectToCfLink || isDemoMode ? (
-                            <Button
-                                Component="button"
-                                variant="link"
-                                className={CommonStyles.buttonClass}
-                                onClick={() => redirectToCf()}
-                            >
-                                {GENERAL.CREATE_PERMISSION_ERROR[3]}
-                            </Button>
-                        ) : (
-                            GENERAL.CREATE_PERMISSION_ERROR[3]
-                        )}
-                        {GENERAL.CREATE_PERMISSION_ERROR[4]}
-                    </div>
-                </>
-            ) : (
-                <>
-                    {GENERAL.MISSING_BLOCKED_PERMISSIONS[0]}
-                    <Button
-                        Component="button"
-                        variant="text"
-                        className={CommonStyles.buttonClass}
-                        onClick={() => openDialog('blocked')}
-                    >
-                        {GENERAL.MISSING_BLOCKED_PERMISSIONS[1]}
-                    </Button>
-                    {GENERAL.MISSING_BLOCKED_PERMISSIONS[2]}
-                    <div>
-                        {GENERAL.MISSING_BLOCKED_PERMISSIONS[3]}
-                        <Button Component="button" variant="text" onClick={() => openDialog('operate')}>
-                            {GENERAL.MISSING_BLOCKED_PERMISSIONS[6]}
-                        </Button>
-                        {GENERAL.MISSING_BLOCKED_PERMISSIONS[4]}
-                    </div>
+            {GENERAL.MISSING_BLOCKED_PERMISSIONS[0]}
+            <Button
+                Component="button"
+                variant="text"
+                className={CommonStyles.buttonClass}
+                onClick={() => openDialog('blocked')}
+            >
+                {GENERAL.MISSING_BLOCKED_PERMISSIONS[1]}
+            </Button>
+            {GENERAL.MISSING_BLOCKED_PERMISSIONS[2]}
+            <div>
+                {GENERAL.MISSING_BLOCKED_PERMISSIONS[3]}
+                <Button Component="button" variant="text" onClick={() => openDialog('operate')}>
+                    {GENERAL.MISSING_BLOCKED_PERMISSIONS[6]}
+                </Button>
+                {GENERAL.MISSING_BLOCKED_PERMISSIONS[4]}
+            </div>
 
-                    <div>{GENERAL.MISSING_BLOCKED_PERMISSIONS[5]}</div>
-                </>
-            )}
+            <div>{GENERAL.MISSING_BLOCKED_PERMISSIONS[5]}</div>
         </div>
     );
 };
