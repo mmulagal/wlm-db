@@ -32,6 +32,7 @@ describe('List SNS topics', () => {
                 }
             ]
         };
+        process.env.KEY_ALIAS = 'alias/wlmdb-service'
         const wlmdbTopicArn = await checkAndCreateTopic(region, queueName, policyStatement);
         expect(wlmdbTopicArn).toBeDefined();
     });

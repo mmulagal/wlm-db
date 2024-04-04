@@ -142,12 +142,12 @@ async function checkAndCreateTopic(region: string, queueName: string, policyStat
         logger.error('Error occurred while calling getSnsTopics:', error);
     }
 
-    if (!wlmdbTopicArn) {
+    if (!wlmdbTopicArn && process.env.KEY_ALIAS) {
         const { TopicArn } = await createTopic(region, {
             Name: queueName,
             Attributes: {
                 Policy: JSON.stringify(policyStatement),
-                KmsMasterKeyId: 'alias/aws/sns'
+                KmsMasterKeyId: process.env.KEY_ALIAS
             },
             Tags: [{ Key: AWS_RESOURCE_NAME_TAG, Value: WLMDB }]
         });
