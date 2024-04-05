@@ -69,7 +69,7 @@ const MssqlApis = () => {
     // licenseAmiSkip to skip AMI APi call when credentialId, regionCode, os, edition and version is not defined
     const [licenseAmiSkip, setLicenseAmiSkip] = useState(true);
 
-    // collationApiSkip to skip collation API when credentialId, regionCode, os version is not defined
+    // collationApiSkip to skip collation API when os version is not defined
     const [collationApiSkip, setCollationApiSkip] = useState(true);
 
     // fsxnSkip to skip FSxN API call when credentialId, regionCode, vpcId is not defined
