@@ -8,7 +8,8 @@ import {
     generateHash,
     getFsxArn,
     isNetworkConfigurationViolated,
-    splitDomainUsername
+    splitDomainUsername,
+    getCollationForMSSQLVersion
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
@@ -70,5 +71,12 @@ describe(' Secrets Manager string', () => {
     it('Split domain from username', async () => {
         const response = splitDomainUsername('thisdomain\\thatuser');
         expect(response.username).toBe('thatuser');
+    });
+    it('Get collation details for mssql version', async () => {
+        const resp = getCollationForMSSQLVersion(
+            '2017',
+            'Microsoft SQL Server 2016 (SP3-OD) (KB5006943) - 13.0.6404.1 (X64)'
+        );
+        expect(resp).toBeDefined();
     });
 });

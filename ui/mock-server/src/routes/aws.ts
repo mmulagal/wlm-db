@@ -24,6 +24,7 @@ import instanceTypeData from '../data/instance-types.json';
 import fsxnData from '../data/fsxn.json';
 import pricingData from '../data/pricing.json';
 import throughputRegionData from '../data/throughputRegion.json';
+import collationList from '../data/collation.json';
 
 const router = require('express').Router();
 
@@ -108,6 +109,13 @@ router.get(`${BASE_URL}/v1/fsx-4gbps-supported-regions`, async (req: {}, res: an
 router.post(`${BASE_URL}/v1/pricing`, async (req: {}, res: any) => {
     const retData = pricingData;
     generateResponse(res, 200, retData);
+});
+
+// Get collation list for MSSQL
+router.get(`${BASE_URL}/v1/collations`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, collationList);
+    }, 2000);  
 });
 
 export default router;

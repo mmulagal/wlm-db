@@ -237,7 +237,7 @@ export interface MssqlRequestBody {
         sqlAmiName: string;
         serviceAccountName: string;
         serviceAccountPassword: string;
-        // sqlServerCollation: string;
+        sqlCollation: string;
         sqlServerName: string;
     };
     topicArn?: string;

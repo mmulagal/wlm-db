@@ -238,6 +238,11 @@ export const awsApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getSqlServerCollationList: builder.query({
+                query: ({ databaseVersion }) => ({
+                    url: `collations?version=${databaseVersion}`
+                })
             })
         };
     }
@@ -556,6 +561,7 @@ export const inventoryApi = createApi({
                         return `credentials/${credentialsId}/regions/${regionId}/mssql/discover?pageSize=10`;
                     }
                 },
+                keepUnusedDataFor: 1,
                 transformResponse: (response: any, meta, args) => {
                     if (response) {
                         response = {
@@ -624,7 +630,8 @@ export const {
     useGetFsxnListQuery,
     useCreateSqlTemplateMutation,
     useDeploySqlTemplateMutation,
-    useGetEstimationCostMutation
+    useGetEstimationCostMutation,
+    useGetSqlServerCollationListQuery
 } = awsApi;
 
 export const {

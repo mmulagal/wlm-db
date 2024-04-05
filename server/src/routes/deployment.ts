@@ -132,7 +132,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 return reply.send(response!);
             }
         )
-        .get('/v1/collation', { schema: CollationListSchema }, async (request, reply) => {
+        .get('/v1/collations', { schema: CollationListSchema }, async (request, reply) => {
             const {
                 params: { accountId },
                 query: { version: mssqlVersion }

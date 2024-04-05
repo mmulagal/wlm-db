@@ -83,7 +83,8 @@ import {
     generateDeploymentParams,
     isNetworkConfigurationViolated,
     sleep,
-    splitDomainUsername
+    splitDomainUsername,
+    getCollationForMSSQLVersion
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
@@ -103,7 +104,6 @@ import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
 import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
 import { createDeploymentMockDataInDB, createFileSystemForDemo } from './demo-operations';
-import { getCollationForMSSQLVersion } from './createdb-operations';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -1098,7 +1098,7 @@ function getFSXAvailableRegionsForThrougput(accountId?: string) {
 
 function getCollationDetailsForDeployment(accountId: string, mssqlVersion: number) {
     logger.info('Getting collation details for mssql deployment', { accountId, mssqlVersion });
-    return getCollationForMSSQLVersion(String(mssqlVersion), '');
+    return getCollationForMSSQLVersion(String(mssqlVersion));
 }
 
 export {

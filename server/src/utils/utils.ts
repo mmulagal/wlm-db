@@ -33,6 +33,7 @@ import {
 
 import getLogger, { hideSecretsValues } from './logger';
 import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
+import { MS_SQL_2016, MS_SQL_2017, MS_SQL_2022 } from '../operations/workloads/mssql/createdb-collations';
 
 const logger = getLogger();
 
@@ -435,6 +436,37 @@ function splitDomainUsername(input: string) {
     return details;
 }
 
+function getCollationForMSSQLVersion(mssqlVersion: string, defaultCollation: string = 'SQL_Latin1_General_CP1_CI_AS') {
+    // This regular expression matches four digits in a row, which is the pattern for a year.
+    const regex = /\b\d{4}\b/;
+
+    const [match] = mssqlVersion.match(regex) || [];
+    switch (match) {
+        case '2016':
+            return {
+                collationList: MS_SQL_2016,
+                defaultCollation
+            };
+        case '2017':
+            return {
+                collationList: MS_SQL_2017,
+                defaultCollation
+            };
+        case '2019':
+        case '2022':
+            return {
+                collationList: MS_SQL_2022,
+                defaultCollation
+            };
+        default:
+            logger.error(`Unable to get collation information for the given MSSQL Version ${mssqlVersion}`);
+            throw createError(
+                HttpErrorCodes.NOT_FOUND,
+                `Unable to get collation information for the given MSSQL Version ${mssqlVersion}`
+            );
+    }
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -463,5 +495,6 @@ export {
     getArtifactsRegionBucketName,
     sqlResponseParsing,
     convertGiBToBytes,
-    splitDomainUsername
+    splitDomainUsername,
+    getCollationForMSSQLVersion
 };
