@@ -169,15 +169,13 @@ const MssqlApis = () => {
         }
     );
 
-    // API call to get collation list for selected credentials and region
+    // API call to get collation list for selected database version
     const {
         data: collationList,
         isFetching: collationListLoading,
         isError: collationListError
     } = useGetSqlServerCollationListQuery(
-        {
-            databaseVersion: dbVersion?.value
-        },
+        { databaseVersion: dbVersion?.value },
         {
             skip: collationApiSkip
         }
