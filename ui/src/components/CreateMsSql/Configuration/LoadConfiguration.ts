@@ -164,6 +164,9 @@ export const apiCallsList = (dispatch: Dispatch, loadData: any) => {
     ) {
         apis.push(API_NAME.AMI);
     }
+    if (dbVersion && !isSameDbVersion) {
+        apis.push(API_NAME.COLLATION);
+    }
     return apis;
 };
 

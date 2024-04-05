@@ -3,17 +3,20 @@ import { SelectField, optionType } from '@netapp/design-system/dist/components/S
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import styles from './SqlServerCollation.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { setSqlServerCollation } from '../../../../store/mssql/mssqlFormSlice';
+import { selectDefaultCollation } from '../../MSSqlServer/MSSqlUtils';
 
 const SqlServerCollation = () => {
     const dispatch = useDispatch();
 
     const sqlServerCollation = useAppSelector(state => state.mssqlForm.sqlServerCollation);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const { collationList, collationListLoading } = useAppSelector(state => state.mssql.getCollationList);
 
@@ -21,9 +24,6 @@ const SqlServerCollation = () => {
         const options: optionType[] = [];
         collationList?.collationList?.map((val: any, idx: number) => {
             const option = generateOptionType(val?.name, val?.name, val?.description, false, '');
-            if (val?.name === collationList?.defaultCollation) {
-                dispatch(setSqlServerCollation(option));
-            }
             options.push(option);
         });
         return options;
@@ -35,6 +35,13 @@ const SqlServerCollation = () => {
         }
         return <DsTypography variant="Regular_14">{sqlServerCollation?.label}</DsTypography>;
     };
+
+    useEffect(() => {
+        if (!isLoadConfig && !movingFromChatbot) {
+            selectDefaultCollation(collationList, dispatch);
+        }
+    }, [dispatch, generateCollationValues]);
+
     return (
         <div className={styles.sqlServerCollation}>
             <AccordionCard
@@ -57,7 +64,6 @@ const SqlServerCollation = () => {
                                 }}
                                 isSearchable={generateCollationValues.length > 5}
                                 options={generateCollationValues}
-                                className={styles.selectField}
                             />
                         </div>
                     </DsTypography>

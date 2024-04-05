@@ -333,6 +333,13 @@
             },
             "selectedCustomAMI": null
         },
+        "sqlServerCollation": {
+            "value":"Albanian_BIN",
+            "label":"Albanian_BIN",
+            "label2":"Albanian, binary sort",
+            "isDisabled":false,
+            "disabledTitle":""
+        },
         "dbName": "sqldatabase1",
         "dbCredentials": {
             "name": "sqlsa",

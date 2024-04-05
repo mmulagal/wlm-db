@@ -238,6 +238,11 @@ export const awsApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getSqlServerCollationList: builder.query({
+                query: ({ databaseVersion }) => ({
+                    url: `collations?version=${databaseVersion}`
+                })
             })
         };
     }
@@ -625,7 +630,8 @@ export const {
     useGetFsxnListQuery,
     useCreateSqlTemplateMutation,
     useDeploySqlTemplateMutation,
-    useGetEstimationCostMutation
+    useGetEstimationCostMutation,
+    useGetSqlServerCollationListQuery
 } = awsApi;
 
 export const {

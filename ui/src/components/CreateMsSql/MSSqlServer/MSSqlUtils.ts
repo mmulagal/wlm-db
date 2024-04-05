@@ -77,15 +77,24 @@ export const selectDefaultLicense = (amiData: any, dispatch: any) => {
 };
 
 export const selectDefaultCollation = (collationData: any, dispatch: any) => {
-    if (collationData) {
-        for (var i = 0; i < collationData?.collationList.length; i++) {
+    if (collationData && collationData?.collationList?.length) {
+        let foundDefault = false;
+        for (let i = 0; i < collationData?.collationList?.length; i++) {
             const val = collationData?.collationList[i];
             if (val?.name === collationData?.defaultCollation) {
                 const option = generateOptionType(val?.name, val?.name, val?.description, false, '');
                 dispatch(setSqlServerCollation(option));
+                foundDefault = true;
                 break;
             }
         }
+        if (!foundDefault) {
+            const val = collationData.collationList[0];
+            const option = generateOptionType(val?.name, val?.name, val?.description, false, '');
+            dispatch(setSqlServerCollation(option));
+        }
+    } else {
+        dispatch(setSqlServerCollation(null));
     }
 };
 
