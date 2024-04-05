@@ -112,7 +112,7 @@ router.post(`${BASE_URL}/v1/pricing`, async (req: {}, res: any) => {
 });
 
 // Get collation list for MSSQL
-router.get(`${BASE_URL}/v1/collation`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/collations`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, collationList);
     }, 2000);  

@@ -241,7 +241,7 @@ export const awsApi = createApi({
             }),
             getSqlServerCollationList: builder.query({
                 query: ({ databaseVersion }) => ({
-                    url: `collation?version=${databaseVersion}`
+                    url: `collations?version=${databaseVersion}`
                 })
             })
         };
