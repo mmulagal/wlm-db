@@ -38,7 +38,9 @@ describe('Cost explorer Operations', () => {
 
         const costExplorerResponse: UsageCostResponseType = {
             compute: 118.7759587606,
-            storage: 118.7759587606,
+            storage: {
+                fsxn: 118.7759587606
+            },
             estimationType: 'billing',
             connectivity: 0,
             others: 0

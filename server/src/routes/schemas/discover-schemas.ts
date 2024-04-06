@@ -1,5 +1,5 @@
 import { RouteTags } from '../../utils/consts';
-import { DatabaseHostSummaryListResponse } from '../types/database-hosts.types';
+import { DatabaseHostPerStorageTypeSummaryListResponse } from '../types/database-hosts.types';
 import {
     DiscoverMsSqlResponseBody,
     DiscoverMsSqlQuery,
@@ -74,7 +74,7 @@ const MsSqlInstancesSchema = {
     summary: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
     description: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
     response: {
-        200: DatabaseHostSummaryListResponse
+        200: DatabaseHostPerStorageTypeSummaryListResponse
     }
 };
 export { DiscoverCredentialsSchema, DiscoverMsSqlSchema, ManageMsSqlSchema, MsSqlInstancesSchema };

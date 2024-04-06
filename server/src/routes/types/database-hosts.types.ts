@@ -66,10 +66,12 @@ type TopologyResponseType = Static<typeof TopologyResponse>;
 
 const ProtectionResponse = Type.Object({
     isSqlNativeEnabled: Type.Boolean({ default: false }),
-    isFsxnAwsBackupEnabled: Type.Boolean({ default: false }),
+    isAwsBackupEnabled: Type.Object({
+        fsxn: Type.Boolean({ default: false }),
+        fsxw: Type.Boolean({ default: false }),
+        ebs: Type.Boolean({ default: false })
+    }),
     isFsxOntapSnapshotsEnabled: Type.Boolean({ default: false }),
-    isFsxwAwsBackupEnabled: Type.Boolean({ default: false }),
-    isEbsAwsBackupEnabled: Type.Boolean({ default: false }),
     protectedDatabases: Type.Optional(Type.Number({ description: 'Number of protected databases' }))
 });
 type ProtectionResponseType = Static<typeof ProtectionResponse>;
@@ -116,16 +118,27 @@ const StorageResponse = Type.Object({
 });
 type StorageResponseType = Static<typeof StorageResponse>;
 
-const UsageCostResponse = Type.Object({
+const StoragePerStorageTypeResponse = Type.Object({
+    fsxn: Type.Optional(StorageResponse),
+    fsxw: Type.Optional(StorageResponse),
+    ebs: Type.Optional(StorageResponse)
+});
+type StoragePerStorageTypeResponseType = Static<typeof StoragePerStorageTypeResponse>;
+
+const UsageCostPerStorageTypeResponse = Type.Object({
     compute: Type.Number({ description: 'Compute cost in dollars' }),
-    storage: Type.Number({ description: 'Storage  cost in dollars' }),
+    storage: Type.Object({
+        fsxn: Type.Number({ description: 'FSX for NetApp ONTAP Storage  cost in dollars' }),
+        fsxw: Type.Optional(Type.Number({ description: 'FSX for Windows Storage cost in dollars' })),
+        ebs: Type.Optional(Type.Number({ description: 'EBS Storage cost in dollars' }))
+    }),
     connectivity: Type.Number({ description: 'Connectivity cost in dollars' }),
     others: Type.Number({
         description: 'Other services like active directory, cloudwatch logging, etc costs in dollars'
     }),
     estimationType: Type.String({ enum: [BILLING, PRICING] })
 });
-type UsageCostResponseType = Static<typeof UsageCostResponse>;
+type UsageCostResponseType = Static<typeof UsageCostPerStorageTypeResponse>;
 
 const DatabaseServerMetadataResponse = Type.Object({
     operatingSystem: Type.String({ minLength: 1 }),
@@ -154,7 +167,30 @@ const ResourcesUtilizationResponse = Type.Object({
 });
 type ResourcesUtilizationResponseType = Static<typeof ResourcesUtilizationResponse>;
 
-const DatabaseHostSummaryResponse = Type.Object({
+// const DatabaseHostSummaryResponse = Type.Object({
+//     id: Type.String(),
+//     name: Type.String(),
+//     status: Type.String({ enum: ['Up', 'Down', 'N/A'] }),
+//     databaseCount: Type.Optional(Type.Number()),
+//     databaseServer: Type.Optional(DatabaseServerMetadataResponse),
+//     topology: Type.Optional(TopologyResponse),
+//     protection: Type.Optional(ProtectionResponse),
+//     performance: Type.Optional(PerformanceResponse),
+//     storage: Type.Optional(StorageResponse),
+//     estimatedUsageCost: Type.Optional(UsageCostPerStorageTypeResponse),
+//     resourceUtilization: Type.Optional(ResourcesUtilizationResponse),
+//     errors: Type.Optional(Type.Any())
+// });
+// const DatabaseHostSummaryListResponse = Type.Object({
+//     count: Type.Number(),
+//     items: Type.Array(DatabaseHostSummaryResponse),
+//     nextToken: Type.Optional(Type.String())
+// });
+
+// type DatabaseHostSummaryResponseType = Static<typeof DatabaseHostSummaryResponse>;
+// type DatabaseHostSummaryListResponseType = Static<typeof DatabaseHostSummaryListResponse>;
+
+const DatabaseHostPerStorageTypeSummaryResponse = Type.Object({
     id: Type.String(),
     name: Type.String(),
     status: Type.String({ enum: ['Up', 'Down', 'N/A'] }),
@@ -163,19 +199,19 @@ const DatabaseHostSummaryResponse = Type.Object({
     topology: Type.Optional(TopologyResponse),
     protection: Type.Optional(ProtectionResponse),
     performance: Type.Optional(PerformanceResponse),
-    storage: Type.Optional(StorageResponse),
-    estimatedUsageCost: Type.Optional(UsageCostResponse),
+    storage: Type.Optional(StoragePerStorageTypeResponse),
+    estimatedUsageCost: Type.Optional(UsageCostPerStorageTypeResponse),
     resourceUtilization: Type.Optional(ResourcesUtilizationResponse),
     errors: Type.Optional(Type.Any())
 });
-const DatabaseHostSummaryListResponse = Type.Object({
+const DatabaseHostPerStorageTypeSummaryListResponse = Type.Object({
     count: Type.Number(),
-    items: Type.Array(DatabaseHostSummaryResponse),
+    items: Type.Array(DatabaseHostPerStorageTypeSummaryResponse),
     nextToken: Type.Optional(Type.String())
 });
 
-type DatabaseHostSummaryResponseType = Static<typeof DatabaseHostSummaryResponse>;
-type DatabaseHostSummaryListResponseType = Static<typeof DatabaseHostSummaryListResponse>;
+type DatabaseHostPerStorageTypeSummaryResponseType = Static<typeof DatabaseHostPerStorageTypeSummaryResponse>;
+type DatabaseHostPerStorageTypeSummaryListResponseType = Static<typeof DatabaseHostPerStorageTypeSummaryListResponse>;
 
 const DatabasesResponse = Type.Object({
     name: Type.String({ minLength: 1 }),
@@ -247,10 +283,14 @@ export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
     DatabaseHostQueryString,
-    DatabaseHostSummaryResponse,
-    DatabaseHostSummaryResponseType,
-    DatabaseHostSummaryListResponse,
-    DatabaseHostSummaryListResponseType,
+    // DatabaseHostSummaryResponse,
+    // DatabaseHostSummaryResponseType,
+    // DatabaseHostSummaryListResponse,
+    // DatabaseHostSummaryListResponseType,
+    DatabaseHostPerStorageTypeSummaryResponse,
+    DatabaseHostPerStorageTypeSummaryResponseType,
+    DatabaseHostPerStorageTypeSummaryListResponse,
+    DatabaseHostPerStorageTypeSummaryListResponseType,
     EC2InstanceDetailsResponse,
     EC2InstanceDetailsResponseType,
     TopologyResponse,
@@ -261,7 +301,9 @@ export {
     ProtectionResponseType,
     StorageResponse,
     StorageResponseType,
-    UsageCostResponse,
+    StoragePerStorageTypeResponse,
+    StoragePerStorageTypeResponseType,
+    UsageCostPerStorageTypeResponse,
     UsageCostResponseType,
     DatabaseHostSummaryParams,
     DatabaseHostSummaryParamsType,

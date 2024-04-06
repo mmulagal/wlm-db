@@ -5,13 +5,13 @@ import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { listResources } from '../lib/database/db';
 import {
-    DatabaseHostSummaryResponseType,
-    DatabaseHostSummaryListResponseType,
     TopologyResponseType,
     ProtectionResponseType,
-    StorageResponseType,
     UsageCostResponseType,
-    DatabasesListResponseType
+    DatabasesListResponseType,
+    StoragePerStorageTypeResponseType,
+    DatabaseHostPerStorageTypeSummaryResponseType,
+    DatabaseHostPerStorageTypeSummaryListResponseType
 } from '../routes/types/database-hosts.types';
 import { describeInstance, describeSubnets, describeVolumes, describeVpc, getAmis } from '../lib/aws/ec2';
 import { describeFSx } from '../lib/aws/fsx';
@@ -308,11 +308,8 @@ async function getTopology(
     return topologyData;
 }
 
-async function getStorageData(
-    resourceDetail: ResourceDetails,
-    activeNodeInstanceId: string
-): Promise<StorageResponseType | undefined> {
-    logger.info('Getting storage data:', { resourceDetail, activeNodeInstanceId });
+async function getStorageData(resourceDetail: ResourceDetails): Promise<StoragePerStorageTypeResponseType | undefined> {
+    logger.info('Getting storage data:', { resourceDetail });
 
     try {
         let totalSize = 0;
@@ -320,25 +317,35 @@ async function getStorageData(
         let totalSpaceSavings;
         let totalSpaceSavingsPercentage;
         const { region, co_relation_id: fsxnId, credentials_id: credentialsId, fsxwId, ebsVolumeId } = resourceDetail;
+
+        const response = {} as StoragePerStorageTypeResponseType;
         if (fsxnId && region) {
             ({ totalSize, totalUsed, totalSpaceSavings, totalSpaceSavingsPercentage } =
                 await calculateFsxnStorageEfficiencyUsingCloudwatch(region, credentialsId, fsxnId));
+            response.fsxn = {
+                size: numeral(`${totalSize}GiB`).value() || 0,
+                used: totalUsed,
+                spaceSavings: totalSpaceSavings,
+                spaceSavingsPercentage: totalSpaceSavingsPercentage
+            };
         }
         if (fsxwId && region) {
             ({ totalSize, totalUsed, totalSpaceSavings, totalSpaceSavingsPercentage } =
                 await calculateFsxwStorageEfficiencyUsingCloudwatch(region, credentialsId, fsxwId));
+            response.fsxw = {
+                size: numeral(`${totalSize}GiB`).value() || 0,
+                used: totalUsed,
+                spaceSavings: totalSpaceSavings,
+                spaceSavingsPercentage: totalSpaceSavingsPercentage
+            };
         }
         if (ebsVolumeId && region) {
             const storageData = await getEbsResourceInfo(credentialsId, region, ebsVolumeId);
             totalSize = storageData.size;
+            response.ebs = { size: numeral(`${totalSize}GiB`).value() || 0 };
         }
 
-        return {
-            size: numeral(`${totalSize}GiB`).value() || 0,
-            used: totalUsed,
-            spaceSavings: totalSpaceSavings,
-            spaceSavingsPercentage: totalSpaceSavingsPercentage
-        };
+        return response;
     } catch (error) {
         const errorMessage = `Error while getting storage savings for resource ${resourceDetail} ${JSON.stringify(
             error
@@ -445,10 +452,12 @@ async function getProtectionStatus(
 
         return {
             isSqlNativeEnabled: Boolean(nativeSqlProtection),
-            isFsxnAwsBackupEnabled: Boolean(fsxnBackup),
+            isAwsBackupEnabled: {
+                fsxn: Boolean(fsxnBackup),
+                fsxw: Boolean(fsxwBackup),
+                ebs: Boolean(ebsBackup)
+            },
             isFsxOntapSnapshotsEnabled: Boolean(ontapProtection),
-            isFsxwAwsBackupEnabled: Boolean(fsxwBackup),
-            isEbsAwsBackupEnabled: Boolean(ebsBackup),
             protectedDatabases: Number.isNaN(Number(nativeSqlProtection)) ? 0 : Number(nativeSqlProtection)
         };
     } catch (error) {
@@ -625,11 +634,15 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
         );
         return {
             compute: pricingResponse?.compute || 0,
-            storage:
-                (pricingResponse?.fsxnStorage?.capacityCost || 0) +
-                    (pricingResponse?.fsxnStorage?.operationalCost || 0) ||
-                pricingResponse.ebsStorage?.ebsStorageCost ||
-                0,
+            storage: {
+                fsxn:
+                    (pricingResponse?.fsxnStorage?.capacityCost || 0) +
+                    (pricingResponse?.fsxnStorage?.operationalCost || 0),
+                fsxw:
+                    (pricingResponse?.fsxwStorage?.capacityCost || 0) +
+                    (pricingResponse?.fsxwStorage?.operationalCost || 0),
+                ebs: pricingResponse.ebsStorage?.ebsStorageCost || 0
+            },
             connectivity: pricingResponse?.vpc || 0,
             others: 0, // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
             estimationType: PRICING
@@ -721,7 +734,7 @@ async function getDatabaseHostsSummary(
     customerCredentialsId?: string,
     vpcId?: string,
     fsxId?: string
-): Promise<DatabaseHostSummaryListResponseType> {
+): Promise<DatabaseHostPerStorageTypeSummaryListResponseType> {
     logger.info(
         'Fetching all database hosts deployed in account ',
         accountId,
@@ -749,7 +762,7 @@ async function getDatabaseHostsSummary(
         return { count: 0, items: [], nextToken: '' };
     }
 
-    const databaseHosts: DatabaseHostSummaryResponseType[] = [];
+    const databaseHosts: DatabaseHostPerStorageTypeSummaryResponseType[] = [];
     try {
         await Promise.all(
             resourceDetails.map(async resourceDetail => {
@@ -785,7 +798,7 @@ async function getDatabaseHostSummary(
     fields?: string,
     resourceDetail?: ResourceDetails,
     isManagedResource: boolean = true
-): Promise<DatabaseHostSummaryResponseType> {
+): Promise<DatabaseHostPerStorageTypeSummaryResponseType> {
     logger.info('Fetching details about a database installtion ', accountId, databaseHostId, fields, isManagedResource);
 
     if (isEmpty(resourceDetail)) {
@@ -797,7 +810,7 @@ async function getDatabaseHostSummary(
         throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
     }
 
-    const databaseHostDetails: DatabaseHostSummaryResponseType = {
+    const databaseHostDetails: DatabaseHostPerStorageTypeSummaryResponseType = {
         id: '',
         name: '',
         status: '',
@@ -877,9 +890,7 @@ async function getDatabaseHostSummary(
                     ...(isSSMConnected && getPerformance && activeNodeInstanceId
                         ? [getPerformanceMetrics(credentialsId, region, activeNodeInstanceId)]
                         : [Promise.resolve()]), // Fetch io latency data
-                    ...(isSSMConnected && getStorageSavings && activeNodeInstanceId
-                        ? [getStorageData(resourceDetail, activeNodeInstanceId)]
-                        : [Promise.resolve()]), // Fetch storage savings data
+                    ...(isSSMConnected && getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
                     ...(isSSMConnected && getProtection && activeNodeInstanceId
                         ? [getProtectionStatus(resourceDetail, activeNodeInstanceId)]
                         : [Promise.resolve()]), // Fetch protection status
