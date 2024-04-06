@@ -10,8 +10,8 @@ import {
     UsageCostResponseType,
     DatabasesListResponseType,
     StoragePerStorageTypeResponseType,
-    DatabaseHostPerStorageTypeSummaryResponseType,
-    DatabaseHostPerStorageTypeSummaryListResponseType
+    DatabaseHostSummaryPerStorageTypeResponseType,
+    DatabaseHostSummaryPerStorageTypeListResponseType
 } from '../routes/types/database-hosts.types';
 import { describeInstance, describeSubnets, describeVolumes, describeVpc, getAmis } from '../lib/aws/ec2';
 import { describeFSx } from '../lib/aws/fsx';
@@ -734,7 +734,7 @@ async function getDatabaseHostsSummary(
     customerCredentialsId?: string,
     vpcId?: string,
     fsxId?: string
-): Promise<DatabaseHostPerStorageTypeSummaryListResponseType> {
+): Promise<DatabaseHostSummaryPerStorageTypeListResponseType> {
     logger.info(
         'Fetching all database hosts deployed in account ',
         accountId,
@@ -762,7 +762,7 @@ async function getDatabaseHostsSummary(
         return { count: 0, items: [], nextToken: '' };
     }
 
-    const databaseHosts: DatabaseHostPerStorageTypeSummaryResponseType[] = [];
+    const databaseHosts: DatabaseHostSummaryPerStorageTypeResponseType[] = [];
     try {
         await Promise.all(
             resourceDetails.map(async resourceDetail => {
@@ -798,7 +798,7 @@ async function getDatabaseHostSummary(
     fields?: string,
     resourceDetail?: ResourceDetails,
     isManagedResource: boolean = true
-): Promise<DatabaseHostPerStorageTypeSummaryResponseType> {
+): Promise<DatabaseHostSummaryPerStorageTypeResponseType> {
     logger.info('Fetching details about a database installtion ', accountId, databaseHostId, fields, isManagedResource);
 
     if (isEmpty(resourceDetail)) {
@@ -810,7 +810,7 @@ async function getDatabaseHostSummary(
         throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
     }
 
-    const databaseHostDetails: DatabaseHostPerStorageTypeSummaryResponseType = {
+    const databaseHostDetails: DatabaseHostSummaryPerStorageTypeResponseType = {
         id: '',
         name: '',
         status: '',

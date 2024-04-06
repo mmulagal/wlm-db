@@ -190,7 +190,7 @@ type ResourcesUtilizationResponseType = Static<typeof ResourcesUtilizationRespon
 // type DatabaseHostSummaryResponseType = Static<typeof DatabaseHostSummaryResponse>;
 // type DatabaseHostSummaryListResponseType = Static<typeof DatabaseHostSummaryListResponse>;
 
-const DatabaseHostPerStorageTypeSummaryResponse = Type.Object({
+const DatabaseHostSummaryPerStorageTypeResponse = Type.Object({
     id: Type.String(),
     name: Type.String(),
     status: Type.String({ enum: ['Up', 'Down', 'N/A'] }),
@@ -204,14 +204,14 @@ const DatabaseHostPerStorageTypeSummaryResponse = Type.Object({
     resourceUtilization: Type.Optional(ResourcesUtilizationResponse),
     errors: Type.Optional(Type.Any())
 });
-const DatabaseHostPerStorageTypeSummaryListResponse = Type.Object({
+const DatabaseHostSummaryPerStorageTypeListResponse = Type.Object({
     count: Type.Number(),
-    items: Type.Array(DatabaseHostPerStorageTypeSummaryResponse),
+    items: Type.Array(DatabaseHostSummaryPerStorageTypeResponse),
     nextToken: Type.Optional(Type.String())
 });
 
-type DatabaseHostPerStorageTypeSummaryResponseType = Static<typeof DatabaseHostPerStorageTypeSummaryResponse>;
-type DatabaseHostPerStorageTypeSummaryListResponseType = Static<typeof DatabaseHostPerStorageTypeSummaryListResponse>;
+type DatabaseHostSummaryPerStorageTypeResponseType = Static<typeof DatabaseHostSummaryPerStorageTypeResponse>;
+type DatabaseHostSummaryPerStorageTypeListResponseType = Static<typeof DatabaseHostSummaryPerStorageTypeListResponse>;
 
 const DatabasesResponse = Type.Object({
     name: Type.String({ minLength: 1 }),
@@ -287,10 +287,10 @@ export {
     // DatabaseHostSummaryResponseType,
     // DatabaseHostSummaryListResponse,
     // DatabaseHostSummaryListResponseType,
-    DatabaseHostPerStorageTypeSummaryResponse,
-    DatabaseHostPerStorageTypeSummaryResponseType,
-    DatabaseHostPerStorageTypeSummaryListResponse,
-    DatabaseHostPerStorageTypeSummaryListResponseType,
+    DatabaseHostSummaryPerStorageTypeResponse,
+    DatabaseHostSummaryPerStorageTypeResponseType,
+    DatabaseHostSummaryPerStorageTypeListResponse,
+    DatabaseHostSummaryPerStorageTypeListResponseType,
     EC2InstanceDetailsResponse,
     EC2InstanceDetailsResponseType,
     TopologyResponse,
