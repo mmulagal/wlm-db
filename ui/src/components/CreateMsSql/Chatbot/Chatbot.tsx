@@ -58,7 +58,7 @@ import {
     setTags,
     setThroughputValue
 } from '../../../store/mssql/mssqlFormSlice';
-import { CHATBOT_FIELD_MAPPING, GENERAL } from '../../../utils/appConstants';
+import { CHATBOT, GENERAL } from '../../../utils/appConstants';
 import {
     AWS_MANAGED_AD,
     CHATBOT_WELCOME_CARDS,
@@ -952,7 +952,8 @@ const Chatbot = () => {
             currentIntent.type === 'DeployMsSql' &&
             lastMsg.type !== 'confirm' &&
             !(lastMsg?.status === 'error') &&
-            resumeCount < 3
+            resumeCount < 3 &&
+            lastMsg.msg !== CHATBOT.WELCOME_PAGE.RESUME_DEPLOYMENT_MSG
         ) {
             dispatch(
                 setSuggestionBubbles({

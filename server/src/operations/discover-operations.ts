@@ -36,7 +36,7 @@ import {
 import { deleteParameters, getParameter, sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
 import { listFsxOntapCredentials, registerFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
-import { SSMParamterObject } from '../utils/common-types';
+import { ResourceDetails, SSMParamterObject } from '../utils/common-types';
 
 import {
     DiscoverMsSqlResponseBodyType,
@@ -93,7 +93,7 @@ async function getHostAndSqlServerInfo(
     accountId: string,
     credentialsId: string,
     region: string,
-    pageSize: number,
+    pageSize?: number,
     nextToken: string = '',
     instances: string[] = []
 ): Promise<DiscoverMsSqlResponseBodyType> {
@@ -110,13 +110,13 @@ async function getHostAndSqlServerInfo(
             { Name: 'architecture', Values: ['x86_64'] },
             { Name: 'instance-state-name', Values: [InstanceStateName.running] }
         ],
-        MaxResults: pageSize,
+        ...(pageSize && { MaxResults: pageSize }),
         NextToken: nextToken
     };
 
     // For use cases, where info for specific EC2s is needed
     if (instances.length > 0) {
-        describeInstanceParams.Filters?.push({ Name: 'instance-id', Values: instances });
+        describeInstanceParams.InstanceIds = instances;
     }
 
     api1StartTime = performance.now();
@@ -247,7 +247,7 @@ async function getHostAndSqlServerInfo(
         api1StartTime = performance.now();
         await Promise.all(
             ssmConnectedNodes.map(
-                throat(pageSize, async (target: SsmTargetsInfo) => {
+                throat(pageSize || 5, async (target: SsmTargetsInfo) => {
                     let dbInfo: SqlServerInstanceInfoType[] = [];
                     const dbInfoStartTime = performance.now();
                     dbInfo = await getHostAndSqlInfoFromPsOutput(
@@ -637,31 +637,59 @@ async function fetchUnmanagedHostsInformation(
     accountId: string,
     credentialsId: string,
     region: string,
-    instancesDetails: { ec2InstanceId: string; fsxnId?: string; ebsVolumeId?: string; fsxwId?: string }[] = []
+    instances: string[] = []
 ) {
-    logger.info('Fetching hosts information:', { accountId, credentialsId, region, instancesDetails });
+    logger.info('Fetching hosts information:', { accountId, credentialsId, region, instances });
 
-    // TODO: /v1/credentials/:credentialsId/regions/:region/mssql/discover (API1) fetches instance-storage mapping and returns it, /v1/credentials/:credentialsId/regions/:region/mssql/instances(API2) expects the same combination in request. In the event there is a mismatch, this function may return incorrect data. Add validation for instance-storage mapping
+    // Modified implementation to fetch SQL Server instance details for EC2 instances with underlying storage details. The code now accepts instances ID array instead of object with ec2InstanceId and storageType. If there are multiple sql instances in an ec2 instance, the code will return multiple resource details for the same ec2 instance. Every item in resourceDetailsList is an ec2 instance - sql instance pair with storage type.
 
-    const resourceDetailsList = instancesDetails.map(({ ec2InstanceId, fsxnId, ebsVolumeId, fsxwId }) => ({
-        id: null,
-        account_id: accountId,
-        resource_id: ec2InstanceId,
-        resource_type: RESOURCESTYPE.MSSQL,
-        resource_name: ec2InstanceId,
-        cloud_provider_name: CloudProviders.AWS,
-        co_relation_id: fsxnId || null,
-        cloud_provider_account_id: null,
+    const { items: ec2HostDetails } = await getHostAndSqlServerInfo(
+        accountId,
+        credentialsId,
         region,
-        credentials_id: credentialsId,
-        storage_type: STORAGE_TYPE.FSXN,
-        metadata: {
-            creationDate: Date.now(),
-            node1InstanceId: ec2InstanceId
-        },
-        ebsVolumeId,
-        fsxwId
-    }));
+        undefined,
+        undefined,
+        instances
+    );
+    const resourceDetailsList: ResourceDetails[] = [];
+
+    ec2HostDetails?.forEach(ec2Instance => {
+        ec2Instance?.sqlServerInstances?.forEach(sqlInstance => {
+            if (sqlInstance.sqlServerState === 'Running') {
+                const { storage } = sqlInstance;
+                let ebsVolumeId;
+                let fsxwId;
+                let fsxnId;
+                storage?.forEach(({ type, id }) => {
+                    // if there are multiple entries in storage for the same type then only the last entry will be considered. For eg: if the same sql instance has fsxn-1 and fsxn-2, then only fsxn-2 will be considered. Such a scenario occurs when system dbs use one storage and user dbs use another storage. The reason for this limitation currently is wlmdb resources are not expecting multiple co-relation ids for the same resource.
+                    // If the storage is of different type, then both will be considered while calculating protection and storage savings details.
+                    ebsVolumeId = type === STORAGE_TYPE.EBS ? id : undefined;
+                    fsxwId = type === STORAGE_TYPE.FSXW ? id : undefined;
+                    fsxnId = type === STORAGE_TYPE.FSXN ? id : undefined;
+                });
+
+                resourceDetailsList.push({
+                    id: null,
+                    account_id: accountId,
+                    resource_id: ec2Instance.ec2InstanceId,
+                    resource_type: RESOURCESTYPE.MSSQL,
+                    resource_name: ec2Instance.ec2InstanceId,
+                    cloud_provider_name: CloudProviders.AWS,
+                    co_relation_id: fsxnId || null,
+                    cloud_provider_account_id: null,
+                    region,
+                    credentials_id: credentialsId,
+                    storage_type: STORAGE_TYPE.FSXN,
+                    metadata: {
+                        creationDate: Date.now(),
+                        node1InstanceId: ec2Instance.ec2InstanceId
+                    },
+                    ebsVolumeId,
+                    fsxwId
+                });
+            }
+        });
+    });
 
     const response = await Promise.all(
         resourceDetailsList.map(async resourceDetail =>
@@ -700,7 +728,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     }
 
     const [discoverInfo, ssmResponse] = await Promise.all([
-        getHostAndSqlServerInfo(accountId, credentialsId, region, 5, undefined, [ec2InstanceId]),
+        getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [ec2InstanceId]),
         callSsmExecution(credentialsId, region, CLUSTER_NETWORK_IP_INFO_PS1, ec2InstanceId, accountId)
     ]);
 

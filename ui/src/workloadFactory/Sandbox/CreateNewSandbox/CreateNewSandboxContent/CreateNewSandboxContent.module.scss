@@ -1,0 +1,23 @@
+.createNewSandboxContent {
+    margin-top: 40px;
+    .heading {
+        display: flex;
+        justify-content: center;
+    }
+
+    .accordionContainer {
+        margin-top: 40px;
+        width: 1063px;
+    }
+}
+
+@media screen and (max-width: 1500px) {
+    .createNewSandboxContent {
+        .accordionContainer {
+            width: 647px;
+            [class*='AccordionCard-module_header'] {
+                grid-template-columns: minmax(136px, max-content) 316px max-content max-content max-content !important;
+            }
+        }
+    }
+}

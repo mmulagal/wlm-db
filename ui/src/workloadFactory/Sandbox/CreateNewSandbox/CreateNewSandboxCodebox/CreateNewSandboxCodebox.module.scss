@@ -1,0 +1,84 @@
+.createNewSandboxCodebox {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    top: 56px;
+    right: 0;
+    width: 638px;
+    height: calc(100% - 56px);
+    background-color: var(--grey-70);
+
+    .createDbHeader {
+        display: flex;
+        flex-direction: row;
+        margin: 32px 40px 16px 40px;
+        justify-content: space-between;
+        align-items: center;
+
+        .createDBText {
+            color: var(--white);
+        }
+    }
+
+    .payloadContainer {
+        padding: 0 40px 0 40px;
+
+        .actionPopOver {
+            width: 100px;
+            display: flex;
+            justify-content: flex-end;
+            // height: 20px;
+            .actions {
+                gap: 16px;
+                display: flex;
+            }
+
+            .menuItemDisabled {
+                pointer-events: none;
+                svg {
+                    path {
+                        fill: var(--grey-25);
+                    }
+                }
+            }
+
+            .copy-popover {
+                width: 140px;
+                font-size: 13px;
+                line-height: 20px;
+                text-align: center;
+                padding: 2px 2px;
+                box-shadow: none;
+            }
+
+            svg {
+                cursor: pointer;
+                &:hover {
+                    fill: var(--text-primary);
+                }
+            }
+        }
+
+        .payloadHeader {
+            height: 48px;
+            padding: 16px 24px 16px 40px;
+            background-color: var(--grey-55);
+            box-shadow: 0px -1px 0px 0px var(--grey-55) inset;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            position: relative;
+        }
+    }
+
+    [class*='CodeBoxColor_startFlex']:nth-child(1) {
+        margin-left: 0;
+    }
+}
+
+@media screen and (max-width: 1500px) {
+    .createNewSandboxCodebox {
+        width: 576px;
+    }
+}

@@ -111,12 +111,20 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
 }
 
 async function returnInventorydata(instances?: string[]) {
-    logger.info('Generate and return inventory data for demo');
+    logger.info('Generate and return inventory data for demo', instances);
     const fsxId = `fs-${randomize('a0', 17)}`;
     const ebsVolId = `vol -${randomize('a0', 17)}`;
     const inventoryData = inventoryDemoData(fsxId, ebsVolId);
 
     if (instances !== undefined && instances.length > 0) {
+        const { items: inventoryItems } = inventoryData;
+        const items = inventoryItems.filter(item => instances.includes(item.ec2InstanceId));
+        if (items.length > 0 && items !== undefined) {
+            return {
+                count: items.length,
+                items
+            };
+        }
         const instanceDetails = inventoryData.items.find(item => item.ec2InstanceId === instances[0])!;
         return {
             count: 1,

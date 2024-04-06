@@ -1,0 +1,72 @@
+.selectTarget {
+    .headerSetter {
+        left: 0%;
+    }
+
+    .actionRequired {
+        svg {
+            position: relative;
+            top: 2px;
+        }
+    }
+
+    .firstRow {
+        display: flex;
+        gap: 24px;
+    }
+
+    .noticeText {
+        margin-top: 6px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        svg {
+            width: 16px;
+            height: 16px;
+            path {
+                fill: #518bec;
+            }
+        }
+    }
+
+    .dbName {
+        max-width: 250px;
+        width: 250px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .firstRowSmallScreen {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .secondRow {
+        margin-top: 24px;
+    }
+
+    .selectField {
+        width: 395px;
+    }
+
+    .keyField {
+        width: 395px;
+    }
+}
+
+@media screen and (max-width: 1500px) {
+    .selectTarget {
+        .noticeText {
+            width: 456px;
+
+            svg {
+                position: relative;
+                top: -10px;
+            }
+        }
+    }
+}

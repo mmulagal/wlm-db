@@ -30,6 +30,7 @@ import { setJobsList, setSubJobsData } from '../../../store/workloadFactory/jobM
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
 import { WLF_TABS } from '../../../utils/consts';
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
+import Sandbox from '../../Sandbox/Sandbox';
 import InventoryApis from '../../Inventory/InventoryApis';
 import DatabaseHomeApis from '../DatabaseHomeApis';
 import JobMonitoringApi from '../../JobMonitoring/JobMonitoringApi';
@@ -259,6 +260,21 @@ const HeaderComponent = () => {
                             <Typography
                                 variant="Regular_14"
                                 className={
+                                    selectedHeaderTab === WLF_TABS.SANDBOXES
+                                        ? `${styles.headerPart4} ${styles.active}`
+                                        : `${styles.headerPart4}`
+                                }
+                                onClick={() => {
+                                    handleClick(WLF_TABS.SANDBOXES);
+                                    refreshPage();
+                                }}
+                            >
+                                Sandboxes
+                            </Typography>
+
+                            <Typography
+                                variant="Regular_14"
+                                className={
                                     selectedHeaderTab === WLF_TABS.JOB_MONITORING
                                         ? `${styles.headerPart3} ${styles.active}`
                                         : `${styles.headerPart3}`
@@ -277,6 +293,7 @@ const HeaderComponent = () => {
                 {selectedHeaderTab === WLF_TABS.INVENTORY && <Inventory />}
                 {selectedHeaderTab === WLF_TABS.JOB_MONITORING && <JobMonitoring />}
                 {selectedHeaderTab === WLF_TABS.OVERVIEW && <DatabaseHostOverview />}
+                {selectedHeaderTab === WLF_TABS.SANDBOXES && <Sandbox />}
             </div>
         )
     );
