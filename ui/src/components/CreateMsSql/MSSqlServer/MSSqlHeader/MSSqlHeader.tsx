@@ -78,6 +78,7 @@ const MSSqlHeader = () => {
                     resetRefetchApiCheck(dispatch);
                 }}
                 dialogFrom={FROM_DIALOG.LOAD_CONFIG}
+                customClass={styles.setLoadConfigWidth}
             />
         );
     };
