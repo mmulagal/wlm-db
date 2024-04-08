@@ -13,6 +13,23 @@ const DatabaseListTable = () => {
     const data: WorkloadFactoryDatabaseItem[] = useAppSelector(state => state.workloadFactoryResource.databaseList);
     const databaseListLoading = useAppSelector(state => state.workloadFactoryResource.databaseListLoading);
 
+    const formatData = (tableData: WorkloadFactoryDatabaseItem[]) => {
+        return tableData?.map(perRow => {
+            let isProtected = GENERAL.NOT_PROTECTED;
+            if (
+                perRow?.protection?.isAwsBackUpEnabled ||
+                perRow?.protection?.isFsxOntapSnapshotsEnabled ||
+                perRow?.protection?.isSqlNativeEnabled
+            ) {
+                isProtected = GENERAL.PROTECTED;
+            }
+            return {
+                ...perRow,
+                isProtected: isProtected
+            };
+        });
+    };
+
     const protectionTooltipText = (data: any) => {
         return (
             <div className={styles.protectionTooltip}>
@@ -158,7 +175,7 @@ const DatabaseListTable = () => {
         manageColumnsProps: false,
         isSorting: false,
         columns: EncryptionColDefs,
-        rows: data,
+        rows: formatData(data),
         pageSize: 50,
         isLazyLoading: databaseListLoading
     });
