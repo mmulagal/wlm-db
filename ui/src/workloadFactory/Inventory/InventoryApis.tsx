@@ -206,6 +206,7 @@ const InventoryApis = () => {
         dispatch(setUnIdentifiableHosts([]));
         dispatch(setMovedToManagedHost([]));
         dispatch(setMovedToUnmanagedHost([]));
+        setRunningResourceList([]);
         if (headerSelectedCred && headerSelectedRegion) {
             setSkipApiCall(false);
             setSkipDiscoveryCall(false);
