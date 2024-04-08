@@ -6,7 +6,7 @@ import { isEmpty } from 'lodash-es';
 import { listResources } from '../lib/database/db';
 import {
     TopologyResponseType,
-    ProtectionResponseType,
+    ProtectionPerStorageTypeResponseType,
     UsageCostResponseType,
     DatabasesListResponseType,
     StoragePerStorageTypeResponseType,
@@ -415,7 +415,7 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageP
 async function getProtectionStatus(
     resourceDetail: ResourceDetails,
     activeNodeInstanceId: string
-): Promise<ProtectionResponseType | undefined> {
+): Promise<ProtectionPerStorageTypeResponseType | undefined> {
     logger.info('Get protection status', { resourceDetail });
 
     const {

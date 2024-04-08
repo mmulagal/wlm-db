@@ -64,7 +64,7 @@ const TopologyResponse = Type.Object({
 });
 type TopologyResponseType = Static<typeof TopologyResponse>;
 
-const ProtectionResponse = Type.Object({
+const ProtectionPerStorageTypeResponse = Type.Object({
     isSqlNativeEnabled: Type.Boolean({ default: false }),
     isAwsBackupEnabled: Type.Object({
         fsxn: Type.Boolean({ default: false }),
@@ -74,7 +74,7 @@ const ProtectionResponse = Type.Object({
     isFsxOntapSnapshotsEnabled: Type.Boolean({ default: false }),
     protectedDatabases: Type.Optional(Type.Number({ description: 'Number of protected databases' }))
 });
-type ProtectionResponseType = Static<typeof ProtectionResponse>;
+type ProtectionPerStorageTypeResponseType = Static<typeof ProtectionPerStorageTypeResponse>;
 
 const RWPerformanceResponse = Type.Object({
     read: Type.Number({ description: 'Database server read performance for latency, IOPS or throughput' }),
@@ -197,7 +197,7 @@ const DatabaseHostSummaryPerStorageTypeResponse = Type.Object({
     databaseCount: Type.Optional(Type.Number()),
     databaseServer: Type.Optional(DatabaseServerMetadataResponse),
     topology: Type.Optional(TopologyResponse),
-    protection: Type.Optional(ProtectionResponse),
+    protection: Type.Optional(ProtectionPerStorageTypeResponse),
     performance: Type.Optional(PerformanceResponse),
     storage: Type.Optional(StoragePerStorageTypeResponse),
     estimatedUsageCost: Type.Optional(UsageCostPerStorageTypeResponse),
@@ -218,7 +218,7 @@ const DatabasesResponse = Type.Object({
     status: Type.String({ minLength: 1 }),
     type: Type.String({ minLength: 1 }),
     size: Type.Number(),
-    protection: ProtectionResponse
+    protection: ProtectionPerStorageTypeResponse
 });
 type DatabasesResponseType = Static<typeof DatabasesResponse>;
 
@@ -297,8 +297,8 @@ export {
     TopologyResponseType,
     PerformanceResponse,
     PerformanceResponseType,
-    ProtectionResponse,
-    ProtectionResponseType,
+    ProtectionPerStorageTypeResponse,
+    ProtectionPerStorageTypeResponseType,
     StorageResponse,
     StorageResponseType,
     StoragePerStorageTypeResponse,
