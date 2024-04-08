@@ -63,6 +63,13 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
             }
         );
 
+        // https://jira.ngage.netapp.com/browse/DBS-2453
+        // "ec2:Describevpcendpoints" is needed to determine if endpoints are available. If this assessment fails, then endpoint
+        // parameters will carry in correct values and deployment fails.
+        // So, lets check early if endpoints can be fetched.
+        const [firstVpc] = vpcs.values();
+        await getVpcEndpoints(credentialsId, region, firstVpc.id!);
+
         return { vpcs };
     }
 
