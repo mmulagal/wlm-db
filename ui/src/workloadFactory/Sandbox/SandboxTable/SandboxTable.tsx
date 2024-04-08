@@ -10,70 +10,70 @@ const SandboxTable = () => {
     const data = [
         {
             id: '1',
-            name: 'Database name 1',
-            hostName: 'host name 1',
-            source: 'Source db name 1',
-            sourceHost: 'Source db host name 1',
+            name: 'RetailBanking',
+            hostName: 'app-server-1',
+            source: 'SQLServer-PreProd-01',
+            sourceHost: 'NA',
             creationDate: 'March 15, 2024, 00:00:00',
             age: '1 day',
             tag: 'Dev'
         },
         {
             id: '2',
-            name: 'db name 2',
-            hostName: 'host name 2',
-            source: 'Source db name 2',
-            sourceHost: 'Source db host name 2',
+            name: 'MFGSales',
+            hostName: 'app-server-2',
+            source: 'SQLServer-Prod-2',
+            sourceHost: 'NA',
             creationDate: 'March 15, 2024, 00:00:00',
             age: '5 days',
-            tag: 'Dev'
+            tag: 'QA'
         },
         {
             id: '3',
-            name: 'db name 3',
-            hostName: 'host name 3',
-            source: 'Source db name 3',
-            sourceHost: 'Source db host name 3',
+            name: 'AssetManagement',
+            hostName: 'app-server-3',
+            source: 'SQLServer-Prod-7',
+            sourceHost: 'NA',
             creationDate: 'March 15, 2024, 00:00:00',
             age: '4 days',
-            tag: 'Dev'
+            tag: 'Other'
         },
         {
             id: '4',
-            name: 'db name 4',
-            hostName: 'host name 4',
-            source: 'Source db name 4',
-            sourceHost: 'Source db host name 4',
+            name: 'HRAudit',
+            hostName: 'app-server-4',
+            source: 'SQLServer-Prod-12',
+            sourceHost: 'NA',
             creationDate: 'March 15, 2024, 00:00:00',
             age: '2 days',
             tag: 'Dev'
         },
         {
             id: '5',
-            name: 'db name 5',
-            hostName: 'host name 5',
-            source: 'Source db name 5',
-            sourceHost: 'Source db host name 5',
+            name: 'PrivateBanking',
+            hostName: 'app-server-6',
+            source: 'SQLServer-Prod-6',
+            sourceHost: 'NA',
             creationDate: 'March 15, 2024, 00:00:00',
             age: '7 days',
-            tag: 'Dev'
+            tag: 'Training'
         },
         {
             id: '6',
-            name: 'db name 6',
-            hostName: 'host name 6',
-            source: 'Source db name 6',
-            sourceHost: 'Source db host name 6',
+            name: 'SalesData',
+            hostName: 'app-server-16',
+            source: 'SQLServer-Prod-9',
+            sourceHost: 'NA',
             creationDate: 'March 15, 2024, 00:00:00',
             age: '1 days',
-            tag: 'Dev'
+            tag: 'Analytics'
         },
         {
             id: '7',
-            name: 'db name 7',
-            hostName: 'host name 7',
-            source: 'Source db name 7',
-            sourceHost: 'Source db host name 7',
+            name: 'ExpenseTracker',
+            hostName: 'app-server-7',
+            source: 'SQLServer-Prod-16',
+            sourceHost: 'NA',
             creationDate: 'March 15, 2024, 00:00:00',
             age: '14 days',
             tag: 'Dev'

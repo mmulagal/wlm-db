@@ -723,6 +723,7 @@ export const GENERAL = {
     SANDBOX_HEADER_CONTENT:
         'Sandbox is an on-demand, isolated database environment that can be used for testing, integration, diagnostics, and training, without affecting production data. It streamlines the development lifecycle while ensuring data integrity and security.',
     CREATE_NEW_SANDBOX: 'Create new sandbox',
+    SANDBOX_DEFINITION: 'Sandbox definitions',
     DONT_SHOW_AGAIN: "Don't show again",
     SANDBOX_DB_NAME: 'Database name',
     SANDBOX_DB_HOST_NAME: 'Database host name',
