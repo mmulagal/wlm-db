@@ -222,10 +222,10 @@ async function getHostAndSqlServerInfo(
         fsxList
             .filter(fsx => fsx.FileSystemType === FileSystemType.WINDOWS)
             .forEach(fsx => {
-                endPointIpWithFsxInfo.set(`\\${fsx.WindowsConfiguration?.RemoteAdministrationEndpoint}`, {
+                endPointIpWithFsxInfo.set(`${fsx.WindowsConfiguration?.RemoteAdministrationEndpoint}`, {
                     fsxId: fsx.FileSystemId!
                 });
-                endPointIpWithFsxInfo.set(`\\${fsx.WindowsConfiguration?.PreferredFileServerIp}`, {
+                endPointIpWithFsxInfo.set(`${fsx.WindowsConfiguration?.PreferredFileServerIp}`, {
                     fsxId: fsx.FileSystemId!
                 });
             });
@@ -399,8 +399,8 @@ async function getHostAndSqlInfoFromPsOutput(
                         } else {
                             // Add FSxW details
                             // Match get-smbmapping with FSxW (RemoteAdministrationEndpoint and PreferredFileServerIp)
-                            // let fsxEndpoints = ['//ip', '//fsxid]
-                            // SerialNumberOrScsiTarget = ['//ip/share', '//fsxid/share]
+                            // let fsxEndpoints = ['ip', 'fsxid]
+                            // SerialNumberOrScsiTarget = ['ip', 'fsxid']
                             const fsxEndpoints = Array.from(endPointIpWithFsxInfo.keys());
                             const matchedEndpoints = fsxEndpoints.filter(value =>
                                 di?.SerialNumberOrScsiTarget?.includes(value)
