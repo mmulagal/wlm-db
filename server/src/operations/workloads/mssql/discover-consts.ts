@@ -344,7 +344,7 @@ const HOST_AND_SQL_INFO_PS1 = [
     Echo $responseObject | ConvertTo-Json
   }
 `
-] 
+]; 
 
 
 const CLUSTER_NETWORK_IP_INFO_PS1 = [
