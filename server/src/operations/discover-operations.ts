@@ -111,7 +111,7 @@ async function getHostAndSqlServerInfo(
             { Name: 'instance-state-name', Values: [InstanceStateName.running] }
         ],
         ...(pageSize && { MaxResults: pageSize }),
-        NextToken: nextToken
+        ...(nextToken && { NextToken: nextToken })
     };
 
     // For use cases, where info for specific EC2s is needed
@@ -655,7 +655,7 @@ async function fetchUnmanagedHostsInformation(
 
     const errorInstances: { id: string; name: string; status: string; errors: string }[] = [];
     ec2HostDetails?.forEach(ec2Instance => {
-        const sqlServerInstance = ec2Instance.sqlServerInstances?.find(
+        const sqlServerInstance = ec2Instance?.sqlServerInstances?.find(
             sqlInstance => sqlInstance.sqlServerState === 'Running'
         );
         // ec2Instance?.sqlServerInstances?.forEach(sqlInstance => { // skipping this loop as we are only considering the first running sql instance in the ec2 instance. This needs to be enabled when we support multiple sql instances in an ec2 instance.
