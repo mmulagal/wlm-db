@@ -7,6 +7,7 @@ import { ReactComponent as QA } from '../../../assets/QA.svg';
 import { ReactComponent as Testing } from '../../../assets/Testing.svg';
 import ProgressBar from '../../../common/ProgressBar/ProgressBar';
 import styles from './SandboxDistributionType.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 
 const SandboxDistributionType = () => {
@@ -24,7 +25,10 @@ const SandboxDistributionType = () => {
             <div className={styles.mainSection}>
                 <div className={styles.leftSide}>
                     <div className={styles.singleSection}>
-                        <Dev />
+                        <div className={CommonStyles.circleSVG}>
+                            <Dev />
+                        </div>
+
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
                                 <DsTypography variant="Semibold_14" className={styles.name}>
@@ -41,7 +45,10 @@ const SandboxDistributionType = () => {
                     </div>
 
                     <div className={styles.singleSection}>
-                        <QA />
+                        <div className={styles.QASvg}>
+                            <QA />
+                        </div>
+
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
                                 <DsTypography variant="Semibold_14" className={styles.name}>
@@ -58,7 +65,10 @@ const SandboxDistributionType = () => {
                     </div>
 
                     <div className={styles.singleSection}>
-                        <Integration />
+                        <div className={CommonStyles.circleSVG}>
+                            <Integration />
+                        </div>
+
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
                                 <DsTypography variant="Semibold_14" className={styles.name}>
@@ -77,7 +87,10 @@ const SandboxDistributionType = () => {
 
                 <div className={styles.rightSide}>
                     <div className={styles.singleSection}>
-                        <Testing />
+                        <div className={CommonStyles.circleSVG}>
+                            <Testing />
+                        </div>
+
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
                                 <DsTypography variant="Semibold_14" className={styles.name}>
@@ -94,7 +107,10 @@ const SandboxDistributionType = () => {
                     </div>
 
                     <div className={styles.singleSection}>
-                        <Analytics />
+                        <div className={CommonStyles.circleSVG}>
+                            <Analytics />
+                        </div>
+
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
                                 <DsTypography variant="Semibold_14" className={styles.name}>
@@ -111,7 +127,10 @@ const SandboxDistributionType = () => {
                     </div>
 
                     <div className={styles.singleSection}>
-                        <Other />
+                        <div className={CommonStyles.circleSVG}>
+                            <Other />
+                        </div>
+
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
                                 <DsTypography variant="Semibold_14" className={styles.name}>
