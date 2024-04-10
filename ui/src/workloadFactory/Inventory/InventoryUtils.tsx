@@ -114,7 +114,7 @@ export const renderCellData = (cellData: any, rowData: any, styles: any) => {
                 </Typography>
             )}
             {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-            {!cellData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+            {(!cellData && cellData !== 0) && !rowData?.loading && GENERAL.NOT_AVAILABLE}
         </>
     );
 };
