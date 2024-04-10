@@ -16,9 +16,9 @@ export interface DatabaseHostItem {
     };
     protection: {
         isAwsBackUpEnabled: {
-            fsxn: boolean,
-            fsxw: boolean,
-            ebs: false 
+            fsxn: boolean;
+            fsxw: boolean;
+            ebs: false;
         };
         isFsxOntapSnapshotsEnabled: boolean;
         isSqlNativeEnabled: boolean;
@@ -30,9 +30,24 @@ export interface DatabaseHostItem {
     performanceText?: string;
     protectionText?: string;
     storage: {
-        size: number;
-        used: number;
-        spaceSavings: number;
+        fsxn?: {
+            size?: number;
+            used?: number;
+            spaceSavings?: number;
+            spaceSavingsPercent?: number;
+        };
+        fsxw?: {
+            size?: number;
+            used?: number;
+            spaceSavings?: number;
+            spaceSavingsPercent?: number;
+        };
+        ebs?: {
+            size?: number;
+            used?: number;
+            spaceSavings?: number;
+            spaceSavingsPercent?: number;
+        };
     };
     storageSavingsText?: string;
     estimatedUsageCost: {

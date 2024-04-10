@@ -78,10 +78,10 @@ const databaseHostItem: any = [
             ]
         },
         protection: {
-            isAwsBackUpEnabled: { 
+            isAwsBackUpEnabled: {
                 fsxn: true,
                 fsxw: false,
-                ebs: false 
+                ebs: false
             },
             isFsxOntapSnapshotsEnabled: true,
             isSqlNativeEnabled: true,
@@ -92,9 +92,21 @@ const databaseHostItem: any = [
             assessment: 'High'
         },
         storage: {
-            size: 0,
-            used: 0,
-            spaceSavings: 0
+            fsxn: {
+                size: 0,
+                used: 0,
+                spaceSavings: 0,
+                spaceSavingsPercent: 0
+            },
+            fsxw: {
+                size: 0,
+                used: 0,
+                spaceSavings: 0,
+                spaceSavingsPercent: 0
+            },
+            ebs: {
+                size: 0
+            }
         },
         estimatedUsageCost: {
             compute: 700,
@@ -132,7 +144,7 @@ const databaseHostItem: any = [
             isAwsBackUpEnabled: {
                 fsxn: false,
                 fsxw: false,
-                ebs: false 
+                ebs: false
             },
             isFsxOntapSnapshotsEnabled: false,
             isSqlNativeEnabled: false,
@@ -143,9 +155,21 @@ const databaseHostItem: any = [
             assessment: 'High'
         },
         storage: {
-            size: 3932364972032,
-            used: 181537648640,
-            spaceSavings: 10737418240
+            fsxn: {
+                size: 3932364972032,
+                used: 181537648640,
+                spaceSavings: 10737418240,
+                spaceSavingsPercent: 0
+            },
+            fsxw: {
+                size: 0,
+                used: 0,
+                spaceSavings: 0,
+                spaceSavingsPercent: 0
+            },
+            ebs: {
+                size: 0
+            }
         },
         estimatedUsageCost: {
             compute: 700,

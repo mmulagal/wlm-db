@@ -1,12 +1,4 @@
-import {
-    DsFlashingDotsLoader,
-    Spinner,
-    Table,
-    TableTopBar,
-    TooltipInfo,
-    Typography,
-    useTable
-} from '@netapp/design-system';
+import { Spinner, Table, TableTopBar, TooltipInfo, Typography, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './UnmanagedHosts.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
@@ -16,18 +8,20 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 
-import {
-    formatFractionalNumber,
-    formatSizeOnePrecision,
-    formatUnamanagedHostList,
-    isAwsBackupEnabled
-} from '../../../utils/utilityFunctions';
+import { formatUnamanagedHostList } from '../../../utils/utilityFunctions';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
-import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
 import { setMovedToManagedHost, setUnManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
 import { useManageHostMutation } from '../../../utils/apiService';
 import store from '../../../store/store';
-import { renderEstimatedCost, renderProtectionColumn } from '../InventoryUtils';
+import {
+    renderAllocatedCapacity,
+    renderCellData,
+    renderDeploymentModel,
+    renderEstimatedCost,
+    renderFileSystemType,
+    renderInstanceName,
+    renderProtectionColumn
+} from '../InventoryUtils';
 
 const UnmanagedHosts = () => {
     const dispatch = useDispatch();
@@ -155,19 +149,7 @@ const UnmanagedHosts = () => {
             filterOptions: 'auto',
             accessorForTextFilter: 'fileSystemType',
             renderCell: (cellData: string, rowData: any) => {
-                const typeList: string[] = [];
-                rowData?.sqlServerInstances?.[0]?.storage?.map((storageObj: any) => {
-                    if (storageObj.type === DETECT_HOST_VAR.FSXN && !typeList.includes(GENERAL.FSX_FOR_ONTAP)) {
-                        typeList.push(GENERAL.FSX_FOR_ONTAP);
-                    }
-                    if (storageObj.type === DETECT_HOST_VAR.EBS && !typeList.includes(GENERAL.EBS)) {
-                        typeList.push(GENERAL.EBS);
-                    }
-                    if (storageObj.type === DETECT_HOST_VAR.FSXW && !typeList.includes(GENERAL.FSX_FOR_WINDOWS)) {
-                        typeList.push(GENERAL.FSX_FOR_WINDOWS);
-                    }
-                });
-                return typeList ? typeList.join(', ') : cellData || GENERAL.NOT_AVAILABLE;
+                return renderFileSystemType(cellData, rowData);
             }
         },
         {
@@ -187,17 +169,7 @@ const UnmanagedHosts = () => {
             width: '188px',
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <>
-                        {cellData && (
-                            <Typography variant="Regular_13" className={styles.colText}>
-                                {cellData}
-                            </Typography>
-                        )}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && !rowData?.loading && notAvailable()}
-                    </>
-                );
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
@@ -207,17 +179,7 @@ const UnmanagedHosts = () => {
             isSortable: true,
             width: '188px',
             renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <>
-                        {cellData && (
-                            <Typography variant="Regular_13" className={styles.colText}>
-                                {cellData}
-                            </Typography>
-                        )}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && !rowData?.loading && notAvailable()}
-                    </>
-                );
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
@@ -233,18 +195,12 @@ const UnmanagedHosts = () => {
         {
             id: '7',
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
-            accessor: 'storage.size',
+            accessor: 'sizeformat',
             isSortable: true,
             width: '194px',
             accessorForTextFilter: 'sizeformat',
             renderCell: (cellData: string | number, rowData: any) => {
-                return (
-                    <>
-                        {!rowData?.loading &&
-                            (cellData || cellData === 0 ? formatSizeOnePrecision(cellData) : GENERAL.NOT_AVAILABLE)}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                    </>
-                );
+                return renderAllocatedCapacity(cellData, rowData);
             }
         },
         {
@@ -255,28 +211,7 @@ const UnmanagedHosts = () => {
             width: '235px',
             accessorForTextFilter: 'instanceNames',
             renderCell: (cellData: any, rowData: any) => {
-                let instanceIds: any = [];
-                let instanceNames: any = [];
-                cellData?.ec2Details?.map((row: any) => {
-                    instanceIds.push(row?.id);
-                    instanceNames.push(row?.name);
-                });
-                return (
-                    <>
-                        {instanceNames.length > 0 ? (
-                            <div className={styles.colText}>
-                                {instanceIds.length > 0 && (
-                                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                        ID: {instanceIds.join(',')}
-                                    </TooltipInfo>
-                                )}
-                                <Typography variant="Regular_14">{instanceNames.join(',')}</Typography>
-                            </div>
-                        ) : (
-                            rowData?.ec2InstanceName || notAvailable()
-                        )}
-                    </>
-                );
+                return renderInstanceName(cellData, rowData, styles);
             }
         },
         {
@@ -342,13 +277,7 @@ const UnmanagedHosts = () => {
             isSortable: true,
             width: '235px',
             renderCell: (cellData: string, rowData: any) => {
-                return (
-                    <>
-                        {cellData && cellData === 'FCI' ? GENERAL.FAILOVER_CLUSTER_INSTANCES : cellData}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && !rowData?.loading && notAvailable()}
-                    </>
-                );
+                return renderDeploymentModel(cellData, rowData);
             }
         }
     ];

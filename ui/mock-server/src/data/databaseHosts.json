@@ -45,9 +45,21 @@
                 "assessment": "High"
             },
             "storage": {
-                "size": 0,
-                "used": 0,
-                "spaceSavings": 0
+                "fsxn": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "fsxw": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "ebs": {
+                    "size": 0
+                }  
             },
             "estimatedUsageCost": {
                 "compute": 700,
@@ -100,9 +112,21 @@
                 "assessment": "High"
             },
             "storage": {
-                "size": 3932364972032,
-                "used": 181537648640,
-                "spaceSavings": 10737418240
+                "fsxn": {
+                    "size": 3932364972032,
+                    "used": 181537648640,
+                    "spaceSavings": 10737418240,
+                    "spaceSavingsPercentage": 0
+                },
+                "fsxw": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "ebs": {
+                    "size": 0
+                }  
             },
             "estimatedUsageCost": {
                 "compute": 700,
@@ -150,9 +174,21 @@
                 "assessment": "High"
             },
             "storage": {
-                "size": 3932364972032,
-                "used": 181537648640,
-                "spaceSavings": 10737418240
+                "fsxn": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "fsxw": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "ebs": {
+                    "size": 3932364972032
+                }  
             },
             "estimatedUsageCost": {
                 "compute": 700,
@@ -200,9 +236,21 @@
                 "assessment": "Low"
             },
             "storage": {
-                "size": 3932364972032,
-                "used": 181537648640,
-                "spaceSavings": 10737418240
+                "fsxn": {
+                    "size": 3932364972032,
+                    "used": 181537648640,
+                    "spaceSavings": 10737418240,
+                    "spaceSavingsPercentage": 0
+                },
+                "fsxw": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "ebs": {
+                    "size": 0
+                }  
             },
             "estimatedUsageCost": {
                 "compute": 700,
@@ -247,9 +295,21 @@
                 "assessment": "Medium"
             },
             "storage": {
-                "size": 3932364972032,
-                "used": 181537648640,
-                "spaceSavings": 10737418240
+                "fsxn": {
+                    "size": 3932364972032,
+                    "used": 181537648640,
+                    "spaceSavings": 10737418240,
+                    "spaceSavingsPercentage": 0
+                },
+                "fsxw": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "ebs": {
+                    "size": 0
+                }  
             },
             "estimatedUsageCost": {
                 "compute": 700,
@@ -294,9 +354,21 @@
                 "assessment": "Medium"
             },
             "storage": {
-                "size": 3932364972032,
-                "used": 181537648640,
-                "spaceSavings": 10737418240
+                "fsxn": {
+                    "size": 3932364972032,
+                    "used": 181537648640,
+                    "spaceSavings": 10737418240,
+                    "spaceSavingsPercentage": 0
+                },
+                "fsxw": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "ebs": {
+                    "size": 0
+                }  
             },
             "estimatedUsageCost": {
                 "compute": 700,
@@ -342,9 +414,21 @@
                 "assessment": "High"
             },
             "storage": {
-                "size": 3932364972032,
-                "used": 181537648640,
-                "spaceSavings": 10737418240
+                "fsxn": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "fsxw": {
+                    "size": 3932364972032,
+                    "used": 181537648640,
+                    "spaceSavings": 10737418240,
+                    "spaceSavingsPercentage": 0
+                },
+                "ebs": {
+                    "size": 0
+                }  
             },
             "estimatedUsageCost": {
                 "compute": 700,
@@ -390,9 +474,21 @@
                 "assessment": "High"
             },
             "storage": {
-                "size": 3932364972032,
-                "used": 181537648640,
-                "spaceSavings": 10737418240
+                "fsxn": {
+                    "size": 3932364972032,
+                    "used": 181537648640,
+                    "spaceSavings": 10737418240,
+                    "spaceSavingsPercentage": 0
+                },
+                "fsxw": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "ebs": {
+                    "size": 0
+                }  
             },
             "estimatedUsageCost": {
                 "compute": 700,
@@ -438,9 +534,21 @@
                 "assessment": "High"
             },
             "storage": {
-                "size": 3932364972032,
-                "used": 181537648640,
-                "spaceSavings": 10737418240
+                "fsxn": {
+                    "size": 3932364972032,
+                    "used": 181537648640,
+                    "spaceSavings": 10737418240,
+                    "spaceSavingsPercentage": 0
+                },
+                "fsxw": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "ebs": {
+                    "size": 0
+                }  
             },
             "estimatedUsageCost": {
                 "compute": 700,
@@ -486,9 +594,21 @@
                 "assessment": "Low"
             },
             "storage": {
-                "size": 3932364972032,
-                "used": 181537648640,
-                "spaceSavings": 10737418240
+                "fsxn": {
+                    "size": 3932364972032,
+                    "used": 181537648640,
+                    "spaceSavings": 10737418240,
+                    "spaceSavingsPercentage": 0
+                },
+                "fsxw": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "ebs": {
+                    "size": 0
+                }  
             },
             "estimatedUsageCost": {
                 "compute": 700,
@@ -534,9 +654,21 @@
                 "assessment": "Low"
             },
             "storage": {
-                "size": 3932364972032,
-                "used": 181537648640,
-                "spaceSavings": 10737418240
+                "fsxn": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "fsxw": {
+                    "size": 3932364972032,
+                    "used": 181537648640,
+                    "spaceSavings": 10737418240,
+                    "spaceSavingsPercentage": 0
+                },
+                "ebs": {
+                    "size": 0
+                }  
             },
             "estimatedUsageCost": {
                 "compute": 700,
@@ -582,9 +714,21 @@
                 "assessment": "Medium"
             },
             "storage": {
-                "size": 3932364972032,
-                "used": 181537648640,
-                "spaceSavings": 10737418240
+                "fsxn": {
+                    "size": 3932364972032,
+                    "used": 181537648640,
+                    "spaceSavings": 10737418240,
+                    "spaceSavingsPercentage": 0
+                },
+                "fsxw": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "ebs": {
+                    "size": 0
+                }  
             },
             "estimatedUsageCost": {
                 "compute": 700,
@@ -630,9 +774,21 @@
                 "assessment": "Medium"
             },
             "storage": {
-                "size": 3932364972032,
-                "used": 181537648640,
-                "spaceSavings": 10737418240
+                "fsxn": {
+                    "size": 3932364972032,
+                    "used": 181537648640,
+                    "spaceSavings": 10737418240,
+                    "spaceSavingsPercentage": 0
+                },
+                "fsxw": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "ebs": {
+                    "size": 0
+                }  
             },
             "estimatedUsageCost": {
                 "compute": 700,
@@ -678,9 +834,21 @@
                 "assessment": "High"
             },
             "storage": {
-                "size": 3932364972032,
-                "used": 181537648640,
-                "spaceSavings": 10737418240
+                "fsxn": {
+                    "size": 3932364972032,
+                    "used": 181537648640,
+                    "spaceSavings": 10737418240,
+                    "spaceSavingsPercentage": 0
+                },
+                "fsxw": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "ebs": {
+                    "size": 0
+                }  
             },
             "estimatedUsageCost": {
                 "compute": 700,
@@ -726,9 +894,21 @@
                 "assessment": "High"
             },
             "storage": {
-                "size": 3932364972032,
-                "used": 181537648640,
-                "spaceSavings": 10737418240
+                "fsxn": {
+                    "size": 3932364972032,
+                    "used": 181537648640,
+                    "spaceSavings": 10737418240,
+                    "spaceSavingsPercentage": 0
+                },
+                "fsxw": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "ebs": {
+                    "size": 0
+                }  
             },
             "estimatedUsageCost": {
                 "compute": 700,
@@ -774,9 +954,21 @@
                 "assessment": "High"
             },
             "storage": {
-                "size": 3932364972032,
-                "used": 181537648640,
-                "spaceSavings": 10737418240
+                "fsxn": {
+                    "size": 3932364972032,
+                    "used": 181537648640,
+                    "spaceSavings": 10737418240,
+                    "spaceSavingsPercentage": 0
+                },
+                "fsxw": {
+                    "size": 0,
+                    "used": 0,
+                    "spaceSavings": 0,
+                    "spaceSavingsPercentage": 0
+                },
+                "ebs": {
+                    "size": 0
+                }  
             },
             "estimatedUsageCost": {
                 "compute": 700,

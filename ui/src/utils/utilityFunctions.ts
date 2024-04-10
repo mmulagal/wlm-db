@@ -28,7 +28,7 @@ import {
 } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets, TagObj } from './types/mssqlTypes';
 import store from '../store/store';
-import { DatabaseHostItem, DatabaseJobsItem, JobsSummaryRes } from './types/databaseHomeTypes';
+import { DatabaseHostItem, JobsSummaryRes } from './types/databaseHomeTypes';
 import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './types/workloadFactoryResourceTypes';
 import { databaseHomeApi } from './apiService';
 import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
@@ -344,25 +344,22 @@ export const formatFractionalNumber = (value: number | undefined, precision: num
     return value;
 };
 
-export const isAwsBackupEnabled = (val:any) => {
-    return val?.protection?.isAwsBackUpEnabled?.fsxw || 
-    val?.protection?.isAwsBackUpEnabled?.fsxn || 
-    val?.protection?.isAwsBackUpEnabled?.ebs;
+export const isAwsBackupEnabled = (val: any) => {
+    return (
+        val?.protection?.isAwsBackUpEnabled?.fsxw ||
+        val?.protection?.isAwsBackUpEnabled?.fsxn ||
+        val?.protection?.isAwsBackUpEnabled?.ebs
+    );
 };
 
 export const formatHostData = (val: any) => {
     // Protection text added to enable filter
     let protectionText = '';
-    if (
-        isAwsBackupEnabled(val) ||
-        val?.protection?.isFsxOntapSnapshotsEnabled ||
-        val?.protection?.isSqlNativeEnabled
-    ) {
+    if (isAwsBackupEnabled(val) || val?.protection?.isFsxOntapSnapshotsEnabled || val?.protection?.isSqlNativeEnabled) {
         protectionText = GENERAL.PROTECTED;
     } else if (val?.protection) {
         protectionText = GENERAL.NOT_PROTECTED;
     }
-    const storagePercent = val?.storage ? (val.storage?.spaceSavings / val.storage?.used) * 100 : 0;
 
     // instance names list
     let instanceNames: string[] = [];
@@ -414,6 +411,32 @@ export const formatHostData = (val: any) => {
     });
     const fileSystemType = typeList.join(', ') || val?.topology?.fileSystemType;
 
+    let storagePercent = 0;
+    let storageSavingsText = '';
+    let fsxType = '';
+    if (fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
+        fsxType = 'fsxn';
+    } else if (fileSystemType.includes(GENERAL.FSX_FOR_WINDOWS)) {
+        fsxType = 'fsxw';
+    } else if (fileSystemType.includes(GENERAL.EBS)) {
+        fsxType = 'ebs';
+    }
+
+    if (fsxType) {
+        storagePercent = val?.storage?.[fsxType]
+            ? (val.storage?.[fsxType]?.spaceSavings / val.storage?.[fsxType]?.used) * 100
+            : 0;
+        storageSavingsText =
+            val?.storage?.[fsxType]?.spaceSavings &&
+            val?.storage?.[fsxType]?.used &&
+            formatFractionalNumber(storagePercent, 2) +
+                '% (' +
+                formatSizeOnePrecision(val.storage?.[fsxType]?.spaceSavings) +
+                ')';
+    }
+
+    let totalSize = (val?.storage?.fsxn?.size || 0) + (val?.storage?.fsxw?.size || 0) + (val?.storage?.ebs?.size || 0);
+
     val = {
         ...val,
         type: DB_HOME_DATA_TYPE.HOSTS,
@@ -431,11 +454,8 @@ export const formatHostData = (val: any) => {
         // performance table text to search in table
         performanceText: val?.performance && val.performance?.assessment,
         // Storage saving table text to search in table
-        storageSavingsText:
-            val?.storage?.spaceSavings &&
-            val?.storage?.used &&
-            formatFractionalNumber(storagePercent, 2) + '% (' + formatSizeOnePrecision(val.storage?.spaceSavings) + ')',
-        sizeformat: val?.storage?.size && formatSizeOnePrecision(val?.storage?.size),
+        storageSavingsText: storageSavingsText,
+        sizeformat: formatSizeOnePrecision(totalSize),
         instanceNames: instanceNames.join(',') || val?.ec2InstanceName,
         vpcNames: val?.topology?.vpcName || val?.vpc?.name,
         azType: azType,
@@ -563,11 +583,22 @@ export const getAggrStorageSavings = (data: DatabaseHostItem[] | WorkloadFactory
     let storageSavings = 0;
 
     data?.map((val: any) => {
-        if (val?.storage?.used) {
-            totalConsume += val.storage.used;
+        let storageType = val?.topology?.fileSystemType;
+        let fsxType = '';
+        if (storageType.includes(GENERAL.FSX_FOR_ONTAP)) {
+            fsxType = 'fsxn';
+        } else if (storageType.includes(GENERAL.FSX_FOR_WINDOWS)) {
+            fsxType = 'fsxw';
+        } else if (storageType.includes(GENERAL.EBS)) {
+            fsxType = 'ebs';
         }
-        if (val?.storage?.spaceSavings) {
-            storageSavings += val.storage.spaceSavings;
+        if (fsxType) {
+            if (val?.storage?.[fsxType]?.used) {
+                totalConsume += val.storage[fsxType].used;
+            }
+            if (val?.storage?.[fsxType]?.spaceSavings) {
+                storageSavings += val.storage[fsxType].spaceSavings;
+            }
         }
     });
 
