@@ -6,7 +6,7 @@ import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected
 import styles from './DatabaseListTable.module.scss';
 import { WorkloadFactoryDatabaseItem } from '../../../utils/types/workloadFactoryResourceTypes';
 import { useAppSelector } from '../../../store/storeHooks';
-import { formatSize } from '../../../utils/utilityFunctions';
+import { formatSize, isAwsBackupEnabled } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
 
 const DatabaseListTable = () => {
@@ -17,7 +17,7 @@ const DatabaseListTable = () => {
         return tableData?.map(perRow => {
             let isProtected = GENERAL.NOT_PROTECTED;
             if (
-                perRow?.protection?.isAwsBackUpEnabled ||
+                isAwsBackupEnabled(perRow) ||
                 perRow?.protection?.isFsxOntapSnapshotsEnabled ||
                 perRow?.protection?.isSqlNativeEnabled
             ) {
@@ -100,7 +100,7 @@ const DatabaseListTable = () => {
                 const protectionData = rowData?.protection;
                 let protectedChk = false;
                 if (
-                    protectionData?.isAwsBackUpEnabled ||
+                    isAwsBackupEnabled(rowData) ||
                     protectionData?.isFsxOntapSnapshotsEnabled ||
                     protectionData?.isSqlNativeEnabled
                 ) {
@@ -110,7 +110,7 @@ const DatabaseListTable = () => {
                 if (protectionData?.isFsxOntapSnapshotsEnabled) {
                     protectedByList.push(GENERAL.FSX_ONTAP_SNAPSHOTS);
                 }
-                if (protectionData?.isAwsBackUpEnabled) {
+                if (isAwsBackupEnabled(rowData)) {
                     protectedByList.push(GENERAL.AWS_BACKUP);
                 }
                 if (protectionData?.isSqlNativeEnabled) {

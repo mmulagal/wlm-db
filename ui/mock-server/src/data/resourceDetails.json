@@ -48,7 +48,7 @@
     },
 
     "protection": {
-        "isAwsBackUpEnabled": true,
+        "isAwsBackUpEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
         "isFsxOntapSnapshotsEnabled": true,
         "isSqlNativeEnabled": false
     },
@@ -75,15 +75,26 @@
     },
 
     "storage": {
-        "size": 10000000000,
-        "used": 90000000,
-        "spaceSavings": 10000000,
-        "spaceSavingsPercent": 10
+        "fsxn": {
+            "size": 10000000000,
+            "used": 90000000,
+            "spaceSavings": 10000000,
+            "spaceSavingsPercent": 10
+        },
+        "fsxw": {
+            "size": 0,
+            "used": 0,
+            "spaceSavings": 0,
+            "spaceSavingsPercent": 0
+        },
+        "ebs": {
+            "size": 0
+        }
     },
 
     "estimatedUsageCost": {
         "compute": 1552,
-        "storage": 600,
+        "storage": { "fsxn": 600, "fsxw": 0, "ebs": 0 },
         "connectivity": 380,
         "others": 572,
         "estimationType": "pricing"

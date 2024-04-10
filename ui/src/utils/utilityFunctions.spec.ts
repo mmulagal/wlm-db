@@ -78,7 +78,11 @@ const databaseHostItem: any = [
             ]
         },
         protection: {
-            isAwsBackUpEnabled: true,
+            isAwsBackUpEnabled: {
+                fsxn: true,
+                fsxw: false,
+                ebs: false
+            },
             isFsxOntapSnapshotsEnabled: true,
             isSqlNativeEnabled: true,
             protectedDatabases: 8
@@ -88,13 +92,29 @@ const databaseHostItem: any = [
             assessment: 'High'
         },
         storage: {
-            size: 0,
-            used: 0,
-            spaceSavings: 0
+            fsxn: {
+                size: 0,
+                used: 0,
+                spaceSavings: 0,
+                spaceSavingsPercent: 0
+            },
+            fsxw: {
+                size: 0,
+                used: 0,
+                spaceSavings: 0,
+                spaceSavingsPercent: 0
+            },
+            ebs: {
+                size: 0
+            }
         },
         estimatedUsageCost: {
             compute: 700,
-            storage: 200,
+            storage: {
+                fsxn: 200,
+                fsxw: 0,
+                ebs: 0
+            },
             connectivity: 100,
             others: 24,
             estimationType: 'pricing'
@@ -121,7 +141,11 @@ const databaseHostItem: any = [
             ]
         },
         protection: {
-            isAwsBackUpEnabled: false,
+            isAwsBackUpEnabled: {
+                fsxn: false,
+                fsxw: false,
+                ebs: false
+            },
             isFsxOntapSnapshotsEnabled: false,
             isSqlNativeEnabled: false,
             protectedDatabases: 8
@@ -131,13 +155,29 @@ const databaseHostItem: any = [
             assessment: 'High'
         },
         storage: {
-            size: 3932364972032,
-            used: 181537648640,
-            spaceSavings: 10737418240
+            fsxn: {
+                size: 3932364972032,
+                used: 181537648640,
+                spaceSavings: 10737418240,
+                spaceSavingsPercent: 0
+            },
+            fsxw: {
+                size: 0,
+                used: 0,
+                spaceSavings: 0,
+                spaceSavingsPercent: 0
+            },
+            ebs: {
+                size: 0
+            }
         },
         estimatedUsageCost: {
             compute: 700,
-            storage: 200,
+            storage: {
+                fsxn: 200,
+                fsxw: 0,
+                ebs: 0
+            },
             connectivity: 100,
             others: 24,
             estimationType: 'pricing'

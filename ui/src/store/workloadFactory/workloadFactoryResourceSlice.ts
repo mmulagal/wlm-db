@@ -50,7 +50,11 @@ const initialState: WorkloadFactoryResourceEntities = {
         },
 
         protection: {
-            isAwsBackUpEnabled: false,
+            isAwsBackUpEnabled: {
+                fsxn: false,
+                fsxw: false,
+                ebs: false
+            },
             isFsxOntapSnapshotsEnabled: false,
             isSqlNativeEnabled: false
         },
@@ -77,15 +81,30 @@ const initialState: WorkloadFactoryResourceEntities = {
         },
 
         storage: {
-            size: 0,
-            used: 0,
-            spaceSavings: 0,
-            spaceSavingsPercent: 0
+            fsxn: {
+                size: 0,
+                used: 0,
+                spaceSavings: 0,
+                spaceSavingsPercent: 0
+            },
+            fsxw: {
+                size: 0,
+                used: 0,
+                spaceSavings: 0,
+                spaceSavingsPercent: 0
+            },
+            ebs: {
+                size: 0
+            }
         },
 
         estimatedUsageCost: {
             compute: 0,
-            storage: 0,
+            storage: {
+                fsxn: 0,
+                fsxw: 0,
+                ebs: 0
+            },
             connectivity: 0,
             others: 0
         },

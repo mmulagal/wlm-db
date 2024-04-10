@@ -5,7 +5,7 @@
         "id": "i-02dbf20711b3c8311",
         "name": "i-02dbf20711b3c8311",
         "status": "Up",
-        "databaseCount": 0,
+        "databaseCount": 10,
         "databaseServer": {
           "operatingSystem": "Windows Server 2019",
           "serverEdition": "Microsoft SQL Server 2022 (RTM-CU6) (KB5027505)",
@@ -53,7 +53,7 @@
           }
         },
         "protection": {
-          "isAwsBackUpEnabled": true,
+          "isAwsBackUpEnabled": { "fsxn": false, "fsxw": false, "ebs": true },
           "isFsxOntapSnapshotsEnabled": true,
           "isSqlNativeEnabled": true,
           "protectedDatabases": 8
@@ -77,13 +77,25 @@
           }
         },
         "storage": {
-          "size": 3932364972032,
-          "used": 181537648640,
-          "spaceSavings": 10737418240
-        },
+          "fsxn": {
+              "size": 0,
+              "used": 0,
+              "spaceSavings": 0,
+              "spaceSavingsPercentage": 0
+          },
+          "fsxw": {
+              "size": 0,
+              "used": 0,
+              "spaceSavings": 0,
+              "spaceSavingsPercentage": 0
+          },
+          "ebs": {
+              "size": 3932364972032
+          }  
+      },
         "estimatedUsageCost": {
           "compute": 700,
-          "storage": 200,
+          "storage": { "fsxn": 0, "fsxw": 0, "ebs": 200 },
           "connectivity": 100,
           "others": 24,
           "estimationType": "pricing"
@@ -114,7 +126,7 @@
         "id": "i-0d6acde2918b1ee11",
         "name": "i-0d6acde2918b1ee11",
         "status": "Up",
-        "databaseCount": 0,
+        "databaseCount": 10,
         "databaseServer": {
           "operatingSystem": "Windows Server 2019",
           "serverEdition": "Microsoft SQL Server 2022 (RTM-CU6) (KB5027505)",
@@ -162,8 +174,8 @@
           }
         },
         "protection": {
-          "isAwsBackUpEnabled": true,
-          "isFsxOntapSnapshotsEnabled": true,
+          "isAwsBackUpEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+          "isFsxOntapSnapshotsEnabled": false,
           "isSqlNativeEnabled": true,
           "protectedDatabases": 8
         },
@@ -186,13 +198,25 @@
           }
         },
         "storage": {
-          "size": 3932364972032,
-          "used": 181537648640,
-          "spaceSavings": 10737418240
-        },
+          "fsxn": {
+              "size": 3932364972032,
+              "used": 181537648640,
+              "spaceSavings": 10737418240,
+              "spaceSavingsPercentage": 0
+          },
+          "fsxw": {
+              "size": 0,
+              "used": 0,
+              "spaceSavings": 0,
+              "spaceSavingsPercentage": 0
+          },
+          "ebs": {
+              "size": 3932364972032
+          }  
+      },
         "estimatedUsageCost": {
           "compute": 700,
-          "storage": 200,
+          "storage": { "fsxn": 0, "fsxw": 100, "ebs": 200 },
           "connectivity": 100,
           "others": 24,
           "estimationType": "pricing"
@@ -223,7 +247,7 @@
         "id": "i-0ccb393ef1e834df",
         "name": "i-0ccb393ef1e834df",
         "status": "Up",
-        "databaseCount": 0,
+        "databaseCount": 10,
         "databaseServer": {
           "operatingSystem": "Windows Server 2019",
           "serverEdition": "Microsoft SQL Server 2022 (RTM-CU6) (KB5027505)",
@@ -271,7 +295,7 @@
           }
         },
         "protection": {
-          "isAwsBackUpEnabled": true,
+          "isAwsBackUpEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
           "isFsxOntapSnapshotsEnabled": true,
           "isSqlNativeEnabled": true,
           "protectedDatabases": 8
@@ -295,13 +319,25 @@
           }
         },
         "storage": {
-          "size": 3932364972032,
-          "used": 181537648640,
-          "spaceSavings": 10737418240
-        },
+          "fsxn": {
+              "size": 3932364972032,
+              "used": 181537648640,
+              "spaceSavings": 10737418240,
+              "spaceSavingsPercentage": 0
+          },
+          "fsxw": {
+              "size": 3932364972032,
+              "used": 181537648640,
+              "spaceSavings": 10737418240,
+              "spaceSavingsPercentage": 0
+          },
+          "ebs": {
+              "size": 0
+          }  
+      },
         "estimatedUsageCost": {
           "compute": 700,
-          "storage": 200,
+          "storage": { "fsxn": 0, "fsxw": 0, "ebs": 200 },
           "connectivity": 100,
           "others": 24,
           "estimationType": "pricing"
@@ -332,7 +368,7 @@
         "id": "i-02dadc332885523434",
         "name": "i-02dadc332885523434",
         "status": "Up",
-        "databaseCount": 0,
+        "databaseCount": 10,
         "databaseServer": {
           "operatingSystem": "Windows Server 2019",
           "serverEdition": "Microsoft SQL Server 2022 (RTM-CU6) (KB5027505)",
@@ -380,7 +416,7 @@
           }
         },
         "protection": {
-          "isAwsBackUpEnabled": true,
+          "isAwsBackUpEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
           "isFsxOntapSnapshotsEnabled": true,
           "isSqlNativeEnabled": true,
           "protectedDatabases": 8
@@ -404,13 +440,25 @@
           }
         },
         "storage": {
-          "size": 3932364972032,
-          "used": 181537648640,
-          "spaceSavings": 10737418240
-        },
+          "fsxn": {
+              "size": 3932364972032,
+              "used": 181537648640,
+              "spaceSavings": 10737418240,
+              "spaceSavingsPercentage": 0
+          },
+          "fsxw": {
+              "size": 0,
+              "used": 0,
+              "spaceSavings": 0,
+              "spaceSavingsPercentage": 0
+          },
+          "ebs": {
+              "size": 0
+          }  
+      },
         "estimatedUsageCost": {
           "compute": 700,
-          "storage": 200,
+          "storage": { "fsxn": 0, "fsxw": 0, "ebs": 200 },
           "connectivity": 100,
           "others": 24,
           "estimationType": "pricing"
@@ -489,8 +537,8 @@
           }
         },
         "protection": {
-          "isAwsBackUpEnabled": true,
-          "isFsxOntapSnapshotsEnabled": true,
+          "isAwsBackUpEnabled": {"fsxn": true, "fsxw": false, "ebs": false},
+          "isFsxOntapSnapshotsEnabled": false,
           "isSqlNativeEnabled": true,
           "protectedDatabases": 8
         },
@@ -513,13 +561,25 @@
           }
         },
         "storage": {
-          "size": 3932364972032,
-          "used": 181537648640,
-          "spaceSavings": 10737418240
-        },
+          "fsxn": {
+              "size": 3932364972032,
+              "used": 181537648640,
+              "spaceSavings": 10737418240,
+              "spaceSavingsPercentage": 0
+          },
+          "fsxw": {
+              "size": 3932364972032,
+              "used": 181537648640,
+              "spaceSavings": 10737418240,
+              "spaceSavingsPercentage": 0
+          },
+          "ebs": {
+              "size": 0
+          }  
+      },
         "estimatedUsageCost": {
           "compute": 700,
-          "storage": 200,
+          "storage": { "fsxn": 200, "fsxw": 100, "ebs": 0 },
           "connectivity": 100,
           "others": 24,
           "estimationType": "pricing"
