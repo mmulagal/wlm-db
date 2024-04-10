@@ -1,17 +1,13 @@
-import { Spinner, Typography } from '@netapp/design-system';
-import { useEffect, useState } from 'react';
-import { GENERAL } from '../../utils/appConstants';
+import { useState } from 'react';
+
 import styles from './DatabaseHomePage.module.scss';
 import Sidebar from './Sidebar/Sidebar';
 import DatabaseHost from './DatabaseHost/DatabaseHost';
-import DatabaseTable from './DatabaseTable/DatabaseTable';
 import StorageSavings from './StorageSavings/StorageSavings';
 import EstimatedCost from './EstimatedCost/EstimatedCost';
 import ProtectionSection from './ProtectSection/ProtectionSection';
 import JobStatus from './JobStatus/JobStatus';
-import DatabaseHomeApis from './DatabaseHomeApis';
 import TopBarButton from './TopBarButton/TopBarButton';
-import { MARKETING_PAGE_URL } from '../../utils/consts';
 import { useAppSelector } from '../../store/storeHooks';
 
 const DatabaseHomePage = () => {
@@ -59,9 +55,6 @@ const DatabaseHomePage = () => {
                         </div>
                     </div>
                 </div>
-                {/*<div className={styles.secondLevelContainer}>
-                    <DatabaseTable />
-                </div> */}
             </div>
 
             <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />
