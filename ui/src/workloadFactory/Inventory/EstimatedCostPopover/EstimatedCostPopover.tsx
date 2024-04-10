@@ -25,7 +25,10 @@ const EstimatedCostPopover = (data: any) => {
                     {GENERAL.STORAGE}
                 </Typography>
                 <Typography variant="Regular_13" className={styles.middle}>
-                    {`$ ${formatFractionalNumber(data?.storage, 2)}`}
+                    {`$ ${formatFractionalNumber(
+                        (data?.storage?.fsxn || 0) + (data?.storage?.fsxw || 0) + (data?.storage?.ebs || 0),
+                        2
+                    )}`}
                 </Typography>
             </div>
 
