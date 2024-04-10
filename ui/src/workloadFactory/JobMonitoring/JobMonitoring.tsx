@@ -1,14 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
-import { useNavigate } from 'react-router-dom';
 import LineChart from '../DatabaseHomePage/LineChart/LineChart';
 import styles from './JobMonitoring.module.scss';
 import { GENERAL } from '../../utils/appConstants';
 import JobMonitoringTable from './JobMonitoringTable/JobMonitoringTable';
 import JobDistribution from './JobDistribution/JobDistribution';
 import { generateOptionType } from '../../utils/utilityFunctions';
-import JobMonitoringApi from './JobMonitoringApi';
 import { setFromTime, setTimeInterval, setToTime } from '../../store/workloadFactory/jobMonitoringSlice';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 

@@ -125,14 +125,6 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
         );
     };
 
-    const redirectToCf = () => {
-        if (isDemoMode) {
-            openDemoInfoDialog();
-        } else {
-            window.open(deployRedirectToCfLink, '_blank', 'noopener');
-        }
-    };
-
     return (
         <div className={styles.noteText}>
             {GENERAL.MISSING_BLOCKED_PERMISSIONS[0]}
