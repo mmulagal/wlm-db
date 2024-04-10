@@ -20,6 +20,9 @@ function App() {
         const element = document.querySelector("[class*='Toggle-module_active']");
         if (element) {
             console.log('element found');
+            element.addEventListener('click', () => {
+                console.log('element clicked');
+            });
         } else {
             console.log('element not found');
         }
