@@ -10,7 +10,8 @@ import {
     getVpcEndpoints,
     getServicesWithNoEndpoint,
     getValidationNodeInstanceType,
-    enableVpcDnsAttributes
+    enableVpcDnsAttributes,
+    isEbsAwsBackupEnabled
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -88,5 +89,10 @@ describe('EC2 Operations', () => {
     it('Modify vpc dns attributes', async () => {
         const response = await enableVpcDnsAttributes(credentialsId, DEFAULT_AWS_REGION, 'vpc-123445');
         expect(response).toBeDefined();
+    });
+
+    it('Check if EBS backup is available', async () => {
+        const response = await isEbsAwsBackupEnabled(credentialsId, DEFAULT_AWS_REGION, 'vol-123445');
+        expect(response).toEqual(true);
     });
 });

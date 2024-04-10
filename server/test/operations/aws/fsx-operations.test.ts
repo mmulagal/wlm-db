@@ -7,13 +7,16 @@ import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
+import '../../simulator/scopes/cloud-manager/fsx-core-scope';
+
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 import {
     getFSxFileSystemsList,
     getOntapVolumesSnapshotCount,
-    isAWSBackupEnabled,
+    isFsxnAwsBackupEnabled,
     getMappedOntapVolumes,
-    tagFsxResource
+    tagFsxResource,
+    isFsxwAwsBackupEnabled
 } from '../../../src/operations/aws/fsx-operations';
 import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_VPC_ID, ACCOUNT_ID } from '../../utils/consts';
 
@@ -23,7 +26,7 @@ const awsAccountId = `${faker.string.alpha(8)}`;
 
 describe('Testcases for Amazon FSx resources operations', () => {
     // Its not mocked, we are making actual api call to fsx inventory, so headers wont be present to make this test works
-    it.skip('List FSx filesystems and volume details', async () => {
+    it('List FSx filesystems and volume details', async () => {
         const response = await getFSxFileSystemsList(
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
@@ -34,7 +37,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
     });
 
     it('AWS backup enabled check', async () => {
-        const response = await isAWSBackupEnabled(
+        const response = await isFsxnAwsBackupEnabled(
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID,
@@ -80,5 +83,14 @@ describe('Testcases for Amazon FSx resources operations', () => {
                 { Key: 'key', Value: 'value' }
             ])
         ).resolves.not.toThrow();
+    });
+
+    it('Check if FSX for Windows AWS backup available', async () => {
+        const response = await isFsxwAwsBackupEnabled(
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            FSX_FILESYSTEM_ID
+        );
+        expect(response).toEqual(true);
     });
 });

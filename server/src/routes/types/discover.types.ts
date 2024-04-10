@@ -142,29 +142,10 @@ const DiscoverInstanceParams = Type.Composite([
     })
 ]);
 
-const MsSqlInstancesRequestBody = Type.Object({
-    instancesDetails: Type.Array(
-        Type.Object({
-            ec2InstanceId: Type.String({
-                description: 'Ec2 instance ID associated with the MS SQL Server instance.'
-            }),
-            fsxnId: Type.Optional(
-                Type.String({
-                    description: 'FSx for NetApp ONTAP FileSystem ID associated with the MS SQL Server instance.'
-                })
-            ),
-            ebsVolumeId: Type.Optional(
-                Type.String({
-                    description: 'EBS volume ID associated with the MS SQL Server instance.'
-                })
-            ),
-            fsxwId: Type.Optional(
-                Type.String({
-                    description: 'FSx for Windows FileSystem ID associated with the MS SQL Server instance.'
-                })
-            )
-        })
-    )
+const MsSqlInstancesRequestQuery = Type.Object({
+    instances: Type.String({
+        description: 'Comma separated Ec2 instance ID associated with the MS SQL Server instance.'
+    })
 });
 
 export {
@@ -177,6 +158,6 @@ export {
     DiscoverCredentialsRequestBody,
     DiscoverInstanceParams,
     DiscoverCredentialsType,
-    MsSqlInstancesRequestBody,
+    MsSqlInstancesRequestQuery,
     DiscoverCredentialsResponse
 };

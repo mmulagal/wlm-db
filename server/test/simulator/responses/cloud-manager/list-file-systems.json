@@ -1,0 +1,139 @@
+{
+    "items": [
+        {
+            "id": "fs-0d5efc3057c4f12cb",
+            "name": "wlmdb-fsx-1",
+            "region": "ap-southeast-1",
+            "deploymentType": "MULTI_AZ",
+            "status": {
+                "status": "AVAILABLE"
+            },
+            "awsAccountId": "464262061435",
+            "storageCapacity": 1099511627776,
+            "throughputCapacity": 134217728,
+            "storageType": "SSD",
+            "vpcId": "vpc-84b3afe6",
+            "subnetIds": {
+                "primary": "subnet-0ef4f90e95f375a84",
+                "secondary": "subnet-4cdd3b29"
+            },
+            "networkInterfaceIds": [
+                "eni-07bd4c0e943562d05",
+                "eni-0de513ad06da316a7"
+            ],
+            "arn": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-0d5efc3057c4f12cb",
+            "tags": [
+                {
+                    "key": "CostExplorerTag",
+                    "value": "wlmdb-fsx-1"
+                },
+                {
+                    "key": "wlmdb-cost-resource",
+                    "value": "fs-0d5efc3057c4f12cb"
+                },
+                {
+                    "key": "Name",
+                    "value": "wlmdb-fsx-1"
+                }
+            ],
+            "endpointIpAddressRange": "172.31.255.255/26",
+            "endpoints": {
+                "intercluster": {
+                    "dnsName": "intercluster.fs-0d5efc3057c4f12cb.fsx.ap-southeast-1.amazonaws.com",
+                    "ipAddresses": [
+                        "172.31.48.75",
+                        "172.31.2.141"
+                    ]
+                },
+                "management": {
+                    "dnsName": "management.fs-0d5efc3057c4f12cb.fsx.ap-southeast-1.amazonaws.com",
+                    "ipAddresses": [
+                        "172.31.255.201"
+                    ]
+                }
+            },
+            "minimumSsdIops": 3072,
+            "routeTableIds": [
+                "rtb-65aeb107",
+                "rtb-0c8d4524c4faf18eb",
+                "rtb-0fbf026488d36d9da",
+                "rtb-02b9529c76dc1bd49"
+            ],
+            "diskIopsConfiguration": {
+                "mode": "AUTOMATIC",
+                "iops": 3072
+            },
+            "weeklyMaintenanceStartTime": "4:21:00",
+            "haPairs": 1,
+            "throughputCapacityPerHAPair": 134217728,
+            "creationTime": 1691379645926
+        },
+        {
+            "id": "fs-0f32f6c69fb7e40ac",
+            "name": "wlmdb-fsx-2",
+            "region": "ap-southeast-1",
+            "deploymentType": "MULTI_AZ",
+            "status": {
+                "status": "AVAILABLE"
+            },
+            "awsAccountId": "464262061435",
+            "storageCapacity": 1099511627776,
+            "throughputCapacity": 134217728,
+            "storageType": "SSD",
+            "vpcId": "vpc-046f7e26255458373",
+            "subnetIds": {
+                "primary": "subnet-03dc0032136f7e0f5",
+                "secondary": "subnet-0fcd4374d52d4faf0"
+            },
+            "networkInterfaceIds": [
+                "eni-0c6339ac05ef5e616",
+                "eni-00c778cdc15cd2cad"
+            ],
+            "arn": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-0f32f6c69fb7e40ac",
+            "tags": [
+                {
+                    "key": "wlmdb-cost-resource",
+                    "value": "fs-0f32f6c69fb7e40ac"
+                },
+                {
+                    "key": "Name",
+                    "value": "wlmdb-fsx-2"
+                }
+            ],
+            "endpointIpAddressRange": "10.0.255.255/26",
+            "endpoints": {
+                "intercluster": {
+                    "dnsName": "intercluster.fs-0f32f6c69fb7e40ac.fsx.ap-southeast-1.amazonaws.com",
+                    "ipAddresses": [
+                        "10.0.7.137",
+                        "10.0.27.147"
+                    ]
+                },
+                "management": {
+                    "dnsName": "management.fs-0f32f6c69fb7e40ac.fsx.ap-southeast-1.amazonaws.com",
+                    "ipAddresses": [
+                        "10.0.255.251"
+                    ]
+                }
+            },
+            "minimumSsdIops": 3072,
+            "routeTableIds": [
+                "rtb-044539dfce91103ab",
+                "rtb-078383bcfaef27afc",
+                "rtb-02e52bec31089f965",
+                "rtb-09a5394f5cee60073"
+            ],
+            "diskIopsConfiguration": {
+                "mode": "AUTOMATIC",
+                "iops": 3072
+            },
+            "weeklyMaintenanceStartTime": "5:18:30",
+            "haPairs": 1,
+            "throughputCapacityPerHAPair": 134217728,
+            "creationTime": 1693205480983,
+            "automaticBackupRetentionDays": 30,
+            "dailyAutomaticBackupStartTime": "14:00"
+        }
+    ],
+    "nextToken": null
+}
