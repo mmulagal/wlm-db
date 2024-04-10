@@ -1,4 +1,4 @@
-import { AccordionCard, AccordionCardContent, DsTypography, TextField } from '@netapp/design-system';
+import { AccordionCard, AccordionCardContent, DsTypography } from '@netapp/design-system';
 import styles from './DefineTag.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';

@@ -31,7 +31,6 @@ import {
     setMovedToManagedHost,
     setMovedToUnmanagedHost,
     setRadioValueDetect,
-    setSelectedHeaderTab,
     setValuesForForm
 } from '../../../store/workloadFactory/inventorySlice';
 import { createDetectHostPayload } from '../../../utils/utilityFunctions';

@@ -28,7 +28,7 @@ import {
 } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets, TagObj } from './types/mssqlTypes';
 import store from '../store/store';
-import { DatabaseHostItem, DatabaseJobsItem, JobsSummaryRes } from './types/databaseHomeTypes';
+import { DatabaseHostItem, JobsSummaryRes } from './types/databaseHomeTypes';
 import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './types/workloadFactoryResourceTypes';
 import { databaseHomeApi } from './apiService';
 import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
