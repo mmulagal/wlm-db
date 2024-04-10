@@ -89,6 +89,16 @@
     justify-content: center;
 }
 
+.notAvailable {
+    color: var(--text-disabled) !important;
+}
+
+.notAvailableInformation {
+    position: relative;
+    top: 13px;
+    height: 38px;
+}
+
 @media screen and (max-width: 1350px) {
     .accordion-group {
         width: 1032px;
