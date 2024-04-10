@@ -226,12 +226,17 @@ const HOST_AND_SQL_INFO_PS1 = [
    return $SMBConnections
   }
 
-   Function GetSQLInstanceDriveDetails($serverInstance) {
-    $sqlInstancePaths = sqlcmd -Q " SET NOCOUNT ON; SELECT filename as Path FROM sys.sysdatabases " -h -1 -b -C -W -S $serverInstance
+  Function GetSQLInstanceDriveDetails($serverInstance) {
+
+    $sqlInstancePaths = sqlcmd -Q " SET NOCOUNT ON; SELECT physical_name FROM sys.master_files " -h -1 -b -C -W -S $serverInstance
+    if($sqlInstancePaths -eq $null) { 
+      $sqlInstancePaths = sqlcmd -Q " SET NOCOUNT ON; SELECT filename as Path FROM sys.sysdatabases " -h -1 -b -C -W -S $serverInstance
+    }
+
     $sqlInstanceDriveLetterOrPathList = @()
     ForEach ($path in $sqlInstancePaths) {
          if (Split-Path $path -IsAbsolute) {
-            $driveOrPath = ($path -split '\\')[0]
+            $driveOrPath = ($path -split '\\\\')[0]
             $sqlInstanceDriveLetterOrPathList += $driveOrPath
             }
          else {
@@ -306,10 +311,8 @@ const HOST_AND_SQL_INFO_PS1 = [
           $responseObject['databaseCount'] = $editionDBCountMachineInfo[1]
           $responseObject['sqlServerName'] = $editionDBCountMachineInfo[2]
   
-          $sqlInstanceDriveLetterOrPathList = sqlcmd -Q " SET NOCOUNT ON; SELECT DISTINCT LEFT(physical_name, 2) AS DriveLetter FROM sys.master_files " -h -1 -b -C -W -S $serverInstance
-          if($sqlInstanceDriveLetterOrPathList -eq $null) { 
-              $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails($serverInstance)
-          }
+          $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails($serverInstance)
+          
           if ($? -eq $False) {
             $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
           }
