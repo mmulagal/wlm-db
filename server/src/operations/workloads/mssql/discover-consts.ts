@@ -235,17 +235,10 @@ const HOST_AND_SQL_INFO_PS1 = [
 
     $sqlInstanceDriveLetterOrPathList = @()
     ForEach ($path in $sqlInstancePaths) {
-         if (Split-Path $path -IsAbsolute) {
-            $driveOrPath = ($path -split '\\\\')[0]
-            $sqlInstanceDriveLetterOrPathList += $driveOrPath
-            }
-         else {
-
-            $driveOrPath = ($path -split '\\share')[0].Trim('\')
-            $sqlInstanceDriveLetterOrPathList += $driveOrPath}
-         }
-
-
+      $path = $path.TrimStart('\')
+      $driveOrPath = ($path -split '\\\\')[0]
+      $sqlInstanceDriveLetterOrPathList += $driveOrPath
+      }
     return ($sqlInstanceDriveLetterOrPathList | Select -Unique)
 
       }
