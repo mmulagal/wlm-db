@@ -57,13 +57,7 @@ export const renderProtectionColumn = (cellData: any, rowData: any, styles: any)
 
 export const renderEstimatedCost = (cellData: any, rowData: any, styles: any) => {
     const costData = rowData?.estimatedUsageCost;
-    const totalCost =
-        costData?.compute +
-        costData?.storage?.fsxn +
-        costData?.storage?.fsxw +
-        costData?.storage?.ebs +
-        costData?.connectivity +
-        costData?.others;
+    const totalCost = +rowData?.totalCost;
     return (
         <>
             {costData && (
