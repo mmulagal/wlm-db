@@ -16,18 +16,6 @@ function App() {
     //@ts-ignore
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
-    useEffect(() => {
-        const element = document.querySelector("[class*='_widgetButton']");
-        if (element) {
-            console.log('element found');
-            element.addEventListener('click', () => {
-                console.log('element clicked');
-            });
-        } else {
-            console.log('element not found');
-        }
-    }, []);
-
     return (
         <>
             <ThemeProvider isIframe={true} theme={isDarkTheme ? 'dark' : 'light'}>
