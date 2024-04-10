@@ -17,9 +17,12 @@ function App() {
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     useEffect(() => {
-        const element = document.querySelector("[class*='Toggle-module_active']");
+        const element = document.querySelector("[class*='_widgetButton']");
         if (element) {
             console.log('element found');
+            element.addEventListener('click', () => {
+                console.log('element clicked');
+            });
         } else {
             console.log('element not found');
         }
