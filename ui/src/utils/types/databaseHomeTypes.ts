@@ -18,7 +18,7 @@ export interface DatabaseHostItem {
         isAwsBackUpEnabled: {
             fsxn: boolean;
             fsxw: boolean;
-            ebs: false;
+            ebs: boolean;
         };
         isFsxOntapSnapshotsEnabled: boolean;
         isSqlNativeEnabled: boolean;
