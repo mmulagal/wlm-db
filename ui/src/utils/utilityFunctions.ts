@@ -409,7 +409,7 @@ export const formatHostData = (val: any) => {
             typeList.push(GENERAL.FSX_FOR_WINDOWS);
         }
     });
-    const fileSystemType = typeList.join(', ') || val?.topology?.fileSystemType;
+    const fileSystemType = typeList.join(', ') || val?.topology?.fileSystemType || '';
 
     let storagePercent = 0;
     let storageSavingsText = '';
@@ -583,7 +583,7 @@ export const getAggrStorageSavings = (data: DatabaseHostItem[] | WorkloadFactory
     let storageSavings = 0;
 
     data?.map((val: any) => {
-        let storageType = val?.topology?.fileSystemType;
+        let storageType = val?.topology?.fileSystemType || '';
         let fsxType = '';
         if (storageType.includes(GENERAL.FSX_FOR_ONTAP)) {
             fsxType = 'fsxn';
