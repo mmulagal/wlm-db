@@ -41,6 +41,11 @@ Example output:
   "databaseCount" = 8,
 }
 
+About function GetSMBMappedDrivesWithPath
+  SMB mapped drives are fetched from Windows registry HKEY_USERS and specifically at Network section.
+  We will consider users starting with S-1-5-21- and do not have _Classes. 
+  Those starting with [S-1-5-21-12] are all local users and starting with [S-1-5-21-13] are all network users.
+  From Network section, pick up DriveLetter and RemotePath.  
 
 Possible causes for unavailability of SQL Server details:
 - Insufficient permissions on sys.master_files view.
@@ -77,13 +82,12 @@ const HOST_AND_SQL_INFO_PS1 = [
 
   Function GetDiskDriveDetails() {
     $TARGET_ADDRESS_REGEX = '\\w+\\:\\*(?<targetAddress>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})\\s?\\w.+'
-    try {
 
     $iScsiInitiatorSessionList = Get-CimInstance -Namespace root\\wmi -ClassName MSiSCSIInitiator_SessionClass |
                                    Where-object { $_.Devices -ne {} } |
                                      Sort-Object -Unique -Property TargetName |
                                        Select-Object Devices, TargetName
-                                       }catch {}
+                                      
 
     $iScsiSessionList = ForEach ($iScsiInitiator in $iScsiInitiatorSessionList) {
       $interfaceNames = @()
@@ -102,11 +106,11 @@ const HOST_AND_SQL_INFO_PS1 = [
 
     $iScsiInitiatorTargetList = $null
     If ((Get-WmiObject win32_service | ?{$_.Name -like 'MSiSCSI'}).State -eq 'Running') {
-        try{
+      
       $iScsiInitiatorTargetList = Get-CimInstance -Namespace root\\wmi -ClassName MSIscsiInitiator_TargetClass |
                                     Sort-Object -Unique -Property TargetName |
                                       Select-Object TargetName, DiscoveryMechanism
-                                      }catch{}
+                                      
     }
 
     $iScsiTargetList = ForEach ($iScsiInitiatorTarget in $iScsiInitiatorTargetList) {
@@ -180,34 +184,30 @@ const HOST_AND_SQL_INFO_PS1 = [
   }
 
 
-  Function GetMappedDrivesWithPath() {
+  Function GetSMBMappedDrivesWithPath() {
     $DriveLetterPath = @{}
     #User List
     $RootKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey(“USERS”,$Computer)
     $SubKeyNames = $RootKey.GetSubKeyNames()
     ForEach ($SubKeyName in $SubKeyNames)
         {
-            if (($SubKeyName.Length -gt 12) -and ($SubKeyName.Contains(“_Classes”) -ne $True))
+            if (($SubKeyName.Contains(“_Classes”) -ne $True))
                 {
-
                     #Drive List
-                    $NetworkKey = $RootKey.OpenSubKey($SubKeyName + [char]92 + “Network”)
+                    $NetworkKey = $RootKey.OpenSubKey($SubKeyName + “\\Network”)
                     if ($NetworkKey -ne $Null)
                         {
                             $MappedDrives = $NetworkKey.GetSubKeyNames()
-                            if ($MappedDrives -ne $Null)
+                           
+                              ForEach ($MappedDrive in $MappedDrives)
                                 {
-                                    ForEach ($MappedDrive in $MappedDrives)
-                                        {
-                                            $DriveKey = $NetworkKey.OpenSubKey($MappedDrive)
-                                            $DrivePath = ($DriveKey.GetValue(“RemotePath”) -split '\\share')[0].Trim('\')
-                                            if(! $DriveLetterPath.ContainsKey($MappedDrive.ToUpper()+':')) {
-                                            $DriveLetterPath.Add($MappedDrive.ToUpper()+':', $DrivePath)
-                                            
-                                            }
-                                           
-                                        }
+                                  $DriveKey = $NetworkKey.OpenSubKey($MappedDrive)
+                                  $DrivePath = ($DriveKey.GetValue(“RemotePath”) -split '\\share')[0].Trim('\')
+                                  if(! $DriveLetterPath.ContainsKey($MappedDrive.ToUpper()+':')) {
+                                      $DriveLetterPath.Add($MappedDrive.ToUpper()+':', $DrivePath)            
+                                  }         
                                 }
+                                
                         } 
                 }
         }
@@ -250,7 +250,7 @@ const HOST_AND_SQL_INFO_PS1 = [
     $instanceSectionStartTime = Get-Date
     $sqlServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
     $DiskTargetInfoMap = GetDiskDriveDetails
-    $MappedDrivesWithPath = GetMappedDrivesWithPath
+    $MappedDrivesWithPath = GetSMBMappedDrivesWithPath
     $SMBConnections = GetSMBConnections
   
     $instancesInfoList = ForEach ($sqlService in $sqlServiceList) {
