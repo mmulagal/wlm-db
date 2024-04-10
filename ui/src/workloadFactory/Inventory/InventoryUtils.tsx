@@ -102,7 +102,7 @@ export const renderFileSystemType = (cellData: any, rowData: any) => {
             typeList.push(GENERAL.FSX_FOR_WINDOWS);
         }
     });
-    return typeList ? typeList.join(', ') : cellData || GENERAL.NOT_AVAILABLE;
+    return typeList.length ? typeList.join(', ') : cellData || GENERAL.NOT_AVAILABLE;
 };
 
 export const renderCellData = (cellData: any, rowData: any, styles: any) => {
