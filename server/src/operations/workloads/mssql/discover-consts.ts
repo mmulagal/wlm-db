@@ -48,6 +48,9 @@ Possible causes for unavailability of SQL Server details:
   due to which the script won't  get/return SerialNumberOrScsiTargets.
   As a result, the storageType can't be determined while processing script
   output, which causes the API to return an empty  response for storageType.
+
+  Note: As a failover, using sys.sysdatabases view to fetch database paths.
+  However, this view does not list log paths.
 - SQL Instance is not running.
   Because of this, we won't be able to get storagex details.
 - No SQL authentication
@@ -225,20 +228,20 @@ const HOST_AND_SQL_INFO_PS1 = [
 
    Function GetSQLInstanceDriveDetails($serverInstance) {
     $sqlInstancePaths = sqlcmd -Q " SET NOCOUNT ON; SELECT filename as Path FROM sys.sysdatabases " -h -1 -b -C -W -S $serverInstance
-    $sqlInstanceDriveLetterList = @()
+    $sqlInstanceDriveLetterOrPathList = @()
     ForEach ($path in $sqlInstancePaths) {
          if (Split-Path $path -IsAbsolute) {
             $driveOrPath = ($path -split '\\')[0]
-            $sqlInstanceDriveLetterList += $driveOrPath
+            $sqlInstanceDriveLetterOrPathList += $driveOrPath
             }
          else {
 
             $driveOrPath = ($path -split '\\share')[0].Trim('\')
-            $sqlInstanceDriveLetterList += $driveOrPath}
+            $sqlInstanceDriveLetterOrPathList += $driveOrPath}
          }
 
 
-    return ($sqlInstanceDriveLetterList | Select -Unique)
+    return ($sqlInstanceDriveLetterOrPathList | Select -Unique)
 
       }
   
@@ -303,24 +306,24 @@ const HOST_AND_SQL_INFO_PS1 = [
           $responseObject['databaseCount'] = $editionDBCountMachineInfo[1]
           $responseObject['sqlServerName'] = $editionDBCountMachineInfo[2]
   
-          $sqlInstanceDriveLetterList = sqlcmd -Q " SET NOCOUNT ON; SELECT DISTINCT LEFT(physical_name, 2) AS DriveLetter FROM sys.master_files " -h -1 -b -C -W -S $serverInstance
-          if($sqlInstanceDriveLetterList -eq $null) { 
-              $sqlInstanceDriveLetterList = GetSQLInstanceDriveDetails($serverInstance)
+          $sqlInstanceDriveLetterOrPathList = sqlcmd -Q " SET NOCOUNT ON; SELECT DISTINCT LEFT(physical_name, 2) AS DriveLetter FROM sys.master_files " -h -1 -b -C -W -S $serverInstance
+          if($sqlInstanceDriveLetterOrPathList -eq $null) { 
+              $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails($serverInstance)
           }
           if ($? -eq $False) {
             $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
           }
   
-          $sqlServerInstanceStorageInfo = ForEach ($sqlInstanceDriveLetter in $sqlInstanceDriveLetterList) {
+          $sqlServerInstanceStorageInfo = ForEach ($sqlInstanceDriveLetterOrPath in $sqlInstanceDriveLetterOrPathList) {
             
-            if ($DiskTargetInfoMap.Keys -contains $sqlInstanceDriveLetter) {
-            New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $DiskTargetInfoMap[$sqlInstanceDriveLetter] }}
-            elseif ($SMBConnections -contains $sqlInstanceDriveLetter) {
-            New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $sqlInstanceDriveLetter }     
+            if ($DiskTargetInfoMap.Keys -contains $sqlInstanceDriveLetterOrPath) {
+            New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $DiskTargetInfoMap[$sqlInstanceDriveLetterOrPath] }}
+            elseif ($SMBConnections -contains $sqlInstanceDriveLetterOrPath) {
+            New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $sqlInstanceDriveLetterOrPath }     
             }
-            elseif($MappedDrivesWithPath.Keys -contains $sqlInstanceDriveLetter) { 
+            elseif($MappedDrivesWithPath.Keys -contains $sqlInstanceDriveLetterOrPath) { 
 
-                  New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $MappedDrivesWithPath[$sqlInstanceDriveLetter] }  
+                  New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $MappedDrivesWithPath[$sqlInstanceDriveLetterOrPath] }  
                   
             }
             }
@@ -345,7 +348,6 @@ const HOST_AND_SQL_INFO_PS1 = [
   }
 `
 ]; 
-
 
 const CLUSTER_NETWORK_IP_INFO_PS1 = [
     `
