@@ -94,7 +94,7 @@ async function getHostAndSqlServerInfo(
     credentialsId: string,
     region: string,
     pageSize?: number,
-    nextToken: string = '',
+    nextToken?: string,
     instances: string[] = []
 ): Promise<DiscoverMsSqlResponseBodyType> {
     logger.info('getHostAndSqlServerInfo():', { accountId, credentialsId, region, nextToken });
