@@ -13,6 +13,7 @@ import { Static } from '@fastify/type-provider-typebox';
 import {
     AWSQueryFields,
     ENDPOINTS_DEPLOYMENT,
+    HttpErrorCodes,
     VALIDATION_NODE_INSTANCETYPE,
     WLMDB_COST_ALLOCATION_TAG
 } from '../../utils/consts';
@@ -61,6 +62,13 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                 return { id, state, tags, cidrBlock, isDefault, ...(resourceName && { name: resourceName }) };
             }
         );
+
+        // https://jira.ngage.netapp.com/browse/DBS-2453
+        // "ec2:Describevpcendpoints" is needed to determine if endpoints are available. If this assessment fails, then endpoint
+        // parameters will carry incorrect values and deployment fails.
+        // So, lets check early if endpoints can be fetched.
+        const [firstVpc] = vpcs.values();
+        await getVpcEndpoints(credentialsId, region, firstVpc.id!);
 
         return { vpcs };
     }
@@ -462,10 +470,16 @@ async function getVpcEndpoints(credentialsId: string, region: string, vpcId: str
         ]
     };
     const response = await describeEndpoints(credentialsId, region, input);
+    if (isEmpty(response)) {
+        throw createError(
+            HttpErrorCodes.UNAUTHORIZED,
+            'Unable to fetch VPC endpoints. Check if role has "ec2:DescribeVpcEndpoints" permission.'
+        );
+    }
 
     logger.debug('Get vpc endpoints response:', response);
 
-    return response?.VpcEndpoints;
+    return response.VpcEndpoints;
 }
 
 async function getVpcSecurityGroups(credentialsId: string, region: string, vpcId: string) {
