@@ -20,7 +20,7 @@ import { navigateToCanvas } from '../../../../utils/appConfig';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { useNavigate } from 'react-router-dom';
 import { handleCreateSQLServer } from './createSqlServer';
-import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventorySlice';
+import { setIsRefreshed, setSelectedHeaderTab } from '../../../../store/workloadFactory/inventorySlice';
 
 const MSSqlFooter = () => {
     const state = useAppSelector(state => state);
@@ -126,6 +126,7 @@ const MSSqlFooter = () => {
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
         notificationMsg = setTimeout(() => {
             isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigateToCanvas('/');
+            dispatch(setIsRefreshed(true));
         }, 3000);
     };
 
