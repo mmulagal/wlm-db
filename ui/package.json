@@ -4,9 +4,9 @@
     "homepage": "./",
     "private": true,
     "dependencies": {
-        "@netapp/design-system": "1.1.4",
+        "@netapp/design-system": "1.2.15",
         "@netapp/icons": "^1.0.8",
-        "@reduxjs/toolkit": "2.2.1",
+        "@reduxjs/toolkit": "2.2.3",
         "auth0-js": "^9.24.1",
         "axios": "^1.6.7",
         "lodash": "^4.17.21",
@@ -71,7 +71,7 @@
         "jest-teamcity-reporter": "^0.9.0",
         "react-scripts": "5.0.1",
         "sass": "^1.66.0",
-        "typescript": "5.4.2"
+        "typescript": "5.4.4"
     },
     "jest": {
         "transformIgnorePatterns": []
