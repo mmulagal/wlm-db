@@ -1027,7 +1027,9 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
                     ? MSSQL_DATABASE_TYPES.SYSTEM
                     : MSSQL_DATABASE_TYPES.USER,
                 protection: {
-                    isAWSBackupEnabled: Boolean(awsBackup),
+                    isAWSBackupEnabled: {
+                        fsxn: awsBackup
+                    },
                     isFsxOntapSnapshotsEnabled: Boolean(ontapBackup),
                     isSqlNativeEnabled: Boolean(
                         backedupDatabases &&
