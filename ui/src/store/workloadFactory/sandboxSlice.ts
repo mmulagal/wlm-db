@@ -79,7 +79,8 @@ export const {
     setSelectedTargetDatabase,
     setCreateSandboxPressed,
     setIsDBNameAdded,
-    setIsMountPathAdded
+    setIsMountPathAdded,
+    setIsNa
 } = sandboxSlice.actions;
 
 export default sandboxSlice;
