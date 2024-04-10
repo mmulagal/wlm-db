@@ -344,11 +344,17 @@ export const formatFractionalNumber = (value: number | undefined, precision: num
     return value;
 };
 
+export const isAwsBackupEnabled = (val:any) => {
+    return val?.protection?.isAwsBackUpEnabled?.fsxw || 
+    val?.protection?.isAwsBackUpEnabled?.fsxn || 
+    val?.protection?.isAwsBackUpEnabled?.ebs;
+};
+
 export const formatHostData = (val: any) => {
     // Protection text added to enable filter
     let protectionText = '';
     if (
-        val?.protection?.isAwsBackUpEnabled ||
+        isAwsBackupEnabled(val) ||
         val?.protection?.isFsxOntapSnapshotsEnabled ||
         val?.protection?.isSqlNativeEnabled
     ) {
@@ -416,7 +422,9 @@ export const formatHostData = (val: any) => {
         // Total cost to enable search in table
         totalCost: (
             (val?.estimatedUsageCost?.compute || 0) +
-            (val?.estimatedUsageCost?.storage || 0) +
+            (val?.estimatedUsageCost?.storage?.fsxn || 0) +
+            (val?.estimatedUsageCost?.storage?.fsxw || 0) +
+            (val?.estimatedUsageCost?.storage?.ebs || 0) +
             (val?.estimatedUsageCost?.connectivity || 0) +
             (val?.estimatedUsageCost?.others || 0)
         ).toString(),
@@ -508,7 +516,7 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
 
     data?.map((val: any) => {
         if (
-            val?.protection?.isAwsBackUpEnabled ||
+            isAwsBackupEnabled(val) ||
             val?.protection?.isFsxOntapSnapshotsEnabled ||
             val?.protection?.isSqlNativeEnabled
         ) {
@@ -518,7 +526,9 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
                 val?.status === STATUS_CONST.UP ||
                 val?.status === 'ONLINE' ||
                 val?.status === 'OFFLINE') &&
-            !val?.protection?.isAwsBackUpEnabled &&
+            !val?.protection?.isAwsBackUpEnabled?.fsxw &&
+            !val?.protection?.isAwsBackUpEnabled?.fsxn &&
+            !val?.protection?.isAwsBackUpEnabled?.ebs &&
             !val?.protection?.isFsxOntapSnapshotsEnabled &&
             !val?.protection?.isSqlNativeEnabled
         ) {
@@ -527,7 +537,7 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
         if (val?.protection?.isFsxOntapSnapshotsEnabled) {
             fsxOntapSnapshotsDb += 1;
         }
-        if (val?.protection?.isAwsBackUpEnabled) {
+        if (isAwsBackupEnabled(val)) {
             awsBackupDb += 1;
         }
         if (val?.protection?.isSqlNativeEnabled) {
@@ -591,12 +601,15 @@ export const getAggrCost = (data: DatabaseHostItem[] | WorkloadFactoryResourceDe
         if (val?.topology?.fileSystemId) {
             fsxVal = val.topology.fileSystemId;
         }
-        if ((!fsxVal || !storageList.includes(fsxVal)) && val?.estimatedUsageCost?.storage) {
-            storageCost += val.estimatedUsageCost.storage;
+        if ((!fsxVal || !storageList.includes(fsxVal)) && val?.estimatedUsageCost?.storage?.fsxn) {
+            storageCost += val.estimatedUsageCost.storage?.fsxn;
             if (fsxVal) {
                 storageList.push(fsxVal);
             }
         }
+
+        storageCost += val.estimatedUsageCost?.storage?.fsxw || 0;
+        storageCost += val.estimatedUsageCost?.storage?.ebs || 0;
 
         // If connectivity cost is already added than no need to add again based on VPCId
         let vpcVal = '';

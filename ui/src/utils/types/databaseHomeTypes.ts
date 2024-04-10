@@ -15,7 +15,11 @@ export interface DatabaseHostItem {
         ec2Details: Array<Ec2Details>;
     };
     protection: {
-        isAwsBackUpEnabled: boolean;
+        isAwsBackUpEnabled: {
+            fsxn: boolean,
+            fsxw: boolean,
+            ebs: false 
+        };
         isFsxOntapSnapshotsEnabled: boolean;
         isSqlNativeEnabled: boolean;
     };
@@ -33,7 +37,11 @@ export interface DatabaseHostItem {
     storageSavingsText?: string;
     estimatedUsageCost: {
         compute: number;
-        storage: number;
+        storage: {
+            fsxn?: number;
+            fsxw?: number;
+            ebs?: number;
+        };
         connectivity: number;
         others: number;
         estimationType: string;

@@ -78,7 +78,11 @@ const databaseHostItem: any = [
             ]
         },
         protection: {
-            isAwsBackUpEnabled: true,
+            isAwsBackUpEnabled: { 
+                fsxn: true,
+                fsxw: false,
+                ebs: false 
+            },
             isFsxOntapSnapshotsEnabled: true,
             isSqlNativeEnabled: true,
             protectedDatabases: 8
@@ -94,7 +98,11 @@ const databaseHostItem: any = [
         },
         estimatedUsageCost: {
             compute: 700,
-            storage: 200,
+            storage: {
+                fsxn: 200,
+                fsxw: 0,
+                ebs: 0
+            },
             connectivity: 100,
             others: 24,
             estimationType: 'pricing'
@@ -121,7 +129,11 @@ const databaseHostItem: any = [
             ]
         },
         protection: {
-            isAwsBackUpEnabled: false,
+            isAwsBackUpEnabled: {
+                fsxn: false,
+                fsxw: false,
+                ebs: false 
+            },
             isFsxOntapSnapshotsEnabled: false,
             isSqlNativeEnabled: false,
             protectedDatabases: 8
@@ -137,7 +149,11 @@ const databaseHostItem: any = [
         },
         estimatedUsageCost: {
             compute: 700,
-            storage: 200,
+            storage: {
+                fsxn: 200,
+                fsxw: 0,
+                ebs: 0
+            },
             connectivity: 100,
             others: 24,
             estimationType: 'pricing'

@@ -48,7 +48,7 @@
     },
 
     "protection": {
-        "isAwsBackUpEnabled": true,
+        "isAwsBackUpEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
         "isFsxOntapSnapshotsEnabled": true,
         "isSqlNativeEnabled": false
     },
@@ -83,7 +83,7 @@
 
     "estimatedUsageCost": {
         "compute": 1552,
-        "storage": 600,
+        "storage": { "fsxn": 600, "fsxw": 0, "ebs": 0 },
         "connectivity": 380,
         "others": 572,
         "estimationType": "pricing"

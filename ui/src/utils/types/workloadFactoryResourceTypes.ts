@@ -50,7 +50,11 @@ export interface WorkloadFactoryResourceDetails {
     };
 
     protection: {
-        isAwsBackUpEnabled: boolean;
+        isAwsBackUpEnabled: { 
+            fsxn: boolean,
+            fsxw: boolean,
+            ebs: boolean 
+        };
         isFsxOntapSnapshotsEnabled: boolean;
         isSqlNativeEnabled: boolean;
     };
@@ -85,7 +89,11 @@ export interface WorkloadFactoryResourceDetails {
 
     estimatedUsageCost: {
         compute: number;
-        storage: number;
+        storage: {
+            fsxn?: number;
+            fsxw?: number;
+            ebs?: number;
+        };
         connectivity: number;
         others: number;
     };
@@ -120,7 +128,11 @@ export interface WorkloadFactoryDatabaseItem {
     type: string;
     isProtected: boolean;
     protection?: {
-        isAwsBackUpEnabled: boolean;
+        isAwsBackUpEnabled: { 
+            fsxn: boolean,
+            fsxw: boolean,
+            ebs: boolean 
+        };
         isFsxOntapSnapshotsEnabled: boolean;
         isSqlNativeEnabled: boolean;
     };

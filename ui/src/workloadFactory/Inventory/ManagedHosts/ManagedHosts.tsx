@@ -21,7 +21,7 @@ import { useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
 import { addDatabaseHosts, selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
-import { databaseTableSort, formatFractionalNumber, formatSizeOnePrecision } from '../../../utils/utilityFunctions';
+import { databaseTableSort, formatFractionalNumber, formatSizeOnePrecision, isAwsBackupEnabled } from '../../../utils/utilityFunctions';
 import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
@@ -33,6 +33,7 @@ import {
     initialCreateNewUserState,
     setDBHostName
 } from '../../../store/workloadFactory/createNewDBSlice';
+import { renderEstimatedCost, renderProtectionColumn } from '../InventoryUtils';
 
 const ManagedHosts = () => {
     const dispatch = useDispatch();
@@ -194,56 +195,7 @@ const ManagedHosts = () => {
             isSortable: true,
             width: '212px',
             renderCell: (cellData: any, rowData: any) => {
-                const isLoading = rowData?.loading;
-                const protectionData = rowData?.protection;
-                const totalDbCount = rowData?.databaseCount || 0;
-                let protectedChk = false;
-                if (
-                    protectionData?.isAwsBackUpEnabled ||
-                    protectionData?.isFsxOntapSnapshotsEnabled ||
-                    protectionData?.isSqlNativeEnabled
-                ) {
-                    protectedChk = true;
-                }
-
-                let protectionDbCount = 0;
-                let protectionPercent = 0;
-                if (protectionData?.isAwsBackUpEnabled || protectionData?.isFsxOntapSnapshotsEnabled) {
-                    protectionDbCount = totalDbCount;
-                    protectionPercent = 100;
-                } else if (protectionData?.isSqlNativeEnabled) {
-                    protectionDbCount = protectionData?.protectedDatabases || 0;
-                    protectionPercent =
-                        totalDbCount > 0 && protectionDbCount <= totalDbCount
-                            ? (protectionDbCount / totalDbCount) * 100
-                            : 0;
-                }
-
-                return (
-                    <>
-                        {protectionData && (
-                            <div className={styles.colText}>
-                                {protectedChk && (
-                                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                        {protectionDbCount +
-                                            GENERAL.PROTECTION_TOOLTIP[0] +
-                                            totalDbCount +
-                                            GENERAL.PROTECTION_TOOLTIP[1]}
-                                    </TooltipInfo>
-                                )}
-                                <div className={styles.protection}>
-                                    <Typography variant="Regular_14">
-                                        {protectedChk
-                                            ? formatFractionalNumber(protectionPercent) + '% ' + GENERAL.PROTECTION
-                                            : GENERAL.NOT_PROTECTED}
-                                    </Typography>
-                                </div>
-                            </div>
-                        )}
-                        {!protectionData && isLoading && <DsFlashingDotsLoader />}
-                        {!protectionData && !isLoading && notAvailable()}
-                    </>
-                );
+                return renderProtectionColumn(cellData, rowData, styles);
             }
         },
         {
@@ -293,25 +245,7 @@ const ManagedHosts = () => {
             isSortable: true,
             width: '212px',
             renderCell: (cellData: any, rowData: any) => {
-                const costData = rowData?.estimatedUsageCost;
-                const totalCost = costData?.compute + costData?.storage + costData?.connectivity + costData?.others;
-                return (
-                    <>
-                        {costData && (
-                            <div className={styles.cost}>
-                                <TooltipInfo className={styles.tooltipClass} onVisibleChange={function noRefCheck() {}}>
-                                    {EstimatedCostPopover({ ...costData, totalCost: totalCost })}
-                                </TooltipInfo>
-                                <Typography variant="Regular_14">{`$ ${formatFractionalNumber(
-                                    totalCost,
-                                    2
-                                )}`}</Typography>
-                            </div>
-                        )}
-                        {!costData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!costData && !rowData?.loading && notAvailable()}
-                    </>
-                );
+                return renderEstimatedCost(cellData, rowData, styles);
             }
         },
         {

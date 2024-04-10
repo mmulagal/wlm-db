@@ -76,6 +76,10 @@
                         {
                             "type": "EBS",
                             "id": "vol08b0788a4333c0233"
+                        },
+                        {
+                            "type": "FSXW",
+                            "id": "fsx122"
                         }
                     ],
                     "deploymentTypes": [],
@@ -242,6 +246,10 @@
                     "storage": [
                         {
                             "type": "FSXN",
+                            "id": "fs123"
+                        },
+                        {
+                            "type": "FSXW",
                             "id": "fs123"
                         }
                     ],
