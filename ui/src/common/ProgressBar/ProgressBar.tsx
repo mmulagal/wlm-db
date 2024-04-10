@@ -1,3 +1,4 @@
+import { useAppSelector } from '../../store/storeHooks';
 import styles from './ProgressBar.module.scss';
 
 type Progress = {
@@ -8,8 +9,12 @@ type Progress = {
 };
 
 const ProgressBar = ({ value, color, max = 100, className = '' }: Progress) => {
+    const { isNA } = useAppSelector(state => state.sandbox);
     return (
-        <div className={`${styles['Suc-progressbar']} ${className}`}>
+        <div
+            className={`${styles['Suc-progressbar']} ${className}`}
+            style={{ backgroundColor: isNA ? 'var(--chart-disabled)' : 'var(--field-border-disabled)' }}
+        >
             <div
                 className={styles['Suc-filled-value']}
                 style={{ width: (value / max) * 100 + '%', backgroundColor: color }}

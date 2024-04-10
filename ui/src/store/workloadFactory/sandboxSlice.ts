@@ -13,13 +13,17 @@ export const initialSandboxState: any = {
     hideBanner: false,
     isCreateSandboxPressed: false,
     isDBNameAdded: true,
-    isMountPathAdded: true
+    isMountPathAdded: true,
+    isNA: false
 };
 
 const sandboxSlice = createSlice({
     name: 'sandbox',
     initialState: initialSandboxState,
     reducers: {
+        setIsNa(state, action: PayloadAction<any>) {
+            state.isNA = action.payload;
+        },
         setIsMountPathAdded(state, action: PayloadAction<any>) {
             state.isMountPathAdded = action.payload;
         },

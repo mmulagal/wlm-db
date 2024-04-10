@@ -9,9 +9,11 @@ import ProgressBar from '../../../common/ProgressBar/ProgressBar';
 import styles from './SandboxDistributionType.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const SandboxDistributionType = () => {
     const loading = false;
+    const { isNA } = useAppSelector(state => state.sandbox);
     return (
         <div className={styles.sandboxType}>
             <div className={styles.headSection}>
@@ -31,15 +33,28 @@ const SandboxDistributionType = () => {
 
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
-                                <DsTypography variant="Semibold_14" className={styles.name}>
+                                <DsTypography
+                                    variant="Semibold_14"
+                                    className={isNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
+                                >
                                     {GENERAL.DEVELOPMENT}
                                 </DsTypography>
-                                <DsTypography variant="Regular_24" className={styles.value}>
-                                    55
-                                </DsTypography>
+                                {!isNA && (
+                                    <DsTypography variant="Regular_24" className={styles.value}>
+                                        55
+                                    </DsTypography>
+                                )}
+                                {isNA && (
+                                    <DsTypography
+                                        variant="Regular_16"
+                                        className={`${styles.value} ${CommonStyles.notAvailable}`}
+                                    >
+                                        {GENERAL.NOT_AVAILABLE}
+                                    </DsTypography>
+                                )}
                             </div>
                             <div className={styles.progressStyle}>
-                                <ProgressBar value={55} color={'#5E8DCD'} />
+                                <ProgressBar value={isNA ? 0 : 55} color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'} />
                             </div>
                         </div>
                     </div>
@@ -51,15 +66,28 @@ const SandboxDistributionType = () => {
 
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
-                                <DsTypography variant="Semibold_14" className={styles.name}>
+                                <DsTypography
+                                    variant="Semibold_14"
+                                    className={isNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
+                                >
                                     {GENERAL.QA}
                                 </DsTypography>
-                                <DsTypography variant="Regular_24" className={styles.value}>
-                                    40
-                                </DsTypography>
+                                {!isNA && (
+                                    <DsTypography variant="Regular_24" className={styles.value}>
+                                        40
+                                    </DsTypography>
+                                )}
+                                {isNA && (
+                                    <DsTypography
+                                        variant="Regular_16"
+                                        className={`${styles.value} ${CommonStyles.notAvailable}`}
+                                    >
+                                        {GENERAL.NOT_AVAILABLE}
+                                    </DsTypography>
+                                )}
                             </div>
                             <div className={styles.progressStyle}>
-                                <ProgressBar value={40} color={'#5E8DCD'} />
+                                <ProgressBar value={isNA ? 0 : 40} color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'} />
                             </div>
                         </div>
                     </div>
@@ -71,15 +99,28 @@ const SandboxDistributionType = () => {
 
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
-                                <DsTypography variant="Semibold_14" className={styles.name}>
+                                <DsTypography
+                                    variant="Semibold_14"
+                                    className={isNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
+                                >
                                     {GENERAL.INTEGRATION}
                                 </DsTypography>
-                                <DsTypography variant="Regular_24" className={styles.value}>
-                                    5
-                                </DsTypography>
+                                {isNA && (
+                                    <DsTypography variant="Regular_24" className={styles.value}>
+                                        5
+                                    </DsTypography>
+                                )}
+                                {isNA && (
+                                    <DsTypography
+                                        variant="Regular_16"
+                                        className={`${styles.value} ${CommonStyles.notAvailable}`}
+                                    >
+                                        {GENERAL.NOT_AVAILABLE}
+                                    </DsTypography>
+                                )}
                             </div>
                             <div className={styles.progressStyle}>
-                                <ProgressBar value={5} color={'#5E8DCD'} />
+                                <ProgressBar value={isNA ? 0 : 5} color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'} />
                             </div>
                         </div>
                     </div>
@@ -93,15 +134,28 @@ const SandboxDistributionType = () => {
 
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
-                                <DsTypography variant="Semibold_14" className={styles.name}>
+                                <DsTypography
+                                    variant="Semibold_14"
+                                    className={isNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
+                                >
                                     {GENERAL.TRAINING}
                                 </DsTypography>
-                                <DsTypography variant="Regular_24" className={styles.value}>
-                                    15
-                                </DsTypography>
+                                {!isNA && (
+                                    <DsTypography variant="Regular_24" className={styles.value}>
+                                        15
+                                    </DsTypography>
+                                )}
+                                {isNA && (
+                                    <DsTypography
+                                        variant="Regular_16"
+                                        className={`${styles.value} ${CommonStyles.notAvailable}`}
+                                    >
+                                        {GENERAL.NOT_AVAILABLE}
+                                    </DsTypography>
+                                )}
                             </div>
                             <div className={styles.progressStyle}>
-                                <ProgressBar value={15} color={'#5E8DCD'} />
+                                <ProgressBar value={isNA ? 0 : 15} color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'} />
                             </div>
                         </div>
                     </div>
@@ -113,15 +167,28 @@ const SandboxDistributionType = () => {
 
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
-                                <DsTypography variant="Semibold_14" className={styles.name}>
+                                <DsTypography
+                                    variant="Semibold_14"
+                                    className={isNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
+                                >
                                     {GENERAL.ANALYTICS}
                                 </DsTypography>
-                                <DsTypography variant="Regular_24" className={styles.value}>
-                                    5
-                                </DsTypography>
+                                {!isNA && (
+                                    <DsTypography variant="Regular_24" className={styles.value}>
+                                        5
+                                    </DsTypography>
+                                )}
+                                {isNA && (
+                                    <DsTypography
+                                        variant="Regular_16"
+                                        className={`${styles.value} ${CommonStyles.notAvailable}`}
+                                    >
+                                        {GENERAL.NOT_AVAILABLE}
+                                    </DsTypography>
+                                )}
                             </div>
                             <div className={styles.progressStyle}>
-                                <ProgressBar value={5} color={'#5E8DCD'} />
+                                <ProgressBar value={isNA ? 0 : 5} color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'} />
                             </div>
                         </div>
                     </div>
@@ -133,15 +200,28 @@ const SandboxDistributionType = () => {
 
                         <div className={styles.valueSection}>
                             <div className={styles.topRow}>
-                                <DsTypography variant="Semibold_14" className={styles.name}>
+                                <DsTypography
+                                    variant="Semibold_14"
+                                    className={isNA ? `${styles.name} ${CommonStyles.notAvailable}` : styles.name}
+                                >
                                     {GENERAL.SANDBOX_OTHER}
                                 </DsTypography>
-                                <DsTypography variant="Regular_24" className={styles.value}>
-                                    0
-                                </DsTypography>
+                                {!isNA && (
+                                    <DsTypography variant="Regular_24" className={styles.value}>
+                                        0
+                                    </DsTypography>
+                                )}
+                                {isNA && (
+                                    <DsTypography
+                                        variant="Regular_16"
+                                        className={`${styles.value} ${CommonStyles.notAvailable}`}
+                                    >
+                                        {GENERAL.NOT_AVAILABLE}
+                                    </DsTypography>
+                                )}
                             </div>
                             <div className={styles.progressStyle}>
-                                <ProgressBar value={0} color={'#5E8DCD'} />
+                                <ProgressBar value={isNA ? 0 : 0} color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'} />
                             </div>
                         </div>
                     </div>

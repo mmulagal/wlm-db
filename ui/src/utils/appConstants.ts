@@ -733,7 +733,7 @@ export const GENERAL = {
     AGE: 'Age',
     SANDBOX_TAG: 'Tag',
     SANDBOX_SOURCE_DATABASES: 'Source databases',
-    SANDBOX_STORAGE_SAVINGS: 'Sandboxes storage savings',
+    SANDBOX_STORAGE_SAVINGS: 'Storage savings',
     SANDBOX_CONSUMED_STORAGE: 'Consumed storage',
     SANDBOX_SAVINGS: 'Sandboxes savings',
     SANDBOX_CONSUMED_SAVING: 'Consumed savings',
