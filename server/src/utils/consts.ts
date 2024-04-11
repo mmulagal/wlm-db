@@ -571,6 +571,7 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     sqlAmiId: 'SQLAMIID',
     serviceAccountPassword: 'SQLServiceAccountPassword',
     sqlServerName: 'SqlServerName',
+    sqlCollation: 'SqlCollation',
 
     workloadInstanceType: 'WorkloadInstanceType',
     keyPairName: 'KeyPairName',

@@ -125,6 +125,12 @@ const PARAMETERS = [
         pattern: '[a-zA-Z0-9\\-]+'
     },
     {
+        name: 'SqlCollation',
+        description: 'SQL Server Collation.',
+        type: 'String',
+        minLength: 1
+    },
+    {
         name: 'VPCCIDR',
         description: 'CIDR Block for the VPC.',
         constraintDescription: 'CIDR block parameter must be in the form x.x.x.x/16-28',
