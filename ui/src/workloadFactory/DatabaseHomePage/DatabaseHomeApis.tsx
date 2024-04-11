@@ -10,7 +10,7 @@ import {
     addDatabaseHostsList,
     addJobsSummary
 } from '../../store/workloadFactory/databaseHomeSlice';
-import { useGetDatabaseHostsQuery, useGetJobsSummaryQuery } from '../../utils/apiService';
+import { useGetJobsSummaryQuery } from '../../utils/apiService';
 import {
     getAggrCost,
     getAggrProtection,
@@ -29,18 +29,18 @@ const DatabaseHomeApis = () => {
     const refetchJobSummaryApi = useAppSelector(state => state.msSqlAction.refetchJobSummaryApi);
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
-    const databaseHostsState = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const dashboardRefresh = useAppSelector(state => state.headers.dashboardRefresh);
+    // const databaseHostsState = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    // const dashboardRefresh = useAppSelector(state => state.headers.dashboardRefresh);
 
-    const [hostCursor, setHostCursor] = useState(null);
+    // const [hostCursor, setHostCursor] = useState(null);
 
     // skipApiCall to skip APi call when isActive is not true
     const [skipApiCall, setSkipApiCall] = useState(true);
-    const [skipDbHostApiCall, setDbHostSkipApiCall] = useState(true);
+    // const [skipDbHostApiCall, setDbHostSkipApiCall] = useState(true);
     const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
 
-    const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
-    const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
+    // const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
+    // const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
 
     useEffect(() => {
         const toDate = Date.now();
@@ -48,18 +48,18 @@ const DatabaseHomeApis = () => {
         setTime({ startTime: fromDate, endTime: toDate });
     }, []);
 
-    const {
-        data: databaseHosts,
-        isFetching: databaseHostsLoading,
-        isError: databaseHostsError
-    } = useGetDatabaseHostsQuery(
-        {
-            credentialId: credId,
-            region: regionId,
-            nextToken: hostCursor
-        },
-        { skip: skipDbHostApiCall }
-    );
+    // const {
+    //     data: databaseHosts,
+    //     isFetching: databaseHostsLoading,
+    //     isError: databaseHostsError
+    // } = useGetDatabaseHostsQuery(
+    //     {
+    //         credentialId: credId,
+    //         region: regionId,
+    //         nextToken: hostCursor
+    //     },
+    //     { skip: skipDbHostApiCall }
+    // );
 
     const {
         data: jobsSummaryData,
@@ -76,20 +76,20 @@ const DatabaseHomeApis = () => {
         { skip: skipApiCall }
     );
 
-    useEffect(() => {
-        if (dashboardRefresh && headerSelectedCred && headerSelectedRegion) {
-            setHostCursor(null);
-            dispatch(
-                addDatabaseHosts({
-                    databaseHostsData: null,
-                    databaseHostsLoading,
-                    databaseHostsError
-                })
-            );
-            setDbHostSkipApiCall(false);
-            dispatch(setDashboardRefresh(false));
-        }
-    }, [dashboardRefresh]);
+    // useEffect(() => {
+    //     if (dashboardRefresh && headerSelectedCred && headerSelectedRegion) {
+    //         setHostCursor(null);
+    //         dispatch(
+    //             addDatabaseHosts({
+    //                 databaseHostsData: null,
+    //                 databaseHostsLoading,
+    //                 databaseHostsError
+    //             })
+    //         );
+    //         setDbHostSkipApiCall(false);
+    //         dispatch(setDashboardRefresh(false));
+    //     }
+    // }, [dashboardRefresh]);
 
     useEffect(() => {
         if (refetchJobSummaryApi) {
@@ -100,48 +100,48 @@ const DatabaseHomeApis = () => {
     }, [refetchJobSummaryApi]);
 
     useEffect(() => {
-        setDbHostSkipApiCall(true);
+        // setDbHostSkipApiCall(true);
         resetDBHomePageState(dispatch); // reset dahsboard state if cred and region is changed
         if (headerSelectedCred && headerSelectedRegion) {
-            setCredId(headerSelectedCred?.data?.credentialsId);
-            setRegionId(headerSelectedRegion?.label2);
+            // setCredId(headerSelectedCred?.data?.credentialsId);
+            // setRegionId(headerSelectedRegion?.label2);
             setTimeout(() => {
                 setSkipApiCall(false);
-                setDbHostSkipApiCall(false);
+                // setDbHostSkipApiCall(false);
             }, 0);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [headerSelectedCred, headerSelectedRegion]);
 
-    useEffect(() => {
-        if (databaseHostsError) {
-            dispatch(addDatabaseHosts({ undefined, databaseHostsLoading, databaseHostsError }));
-        } else {
-            if (!databaseHostsLoading) {
-                let oldList = databaseHostsData || [];
-                let newList = databaseHosts?.items || [];
-                dispatch(
-                    addDatabaseHosts({
-                        databaseHostsData: [...oldList, ...newList],
-                        databaseHostsLoading,
-                        databaseHostsError
-                    })
-                );
-                setHostCursor(databaseHosts?.nextToken || null);
-                if (databaseHosts && !databaseHosts?.nextToken) {
-                    setDbHostSkipApiCall(true);
-                }
-            } else {
-                dispatch(
-                    addDatabaseHosts({
-                        ...databaseHostsState,
-                        databaseHostsLoading
-                    })
-                );
-            }
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [databaseHosts, databaseHostsLoading, databaseHostsError]);
+    // useEffect(() => {
+    //     if (databaseHostsError) {
+    //         dispatch(addDatabaseHosts({ undefined, databaseHostsLoading, databaseHostsError }));
+    //     } else {
+    //         if (!databaseHostsLoading) {
+    //             let oldList = databaseHostsData || [];
+    //             let newList = databaseHosts?.items || [];
+    //             dispatch(
+    //                 addDatabaseHosts({
+    //                     databaseHostsData: [...oldList, ...newList],
+    //                     databaseHostsLoading,
+    //                     databaseHostsError
+    //                 })
+    //             );
+    //             setHostCursor(databaseHosts?.nextToken || null);
+    //             if (databaseHosts && !databaseHosts?.nextToken) {
+    //                 setDbHostSkipApiCall(true);
+    //             }
+    //         } else {
+    //             dispatch(
+    //                 addDatabaseHosts({
+    //                     ...databaseHostsState,
+    //                     databaseHostsLoading
+    //                 })
+    //             );
+    //         }
+    //     }
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, [databaseHosts, databaseHostsLoading, databaseHostsError]);
 
     useEffect(() => {
         if (jobsSummaryError) {

@@ -339,12 +339,31 @@ export const databaseHomeApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
-            getDatabaseHosts: builder.query({
+            getDatabaseHostsFullData: builder.query({
                 query: ({ credentialId, region, nextToken = null }) => {
                     if (nextToken) {
-                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=serverDetails,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
                     } else {
-                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation`;
+                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=serverDetails,performance,storage,protection,usageEstimation`;
+                    }
+                },
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialId,
+                            regionId: args?.region
+                        };
+                    }
+                    return response;
+                }
+            }),
+            getDatabaseHostsList: builder.query({
+                query: ({ credentialId, region, nextToken = null }) => {
+                    if (nextToken) {
+                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=topology&nextToken=${nextToken}`;
+                    } else {
+                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=topology`;
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
@@ -651,7 +670,12 @@ export const {
     useUpdateConfigMutation
 } = configApi;
 
-export const { useGetDatabaseHostsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation } = databaseHomeApi;
+export const { 
+    useLazyGetDatabaseHostsFullDataQuery, 
+    useLazyGetDatabaseHostsListQuery, 
+    useGetJobsSummaryQuery, 
+    useGetTemplatesMutation 
+} = databaseHomeApi;
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 

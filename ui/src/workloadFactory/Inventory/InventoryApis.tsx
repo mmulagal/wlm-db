@@ -7,10 +7,11 @@ import {
 } from '../../store/workloadFactory/databaseHomeSlice';
 import {
     useDiscoverHostsQuery,
-    useGetDatabaseHostsQuery,
     useGetFsxCredentialStatusQuery,
     useGetMssqlInstanceDataMutation,
     useGetMssqlResourceDataMutation,
+    useLazyGetDatabaseHostsFullDataQuery,
+    useLazyGetDatabaseHostsListQuery,
     useLazyGetManagedHostDataQuery
 } from '../../utils/apiService';
 import {
@@ -67,6 +68,8 @@ const InventoryApis = () => {
     const isCredRegionMissing = !headerSelectedCred || !headerSelectedRegion;
 
     const [getManagedHostListAPI] = useLazyGetManagedHostDataQuery();
+    const [getDatabaseHostsFullDataApi] = useLazyGetDatabaseHostsFullDataQuery();
+    const [getDatabaseHostsListApi] = useLazyGetDatabaseHostsListQuery();
     const [managedHostList, setManagedHostList] = useState<any>([]);
     const [managedHostListLoading, setManagedHostListLoading] = useState(true);
 
@@ -119,6 +122,88 @@ const InventoryApis = () => {
         }
     };
 
+    // const getDatabaseHostsFullData = async (
+    //     managedList: string[],
+    //     managedHostCursor: string | null,
+    //     runningCredId: string,
+    //     runningRegionId: string
+    // ) => {
+    //     if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+    //         try {
+    //             const result: any = await getDatabaseHostsFullDataApi({
+    //                 credentialId: credId,
+    //                 regionId: regionId,
+    //                 nextToken: managedHostCursor
+    //             });
+    //             if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+    //                 if (result && !result?.error) {
+    //                     result?.data?.items?.map((perRow: any) => {
+    //                         if (perRow?.instances) {
+    //                             managedList = [...managedList, ...perRow?.instances];
+    //                         }
+    //                     });
+    //                     if (result?.data?.nextToken) {
+    //                         getManagedHostList(managedList, result?.data?.nextToken, runningCredId, runningRegionId);
+    //                     } else {
+    //                         setManagedHostListLoading(false);
+    //                         dispatch(setIsManagedHostListLoading(false));
+    //                         setManagedHostList(managedList);
+    //                     }
+    //                 } else {
+    //                     setManagedHostListLoading(false);
+    //                     dispatch(setIsManagedHostListLoading(false));
+    //                     setManagedHostList(managedList);
+    //                 }
+    //             }
+    //         } catch (error) {
+    //             setManagedHostListLoading(false);
+    //             dispatch(setIsManagedHostListLoading(false));
+    //             setManagedHostList(managedList);
+    //         }
+    //     }
+    // };
+
+    // const getDatabaseHostsList = async (
+    //     managedList: string[],
+    //     managedHostCursor: string | null,
+    //     runningCredId: string,
+    //     runningRegionId: string
+    // ) => {
+    //     if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+    //         try {
+    //             const result: any = await getDatabaseHostsListApi({
+    //                 credentialId: credId,
+    //                 regionId: regionId,
+    //                 nextToken: managedHostCursor
+    //             });
+    //             if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+    //                 if (result && !result?.error) {
+    //                     result?.data?.items?.map((perRow: any) => {
+    //                         if (perRow?.instances) {
+    //                             managedList = [...managedList, ...perRow?.instances];
+    //                         }
+    //                     });
+    //                     if (result?.data?.nextToken) {
+    //                         getManagedHostList(managedList, result?.data?.nextToken, runningCredId, runningRegionId);
+    //                     } else {
+    //                         setManagedHostListLoading(false);
+    //                         dispatch(setIsManagedHostListLoading(false));
+    //                         setManagedHostList(managedList);
+    //                     }
+    //                 } else {
+    //                     setManagedHostListLoading(false);
+    //                     dispatch(setIsManagedHostListLoading(false));
+    //                     setManagedHostList(managedList);
+    //                 }
+    //             }
+    //         } catch (error) {
+    //             setManagedHostListLoading(false);
+    //             dispatch(setIsManagedHostListLoading(false));
+    //             setManagedHostList(managedList);
+    //         }
+    //     }
+    // };
+
     useEffect(() => {
         let managedList: string[] = [];
         if (credId && regionId) {
@@ -131,21 +216,21 @@ const InventoryApis = () => {
 
     useEffect(() => {
         resetDBHomePageState(dispatch);
-        dispatch(addDatabaseHostsLoading(databaseHostsLoading));
+        // dispatch(addDatabaseHostsLoading(databaseHostsLoading));
     }, [credId, regionId]);
 
-    const {
-        data: databaseHosts,
-        isFetching: databaseHostsLoading,
-        isError: databaseHostsError
-    } = useGetDatabaseHostsQuery(
-        {
-            credentialId: credId,
-            region: regionId,
-            nextToken: hostCursor
-        },
-        { skip: skipApiCall || skipManagedHostCall || isCredRegionMissing }
-    );
+    // const {
+    //     data: databaseHosts,
+    //     isFetching: databaseHostsLoading,
+    //     isError: databaseHostsError
+    // } = useGetDatabaseHostsQuery(
+    //     {
+    //         credentialId: credId,
+    //         region: regionId,
+    //         nextToken: hostCursor
+    //     },
+    //     { skip: skipApiCall || skipManagedHostCall || isCredRegionMissing }
+    // );
 
     const {
         data: discoveredHosts,
@@ -194,13 +279,13 @@ const InventoryApis = () => {
         dispatch(setMssqlInstancesData({}));
         setRunningInstanceList([]);
         dispatch(addDatabaseHostsList([]));
-        dispatch(
-            addDatabaseHosts({
-                databaseHostsData: null,
-                databaseHostsLoading: true,
-                databaseHostsError
-            })
-        );
+        // dispatch(
+        //     addDatabaseHosts({
+        //         databaseHostsData: null,
+        //         databaseHostsLoading: true,
+        //         databaseHostsError
+        //     })
+        // );
         dispatch(setMovedManagedHosts([]));
         dispatch(setUnManagedHosts([]));
         dispatch(setUnIdentifiableHosts([]));
@@ -217,46 +302,46 @@ const InventoryApis = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [headerSelectedCred, headerSelectedRegion]);
 
-    useEffect(() => {
-        if (databaseHostsError) {
-            dispatch(addDatabaseHosts({ undefined, databaseHostsLoading, databaseHostsError }));
-        } else {
-            if (!databaseHostsLoading) {
-                let oldList = databaseHostsData || [];
-                let newList = databaseHosts?.items || [];
-                if (databaseHosts && databaseHosts?.credentialId === credId && databaseHosts?.regionId === regionId) {
-                    dispatch(
-                        addDatabaseHosts({
-                            databaseHostsData: [...oldList, ...newList],
-                            databaseHostsLoading,
-                            databaseHostsError
-                        })
-                    );
-                } else {
-                    dispatch(
-                        addDatabaseHosts({
-                            ...databaseHostState,
-                            databaseHostsLoading
-                        })
-                    );
-                }
-                setHostCursor(databaseHosts?.nextToken || null);
-                if (!databaseHosts?.nextToken && databaseHostsData) {
-                    setSkipManagedHostCall(true);
-                } else {
-                    setSkipManagedHostCall(false);
-                }
-            } else {
-                dispatch(
-                    addDatabaseHosts({
-                        ...databaseHostState,
-                        databaseHostsLoading
-                    })
-                );
-            }
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [databaseHosts, databaseHostsLoading, databaseHostsError]);
+    // useEffect(() => {
+    //     if (databaseHostsError) {
+    //         dispatch(addDatabaseHosts({ undefined, databaseHostsLoading, databaseHostsError }));
+    //     } else {
+    //         if (!databaseHostsLoading) {
+    //             let oldList = databaseHostsData || [];
+    //             let newList = databaseHosts?.items || [];
+    //             if (databaseHosts && databaseHosts?.credentialId === credId && databaseHosts?.regionId === regionId) {
+    //                 dispatch(
+    //                     addDatabaseHosts({
+    //                         databaseHostsData: [...oldList, ...newList],
+    //                         databaseHostsLoading,
+    //                         databaseHostsError
+    //                     })
+    //                 );
+    //             } else {
+    //                 dispatch(
+    //                     addDatabaseHosts({
+    //                         ...databaseHostState,
+    //                         databaseHostsLoading
+    //                     })
+    //                 );
+    //             }
+    //             setHostCursor(databaseHosts?.nextToken || null);
+    //             if (!databaseHosts?.nextToken && databaseHostsData) {
+    //                 setSkipManagedHostCall(true);
+    //             } else {
+    //                 setSkipManagedHostCall(false);
+    //             }
+    //         } else {
+    //             dispatch(
+    //                 addDatabaseHosts({
+    //                     ...databaseHostState,
+    //                     databaseHostsLoading
+    //                 })
+    //             );
+    //         }
+    //     }
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, [databaseHosts, databaseHostsLoading, databaseHostsError]);
 
     useEffect(() => {
         if (discoverHostError) {
@@ -316,13 +401,13 @@ const InventoryApis = () => {
             dispatch(setMssqlInstancesData({}));
             setRunningInstanceList([]);
             dispatch(addDatabaseHostsList([]));
-            dispatch(
-                addDatabaseHosts({
-                    databaseHostsData: null,
-                    databaseHostsLoading: true,
-                    databaseHostsError
-                })
-            );
+            // dispatch(
+            //     addDatabaseHosts({
+            //         databaseHostsData: null,
+            //         databaseHostsLoading: true,
+            //         databaseHostsError
+            //     })
+            // );
             dispatch(setMovedManagedHosts([]));
             dispatch(setUnManagedHosts([]));
             dispatch(setUnIdentifiableHosts([]));
