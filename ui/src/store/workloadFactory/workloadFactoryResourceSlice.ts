@@ -50,7 +50,7 @@ const initialState: WorkloadFactoryResourceEntities = {
         },
 
         protection: {
-            isAwsBackUpEnabled: {
+            isAwsBackupEnabled: {
                 fsxn: false,
                 fsxw: false,
                 ebs: false

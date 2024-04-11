@@ -15,7 +15,7 @@ export interface DatabaseHostItem {
         ec2Details: Array<Ec2Details>;
     };
     protection: {
-        isAwsBackUpEnabled: {
+        isAwsBackupEnabled: {
             fsxn: boolean;
             fsxw: boolean;
             ebs: boolean;

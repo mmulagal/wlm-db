@@ -346,9 +346,9 @@ export const formatFractionalNumber = (value: number | undefined, precision: num
 
 export const isAwsBackupEnabled = (val: any) => {
     return (
-        val?.protection?.isAwsBackUpEnabled?.fsxw ||
-        val?.protection?.isAwsBackUpEnabled?.fsxn ||
-        val?.protection?.isAwsBackUpEnabled?.ebs
+        val?.protection?.isAwsBackupEnabled?.fsxw ||
+        val?.protection?.isAwsBackupEnabled?.fsxn ||
+        val?.protection?.isAwsBackupEnabled?.ebs
     );
 };
 
@@ -546,9 +546,9 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
                 val?.status === STATUS_CONST.UP ||
                 val?.status === 'ONLINE' ||
                 val?.status === 'OFFLINE') &&
-            !val?.protection?.isAwsBackUpEnabled?.fsxw &&
-            !val?.protection?.isAwsBackUpEnabled?.fsxn &&
-            !val?.protection?.isAwsBackUpEnabled?.ebs &&
+            !val?.protection?.isAwsBackupEnabled?.fsxw &&
+            !val?.protection?.isAwsBackupEnabled?.fsxn &&
+            !val?.protection?.isAwsBackupEnabled?.ebs &&
             !val?.protection?.isFsxOntapSnapshotsEnabled &&
             !val?.protection?.isSqlNativeEnabled
         ) {

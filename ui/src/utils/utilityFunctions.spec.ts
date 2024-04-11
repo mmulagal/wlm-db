@@ -78,7 +78,7 @@ const databaseHostItem: any = [
             ]
         },
         protection: {
-            isAwsBackUpEnabled: {
+            isAwsBackupEnabled: {
                 fsxn: true,
                 fsxw: false,
                 ebs: false
@@ -141,7 +141,7 @@ const databaseHostItem: any = [
             ]
         },
         protection: {
-            isAwsBackUpEnabled: {
+            isAwsBackupEnabled: {
                 fsxn: false,
                 fsxw: false,
                 ebs: false

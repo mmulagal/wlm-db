@@ -35,7 +35,7 @@
                 ]
             },
             "protection": {
-                "isAwsBackUpEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true,
                 "protectedDatabases": 8
@@ -102,7 +102,7 @@
                 ]
             },
             "protection": {
-                "isAwsBackUpEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": false,
                 "protectedDatabases": 8
@@ -164,7 +164,7 @@
                 ]
             },
             "protection": {
-                "isAwsBackUpEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false,
                 "protectedDatabases": 0
@@ -226,7 +226,7 @@
                 ]
             },
             "protection": {
-                "isAwsBackUpEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false,
                 "protectedDatabases": 0
@@ -285,7 +285,7 @@
                 ]
             },
             "protection": {
-                "isAwsBackUpEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": true,
                 "protectedDatabases": 8
@@ -344,7 +344,7 @@
                 ]
             },
             "protection": {
-                "isAwsBackUpEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": false,
                 "protectedDatabases": 0
@@ -404,7 +404,7 @@
                 ]
             },
             "protection": {
-                "isAwsBackUpEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true,
                 "protectedDatabases": 8
@@ -464,7 +464,7 @@
                 ]
             },
             "protection": {
-                "isAwsBackUpEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": false,
                 "protectedDatabases": 8
@@ -524,7 +524,7 @@
                 ]
             },
             "protection": {
-                "isAwsBackUpEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": true,
                 "protectedDatabases": 6
@@ -584,7 +584,7 @@
                 ]
             },
             "protection": {
-                "isAwsBackUpEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": true,
                 "protectedDatabases": 8
@@ -644,7 +644,7 @@
                 ]
             },
             "protection": {
-                "isAwsBackUpEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true,
                 "protectedDatabases": 8
@@ -704,7 +704,7 @@
                 ]
             },
             "protection": {
-                "isAwsBackUpEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true,
                 "protectedDatabases": 8
@@ -764,7 +764,7 @@
                 ]
             },
             "protection": {
-                "isAwsBackUpEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false,
                 "protectedDatabases": 0
@@ -824,7 +824,7 @@
                 ]
             },
             "protection": {
-                "isAwsBackUpEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false,
                 "protectedDatabases": 0
@@ -884,7 +884,7 @@
                 ]
             },
             "protection": {
-                "isAwsBackUpEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": true,
                 "protectedDatabases": 8
@@ -944,7 +944,7 @@
                 ]
             },
             "protection": {
-                "isAwsBackUpEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {"fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": false,
                 "protectedDatabases": 8
