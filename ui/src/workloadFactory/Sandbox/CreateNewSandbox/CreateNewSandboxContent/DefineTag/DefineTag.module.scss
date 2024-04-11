@@ -24,11 +24,11 @@
     }
 
     .selectedTag {
-        background-color: var(--tag-3-bg);
+        background-color: var(--hover-background);
     }
 
     .tag:hover {
-        background-color: var(--tag-3-bg);
+        background-color: var(--hover-background);
     }
 
     .darkTheme {
