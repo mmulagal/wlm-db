@@ -46,7 +46,7 @@ const DefineTag = () => {
                     <DsTypography>
                         <div className={styles.container}>
                             {tagNames.map((tag: any) => (
-                                <div className={setClass(tag)} onClick={() => handleClick(tag)}>
+                                <div key={tag} className={setClass(tag)} onClick={() => handleClick(tag)}>
                                     <DsTypography variant="Semibold_13" className={styles.tagColor}>
                                         {tag}
                                     </DsTypography>
