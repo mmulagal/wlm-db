@@ -50,7 +50,7 @@ export interface WorkloadFactoryResourceDetails {
     };
 
     protection: {
-        isAwsBackUpEnabled: {
+        isAwsBackupEnabled: {
             fsxn?: boolean;
             fsxw?: boolean;
             ebs?: boolean;
@@ -142,7 +142,7 @@ export interface WorkloadFactoryDatabaseItem {
     type: string;
     isProtected: boolean;
     protection?: {
-        isAwsBackUpEnabled: {
+        isAwsBackupEnabled: {
             fsxn: boolean;
             fsxw: boolean;
             ebs: boolean;

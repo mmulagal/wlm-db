@@ -346,9 +346,9 @@ export const formatFractionalNumber = (value: number | undefined, precision: num
 
 export const isAwsBackupEnabled = (val: any) => {
     return (
-        val?.protection?.isAwsBackUpEnabled?.fsxw ||
-        val?.protection?.isAwsBackUpEnabled?.fsxn ||
-        val?.protection?.isAwsBackUpEnabled?.ebs
+        val?.protection?.isAwsBackupEnabled?.fsxw ||
+        val?.protection?.isAwsBackupEnabled?.fsxn ||
+        val?.protection?.isAwsBackupEnabled?.ebs
     );
 };
 
@@ -455,7 +455,7 @@ export const formatHostData = (val: any) => {
         performanceText: val?.performance && val.performance?.assessment,
         // Storage saving table text to search in table
         storageSavingsText: storageSavingsText,
-        sizeformat: formatSizeOnePrecision(totalSize),
+        sizeformat: val?.storage ? formatSizeOnePrecision(totalSize) : '',
         instanceNames: instanceNames.join(',') || val?.ec2InstanceName,
         vpcNames: val?.topology?.vpcName || val?.vpc?.name,
         azType: azType,
@@ -546,9 +546,9 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
                 val?.status === STATUS_CONST.UP ||
                 val?.status === 'ONLINE' ||
                 val?.status === 'OFFLINE') &&
-            !val?.protection?.isAwsBackUpEnabled?.fsxw &&
-            !val?.protection?.isAwsBackUpEnabled?.fsxn &&
-            !val?.protection?.isAwsBackUpEnabled?.ebs &&
+            !val?.protection?.isAwsBackupEnabled?.fsxw &&
+            !val?.protection?.isAwsBackupEnabled?.fsxn &&
+            !val?.protection?.isAwsBackupEnabled?.ebs &&
             !val?.protection?.isFsxOntapSnapshotsEnabled &&
             !val?.protection?.isSqlNativeEnabled
         ) {

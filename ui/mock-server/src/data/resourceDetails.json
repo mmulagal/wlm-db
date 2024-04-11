@@ -48,7 +48,7 @@
     },
 
     "protection": {
-        "isAwsBackUpEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
         "isFsxOntapSnapshotsEnabled": true,
         "isSqlNativeEnabled": false
     },
