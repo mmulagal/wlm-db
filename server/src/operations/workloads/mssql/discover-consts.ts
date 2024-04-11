@@ -41,6 +41,11 @@ Example output:
   "databaseCount" = 8,
 }
 
+About function GetSMBMappedDrivesWithPath
+  SMB mapped drives are fetched from Windows registry HKEY_USERS and specifically at Network section.
+  We will consider users starting with S-1-5-21- and do not have _Classes. 
+  Those starting with [S-1-5-21-12] are all local users and starting with [S-1-5-21-13] are all network users.
+  From Network section, pick up DriveLetter and RemotePath.  
 
 Possible causes for unavailability of SQL Server details:
 - Insufficient permissions on sys.master_files view.
@@ -48,13 +53,16 @@ Possible causes for unavailability of SQL Server details:
   due to which the script won't  get/return SerialNumberOrScsiTargets.
   As a result, the storageType can't be determined while processing script
   output, which causes the API to return an empty  response for storageType.
+
+  Note: As a failover, using sys.sysdatabases view to fetch database paths.
+  However, this view does not list log paths.
 - SQL Instance is not running.
   Because of this, we won't be able to get storagex details.
 - No SQL authentication
   Because of this, we won't be able to get storage details.
 */
 const HOST_AND_SQL_INFO_PS1 = [
-    `
+  `
   $ErrorActionPreference = "Stop"
 
   Function TestIfInterfaceNameMatchesWithDriveId {
@@ -79,6 +87,7 @@ const HOST_AND_SQL_INFO_PS1 = [
                                    Where-object { $_.Devices -ne {} } |
                                      Sort-Object -Unique -Property TargetName |
                                        Select-Object Devices, TargetName
+                                      
 
     $iScsiSessionList = ForEach ($iScsiInitiator in $iScsiInitiatorSessionList) {
       $interfaceNames = @()
@@ -97,9 +106,11 @@ const HOST_AND_SQL_INFO_PS1 = [
 
     $iScsiInitiatorTargetList = $null
     If ((Get-WmiObject win32_service | ?{$_.Name -like 'MSiSCSI'}).State -eq 'Running') {
+      
       $iScsiInitiatorTargetList = Get-CimInstance -Namespace root\\wmi -ClassName MSIscsiInitiator_TargetClass |
                                     Sort-Object -Unique -Property TargetName |
                                       Select-Object TargetName, DiscoveryMechanism
+                                      
     }
 
     $iScsiTargetList = ForEach ($iScsiInitiatorTarget in $iScsiInitiatorTargetList) {
@@ -171,12 +182,74 @@ const HOST_AND_SQL_INFO_PS1 = [
 
     return $DriveTargetMap
   }
+
+
+  Function GetSMBMappedDrivesWithPath() {
+    $DriveLetterPath = @{}
+    #User List
+    $RootKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey(“USERS”,$Computer)
+    $SubKeyNames = $RootKey.GetSubKeyNames()
+    ForEach ($SubKeyName in $SubKeyNames)
+        {
+            if (($SubKeyName.Contains(“_Classes”) -ne $True))
+                {
+                    #Drive List
+                    $NetworkKey = $RootKey.OpenSubKey($SubKeyName + “\\Network”)
+                    if ($NetworkKey -ne $Null)
+                        {
+                            $MappedDrives = $NetworkKey.GetSubKeyNames()
+                           
+                              ForEach ($MappedDrive in $MappedDrives)
+                                {
+                                  $DriveKey = $NetworkKey.OpenSubKey($MappedDrive)
+                                  $DrivePath = ($DriveKey.GetValue(“RemotePath”) -split '\\share')[0].Trim('\')
+                                  if(! $DriveLetterPath.ContainsKey($MappedDrive.ToUpper()+':')) {
+                                      $DriveLetterPath.Add($MappedDrive.ToUpper()+':', $DrivePath)            
+                                  }         
+                                }
+                                
+                        } 
+                }
+        }
+
+    return $DriveLetterPath 
+  }
+  
+  Function GetSMBConnections() {
+
+   $SMBConnections = @()
+
+   $smbshares = Get-SMBConnection | Select-Object ServerName
+   ForEach($share in $smbshares) {
+        $SMBConnections += $share.ServerName 
+        }
+   return $SMBConnections
+  }
+
+  Function GetSQLInstanceDriveDetails($serverInstance) {
+
+    $sqlInstancePaths = sqlcmd -Q " SET NOCOUNT ON; SELECT physical_name FROM sys.master_files " -h -1 -b -C -W -S $serverInstance
+    if($sqlInstancePaths -eq $null) { 
+      $sqlInstancePaths = sqlcmd -Q " SET NOCOUNT ON; SELECT filename as Path FROM sys.sysdatabases " -h -1 -b -C -W -S $serverInstance
+    }
+
+    $sqlInstanceDriveLetterOrPathList = @()
+    ForEach ($path in $sqlInstancePaths) {
+      $path = $path.TrimStart('\')
+      $driveOrPath = ($path -split '\\\\')[0]
+      $sqlInstanceDriveLetterOrPathList += $driveOrPath
+      }
+    return ($sqlInstanceDriveLetterOrPathList | Select -Unique)
+
+      }
   
   try {
     $responseObject = @{}
     $instanceSectionStartTime = Get-Date
     $sqlServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
     $DiskTargetInfoMap = GetDiskDriveDetails
+    $MappedDrivesWithPath = GetSMBMappedDrivesWithPath
+    $SMBConnections = GetSMBConnections
   
     $instancesInfoList = ForEach ($sqlService in $sqlServiceList) {
       $responseObject = @{}
@@ -231,14 +304,26 @@ const HOST_AND_SQL_INFO_PS1 = [
           $responseObject['databaseCount'] = $editionDBCountMachineInfo[1]
           $responseObject['sqlServerName'] = $editionDBCountMachineInfo[2]
   
-          $sqlInstanceDriveLetterList = sqlcmd -Q " SET NOCOUNT ON; SELECT DISTINCT LEFT(physical_name, 2) AS DriveLetter FROM sys.master_files " -h -1 -b -C -W -S $serverInstance
+          $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails($serverInstance)
+          
           if ($? -eq $False) {
             $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
           }
   
-          $sqlServerInstanceStorageInfo = ForEach ($sqlInstanceDriveLetter in $sqlInstanceDriveLetterList) {
-            New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $DiskTargetInfoMap[$sqlInstanceDriveLetter] }
-          }
+          $sqlServerInstanceStorageInfo = ForEach ($sqlInstanceDriveLetterOrPath in $sqlInstanceDriveLetterOrPathList) {
+            
+            if ($DiskTargetInfoMap.Keys -contains $sqlInstanceDriveLetterOrPath) {
+            New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $DiskTargetInfoMap[$sqlInstanceDriveLetterOrPath] }}
+            elseif ($SMBConnections -contains $sqlInstanceDriveLetterOrPath) {
+            New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $sqlInstanceDriveLetterOrPath }     
+            }
+            elseif($MappedDrivesWithPath.Keys -contains $sqlInstanceDriveLetterOrPath) { 
+
+                  New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $MappedDrivesWithPath[$sqlInstanceDriveLetterOrPath] }  
+                  
+            }
+            }
+          
         } else {
           $responseObject['failureInfo'] += "\${instanceName}: SQLCMD.EXE not available\`n"
         }
@@ -258,7 +343,7 @@ const HOST_AND_SQL_INFO_PS1 = [
     Echo $responseObject | ConvertTo-Json
   }
 `
-];
+]; 
 
 const CLUSTER_NETWORK_IP_INFO_PS1 = [
     `
