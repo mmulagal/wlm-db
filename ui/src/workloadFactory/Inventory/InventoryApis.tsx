@@ -597,8 +597,8 @@ const InventoryApis = () => {
             if (result && !result?.error) {
                 let mssqlInstancesDataRes: any = {};
                 result?.data?.items?.map((host: any) => {
-                    if (mssqlInstancesData[host?.name]) {
-                        mssqlInstancesDataRes[host?.name] = {
+                    if (mssqlInstancesData[host?.id]) {
+                        mssqlInstancesDataRes[host?.id] = {
                             loading: false,
                             data: host,
                             error: host?.errors
