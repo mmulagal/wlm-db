@@ -455,7 +455,7 @@ export const formatHostData = (val: any) => {
         performanceText: val?.performance && val.performance?.assessment,
         // Storage saving table text to search in table
         storageSavingsText: storageSavingsText,
-        sizeformat: formatSizeOnePrecision(totalSize),
+        sizeformat: val?.storage ? formatSizeOnePrecision(totalSize) : '',
         instanceNames: instanceNames.join(',') || val?.ec2InstanceName,
         vpcNames: val?.topology?.vpcName || val?.vpc?.name,
         azType: azType,
