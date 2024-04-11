@@ -178,14 +178,14 @@ async function formatTemplateParameters(
     ];
 
     if (fsxConfiguration.fsxPassword) {
-        // try {
-        //     const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
-        //     if (encryptedFsxPassword) {
-        templateParams.push({ ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: fsxConfiguration.fsxPassword });
-        //     }
-        // } catch (error) {
-        //     throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
-        // }
+        try {
+            const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
+            if (encryptedFsxPassword) {
+                templateParams.push({ ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: encryptedFsxPassword });
+            }
+        } catch (error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
+        }
     }
 
     Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
