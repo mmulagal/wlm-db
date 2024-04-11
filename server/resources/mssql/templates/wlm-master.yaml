@@ -75,6 +75,7 @@ Metadata:
           - SQLServiceAccountPassword
           - SqlFSxWSFCName
           - SqlServerName
+          - SqlCollation
       - Label:
           default: CloudWatch, SNS Topic and Resource Tags configuration
         Parameters:
@@ -126,6 +127,8 @@ Metadata:
         default: SQL igroup name
       SqlServerName:
         default: SQL server name
+      SqlCollation:
+        default: SQL Server Collation
       VPCName:
         default: Name of VPC
       VPCCIDR:
@@ -208,6 +211,8 @@ Parameters:
   {{{SQLigroupname}}}
 
   {{{SqlServerName}}}
+
+  {{{SqlCollation}}}
 
   {{{SqlFSxWSFCName}}}
 
@@ -840,6 +845,8 @@ Resources:
           Ref: SqlFSxWSFCName
         SqlFSxFCIName:
           Ref: SqlServerName
+        SqlCollation:
+          Ref: SqlCollation
         SQLAdminAccounts:
           Ref: SQLServiceAccountName
         VPCID:
@@ -981,6 +988,8 @@ Resources:
           Ref: AWS::StackName
         SqlServerName:
           Ref: SqlServerName
+        SqlCollation:
+          Ref: SqlCollation
       NotificationARNs:
         Fn::If:
         - IncludeNotification
