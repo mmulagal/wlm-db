@@ -1,9 +1,10 @@
 import { isEmpty } from 'lodash-es';
-import { ContextEntry, SimulatePrincipalPolicyCommandInput } from '@aws-sdk/client-iam'; // ES Modules import
+import { ContextEntry, PolicyEvaluationDecisionType, SimulatePrincipalPolicyCommandInput } from '@aws-sdk/client-iam'; // ES Modules import
 import { getRoleDetails } from '../cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
 import simulatePrincipalPolicy from '../../lib/aws/iam';
 import { MissingPermission } from '../../utils/common-types';
+import { PERMISSION_DENIAL_POSSIBLE_REASONS } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -32,53 +33,72 @@ export default async function getMissingPermissionsList(
     };
 
     const { EvaluationResults: results } = await simulatePrincipalPolicy(credentialsId, region, command);
-    const missingPermissions =
-        results
-            ?.filter(
-                ({ EvalDecision, OrganizationsDecisionDetail, MatchedStatements }) =>
-                    EvalDecision !== 'allowed' &&
-                    OrganizationsDecisionDetail?.AllowedByOrganizations &&
-                    isEmpty(MatchedStatements)
-            )
-            .map(
-                ({ EvalActionName, EvalDecision }) =>
-                    ({
-                        service: EvalActionName?.split(':') ? EvalActionName?.split(':')[0] : EvalActionName,
-                        action: EvalActionName?.split(':') ? EvalActionName?.split(':')[1] : EvalActionName,
-                        error: EvalDecision as string
-                    } as MissingPermission)
-            ) || [];
-    const blockedByOrganisation =
+
+    // Any implicity denied permission will be marked as missing which can be missed in policy, SCP or boundary.
+    const implicitlyDenied =
         results
             ?.filter(
                 ({ EvalDecision, OrganizationsDecisionDetail }) =>
-                    EvalDecision !== 'allowed' && !OrganizationsDecisionDetail?.AllowedByOrganizations
+                    EvalDecision === PolicyEvaluationDecisionType.IMPLICIT_DENY &&
+                    OrganizationsDecisionDetail?.AllowedByOrganizations
             )
             .map(
-                ({ EvalActionName, EvalDecision }) =>
+                ({ EvalActionName, MatchedStatements, PermissionsBoundaryDecisionDetail }) =>
                     ({
                         service: EvalActionName?.split(':') ? EvalActionName?.split(':')[0] : EvalActionName,
                         action: EvalActionName?.split(':') ? EvalActionName?.split(':')[1] : EvalActionName,
-                        error: EvalDecision as string
-                    } as MissingPermission)
-            ) || [];
-    const blockedByPermissionBoundary =
-        results
-            ?.filter(
-                ({ EvalDecision, OrganizationsDecisionDetail, PermissionsBoundaryDecisionDetail, MatchedStatements }) =>
-                    EvalDecision !== 'allowed' &&
-                    OrganizationsDecisionDetail?.AllowedByOrganizations &&
-                    !PermissionsBoundaryDecisionDetail?.AllowedByPermissionsBoundary &&
-                    !isEmpty(MatchedStatements)
-            )
-            .map(
-                ({ EvalActionName, EvalDecision }) =>
-                    ({
-                        service: EvalActionName?.split(':') ? EvalActionName?.split(':')[0] : EvalActionName,
-                        action: EvalActionName?.split(':') ? EvalActionName?.split(':')[1] : EvalActionName,
-                        error: EvalDecision as string
+                        error: EvalActionName,
+                        reason:
+                            PermissionsBoundaryDecisionDetail &&
+                            !PermissionsBoundaryDecisionDetail?.AllowedByPermissionsBoundary
+                                ? PERMISSION_DENIAL_POSSIBLE_REASONS.BLOCKED_BOUNDARY
+                                : isEmpty(MatchedStatements)
+                                ? PERMISSION_DENIAL_POSSIBLE_REASONS.MISSING
+                                : PERMISSION_DENIAL_POSSIBLE_REASONS.OTHERS
                     } as MissingPermission)
             ) || [];
 
-    return { missingPermissions, blockedByOrganisation, blockedByPermissionBoundary };
+    // Any explicitly denied permission will be marked as blocked which could be from policy, SCP or boundary.
+    const explicitlyDenied =
+        results
+            ?.filter(({ EvalDecision }) => EvalDecision === PolicyEvaluationDecisionType.EXPLICIT_DENY)
+            .map(
+                ({
+                    EvalActionName,
+                    MatchedStatements,
+                    OrganizationsDecisionDetail,
+                    PermissionsBoundaryDecisionDetail
+                }) =>
+                    ({
+                        service: EvalActionName?.split(':') ? EvalActionName?.split(':')[0] : EvalActionName,
+                        action: EvalActionName?.split(':') ? EvalActionName?.split(':')[1] : EvalActionName,
+                        error: EvalActionName,
+                        reason: !OrganizationsDecisionDetail?.AllowedByOrganizations
+                            ? PERMISSION_DENIAL_POSSIBLE_REASONS.BLOCKED_SCP
+                            : PermissionsBoundaryDecisionDetail &&
+                              !PermissionsBoundaryDecisionDetail?.AllowedByPermissionsBoundary
+                            ? PERMISSION_DENIAL_POSSIBLE_REASONS.BLOCKED_BOUNDARY
+                            : isEmpty(MatchedStatements)
+                            ? PERMISSION_DENIAL_POSSIBLE_REASONS.MISSING
+                            : PERMISSION_DENIAL_POSSIBLE_REASONS.OTHERS
+                    } as MissingPermission)
+            ) || [];
+
+    // SCP blocked permissions are returned as implicitDeny but needs to be classified as blocked.
+    const blockedBySCP =
+        results
+            ?.filter(({ OrganizationsDecisionDetail }) => !OrganizationsDecisionDetail?.AllowedByOrganizations)
+            .map(
+                ({ EvalActionName }) =>
+                    ({
+                        service: EvalActionName?.split(':') ? EvalActionName?.split(':')[0] : EvalActionName,
+                        action: EvalActionName?.split(':') ? EvalActionName?.split(':')[1] : EvalActionName,
+                        error: EvalActionName,
+                        reason: PERMISSION_DENIAL_POSSIBLE_REASONS.BLOCKED_SCP
+                    } as MissingPermission)
+            ) || [];
+
+    explicitlyDenied.push(...blockedBySCP);
+
+    return { implicitlyDenied, explicitlyDenied };
 }
