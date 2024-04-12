@@ -47,6 +47,7 @@ Metadata:
                   - AMIID
                   - BYOLAMI
                   - SqlServerName
+                  - SqlCollation
             - Label:
                   default: AWS Configuration
               Parameters:
@@ -108,6 +109,8 @@ Metadata:
                 default: Stack name for parent CloudFormation stack
             SqlServerName:
                 default: SQL Server Name
+            SqlCollation:
+                default: Name for the SQL Server collation.
 Parameters:
     ParentStackName:
         Description: Stack name for the parent CloudFormation stack.
@@ -239,6 +242,9 @@ Parameters:
         Type: String
     SqlServerName:
         Description: Name for the SQL Server.
+        Type: String
+    SqlCollation:
+        Description: Collation for the SQL Server.
         Type: String
 Conditions:
     ADSGNotSelected: !Equals
@@ -641,6 +647,8 @@ Resources:
                                   - !Ref 'SQLAdminAccounts'
                                   - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
+                                  - "' -SqlCollation '"
+                                  - !Ref 'SqlCollation'
                                   - "' -NetBIOSName '"
                                   - !Ref 'SqlServerName'
                                   - '''"'
