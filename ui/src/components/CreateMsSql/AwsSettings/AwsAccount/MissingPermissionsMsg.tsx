@@ -23,9 +23,9 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
     const [permissionCount, setPermissionCount] = useState(0);
 
     const modifyPermissions = (obj: any) => {
-        if (obj.error === 'implicitDeny') {
+        if (obj.error === 'implicitDeny' || obj.error === 'implicitly denied') {
             return { ...obj, error: `${GENERAL.MISSING_PERMISSION}` };
-        } else if (obj.error === 'explicitDeny') {
+        } else if (obj.error === 'explicitDeny' || obj.error === 'explicitly denied') {
             return { ...obj, error: `${GENERAL.BLOCKED_BY_PERMISSION_BOUNDARY}` };
         } else {
             return { ...obj, error: `${obj.error}` };
