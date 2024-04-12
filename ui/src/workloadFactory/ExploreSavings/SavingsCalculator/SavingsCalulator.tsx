@@ -6,6 +6,8 @@ import { WLF_TABS } from '../../../utils/consts';
 import { DsTypography } from '@netapp/design-system';
 import CostSavings from './CostSavings/CostSavings';
 import TotalMonthlyCost from '../TotalMonthlyCost/TotalMonthlyCost';
+import SavingsHeader from './SavingsHeader/SavingsHeader';
+import SavingsSelection from './SavingsSelection/SavingsSelection';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
@@ -33,7 +35,13 @@ const SavingsCalculator = () => {
             </div>
 
             <div className={styles.contentArea}>
-                <div className={styles.firstContainer}></div>
+                {/* Left side code here */}
+                <div className={styles.firstContainer}>
+                    <SavingsHeader />
+                    <SavingsSelection />
+                </div>
+
+                {/* Right side code here */}
                 <div className={styles.secondContainer}>
                     <div className={styles.firstSection}>
                         <CostSavings />
