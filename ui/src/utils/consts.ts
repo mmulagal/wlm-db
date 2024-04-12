@@ -268,6 +268,7 @@ export const WLF_TABS = {
     OVERVIEW: 'Overview',
     SANDBOXES: 'Sandboxes',
     EXPLORE_SAVINGS: 'Explore savings',
+    SAVINGS_CALCULATOR: 'Savings Calculator',
     JOB_MONITORING: 'Job monitoring',
     DATABASE_LIST: 'Database list',
     MANAGED_HOSTS: 'Managed hosts',

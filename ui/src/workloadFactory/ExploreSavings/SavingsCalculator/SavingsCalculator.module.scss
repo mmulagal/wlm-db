@@ -1,0 +1,47 @@
+.savingsCalculator {
+    height: 90vh;
+    width: 100vw;
+    background-color: var(--main-background);
+    overflow-y: auto;
+
+    .breadCrumb {
+        margin-top: 16px;
+        margin-left: 40px;
+        width: 1687px;
+        display: flex;
+        justify-content: space-between;
+
+        [class*='BreadCrumbs_bread-crumbs'] {
+            position: relative;
+            top: -3px;
+        }
+    }
+
+    .savingsHeading {
+        margin: 0 auto;
+
+        width: 1336px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .contentArea {
+        width: 1336px;
+        margin: 0 auto;
+        margin-top: 8px;
+        display: flex;
+        gap: 24px;
+
+        .firstContainer {
+            width: 656px;
+            height: 782px;
+            background-color: var(--content-background);
+        }
+
+        .secondContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+    }
+}

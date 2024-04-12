@@ -1,0 +1,21 @@
+.exploreSavingsHeader {
+    margin: 40px 0 0 120px;
+    background-color: var(--content-background);
+    width: 1605px;
+    height: 224px;
+
+    .topPart {
+        display: flex;
+
+        .contentSection {
+            padding: 66px 64px 0 64px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+
+            .subText {
+                width: 877px;
+            }
+        }
+    }
+}

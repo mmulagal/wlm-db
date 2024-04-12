@@ -1,10 +1,10 @@
+import ExploreSavingHeader from './ExploreSavingHeader/ExploreSavingHeader';
 import styles from './ExploreSavings.module.scss';
-import TotalMonthlyCost from './TotalMonthlyCost/TotalMonthlyCost';
 
 const ExploreSavings = () => {
     return (
         <div className={styles.exploreSavings}>
-            <TotalMonthlyCost />
+            <ExploreSavingHeader />
         </div>
     );
 };
