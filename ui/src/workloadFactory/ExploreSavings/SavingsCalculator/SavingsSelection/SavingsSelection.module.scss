@@ -1,10 +1,39 @@
 .savingsSelection {
-    padding: 40px;
+    padding: 40px 40px 0 40px;
     display: flex;
     flex-direction: column;
-    gap: 32px;
 
     .firstRow {
+        margin-top: 32px;
+    }
+
+    .widthSet {
         width: 276px;
+    }
+
+    .secondRow {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+    }
+
+    .notice {
+        display: flex;
+        gap: 6px;
+        position: relative;
+        left: 9px;
+
+        .setSVG {
+            svg {
+                width: 21px;
+                height: 21px;
+                path {
+                    fill: #518bec;
+                }
+            }
+        }
+        .contentWidth {
+            width: 256px;
+        }
     }
 }

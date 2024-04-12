@@ -8,6 +8,7 @@ import CostSavings from './CostSavings/CostSavings';
 import TotalMonthlyCost from '../TotalMonthlyCost/TotalMonthlyCost';
 import SavingsHeader from './SavingsHeader/SavingsHeader';
 import SavingsSelection from './SavingsSelection/SavingsSelection';
+import CostBreakdown from './CostBreakdown/CostBreakdown';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
@@ -48,6 +49,9 @@ const SavingsCalculator = () => {
                     </div>
                     <div className={styles.secondSection}>
                         <TotalMonthlyCost />
+                    </div>
+                    <div className={styles.secondSection}>
+                        <CostBreakdown />
                     </div>
                 </div>
             </div>
