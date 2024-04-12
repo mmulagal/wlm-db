@@ -47,7 +47,6 @@ export default async function getMissingPermissionsList(
                     ({
                         service: EvalActionName?.split(':') ? EvalActionName?.split(':')[0] : EvalActionName,
                         action: EvalActionName?.split(':') ? EvalActionName?.split(':')[1] : EvalActionName,
-                        error: EvalActionName,
                         reason:
                             PermissionsBoundaryDecisionDetail &&
                             !PermissionsBoundaryDecisionDetail?.AllowedByPermissionsBoundary
@@ -72,7 +71,6 @@ export default async function getMissingPermissionsList(
                     ({
                         service: EvalActionName?.split(':') ? EvalActionName?.split(':')[0] : EvalActionName,
                         action: EvalActionName?.split(':') ? EvalActionName?.split(':')[1] : EvalActionName,
-                        error: EvalActionName,
                         reason: !OrganizationsDecisionDetail?.AllowedByOrganizations
                             ? PERMISSION_DENIAL_POSSIBLE_REASONS.BLOCKED_SCP
                             : PermissionsBoundaryDecisionDetail &&
@@ -93,7 +91,6 @@ export default async function getMissingPermissionsList(
                     ({
                         service: EvalActionName?.split(':') ? EvalActionName?.split(':')[0] : EvalActionName,
                         action: EvalActionName?.split(':') ? EvalActionName?.split(':')[1] : EvalActionName,
-                        error: EvalActionName,
                         reason: PERMISSION_DENIAL_POSSIBLE_REASONS.BLOCKED_SCP
                     } as MissingPermission)
             ) || [];
