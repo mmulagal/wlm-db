@@ -6,7 +6,6 @@ import ErrorPage from './common/ErrorPage/ErrorPage';
 import { useInitialize } from './utils/appConfig';
 import FullStoryComp from './common/FullStoryComp';
 import ComponentLoader from './common/ComponentLoader/ComponentLoader';
-import { useEffect } from 'react';
 
 function App() {
     const { loading, accountId } = useAppSelector(state => state.auth);

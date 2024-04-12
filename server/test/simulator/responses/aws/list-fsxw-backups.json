@@ -1,0 +1,178 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "1e90482a-f646-41c6-848e-bfa70d9ce875",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "Backups": [
+        {
+            "BackupId": "backup-0ab3852a2af353d36",
+            "CreationTime": "2024-03-27T18:01:31.619Z",
+            "DirectoryInformation": {
+                "ActiveDirectoryId": "d-9667612aec",
+                "ResourceARN": "arn:aws:ds:ap-southeast-1:464262061435:directory/d-9667612aec"
+            },
+            "FileSystem": {
+                "FileSystemId": "fs-0f7b536896e0beb0a",
+                "FileSystemType": "WINDOWS",
+                "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-0f7b536896e0beb0a",
+                "StorageCapacity": 32,
+                "WindowsConfiguration": {
+                    "ActiveDirectoryId": "d-9667612aec",
+                    "AutomaticBackupRetentionDays": 30,
+                    "DailyAutomaticBackupStartTime": "18:00",
+                    "DeploymentType": "SINGLE_AZ_2",
+                    "WeeklyMaintenanceStartTime": "1:14:30"
+                }
+            },
+            "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061435:key/0a96542a-f57b-487c-a0fc-4db5d74c0a89",
+            "Lifecycle": "AVAILABLE",
+            "OwnerId": "464262061435",
+            "ProgressPercent": 100,
+            "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:backup/backup-0ab3852a2af353d36",
+            "Tags": [],
+            "Type": "AUTOMATIC"
+        },
+        {
+            "BackupId": "backup-0f811bac309e72c0a",
+            "CreationTime": "2024-03-28T18:12:25.028Z",
+            "DirectoryInformation": {
+                "ActiveDirectoryId": "d-9667612aec",
+                "ResourceARN": "arn:aws:ds:ap-southeast-1:464262061435:directory/d-9667612aec"
+            },
+            "FileSystem": {
+                "FileSystemId": "fs-0f7b536896e0beb0a",
+                "FileSystemType": "WINDOWS",
+                "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-0f7b536896e0beb0a",
+                "StorageCapacity": 32,
+                "WindowsConfiguration": {
+                    "ActiveDirectoryId": "d-9667612aec",
+                    "AutomaticBackupRetentionDays": 30,
+                    "DailyAutomaticBackupStartTime": "18:00",
+                    "DeploymentType": "SINGLE_AZ_2",
+                    "WeeklyMaintenanceStartTime": "1:14:30"
+                }
+            },
+            "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061435:key/0a96542a-f57b-487c-a0fc-4db5d74c0a89",
+            "Lifecycle": "AVAILABLE",
+            "OwnerId": "464262061435",
+            "ProgressPercent": 100,
+            "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:backup/backup-0f811bac309e72c0a",
+            "Tags": [],
+            "Type": "AUTOMATIC"
+        },
+        {
+            "BackupId": "backup-038001ccf8c2cf4d8",
+            "CreationTime": "2024-03-29T18:12:26.095Z",
+            "DirectoryInformation": {
+                "ActiveDirectoryId": "d-9667612aec",
+                "ResourceARN": "arn:aws:ds:ap-southeast-1:464262061435:directory/d-9667612aec"
+            },
+            "FileSystem": {
+                "FileSystemId": "fs-0f7b536896e0beb0a",
+                "FileSystemType": "WINDOWS",
+                "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-0f7b536896e0beb0a",
+                "StorageCapacity": 32,
+                "WindowsConfiguration": {
+                    "ActiveDirectoryId": "d-9667612aec",
+                    "AutomaticBackupRetentionDays": 30,
+                    "DailyAutomaticBackupStartTime": "18:00",
+                    "DeploymentType": "SINGLE_AZ_2",
+                    "WeeklyMaintenanceStartTime": "1:14:30"
+                }
+            },
+            "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061435:key/0a96542a-f57b-487c-a0fc-4db5d74c0a89",
+            "Lifecycle": "AVAILABLE",
+            "OwnerId": "464262061435",
+            "ProgressPercent": 100,
+            "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:backup/backup-038001ccf8c2cf4d8",
+            "Tags": [],
+            "Type": "AUTOMATIC"
+        },
+        {
+            "BackupId": "backup-05f45a01f85db4cd5",
+            "CreationTime": "2024-03-30T18:12:20.959Z",
+            "DirectoryInformation": {
+                "ActiveDirectoryId": "d-9667612aec",
+                "ResourceARN": "arn:aws:ds:ap-southeast-1:464262061435:directory/d-9667612aec"
+            },
+            "FileSystem": {
+                "FileSystemId": "fs-0f7b536896e0beb0a",
+                "FileSystemType": "WINDOWS",
+                "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-0f7b536896e0beb0a",
+                "StorageCapacity": 32,
+                "WindowsConfiguration": {
+                    "ActiveDirectoryId": "d-9667612aec",
+                    "AutomaticBackupRetentionDays": 30,
+                    "DailyAutomaticBackupStartTime": "18:00",
+                    "DeploymentType": "SINGLE_AZ_2",
+                    "WeeklyMaintenanceStartTime": "1:14:30"
+                }
+            },
+            "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061435:key/0a96542a-f57b-487c-a0fc-4db5d74c0a89",
+            "Lifecycle": "AVAILABLE",
+            "OwnerId": "464262061435",
+            "ProgressPercent": 100,
+            "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:backup/backup-05f45a01f85db4cd5",
+            "Tags": [],
+            "Type": "AUTOMATIC"
+        },
+        {
+            "BackupId": "backup-02b9d2b61eb74c34a",
+            "CreationTime": "2024-03-31T18:12:33.192Z",
+            "DirectoryInformation": {
+                "ActiveDirectoryId": "d-9667612aec",
+                "ResourceARN": "arn:aws:ds:ap-southeast-1:464262061435:directory/d-9667612aec"
+            },
+            "FileSystem": {
+                "FileSystemId": "fs-0f7b536896e0beb0a",
+                "FileSystemType": "WINDOWS",
+                "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-0f7b536896e0beb0a",
+                "StorageCapacity": 32,
+                "WindowsConfiguration": {
+                    "ActiveDirectoryId": "d-9667612aec",
+                    "AutomaticBackupRetentionDays": 30,
+                    "DailyAutomaticBackupStartTime": "18:00",
+                    "DeploymentType": "SINGLE_AZ_2",
+                    "WeeklyMaintenanceStartTime": "1:14:30"
+                }
+            },
+            "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061435:key/0a96542a-f57b-487c-a0fc-4db5d74c0a89",
+            "Lifecycle": "AVAILABLE",
+            "OwnerId": "464262061435",
+            "ProgressPercent": 100,
+            "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:backup/backup-02b9d2b61eb74c34a",
+            "Tags": [],
+            "Type": "AUTOMATIC"
+        },
+        {
+            "BackupId": "backup-07cf5e6bb9af38a44",
+            "CreationTime": "2024-04-01T18:12:25.007Z",
+            "DirectoryInformation": {
+                "ActiveDirectoryId": "d-9667612aec",
+                "ResourceARN": "arn:aws:ds:ap-southeast-1:464262061435:directory/d-9667612aec"
+            },
+            "FileSystem": {
+                "FileSystemId": "fs-0f7b536896e0beb0a",
+                "FileSystemType": "WINDOWS",
+                "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-0f7b536896e0beb0a",
+                "StorageCapacity": 32,
+                "WindowsConfiguration": {
+                    "ActiveDirectoryId": "d-9667612aec",
+                    "AutomaticBackupRetentionDays": 30,
+                    "DailyAutomaticBackupStartTime": "18:00",
+                    "DeploymentType": "SINGLE_AZ_2",
+                    "WeeklyMaintenanceStartTime": "1:14:30"
+                }
+            },
+            "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061435:key/0a96542a-f57b-487c-a0fc-4db5d74c0a89",
+            "Lifecycle": "AVAILABLE",
+            "OwnerId": "464262061435",
+            "ProgressPercent": 100,
+            "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:backup/backup-07cf5e6bb9af38a44",
+            "Tags": [],
+            "Type": "AUTOMATIC"
+        }
+    ]
+}

@@ -8,7 +8,7 @@
             "size": 8388608,
             "type": "System Database",
             "protection": {
-                "isAwsBackUpEnabled": true,
+                "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": true
             }
@@ -20,7 +20,7 @@
             "size": 9388608,
             "type": "System Database",
             "protection": {
-                "isAwsBackUpEnabled": true,
+                "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false
             }
@@ -32,7 +32,7 @@
             "size": 2388608,
             "type": "User Database",
             "protection": {
-                "isAwsBackUpEnabled": true,
+                "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
             }
@@ -44,7 +44,7 @@
             "size": 18388608,
             "type": "System Database",
             "protection": {
-                "isAwsBackUpEnabled": false,
+                "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": true
             }
@@ -56,7 +56,7 @@
             "size": 5388608,
             "type": "User Database",
             "protection": {
-                "isAwsBackUpEnabled": false,
+                "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
             }
@@ -68,7 +68,7 @@
             "size": 84388608,
             "type": "System Database",
             "protection": {
-                "isAwsBackUpEnabled": false,
+                "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false
             }
@@ -80,7 +80,7 @@
             "size": 118388608,
             "type": "System Database",
             "protection": {
-                "isAwsBackUpEnabled": false,
+                "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": false
             }
@@ -92,7 +92,7 @@
             "size": 8388608,
             "type": "User Database",
             "protection": {
-                "isAwsBackUpEnabled": true,
+                "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
             }
@@ -104,7 +104,7 @@
             "size": 28388608,
             "type": "System Database",
             "protection": {
-                "isAwsBackUpEnabled": false,
+                "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false
             }
@@ -116,7 +116,7 @@
             "size": 38388608,
             "type": "System Database",
             "protection": {
-                "isAwsBackUpEnabled": true,
+                "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
             }
@@ -128,7 +128,7 @@
             "size": 83828608,
             "type": "System Database",
             "protection": {
-                "isAwsBackUpEnabled": true,
+                "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false
             }
@@ -140,7 +140,7 @@
             "size": 83828608,
             "type": "System Database",
             "protection": {
-                "isAwsBackUpEnabled": false,
+                "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false
             }
@@ -152,7 +152,7 @@
             "size": 83886408,
             "type": "User Database",
             "protection": {
-                "isAwsBackUpEnabled": false,
+                "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
             }
@@ -164,7 +164,7 @@
             "size": 8388608,
             "type": "User Database",
             "protection": {
-                "isAwsBackUpEnabled": true,
+                "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false
             }
@@ -176,7 +176,7 @@
             "size": 8388608,
             "type": "System Database",
             "protection": {
-                "isAwsBackUpEnabled": true,
+                "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
             }

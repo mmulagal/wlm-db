@@ -4,12 +4,15 @@ import { registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './SandboxChart.module.scss';
+import CommonStyles from '../../../../utils/CommonStyles.module.scss';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 Chart.register(...registerables);
 
 const SandboxChart = () => {
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
+    const { isNA } = useAppSelector(state => state.sandbox);
 
     const doughnutOptions = {
         plugins: {
@@ -47,15 +50,26 @@ const SandboxChart = () => {
     return (
         <div className={styles.sandboxChart} id="chart-item">
             <div className={styles['center-text']}>
-                <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                    120
+                {!isNA && (
+                    <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
+                        120
+                    </Typography>
+                )}
+
+                {isNA && (
+                    <Typography variant="Regular_16" className={CommonStyles.notAvailable}>
+                        {GENERAL.NOT_AVAILABLE}
+                    </Typography>
+                )}
+                <Typography variant="Regular_14" className={isNA ? ` ${CommonStyles.notAvailable}` : ''}>
+                    sandboxes
                 </Typography>
-                <Typography variant="Regular_14">sandboxes</Typography>
             </div>
             {/* @ts-ignore */}
             {false && <div className={styles.emptyCircle}></div>}
+            {isNA && <div className={styles.emptyCircle}></div>}
 
-            <canvas ref={ref} id="chart-area" width={184} height={184}></canvas>
+            {!isNA && <canvas ref={ref} id="chart-area" width={184} height={184}></canvas>}
         </div>
     );
 };

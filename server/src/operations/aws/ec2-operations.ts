@@ -7,7 +7,8 @@ import {
     DescribeNetworkInterfacesCommandInput,
     DescribeTagsCommandInput,
     DescribeVpcEndpointsCommandInput,
-    VpcEndpoint
+    VpcEndpoint,
+    DescribeSnapshotsCommandInput
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
 import {
@@ -30,7 +31,8 @@ import {
     describeTags,
     describeEndpoints,
     modifyVpcAttributes,
-    describeInstanceTypeOfferings
+    describeInstanceTypeOfferings,
+    describeSnapshots
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
@@ -561,6 +563,27 @@ async function getValidationNodeInstanceType(credentialsId: string, region: stri
     return instanceType;
 }
 
+async function isEbsAwsBackupEnabled(credentialsId: string, region: string, ebsVolumeId: string) {
+    logger.info('Check if EBS AWS backup is enabled', {
+        credentialsId,
+        region,
+        ebsVolumeId
+    });
+
+    const input: DescribeSnapshotsCommandInput = {
+        Filters: [
+            {
+                Name: 'volume-id',
+                Values: [ebsVolumeId]
+            }
+        ]
+    };
+
+    const backups = await describeSnapshots(credentialsId, region, input);
+
+    return backups.Snapshots?.length !== 0;
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -576,5 +599,6 @@ export {
     getServicesWithNoEndpoint,
     findResourceNameFromTags,
     enableVpcDnsAttributes,
-    getValidationNodeInstanceType
+    getValidationNodeInstanceType,
+    isEbsAwsBackupEnabled
 };

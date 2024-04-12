@@ -114,10 +114,6 @@ const SelectSource = () => {
                 <span>
                     {GENERAL.SOURCE_INSTANCE}: {selectedSourceInstance ? selectedSourceInstance.label : ''}
                 </span>
-                <span className={CommonStyles.separatorSandbox} />
-                <span>
-                    {GENERAL.SOURCE_DATABASE}: {selectedSourceDatabase ? selectedSourceDatabase.label : ''}
-                </span>
             </DsTypography>
         );
     };

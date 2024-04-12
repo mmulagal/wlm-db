@@ -88,7 +88,7 @@ router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances
     }, 3000);
 });
 
-router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/mssql/instances`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/mssql/instances`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, MssqlInstances);
     }, 3000);

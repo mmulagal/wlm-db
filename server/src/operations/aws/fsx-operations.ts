@@ -3,8 +3,8 @@ import randomize from 'randomatic';
 import createError from 'http-errors';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
-import { ListTagsForResourceCommandInput, Tag } from '@aws-sdk/client-fsx';
-import { attempt, isEmpty } from 'lodash-es';
+import { DescribeBackupsCommandInput, ListTagsForResourceCommandInput, Tag } from '@aws-sdk/client-fsx';
+import { attempt, compact, isEmpty } from 'lodash-es';
 import {
     describeFSxFileSystems,
     describeFSxVolumes,
@@ -258,17 +258,17 @@ async function getVolumeIdsFromUuids(credentialsId: string, region: string, fsxI
 
     logger.debug('List volume ids in an fsx response', volumeIds);
 
-    return volumeIds;
+    return compact(volumeIds);
 }
 
-async function isAWSBackupEnabled(
+async function isFsxnAwsBackupEnabled(
     credentialsId: string,
     region: string,
     fileSystemId: string,
     metadata: Metadata,
     activeNodeInstanceId?: string
 ) {
-    logger.info('Check if AWS backup is enabled', {
+    logger.info('Check if FSX for NetApp ONTAP AWS backup is enabled', {
         credentialsId,
         region,
         fileSystemId,
@@ -286,11 +286,41 @@ async function isAWSBackupEnabled(
     if (!isEmpty(volumeUuids)) {
         const volumeIds = await getVolumeIdsFromUuids(credentialsId, region, fileSystemId, volumeUuids);
         if (!isEmpty(volumeIds)) {
-            const backups = await describeFSxBackups(credentialsId, region, volumeIds as string[]);
+            const input: DescribeBackupsCommandInput = {
+                Filters: [
+                    {
+                        Name: 'volume-id',
+                        Values: volumeIds
+                    }
+                ]
+            };
+            const backups = await describeFSxBackups(credentialsId, region, input);
+
             return backups.Backups?.length !== 0;
         }
         return false;
     }
+}
+
+async function isFsxwAwsBackupEnabled(credentialsId: string, region: string, fileSystemId: string) {
+    logger.info('Check if FSX for Windows AWS backup is enabled', {
+        credentialsId,
+        region,
+        fileSystemId
+    });
+
+    const input: DescribeBackupsCommandInput = {
+        Filters: [
+            {
+                Name: 'file-system-id',
+                Values: [fileSystemId]
+            }
+        ]
+    };
+
+    const backups = await describeFSxBackups(credentialsId, region, input);
+
+    return backups.Backups?.length !== 0;
 }
 
 async function getOntapVolumesSnapshotCount(
@@ -454,7 +484,8 @@ async function getFsxStorageCapacity(credentialsId: string, region: string, fsxI
 
 export {
     getFSxFileSystemsList,
-    isAWSBackupEnabled,
+    isFsxnAwsBackupEnabled,
+    isFsxwAwsBackupEnabled,
     getOntapVolumesSnapshotCount,
     getStorageDataUsingSSM,
     getMappedOntapVolumes,

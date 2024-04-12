@@ -1,4 +1,4 @@
-import { Button, Typography, useDialog } from '@netapp/design-system';
+import { Button, useDialog } from '@netapp/design-system';
 import { useAppSelector } from '../../../../store/storeHooks';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -14,8 +14,6 @@ type permissionProp = {
 
 const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
     const { setDialog } = useDialog();
-    const deployRedirectToCfLink = useAppSelector(state => state.msSqlAction.deployRedirectToCfLink);
-    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const { policiesList } = useAppSelector(state => state.mssql.getPolicies);
     const blockedPermissions =
         (permissionData?.blockedByOrganisation && permissionData?.blockedByOrganisation.length) ||
@@ -112,25 +110,6 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
                 customClass={styles.setWidth}
             />
         );
-    };
-
-    const openDemoInfoDialog = () => {
-        setDialog(
-            <DialogComponent
-                header={GENERAL.DEMO_TITLE}
-                content={<Typography variant="Regular_14">{`${GENERAL.DEMO_CONTENT}`}</Typography>}
-                primaryButton={GENERAL.CONTINUE}
-                callback={() => {}}
-            />
-        );
-    };
-
-    const redirectToCf = () => {
-        if (isDemoMode) {
-            openDemoInfoDialog();
-        } else {
-            window.open(deployRedirectToCfLink, '_blank', 'noopener');
-        }
     };
 
     return (

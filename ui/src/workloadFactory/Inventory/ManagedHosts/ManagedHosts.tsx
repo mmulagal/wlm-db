@@ -15,24 +15,31 @@ import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { WLF_TABS, STATUS_CONST, FSX_DEPLOYMENT_MODE, DETECT_HOST_VAR } from '../../../utils/consts';
+import { WLF_TABS, STATUS_CONST, FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
 import { addDatabaseHosts, selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
-import { databaseTableSort, formatFractionalNumber, formatSizeOnePrecision } from '../../../utils/utilityFunctions';
-import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
+import { databaseTableSort } from '../../../utils/utilityFunctions';
 import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
 import { setManagedHostColState, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
-import EstimatedCostPopover from '../EstimatedCostPopover/EstimatedCostPopover';
 import {
     addInitialDBCreateData,
     initialCreateNewUserState,
     setDBHostName
 } from '../../../store/workloadFactory/createNewDBSlice';
+import {
+    renderAllocatedCapacity,
+    renderCellData,
+    renderDeploymentModel,
+    renderEstimatedCost,
+    renderFileSystemType,
+    renderInstanceName,
+    renderProtectionColumn
+} from '../InventoryUtils';
 
 const ManagedHosts = () => {
     const dispatch = useDispatch();
@@ -169,19 +176,7 @@ const ManagedHosts = () => {
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 if (!cellData) {
-                    const typeList: string[] = [];
-                    rowData?.sqlServerInstances?.[0]?.storage?.map((storageObj: any) => {
-                        if (storageObj.type === DETECT_HOST_VAR.FSXN && !typeList.includes(GENERAL.FSX_FOR_ONTAP)) {
-                            typeList.push(GENERAL.FSX_FOR_ONTAP);
-                        }
-                        if (storageObj.type === DETECT_HOST_VAR.EBS && !typeList.includes(GENERAL.EBS)) {
-                            typeList.push(GENERAL.EBS);
-                        }
-                        if (storageObj.type === DETECT_HOST_VAR.FSXW && !typeList.includes(GENERAL.FSX_FOR_WINDOWS)) {
-                            typeList.push(GENERAL.FSX_FOR_WINDOWS);
-                        }
-                    });
-                    return typeList ? typeList.join(', ') : cellData || GENERAL.NOT_AVAILABLE;
+                    return renderFileSystemType(cellData, rowData);
                 } else {
                     return cellData || GENERAL.NOT_AVAILABLE;
                 }
@@ -194,56 +189,7 @@ const ManagedHosts = () => {
             isSortable: true,
             width: '212px',
             renderCell: (cellData: any, rowData: any) => {
-                const isLoading = rowData?.loading;
-                const protectionData = rowData?.protection;
-                const totalDbCount = rowData?.databaseCount || 0;
-                let protectedChk = false;
-                if (
-                    protectionData?.isAwsBackUpEnabled ||
-                    protectionData?.isFsxOntapSnapshotsEnabled ||
-                    protectionData?.isSqlNativeEnabled
-                ) {
-                    protectedChk = true;
-                }
-
-                let protectionDbCount = 0;
-                let protectionPercent = 0;
-                if (protectionData?.isAwsBackUpEnabled || protectionData?.isFsxOntapSnapshotsEnabled) {
-                    protectionDbCount = totalDbCount;
-                    protectionPercent = 100;
-                } else if (protectionData?.isSqlNativeEnabled) {
-                    protectionDbCount = protectionData?.protectedDatabases || 0;
-                    protectionPercent =
-                        totalDbCount > 0 && protectionDbCount <= totalDbCount
-                            ? (protectionDbCount / totalDbCount) * 100
-                            : 0;
-                }
-
-                return (
-                    <>
-                        {protectionData && (
-                            <div className={styles.colText}>
-                                {protectedChk && (
-                                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                        {protectionDbCount +
-                                            GENERAL.PROTECTION_TOOLTIP[0] +
-                                            totalDbCount +
-                                            GENERAL.PROTECTION_TOOLTIP[1]}
-                                    </TooltipInfo>
-                                )}
-                                <div className={styles.protection}>
-                                    <Typography variant="Regular_14">
-                                        {protectedChk
-                                            ? formatFractionalNumber(protectionPercent) + '% ' + GENERAL.PROTECTION
-                                            : GENERAL.NOT_PROTECTED}
-                                    </Typography>
-                                </div>
-                            </div>
-                        )}
-                        {!protectionData && isLoading && <DsFlashingDotsLoader />}
-                        {!protectionData && !isLoading && notAvailable()}
-                    </>
-                );
+                return renderProtectionColumn(cellData, rowData, styles);
             }
         },
         {
@@ -253,17 +199,7 @@ const ManagedHosts = () => {
             width: '212px',
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <>
-                        {cellData && (
-                            <Typography variant="Regular_13" className={styles.colText}>
-                                {cellData}
-                            </Typography>
-                        )}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && !rowData?.loading && notAvailable()}
-                    </>
-                );
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
@@ -273,17 +209,7 @@ const ManagedHosts = () => {
             isSortable: true,
             width: '212px',
             renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <>
-                        {cellData && (
-                            <Typography variant="Regular_13" className={styles.colText}>
-                                {cellData}
-                            </Typography>
-                        )}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && !rowData?.loading && notAvailable()}
-                    </>
-                );
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
@@ -293,42 +219,18 @@ const ManagedHosts = () => {
             isSortable: true,
             width: '212px',
             renderCell: (cellData: any, rowData: any) => {
-                const costData = rowData?.estimatedUsageCost;
-                const totalCost = costData?.compute + costData?.storage + costData?.connectivity + costData?.others;
-                return (
-                    <>
-                        {costData && (
-                            <div className={styles.cost}>
-                                <TooltipInfo className={styles.tooltipClass} onVisibleChange={function noRefCheck() {}}>
-                                    {EstimatedCostPopover({ ...costData, totalCost: totalCost })}
-                                </TooltipInfo>
-                                <Typography variant="Regular_14">{`$ ${formatFractionalNumber(
-                                    totalCost,
-                                    2
-                                )}`}</Typography>
-                            </div>
-                        )}
-                        {!costData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!costData && !rowData?.loading && notAvailable()}
-                    </>
-                );
+                return renderEstimatedCost(cellData, rowData, styles);
             }
         },
         {
             id: '7',
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
-            accessor: 'storage.size',
+            accessor: 'sizeformat',
             isSortable: true,
             width: '212px',
             accessorForTextFilter: 'sizeformat',
             renderCell: (cellData: string | number, rowData: any) => {
-                return (
-                    <>
-                        {!rowData?.loading &&
-                            (cellData || cellData === 0 ? formatSizeOnePrecision(cellData) : GENERAL.NOT_AVAILABLE)}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                    </>
-                );
+                return renderAllocatedCapacity(cellData, rowData);
             }
         },
         {
@@ -339,28 +241,7 @@ const ManagedHosts = () => {
             width: '212px',
             accessorForTextFilter: 'instanceNames',
             renderCell: (cellData: any, rowData: any) => {
-                let instanceIds: any = [];
-                let instanceNames: any = [];
-                cellData?.ec2Details?.map((row: any) => {
-                    instanceIds.push(row?.id);
-                    instanceNames.push(row?.name);
-                });
-                return (
-                    <>
-                        {instanceNames.length > 0 ? (
-                            <div className={styles.colText}>
-                                {instanceIds.length > 0 && (
-                                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                        ID: {instanceIds.join(',')}
-                                    </TooltipInfo>
-                                )}
-                                <Typography variant="Regular_14">{instanceNames.join(',')}</Typography>
-                            </div>
-                        ) : (
-                            rowData?.ec2InstanceName || notAvailable()
-                        )}
-                    </>
-                );
+                return renderInstanceName(cellData, rowData, styles);
             }
         },
         {
@@ -451,13 +332,7 @@ const ManagedHosts = () => {
             width: '212px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                return (
-                    <>
-                        {cellData && cellData === 'FCI' ? GENERAL.FAILOVER_CLUSTER_INSTANCES : cellData}
-                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!cellData && !rowData?.loading && notAvailable()}
-                    </>
-                );
+                return renderDeploymentModel(cellData, rowData);
             }
         }
     ];

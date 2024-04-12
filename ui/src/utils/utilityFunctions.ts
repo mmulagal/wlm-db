@@ -28,7 +28,7 @@ import {
 } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets, TagObj } from './types/mssqlTypes';
 import store from '../store/store';
-import { DatabaseHostItem, DatabaseJobsItem, JobsSummaryRes } from './types/databaseHomeTypes';
+import { DatabaseHostItem, JobsSummaryRes } from './types/databaseHomeTypes';
 import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './types/workloadFactoryResourceTypes';
 import { databaseHomeApi } from './apiService';
 import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
@@ -344,19 +344,22 @@ export const formatFractionalNumber = (value: number | undefined, precision: num
     return value;
 };
 
+export const isAwsBackupEnabled = (val: any) => {
+    return (
+        val?.protection?.isAwsBackupEnabled?.fsxw ||
+        val?.protection?.isAwsBackupEnabled?.fsxn ||
+        val?.protection?.isAwsBackupEnabled?.ebs
+    );
+};
+
 export const formatHostData = (val: any) => {
     // Protection text added to enable filter
     let protectionText = '';
-    if (
-        val?.protection?.isAwsBackUpEnabled ||
-        val?.protection?.isFsxOntapSnapshotsEnabled ||
-        val?.protection?.isSqlNativeEnabled
-    ) {
+    if (isAwsBackupEnabled(val) || val?.protection?.isFsxOntapSnapshotsEnabled || val?.protection?.isSqlNativeEnabled) {
         protectionText = GENERAL.PROTECTED;
     } else if (val?.protection) {
         protectionText = GENERAL.NOT_PROTECTED;
     }
-    const storagePercent = val?.storage ? (val.storage?.spaceSavings / val.storage?.used) * 100 : 0;
 
     // instance names list
     let instanceNames: string[] = [];
@@ -406,7 +409,33 @@ export const formatHostData = (val: any) => {
             typeList.push(GENERAL.FSX_FOR_WINDOWS);
         }
     });
-    const fileSystemType = typeList.join(', ') || val?.topology?.fileSystemType;
+    const fileSystemType = typeList.join(', ') || val?.topology?.fileSystemType || '';
+
+    let storagePercent = 0;
+    let storageSavingsText = '';
+    let fsxType = '';
+    if (fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
+        fsxType = 'fsxn';
+    } else if (fileSystemType.includes(GENERAL.FSX_FOR_WINDOWS)) {
+        fsxType = 'fsxw';
+    } else if (fileSystemType.includes(GENERAL.EBS)) {
+        fsxType = 'ebs';
+    }
+
+    if (fsxType) {
+        storagePercent = val?.storage?.[fsxType]
+            ? (val.storage?.[fsxType]?.spaceSavings / val.storage?.[fsxType]?.used) * 100
+            : 0;
+        storageSavingsText =
+            val?.storage?.[fsxType]?.spaceSavings &&
+            val?.storage?.[fsxType]?.used &&
+            formatFractionalNumber(storagePercent, 2) +
+                '% (' +
+                formatSizeOnePrecision(val.storage?.[fsxType]?.spaceSavings) +
+                ')';
+    }
+
+    let totalSize = (val?.storage?.fsxn?.size || 0) + (val?.storage?.fsxw?.size || 0) + (val?.storage?.ebs?.size || 0);
 
     val = {
         ...val,
@@ -416,18 +445,17 @@ export const formatHostData = (val: any) => {
         // Total cost to enable search in table
         totalCost: (
             (val?.estimatedUsageCost?.compute || 0) +
-            (val?.estimatedUsageCost?.storage || 0) +
+            (val?.estimatedUsageCost?.storage?.fsxn || 0) +
+            (val?.estimatedUsageCost?.storage?.fsxw || 0) +
+            (val?.estimatedUsageCost?.storage?.ebs || 0) +
             (val?.estimatedUsageCost?.connectivity || 0) +
             (val?.estimatedUsageCost?.others || 0)
         ).toString(),
         // performance table text to search in table
         performanceText: val?.performance && val.performance?.assessment,
         // Storage saving table text to search in table
-        storageSavingsText:
-            val?.storage?.spaceSavings &&
-            val?.storage?.used &&
-            formatFractionalNumber(storagePercent, 2) + '% (' + formatSizeOnePrecision(val.storage?.spaceSavings) + ')',
-        sizeformat: val?.storage?.size && formatSizeOnePrecision(val?.storage?.size),
+        storageSavingsText: storageSavingsText,
+        sizeformat: val?.storage ? formatSizeOnePrecision(totalSize) : '',
         instanceNames: instanceNames.join(',') || val?.ec2InstanceName,
         vpcNames: val?.topology?.vpcName || val?.vpc?.name,
         azType: azType,
@@ -508,7 +536,7 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
 
     data?.map((val: any) => {
         if (
-            val?.protection?.isAwsBackUpEnabled ||
+            isAwsBackupEnabled(val) ||
             val?.protection?.isFsxOntapSnapshotsEnabled ||
             val?.protection?.isSqlNativeEnabled
         ) {
@@ -518,7 +546,9 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
                 val?.status === STATUS_CONST.UP ||
                 val?.status === 'ONLINE' ||
                 val?.status === 'OFFLINE') &&
-            !val?.protection?.isAwsBackUpEnabled &&
+            !val?.protection?.isAwsBackupEnabled?.fsxw &&
+            !val?.protection?.isAwsBackupEnabled?.fsxn &&
+            !val?.protection?.isAwsBackupEnabled?.ebs &&
             !val?.protection?.isFsxOntapSnapshotsEnabled &&
             !val?.protection?.isSqlNativeEnabled
         ) {
@@ -527,7 +557,7 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
         if (val?.protection?.isFsxOntapSnapshotsEnabled) {
             fsxOntapSnapshotsDb += 1;
         }
-        if (val?.protection?.isAwsBackUpEnabled) {
+        if (isAwsBackupEnabled(val)) {
             awsBackupDb += 1;
         }
         if (val?.protection?.isSqlNativeEnabled) {
@@ -553,11 +583,22 @@ export const getAggrStorageSavings = (data: DatabaseHostItem[] | WorkloadFactory
     let storageSavings = 0;
 
     data?.map((val: any) => {
-        if (val?.storage?.used) {
-            totalConsume += val.storage.used;
+        let storageType = val?.topology?.fileSystemType || '';
+        let fsxType = '';
+        if (storageType.includes(GENERAL.FSX_FOR_ONTAP)) {
+            fsxType = 'fsxn';
+        } else if (storageType.includes(GENERAL.FSX_FOR_WINDOWS)) {
+            fsxType = 'fsxw';
+        } else if (storageType.includes(GENERAL.EBS)) {
+            fsxType = 'ebs';
         }
-        if (val?.storage?.spaceSavings) {
-            storageSavings += val.storage.spaceSavings;
+        if (fsxType) {
+            if (val?.storage?.[fsxType]?.used) {
+                totalConsume += val.storage[fsxType].used;
+            }
+            if (val?.storage?.[fsxType]?.spaceSavings) {
+                storageSavings += val.storage[fsxType].spaceSavings;
+            }
         }
     });
 
@@ -591,12 +632,15 @@ export const getAggrCost = (data: DatabaseHostItem[] | WorkloadFactoryResourceDe
         if (val?.topology?.fileSystemId) {
             fsxVal = val.topology.fileSystemId;
         }
-        if ((!fsxVal || !storageList.includes(fsxVal)) && val?.estimatedUsageCost?.storage) {
-            storageCost += val.estimatedUsageCost.storage;
+        if ((!fsxVal || !storageList.includes(fsxVal)) && val?.estimatedUsageCost?.storage?.fsxn) {
+            storageCost += val.estimatedUsageCost.storage?.fsxn;
             if (fsxVal) {
                 storageList.push(fsxVal);
             }
         }
+
+        storageCost += val.estimatedUsageCost?.storage?.fsxw || 0;
+        storageCost += val.estimatedUsageCost?.storage?.ebs || 0;
 
         // If connectivity cost is already added than no need to add again based on VPCId
         let vpcVal = '';
