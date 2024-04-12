@@ -1,0 +1,113 @@
+@import "./layout";
+
+@mixin medium {
+  @media (max-width: $break-medium) {
+    @content;
+  }
+}
+
+@mixin small {
+  @media (max-width: $break-small) {
+    @content;
+  }
+}
+
+@mixin transparent-button {
+  padding: 0;
+  border: 0;
+  outline: none;
+  margin: 0;
+  background-color: transparent;
+}
+
+@mixin text-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@mixin standard-scroll($width: 7.5px) {
+  scrollbar-color: var(--scroller) var(--scroller-track);
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    width: $width;
+    height: $width;
+  };
+
+  &::-webkit-scrollbar-track  {
+    background-color: var(--scroller-track);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--scroller);
+  }
+}
+
+@keyframes bgshimmer {
+  0% {
+    background-position: 300% 0
+  }
+  100% {
+    background-position: -300% 0
+  }
+}
+
+@mixin loading-mask($height: 13px) {
+  width: 100%;
+  height: $height;
+  animation-duration: 3.818181818181818s;
+  animation-fill-mode: forwards;
+  animation-iteration-count: infinite;
+  animation-name: bgshimmer;
+  animation-timing-function: linear;
+  background: var(--border);
+  background: linear-gradient(to right, var(--border) 8%, var(--scroller) 18%, var(--border) 33%);
+  background-size: 200% 102%;
+}
+
+@mixin color-svg($fill: null, $stroke: null, $secondaryFill: null, $secondaryStroke: null, $primary: null, $secondary: null) {
+  @if $primary {
+    [class*="primary-fill"] {
+      fill: $primary;
+    }
+
+    [class*="primary-stroke"] {
+      stroke: $primary;
+    }
+  }
+
+  @if $secondary {
+    [class*="secondary-fill"] {
+      fill: $secondary;
+    }
+
+    [class*="secondary-stroke"] {
+      stroke: $secondary;
+    }
+  }
+
+  @if $fill {
+    [class*="primary-fill"] {
+      fill: $fill;
+    }
+  }
+
+  @if $secondaryFill {
+    [class*="secondary-fill"] {
+      fill: $secondaryFill;
+    }
+  }
+
+  @if $stroke {
+    [class*="primary-stroke"] {
+      stroke: $stroke;
+    }
+  }
+
+  @if $secondaryStroke {
+    [class*="secondary-stroke"] {
+      stroke: $secondaryStroke;
+    }
+  }
+}

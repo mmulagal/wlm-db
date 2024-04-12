@@ -35,6 +35,7 @@ import Sandbox from '../../Sandbox/Sandbox';
 import InventoryApis from '../../Inventory/InventoryApis';
 import DatabaseHomeApis from '../DatabaseHomeApis';
 import JobMonitoringApi from '../../JobMonitoring/JobMonitoringApi';
+import ExploreSavings from '../../ExploreSavings/ExploreSavings';
 
 const HeaderComponent = () => {
     const dispatch = useDispatch();
@@ -273,6 +274,21 @@ const HeaderComponent = () => {
                                 Sandboxes
                             </Typography>
 
+                            {/* <Typography
+                                variant="Regular_14"
+                                className={
+                                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS
+                                        ? `${styles.headerPart5} ${styles.active}`
+                                        : `${styles.headerPart5}`
+                                }
+                                onClick={() => {
+                                    handleClick(WLF_TABS.EXPLORE_SAVINGS);
+                                    refreshPage();
+                                }}
+                            >
+                                Explore savings
+                            </Typography> */}
+
                             <Typography
                                 variant="Regular_14"
                                 className={
@@ -295,6 +311,7 @@ const HeaderComponent = () => {
                 {selectedHeaderTab === WLF_TABS.JOB_MONITORING && <JobMonitoring />}
                 {selectedHeaderTab === WLF_TABS.OVERVIEW && <DatabaseHostOverview />}
                 {selectedHeaderTab === WLF_TABS.SANDBOXES && <Sandbox />}
+                {selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS && <ExploreSavings />}
             </div>
         )
     );

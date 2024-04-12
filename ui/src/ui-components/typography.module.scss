@@ -1,0 +1,155 @@
+@use './mixins.scss';
+
+@mixin h {
+    margin: 0;
+    padding: 0;
+    color: var(--text-primary);
+    text-align: left;
+
+    &.u {
+        padding-bottom: 4px;
+    }
+}
+
+.b {
+    font-weight: 590;
+}
+
+.i {
+    font-style: italic;
+}
+
+.h040 {
+    @include h;
+    font-size: 40px;
+    line-height: 56px;
+}
+
+.h032 {
+    @include h;
+    font-size: 32px;
+    line-height: 48px;
+}
+
+.h024 {
+    @include h;
+    font-size: 24px;
+    line-height: 36px;
+}
+
+.h020 {
+    @include h;
+    font-size: 20px;
+    line-height: 32px;
+}
+
+.h016 {
+    @include h;
+    font-size: 16px;
+    line-height: 28px;
+}
+
+.h01 {
+    @include h;
+    font-size: 24px;
+    line-height: 1.5;
+}
+
+.h02 {
+    @include h;
+    font-size: 20px;
+    line-height: 1.7;
+}
+
+.h03 {
+    composes: b;
+    @include h;
+    font-size: 16px;
+    line-height: 1.625;
+}
+
+.h04 {
+    composes: b;
+    @include h;
+    font-size: 14px;
+    line-height: 1.71;
+}
+
+.u {
+    border-bottom: 1px solid var(--border);
+}
+
+.c {
+    text-align: center;
+}
+
+@mixin body {
+    color: var(--text-primary);
+}
+
+@mixin body14 {
+    @include body;
+    font-size: 14px;
+    line-height: 24px;
+}
+
+.body14 {
+    @include body14;
+}
+
+.body13 {
+    @include body;
+    font-size: 13px;
+    line-height: 20px;
+}
+
+.body12 {
+    @include body;
+    font-size: 12px;
+    line-height: 20px;
+}
+
+.text-title {
+    color: var(--text-title);
+}
+
+.text-disabled {
+    color: var(--text-disabled);
+}
+
+.text-secondary {
+    color: var(--text-secondary);
+}
+
+.error {
+    color: var(--error);
+}
+
+.success {
+    color: var(--success);
+}
+
+.information,
+.info {
+    color: var(--info);
+}
+
+.warning {
+    color: var(--warning);
+}
+
+.ellipsis {
+    @include mixins.text-ellipsis;
+}
+
+.no-wrap {
+    white-space: nowrap;
+}
+
+.notice {
+    margin-right: 4px;
+}
+
+.on-color {
+    color: var(--text-on-color);
+}
