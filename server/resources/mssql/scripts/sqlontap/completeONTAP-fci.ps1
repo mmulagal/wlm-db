@@ -26,8 +26,10 @@ param(
     [string]$Stackname,
 
     [Parameter(Mandatory=$true)]
-    [string]$Parentstackname 
-
+    [string]$Parentstackname,
+    
+    [Parameter(Mandatory=$true)]
+    [string]$SqlCollation 
 )
 
 Start-Sleep -Seconds 600
@@ -125,7 +127,17 @@ try
     Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:skipclusterarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output.txt -RedirectStandardError C:\cfn\log\completefci_error.txt
     } -Credential $Credentials -ComputerName $HostName -Authentication credssp
     }
-
+    # setting collation on the sql server
+    try {
+        Write-Output "Setting collation on SQLServer(MSSQLSERVER)"
+        Stop-ClusterResource "SQL Server"
+        $rebuildarguments ='/QUIET /ACTION="REBUILDDATABASE" /INSTANCENAME="MSSQLSERVER" /SQLSYSADMINACCOUNTS="' + $ClusterAdminUser + '" /SAPWD="' + $AdminPassword + '" /SQLCOLLATION="' + $SqlCollation + '"'
+        Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:rebuildarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\rebuild_collation.txt -RedirectStandardError C:\cfn\log\rebuild_error.txt
+        Start-Sleep -Seconds 5
+        Start-ClusterResource "SQL Server"
+     } catch {
+        Write-Output "Failed to set collation on SQLServer(MSSQLSERVER)"
+     }
 } catch {
         Write-Output "Failed to run complete Failover cluster action for SQL installation"
         Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId

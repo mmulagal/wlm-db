@@ -22,10 +22,7 @@ param(
     [string]$Stackname,
 
     [Parameter(Mandatory=$true)]
-    [string]$Parentstackname,
-
-    [Parameter(Mandatory=$true)]
-    [string]$SqlCollation
+    [string]$Parentstackname
 )
 
 #get Instance ID
@@ -125,14 +122,6 @@ catch {
 }
 else {
     Write-Output "Configured SQL Server(MSSQLSERVER) successfully"
- }
-
- try {
-    $rebuildarguments ='/QUIET /ACTION="REBUILDDATABASE" /INSTANCENAME="MSSQLSERVER" /SQLSYSADMINACCOUNTS="' + $ClusterAdminUser + '" /SAPWD="' + $AdminPassword + '" /SQLCOLLATION="' + $SqlCollation + '"'
-    Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:rebuildarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\rebuild_collation.txt 
-    
- } catch {
-    Write-Output "Failed to set collation on SQLServer(MSSQLSERVER)"
  }
 
 } catch {
