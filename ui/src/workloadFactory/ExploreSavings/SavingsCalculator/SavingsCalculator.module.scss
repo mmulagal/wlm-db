@@ -45,4 +45,21 @@
             gap: 24px;
         }
     }
+
+    .selectionArea {
+        margin: 0 auto;
+        margin-top: 24px;
+        box-shadow: 2px 2px 6px 0px var(--border);
+        height: 105px;
+        width: 1336px;
+        background-color: var(--content-background);
+        padding: 28px 40px;
+        display: flex;
+        gap: 40px;
+
+        .textContent {
+            display: flex;
+            flex-direction: column;
+        }
+    }
 }

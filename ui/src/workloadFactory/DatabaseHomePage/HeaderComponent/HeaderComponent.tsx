@@ -281,7 +281,8 @@ const HeaderComponent = () => {
                                 <Typography
                                     variant="Regular_14"
                                     className={
-                                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS
+                                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
+                                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR
                                             ? `${styles.headerPart5} ${styles.active}`
                                             : `${styles.headerPart5}`
                                     }
