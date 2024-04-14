@@ -4,7 +4,8 @@ export const initialExploreSavingsState: any = {
     selectedSnapshotFrequency: null,
     numberOfClonedCopies: 0,
     selectedCloneRefresh: null,
-    monthlyChangeRate: null
+    monthlyChangeRate: null,
+    saveConfigName: ''
 };
 
 const exploreSavingsSlice = createSlice({
@@ -22,11 +23,19 @@ const exploreSavingsSlice = createSlice({
         },
         setMonthlyChangeRate(state, action: PayloadAction<any>) {
             state.monthlyChangeRate = action.payload;
+        },
+        setSaveConfigName(state, action: PayloadAction<any>) {
+            state.saveConfigName = action.payload;
         }
     }
 });
 
-export const { setSelectedSnapshotFrequency, setNumberOfClonedCopies, setSelectedCloneRefresh, setMonthlyChangeRate } =
-    exploreSavingsSlice.actions;
+export const {
+    setSelectedSnapshotFrequency,
+    setNumberOfClonedCopies,
+    setSelectedCloneRefresh,
+    setMonthlyChangeRate,
+    setSaveConfigName
+} = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

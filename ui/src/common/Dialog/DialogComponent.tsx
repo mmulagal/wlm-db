@@ -41,6 +41,7 @@ const DialogComponent = ({
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const isSaveConfigLoading = useAppSelector(state => state.msSqlAction.isSaveConfigLoading);
     const saveConfigName = useAppSelector(state => state.mssqlForm.saveConfigName);
+    const saveConfigFromSaving = useAppSelector(state => state.exploreSavings.saveConfigName);
     const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
     const detectHostError = useAppSelector(state => state.msSqlAction.isDetectHostError);
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
@@ -77,7 +78,8 @@ const DialogComponent = ({
     const disabledCheck = () => {
         return (
             ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom === FROM_DIALOG.HEADER_CROSS) &&
-                saveConfigName === '') ||
+                saveConfigName === '' &&
+                saveConfigFromSaving === '') ||
             (dialogFrom === FROM_DIALOG.LOAD_CONFIG && (!configData || configData.length === 0))
         );
     };
