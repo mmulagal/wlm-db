@@ -8,7 +8,7 @@ import { GENERAL } from '../../../utils/appConstants';
 const ProtectionSection = () => {
     const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
 
-    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseHostsLoading, isFullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
 
     return (
         <div className={styles.protectionSection}>
@@ -17,7 +17,7 @@ const ProtectionSection = () => {
                     {GENERAL.DB_HOST_PROTECTION}
                 </Typography>
 
-                {databaseHostsLoading && <FlashingDotsLoader />}
+                {(databaseHostsLoading || isFullHostDataLoading) && <FlashingDotsLoader />}
             </div>
 
             <div className={styles.secondContainer}>

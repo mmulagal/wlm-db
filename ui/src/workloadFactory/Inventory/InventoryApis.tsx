@@ -1,9 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
-    addDatabaseHosts,
-    addDatabaseHostsList,
-    addDatabaseHostsLoading
+    addDatabaseHostsList
 } from '../../store/workloadFactory/databaseHomeSlice';
 import {
     useDiscoverHostsQuery,
@@ -17,13 +15,15 @@ import {
 import {
     addNewManagedHostData,
     mergeDatabaseHostsData,
-    resetDBHomePageState,
     sortListOfDict
 } from '../../utils/utilityFunctions';
 import {
+    addDatabaseHostsData,
+    addDatabaseHostsLoading,
     setDiscoveredHosts,
     setFsxCredentialStatus,
     setFsxIdsList,
+    setIsFullHostDataLoading,
     setIsManagedHostListLoading,
     setIsRefreshed,
     setMovedManagedHosts,
@@ -40,11 +40,10 @@ import store from '../../store/store';
 const InventoryApis = () => {
     const dispatch = useAppDispatch();
 
-    const { databaseHostsData } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseHostsData } = useAppSelector(state => state.inventory.getDatabaseHosts);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const { discoveredHostData } = useAppSelector(state => state.inventory.discoveredHosts);
     const discoveredHostState = useAppSelector(state => state.inventory.discoveredHosts);
-    const databaseHostState = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { fsxIdsList, fsxCredentialStatusObj, isRefreshed } = useAppSelector(state => state.inventory);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
     const movedToUnmanagedHost = useAppSelector(state => state.inventory.movedToUnmanagedHost);
@@ -71,7 +70,10 @@ const InventoryApis = () => {
     const [getDatabaseHostsFullDataApi] = useLazyGetDatabaseHostsFullDataQuery();
     const [getDatabaseHostsListApi] = useLazyGetDatabaseHostsListQuery();
     const [managedHostList, setManagedHostList] = useState<any>([]);
-    const [managedHostListLoading, setManagedHostListLoading] = useState(true);
+    const [managedHostListLoading, setManagedHostListLoading] = useState(true); 
+
+    const [fullHostData, setFullHostData] = useState<any>({});
+    const [topologyHostData, setTopologyHostData] = useState<any>({});
 
     const credIdRef = useRef();
     const regionIdRef = useRef();
@@ -122,115 +124,103 @@ const InventoryApis = () => {
         }
     };
 
-    // const getDatabaseHostsFullData = async (
-    //     managedList: string[],
-    //     managedHostCursor: string | null,
-    //     runningCredId: string,
-    //     runningRegionId: string
-    // ) => {
-    //     if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
-    //         try {
-    //             const result: any = await getDatabaseHostsFullDataApi({
-    //                 credentialId: credId,
-    //                 regionId: regionId,
-    //                 nextToken: managedHostCursor
-    //             });
-    //             if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
-    //                 if (result && !result?.error) {
-    //                     result?.data?.items?.map((perRow: any) => {
-    //                         if (perRow?.instances) {
-    //                             managedList = [...managedList, ...perRow?.instances];
-    //                         }
-    //                     });
-    //                     if (result?.data?.nextToken) {
-    //                         getManagedHostList(managedList, result?.data?.nextToken, runningCredId, runningRegionId);
-    //                     } else {
-    //                         setManagedHostListLoading(false);
-    //                         dispatch(setIsManagedHostListLoading(false));
-    //                         setManagedHostList(managedList);
-    //                     }
-    //                 } else {
-    //                     setManagedHostListLoading(false);
-    //                     dispatch(setIsManagedHostListLoading(false));
-    //                     setManagedHostList(managedList);
-    //                 }
-    //             }
-    //         } catch (error) {
-    //             setManagedHostListLoading(false);
-    //             dispatch(setIsManagedHostListLoading(false));
-    //             setManagedHostList(managedList);
-    //         }
-    //     }
-    // };
+    const getDatabaseHostsList = async (
+        managedList: string[],
+        nextToken: string | null,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+            try {
+                const result: any = await getDatabaseHostsListApi({
+                    credentialId: credId,
+                    regionId: regionId,
+                    nextToken: nextToken
+                });
+                if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+                    if (result && !result?.error) {
+                        result?.data?.items?.map((perRow: any) => {
+                            if (perRow?.id) {
+                                managedList = {...managedList, [perRow?.id] : perRow};
+                            }
+                        });
+                        if (result?.data?.nextToken) {
+                            setTopologyHostData(managedList);
+                            getDatabaseHostsList(managedList, result?.data?.nextToken, runningCredId, runningRegionId);
+                        } else {
+                            dispatch(addDatabaseHostsLoading(false));
+                            setTopologyHostData(managedList);
+                        }
+                    } else {
+                        dispatch(addDatabaseHostsLoading(false));
+                        setTopologyHostData(managedList);
+                    }
+                }
+            } catch (error) {
+                dispatch(addDatabaseHostsLoading(false));
+                setTopologyHostData(managedList);
+            }
+        }
+    };
 
-    // const getDatabaseHostsList = async (
-    //     managedList: string[],
-    //     managedHostCursor: string | null,
-    //     runningCredId: string,
-    //     runningRegionId: string
-    // ) => {
-    //     if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
-    //         try {
-    //             const result: any = await getDatabaseHostsListApi({
-    //                 credentialId: credId,
-    //                 regionId: regionId,
-    //                 nextToken: managedHostCursor
-    //             });
-    //             if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
-    //                 if (result && !result?.error) {
-    //                     result?.data?.items?.map((perRow: any) => {
-    //                         if (perRow?.instances) {
-    //                             managedList = [...managedList, ...perRow?.instances];
-    //                         }
-    //                     });
-    //                     if (result?.data?.nextToken) {
-    //                         getManagedHostList(managedList, result?.data?.nextToken, runningCredId, runningRegionId);
-    //                     } else {
-    //                         setManagedHostListLoading(false);
-    //                         dispatch(setIsManagedHostListLoading(false));
-    //                         setManagedHostList(managedList);
-    //                     }
-    //                 } else {
-    //                     setManagedHostListLoading(false);
-    //                     dispatch(setIsManagedHostListLoading(false));
-    //                     setManagedHostList(managedList);
-    //                 }
-    //             }
-    //         } catch (error) {
-    //             setManagedHostListLoading(false);
-    //             dispatch(setIsManagedHostListLoading(false));
-    //             setManagedHostList(managedList);
-    //         }
-    //     }
-    // };
+    const getDatabaseHostsFullData = async (
+        managedList: any,
+        nextToken: string | null,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+            try {
+                const result: any = await getDatabaseHostsFullDataApi({
+                    credentialId: credId,
+                    regionId: regionId,
+                    nextToken: nextToken
+                });
+                if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+                    if (result && !result?.error) {
+                        result?.data?.items?.map((perRow: any) => {
+                            if (perRow?.id) {
+                                managedList = {...managedList, [perRow?.id] : perRow};
+                            }
+                        });
+                        if (result?.data?.nextToken) {
+                            setFullHostData(managedList);
+                            getDatabaseHostsFullData(managedList, result?.data?.nextToken, runningCredId, runningRegionId);
+                        } else {
+                            dispatch(setIsFullHostDataLoading(false));
+                            setFullHostData(managedList);
+                        }
+                    } else {
+                        dispatch(setIsFullHostDataLoading(false));
+                        setFullHostData(managedList);
+                    }
+                }
+            } catch (error) {
+                dispatch(setIsFullHostDataLoading(false));
+                setFullHostData(managedList);
+            }
+        }
+    };
 
     useEffect(() => {
         let managedList: string[] = [];
+        let fullHostData: any = {};
+        let topologyHostData: any = {};
         if (credId && regionId) {
             dispatch(setIsManagedHostListLoading(true));
             setManagedHostList([]);
             setManagedHostListLoading(true);
-            getManagedHostList(managedList, null, credId, regionId);
+            setFullHostData({});
+            setTopologyHostData({});
+            dispatch(addDatabaseHostsLoading(true));
+            dispatch(setIsFullHostDataLoading(true));
+            setTimeout(() => {
+                getManagedHostList(managedList, null, credId, regionId);
+                getDatabaseHostsFullData(fullHostData, null, credId, regionId);
+                getDatabaseHostsList(topologyHostData, null, credId, regionId);
+            }, 10);   
         }
     }, [credId, regionId, isRefreshed]);
-
-    useEffect(() => {
-        resetDBHomePageState(dispatch);
-        // dispatch(addDatabaseHostsLoading(databaseHostsLoading));
-    }, [credId, regionId]);
-
-    // const {
-    //     data: databaseHosts,
-    //     isFetching: databaseHostsLoading,
-    //     isError: databaseHostsError
-    // } = useGetDatabaseHostsQuery(
-    //     {
-    //         credentialId: credId,
-    //         region: regionId,
-    //         nextToken: hostCursor
-    //     },
-    //     { skip: skipApiCall || skipManagedHostCall || isCredRegionMissing }
-    // );
 
     const {
         data: discoveredHosts,
@@ -279,13 +269,6 @@ const InventoryApis = () => {
         dispatch(setMssqlInstancesData({}));
         setRunningInstanceList([]);
         dispatch(addDatabaseHostsList([]));
-        // dispatch(
-        //     addDatabaseHosts({
-        //         databaseHostsData: null,
-        //         databaseHostsLoading: true,
-        //         databaseHostsError
-        //     })
-        // );
         dispatch(setMovedManagedHosts([]));
         dispatch(setUnManagedHosts([]));
         dispatch(setUnIdentifiableHosts([]));
@@ -301,47 +284,6 @@ const InventoryApis = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [headerSelectedCred, headerSelectedRegion]);
-
-    // useEffect(() => {
-    //     if (databaseHostsError) {
-    //         dispatch(addDatabaseHosts({ undefined, databaseHostsLoading, databaseHostsError }));
-    //     } else {
-    //         if (!databaseHostsLoading) {
-    //             let oldList = databaseHostsData || [];
-    //             let newList = databaseHosts?.items || [];
-    //             if (databaseHosts && databaseHosts?.credentialId === credId && databaseHosts?.regionId === regionId) {
-    //                 dispatch(
-    //                     addDatabaseHosts({
-    //                         databaseHostsData: [...oldList, ...newList],
-    //                         databaseHostsLoading,
-    //                         databaseHostsError
-    //                     })
-    //                 );
-    //             } else {
-    //                 dispatch(
-    //                     addDatabaseHosts({
-    //                         ...databaseHostState,
-    //                         databaseHostsLoading
-    //                     })
-    //                 );
-    //             }
-    //             setHostCursor(databaseHosts?.nextToken || null);
-    //             if (!databaseHosts?.nextToken && databaseHostsData) {
-    //                 setSkipManagedHostCall(true);
-    //             } else {
-    //                 setSkipManagedHostCall(false);
-    //             }
-    //         } else {
-    //             dispatch(
-    //                 addDatabaseHosts({
-    //                     ...databaseHostState,
-    //                     databaseHostsLoading
-    //                 })
-    //             );
-    //         }
-    //     }
-    //     // eslint-disable-next-line react-hooks/exhaustive-deps
-    // }, [databaseHosts, databaseHostsLoading, databaseHostsError]);
 
     useEffect(() => {
         if (discoverHostError) {
@@ -401,13 +343,6 @@ const InventoryApis = () => {
             dispatch(setMssqlInstancesData({}));
             setRunningInstanceList([]);
             dispatch(addDatabaseHostsList([]));
-            // dispatch(
-            //     addDatabaseHosts({
-            //         databaseHostsData: null,
-            //         databaseHostsLoading: true,
-            //         databaseHostsError
-            //     })
-            // );
             dispatch(setMovedManagedHosts([]));
             dispatch(setUnManagedHosts([]));
             dispatch(setUnIdentifiableHosts([]));
@@ -425,13 +360,20 @@ const InventoryApis = () => {
         }
     }, [isRefreshed]);
 
-    // To merge database host and database jobs data
     useEffect(() => {
-        const mergedData = mergeDatabaseHostsData(databaseHostsData);
-        dispatch(addDatabaseHostsList(mergedData));
-
+        let databaseHostDataObj : any = {};
+        Object.keys(topologyHostData).map((key: string) => {
+            if (key in fullHostData) {
+                const perObj = {...topologyHostData[key], ...fullHostData[key], loading : false} 
+                databaseHostDataObj = {...databaseHostDataObj, ...{[key]: perObj}}
+            } else {
+                const perObj = {...topologyHostData[key], loading : true} 
+                databaseHostDataObj = {...databaseHostDataObj, ...{[key]:perObj}}
+            }
+        });
+        dispatch(addDatabaseHostsData(databaseHostDataObj))
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [databaseHostsData]);
+    }, [fullHostData, topologyHostData]);
 
     useEffect(() => {
         if (!credentialStatusLoading) {
@@ -662,7 +604,6 @@ const InventoryApis = () => {
         }
     }, [
         discoveredHostData,
-        databaseHostsData,
         fsxCredentialStatusObj,
         movedToUnmanagedHost,
         movedToManagedHost,

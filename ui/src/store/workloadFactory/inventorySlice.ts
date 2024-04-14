@@ -12,6 +12,11 @@ const initialInventoryState: any = {
     detectHostRadio: DETECT_HOST_VAR.MOVE_TO_MANAGE,
     managedHostInitialColumns: initialColStateManagedHosts,
     unManagedHostInitialColumns: initialColStateManagedHosts,
+    getDatabaseHosts: {
+        databaseHostsData: null, // To fetch database-hosts API data
+        databaseHostsLoading: false, // To check if partial database-hosts api is running
+        fullHostDataLoading: false, // To check if full database-hosts api is running
+    },
     discoveredHosts: {
         discoveredHostData: null,
         discoverHostLoading: false,
@@ -46,7 +51,6 @@ const inventorySlice = createSlice({
         setSelectedInventoryTab: (state, action: PayloadAction<any>) => {
             state.selectedInventoryTab = action.payload;
         },
-
         setSelectedHeaderTab: (state, action: PayloadAction<any>) => {
             state.selectedHeaderTab = action.payload;
         },
@@ -64,6 +68,15 @@ const inventorySlice = createSlice({
         },
         setRadioValueDetect: (state, action: PayloadAction<any>) => {
             state.detectHostRadio = action.payload;
+        },
+        addDatabaseHostsData: (state, action: PayloadAction<any>) => {
+            state.getDatabaseHosts.databaseHostsData = action.payload;
+        },
+        addDatabaseHostsLoading: (state, action: PayloadAction<any>) => {
+            state.getDatabaseHosts.databaseHostsLoading = action.payload;
+        },
+        setIsFullHostDataLoading: (state, action: PayloadAction<any>) => {
+            state.getDatabaseHosts.isFullHostDataLoading = action.payload;
         },
         setDiscoveredHosts: (state, action: PayloadAction<any>) => {
             state.discoveredHosts = action.payload;
@@ -122,7 +135,10 @@ export const {
     setMovedToUnmanagedHost,
     setMovedToManagedHost,
     setMssqlInstancesData,
-    setIsManagedHostListLoading
+    setIsManagedHostListLoading,
+    addDatabaseHostsData,
+    addDatabaseHostsLoading,
+    setIsFullHostDataLoading
 } = inventorySlice.actions;
 
 export default inventorySlice;

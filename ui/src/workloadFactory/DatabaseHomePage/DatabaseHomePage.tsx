@@ -15,7 +15,7 @@ const DatabaseHomePage = () => {
 
     const hostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
     const hostCostData: any = useAppSelector(state => state.databaseHome.aggregatedCosts);
-    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseHostsLoading, isFullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
 
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
@@ -47,11 +47,11 @@ const DatabaseHomePage = () => {
                     {/* Bar lines */}
                     <div className={styles.barContainer}>
                         <div className={styles.commonContainer}>
-                            <StorageSavings hostData={hostStorageSavingsData} hostsLoading={databaseHostsLoading} />
+                            <StorageSavings hostData={hostStorageSavingsData} hostsLoading={databaseHostsLoading || isFullHostDataLoading} />
                         </div>
 
                         <div className={styles.commonContainer}>
-                            <EstimatedCost hostData={hostCostData} hostsLoading={databaseHostsLoading} />
+                            <EstimatedCost hostData={hostCostData} hostsLoading={databaseHostsLoading || isFullHostDataLoading} />
                         </div>
                     </div>
                 </div>

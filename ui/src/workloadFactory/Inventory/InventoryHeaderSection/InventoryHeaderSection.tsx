@@ -12,7 +12,7 @@ const InventoryHeaderSection = () => {
     const navigate = useNavigate();
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
-    const isManagedHostInProgress = useAppSelector(state => state.databaseHome.getDatabaseHosts.databaseHostsLoading);
+    const isManagedHostInProgress = useAppSelector(state => state.inventory.getDatabaseHosts.databaseHostsLoading);
     const { unManagedHosts, unIdentifiableHosts } = useAppSelector(state => state.inventory);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
     return (

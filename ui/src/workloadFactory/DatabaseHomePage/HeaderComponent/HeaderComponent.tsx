@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import styles from './HeaderComponent.module.scss';
 import DatabaseHomePage from '../DatabaseHomePage';
-import { SelectField, Spinner, Typography } from '@netapp/design-system';
+import { SelectField, Typography } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
@@ -154,6 +154,7 @@ const HeaderComponent = () => {
         if (selectedHeaderTab === WLF_TABS.DASHBOARD) {
             resetDBHomePageState(dispatch);
             dispatch(setDashboardRefresh(true));
+            dispatch(setIsRefreshed(true));
         } else if (selectedHeaderTab === WLF_TABS.INVENTORY) {
             resetDBHomePageState(dispatch);
             dispatch(inventoryApi.util.resetApiState());
