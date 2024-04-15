@@ -11,6 +11,29 @@ import { WLF_TABS } from '../../../../utils/consts';
 
 const ExportPDF = ({ rootElementId }: any) => {
     const dispatch = useDispatch();
+    const generatePdf = () => {
+        let jsPdf = new jsPDF('p', 'pt', 'letter');
+        var htmlElement = document.getElementById(rootElementId) as HTMLElement;
+        // you need to load html2canvas (and dompurify if you pass a string to html)
+        const opt: any = {
+            callback: function (jsPdf: any) {
+                jsPdf.save("Test.pdf");
+                // to open the generated PDF in browser window
+                // window.open(jsPdf.output('bloburl'));
+            },
+            margin: [72, 72, 72, 72],
+            autoPaging: 'text',
+            html2canvas: {
+                allowTaint: true,
+                dpi: 300,
+                letterRendering: true,
+                logging: false,
+                scale: .4
+            }
+        };
+    
+        jsPdf.html(htmlElement, opt);
+    }
 
     const downloadPdfDocument = () => {
         const input = document.getElementById(rootElementId) as HTMLElement;
@@ -56,7 +79,8 @@ const ExportPDF = ({ rootElementId }: any) => {
     };
 
     const handleExport = () => {
-        downloadPdfDocument();
+        // downloadPdfDocument();
+        generatePdf();
     };
     return (
         <div className={styles.exportPdf}>
