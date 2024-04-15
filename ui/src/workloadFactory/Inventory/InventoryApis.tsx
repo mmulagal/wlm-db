@@ -74,6 +74,7 @@ const InventoryApis = () => {
         regionIdRef.current = regionId;
     }, [credId, regionId]);
 
+    // This function is to get managed list and respective instance IDs. Managed instances will not be shown in Tab2 and Tab3.
     const getManagedHostList = async (
         managedList: string[],
         managedHostCursor: string | null,
@@ -115,6 +116,7 @@ const InventoryApis = () => {
         }
     };
 
+    // This function is to get basic managed rows info. This output is used both in managed tab and dashboard page.
     const getDatabaseHostsList = async (
         managedList: string[],
         nextToken: string | null,
@@ -154,6 +156,7 @@ const InventoryApis = () => {
         }
     };
 
+    // This function is to get all managed rows data. This output is used both in managed tab and dashboard page.
     const getDatabaseHostsFullData = async (
         managedList: any,
         nextToken: string | null,
@@ -198,6 +201,7 @@ const InventoryApis = () => {
         }
     };
 
+    // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
     useEffect(() => {
         let managedList: string[] = [];
         let fullHostData: any = {};
@@ -218,6 +222,23 @@ const InventoryApis = () => {
         }
     }, [credId, regionId, isRefreshed]);
 
+    // This will combine fullHostData (getDatabaseHostsFullData) and topologyHostData (getDatabaseHostsList) data and store in single object.
+    useEffect(() => {
+        let databaseHostDataObj: any = {};
+        Object.keys(topologyHostData).map((key: string) => {
+            if (key in fullHostData) {
+                const perObj = { ...topologyHostData[key], ...fullHostData[key], loading: false };
+                databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
+            } else {
+                const perObj = { ...topologyHostData[key], loading: isFullHostDataLoading ? true : false };
+                databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
+            }
+        });
+        dispatch(addDatabaseHostsData(databaseHostDataObj));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fullHostData, topologyHostData]);
+
+    // To call discover API (API1)
     const {
         data: discoveredHosts,
         isFetching: discoverHostLoading,
@@ -233,6 +254,7 @@ const InventoryApis = () => {
         }
     );
 
+    // To check if FSx is registered or not. It gets FSx IDs from API1 and call another API to check if FSx is registered or not.
     const {
         data: fsxCredentialStatus,
         isFetching: credentialStatusLoading,
@@ -251,6 +273,7 @@ const InventoryApis = () => {
     const [getMssqlInstanceDataApi] = useGetMssqlInstanceDataMutation();
     const [getMssqlResourceDataApi] = useGetMssqlResourceDataMutation();
 
+    // This is to reset disocovery data on cred and region change
     useEffect(() => {
         setSkipApiCall(true);
         setDiscoveryCursor(null);
@@ -279,6 +302,7 @@ const InventoryApis = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [headerSelectedCred, headerSelectedRegion]);
 
+    // This is to store disocovery data when useDiscoverHostsQuery API returns response
     useEffect(() => {
         if (discoverHostError) {
             dispatch(setDiscoveredHosts({ ...discoveredHostState, discoverHostLoading, discoverHostError }));
@@ -323,6 +347,7 @@ const InventoryApis = () => {
         }
     }, [discoveredHosts, discoverHostLoading, discoverHostError]);
 
+    //This is to reset disocovery data on refresh page
     useEffect(() => {
         if (isRefreshed) {
             setDiscoveryCursor(null);
@@ -352,21 +377,6 @@ const InventoryApis = () => {
             dispatch(setIsRefreshed(false));
         }
     }, [isRefreshed]);
-
-    useEffect(() => {
-        let databaseHostDataObj: any = {};
-        Object.keys(topologyHostData).map((key: string) => {
-            if (key in fullHostData) {
-                const perObj = { ...topologyHostData[key], ...fullHostData[key], loading: false };
-                databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
-            } else {
-                const perObj = { ...topologyHostData[key], loading: isFullHostDataLoading ? true : false };
-                databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
-            }
-        });
-        dispatch(addDatabaseHostsData(databaseHostDataObj));
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [fullHostData, topologyHostData]);
 
     useEffect(() => {
         if (!credentialStatusLoading) {
@@ -518,6 +528,7 @@ const InventoryApis = () => {
         return;
     };
 
+    // Logic to read discover data and place it in either Tab2 or Tab3 based on some conditions. It also checks if any discover row is already managed than dont show it in Tab2 and tab3.
     useEffect(() => {
         if (!managedHostListLoading && discoveredHostData && discoveredHostData.length) {
             let newDiscoveredHostData: any = [];
@@ -597,6 +608,7 @@ const InventoryApis = () => {
         }
     }, [discoveredHostData, fsxCredentialStatusObj, movedToUnmanagedHost, movedToManagedHost, managedHostListLoading]);
 
+    // This function is to call API2 that will return unmanaged per instance full data like SS, cost, proection, performance.
     const getMssqlData = async (instanceList: any, nextToken: string | null = '') => {
         try {
             const result: any = await getMssqlInstanceDataApi({
@@ -646,6 +658,7 @@ const InventoryApis = () => {
         }
     };
 
+    // If any new Unmanaged List is added than it will trigger getMssqlData (API2) function to get unmanagaed row data.
     useEffect(() => {
         if (unManagedHostList && unManagedHostList.length > 0) {
             let instancesList: any = [];
@@ -716,7 +729,7 @@ const InventoryApis = () => {
         }
     };
 
-    // If any host is moved to managed host than it will be moved and it will get added in databaseHostsList
+    // If any host is moved to managed host than it will be moved and it will get added in databaseHostsList. This will call getManagedMssqlData function.
     useEffect(() => {
         if (movedManagedHostList && movedManagedHostList.length > 0) {
             movedManagedHostList.map((host: any) => {
