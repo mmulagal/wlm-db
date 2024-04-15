@@ -18,7 +18,7 @@ const ExportPDF = ({ rootElementId }: any) => {
         const originalHeight = input.style.height;
         input.style.height = `${input.scrollHeight}px`;
 
-        html2canvas(input).then(canvas => {
+        html2canvas(input, { useCORS: true }).then(canvas => {
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pageWidth = pdf.internal.pageSize.getWidth();
