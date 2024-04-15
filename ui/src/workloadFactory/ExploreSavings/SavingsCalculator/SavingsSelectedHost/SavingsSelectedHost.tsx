@@ -3,7 +3,7 @@ import styles from './SavingsSelectedHost.module.scss';
 
 const SavingsSelectedHost = () => {
     const isDisabled = false;
-    const isLoading = true;
+    const isLoading = false;
     return (
         <div className={styles.selectedHosts}>
             <DsTypography variant="Regular_14" className={isDisabled ? styles.disabledHeading : ''}>

@@ -132,3 +132,87 @@ export const MSSQLServerInstance = (sqlData: any) => {
         }
     ];
 };
+
+export const viewCalculation = (viewCalculation: any) => {
+    return {
+        Ec2InstanceCalculation: [
+            {
+                label: 'MsSQL Ec2 Instances calculation',
+                mainHeading: true
+            },
+            {
+                label: 'Machine 1 specification'
+            },
+            {
+                label: 'Instance type',
+                value: `${viewCalculation.Ec2InstanceCalculation.instanceType}`,
+                text: ''
+            },
+            {
+                label: 'Machine 1 pricing calculations'
+            },
+            {
+                label: 'Instance hourly price',
+                value: `${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
+                text: ''
+            },
+            {
+                label: 'Ec2 machine1 cost',
+                value: `${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
+                text: `Instance hourly price x number of hours in a month = ${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} $ x 730`
+            }
+        ],
+        FSxNCalculation: [
+            {
+                label: 'FSxN calculation',
+                mainHeading: true
+            },
+            {
+                label: 'Unit conversions'
+            },
+            {
+                label: 'Desired storage capacity',
+                value: `${viewCalculation.FSxNCalculation.storageCapacity}`,
+                text: `EBS capacity ${viewCalculation.FSxNCalculation.ebsCapacity} TiB x Number of volumes ${viewCalculation.FSxNCalculation.volumes} x 1024 `
+            },
+            {
+                label: 'Percentage of data on SSD storage',
+                value: `${viewCalculation.FSxNCalculation.ssdStorage}%`,
+                text: ''
+            },
+            {
+                label: 'Savings from compression & deduplication',
+                value: `${viewCalculation.FSxNCalculation.deduplication}%`,
+                text: ''
+            },
+            {
+                label: 'Pricing calculations'
+            },
+            {
+                label: 'Storage savings from compression & deduplication ',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.deduplication} GiB`,
+                text: `Desired storage capacity x Savings from compression & deduplication (xx%) `
+            },
+            {
+                label: 'Effective storage capacity for FSx for ONTAP',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.storageCapacity} GiB`,
+                text: `Desired storage capacity  - Storage savings from compression & deduplication `
+            },
+            {
+                label: 'SSD storage GIB per month',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.ssdStorage} GiB`,
+                text: `Effective storage capacity for FSx for ONTAP  x Percentage of data on SSD storage  `
+            },
+            {
+                label: 'The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.minSSDStorage} GiB`,
+                text: ` `
+            },
+            {
+                label: 'SSD monthly cost ',
+                value: `$ ${viewCalculation.FSxNCalculation.priceCalculation.ssdMonthlyCost}`,
+                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity x SSD storage price  `
+            }
+        ]
+    };
+};
