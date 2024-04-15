@@ -25,7 +25,11 @@ import { databaseTableSort } from '../../../utils/utilityFunctions';
 import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
-import { addDatabaseHostsData, setManagedHostColState, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import {
+    addDatabaseHostsData,
+    setManagedHostColState,
+    setSelectedHeaderTab
+} from '../../../store/workloadFactory/inventorySlice';
 import {
     addInitialDBCreateData,
     initialCreateNewUserState,
@@ -45,7 +49,9 @@ const ManagedHosts = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    const { databaseHostsData, databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
+    const { databaseHostsData, databaseHostsLoading, fullHostDataLoading } = useAppSelector(
+        state => state.inventory.getDatabaseHosts
+    );
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
     const { managedHostInitialColumns } = useAppSelector(state => state.inventory);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
@@ -93,15 +99,15 @@ const ManagedHosts = () => {
             if (!data?.error) {
                 dispatch(setRefetchJobSummaryApi(true));
                 if (databaseHostsData) {
-                    let newList:any;
-                    newList = Object.keys(databaseHostsData).filter(objKey => objKey !== id).reduce((newObj:any, key) =>
-                        {
+                    let newList: any;
+                    newList = Object.keys(databaseHostsData)
+                        .filter(objKey => objKey !== id)
+                        .reduce((newObj: any, key) => {
                             newObj[key] = databaseHostsData[key];
                             return newObj;
-                        }, {}
-                    );
+                        }, {});
                     dispatch(addDatabaseHostsData(newList));
-                };
+                }
             }
         });
     };

@@ -1,8 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
-import {
-    addDatabaseHostsList
-} from '../../store/workloadFactory/databaseHomeSlice';
+import { addDatabaseHostsList } from '../../store/workloadFactory/databaseHomeSlice';
 import {
     useDiscoverHostsQuery,
     useGetFsxCredentialStatusQuery,
@@ -12,10 +10,7 @@ import {
     useLazyGetDatabaseHostsListQuery,
     useLazyGetManagedHostDataQuery
 } from '../../utils/apiService';
-import {
-    addNewManagedHostData,
-    sortListOfDict
-} from '../../utils/utilityFunctions';
+import { addNewManagedHostData, sortListOfDict } from '../../utils/utilityFunctions';
 import {
     addDatabaseHostsData,
     addDatabaseHostsLoading,
@@ -67,7 +62,7 @@ const InventoryApis = () => {
     const [getDatabaseHostsFullDataApi] = useLazyGetDatabaseHostsFullDataQuery();
     const [getDatabaseHostsListApi] = useLazyGetDatabaseHostsListQuery();
     const [managedHostList, setManagedHostList] = useState<any>([]);
-    const [managedHostListLoading, setManagedHostListLoading] = useState(true); 
+    const [managedHostListLoading, setManagedHostListLoading] = useState(true);
 
     const [fullHostData, setFullHostData] = useState<any>({});
     const [topologyHostData, setTopologyHostData] = useState<any>({});
@@ -138,7 +133,7 @@ const InventoryApis = () => {
                     if (result && !result?.error) {
                         result?.data?.items?.map((perRow: any) => {
                             if (perRow?.id) {
-                                managedList = {...managedList, [perRow?.id] : perRow};
+                                managedList = { ...managedList, [perRow?.id]: perRow };
                             }
                         });
                         if (result?.data?.nextToken) {
@@ -177,12 +172,17 @@ const InventoryApis = () => {
                     if (result && !result?.error) {
                         result?.data?.items?.map((perRow: any) => {
                             if (perRow?.id) {
-                                managedList = {...managedList, [perRow?.id] : perRow};
+                                managedList = { ...managedList, [perRow?.id]: perRow };
                             }
                         });
                         if (result?.data?.nextToken) {
                             setFullHostData(managedList);
-                            getDatabaseHostsFullData(managedList, result?.data?.nextToken, runningCredId, runningRegionId);
+                            getDatabaseHostsFullData(
+                                managedList,
+                                result?.data?.nextToken,
+                                runningCredId,
+                                runningRegionId
+                            );
                         } else {
                             dispatch(setIsFullHostDataLoading(false));
                             setFullHostData(managedList);
@@ -215,7 +215,7 @@ const InventoryApis = () => {
                 getManagedHostList(managedList, null, credId, regionId);
                 getDatabaseHostsFullData(fullHostData, null, credId, regionId);
                 getDatabaseHostsList(topologyHostData, null, credId, regionId);
-            }, 10);   
+            }, 10);
         }
     }, [credId, regionId, isRefreshed]);
 
@@ -355,17 +355,17 @@ const InventoryApis = () => {
     }, [isRefreshed]);
 
     useEffect(() => {
-        let databaseHostDataObj : any = {};
+        let databaseHostDataObj: any = {};
         Object.keys(topologyHostData).map((key: string) => {
             if (key in fullHostData) {
-                const perObj = {...topologyHostData[key], ...fullHostData[key], loading : false} 
-                databaseHostDataObj = {...databaseHostDataObj, ...{[key]: perObj}}
+                const perObj = { ...topologyHostData[key], ...fullHostData[key], loading: false };
+                databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
             } else {
-                const perObj = {...topologyHostData[key], loading : fullHostDataLoading ? true : false} 
-                databaseHostDataObj = {...databaseHostDataObj, ...{[key]:perObj}}
+                const perObj = { ...topologyHostData[key], loading: fullHostDataLoading ? true : false };
+                databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
             }
         });
-        dispatch(addDatabaseHostsData(databaseHostDataObj))
+        dispatch(addDatabaseHostsData(databaseHostDataObj));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fullHostData, topologyHostData]);
 
@@ -596,13 +596,7 @@ const InventoryApis = () => {
             dispatch(setUnManagedHosts(unManagedHosts));
             dispatch(setMovedManagedHosts(movedManagedHosts));
         }
-    }, [
-        discoveredHostData,
-        fsxCredentialStatusObj,
-        movedToUnmanagedHost,
-        movedToManagedHost,
-        managedHostListLoading
-    ]);
+    }, [discoveredHostData, fsxCredentialStatusObj, movedToUnmanagedHost, movedToManagedHost, managedHostListLoading]);
 
     const getMssqlData = async (instanceList: any, nextToken: string | null = '') => {
         try {
