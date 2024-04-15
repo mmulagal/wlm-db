@@ -7,7 +7,7 @@ import '../simulator/scopes/opentelemetry-scope';
 import '../simulator/scopes/aws/ssm-scope';
 import { ACCOUNT_ID } from '../../src/utils/consts';
 import { createResource, deleteResource } from '../../src/lib/database/db';
-import { getSandboxInfo } from '../../src/operations/workloads/mssql/sandbox-operations';
+import { getSandboxesInfo } from '../../src/operations/sandbox-operations';
 import sandboxResponse from '../simulator/responses/workload/sandbox-response.json';
 
 beforeAll(async () => {
@@ -36,7 +36,7 @@ afterAll(async () => {
 
 describe('sandbox operations ', () => {
     it('Get sandbox details for all resources', async () => {
-        const resp = await getSandboxInfo(ACCOUNT_ID, 'f6082f35-c1db-4619-bb5c-84bcb5bf3286', 'ap-southeast-1');
+        const resp = await getSandboxesInfo(ACCOUNT_ID, 'f6082f35-c1db-4619-bb5c-84bcb5bf3286', 'ap-southeast-1');
         expect(resp).toEqual(sandboxResponse.getSandboxDetailsResponse);
     });
 });

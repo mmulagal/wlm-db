@@ -1,28 +1,36 @@
-import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
-import getLogger from '../../../utils/logger';
-import { listResources } from '../../../lib/database/db';
-import { API_PAGE_SIZE, DEFAULT_INSTANCE_NAME, HttpErrorCodes, RESOURCESTYPE } from '../../../utils/consts';
-import { GET_SANDBOX_DETAILS } from './sandbox-scripts';
-import { Metadata } from '../../../utils/common-types';
-import { getActiveSqlNode } from './mssql-operations';
-import { callSsmExecution } from '../../aws/ssm-operations';
-import { sqlResponseParsing } from '../../../utils/utils';
-import { SandboxInfoResponseType } from '../../../routes/types/database-hosts.types';
+import getLogger from '../utils/logger';
+import { listResources } from '../lib/database/db';
+import { API_PAGE_SIZE, DEFAULT_INSTANCE_NAME, NO_SANDBOX_CREATED, RESOURCESTYPE } from '../utils/consts';
+import { GET_SANDBOX_DETAILS } from './workloads/mssql/sandbox-scripts';
+import { Metadata, ResourceDetails } from '../utils/common-types';
+import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
+import { callSsmExecution } from './aws/ssm-operations';
+import { sqlResponseParsing } from '../utils/utils';
+import { SandboxInfoResponseType } from '../routes/types/database-hosts.types';
 
 const logger = getLogger();
 
-function getProperty(item: any, propertyName: string) {
-    const property = item.sandbox_properties.find((prop: { name: string }) => prop.name === propertyName);
-    return property ? property.value : null;
+interface SandboxObject {
+    sandbox_properties: { name: string; value: string }[];
 }
 
-function getSourceDetails(obj: any) {
+function getProperty(item: SandboxObject, propertyName: string) {
+    const property = item.sandbox_properties.find((prop: { name: string }) => prop.name === propertyName);
+    return property ? property.value : 'N/A';
+}
+
+function getSourceDetails(obj: SandboxObject) {
     const source = getProperty(obj, 'source');
     return source.split('\\');
 }
 
-async function getSandboxDetails(accountId: string, credentialsId: string, region: string, resourceDetails: any) {
+async function getSandboxDetails(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    resourceDetails: ResourceDetails
+) {
     logger.info('Get sandbox details of host:', resourceDetails.resource_id, accountId, credentialsId, region);
     const { metadata, resource_id: resourceId } = resourceDetails;
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
@@ -37,22 +45,20 @@ async function getSandboxDetails(accountId: string, credentialsId: string, regio
 
     const errorResponse = (errorMessage: any) => [
         {
-            databaseHostName: resourceDetails.resource_name,
-            databaseHostId: resourceDetails.resource_id,
+            databaseHostName: resourceDetails.resource_name!,
+            databaseHostId: resourceDetails.resource_id!,
             databaseInstanceName: DEFAULT_INSTANCE_NAME,
             error: errorMessage
         }
     ];
 
-    const command = [GET_SANDBOX_DETAILS(['"."'])];
-    if (!isSSMConnected) {
-        if (!isSSMConnected && activeNodeInstanceId === undefined) {
-            const errorMessage = `Unable to get sandbox details for host ${resourceDetails.resource_id} in account ${accountId} due to SSM connection issues.`;
-            logger.error(errorMessage);
-            return errorResponse(errorMessage);
-        }
+    if (!isSSMConnected && activeNodeInstanceId === undefined) {
+        const errorMessage = `Unable to get sandbox details for host ${resourceDetails.resource_id} in account ${accountId} due to SSM connection issues.`;
+        logger.error(errorMessage);
+        return errorResponse(errorMessage);
     }
 
+    const command = [GET_SANDBOX_DETAILS(['"."'])];
     const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
     if (response) {
         let parsedResponse;
@@ -64,17 +70,10 @@ async function getSandboxDetails(accountId: string, credentialsId: string, regio
         if (parsedResponse?.Error) {
             const errorMessage = `Error fetching sandbox details for host: ${resourceId},${parsedResponse.Instance},${accountId}${parsedResponse?.Error}.`;
             logger.error(errorMessage);
-            return [
-                {
-                    databaseHostName: resourceDetails.resource_name,
-                    databaseHostId: resourceDetails.resource_id,
-                    databaseInstanceName: DEFAULT_INSTANCE_NAME,
-                    error: errorMessage
-                }
-            ];
+            return errorResponse(errorMessage);
         }
         const sandboxDetails = parsedResponse.Output;
-        if (sandboxDetails === 'No sandboxes created for the instance') {
+        if (sandboxDetails === NO_SANDBOX_CREATED) {
             const errorMessage = `No sandboxes created for the instance:${parsedResponse.Instance} ,${resourceId},${accountId}.`;
             logger.error(errorMessage);
             return errorResponse(errorMessage);
@@ -92,8 +91,8 @@ async function getSandboxDetails(accountId: string, credentialsId: string, regio
 
                 const databaseObject = {
                     sandboxName: item.database_name,
-                    databaseHostName: resourceDetails.resource_name,
-                    databaseHostId: resourceDetails.resource_id,
+                    databaseHostName: resourceDetails.resource_name!,
+                    databaseHostId: resourceDetails.resource_id!,
                     databaseInstanceName: DEFAULT_INSTANCE_NAME,
                     sourceDatabaseHostName: sources[0],
                     sourceDatabaseInstanceName: sources[1],
@@ -112,7 +111,7 @@ async function getSandboxDetails(accountId: string, credentialsId: string, regio
     }
 }
 
-async function getSandboxInfo(accountId: string, credentialsId: string, region: string, nextToken?: string) {
+async function getSandboxesInfo(accountId: string, credentialsId: string, region: string, nextToken?: string) {
     logger.info('Get Sandboxes Info', accountId, credentialsId, region, nextToken);
     const resourceDetails = await listResources(
         accountId,
@@ -151,8 +150,7 @@ async function getSandboxInfo(accountId: string, credentialsId: string, region: 
     } catch (error) {
         const errorMessage = `Error fetching Sandboxes info. ${error}.`;
         logger.error(errorMessage);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 }
 
-export { getSandboxInfo };
+export { getSandboxesInfo };

@@ -1115,7 +1115,7 @@ const DATABASE_MAX_LUN_SIZE_IN_GIB = 133120;
 const DATABASE_MIN_LUN_SIZE_IN_GIB = 120;
 const FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL = '5h';
 const DBCREATE_RELATIVE_PATH = `${WLMDB}/scripts/dbcreate.zip`;
-const DEFAULT_INSTANCE_NAME = 'Default Instance';
+const DEFAULT_INSTANCE_NAME = 'MSSQLSERVER';
 
 const PERMISSION_DENIAL_POSSIBLE_REASONS = {
     MISSING: 'permission statement is missing',
@@ -1123,6 +1123,8 @@ const PERMISSION_DENIAL_POSSIBLE_REASONS = {
     BLOCKED_BOUNDARY: 'permission blocked due to boundary',
     OTHERS: 'permission is denied in "Effect" or due to other reasons'
 };
+
+const NO_SANDBOX_CREATED = 'No sandboxes created for the instance';
 
 export {
     WLMDB,
@@ -1378,5 +1380,6 @@ export {
     FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL,
     DBCREATE_RELATIVE_PATH,
     DEFAULT_INSTANCE_NAME,
-    PERMISSION_DENIAL_POSSIBLE_REASONS
+    PERMISSION_DENIAL_POSSIBLE_REASONS,
+    NO_SANDBOX_CREATED
 };
