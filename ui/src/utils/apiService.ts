@@ -339,25 +339,6 @@ export const databaseHomeApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
-            getDatabaseHosts: builder.query({
-                query: ({ credentialId, region, nextToken = null }) => {
-                    if (nextToken) {
-                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
-                    } else {
-                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation`;
-                    }
-                },
-                transformResponse: (response: any, meta, args) => {
-                    if (response) {
-                        response = {
-                            ...response,
-                            credentialId: args?.credentialId,
-                            regionId: args?.region
-                        };
-                    }
-                    return response;
-                }
-            }),
             getJobsSummary: builder.query({
                 query: ({ credentialId, region, startTime, endTime }) =>
                     `credentials/${credentialId}/regions/${region}/jobs/summary?startTime=${startTime}&endTime=${endTime}`
@@ -534,6 +515,44 @@ export const inventoryApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
+            getDatabaseHostsFullData: builder.query({
+                query: ({ credentialId, regionId, nextToken = null }) => {
+                    if (nextToken) {
+                        return `credentials/${credentialId}/regions/${regionId}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                    } else {
+                        return `credentials/${credentialId}/regions/${regionId}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation`;
+                    }
+                },
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialId,
+                            regionId: args?.regionId
+                        };
+                    }
+                    return response;
+                }
+            }),
+            getDatabaseHostsList: builder.query({
+                query: ({ credentialId, regionId, nextToken = null }) => {
+                    if (nextToken) {
+                        return `credentials/${credentialId}/regions/${regionId}/database-hosts?nextToken=${nextToken}`;
+                    } else {
+                        return `credentials/${credentialId}/regions/${regionId}/database-hosts`;
+                    }
+                },
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialId,
+                            regionId: args?.regionId
+                        };
+                    }
+                    return response;
+                }
+            }),
             getManagedHostData: builder.query({
                 query: ({ credentialId, regionId, nextToken = null }) => {
                     if (nextToken) {
@@ -651,7 +670,10 @@ export const {
     useUpdateConfigMutation
 } = configApi;
 
-export const { useGetDatabaseHostsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation } = databaseHomeApi;
+export const { 
+    useGetJobsSummaryQuery, 
+    useGetTemplatesMutation 
+} = databaseHomeApi;
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
@@ -672,6 +694,8 @@ export const { useGetWlmdbPoliciesQuery } = policiesApi;
 export const { useGetDriveInfoQuery, useCreateUserDBMutation, useGetCollationListQuery } = createUserDbApi;
 
 export const {
+    useLazyGetDatabaseHostsFullDataQuery, 
+    useLazyGetDatabaseHostsListQuery, 
     useLazyGetManagedHostDataQuery,
     useDiscoverHostsQuery,
     useGetFsxCredentialStatusQuery,
