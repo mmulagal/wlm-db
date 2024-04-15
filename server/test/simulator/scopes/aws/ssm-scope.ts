@@ -2,6 +2,7 @@
 // workaroud for the sdk type issue.. remove this @ts-nocheck once the sdk mock works fine
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
+/* eslint-disable */
 
 import {
     GetCommandInvocationCommand,
@@ -255,7 +256,7 @@ const cleanUpDB = {
 
 const checkDBExists = {
     commands: [
-        'sqlcmd -Q "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = \'tempdb18\' FOR JSON PATH" -y 0'
+        "sqlcmd -Q \"SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = 'tempdb18' FOR JSON PATH\" -y 0"
     ]
 };
 
