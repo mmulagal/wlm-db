@@ -12,7 +12,7 @@ const InventoryHeaderSection = () => {
     const navigate = useNavigate();
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
-    const isManagedHostInProgress = useAppSelector(state => state.inventory.getDatabaseHosts.databaseHostsLoading);
+    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
     const { unManagedHosts, unIdentifiableHosts } = useAppSelector(state => state.inventory);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
     return (
@@ -78,7 +78,7 @@ const InventoryHeaderSection = () => {
                                 value={((databaseHostsList || [])?.length || 0).toString()}
                                 color="var(--chart-9)"
                                 text={GENERAL.MANAGED_BY_WLF}
-                                isLoading={isManagedHostInProgress}
+                                isLoading={databaseHostsLoading || fullHostDataLoading}
                             />
                         </div>
 

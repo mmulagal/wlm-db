@@ -45,7 +45,7 @@ const ManagedHosts = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
+    const { databaseHostsData, databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
     const { managedHostInitialColumns } = useAppSelector(state => state.inventory);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
@@ -408,7 +408,7 @@ const ManagedHosts = () => {
             }
         },
         initialColumnState: managedHostInitialColumns,
-        isLazyLoading: databaseHostsLoading
+        isLazyLoading: databaseHostsLoading || fullHostDataLoading
     });
 
     useEffect(() => {

@@ -14,7 +14,6 @@ import {
 } from '../../utils/apiService';
 import {
     addNewManagedHostData,
-    mergeDatabaseHostsData,
     sortListOfDict
 } from '../../utils/utilityFunctions';
 import {
@@ -40,7 +39,7 @@ import store from '../../store/store';
 const InventoryApis = () => {
     const dispatch = useAppDispatch();
 
-    const { databaseHostsData } = useAppSelector(state => state.inventory.getDatabaseHosts);
+    const { fullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const { discoveredHostData } = useAppSelector(state => state.inventory.discoveredHosts);
     const discoveredHostState = useAppSelector(state => state.inventory.discoveredHosts);
@@ -52,13 +51,11 @@ const InventoryApis = () => {
     const movedManagedHostList = useAppSelector(state => state.inventory.movedManagedHosts);
     const mssqlInstancesData = useAppSelector(state => state.inventory.mssqlInstancesData);
 
-    const [hostCursor, setHostCursor] = useState(null);
     const [discoveryCursor, setDiscoveryCursor] = useState(null);
 
     // skipApiCall to skip APi call when isActive is not true
     const [skipApiCall, setSkipApiCall] = useState(true);
     const [skipDiscoveryCall, setSkipDiscoveryCall] = useState(false);
-    const [skipManagedHostCall, setSkipManagedHostCall] = useState(false);
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
     const [runningInstanceList, setRunningInstanceList] = useState<Array<String>>([]);
@@ -258,7 +255,6 @@ const InventoryApis = () => {
     useEffect(() => {
         setSkipApiCall(true);
         setDiscoveryCursor(null);
-        setHostCursor(null);
         dispatch(
             setDiscoveredHosts({
                 discoveredHostData: null,
@@ -278,7 +274,6 @@ const InventoryApis = () => {
         if (headerSelectedCred && headerSelectedRegion) {
             setSkipApiCall(false);
             setSkipDiscoveryCall(false);
-            setSkipManagedHostCall(false);
             setCredId(headerSelectedCred?.data?.credentialsId);
             setRegionId(headerSelectedRegion?.label2);
         }
@@ -332,7 +327,6 @@ const InventoryApis = () => {
     useEffect(() => {
         if (isRefreshed) {
             setDiscoveryCursor(null);
-            setHostCursor(null);
             dispatch(
                 setDiscoveredHosts({
                     discoveredHostData: null,
@@ -367,7 +361,7 @@ const InventoryApis = () => {
                 const perObj = {...topologyHostData[key], ...fullHostData[key], loading : false} 
                 databaseHostDataObj = {...databaseHostDataObj, ...{[key]: perObj}}
             } else {
-                const perObj = {...topologyHostData[key], loading : true} 
+                const perObj = {...topologyHostData[key], loading : fullHostDataLoading ? true : false} 
                 databaseHostDataObj = {...databaseHostDataObj, ...{[key]:perObj}}
             }
         });
