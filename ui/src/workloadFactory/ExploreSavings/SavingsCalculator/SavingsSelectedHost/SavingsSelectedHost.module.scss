@@ -8,5 +8,50 @@
         width: 576px;
         height: 80px;
         background-color: var(--table-header-background);
+        padding: 16px 40px;
+        display: flex;
+        gap: 22px;
+
+        .container {
+            display: flex;
+            flex-direction: column;
+
+            .value {
+                width: 142px;
+                max-width: 142px;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+
+            .heading {
+                width: 135px;
+                max-width: 142px;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+        }
+
+        .separator {
+            width: 1px;
+            height: 40px;
+            background-color: var(--border);
+            position: relative;
+            top: 2px;
+        }
+    }
+
+    .disabledHeading {
+        color: var(--text-disabled);
+    }
+
+    .disabledContent {
+        color: var(--text-disabled);
+    }
+
+    .loader {
+        margin-top: 10px;
+        margin-bottom: 6px;
     }
 }
