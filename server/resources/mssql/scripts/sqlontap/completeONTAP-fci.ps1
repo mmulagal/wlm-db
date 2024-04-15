@@ -1,82 +1,75 @@
-    [CmdletBinding()]
+[CmdletBinding()]
 param(
 
-	[Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$Node1FciIp,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$Node1SubnetId,
 
-	[Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$Node2FciIp,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$Node2SubnetId,
 
-	[Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$FCIName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$DomainAdminUser,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$ResourceID,   
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$Stackname,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$Parentstackname,
     
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$SqlCollation 
 )
 
 Start-Sleep -Seconds 600
 
 #get Instance ID
-$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
-$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 
 
-try
-{
+try {
     #Function to find Subnet mask
-    function Get-SubnetMask($subnetid)
-                 {
-                    $subnet = get-ec2subnet -SubnetId $subnetid
-                    $cidr = $subnet.CidrBlock
-                    $cidr_mask = $cidr.split('/')[1]
-                    $A = 0
-                    $A_Index = 8
-                    $B = 0
-                    $B_Index = 16
-                    $C = 0
-                    $C_Index = 24
-                    $D = 0
-                    $D_Index = 32
-                    for ($i = 1; $i -le $cidr_mask; $i++)
-                    {
-                        if ($i -le $A_Index)
-                        {
-                            $A += ([Math]::Pow(2, 8 - $i))
-                        }
-                        elseif ($i -le $B_Index)
-                        {
-                            $B += ([Math]::Pow(2, 8 - $i + $A_Index))
-                        }
-                        elseif ($i -le $C_Index)
-                        {
-                            $C += ([Math]::Pow(2, 8 - $i + $B_Index))
-                        }
-                        elseif ($i -le $D_Index)
-                        {
-                            $D += ([Math]::Pow(2, 8 - $i + $C_Index))
-                        }
-                    }
-                    $subnet_mask = "{0}.{1}.{2}.{3}" -f $A, $B, $C, $D
-                    return $subnet_mask
-                 }
+    function Get-SubnetMask($subnetid) {
+        $subnet = get-ec2subnet -SubnetId $subnetid
+        $cidr = $subnet.CidrBlock
+        $cidr_mask = $cidr.split('/')[1]
+        $A = 0
+        $A_Index = 8
+        $B = 0
+        $B_Index = 16
+        $C = 0
+        $C_Index = 24
+        $D = 0
+        $D_Index = 32
+        for ($i = 1; $i -le $cidr_mask; $i++) {
+            if ($i -le $A_Index) {
+                $A += ([Math]::Pow(2, 8 - $i))
+            }
+            elseif ($i -le $B_Index) {
+                $B += ([Math]::Pow(2, 8 - $i + $A_Index))
+            }
+            elseif ($i -le $C_Index) {
+                $C += ([Math]::Pow(2, 8 - $i + $B_Index))
+            }
+            elseif ($i -le $D_Index) {
+                $D += ([Math]::Pow(2, 8 - $i + $C_Index))
+            }
+        }
+        $subnet_mask = "{0}.{1}.{2}.{3}" -f $A, $B, $C, $D
+        return $subnet_mask
+    }
     Start-Transcript -Path C:\cfn\log\completeONTAPfci.ps1.txt -Append
     $ErrorActionPreference = "Stop"
     $DomainNetBIOSName = $env:USERDOMAIN
@@ -109,37 +102,45 @@ try
 
     $arguments = '/QUIET /ACTION=CompleteFailoverCluster /InstanceName=MSSQLSERVER /INDICATEPROGRESS=TRUE /FAILOVERCLUSTERNETWORKNAME={0} /FAILOVERCLUSTERIPADDRESSES="IPv4;{1};Cluster Network 1;{2}" "IPv4;{3};Cluster Network 2;{4}" /CONFIRMIPDEPENDENCYCHANGE=TRUE /FAILOVERCLUSTERGROUP="SQL Server (MSSQLSERVER)" /FAILOVERCLUSTERDISKS="SQL-DATA" "SQL-LOG" "SQL-TEMPDB" /INSTALLSQLDATADIR="C:\Program Files\Microsoft SQL Server" /SQLCOLLATION="SQL_Latin1_General_CP1_CI_AS" /SQLSYSADMINACCOUNTS={5} /INSTALLSQLDATADIR={6} /SQLUSERDBDIR={7} /SQLUSERDBLOGDIR={8} /SQLTEMPDBDIR={9}' -f $FCIName, $Node1FciIp, $Node1SubnetMask, $Node2FciIp, $Node2SubnetMask, $AdminGroup, $sqlRootPath, $sqlDataPath, $sqlLogPath, $sqlTempPath
     Invoke-Command -scriptblock {
-    Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output.txt -RedirectStandardError C:\cfn\log\completefci_error.txt 
+        Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output.txt -RedirectStandardError C:\cfn\log\completefci_error.txt 
 
-} -Credential $Credentials -ComputerName $HostName -Authentication credssp -ErrorAction SilentlyContinue -ErrorVariable errs
+    } -Credential $Credentials -ComputerName $HostName -Authentication credssp -ErrorAction SilentlyContinue -ErrorVariable errs
 
-##Re-attempt once if previous step failed to install due to synchronization with second node prepare-fci and reboot
+    ##Re-attempt once if previous step failed to install due to synchronization with second node prepare-fci and reboot
     Start-Sleep -Seconds 30
     $ClusterResource = Invoke-Command -scriptblock {
-    $clusresources = Get-ClusterResource | Out-String
-    $clusresources
-      }  -Credential $Credentials -ComputerName $HostName -Authentication credssp
+        $clusresources = Get-ClusterResource | Out-String
+        $clusresources
+    }  -Credential $Credentials -ComputerName $HostName -Authentication credssp
     if ($ClusterResource -notmatch "SQL Server") {
-    Start-Sleep -Seconds 300
-    Write-Output "There are errors or failures in the cluster verification report. This could happen when other node restarted during test for the deployment. Skipping cluster verify errors.Confirm that cluster configuration is fine by running tests later"
-    $skipclusterarguments = '/QUIET /ACTION=CompleteFailoverCluster /SkipRules=Cluster_VerifyForErrors /InstanceName=MSSQLSERVER /INDICATEPROGRESS=TRUE /FAILOVERCLUSTERNETWORKNAME={0} /FAILOVERCLUSTERIPADDRESSES="IPv4;{1};Cluster Network 1;{2}" "IPv4;{3};Cluster Network 2;{4}" /CONFIRMIPDEPENDENCYCHANGE=TRUE /FAILOVERCLUSTERGROUP="SQL Server (MSSQLSERVER)" /FAILOVERCLUSTERDISKS="SQL-DATA" "SQL-LOG" "SQL-TEMPDB" /INSTALLSQLDATADIR="C:\Program Files\Microsoft SQL Server" /SQLCOLLATION="SQL_Latin1_General_CP1_CI_AS" /SQLSYSADMINACCOUNTS={5} /INSTALLSQLDATADIR={6} /SQLUSERDBDIR={7} /SQLUSERDBLOGDIR={8} /SQLTEMPDBDIR={9}' -f $FCIName, $Node1FciIp, $Node1SubnetMask, $Node2FciIp, $Node2SubnetMask, $AdminGroup, $sqlRootPath, $sqlDataPath, $sqlLogPath, $sqlTempPath
-    Invoke-Command -scriptblock {
-    Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:skipclusterarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output.txt -RedirectStandardError C:\cfn\log\completefci_error.txt
-    } -Credential $Credentials -ComputerName $HostName -Authentication credssp
+        Start-Sleep -Seconds 300
+        Write-Output "There are errors or failures in the cluster verification report. This could happen when other node restarted during test for the deployment. Skipping cluster verify errors.Confirm that cluster configuration is fine by running tests later"
+        $skipclusterarguments = '/QUIET /ACTION=CompleteFailoverCluster /SkipRules=Cluster_VerifyForErrors /InstanceName=MSSQLSERVER /INDICATEPROGRESS=TRUE /FAILOVERCLUSTERNETWORKNAME={0} /FAILOVERCLUSTERIPADDRESSES="IPv4;{1};Cluster Network 1;{2}" "IPv4;{3};Cluster Network 2;{4}" /CONFIRMIPDEPENDENCYCHANGE=TRUE /FAILOVERCLUSTERGROUP="SQL Server (MSSQLSERVER)" /FAILOVERCLUSTERDISKS="SQL-DATA" "SQL-LOG" "SQL-TEMPDB" /INSTALLSQLDATADIR="C:\Program Files\Microsoft SQL Server" /SQLCOLLATION="SQL_Latin1_General_CP1_CI_AS" /SQLSYSADMINACCOUNTS={5} /INSTALLSQLDATADIR={6} /SQLUSERDBDIR={7} /SQLUSERDBLOGDIR={8} /SQLTEMPDBDIR={9}' -f $FCIName, $Node1FciIp, $Node1SubnetMask, $Node2FciIp, $Node2SubnetMask, $AdminGroup, $sqlRootPath, $sqlDataPath, $sqlLogPath, $sqlTempPath
+        Invoke-Command -scriptblock {
+            Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:skipclusterarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output.txt -RedirectStandardError C:\cfn\log\completefci_error.txt
+        } -Credential $Credentials -ComputerName $HostName -Authentication credssp
     }
     # setting collation on the sql server
     try {
         Write-Output "Setting collation on SQLServer(MSSQLSERVER)"
         Stop-ClusterResource "SQL Server"
-        $rebuildarguments ='/QUIET /ACTION="REBUILDDATABASE" /INSTANCENAME="MSSQLSERVER" /SQLSYSADMINACCOUNTS="' + $ClusterAdminUser + '" /SAPWD="' + $AdminPassword + '" /SQLCOLLATION="' + $SqlCollation + '"'
-        Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:rebuildarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\rebuild_collation.txt -RedirectStandardError C:\cfn\log\rebuild_error.txt
+        # Build the setup arguments
+        $rebuildarguments = '/QUIET /ACTION="REBUILDDATABASE" /INSTANCENAME="MSSQLSERVER" /SQLSYSADMINACCOUNTS="' + $ClusterAdminUser + '" /SAPWD="' + $AdminPassword + '" /SQLCOLLATION="' + $SqlCollation + '"'
+        
+        Invoke-Command -scriptblock {
+            Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:rebuildarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\rebuild_collation.txt -RedirectStandardError C:\cfn\log\rebuild_error.txt
+        } -Credential $Credentials -ComputerName $HostName -Authentication credssp
         Start-Sleep -Seconds 5
         Start-ClusterResource "SQL Server"
-     } catch {
+    }
+    catch {
         Write-Output "Failed to set collation on SQLServer(MSSQLSERVER)"
-     }
-} catch {
-        Write-Output "Failed to run complete Failover cluster action for SQL installation"
-        Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
-        $_ | Write-AWSLaunchWizardException
+        Start-Sleep -Seconds 5
+        Start-ClusterResource "SQL Server"
+    }
+}
+catch {
+    Write-Output "Failed to run complete Failover cluster action for SQL installation"
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
+    $_ | Write-AWSLaunchWizardException
 }
