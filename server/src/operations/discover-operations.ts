@@ -116,7 +116,7 @@ async function getHostAndSqlServerInfo(
 
     // For use cases, where info for specific EC2s is needed
     if (instances.length > 0) {
-        describeInstanceParams.InstanceIds = instances;
+        describeInstanceParams.Filters?.push({ Name: 'instance-id', Values: instances });
     }
 
     api1StartTime = performance.now();
