@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { ContextEntry, PolicyEvaluationDecisionType } from '@aws-sdk/client-iam';
+import { ContextEntry } from '@aws-sdk/client-iam';
 import randomize from 'randomatic';
 import fs from 'fs';
 import path from 'path';
@@ -66,7 +66,6 @@ import {
     DEFAULT_AWS_REGION,
     VALIDATION_INSTANCE_TYPE,
     VALIDATION_NODE_INSTANCETYPE,
-    BLOCKED_BY_SCP,
     IAM,
     SIMULATE_IAM_POLICY,
     TEMPLATE_S3GATEWAY_ROUTETABLES,
@@ -74,7 +73,8 @@ import {
     FSX_IOPS,
     DATABASE_MIN_LUN_SIZE_IN_GIB,
     DATABASE_MAX_LUN_SIZE_IN_GIB,
-    TEMPLATE_USERNAME_MAPPING
+    TEMPLATE_USERNAME_MAPPING,
+    PERMISSION_DENIAL_POSSIBLE_REASONS
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -512,11 +512,7 @@ async function deployStackOrCreateTemplateURL(
         const { permissions } = await checkAllMissingPermissions(credentialsId, region, OPERATE);
 
         // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
-        if (
-            permissions.missingStatements.length ||
-            permissions.blockedByOrganisation.length ||
-            permissions.blockedByPermissionBoundary.length
-        ) {
+        if (permissions.implicitlyDenied.length || permissions.explicitlyDenied.length) {
             metrics += `,${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION}`;
             const response = await createCloudFormationTemplateForUserDeployment(
                 credentialsId,
@@ -531,18 +527,13 @@ async function deployStackOrCreateTemplateURL(
                 metrics,
                 tags
             );
-            const errMsg = MISSING_PERMISSIONS(
-                permissions.missingStatements,
-                permissions.blockedByOrganisation,
-                permissions.blockedByPermissionBoundary
-            );
+            const errMsg = MISSING_PERMISSIONS(permissions.implicitlyDenied, permissions.explicitlyDenied);
 
             const responseWithPermissions: CloudFormationDeploymentResponseType = {
                 ...response,
                 missingPermissions: {
-                    missingStatements: permissions.missingStatements || [],
-                    blockedByOrganisation: permissions.blockedByOrganisation || [],
-                    blockedByPermissionBoundary: permissions.blockedByPermissionBoundary || []
+                    implicitlyDenied: permissions.implicitlyDenied || [],
+                    explicitlyDenied: permissions.explicitlyDenied
                 }
             };
 
@@ -586,23 +577,28 @@ async function deployStackOrCreateTemplateURL(
                 blockedBySCP = true;
             }
 
-            const errMsg = MISSING_PERMISSIONS(err?.message, [], []);
+            const errMsg = MISSING_PERMISSIONS(err?.message, []);
             const responseWithPermissions: CloudFormationDeploymentResponseType = {
                 ...response,
                 missingPermissions: {
-                    missingStatements: !blockedBySCP
+                    implicitlyDenied: !blockedBySCP
                         ? [
                               {
                                   service: IAM,
                                   action: SIMULATE_IAM_POLICY,
-                                  error: PolicyEvaluationDecisionType.EXPLICIT_DENY
+                                  reason: PERMISSION_DENIAL_POSSIBLE_REASONS.MISSING
                               }
                           ]
                         : [],
-                    blockedByOrganisation: blockedBySCP
-                        ? [{ service: IAM, action: SIMULATE_IAM_POLICY, error: BLOCKED_BY_SCP }]
-                        : [],
-                    blockedByPermissionBoundary: []
+                    explicitlyDenied: blockedBySCP
+                        ? [
+                              {
+                                  service: IAM,
+                                  action: SIMULATE_IAM_POLICY,
+                                  reason: PERMISSION_DENIAL_POSSIBLE_REASONS.BLOCKED_SCP
+                              }
+                          ]
+                        : []
                 }
             };
             logger.error(errMsg);
@@ -1027,9 +1023,8 @@ async function checkAllMissingPermissions(credentialsId: string, region: string,
     }
 
     const missedPermissions: MissingPermissionInterface = {
-        missingStatements: [],
-        blockedByOrganisation: [],
-        blockedByPermissionBoundary: []
+        implicitlyDenied: [],
+        explicitlyDenied: []
     };
 
     await Promise.all(
@@ -1039,22 +1034,18 @@ async function checkAllMissingPermissions(credentialsId: string, region: string,
         policyResourceActions.map(
             throat(1, async ({ resourceArn, resourceActions, resourceConditions }) => {
                 try {
-                    const { missingPermissions, blockedByOrganisation, blockedByPermissionBoundary } =
-                        await getMissingPermissionsList(
-                            credentialsId,
-                            region,
-                            resourceActions,
-                            resourceArn,
-                            resourceConditions
-                        );
-                    if (missingPermissions.length > 0) {
-                        missedPermissions.missingStatements.push(...missingPermissions);
+                    const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(
+                        credentialsId,
+                        region,
+                        resourceActions,
+                        resourceArn,
+                        resourceConditions
+                    );
+                    if (implicitlyDenied.length > 0) {
+                        missedPermissions.implicitlyDenied.push(...implicitlyDenied);
                     }
-                    if (blockedByOrganisation.length > 0) {
-                        missedPermissions.blockedByOrganisation.push(...blockedByOrganisation);
-                    }
-                    if (blockedByPermissionBoundary.length > 0) {
-                        missedPermissions.blockedByPermissionBoundary.push(...blockedByPermissionBoundary);
+                    if (explicitlyDenied.length > 0) {
+                        missedPermissions.explicitlyDenied.push(...explicitlyDenied);
                     }
                 } catch (error) {
                     throw createError(

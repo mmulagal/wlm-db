@@ -596,12 +596,8 @@ const WLM_ASSETS: Record<string, string> = {
 };
 
 // Template error messages
-const MISSING_PERMISSIONS = (
-    permissions: MissingPermission[],
-    blockedByOrganisation: MissingPermission[],
-    blockedByPermissionBoundary: MissingPermission[]
-) =>
-    `Required permissions are not available to deploy cloud formation template. Missing permissions: ${permissions}. Blocked by organisation: ${blockedByOrganisation}. Blocked by permission boundary: ${blockedByPermissionBoundary}`;
+const MISSING_PERMISSIONS = (implicitlyDenied: MissingPermission[], explicitlyDenied: MissingPermission[]) =>
+    `Required permissions are not available to deploy cloud formation template. Implicitly denied: ${implicitlyDenied}. Explicitly denied: ${explicitlyDenied}`;
 
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
 const STANDALONE_NETWORK_VIOLATION_MESSAGE =
@@ -1120,6 +1116,13 @@ const DATABASE_MIN_LUN_SIZE_IN_GIB = 120;
 const FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL = '5h';
 const DBCREATE_RELATIVE_PATH = `${WLMDB}/scripts/dbcreate.zip`;
 
+const PERMISSION_DENIAL_POSSIBLE_REASONS = {
+    MISSING: 'permission statement is missing',
+    BLOCKED_SCP: 'permission blocked by SCP',
+    BLOCKED_BOUNDARY: 'permission blocked due to boundary',
+    OTHERS: 'permission is denied in "Effect" or due to other reasons'
+};
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1372,5 +1375,6 @@ export {
     DATABASE_MIN_LUN_SIZE_IN_GIB,
     TEMPLATE_USERNAME_MAPPING,
     FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL,
-    DBCREATE_RELATIVE_PATH
+    DBCREATE_RELATIVE_PATH,
+    PERMISSION_DENIAL_POSSIBLE_REASONS
 };
