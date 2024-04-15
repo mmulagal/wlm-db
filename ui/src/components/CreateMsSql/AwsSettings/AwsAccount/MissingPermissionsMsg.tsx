@@ -15,62 +15,40 @@ type permissionProp = {
 const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
     const { setDialog } = useDialog();
     const { policiesList } = useAppSelector(state => state.mssql.getPolicies);
-    const blockedPermissions =
-        (permissionData?.blockedByOrganisation && permissionData?.blockedByOrganisation.length) ||
-        (permissionData?.blockedByPermissionBoundary && permissionData?.blockedByPermissionBoundary.length);
+    const blockedPermissions = permissionData?.explicitlyDenied && permissionData?.explicitlyDenied.length;
 
     const [dataToDisplay, setDataToDisplay] = useState([]);
     const [permissionCount, setPermissionCount] = useState(0);
 
-    const modifyPermissions = (obj: any) => {
-        if (obj.error === 'implicitDeny' || obj.error === 'implicitly denied') {
+    const modifyPermissions = (obj: any, msg: string) => {
+        if (msg === 'missing') {
             return { ...obj, error: `${GENERAL.MISSING_PERMISSION}` };
-        } else if (obj.error === 'explicitDeny' || obj.error === 'explicitly denied') {
+        } else if (msg === 'blocked') {
             return { ...obj, error: `${GENERAL.BLOCKED_BY_PERMISSION_BOUNDARY}` };
         } else {
-            return { ...obj, error: `${obj.error}` };
+            return { ...obj, error: `${GENERAL.MISSING_PERMISSION}` };
         }
     };
 
     useEffect(() => {
         if (blockedPermissions) {
             const updatedMissingPermissions =
-                permissionData?.missingStatements.length &&
-                permissionData?.missingStatements.map((obj: any) => {
-                    return modifyPermissions(obj);
+                permissionData?.implicitlyDenied.length &&
+                permissionData?.implicitlyDenied.map((obj: any) => {
+                    return modifyPermissions(obj, 'missing');
                 });
 
             const updatedBlockedByOrganization =
-                permissionData?.blockedByOrganisation.length > 0 &&
-                permissionData?.blockedByOrganisation.map((obj: any) => {
-                    return modifyPermissions(obj);
+                permissionData?.explicitlyDenied.length > 0 &&
+                permissionData?.explicitlyDenied.map((obj: any) => {
+                    return modifyPermissions(obj, 'blocked');
                 });
 
-            const updatedBlockedByPermissionBoundary =
-                permissionData?.blockedByPermissionBoundary.length &&
-                permissionData?.blockedByPermissionBoundary.map((obj: any) => {
-                    return modifyPermissions(obj);
-                });
             let mergeData = [];
-            if (
-                updatedMissingPermissions.length &&
-                updatedBlockedByOrganization.length &&
-                updatedBlockedByPermissionBoundary.length
-            ) {
-                mergeData = updatedMissingPermissions.concat(
-                    updatedBlockedByOrganization,
-                    updatedBlockedByPermissionBoundary
-                );
-            } else if (updatedMissingPermissions.length && updatedBlockedByOrganization.length) {
+            if (updatedMissingPermissions.length && updatedBlockedByOrganization.length) {
                 mergeData = updatedMissingPermissions.concat(updatedBlockedByOrganization);
-            } else if (updatedMissingPermissions.length && updatedBlockedByPermissionBoundary.length) {
-                mergeData = updatedMissingPermissions.concat(updatedBlockedByPermissionBoundary);
-            } else if (updatedBlockedByOrganization.length && updatedBlockedByPermissionBoundary.length) {
-                mergeData = updatedBlockedByOrganization.concat(updatedBlockedByPermissionBoundary);
             } else if (updatedBlockedByOrganization.length) {
                 mergeData = updatedBlockedByOrganization;
-            } else if (updatedBlockedByPermissionBoundary.length) {
-                mergeData = updatedBlockedByPermissionBoundary;
             } else if (updatedMissingPermissions.length) {
                 mergeData = updatedMissingPermissions;
             } else {
@@ -80,9 +58,11 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
             setDataToDisplay(mergeData);
             setPermissionCount(mergeData.length);
         } else {
-            const updatedMissingPermissions = permissionData?.missingStatements.map((obj: any) => {
-                return modifyPermissions(obj);
-            });
+            const updatedMissingPermissions =
+                permissionData?.implicitlyDenied.length &&
+                permissionData?.implicitlyDenied.map((obj: any) => {
+                    return modifyPermissions(obj, 'missing');
+                });
 
             setDataToDisplay(updatedMissingPermissions);
             setPermissionCount(updatedMissingPermissions.length);

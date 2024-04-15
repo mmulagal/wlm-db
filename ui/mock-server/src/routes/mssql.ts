@@ -25,50 +25,115 @@ router.post(
             cloudFormationUrl: 'cloud_formation_url',
             // warningMessage: 'Required IAM permissions are not available to deploy the cloud formation template',
             missingPermissions: {
-                missingStatements: [
+                implicitlyDenied: [
                     {
                         service: 'ec2',
-                        action: 'AllocateAddress',
-                        error: 'implicitDeny'
+                        action: 'DisassociateAddress',
+                        reason: 'permission statement is missing'
                     },
                     {
                         service: 'ec2',
-                        action: 'AllocateHosts',
-                        error: 'implicitDeny'
+                        action: 'DisassociateIamInstanceProfile',
+                        reason: 'permission statement is missing'
                     },
                     {
                         service: 'ec2',
-                        action: 'AssignPrivateIpAddresses',
-                        error: 'implicitDeny'
+                        action: 'DisassociateRouteTable',
+                        reason: 'permission statement is missing'
                     },
                     {
                         service: 'ec2',
-                        action: 'AssociateAddress',
-                        error: 'implicitDeny'
+                        action: 'DisassociateSubnetCidrBlock',
+                        reason: 'permission statement is missing'
                     },
                     {
                         service: 'ec2',
-                        action: 'AssociateRouteTable',
-                        error: 'implicitDeny'
+                        action: 'DisassociateVpcCidrBlock',
+                        reason: 'permission statement is missing'
                     },
                     {
-                        service: 'ec2',
-                        action: 'AssociateSubnetCidrBlock',
-                        error: 'implicitDeny'
+                        service: 'ec2messages',
+                        action: '*',
+                        reason: 'permission blocked due to boundary'
                     },
                     {
-                        service: 'ec2',
-                        action: 'AssociateVpcCidrBlock',
-                        error: 'implicitDeny'
+                        service: 'kms',
+                        action: 'GenerateDataKey',
+                        reason: 'permission statement is missing'
                     },
                     {
-                        service: 'ec2',
-                        action: 'AttachInternetGateway',
-                        error: 'implicitDeny'
+                        service: 'kms',
+                        action: 'Decrypt',
+                        reason: 'permission statement is missing'
+                    },
+                    {
+                        service: 'iam',
+                        action: 'CreateRole',
+                        reason: 'permission statement is missing'
+                    },
+                    {
+                        service: 'iam',
+                        action: 'GetRole',
+                        reason: 'permission statement is missing'
+                    },
+                    {
+                        service: 'ssm',
+                        action: 'DeleteParameters',
+                        reason: 'permission statement is missing'
                     }
                 ],
-                blockedByOrganisation: [],
-                blockedByPermissionBoundary: []
+                explicitlyDenied: [
+                    {
+                        service: 'fsx',
+                        action: 'TagResource',
+                        reason: 'permission is denied in "Effect" or due to other reasons'
+                    },
+                    {
+                        service: 'cloudformation',
+                        action: 'CreateStack',
+                        reason: 'permission blocked due to boundary'
+                    },
+                    {
+                        service: 'cloudformation',
+                        action: 'DescribeStackEvents',
+                        reason: 'permission blocked due to boundary'
+                    },
+                    {
+                        service: 'cloudformation',
+                        action: 'DescribeStacks',
+                        reason: 'permission blocked due to boundary'
+                    },
+                    {
+                        service: 'cloudformation',
+                        action: 'ListStacks',
+                        reason: 'permission blocked due to boundary'
+                    },
+                    {
+                        service: 'cloudwatch',
+                        action: 'GetMetricStatistics',
+                        reason: 'permission blocked due to boundary'
+                    },
+                    {
+                        service: 'cloudformation',
+                        action: 'ValidateTemplate',
+                        reason: 'permission blocked by SCP'
+                    },
+                    {
+                        service: 'cloudformation',
+                        action: 'SignalResource',
+                        reason: 'permission blocked by SCP'
+                    },
+                    {
+                        service: 'cloudformation',
+                        action: 'SignalResource',
+                        reason: 'permission blocked by SCP'
+                    },
+                    {
+                        service: 'iam',
+                        action: 'PassRole',
+                        reason: 'permission blocked by SCP'
+                    }
+                ]
             }
         };
         generateResponse(res, 200, resData);
