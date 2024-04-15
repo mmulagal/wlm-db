@@ -13,45 +13,29 @@ const ExportPDF = ({ rootElementId }: any) => {
     const dispatch = useDispatch();
 
     const downloadPdfDocument = () => {
-        const input = document.getElementById(rootElementId) as HTMLElement;
-
-        const originalHeight = input.style.height;
-        input.style.height = `${input.scrollHeight}px`;
-
-        html2canvas(input, { useCORS: true }).then(canvas => {
+        const input = document.getElementById('export-pdf');
+        //@ts-ignore
+        html2canvas(input, {
+            //@ts-ignore
+            width: input.scrollWidth,
+            //@ts-ignore
+            windowWidth: input.scrollWidth,
+            //@ts-ignore
+            height: input.scrollHeight,
+            //@ts-ignore
+            windowHeight: input.scrollHeight
+        }).then(canvas => {
             const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-
+            const pdf = new jsPDF('p', 'mm', 'a4', true);
+            const componentWidth = pdf.internal.pageSize.getWidth();
+            const componentHeight = pdf.internal.pageSize.getHeight();
             const imgWidth = canvas.width;
             const imgHeight = canvas.height;
-
-            const widthRatio = pageWidth / imgWidth;
-            const heightRatio = pageHeight / imgHeight;
-            const ratio = Math.min(widthRatio);
-
-            const scaledWidth = imgWidth * ratio;
-            const scaledHeight = imgHeight * ratio;
-
-            let heightLeft = imgHeight;
-            let heightPosition = imgHeight;
-            let position = 0;
-
-            pdf.addImage(imgData, 'PNG', 0, position, scaledWidth, scaledHeight);
-            heightLeft -= pageHeight / widthRatio;
-            heightPosition -= pageHeight;
-
-            while (heightLeft >= 0) {
-                position = heightPosition - imgHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, scaledWidth, scaledHeight);
-                heightLeft -= pageHeight / widthRatio;
-                heightPosition -= pageHeight;
-            }
-
-            pdf.save('SavingCalculator.pdf');
-            input.style.height = originalHeight;
+            const ratio = Math.min(componentWidth / imgWidth, componentHeight / imgHeight);
+            const imgX = (componentWidth - imgWidth * ratio) / 2;
+            const imgY = 10;
+            pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+            pdf.save('StorageCalculator.pdf');
         });
     };
 
