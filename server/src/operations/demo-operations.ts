@@ -140,7 +140,8 @@ async function createDeploymentMockDataInDB(
         creationDate: new Date().getTime().toString(),
         activeDirectoryName: 'wlm.com',
         activeDirectoryAddress: generateRandomIP(),
-        fsxSvmId: 'svm-0491dd89a76b7ca3d'
+        fsxSvmId: 'svm-0491dd89a76b7ca3d',
+        sandboxCreated: true
     };
 
     if (sqlDeploymentMode === 'FCI') {

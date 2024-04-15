@@ -9,7 +9,10 @@ import {
     DatabasesCreateResponse,
     CreateDatabaseParams,
     DriveInfoResponseBody,
-    CollationInfoResponseBody
+    CollationInfoResponseBody,
+    GetSandboxesParams,
+    SandboxInfoResponseBody,
+    SandboxQueryString
 } from '../types/database-hosts.types';
 import { CredentialsIdParams } from '../types/generic.types';
 
@@ -87,11 +90,23 @@ const GetCollationDetailsSchema = {
     }
 };
 
+const GetSandboxesInfoSchema = {
+    ...databaseHostsRequest,
+    summary: 'Get Sandboxes Information',
+    description: 'Get Sandboxes Information of all databases',
+    params: GetSandboxesParams,
+    querystring: SandboxQueryString,
+    response: {
+        200: SandboxInfoResponseBody
+    }
+};
+
 export {
     DatabaseHostsSummarySchema,
     DatabaseHostDetailsSchema,
     DatabasesListSchema,
     GetDriveInfoSchema,
     DatabasesCreateSchema,
-    GetCollationDetailsSchema
+    GetCollationDetailsSchema,
+    GetSandboxesInfoSchema
 };

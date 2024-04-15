@@ -33,6 +33,7 @@ import {
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST
 } from '../../../../src/operations/workloads/mssql/ssm-script-utils';
+import { GET_SANDBOX_DETAILS } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -255,7 +256,7 @@ const cleanUpDB = {
 
 const checkDBExists = {
     commands: [
-        "sqlcmd -Q \"SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = 'tempdb18' FOR JSON PATH\" -y 0"
+        'sqlcmd -Q "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = \'tempdb18\' FOR JSON PATH" -y 0'
     ]
 };
 
@@ -279,6 +280,10 @@ const getCollationDetails = {
     commands: [
         '\n#Get default collation of SQL server\n$defaultSqlCollation = sqlcmd -Q @"\n    SET NOCOUNT ON;\n    SELECT CONVERT(nvarchar(128), SERVERPROPERTY(\'collation\'));\n"@ -y 0\n\n#Get default version of SQL server\n$sqlVersion = sqlcmd -Q @"\n    SET NOCOUNT ON;\n    SELECT @@VERSION;\n"@ -y 0\n\nWrite-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json\n'
     ]
+};
+
+const getSandboxDetails = {
+    commands: [GET_SANDBOX_DETAILS(['"."'])]
 };
 
 ssmMock
@@ -367,7 +372,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getCollationDetails })
     .resolves(listSendCommandCommandResponse.getCollationDetailsResponse)
     .on(SendCommandCommand, { Parameters: clusterNetwokIpInfo })
-    .resolves(listSendCommandCommandResponse.clusterNetwokIpInfo);
+    .resolves(listSendCommandCommandResponse.clusterNetwokIpInfo)
+    .on(SendCommandCommand, { Parameters: getSandboxDetails })
+    .resolves(listSendCommandCommandResponse.getSandboxDetails);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -455,7 +462,9 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getCollationDetails' })
     .resolves(getCommandInvocationResponse.collationDetailsInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-clusterNetwokIpInfo' })
-    .resolves(getCommandInvocationResponse.clusterNetwokIpInfoInvocationResponse);
+    .resolves(getCommandInvocationResponse.clusterNetwokIpInfoInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getSandboxDetailsInfo' })
+    .resolves(getCommandInvocationResponse.getSandboxDetailsInvocationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

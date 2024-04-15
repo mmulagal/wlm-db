@@ -8,8 +8,10 @@ import {
     DatabaseHostsSummarySchema,
     DatabasesCreateSchema,
     GetDriveInfoSchema,
-    GetCollationDetailsSchema
+    GetCollationDetailsSchema,
+    GetSandboxesInfoSchema
 } from './schemas/database-hosts-schemas';
+import { getSandboxInfo } from '../operations/workloads/mssql/sandbox-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 
@@ -96,6 +98,18 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     params: { accountId, databaseHostId, credentialsId, region }
                 } = request;
                 const response = await getCollationDetails(accountId, databaseHostId, credentialsId, region);
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH}/database-hosts/sandbox`,
+            { schema: GetSandboxesInfoSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region },
+                    query: { nextToken }
+                } = request;
+                const response = await getSandboxInfo(accountId, credentialsId, region, nextToken);
                 return reply.send(response);
             }
         );

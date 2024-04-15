@@ -17,6 +17,12 @@ const CreateDatabaseParams = Type.Object({
     region: Type.String()
 });
 
+const GetSandboxesParams = Type.Object({
+    accountId: Type.String({ minLength: 7 }),
+    credentialsId: Type.String(),
+    region: Type.String()
+});
+
 // Query parameter to fetch protection, performance, storage and cost details
 const DatabaseHostQueryString = Type.Object({
     fields: Type.Optional(Type.String()),
@@ -241,6 +247,31 @@ const CollationInfoResponseBody = Type.Object({
 });
 type CollationInfoResponseBodyType = Static<typeof CollationInfoResponseBody>;
 
+const SandboxQueryString = Type.Object({
+    nextToken: Type.Optional(Type.String())
+});
+
+const SandboxInfoResponse = Type.Object({
+    sandboxName: Type.Optional(Type.String()),
+    databaseHostName: Type.String(),
+    databaseHostId: Type.String(),
+    databaseInstanceName: Type.String(),
+    sourceDatabaseName: Type.Optional(Type.String()),
+    sourceDatabaseHostName: Type.Optional(Type.String()),
+    sourceDatabaseInstanceName: Type.Optional(Type.String()),
+    creationTime: Type.Optional(Type.String()),
+    tag: Type.Optional(Type.String()),
+    error: Type.Optional(Type.Any())
+});
+
+const SandboxInfoResponseBody = Type.Object({
+    count: Type.Number(),
+    items: Type.Optional(Type.Array(SandboxInfoResponse)),
+    nextToken: Type.Optional(Type.String())
+});
+type SandboxInfoResponseBodyType = Static<typeof SandboxInfoResponseBody>;
+type SandboxInfoResponseType = Static<typeof SandboxInfoResponse>;
+
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -280,9 +311,15 @@ export {
     DatabasesCreateResponse,
     DatabaseCreateResponseType,
     CreateDatabaseParams,
+    GetSandboxesParams,
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
     FileConfigType,
     CollationInfoResponseBodyType,
-    CollationInfoResponseBody
+    CollationInfoResponseBody,
+    SandboxInfoResponse,
+    SandboxInfoResponseType,
+    SandboxInfoResponseBody,
+    SandboxInfoResponseBodyType,
+    SandboxQueryString
 };

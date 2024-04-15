@@ -821,5 +821,22 @@
         "StandardOutputContent": "{ \"clusterNetworkIps\": [\"10.45.66.75\", \"10.98.65.75\"] }",
         "Status": "Success",
         "StatusDetails": "Success"
+    },
+    "getSandboxDetailsInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\r\n    \"Instance\":  \".\",\r\n    \"Output\":  \"[{\\\"database_name\\\":\\\"sandboxtest1\\\",\\\"sandbox_properties\\\":[{\\\"name\\\":\\\"baseSnapshot\\\",\\\"value\\\":\\\"7e1de7b5-6e0e-4f6d-9c0a-8e5e3c1d2f0a\\\"},{\\\"name\\\":\\\"initialCreationDate\\\",\\\"value\\\":\\\"1649875812345\\\"},{\\\"name\\\":\\\"source\\\",\\\"value\\\":\\\"dbhost\\\\\\\\dbinstance\\\\\\\\dbname1\\\"},{\\\"name\\\":\\\"tag\\\",\\\"value\\\":\\\"dev\\\"}]},{\\\"database_name\\\":\\\"sandboxtest2\\\",\\\"sandbox_properties\\\":[{\\\"name\\\":\\\"baseSnapshot\\\",\\\"value\\\":\\\"f7b0d0b1-7c8d-4e9f-a6e2-9c3b4a5d6e7f\\\"},{\\\"name\\\":\\\"initialCreationDate\\\",\\\"value\\\":\\\"1649875812345\\\"},{\\\"name\\\":\\\"source\\\",\\\"value\\\":\\\"dbhost\\\\\\\\dbinstance\\\\\\\\dbname2\\\"},{\\\"name\\\":\\\"tag\\\",\\\"value\\\":\\\"qa\\\"}]}]\"\r\n}\r\n",
+        "Status": "Success",
+        "StatusDetails": "Success"
     }
 }
