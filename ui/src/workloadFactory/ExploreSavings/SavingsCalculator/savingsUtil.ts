@@ -191,17 +191,17 @@ export const viewCalculation = (viewCalculation: any) => {
             {
                 label: 'Storage savings from compression & deduplication ',
                 value: `${viewCalculation.FSxNCalculation.priceCalculation.deduplication} GiB`,
-                text: `Desired storage capacity x Savings from compression & deduplication (xx%) `
+                text: `Desired storage capacity x Savings from compression & deduplication (xx%)`
             },
             {
                 label: 'Effective storage capacity for FSx for ONTAP',
                 value: `${viewCalculation.FSxNCalculation.priceCalculation.storageCapacity} GiB`,
-                text: `Desired storage capacity  - Storage savings from compression & deduplication `
+                text: `Desired storage capacity  - Storage savings from compression & deduplication`
             },
             {
                 label: 'SSD storage GIB per month',
                 value: `${viewCalculation.FSxNCalculation.priceCalculation.ssdStorage} GiB`,
-                text: `Effective storage capacity for FSx for ONTAP  x Percentage of data on SSD storage  `
+                text: `Effective storage capacity for FSx for ONTAP  x Percentage of data on SSD storage `
             },
             {
                 label: 'The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity',
@@ -211,7 +211,112 @@ export const viewCalculation = (viewCalculation: any) => {
             {
                 label: 'SSD monthly cost ',
                 value: `$ ${viewCalculation.FSxNCalculation.priceCalculation.ssdMonthlyCost}`,
-                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity x SSD storage price  `
+                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity x SSD storage price `
+            },
+            {
+                label: 'Total monthly cost for FSx for NetApp ONTAP file server - SSD storage capacity',
+                value: `$ ${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostStorageCapacity}`,
+                text: `$ ${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostStorageCapacity} `
+            },
+            {
+                label: 'Ratio after savings from compression & deduplication factor',
+                value: `(${viewCalculation.FSxNCalculation.priceCalculation.deduplicationFactor}%)`,
+                text: `$ ${viewCalculation.FSxNCalculation.priceCalculation.deduplicationFactor} `
+            },
+            {
+                label: 'Data on capacity pool storage factor',
+                value: `(${viewCalculation.FSxNCalculation.priceCalculation.storageFactor}%)`,
+                text: `100% - Percentage of data on SSD storage`
+            },
+            {
+                label: 'Capacity pool storage capacity',
+                value: `(${viewCalculation.FSxNCalculation.priceCalculation.storageCapacity} GiB)`,
+                text: `Desired storage capacity x Ratio after savings from compression & deduplication factor x Data on capacity pool storage factor `
+            },
+            {
+                label: 'Capacity pool storage capacity',
+                value: `$(${viewCalculation.FSxNCalculation.priceCalculation.capacityMonthlyCost})`,
+                text: `Desired storage capacity x Ratio after savings from compression & deduplication factor x Data on capacity pool storage factor `
+            },
+            {
+                label: 'Total monthly cost for FSx for NetApp ONTAP file server - Capacity pool storage capacity',
+                value: `$(${viewCalculation.FSxNCalculation.priceCalculation.capacityPoolStorageCapacity})`,
+                text: ` `
+            },
+            {
+                label: 'Total storage charge (monthly)',
+                value: `$(${viewCalculation.FSxNCalculation.priceCalculation.totalStorageCharge})`,
+                text: `Total monthly cost for FSx for NetApp ONTAP file server capacity pool storage capacity`
+            },
+            {
+                label: 'Minimum number of file systems required for storage capacity',
+                value: `(${viewCalculation.FSxNCalculation.priceCalculation.minFileSystem})`,
+                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity ÷ Max SSD tier size 192 TiB`
+            },
+            {
+                label: 'Minimum number of file systems required for throughout capacity',
+                value: `(${viewCalculation.FSxNCalculation.priceCalculation.throughputCapacity})`,
+                text: `Suggested FSx for ONTAP throughout capacity ÷ max throughput MB/s`
+            },
+            {
+                label: 'Minimum number of file systems required for SSD IOPS',
+                value: `(${viewCalculation.FSxNCalculation.priceCalculation.sddIOPS})`,
+                text: `Provisioned SSD IOPS ÷ Maximum SSD IOPS`
+            },
+            {
+                label: 'Required number of FSx file systems - fractional',
+                value: `(${viewCalculation.FSxNCalculation.priceCalculation.fractional})`,
+                text: ``
+            },
+            {
+                label: 'Required number of FSx file systems',
+                value: `(${viewCalculation.FSxNCalculation.priceCalculation.fileSystems})`,
+                text: ``
+            },
+            {
+                label: 'Minimum throughout capacity required',
+                value: `(${viewCalculation.FSxNCalculation.priceCalculation.capacityRequired})`,
+                text: `Required number of FSx file systems x Min throughput capacity GiB `
+            },
+            {
+                label: 'Provisioned throughput capacity',
+                value: `(${viewCalculation.FSxNCalculation.priceCalculation.provisionedThroughputCapacity}) GiB`,
+                text: ``
+            },
+            {
+                label: 'Total monthly cost for FSx for NetApp ONTAP file server - Throughput capacity',
+                value: `$(${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostThroughputCapacity})`,
+                text: ` Provisioned throughput capacity  x FSx for ONTAP throughput price`
+            },
+            {
+                label: 'Included SSD IOPS',
+                value: `(${viewCalculation.FSxNCalculation.priceCalculation.includedSSDIOPS})`,
+                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity x Included IOPS÷GIB `
+            },
+            {
+                label: 'Additional SSD IOPS',
+                value: `(${viewCalculation.FSxNCalculation.priceCalculation.additionalSSDIOPS})`,
+                text: `Provisioned SSD IOPS - Included SSD IOPS`
+            },
+            {
+                label: 'Billed additional SSD IOPS',
+                value: `(${viewCalculation.FSxNCalculation.priceCalculation.billedSSD})`,
+                text: ``
+            },
+            {
+                label: 'Additional billed cost for SSD IOPS',
+                value: `$(${viewCalculation.FSxNCalculation.priceCalculation.additionalBilledCost})`,
+                text: `Billed additional SSD IOPS x FSx for ONTAP IOPS price`
+            },
+            {
+                label: 'Total throughput and IOPS (monthly)',
+                value: `$(${viewCalculation.FSxNCalculation.priceCalculation.totalThroughputIOPS})`,
+                text: `Additional billed cost for SSD IOPS + Total monthly cost for FSx for NetApp ONTAP file server throughput capacity `
+            },
+            {
+                label: 'Total monthly cost',
+                value: `$(${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCost})`,
+                text: `Total throughput and IOPS (monthly) + total storage charge (monthly) `
             }
         ]
     };

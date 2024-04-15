@@ -20,7 +20,7 @@ const SavingsSelection = () => {
     );
     //Function to generate the options for Select Field
     const generateSnapshotFrequency = useMemo<optionType[]>((): optionType[] => {
-        const frequency = ['Daily', 'Weekly', 'Monthly'];
+        const frequency = ['No snapshot storage', 'Hourly', 'Daily', '2*Daily', 'Weekly', 'Monthly'];
         const options: optionType[] = [];
         frequency?.map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '', val);
@@ -75,7 +75,7 @@ const SavingsSelection = () => {
                 <SelectField
                     label={'Clone refresh'}
                     isClearable={false}
-                    defaultValue={selectedCloneRefresh ? selectedCloneRefresh : [generateCloneRefresh[0]]}
+                    defaultValue={selectedCloneRefresh ? selectedCloneRefresh : [generateCloneRefresh[2]]}
                     onChange={(selectedOptions: any): void => {
                         dispatch(setSelectedCloneRefresh(selectedOptions));
                     }}
