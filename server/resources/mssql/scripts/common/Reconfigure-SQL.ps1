@@ -149,6 +149,9 @@ try {
     }
     catch {
         Write-Output "Failed to set collation on SQLServer(MSSQLSERVER)"
+        # Start SQL service even though collation fails
+        $SQLService.Start()
+        $SQLService.WaitForStatus('Running', '00:01:00')
     }
  
 }
