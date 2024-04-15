@@ -53,6 +53,7 @@ Metadata:
                   - SQLAdminAccounts
                   - AMIID
                   - BYOLAMI
+                  - SqlCollation
             - Label:
                   default: AWS Configuration
               Parameters:
@@ -194,6 +195,10 @@ Parameters:
         MaxLength: '15'
         MinLength: '1'
         Type: String
+    SqlCollation:
+        Description: Name for the SQL Server collation.
+        Type: String
+        MinLength: '1'
     DomainAdminUser:
         AllowedPattern: ([a-zA-Z0-9]+(\.|_|-|@)*)+
         Default: admin
@@ -824,6 +829,8 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
+                                  - "' -SqlCollation '"
+                                  - !Ref 'SqlCollation'
                                   - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '''"'

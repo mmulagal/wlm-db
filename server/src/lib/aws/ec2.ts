@@ -39,7 +39,9 @@ import {
     DescribeInstanceTypeOfferingsCommandInput,
     DescribeInstanceTypeOfferingsCommand,
     DescribeVolumesCommandInput,
-    DescribeVolumesCommand
+    DescribeVolumesCommand,
+    DescribeSnapshotsCommandInput,
+    DescribeSnapshotsCommand
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -337,6 +339,17 @@ async function describeVolumes(credentialsId: string, region: string, params: De
     return resp;
 }
 
+async function describeSnapshots(credentialsId: string, region: string, params: DescribeSnapshotsCommandInput) {
+    logger.info('Describe snapshots', { region, params });
+
+    const ec2 = await getEC2Client(region, credentialsId);
+
+    const resp = await ec2.send(new DescribeSnapshotsCommand(params));
+    logger.debug('descibeSnapshots response:', resp);
+
+    return resp;
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -356,5 +369,6 @@ export {
     paginatedDescribeSubnets,
     describeVolumes,
     modifyVpcAttributes,
-    describeInstanceTypeOfferings
+    describeInstanceTypeOfferings,
+    describeSnapshots
 };

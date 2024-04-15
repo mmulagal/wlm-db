@@ -1,4 +1,4 @@
-import { AccordionCard, AccordionCardContent, DsTypography, TextField } from '@netapp/design-system';
+import { AccordionCard, AccordionCardContent, DsTypography } from '@netapp/design-system';
 import styles from './DefineTag.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
@@ -46,7 +46,7 @@ const DefineTag = () => {
                     <DsTypography>
                         <div className={styles.container}>
                             {tagNames.map((tag: any) => (
-                                <div className={setClass(tag)} onClick={() => handleClick(tag)}>
+                                <div key={tag} className={setClass(tag)} onClick={() => handleClick(tag)}>
                                     <DsTypography variant="Semibold_13" className={styles.tagColor}>
                                         {tag}
                                     </DsTypography>

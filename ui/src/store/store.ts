@@ -28,6 +28,7 @@ import inventorySlice from './workloadFactory/inventorySlice';
 import headersSlice from './workloadFactory/headersSlice';
 import createNewUserSlice from './workloadFactory/createNewDBSlice';
 import sandboxSlice from './workloadFactory/sandboxSlice';
+import exploreSavingsSlice from './workloadFactory/exploreSavingsSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -54,7 +55,8 @@ const rootReducer = combineReducers({
     [policiesApi.reducerPath]: policiesApi.reducer,
     [createUserDbApi.reducerPath]: createUserDbApi.reducer,
     [inventoryApi.reducerPath]: inventoryApi.reducer,
-    [sandboxSlice.reducerPath]: sandboxSlice.reducer
+    [sandboxSlice.reducerPath]: sandboxSlice.reducer,
+    [exploreSavingsSlice.reducerPath]: exploreSavingsSlice.reducer
 });
 
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action: any) => {

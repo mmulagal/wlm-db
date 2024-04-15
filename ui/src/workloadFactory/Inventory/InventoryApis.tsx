@@ -206,6 +206,7 @@ const InventoryApis = () => {
         dispatch(setUnIdentifiableHosts([]));
         dispatch(setMovedToManagedHost([]));
         dispatch(setMovedToUnmanagedHost([]));
+        setRunningResourceList([]);
         if (headerSelectedCred && headerSelectedRegion) {
             setSkipApiCall(false);
             setSkipDiscoveryCall(false);
@@ -583,12 +584,12 @@ const InventoryApis = () => {
         managedHostListLoading
     ]);
 
-    const getMssqlData = async (instancesPayload: any, nextToken: string | null = '') => {
+    const getMssqlData = async (instanceList: any, nextToken: string | null = '') => {
         try {
             const result: any = await getMssqlInstanceDataApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
                 regionId: headerSelectedRegion?.label2,
-                payload: { instancesDetails: instancesPayload },
+                instances: instanceList.join(','),
                 nextToken: nextToken
             });
             const state = store.getState();
@@ -596,8 +597,8 @@ const InventoryApis = () => {
             if (result && !result?.error) {
                 let mssqlInstancesDataRes: any = {};
                 result?.data?.items?.map((host: any) => {
-                    if (mssqlInstancesData[host?.name]) {
-                        mssqlInstancesDataRes[host?.name] = {
+                    if (mssqlInstancesData[host?.id]) {
+                        mssqlInstancesDataRes[host?.id] = {
                             loading: false,
                             data: host,
                             error: host?.errors
@@ -606,12 +607,12 @@ const InventoryApis = () => {
                 });
                 dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataRes }));
                 if (result?.data?.nextToken) {
-                    getMssqlData(instancesPayload, result?.data?.nextToken);
+                    getMssqlData(instanceList, result?.data?.nextToken);
                 }
             } else {
                 let mssqlInstancesDataErr: any = {};
-                instancesPayload?.map((host: any) => {
-                    mssqlInstancesDataErr[host?.ec2InstanceId] = {
+                instanceList?.map((ec2InstanceId: any) => {
+                    mssqlInstancesDataErr[ec2InstanceId] = {
                         loading: false,
                         data: null,
                         error: result?.error?.data?.message
@@ -621,8 +622,8 @@ const InventoryApis = () => {
             }
         } catch (error) {
             let mssqlInstancesDataErr: any = {};
-            instancesPayload?.map((host: any) => {
-                mssqlInstancesDataErr[host?.ec2InstanceId] = {
+            instanceList?.map((ec2InstanceId: any) => {
+                mssqlInstancesDataErr[ec2InstanceId] = {
                     loading: false,
                     data: null,
                     error: error
@@ -634,56 +635,18 @@ const InventoryApis = () => {
 
     useEffect(() => {
         if (unManagedHostList && unManagedHostList.length > 0) {
-            let instancesPayload: any = [];
+            let instancesList: any = [];
             unManagedHostList.map((host: any) => {
                 const instanceId = host?.ec2InstanceId || '';
                 if (instanceId && !runningInstanceList.find(inst => inst === instanceId)) {
                     setRunningInstanceList([...runningInstanceList, host?.ec2InstanceId]);
-                    let fsxId = '';
-                    let ebsId = '';
-                    let fsxwId = '';
-                    if (host?.sqlServerInstances?.[0]?.storage) {
-                        host?.sqlServerInstances?.[0]?.storage?.map((storageObj: any) => {
-                            if (storageObj.type === DETECT_HOST_VAR.FSXN) {
-                                fsxId = storageObj.id;
-                            }
-                            if (storageObj.type === DETECT_HOST_VAR.EBS) {
-                                ebsId = storageObj.id;
-                            }
-                            if (storageObj.type === DETECT_HOST_VAR.FSXW) {
-                                fsxwId = storageObj.id;
-                            }
-                        });
-                    }
-                    let instanceObj: any = { ec2InstanceId: host?.ec2InstanceId };
-
-                    if (fsxId) {
-                        instanceObj = {
-                            ...instanceObj,
-                            fsxnId: fsxId
-                        };
-                    }
-
-                    if (ebsId) {
-                        instanceObj = {
-                            ...instanceObj,
-                            ebsVolumeId: ebsId
-                        };
-                    }
-
-                    if (fsxwId) {
-                        instanceObj = {
-                            ...instanceObj,
-                            fsxwId: fsxwId
-                        };
-                    }
-                    instancesPayload.push(instanceObj);
+                    instancesList.push(host?.ec2InstanceId);
                 }
             });
             let mssqlInstancesDataLoad: any = {};
-            if (instancesPayload && instancesPayload.length > 0) {
-                instancesPayload?.map((host: any) => {
-                    mssqlInstancesDataLoad[host?.ec2InstanceId] = {
+            if (instancesList && instancesList.length > 0) {
+                instancesList?.map((ec2InstanceId: any) => {
+                    mssqlInstancesDataLoad[ec2InstanceId] = {
                         loading: true,
                         data: null,
                         error: null
@@ -691,7 +654,7 @@ const InventoryApis = () => {
                 });
                 dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataLoad }));
                 setTimeout(() => {
-                    getMssqlData(instancesPayload);
+                    getMssqlData(instancesList);
                 }, 1);
             }
         }

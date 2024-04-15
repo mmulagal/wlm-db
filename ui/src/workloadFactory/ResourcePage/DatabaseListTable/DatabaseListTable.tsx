@@ -6,12 +6,29 @@ import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected
 import styles from './DatabaseListTable.module.scss';
 import { WorkloadFactoryDatabaseItem } from '../../../utils/types/workloadFactoryResourceTypes';
 import { useAppSelector } from '../../../store/storeHooks';
-import { formatSize } from '../../../utils/utilityFunctions';
+import { formatSize, isAwsBackupEnabled } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
 
 const DatabaseListTable = () => {
     const data: WorkloadFactoryDatabaseItem[] = useAppSelector(state => state.workloadFactoryResource.databaseList);
     const databaseListLoading = useAppSelector(state => state.workloadFactoryResource.databaseListLoading);
+
+    const formatData = (tableData: WorkloadFactoryDatabaseItem[]) => {
+        return tableData?.map(perRow => {
+            let isProtected = GENERAL.NOT_PROTECTED;
+            if (
+                isAwsBackupEnabled(perRow) ||
+                perRow?.protection?.isFsxOntapSnapshotsEnabled ||
+                perRow?.protection?.isSqlNativeEnabled
+            ) {
+                isProtected = GENERAL.PROTECTED;
+            }
+            return {
+                ...perRow,
+                isProtected: isProtected
+            };
+        });
+    };
 
     const protectionTooltipText = (data: any) => {
         return (
@@ -83,7 +100,7 @@ const DatabaseListTable = () => {
                 const protectionData = rowData?.protection;
                 let protectedChk = false;
                 if (
-                    protectionData?.isAwsBackUpEnabled ||
+                    isAwsBackupEnabled(rowData) ||
                     protectionData?.isFsxOntapSnapshotsEnabled ||
                     protectionData?.isSqlNativeEnabled
                 ) {
@@ -93,7 +110,7 @@ const DatabaseListTable = () => {
                 if (protectionData?.isFsxOntapSnapshotsEnabled) {
                     protectedByList.push(GENERAL.FSX_ONTAP_SNAPSHOTS);
                 }
-                if (protectionData?.isAwsBackUpEnabled) {
+                if (isAwsBackupEnabled(rowData)) {
                     protectedByList.push(GENERAL.AWS_BACKUP);
                 }
                 if (protectionData?.isSqlNativeEnabled) {
@@ -158,7 +175,7 @@ const DatabaseListTable = () => {
         manageColumnsProps: false,
         isSorting: false,
         columns: EncryptionColDefs,
-        rows: data,
+        rows: formatData(data),
         pageSize: 50,
         isLazyLoading: databaseListLoading
     });

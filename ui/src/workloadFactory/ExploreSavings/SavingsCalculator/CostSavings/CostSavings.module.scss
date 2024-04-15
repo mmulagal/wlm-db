@@ -1,0 +1,58 @@
+.costSavings {
+    height: 105px;
+    background-color: var(--content-background);
+    width: 656px;
+    padding: 24px 0 0 40px;
+    display: flex;
+
+    .leftSide {
+        display: flex;
+        gap: 16px;
+
+        .setImage {
+            position: relative;
+            top: 2.5px;
+        }
+
+        .textContent {
+            display: flex;
+            flex-direction: column;
+            width: 192px;
+            .dollar {
+                position: relative;
+                top: 7px;
+            }
+            .topValue {
+                display: flex;
+                gap: 4px;
+            }
+        }
+    }
+
+    .separator {
+        margin-left: 32px;
+        height: 40px;
+        border-left: 1px solid var(--border);
+        position: relative;
+        top: 8px;
+    }
+
+    .rightSide {
+        display: flex;
+        flex-direction: column;
+        margin-left: 40px;
+
+        .firstRow {
+            display: flex;
+            gap: 4px;
+            .dollar {
+                position: relative;
+                top: 7px;
+            }
+        }
+    }
+    .bottomValue {
+        display: flex;
+        gap: 8px;
+    }
+}

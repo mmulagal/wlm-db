@@ -1,9 +1,9 @@
 import { RouteTags } from '../../utils/consts';
 import {
     DatabaseHostQueryString,
-    DatabaseHostSummaryListResponse,
+    DatabaseHostSummaryPerStorageTypeListResponse,
     DatabaseHostSummaryParams,
-    DatabaseHostSummaryResponse,
+    DatabaseHostSummaryPerStorageTypeResponse,
     DatabasesListResponse,
     CreateDatabseRequestBody,
     DatabasesCreateResponse,
@@ -29,7 +29,7 @@ const DatabaseHostsSummarySchema = {
     description: 'Get database hosts summary details',
     querystring: DatabaseHostQueryString,
     response: {
-        200: DatabaseHostSummaryListResponse
+        200: DatabaseHostSummaryPerStorageTypeListResponse
     }
 };
 
@@ -42,7 +42,7 @@ const DatabaseHostDetailsSchema = {
     params: DatabaseHostSummaryParams,
     querystring: DatabaseHostQueryString,
     response: {
-        200: DatabaseHostSummaryResponse
+        200: DatabaseHostSummaryPerStorageTypeResponse
     }
 };
 

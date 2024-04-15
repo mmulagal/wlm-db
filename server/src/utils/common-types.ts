@@ -122,12 +122,11 @@ interface SSMParamterObject {
 interface MissingPermission {
     service: string;
     action: string;
-    error: string;
+    reason: string;
 }
 interface MissingPermissionInterface {
-    missingStatements: MissingPermission[];
-    blockedByOrganisation: MissingPermission[];
-    blockedByPermissionBoundary: MissingPermission[];
+    implicitlyDenied: MissingPermission[];
+    explicitlyDenied: MissingPermission[];
 }
 
 export {

@@ -597,12 +597,11 @@ export const inventoryApi = createApi({
                 })
             }),
             getMssqlInstanceData: builder.mutation({
-                query: ({ credentialId, regionId, payload, nextToken = null }) => ({
+                query: ({ credentialId, regionId, instances, nextToken = null }) => ({
                     url: nextToken
-                        ? `credentials/${credentialId}/regions/${regionId}/mssql/instances&nextToken=${nextToken}`
-                        : `credentials/${credentialId}/regions/${regionId}/mssql/instances`,
-                    method: 'POST',
-                    body: payload
+                        ? `credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}&nextToken=${nextToken}`
+                        : `credentials/${credentialId}/regions/${regionId}/mssql/instances?instances=${instances}`,
+                    method: 'GET'
                 })
             }),
             getMssqlResourceData: builder.mutation({

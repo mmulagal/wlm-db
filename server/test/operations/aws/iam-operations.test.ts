@@ -19,11 +19,11 @@ describe('List permissions required', () => {
     });
 
     it('list permissions required to deploy the stack - with skipped resources', async () => {
-        const { missingPermissions } = await getMissingPermissionsList(DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
+        const { implicitlyDenied } = await getMissingPermissionsList(DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
             SNS
         ]);
         let isSnsFound = false;
-        for (const perm of missingPermissions) {
+        for (const perm of implicitlyDenied) {
             if (perm.service.includes(SNS)) {
                 isSnsFound = true;
                 break;

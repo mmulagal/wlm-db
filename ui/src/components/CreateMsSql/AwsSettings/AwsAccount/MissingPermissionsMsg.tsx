@@ -1,4 +1,4 @@
-import { Button, Typography, useDialog } from '@netapp/design-system';
+import { Button, useDialog } from '@netapp/design-system';
 import { useAppSelector } from '../../../../store/storeHooks';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -14,8 +14,6 @@ type permissionProp = {
 
 const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
     const { setDialog } = useDialog();
-    const deployRedirectToCfLink = useAppSelector(state => state.msSqlAction.deployRedirectToCfLink);
-    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const { policiesList } = useAppSelector(state => state.mssql.getPolicies);
     const blockedPermissions =
         (permissionData?.blockedByOrganisation && permissionData?.blockedByOrganisation.length) ||
@@ -25,9 +23,9 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
     const [permissionCount, setPermissionCount] = useState(0);
 
     const modifyPermissions = (obj: any) => {
-        if (obj.error === 'implicitDeny') {
+        if (obj.error === 'implicitDeny' || obj.error === 'implicitly denied') {
             return { ...obj, error: `${GENERAL.MISSING_PERMISSION}` };
-        } else if (obj.error === 'explicitDeny') {
+        } else if (obj.error === 'explicitDeny' || obj.error === 'explicitly denied') {
             return { ...obj, error: `${GENERAL.BLOCKED_BY_PERMISSION_BOUNDARY}` };
         } else {
             return { ...obj, error: `${obj.error}` };
@@ -112,25 +110,6 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
                 customClass={styles.setWidth}
             />
         );
-    };
-
-    const openDemoInfoDialog = () => {
-        setDialog(
-            <DialogComponent
-                header={GENERAL.DEMO_TITLE}
-                content={<Typography variant="Regular_14">{`${GENERAL.DEMO_CONTENT}`}</Typography>}
-                primaryButton={GENERAL.CONTINUE}
-                callback={() => {}}
-            />
-        );
-    };
-
-    const redirectToCf = () => {
-        if (isDemoMode) {
-            openDemoInfoDialog();
-        } else {
-            window.open(deployRedirectToCfLink, '_blank', 'noopener');
-        }
     };
 
     return (

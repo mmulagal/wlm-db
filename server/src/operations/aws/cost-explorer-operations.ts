@@ -48,7 +48,9 @@ async function calculateBilling(
 
         return {
             compute: ec2Cost!,
-            storage: fsxCost!,
+            storage: {
+                fsxn: fsxCost!
+            },
             estimationType: BILLING,
             connectivity: 0, // Since we are not creating tag on resource other than ec2 and fsx
             others: 0

@@ -188,6 +188,9 @@ const Chatbot = () => {
                                 mapParamsToPayload(intent.params);
                             }
                             setIsPayloadReady(intent.complete);
+                            if (intent.complete) {
+                                dispatch(setExpectingResponse({ type: 'none', fieldName: '' }));
+                            }
                         }
 
                         const updatedMessages = [
@@ -735,6 +738,9 @@ const Chatbot = () => {
                             mapParamsToPayload(intent.params);
                         }
                         setIsPayloadReady(intent.complete);
+                        if (intent.complete) {
+                            dispatch(setExpectingResponse({ type: 'none', fieldName: '' }));
+                        }
                     }
 
                     updatedMessages = [
@@ -802,6 +808,9 @@ const Chatbot = () => {
                             mapParamsToPayload(intent.params);
                         }
                         setIsPayloadReady(intent.complete);
+                        if (intent.complete) {
+                            dispatch(setExpectingResponse({ type: 'none', fieldName: '' }));
+                        }
                     }
 
                     const updatedMessages = [

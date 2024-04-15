@@ -13,7 +13,7 @@ function CreateNewSandboxHeader() {
                         navigate('../databases');
                     }
                 }}
-                title={<div className={styles.leftSideStyle}>{GENERAL.CREATE_NEW_SANDBOX}</div>}
+                title={<div className={styles.leftSideStyle}>{GENERAL.SANDBOX_DEFINITION}</div>}
                 style={{ width: '100vw' }}
             ></Header>
         </div>

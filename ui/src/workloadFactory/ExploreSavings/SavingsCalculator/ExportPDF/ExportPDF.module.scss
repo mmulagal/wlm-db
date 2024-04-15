@@ -1,0 +1,30 @@
+.exportPdf {
+    margin: 0 auto;
+    margin-top: 24px;
+    margin-bottom: 40px;
+    background-color: var(--content-background);
+    box-shadow: 2px 2px 6px 0px var(--border);
+    padding: 13px 40px;
+    width: 1336px;
+    height: 59px;
+
+    display: flex;
+    gap: 40px;
+
+    .insideContainer {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+
+        svg {
+            path {
+                fill: var(--text-button-primary);
+            }
+        }
+
+        .text {
+            color: var(--text-button-primary);
+            cursor: pointer;
+        }
+    }
+}

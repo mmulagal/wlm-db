@@ -13,8 +13,10 @@ param(
     $DomainAdminUser,
 
     [Parameter(Mandatory=$true)]
-    [string]$Parentstackname
-
+    [string]$Parentstackname,
+    
+    [Parameter(Mandatory=$true)]
+    [string]$SqlCollation
 )
 
 try {
@@ -118,6 +120,15 @@ try {
         # Set SQL Server and Agent services user to SQL AD user
         $Services = Get-WmiObject -Class Win32_Service -Filter "Name='SQLSERVERAGENT' OR Name='MSSQLSERVER'"
         $Services.change($null,$null,$null,$null,$null,$null, $Using:DomainAdminFullUser ,$Using:DomainAdminPassword,$null,$null,$null)
+
+        #Set collation for the sql server
+        try {
+            Write-Output "Setting collation on SQLServer(MSSQLSERVER)"
+            $rebuildarguments ='/QUIET /ACTION="REBUILDDATABASE" /INSTANCENAME="MSSQLSERVER" /SQLSYSADMINACCOUNTS="' + $DomainAdminFullUser + '" /SAPWD="' + $DomainAdminPassword + '" /SQLCOLLATION="' + $SqlCollation + '"'
+            Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:rebuildarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\rebuild_collation.txt -RedirectStandardError C:\cfn\log\rebuild_error.txt
+         } catch {
+            Write-Output "Failed to set collation on SQLServer(MSSQLSERVER)"
+         }
 
         # Start service
         $SQLService.Start()

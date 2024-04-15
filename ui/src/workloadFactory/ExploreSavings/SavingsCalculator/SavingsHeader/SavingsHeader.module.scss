@@ -1,0 +1,18 @@
+.savingsHeader {
+    width: 656px;
+    height: 105px;
+    padding: 26px 40px 12px 40px;
+    box-shadow: 0px -1px 0px 0px var(--border) inset;
+
+    display: flex;
+    gap: 16px;
+
+    .setImage {
+        position: relative;
+        top: 3px;
+    }
+
+    .content {
+        width: 431px;
+    }
+}

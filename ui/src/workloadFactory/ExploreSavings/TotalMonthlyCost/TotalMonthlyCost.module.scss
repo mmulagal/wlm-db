@@ -1,0 +1,29 @@
+.totalMonthlyCost {
+    width: 656px;
+    height: 514px;
+    background-color: var(--content-background);
+    .headSection {
+        display: flex;
+        height: 72px;
+        padding: 12px 40px;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        justify-content: space-between;
+    }
+
+    .mainSection {
+        padding: 40px 40px 32px 40px;
+
+        .noData {
+            color: #6f6f6f;
+            width: 383px;
+        }
+        .calculate-notice {
+            text-align: center;
+            width: 63%;
+            margin-bottom: 124px;
+            margin-top: 70px;
+            margin-left: 100px;
+        }
+    }
+}

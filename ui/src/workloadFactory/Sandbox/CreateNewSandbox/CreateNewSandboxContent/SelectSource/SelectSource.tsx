@@ -32,6 +32,13 @@ const SelectSource = () => {
     const dispatch = useDispatch();
 
     useEffect(() => {
+        // by default Select source accordion will be opened
+        accordionContext({
+            1: true
+        });
+    }, []);
+
+    useEffect(() => {
         if (isCreateSandboxPressed && (!isDBNameAdded || isMountPathAdded)) {
             accordionContext({
                 2: !isDBNameAdded ? true : false,
@@ -106,10 +113,6 @@ const SelectSource = () => {
                 <span className={CommonStyles.separatorSandbox} />
                 <span>
                     {GENERAL.SOURCE_INSTANCE}: {selectedSourceInstance ? selectedSourceInstance.label : ''}
-                </span>
-                <span className={CommonStyles.separatorSandbox} />
-                <span>
-                    {GENERAL.SOURCE_DATABASE}: {selectedSourceDatabase ? selectedSourceDatabase.label : ''}
                 </span>
             </DsTypography>
         );
