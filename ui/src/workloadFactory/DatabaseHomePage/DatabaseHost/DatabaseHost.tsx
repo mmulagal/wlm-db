@@ -8,7 +8,7 @@ import { GENERAL } from '../../../utils/appConstants';
 
 const DatabaseHost = () => {
     const hostData = useAppSelector(state => state.databaseHome.aggregatedHostsCount);
-    const { databaseHostsLoading, isFullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
+    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
 
     return (
         <div className={styles.databaseHost}>
@@ -34,7 +34,7 @@ const DatabaseHost = () => {
                         <Typography variant="Regular_14" className={styles.databaseText}>
                             {GENERAL.DATABASES}
                         </Typography>
-                        {(databaseHostsLoading || isFullHostDataLoading) && <FlashingDotsLoader />}
+                        {(databaseHostsLoading || fullHostDataLoading) && <FlashingDotsLoader />}
                     </div>
                 </div>
 

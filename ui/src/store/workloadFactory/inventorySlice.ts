@@ -76,7 +76,7 @@ const inventorySlice = createSlice({
             state.getDatabaseHosts.databaseHostsLoading = action.payload;
         },
         setIsFullHostDataLoading: (state, action: PayloadAction<any>) => {
-            state.getDatabaseHosts.isFullHostDataLoading = action.payload;
+            state.getDatabaseHosts.fullHostDataLoading = action.payload;
         },
         setDiscoveredHosts: (state, action: PayloadAction<any>) => {
             state.discoveredHosts = action.payload;

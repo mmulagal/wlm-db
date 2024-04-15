@@ -33,8 +33,7 @@ import store from '../../store/store';
 
 const InventoryApis = () => {
     const dispatch = useAppDispatch();
-
-    const { fullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
+    const isFullHostDataLoading = useAppSelector(state => state.inventory.getDatabaseHosts.fullHostDataLoading);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const { discoveredHostData } = useAppSelector(state => state.inventory.discoveredHosts);
     const discoveredHostState = useAppSelector(state => state.inventory.discoveredHosts);
@@ -361,7 +360,7 @@ const InventoryApis = () => {
                 const perObj = { ...topologyHostData[key], ...fullHostData[key], loading: false };
                 databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
             } else {
-                const perObj = { ...topologyHostData[key], loading: fullHostDataLoading ? true : false };
+                const perObj = { ...topologyHostData[key], loading: isFullHostDataLoading ? true : false };
                 databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
             }
         });
