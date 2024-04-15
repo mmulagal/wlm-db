@@ -36,6 +36,8 @@ import InventoryApis from '../../Inventory/InventoryApis';
 import DatabaseHomeApis from '../DatabaseHomeApis';
 import JobMonitoringApi from '../../JobMonitoring/JobMonitoringApi';
 import ExploreSavings from '../../ExploreSavings/ExploreSavings';
+import SavingsCalculator from '../../ExploreSavings/SavingsCalculator/SavingsCalulator';
+import ViewCalculations from '../../ExploreSavings/ViewCalculations/ViewCalculations';
 
 const HeaderComponent = () => {
     const dispatch = useDispatch();
@@ -52,6 +54,8 @@ const HeaderComponent = () => {
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+
+    const showExploreSavings = localStorage.getItem('exploreSaving');
 
     HeaderComponentApi();
     InventoryApis();
@@ -274,20 +278,24 @@ const HeaderComponent = () => {
                                 Sandboxes
                             </Typography>
 
-                            {/* <Typography
-                                variant="Regular_14"
-                                className={
-                                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS
-                                        ? `${styles.headerPart5} ${styles.active}`
-                                        : `${styles.headerPart5}`
-                                }
-                                onClick={() => {
-                                    handleClick(WLF_TABS.EXPLORE_SAVINGS);
-                                    refreshPage();
-                                }}
-                            >
-                                Explore savings
-                            </Typography> */}
+                            {showExploreSavings && (
+                                <Typography
+                                    variant="Regular_14"
+                                    className={
+                                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
+                                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                                            ? `${styles.headerPart5} ${styles.active}`
+                                            : `${styles.headerPart5}`
+                                    }
+                                    onClick={() => {
+                                        handleClick(WLF_TABS.EXPLORE_SAVINGS);
+                                        refreshPage();
+                                    }}
+                                >
+                                    Explore savings
+                                </Typography>
+                            )}
 
                             <Typography
                                 variant="Regular_14"
@@ -312,6 +320,8 @@ const HeaderComponent = () => {
                 {selectedHeaderTab === WLF_TABS.OVERVIEW && <DatabaseHostOverview />}
                 {selectedHeaderTab === WLF_TABS.SANDBOXES && <Sandbox />}
                 {selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS && <ExploreSavings />}
+                {selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR && <SavingsCalculator />}
+                {selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS && <ViewCalculations />}
             </div>
         )
     );

@@ -114,7 +114,8 @@ async function getTopology(
     resourceId: string,
     resourceData: ResourceDetails,
     activeNodeInstanceId: string,
-    standbyNodeInstanceId?: string
+    standbyNodeInstanceId?: string,
+    shouldQueryFullTopology: boolean = false
 ): Promise<TopologyResponseType> {
     logger.info('Fetching topology data', {
         accountId,
@@ -144,17 +145,22 @@ async function getTopology(
         metadata as unknown as Metadata;
 
     let topologyData: TopologyResponseType = {
-        awsAccount: '',
-        region,
-        serverType: resourceType,
-        serverInstallationMode: '',
+        awsAccount: awsAccountId || '',
+        region: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region)! : region,
+        serverType: SERVER_TYPE_MAPPING.get(resourceType)!,
+        serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
         fileSystemId: fileSystemId!,
-        fileSystemType: '',
+        fileSystemType:
+            storageType !== undefined
+                ? storageType === STORAGE_TYPE.FSXN
+                    ? FileSystemTypes.FSXONTAP
+                    : storageType
+                : '',
         vpcId: undefined,
         ec2Details: []
     };
 
-    if (node1InstanceId) {
+    if (node1InstanceId && shouldQueryFullTopology) {
         let vpcId;
         let fileSystemStatus;
         let fileSystemName;
@@ -875,18 +881,17 @@ async function getDatabaseHostSummary(
                     ...(isSSMConnected && activeNodeInstanceId && shouldQueryServerDetails
                         ? [getServerDetails(credentialsId, region, activeNodeInstanceId)]
                         : [Promise.resolve()]), // Fetch server metadata
-                    ...(shouldQueryTopology
-                        ? [
-                              getTopology(
-                                  accountId,
-                                  region,
-                                  resourceId,
-                                  resourceDetail,
-                                  activeNodeInstanceId!,
-                                  standbyNodeInstanceId
-                              )
-                          ]
-                        : [Promise.resolve()]),
+                    ...[
+                        getTopology(
+                            accountId,
+                            region,
+                            resourceId,
+                            resourceDetail,
+                            activeNodeInstanceId!,
+                            standbyNodeInstanceId,
+                            shouldQueryTopology
+                        )
+                    ],
                     ...(isSSMConnected && getPerformance && activeNodeInstanceId
                         ? [getPerformanceMetrics(credentialsId, region, activeNodeInstanceId)]
                         : [Promise.resolve()]), // Fetch io latency data
@@ -920,9 +925,8 @@ async function getDatabaseHostSummary(
                     serverDetails.clusterName = resourceName || '';
                 }
             }
-            databaseHostDetails.status = ServerState.DOWN;
+            databaseHostDetails.status = isSSMConnected ? ServerState.UP : ServerState.DOWN;
             if (shouldQueryServerDetails && serverDetails) {
-                databaseHostDetails.status = ServerState.UP;
                 databaseHostDetails.databaseCount = serverDetails?.dbCount || 0;
                 databaseHostDetails.databaseServer = serverDetails;
                 serverDetails.creationDate = creationDate || '';

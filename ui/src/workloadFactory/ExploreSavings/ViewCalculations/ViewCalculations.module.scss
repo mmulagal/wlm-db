@@ -1,0 +1,30 @@
+.viewCalculations {
+    height: 90vh;
+    width: 100vw;
+    background-color: var(--main-background);
+    overflow-y: auto;
+
+    .breadCrumb {
+        margin-top: 24px;
+        margin-left: 40px;
+        width: 1687px;
+        display: flex;
+        justify-content: space-between;
+
+        [class*='BreadCrumbs_bread-crumbs'] {
+            position: relative;
+            top: -3px;
+        }
+    }
+
+    .mainSection {
+        margin: 0 auto;
+        width: 1334px;
+        margin-top: 40px;
+
+        .headingArea {
+            display: flex;
+            justify-content: space-between;
+        }
+    }
+}

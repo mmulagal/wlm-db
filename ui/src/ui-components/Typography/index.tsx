@@ -81,7 +81,7 @@ export const Text = ({
 }: {
     children: any;
     level?: TextLevels;
-    color?: TypographyColors;
+    color?: TypographyColors | any;
     bold?: boolean;
     italic?: boolean;
     center?: boolean;

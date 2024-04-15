@@ -792,8 +792,6 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
-                                  - "' -SqlCollation '"
-                                  - !Ref 'SqlCollation'
                                   - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '''"'
@@ -831,6 +829,8 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
+                                  - "' -SqlCollation '"
+                                  - !Ref 'SqlCollation'
                                   - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '''"'
@@ -1321,8 +1321,6 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
-                                  - "' -SqlCollation '"
-                                  - !Ref 'SqlCollation'
                                   - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '''"'

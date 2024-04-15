@@ -1,0 +1,58 @@
+.exploreSavingTable {
+    width: 1607px;
+
+    margin-top: 24px;
+    margin-bottom: 40px;
+
+    .firstColText {
+        display: flex;
+        gap: 8px;
+    }
+
+    .statusIcon {
+        width: 10px;
+        height: 10px;
+        align-self: center;
+        &.circle {
+            border-radius: 50%;
+            margin-top: 2px;
+        }
+        &.up {
+            background-color: var(--green-60);
+        }
+        &.down {
+            background-color: var(--orange-60);
+        }
+        &.initializing {
+            background-color: var(--cyan-30);
+        }
+        &.failed {
+            background-color: var(--red-30);
+        }
+    }
+
+    .detectManage {
+        width: 134px;
+        height: 32px;
+        border-radius: 32px;
+        border: 1px solid var(--text-button-primary);
+
+        cursor: pointer;
+
+        .textStyle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2px;
+            color: var(--text-button-primary);
+        }
+    }
+
+    .detectManage:hover {
+        border: 1px solid var(--text-button-primary-hover);
+
+        .textStyle {
+            color: var(--text-button-primary-hover);
+        }
+    }
+}

@@ -1,0 +1,87 @@
+$white: #fff;
+
+$grey-2: #f5f5f5;
+$grey-5: #a7a7a7a7;
+$grey-7: #a7a7a7a7;
+$grey-3: #e0e0e0;
+$grey-4: #c8c8c8;
+$grey-6: #838383;
+
+$slider-grey: #f8f8f8;
+$white-grey: #fbfbfb;
+$background-grey: #F5F5F5;
+$text-grey: #404040;
+$text-light-grey: #636363; //bug in naming -> eventually needs to be fixed light is dark and dark is light
+$text-dark-grey: #838383; //bug in naming -> eventually needs to be fixed light is dark and dark is light
+$disabled-grey: $grey-4;
+$text-grey-disabled: $disabled-grey;
+$light-grey: #F1F1F1;
+$light-blue:  #F4FBFF;
+
+$light-border: $grey-3;
+$medium-border: $grey-4;
+$dark-border: $grey-7;
+$input-field-border: $dark-border;
+$menu-divider: #e4e4e4;
+
+$primary-blue: #006dc9;
+$primary-blue-hover: #2359a3;
+$primary-blue-disabled: #93b3e5;
+$secondary-blue-disabled: #edf4ff;
+$secondary-blue-hover: #F2F7FF;
+
+$header-blue: #2c6bcc;
+$dark-blue: #2359a3;
+
+$accent-blue: #1fa0ff;
+$accent-blue-light: #98d5ff;
+$services-blue: #1ca6ff;
+
+$error-red: #da1e27;
+$error-background: #fff5f5;
+$success-green: #27d397;
+$success-background: #f2fcf9;
+$information-blue: #00c4ff;
+$information-background: #f0f7ff;
+$warning-orange: #eb6d12;
+$warning-background: #fff6ef;
+
+$category-storage: #5933b4;
+$category-services: #1ca6ff;
+$category-controls: #cc3cd6;
+$category-analytics: #3CB09F;
+
+:export {
+  white: $white;
+  backgroundGrey: $background-grey;
+  whiteGrey: $white-grey;
+  textGrey: $text-grey;
+  textDarkGrey: $text-dark-grey;
+  lightBorder: $light-border;
+  mediumBorder: $medium-border;
+  darkBorder: $dark-border;
+  disabledGrey: $disabled-grey;
+  textGreyDisabled: $text-grey-disabled;
+
+  inputFieldBorder: $input-field-border;
+  menuDivider: $menu-divider;
+
+  primaryBlue: $primary-blue;
+  primaryBlueHover: $primary-blue-hover;
+  primaryBlueDisabled: $primary-blue-disabled;
+  secondaryBlueDisabled: $secondary-blue-disabled;
+  secondaryBlueHover: $secondary-blue-hover;
+
+  accentBlue: $accent-blue;
+  accentBlueLight: $accent-blue-light;
+
+
+  errorRed: $error-red;
+  errorBackground: $error-background;
+  successGreen: $success-green;
+  successBackground: $success-background;
+  informationBlue: $information-blue;
+  informationBackground: $information-background;
+  warningOrange: $warning-orange;
+  warningBackground: $warning-background;
+}
