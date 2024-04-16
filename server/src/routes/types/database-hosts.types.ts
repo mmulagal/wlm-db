@@ -280,6 +280,34 @@ const CollationInfoResponseBody = Type.Object({
 });
 type CollationInfoResponseBodyType = Static<typeof CollationInfoResponseBody>;
 
+const SandboxSavingsResponseBody = Type.Object({
+    consumedStorage: Type.Number(),
+    savedStorage: Type.Number(),
+    sandboxSavingsPercentage: Type.Number()
+});
+
+type SandboxSavingsResponseBodyType = Static<typeof SandboxSavingsResponseBody>;
+const SandboxInfoResponse = Type.Object({
+    sandboxName: Type.Optional(Type.String()),
+    databaseHostName: Type.String(),
+    databaseHostId: Type.String(),
+    databaseInstanceName: Type.String(),
+    sourceDatabaseName: Type.Optional(Type.String()),
+    sourceDatabaseHostName: Type.Optional(Type.String()),
+    sourceDatabaseInstanceName: Type.Optional(Type.String()),
+    creationTime: Type.Optional(Type.String()),
+    tag: Type.Optional(Type.String()),
+    error: Type.Optional(Type.Any())
+});
+
+const SandboxInfoResponseBody = Type.Object({
+    count: Type.Number(),
+    items: Type.Optional(Type.Array(SandboxInfoResponse)),
+    nextToken: Type.Optional(Type.String())
+});
+type SandboxInfoResponseBodyType = Static<typeof SandboxInfoResponseBody>;
+type SandboxInfoResponseType = Static<typeof SandboxInfoResponse>;
+
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -329,5 +357,11 @@ export {
     DriveInfoResponseBodyType,
     FileConfigType,
     CollationInfoResponseBodyType,
-    CollationInfoResponseBody
+    CollationInfoResponseBody,
+    SandboxSavingsResponseBody,
+    SandboxSavingsResponseBodyType,
+    SandboxInfoResponse,
+    SandboxInfoResponseType,
+    SandboxInfoResponseBody,
+    SandboxInfoResponseBodyType
 };

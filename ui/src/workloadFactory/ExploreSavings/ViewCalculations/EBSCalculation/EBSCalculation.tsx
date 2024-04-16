@@ -74,6 +74,7 @@ const EBSCalculation = () => {
                 incrementSnapshotCost: '15',
                 totalSnapshotCost: '150',
                 totalEBSSnapshotCost: '200',
+                ebsSnapshotCost: '100',
                 amazonElasticBlock: '6,270'
             }
         }

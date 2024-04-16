@@ -19,72 +19,76 @@ import ExportPDF from './ExportPDF/ExportPDF';
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
     return (
-        <div className={styles.savingsCalculator} id="export-pdf">
-            <div className={styles.breadCrumb}>
-                <BreadCrumbs
-                    items={[
-                        {
-                            title: 'Explore savings',
-                            onClick: () => {
-                                dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
-                            }
-                        },
-                        {
-                            title: 'Host name'
-                        }
-                    ]}
-                />
-            </div>
-
-            <div className={styles.savingsHeading}>
-                <DsTypography variant="Regular_24">Savings Calculator</DsTypography>
-                <div />
-            </div>
-
-            <div className={styles.contentArea}>
-                {/* Left side code here */}
-                <div className={styles.firstContainer}>
-                    <SavingsHeader />
-                    <SavingsSelection />
-                    <SavingsSelectedHost />
-                    <InstanceInformation />
-                    <SelectedVolumeSummary />
-                </div>
-
-                {/* Right side code here */}
-                <div className={styles.secondContainer}>
-                    <div className={styles.firstSection}>
-                        <CostSavings />
+        <div style={{ height: '90vh', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
+            <div className="scrollArea">
+                <div className={styles.savingsCalculator} id="export-pdf">
+                    <div className={styles.breadCrumb}>
+                        <BreadCrumbs
+                            items={[
+                                {
+                                    title: 'Explore savings',
+                                    onClick: () => {
+                                        dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                                    }
+                                },
+                                {
+                                    title: 'Host name'
+                                }
+                            ]}
+                        />
                     </div>
-                    <div className={styles.secondSection}>
-                        <TotalMonthlyCost />
+
+                    <div className={styles.savingsHeading}>
+                        <DsTypography variant="Regular_24">Savings calculator</DsTypography>
+                        <div />
                     </div>
-                    <div className={styles.secondSection}>
-                        <CostBreakdown />
+
+                    <div className={styles.contentArea}>
+                        {/* Left side code here */}
+                        <div className={styles.firstContainer}>
+                            <SavingsHeader />
+                            <SavingsSelection />
+                            <SavingsSelectedHost />
+                            <InstanceInformation />
+                            <SelectedVolumeSummary />
+                        </div>
+
+                        {/* Right side code here */}
+                        <div className={styles.secondContainer}>
+                            <div className={styles.firstSection}>
+                                <CostSavings />
+                            </div>
+                            <div className={styles.secondSection}>
+                                <TotalMonthlyCost />
+                            </div>
+                            <div className={styles.secondSection}>
+                                <CostBreakdown />
+                            </div>
+                        </div>
                     </div>
+
+                    {/* Text Area */}
+                    <div className={styles.selectionArea}>
+                        <div>
+                            <Suggestion />
+                        </div>
+                        <div className={styles.textContent}>
+                            <DsTypography variant="Semibold_16">
+                                Based on your selections, we recommend creating the following:
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                Microsoft SQL Server on AWS Ec2 using FSx for ONTAP file system
+                            </DsTypography>
+                        </div>
+                    </div>
+
+                    {/* Accordion here */}
+                    <MSSQLAccordion />
+
+                    {/* last section */}
+                    <ExportPDF rootElementId="export-pdf" />
                 </div>
             </div>
-
-            {/* Text Area */}
-            <div className={styles.selectionArea}>
-                <div>
-                    <Suggestion />
-                </div>
-                <div className={styles.textContent}>
-                    <DsTypography variant="Semibold_16">
-                        Based on your selections, we recommend creating the following:
-                    </DsTypography>
-                    <DsTypography variant="Regular_14">
-                        Microsoft SQL Server on AWS Ec2 using FSx for ONTAP file system
-                    </DsTypography>
-                </div>
-            </div>
-
-            {/* Accordion here */}
-            <MSSQLAccordion />
-
-            {/* last section */}
-            <ExportPDF rootElementId="export-pdf" />
         </div>
     );
 };

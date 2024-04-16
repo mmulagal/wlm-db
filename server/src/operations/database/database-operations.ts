@@ -228,6 +228,7 @@ async function getResources(
             region,
             resourceType,
             undefined,
+            undefined,
             pageSize,
             nextToken
         );

@@ -9,9 +9,11 @@ import {
     DatabasesCreateResponse,
     CreateDatabaseParams,
     DriveInfoResponseBody,
-    CollationInfoResponseBody
+    CollationInfoResponseBody,
+    SandboxSavingsResponseBody,
+    SandboxInfoResponseBody
 } from '../types/database-hosts.types';
-import { CredentialsIdParams } from '../types/generic.types';
+import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
 // Base Request for Deployment with credential and region Routes
 const databaseHostsRequest = {
@@ -87,11 +89,32 @@ const GetCollationDetailsSchema = {
     }
 };
 
+const GetSandboxSavingsSchema = {
+    ...databaseHostsRequest,
+    summary: 'Get sandbox savings',
+    description: 'Get savings across all the database hosts for sandboxes created',
+    response: {
+        200: SandboxSavingsResponseBody
+    }
+};
+
+const GetSandboxesInfoSchema = {
+    ...databaseHostsRequest,
+    summary: 'Get Sandboxes Information',
+    description: 'Get Sandboxes Information of all databases',
+    querystring: nextTokenQueryString,
+    response: {
+        200: SandboxInfoResponseBody
+    }
+};
+
 export {
     DatabaseHostsSummarySchema,
     DatabaseHostDetailsSchema,
     DatabasesListSchema,
     GetDriveInfoSchema,
     DatabasesCreateSchema,
-    GetCollationDetailsSchema
+    GetCollationDetailsSchema,
+    GetSandboxSavingsSchema,
+    GetSandboxesInfoSchema
 };

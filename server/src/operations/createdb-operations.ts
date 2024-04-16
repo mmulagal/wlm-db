@@ -477,7 +477,7 @@ async function invokeSSMForDatabaseDeployment(
         );
 
         const svmList = fsxSVMs?.filter(svm => svm.StorageVirtualMachineId === fsxSvmId) || [];
-        const [{ Name: sqlVMName }] = svmList;
+        const sqlVMName = svmList[0]?.Name;
 
         sqlVirtualMachineName = sqlVMName;
         activeNodeId = activeNodeInstanceId;

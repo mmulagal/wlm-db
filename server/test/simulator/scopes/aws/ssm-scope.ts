@@ -2,6 +2,7 @@
 // workaroud for the sdk type issue.. remove this @ts-nocheck once the sdk mock works fine
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
+/* eslint-disable */
 
 import {
     GetCommandInvocationCommand,
@@ -32,6 +33,7 @@ import {
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST
 } from '../../../../src/operations/workloads/mssql/ssm-script-utils';
+import { GET_SANDBOX_DETAILS } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -171,7 +173,7 @@ const getOntapSnapshotCountParams = {
 };
 
 const getOntapMappedVolumesParams = {
-    commands: [getMappedOntapVolumesScript('fs-03773e21b2f0e39b4', DEFAULT_AWS_REGION)]
+    commands: [getMappedOntapVolumesScript('test-fsx', DEFAULT_AWS_REGION)]
 };
 
 const getStorageParams = {
@@ -254,6 +256,7 @@ const cleanUpDB = {
 
 const checkDBExists = {
     commands: [
+        // prettier-ignore
         "sqlcmd -Q \"SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = 'tempdb18' FOR JSON PATH\" -y 0"
     ]
 };
@@ -278,6 +281,22 @@ const getCollationDetails = {
     commands: [
         '\n#Get default collation of SQL server\n$defaultSqlCollation = sqlcmd -Q @"\n    SET NOCOUNT ON;\n    SELECT CONVERT(nvarchar(128), SERVERPROPERTY(\'collation\'));\n"@ -y 0\n\n#Get default version of SQL server\n$sqlVersion = sqlcmd -Q @"\n    SET NOCOUNT ON;\n    SELECT @@VERSION;\n"@ -y 0\n\nWrite-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json\n'
     ]
+};
+
+const getOntapSandboxVolumeSavingsParams = {
+    commands: [
+        restGetUtilForOntap(
+            'test-fsx',
+            'us-east-1',
+            '/storage/volumes',
+            'tiering.object_tags="cloned_by=netapp_wlmdb"',
+            'fields=space.used_by_afs,space.physical_used,clone.split_estimate'
+        )
+    ]
+};
+
+const getSandboxDetails = {
+    commands: [GET_SANDBOX_DETAILS(['"."'])]
 };
 
 ssmMock
@@ -366,7 +385,11 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getCollationDetails })
     .resolves(listSendCommandCommandResponse.getCollationDetailsResponse)
     .on(SendCommandCommand, { Parameters: clusterNetwokIpInfo })
-    .resolves(listSendCommandCommandResponse.clusterNetwokIpInfo);
+    .resolves(listSendCommandCommandResponse.clusterNetwokIpInfo)
+    .on(SendCommandCommand, { Parameters: getOntapSandboxVolumeSavingsParams })
+    .resolves(listSendCommandCommandResponse.ontapSandboxVolumesSavings)
+    .on(SendCommandCommand, { Parameters: getSandboxDetails })
+    .resolves(listSendCommandCommandResponse.getSandboxDetails);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -454,7 +477,11 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getCollationDetails' })
     .resolves(getCommandInvocationResponse.collationDetailsInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-clusterNetwokIpInfo' })
-    .resolves(getCommandInvocationResponse.clusterNetwokIpInfoInvocationResponse);
+    .resolves(getCommandInvocationResponse.clusterNetwokIpInfoInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'a271a4a7-3693-41bb-8c31-ontapSandboxVolumesSavings' })
+    .resolves(getCommandInvocationResponse.ontapSandboxVolumesSavingsResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getSandboxDetailsInfo' })
+    .resolves(getCommandInvocationResponse.getSandboxDetailsInvocationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

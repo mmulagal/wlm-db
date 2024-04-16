@@ -759,6 +759,7 @@ async function getDatabaseHostsSummary(
         awsRegion,
         RESOURCESTYPE.MSSQL,
         fsxId,
+        undefined,
         API_PAGE_SIZE,
         nextToken
     );
@@ -914,7 +915,11 @@ async function getDatabaseHostSummary(
                     })
                 )
             );
-            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            if (
+                (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') &&
+                shouldQueryServerDetails &&
+                shouldQueryTopology
+            ) {
                 serverDetails.dbCount = serverDetails?.dbCount || 0;
                 serverDetails.dbCount += userDatabase.length;
                 if (topologyData?.serverInstallationMode === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {

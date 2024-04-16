@@ -400,6 +400,9 @@ async function getMappedOntapVolumes(
     }
 
     try {
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            fileSystemId = 'test-fsx';
+        }
         const command = getMappedOntapVolumesScript(fileSystemId, region);
 
         const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId!);
