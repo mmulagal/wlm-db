@@ -52,7 +52,7 @@ const SavingsSelection = () => {
                     label={'Snapshot frequency'}
                     isClearable={false}
                     defaultValue={
-                        selectedSnapshotFrequency ? selectedSnapshotFrequency : [generateSnapshotFrequency[0]]
+                        selectedSnapshotFrequency ? selectedSnapshotFrequency : [generateSnapshotFrequency[2]]
                     }
                     onChange={(selectedOptions: any): void => {
                         dispatch(setSelectedSnapshotFrequency(selectedOptions));
@@ -75,7 +75,7 @@ const SavingsSelection = () => {
                 <SelectField
                     label={'Clone refresh'}
                     isClearable={false}
-                    defaultValue={selectedCloneRefresh ? selectedCloneRefresh : [generateCloneRefresh[2]]}
+                    defaultValue={selectedCloneRefresh ? selectedCloneRefresh : [generateCloneRefresh[0]]}
                     onChange={(selectedOptions: any): void => {
                         dispatch(setSelectedCloneRefresh(selectedOptions));
                     }}

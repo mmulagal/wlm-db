@@ -1,2 +1,10 @@
 .ebsCalculation {
+    .accordionContentSet {
+        [class*='Layout_grid-item'] {
+            height: 64px !important;
+            display: flex;
+            align-items: center;
+        }
+    }
+    margin-bottom: 80px;
 }
