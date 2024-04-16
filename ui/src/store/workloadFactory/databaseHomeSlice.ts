@@ -4,11 +4,6 @@ import { WLF_TABS } from '../../utils/consts';
 
 export const initialDBHomepageState: DatabaseHostsEntities = {
     selectedTab: WLF_TABS.OVERVIEW,
-    getDatabaseHosts: {
-        databaseHostsData: null,
-        databaseHostsLoading: false,
-        databaseHostsError: null
-    },
     getJobsSummary: {
         jobsSummaryData: null,
         jobsSummaryLoading: false,
@@ -58,12 +53,6 @@ const databaseHomeSlice = createSlice({
         selectedTabSelection: (state, action: PayloadAction<any>) => {
             state.selectedTab = action.payload;
         },
-        addDatabaseHosts: (state, action: PayloadAction<any>) => {
-            state.getDatabaseHosts = action.payload;
-        },
-        addDatabaseHostsLoading: (state, action: PayloadAction<any>) => {
-            state.getDatabaseHosts.databaseHostsLoading = action.payload;
-        },
         addJobsSummary: (state, action: PayloadAction<any>) => {
             state.getJobsSummary = action.payload;
         },
@@ -89,8 +78,6 @@ const databaseHomeSlice = createSlice({
 });
 
 export const {
-    addDatabaseHosts,
-    addDatabaseHostsLoading,
     selectedTabSelection,
     addJobsSummary,
     addDatabaseHostsList,

@@ -147,11 +147,6 @@ export interface AggregatedCostsRes {
 
 export interface DatabaseHostsEntities {
     selectedTab: string;
-    getDatabaseHosts: {
-        databaseHostsData: DatabaseHostItem[] | null;
-        databaseHostsLoading: false;
-        databaseHostsError: null;
-    };
     getJobsSummary: {
         jobsSummaryData: JobsSummaryRes | null;
         jobsSummaryLoading: false;

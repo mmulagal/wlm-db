@@ -20,12 +20,16 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
-import { addDatabaseHosts, selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
+import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
 import { databaseTableSort } from '../../../utils/utilityFunctions';
 import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
-import { setManagedHostColState, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import {
+    addDatabaseHostsData,
+    setManagedHostColState,
+    setSelectedHeaderTab
+} from '../../../store/workloadFactory/inventorySlice';
 import {
     addInitialDBCreateData,
     initialCreateNewUserState,
@@ -45,7 +49,9 @@ const ManagedHosts = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseHostsData, databaseHostsLoading, fullHostDataLoading } = useAppSelector(
+        state => state.inventory.getDatabaseHosts
+    );
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
     const { managedHostInitialColumns } = useAppSelector(state => state.inventory);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
@@ -92,8 +98,16 @@ const ManagedHosts = () => {
         removeDatabaseHosts(id).then((data: any) => {
             if (!data?.error) {
                 dispatch(setRefetchJobSummaryApi(true));
-                const newList = databaseHostsData?.filter((val: any) => val?.id !== id);
-                dispatch(addDatabaseHosts({ databaseHostsData: newList, databaseHostsLoading: false, undefined }));
+                if (databaseHostsData) {
+                    let newList: any;
+                    newList = Object.keys(databaseHostsData)
+                        .filter(objKey => objKey !== id)
+                        .reduce((newObj: any, key) => {
+                            newObj[key] = databaseHostsData[key];
+                            return newObj;
+                        }, {});
+                    dispatch(addDatabaseHostsData(newList));
+                }
             }
         });
     };
@@ -400,7 +414,7 @@ const ManagedHosts = () => {
             }
         },
         initialColumnState: managedHostInitialColumns,
-        isLazyLoading: databaseHostsLoading
+        isLazyLoading: databaseHostsLoading || fullHostDataLoading
     });
 
     useEffect(() => {

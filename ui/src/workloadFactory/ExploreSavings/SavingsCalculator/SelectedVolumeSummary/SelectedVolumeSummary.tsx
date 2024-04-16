@@ -4,6 +4,12 @@ import { DsTypography } from '@netapp/design-system';
 import styles from './SelectedVolumeSummary.module.scss';
 
 const SelectedVolumeSummary = () => {
+    const setSummaryHeader = {
+        gp3: true,
+        gp2: true,
+        io1: true,
+        io2: true
+    };
     const data = [
         { details: 'Total volumes', gp3: 10, gp2: 10, io1: 10, io2: 10, id: '1' },
         {
@@ -52,13 +58,91 @@ const SelectedVolumeSummary = () => {
         }
     ];
 
+    const InstanceColDefsNoGp3: ColumnProps[] = [
+        {
+            Header: 'Details',
+            accessor: 'details',
+            id: '1',
+            width: '190px'
+        },
+
+        {
+            Header: 'gp2',
+            accessor: 'gp2',
+            id: '3',
+            width: '128px'
+        },
+        {
+            Header: 'io1',
+            accessor: 'io1',
+            id: '4',
+            width: '128px'
+        },
+        {
+            Header: 'io2',
+            accessor: 'io2',
+            id: '5',
+            width: '128px'
+        }
+    ];
+
+    const InstanceColDefsNoGp3Gp2: ColumnProps[] = [
+        {
+            Header: 'Details',
+            accessor: 'details',
+            id: '1',
+            width: '190px'
+        },
+
+        {
+            Header: 'io1',
+            accessor: 'io1',
+            id: '4',
+            width: '193px'
+        },
+        {
+            Header: 'io2',
+            accessor: 'io2',
+            id: '5',
+            width: '193px'
+        }
+    ];
+
+    const InstanceColDefsOnlyIO2: ColumnProps[] = [
+        {
+            Header: 'Details',
+            accessor: 'details',
+            id: '1',
+            width: '190px'
+        },
+
+        {
+            Header: 'io2',
+            accessor: 'io2',
+            id: '5',
+            width: '386px'
+        }
+    ];
+
+    const setColumns = () => {
+        if (setSummaryHeader.gp3 && setSummaryHeader.gp2 && setSummaryHeader.io1 && setSummaryHeader.io2) {
+            return InstanceColDefs;
+        } else if (!setSummaryHeader.gp3 && setSummaryHeader.gp2 && setSummaryHeader.io1 && setSummaryHeader.io2) {
+            return InstanceColDefsNoGp3;
+        } else if (!setSummaryHeader.gp3 && !setSummaryHeader.gp2 && setSummaryHeader.io1 && setSummaryHeader.io2) {
+            return InstanceColDefsNoGp3Gp2;
+        } else {
+            return InstanceColDefsOnlyIO2;
+        }
+    };
+
     const tableProps = useTable({
         //@ts-ignore
         selectAllProps: false,
         //@ts-ignore
         manageColumnsProps: false,
 
-        columns: InstanceColDefs,
+        columns: setColumns(),
         rows: data,
         pageSize: 10
     });

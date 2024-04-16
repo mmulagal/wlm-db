@@ -465,17 +465,13 @@ export const formatHostData = (val: any) => {
     return val;
 };
 
-export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null) => {
+export const mergeDatabaseHostsData = (hostsData: any) => {
     if (!hostsData) {
         return [];
-    }
-    let uniqueIds: Array<String> = [];
+    };
     const mergedList: any[] = [];
-    hostsData?.map(val => {
-        if (!uniqueIds.includes(val?.id)) {
-            mergedList.push(formatHostData(val));
-            uniqueIds.push(val?.id);
-        }
+    Object.keys(hostsData).map((key: string) => {
+        mergedList.push(formatHostData(hostsData[key]));
     });
     return mergedList;
 };
