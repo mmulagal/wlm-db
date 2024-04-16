@@ -18,4 +18,15 @@ const CredentialsIdParams = Type.Object({
 
 type AccountIdParamsType = Static<typeof AccountIdParams>;
 
-export { GenericHeaders, GenericHeadersType, AccountIdParams, AccountIdParamsType, CredentialsIdParams };
+const nextTokenQueryString = Type.Object({
+    nextToken: Type.Optional(Type.String())
+});
+
+export {
+    GenericHeaders,
+    GenericHeadersType,
+    AccountIdParams,
+    AccountIdParamsType,
+    CredentialsIdParams,
+    nextTokenQueryString
+};

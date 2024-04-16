@@ -2,6 +2,7 @@
 // workaroud for the sdk type issue.. remove this @ts-nocheck once the sdk mock works fine
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
+/* eslint-disable */
 
 import {
     GetCommandInvocationCommand,
@@ -32,6 +33,7 @@ import {
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST
 } from '../../../../src/operations/workloads/mssql/ssm-script-utils';
+import { GET_SANDBOX_DETAILS } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -280,6 +282,10 @@ const getCollationDetails = {
     ]
 };
 
+const getSandboxDetails = {
+    commands: [GET_SANDBOX_DETAILS(['"."'])]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -366,7 +372,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getCollationDetails })
     .resolves(listSendCommandCommandResponse.getCollationDetailsResponse)
     .on(SendCommandCommand, { Parameters: clusterNetwokIpInfo })
-    .resolves(listSendCommandCommandResponse.clusterNetwokIpInfo);
+    .resolves(listSendCommandCommandResponse.clusterNetwokIpInfo)
+    .on(SendCommandCommand, { Parameters: getSandboxDetails })
+    .resolves(listSendCommandCommandResponse.getSandboxDetails);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -454,7 +462,9 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getCollationDetails' })
     .resolves(getCommandInvocationResponse.collationDetailsInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-clusterNetwokIpInfo' })
-    .resolves(getCommandInvocationResponse.clusterNetwokIpInfoInvocationResponse);
+    .resolves(getCommandInvocationResponse.clusterNetwokIpInfoInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getSandboxDetailsInfo' })
+    .resolves(getCommandInvocationResponse.getSandboxDetailsInvocationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
