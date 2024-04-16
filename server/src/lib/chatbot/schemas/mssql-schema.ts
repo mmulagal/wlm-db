@@ -49,6 +49,7 @@ type DeployMsSqlParams = {
     fsxFileSystemId?: string;
     enableCloudWatch?: boolean;
     tags?: Array<{ key: string; value: string }>;
+    sqlCollation?: string;
 };
 
 // Deploy MS SQL

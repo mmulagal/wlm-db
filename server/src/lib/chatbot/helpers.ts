@@ -61,7 +61,9 @@ import {
     ENCRYPTION_KEY,
     KEY_LABEL_MAP,
     CHATBOT_UI_PARAMS_FSX,
-    BACKTRACE_MESSAGES
+    BACKTRACE_MESSAGES,
+    SQL_DEFAULT_COLLATION,
+    SQL_COLLATION
 } from './consts';
 
 const logger = getLogger();
@@ -322,6 +324,10 @@ async function validate(key: string, params: Params, oldParams: Params) {
                     params[FSX_FILE_SYSTEM_ID],
                     key
                 );
+                break;
+            }
+            case SQL_COLLATION: {
+                response = { key, value: SQL_DEFAULT_COLLATION };
                 break;
             }
             default:
