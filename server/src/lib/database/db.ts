@@ -1,5 +1,5 @@
 import { DEPLOYMENT_STATUS, DEPLOYMENT_MODEL, STORAGE_TYPE } from '@prisma/client';
-import { compact, isEmpty } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from '../../utils/utils';
@@ -294,33 +294,22 @@ async function listResources(
     });
     accountId = checkAccount(accountId);
 
-    const params = [
-        { account_id: accountId },
-        resourceId ? { resource_id: resourceId } : null,
-        resourceType ? { resource_type: resourceType } : null,
-        region ? { region } : null,
-        credentialsId ? { credentials_id: credentialsId } : null,
-        fsxId ? { co_relation_id: fsxId } : null
-    ];
-
-    if (metaFilters) {
-        Object.entries(metaFilters).forEach(([key, val]) => {
-            const metadata = {
-                metadata: {
-                    path: `$.${key}`,
-                    equals: val
-                }
-            };
-
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            params.push(metadata);
-        });
-    }
-
     return prisma.client.resource.findMany({
         where: {
-            AND: compact(params)
+            account_id: accountId,
+            ...(resourceId && { resource_id: resourceId }),
+            ...(resourceType && { resource_type: resourceType }),
+            ...(region && { region }),
+            ...(credentialsId && { credentials_id: credentialsId }),
+            ...(fsxId && { co_relation_id: fsxId }),
+            ...(metaFilters && {
+                AND: Object.entries(metaFilters).map(([key, val]) => ({
+                    metadata: {
+                        path: `$.${key}`,
+                        equals: val
+                    }
+                }))
+            })
         },
         orderBy: {
             id: 'asc'
