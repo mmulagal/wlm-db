@@ -10,11 +10,9 @@ import {
     CreateDatabaseParams,
     DriveInfoResponseBody,
     CollationInfoResponseBody,
-    GetSandboxesParams,
-    SandboxInfoResponseBody,
-    SandboxQueryString
+    SandboxInfoResponseBody
 } from '../types/database-hosts.types';
-import { CredentialsIdParams } from '../types/generic.types';
+import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
 // Base Request for Deployment with credential and region Routes
 const databaseHostsRequest = {
@@ -94,8 +92,7 @@ const GetSandboxesInfoSchema = {
     ...databaseHostsRequest,
     summary: 'Get Sandboxes Information',
     description: 'Get Sandboxes Information of all databases',
-    params: GetSandboxesParams,
-    querystring: SandboxQueryString,
+    querystring: nextTokenQueryString,
     response: {
         200: SandboxInfoResponseBody
     }

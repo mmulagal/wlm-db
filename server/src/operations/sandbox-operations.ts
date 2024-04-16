@@ -1,7 +1,7 @@
 import { isEmpty } from 'lodash-es';
 import getLogger from '../utils/logger';
 import { listResources } from '../lib/database/db';
-import { API_PAGE_SIZE, DEFAULT_INSTANCE_NAME, NO_SANDBOX_CREATED, RESOURCESTYPE } from '../utils/consts';
+import { DEFAULT_INSTANCE_NAME, NO_SANDBOX_CREATED, RESOURCESTYPE, SANDBOX_API_SIZE } from '../utils/consts';
 import { GET_SANDBOX_DETAILS } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
@@ -22,7 +22,7 @@ function getProperty(item: SandboxObject, propertyName: string) {
 
 function getSourceDetails(obj: SandboxObject) {
     const source = getProperty(obj, 'source');
-    return source.split('\\');
+    return source.split('|');
 }
 
 async function getSandboxDetails(
@@ -120,7 +120,8 @@ async function getSandboxesInfo(accountId: string, credentialsId: string, region
         region,
         RESOURCESTYPE.MSSQL,
         undefined,
-        API_PAGE_SIZE,
+        process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator' ? undefined : { sandboxCreated: true },
+        SANDBOX_API_SIZE,
         nextToken
     );
 
@@ -129,13 +130,11 @@ async function getSandboxesInfo(accountId: string, credentialsId: string, region
         return { count: 0, items: [], nextToken: '' };
     }
 
-    const filteredResources = resourceDetails.filter((entry: any) => entry.metadata?.sandboxCreated === true);
-
     try {
         let sandboxes: SandboxInfoResponseType[] = [];
 
         await Promise.all(
-            filteredResources.map(async resourceDetail => {
+            resourceDetails.map(async resourceDetail => {
                 const sandboxDetails = await getSandboxDetails(accountId, credentialsId, region, resourceDetail);
                 if (sandboxDetails && sandboxDetails.length) {
                     sandboxes = sandboxes.concat(sandboxDetails);
@@ -145,7 +144,11 @@ async function getSandboxesInfo(accountId: string, credentialsId: string, region
 
         return {
             count: sandboxes.length,
-            items: sandboxes
+            items: sandboxes,
+            nextToken:
+                resourceDetails?.length === SANDBOX_API_SIZE
+                    ? resourceDetails[resourceDetails.length - 1].id
+                    : undefined
         };
     } catch (error) {
         const errorMessage = `Error fetching Sandboxes info. ${error}.`;

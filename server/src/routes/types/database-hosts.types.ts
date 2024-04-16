@@ -17,12 +17,6 @@ const CreateDatabaseParams = Type.Object({
     region: Type.String()
 });
 
-const GetSandboxesParams = Type.Object({
-    accountId: Type.String({ minLength: 7 }),
-    credentialsId: Type.String(),
-    region: Type.String()
-});
-
 // Query parameter to fetch protection, performance, storage and cost details
 const DatabaseHostQueryString = Type.Object({
     fields: Type.Optional(Type.String()),
@@ -285,10 +279,6 @@ const CollationInfoResponseBody = Type.Object({
 });
 type CollationInfoResponseBodyType = Static<typeof CollationInfoResponseBody>;
 
-const SandboxQueryString = Type.Object({
-    nextToken: Type.Optional(Type.String())
-});
-
 const SandboxInfoResponse = Type.Object({
     sandboxName: Type.Optional(Type.String()),
     databaseHostName: Type.String(),
@@ -355,7 +345,6 @@ export {
     DatabasesCreateResponse,
     DatabaseCreateResponseType,
     CreateDatabaseParams,
-    GetSandboxesParams,
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
     FileConfigType,
@@ -364,6 +353,5 @@ export {
     SandboxInfoResponse,
     SandboxInfoResponseType,
     SandboxInfoResponseBody,
-    SandboxInfoResponseBodyType,
-    SandboxQueryString
+    SandboxInfoResponseBodyType
 };
