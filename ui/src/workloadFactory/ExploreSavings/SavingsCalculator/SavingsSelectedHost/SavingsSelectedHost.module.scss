@@ -10,7 +10,6 @@
         background-color: var(--table-header-background);
         padding: 16px 40px;
         display: flex;
-        gap: 22px;
 
         .container {
             display: flex;
@@ -33,12 +32,13 @@
             }
         }
 
-        .separator {
-            width: 1px;
-            height: 40px;
-            background-color: var(--border);
-            position: relative;
-            top: 2px;
+        .secondContainer {
+            width: 186px;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            align-items: center;
+            margin: 0 22px 0 22px;
+            padding-left: 6px;
         }
     }
 

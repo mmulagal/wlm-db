@@ -55,8 +55,6 @@ const HeaderComponent = () => {
     const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
-    const showExploreSavings = localStorage.getItem('exploreSaving');
-
     HeaderComponentApi();
     InventoryApis();
     DatabaseHomeApis();
@@ -279,24 +277,22 @@ const HeaderComponent = () => {
                                 Sandboxes
                             </Typography>
 
-                            {showExploreSavings && (
-                                <Typography
-                                    variant="Regular_14"
-                                    className={
-                                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
-                                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
-                                            ? `${styles.headerPart5} ${styles.active}`
-                                            : `${styles.headerPart5}`
-                                    }
-                                    onClick={() => {
-                                        handleClick(WLF_TABS.EXPLORE_SAVINGS);
-                                        refreshPage();
-                                    }}
-                                >
-                                    Explore savings
-                                </Typography>
-                            )}
+                            <Typography
+                                variant="Regular_14"
+                                className={
+                                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
+                                    selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                                    selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                                        ? `${styles.headerPart5} ${styles.active}`
+                                        : `${styles.headerPart5}`
+                                }
+                                onClick={() => {
+                                    handleClick(WLF_TABS.EXPLORE_SAVINGS);
+                                    refreshPage();
+                                }}
+                            >
+                                Explore savings
+                            </Typography>
 
                             <Typography
                                 variant="Regular_14"
