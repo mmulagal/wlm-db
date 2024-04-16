@@ -52,7 +52,7 @@ async function createConfigurations(accountId: string, awsAccountId: string, cre
     saveConfig(accountId, 'SYSTEM', configName, preprodData);
 
     configName = 'MSSQL 2 nodes FCI deployment in us-east';
-    const fciData = saveFciConfigurationData('us-west-1', awsAccountId, credentialsId, 'fciDB', configName);
+    const fciData = saveFciConfigurationData('us-east-1', awsAccountId, credentialsId, 'fciDB', configName);
     saveConfig(accountId, 'SYSTEM', configName, fciData);
 
     configName = 'MSSQL Single Instance DR system deployment';
