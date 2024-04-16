@@ -1,5 +1,5 @@
 import { DEPLOYMENT_STATUS, DEPLOYMENT_MODEL, STORAGE_TYPE } from '@prisma/client';
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from '../../utils/utils';
