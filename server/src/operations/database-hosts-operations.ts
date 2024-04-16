@@ -759,6 +759,7 @@ async function getDatabaseHostsSummary(
         awsRegion,
         RESOURCESTYPE.MSSQL,
         fsxId,
+        undefined,
         API_PAGE_SIZE,
         nextToken
     );
