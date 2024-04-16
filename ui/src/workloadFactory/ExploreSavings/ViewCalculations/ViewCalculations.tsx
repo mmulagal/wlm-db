@@ -41,7 +41,8 @@ const ViewCalculations = () => {
                             {'Cost calculation'}
                         </DsTypography>
                         <DsTypography variant="Regular_14" style={{ marginBottom: '24px' }}>
-                            Lorem Ipsum is simply dummy text of the printing and typesetting industry.
+                            Learn how we calculated the estimated cost of Microsoft SQL server on FSx for ONTAP for your
+                            specific use case and the configuration that you selected.
                         </DsTypography>
                     </div>
                     <div></div>
