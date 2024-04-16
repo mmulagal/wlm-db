@@ -321,3 +321,148 @@ export const viewCalculation = (viewCalculation: any) => {
         ]
     };
 };
+
+export const viewCalculationForEBS = (viewCalculation: any) => {
+    return {
+        Ec2InstanceCalculation: [
+            {
+                label: 'MsSQL Ec2 Instances calculation',
+                mainHeading: true
+            },
+            {
+                label: 'Machine 1 specification'
+            },
+            {
+                label: 'Instance type',
+                value: `${viewCalculation.Ec2InstanceCalculation.instanceType}`,
+                text: ''
+            },
+            {
+                label: 'Machine 1 pricing calculations'
+            },
+            {
+                label: 'Instance hourly price',
+                value: `${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
+                text: ''
+            },
+            {
+                label: 'Ec2 machine1 cost',
+                value: `${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
+                text: `Instance hourly price x number of hours in a month = ${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} $ x 730`
+            }
+        ],
+        EBSCalculation: [
+            {
+                label: 'EBS calculation',
+                mainHeading: true
+            },
+            {
+                label: 'Unit conversions'
+            },
+            {
+                label: 'Storage amount per volume',
+                value: `${viewCalculation.EBSCalculation.storageCapacity}`,
+                text: `Storage amount per volume x 1024 `
+            },
+
+            {
+                label: 'Pricing calculations'
+            },
+            {
+                label: 'Total instance hours',
+                value: `${viewCalculation.EBSCalculation.priceCalculation.totalInstanceHour}`,
+                text: `Number of volumes x Average duration each instance runs ${viewCalculation.EBSCalculation.priceCalculation.totalInstanceHour} hours`
+            },
+            {
+                label: 'Instance months',
+                value: `(${viewCalculation.EBSCalculation.priceCalculation.instanceMonth}) month`,
+                text: `Total instance hours  ÷ hours in a month`
+            },
+            {
+                label: 'EBS storage cost',
+                value: `$${viewCalculation.EBSCalculation.priceCalculation.ebsStorageCost}`,
+                text: `Storage amount per volume x instance months x EBS capacity price ${viewCalculation.EBSCalculation.priceCalculation.ebsStorageCost}`
+            },
+            {
+                label: 'Billable IOPS',
+                value: `${viewCalculation.EBSCalculation.priceCalculation.billableIOPS} IOPS`,
+                text: ` `
+            },
+            {
+                label: 'Total billable IOPS ',
+                value: `$ ${viewCalculation.EBSCalculation.priceCalculation.totalBillableIOPS}`,
+                text: ``
+            },
+            {
+                label: 'EBS IOPS cost',
+                value: `$ ${viewCalculation.EBSCalculation.priceCalculation.ebsIOPSCost}`,
+                text: ``
+            },
+            {
+                label: 'Billable MB/s',
+                value: `(${viewCalculation.EBSCalculation.priceCalculation.billableMbps} MB/s)`,
+                text: ``
+            },
+            {
+                label: 'Billable throughput (MB/s)',
+                value: `(${viewCalculation.EBSCalculation.priceCalculation.billableThroughputMbps} MB/s)`,
+                text: ``
+            },
+            {
+                label: 'Billable throughput (GB/s))',
+                value: `(${viewCalculation.EBSCalculation.priceCalculation.billableThroughputGbps} GB/s)`,
+                text: `Billable throughput (MB/s) ÷ 1024`
+            },
+            {
+                label: 'EBS throughput cost',
+                value: `$(${viewCalculation.EBSCalculation.priceCalculation.ebsThroughCost})`,
+                text: ``
+            },
+            {
+                label: 'Total snapshots',
+                value: `(${viewCalculation.EBSCalculation.priceCalculation.totalSnapshots})`,
+                text: ` `
+            },
+            {
+                label: 'Initial snapshot cost',
+                value: `$(${viewCalculation.EBSCalculation.priceCalculation.initialSnapshotCost})`,
+                text: ``
+            },
+            {
+                label: 'Monthly cost of each snapshot',
+                value: `$(${viewCalculation.EBSCalculation.priceCalculation.monthlyCostOFEachSnapshot})`,
+                text: ``
+            },
+            {
+                label: 'Discount for partial storage month',
+                value: `$(${viewCalculation.EBSCalculation.priceCalculation.discountForPartialStorage})`,
+                text: `Monthly cost of each snapshot x discount for partial storage month (xxx)%`
+            },
+            {
+                label: 'Incremental snapshot cost',
+                value: `$(${viewCalculation.EBSCalculation.priceCalculation.incrementSnapshotCost})`,
+                text: `(Monthly cost of each snapshot - discount for partial storage month) x Total snapshots `
+            },
+            {
+                label: 'Total snapshot cost',
+                value: `$(${viewCalculation.EBSCalculation.priceCalculation.totalSnapshotCost})`,
+                text: `Initial snapshot cost + Incremental snapshot cost `
+            },
+            {
+                label: 'Total EBS snapshot cost',
+                value: `(${viewCalculation.EBSCalculation.priceCalculation.totalEBSSnapshotCost})`,
+                text: `Total snapshot cost  x instance months`
+            },
+            {
+                label: 'EBS snapshot cost',
+                value: `$(${viewCalculation.EBSCalculation.priceCalculation.ebsSnapshotCost})`,
+                text: ``
+            },
+            {
+                label: 'Amazon Elastic Block Storage (EBS) total cost (monthly)',
+                value: `$(${viewCalculation.EBSCalculation.priceCalculation.amazonElasticBlock})`,
+                text: `EBS snapshot cost + EBS throughput cost + EBS IOPS cost + EBS storage cost `
+            }
+        ]
+    };
+};
