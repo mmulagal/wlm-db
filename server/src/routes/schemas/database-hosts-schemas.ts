@@ -10,6 +10,7 @@ import {
     CreateDatabaseParams,
     DriveInfoResponseBody,
     CollationInfoResponseBody,
+    SandboxSavingsResponseBody,
     SandboxInfoResponseBody
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
@@ -88,6 +89,15 @@ const GetCollationDetailsSchema = {
     }
 };
 
+const GetSandboxSavingsSchema = {
+    ...databaseHostsRequest,
+    summary: 'Get sandbox savings',
+    description: 'Get savings across all the database hosts for sandboxes created',
+    response: {
+        200: SandboxSavingsResponseBody
+    }
+};
+
 const GetSandboxesInfoSchema = {
     ...databaseHostsRequest,
     summary: 'Get Sandboxes Information',
@@ -105,5 +115,6 @@ export {
     GetDriveInfoSchema,
     DatabasesCreateSchema,
     GetCollationDetailsSchema,
+    GetSandboxSavingsSchema,
     GetSandboxesInfoSchema
 };

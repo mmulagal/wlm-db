@@ -1,13 +1,23 @@
-import { isEmpty } from 'lodash-es';
+import { ConnectionStatus } from '@aws-sdk/client-ssm';
+import throat from 'throat';
+import { groupBy, isEmpty } from 'lodash-es';
+import createError from 'http-errors';
 import getLogger from '../utils/logger';
 import { listResources } from '../lib/database/db';
-import { DEFAULT_INSTANCE_NAME, NO_SANDBOX_CREATED, RESOURCESTYPE, SANDBOX_API_SIZE } from '../utils/consts';
+import {
+    DEFAULT_INSTANCE_NAME,
+    HttpErrorCodes,
+    NO_SANDBOX_CREATED,
+    RESOURCESTYPE,
+    SANDBOX_API_SIZE
+} from '../utils/consts';
 import { GET_SANDBOX_DETAILS } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
-import { callSsmExecution } from './aws/ssm-operations';
+import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { sqlResponseParsing } from '../utils/utils';
 import { SandboxInfoResponseType } from '../routes/types/database-hosts.types';
+import { restGetUtilForOntap } from './workloads/mssql/ssm-script-utils';
 
 const logger = getLogger();
 
@@ -156,4 +166,118 @@ async function getSandboxesInfo(accountId: string, credentialsId: string, region
     }
 }
 
-export { getSandboxesInfo };
+async function getSandboxSavings(accountId: string, credentialsId: string, region: string) {
+    try {
+        logger.info('Get sandbox savings', { accountId, credentialsId, region });
+
+        const savingsData = {
+            consumedStorage: 0,
+            savedStorage: 0,
+            sandboxSavingsPercentage: 0
+        };
+
+        const resourceDetails = await listResources(
+            accountId,
+            undefined,
+            credentialsId,
+            region,
+            RESOURCESTYPE.MSSQL,
+            undefined,
+            process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
+                ? undefined
+                : {
+                      sandboxCreated: true
+                  }
+        );
+
+        if (isEmpty(resourceDetails)) {
+            logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
+            return savingsData;
+        }
+
+        const fsxGroups = groupBy(resourceDetails, 'co_relation_id'); // { fsxId: Array<resource> }
+
+        await Promise.all(
+            Object.keys(fsxGroups).map(
+                throat(10, async fsxId => {
+                    for (const resourceDetail of fsxGroups[fsxId]) {
+                        const { metadata } = resourceDetail;
+                        const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+
+                        try {
+                            const [ssmStatus1, ssmStatus2] = await Promise.all([
+                                getSSMConnectionStatus(credentialsId, region, node1InstanceId),
+                                node2InstanceId
+                                    ? getSSMConnectionStatus(credentialsId, region, node1InstanceId)
+                                    : Promise.resolve({ Status: ConnectionStatus.NOT_CONNECTED })
+                            ]);
+
+                            if (
+                                ssmStatus1.Status === ConnectionStatus.CONNECTED ||
+                                ssmStatus2.Status === ConnectionStatus.CONNECTED
+                            ) {
+                                // DEMO FSX ID AND REGION
+                                if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+                                    fsxId = 'test-fsx';
+                                    region = 'us-east-1';
+                                }
+
+                                const command = [
+                                    restGetUtilForOntap(
+                                        fsxId,
+                                        region,
+                                        '/storage/volumes',
+                                        'tiering.object_tags="cloned_by=netapp_wlmdb"',
+                                        'fields=space.used_by_afs,space.physical_used,clone.split_estimate'
+                                    )
+                                ];
+
+                                const response = await callSsmExecution(
+                                    credentialsId,
+                                    region,
+                                    command,
+                                    (ssmStatus1.Status === ConnectionStatus.CONNECTED
+                                        ? node1InstanceId
+                                        : node2InstanceId) as string,
+                                    accountId
+                                );
+
+                                const cleanResponse = response?.replaceAll('\r\n', '');
+                                const jsonResponse = JSON.parse(cleanResponse!);
+
+                                jsonResponse?.records?.forEach(
+                                    (record: {
+                                        clone?: { split_estimate: number };
+                                        space: { physical_used: number; used_by_afs: number };
+                                    }) => {
+                                        const {
+                                            clone: { split_estimate: splitEstimate } = { split_estimate: 0 },
+                                            space: { physical_used: physicalUsed }
+                                        } = record;
+                                        savingsData.consumedStorage += physicalUsed;
+                                        savingsData.savedStorage += splitEstimate;
+                                        savingsData.sandboxSavingsPercentage +=
+                                            (splitEstimate * 100) / (splitEstimate + physicalUsed);
+                                    }
+                                );
+                                break;
+                            }
+                        } catch (e) {
+                            logger.error(`Falied to fetch storage saving for fsx: ${fsxId}`, e);
+                        }
+                    }
+                })
+            )
+        );
+
+        return savingsData;
+    } catch (e) {
+        logger.error('Error while fetching storage savings', e);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while fetching storage savings ${accountId}, ${e}`
+        );
+    }
+}
+
+export { getSandboxesInfo, getSandboxSavings };

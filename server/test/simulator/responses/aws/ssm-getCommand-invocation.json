@@ -822,6 +822,23 @@
         "Status": "Success",
         "StatusDetails": "Success"
     },
+    "ontapSandboxVolumesSavingsResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"records\":[{\"uuid\":\"d1f91312-f0c1-11ee-a11e-13a030d9dcda\",\"name\":\"vol_murali_clone\",\"tiering\":{\"object_tags\":[\"cloned_by=netapp_wlmdb\"]},\"clone\":{\"split_estimate\":6264045568},\"space\":{\"used_by_afs\":7378214912,\"physical_used\":1135968256},\"_links\":{\"self\":{\"href\":\"/api/storage/volumes/d1f91312-f0c1-11ee-a11e-13a030d9dcda\"}}}],\"num_records\":1,\"_links\":{\"self\":{\"href\":\"/api/storage/volumes?tiering.object_tags=%22cloned_by=netapp_wlmdb%22&fields=space.used_by_afs,space.physical_used,clone.split_estimate\"}}}",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
     "getSandboxDetailsInvocationResponse": {
         "$metadata": {
             "httpStatusCode": 200,

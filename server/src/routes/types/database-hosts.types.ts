@@ -279,6 +279,13 @@ const CollationInfoResponseBody = Type.Object({
 });
 type CollationInfoResponseBodyType = Static<typeof CollationInfoResponseBody>;
 
+const SandboxSavingsResponseBody = Type.Object({
+    consumedStorage: Type.Number(),
+    savedStorage: Type.Number(),
+    sandboxSavingsPercentage: Type.Number()
+});
+
+type SandboxSavingsResponseBodyType = Static<typeof SandboxSavingsResponseBody>;
 const SandboxInfoResponse = Type.Object({
     sandboxName: Type.Optional(Type.String()),
     databaseHostName: Type.String(),
@@ -350,6 +357,8 @@ export {
     FileConfigType,
     CollationInfoResponseBodyType,
     CollationInfoResponseBody,
+    SandboxSavingsResponseBody,
+    SandboxSavingsResponseBodyType,
     SandboxInfoResponse,
     SandboxInfoResponseType,
     SandboxInfoResponseBody,

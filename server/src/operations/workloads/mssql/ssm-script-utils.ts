@@ -474,19 +474,19 @@ const restGetUtilForOntap = (
         $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
         $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
         Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
-
+     
         Function Invoke-ONTAPGetRequest {
             param(
                 [Parameter(Mandatory = $false)]
                 [string]$ApiEndpoint,
-
+     
                 [Parameter(Mandatory = $false)]
                 [string]$ApiQueryFilter,
-
+     
                 [Parameter(Mandatory = $false)]
                 [string]$ApiQueryFields
             )
-
+     
             $Ampersand = ''
             if ($ApiQueryFields -ne '' -and $ApiQueryFilter -ne '') {
                 $Ampersand = '&';
@@ -497,17 +497,18 @@ const restGetUtilForOntap = (
                 "Headers" =@{"Authorization" = "Basic $FSxCredentialsInBase64"}
                 "ContentType" = "application/json"
             }
-
+     
             return Invoke-RestMethod @Params -Certificate $regionCertificateificate
         }
-
-        $response = Invoke-ONTAPGetRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
-        $response | ConvertTo-Json
+     
+        $responeObject = Invoke-ONTAPGetRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
     } catch {
         $responeObject = @{
             error = $_.Exception.Message
         }
     }
+    $responeObject | ConvertTo-Json -Depth 5
+    
 `;
 
 export {
