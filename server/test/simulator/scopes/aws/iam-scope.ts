@@ -21,49 +21,56 @@ const IamSimulatePolicyResponse: Partial<SimulatePrincipalPolicyCommandOutput> =
             EvalResourceName: '*',
             EvalDecision: PolicyEvaluationDecisionType.ALLOWED,
             MatchedStatements: [],
-            MissingContextValues: []
+            MissingContextValues: [],
+            OrganizationsDecisionDetail: {AllowedByOrganizations:true}
         },
         {
             EvalActionName: 'secretsmanager:CreateSecret',
             EvalResourceName: '*',
             EvalDecision: PolicyEvaluationDecisionType.ALLOWED,
             MatchedStatements: [],
-            MissingContextValues: []
+            MissingContextValues: [],
+            OrganizationsDecisionDetail: {AllowedByOrganizations:true}
         },
         {
             EvalActionName: 'secretsmanager:GetRandomPassword',
             EvalResourceName: '*',
             EvalDecision: PolicyEvaluationDecisionType.ALLOWED,
             MatchedStatements: [],
-            MissingContextValues: []
+            MissingContextValues: [],
+            OrganizationsDecisionDetail: {AllowedByOrganizations:true}
         },
         {
             EvalActionName: 'secretsmanager:DeleteSecret',
             EvalResourceName: '*',
             EvalDecision: PolicyEvaluationDecisionType.ALLOWED,
             MatchedStatements: [],
-            MissingContextValues: []
+            MissingContextValues: [],
+            OrganizationsDecisionDetail: {AllowedByOrganizations:true}
         },
         {
             EvalActionName: 'secretsmanager:ListSecretVersionIds',
             EvalResourceName: '*',
             EvalDecision: PolicyEvaluationDecisionType.ALLOWED,
             MatchedStatements: [],
-            MissingContextValues: []
+            MissingContextValues: [],
+            OrganizationsDecisionDetail: {AllowedByOrganizations:true}
         },
         {
             EvalActionName: 'secretsmanager:TagResource',
             EvalResourceName: '*',
             EvalDecision: PolicyEvaluationDecisionType.ALLOWED,
             MatchedStatements: [],
-            MissingContextValues: []
+            MissingContextValues: [],
+            OrganizationsDecisionDetail: {AllowedByOrganizations:true}
         },
         {
             EvalActionName: 'secretsmanager:UntagResource',
             EvalResourceName: '*',
             EvalDecision: PolicyEvaluationDecisionType.ALLOWED,
             MatchedStatements: [],
-            MissingContextValues: []
+            MissingContextValues: [],
+            OrganizationsDecisionDetail: {AllowedByOrganizations:true}
         }
     ]
 };
