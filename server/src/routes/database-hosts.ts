@@ -9,9 +9,10 @@ import {
     DatabasesCreateSchema,
     GetDriveInfoSchema,
     GetCollationDetailsSchema,
+    GetSandboxSavingsSchema,
     GetSandboxesInfoSchema
 } from './schemas/database-hosts-schemas';
-import { getSandboxesInfo } from '../operations/sandbox-operations';
+import { getSandboxesInfo, getSandboxSavings } from '../operations/sandbox-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 
@@ -35,6 +36,17 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             );
             return reply.send(response);
         })
+        .get(
+            `${API_PREFIX_PATH}/database-hosts/sandbox-savings`,
+            { schema: GetSandboxSavingsSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region }
+                } = request;
+                const response = await getSandboxSavings(accountId, credentialsId, region);
+                return reply.send(response);
+            }
+        )
         .get(
             `${API_PREFIX_PATH}/database-hosts/:databaseHostId`,
             { schema: DatabaseHostDetailsSchema },

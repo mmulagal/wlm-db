@@ -256,6 +256,7 @@ const cleanUpDB = {
 
 const checkDBExists = {
     commands: [
+        // prettier-ignore
         "sqlcmd -Q \"SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = 'tempdb18' FOR JSON PATH\" -y 0"
     ]
 };
@@ -279,6 +280,18 @@ const resourceUtilization = {
 const getCollationDetails = {
     commands: [
         '\n#Get default collation of SQL server\n$defaultSqlCollation = sqlcmd -Q @"\n    SET NOCOUNT ON;\n    SELECT CONVERT(nvarchar(128), SERVERPROPERTY(\'collation\'));\n"@ -y 0\n\n#Get default version of SQL server\n$sqlVersion = sqlcmd -Q @"\n    SET NOCOUNT ON;\n    SELECT @@VERSION;\n"@ -y 0\n\nWrite-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json\n'
+    ]
+};
+
+const getOntapSandboxVolumeSavingsParams = {
+    commands: [
+        restGetUtilForOntap(
+            'test-fsx',
+            'us-east-1',
+            '/storage/volumes',
+            'tiering.object_tags="cloned_by=netapp_wlmdb"',
+            'fields=space.used_by_afs,space.physical_used,clone.split_estimate'
+        )
     ]
 };
 
@@ -373,6 +386,8 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getCollationDetailsResponse)
     .on(SendCommandCommand, { Parameters: clusterNetwokIpInfo })
     .resolves(listSendCommandCommandResponse.clusterNetwokIpInfo)
+    .on(SendCommandCommand, { Parameters: getOntapSandboxVolumeSavingsParams })
+    .resolves(listSendCommandCommandResponse.ontapSandboxVolumesSavings)
     .on(SendCommandCommand, { Parameters: getSandboxDetails })
     .resolves(listSendCommandCommandResponse.getSandboxDetails);
 
@@ -463,6 +478,8 @@ ssmMock
     .resolves(getCommandInvocationResponse.collationDetailsInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-clusterNetwokIpInfo' })
     .resolves(getCommandInvocationResponse.clusterNetwokIpInfoInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'a271a4a7-3693-41bb-8c31-ontapSandboxVolumesSavings' })
+    .resolves(getCommandInvocationResponse.ontapSandboxVolumesSavingsResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getSandboxDetailsInfo' })
     .resolves(getCommandInvocationResponse.getSandboxDetailsInvocationResponse);
 
