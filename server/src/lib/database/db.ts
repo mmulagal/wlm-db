@@ -278,6 +278,7 @@ async function listResources(
     region?: string,
     resourceType?: string,
     fsxId?: string,
+    metaFilters?: { [x: string]: string | number | boolean },
     pageSize?: number,
     nextToken?: string
 ) {
@@ -287,10 +288,12 @@ async function listResources(
         resourceType,
         region,
         credentialsId,
+        metaFilters,
         pageSize,
         nextToken
     });
     accountId = checkAccount(accountId);
+
     return prisma.client.resource.findMany({
         where: {
             account_id: accountId,
@@ -298,7 +301,15 @@ async function listResources(
             ...(resourceType && { resource_type: resourceType }),
             ...(region && { region }),
             ...(credentialsId && { credentials_id: credentialsId }),
-            ...(fsxId && { co_relation_id: fsxId })
+            ...(fsxId && { co_relation_id: fsxId }),
+            ...(metaFilters && {
+                AND: Object.entries(metaFilters).map(([key, val]) => ({
+                    metadata: {
+                        path: `$.${key}`,
+                        equals: val
+                    }
+                }))
+            })
         },
         orderBy: {
             id: 'asc'

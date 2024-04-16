@@ -25,9 +25,9 @@ const SavingsSelectedHost = () => {
                     </DsTypography>
                 </div>
 
-                <div className={styles.separator} />
+                {/* <div className={styles.separator} /> */}
 
-                <div className={styles.container}>
+                <div className={`${styles.container} ${styles.secondContainer}`}>
                     {!isLoading && (
                         <DsTypography
                             variant="Semibold_14"
@@ -49,7 +49,7 @@ const SavingsSelectedHost = () => {
                     </DsTypography>
                 </div>
 
-                <div className={styles.separator} />
+                {/* <div className={styles.separator} /> */}
 
                 <div className={styles.container}>
                     {!isLoading && (

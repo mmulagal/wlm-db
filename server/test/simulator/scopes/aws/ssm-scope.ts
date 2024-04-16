@@ -173,7 +173,7 @@ const getOntapSnapshotCountParams = {
 };
 
 const getOntapMappedVolumesParams = {
-    commands: [getMappedOntapVolumesScript('fs-03773e21b2f0e39b4', DEFAULT_AWS_REGION)]
+    commands: [getMappedOntapVolumesScript('test-fsx', DEFAULT_AWS_REGION)]
 };
 
 const getStorageParams = {
