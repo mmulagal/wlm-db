@@ -34,6 +34,7 @@ const FSX_TYPE = 'fsxType';
 const FSX_FILE_SYSTEM_ID = 'fsxFileSystemId';
 const ENABLE_CLOUD_WATCH = 'enableCloudWatch';
 const SQL_SERVER_NAME = 'sqlServerName';
+const SQL_COLLATION = 'sqlCollation';
 const TAGS = 'tags';
 const DEPLOYMENT_ENVIRONMENT = 'deploymentEnvironment';
 const FCI_ABBREVIATION = 'FCI (Failover cluster instance)';
@@ -60,6 +61,7 @@ const CUSTOM = 'CUSTOM';
 const M5_2XL = 'm5.2xlarge';
 const M5_XL = 'm5.xlarge';
 const THROUGHPUT = 128;
+const SQL_DEFAULT_COLLATION = 'SQL_Latin1_General_CP1_CI_AS';
 
 const CHATBOT_UI_PARAMS_FSX = [
     {
@@ -239,6 +241,11 @@ const CHATBOT_UI_PARAMS_FSX = [
         [ENCRYPTION_KEY]: {
             required: { key: FSX_TYPE, operand: EQ, value: EXISTING }
         }
+    },
+    {
+        [SQL_COLLATION]: {
+            required: true
+        }
     }
 ];
 
@@ -364,5 +371,7 @@ export {
     ENCRYPTION_KEY,
     THROUGHPUT,
     BACKTRACE_MESSAGES,
-    FSX_ADMIN
+    FSX_ADMIN,
+    SQL_COLLATION,
+    SQL_DEFAULT_COLLATION
 };
