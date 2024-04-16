@@ -14,9 +14,10 @@ const TableLayout = ({ data }: any) => {
         ) {
             return {
                 backgroundColor: 'var(--table-header-background)',
-                height: 88,
+                height: 64,
                 fontWeight: 490,
-                marginBottom: 3
+                marginBottom: 3,
+                marginTop: 14
             };
         } else if (data.label === 'Total storage charge (monthly)') {
             return {
@@ -63,12 +64,32 @@ const OntapCalculation = () => {
                 storageCapacity: '25',
                 ssdStorage: '30',
                 minSSDStorage: '10',
-                ssdMonthlyCost: '50'
+                ssdMonthlyCost: '50',
+                totalMonthlyCostStorageCapacity: '100',
+                deduplicationFactor: '50',
+                storageFactor: '35',
+                capacityMonthlyCost: '100',
+                capacityPoolStorageCapacity: '100',
+                totalStorageCharge: '30',
+                minFileSystem: '120',
+                throughputCapacity: '50',
+                sddIOPS: '65',
+                fractional: '25',
+                fileSystems: '100',
+                capacityRequired: '30',
+                provisionedThroughputCapacity: '10',
+                totalMonthlyCostThroughputCapacity: '40',
+                includedSSDIOPS: '35',
+                additionalSSDIOPS: '35',
+                billedSSD: '700',
+                additionalBilledCost: '500',
+                totalThroughputIOPS: '780',
+                totalMonthlyCost: '5270'
             }
         }
     };
     const setHeader = () => {
-        return <DsTypography variant="Regular_14">$XXX</DsTypography>;
+        return <DsTypography variant="Regular_14">$5,270</DsTypography>;
     };
     return (
         <div className={styles.ontapCalculation}>

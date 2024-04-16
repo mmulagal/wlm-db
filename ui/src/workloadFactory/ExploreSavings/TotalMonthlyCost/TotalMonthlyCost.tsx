@@ -5,6 +5,7 @@ import ComparisonChart from '../../../ui-components/Charts/ComparisionChart';
 
 const TotalMonthlyCost = () => {
     const noData = false;
+    const isLoading = false;
     const calculatedResponse = {
         fsx: {
             total: 7000
@@ -22,7 +23,23 @@ const TotalMonthlyCost = () => {
             </div>
 
             <div className={styles.mainSection}>
-                {noData && (
+                {isLoading && (
+                    <>
+                        <div style={{ position: 'relative', top: '250px' }}>
+                            <ComparisonChart
+                                data={[1, 1]}
+                                yTickFormatter={yValue => '$' + 0}
+                                height={120}
+                                colors={['chart-9', 'chart-6']}
+                                categories={[
+                                    'Microsoft SQL server on FSx for ONTAP',
+                                    'Microsoft SQL server on Amazon Elastic Block Store (EBS)'
+                                ]}
+                            />
+                        </div>
+                    </>
+                )}
+                {noData && !isLoading && (
                     <>
                         <div className={styles['calculate-notice']}>
                             <GraphIcon style={{ marginTop: 24 }} />
@@ -40,7 +57,7 @@ const TotalMonthlyCost = () => {
                         />
                     </>
                 )}
-                {!noData && (
+                {!noData && !isLoading && (
                     <>
                         <ComparisonChart
                             data={[calculatedResponse.fsx.total, calculatedResponse.ebs.total]}
