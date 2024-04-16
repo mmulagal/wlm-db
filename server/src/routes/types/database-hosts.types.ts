@@ -156,7 +156,8 @@ const UtilizationResponse = Type.Object({
     percentUsed: Type.String({ minLength: 1 }),
     used: Type.String({ minLength: 1 }),
     total: Type.String({ minLength: 1 }),
-    remaining: Type.String({ minLength: 1 })
+    remaining: Type.String({ minLength: 1 }),
+    error: Type.Optional(Type.String())
 });
 type UtilizationResponseType = Static<typeof UtilizationResponse>;
 

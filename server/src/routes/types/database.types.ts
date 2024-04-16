@@ -61,7 +61,8 @@ const UtilisationResponseBody = Type.Object({
     percentUsed: Type.String(),
     used: Type.String(),
     total: Type.String(),
-    remaining: Type.String()
+    remaining: Type.String(),
+    error: Type.Optional(Type.String())
 });
 
 type UtilisationResponseBodyInterface = Static<typeof UtilisationResponseBody>;

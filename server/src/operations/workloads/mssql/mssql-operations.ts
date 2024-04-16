@@ -141,15 +141,22 @@ async function getAllResourceUtilisationDetails(credentialsId: string, region: s
     const parsedResourceUtilizationData = resurceUtilizationData ? sqlResponseParsing(resurceUtilizationData) : '';
 
     const cpuUtilization = sqlResponseParsing(parsedResourceUtilizationData.cpu)[0];
-    const dbSizeData = sqlResponseParsing(parsedResourceUtilizationData.dbSize);
-    const diskData = sqlResponseParsing(parsedResourceUtilizationData.disk);
+    const [dbSizeData] = sqlResponseParsing(parsedResourceUtilizationData.dbSize);
+    const [diskData] = sqlResponseParsing(parsedResourceUtilizationData.disk);
     const memoryUtilization = sqlResponseParsing(parsedResourceUtilizationData.memory)[0];
+    
+    let diskError = '';
+    if (isEmpty(dbSizeData) || isEmpty(diskData)) {
+        diskError = `Disk utilisation data is empty for instance ${activeNodeInstanceId}. Disk utilisation data is empty for instance.`
+        logger.error(diskError)
+    }
 
     const diskUtilization: UtilisationResponseBodyInterface = {
-        used: dbSizeData[0]?.TotalSize?.toString(),
-        total: diskData[0]?.total?.toString(),
-        remaining: (Number(diskData[0].total) - dbSizeData[0].TotalSize).toString(),
-        percentUsed: Math.round((dbSizeData[0].TotalSize * 100) / Number(diskData[0].total)).toString()
+        used: dbSizeData?.TotalSize?.toString() || '0',
+        total: diskData?.total?.toString() || '0',
+        remaining: (Number(diskData.total) - dbSizeData.TotalSize).toString(),
+        percentUsed: Math.round((dbSizeData.TotalSize * 100) / Number(diskData.total)).toString(),
+        error: diskError
     };
 
     return { cpuUtilization, diskUtilization, memoryUtilization };
@@ -230,11 +237,19 @@ async function getResourceUtilisationDetails(
 
         const [sizeValue] = size ? sqlResponseParsing(size) : [];
         const [diskDataValue] = diskdata ? sqlResponseParsing(diskdata) : [];
+
+        let diskError = '';
+        if (isEmpty(diskDataValue) || isEmpty(sizeValue)) {
+            diskError = `Disk utilisation data is empty for instance ${activeNodeInstanceId}. Reason could be no access to sys.master_files.`
+            logger.error(diskError)
+        
+        }
         const diskUtilization: UtilisationResponseBodyInterface = {
-            used: sizeValue?.TotalSize?.toString(),
-            total: diskDataValue?.total?.toString(),
+            used: sizeValue?.TotalSize?.toString() || '0',
+            total: diskDataValue?.total?.toString() || '0',
             remaining: (Number(diskDataValue.total) - sizeValue.TotalSize).toString(),
-            percentUsed: Math.round((sizeValue.TotalSize * 100) / Number(diskDataValue.total)).toString()
+            percentUsed: Math.round((sizeValue.TotalSize * 100) / Number(diskDataValue.total)).toString(),
+            error: diskError
         };
         return diskUtilization;
     }
