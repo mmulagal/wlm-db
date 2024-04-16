@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
-import './SavingsCalculator.scss';
+import styles from './SavingsCalculator.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import { WLF_TABS } from '../../../utils/consts';
 import { DsTypography } from '@netapp/design-system';
@@ -19,72 +19,76 @@ import ExportPDF from './ExportPDF/ExportPDF';
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
     return (
-        <div className={'savingsCalculator'} id="export-pdf">
-            <div className={'breadCrumb'}>
-                <BreadCrumbs
-                    items={[
-                        {
-                            title: 'Explore savings',
-                            onClick: () => {
-                                dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
-                            }
-                        },
-                        {
-                            title: 'Host name'
-                        }
-                    ]}
-                />
-            </div>
-
-            <div className={'savingsHeading'}>
-                <DsTypography variant="Regular_24">Savings calculator</DsTypography>
-                <div />
-            </div>
-
-            <div className={'contentArea'}>
-                {/* Left side code here */}
-                <div className={'firstContainer'}>
-                    <SavingsHeader />
-                    <SavingsSelection />
-                    <SavingsSelectedHost />
-                    <InstanceInformation />
-                    <SelectedVolumeSummary />
-                </div>
-
-                {/* Right side code here */}
-                <div className={'secondContainer'}>
-                    <div className={'firstSection'}>
-                        <CostSavings />
+        <div style={{ height: '90vh', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
+            <div className="scrollArea">
+                <div className={styles.savingsCalculator} id="export-pdf">
+                    <div className={styles.breadCrumb}>
+                        <BreadCrumbs
+                            items={[
+                                {
+                                    title: 'Explore savings',
+                                    onClick: () => {
+                                        dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                                    }
+                                },
+                                {
+                                    title: 'Host name'
+                                }
+                            ]}
+                        />
                     </div>
-                    <div className={'secondSection'}>
-                        <TotalMonthlyCost />
+
+                    <div className={styles.savingsHeading}>
+                        <DsTypography variant="Regular_24">Savings calculator</DsTypography>
+                        <div />
                     </div>
-                    <div className={'secondSection'}>
-                        <CostBreakdown />
+
+                    <div className={styles.contentArea}>
+                        {/* Left side code here */}
+                        <div className={styles.firstContainer}>
+                            <SavingsHeader />
+                            <SavingsSelection />
+                            <SavingsSelectedHost />
+                            <InstanceInformation />
+                            <SelectedVolumeSummary />
+                        </div>
+
+                        {/* Right side code here */}
+                        <div className={styles.secondContainer}>
+                            <div className={styles.firstSection}>
+                                <CostSavings />
+                            </div>
+                            <div className={styles.secondSection}>
+                                <TotalMonthlyCost />
+                            </div>
+                            <div className={styles.secondSection}>
+                                <CostBreakdown />
+                            </div>
+                        </div>
                     </div>
+
+                    {/* Text Area */}
+                    <div className={styles.selectionArea}>
+                        <div>
+                            <Suggestion />
+                        </div>
+                        <div className={styles.textContent}>
+                            <DsTypography variant="Semibold_16">
+                                Based on your selections, we recommend creating the following:
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                Microsoft SQL Server on AWS Ec2 using FSx for ONTAP file system
+                            </DsTypography>
+                        </div>
+                    </div>
+
+                    {/* Accordion here */}
+                    <MSSQLAccordion />
+
+                    {/* last section */}
+                    <ExportPDF rootElementId="export-pdf" />
                 </div>
             </div>
-
-            {/* Text Area */}
-            <div className={'selectionArea'}>
-                <div>
-                    <Suggestion />
-                </div>
-                <div className={'textContent'}>
-                    <DsTypography variant="Semibold_16">
-                        Based on your selections, we recommend creating the following:
-                    </DsTypography>
-                    <DsTypography variant="Regular_14">
-                        Microsoft SQL Server on AWS Ec2 using FSx for ONTAP file system
-                    </DsTypography>
-                </div>
-            </div>
-
-            {/* Accordion here */}
-            <MSSQLAccordion />
-
-            {/* last section */}
-            <ExportPDF rootElementId="export-pdf" />
         </div>
     );
 };
