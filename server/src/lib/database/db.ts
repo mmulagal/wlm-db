@@ -278,6 +278,7 @@ async function listResources(
     region?: string,
     resourceType?: string,
     fsxId?: string,
+    metaFilters?: { [x: string]: string | number | boolean },
     pageSize?: number,
     nextToken?: string
 ) {
@@ -287,18 +288,39 @@ async function listResources(
         resourceType,
         region,
         credentialsId,
+        metaFilters,
         pageSize,
         nextToken
     });
     accountId = checkAccount(accountId);
+
+    const params = [
+        { account_id: accountId },
+        resourceId ? { resource_id: resourceId } : null,
+        resourceType ? { resource_type: resourceType } : null,
+        region ? { region } : null,
+        credentialsId ? { credentials_id: credentialsId } : null,
+        fsxId ? { co_relation_id: fsxId } : null
+    ];
+
+    if (metaFilters) {
+        Object.entries(metaFilters).forEach(([key, val]) => {
+            const metadata = {
+                metadata: {
+                    path: `$.${key}`,
+                    equals: val
+                }
+            };
+
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            params.push(metadata);
+        });
+    }
+
     return prisma.client.resource.findMany({
         where: {
-            account_id: accountId,
-            ...(resourceId && { resource_id: resourceId }),
-            ...(resourceType && { resource_type: resourceType }),
-            ...(region && { region }),
-            ...(credentialsId && { credentials_id: credentialsId }),
-            ...(fsxId && { co_relation_id: fsxId })
+            AND: compact(params)
         },
         orderBy: {
             id: 'asc'
