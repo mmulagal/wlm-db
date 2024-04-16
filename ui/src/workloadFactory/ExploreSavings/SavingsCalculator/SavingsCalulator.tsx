@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
-import styles from './SavingsCalculator.module.scss';
+import './SavingsCalculator.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import { WLF_TABS } from '../../../utils/consts';
 import { DsTypography } from '@netapp/design-system';
@@ -19,8 +19,8 @@ import ExportPDF from './ExportPDF/ExportPDF';
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
     return (
-        <div className={styles.savingsCalculator} id="export-pdf">
-            <div className={styles.breadCrumb}>
+        <div className={"savingsCalculator"} id="export-pdf">
+            <div className={"breadCrumb"}>
                 <BreadCrumbs
                     items={[
                         {
@@ -36,14 +36,14 @@ const SavingsCalculator = () => {
                 />
             </div>
 
-            <div className={styles.savingsHeading}>
+            <div className={"savingsHeading"}>
                 <DsTypography variant="Regular_24">Savings Calculator</DsTypography>
                 <div />
             </div>
 
-            <div className={styles.contentArea}>
+            <div className={"contentArea"}>
                 {/* Left side code here */}
-                <div className={styles.firstContainer}>
+                <div className={"firstContainer"}>
                     <SavingsHeader />
                     <SavingsSelection />
                     <SavingsSelectedHost />
@@ -52,25 +52,25 @@ const SavingsCalculator = () => {
                 </div>
 
                 {/* Right side code here */}
-                <div className={styles.secondContainer}>
-                    <div className={styles.firstSection}>
+                <div className={"secondContainer"}>
+                    <div className={"firstSection"}>
                         <CostSavings />
                     </div>
-                    <div className={styles.secondSection}>
+                    <div className={"secondSection"}>
                         <TotalMonthlyCost />
                     </div>
-                    <div className={styles.secondSection}>
+                    <div className={"secondSection"}>
                         <CostBreakdown />
                     </div>
                 </div>
             </div>
 
             {/* Text Area */}
-            <div className={styles.selectionArea}>
+            <div className={"selectionArea"}>
                 <div>
                     <Suggestion />
                 </div>
-                <div className={styles.textContent}>
+                <div className={"textContent"}>
                     <DsTypography variant="Semibold_16">
                         Based on your selections, we recommend creating the following:
                     </DsTypography>
