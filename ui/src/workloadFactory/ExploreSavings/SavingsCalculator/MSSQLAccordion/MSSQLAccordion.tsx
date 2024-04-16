@@ -1,4 +1,4 @@
-import { DsAccordion, DsButton, DsTypography, useDialog } from '@netapp/design-system';
+import { DsAccordion, DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import styles from './MSSQLAccordion.module.scss';
 import { MSSQLServerInstance, calculatedFSXData } from '../savingsUtil';
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
@@ -26,6 +26,7 @@ const TableLayout = ({ data }: any) => {
 };
 
 const MSSQLAccordion = () => {
+    const isMutliFsx = false;
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
     const fsxData = {
@@ -82,35 +83,87 @@ const MSSQLAccordion = () => {
                 variant="Default"
                 value=""
                 headerActions={[
-                    <DsButton type="text" onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}>
-                        Save configuration
-                    </DsButton>,
+                    isMutliFsx ? (
+                        <Popover
+                            popoverClass={styles['popover']}
+                            children={'This configuration can not be save'}
+                            trigger="hover"
+                            container={
+                                <DsButton type="text" isDisabled={true}>
+                                    Save configuration
+                                </DsButton>
+                            }
+                        />
+                    ) : (
+                        <DsButton type="text" onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}>
+                            Save configuration
+                        </DsButton>
+                    ),
+                    ,
                     <div style={{ height: '32px' }} className={styles.buttonContainer}>
-                        <DsButton type="button" onClick={() => navigate(WLF_TO_FORM_NAVIGATE)}>
+                        <DsButton type="button" isDisabled={isMutliFsx} onClick={() => navigate(WLF_TO_FORM_NAVIGATE)}>
                             Create
                         </DsButton>
                     </div>
                 ]}
                 children={
-                    <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '2000px' }}>
-                        <DsTypography variant="Semibold_14" style={{ marginBottom: '6px' }}>
-                            Microsoft SQL Server EC2 instance
-                        </DsTypography>
+                    isMutliFsx ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '2351px' }}>
+                            <DsTypography variant="Semibold_14" style={{ marginBottom: '6px' }}>
+                                Microsoft SQL Server EC2 instance - 2 instances
+                            </DsTypography>
 
-                        {MSSQLServerInstance(msSqlInstance).map(
-                            (data: { label: string; text: string; value: string }, index: number) => (
-                                <TableLayout data={data} key={index} />
-                            )
-                        )}
-                        <DsTypography variant="Semibold_14" style={{ marginTop: '32px', marginBottom: '6px' }}>
-                            FsxN
-                        </DsTypography>
-                        {calculatedFSXData(fsxData).map(
-                            (data: { label: string; text: string; value: string }, index: number) => (
-                                <TableLayout data={data} key={index} />
-                            )
-                        )}
-                    </div>
+                            {MSSQLServerInstance(msSqlInstance).map(
+                                (data: { label: string; text: string; value: string }, index: number) => (
+                                    <TableLayout data={data} key={index} />
+                                )
+                            )}
+                            <DsTypography variant="Semibold_14" style={{ marginTop: '32px', marginBottom: '6px' }}>
+                                FsxN 1
+                            </DsTypography>
+                            {calculatedFSXData(fsxData).map(
+                                (data: { label: string; text: string; value: string }, index: number) => (
+                                    <TableLayout data={data} key={index} />
+                                )
+                            )}
+
+                            <DsTypography variant="Semibold_14" style={{ marginTop: '32px', marginBottom: '6px' }}>
+                                FsxN 2
+                            </DsTypography>
+                            {calculatedFSXData(fsxData).map(
+                                (data: { label: string; text: string; value: string }, index: number) => (
+                                    <TableLayout data={data} key={index} />
+                                )
+                            )}
+                        </div>
+                    ) : (
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                maxHeight: '2000px',
+                                overflow: 'hidden'
+                            }}
+                        >
+                            <DsTypography variant="Semibold_14" style={{ marginBottom: '6px' }}>
+                                Microsoft SQL Server EC2 instance
+                            </DsTypography>
+
+                            {MSSQLServerInstance(msSqlInstance).map(
+                                (data: { label: string; text: string; value: string }, index: number) => (
+                                    <TableLayout data={data} key={index} />
+                                )
+                            )}
+                            <DsTypography variant="Semibold_14" style={{ marginTop: '32px', marginBottom: '6px' }}>
+                                FsxN
+                            </DsTypography>
+                            {calculatedFSXData(fsxData).map(
+                                (data: { label: string; text: string; value: string }, index: number) => (
+                                    <TableLayout data={data} key={index} />
+                                )
+                            )}
+                        </div>
+                    )
                 }
             />
         </div>
