@@ -144,11 +144,11 @@ async function getAllResourceUtilisationDetails(credentialsId: string, region: s
     const [dbSizeData] = sqlResponseParsing(parsedResourceUtilizationData.dbSize);
     const [diskData] = sqlResponseParsing(parsedResourceUtilizationData.disk);
     const memoryUtilization = sqlResponseParsing(parsedResourceUtilizationData.memory)[0];
-    
+
     let diskError = '';
     if (isEmpty(dbSizeData) || isEmpty(diskData)) {
-        diskError = `Disk utilisation data is empty for instance ${activeNodeInstanceId}. Disk utilisation data is empty for instance.`
-        logger.error(diskError)
+        diskError = `Disk utilisation data is empty for instance ${activeNodeInstanceId}. Disk utilisation data is empty for instance.`;
+        logger.error(diskError);
     }
 
     const diskUtilization: UtilisationResponseBodyInterface = {
@@ -240,9 +240,8 @@ async function getResourceUtilisationDetails(
 
         let diskError = '';
         if (isEmpty(diskDataValue) || isEmpty(sizeValue)) {
-            diskError = `Disk utilisation data is empty for instance ${activeNodeInstanceId}. Reason could be no access to sys.master_files.`
-            logger.error(diskError)
-        
+            diskError = `Disk utilisation data is empty for instance ${activeNodeInstanceId}. Reason could be no access to sys.master_files.`;
+            logger.error(diskError);
         }
         const diskUtilization: UtilisationResponseBodyInterface = {
             used: sizeValue?.TotalSize?.toString() || '0',
