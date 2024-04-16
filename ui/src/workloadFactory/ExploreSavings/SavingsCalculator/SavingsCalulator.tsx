@@ -19,8 +19,8 @@ import ExportPDF from './ExportPDF/ExportPDF';
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
     return (
-        <div className={"savingsCalculator"} id="export-pdf">
-            <div className={"breadCrumb"}>
+        <div className={'savingsCalculator'} id="export-pdf">
+            <div className={'breadCrumb'}>
                 <BreadCrumbs
                     items={[
                         {
@@ -36,14 +36,14 @@ const SavingsCalculator = () => {
                 />
             </div>
 
-            <div className={"savingsHeading"}>
-                <DsTypography variant="Regular_24">Savings Calculator</DsTypography>
+            <div className={'savingsHeading'}>
+                <DsTypography variant="Regular_24">Savings calculator</DsTypography>
                 <div />
             </div>
 
-            <div className={"contentArea"}>
+            <div className={'contentArea'}>
                 {/* Left side code here */}
-                <div className={"firstContainer"}>
+                <div className={'firstContainer'}>
                     <SavingsHeader />
                     <SavingsSelection />
                     <SavingsSelectedHost />
@@ -52,25 +52,25 @@ const SavingsCalculator = () => {
                 </div>
 
                 {/* Right side code here */}
-                <div className={"secondContainer"}>
-                    <div className={"firstSection"}>
+                <div className={'secondContainer'}>
+                    <div className={'firstSection'}>
                         <CostSavings />
                     </div>
-                    <div className={"secondSection"}>
+                    <div className={'secondSection'}>
                         <TotalMonthlyCost />
                     </div>
-                    <div className={"secondSection"}>
+                    <div className={'secondSection'}>
                         <CostBreakdown />
                     </div>
                 </div>
             </div>
 
             {/* Text Area */}
-            <div className={"selectionArea"}>
+            <div className={'selectionArea'}>
                 <div>
                     <Suggestion />
                 </div>
-                <div className={"textContent"}>
+                <div className={'textContent'}>
                     <DsTypography variant="Semibold_16">
                         Based on your selections, we recommend creating the following:
                     </DsTypography>
