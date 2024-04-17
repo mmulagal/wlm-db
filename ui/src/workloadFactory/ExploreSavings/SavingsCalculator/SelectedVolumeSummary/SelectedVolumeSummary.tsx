@@ -1,9 +1,11 @@
 import { Table, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
-import { DsTypography } from '@netapp/design-system';
+import { DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
 import styles from './SelectedVolumeSummary.module.scss';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 const SelectedVolumeSummary = () => {
+    const { loading } = useAppSelector(state => state.exploreSavings);
     const setSummaryHeader = {
         gp3: true,
         gp2: true,
@@ -36,25 +38,53 @@ const SelectedVolumeSummary = () => {
             Header: 'gp3',
             accessor: 'gp3',
             id: '2',
-            width: '96.5px'
+            width: '96.5px',
+            renderCell: (cellData: any, rowData: any) => {
+                return loading ? (
+                    <DsFlashingDotsLoader />
+                ) : (
+                    <DsTypography variant="Regular_14">{rowData.gp3}</DsTypography>
+                );
+            }
         },
         {
             Header: 'gp2',
             accessor: 'gp2',
             id: '3',
-            width: '96.5px'
+            width: '96.5px',
+            renderCell: (cellData: any, rowData: any) => {
+                return loading ? (
+                    <DsFlashingDotsLoader />
+                ) : (
+                    <DsTypography variant="Regular_14">{rowData.gp2}</DsTypography>
+                );
+            }
         },
         {
             Header: 'io1',
             accessor: 'io1',
             id: '4',
-            width: '96.5px'
+            width: '96.5px',
+            renderCell: (cellData: any, rowData: any) => {
+                return loading ? (
+                    <DsFlashingDotsLoader />
+                ) : (
+                    <DsTypography variant="Regular_14">{rowData.io1}</DsTypography>
+                );
+            }
         },
         {
             Header: 'io2',
             accessor: 'io2',
             id: '5',
-            width: '96.5px'
+            width: '96.5px',
+            renderCell: (cellData: any, rowData: any) => {
+                return loading ? (
+                    <DsFlashingDotsLoader />
+                ) : (
+                    <DsTypography variant="Regular_14">{rowData.io2}</DsTypography>
+                );
+            }
         }
     ];
 
@@ -70,19 +100,40 @@ const SelectedVolumeSummary = () => {
             Header: 'gp2',
             accessor: 'gp2',
             id: '3',
-            width: '128px'
+            width: '128px',
+            renderCell: (cellData: any, rowData: any) => {
+                return loading ? (
+                    <DsFlashingDotsLoader />
+                ) : (
+                    <DsTypography variant="Regular_14">{rowData.gp2}</DsTypography>
+                );
+            }
         },
         {
             Header: 'io1',
             accessor: 'io1',
             id: '4',
-            width: '128px'
+            width: '128px',
+            renderCell: (cellData: any, rowData: any) => {
+                return loading ? (
+                    <DsFlashingDotsLoader />
+                ) : (
+                    <DsTypography variant="Regular_14">{rowData.io1}</DsTypography>
+                );
+            }
         },
         {
             Header: 'io2',
             accessor: 'io2',
             id: '5',
-            width: '128px'
+            width: '128px',
+            renderCell: (cellData: any, rowData: any) => {
+                return loading ? (
+                    <DsFlashingDotsLoader />
+                ) : (
+                    <DsTypography variant="Regular_14">{rowData.io2}</DsTypography>
+                );
+            }
         }
     ];
 
@@ -98,13 +149,27 @@ const SelectedVolumeSummary = () => {
             Header: 'io1',
             accessor: 'io1',
             id: '4',
-            width: '193px'
+            width: '193px',
+            renderCell: (cellData: any, rowData: any) => {
+                return loading ? (
+                    <DsFlashingDotsLoader />
+                ) : (
+                    <DsTypography variant="Regular_14">{rowData.io1}</DsTypography>
+                );
+            }
         },
         {
             Header: 'io2',
             accessor: 'io2',
             id: '5',
-            width: '193px'
+            width: '193px',
+            renderCell: (cellData: any, rowData: any) => {
+                return loading ? (
+                    <DsFlashingDotsLoader />
+                ) : (
+                    <DsTypography variant="Regular_14">{rowData.io2}</DsTypography>
+                );
+            }
         }
     ];
 
@@ -120,7 +185,14 @@ const SelectedVolumeSummary = () => {
             Header: 'io2',
             accessor: 'io2',
             id: '5',
-            width: '386px'
+            width: '386px',
+            renderCell: (cellData: any, rowData: any) => {
+                return loading ? (
+                    <DsFlashingDotsLoader />
+                ) : (
+                    <DsTypography variant="Regular_14">{rowData.io2}</DsTypography>
+                );
+            }
         }
     ];
 

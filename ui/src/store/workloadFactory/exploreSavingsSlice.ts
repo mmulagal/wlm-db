@@ -5,7 +5,8 @@ export const initialExploreSavingsState: any = {
     numberOfClonedCopies: 3,
     selectedCloneRefresh: null,
     monthlyChangeRate: 3,
-    saveConfigName: ''
+    saveConfigName: '',
+    loading: false
 };
 
 const exploreSavingsSlice = createSlice({

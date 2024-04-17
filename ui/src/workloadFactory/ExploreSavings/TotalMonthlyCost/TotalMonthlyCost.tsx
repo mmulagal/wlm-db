@@ -1,11 +1,13 @@
-import { DsTypography } from '@netapp/design-system';
+import { DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
 import { ReactComponent as GraphIcon } from '../../../assets/ic_graph.svg';
 import styles from './TotalMonthlyCost.module.scss';
 import ComparisonChart from '../../../ui-components/Charts/ComparisionChart';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const TotalMonthlyCost = () => {
+    const { loading } = useAppSelector(state => state.exploreSavings);
     const noData = false;
-    const isLoading = false;
+
     const calculatedResponse = {
         fsx: {
             total: 7000
@@ -20,10 +22,11 @@ const TotalMonthlyCost = () => {
                 <DsTypography variant="Semibold_16" className={styles.title}>
                     Total monthly cost
                 </DsTypography>
+                {loading && <DsFlashingDotsLoader />}
             </div>
 
             <div className={styles.mainSection}>
-                {isLoading && (
+                {loading && (
                     <>
                         <div style={{ position: 'relative', top: '250px' }}>
                             <ComparisonChart
@@ -39,7 +42,7 @@ const TotalMonthlyCost = () => {
                         </div>
                     </>
                 )}
-                {noData && !isLoading && (
+                {noData && !loading && (
                     <>
                         <div className={styles['calculate-notice']}>
                             <GraphIcon style={{ marginTop: 24 }} />
@@ -57,7 +60,7 @@ const TotalMonthlyCost = () => {
                         />
                     </>
                 )}
-                {!noData && !isLoading && (
+                {!noData && !loading && (
                     <>
                         <ComparisonChart
                             data={[calculatedResponse.fsx.total, calculatedResponse.ebs.total]}
