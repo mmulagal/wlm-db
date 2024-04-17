@@ -114,11 +114,11 @@ const SelectSource = () => {
                 className={CommonStyles.setHeaderStyleSandbox}
             >
                 <span>
-                    {GENERAL.SOURCE_HOST}: {selectedDatabaseHost ? selectedDatabaseHost.label : ''}
+                    {GENERAL.SOURCE_HOST}: {selectedDatabaseHost ? selectedDatabaseHost.label : 'NA'}
                 </span>
                 <span className={CommonStyles.separatorSandbox} />
                 <span>
-                    {GENERAL.SOURCE_INSTANCE}: {selectedDatabaseInstance ? selectedDatabaseInstance.label : ''}
+                    {GENERAL.SOURCE_INSTANCE}: {selectedDatabaseInstance ? selectedDatabaseInstance.label : 'NA'}
                 </span>
             </DsTypography>
         );

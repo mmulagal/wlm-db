@@ -39,7 +39,9 @@ const SandboxDistributionDate = () => {
                         {windowSize.width > 1500 && !isNA && (
                             <>
                                 <div className={styles.separator} />
-                                <DsTypography variant="Semibold_14">30 {GENERAL.SANDBOXES}</DsTypography>
+                                <DsTypography variant="Semibold_14">{`${
+                                    getSandboxDistributionByAge(aggregatedSandboxList)['0-7']
+                                } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}
                         {windowSize.width <= 1500 && !isNA && (
@@ -71,7 +73,9 @@ const SandboxDistributionDate = () => {
                         {windowSize.width > 1500 && !isNA && (
                             <>
                                 <div className={styles.separator} />
-                                <DsTypography variant="Semibold_14">30 {GENERAL.SANDBOXES}</DsTypography>
+                                <DsTypography variant="Semibold_14">{`${
+                                    getSandboxDistributionByAge(aggregatedSandboxList)['8-14']
+                                } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}
                         {windowSize.width <= 1500 && !isNA && (
@@ -104,7 +108,9 @@ const SandboxDistributionDate = () => {
                         {windowSize.width > 1500 && !isNA && (
                             <>
                                 <div className={styles.separator} />
-                                <DsTypography variant="Semibold_14">40 {GENERAL.SANDBOXES}</DsTypography>
+                                <DsTypography variant="Semibold_14">{`${
+                                    getSandboxDistributionByAge(aggregatedSandboxList)['15-30']
+                                } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}
 
@@ -137,7 +143,9 @@ const SandboxDistributionDate = () => {
                         {windowSize.width > 1500 && !isNA && (
                             <>
                                 <div className={styles.separator} />
-                                <DsTypography variant="Semibold_14">20 {GENERAL.SANDBOXES}</DsTypography>
+                                <DsTypography variant="Semibold_14">{`${
+                                    getSandboxDistributionByAge(aggregatedSandboxList)['30+']
+                                } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}
 
