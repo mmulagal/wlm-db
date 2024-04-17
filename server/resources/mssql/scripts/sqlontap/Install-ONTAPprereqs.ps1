@@ -36,7 +36,7 @@ else {
 # If PS modules installation fails, retry again. We have seen success on retry. 
 $modulesInstalled = $False
 $installPSModulesTries = 1
-while($installPSModulesTries -ne 2) {
+while($installPSModulesTries -ge 2) {
     if ($isprivatesubnet -ne $True) {
         #Install Nuget provider
         Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
