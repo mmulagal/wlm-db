@@ -10,18 +10,20 @@ import CodeBoxScroll from '../../../../common/CodeBoxScroll/CodeBoxScroll';
 import CodeBoxColor from '../../../../common/CodeBoxColor/CodeBoxColor';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { CRED_PLACEHOLDERS } from '../../../../utils/consts';
+import { generateCreateSandboxPayload } from '../../SandboxUtility';
 
 const CreateNewSandboxCodebox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
 
     const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
     const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
+    const createSandboxState = useAppSelector(state => state.createSandbox);
 
     // To copy response based on dropdown selection
     const copyResponseData = () => {};
 
     const setDisplayedDataInCodeBox = () => {
-        const payload = {};
+        const payload = generateCreateSandboxPayload(createSandboxState);
         return (
             <>
                 <CodeBoxColor

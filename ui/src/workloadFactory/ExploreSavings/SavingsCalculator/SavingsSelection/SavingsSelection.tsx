@@ -15,9 +15,8 @@ import { useAppSelector } from '../../../../store/storeHooks';
 
 const SavingsSelection = () => {
     const dispatch = useDispatch();
-    const { selectedSnapshotFrequency, numberOfClonedCopies, selectedCloneRefresh, monthlyChangeRate } = useAppSelector(
-        state => state.exploreSavings
-    );
+    const { selectedSnapshotFrequency, numberOfClonedCopies, selectedCloneRefresh, monthlyChangeRate, loading } =
+        useAppSelector(state => state.exploreSavings);
     //Function to generate the options for Select Field
     const generateSnapshotFrequency = useMemo<optionType[]>((): optionType[] => {
         const frequency = ['No snapshot storage', 'Hourly', 'Daily', '2*Daily', 'Weekly', 'Monthly'];
@@ -50,6 +49,7 @@ const SavingsSelection = () => {
             <div className={styles.firstRow}>
                 <SelectField
                     label={'Snapshot frequency'}
+                    isDisabled={loading}
                     isClearable={false}
                     defaultValue={
                         selectedSnapshotFrequency ? selectedSnapshotFrequency : [generateSnapshotFrequency[2]]
@@ -66,6 +66,7 @@ const SavingsSelection = () => {
             <div className={styles.secondRow}>
                 <TextField
                     label={'Number of cloned copies'}
+                    isDisabled={loading}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         dispatch(setNumberOfClonedCopies(e.target.value));
                     }}
@@ -75,6 +76,7 @@ const SavingsSelection = () => {
                 <SelectField
                     label={'Clone refresh'}
                     isClearable={false}
+                    isDisabled={loading}
                     defaultValue={selectedCloneRefresh ? selectedCloneRefresh : [generateCloneRefresh[0]]}
                     onChange={(selectedOptions: any): void => {
                         dispatch(setSelectedCloneRefresh(selectedOptions));
@@ -91,6 +93,7 @@ const SavingsSelection = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         dispatch(setMonthlyChangeRate(e.target.value));
                     }}
+                    isDisabled={loading}
                     value={monthlyChangeRate ? monthlyChangeRate : ''}
                     className={styles.widthSet}
                 />

@@ -9,10 +9,10 @@ import styles from './SelectTarget.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import {
-    setSelectedTargetDatabase,
-    setSelectedTargetHost,
-    setSelectedTargetInstance
-} from '../../../../../store/workloadFactory/sandboxSlice';
+    setTargetDbHost,
+    setTargetDbInstance,
+    setTargetDatabase
+} from '../../../../../store/workloadFactory/createSandboxSlice';
 import { GENERAL } from '../../../../../utils/appConstants';
 import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
 
@@ -20,24 +20,35 @@ const SelectTarget = () => {
     const windowSize = useResize();
     const dispatch = useDispatch();
 
-    const { selectedTargetHost, selectedTargetInstance, selectedTargetDatabase, isCreateSandboxPressed } =
-        useAppSelector(state => state.sandbox);
+    const { target, isCreateSandboxPressed, source, aggregatedDbHostList } = useAppSelector(
+        state => state.createSandbox
+    );
+    const { selectedDatabaseHost, selectedDatabase, selectedDatabaseInstance } = target;
+    const { selectedDatabaseHost: selectedSourceDbHost } = source;
 
     //Function to generate the options for Select Field
     const generateTargetName = useMemo<optionType[]>((): optionType[] => {
-        const hostName = ['host name 1', 'host name 2', 'host name 3', 'host name 6', 'host name 4', 'host name 5'];
         const options: optionType[] = [];
-        hostName?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+        const filteredHosts = selectedSourceDbHost
+            ? aggregatedDbHostList.filter(
+                  item =>
+                      item?.topology?.fileSystemId &&
+                      item?.topology?.fileSystemId === selectedSourceDbHost?.data?.topology?.fileSystemId &&
+                      item?.topology?.vpcId &&
+                      item?.topology?.vpcId === selectedSourceDbHost?.data?.topology?.vpcId
+              )
+            : [];
+        filteredHosts?.map((obj, idx: number) => {
+            const option = generateOptionType(obj?.id, obj?.name, '', false, '', obj);
             options.push(option);
         });
 
         return options;
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [aggregatedDbHostList, selectedSourceDbHost]);
 
     const generateTargetInstance = useMemo<optionType[]>((): optionType[] => {
-        const hostName = ['instance 1', 'instance 1', '5instance 1', 'instance 4', 'instance 1', 'instance 8'];
+        const hostName = ['default'];
         const options: optionType[] = [];
         hostName?.map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '');
@@ -49,17 +60,17 @@ const SelectTarget = () => {
     }, []);
     useEffect(() => {
         if (
-            selectedTargetHost === null &&
-            selectedTargetInstance === null &&
+            selectedDatabaseHost === null &&
+            selectedDatabaseInstance === null &&
             generateTargetName &&
             generateTargetInstance
         ) {
-            dispatch(setSelectedTargetHost(generateTargetName[0]));
-            dispatch(setSelectedTargetInstance(generateTargetInstance[0]));
+            dispatch(setTargetDbHost(generateTargetName[0]));
+            dispatch(setTargetDbInstance(generateTargetInstance[0]));
         }
     }, [generateTargetName, generateTargetInstance]);
     const setHeader = () => {
-        if (!selectedTargetDatabase) {
+        if (!selectedDatabase) {
             return (
                 <div className={styles.actionRequired}>
                     <ActionRequired />
@@ -69,17 +80,17 @@ const SelectTarget = () => {
             return (
                 <DsTypography
                     variant="Regular_14"
-                    title={`${selectedTargetHost ? selectedTargetHost.label : ''}, ${
-                        selectedTargetInstance ? selectedTargetInstance.label : ''
-                    }, ${selectedTargetDatabase ? selectedTargetDatabase : ''}`}
+                    title={`${selectedDatabaseHost ? selectedDatabaseHost.label : ''}, ${
+                        selectedDatabaseInstance ? selectedDatabaseInstance.label : ''
+                    }, ${selectedDatabase ? selectedDatabase : ''}`}
                     className={CommonStyles.setHeaderStyleSandbox}
                 >
                     <span>
-                        {GENERAL.TARGET_HOST}: {selectedTargetHost ? selectedTargetHost.label : ''}
+                        {GENERAL.TARGET_HOST}: {selectedDatabaseHost ? selectedDatabaseHost.label : ''}
                     </span>
                     <span className={CommonStyles.separatorSandbox} />
                     <span>
-                        {GENERAL.TARGET_INSTANCE}: {selectedTargetInstance ? selectedTargetInstance.label : ''}
+                        {GENERAL.TARGET_INSTANCE}: {selectedDatabaseInstance ? selectedDatabaseInstance.label : ''}
                     </span>
                 </DsTypography>
             );
@@ -105,9 +116,9 @@ const SelectTarget = () => {
                                 <SelectField
                                     label={GENERAL.TARGET_HOST}
                                     isClearable={false}
-                                    defaultValue={selectedTargetHost ? selectedTargetHost : [generateTargetName[0]]}
+                                    defaultValue={selectedDatabaseHost ? selectedDatabaseHost : [generateTargetName[0]]}
                                     onChange={(selectedOptions: any): void => {
-                                        dispatch(setSelectedTargetHost(selectedOptions));
+                                        dispatch(setTargetDbHost(selectedOptions));
                                     }}
                                     isSearchable={true}
                                     options={generateTargetName}
@@ -118,25 +129,28 @@ const SelectTarget = () => {
                                     label={GENERAL.TARGET_INSTANCE}
                                     isClearable={false}
                                     defaultValue={
-                                        selectedTargetInstance ? selectedTargetInstance : [generateTargetInstance[0]]
+                                        selectedDatabaseInstance
+                                            ? selectedDatabaseInstance
+                                            : [generateTargetInstance[0]]
                                     }
                                     onChange={(selectedOptions: any): void => {
-                                        dispatch(setSelectedTargetInstance(selectedOptions));
+                                        dispatch(setTargetDbInstance(selectedOptions));
                                     }}
                                     isSearchable={true}
                                     options={generateTargetInstance}
                                     className={styles.selectField}
+                                    isDisabled={true}
                                 />
 
                                 {windowSize.width <= 1500 && (
                                     <TextField
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                            dispatch(setSelectedTargetDatabase(e.target.value));
+                                            dispatch(setTargetDbInstance(e.target.value));
                                         }}
                                         label={GENERAL.TARGET_DATABASES}
-                                        value={selectedTargetDatabase}
+                                        value={selectedDatabase}
                                         className={styles.keyField}
-                                        error={!selectedTargetDatabase ? GENERAL.ACTION_REQUIRED : ''}
+                                        error={!selectedDatabase ? GENERAL.ACTION_REQUIRED : ''}
                                     />
                                 )}
                             </div>
@@ -145,12 +159,12 @@ const SelectTarget = () => {
                                 <div className={styles.secondRow}>
                                     <TextField
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                            dispatch(setSelectedTargetDatabase(e.target.value));
+                                            dispatch(setTargetDbInstance(e.target.value));
                                         }}
                                         label={GENERAL.TARGET_DATABASES}
-                                        value={selectedTargetDatabase}
+                                        value={selectedDatabase}
                                         className={styles.keyField}
-                                        error={!selectedTargetDatabase ? GENERAL.ACTION_REQUIRED : ''}
+                                        error={!selectedDatabase ? GENERAL.ACTION_REQUIRED : ''}
                                     />
                                 </div>
                             )}

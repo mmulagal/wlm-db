@@ -6,6 +6,7 @@ export const initialExploreSavingsState: any = {
     selectedCloneRefresh: null,
     monthlyChangeRate: 3,
     saveConfigName: '',
+    loading: false,
     unmanagedExploreSavingsHost: []
 };
 

@@ -12,6 +12,7 @@ app.use('', routers.aws);
 app.use('', routers.mssql);
 app.use('', routers.resource);
 app.use('', routers.config);
+app.use('', routers.sandbox);
 app.use('', routers.databaseHosts);
 app.use('', routers.chatbot);
 app.use('', routers.createUserDb);

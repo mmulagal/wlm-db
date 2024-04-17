@@ -6,6 +6,7 @@ import config from './config';
 import databaseHosts from './databaseHosts';
 import chatbot from './chatbot';
 import createUserDb from './createUserDb';
+import sandbox from './sandbox';
 
 const routes = {
     credentials,
@@ -13,6 +14,7 @@ const routes = {
     mssql,
     resource,
     config,
+    sandbox,
     databaseHosts,
     chatbot,
     createUserDb

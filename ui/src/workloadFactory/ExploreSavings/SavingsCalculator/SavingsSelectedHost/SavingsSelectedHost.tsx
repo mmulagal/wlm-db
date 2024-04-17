@@ -1,9 +1,10 @@
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import styles from './SavingsSelectedHost.module.scss';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 const SavingsSelectedHost = () => {
     const isDisabled = false;
-    const isLoading = false;
+    const { loading } = useAppSelector(state => state.exploreSavings);
     return (
         <div className={styles.selectedHosts}>
             <DsTypography variant="Regular_14" className={isDisabled ? styles.disabledHeading : ''}>
@@ -28,7 +29,7 @@ const SavingsSelectedHost = () => {
                 {/* <div className={styles.separator} /> */}
 
                 <div className={`${styles.container} ${styles.secondContainer}`}>
-                    {!isLoading && (
+                    {!loading && (
                         <DsTypography
                             variant="Semibold_14"
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
@@ -36,8 +37,8 @@ const SavingsSelectedHost = () => {
                             120
                         </DsTypography>
                     )}
-                    {isLoading && (
-                        <div className={styles.loader}>
+                    {loading && (
+                        <div className={styles.loader} style={{ marginRight: '104px' }}>
                             <FlashingDotsLoader />
                         </div>
                     )}
@@ -52,7 +53,7 @@ const SavingsSelectedHost = () => {
                 {/* <div className={styles.separator} /> */}
 
                 <div className={styles.container}>
-                    {!isLoading && (
+                    {!loading && (
                         <DsTypography
                             variant="Semibold_14"
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
@@ -60,7 +61,7 @@ const SavingsSelectedHost = () => {
                             120
                         </DsTypography>
                     )}
-                    {isLoading && (
+                    {loading && (
                         <div className={styles.loader}>
                             <FlashingDotsLoader />
                         </div>

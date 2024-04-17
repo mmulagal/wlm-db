@@ -1,86 +1,41 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import { SandboxEntities } from '../../utils/types/sandBoxTypes';
 
-export const initialSandboxState: any = {
-    selectedSourceHost: null,
-    selectedSourceInstance: null,
-    selectedSourceDatabase: null,
-    selectedMount: 'Auto-assign mount point',
-    mountPath: '',
-    selectedTargetHost: null,
-    selectedTargetInstance: null,
-    selectedTargetDatabase: `DBname_sandbox_${Date.now()}`,
-    selectedTag: 'Development',
-    hideBanner: false,
-    isCreateSandboxPressed: false,
-    isDBNameAdded: true,
-    isMountPathAdded: true,
-    isNA: false
+export const initialSandboxState: SandboxEntities = {
+    isNA: false,
+    getSandboxList: {
+        sandboxListData: [],
+        sandboxListLoading: false,
+        sandboxListError: ''
+    },
+    aggregatedSandboxList: [],
+    getSandboxSavings: {
+        sandboxSavings: {
+            consumedStorage: 0,
+            savedStorage: 0,
+            sandboxSavingsPercentage: 0
+        },
+        sandboxSavingsLoading: false,
+        sandboxSavingsError: ''
+    }
 };
 
 const sandboxSlice = createSlice({
     name: 'sandbox',
     initialState: initialSandboxState,
     reducers: {
-        setIsNa(state, action: PayloadAction<any>) {
-            state.isNA = action.payload;
+        setSandboxListState: (state, action: PayloadAction<any>) => {
+            state.getSandboxList = action.payload;
         },
-        setIsMountPathAdded(state, action: PayloadAction<any>) {
-            state.isMountPathAdded = action.payload;
+        setAggregatedSandboxList: (state, action: PayloadAction<any>) => {
+            state.aggregatedSandboxList = action.payload;
         },
-        setIsDBNameAdded(state, action: PayloadAction<any>) {
-            state.isDBNameAdded = action.payload;
-        },
-        setCreateSandboxPressed(state, action: PayloadAction<any>) {
-            state.isCreateSandboxPressed = action.payload;
-        },
-        setShowBanner: (state, action: PayloadAction<any>) => {
-            state.hideBanner = action.payload;
-        },
-        setSelectedTag: (state, action: PayloadAction<any>) => {
-            state.selectedTag = action.payload;
-        },
-        setSelectedSourceHost: (state, action: PayloadAction<any>) => {
-            state.selectedSourceHost = action.payload;
-        },
-        setSelectedSourceInstance: (state, action: PayloadAction<any>) => {
-            state.selectedSourceInstance = action.payload;
-        },
-        setSelectedSourceDatabase: (state, action: PayloadAction<any>) => {
-            state.selectedSourceDatabase = action.payload;
-        },
-        setSelectedMount: (state, action: PayloadAction<any>) => {
-            state.selectedMount = action.payload;
-        },
-        setMountPath: (state, action: PayloadAction<any>) => {
-            state.mountPath = action.payload;
-        },
-        setSelectedTargetHost: (state, action: PayloadAction<any>) => {
-            state.selectedTargetHost = action.payload;
-        },
-        setSelectedTargetInstance: (state, action: PayloadAction<any>) => {
-            state.selectedTargetInstance = action.payload;
-        },
-        setSelectedTargetDatabase: (state, action: PayloadAction<any>) => {
-            state.selectedTargetDatabase = action.payload;
+        setSandboxSavingsState: (state, action: PayloadAction<any>) => {
+            state.getSandboxSavings = action.payload;
         }
     }
 });
 
-export const {
-    setSelectedSourceHost,
-    setMountPath,
-    setShowBanner,
-    setSelectedTag,
-    setSelectedMount,
-    setSelectedSourceInstance,
-    setSelectedSourceDatabase,
-    setSelectedTargetHost,
-    setSelectedTargetInstance,
-    setSelectedTargetDatabase,
-    setCreateSandboxPressed,
-    setIsDBNameAdded,
-    setIsMountPathAdded,
-    setIsNa
-} = sandboxSlice.actions;
+export const { setSandboxListState, setAggregatedSandboxList, setSandboxSavingsState } = sandboxSlice.actions;
 
 export default sandboxSlice;
