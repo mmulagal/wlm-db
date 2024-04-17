@@ -86,11 +86,11 @@ const SelectTarget = () => {
                     className={CommonStyles.setHeaderStyleSandbox}
                 >
                     <span>
-                        {GENERAL.TARGET_HOST}: {selectedDatabaseHost ? selectedDatabaseHost.label : ''}
+                        {GENERAL.TARGET_HOST}: {selectedDatabaseHost ? selectedDatabaseHost.label : 'NA'}
                     </span>
                     <span className={CommonStyles.separatorSandbox} />
                     <span>
-                        {GENERAL.TARGET_INSTANCE}: {selectedDatabaseInstance ? selectedDatabaseInstance.label : ''}
+                        {GENERAL.TARGET_INSTANCE}: {selectedDatabaseInstance ? selectedDatabaseInstance.label : 'NA'}
                     </span>
                 </DsTypography>
             );

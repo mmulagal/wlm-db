@@ -47,7 +47,7 @@ const SandboxChart = () => {
         return () => {
             myDoughnut.destroy();
         };
-    }, []);
+    }, [aggregatedSandboxList]);
 
     return (
         <div className={styles.sandboxChart} id="chart-item">
@@ -68,7 +68,7 @@ const SandboxChart = () => {
                 </Typography>
             </div>
             {/* @ts-ignore */}
-            {false && <div className={styles.emptyCircle}></div>}
+            {aggregatedSandboxList.length === 0 && <div className={styles.emptyCircle}></div>}
             {isNA && <div className={styles.emptyCircle}></div>}
 
             {!isNA && <canvas ref={ref} id="chart-area" width={184} height={184}></canvas>}
