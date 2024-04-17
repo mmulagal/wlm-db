@@ -257,8 +257,9 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                         } = record;
                                         savingsData.consumedStorage += physicalUsed;
                                         savingsData.savedStorage += splitEstimate;
-                                        savingsData.sandboxSavingsPercentage +=
-                                            (splitEstimate * 100) / (splitEstimate + physicalUsed);
+                                        savingsData.sandboxSavingsPercentage =
+                                            (savingsData.savedStorage * 100) /
+                                            (savingsData.consumedStorage + savingsData.savedStorage);
                                     }
                                 );
                                 break;
