@@ -157,7 +157,9 @@ async function getSandboxesInfo(accountId: string, credentialsId: string, region
             count: sandboxes.length,
             items: sandboxes,
             nextToken:
-                resourceDetails?.length === SANDBOX_API_SIZE ? resourceDetails[resourceDetails.length - 1].id : null
+                resourceDetails?.length === SANDBOX_API_SIZE
+                    ? resourceDetails[resourceDetails.length - 1].id
+                    : undefined
         };
     } catch (error) {
         const errorMessage = `Error fetching Sandboxes info. ${error}.`;
