@@ -3,7 +3,7 @@ import throat from 'throat';
 import { groupBy, isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import getLogger from '../utils/logger';
-import { listResources } from '../lib/database/db';
+import { listResources, updateResourceMetaData } from '../lib/database/db';
 import {
     DEFAULT_INSTANCE_NAME,
     HttpErrorCodes,
@@ -18,6 +18,7 @@ import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { sqlResponseParsing } from '../utils/utils';
 import { SandboxInfoResponseType } from '../routes/types/database-hosts.types';
 import { restGetUtilForOntap } from './workloads/mssql/ssm-script-utils';
+import { getResources } from './database/database-operations';
 
 const logger = getLogger();
 
@@ -280,4 +281,67 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
     }
 }
 
-export { getSandboxesInfo, getSandboxSavings };
+async function updateMetadataForSanboxTesting(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string
+) {
+    logger.info('Updating metadata for sandbox testing', accountId, credentialsId, region, databaseHostId);
+    const {
+        items: [resourceDetail]
+    } = await getResources(accountId, databaseHostId);
+
+    if (isEmpty(resourceDetail)) {
+        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+    }
+    const { metadata } = resourceDetail;
+
+    const newMetadata = metadata as unknown as Metadata;
+
+    newMetadata.sandboxCreated = true;
+    newMetadata.updatedManually = true;
+    try {
+        await updateResourceMetaData(accountId, databaseHostId, newMetadata);
+        return 'metadata updated succesfully';
+    } catch (error) {
+        return error;
+    }
+}
+
+async function revertMetadataForSanboxTesting(accountId: string, credentialsId: string, region: string) {
+    const resourceDetails = await listResources(
+        accountId,
+        undefined,
+        credentialsId,
+        region,
+        RESOURCESTYPE.MSSQL,
+        undefined,
+        { updatedManually: true }
+    );
+
+    if (isEmpty(resourceDetails)) {
+        logger.error(`No manually updated resources ${accountId}.`);
+        return 'No manually updated resources';
+    }
+
+    await Promise.all(
+        resourceDetails.map(async resourceDetail => {
+            const { resource_id: resourceId, metadata } = resourceDetail;
+            const newMetadata = metadata as unknown as Metadata;
+            try {
+                delete newMetadata.sandboxCreated;
+                delete newMetadata.updatedManually;
+                await updateResourceMetaData(accountId, resourceId, newMetadata);
+            } catch (error) {
+                logger.error('Failed to update meatadata', resourceId);
+            }
+        })
+    );
+
+    return 'Revereted manually updated metadatas';
+}
+
+export { getSandboxesInfo, getSandboxSavings, updateMetadataForSanboxTesting, revertMetadataForSanboxTesting };
