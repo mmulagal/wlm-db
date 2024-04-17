@@ -38,7 +38,9 @@ export const formatSandboxListData = (data: SandboxListEntities) => {
 export const getUniqueSourceDatabasesCount = (sandBoxList: SandboxListEntities) => {
     let uniqueSourceDatabases = new Set();
     sandBoxList.map(item => {
-        uniqueSourceDatabases.add(item?.sourceDatabaseName);
+        uniqueSourceDatabases.add(
+            `${item?.sourceDatabaseHostName}_${item?.sourceDatabaseInstanceName}_${item?.sourceDatabaseName}`
+        );
     });
     return uniqueSourceDatabases.size;
 };
