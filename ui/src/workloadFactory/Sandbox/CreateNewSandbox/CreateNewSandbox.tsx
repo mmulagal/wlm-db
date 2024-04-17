@@ -5,9 +5,12 @@ import CreateNewSandboxHeader from './CreateNewSandboxHeader/CreateNewSandboxHea
 import CreateNewSandboxFooter from './CreateNewSandboxFooter/CreateNewSandboxFooter';
 import CreateNewSandboxContent from './CreateNewSandboxContent/CreateNewSandboxContent';
 import CreateNewSandboxCodebox from './CreateNewSandboxCodebox/CreateNewSandboxCodebox';
+import CreateSandboxApis from './CreateNewSandboxContent/CreateNewSandboxApis';
 
 const CreateNewSandbox = () => {
     const loading = false;
+
+    CreateSandboxApis();
     return (
         <div className={styles.createNewSandbox}>
             {loading && (

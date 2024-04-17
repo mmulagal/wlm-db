@@ -242,6 +242,10 @@ export const formatDateWithTime = (date: string | number) => {
     return moment(new Date(parseInt(dateStr))).format('LL HH:mm');
 };
 
+export const getTimeDifferenceInDays = (timeStamp1: number, timeStamp2: number) => {
+    return Math.floor((timeStamp1 - timeStamp2) / 1000 / 60 / 60 / 24);
+};
+
 export const isNotNumberOrNA = (value: string | number) => {
     if (!value) {
         return false;

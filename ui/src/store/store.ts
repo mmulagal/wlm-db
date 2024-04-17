@@ -11,7 +11,8 @@ import {
     policiesApi,
     resourceApi,
     workloadFactoryResourceApi,
-    inventoryApi
+    inventoryApi,
+    sandboxApi
 } from '../utils/apiService';
 import authSlice from './authSlice';
 import mssqlSlice from './mssql/mssqlSlice';
@@ -29,6 +30,7 @@ import headersSlice from './workloadFactory/headersSlice';
 import createNewUserSlice from './workloadFactory/createNewDBSlice';
 import sandboxSlice from './workloadFactory/sandboxSlice';
 import exploreSavingsSlice from './workloadFactory/exploreSavingsSlice';
+import createSandboxSlice from './workloadFactory/createSandboxSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -56,7 +58,9 @@ const rootReducer = combineReducers({
     [createUserDbApi.reducerPath]: createUserDbApi.reducer,
     [inventoryApi.reducerPath]: inventoryApi.reducer,
     [sandboxSlice.reducerPath]: sandboxSlice.reducer,
-    [exploreSavingsSlice.reducerPath]: exploreSavingsSlice.reducer
+    [sandboxApi.reducerPath]: sandboxApi.reducer,
+    [exploreSavingsSlice.reducerPath]: exploreSavingsSlice.reducer,
+    [createSandboxSlice.reducerPath]: createSandboxSlice.reducer
 });
 
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action: any) => {
@@ -120,6 +124,7 @@ const store = configureStore({
             .concat(policiesApi.middleware)
             .concat(createUserDbApi.middleware)
             .concat(inventoryApi.middleware)
+            .concat(sandboxApi.middleware)
             .concat(rtkQueryErrorLogger)
 });
 

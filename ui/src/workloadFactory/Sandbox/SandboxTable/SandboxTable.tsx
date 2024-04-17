@@ -4,81 +4,12 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './SandboxTable.module.scss';
 import { useNavigate } from 'react-router-dom';
 import { GENERAL } from '../../../utils/appConstants';
+import { useAppSelector } from '../../../store/storeHooks';
+import { formatSandboxListData } from '../SandboxUtility';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
-    const data = [
-        {
-            id: '1',
-            name: 'RetailBanking',
-            hostName: 'app-server-1',
-            source: 'SQLServer-PreProd-01',
-            sourceHost: 'NA',
-            creationDate: 'March 15, 2024, 00:00:00',
-            age: '1 day',
-            tag: 'Dev'
-        },
-        {
-            id: '2',
-            name: 'MFGSales',
-            hostName: 'app-server-2',
-            source: 'SQLServer-Prod-2',
-            sourceHost: 'NA',
-            creationDate: 'March 15, 2024, 00:00:00',
-            age: '5 days',
-            tag: 'QA'
-        },
-        {
-            id: '3',
-            name: 'AssetManagement',
-            hostName: 'app-server-3',
-            source: 'SQLServer-Prod-7',
-            sourceHost: 'NA',
-            creationDate: 'March 15, 2024, 00:00:00',
-            age: '4 days',
-            tag: 'Other'
-        },
-        {
-            id: '4',
-            name: 'HRAudit',
-            hostName: 'app-server-4',
-            source: 'SQLServer-Prod-12',
-            sourceHost: 'NA',
-            creationDate: 'March 15, 2024, 00:00:00',
-            age: '2 days',
-            tag: 'Dev'
-        },
-        {
-            id: '5',
-            name: 'PrivateBanking',
-            hostName: 'app-server-6',
-            source: 'SQLServer-Prod-6',
-            sourceHost: 'NA',
-            creationDate: 'March 15, 2024, 00:00:00',
-            age: '7 days',
-            tag: 'Training'
-        },
-        {
-            id: '6',
-            name: 'SalesData',
-            hostName: 'app-server-16',
-            source: 'SQLServer-Prod-9',
-            sourceHost: 'NA',
-            creationDate: 'March 15, 2024, 00:00:00',
-            age: '1 days',
-            tag: 'Analytics'
-        },
-        {
-            id: '7',
-            name: 'ExpenseTracker',
-            hostName: 'app-server-7',
-            source: 'SQLServer-Prod-16',
-            sourceHost: 'NA',
-            creationDate: 'March 15, 2024, 00:00:00',
-            age: '14 days',
-            tag: 'Dev'
-        }
-    ];
+    const { aggregatedSandboxList } = useAppSelector(state => state.sandbox);
 
     const SandboxColDefs: ColumnProps[] = [
         {
@@ -147,7 +78,7 @@ const SandboxTable = () => {
         isHorizontalScroll: true,
         isSorting: false,
         columns: SandboxColDefs,
-        rows: data,
+        rows: formatSandboxListData(aggregatedSandboxList),
         pageSize: 50
     });
     return (

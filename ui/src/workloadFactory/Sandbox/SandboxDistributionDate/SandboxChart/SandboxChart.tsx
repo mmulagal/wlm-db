@@ -6,6 +6,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import styles from './SandboxChart.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { getSandboxDistributionByAge } from '../../SandboxUtility';
 
 Chart.register(...registerables);
 
@@ -13,6 +14,7 @@ const SandboxChart = () => {
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
     const { isNA } = useAppSelector(state => state.sandbox);
+    const { aggregatedSandboxList } = useAppSelector(state => state.sandbox);
 
     const doughnutOptions = {
         plugins: {
@@ -27,7 +29,7 @@ const SandboxChart = () => {
         data: {
             datasets: [
                 {
-                    data: [30, 30, 40, 20],
+                    data: Object.values(getSandboxDistributionByAge(aggregatedSandboxList)),
                     backgroundColor: ['#68C6B3', '#0BAFFC', '#A815F3', '#FDC300']
                 }
             ]
@@ -52,7 +54,7 @@ const SandboxChart = () => {
             <div className={styles['center-text']}>
                 {!isNA && (
                     <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                        120
+                        {aggregatedSandboxList.length}
                     </Typography>
                 )}
 

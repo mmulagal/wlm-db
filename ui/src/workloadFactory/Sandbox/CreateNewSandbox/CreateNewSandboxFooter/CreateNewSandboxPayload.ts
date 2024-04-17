@@ -1,8 +1,5 @@
-import {
-    setCreateSandboxPressed,
-    setIsDBNameAdded,
-    setIsMountPathAdded
-} from '../../../../store/workloadFactory/sandboxSlice';
+import { setIsDbNameAdded } from '../../../../store/workloadFactory/createSandboxSlice';
+import { setCreateSandboxPressed, setIsMountPathAdded } from '../../../../store/workloadFactory/createSandboxSlice';
 
 export const handleCreateNewSandbox = (state: any, dispatch: any) => {
     let payload;
@@ -13,9 +10,9 @@ export const handleCreateNewSandbox = (state: any, dispatch: any) => {
     const mountPathCheck = state.sandbox.selectedMount === 'Define mount point path' && !state.sandbox.mountPath;
 
     if (selectTargetDBName) {
-        dispatch(setIsDBNameAdded(false));
+        dispatch(setIsDbNameAdded(false));
     } else {
-        dispatch(setIsDBNameAdded(true));
+        dispatch(setIsDbNameAdded(true));
     }
 
     if (state.sandbox.selectedMount === 'Define mount point path' && mountPathCheck) {
