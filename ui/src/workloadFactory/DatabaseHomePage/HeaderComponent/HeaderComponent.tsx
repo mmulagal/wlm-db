@@ -153,7 +153,7 @@ const HeaderComponent = () => {
             resetDBHomePageState(dispatch);
             dispatch(setDashboardRefresh(true));
             dispatch(setIsRefreshed(true));
-        } else if (selectedHeaderTab === WLF_TABS.INVENTORY) {
+        } else if (selectedHeaderTab === WLF_TABS.INVENTORY || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS) {
             resetDBHomePageState(dispatch);
             dispatch(inventoryApi.util.resetApiState());
             dispatch(setIsRefreshed(true));
@@ -271,7 +271,6 @@ const HeaderComponent = () => {
                                 }
                                 onClick={() => {
                                     handleClick(WLF_TABS.SANDBOXES);
-                                    refreshPage();
                                 }}
                             >
                                 Sandboxes
@@ -288,7 +287,6 @@ const HeaderComponent = () => {
                                 }
                                 onClick={() => {
                                     handleClick(WLF_TABS.EXPLORE_SAVINGS);
-                                    refreshPage();
                                 }}
                             >
                                 Explore savings

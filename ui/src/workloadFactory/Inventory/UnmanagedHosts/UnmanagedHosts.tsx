@@ -1,14 +1,11 @@
 import { Spinner, Table, TableTopBar, TooltipInfo, Typography, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './UnmanagedHosts.module.scss';
-import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useEffect, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
+import { DETECT_HOST_VAR } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
-
-import { formatUnamanagedHostList } from '../../../utils/utilityFunctions';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import { setMovedToManagedHost, setUnManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
 import { useManageHostMutation } from '../../../utils/apiService';
@@ -20,7 +17,9 @@ import {
     renderEstimatedCost,
     renderFileSystemType,
     renderInstanceName,
-    renderProtectionColumn
+    renderProtectionColumn,
+    renderUnmanagedAZ,
+    renderUnmanagedHostName
 } from '../InventoryUtils';
 
 const UnmanagedHosts = () => {
@@ -28,8 +27,7 @@ const UnmanagedHosts = () => {
 
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
-    const unManagedHostList = useAppSelector(state => state.inventory.unManagedHosts);
-    const mssqlInstancesData = useAppSelector(state => state.inventory.mssqlInstancesData);
+    const unManagedHostFormatedList = useAppSelector(state => state.inventory.unmanagedFormatedData);
     const { unManagedHostInitialColumns } = useAppSelector(state => state.inventory);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
@@ -39,12 +37,6 @@ const UnmanagedHosts = () => {
 
     const [manageLoading, setManageLoading] = useState<any>({});
     const [manageHostApi] = useManageHostMutation();
-    const [tableData, setTableData] = useState<any>([]);
-
-    useEffect(() => {
-        // Format data again on unIdentifiableHosts or fsxCredentialStatusObj change
-        setTableData(formatUnamanagedHostList(unManagedHostList, mssqlInstancesData));
-    }, [unManagedHostList, mssqlInstancesData]);
 
     const notAvailable = () => {
         return (
@@ -115,30 +107,7 @@ const UnmanagedHosts = () => {
             isSticky: true,
             accessorForTextFilter: 'databaseHostname',
             renderCell: (cellData: any, rowData: any) => {
-                const status = rowData?.sqlServerInstances?.[0]?.sqlServerState;
-                const name = rowData?.sqlServerInstances?.[0]?.sqlServerName || rowData?.name;
-                return (
-                    <div>
-                        <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
-                        <div className={styles.firstColText}>
-                            {status === GENERAL.JOB_STATUS_RUNNING && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
-                            )}
-                            {status !== GENERAL.JOB_STATUS_RUNNING && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['down']}`}></div>
-                            )}
-                            <Typography variant="Regular_13">
-                                {status
-                                    ? status === GENERAL.JOB_STATUS_RUNNING
-                                        ? GENERAL.DB_HOST_UP
-                                        : GENERAL.DB_HOST_DOWN
-                                    : GENERAL.NOT_AVAILABLE}
-                            </Typography>
-                            <div className={CommonStyles.separator} />
-                            <Typography variant="Regular_13">{GENERAL.MSSQL}</Typography>
-                        </div>
-                    </div>
-                );
+                return renderUnmanagedHostName(cellData, rowData, styles);
             }
         },
         {
@@ -247,27 +216,7 @@ const UnmanagedHosts = () => {
                 { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
             ],
             renderCell: (cellData: any, rowData: any) => {
-                const azList = rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones
-                    ? rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones.join(',')
-                    : '';
-                const deploymentType = rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
-                return (
-                    <>
-                        {deploymentType && (
-                            <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
-                                <Typography variant="Regular_14">
-                                    {deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-                                        ? GENERAL.SINGLE_AZ
-                                        : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-                                        ? GENERAL.MULTI_AZ
-                                        : ''}
-                                </Typography>
-                            </div>
-                        )}
-                        {!deploymentType && notAvailable()}
-                    </>
-                );
+                return renderUnmanagedAZ(cellData, rowData, styles);
             }
         },
         {
@@ -285,7 +234,7 @@ const UnmanagedHosts = () => {
     const tableProps = useTable({
         isSorting: false,
         columns: DatabasesColDefs,
-        rows: tableData || [],
+        rows: unManagedHostFormatedList || [],
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
@@ -345,7 +294,7 @@ const UnmanagedHosts = () => {
 
     useEffect(() => {
         if (resetPage) {
-            if ((unManagedHostList || []).length % pageSize === 1) {
+            if ((unManagedHostFormatedList || []).length % pageSize === 1) {
                 tableProps.pagination?.gotoPage(0);
             }
         }

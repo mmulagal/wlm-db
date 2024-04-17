@@ -9,6 +9,11 @@
         gap: 8px;
     }
 
+    .colText {
+        display: flex;
+        gap: 16px;
+    }
+
     .statusIcon {
         width: 10px;
         height: 10px;
@@ -53,6 +58,19 @@
 
         .textStyle {
             color: var(--text-button-primary-hover);
+        }
+    }
+
+    .cost {
+        display: flex;
+        gap: 16px;
+
+        .tooltipClass {
+            [class*='TooltipInfo-module_tooltip-base'] {
+                max-width: 462px !important;
+                padding: 16px 24px;
+                box-shadow: 2px 2px 6px 0px var(--border);
+            }
         }
     }
 }
