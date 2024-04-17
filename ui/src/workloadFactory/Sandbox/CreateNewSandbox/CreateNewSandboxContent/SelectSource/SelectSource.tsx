@@ -16,19 +16,27 @@ import { useAppSelector } from '../../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import {
     setCreateSandboxPressed,
-    setSelectedSourceDatabase,
-    setSelectedSourceHost,
-    setSelectedSourceInstance
-} from '../../../../../store/workloadFactory/sandboxSlice';
+    setSourceDatabase,
+    setSourceDbHost,
+    setSourceDbInstance
+} from '../../../../../store/workloadFactory/createSandboxSlice';
 import { GENERAL } from '../../../../../utils/appConstants';
 
 const SelectSource = () => {
     const windowSize = useResize();
     const accordionContext = useAccordionContext()?.setOpenChildren!;
-    const { isDBNameAdded, isMountPathAdded, isCreateSandboxPressed } = useAppSelector(state => state.sandbox);
-    const { selectedSourceHost, selectedSourceInstance, selectedSourceDatabase } = useAppSelector(
-        state => state.sandbox
-    );
+    const {
+        isDBNameAdded,
+        isMountPathAdded,
+        isCreateSandboxPressed,
+        getDatabaseHosts,
+        getDatabaseList,
+        aggregatedDbHostList
+    } = useAppSelector(state => state.createSandbox);
+    const { source } = useAppSelector(state => state.createSandbox);
+    const { selectedDatabaseHost, selectedDatabaseInstance, selectedDatabase } = source;
+    const { databaseListData, databaseListLoading } = getDatabaseList;
+    const { databaseHostsLoading } = getDatabaseHosts;
     const dispatch = useDispatch();
 
     useEffect(() => {
@@ -50,19 +58,18 @@ const SelectSource = () => {
 
     //Function to generate the options for Select Field
     const generateHostName = useMemo<optionType[]>((): optionType[] => {
-        const hostName = ['host name 1', 'host name 2', 'host name 3', 'host name 6', 'host name 4', 'host name 5'];
         const options: optionType[] = [];
-        hostName?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+        aggregatedDbHostList?.map((obj, idx: number) => {
+            const option = generateOptionType(obj?.id, obj?.name, '', false, '', obj);
             options.push(option);
         });
 
         return options;
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [aggregatedDbHostList]);
 
     const generateSourceInstance = useMemo<optionType[]>((): optionType[] => {
-        const hostName = ['instance 1', 'instance 1', '5instance 1', 'instance 4', 'instance 1', 'instance 8'];
+        const hostName = ['default'];
         const options: optionType[] = [];
         hostName?.map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '');
@@ -74,45 +81,44 @@ const SelectSource = () => {
     }, []);
 
     const generateSourceDatabase = useMemo<optionType[]>((): optionType[] => {
-        const hostName = ['db 1', 'db 2', 'db 3', 'db 4s', 'db 5', 'db 6'];
         const options: optionType[] = [];
-        hostName?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+        databaseListData?.map((obj, idx: number) => {
+            const option = generateOptionType(obj?.id, obj?.name, '', false, '');
             options.push(option);
         });
 
         return options;
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [databaseListData]);
     useEffect(() => {
         if (
-            selectedSourceHost === null &&
-            selectedSourceInstance === null &&
-            selectedSourceDatabase === null &&
+            source.selectedDatabaseHost === null &&
+            source.selectedDatabaseInstance === null &&
+            source.selectedDatabaseInstance === null &&
             generateSourceInstance &&
             generateSourceDatabase &&
             generateHostName
         ) {
-            dispatch(setSelectedSourceHost(generateHostName[0]));
-            dispatch(setSelectedSourceInstance(generateSourceInstance[0]));
-            dispatch(setSelectedSourceDatabase(generateSourceDatabase[0]));
+            dispatch(setSourceDbHost(generateHostName[0]));
+            dispatch(setSourceDbInstance(generateSourceInstance[0]));
+            dispatch(setSourceDatabase(generateSourceDatabase[0]));
         }
     }, [generateSourceInstance, generateSourceDatabase, generateHostName]);
     const setHeader = () => {
         return (
             <DsTypography
                 variant="Regular_14"
-                title={`${selectedSourceHost ? selectedSourceHost.label : ''}, ${
-                    selectedSourceInstance ? selectedSourceInstance.label : ''
-                }, ${selectedSourceDatabase ? selectedSourceDatabase.label : ''}`}
+                title={`${selectedDatabaseHost ? selectedDatabaseHost.label : ''}, ${
+                    selectedDatabaseInstance ? selectedDatabaseInstance.label : ''
+                }, ${selectedDatabase ? selectedDatabase.label : ''}`}
                 className={CommonStyles.setHeaderStyleSandbox}
             >
                 <span>
-                    {GENERAL.SOURCE_HOST}: {selectedSourceHost ? selectedSourceHost.label : ''}
+                    {GENERAL.SOURCE_HOST}: {selectedDatabaseHost ? selectedDatabaseHost.label : ''}
                 </span>
                 <span className={CommonStyles.separatorSandbox} />
                 <span>
-                    {GENERAL.SOURCE_INSTANCE}: {selectedSourceInstance ? selectedSourceInstance.label : ''}
+                    {GENERAL.SOURCE_INSTANCE}: {selectedDatabaseInstance ? selectedDatabaseInstance.label : ''}
                 </span>
             </DsTypography>
         );
@@ -133,44 +139,45 @@ const SelectSource = () => {
                                 <SelectField
                                     label={GENERAL.SOURCE_HOST}
                                     isClearable={false}
-                                    defaultValue={selectedSourceHost ? selectedSourceHost : [generateHostName[0]]}
+                                    defaultValue={selectedDatabaseHost ? selectedDatabaseHost : [generateHostName[0]]}
                                     onChange={(selectedOptions: any): void => {
-                                        dispatch(setSelectedSourceHost(selectedOptions));
+                                        dispatch(setSourceDbHost(selectedOptions));
                                     }}
                                     isSearchable={true}
                                     options={generateHostName}
                                     className={styles.selectField}
+                                    isLoading={databaseHostsLoading}
                                 />
 
                                 <SelectField
                                     label={GENERAL.SOURCE_INSTANCE}
                                     isClearable={false}
                                     defaultValue={
-                                        selectedSourceInstance ? selectedSourceInstance : [generateSourceInstance[0]]
+                                        selectedDatabaseInstance
+                                            ? selectedDatabaseInstance
+                                            : [generateSourceInstance[0]]
                                     }
                                     onChange={(selectedOptions: any): void => {
-                                        dispatch(setSelectedSourceInstance(selectedOptions));
+                                        dispatch(setSourceDbInstance(selectedOptions));
                                     }}
                                     isSearchable={true}
                                     options={generateSourceInstance}
                                     className={styles.selectField}
+                                    isDisabled={true}
                                 />
 
                                 {windowSize.width <= 1500 && (
                                     <SelectField
                                         label={GENERAL.SOURCE_DATABASE}
                                         isClearable={false}
-                                        defaultValue={
-                                            selectedSourceDatabase
-                                                ? selectedSourceDatabase
-                                                : [generateSourceDatabase[0]]
-                                        }
+                                        defaultValue={selectedDatabase ? selectedDatabase : [generateSourceDatabase[0]]}
                                         onChange={(selectedOptions: any): void => {
-                                            dispatch(setSelectedSourceDatabase(selectedOptions));
+                                            dispatch(setSourceDatabase(selectedOptions));
                                         }}
                                         isSearchable={true}
                                         options={generateSourceDatabase}
                                         className={styles.selectField}
+                                        isLoading={databaseListLoading}
                                     />
                                 )}
                             </div>
@@ -180,17 +187,14 @@ const SelectSource = () => {
                                     <SelectField
                                         label={GENERAL.SOURCE_DATABASE}
                                         isClearable={false}
-                                        defaultValue={
-                                            selectedSourceDatabase
-                                                ? selectedSourceDatabase
-                                                : [generateSourceDatabase[0]]
-                                        }
+                                        defaultValue={selectedDatabase ? selectedDatabase : [generateSourceDatabase[0]]}
                                         onChange={(selectedOptions: any): void => {
-                                            dispatch(setSelectedSourceDatabase(selectedOptions));
+                                            dispatch(setSourceDatabase(selectedOptions));
                                         }}
                                         isSearchable={true}
                                         options={generateSourceDatabase}
                                         className={styles.selectField}
+                                        isLoading={databaseListLoading}
                                     />
                                 </div>
                             )}

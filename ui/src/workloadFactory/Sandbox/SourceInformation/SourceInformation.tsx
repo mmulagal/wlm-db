@@ -6,9 +6,11 @@ import styles from './SourceInformation.module.scss';
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
+import { getUniqueSourceDatabasesCount } from '../SandboxUtility';
 
 const SourceInformation = () => {
-    const loading = false;
+    const loading = useAppSelector(state => state?.sandbox?.getSandboxList?.sandboxListLoading);
+    const { aggregatedSandboxList } = useAppSelector(state => state?.sandbox);
     const { isNA } = useAppSelector(state => state.sandbox);
     return (
         <div className={styles.sourceInformation}>
@@ -22,7 +24,7 @@ const SourceInformation = () => {
                                     <FlashingDotsLoader />
                                 </div>
                             )}
-                            {!loading && 12}
+                            {!loading && getUniqueSourceDatabasesCount(aggregatedSandboxList)}
                         </DsTypography>
                     )}
 
@@ -55,7 +57,7 @@ const SourceInformation = () => {
                                     <FlashingDotsLoader />
                                 </div>
                             )}
-                            {!loading && 12}
+                            {!loading && aggregatedSandboxList.length}
                         </DsTypography>
                     )}
                     {isNA && (

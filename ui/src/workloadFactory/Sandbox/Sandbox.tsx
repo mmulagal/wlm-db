@@ -1,4 +1,3 @@
-import React from 'react';
 import styles from './Sandbox.module.scss';
 import SandboxHeader from './SandboxHeader/SandboxHeader';
 import SourceInformation from './SourceInformation/SourceInformation';
@@ -6,14 +5,15 @@ import SandboxStorageSaving from './SandboxStorageSaving/SandboxStorageSaving';
 import SandboxDistributionDate from './SandboxDistributionDate/SandboxDistributionDate';
 import SandboxDistributionType from './SandboxDistributionType/SandboxDistributionType';
 import SandboxTable from './SandboxTable/SandboxTable';
-import { useAppSelector } from '../../store/storeHooks';
+import SandboxApis from './SandboxApis';
 
 const Sandbox = () => {
     const bannerToShow = localStorage.getItem('showBanner');
-    const { hideBanner } = useAppSelector(state => state.sandbox);
+
+    SandboxApis();
     return (
         <div className={styles.sandbox}>
-            {!bannerToShow && !hideBanner && <SandboxHeader />}
+            {!bannerToShow && <SandboxHeader />}
 
             <div className={styles.sandboxSecondLevel}>
                 <SourceInformation />

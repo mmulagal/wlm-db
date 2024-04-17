@@ -5,11 +5,12 @@ import SandboxChart from './SandboxChart/SandboxChart';
 import useResize from '../../../common/hooks/useResize';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
+import { getSandboxDistributionByAge } from '../SandboxUtility';
 
 const SandboxDistributionDate = () => {
     const windowSize = useResize();
-    const loading = false;
-    const { isNA } = useAppSelector(state => state.sandbox);
+    const loading = useAppSelector(state => state.sandbox.getSandboxList.sandboxListLoading);
+    const { isNA, aggregatedSandboxList } = useAppSelector(state => state.sandbox);
     return (
         <div className={styles.sandboxDate}>
             <div className={styles.headSection}>
@@ -41,7 +42,11 @@ const SandboxDistributionDate = () => {
                                 <DsTypography variant="Semibold_14">30 {GENERAL.SANDBOXES}</DsTypography>
                             </>
                         )}
-                        {windowSize.width <= 1500 && !isNA && <DsTypography variant="Regular_14">(30)</DsTypography>}
+                        {windowSize.width <= 1500 && !isNA && (
+                            <DsTypography variant="Regular_14">{`(${
+                                getSandboxDistributionByAge(aggregatedSandboxList)['0-7']
+                            })`}</DsTypography>
+                        )}
                         {isNA && (
                             <>
                                 <div className={styles.separator} />
@@ -69,7 +74,11 @@ const SandboxDistributionDate = () => {
                                 <DsTypography variant="Semibold_14">30 {GENERAL.SANDBOXES}</DsTypography>
                             </>
                         )}
-                        {windowSize.width <= 1500 && !isNA && <DsTypography variant="Regular_14">(30)</DsTypography>}
+                        {windowSize.width <= 1500 && !isNA && (
+                            <DsTypography variant="Regular_14">{`(${
+                                getSandboxDistributionByAge(aggregatedSandboxList)['8-14']
+                            })`}</DsTypography>
+                        )}
                         {isNA && (
                             <>
                                 <div className={styles.separator} />
@@ -99,7 +108,11 @@ const SandboxDistributionDate = () => {
                             </>
                         )}
 
-                        {windowSize.width <= 1500 && !isNA && <DsTypography variant="Regular_14">(40)</DsTypography>}
+                        {windowSize.width <= 1500 && !isNA && (
+                            <DsTypography variant="Regular_14">{`(${
+                                getSandboxDistributionByAge(aggregatedSandboxList)['15-30']
+                            })`}</DsTypography>
+                        )}
                         {isNA && (
                             <>
                                 <div className={styles.separator} />
@@ -128,7 +141,11 @@ const SandboxDistributionDate = () => {
                             </>
                         )}
 
-                        {windowSize.width <= 1500 && !isNA && <DsTypography variant="Regular_14">(20)</DsTypography>}
+                        {windowSize.width <= 1500 && !isNA && (
+                            <DsTypography variant="Regular_14">{`(${
+                                getSandboxDistributionByAge(aggregatedSandboxList)['30+']
+                            })`}</DsTypography>
+                        )}
                         {isNA && (
                             <>
                                 <div className={styles.separator} />

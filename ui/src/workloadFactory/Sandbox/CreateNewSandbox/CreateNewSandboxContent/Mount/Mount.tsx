@@ -3,12 +3,12 @@ import styles from './Mount.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
-import { setMountPath, setSelectedMount } from '../../../../../store/workloadFactory/sandboxSlice';
+import { setMountPath, setSelectedMount } from '../../../../../store/workloadFactory/createSandboxSlice';
 import { GENERAL } from '../../../../../utils/appConstants';
 import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
 
 const Mount = () => {
-    const { selectedMount, mountPath } = useAppSelector(state => state.sandbox);
+    const { selectedMount, mountPath } = useAppSelector(state => state.createSandbox);
     const dispatch = useDispatch();
     const setHeader = () => {
         if (selectedMount === GENERAL.AUTO_ASSIGN_MOUNT_POINT) {

@@ -515,6 +515,25 @@ export const inventoryApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
+            getDatabaseHosts: builder.query({
+                query: ({ credentialId, region, nextToken = null }) => {
+                    if (nextToken) {
+                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                    } else {
+                        return `credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,serverDetails,performance,storage,protection,usageEstimation`;
+                    }
+                },
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialId,
+                            regionId: args?.region
+                        };
+                    }
+                    return response;
+                }
+            }),
             getDatabaseHostsFullData: builder.query({
                 query: ({ credentialId, regionId, nextToken = null }) => {
                     if (nextToken) {
@@ -633,6 +652,40 @@ export const inventoryApi = createApi({
     }
 });
 
+export const sandboxApi = createApi({
+    reducerPath: 'sandboxApi',
+    baseQuery: dynamicBaseQuery,
+    refetchOnMountOrArgChange: true,
+    endpoints: builder => {
+        return {
+            getSandboxList: builder.query({
+                query: ({ credentialId, region, nextToken = null }) => {
+                    if (nextToken) {
+                        return `credentials/${credentialId}/regions/${region}/database-hosts/sandboxes?nextToken=${nextToken}`;
+                    } else {
+                        return `credentials/${credentialId}/regions/${region}/database-hosts/sandboxes`;
+                    }
+                },
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialId,
+                            regionId: args?.region
+                        };
+                    }
+                    return response;
+                }
+            }),
+            getSandboxSavings: builder.query({
+                query: ({ credentialId, region }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/database-hosts/sandbox-savings`
+                })
+            })
+        };
+    }
+});
+
 export const {
     useGetCredentialsQuery,
     useGetRegionsQuery,
@@ -670,10 +723,7 @@ export const {
     useUpdateConfigMutation
 } = configApi;
 
-export const { 
-    useGetJobsSummaryQuery, 
-    useGetTemplatesMutation 
-} = databaseHomeApi;
+export const { useGetJobsSummaryQuery, useGetTemplatesMutation } = databaseHomeApi;
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
@@ -694,8 +744,8 @@ export const { useGetWlmdbPoliciesQuery } = policiesApi;
 export const { useGetDriveInfoQuery, useCreateUserDBMutation, useGetCollationListQuery } = createUserDbApi;
 
 export const {
-    useLazyGetDatabaseHostsFullDataQuery, 
-    useLazyGetDatabaseHostsListQuery, 
+    useLazyGetDatabaseHostsFullDataQuery,
+    useLazyGetDatabaseHostsListQuery,
     useLazyGetManagedHostDataQuery,
     useDiscoverHostsQuery,
     useGetFsxCredentialStatusQuery,
@@ -703,5 +753,8 @@ export const {
     useManageHostMutation,
     useRegisterResourceCredentialsMutation,
     useGetMssqlInstanceDataMutation,
-    useGetMssqlResourceDataMutation
+    useGetMssqlResourceDataMutation,
+    useGetDatabaseHostsQuery
 } = inventoryApi;
+
+export const { useGetSandboxListQuery, useGetSandboxSavingsQuery } = sandboxApi;
