@@ -56,6 +56,7 @@ const ExploreSavingsTable = () => {
             isSortable: true,
             isSticky: true,
             width: '324px',
+            accessorForTextFilter: 'databaseHostname',
             renderCell: (cellData: any, rowData: any) => {
                 return renderUnmanagedHostName(cellData, rowData, styles);
             }
