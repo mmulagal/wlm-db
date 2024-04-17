@@ -304,7 +304,7 @@ async function updateMetadataForSanboxTesting(
     newMetadata.sandboxCreated = true;
     newMetadata.updatedManually = true;
     try {
-        updateResourceMetaData(accountId, databaseHostId, newMetadata);
+        await updateResourceMetaData(accountId, databaseHostId, newMetadata);
         return 'metadata updated succesfully';
     } catch (error) {
         return error;
@@ -334,7 +334,7 @@ async function revertMetadataForSanboxTesting(accountId: string, credentialsId: 
             try {
                 delete newMetadata.sandboxCreated;
                 delete newMetadata.updatedManually;
-                updateResourceMetaData(accountId, resourceId, newMetadata);
+                await updateResourceMetaData(accountId, resourceId, newMetadata);
             } catch (error) {
                 logger.error('Failed to update meatadata', resourceId);
             }
