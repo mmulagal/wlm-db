@@ -8,8 +8,10 @@ import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventor
 import { WLF_TABS } from '../../../../utils/consts';
 //@ts-ignore
 import domToPdf from 'dom-to-pdf';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 const ExportPDF = ({ rootElementId }: any) => {
+    const { loading } = useAppSelector(state => state.exploreSavings);
     const dispatch = useDispatch();
 
     const printDocument = () => {
@@ -27,23 +29,29 @@ const ExportPDF = ({ rootElementId }: any) => {
     };
     return (
         <div className={styles.exportPdf}>
-            <div className={styles.insideContainer}>
+            <div className={loading ? `${styles.insideContainer} ${styles.disabled}` : styles.insideContainer}>
                 <div>
                     <Download />
                 </div>
-                <DsTypography variant="Semibold_14" className={styles.text} onClick={() => handleExport()}>
+                <DsTypography
+                    variant="Semibold_14"
+                    className={styles.text}
+                    onClick={() => (loading ? () => {} : handleExport())}
+                >
                     Export PDF
                 </DsTypography>
             </div>
 
-            <div className={styles.insideContainer}>
+            <div className={loading ? `${styles.insideContainer} ${styles.disabled}` : styles.insideContainer}>
                 <div>
                     <Calculate />
                 </div>
                 <DsTypography
                     variant="Semibold_14"
                     className={styles.text}
-                    onClick={() => dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))}
+                    onClick={() =>
+                        loading ? () => {} : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
+                    }
                 >
                     View the calculations
                 </DsTypography>

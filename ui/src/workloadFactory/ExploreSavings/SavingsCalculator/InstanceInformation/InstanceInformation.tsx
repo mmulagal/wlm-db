@@ -1,9 +1,12 @@
-import { Table, useTable } from '@netapp/design-system';
+import { Table, useTable, DsFlashingDotsLoader } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { DsTypography } from '@netapp/design-system';
 import styles from './InstanceInformation.module.scss';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 const InstanceInformation = () => {
+    const { loading } = useAppSelector(state => state.exploreSavings);
+
     const data = [
         { details: 'Instance type', value: 'M5.xlarge, C4.xlarge', id: '1' },
         { details: 'SQL Edition', value: 'SQL server enterprise edition', id: '2' },
@@ -22,7 +25,14 @@ const InstanceInformation = () => {
             Header: 'Value',
             accessor: 'value',
             id: '2',
-            width: '386px'
+            width: '386px',
+            renderCell: (cellData: any, rowData: any) => {
+                return !loading ? (
+                    <DsTypography variant="Regular_14">{rowData.value}</DsTypography>
+                ) : (
+                    <DsFlashingDotsLoader />
+                );
+            }
         }
     ];
 

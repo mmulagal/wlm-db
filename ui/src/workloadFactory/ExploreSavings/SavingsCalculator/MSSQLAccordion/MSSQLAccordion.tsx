@@ -8,6 +8,7 @@ import { FROM_DIALOG, WLF_TO_FORM_NAVIGATE } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../../utils/appConstants';
 import SaveConfigSavings from './SaveCongfigSavings/SaveCongfigSavings';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 const TableLayout = ({ data }: any) => {
     return (
@@ -27,6 +28,7 @@ const TableLayout = ({ data }: any) => {
 
 const MSSQLAccordion = () => {
     const isMutliFsx = false;
+    const { loading } = useAppSelector(state => state.exploreSavings);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
     const fsxData = {
@@ -82,6 +84,7 @@ const MSSQLAccordion = () => {
                 title="Microsoft SQL Server on FSx for ONTAP"
                 variant="Default"
                 value=""
+                isDisabled={loading}
                 headerActions={[
                     isMutliFsx ? (
                         <Popover
@@ -95,13 +98,21 @@ const MSSQLAccordion = () => {
                             }
                         />
                     ) : (
-                        <DsButton type="text" onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}>
+                        <DsButton
+                            type="text"
+                            isDisabled={loading}
+                            onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
+                        >
                             Save configuration
                         </DsButton>
                     ),
                     ,
                     <div style={{ height: '32px' }} className={styles.buttonContainer}>
-                        <DsButton type="button" isDisabled={isMutliFsx} onClick={() => navigate(WLF_TO_FORM_NAVIGATE)}>
+                        <DsButton
+                            type="button"
+                            isDisabled={isMutliFsx || loading}
+                            onClick={() => navigate(WLF_TO_FORM_NAVIGATE)}
+                        >
                             Create
                         </DsButton>
                     </div>
