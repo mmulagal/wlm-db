@@ -10,9 +10,16 @@ import {
     GetDriveInfoSchema,
     GetCollationDetailsSchema,
     GetSandboxSavingsSchema,
-    GetSandboxesInfoSchema
+    GetSandboxesInfoSchema,
+    PatchResourceForSandboxSchema,
+    RevertPatchResourceForSandboxSchema
 } from './schemas/database-hosts-schemas';
-import { getSandboxesInfo, getSandboxSavings } from '../operations/sandbox-operations';
+import {
+    getSandboxesInfo,
+    getSandboxSavings,
+    revertMetadataForSanboxTesting,
+    updateMetadataForSanboxTesting
+} from '../operations/sandbox-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 
@@ -122,6 +129,28 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     query: { nextToken }
                 } = request;
                 const response = await getSandboxesInfo(accountId, credentialsId, region, nextToken);
+                return reply.send(response);
+            }
+        )
+        .patch(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes-meta-update`,
+            { schema: PatchResourceForSandboxSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId }
+                } = request;
+                const response = await updateMetadataForSanboxTesting(accountId, credentialsId, region, databaseHostId);
+                return reply.send(response);
+            }
+        )
+        .patch(
+            `${API_PREFIX_PATH}/database-hosts/revert-sandboxes-meta-update`,
+            { schema: RevertPatchResourceForSandboxSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region }
+                } = request;
+                const response = await revertMetadataForSanboxTesting(accountId, credentialsId, region);
                 return reply.send(response);
             }
         );

@@ -11,6 +11,7 @@ interface Metadata {
     userDatabase?: Array<UserDatabase>;
     createDbMetrics?: CreateDbMetrics;
     sandboxCreated?: boolean;
+    updatedManually?: boolean;
 }
 
 interface CreateDbMetrics {

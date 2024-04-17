@@ -1,4 +1,6 @@
 import { RouteTags } from '../../utils/consts';
+import { Type } from '@fastify/type-provider-typebox';
+
 import {
     DatabaseHostQueryString,
     DatabaseHostSummaryPerStorageTypeListResponse,
@@ -108,6 +110,25 @@ const GetSandboxesInfoSchema = {
     }
 };
 
+const PatchResourceForSandboxSchema = {
+    ...databaseHostsRequest,
+    summary: 'Patch for sandboxcreation resource metadata ',
+    description: 'Patch for sandboxcreation resource metadata.',
+    params: DatabaseHostSummaryParams,
+    response: {
+        200: Type.Any()
+    }
+};
+
+const RevertPatchResourceForSandboxSchema = {
+    ...databaseHostsRequest,
+    summary: 'Patch for sandboxcreation resource metadata ',
+    description: 'Patch for sandboxcreation resource metadata.',
+    response: {
+        200: Type.Any()
+    }
+};
+
 export {
     DatabaseHostsSummarySchema,
     DatabaseHostDetailsSchema,
@@ -116,5 +137,7 @@ export {
     DatabasesCreateSchema,
     GetCollationDetailsSchema,
     GetSandboxSavingsSchema,
-    GetSandboxesInfoSchema
+    GetSandboxesInfoSchema,
+    PatchResourceForSandboxSchema,
+    RevertPatchResourceForSandboxSchema
 };
