@@ -9,7 +9,8 @@
         "percentUsed": "25",
         "remaining": "7421703487488",
         "total": "9895604649984",
-        "used": "2473901162496"
+        "used": "2473901162496",
+        "error": ""
     },
     "allResourceUtilizationResponse": {
         "cpuUtilization": {
@@ -22,7 +23,8 @@
             "used": "2473901162496",
             "total": "9895604649984",
             "remaining": "7421703487488",
-            "percentUsed": "25"
+            "percentUsed": "25",
+            "error": ""
         },
         "memoryUtilization": {
             "used": 8589934592,

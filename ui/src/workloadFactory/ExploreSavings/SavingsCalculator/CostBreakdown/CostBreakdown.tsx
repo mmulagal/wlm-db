@@ -1,11 +1,13 @@
-import { DsTypography } from '@netapp/design-system';
+import { DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
 import styles from './CostBreakdown.module.scss';
 import { Card, CardContent, CardTableContent } from '../../../../ui-components/Cards/Card';
 import { Text } from '../../../../ui-components/Typography';
 import { comparisonData } from '../savingsUtil';
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 const CostBreakdown = () => {
+    const { loading } = useAppSelector(state => state.exploreSavings);
     const ComparisonTableLayout = ({ data, calculatedResponse }: any) => {
         return (
             <div
@@ -26,10 +28,24 @@ const CostBreakdown = () => {
                         </Text>
                     </GridItem>
                     <GridItem lg="4">
-                        <Text style={{ paddingLeft: 10 }}>{calculatedResponse && `$ ${data?.fsx}`}</Text>
+                        <Text style={{ paddingLeft: 10 }}>
+                            {!loading && calculatedResponse && `$ ${data?.fsx}`}
+                            {loading && (
+                                <div style={{ position: 'relative', top: '5px' }}>
+                                    <DsFlashingDotsLoader />
+                                </div>
+                            )}
+                        </Text>
                     </GridItem>
                     <GridItem lg="4">
-                        <Text style={{ paddingLeft: 10 }}>{calculatedResponse && `$ ${data?.ebs}`}</Text>
+                        <Text style={{ paddingLeft: 10 }}>
+                            {!loading && calculatedResponse && `$ ${data?.ebs}`}
+                            {loading && (
+                                <div style={{ position: 'relative', top: '5px' }}>
+                                    <DsFlashingDotsLoader />
+                                </div>
+                            )}
+                        </Text>
                     </GridItem>
                 </Grid>
             </div>
@@ -65,6 +81,7 @@ const CostBreakdown = () => {
                 <DsTypography variant="Semibold_16" className={styles.title}>
                     Cost breakdown - Monthly charge
                 </DsTypography>
+                {loading && <DsFlashingDotsLoader />}
             </div>
 
             <div>

@@ -1,9 +1,10 @@
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import { ReactComponent as CostSavingsImage } from '../../../../assets/cost-savings.svg';
 import styles from './CostSavings.module.scss';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 const CostSavings = () => {
-    const loading = false;
+    const { loading } = useAppSelector(state => state.exploreSavings);
     return (
         <div className={styles.costSavings}>
             <div className={styles.leftSide}>
@@ -12,11 +13,14 @@ const CostSavings = () => {
                 </div>
                 <div className={styles.textContent}>
                     <div className={styles.topValue}>
-                        <DsTypography variant="Regular_16" className={styles.dollar}>
+                        <DsTypography
+                            variant="Regular_16"
+                            className={loading ? `${styles.dollar} ${styles.dollarHeight}` : styles.dollar}
+                        >
                             $
                         </DsTypography>
                         <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                            7000
+                            {!loading && 7000}
                         </DsTypography>
                     </div>
 
@@ -34,9 +38,12 @@ const CostSavings = () => {
             <div className={styles.rightSide}>
                 <div className={styles.firstRow}>
                     <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                        50
+                        {!loading && 7000}
                     </DsTypography>
-                    <DsTypography variant="Regular_16" className={styles.dollar}>
+                    <DsTypography
+                        variant="Regular_16"
+                        className={loading ? `${styles.dollar} ${styles.dollarHeight}` : styles.dollar}
+                    >
                         %
                     </DsTypography>
                 </div>

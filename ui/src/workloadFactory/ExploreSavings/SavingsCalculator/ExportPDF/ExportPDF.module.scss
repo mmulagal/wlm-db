@@ -27,4 +27,17 @@
             cursor: pointer;
         }
     }
+
+    .disabled {
+        svg {
+            path {
+                fill: var(--text-disabled);
+            }
+        }
+
+        .text {
+            color: var(--text-disabled);
+            cursor: not-allowed;
+        }
+    }
 }
