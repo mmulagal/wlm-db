@@ -10,7 +10,7 @@ import {
     useLazyGetDatabaseHostsListQuery,
     useLazyGetManagedHostDataQuery
 } from '../../utils/apiService';
-import { addNewManagedHostData, sortListOfDict } from '../../utils/utilityFunctions';
+import { addNewManagedHostData, formatUnamanagedHostList, sortListOfDict } from '../../utils/utilityFunctions';
 import {
     addDatabaseHostsData,
     addDatabaseHostsLoading,
@@ -25,11 +25,15 @@ import {
     setMovedToUnmanagedHost,
     setMssqlInstancesData,
     setUnIdentifiableHosts,
-    setUnManagedHosts
+    setUnManagedHosts,
+    setUnmanagedFormatedData
 } from '../../store/workloadFactory/inventorySlice';
 import { setHeaderSelectedCred, setHeaderSelectedRegion } from '../../store/workloadFactory/headersSlice';
 import { DETECT_HOST_VAR } from '../../utils/consts';
 import store from '../../store/store';
+import { renderFileSystemType } from './InventoryUtils';
+import { GENERAL } from '../../utils/appConstants';
+import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/exploreSavingsSlice';
 
 const InventoryApis = () => {
     const dispatch = useAppDispatch();
@@ -289,6 +293,8 @@ const InventoryApis = () => {
         dispatch(addDatabaseHostsList([]));
         dispatch(setMovedManagedHosts([]));
         dispatch(setUnManagedHosts([]));
+        dispatch(setUnmanagedFormatedData([]));
+        dispatch(setUnmanagedExploreSavingsHost([]));
         dispatch(setUnIdentifiableHosts([]));
         dispatch(setMovedToManagedHost([]));
         dispatch(setMovedToUnmanagedHost([]));
@@ -363,6 +369,8 @@ const InventoryApis = () => {
             dispatch(addDatabaseHostsList([]));
             dispatch(setMovedManagedHosts([]));
             dispatch(setUnManagedHosts([]));
+            dispatch(setUnmanagedFormatedData([]));
+            dispatch(setUnmanagedExploreSavingsHost([]));
             dispatch(setUnIdentifiableHosts([]));
             dispatch(setHeaderSelectedCred(null));
             dispatch(setHeaderSelectedRegion(null));
@@ -751,6 +759,23 @@ const InventoryApis = () => {
             });
         }
     }, [movedManagedHostList]);
+
+    // This is to format unmanaged host data that is used in Inventory unmanaged tab and explore savings page.
+    useEffect(() => {
+        // Format data again on unIdentifiableHosts or fsxCredentialStatusObj change
+        const unmanagedFormatedData = formatUnamanagedHostList(unManagedHostList, mssqlInstancesData);
+        dispatch(setUnmanagedFormatedData(unmanagedFormatedData));
+
+        let nonFsxnStorageList: any = [];
+        unmanagedFormatedData.map((item: any) => {
+            const fileSystemType = renderFileSystemType('', item);
+            if (fileSystemType && fileSystemType.includes(GENERAL.EBS)) {
+                nonFsxnStorageList.push(item);
+            }
+        });
+        // This is to store EBS unmanaged rows in explore savings. Once FSXW is supported than will add that also.
+        dispatch(setUnmanagedExploreSavingsHost(nonFsxnStorageList));
+    }, [unManagedHostList, mssqlInstancesData]);
 
     return <></>;
 };
