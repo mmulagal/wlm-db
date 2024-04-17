@@ -13,8 +13,8 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { getSandboxDistributionByTag } from '../SandboxUtility';
 
 const SandboxDistributionType = () => {
-    const loading = false;
-    const { isNA, aggregatedSandboxList } = useAppSelector(state => state.sandbox);
+    const { isNA, aggregatedSandboxList, getSandboxList } = useAppSelector(state => state.sandbox);
+    const { sandboxListLoading: loading } = getSandboxList;
     const distributionByTags = getSandboxDistributionByTag(aggregatedSandboxList);
     return (
         <div className={styles.sandboxType}>
@@ -58,8 +58,8 @@ const SandboxDistributionType = () => {
                             <div className={styles.progressStyle}>
                                 <ProgressBar
                                     max={aggregatedSandboxList.length}
-                                    value={isNA ? 0 : distributionByTags[GENERAL.DEVELOPMENT]}
-                                    color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                    value={isNA || loading ? 0 : distributionByTags[GENERAL.DEVELOPMENT]}
+                                    color={isNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
                                 />
                             </div>
                         </div>
@@ -95,8 +95,8 @@ const SandboxDistributionType = () => {
                             <div className={styles.progressStyle}>
                                 <ProgressBar
                                     max={aggregatedSandboxList.length}
-                                    value={isNA ? 0 : distributionByTags[GENERAL.QA]}
-                                    color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                    value={isNA || loading ? 0 : distributionByTags[GENERAL.QA]}
+                                    color={isNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
                                 />
                             </div>
                         </div>
@@ -115,7 +115,7 @@ const SandboxDistributionType = () => {
                                 >
                                     {GENERAL.INTEGRATION}
                                 </DsTypography>
-                                {isNA && (
+                                {!isNA && (
                                     <DsTypography variant="Regular_24" className={styles.value}>
                                         {distributionByTags[GENERAL.INTEGRATION]}
                                     </DsTypography>
@@ -132,8 +132,8 @@ const SandboxDistributionType = () => {
                             <div className={styles.progressStyle}>
                                 <ProgressBar
                                     max={aggregatedSandboxList.length}
-                                    value={isNA ? 0 : distributionByTags[GENERAL.INTEGRATION]}
-                                    color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                    value={isNA || loading ? 0 : distributionByTags[GENERAL.INTEGRATION]}
+                                    color={isNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
                                 />
                             </div>
                         </div>
@@ -171,8 +171,8 @@ const SandboxDistributionType = () => {
                             <div className={styles.progressStyle}>
                                 <ProgressBar
                                     max={aggregatedSandboxList.length}
-                                    value={isNA ? 0 : distributionByTags[GENERAL.TRAINING]}
-                                    color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                    value={isNA || loading ? 0 : distributionByTags[GENERAL.TRAINING]}
+                                    color={isNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
                                 />
                             </div>
                         </div>
@@ -208,8 +208,8 @@ const SandboxDistributionType = () => {
                             <div className={styles.progressStyle}>
                                 <ProgressBar
                                     max={aggregatedSandboxList.length}
-                                    value={isNA ? 0 : distributionByTags[GENERAL.ANALYTICS]}
-                                    color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                    value={isNA || loading ? 0 : distributionByTags[GENERAL.ANALYTICS]}
+                                    color={isNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
                                 />
                             </div>
                         </div>
@@ -245,8 +245,8 @@ const SandboxDistributionType = () => {
                             <div className={styles.progressStyle}>
                                 <ProgressBar
                                     max={aggregatedSandboxList.length}
-                                    value={isNA ? 0 : distributionByTags[GENERAL.SANDBOX_OTHER]}
-                                    color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                    value={isNA || loading ? 0 : distributionByTags[GENERAL.SANDBOX_OTHER]}
+                                    color={isNA || loading ? 'var(--chart-disabled)' : '#5E8DCD'}
                                 />
                             </div>
                         </div>

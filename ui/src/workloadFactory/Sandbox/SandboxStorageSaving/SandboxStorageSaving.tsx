@@ -12,22 +12,44 @@ const SandboxStorageSaving = () => {
     const { isNA, getSandboxSavings } = useAppSelector(state => state.sandbox);
     const { sandboxSavingsLoading: loading, sandboxSavings } = getSandboxSavings;
 
+    const savingsPercentage = sandboxSavings?.sandboxSavingsPercentage
+        ? Math.floor(sandboxSavings.sandboxSavingsPercentage) - 169
+        : 0;
+    const savingsPercentToShow = `${savingsPercentage < 5 ? '<5' : savingsPercentage}%`;
+
     const handleProgressBar = () => {
+        if (savingsPercentage === 0) {
+            return (
+                <div className={styles.progressBar}>
+                    <div
+                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                        style={{
+                            width: `${100}%`,
+                            backgroundColor: 'var(--chart-disabled)'
+                        }}
+                    ></div>
+                </div>
+            );
+        }
         if (!isNA) {
             return (
                 <div className={styles.progressBar}>
                     <div
-                        className={`${styles.progress} ${styles.leftCurveBar}`}
+                        className={`${styles.progress} ${styles.leftCurveBar} ${
+                            savingsPercentage === 100 ? styles.rightCurveBar : ''
+                        }`}
                         style={{
-                            width: `${sandboxSavings?.sandboxSavingsPercentage || 0}%`,
+                            width: `${savingsPercentage}%`,
                             backgroundColor: 'var(--chart-4)'
                         }}
                     ></div>
                     <div className={styles.separator}></div>
                     <div
-                        className={`${styles.progress} ${styles.rightCurveBar}`}
+                        className={`${styles.progress} ${styles.rightCurveBar} ${
+                            savingsPercentage === 0 ? styles.leftCurveBar : ''
+                        }`}
                         style={{
-                            width: `${100 - sandboxSavings?.sandboxSavingsPercentage || 0}%`,
+                            width: `${100 - savingsPercentage}%`,
                             backgroundColor: 'var(--chart-9)'
                         }}
                     ></div>
@@ -63,7 +85,7 @@ const SandboxStorageSaving = () => {
                                             <FlashingDotsLoader />
                                         </div>
                                     )}
-                                    {!loading && `${sandboxSavings?.sandboxSavingsPercentage || 0}%`}
+                                    {!loading && savingsPercentToShow}
                                 </DsTypography>
                             )}
                             {isNA && (
@@ -134,7 +156,7 @@ const SandboxStorageSaving = () => {
                                             <FlashingDotsLoader />
                                         </div>
                                     )}
-                                    {!loading && `${sandboxSavings?.sandboxSavingsPercentage || 0}%`}
+                                    {!loading && savingsPercentToShow}
                                 </DsTypography>
                             )}
                             {isNA && (
