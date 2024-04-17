@@ -122,8 +122,8 @@ const PatchResourceForSandboxSchema = {
 
 const RevertPatchResourceForSandboxSchema = {
     ...databaseHostsRequest,
-    summary: 'Patch for sandboxcreation resource metadata ',
-    description: 'Patch for sandboxcreation resource metadata.',
+    summary: 'Revert  for sandboxcreation resource metadata ',
+    description: 'Revert  for sandboxcreation resource metadata.',
     response: {
         200: Type.Any()
     }
