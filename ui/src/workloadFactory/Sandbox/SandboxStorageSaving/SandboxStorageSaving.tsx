@@ -5,11 +5,12 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
+import { formatSize } from '../../../utils/utilityFunctions';
 
 const SandboxStorageSaving = () => {
     const windowSize = useResize();
-    const loading = false;
-    const { isNA } = useAppSelector(state => state.sandbox);
+    const { isNA, getSandboxSavings } = useAppSelector(state => state.sandbox);
+    const { sandboxSavingsLoading: loading, sandboxSavings } = getSandboxSavings;
 
     const handleProgressBar = () => {
         if (!isNA) {
@@ -18,7 +19,7 @@ const SandboxStorageSaving = () => {
                     <div
                         className={`${styles.progress} ${styles.leftCurveBar}`}
                         style={{
-                            width: `${70}%`,
+                            width: `${sandboxSavings?.sandboxSavingsPercentage || 0}%`,
                             backgroundColor: 'var(--chart-4)'
                         }}
                     ></div>
@@ -26,7 +27,7 @@ const SandboxStorageSaving = () => {
                     <div
                         className={`${styles.progress} ${styles.rightCurveBar}`}
                         style={{
-                            width: `${30}%`,
+                            width: `${100 - sandboxSavings?.sandboxSavingsPercentage || 0}%`,
                             backgroundColor: 'var(--chart-9)'
                         }}
                     ></div>
@@ -62,7 +63,7 @@ const SandboxStorageSaving = () => {
                                             <FlashingDotsLoader />
                                         </div>
                                     )}
-                                    {!loading && '78%'}
+                                    {!loading && `${sandboxSavings?.sandboxSavingsPercentage || 0}%`}
                                 </DsTypography>
                             )}
                             {isNA && (
@@ -90,7 +91,7 @@ const SandboxStorageSaving = () => {
                                 />
                                 {!isNA && (
                                     <DsTypography variant="Semibold_14" style={{ lineHeight: 'unset' }}>
-                                        {'0.82 TiB'}
+                                        {formatSize(sandboxSavings?.savedStorage * 8)}
                                     </DsTypography>
                                 )}
 
@@ -106,7 +107,7 @@ const SandboxStorageSaving = () => {
                                 />
                                 {!isNA && (
                                     <DsTypography variant="Semibold_14" style={{ lineHeight: 'unset' }}>
-                                        {'0.82 TiB'}
+                                        {formatSize(sandboxSavings?.consumedStorage * 8)}
                                     </DsTypography>
                                 )}
 
@@ -133,7 +134,7 @@ const SandboxStorageSaving = () => {
                                             <FlashingDotsLoader />
                                         </div>
                                     )}
-                                    {!loading && '78%'}
+                                    {!loading && `${sandboxSavings?.sandboxSavingsPercentage || 0}%`}
                                 </DsTypography>
                             )}
                             {isNA && (
@@ -162,14 +163,14 @@ const SandboxStorageSaving = () => {
                             {!loading && !isNA && (
                                 <>
                                     <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                                        0.82
+                                        {formatSize(sandboxSavings?.savedStorage * 8).split(' ')[0]}
                                     </DsTypography>
                                     <DsTypography
                                         variant="Semibold_14"
                                         className={styles.setUnit}
                                         style={{ lineHeight: 'unset' }}
                                     >
-                                        TiB
+                                        {formatSize(sandboxSavings?.savedStorage * 8).split(' ')[1]}
                                     </DsTypography>
                                 </>
                             )}
@@ -199,14 +200,14 @@ const SandboxStorageSaving = () => {
                             {!loading && !isNA && (
                                 <>
                                     <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                                        0.18
+                                        {formatSize(sandboxSavings?.consumedStorage * 8).split(' ')[0]}
                                     </DsTypography>
                                     <DsTypography
                                         variant="Semibold_14"
                                         className={styles.setUnit}
                                         style={{ lineHeight: 'unset' }}
                                     >
-                                        TiB
+                                        {formatSize(sandboxSavings?.consumedStorage * 8).split(' ')[1]}
                                     </DsTypography>
                                 </>
                             )}

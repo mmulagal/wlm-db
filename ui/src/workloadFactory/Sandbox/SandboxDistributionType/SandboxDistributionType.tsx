@@ -10,10 +10,12 @@ import styles from './SandboxDistributionType.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
+import { getSandboxDistributionByTag } from '../SandboxUtility';
 
 const SandboxDistributionType = () => {
     const loading = false;
-    const { isNA } = useAppSelector(state => state.sandbox);
+    const { isNA, aggregatedSandboxList } = useAppSelector(state => state.sandbox);
+    const distributionByTags = getSandboxDistributionByTag(aggregatedSandboxList);
     return (
         <div className={styles.sandboxType}>
             <div className={styles.headSection}>
@@ -41,7 +43,7 @@ const SandboxDistributionType = () => {
                                 </DsTypography>
                                 {!isNA && (
                                     <DsTypography variant="Regular_24" className={styles.value}>
-                                        55
+                                        {distributionByTags[GENERAL.DEVELOPMENT]}
                                     </DsTypography>
                                 )}
                                 {isNA && (
@@ -54,7 +56,11 @@ const SandboxDistributionType = () => {
                                 )}
                             </div>
                             <div className={styles.progressStyle}>
-                                <ProgressBar value={isNA ? 0 : 55} color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'} />
+                                <ProgressBar
+                                    max={aggregatedSandboxList.length}
+                                    value={isNA ? 0 : distributionByTags[GENERAL.DEVELOPMENT]}
+                                    color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                />
                             </div>
                         </div>
                     </div>
@@ -74,7 +80,7 @@ const SandboxDistributionType = () => {
                                 </DsTypography>
                                 {!isNA && (
                                     <DsTypography variant="Regular_24" className={styles.value}>
-                                        40
+                                        {distributionByTags[GENERAL.QA]}
                                     </DsTypography>
                                 )}
                                 {isNA && (
@@ -87,7 +93,11 @@ const SandboxDistributionType = () => {
                                 )}
                             </div>
                             <div className={styles.progressStyle}>
-                                <ProgressBar value={isNA ? 0 : 40} color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'} />
+                                <ProgressBar
+                                    max={aggregatedSandboxList.length}
+                                    value={isNA ? 0 : distributionByTags[GENERAL.QA]}
+                                    color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                />
                             </div>
                         </div>
                     </div>
@@ -107,7 +117,7 @@ const SandboxDistributionType = () => {
                                 </DsTypography>
                                 {isNA && (
                                     <DsTypography variant="Regular_24" className={styles.value}>
-                                        5
+                                        {distributionByTags[GENERAL.INTEGRATION]}
                                     </DsTypography>
                                 )}
                                 {isNA && (
@@ -120,7 +130,11 @@ const SandboxDistributionType = () => {
                                 )}
                             </div>
                             <div className={styles.progressStyle}>
-                                <ProgressBar value={isNA ? 0 : 5} color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'} />
+                                <ProgressBar
+                                    max={aggregatedSandboxList.length}
+                                    value={isNA ? 0 : distributionByTags[GENERAL.INTEGRATION]}
+                                    color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                />
                             </div>
                         </div>
                     </div>
@@ -142,7 +156,7 @@ const SandboxDistributionType = () => {
                                 </DsTypography>
                                 {!isNA && (
                                     <DsTypography variant="Regular_24" className={styles.value}>
-                                        15
+                                        {distributionByTags[GENERAL.TRAINING]}
                                     </DsTypography>
                                 )}
                                 {isNA && (
@@ -155,7 +169,11 @@ const SandboxDistributionType = () => {
                                 )}
                             </div>
                             <div className={styles.progressStyle}>
-                                <ProgressBar value={isNA ? 0 : 15} color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'} />
+                                <ProgressBar
+                                    max={aggregatedSandboxList.length}
+                                    value={isNA ? 0 : distributionByTags[GENERAL.TRAINING]}
+                                    color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                />
                             </div>
                         </div>
                     </div>
@@ -175,7 +193,7 @@ const SandboxDistributionType = () => {
                                 </DsTypography>
                                 {!isNA && (
                                     <DsTypography variant="Regular_24" className={styles.value}>
-                                        5
+                                        {distributionByTags[GENERAL.ANALYTICS]}
                                     </DsTypography>
                                 )}
                                 {isNA && (
@@ -188,7 +206,11 @@ const SandboxDistributionType = () => {
                                 )}
                             </div>
                             <div className={styles.progressStyle}>
-                                <ProgressBar value={isNA ? 0 : 5} color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'} />
+                                <ProgressBar
+                                    max={aggregatedSandboxList.length}
+                                    value={isNA ? 0 : distributionByTags[GENERAL.ANALYTICS]}
+                                    color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                />
                             </div>
                         </div>
                     </div>
@@ -208,7 +230,7 @@ const SandboxDistributionType = () => {
                                 </DsTypography>
                                 {!isNA && (
                                     <DsTypography variant="Regular_24" className={styles.value}>
-                                        0
+                                        {distributionByTags[GENERAL.SANDBOX_OTHER]}
                                     </DsTypography>
                                 )}
                                 {isNA && (
@@ -221,7 +243,11 @@ const SandboxDistributionType = () => {
                                 )}
                             </div>
                             <div className={styles.progressStyle}>
-                                <ProgressBar value={isNA ? 0 : 0} color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'} />
+                                <ProgressBar
+                                    max={aggregatedSandboxList.length}
+                                    value={isNA ? 0 : distributionByTags[GENERAL.SANDBOX_OTHER]}
+                                    color={isNA ? 'var(--chart-disabled)' : '#5E8DCD'}
+                                />
                             </div>
                         </div>
                     </div>
