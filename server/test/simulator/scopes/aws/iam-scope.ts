@@ -22,7 +22,7 @@ const IamSimulatePolicyResponse: Partial<SimulatePrincipalPolicyCommandOutput> =
             EvalDecision: PolicyEvaluationDecisionType.ALLOWED,
             MatchedStatements: [],
             MissingContextValues: [],
-            OrganizationsDecisionDetail: {AllowedByOrganizations:true}
+            OrganizationsDecisionDetail: { AllowedByOrganizations: true }
         },
         {
             EvalActionName: 'secretsmanager:CreateSecret',
@@ -30,7 +30,7 @@ const IamSimulatePolicyResponse: Partial<SimulatePrincipalPolicyCommandOutput> =
             EvalDecision: PolicyEvaluationDecisionType.ALLOWED,
             MatchedStatements: [],
             MissingContextValues: [],
-            OrganizationsDecisionDetail: {AllowedByOrganizations:true}
+            OrganizationsDecisionDetail: { AllowedByOrganizations: true }
         },
         {
             EvalActionName: 'secretsmanager:GetRandomPassword',
@@ -38,7 +38,7 @@ const IamSimulatePolicyResponse: Partial<SimulatePrincipalPolicyCommandOutput> =
             EvalDecision: PolicyEvaluationDecisionType.ALLOWED,
             MatchedStatements: [],
             MissingContextValues: [],
-            OrganizationsDecisionDetail: {AllowedByOrganizations:true}
+            OrganizationsDecisionDetail: { AllowedByOrganizations: true }
         },
         {
             EvalActionName: 'secretsmanager:DeleteSecret',
@@ -46,7 +46,7 @@ const IamSimulatePolicyResponse: Partial<SimulatePrincipalPolicyCommandOutput> =
             EvalDecision: PolicyEvaluationDecisionType.ALLOWED,
             MatchedStatements: [],
             MissingContextValues: [],
-            OrganizationsDecisionDetail: {AllowedByOrganizations:true}
+            OrganizationsDecisionDetail: { AllowedByOrganizations: true }
         },
         {
             EvalActionName: 'secretsmanager:ListSecretVersionIds',
@@ -54,7 +54,7 @@ const IamSimulatePolicyResponse: Partial<SimulatePrincipalPolicyCommandOutput> =
             EvalDecision: PolicyEvaluationDecisionType.ALLOWED,
             MatchedStatements: [],
             MissingContextValues: [],
-            OrganizationsDecisionDetail: {AllowedByOrganizations:true}
+            OrganizationsDecisionDetail: { AllowedByOrganizations: true }
         },
         {
             EvalActionName: 'secretsmanager:TagResource',
@@ -62,7 +62,7 @@ const IamSimulatePolicyResponse: Partial<SimulatePrincipalPolicyCommandOutput> =
             EvalDecision: PolicyEvaluationDecisionType.ALLOWED,
             MatchedStatements: [],
             MissingContextValues: [],
-            OrganizationsDecisionDetail: {AllowedByOrganizations:true}
+            OrganizationsDecisionDetail: { AllowedByOrganizations: true }
         },
         {
             EvalActionName: 'secretsmanager:UntagResource',
@@ -70,7 +70,7 @@ const IamSimulatePolicyResponse: Partial<SimulatePrincipalPolicyCommandOutput> =
             EvalDecision: PolicyEvaluationDecisionType.ALLOWED,
             MatchedStatements: [],
             MissingContextValues: [],
-            OrganizationsDecisionDetail: {AllowedByOrganizations:true}
+            OrganizationsDecisionDetail: { AllowedByOrganizations: true }
         }
     ]
 };

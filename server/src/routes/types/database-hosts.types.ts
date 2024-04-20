@@ -190,7 +190,16 @@ type ResourcesUtilizationResponseType = Static<typeof ResourcesUtilizationRespon
 
 // type DatabaseHostSummaryResponseType = Static<typeof DatabaseHostSummaryResponse>;
 // type DatabaseHostSummaryListResponseType = Static<typeof DatabaseHostSummaryListResponse>;
-
+const EbsResourceInfoResponse = Type.Array(
+    Type.Object({
+        id: Type.String(),
+        size: Type.Number(),
+        cost: Type.Number(),
+        throughput: Type.Optional(Type.Number()), // Optional for gp2 volumes
+        iops: Type.Optional(Type.Number()), // Optional for st1
+        volumeType: Type.String()
+    })
+);
 const DatabaseHostSummaryPerStorageTypeResponse = Type.Object({
     id: Type.String(),
     name: Type.String(),
@@ -201,6 +210,7 @@ const DatabaseHostSummaryPerStorageTypeResponse = Type.Object({
     protection: Type.Optional(ProtectionPerStorageTypeResponse),
     performance: Type.Optional(PerformanceResponse),
     storage: Type.Optional(StoragePerStorageTypeResponse),
+    ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),
     estimatedUsageCost: Type.Optional(UsageCostPerStorageTypeResponse),
     resourceUtilization: Type.Optional(ResourcesUtilizationResponse),
     errors: Type.Optional(Type.Any())

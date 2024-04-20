@@ -32,7 +32,7 @@ import describeInstanceResponse from '../../responses/aws/describe-instance.json
 import describeVpcEndpointsResponse from '../../responses/aws/describe-endpoints.json';
 import describeInstanceTypeOfferings from '../../responses/aws/describe-instancetype-offerings.json';
 import modifyVpcAttributesResponse from '../../responses/aws/modify-vpc-attributes.json';
-import describeVolumesResponse from '../../responses/aws/describe-volumes.json';
+// import describeVolumesResponse from '../../responses/aws/describe-volumes.json';
 import describeSnapshotsResponse from '../../responses/aws/describe-snapshots.json';
 
 const KeyPairId = `${faker.string.alphanumeric(20)}`;
@@ -95,6 +95,35 @@ ec2Mock.on(DescribeInstanceTypeOfferingsCommand).resolves(describeInstanceTypeOf
 
 ec2Mock.on(ModifyVpcAttributeCommand).resolves(modifyVpcAttributesResponse);
 
-ec2Mock.on(DescribeVolumesCommand).resolves(describeVolumesResponse);
+// ec2Mock.on(DescribeVolumesCommand).resolves(describeVolumesResponse);
+ec2Mock.on(DescribeVolumesCommand).callsFake(async (command: DescribeVolumesCommand) => {
+    // Get the VolumeIds from the command parameters
+    const volumeIds = command.VolumeIds;
 
+    const volumes: Volume[] = volumeIds.map(volumeId => ({
+        VolumeId: volumeId,
+        AvailabilityZone: 'us-east-1a',
+        Attachments: [
+            {
+                AttachTime: '2013-12-18T22:35:00.000Z',
+                InstanceId: 'i-1234567890abcdef0',
+                VolumeId: 'vol-049df61146c4d7901',
+                State: 'attached',
+                DeleteOnTermination: true,
+                Device: '/dev/sda1'
+            }
+        ],
+        Encrypted: true,
+        KmsKeyId: 'arn:aws:kms:us-east-2a:123456789012:key/8c5b2c63-b9bc-45a3-a87a-5513eEXAMPLE',
+        VolumeType: 'gp2',
+        State: 'in-use',
+        Iops: 100,
+        SnapshotId: 'snap-1234567890abcdef0',
+        CreateTime: '2019-12-18T22:35:00.084Z',
+        Size: 8
+    }));
+    return {
+        Volumes: volumes
+    } as DescribeVolumesResult;
+});
 ec2Mock.on(DescribeSnapshotsCommand).resolves(describeSnapshotsResponse);
