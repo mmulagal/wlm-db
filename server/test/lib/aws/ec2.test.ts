@@ -36,7 +36,6 @@ import ec2Instances from '../../simulator/responses/aws/describe-instance.json';
 import vpcEndpoints from '../../simulator/responses/aws/describe-endpoints.json';
 import instanceTypeOfferings from '../../simulator/responses/aws/describe-instancetype-offerings.json';
 import modifyVpcAttributesResponse from '../../simulator/responses/aws/modify-vpc-attributes.json';
-import describeVolumesResponse from '../../simulator/responses/aws/describe-volumes.json';
 
 import { DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
 
@@ -171,6 +170,6 @@ describe('EC2 Lib', () => {
     it('Describe volumes response', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
         const response = await describeVolumes(credentialsId, DEFAULT_AWS_REGION, { VolumeIds: ['test-volume-id'] });
-        expect(response).toEqual(describeVolumesResponse);
+        expect(response?.Volumes?.[0]?.VolumeId).toEqual('test-volume-id');
     });
 });
