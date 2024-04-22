@@ -3,6 +3,7 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { DsTypography } from '@netapp/design-system';
 import styles from './InstanceInformation.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const InstanceInformation = () => {
     const { loading } = useAppSelector(state => state.exploreSavings);
@@ -48,7 +49,7 @@ const InstanceInformation = () => {
     });
     return (
         <div className={styles.instanceInformation}>
-            <DsTypography variant="Regular_14">Instance information:</DsTypography>
+            <DsTypography variant="Regular_14">{GENERAL.INSTANCE_INFORMATION}</DsTypography>
             <div className={styles.instanceTable}>
                 <Table
                     //@ts-ignore

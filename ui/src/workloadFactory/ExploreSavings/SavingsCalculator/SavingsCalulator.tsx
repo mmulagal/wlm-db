@@ -18,6 +18,7 @@ import { useState } from 'react';
 //@ts-ignore
 import domToPdf from 'dom-to-pdf';
 import ExportPDF from './ExportPDF/ExportPDF';
+import { GENERAL } from '../../../utils/appConstants';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
@@ -55,7 +56,7 @@ const SavingsCalculator = () => {
                     </div>
 
                     <div className={styles.savingsHeading}>
-                        <DsTypography variant="Regular_24">Savings calculator</DsTypography>
+                        <DsTypography variant="Regular_24">{GENERAL.SAVINGS_CALCULATOR}</DsTypography>
                         <div />
                     </div>
 
@@ -89,12 +90,8 @@ const SavingsCalculator = () => {
                             <Suggestion />
                         </div>
                         <div className={styles.textContent}>
-                            <DsTypography variant="Semibold_16">
-                                Based on your selections, we recommend creating the following:
-                            </DsTypography>
-                            <DsTypography variant="Regular_14">
-                                Microsoft SQL Server on AWS Ec2 using FSx for ONTAP file system
-                            </DsTypography>
+                            <DsTypography variant="Semibold_16">{GENERAL.SELECTION_BASED_TEXT}</DsTypography>
+                            <DsTypography variant="Regular_14">{GENERAL.SELECTION_BASED_SECOND}</DsTypography>
                         </div>
                     </div>
 

@@ -1,6 +1,7 @@
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import styles from './SavingsSelectedHost.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const SavingsSelectedHost = () => {
     const isDisabled = false;
@@ -22,7 +23,7 @@ const SavingsSelectedHost = () => {
                         variant="Regular_14"
                         className={isDisabled ? `${styles.heading} ${styles.disabledContent}` : styles.heading}
                     >
-                        Host name
+                        {GENERAL.ES_HOST_NAME}
                     </DsTypography>
                 </div>
 
@@ -46,7 +47,7 @@ const SavingsSelectedHost = () => {
                         variant="Regular_14"
                         className={isDisabled ? `${styles.heading} ${styles.disabledContent}` : styles.heading}
                     >
-                        Number of database{' '}
+                        {GENERAL.ES_NUMBER_OF_DB}{' '}
                     </DsTypography>
                 </div>
 
@@ -70,7 +71,7 @@ const SavingsSelectedHost = () => {
                         variant="Regular_14"
                         className={isDisabled ? `${styles.heading} ${styles.disabledContent}` : styles.heading}
                     >
-                        Number of volumes{' '}
+                        {GENERAL.ES_NUMBER_OF_VOLS}
                     </DsTypography>
                 </div>
             </div>

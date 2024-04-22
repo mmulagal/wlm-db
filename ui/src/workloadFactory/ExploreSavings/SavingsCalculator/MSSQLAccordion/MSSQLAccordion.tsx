@@ -89,11 +89,11 @@ const MSSQLAccordion = () => {
                     isMutliFsx ? (
                         <Popover
                             popoverClass={styles['popover']}
-                            children={'This configuration can not be save'}
+                            children={GENERAL.ES_SAVE_ERROR}
                             trigger="hover"
                             container={
                                 <DsButton type="text" isDisabled={true}>
-                                    Save configuration
+                                    {GENERAL.ES_SAVE_CONFIG}
                                 </DsButton>
                             }
                         />
@@ -103,7 +103,7 @@ const MSSQLAccordion = () => {
                             isDisabled={loading}
                             onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
                         >
-                            Save configuration
+                            {GENERAL.ES_SAVE_CONFIG}
                         </DsButton>
                     ),
                     ,
@@ -121,7 +121,7 @@ const MSSQLAccordion = () => {
                     isMutliFsx ? (
                         <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '2351px' }}>
                             <DsTypography variant="Semibold_14" style={{ marginBottom: '6px' }}>
-                                Microsoft SQL Server EC2 instance - 2 instances
+                                {GENERAL.MS_SQL_TWO_INSTANCES}
                             </DsTypography>
 
                             {MSSQLServerInstance(msSqlInstance).map(
@@ -157,7 +157,7 @@ const MSSQLAccordion = () => {
                             }}
                         >
                             <DsTypography variant="Semibold_14" style={{ marginBottom: '6px' }}>
-                                Microsoft SQL Server EC2 instance
+                                {GENERAL.MS_SQL_SINGLE_INSTANCES}
                             </DsTypography>
 
                             {MSSQLServerInstance(msSqlInstance).map(

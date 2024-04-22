@@ -9,6 +9,7 @@ import { WLF_TABS } from '../../../../utils/consts';
 //@ts-ignore
 import domToPdf from 'dom-to-pdf';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const ExportPDF = ({ printDocument }: any) => {
     const { loading } = useAppSelector(state => state.exploreSavings);
@@ -28,7 +29,7 @@ const ExportPDF = ({ printDocument }: any) => {
                     className={styles.text}
                     onClick={() => (loading ? () => {} : handleExport())}
                 >
-                    Export PDF
+                    {GENERAL.EXPORT_PDF}
                 </DsTypography>
             </div>
 
@@ -43,7 +44,7 @@ const ExportPDF = ({ printDocument }: any) => {
                         loading ? () => {} : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
                     }
                 >
-                    View the calculations
+                    {GENERAL.VIEW_THE_CALCULATIONS}
                 </DsTypography>
             </div>
         </div>

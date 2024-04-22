@@ -12,6 +12,7 @@ import {
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const SavingsSelection = ({ printState }: any) => {
     const dispatch = useDispatch();
@@ -42,9 +43,7 @@ const SavingsSelection = ({ printState }: any) => {
     }, []);
     return (
         <div className={styles.savingsSelection}>
-            <DsTypography variant="Regular_14">
-                Provide clone and snapshot values to calculate the cost savings if you use FSx for ONTAP volumes.
-            </DsTypography>
+            <DsTypography variant="Regular_14">{GENERAL.ES_SAVINGS_SELECTION_TEXT}</DsTypography>
 
             <div className={styles.firstRow}>
                 <SelectField
@@ -67,14 +66,14 @@ const SavingsSelection = ({ printState }: any) => {
                 {printState && (
                     <div className={styles.mockInput}>
                         <DsTypography variant="Regular_14" className={styles.mockLabel}>
-                            Number of cloned copies
+                            {GENERAL.NUMBER_OF_CLONED_COPIES}
                         </DsTypography>
                         <div className={styles.inputField}>{numberOfClonedCopies}</div>
                     </div>
                 )}
                 {!printState && (
                     <TextField
-                        label={'Number of cloned copies'}
+                        label={GENERAL.NUMBER_OF_CLONED_COPIES}
                         isDisabled={loading}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             dispatch(setNumberOfClonedCopies(e.target.value));
@@ -101,14 +100,14 @@ const SavingsSelection = ({ printState }: any) => {
                 {printState && (
                     <div className={styles.mockInput}>
                         <DsTypography variant="Regular_14" className={styles.mockLabel}>
-                            Monthly change rate (%)
+                            {GENERAL.MONTHLY_CHANGE_RATE}
                         </DsTypography>
                         <div className={styles.inputField}>{monthlyChangeRate}</div>
                     </div>
                 )}
                 {!printState && (
                     <TextField
-                        label={'Monthly change rate (%)'}
+                        label={GENERAL.MONTHLY_CHANGE_RATE}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             dispatch(setMonthlyChangeRate(e.target.value));
                         }}
@@ -122,7 +121,7 @@ const SavingsSelection = ({ printState }: any) => {
                         <InfoIcon />
                     </div>
                     <DsTypography variant="Regular_14" className={styles.contentWidth}>
-                        This field refer to clones and snapshots
+                        {GENERAL.REFER_SNAPSHOTS}
                     </DsTypography>
                 </div>
             </div>

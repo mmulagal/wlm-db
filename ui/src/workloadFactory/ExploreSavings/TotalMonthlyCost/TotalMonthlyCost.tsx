@@ -3,6 +3,7 @@ import { ReactComponent as GraphIcon } from '../../../assets/ic_graph.svg';
 import styles from './TotalMonthlyCost.module.scss';
 import ComparisonChart from '../../../ui-components/Charts/ComparisionChart';
 import { useAppSelector } from '../../../store/storeHooks';
+import { GENERAL } from '../../../utils/appConstants';
 
 const TotalMonthlyCost = () => {
     const { loading } = useAppSelector(state => state.exploreSavings);
@@ -20,7 +21,7 @@ const TotalMonthlyCost = () => {
         <div className={styles.totalMonthlyCost}>
             <div className={styles.headSection}>
                 <DsTypography variant="Semibold_16" className={styles.title}>
-                    Total monthly cost
+                    {GENERAL.TOTAL_MONTHLY_COST}
                 </DsTypography>
                 {loading && <DsFlashingDotsLoader />}
             </div>
@@ -34,10 +35,7 @@ const TotalMonthlyCost = () => {
                                 yTickFormatter={yValue => '$' + 0}
                                 height={120}
                                 colors={['chart-9', 'chart-6']}
-                                categories={[
-                                    'Microsoft SQL server on FSx for ONTAP',
-                                    'Microsoft SQL server on Amazon Elastic Block Store (EBS)'
-                                ]}
+                                categories={[GENERAL.CATEGORY_POINT_ONE, GENERAL.CATEGORY_POINT_TWO]}
                             />
                         </div>
                     </>
@@ -47,16 +45,13 @@ const TotalMonthlyCost = () => {
                         <div className={styles['calculate-notice']}>
                             <GraphIcon style={{ marginTop: 24 }} />
                             <DsTypography variant="Semibold_14" className={styles.noData}>
-                                To view storage cost savings, enter your configuration.
+                                {GENERAL.TO_VIEW_STORAGE}
                             </DsTypography>
                         </div>
                         <ComparisonChart
                             data={[0, 0]}
                             height={75}
-                            categories={[
-                                'Microsoft SQL server on FSx for ONTAP',
-                                'Microsoft SQL server on Amazon Elastic Block Store (EBS)'
-                            ]}
+                            categories={[GENERAL.CATEGORY_POINT_ONE, GENERAL.CATEGORY_POINT_TWO]}
                         />
                     </>
                 )}
@@ -67,10 +62,7 @@ const TotalMonthlyCost = () => {
                             yTickFormatter={yValue => '$' + yValue}
                             height={370}
                             colors={calculatedResponse && ['chart-9', 'chart-6']}
-                            categories={[
-                                'Microsoft SQL server on FSx for ONTAP',
-                                'Microsoft SQL server on Amazon Elastic Block Store (EBS)'
-                            ]}
+                            categories={[GENERAL.CATEGORY_POINT_ONE, GENERAL.CATEGORY_POINT_TWO]}
                         />
                     </>
                 )}
