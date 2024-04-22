@@ -15,7 +15,7 @@ const initialInventoryState: any = {
     getDatabaseHosts: {
         databaseHostsData: null, // To fetch database-hosts API data
         databaseHostsLoading: false, // To check if partial database-hosts api is running
-        fullHostDataLoading: false, // To check if full database-hosts api is running
+        fullHostDataLoading: false // To check if full database-hosts api is running
     },
     discoveredHosts: {
         discoveredHostData: null,
@@ -32,7 +32,8 @@ const initialInventoryState: any = {
     movedToUnmanagedHost: [], // Instances that is moved from Unidentifiable rows moved to unmanaged host in inventory
     movedToManagedHost: [], // Instances that is moved from Unidentifiable rows moved to managed host in inventory
     mssqlInstancesData: {},
-    isManagedHostListLoading: false
+    isManagedHostListLoading: false,
+    unmanagedFormatedData: []
 };
 
 const inventorySlice = createSlice({
@@ -110,6 +111,9 @@ const inventorySlice = createSlice({
         },
         setIsManagedHostListLoading: (state, action: PayloadAction<any>) => {
             state.isManagedHostListLoading = action.payload;
+        },
+        setUnmanagedFormatedData: (state, action: PayloadAction<any>) => {
+            state.unmanagedFormatedData = action.payload;
         }
     }
 });
@@ -138,7 +142,8 @@ export const {
     setIsManagedHostListLoading,
     addDatabaseHostsData,
     addDatabaseHostsLoading,
-    setIsFullHostDataLoading
+    setIsFullHostDataLoading,
+    setUnmanagedFormatedData
 } = inventorySlice.actions;
 
 export default inventorySlice;

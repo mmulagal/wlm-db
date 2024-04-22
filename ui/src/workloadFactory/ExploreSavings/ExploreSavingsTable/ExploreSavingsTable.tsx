@@ -1,77 +1,27 @@
-import { Table, useTable, Typography, TableTopBar, Button } from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './ExploreSavingsTable.module.scss';
-import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
-import { STATUS_CONST, WLF_TABS } from '../../../utils/consts';
+import { WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import { useAppSelector } from '../../../store/storeHooks';
+import {
+    renderAllocatedCapacity,
+    renderDeploymentModel,
+    renderEstimatedCost,
+    renderFileSystemType,
+    renderUnmanagedAZ,
+    renderUnmanagedHostName
+} from '../../Inventory/InventoryUtils';
 
 const ExploreSavingsTable = () => {
     const dispatch = useDispatch();
-    const data = [
-        {
-            id: '1',
-            name: 'RetailBanking',
-            storageType: 'EBS',
-            allocatedCapacity: '20 TiB',
-            sourceHost: 'NA',
-            deployment: 'Failover Cluster Instances',
-            estimatedCost: 'NA',
-            tag: 'Dev',
-            status: 'Up',
-            serverType: 'Microsoft SQL Server'
-        },
-        {
-            id: '2',
-            name: 'MFGSales',
-            storageType: 'EBS',
-            allocatedCapacity: '20 TiB',
-            sourceHost: 'NA',
-            deployment: 'Failover Cluster Instances',
-            estimatedCost: 'NA',
-            tag: 'QA',
-            status: 'Up',
-            serverType: 'Microsoft SQL Server'
-        },
-        {
-            id: '3',
-            name: 'AssetManagement',
-            storageType: 'EBS',
-            allocatedCapacity: '20 TiB',
-            sourceHost: 'NA',
-            deployment: 'Failover Cluster Instances',
-            estimatedCost: 'NA',
-            tag: 'QA',
-            status: 'Up',
-            serverType: 'Microsoft SQL Server'
-        },
-        {
-            id: '4',
-            name: 'PrivateBanking',
-            storageType: 'FSXn',
-            allocatedCapacity: '40 TiB',
-            sourceHost: 'NA',
-            deployment: 'Failover Cluster Instances',
-            estimatedCost: 'NA',
-            tag: 'QA',
-            status: 'Up',
-            serverType: 'Microsoft SQL Server'
-        },
-        {
-            id: '5',
-            name: 'HRAudit',
-            storageType: 'EBS',
-            allocatedCapacity: '30 TiB',
-            sourceHost: 'NA',
-            deployment: 'Standalone',
-            estimatedCost: 'NA',
-            tag: 'QA',
-            status: 'Up',
-            serverType: 'Microsoft SQL Server'
-        }
-    ];
+
+    const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
+    const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
+    const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
 
     const lastColDetails = () => {
         return {
@@ -100,74 +50,71 @@ const ExploreSavingsTable = () => {
 
     const ExploreSavingsColDefs: ColumnProps[] = [
         {
-            Header: 'Database host name',
-            accessor: 'name',
+            Header: GENERAL.DATABASE_HOST_NAME,
+            accessor: 'status',
             id: '1',
             isSortable: true,
             isSticky: true,
             width: '324px',
+            accessorForTextFilter: 'databaseHostname',
             renderCell: (cellData: any, rowData: any) => {
-                const name = rowData?.name;
-                return (
-                    <div>
-                        <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
-                        <div className={styles.firstColText}>
-                            {rowData?.status === STATUS_CONST.UP && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
-                            )}
-                            {rowData?.status === STATUS_CONST.DOWN && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['down']}`}></div>
-                            )}
-                            {rowData?.status === STATUS_CONST.INITIALIZING && (
-                                <div
-                                    className={`${styles.statusIcon} ${styles['circle']} ${styles['initializing']}`}
-                                ></div>
-                            )}
-                            {rowData?.status === STATUS_CONST.FAILED && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['failed']}`}></div>
-                            )}
-                            <Typography variant="Regular_13">{rowData?.status}</Typography>
-                            <div className={CommonStyles.separator} />
-                            <Typography variant="Regular_13">{rowData?.serverType}</Typography>
-                        </div>
-                    </div>
-                );
+                return renderUnmanagedHostName(cellData, rowData, styles);
             }
         },
         {
-            Header: 'Storage type',
-            accessor: 'storageType',
+            Header: GENERAL.DB_HOST_FILE_SYSTEM_TYPE,
+            accessor: 'fileSystemType',
             id: '2',
             width: '220px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            accessorForTextFilter: 'fileSystemType',
+            renderCell: (cellData: string, rowData: any) => {
+                return renderFileSystemType(cellData, rowData);
+            }
         },
         {
-            Header: 'Allocated capacity',
-            accessor: 'allocatedCapacity',
+            Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
+            accessor: 'sizeformat',
             id: '3',
             width: '220px',
-            isSortable: true
+            isSortable: true,
+            accessorForTextFilter: 'sizeformat',
+            renderCell: (cellData: string | number, rowData: any) => {
+                return renderAllocatedCapacity(cellData, rowData);
+            }
         },
         {
-            Header: 'Availability',
-            accessor: 'sourceHost',
+            Header: GENERAL.DB_HOST_AVAILABILITY,
+            accessor: 'azType',
             id: '4',
             width: '220px',
-            filterOptions: 'auto'
+            filterOptions: [
+                { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
+                { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
+            ],
+            renderCell: (cellData: any, rowData: any) => {
+                return renderUnmanagedAZ(cellData, rowData, styles);
+            }
         },
         {
-            Header: 'Deployment model',
-            accessor: 'deployment',
+            Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
+            accessor: 'serverInstallationMode',
             id: '5',
             width: '220px',
-            isSortable: true
+            filterOptions: 'auto',
+            renderCell: (cellData: string, rowData: any) => {
+                return renderDeploymentModel(cellData, rowData);
+            }
         },
         {
-            Header: 'Estimated cost',
-            accessor: 'estimatedCost',
+            Header: GENERAL.DB_HOST_ESTIMATED_COST,
+            accessor: 'totalCost',
             id: '6',
             width: '220px',
-            isSortable: true
+            isSortable: true,
+            renderCell: (cellData: any, rowData: any) => {
+                return renderEstimatedCost(cellData, rowData, styles);
+            }
         },
         lastColDetails()
     ];
@@ -180,8 +127,9 @@ const ExploreSavingsTable = () => {
         isHorizontalScroll: true,
         isSorting: false,
         columns: ExploreSavingsColDefs,
-        rows: data,
-        pageSize: 50
+        rows: unManagedHostFormatedList || [],
+        pageSize: 50,
+        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading
     });
     return (
         <div className={styles.exploreSavingTable}>

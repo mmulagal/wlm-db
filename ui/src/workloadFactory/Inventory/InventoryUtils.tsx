@@ -2,7 +2,8 @@ import { DsFlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-sy
 import { GENERAL } from '../../utils/appConstants';
 import { formatFractionalNumber, isAwsBackupEnabled } from '../../utils/utilityFunctions';
 import EstimatedCostPopover from './EstimatedCostPopover/EstimatedCostPopover';
-import { DETECT_HOST_VAR } from '../../utils/consts';
+import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE } from '../../utils/consts';
+import CommonStyles from '../../utils/CommonStyles.module.scss';
 
 export const renderProtectionColumn = (cellData: any, rowData: any, styles: any) => {
     const isLoading = rowData?.loading;
@@ -108,7 +109,7 @@ export const renderCellData = (cellData: any, rowData: any, styles: any) => {
                 </Typography>
             )}
             {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-            {(!cellData && cellData !== 0) && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+            {!cellData && cellData !== 0 && !rowData?.loading && GENERAL.NOT_AVAILABLE}
         </>
     );
 };
@@ -144,6 +145,57 @@ export const renderDeploymentModel = (cellData: string, rowData: any) => {
             {cellData && cellData === 'FCI' ? GENERAL.FAILOVER_CLUSTER_INSTANCES : cellData}
             {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
             {!cellData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+        </>
+    );
+};
+
+export const renderUnmanagedHostName = (cellData: string, rowData: any, styles: any) => {
+    const status = rowData?.sqlServerInstances?.[0]?.sqlServerState;
+    const name = rowData?.sqlServerInstances?.[0]?.sqlServerName || rowData?.name;
+    return (
+        <div>
+            <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
+            <div className={styles.firstColText}>
+                {status === GENERAL.JOB_STATUS_RUNNING && (
+                    <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
+                )}
+                {status !== GENERAL.JOB_STATUS_RUNNING && (
+                    <div className={`${styles.statusIcon} ${styles['circle']} ${styles['down']}`}></div>
+                )}
+                <Typography variant="Regular_13">
+                    {status
+                        ? status === GENERAL.JOB_STATUS_RUNNING
+                            ? GENERAL.DB_HOST_UP
+                            : GENERAL.DB_HOST_DOWN
+                        : GENERAL.NOT_AVAILABLE}
+                </Typography>
+                <div className={CommonStyles.separator} />
+                <Typography variant="Regular_13">{GENERAL.MSSQL}</Typography>
+            </div>
+        </div>
+    );
+};
+
+export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) => {
+    const azList = rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones
+        ? rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones.join(',')
+        : '';
+    const deploymentType = rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
+    return (
+        <>
+            {deploymentType && (
+                <div className={styles.colText}>
+                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
+                    <Typography variant="Regular_14">
+                        {deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+                            ? GENERAL.SINGLE_AZ
+                            : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                            ? GENERAL.MULTI_AZ
+                            : ''}
+                    </Typography>
+                </div>
+            )}
+            {!deploymentType && GENERAL.NOT_AVAILABLE}
         </>
     );
 };
