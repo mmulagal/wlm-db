@@ -664,7 +664,7 @@ export const GENERAL = {
     DETECT_FSX_PASSWORD: 'ONTAP password',
     DETECTED_HOST_INFO: 'Detected host information',
     DETECT_HOSTNAME: 'Host name',
-    DETECT_HOST_TYPE: 'Host type',
+    DETECT_STORAGE_TYPE: 'Storage type',
     DETECT_NO_OF_DB: 'Number of databases',
     DETECT_SQL_VERSION: 'SQL version',
     DETECT_DEPLOYMENT_MODEL: 'Deployment model',
@@ -764,7 +764,48 @@ export const GENERAL = {
     SQL_SERVER_COLLATION: 'SQL Server collation',
     DEFINE_TAG: 'Define tag',
     HEADER_CREDENTIAL: 'Credential',
-    HEADER_ACCOUNT_ID: 'Account ID'
+    HEADER_ACCOUNT_ID: 'Account ID',
+    //Explore savings
+    ES_TYPE: 'Type',
+    ES_MSSQL_SERVER: ' MsSQL server on FSx for ONTAP',
+    ES_MSSQL_EBS: 'MsSQL server on EBS',
+    ES_COST_BREAKDOWN: 'Cost breakdown - Monthly charge',
+    ES_SAVINGS_SELECTION_TEXT:
+        'Provide clone and snapshot values to calculate the cost savings if you use FSx for ONTAP volumes.',
+    NUMBER_OF_CLONED_COPIES: 'Number of cloned copies',
+    MONTHLY_CHANGE_RATE: 'Monthly change rate (%)',
+    REFER_SNAPSHOTS: 'This field refer to clones and snapshots',
+    VIEW_THE_CALCULATIONS: 'View the calculations',
+    EXPORT_PDF: 'Export PDF',
+    ES_COST_SAVINGS: 'Cost savings',
+    ES_SAVINGS_PERCENTAGE: 'Savings percentage',
+    ES_HEADING: 'Explore savings of selected host',
+    ES_HEADER:
+        'Select Microsoft SQL server host from your list. Upon clicking the "Explore savings" button, we will calculate and present you with your potential savings by moving to Microsoft SQL server using FSx for ONTAP file system.',
+    ES_SAVINGS: 'Explore savings',
+    INSTANCE_INFORMATION: 'Instance information:',
+    ES_SAVE_CONFIG: 'Save configuration',
+    ES_SAVE_ERROR: 'This configuration can not be save',
+    MS_SQL_TWO_INSTANCES: 'Microsoft SQL Server EC2 instance - 2 instances',
+    MS_SQL_SINGLE_INSTANCES: 'Microsoft SQL Server EC2 instance',
+    SAVINGS_HEADER: 'Microsoft SQL server on Amazon Elastic Block Store (EBS) configuration.',
+    ES_NUMBER_OF_DB: 'Number of database',
+    ES_HOST_NAME: 'Host name',
+    ES_NUMBER_OF_VOLS: 'Number of volumes',
+    SUMMARY_TEXT: 'The selected volumes summary per volume type:',
+    SELECTION_BASED_TEXT: 'Based on your selections, we recommend creating the following:',
+    SELECTION_BASED_SECOND: 'Microsoft SQL Server on AWS Ec2 using FSx for ONTAP file system',
+    SAVINGS_CALCULATOR: 'Savings calculator',
+    TOTAL_MONTHLY_COST: 'Total monthly cost',
+    TO_VIEW_STORAGE: 'To view storage cost savings, enter your configuration.',
+    CATEGORY_POINT_ONE: 'Microsoft SQL server on FSx for ONTAP',
+    CATEGORY_POINT_TWO: 'Microsoft SQL server on Amazon Elastic Block Store (EBS)',
+    MS_EBS_CALCULATION: 'Microsoft SQL server on EBS calculation',
+    MS_ONTAP_CALCULATION: 'Microsoft SQL server on FSx for ONTAP calculation',
+    VIEW_CALC_TEXT:
+        'Learn how we calculated the estimated cost of Microsoft SQL server on FSx for ONTAP for your specific use case and the configuration that you selected.',
+    VIEW_CALCS: 'View calculations',
+    COST_CALCULATION: 'Cost calculation'
 };
 
 export const CODE_VIEWER = {

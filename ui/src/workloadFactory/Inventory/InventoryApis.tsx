@@ -673,7 +673,6 @@ const InventoryApis = () => {
             unManagedHostList.map((host: any) => {
                 const instanceId = host?.ec2InstanceId || '';
                 if (instanceId && !runningInstanceList.find(inst => inst === instanceId)) {
-                    setRunningInstanceList([...runningInstanceList, host?.ec2InstanceId]);
                     instancesList.push(host?.ec2InstanceId);
                 }
             });
@@ -687,6 +686,7 @@ const InventoryApis = () => {
                     };
                 });
                 dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataLoad }));
+                setRunningInstanceList([...runningInstanceList, ...instancesList]);
                 setTimeout(() => {
                     getMssqlData(instancesList);
                 }, 1);

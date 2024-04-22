@@ -4,6 +4,7 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { Text } from '../../../../ui-components/Typography';
 import { viewCalculationForEBS } from '../../SavingsCalculator/savingsUtil';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const TableLayout = ({ data }: any) => {
     const styleHandler = (data: any) => {
@@ -87,7 +88,7 @@ const EBSCalculation = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="2"
-                title={<div>Microsoft SQL server on EBS calculation</div>}
+                title={<div>{GENERAL.MS_EBS_CALCULATION}</div>}
             >
                 <AccordionCardContent>
                     <DsTypography className={styles.accordionContentSet}>

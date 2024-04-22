@@ -39,7 +39,7 @@ const ExploreSavingsTable = () => {
                             }}
                         >
                             <Typography variant="Regular_14" className={styles.textStyle}>
-                                Explore savings
+                                {GENERAL.ES_SAVINGS}
                             </Typography>
                         </div>
                     </>

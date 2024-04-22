@@ -14,10 +14,27 @@ import InstanceInformation from './InstanceInformation/InstanceInformation';
 import SelectedVolumeSummary from './SelectedVolumeSummary/SelectedVolumeSummary';
 import { ReactComponent as Suggestion } from '../../../assets/Suggestion.svg';
 import MSSQLAccordion from './MSSQLAccordion/MSSQLAccordion';
+import { useState } from 'react';
+//@ts-ignore
+import domToPdf from 'dom-to-pdf';
 import ExportPDF from './ExportPDF/ExportPDF';
+import { GENERAL } from '../../../utils/appConstants';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
+    const [printState, setPrintState] = useState(false);
+    const printDocument = () => {
+        setPrintState(true);
+        setTimeout(() => {
+            const elem = document.getElementById('export-pdf') as HTMLElement;
+            var options = {
+                filename: `SavingsCalculator.pdf`
+            };
+            domToPdf(elem, options, (pdf: any) => {
+                setPrintState(false);
+            });
+        }, 200);
+    };
     return (
         <div style={{ height: '90vh', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
             <div className="scrollArea">
@@ -39,7 +56,7 @@ const SavingsCalculator = () => {
                     </div>
 
                     <div className={styles.savingsHeading}>
-                        <DsTypography variant="Regular_24">Savings calculator</DsTypography>
+                        <DsTypography variant="Regular_24">{GENERAL.SAVINGS_CALCULATOR}</DsTypography>
                         <div />
                     </div>
 
@@ -47,7 +64,7 @@ const SavingsCalculator = () => {
                         {/* Left side code here */}
                         <div className={styles.firstContainer}>
                             <SavingsHeader />
-                            <SavingsSelection />
+                            <SavingsSelection printState={printState} />
                             <SavingsSelectedHost />
                             <InstanceInformation />
                             <SelectedVolumeSummary />
@@ -73,12 +90,8 @@ const SavingsCalculator = () => {
                             <Suggestion />
                         </div>
                         <div className={styles.textContent}>
-                            <DsTypography variant="Semibold_16">
-                                Based on your selections, we recommend creating the following:
-                            </DsTypography>
-                            <DsTypography variant="Regular_14">
-                                Microsoft SQL Server on AWS Ec2 using FSx for ONTAP file system
-                            </DsTypography>
+                            <DsTypography variant="Semibold_16">{GENERAL.SELECTION_BASED_TEXT}</DsTypography>
+                            <DsTypography variant="Regular_14">{GENERAL.SELECTION_BASED_SECOND}</DsTypography>
                         </div>
                     </div>
 
@@ -86,7 +99,7 @@ const SavingsCalculator = () => {
                     <MSSQLAccordion />
 
                     {/* last section */}
-                    <ExportPDF rootElementId="export-pdf" />
+                    <ExportPDF printDocument={printDocument} />
                 </div>
             </div>
         </div>

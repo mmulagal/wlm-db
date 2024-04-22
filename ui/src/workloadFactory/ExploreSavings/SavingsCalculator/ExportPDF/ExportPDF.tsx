@@ -9,20 +9,11 @@ import { WLF_TABS } from '../../../../utils/consts';
 //@ts-ignore
 import domToPdf from 'dom-to-pdf';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { GENERAL } from '../../../../utils/appConstants';
 
-const ExportPDF = ({ rootElementId }: any) => {
+const ExportPDF = ({ printDocument }: any) => {
     const { loading } = useAppSelector(state => state.exploreSavings);
     const dispatch = useDispatch();
-
-    const printDocument = () => {
-        setTimeout(() => {
-            const elem = document.getElementById(rootElementId) as HTMLElement;
-            var options = {
-                filename: `SavingsCalculator.pdf`
-            };
-            domToPdf(elem, options, (pdf: any) => {});
-        }, 200);
-    };
 
     const handleExport = () => {
         printDocument();
@@ -38,7 +29,7 @@ const ExportPDF = ({ rootElementId }: any) => {
                     className={styles.text}
                     onClick={() => (loading ? () => {} : handleExport())}
                 >
-                    Export PDF
+                    {GENERAL.EXPORT_PDF}
                 </DsTypography>
             </div>
 
@@ -53,7 +44,7 @@ const ExportPDF = ({ rootElementId }: any) => {
                         loading ? () => {} : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
                     }
                 >
-                    View the calculations
+                    {GENERAL.VIEW_THE_CALCULATIONS}
                 </DsTypography>
             </div>
         </div>
