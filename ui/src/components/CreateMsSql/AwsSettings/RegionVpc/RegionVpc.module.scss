@@ -18,19 +18,19 @@
         margin-top: 16px;
         --menu-max-height: 250px;
 
-        // .noticeVpc {
-        //     display: flex;
-        //     gap: 8px;
+        .noticeVpc {
+            display: flex;
+            gap: 8px;
 
-        //     width: 900px;
+            width: 900px;
 
-        //     svg {
-        //         width: 16px;
-        //         height: 16px;
-        //         path {
-        //             fill: #518bec;
-        //         }
-        //     }
-        // }
+            svg {
+                width: 16px;
+                height: 16px;
+                path {
+                    fill: #518bec;
+                }
+            }
+        }
     }
 }
