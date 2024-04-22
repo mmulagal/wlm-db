@@ -13,7 +13,7 @@ import {
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 
-const SavingsSelection = () => {
+const SavingsSelection = ({ printState }: any) => {
     const dispatch = useDispatch();
     const { selectedSnapshotFrequency, numberOfClonedCopies, selectedCloneRefresh, monthlyChangeRate, loading } =
         useAppSelector(state => state.exploreSavings);
@@ -64,15 +64,25 @@ const SavingsSelection = () => {
             </div>
 
             <div className={styles.secondRow}>
-                <TextField
-                    label={'Number of cloned copies'}
-                    isDisabled={loading}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        dispatch(setNumberOfClonedCopies(e.target.value));
-                    }}
-                    value={numberOfClonedCopies}
-                    className={styles.widthSet}
-                />
+                {printState && (
+                    <div className={styles.mockInput}>
+                        <DsTypography variant="Regular_14" className={styles.mockLabel}>
+                            Number of cloned copies
+                        </DsTypography>
+                        <div className={styles.inputField}>{numberOfClonedCopies}</div>
+                    </div>
+                )}
+                {!printState && (
+                    <TextField
+                        label={'Number of cloned copies'}
+                        isDisabled={loading}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            dispatch(setNumberOfClonedCopies(e.target.value));
+                        }}
+                        value={numberOfClonedCopies}
+                        className={styles.widthSet}
+                    />
+                )}
                 <SelectField
                     label={'Clone refresh'}
                     isClearable={false}
@@ -88,15 +98,25 @@ const SavingsSelection = () => {
             </div>
 
             <div className={styles.secondRow}>
-                <TextField
-                    label={'Monthly change rate (%)'}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        dispatch(setMonthlyChangeRate(e.target.value));
-                    }}
-                    isDisabled={loading}
-                    value={monthlyChangeRate ? monthlyChangeRate : ''}
-                    className={styles.widthSet}
-                />
+                {printState && (
+                    <div className={styles.mockInput}>
+                        <DsTypography variant="Regular_14" className={styles.mockLabel}>
+                            Monthly change rate (%)
+                        </DsTypography>
+                        <div className={styles.inputField}>{monthlyChangeRate}</div>
+                    </div>
+                )}
+                {!printState && (
+                    <TextField
+                        label={'Monthly change rate (%)'}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            dispatch(setMonthlyChangeRate(e.target.value));
+                        }}
+                        isDisabled={loading}
+                        value={monthlyChangeRate ? monthlyChangeRate : ''}
+                        className={styles.widthSet}
+                    />
+                )}
                 <div className={styles.notice}>
                     <div className={styles.setSVG}>
                         <InfoIcon />

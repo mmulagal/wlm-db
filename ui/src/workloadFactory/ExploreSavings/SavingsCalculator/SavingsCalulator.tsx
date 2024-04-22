@@ -14,10 +14,26 @@ import InstanceInformation from './InstanceInformation/InstanceInformation';
 import SelectedVolumeSummary from './SelectedVolumeSummary/SelectedVolumeSummary';
 import { ReactComponent as Suggestion } from '../../../assets/Suggestion.svg';
 import MSSQLAccordion from './MSSQLAccordion/MSSQLAccordion';
+import { useState } from 'react';
+//@ts-ignore
+import domToPdf from 'dom-to-pdf';
 import ExportPDF from './ExportPDF/ExportPDF';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
+    const [printState, setPrintState] = useState(false);
+    const printDocument = () => {
+        setPrintState(true);
+        setTimeout(() => {
+            const elem = document.getElementById('export-pdf') as HTMLElement;
+            var options = {
+                filename: `SavingsCalculator.pdf`
+            };
+            domToPdf(elem, options, (pdf: any) => {
+                setPrintState(false);
+            });
+        }, 200);
+    };
     return (
         <div style={{ height: '90vh', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
             <div className="scrollArea">
@@ -47,7 +63,7 @@ const SavingsCalculator = () => {
                         {/* Left side code here */}
                         <div className={styles.firstContainer}>
                             <SavingsHeader />
-                            <SavingsSelection />
+                            <SavingsSelection printState={printState} />
                             <SavingsSelectedHost />
                             <InstanceInformation />
                             <SelectedVolumeSummary />
@@ -86,7 +102,7 @@ const SavingsCalculator = () => {
                     <MSSQLAccordion />
 
                     {/* last section */}
-                    <ExportPDF rootElementId="export-pdf" />
+                    <ExportPDF printDocument={printDocument} />
                 </div>
             </div>
         </div>
