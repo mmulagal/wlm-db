@@ -47,6 +47,32 @@ try {
     $SQLFullUser = $DomainNetBIOSName + '\' + $SQLServiceAccount
     $HostName = hostname
 
+    #Set collation for the sql server
+    Start-Sleep 5
+    try {
+        Write-Output "Setting collation on SQLServer(MSSQLSERVER)"
+        # Stop SQL Service
+        $SQLService = Get-Service -Name 'MSSQLSERVER'
+        if ($SQLService.status -eq 'Running') { $SQLService.Stop() }
+        $SQLService.WaitForStatus('Stopped', '00:01:00')
+ 
+        #Set collation value and rebuild system databases
+        $rebuildarguments = '/QUIET /ACTION="REBUILDDATABASE" /INSTANCENAME="MSSQLSERVER" /SQLSYSADMINACCOUNTS="' + $DomainAdminFullUser + '" /SAPWD="' + $DomainAdminPassword + '" /SQLCOLLATION="' + $SqlCollation + '"'
+        Invoke-Command -scriptblock {
+            Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:rebuildarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\rebuild_collation.txt -RedirectStandardError C:\cfn\log\rebuild_error.txt
+        } -Credential $DomainAdminCreds -ComputerName $HostName -Authentication credssp
+ 
+        # Start SQL service
+        $SQLService.Start()
+        $SQLService.WaitForStatus('Running', '00:01:00')
+    }
+    catch {
+        Write-Output "Failed to set collation on SQLServer(MSSQLSERVER)"
+        # Start SQL service even though collation fails
+        $SQLService.Start()
+        $SQLService.WaitForStatus('Running', '00:01:00')
+    }
+
     $ConfigureSqlPs = {
         $ErrorActionPreference = "Stop"
 
@@ -127,32 +153,6 @@ try {
     }
  
     Invoke-Command -Authentication Credssp -Scriptblock $ConfigureSqlPs -ComputerName $NetBIOSName -Credential $DomainAdminCreds
- 
-    #Set collation for the sql server
-    Start-Sleep 5
-    try {
-        Write-Output "Setting collation on SQLServer(MSSQLSERVER)"
-        # Stop SQL Service
-        $SQLService = Get-Service -Name 'MSSQLSERVER'
-        if ($SQLService.status -eq 'Running') { $SQLService.Stop() }
-        $SQLService.WaitForStatus('Stopped', '00:01:00')
- 
-        #Set collation value and rebuild system databases
-        $rebuildarguments = '/QUIET /ACTION="REBUILDDATABASE" /INSTANCENAME="MSSQLSERVER" /SQLSYSADMINACCOUNTS="' + $DomainAdminFullUser + '" /SAPWD="' + $DomainAdminPassword + '" /SQLCOLLATION="' + $SqlCollation + '"'
-        Invoke-Command -scriptblock {
-            Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:rebuildarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\rebuild_collation.txt -RedirectStandardError C:\cfn\log\rebuild_error.txt
-        } -Credential $DomainAdminCreds -ComputerName $HostName -Authentication credssp
- 
-        # Start SQL service
-        $SQLService.Start()
-        $SQLService.WaitForStatus('Running', '00:01:00')
-    }
-    catch {
-        Write-Output "Failed to set collation on SQLServer(MSSQLSERVER)"
-        # Start SQL service even though collation fails
-        $SQLService.Start()
-        $SQLService.WaitForStatus('Running', '00:01:00')
-    }
  
 }
 catch {
