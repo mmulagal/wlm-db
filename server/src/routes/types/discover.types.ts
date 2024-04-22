@@ -68,9 +68,7 @@ const SqlServerInstanceInfo = Type.Object({
                 svmId: Type.Optional(
                     Type.String({ description: 'ID of Storage Virtual Machine, if underlying storage is FSx ONTAP' })
                 ),
-                protocol: Type.Optional(
-                    Type.String({ description: 'Data sharing protocol, iSCSI or SMB' })
-                )
+                protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or SMB' }))
             })
         )
     ),

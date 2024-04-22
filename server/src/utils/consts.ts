@@ -1127,7 +1127,7 @@ const PERMISSION_DENIAL_POSSIBLE_REASONS = {
 
 const NO_SANDBOX_CREATED = 'No sandboxes created for the instance';
 
-const STORAGE_PROTOCOLS = {SMB: 'SMB', ISCSI: 'iSCSI'};
+const STORAGE_PROTOCOLS = { SMB: 'SMB', ISCSI: 'iSCSI' };
 
 export {
     WLMDB,
