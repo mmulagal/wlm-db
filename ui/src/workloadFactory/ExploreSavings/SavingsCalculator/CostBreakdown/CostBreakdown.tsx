@@ -62,17 +62,17 @@ const CostBreakdown = () => {
             clone: 1000,
             compute: 1000,
             license: 1000,
-            total: 8000
+            total: 7000
         },
         ebs: {
-            capacity: 12,
-            iops: 1000,
-            throughput: 1000,
-            snapshots: '1000',
-            clone: '1000',
-            compute: '1000',
-            license: '1000',
-            total: 8000
+            capacity: 2000,
+            iops: 2000,
+            throughput: 2000,
+            snapshots: '2000',
+            clone: '2000',
+            compute: '2000',
+            license: '2000',
+            total: 14000
         }
     };
 
