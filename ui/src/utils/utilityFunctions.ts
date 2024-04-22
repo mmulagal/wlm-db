@@ -444,7 +444,7 @@ export const formatHostData = (val: any) => {
     val = {
         ...val,
         type: DB_HOME_DATA_TYPE.HOSTS,
-        databaseHostname: (val?.name || '') + (val?.status || '') + (val?.sqlServerInstances?.[0]?.sqlServerName || ''),
+        databaseHostname: (val?.name || '') + (val?.sqlServerInstances?.[0]?.sqlServerName || '') + (val?.status || ''),
         protectionText: protectionText,
         // Total cost to enable search in table
         totalCost: (
