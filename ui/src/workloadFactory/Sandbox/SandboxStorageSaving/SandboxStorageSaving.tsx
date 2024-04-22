@@ -113,7 +113,7 @@ const SandboxStorageSaving = () => {
                                 />
                                 {!isNA && (
                                     <DsTypography variant="Semibold_14" style={{ lineHeight: 'unset' }}>
-                                        {formatSize(sandboxSavings?.savedStorage * 8)}
+                                        {formatSize(sandboxSavings?.savedStorage)}
                                     </DsTypography>
                                 )}
 
@@ -129,7 +129,7 @@ const SandboxStorageSaving = () => {
                                 />
                                 {!isNA && (
                                     <DsTypography variant="Semibold_14" style={{ lineHeight: 'unset' }}>
-                                        {formatSize(sandboxSavings?.consumedStorage * 8)}
+                                        {formatSize(sandboxSavings?.consumedStorage)}
                                     </DsTypography>
                                 )}
 
@@ -185,14 +185,14 @@ const SandboxStorageSaving = () => {
                             {!loading && !isNA && (
                                 <>
                                     <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                                        {formatSize(sandboxSavings?.savedStorage * 8).split(' ')[0]}
+                                        {formatSize(sandboxSavings?.savedStorage).split(' ')[0]}
                                     </DsTypography>
                                     <DsTypography
                                         variant="Semibold_14"
                                         className={styles.setUnit}
                                         style={{ lineHeight: 'unset' }}
                                     >
-                                        {formatSize(sandboxSavings?.savedStorage * 8).split(' ')[1]}
+                                        {formatSize(sandboxSavings?.savedStorage).split(' ')[1]}
                                     </DsTypography>
                                 </>
                             )}
@@ -222,14 +222,14 @@ const SandboxStorageSaving = () => {
                             {!loading && !isNA && (
                                 <>
                                     <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                                        {formatSize(sandboxSavings?.consumedStorage * 8).split(' ')[0]}
+                                        {formatSize(sandboxSavings?.consumedStorage).split(' ')[0]}
                                     </DsTypography>
                                     <DsTypography
                                         variant="Semibold_14"
                                         className={styles.setUnit}
                                         style={{ lineHeight: 'unset' }}
                                     >
-                                        {formatSize(sandboxSavings?.consumedStorage * 8).split(' ')[1]}
+                                        {formatSize(sandboxSavings?.consumedStorage).split(' ')[1]}
                                     </DsTypography>
                                 </>
                             )}
