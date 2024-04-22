@@ -71,7 +71,7 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
 
                     <div className={styles.entry} style={{ gap: '80px' }}>
                         <Typography variant="Regular_14" style={{ width: '116px' }}>
-                            {GENERAL.DETECT_HOST_TYPE}
+                            {GENERAL.DETECT_STORAGE_TYPE}
                         </Typography>
                         <Typography variant="Semibold_14">{hostType}</Typography>
                     </div>
