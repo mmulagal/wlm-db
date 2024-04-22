@@ -854,7 +854,7 @@ export const databaseTableSort = (data: DatabaseHostItem[] | null) => {
     if (!data || data.length < 2) {
         return data;
     }
-    const sort_order_list = [STATUS_CONST.INITIALIZING, STATUS_CONST.UP, STATUS_CONST.DOWN, STATUS_CONST.FAILED];
+    const sort_order_list = ['', STATUS_CONST.INITIALIZING, STATUS_CONST.UP, STATUS_CONST.DOWN, STATUS_CONST.FAILED];
     const newDataList = data.slice().sort((a, b) => {
         const indexA = sort_order_list.indexOf(a.status || '');
         const indexB = sort_order_list.indexOf(b.status || '');
@@ -1425,7 +1425,7 @@ export const addNewManagedHostData = (existingList: any, newItem: any) => {
         return per;
     });
     if (!newItemFound) {
-        return [...existingList, ...[formatHostData(newItem)]];
+        return [...[formatHostData(newItem), ...existingList]];
     } else {
         return newList;
     }
