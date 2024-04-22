@@ -664,7 +664,7 @@ export const GENERAL = {
     DETECT_FSX_PASSWORD: 'ONTAP password',
     DETECTED_HOST_INFO: 'Detected host information',
     DETECT_HOSTNAME: 'Host name',
-    DETECT_HOST_TYPE: 'Host type',
+    DETECT_STORAGE_TYPE: 'Storage type',
     DETECT_NO_OF_DB: 'Number of databases',
     DETECT_SQL_VERSION: 'SQL version',
     DETECT_DEPLOYMENT_MODEL: 'Deployment model',
