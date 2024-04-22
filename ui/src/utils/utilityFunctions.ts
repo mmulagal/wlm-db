@@ -444,7 +444,10 @@ export const formatHostData = (val: any) => {
     val = {
         ...val,
         type: DB_HOME_DATA_TYPE.HOSTS,
-        databaseHostname: (val?.name || '') + (val?.sqlServerInstances?.[0]?.sqlServerName || '') + (val?.status || ''),
+        databaseHostname: (val?.name || '') + (val?.status || '') + (val?.sqlServerInstances?.[0]?.sqlServerName || ''),
+        databaseServerName: val?.sqlServerInstances?.[0]?.sqlServerName
+            ? val.sqlServerInstances?.[0].sqlServerName.toLowerCase()
+            : '',
         protectionText: protectionText,
         // Total cost to enable search in table
         totalCost: (
@@ -472,7 +475,7 @@ export const formatHostData = (val: any) => {
 export const mergeDatabaseHostsData = (hostsData: any) => {
     if (!hostsData) {
         return [];
-    };
+    }
     const mergedList: any[] = [];
     Object.keys(hostsData).map((key: string) => {
         mergedList.push(formatHostData(hostsData[key]));
