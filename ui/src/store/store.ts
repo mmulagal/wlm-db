@@ -91,7 +91,7 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
             errorMsg = reqFieldChk + GENERAL.IS_REQUIRED_MSG;
         }
 
-        errorMsg = customErrorMessages(errorMsg);
+        errorMsg = customErrorMessages(errorMsg, action?.meta?.arg?.endpointName);
         if (errorMsg && errorMsg.length > 250) {
             api.dispatch(
                 addNotification({

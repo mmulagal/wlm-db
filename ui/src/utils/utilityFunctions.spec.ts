@@ -644,15 +644,18 @@ describe('requiredFieldError', () => {
 
 describe('customErrorMessages', () => {
     it('Duplicate config case', () => {
-        const result = customErrorMessages('An unique key constraint violated uk_wlmdb_config_account_id_name_user');
+        const result = customErrorMessages(
+            'An unique key constraint violated uk_wlmdb_config_account_id_name_user',
+            ''
+        );
         expect(result).toEqual(SELECT_CONFIG.DUPLICATE_CONFIG_NAME);
     });
     it('Non duplicate config case', () => {
-        const result = customErrorMessages('test');
+        const result = customErrorMessages('test', '');
         expect(result).toEqual('test');
     });
     it('Null case', () => {
-        const result = customErrorMessages('');
+        const result = customErrorMessages('', '');
         expect(result).toBeNull();
     });
 });

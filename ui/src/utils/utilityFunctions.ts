@@ -218,12 +218,16 @@ export const requiredFieldError = (inputString: string) => {
     }
 };
 
-export const customErrorMessages = (inputString: string) => {
+export const customErrorMessages = (inputString: string, endpoint: string) => {
     if (!inputString) {
         return null;
     }
     if (inputString.includes(API_ERRORS.DUPLICATE_CONFIG_NAME)) {
         return SELECT_CONFIG.DUPLICATE_CONFIG_NAME;
+    }
+    // For deploy API if it gets rate exceeded than update notification message
+    if (endpoint === 'deploySqlTemplate' && inputString.toLowerCase().includes(API_ERRORS.RATE_EXCEEDED)) {
+        return GENERAL.DEPLOY_RATE_EXCEEDED;
     }
     return inputString;
 };
