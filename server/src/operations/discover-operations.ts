@@ -4,7 +4,7 @@ import config from 'config';
 import { STORAGE_TYPE } from '@prisma/client';
 import { FileSystem, FileSystemType } from '@aws-sdk/client-fsx';
 import { attempt, compact, uniqBy, isEmpty } from 'lodash-es';
-import { DescribeInstancesCommandInput,  Vpc } from '@aws-sdk/client-ec2';
+import { DescribeInstancesCommandInput,  InstanceStateName,  Vpc } from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
 import { createResource } from '../lib/database/db';
@@ -25,7 +25,8 @@ import {
     SSM_PARAMETERS_BASE_PATH,
     SqlServerDeploymentModel,
     RESOURCE_SOURCE,
-    DBCREATE_RELATIVE_PATH
+    DBCREATE_RELATIVE_PATH,
+    STORAGE_PROTOCOLS
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -106,14 +107,13 @@ async function getHostAndSqlServerInfo(
     let api1EndTime;
 
     const describeInstanceParams: DescribeInstancesCommandInput = {
-        InstanceIds: ['i-0ed27a3e76249d882'],
-        // Filters: [
-        //     { Name: 'platform', Values: ['windows'] },
-        //     { Name: 'architecture', Values: ['x86_64'] },
-        //     { Name: 'instance-state-name', Values: [InstanceStateName.running] }
-        // ],
-        // ...(pageSize && { MaxResults: pageSize }),
-        // ...(nextToken && { NextToken: nextToken })
+        Filters: [
+            { Name: 'platform', Values: ['windows'] },
+            { Name: 'architecture', Values: ['x86_64'] },
+            { Name: 'instance-state-name', Values: [InstanceStateName.running] }
+        ],
+        ...(pageSize && { MaxResults: pageSize }),
+        ...(nextToken && { NextToken: nextToken })
     };
 
     // For use cases, where info for specific EC2s is needed
@@ -212,7 +212,7 @@ async function getHostAndSqlServerInfo(
             elem?.Endpoints?.Iscsi?.IpAddresses?.forEach(async ip => {
                 endPointIpWithFsxInfo.set(ip, { fsxId: fsId!, svmId: elem.StorageVirtualMachineId!, type: FileSystemType.ONTAP});
             });
-            
+
             elem?.Endpoints?.Smb?.IpAddresses?.forEach(async ip => {
                 endPointIpWithFsxInfo.set(ip, { fsxId: fsId!, svmId: elem.StorageVirtualMachineId!, type: FileSystemType.ONTAP });
             });
@@ -364,11 +364,6 @@ async function getHostAndSqlInfoFromPsOutput(
                 responseInJson = [responseInJson];
             }
 
-            logger.info("@@@@@@@@@@@@@@@@@@@@@@@@@@")
-            logger.info(responseInJson)
-            logger.info(endPointIpWithFsxInfo)
-            logger.info("@@@@@@@@@@@@@@@@@@@@@@@@@@")
-
             for (const sqlServerInstanceInfo of responseInJson) {
                 // If an SQL Server version is unknown, default to 2015, which
                 // causes no data to be returned for the SQL Server instance.
@@ -396,14 +391,16 @@ async function getHostAndSqlInfoFromPsOutput(
                                 type: STORAGE_TYPE.EBS,
                                 id: volIdRegex.test(ebsVolumeId)
                                     ? ebsVolumeId.replace(volIdRegex, '$1-$2')
-                                    : ebsVolumeId // convert the volumeId to the correct format.
+                                    : ebsVolumeId, // convert the volumeId to the correct format.
+                                protocol: STORAGE_PROTOCOLS.ISCSI
                             });
                         } else if (endPointIpWithFsxInfo.has(di?.SerialNumberOrScsiTarget))  {
                             const { fsxId, svmId } = endPointIpWithFsxInfo.get(di?.SerialNumberOrScsiTarget)!;
                             storageTypes.push({
                                 type: STORAGE_TYPE.FSXN,
                                 id: fsxId!,
-                                svmId
+                                svmId,
+                                protocol: STORAGE_PROTOCOLS.ISCSI
                             });
                             const { deploymentType, subnetIds } = fsIdWithDeploymentType.get(fsxId!) || {};
 
@@ -412,30 +409,39 @@ async function getHostAndSqlInfoFromPsOutput(
                                 zones: compact(subnetIds?.map(subnetId => subnetListMap.get(subnetId))),
                                 ids: subnetIds?.join()
                             });
-                        } 
+                        }
                         else {
-                            // Add FSxW details
+                            // SMB shares
+                            //
+                            // IF FSxW,
                             // Match get-smbmapping with FSxW (RemoteAdministrationEndpoint and PreferredFileServerIp)
                             // let fsxEndpoints = ['ip', 'fsxid]
                             // SerialNumberOrScsiTarget = ['ip', 'fsxid']
-                            logger.info("$$$$$$$$$$$$$$")
-                            logger.info(endPointIpWithFsxInfo.keys())
-                            logger.info(di?.SerialNumberOrScsiTarget)
+                            //
+                            // If FSxN over SMB, Match get-smbmapping with SVM ip/fqdn
+
                             const fsxEndpoints = Array.from(endPointIpWithFsxInfo.keys());
+                            const targets = di?.SerialNumberOrScsiTarget ? di.SerialNumberOrScsiTarget.toLowerCase() : '';
                             const matchedEndpoints = fsxEndpoints.filter(value =>
-                                di?.SerialNumberOrScsiTarget?.includes(value)
+                                targets.includes(value.toLowerCase())
                             );
                             if (!isEmpty(matchedEndpoints)) {
-                                const fsxType = endPointIpWithFsxInfo.get(matchedEndpoints[0])?.type
-                                
-                                logger.info(matchedEndpoints)
-                                logger.info(matchedEndpoints[0])
-                                logger.info(endPointIpWithFsxInfo.get(matchedEndpoints[0]))
-                                logger.info("$$$$$$$$$$$$$$")
+                                const fsxType = endPointIpWithFsxInfo.get(matchedEndpoints[0])?.type;
+                                if (fsxType === FileSystemType.WINDOWS) {
                                 storageTypes.push({
-                                    type: fsxType === FileSystemType.WINDOWS ? STORAGE_TYPE.FSXW : STORAGE_TYPE.FSXN,
-                                    id: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.fsxId
+                                    type:  STORAGE_TYPE.FSXW,
+                                    id: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.fsxId,
+                                    protocol: STORAGE_PROTOCOLS.SMB
                                 });
+                            }
+                            else {
+                                storageTypes.push({
+                                    type:  STORAGE_TYPE.FSXN,
+                                    id: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.fsxId,
+                                    svmId:endPointIpWithFsxInfo.get(matchedEndpoints[0])?.svmId,
+                                    protocol: STORAGE_PROTOCOLS.SMB,
+                                });
+                            }
                             }
                         }
                     }

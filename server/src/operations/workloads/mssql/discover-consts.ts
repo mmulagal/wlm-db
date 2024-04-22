@@ -43,9 +43,9 @@ Example output:
 
 About function GetSMBMappedDrivesWithPath
   SMB mapped drives are fetched from Windows registry HKEY_USERS and specifically at Network section.
-  We will consider users starting with S-1-5-21- and do not have _Classes. 
+  We will consider users starting with S-1-5-21- and do not have _Classes.
   Those starting with [S-1-5-21-12] are all local users and starting with [S-1-5-21-13] are all network users.
-  From Network section, pick up DriveLetter and RemotePath.  
+  From Network section, pick up DriveLetter and RemotePath.
 
 Possible causes for unavailability of SQL Server details:
 - Insufficient permissions on sys.master_files view.
@@ -343,7 +343,7 @@ const HOST_AND_SQL_INFO_PS1 = [
     Echo $responseObject | ConvertTo-Json
   }
 `
-]; 
+];
 
 const CLUSTER_NETWORK_IP_INFO_PS1 = [
     `
