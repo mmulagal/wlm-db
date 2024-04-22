@@ -3,6 +3,7 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
 import styles from './SelectedVolumeSummary.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const SelectedVolumeSummary = () => {
     const { loading } = useAppSelector(state => state.exploreSavings);
@@ -220,7 +221,7 @@ const SelectedVolumeSummary = () => {
     });
     return (
         <div className={styles.selectedVolumeSummary}>
-            <DsTypography variant="Regular_14">The selected volumes summary per volume type:</DsTypography>
+            <DsTypography variant="Regular_14">{GENERAL.SUMMARY_TEXT}</DsTypography>
             <div className={styles.instanceTable}>
                 <Table
                     //@ts-ignore

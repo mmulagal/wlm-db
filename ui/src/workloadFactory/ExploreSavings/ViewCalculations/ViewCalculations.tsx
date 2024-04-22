@@ -6,6 +6,7 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySl
 import { WLF_TABS } from '../../../utils/consts';
 import OntapCalculation from './OntapCalculation/OntapCalculation';
 import EBSCalculation from './EBSCalculation/EBSCalculation';
+import { GENERAL } from '../../../utils/appConstants';
 
 const ViewCalculations = () => {
     const dispatch = useDispatch();
@@ -15,7 +16,7 @@ const ViewCalculations = () => {
                 <BreadCrumbs
                     items={[
                         {
-                            title: 'Explore savings',
+                            title: GENERAL.ES_SAVINGS,
                             onClick: () => {
                                 dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
                             }
@@ -27,7 +28,7 @@ const ViewCalculations = () => {
                             }
                         },
                         {
-                            title: 'View calculations'
+                            title: GENERAL.VIEW_CALCS
                         }
                     ]}
                 />
@@ -38,11 +39,10 @@ const ViewCalculations = () => {
                 <div className={styles.headingArea}>
                     <div>
                         <DsTypography variant="Semibold_24" className={styles.accordionContainer}>
-                            {'Cost calculation'}
+                            {GENERAL.COST_CALCULATION}
                         </DsTypography>
                         <DsTypography variant="Regular_14" style={{ marginBottom: '24px' }}>
-                            Learn how we calculated the estimated cost of Microsoft SQL server on FSx for ONTAP for your
-                            specific use case and the configuration that you selected.
+                            {GENERAL.VIEW_CALC_TEXT}
                         </DsTypography>
                     </div>
                     <div></div>

@@ -2,6 +2,7 @@ import { DsTypography } from '@netapp/design-system';
 import { ReactComponent as MSSQL } from '../../../../assets/MS-sql-icon.svg';
 
 import styles from './SavingsHeader.module.scss';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const SavingsHeader = () => {
     return (
@@ -10,7 +11,7 @@ const SavingsHeader = () => {
                 <MSSQL />
             </div>
             <DsTypography variant="Semibold_16" className={styles.content}>
-                Microsoft SQL server on Amazon Elastic Block Store (EBS) configuration.
+                {GENERAL.SAVINGS_HEADER}
             </DsTypography>
         </div>
     );

@@ -5,6 +5,7 @@ import { Text } from '../../../../ui-components/Typography';
 import { comparisonData } from '../savingsUtil';
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const CostBreakdown = () => {
     const { loading } = useAppSelector(state => state.exploreSavings);
@@ -14,7 +15,7 @@ const CostBreakdown = () => {
                 className={styles['comparison-table-column']}
                 style={
                     data?.type === 'Total summary'
-                        ? { backgroundColor: 'var(--table-header-background)', fontWeight: 590 }
+                        ? { backgroundColor: 'var(--table-header-background)', fontWeight: 500 }
                         : { backgroundColor: 'var(--main-background)' }
                 }
             >
@@ -79,7 +80,7 @@ const CostBreakdown = () => {
         <div className={styles.costBreakdown}>
             <div className={styles.headSection}>
                 <DsTypography variant="Semibold_16" className={styles.title}>
-                    Cost breakdown - Monthly charge
+                    {GENERAL.ES_COST_BREAKDOWN}
                 </DsTypography>
                 {loading && <DsFlashingDotsLoader />}
             </div>
@@ -99,7 +100,7 @@ const CostBreakdown = () => {
                                 }
                             >
                                 {' '}
-                                Type
+                                {GENERAL.ES_TYPE}
                             </div>
                             <div className={styles['table-container']}>
                                 <div
@@ -115,7 +116,7 @@ const CostBreakdown = () => {
                                     style={{ width: '121px', fontWeight: '500' }}
                                 >
                                     {' '}
-                                    MsSQL server on FSx for ONTAP
+                                    {GENERAL.ES_MSSQL_SERVER}
                                 </Text>
                             </div>
                             <div className={styles['table-container-right']}>
@@ -132,7 +133,7 @@ const CostBreakdown = () => {
                                     style={{ width: '121px', fontWeight: '500' }}
                                 >
                                     {' '}
-                                    MsSQL server on EBS
+                                    {GENERAL.ES_MSSQL_EBS}
                                 </Text>
                             </div>
                         </CardTableContent>

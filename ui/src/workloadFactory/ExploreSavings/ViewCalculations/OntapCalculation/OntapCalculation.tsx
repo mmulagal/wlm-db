@@ -4,6 +4,7 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { viewCalculation } from '../../SavingsCalculator/savingsUtil';
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { Text } from '../../../../ui-components/Typography';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const TableLayout = ({ data }: any) => {
     const styleHandler = (data: any) => {
@@ -96,7 +97,7 @@ const OntapCalculation = () => {
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="1"
-                title={<div>Microsoft SQL server on FSx for ONTAP calculation</div>}
+                title={<div>{GENERAL.MS_ONTAP_CALCULATION}</div>}
             >
                 <AccordionCardContent>
                     <DsTypography className={styles.accordionContentSet}>
