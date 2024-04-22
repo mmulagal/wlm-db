@@ -10,19 +10,9 @@ import { WLF_TABS } from '../../../../utils/consts';
 import domToPdf from 'dom-to-pdf';
 import { useAppSelector } from '../../../../store/storeHooks';
 
-const ExportPDF = ({ rootElementId }: any) => {
+const ExportPDF = ({ printDocument }: any) => {
     const { loading } = useAppSelector(state => state.exploreSavings);
     const dispatch = useDispatch();
-
-    const printDocument = () => {
-        setTimeout(() => {
-            const elem = document.getElementById(rootElementId) as HTMLElement;
-            var options = {
-                filename: `SavingsCalculator.pdf`
-            };
-            domToPdf(elem, options, (pdf: any) => {});
-        }, 200);
-    };
 
     const handleExport = () => {
         printDocument();
