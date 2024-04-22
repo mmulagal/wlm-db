@@ -625,7 +625,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
                     throughput: fsxwResourceInfo.throughput,
                     iops: fsxwResourceInfo.iops,
                     deploymentOption: fsxwResourceInfo.deploymentOption,
-                    storageType: fsxnResourceInfo.storageType,
+                    storageType: fsxwResourceInfo.storageType,
                     diskSize: 0 // As we are calculating post deployment cost usage, we don't need disk size, we can use storageCapacity instead.
                 }
             })
