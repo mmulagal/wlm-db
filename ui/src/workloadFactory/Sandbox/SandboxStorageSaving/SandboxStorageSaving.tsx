@@ -13,7 +13,7 @@ const SandboxStorageSaving = () => {
     const { sandboxSavingsLoading: loading, sandboxSavings } = getSandboxSavings;
 
     const savingsPercentage = sandboxSavings?.sandboxSavingsPercentage
-        ? Math.floor(sandboxSavings.sandboxSavingsPercentage) - 169
+        ? Math.floor(sandboxSavings.sandboxSavingsPercentage)
         : 0;
     const savingsPercentToShow = `${savingsPercentage < 5 ? '<5' : savingsPercentage}%`;
 
