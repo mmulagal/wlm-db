@@ -219,7 +219,7 @@ async function updateUserDBIntoResourceData(
         type: MSSQL_DATABASE_TYPES.USER,
         status: ONLINE,
         protection: {
-            isAwsBackupEnabled: {
+            isAWSBackupEnabled: {
                 fsxn: false,
                 fsxw: false,
                 ebs: false

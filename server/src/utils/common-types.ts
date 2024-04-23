@@ -19,12 +19,11 @@ interface CreateDbMetrics {
 }
 
 interface IsAWSBackup {
-    isAwsBackupEnabled: {
-        fsxn: boolean;
-        fsxw: boolean;
-        ebs: boolean;
-    };
+    fsxn: boolean;
+    fsxw: boolean;
+    ebs: boolean;
 }
+
 interface UserDatabase {
     name: string;
     size: number;
