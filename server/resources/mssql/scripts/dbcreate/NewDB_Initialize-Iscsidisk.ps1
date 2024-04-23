@@ -19,7 +19,13 @@ param(
     [string]$DataNew,  
     
     [Parameter(Mandatory=$false)]
-    [string]$Virtualmount    
+    [string]$Virtualmount,
+    
+    [Parameter(Mandatory=$false)]
+    [string]$DataSerial,
+
+    [Parameter(Mandatory=$false)]
+    [string]$LogSerial             
 )
 $null = (Start-Transcript -Path C:\cfn\log\NewDB_initializeiscsi.log.txt -Append)
 $ErrorActionPreference = "Stop"
@@ -87,18 +93,17 @@ else {$count = 1}
 }
 try{
 #Retrieve a list of FSx for ONTAP disks. 
-$disklist=(Get-Disk | Where-Object{$_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline'} | Sort-Object -Property Size)
-$diskcount = $disklist.Number.Count
+if($DataNew -ne "false") {
+$getdatadisk=(Get-Disk | Where-Object{$_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline' -and $_.SerialNumber -eq $DataSerial})
 #Retry for 1 min until disks are available on host
-if ($diskcount -lt $count) {
+if ([string]::IsNullOrEmpty($getdatadisk)) {
     do {
-    $disklist=(Get-Disk | Where-Object{$_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline'} | Sort-Object -Property Size)
-    $diskcount = $disklist.Number.Count
-    $retry++
+    $getdatadisk=(Get-Disk | Where-Object{$_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline' -and $_.SerialNumber -eq $DataSerial})
+    $retrydata++
     Start-Sleep 20
-    } until (($retry -eq 4) -Or($diskcount -ge $count))
+    } until (($retrydata -eq 4) -Or !([string]::IsNullOrEmpty($getdatadisk) ))
     try {
-    if (($retry -ge 4) -And ($diskcount -lt $count)) {throw}
+    if (($retrydata -ge 4) -And ([string]::IsNullOrEmpty($getdatadisk))) {throw}
     } catch {
     $result.Add('Status','Failed')
     $result.Add('Message','Disks created are not discoverable on host')
@@ -109,21 +114,64 @@ if ($diskcount -lt $count) {
     }
 
 }
+}
+
+if($LogNew -ne "false") {
+$getlogdisk=(Get-Disk | Where-Object{$_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline' -and $_.SerialNumber -eq $LogSerial})
+#Retry for 1 min until disks are available on host
+if ([string]::IsNullOrEmpty($getlogdisk)) {
+    do {
+    $getlogdisk=(Get-Disk | Where-Object{$_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline' -and $_.SerialNumber -eq $LogSerial})
+    $retrylog++
+    Start-Sleep 20
+    } until (($retrylog -eq 4) -Or !([string]::IsNullOrEmpty($getlogdisk) ))
+    try {
+    if (($retrylog -ge 4) -And ([string]::IsNullOrEmpty($getlogdisk))) {throw}
+    } catch {
+    $result.Add('Status','Failed')
+    $result.Add('Message','Disks created are not discoverable on host')
+    $result.Add('Exception',$_)
+    $resultjson = ($result | ConvertTo-Json) 
+    $resultjson  
+    exit 1        
+    }
+
+}
+}
+
 #Adding Silently Continue for Set-Disk as warning caused output to have the string an API considered failure despite success
 #If warning is indeed serious the next step to initialize will fail and that will be caught
-foreach($dk in $disklist)
+
+if($DataNew -ne "false")
 {
-    if(($dk).IsOffline -eq $True){
-       Set-Disk -Number ($dk).Number -IsOffline $False -ErrorAction SilentlyContinue
+    if(($getdatadisk).IsOffline -eq $True){
+       Set-Disk -Number ($getdatadisk).Number -IsOffline $False -ErrorAction SilentlyContinue
        Start-Sleep 2
 
     }
-    if(($dk).PartitionStyle -eq 'RAW'){
-        Initialize-Disk -Number ($dk).Number -PartitionStyle GPT -ErrorAction SilentlyContinue
+    if(($getdatadisk).PartitionStyle -eq 'RAW'){
+        Initialize-Disk -Number ($getdatadisk).Number -PartitionStyle GPT -ErrorAction SilentlyContinue
         Start-Sleep 2
     }
-    if($dk.IsReadOnly -eq $True){
-        Set-Disk -Number ($dk).Number -IsReadOnly $False -ErrorAction SilentlyContinue
+    if($getdatadisk.IsReadOnly -eq $True){
+        Set-Disk -Number ($getdatadisk).Number -IsReadOnly $False -ErrorAction SilentlyContinue
+        Start-Sleep 2
+    }
+}
+
+if($LogNew -ne "false")
+{
+    if(($getlogdisk).IsOffline -eq $True){
+       Set-Disk -Number ($getlogdisk).Number -IsOffline $False -ErrorAction SilentlyContinue
+       Start-Sleep 2
+
+    }
+    if(($getlogdisk).PartitionStyle -eq 'RAW'){
+        Initialize-Disk -Number ($getlogdisk).Number -PartitionStyle GPT -ErrorAction SilentlyContinue
+        Start-Sleep 2
+    }
+    if($getlogdisk.IsReadOnly -eq $True){
+        Set-Disk -Number ($getlogdisk).Number -IsReadOnly $False -ErrorAction SilentlyContinue
         Start-Sleep 2
     }
 }
@@ -148,37 +196,37 @@ if ($Virtualmount -eq "true") {
 #Mount new ISCSI disks to a folder in selected drive 
 $null = (New-Item -ItemType Directory -Path $datafolder -Force)
 $null = (New-Item -ItemType Directory -Path $logfolder -Force)
-$null = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize  | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
-$null = (New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
+$null = (New-Partition -DiskNumber ($getlogdisk).Number -UseMaximumSize  | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
+$null = (New-Partition -DiskNumber ($getdatadisk).Number -UseMaximumSize | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
 Start-Sleep 5
-$null = (Get-Partition -DiskNumber ($disklist[0]).Number |  Where-Object Type -eq Basic | Add-PartitionAccessPath -AccessPath $logfolder)
-$null = (Get-Partition -DiskNumber ($disklist[1]).Number |  Where-Object Type -eq Basic  | Add-PartitionAccessPath -AccessPath $datafolder)
-$null = (Get-Partition -DiskNumber ($disklist[0]).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
-$null = (Get-Partition -DiskNumber ($disklist[1]).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true) 
+$null = (Get-Partition -DiskNumber ($getlogdisk).Number |  Where-Object Type -eq Basic | Add-PartitionAccessPath -AccessPath $logfolder)
+$null = (Get-Partition -DiskNumber ($getdatadisk).Number |  Where-Object Type -eq Basic  | Add-PartitionAccessPath -AccessPath $datafolder)
+$null = (Get-Partition -DiskNumber ($getlogdisk).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+$null = (Get-Partition -DiskNumber ($getdatadisk).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true) 
 
 }
 else {
-    $null = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel)
-    $null = (New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel)
+    $null = (New-Partition -DiskNumber ($getlogdisk).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel)
+    $null = (New-Partition -DiskNumber ($getdatadisk).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel)
 } }
 elseif($LogNew -ne "false") {
     if ($Virtualmount -eq "true") { 
         $null = (New-Item -ItemType Directory -Path $logfolder -Force)
-        $null = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize  | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
-        $null = (Get-Partition -DiskNumber ($disklist[0]).Number |  Where-Object Type -eq Basic  | Add-PartitionAccessPath -AccessPath $logfolder)
-        $null = (Get-Partition -DiskNumber ($disklist[0]).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+        $null = (New-Partition -DiskNumber ($getlogdisk).Number -UseMaximumSize  | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
+        $null = (Get-Partition -DiskNumber ($getlogdisk).Number |  Where-Object Type -eq Basic  | Add-PartitionAccessPath -AccessPath $logfolder)
+        $null = (Get-Partition -DiskNumber ($getlogdisk).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
     }
     else {
-    $null = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel)
+    $null = (New-Partition -DiskNumber ($getlogdisk).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel)
 }} else {
     if ($Virtualmount -eq "true") { 
         $null = (New-Item -ItemType Directory -Path $datafolder -Force)
-        $null = (New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
-        $null =(Get-Partition -DiskNumber ($disklist[1]).Number |  Where-Object Type -eq Basic | Add-PartitionAccessPath -AccessPath $datafolder)
-        $null = (Get-Partition -DiskNumber ($disklist[0]).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+        $null = (New-Partition -DiskNumber ($getdatadisk).Number -UseMaximumSize | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
+        $null =(Get-Partition -DiskNumber ($getdatadisk).Number |  Where-Object Type -eq Basic | Add-PartitionAccessPath -AccessPath $datafolder)
+        $null = (Get-Partition -DiskNumber ($getdatadisk).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
     }
     else {
-    $null = (New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel)    
+    $null = (New-Partition -DiskNumber ($getdatadisk).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel)    
     }}
 Start-Service -Name ShellHWDetection
 }catch{
@@ -194,13 +242,13 @@ try{
 if ($IsClustered -ne "false") {
 # Add new disks to Cluster Storage
     if( ($LogNew -ne "false")-And ($DataNew -ne "false")) {
-    $logdisk = (Get-Disk -Number $disklist[0].Number | Add-ClusterDisk)
-    $datadisk = (Get-Disk -Number $disklist[1].Number | Add-ClusterDisk)
+    $logdisk = (Get-Disk -Number $getlogdisk.Number | Add-ClusterDisk)
+    $datadisk = (Get-Disk -Number $getdatadisk.Number | Add-ClusterDisk)
     }
     elseif($LogNew -ne "false") {
-        $logdisk = (Get-Disk -Number $disklist[0].Number | Add-ClusterDisk)
+        $logdisk = (Get-Disk -Number $getlogdisk.Number | Add-ClusterDisk)
     } else {
-        $datadisk = (Get-Disk -Number $disklist[0].Number | Add-ClusterDisk)
+        $datadisk = (Get-Disk -Number $getdatadisk.Number | Add-ClusterDisk)
     }
 
 }

@@ -18,8 +18,10 @@ param(
     [string]$LogNew,
 
     [Parameter(Mandatory=$true)]
-    [string]$DataNew   
+    [string]$DataNew,   
 
+    [Parameter(Mandatory=$false)]
+    [string]$StandbyIQN
 )
 $logtranscript = (New-Item -ItemType Directory -Path C:\cfn\log -Force)
 $silenttranscript = (Start-Transcript -Path C:\cfn\log\Configure_luns.log.txt -Append)
@@ -168,11 +170,20 @@ if(($LogNew -eq "false") -And ($DataNew -eq "false")) { throw }
 
 $IGUriDynamicPart='protocols/san/igroups'
 try {
-$URI=@"
+
+if($StandbyIQN) {
+    $URI=@"
+    https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($nodeiqn),$($StandbyIQN)&protocol=iscsi
+    "@
+    $igroups = (callGetApi -uri $URI -region $region -creds $base64 -result $result).records   
+}
+else {
+    $URI=@"
 https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($nodeiqn)&protocol=iscsi
 "@
 $igroups = (callGetApi -uri $URI -region $region -creds $base64 -result $result).records
-$IGROUP = $igroups[0].name
+}
+    $IGROUP = $igroups[0].name
 } catch {
     $result.Add('Status','Failed')
     $result.Add('Message','Unable to fetch initiator group from SVM')
@@ -183,11 +194,19 @@ $IGROUP = $igroups[0].name
 }
 if ([string]::IsNullOrEmpty($IGROUP)) {
   $found = $nodeiqn -match '(.*\:.+?)\.'
+
   try {
   if ($found) {
     $baseiqn = $matches[1]
     }
   else { throw}
+  if($StandbyIQN) {
+    $found2 = $StandbyIQN -match '(.*\:.+?)\.'
+    if ($found2) {
+        $standbybaseiqn = $matches[1]
+        }
+      else { throw}
+  }
   } catch {
     $result.Add('Status','Failed')
     $result.Add('Message','Unable to find initiator group allowing access to the node')
@@ -196,11 +215,21 @@ if ([string]::IsNullOrEmpty($IGROUP)) {
     $resultjson  
     exit 1 
   }
-  $URI=@"
-  https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($baseiqn)&protocol=iscsi
-"@
 
-  $igroups = (callGetApi -uri $URI -region $region -creds $base64 -result $result).records
+
+  if($StandbyIQN) { 
+    $SURI=@"
+  https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($baseiqn),$($standbybaseiqn)&protocol=iscsi
+"@
+  $igroups = (callGetApi -uri $SURI -region $region -creds $base64 -result $result).records
+  
+  } else {
+    $URI=@"
+    https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($baseiqn)&protocol=iscsi
+  "@
+  
+    $igroups = (callGetApi -uri $URI -region $region -creds $base64 -result $result).records 
+  }
   $IGROUP = $igroups[0].name
   try {
   if ([string]::IsNullOrEmpty($IGROUP)) { throw }
@@ -447,8 +476,16 @@ foreach ($perlun in $pathlist) {
         }
         Start-Sleep 3
     }
+
+    $DATAURI="https://$($MgmtDNS)/api/storage/luns?name=/vol/$($FsxDataVolumeName)/$($DATALUN)&fields=serial_number"
+    $dataserial = ((callGetApi -uri $DATAURI -region $region -creds $base64 -result $result).records)[0].serial_number
+    $LOGURI="https://$($MgmtDNS)/api/storage/luns?name=/vol/$($FsxLogVolumeName)/$($LOGLUN)&fields=serial_number"
+    $logserial = ((callGetApi -uri $LOGURI -region $region -creds $base64 -result $result).records)[0].serial_number
+    $result.Resources.Add('DataSerial',$dataserial)
+    $result.Resources.Add('LogSerial',$logserial)
     $result.Add('Status','Complete')
     $result.Add('Message','Provisioning storage on FSx for NetApp ONTAP complete')
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson 
+ 
  
