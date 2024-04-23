@@ -10,7 +10,7 @@ import throat from 'throat';
 import { createResource } from '../lib/database/db';
 import { getResources } from './database/database-operations';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
-import { getArtifactsRegionBucketName, getResourceNameFromTags, sleep } from '../utils/utils';
+import { getResourceNameFromTags, sleep } from '../utils/utils';
 import {
     getEc2SqlParameters,
     callSsmExecution,
@@ -18,6 +18,7 @@ import {
     pollCommandStatus,
     ssmPutParameters
 } from './aws/ssm-operations';
+import { tagResources } from './aws/sqs-operations';
 import {
     CloudProviders,
     HttpErrorCodes,
@@ -25,14 +26,16 @@ import {
     SSM_PARAMETERS_BASE_PATH,
     SqlServerDeploymentModel,
     RESOURCE_SOURCE,
-    DBCREATE_RELATIVE_PATH,
     STORAGE_PROTOCOLS
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
     HOST_AND_SQL_INFO_PS1,
     CLUSTER_NETWORK_IP_INFO_PS1,
-    COPY_SCIRPTS_TO_MANAGE_RESOURCE
+    IS_PS7_AVAILABLE,
+    UNAVAILABLE_PS_MODULES,
+    GET_MISSING_RESOURCE_DETAILS,
+    IS_DATABASE_CREATE_POSSIBLE
 } from './workloads/mssql/discover-consts';
 import { deleteParameters, getParameter, sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
@@ -56,9 +59,6 @@ import {
 } from './workloads/mssql/ssm-script-utils';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
-import { preSignedUrl } from '../lib/aws/s3';
-
-const { getPreSignedUrl } = preSignedUrl;
 
 const logger = getLogger();
 
@@ -772,7 +772,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     if (isEmpty(ec2InstanceId)) {
         throw createError(
             HttpErrorCodes.VALIDATION_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Reason: empty instance ID`
+            `Unable to manage instance '${ec2InstanceId}'. Reason: empty instance ID.`
         );
     }
 
@@ -780,7 +780,34 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     if (ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
         throw createError(
             HttpErrorCodes.VALIDATION_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Reason: no SSM connectivity`
+            `Unable to manage instance '${ec2InstanceId}'. Reason: no SSM connectivity.`
+        );
+    }
+
+    const missingResourceInfo = await callSsmExecution(
+        credentialsId,
+        region,
+        GET_MISSING_RESOURCE_DETAILS,
+        ec2InstanceId,
+        accountId
+    );
+    logger.debug('Missing resource info', missingResourceInfo);
+    const missingResourceResponse = JSON.parse(missingResourceInfo!);
+
+    if (missingResourceResponse[IS_PS7_AVAILABLE] === false) {
+        throw createError(
+            HttpErrorCodes.FAILED_DEPENDENCY,
+            'PowerShell 7 is needed for managing the resource. Install it manually (refer to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4) or using the API <to-be-filled>, and retry the operation.'
+        );
+    } else if (missingResourceResponse[UNAVAILABLE_PS_MODULES]) {
+        throw createError(
+            HttpErrorCodes.FAILED_DEPENDENCY,
+            `PowerShell modules ${missingResourceResponse[UNAVAILABLE_PS_MODULES]} are needed for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API <to-be-filled>, and retry the operation.`
+        );
+    } else if (missingResourceResponse[IS_DATABASE_CREATE_POSSIBLE] === false) {
+        throw createError(
+            HttpErrorCodes.FAILED_DEPENDENCY,
+            'Files required for database operations are not available. Install them using the API <to-be-filled>, and retry the operation.'
         );
     }
 
@@ -846,68 +873,21 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     await validateEc2InstanceManageability(discoverInfo, ec2InstanceId);
 
     const [item] = discoverInfo.items;
-    const [sqlServerInstance] = item.sqlServerInstances || [];
+    const [sqlServerInstance] = item?.sqlServerInstances || [];
     const { storage } = sqlServerInstance;
     const storageInfo = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
 
-    // Get signed url for dbcreate.zip
-    const bucketname = getArtifactsRegionBucketName(region);
-    const dbcreateS3SignedUrl = await getPreSignedUrl(region, bucketname, DBCREATE_RELATIVE_PATH);
-
-    // Copy scripts to the EC2 instance
-    const discoveryPromiseList = [
-        callSsmExecution(
-            credentialsId,
-            region,
-            COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
-            ec2InstanceId,
-            accountId,
-            true,
-            '7200' // FIXME: If frequent timeouts are seen, we shall run the command as a PS Job.
-        )
-    ];
-
-    if (node2InstanceId) {
-        discoveryPromiseList.push(
-            callSsmExecution(
-                credentialsId,
-                region,
-                COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
-                node2InstanceId,
-                accountId,
-                true,
-                '7200' // FIXME: If frequent timeouts are seen, we shall run the command as a PS Job.
-            )
-        );
-    }
-    const [ssmScriptsCopyResponse1, ssmScriptsCopyResponse2] = await Promise.all([
-        ...discoveryPromiseList,
-        verifyAndAddFSxOntapCredentials(
-            accountId,
-            credentialsId,
-            region,
-            discoverInfo?.items?.[0].sqlServerInstances?.[0]?.storage
-        )
-    ]);
-
-    logger.info(
-        `Response for copy scripts using PowerShell: ${node1InstanceId} = ${ssmScriptsCopyResponse1}, ${node2InstanceId} = ${ssmScriptsCopyResponse2}`
+    verifyAndAddFSxOntapCredentials(
+        accountId,
+        credentialsId,
+        region,
+        discoverInfo?.items?.[0].sqlServerInstances?.[0]?.storage
     );
-    if (ssmScriptsCopyResponse1?.includes('failureInfo')) {
-        logger.error('Failed to copy discovery scripts. Reason:', ssmScriptsCopyResponse1);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to manage instance '${node1InstanceId}'. Reason: failed to copy artifacts`
-        );
-    }
 
-    if (ssmScriptsCopyResponse2?.includes('failureInfo')) {
-        logger.error('Failed to copy discovery scripts. Reason:', ssmScriptsCopyResponse2);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to manage instance '${node2InstanceId}'. Reason: failed to copy artifacts`
-        );
-    }
+    const fsxStorage = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
+
+    // TODO: Find AWS account ID and use instead of '464262061435' below.
+    tagResources(credentialsId, region, '464262061435', accountId, fsxStorage!.id, node1InstanceId, node2InstanceId);
 
     // Register the resource
     await createResource(accountId, {
@@ -1143,7 +1123,7 @@ async function verifyAndAddFSxOntapCredentials(
             } catch (error: any) {
                 throw createError(
                     HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                    `FSx for ONTAP storage '${fsxStorage.id}' isn't registered with FSxN core service. This cannot be managed`
+                    `Unable to manage the instance. Reason: FSx for ONTAP storage '${fsxStorage.id}' isn't registered with FSxN core service.`
                 );
             }
 

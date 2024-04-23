@@ -1,3 +1,7 @@
+const IS_DATABASE_CREATE_POSSIBLE = 'isDatabaseCreatePossible';
+const IS_PS7_AVAILABLE = 'isPS7Available';
+const UNAVAILABLE_PS_MODULES = 'unavailablePsModules';
+
 const SQL_SERVER_VERSION_TO_YEAR = new Map<number, number>([
     // Ref: https://learn.microsoft.com/en-AU/troubleshoot/sql/releases/download-and-install-latest-updates#sql-server-2022
     [9, 2005],
@@ -414,9 +418,66 @@ const COPY_SCIRPTS_TO_MANAGE_RESOURCE = (s3SignedUrl: string) => [
 `
 ];
 
+const GET_MISSING_RESOURCE_DETAILS = [
+    `
+  $ErrorActionPreference = "Stop"
+  $responseObject = @{}
+  $scriptStartTime = Get-Date
+  $isPS7Available = $False
+  $isDatabaseCreatePossible = $False
+  
+  try {
+    If (Get-Command -Name pwsh -ErrorAction SilentlyContinue) {
+      $isPS7Available = $True
+    }
+
+    $databaseCreateFileList = @(
+      'C:\\SSM\\Cleanup-ONTAP.ps1'
+      'C:\\SSM\\Configure-LUNs.ps1'
+      'C:\\SSM\\Create-Database.ps1'
+      'C:\\SSM\\Invoke-virtualmount.ps1'
+      'C:\\SSM\\NewDB_Initialize-Iscsidisk.ps1'
+    )
+
+    $isDatabaseCreatePossible = If ((Test-path -path $databaseCreateFileList -PathType Leaf) -contains $False) { $False } Else { $True }
+
+    $requiredPsModuleList = @(
+      'AWS.Tools.EC2'
+      'AWS.Tools.FSx'
+      'AWS.Tools.Installer'
+      'AWS.Tools.SecretsManager'
+      'AWS.Tools.SimpleSystemsManagement'
+      'NetApp.ONTAP'
+    )
+
+    $availablePsModuleList = (Get-Module -ListAvailable -Name $requiredPsModuleList).Name
+    $unavailablePsModuleList = $requiredPsModuleList | ? { $_ -NotIn $availablePsModuleList}
+
+  } catch {
+    # Prevent any possible errors from clobbering JSON output
+    $responseObject['failureInfo'] = $_.Exception.Message
+  } finally {
+    $responseObject['${IS_PS7_AVAILABLE}'] = $isPS7Available
+    $responseObject['${IS_DATABASE_CREATE_POSSIBLE}'] = $isDatabaseCreatePossible
+
+    if ($unavailablePsModuleList.Count -gt 0) {
+      $responseObject['${UNAVAILABLE_PS_MODULES}'] = $unavailablePsModuleList;
+    }
+
+    $scriptEndTime = Get-Date
+    $responseObject['scriptExecutionTime'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)
+    Echo $responseObject | ConvertTo-Json -Compress
+  } 
+  `
+];
+
 export {
     HOST_AND_SQL_INFO_PS1,
     SQL_SERVER_VERSION_TO_YEAR,
     CLUSTER_NETWORK_IP_INFO_PS1,
-    COPY_SCIRPTS_TO_MANAGE_RESOURCE
+    COPY_SCIRPTS_TO_MANAGE_RESOURCE,
+    GET_MISSING_RESOURCE_DETAILS,
+    IS_PS7_AVAILABLE,
+    UNAVAILABLE_PS_MODULES,
+    IS_DATABASE_CREATE_POSSIBLE
 };
