@@ -11,10 +11,11 @@ export default function storageSavingsRoutes(fastify: FastifyInstance) {
 
     server.post(API_PATH_STORAGE_SAVINGS, { schema: getStorageSavingsSchema }, async (request, reply) => {
         const {
-            params: { accountId, credentialsId, region, instanceId }
+            params: { accountId, credentialsId, region, instanceId },
+            body
         } = request;
 
-        const response = await performStorageSavingsCalculations(accountId, credentialsId, region, instanceId);
+        const response = await performStorageSavingsCalculations(accountId, credentialsId, region, instanceId, body);
         return reply.send(response);
     });
 }
