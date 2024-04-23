@@ -17,12 +17,20 @@ interface Metadata {
 interface CreateDbMetrics {
     numberofUserDbsCreated: number;
 }
+
+interface IsAWSBackup {
+    isAwsBackupEnabled: {
+        fsxn: boolean;
+        fsxw: boolean;
+        ebs: boolean;
+    };
+}
 interface UserDatabase {
     name: string;
     size: number;
     status: string;
     type: string;
-    protection: { isAWSBackupEnabled: boolean; isFsxOntapSnapshotsEnabled: boolean; isSqlNativeEnabled: boolean };
+    protection: { isAWSBackupEnabled: IsAWSBackup; isFsxOntapSnapshotsEnabled: boolean; isSqlNativeEnabled: boolean };
 }
 
 interface ResourceDetails {
