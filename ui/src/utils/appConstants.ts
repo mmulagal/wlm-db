@@ -805,6 +805,7 @@ export const GENERAL = {
     VIEW_CALC_TEXT:
         'Learn how we calculated the estimated cost of Microsoft SQL server on FSx for ONTAP for your specific use case and the configuration that you selected.',
     VIEW_CALCS: 'View calculations',
+    VIEW_CAL_SECONDARY_TEXT: 'All aws prices mentioned in the calculations are aws on-demand pricing.',
     COST_CALCULATION: 'Cost calculation',
     DEPLOY_RATE_EXCEEDED: 'An internal error occurred when attempting to deploy the database server, please try again.'
 };

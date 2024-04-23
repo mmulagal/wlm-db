@@ -52,7 +52,13 @@ const EBSCalculation = () => {
         Ec2InstanceCalculation: {
             instanceType: 'c5.2xlarge',
             instanceHourlyPrice: '1.68',
-            ec2MachineCost: '1,226.40'
+            ec2MachineCost: '1,226.40',
+            sqlEdition: 'SQL Server Standard edition',
+            sqlLicense: 'Yes'
+        },
+        cloneCalculation: {
+            numberOfClonedCopies: 3,
+            cloneCost: 900
         },
         EBSCalculation: {
             storageCapacity: '23',
@@ -99,6 +105,14 @@ const EBSCalculation = () => {
                         )}
                         <div style={{ marginTop: '16px' }}>
                             {viewCalculationForEBS(viewCalculationData).EBSCalculation.map(
+                                (data: { label: string; text?: string; value?: string }, index: number) => (
+                                    <TableLayout key={index} data={data} />
+                                )
+                            )}
+                        </div>
+
+                        <div style={{ marginTop: '16px' }}>
+                            {viewCalculationForEBS(viewCalculationData).cloneCalculation.map(
                                 (data: { label: string; text?: string; value?: string }, index: number) => (
                                     <TableLayout key={index} data={data} />
                                 )

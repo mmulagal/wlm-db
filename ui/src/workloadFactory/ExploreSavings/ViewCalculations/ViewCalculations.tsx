@@ -41,8 +41,12 @@ const ViewCalculations = () => {
                         <DsTypography variant="Semibold_24" className={styles.accordionContainer}>
                             {GENERAL.COST_CALCULATION}
                         </DsTypography>
-                        <DsTypography variant="Regular_14" style={{ marginBottom: '24px' }}>
+                        <DsTypography variant="Regular_14" style={{ marginBottom: '4px' }}>
                             {GENERAL.VIEW_CALC_TEXT}
+                        </DsTypography>
+
+                        <DsTypography variant="Regular_14" style={{ marginBottom: '24px', fontWeight: '500' }}>
+                            {GENERAL.VIEW_CAL_SECONDARY_TEXT}
                         </DsTypography>
                     </div>
                     <div></div>
