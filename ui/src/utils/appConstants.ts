@@ -807,7 +807,9 @@ export const GENERAL = {
     VIEW_CALCS: 'View calculations',
     VIEW_CAL_SECONDARY_TEXT: 'All aws prices mentioned in the calculations are aws on-demand pricing.',
     COST_CALCULATION: 'Cost calculation',
-    DEPLOY_RATE_EXCEEDED: 'An internal error occurred when attempting to deploy the database server, please try again.'
+    DEPLOY_RATE_EXCEEDED: 'An internal error occurred when attempting to deploy the database server, please try again.',
+    TOOLTIP_MESSAGE_SNAPSHOT_FREQ:
+        'EBS snapshots not detected, if you would like to compare FSxN snapshots to potential EBS snapshots cost, please update the snapshot frequency.'
 };
 
 export const CODE_VIEWER = {
