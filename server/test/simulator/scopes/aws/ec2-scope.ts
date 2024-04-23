@@ -23,6 +23,7 @@ import { mockClient } from 'aws-sdk-client-mock';
 import vpcsResponse from '../../responses/aws/list-vpcs.json';
 import subnetsResponse from '../../responses/aws/list-subnets.json';
 import securityGroupsResponse from '../../responses/aws/list-security-groups.json';
+import ec2ImagesResponse from '../../responses/aws/ec2-images.json';
 import ec2AMIImagesResponse from '../../responses/aws/ec2-ami-images.json';
 import fsxRegionsResponse from '../../responses/aws/list-fsx-regions.json';
 import ec2InstanaceTypes from '../../responses/aws/ec2-instance-types.json';
@@ -67,30 +68,175 @@ const keyPairsResponse = {
     ]
 };
 
-const FIRSTIMAGEFILTER = { Filters: [{ Name: 'name', Values: ['Windows_Server-2016-English-Full-SQL_2016_SP*_Enterprise*'] }, { Name: 'owner-alias', Values: ['amazon'] }], Owners: ['801119661308', '185158320714', '536790793924', '688423173695', '878052572473', '159365745649', '903064639964', '311529897437'] };
+const FIRSTIMAGEFILTER = {
+    Filters: [
+        { Name: 'name', Values: ['Windows_Server-2016-English-Full-SQL_2016_SP*_Enterprise*'] },
+        { Name: 'owner-alias', Values: ['amazon'] }
+    ],
+    Owners: [
+        '801119661308',
+        '185158320714',
+        '536790793924',
+        '688423173695',
+        '878052572473',
+        '159365745649',
+        '903064639964',
+        '311529897437'
+    ]
+};
 
-const SECONDIMAGEFILTER = { Filters: [{ Name: 'name', Values: ['Windows_Server-2016-English-Full-SQL_2016_SP*_Standard*'] }, { Name: 'owner-alias', Values: ['amazon'] }], Owners: ['801119661308', '185158320714', '536790793924', '688423173695', '878052572473', '159365745649', '903064639964', '311529897437'] };
+const SECONDIMAGEFILTER = {
+    Filters: [
+        { Name: 'name', Values: ['Windows_Server-2016-English-Full-SQL_2016_SP*_Standard*'] },
+        { Name: 'owner-alias', Values: ['amazon'] }
+    ],
+    Owners: [
+        '801119661308',
+        '185158320714',
+        '536790793924',
+        '688423173695',
+        '878052572473',
+        '159365745649',
+        '903064639964',
+        '311529897437'
+    ]
+};
 
-const THIRDIMAGEFILTER =
-    { Filters: [{ Name: 'name', Values: ['Windows_Server-2016-English-Full-SQL_2019_Standard*'] }, { Name: 'owner-alias', Values: ['amazon'] }], Owners: ['801119661308', '185158320714', '536790793924', '688423173695', '878052572473', '159365745649', '903064639964', '311529897437'] };
+const THIRDIMAGEFILTER = {
+    Filters: [
+        { Name: 'name', Values: ['Windows_Server-2016-English-Full-SQL_2019_Standard*'] },
+        { Name: 'owner-alias', Values: ['amazon'] }
+    ],
+    Owners: [
+        '801119661308',
+        '185158320714',
+        '536790793924',
+        '688423173695',
+        '878052572473',
+        '159365745649',
+        '903064639964',
+        '311529897437'
+    ]
+};
 
-const FOURTHIMAGEFILTER =
-    { Filters: [{ Name: 'name', Values: ['Windows_Server-2016-English-Full-SQL_2019_Enterprise*'] }, { Name: 'owner-alias', Values: ['amazon'] }], Owners: ['801119661308', '185158320714', '536790793924', '688423173695', '878052572473', '159365745649', '903064639964', '311529897437'] };
+const FOURTHIMAGEFILTER = {
+    Filters: [
+        { Name: 'name', Values: ['Windows_Server-2016-English-Full-SQL_2019_Enterprise*'] },
+        { Name: 'owner-alias', Values: ['amazon'] }
+    ],
+    Owners: [
+        '801119661308',
+        '185158320714',
+        '536790793924',
+        '688423173695',
+        '878052572473',
+        '159365745649',
+        '903064639964',
+        '311529897437'
+    ]
+};
 
-const FIFTHIMAGEFILTER = { Filters: [{ Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2016_SP*_Standard*'] }, { Name: 'owner-alias', Values: ['amazon'] }], Owners: ['801119661308', '185158320714', '536790793924', '688423173695', '878052572473', '159365745649', '903064639964', '311529897437'] };
+const FIFTHIMAGEFILTER = {
+    Filters: [
+        { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2016_SP*_Standard*'] },
+        { Name: 'owner-alias', Values: ['amazon'] }
+    ],
+    Owners: [
+        '801119661308',
+        '185158320714',
+        '536790793924',
+        '688423173695',
+        '878052572473',
+        '159365745649',
+        '903064639964',
+        '311529897437'
+    ]
+};
 
-const SIXTHIMAGEFILTER = { Filters: [{ Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2019_Standard*'] }, { Name: 'owner-alias', Values: ['amazon'] }], Owners: ['801119661308', '185158320714', '536790793924', '688423173695', '878052572473', '159365745649', '903064639964', '311529897437'] };
+const SIXTHIMAGEFILTER = {
+    Filters: [
+        { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2019_Standard*'] },
+        { Name: 'owner-alias', Values: ['amazon'] }
+    ],
+    Owners: [
+        '801119661308',
+        '185158320714',
+        '536790793924',
+        '688423173695',
+        '878052572473',
+        '159365745649',
+        '903064639964',
+        '311529897437'
+    ]
+};
 
-const SEVENTHIMAGEFILTER =
-    { Filters: [{ Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2022_Standard*'] }, { Name: 'owner-alias', Values: ['amazon'] }], Owners: ['801119661308', '185158320714', '536790793924', '688423173695', '878052572473', '159365745649', '903064639964', '311529897437'] };
+const SEVENTHIMAGEFILTER = {
+    Filters: [
+        { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2022_Standard*'] },
+        { Name: 'owner-alias', Values: ['amazon'] }
+    ],
+    Owners: [
+        '801119661308',
+        '185158320714',
+        '536790793924',
+        '688423173695',
+        '878052572473',
+        '159365745649',
+        '903064639964',
+        '311529897437'
+    ]
+};
 
-const EIGHTHIMAGEFILTER =
-    { Filters: [{ Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2016_SP*_Enterprise*'] }, { Name: 'owner-alias', Values: ['amazon'] }], Owners: ['801119661308', '185158320714', '536790793924', '688423173695', '878052572473', '159365745649', '903064639964', '311529897437'] };
+const EIGHTHIMAGEFILTER = {
+    Filters: [
+        { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2016_SP*_Enterprise*'] },
+        { Name: 'owner-alias', Values: ['amazon'] }
+    ],
+    Owners: [
+        '801119661308',
+        '185158320714',
+        '536790793924',
+        '688423173695',
+        '878052572473',
+        '159365745649',
+        '903064639964',
+        '311529897437'
+    ]
+};
 
-const NINETHIMAGEFILTER =
-    { Filters: [{ Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2019_Enterprise*'] }, { Name: 'owner-alias', Values: ['amazon'] }], Owners: ['801119661308', '185158320714', '536790793924', '688423173695', '878052572473', '159365745649', '903064639964', '311529897437'] };
+const NINETHIMAGEFILTER = {
+    Filters: [
+        { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2019_Enterprise*'] },
+        { Name: 'owner-alias', Values: ['amazon'] }
+    ],
+    Owners: [
+        '801119661308',
+        '185158320714',
+        '536790793924',
+        '688423173695',
+        '878052572473',
+        '159365745649',
+        '903064639964',
+        '311529897437'
+    ]
+};
 
-const TENTHIMAGEFILTER = { Filters: [{ Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2022_Enterprise*'] }, { Name: 'owner-alias', Values: ['amazon'] }], Owners: ['801119661308', '185158320714', '536790793924', '688423173695', '878052572473', '159365745649', '903064639964', '311529897437'] };
+const TENTHIMAGEFILTER = {
+    Filters: [
+        { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2022_Enterprise*'] },
+        { Name: 'owner-alias', Values: ['amazon'] }
+    ],
+    Owners: [
+        '801119661308',
+        '185158320714',
+        '536790793924',
+        '688423173695',
+        '878052572473',
+        '159365745649',
+        '903064639964',
+        '311529897437'
+    ]
+};
 
 const ec2Mock = mockClient(EC2Client);
 
@@ -99,6 +245,8 @@ ec2Mock.on(DescribeVpcsCommand).resolves(vpcsResponse);
 ec2Mock.on(DescribeSubnetsCommand).resolves(subnetsResponse);
 
 ec2Mock.on(DescribeSecurityGroupsCommand).resolves(securityGroupsResponse);
+
+ec2Mock.on(DescribeImagesCommand).resolves(ec2ImagesResponse);
 
 ec2Mock.on(DescribeImagesCommand, FIRSTIMAGEFILTER).resolves(ec2AMIImagesResponse[0]);
 
