@@ -25,7 +25,8 @@ import {
     SSM_PARAMETERS_BASE_PATH,
     SqlServerDeploymentModel,
     RESOURCE_SOURCE,
-    DBCREATE_RELATIVE_PATH
+    DBCREATE_RELATIVE_PATH,
+    STORAGE_PROTOCOLS
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -81,6 +82,7 @@ interface DeployType {
 interface FSxInfo {
     fsxId: string;
     svmId?: string;
+    type?: string;
 }
 
 const MINIMUM_SQL_SERVER_SUPPORTED = 2016;
@@ -208,8 +210,27 @@ async function getHostAndSqlServerInfo(
         svmList.StorageVirtualMachines?.forEach(async elem => {
             const fsId = elem.FileSystemId;
             elem?.Endpoints?.Iscsi?.IpAddresses?.forEach(async ip => {
-                endPointIpWithFsxInfo.set(ip, { fsxId: fsId!, svmId: elem.StorageVirtualMachineId! });
+                endPointIpWithFsxInfo.set(ip, {
+                    fsxId: fsId!,
+                    svmId: elem.StorageVirtualMachineId!,
+                    type: FileSystemType.ONTAP
+                });
             });
+
+            elem?.Endpoints?.Smb?.IpAddresses?.forEach(async ip => {
+                endPointIpWithFsxInfo.set(ip, {
+                    fsxId: fsId!,
+                    svmId: elem.StorageVirtualMachineId!,
+                    type: FileSystemType.ONTAP
+                });
+            });
+            if (elem?.Endpoints?.Smb?.DNSName) {
+                endPointIpWithFsxInfo.set(elem?.Endpoints?.Smb?.DNSName, {
+                    fsxId: fsId!,
+                    svmId: elem.StorageVirtualMachineId!,
+                    type: FileSystemType.ONTAP
+                });
+            }
             const { OntapConfiguration, SubnetIds } =
                 fsxList.find((fsx: FileSystem) => fsx?.FileSystemId === fsId) || {};
             fsIdWithDeploymentType.set(fsId!, {
@@ -223,10 +244,12 @@ async function getHostAndSqlServerInfo(
             .filter(fsx => fsx.FileSystemType === FileSystemType.WINDOWS)
             .forEach(fsx => {
                 endPointIpWithFsxInfo.set(`${fsx.WindowsConfiguration?.RemoteAdministrationEndpoint}`, {
-                    fsxId: fsx.FileSystemId!
+                    fsxId: fsx.FileSystemId!,
+                    type: FileSystemType.WINDOWS
                 });
                 endPointIpWithFsxInfo.set(`${fsx.WindowsConfiguration?.PreferredFileServerIp}`, {
-                    fsxId: fsx.FileSystemId!
+                    fsxId: fsx.FileSystemId!,
+                    type: FileSystemType.WINDOWS
                 });
             });
 
@@ -387,7 +410,8 @@ async function getHostAndSqlInfoFromPsOutput(
                             storageTypes.push({
                                 type: STORAGE_TYPE.FSXN,
                                 id: fsxId!,
-                                svmId
+                                svmId,
+                                protocol: STORAGE_PROTOCOLS.ISCSI
                             });
                             const { deploymentType, subnetIds } = fsIdWithDeploymentType.get(fsxId!) || {};
 
@@ -397,19 +421,38 @@ async function getHostAndSqlInfoFromPsOutput(
                                 ids: subnetIds?.join()
                             });
                         } else {
-                            // Add FSxW details
+                            // SMB shares
+                            //
+                            // IF FSxW,
                             // Match get-smbmapping with FSxW (RemoteAdministrationEndpoint and PreferredFileServerIp)
                             // let fsxEndpoints = ['ip', 'fsxid]
                             // SerialNumberOrScsiTarget = ['ip', 'fsxid']
+                            //
+                            // If FSxN over SMB, Match get-smbmapping with SVM ip/fqdn
+
                             const fsxEndpoints = Array.from(endPointIpWithFsxInfo.keys());
+                            const targets = di?.SerialNumberOrScsiTarget
+                                ? di.SerialNumberOrScsiTarget.toLowerCase()
+                                : '';
                             const matchedEndpoints = fsxEndpoints.filter(value =>
-                                di?.SerialNumberOrScsiTarget?.includes(value)
+                                targets.includes(value.toLowerCase())
                             );
                             if (!isEmpty(matchedEndpoints)) {
-                                storageTypes.push({
-                                    type: STORAGE_TYPE.FSXW,
-                                    id: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.fsxId
-                                });
+                                const fsxType = endPointIpWithFsxInfo.get(matchedEndpoints[0])?.type;
+                                if (fsxType === FileSystemType.WINDOWS) {
+                                    storageTypes.push({
+                                        type: STORAGE_TYPE.FSXW,
+                                        id: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.fsxId,
+                                        protocol: STORAGE_PROTOCOLS.SMB
+                                    });
+                                } else {
+                                    storageTypes.push({
+                                        type: STORAGE_TYPE.FSXN,
+                                        id: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.fsxId,
+                                        svmId: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.svmId,
+                                        protocol: STORAGE_PROTOCOLS.SMB
+                                    });
+                                }
                             }
                         }
                     }
