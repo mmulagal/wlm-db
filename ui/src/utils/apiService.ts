@@ -8,7 +8,7 @@ import {
 } from '@reduxjs/toolkit/query/react';
 import { BaseQueryApi } from '@reduxjs/toolkit/dist/query/baseQueryTypes';
 import store, { RootState } from '../store/store';
-import { API_MAX_RETRIES, PRODUCTION, WLMDB_POLICIES_PROD_LINK, WLMDB_POLICIES_STAGE_LINK } from './consts';
+import { API_ERRORS, API_MAX_RETRIES, PRODUCTION, WLMDB_POLICIES_PROD_LINK, WLMDB_POLICIES_STAGE_LINK } from './consts';
 import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
 import { generateRandomDBName, sortListOfDict } from './utilityFunctions';
@@ -82,7 +82,15 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
         const adjustedUrl = `${baseUrl}/${url}`;
         const adjustedArgs = typeof args === 'string' ? adjustedUrl : { ...args, url: adjustedUrl };
         // provide the amended url and other params to the raw base query
-        const result = await rawBaseQuery(adjustedArgs, api, extraOptions);
+        const result: any = await rawBaseQuery(adjustedArgs, api, extraOptions);
+        // For deploy API if it gets rate exceeded than retry that API
+        if (
+            api.endpoint === 'deploySqlTemplate' &&
+            result.error?.data &&
+            result.error.data?.message.toLowerCase().includes(API_ERRORS.RATE_EXCEEDED)
+        ) {
+            return result;
+        }
         if (result.error && result.error?.status !== 504) {
             retry.fail(result.error);
         }

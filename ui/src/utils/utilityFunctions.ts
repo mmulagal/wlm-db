@@ -218,12 +218,16 @@ export const requiredFieldError = (inputString: string) => {
     }
 };
 
-export const customErrorMessages = (inputString: string) => {
+export const customErrorMessages = (inputString: string, endpoint: string) => {
     if (!inputString) {
         return null;
     }
     if (inputString.includes(API_ERRORS.DUPLICATE_CONFIG_NAME)) {
         return SELECT_CONFIG.DUPLICATE_CONFIG_NAME;
+    }
+    // For deploy API if it gets rate exceeded than update notification message
+    if (endpoint === 'deploySqlTemplate' && inputString.toLowerCase().includes(API_ERRORS.RATE_EXCEEDED)) {
+        return GENERAL.DEPLOY_RATE_EXCEEDED;
     }
     return inputString;
 };
@@ -445,6 +449,9 @@ export const formatHostData = (val: any) => {
         ...val,
         type: DB_HOME_DATA_TYPE.HOSTS,
         databaseHostname: (val?.name || '') + (val?.status || '') + (val?.sqlServerInstances?.[0]?.sqlServerName || ''),
+        databaseServerName: val?.sqlServerInstances?.[0]?.sqlServerName
+            ? val.sqlServerInstances?.[0].sqlServerName.toLowerCase()
+            : '',
         protectionText: protectionText,
         // Total cost to enable search in table
         totalCost: (
@@ -472,7 +479,7 @@ export const formatHostData = (val: any) => {
 export const mergeDatabaseHostsData = (hostsData: any) => {
     if (!hostsData) {
         return [];
-    };
+    }
     const mergedList: any[] = [];
     Object.keys(hostsData).map((key: string) => {
         mergedList.push(formatHostData(hostsData[key]));

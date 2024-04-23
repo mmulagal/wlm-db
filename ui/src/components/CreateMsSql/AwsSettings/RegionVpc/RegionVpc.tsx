@@ -247,12 +247,12 @@ const RegionVpc = () => {
                                     options={generateVPCOptions}
                                     variant="two-lines"
                                 />
-                                {/* <div className={styles.noticeVpc}>
+                                <div className={styles.noticeVpc}>
                                     <div>
                                         <InfoIcon />
                                     </div>
                                     <Typography variant="Regular_13">{GENERAL.VPC_MESSAGE}</Typography>
-                                </div> */}
+                                </div>
                             </div>
                         )}
                     </Typography>

@@ -715,7 +715,7 @@ export const GENERAL = {
     BUFFER_SIZE: 'Buffer',
     MIN_FSX_CAPACITY_MESSAGE: 'Minimum SSD capacity of FSx for NetApp ONTAP',
     VPC_MESSAGE:
-        'AWS Service interface endpoints (SQS, FSx, EC2, CloudWatch, Cloud Formation, SSM) and S3 gateway endpoint are created during deployment if not found. Make sure security group for an existing Interface endpoint allows access to HTTPS(443) protocol to the selected subnets. VPC DNS attributes(EnableDnsSupport and EnableDnsHostnames) are modified to enable resolve endpoint address resolution.',
+        'Ensure your VPC has connectivity to other AWS services (SQS, FSx, EC2, CloudWatch, CloudFormation, SSM) via VPC endpoints and S3 gateway endpoint. If not, endpoints will be created automatically during deployment.',
     SQL_SERVER_NOT_RUNNING: 'SQL service is not running',
     STORAGE_NOT_PRESENT: 'Storage could not be identified',
     //Sandbox constants
@@ -805,7 +805,8 @@ export const GENERAL = {
     VIEW_CALC_TEXT:
         'Learn how we calculated the estimated cost of Microsoft SQL server on FSx for ONTAP for your specific use case and the configuration that you selected.',
     VIEW_CALCS: 'View calculations',
-    COST_CALCULATION: 'Cost calculation'
+    COST_CALCULATION: 'Cost calculation',
+    DEPLOY_RATE_EXCEEDED: 'An internal error occurred when attempting to deploy the database server, please try again.'
 };
 
 export const CODE_VIEWER = {

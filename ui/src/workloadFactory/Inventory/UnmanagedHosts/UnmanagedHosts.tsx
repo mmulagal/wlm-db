@@ -101,7 +101,7 @@ const UnmanagedHosts = () => {
         {
             id: '1',
             Header: GENERAL.DATABASE_HOST_NAME,
-            accessor: 'status',
+            accessor: 'databaseServerName',
             isSortable: true,
             width: '280px',
             isSticky: true,
