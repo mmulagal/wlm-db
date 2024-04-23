@@ -68,21 +68,23 @@ const keyPairsResponse = {
     ]
 };
 
+const amiOwners = [
+    '801119661308',
+    '185158320714',
+    '536790793924',
+    '688423173695',
+    '878052572473',
+    '159365745649',
+    '903064639964',
+    '311529897437'
+];
+
 const FIRSTIMAGEFILTER = {
     Filters: [
         { Name: 'name', Values: ['Windows_Server-2016-English-Full-SQL_2016_SP*_Enterprise*'] },
         { Name: 'owner-alias', Values: ['amazon'] }
     ],
-    Owners: [
-        '801119661308',
-        '185158320714',
-        '536790793924',
-        '688423173695',
-        '878052572473',
-        '159365745649',
-        '903064639964',
-        '311529897437'
-    ]
+    Owners: amiOwners
 };
 
 const SECONDIMAGEFILTER = {
@@ -90,16 +92,7 @@ const SECONDIMAGEFILTER = {
         { Name: 'name', Values: ['Windows_Server-2016-English-Full-SQL_2016_SP*_Standard*'] },
         { Name: 'owner-alias', Values: ['amazon'] }
     ],
-    Owners: [
-        '801119661308',
-        '185158320714',
-        '536790793924',
-        '688423173695',
-        '878052572473',
-        '159365745649',
-        '903064639964',
-        '311529897437'
-    ]
+    Owners: amiOwners
 };
 
 const THIRDIMAGEFILTER = {
@@ -107,16 +100,7 @@ const THIRDIMAGEFILTER = {
         { Name: 'name', Values: ['Windows_Server-2016-English-Full-SQL_2019_Standard*'] },
         { Name: 'owner-alias', Values: ['amazon'] }
     ],
-    Owners: [
-        '801119661308',
-        '185158320714',
-        '536790793924',
-        '688423173695',
-        '878052572473',
-        '159365745649',
-        '903064639964',
-        '311529897437'
-    ]
+    Owners: amiOwners
 };
 
 const FOURTHIMAGEFILTER = {
@@ -124,16 +108,7 @@ const FOURTHIMAGEFILTER = {
         { Name: 'name', Values: ['Windows_Server-2016-English-Full-SQL_2019_Enterprise*'] },
         { Name: 'owner-alias', Values: ['amazon'] }
     ],
-    Owners: [
-        '801119661308',
-        '185158320714',
-        '536790793924',
-        '688423173695',
-        '878052572473',
-        '159365745649',
-        '903064639964',
-        '311529897437'
-    ]
+    Owners: amiOwners
 };
 
 const FIFTHIMAGEFILTER = {
@@ -141,16 +116,7 @@ const FIFTHIMAGEFILTER = {
         { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2016_SP*_Standard*'] },
         { Name: 'owner-alias', Values: ['amazon'] }
     ],
-    Owners: [
-        '801119661308',
-        '185158320714',
-        '536790793924',
-        '688423173695',
-        '878052572473',
-        '159365745649',
-        '903064639964',
-        '311529897437'
-    ]
+    Owners: amiOwners
 };
 
 const SIXTHIMAGEFILTER = {
@@ -158,16 +124,7 @@ const SIXTHIMAGEFILTER = {
         { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2019_Standard*'] },
         { Name: 'owner-alias', Values: ['amazon'] }
     ],
-    Owners: [
-        '801119661308',
-        '185158320714',
-        '536790793924',
-        '688423173695',
-        '878052572473',
-        '159365745649',
-        '903064639964',
-        '311529897437'
-    ]
+    Owners: amiOwners
 };
 
 const SEVENTHIMAGEFILTER = {
@@ -175,16 +132,7 @@ const SEVENTHIMAGEFILTER = {
         { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2022_Standard*'] },
         { Name: 'owner-alias', Values: ['amazon'] }
     ],
-    Owners: [
-        '801119661308',
-        '185158320714',
-        '536790793924',
-        '688423173695',
-        '878052572473',
-        '159365745649',
-        '903064639964',
-        '311529897437'
-    ]
+    Owners: amiOwners
 };
 
 const EIGHTHIMAGEFILTER = {
@@ -192,16 +140,7 @@ const EIGHTHIMAGEFILTER = {
         { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2016_SP*_Enterprise*'] },
         { Name: 'owner-alias', Values: ['amazon'] }
     ],
-    Owners: [
-        '801119661308',
-        '185158320714',
-        '536790793924',
-        '688423173695',
-        '878052572473',
-        '159365745649',
-        '903064639964',
-        '311529897437'
-    ]
+    Owners: amiOwners
 };
 
 const NINETHIMAGEFILTER = {
@@ -209,16 +148,7 @@ const NINETHIMAGEFILTER = {
         { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2019_Enterprise*'] },
         { Name: 'owner-alias', Values: ['amazon'] }
     ],
-    Owners: [
-        '801119661308',
-        '185158320714',
-        '536790793924',
-        '688423173695',
-        '878052572473',
-        '159365745649',
-        '903064639964',
-        '311529897437'
-    ]
+    Owners: amiOwners
 };
 
 const TENTHIMAGEFILTER = {
@@ -226,16 +156,7 @@ const TENTHIMAGEFILTER = {
         { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2022_Enterprise*'] },
         { Name: 'owner-alias', Values: ['amazon'] }
     ],
-    Owners: [
-        '801119661308',
-        '185158320714',
-        '536790793924',
-        '688423173695',
-        '878052572473',
-        '159365745649',
-        '903064639964',
-        '311529897437'
-    ]
+    Owners: amiOwners
 };
 
 const ec2Mock = mockClient(EC2Client);
