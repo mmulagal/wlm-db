@@ -2,12 +2,16 @@ import { Spinner, Table, TableTopBar, TooltipInfo, Typography, useTable } from '
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './UnmanagedHosts.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DETECT_HOST_VAR } from '../../../utils/consts';
+import { DETECT_HOST_VAR, WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
-import { setMovedToManagedHost, setUnManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
+import {
+    setMovedToManagedHost,
+    setSelectedHeaderTab,
+    setUnManagedHostColState
+} from '../../../store/workloadFactory/inventorySlice';
 import { useManageHostMutation } from '../../../utils/apiService';
 import store from '../../../store/store';
 import {
@@ -21,6 +25,7 @@ import {
     renderUnmanagedAZ,
     renderUnmanagedHostName
 } from '../InventoryUtils';
+import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 
 const UnmanagedHosts = () => {
     const dispatch = useDispatch();
@@ -37,6 +42,22 @@ const UnmanagedHosts = () => {
 
     const [manageLoading, setManageLoading] = useState<any>({});
     const [manageHostApi] = useManageHostMutation();
+
+    const [menuOpenedRow, setOpenedRow] = useState(null);
+    const menuOpenedRowDetail: any = useRef(null);
+    const menuItems = (row: any) => {
+        return [
+            {
+                id: 'manageHost',
+                displayName: 'Manage host'
+            },
+            {
+                id: 'exploreSavings',
+                displayName: 'Explore savings',
+                disabled: true
+            }
+        ];
+    };
 
     const notAvailable = () => {
         return (
@@ -240,31 +261,40 @@ const UnmanagedHosts = () => {
         isHorizontalScroll: true,
         isManagedColumns: true,
         manageColumnsProps: {
-            width: '182px',
             renderCell: (cellData: any, rowData: any) => {
-                const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find(
-                    (item: any) => item.type === DETECT_HOST_VAR.FSXN
-                );
+                // const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find(
+                //     (item: any) => item.type === DETECT_HOST_VAR.FSXN
+                // );
                 return (
-                    <>
-                        {hasFsx && (
-                            <div
-                                className={styles.manageHostCol}
-                                onClick={() => {
-                                    manageHost(rowData);
-                                }}
-                            >
-                                {rowData?.id in manageLoading && manageLoading[rowData?.id] && (
-                                    <Spinner className={styles.loading} />
-                                )}
-                                {!manageLoading[rowData?.id] && (
-                                    <Typography variant="Regular_14" className={styles.textStyle}>
-                                        {GENERAL.MANAGE_HOST}
-                                    </Typography>
-                                )}
-                            </div>
-                        )}
-                    </>
+                    <div className={styles.jobMenuPopover}>
+                        <MenuPopover
+                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                            menuItems={menuItems(rowData)}
+                            toggleMenu={(toggleType: string, menuId: string) => {
+                                if (toggleType === 'close') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+                                } else if (toggleType === 'open') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(rowData.id);
+                                    menuOpenedRowDetail.current = rowData.id;
+                                } else if (toggleType === 'selectedOption') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+
+                                    if (menuId === 'manageHost') {
+                                        manageHost(rowData);
+                                    }
+
+                                    if (menuId === 'exploreSavings') {
+                                        dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+                                    }
+                                }
+                            }}
+                            CustomMenu={undefined}
+                            disabledText={undefined}
+                        />
+                    </div>
                 );
             }
         },
