@@ -1,7 +1,7 @@
-import { HEADERS, WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts';
+import { HEADERS, USER_TOKEN, WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts';
 import { gotInstanceForInternalRequest } from '../../utils/got';
-import { getWfServiceToken } from './auth';
 import getLogger from '../../utils/logger';
+import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 
 const logger = getLogger();
 
@@ -214,12 +214,12 @@ export default async function getStorageSavings(
     ebsVolumeIds: string[]
 ) {
     logger.info('Get storage savings from marketing APIs:', { accountId, credentialsId, region, ebsVolumeIds });
-    const { token } = await getWfServiceToken();
+
     const response = await gotInstanceForInternalRequest
         .post(`accounts/${accountId}/marketing/v1/credentials/${credentialsId}/regions/${region}/ebs/auto/calculate`, {
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
             headers: {
-                [HEADERS.AUTHORIZATION]: token
+                [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN)
             },
             json: {
                 useCase: 'Backup Data',
