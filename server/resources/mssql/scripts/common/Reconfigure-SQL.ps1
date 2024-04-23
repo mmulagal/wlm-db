@@ -99,13 +99,11 @@ try {
         $SQLService.StartupParameters = $Using:params
         $SQLService.Alter()
 
-        # Create account for SQL AD user
+        # Create account for SQL Service Account user. AD user is added above as part of setting collation.
         $SQLUser = "[" + $Using:DomainNetBIOSName + "\" + $Using:SQLServiceAccount + "]"
-        $AdminUser = "[" + $Using:DomainNetBIOSName + "\" + $Using:DomainAdminUser + "]"
         Invoke-Sqlcmd -Query "CREATE LOGIN $SQLUser FROM WINDOWS ;"
-        Invoke-Sqlcmd -Query "CREATE LOGIN $AdminUser FROM WINDOWS ;"
         Invoke-Sqlcmd -Query "ALTER SERVER ROLE [sysadmin] ADD MEMBER $SQLUser ;"
-        Invoke-Sqlcmd -Query "ALTER SERVER ROLE [sysadmin] ADD MEMBER $AdminUser ;"
+
 
         # Update paths for tempdb,model and MSDB
         $tempDevFile = "'$Using:tempPath\tempdb.mdf'"
