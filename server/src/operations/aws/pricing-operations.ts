@@ -280,7 +280,9 @@ function getInputs(
     logger.info('Getting product inputs', {
         compute,
         fsxnStorage,
-        vpc
+        vpc,
+        ebsStorage,
+        fsxwStorage
     });
 
     return [
@@ -336,7 +338,7 @@ function getProductsInputForFSxWindows(region: string, deploymentOption: string)
                 {
                     Type: FilterType.TERM_MATCH,
                     Field: 'deploymentOption',
-                    Value: deploymentOption
+                    Value: deploymentOption === SINGLE_AZ ? 'Single-AZ' : 'Multi-AZ'
                 },
                 {
                     Type: FilterType.TERM_MATCH,

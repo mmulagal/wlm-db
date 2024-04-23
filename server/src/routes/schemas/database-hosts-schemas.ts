@@ -1,5 +1,5 @@
-import { RouteTags } from '../../utils/consts';
 import { Type } from '@fastify/type-provider-typebox';
+import { RouteTags } from '../../utils/consts';
 
 import {
     DatabaseHostQueryString,

@@ -720,7 +720,7 @@ async function fetchUnmanagedHostsInformation(
                 account_id: accountId,
                 resource_id: ec2Instance.ec2InstanceId,
                 resource_type: RESOURCESTYPE.MSSQL,
-                resource_name: ec2Instance.ec2InstanceId,
+                resource_name: ec2Instance.ec2InstanceName || ec2Instance.ec2InstanceId,
                 cloud_provider_name: CloudProviders.AWS,
                 co_relation_id: fsxnId || null,
                 cloud_provider_account_id: null,

@@ -625,7 +625,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
                     throughput: fsxwResourceInfo.throughput,
                     iops: fsxwResourceInfo.iops,
                     deploymentOption: fsxwResourceInfo.deploymentOption,
-                    storageType: fsxnResourceInfo.storageType,
+                    storageType: fsxwResourceInfo.storageType,
                     diskSize: 0 // As we are calculating post deployment cost usage, we don't need disk size, we can use storageCapacity instead.
                 }
             })
@@ -696,16 +696,16 @@ async function getFsxResourceInfo(
     region: string,
     filesystemId: string
 ): Promise<EstimationFSxType> {
-    logger.info('Getting FSxN resource info:', { credentialsId, region, filesystemId });
+    logger.info('Getting FSx resource info:', { credentialsId, region, filesystemId });
 
     const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [filesystemId] });
-    logger.info('Estimation info for FSxN:', fsxInfo);
+    logger.info('Estimation info for FSx:', fsxInfo);
 
-    const [{ StorageCapacity, OntapConfiguration, StorageType }] = fsxInfo?.FileSystems || [];
+    const [{ StorageCapacity, OntapConfiguration, StorageType, WindowsConfiguration }] = fsxInfo?.FileSystems || [];
     const storageCapacity = StorageCapacity || 0;
-    const throughput = OntapConfiguration?.ThroughputCapacity;
-    const iops = OntapConfiguration?.DiskIopsConfiguration?.Iops;
-    const deploymentOption = OntapConfiguration?.DeploymentType;
+    const throughput = OntapConfiguration?.ThroughputCapacity || WindowsConfiguration?.ThroughputCapacity;
+    const iops = OntapConfiguration?.DiskIopsConfiguration?.Iops || WindowsConfiguration?.DiskIopsConfiguration?.Iops;
+    const deploymentOption = OntapConfiguration?.DeploymentType || WindowsConfiguration?.DeploymentType;
 
     return {
         storageCapacity,
