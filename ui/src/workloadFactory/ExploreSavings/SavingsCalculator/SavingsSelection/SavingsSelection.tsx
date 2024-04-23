@@ -56,6 +56,11 @@ const SavingsSelection = ({ printState }: any) => {
                     onChange={(selectedOptions: any): void => {
                         dispatch(setSelectedSnapshotFrequency(selectedOptions));
                     }}
+                    info={
+                        selectedSnapshotFrequency &&
+                        selectedSnapshotFrequency.label === 'No snapshot storage' &&
+                        GENERAL.TOOLTIP_MESSAGE_SNAPSHOT_FREQ
+                    }
                     isSearchable={generateSnapshotFrequency.length > 5}
                     options={generateSnapshotFrequency}
                     className={styles.widthSet}
