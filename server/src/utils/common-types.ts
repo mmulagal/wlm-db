@@ -29,7 +29,7 @@ interface UserDatabase {
     size: number;
     status: string;
     type: string;
-    protection: { isAWSBackupEnabled: IsAWSBackup; isFsxOntapSnapshotsEnabled: boolean; isSqlNativeEnabled: boolean };
+    protection: { isAwsBackupEnabled: IsAWSBackup; isFsxOntapSnapshotsEnabled: boolean; isSqlNativeEnabled: boolean };
 }
 
 interface ResourceDetails {
