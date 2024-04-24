@@ -49,7 +49,7 @@ const SavingsSelection = ({ printState }: any) => {
 
     useEffect(() => {
         if (!selectedCloneRefresh) {
-            dispatch(setSelectedCloneRefresh(generateCloneRefresh[1]));
+            dispatch(setSelectedCloneRefresh(generateCloneRefresh[0]));
         }
     }, [generateCloneRefresh]);
 

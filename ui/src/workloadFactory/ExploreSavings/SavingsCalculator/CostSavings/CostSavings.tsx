@@ -25,7 +25,9 @@ const CostSavings = () => {
         } else {
             setSavings(GENERAL.NOT_AVAILABLE);
             setSavingsPer(GENERAL.NOT_AVAILABLE);
-            setCostZeroCase(true);
+            if (fsxTotal > ebsTotal) {
+                setCostZeroCase(true);
+            }
         }
     }, [storageSavingsResponse]);
 
@@ -48,7 +50,7 @@ const CostSavings = () => {
                         <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
                             {/* {!storageSavingsLoading && savings} */}
                             {!storageSavingsLoading && !costZeroCase && Number(savings).toLocaleString()}
-                            {!storageSavingsLoading && costZeroCase && Number(savings).toLocaleString()}
+                            {!storageSavingsLoading && costZeroCase && Number(0).toLocaleString()}
                         </DsTypography>
                     </div>
 
@@ -80,7 +82,9 @@ const CostSavings = () => {
                         </DsTypography>
                         <DsTypography
                             variant="Regular_16"
-                            className={storageSavingsLoading ? `${styles.dollar} ${styles.dollarHeight}` : styles.dollar}
+                            className={
+                                storageSavingsLoading ? `${styles.dollar} ${styles.dollarHeight}` : styles.dollar
+                            }
                         >
                             %
                         </DsTypography>

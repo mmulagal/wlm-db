@@ -20,10 +20,12 @@ import domToPdf from 'dom-to-pdf';
 import ExportPDF from './ExportPDF/ExportPDF';
 import { GENERAL } from '../../../utils/appConstants';
 import { addExploreSavingsInitialData } from '../../../store/workloadFactory/exploreSavingsSlice';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
+    const selectedServerName = useAppSelector(state => state.exploreSavings.selectedServerName);
 
     const printDocument = () => {
         setPrintState(true);
@@ -52,7 +54,7 @@ const SavingsCalculator = () => {
                                     }
                                 },
                                 {
-                                    title: 'Host name'
+                                    title: selectedServerName
                                 }
                             ]}
                         />

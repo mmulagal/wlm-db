@@ -62,7 +62,7 @@ const TotalMonthlyCost = () => {
                 {!noData && !storageSavingsLoading && !costZeroCase && (
                     <>
                         <ComparisonChart
-                            data={[storageSavingsResponse.fsx.total, storageSavingsResponse.ebs.total]}
+                            data={[storageSavingsResponse?.fsx?.total, storageSavingsResponse?.ebs?.total]}
                             yTickFormatter={yValue => '$' + Number(yValue).toLocaleString()}
                             height={370}
                             colors={storageSavingsResponse && ['chart-9', 'chart-6']}

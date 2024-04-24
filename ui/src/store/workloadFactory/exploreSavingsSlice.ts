@@ -9,6 +9,7 @@ export const initialExploreSavingsState: any = {
     loading: false,
     unmanagedExploreSavingsHost: [],
     selectedInstanceId: null,
+    selectedServerName: null,
     selectedHostDetails: {},
     storageSavingsResponse: {},
     storageSavingsLoading: false,
@@ -40,6 +41,9 @@ const exploreSavingsSlice = createSlice({
         setSelectedInstanceId(state, action: PayloadAction<any>) {
             state.selectedInstanceId = action.payload;
         },
+        setSelectedServerName(state, action: PayloadAction<any>) {
+            state.selectedServerName = action.payload;
+        },
         setSelectedHostDetails(state, action: PayloadAction<any>) {
             state.selectedHostDetails = action.payload;
         },
@@ -58,6 +62,7 @@ const exploreSavingsSlice = createSlice({
             state.selectedCloneRefresh = null;
             state.monthlyChangeRate = 3;
             state.selectedInstanceId = null;
+            state.selectedServerName = null;
             state.selectedHostDetails = {};
             state.storageSavingsResponse = {};
             state.storageSavingsLoading = false;
@@ -74,6 +79,7 @@ export const {
     setSaveConfigName,
     setUnmanagedExploreSavingsHost,
     setSelectedInstanceId,
+    setSelectedServerName,
     setSelectedHostDetails,
     setStorageSavingsResponse,
     setStorageSavingsLoading,

@@ -15,7 +15,11 @@ import {
     renderUnmanagedAZ,
     renderUnmanagedHostName
 } from '../../Inventory/InventoryUtils';
-import { setSelectedHostDetails, setSelectedInstanceId } from '../../../store/workloadFactory/exploreSavingsSlice';
+import {
+    setSelectedHostDetails,
+    setSelectedInstanceId,
+    setSelectedServerName
+} from '../../../store/workloadFactory/exploreSavingsSlice';
 
 const ExploreSavingsTable = () => {
     const dispatch = useDispatch();
@@ -38,6 +42,13 @@ const ExploreSavingsTable = () => {
                             onClick={() => {
                                 dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                                 dispatch(setSelectedInstanceId(rowData?.id));
+                                dispatch(
+                                    setSelectedServerName(
+                                        rowData?.sqlServerInstances?.[0]?.sqlServerName
+                                            ? rowData.sqlServerInstances?.[0].sqlServerName.toLowerCase()
+                                            : 'Server name'
+                                    )
+                                );
                                 dispatch(setSelectedHostDetails(rowData));
                             }}
                         >
