@@ -32,7 +32,14 @@ const SelectedVolumeSummary = () => {
             Header: 'Details',
             accessor: 'details',
             id: '1',
-            width: '190px'
+            width: '190px',
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <DsTypography variant="Regular_14" style={{ minWidth: '146px' }}>
+                        {rowData.details}
+                    </DsTypography>
+                );
+            }
         },
 
         {
