@@ -26,7 +26,7 @@ const TableLayout = ({ data }: any) => {
     );
 };
 
-const MSSQLAccordion = () => {
+const MSSQLAccordion = ({ printState }: any) => {
     const isMutliFsx = false;
     const { loading } = useAppSelector(state => state.exploreSavings);
     const { setDialog, closeDialog } = useDialog();
@@ -84,6 +84,7 @@ const MSSQLAccordion = () => {
                 title="Microsoft SQL Server on FSx for ONTAP"
                 variant="Default"
                 value=""
+                isExpanded={printState}
                 isDisabled={loading}
                 headerActions={[
                     isMutliFsx ? (
