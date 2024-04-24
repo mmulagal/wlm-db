@@ -701,8 +701,8 @@ export const exploreSavingsApi = createApi({
     endpoints: builder => {
         return {
             getStorageSavings: builder.mutation({
-                query: ({ credentialId, region, instanceId, payload }) => ({
-                    url: `credentials/${credentialId}/regions/${region}/instances/${instanceId}/storage-savings`,
+                query: ({ credentialId, regionId, instanceId, payload }) => ({
+                    url: `credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings`,
                     method: 'POST',
                     body: payload
                 })

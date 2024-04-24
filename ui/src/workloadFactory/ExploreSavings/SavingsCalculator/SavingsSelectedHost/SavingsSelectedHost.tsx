@@ -14,12 +14,19 @@ const SavingsSelectedHost = () => {
             </DsTypography>
             <div className={styles.valueArea}>
                 <div className={styles.container}>
-                    <DsTypography
-                        variant="Semibold_14"
-                        className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
-                    >
-                        Host name number 1
-                    </DsTypography>
+                    {!selectedHostDetails?.loading && (
+                        <DsTypography
+                            variant="Semibold_14"
+                            className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
+                        >
+                            {selectedHostDetails?.databaseServerName || GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
+                    )}
+                    {selectedHostDetails?.loading && (
+                        <div className={styles.loader} style={{ marginRight: '104px' }}>
+                            <FlashingDotsLoader />
+                        </div>
+                    )}
                     <DsTypography
                         variant="Regular_14"
                         className={isDisabled ? `${styles.heading} ${styles.disabledContent}` : styles.heading}

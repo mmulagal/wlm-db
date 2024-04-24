@@ -40,7 +40,7 @@ const CostBreakdown = () => {
                     </GridItem>
                     <GridItem lg="4">
                         <Text style={{ paddingLeft: 10 }}>
-                            {!loading && calculatedResponse && `$ ${data?.fsx}`}
+                            {!loading && calculatedResponse && data?.fsx}
                             {loading && (
                                 <div style={{ position: 'relative', top: '5px' }}>
                                     <DsFlashingDotsLoader />
@@ -50,7 +50,7 @@ const CostBreakdown = () => {
                     </GridItem>
                     <GridItem lg="4">
                         <Text style={{ paddingLeft: 10 }}>
-                            {!loading && calculatedResponse && `$ ${data?.ebs}`}
+                            {!loading && calculatedResponse && data?.ebs}
                             {loading && (
                                 <div style={{ position: 'relative', top: '5px' }}>
                                     <DsFlashingDotsLoader />
@@ -125,15 +125,9 @@ const CostBreakdown = () => {
                             </div>
                         </CardTableContent>
 
-                        {comparisonData(calculatedResponse).map(
-                            (data: { type: string; fsx: string; ebs: string }, index: number) => (
-                                <ComparisonTableLayout
-                                    key={index}
-                                    data={data}
-                                    calculatedResponse={calculatedResponse}
-                                />
-                            )
-                        )}
+                        {comparisonData(calculatedResponse).map((data: any, index: number) => (
+                            <ComparisonTableLayout key={index} data={data} calculatedResponse={calculatedResponse} />
+                        ))}
                     </CardContent>
                 </Card>
             </div>

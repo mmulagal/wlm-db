@@ -5,9 +5,11 @@ import styles from './SelectedVolumeSummary.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
+import { formatFractionalNumber } from '../../../../utils/utilityFunctions';
 
 const SelectedVolumeSummary = () => {
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const [tableData, setTableData] = useState<any>([]);
     const [loading, setLoading] = useState(false);
@@ -48,7 +50,7 @@ const SelectedVolumeSummary = () => {
                 id: id,
                 width: colWidth,
                 renderCell: (cellData: any, rowData: any) => {
-                    return loading ? (
+                    return selectedHostDetails?.loading ? (
                         <DsFlashingDotsLoader />
                     ) : (
                         <DsTypography variant="Regular_14">{cellData}</DsTypography>
@@ -63,16 +65,38 @@ const SelectedVolumeSummary = () => {
     };
 
     useEffect(() => {
+        // This demo response will be removed once API starts returning demo data
+        if (isDemoMode) {
+            setLoading(false);
+            getColumnsList(['gp3', 'gp2', 'io1', 'io2'], '96.5px');
+            setTableData([
+                { details: 'Total volumes', gp3: 10, gp2: 10, io1: 10, io2: 10, id: '1' },
+                {
+                    details: 'Total storage amount',
+                    gp3: '250.5 TiB',
+                    gp2: '250.5 TiB',
+                    io1: '250.5 TiB',
+                    io2: '250.5 TiB',
+                    id: '2'
+                },
+                { details: 'Total provisioned IOPS', gp3: 60000, gp2: 60000, io1: 60000, io2: 60000, id: '3' },
+                { details: 'Total throughput MB/s', gp3: 3000, gp2: 3000, io1: 3000, io2: 3000, id: '4' }
+            ]);
+            return;
+        }
+
+        setLoading(selectedHostDetails?.loading);
+
         if (!selectedHostDetails?.ebsResourceInfo) {
             return;
         }
+
         let header = {};
         let volumes: any = { details: 'Total volumes', id: '1' };
         let storageAmount: any = { details: 'Total storage amount', id: '2' };
         let iops: any = { details: 'Total provisioned IOPS', id: '3' };
         let throughput: any = { details: 'Total throughput MB/s', id: '4' };
 
-        setLoading(selectedHostDetails?.loading);
         let volTypeList: any = [];
 
         selectedHostDetails?.ebsResourceInfo?.map((row: any) => {
@@ -103,7 +127,7 @@ const SelectedVolumeSummary = () => {
                     newObj[key] = storageAmount[key];
                     return newObj;
                 } else {
-                    newObj[key] = storageAmount[key] + ' GiB';
+                    newObj[key] = formatFractionalNumber(storageAmount[key], 2) + ' GiB';
                     return newObj;
                 }
             }, {});
@@ -125,13 +149,13 @@ const SelectedVolumeSummary = () => {
     return (
         <div className={styles.selectedVolumeSummary}>
             <DsTypography variant="Regular_14">{GENERAL.SUMMARY_TEXT}</DsTypography>
-            {selectedHostDetails?.loading && (
+            {loading && (
                 <Typography variant="Regular_14" className={styles.loadingTable}>
                     <FlashingDotsLoader />
                     <div>{GENERAL.LOADING_DATA}</div>
                 </Typography>
             )}
-            {!selectedHostDetails?.loading && (
+            {!loading && (
                 <div className={styles.instanceTable}>
                     <Table
                         //@ts-ignore

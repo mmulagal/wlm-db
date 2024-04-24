@@ -38,6 +38,8 @@ import JobMonitoringApi from '../../JobMonitoring/JobMonitoringApi';
 import ExploreSavings from '../../ExploreSavings/ExploreSavings';
 import SavingsCalculator from '../../ExploreSavings/SavingsCalculator/SavingsCalulator';
 import ViewCalculations from '../../ExploreSavings/ViewCalculations/ViewCalculations';
+import SavingsCalculatorApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorApi';
+import { setSavingsCalculatorRefresh } from '../../../store/workloadFactory/exploreSavingsSlice';
 
 const HeaderComponent = () => {
     const dispatch = useDispatch();
@@ -59,6 +61,7 @@ const HeaderComponent = () => {
     InventoryApis();
     DatabaseHomeApis();
     JobMonitoringApi();
+    SavingsCalculatorApi();
 
     useEffect(() => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
@@ -163,6 +166,8 @@ const HeaderComponent = () => {
         } else if (selectedHeaderTab === WLF_TABS.JOB_MONITORING) {
             dispatch(setJobsList([]));
             dispatch(setSubJobsData([]));
+        } else if (selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR) {
+            dispatch(setSavingsCalculatorRefresh(true));
         }
     };
 

@@ -8,8 +8,8 @@
         "databaseCount": 10,
         "databaseServer": {
           "operatingSystem": "Windows Server 2019",
-          "serverEdition": "Microsoft SQL Server 2022 (RTM-CU6) (KB5027505)",
-          "serverVersion": "16.0.4055.4",
+          "serverEdition": "SQL Server Standard Edition (64-bit)",
+          "serverVersion": "Microsoft SQL Server 2019",
           "clusterName": "cluster1",
           "activeNode": "SQLDBAPQHU",
           "nodeNames": [
@@ -173,8 +173,8 @@
         "databaseCount": 10,
         "databaseServer": {
           "operatingSystem": "Windows Server 2019",
-          "serverEdition": "Microsoft SQL Server 2022 (RTM-CU6) (KB5027505)",
-          "serverVersion": "16.0.4055.4",
+          "serverEdition": "SQL Server Standard Edition (64-bit)",
+          "serverVersion": "Microsoft SQL Server 2019",
           "clusterName": "cluster1",
           "activeNode": "SQLDBAPQHU",
           "nodeNames": [
@@ -325,8 +325,8 @@
         "databaseCount": 10,
         "databaseServer": {
           "operatingSystem": "Windows Server 2019",
-          "serverEdition": "Microsoft SQL Server 2022 (RTM-CU6) (KB5027505)",
-          "serverVersion": "16.0.4055.4",
+          "serverEdition": "SQL Server Standard Edition (64-bit)",
+          "serverVersion": "Microsoft SQL Server 2019",
           "clusterName": "cluster1",
           "activeNode": "SQLDBAPQHU",
           "nodeNames": [
@@ -490,8 +490,8 @@
         "databaseCount": 10,
         "databaseServer": {
           "operatingSystem": "Windows Server 2019",
-          "serverEdition": "Microsoft SQL Server 2022 (RTM-CU6) (KB5027505)",
-          "serverVersion": "16.0.4055.4",
+          "serverEdition": "SQL Server Standard Edition (64-bit)",
+          "serverVersion": "Microsoft SQL Server 2019",
           "clusterName": "cluster1",
           "activeNode": "SQLDBAPQHU",
           "nodeNames": [
@@ -655,8 +655,8 @@
         "databaseCount": 0,
         "databaseServer": {
           "operatingSystem": "Windows Server 2019",
-          "serverEdition": "Microsoft SQL Server 2022 (RTM-CU6) (KB5027505)",
-          "serverVersion": "16.0.4055.4",
+          "serverEdition": "SQL Server Standard Edition (64-bit)",
+          "serverVersion": "Microsoft SQL Server 2019",
           "clusterName": "cluster1",
           "activeNode": "SQLDBAPQHU",
           "nodeNames": [

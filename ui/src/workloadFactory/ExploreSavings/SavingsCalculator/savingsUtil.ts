@@ -1,46 +1,73 @@
 import { GENERAL } from '../../../utils/appConstants';
+import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 
 export const comparisonData = (calculatedResponse: any) => {
     return [
         {
             type: 'Capacity',
-            fsx: calculatedResponse?.fsx?.capacity || 0,
-            ebs: calculatedResponse?.ebs?.capacity || 0
+            fsx: `$ ${formatFractionalNumber(calculatedResponse?.fsx?.capacity, 2)}` || '$ 0',
+            ebs: `$ ${formatFractionalNumber(calculatedResponse?.ebs?.capacity, 2)}` || '$ 0'
         },
         {
             type: 'IOPS',
-            fsx: calculatedResponse?.fsx?.iops || 0,
-            ebs: calculatedResponse?.ebs?.iops || 0
+            fsx: calculatedResponse?.fsx?.iops
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.iops, 2)}`
+                : '$ 0',
+            ebs: calculatedResponse?.ebs?.iops ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.iops, 2)}` : '$ 0'
         },
         {
             type: 'Throughput',
-            fsx: calculatedResponse?.fsx?.throughput || 0,
-            ebs: calculatedResponse?.ebs?.throughput || 0
+            fsx: calculatedResponse?.fsx?.throughput
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.throughput, 2)}`
+                : '$ 0',
+            ebs: calculatedResponse?.ebs?.throughput
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.throughput, 2)}`
+                : '$ 0'
         },
         {
             type: 'Snapshots',
-            fsx: calculatedResponse?.fsx?.snapshots || 0,
-            ebs: calculatedResponse?.ebs?.snapshots || 0
+            fsx: calculatedResponse?.fsx?.snapshots
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.snapshots, 2)}`
+                : '$ 0',
+            ebs: calculatedResponse?.ebs?.snapshots
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.snapshots, 2)}`
+                : '$ 0'
         },
         {
             type: 'Clone',
-            fsx: calculatedResponse?.fsx?.clone || 0,
-            ebs: calculatedResponse?.ebs?.clone || 0
+            fsx: calculatedResponse?.fsx?.clone
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.clone, 2)}`
+                : GENERAL.NOT_AVAILABLE,
+            ebs: calculatedResponse?.ebs?.clone
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.clone, 2)}`
+                : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'Compute',
-            fsx: calculatedResponse?.fsx?.compute || 0,
-            ebs: calculatedResponse?.ebs?.compute || 0
+            fsx: calculatedResponse?.fsx?.compute
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.compute, 2)}`
+                : GENERAL.NOT_AVAILABLE,
+            ebs: calculatedResponse?.ebs?.compute
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.compute, 2)}`
+                : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'SQL license',
-            fsx: calculatedResponse?.fsx?.license || 0,
-            ebs: calculatedResponse?.ebs?.license || 0
+            fsx: calculatedResponse?.fsx?.license
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.license, 2)}`
+                : GENERAL.NOT_AVAILABLE,
+            ebs: calculatedResponse?.ebs?.license
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.license, 2)}`
+                : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'Total summary',
-            fsx: calculatedResponse?.fsx?.total || 0,
-            ebs: calculatedResponse?.ebs?.total || 0
+            fsx: calculatedResponse?.fsx?.total
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.total, 2)}`
+                : '$ 0',
+            ebs: calculatedResponse?.ebs?.total
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.total, 2)}`
+                : '$ 0'
         }
     ];
 };
@@ -63,39 +90,43 @@ export const calculatedFSXData = (fsxData: any) => {
         {
             label: 'Total storage capacity',
             value: fsxData?.totalStorageCapacity
-                ? `${fsxData?.totalStorageCapacity?.size} ${fsxData?.totalStorageCapacity?.unit}`
+                ? `${formatFractionalNumber(fsxData?.totalStorageCapacity?.size, 2)} ${
+                      fsxData?.totalStorageCapacity?.unit
+                  }`
                 : GENERAL.NOT_AVAILABLE,
             text: 'The number of volumes that you need times the selected volume size.'
         },
 
         {
             label: 'Percentage of data on SSD storage',
-            value: fsxData?.percentageSsd ? fsxData?.percentageSsd + '%' : GENERAL.NOT_AVAILABLE,
+            value: fsxData?.percentageSsd
+                ? formatFractionalNumber(fsxData?.percentageSsd, 2) + '%'
+                : GENERAL.NOT_AVAILABLE,
             text: `The potential percentage of data stored on the SSD tier for a typical ${fsxData?.useCase} workload when using FSx for ONTAP data tiering capabilities.`
         },
         {
             label: 'Savings from compression + deduplication',
-            value: fsxData?.savings ? fsxData?.savings + '%' : GENERAL.NOT_AVAILABLE,
+            value: fsxData?.savings ? formatFractionalNumber(fsxData?.savings, 2) + '%' : GENERAL.NOT_AVAILABLE,
             text: `Potential storage savings for ${fsxData?.useCase} workload. Storage efficiency is based on a typical customer deployment.`
         },
         {
             label: 'Effective capacity',
             value: fsxData?.effectiveCapacity
-                ? `${fsxData?.effectiveCapacity?.size?.toFixed(2)} ${fsxData?.effectiveCapacity?.unit}`
+                ? `${formatFractionalNumber(fsxData?.effectiveCapacity?.size, 2)} ${fsxData?.effectiveCapacity?.unit}`
                 : GENERAL.NOT_AVAILABLE,
             text: `Cost reduction based on ${fsxData?.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
         },
         {
             label: 'SSD tier required capacity',
             value: fsxData?.ssdTierReqCapacity
-                ? `${fsxData?.ssdTierReqCapacity?.size?.toFixed(2)} ${fsxData?.ssdTierReqCapacity?.unit}`
+                ? `${formatFractionalNumber(fsxData?.ssdTierReqCapacity?.size, 2)} ${fsxData?.ssdTierReqCapacity?.unit}`
                 : GENERAL.NOT_AVAILABLE,
             text: `Based on a typical ${fsxData?.useCase} workload, ${fsxData?.percentageSsd}% of the data is on the SSD tier.`
         },
         {
             label: 'Capacity pool tier required capacity',
             value: fsxData?.capacityPoolTier
-                ? `${fsxData?.capacityPoolTier?.size?.toFixed(2)} ${fsxData?.capacityPoolTier?.unit}`
+                ? `${formatFractionalNumber(fsxData?.capacityPoolTier?.size, 2)} ${fsxData?.capacityPoolTier?.unit}`
                 : GENERAL.NOT_AVAILABLE,
             text: `Based on a typical ${fsxData?.useCase} workload, ${
                 100 - fsxData?.percentageSsd
@@ -116,7 +147,9 @@ export const calculatedFSXData = (fsxData: any) => {
         {
             label: 'Monthly snapshot capacity',
             value: fsxData?.monthlySnapshotCapacity
-                ? `${fsxData?.monthlySnapshotCapacity?.size} ${fsxData?.monthlySnapshotCapacity?.unit}`
+                ? `${formatFractionalNumber(fsxData?.monthlySnapshotCapacity?.size, 2)} ${
+                      fsxData?.monthlySnapshotCapacity?.unit
+                  }`
                 : GENERAL.NOT_AVAILABLE,
             text: 'Cost reduction is based on FSx for ONTAP data tiering capability. 90% of snapshots data will be tiered to the capacity pool tier.'
         }

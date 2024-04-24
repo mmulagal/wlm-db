@@ -14,18 +14,16 @@ import InstanceInformation from './InstanceInformation/InstanceInformation';
 import SelectedVolumeSummary from './SelectedVolumeSummary/SelectedVolumeSummary';
 import { ReactComponent as Suggestion } from '../../../assets/Suggestion.svg';
 import MSSQLAccordion from './MSSQLAccordion/MSSQLAccordion';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 //@ts-ignore
 import domToPdf from 'dom-to-pdf';
 import ExportPDF from './ExportPDF/ExportPDF';
 import { GENERAL } from '../../../utils/appConstants';
-import SavingsCalculatorApi from './SavingsCalculatorApi';
+import { addExploreSavingsInitialData } from '../../../store/workloadFactory/exploreSavingsSlice';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
-
-    SavingsCalculatorApi();
 
     const printDocument = () => {
         setPrintState(true);
@@ -50,6 +48,7 @@ const SavingsCalculator = () => {
                                     title: 'Explore savings',
                                     onClick: () => {
                                         dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                                        dispatch(addExploreSavingsInitialData(null));
                                     }
                                 },
                                 {

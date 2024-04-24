@@ -29,7 +29,9 @@ const TableLayout = ({ data }: any) => {
 
 const MSSQLAccordion = () => {
     const isMutliFsx = false;
-    const { storageSavingsLoading, storageSavingsResponse } = useAppSelector(state => state.exploreSavings);
+    const { storageSavingsLoading, storageSavingsResponse, selectedHostDetails } = useAppSelector(
+        state => state.exploreSavings
+    );
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
     const [fsxData, setFsxData] = useState({});
@@ -37,8 +39,19 @@ const MSSQLAccordion = () => {
 
     useEffect(() => {
         setFsxData(storageSavingsResponse?.fsxCalculation);
-        setMsSqlInstance(storageSavingsResponse?.mssqlInstance);
+        // setMsSqlInstance(storageSavingsResponse?.mssqlInstance);
     }, [storageSavingsResponse]);
+
+    useEffect(() => {
+        const instanceTypelist = selectedHostDetails?.topology?.ec2Details?.map((inst: any) => inst?.instanceType);
+        const mssqlInstanceData = {
+            serverInstallationMode: selectedHostDetails?.serverInstallationMode,
+            serverEdition: selectedHostDetails?.databaseServer?.serverEdition,
+            serverVersion: selectedHostDetails?.databaseServer?.serverVersion,
+            instanceType: instanceTypelist
+        };
+        setMsSqlInstance(mssqlInstanceData);
+    }, [selectedHostDetails]);
 
     const handleSaveConfiguration = (dialogFrom: any) => {
         setDialog(
@@ -69,7 +82,7 @@ const MSSQLAccordion = () => {
                 title="Microsoft SQL Server on FSx for ONTAP"
                 variant="Default"
                 value=""
-                isDisabled={storageSavingsLoading}
+                isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
                 headerActions={[
                     isMutliFsx ? (
                         <Popover
@@ -85,7 +98,7 @@ const MSSQLAccordion = () => {
                     ) : (
                         <DsButton
                             type="text"
-                            isDisabled={storageSavingsLoading}
+                            isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
                             onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
                         >
                             {GENERAL.ES_SAVE_CONFIG}
@@ -95,7 +108,7 @@ const MSSQLAccordion = () => {
                     <div style={{ height: '32px' }} className={styles.buttonContainer}>
                         <DsButton
                             type="button"
-                            isDisabled={isMutliFsx || storageSavingsLoading}
+                            isDisabled={isMutliFsx || storageSavingsLoading || selectedHostDetails?.loading}
                             onClick={() => navigate(WLF_TO_FORM_NAVIGATE)}
                         >
                             Create
