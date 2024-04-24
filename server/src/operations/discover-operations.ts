@@ -25,7 +25,8 @@ import {
     SSM_PARAMETERS_BASE_PATH,
     SqlServerDeploymentModel,
     RESOURCE_SOURCE,
-    DBCREATE_RELATIVE_PATH
+    DBCREATE_RELATIVE_PATH,
+    STORAGE_PROTOCOLS
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -81,6 +82,7 @@ interface DeployType {
 interface FSxInfo {
     fsxId: string;
     svmId?: string;
+    type?: string;
 }
 
 const MINIMUM_SQL_SERVER_SUPPORTED = 2016;
@@ -208,8 +210,27 @@ async function getHostAndSqlServerInfo(
         svmList.StorageVirtualMachines?.forEach(async elem => {
             const fsId = elem.FileSystemId;
             elem?.Endpoints?.Iscsi?.IpAddresses?.forEach(async ip => {
-                endPointIpWithFsxInfo.set(ip, { fsxId: fsId!, svmId: elem.StorageVirtualMachineId! });
+                endPointIpWithFsxInfo.set(ip, {
+                    fsxId: fsId!,
+                    svmId: elem.StorageVirtualMachineId!,
+                    type: FileSystemType.ONTAP
+                });
             });
+
+            elem?.Endpoints?.Smb?.IpAddresses?.forEach(async ip => {
+                endPointIpWithFsxInfo.set(ip, {
+                    fsxId: fsId!,
+                    svmId: elem.StorageVirtualMachineId!,
+                    type: FileSystemType.ONTAP
+                });
+            });
+            if (elem?.Endpoints?.Smb?.DNSName) {
+                endPointIpWithFsxInfo.set(elem?.Endpoints?.Smb?.DNSName, {
+                    fsxId: fsId!,
+                    svmId: elem.StorageVirtualMachineId!,
+                    type: FileSystemType.ONTAP
+                });
+            }
             const { OntapConfiguration, SubnetIds } =
                 fsxList.find((fsx: FileSystem) => fsx?.FileSystemId === fsId) || {};
             fsIdWithDeploymentType.set(fsId!, {
@@ -223,10 +244,12 @@ async function getHostAndSqlServerInfo(
             .filter(fsx => fsx.FileSystemType === FileSystemType.WINDOWS)
             .forEach(fsx => {
                 endPointIpWithFsxInfo.set(`${fsx.WindowsConfiguration?.RemoteAdministrationEndpoint}`, {
-                    fsxId: fsx.FileSystemId!
+                    fsxId: fsx.FileSystemId!,
+                    type: FileSystemType.WINDOWS
                 });
                 endPointIpWithFsxInfo.set(`${fsx.WindowsConfiguration?.PreferredFileServerIp}`, {
-                    fsxId: fsx.FileSystemId!
+                    fsxId: fsx.FileSystemId!,
+                    type: FileSystemType.WINDOWS
                 });
             });
 
@@ -387,7 +410,8 @@ async function getHostAndSqlInfoFromPsOutput(
                             storageTypes.push({
                                 type: STORAGE_TYPE.FSXN,
                                 id: fsxId!,
-                                svmId
+                                svmId,
+                                protocol: STORAGE_PROTOCOLS.ISCSI
                             });
                             const { deploymentType, subnetIds } = fsIdWithDeploymentType.get(fsxId!) || {};
 
@@ -397,19 +421,38 @@ async function getHostAndSqlInfoFromPsOutput(
                                 ids: subnetIds?.join()
                             });
                         } else {
-                            // Add FSxW details
+                            // SMB shares
+                            //
+                            // IF FSxW,
                             // Match get-smbmapping with FSxW (RemoteAdministrationEndpoint and PreferredFileServerIp)
                             // let fsxEndpoints = ['ip', 'fsxid]
                             // SerialNumberOrScsiTarget = ['ip', 'fsxid']
+                            //
+                            // If FSxN over SMB, Match get-smbmapping with SVM ip/fqdn
+
                             const fsxEndpoints = Array.from(endPointIpWithFsxInfo.keys());
+                            const targets = di?.SerialNumberOrScsiTarget
+                                ? di.SerialNumberOrScsiTarget.toLowerCase()
+                                : '';
                             const matchedEndpoints = fsxEndpoints.filter(value =>
-                                di?.SerialNumberOrScsiTarget?.includes(value)
+                                targets.includes(value.toLowerCase())
                             );
                             if (!isEmpty(matchedEndpoints)) {
-                                storageTypes.push({
-                                    type: STORAGE_TYPE.FSXW,
-                                    id: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.fsxId
-                                });
+                                const fsxType = endPointIpWithFsxInfo.get(matchedEndpoints[0])?.type;
+                                if (fsxType === FileSystemType.WINDOWS) {
+                                    storageTypes.push({
+                                        type: STORAGE_TYPE.FSXW,
+                                        id: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.fsxId,
+                                        protocol: STORAGE_PROTOCOLS.SMB
+                                    });
+                                } else {
+                                    storageTypes.push({
+                                        type: STORAGE_TYPE.FSXN,
+                                        id: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.fsxId,
+                                        svmId: endPointIpWithFsxInfo.get(matchedEndpoints[0])?.svmId,
+                                        protocol: STORAGE_PROTOCOLS.SMB
+                                    });
+                                }
                             }
                         }
                     }
@@ -661,13 +704,13 @@ async function fetchUnmanagedHostsInformation(
         // ec2Instance?.sqlServerInstances?.forEach(sqlInstance => { // skipping this loop as we are only considering the first running sql instance in the ec2 instance. This needs to be enabled when we support multiple sql instances in an ec2 instance.
         if (!isEmpty(sqlServerInstance)) {
             const { storage } = sqlServerInstance;
-            let ebsVolumeId: string | undefined;
+            let ebsVolumeIds: string[] | undefined = [];
             let fsxwId: string | undefined;
             let fsxnId: string | undefined;
             storage?.forEach(({ type, id }) => {
                 // if there are multiple entries in storage for the same type then only the last entry will be considered. For eg: if the same sql instance has fsxn-1 and fsxn-2, then only fsxn-2 will be considered. Such a scenario occurs when system dbs use one storage and user dbs use another storage. The reason for this limitation currently is wlmdb resources are not expecting multiple co-relation ids for the same resource.
                 // If the storage is of different type, then both will be considered while calculating protection and storage savings details.
-                ebsVolumeId = type === STORAGE_TYPE.EBS ? id : ebsVolumeId;
+                ebsVolumeIds = type === STORAGE_TYPE.EBS ? ebsVolumeIds?.concat(id) : ebsVolumeIds;
                 fsxwId = type === STORAGE_TYPE.FSXW ? id : fsxwId;
                 fsxnId = type === STORAGE_TYPE.FSXN ? id : fsxnId;
             });
@@ -677,7 +720,7 @@ async function fetchUnmanagedHostsInformation(
                 account_id: accountId,
                 resource_id: ec2Instance.ec2InstanceId,
                 resource_type: RESOURCESTYPE.MSSQL,
-                resource_name: ec2Instance.ec2InstanceId,
+                resource_name: ec2Instance.ec2InstanceName || ec2Instance.ec2InstanceId,
                 cloud_provider_name: CloudProviders.AWS,
                 co_relation_id: fsxnId || null,
                 cloud_provider_account_id: null,
@@ -688,7 +731,7 @@ async function fetchUnmanagedHostsInformation(
                     creationDate: Date.now(),
                     node1InstanceId: ec2Instance.ec2InstanceId
                 },
-                ebsVolumeId,
+                ebsVolumeIds,
                 fsxwId
             });
         } else {
@@ -707,7 +750,7 @@ async function fetchUnmanagedHostsInformation(
             getDatabaseHostSummary(
                 accountId,
                 resourceDetail.resource_id,
-                'serverDetails,performance,usageEstimation,storage,protection',
+                'serverDetails,topology,performance,usageEstimation,storage,protection',
                 resourceDetail,
                 false // unmanaged host
             )

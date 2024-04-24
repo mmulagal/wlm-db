@@ -10,7 +10,6 @@ import { formatFractionalNumber } from '../../../../utils/utilityFunctions';
 const SelectedVolumeSummary = () => {
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
-
     const [tableData, setTableData] = useState<any>([]);
     const [loading, setLoading] = useState(false);
 

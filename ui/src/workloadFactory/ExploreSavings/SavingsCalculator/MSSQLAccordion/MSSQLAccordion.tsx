@@ -27,7 +27,7 @@ const TableLayout = ({ data }: any) => {
     );
 };
 
-const MSSQLAccordion = () => {
+const MSSQLAccordion = ({ printState }: any) => {
     const isMutliFsx = false;
     const { storageSavingsLoading, storageSavingsResponse, selectedHostDetails } = useAppSelector(
         state => state.exploreSavings
@@ -83,6 +83,7 @@ const MSSQLAccordion = () => {
                 variant="Default"
                 value=""
                 isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
+                isExpanded={printState}
                 headerActions={[
                     isMutliFsx ? (
                         <Popover

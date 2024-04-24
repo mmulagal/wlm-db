@@ -8,6 +8,7 @@ import { GENERAL } from '../../../utils/appConstants';
 const TotalMonthlyCost = () => {
     const { storageSavingsResponse, storageSavingsLoading } = useAppSelector(state => state.exploreSavings);
     const noData = false;
+    const costZeroCase = false;
 
     return (
         <div className={styles.totalMonthlyCost}>
@@ -32,6 +33,17 @@ const TotalMonthlyCost = () => {
                         </div>
                     </>
                 )}
+                {!storageSavingsLoading && costZeroCase && !noData && (
+                    <>
+                        <ComparisonChart
+                            data={[1, 1]}
+                            yTickFormatter={yValue => '$' + Number(yValue).toLocaleString()}
+                            height={370}
+                            colors={storageSavingsResponse && ['chart-9', 'chart-6']}
+                            categories={[GENERAL.CATEGORY_POINT_ONE, GENERAL.CATEGORY_POINT_TWO]}
+                        />
+                    </>
+                )}
                 {noData && !storageSavingsLoading && (
                     <>
                         <div className={styles['calculate-notice']}>
@@ -47,11 +59,11 @@ const TotalMonthlyCost = () => {
                         />
                     </>
                 )}
-                {!noData && !storageSavingsLoading && (
+                {!noData && !storageSavingsLoading && !costZeroCase && (
                     <>
                         <ComparisonChart
-                            data={[storageSavingsResponse?.fsx?.total, storageSavingsResponse?.ebs?.total]}
-                            yTickFormatter={yValue => '$' + yValue}
+                            data={[storageSavingsResponse.fsx.total, storageSavingsResponse.ebs.total]}
+                            yTickFormatter={yValue => '$' + Number(yValue).toLocaleString()}
                             height={370}
                             colors={storageSavingsResponse && ['chart-9', 'chart-6']}
                             categories={[GENERAL.CATEGORY_POINT_ONE, GENERAL.CATEGORY_POINT_TWO]}

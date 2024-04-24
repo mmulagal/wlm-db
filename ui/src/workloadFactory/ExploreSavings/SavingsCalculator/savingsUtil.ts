@@ -166,7 +166,7 @@ export const MSSQLServerInstance = (sqlData: any) => {
         {
             label: 'Database edition',
             value: sqlData?.serverEdition || GENERAL.NOT_AVAILABLE,
-            text: 'Complete'
+            text: 'Since source deployment mode suggested is  FCI the Enterprise replication feature is not relevant. Based on our analysis, SQL Enterprise features are not used as well, therefore we recommend using Standard edition.'
         },
         {
             label: 'Database version',
@@ -282,9 +282,9 @@ export const viewCalculation = (viewCalculation: any) => {
                 text: `Desired storage capacity x Ratio after savings from compression & deduplication factor x Data on capacity pool storage factor `
             },
             {
-                label: 'Capacity pool storage capacity',
+                label: 'Capacity monthly cost',
                 value: `$${viewCalculation.FSxNCalculation.priceCalculation.capacityMonthlyCost}`,
-                text: `Desired storage capacity x Ratio after savings from compression & deduplication factor x Data on capacity pool storage factor `
+                text: `Capacity pool storage capacity x FSx for ONTAP capacity price  `
             },
             {
                 label: 'Total monthly cost for FSx for NetApp ONTAP file server - Capacity pool storage capacity',
@@ -360,6 +360,69 @@ export const viewCalculation = (viewCalculation: any) => {
                 label: 'Total throughput and IOPS (monthly)',
                 value: `$${viewCalculation.FSxNCalculation.priceCalculation.totalThroughputIOPS}`,
                 text: `Additional billed cost for SSD IOPS + Total monthly cost for FSx for NetApp ONTAP file server throughput capacity `
+            }
+        ],
+        cloneCalculation: [
+            {
+                label: 'Clone calculation',
+                mainHeading: true
+            },
+            {
+                label: 'Unit conversions'
+            },
+            {
+                label: 'Clone frequency',
+                value: `$(${viewCalculation.cloneCalculation.unitConversion.cloneFrequency})`,
+                text: ``
+            },
+            {
+                label: 'change rate between clones (%)',
+                value: `$${viewCalculation.cloneCalculation.unitConversion.cloneRateChange}%`,
+                text: `monthly change rate (%) / number of periods = 3%/30`
+            },
+            {
+                label: 'Desired storage capacity',
+                value: `${viewCalculation.cloneCalculation.unitConversion.desiredStorageCapacity}GiB`,
+                text: `number of cloned copies* (%change rate*total fsxN capacity*number of clones in a month)= 3*(0.1% *2*1024*30)`
+            },
+            {
+                label: 'Percentage of data on SSD storage',
+                value: `$${viewCalculation.cloneCalculation.unitConversion.ssdStorage}%`,
+                text: ``
+            },
+            {
+                label: 'Savings from compression & deduplication',
+                value: `$${viewCalculation.cloneCalculation.unitConversion.savingsDeduplication}%`,
+                text: ``
+            },
+            {
+                label: 'Pricing calculations'
+            },
+            {
+                label: 'Storage savings from compression & deduplication',
+                value: `${viewCalculation.cloneCalculation.priceCalculation.storageSavingsDeduplication} GiB`,
+                text: `Desired storage capacity  x Savings from compression & deduplication = 184GiB x 0% = 0GiB`
+            },
+            {
+                label: 'Effective storage capacity for FSx for ONTAP',
+                value: `${viewCalculation.cloneCalculation.priceCalculation.effectiveStorageCapacity} GiB`,
+                text: `Desired storage capacity  - Storage savings from compression & deduplication = 184GiB-0Gib`
+            },
+            {
+                label: 'SSD storage GiB per month',
+                value: `${viewCalculation.cloneCalculation.priceCalculation.ssdStorage} GiB`,
+                text: `Effective storage capacity for FSx for ONTAP (3,000 GiB) x Percentage of data on SSD storage = 184GiBx 100%`
+            },
+            {
+                label: 'SSD monthly cost',
+                value: `${viewCalculation.cloneCalculation.priceCalculation.ssdMonthlyCost}$`,
+                text: `SSD storage GiB per month  x FSx for ONTAP SSD price = 184GiB x 0.14$`
+            },
+            {
+                label: 'Total clone monthly cost',
+                value: `${viewCalculation.cloneCalculation.priceCalculation.totalMonthlyCloneCost}$`,
+                secondaryHeading: true,
+                text: ``
             },
             {
                 label: 'Total monthly cost',
@@ -383,6 +446,16 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
             {
                 label: 'Instance type',
                 value: `${viewCalculation.Ec2InstanceCalculation.instanceType}`,
+                text: ''
+            },
+            {
+                label: 'SQL edition',
+                value: `${viewCalculation.Ec2InstanceCalculation.sqlEdition}`,
+                text: ''
+            },
+            {
+                label: 'SQL license included',
+                value: `${viewCalculation.Ec2InstanceCalculation.sqlLicense}`,
                 text: ''
             },
             {
@@ -505,6 +578,22 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
                 label: 'EBS snapshot cost',
                 value: `$${viewCalculation.EBSCalculation.priceCalculation.ebsSnapshotCost}`,
                 text: ``
+            }
+        ],
+        cloneCalculation: [
+            {
+                label: 'Clone calculation',
+                mainHeading: true
+            },
+            {
+                label: 'Number of Cloned copies',
+                value: `${viewCalculation.cloneCalculation.numberOfClonedCopies}`,
+                text: ` `
+            },
+            {
+                label: 'Clone cost',
+                value: `$${viewCalculation.cloneCalculation.cloneCost}`,
+                text: `number of Cloned copies *( ebs storage cost + ebs iops cost + ebs throughput cost )= 3 * 300$`
             },
             {
                 label: 'Amazon Elastic Block Storage (EBS) total cost (monthly)',

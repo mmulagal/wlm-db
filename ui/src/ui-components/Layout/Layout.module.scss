@@ -110,7 +110,7 @@ $gutter: 24px;
 
 .grid {
     display: flex;
-    flex-flow: row wrap;
+    //flex-flow: row wrap;
 
     margin: 0 math.div($gutter, -2);
 

@@ -630,7 +630,10 @@ Resources:
                                   - '-ExecutionPolicy RemoteSigned '
                                   - -Command "
                                   - C:\cfn\scripts\common\AddUserToGroup.ps1 -UserName '
-                                  - !Ref 'SQLAdminAccounts'
+                                  - !Join
+                                    - '\'
+                                    - - !Ref 'DomainDNSName'
+                                      - !Ref 'SQLAdminAccounts'
                                   - ''' -GroupName ''Administrators''"'
                             waitAfterCompletion: '0'
                 SQLIncludedConfigure:

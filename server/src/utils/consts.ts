@@ -137,7 +137,8 @@ enum RouteTags {
     PRICING = 'Pricing',
     RESOURCE = 'Resource',
     SYSTEM = 'System',
-    WORKING_ENVIRONMENT = 'Working Environment'
+    WORKING_ENVIRONMENT = 'Working Environment',
+    STORAGE_SAVINGS = 'Storage Savings'
 }
 
 enum HttpErrorCodes {
@@ -1127,6 +1128,8 @@ const PERMISSION_DENIAL_POSSIBLE_REASONS = {
 
 const NO_SANDBOX_CREATED = 'No sandboxes created for the instance';
 
+const STORAGE_PROTOCOLS = { SMB: 'SMB', ISCSI: 'iSCSI' };
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1383,5 +1386,6 @@ export {
     DBCREATE_RELATIVE_PATH,
     DEFAULT_INSTANCE_NAME,
     PERMISSION_DENIAL_POSSIBLE_REASONS,
-    NO_SANDBOX_CREATED
+    NO_SANDBOX_CREATED,
+    STORAGE_PROTOCOLS
 };

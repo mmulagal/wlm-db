@@ -2,7 +2,7 @@
  * This file contains the utility functions
  * These functions can be re-used at different places and act as helper functions
  */
-import { attempt, trimEnd, trimStart } from 'lodash-es';
+import { attempt, trimEnd, trimStart, camelCase } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { Tag } from '@aws-sdk/client-ec2';
@@ -467,6 +467,22 @@ function getCollationForMSSQLVersion(mssqlVersion: string, defaultCollation: str
     }
 }
 
+function camelizeKeys(obj: any): any {
+    if (Array.isArray(obj)) {
+        return obj.map(v => camelizeKeys(v));
+    }
+    if (obj != null && obj.constructor === Object) {
+        return Object.keys(obj).reduce(
+            (result: { [key: string]: any }, key: string) => ({
+                ...result,
+                [camelCase(key)]: camelizeKeys(obj[key])
+            }),
+            {}
+        );
+    }
+    return obj;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -496,5 +512,6 @@ export {
     sqlResponseParsing,
     convertGiBToBytes,
     splitDomainUsername,
-    getCollationForMSSQLVersion
+    getCollationForMSSQLVersion,
+    camelizeKeys
 };

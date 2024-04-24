@@ -39,7 +39,7 @@
         # Verify Domain Join worked fine
 
         if (-not (Get-Module -ListAvailable -Name ActiveDirectory)) {
-            Install-WindowsFeature RSAT-AD-PowerShell *>$null
+            Install-WindowsFeature RSAT-AD-PowerShell -ErrorAction SilentlyContinue *>$null
         }
         if ($isSecretManagerSupported) {
             try {

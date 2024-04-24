@@ -23,7 +23,7 @@ const TableLayout = ({ data }: any) => {
         } else if (data.label === 'Total storage charge (monthly)') {
             return {
                 backgroundColor: 'var(--main-background)',
-                height: 88,
+                height: 64,
                 marginBottom: 3
             };
         } else {
@@ -33,7 +33,10 @@ const TableLayout = ({ data }: any) => {
     return (
         <Grid className={styles['table-column']} style={styleHandler(data)}>
             <GridItem lg="4">
-                <Text bold={!data.value && true} style={data.mainHeading ? { fontSize: 16 } : { fontSize: 14 }}>
+                <Text
+                    bold={(!data.value || data.secondaryHeading) && true}
+                    style={data.mainHeading ? { fontSize: 16 } : { fontSize: 14 }}
+                >
                     {data.label}
                 </Text>
             </GridItem>
@@ -53,6 +56,22 @@ const OntapCalculation = () => {
             instanceType: 'c5.2xlarge',
             instanceHourlyPrice: '1.68',
             ec2MachineCost: '1,226.40'
+        },
+        cloneCalculation: {
+            unitConversion: {
+                cloneFrequency: 'daily',
+                cloneRateChange: '0.1',
+                desiredStorageCapacity: '184',
+                ssdStorage: '100',
+                savingsDeduplication: 0
+            },
+            priceCalculation: {
+                storageSavingsDeduplication: '0',
+                effectiveStorageCapacity: '184',
+                ssdStorage: '184',
+                ssdMonthlyCost: '25.76',
+                totalMonthlyCloneCost: '25.76'
+            }
         },
         FSxNCalculation: {
             storageCapacity: '23',
@@ -108,6 +127,13 @@ const OntapCalculation = () => {
                         )}
                         <div style={{ marginTop: '16px' }}>
                             {viewCalculation(viewCalculationData).FSxNCalculation.map(
+                                (data: { label: string; text?: string; value?: string }, index: number) => (
+                                    <TableLayout key={index} data={data} />
+                                )
+                            )}
+                        </div>
+                        <div style={{ marginTop: '16px' }}>
+                            {viewCalculation(viewCalculationData).cloneCalculation.map(
                                 (data: { label: string; text?: string; value?: string }, index: number) => (
                                     <TableLayout key={index} data={data} />
                                 )

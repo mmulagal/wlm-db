@@ -3,6 +3,11 @@
     gap: 24px;
     padding: 0 120px;
 
+    .jobMenuPopover {
+        width: fit-content;
+        margin-left: -12px;
+    }
+
     .manageHostCol {
         width: 182px;
         height: 32px;
