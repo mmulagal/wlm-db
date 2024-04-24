@@ -694,6 +694,23 @@ export const sandboxApi = createApi({
     }
 });
 
+export const exploreSavingsApi = createApi({
+    reducerPath: 'exploreSavingsApi',
+    baseQuery: dynamicBaseQuery,
+    refetchOnMountOrArgChange: true,
+    endpoints: builder => {
+        return {
+            getStorageSavings: builder.mutation({
+                query: ({ credentialId, region, instanceId, payload }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/instances/${instanceId}/storage-savings`,
+                    method: 'POST',
+                    body: payload
+                })
+            })
+        };
+    }
+});
+
 export const {
     useGetCredentialsQuery,
     useGetRegionsQuery,
@@ -766,3 +783,5 @@ export const {
 } = inventoryApi;
 
 export const { useGetSandboxListQuery, useGetSandboxSavingsQuery } = sandboxApi;
+
+export const { useGetStorageSavingsMutation } = exploreSavingsApi;

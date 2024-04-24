@@ -5,7 +5,8 @@ import { GENERAL } from '../../../../utils/appConstants';
 
 const SavingsSelectedHost = () => {
     const isDisabled = false;
-    const { loading } = useAppSelector(state => state.exploreSavings);
+    const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
+
     return (
         <div className={styles.selectedHosts}>
             <DsTypography variant="Regular_14" className={isDisabled ? styles.disabledHeading : ''}>
@@ -30,15 +31,15 @@ const SavingsSelectedHost = () => {
                 {/* <div className={styles.separator} /> */}
 
                 <div className={`${styles.container} ${styles.secondContainer}`}>
-                    {!loading && (
+                    {!selectedHostDetails?.loading && (
                         <DsTypography
                             variant="Semibold_14"
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
                         >
-                            120
+                            {selectedHostDetails?.databaseCount || GENERAL.NOT_AVAILABLE}
                         </DsTypography>
                     )}
-                    {loading && (
+                    {selectedHostDetails?.loading && (
                         <div className={styles.loader} style={{ marginRight: '104px' }}>
                             <FlashingDotsLoader />
                         </div>
@@ -54,15 +55,15 @@ const SavingsSelectedHost = () => {
                 {/* <div className={styles.separator} /> */}
 
                 <div className={styles.container}>
-                    {!loading && (
+                    {!selectedHostDetails?.loading && (
                         <DsTypography
                             variant="Semibold_14"
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
                         >
-                            120
+                            {selectedHostDetails?.ebsResourceInfo?.length || GENERAL.NOT_AVAILABLE}
                         </DsTypography>
                     )}
-                    {loading && (
+                    {selectedHostDetails?.loading && (
                         <div className={styles.loader}>
                             <FlashingDotsLoader />
                         </div>

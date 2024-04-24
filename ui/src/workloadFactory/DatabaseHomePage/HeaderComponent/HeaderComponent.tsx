@@ -196,7 +196,11 @@ const HeaderComponent = () => {
                                     isSearchable={generateAWSAccounts.length > 5}
                                     options={generateAWSAccounts}
                                     variant="two-lines"
-                                    isReadOnly={selectedHeaderTab === WLF_TABS.OVERVIEW}
+                                    isReadOnly={
+                                        selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                                    }
                                 />
                             </div>
 
@@ -216,7 +220,11 @@ const HeaderComponent = () => {
                                     isSearchable={generateRegionsData.length > 5}
                                     options={generateRegionsData}
                                     variant="two-lines"
-                                    isReadOnly={selectedHeaderTab === WLF_TABS.OVERVIEW}
+                                    isReadOnly={
+                                        selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                                    }
                                 />
                             </div>
 

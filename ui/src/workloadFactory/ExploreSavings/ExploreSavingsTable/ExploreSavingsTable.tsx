@@ -15,6 +15,7 @@ import {
     renderUnmanagedAZ,
     renderUnmanagedHostName
 } from '../../Inventory/InventoryUtils';
+import { setSelectedHostDetails, setSelectedInstanceId } from '../../../store/workloadFactory/exploreSavingsSlice';
 
 const ExploreSavingsTable = () => {
     const dispatch = useDispatch();
@@ -36,6 +37,8 @@ const ExploreSavingsTable = () => {
                             className={styles.detectManage}
                             onClick={() => {
                                 dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+                                dispatch(setSelectedInstanceId(rowData?.id));
+                                dispatch(setSelectedHostDetails(rowData));
                             }}
                         >
                             <Typography variant="Regular_14" className={styles.textStyle}>

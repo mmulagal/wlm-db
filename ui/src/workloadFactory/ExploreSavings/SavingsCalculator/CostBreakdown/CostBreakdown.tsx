@@ -6,9 +6,19 @@ import { comparisonData } from '../savingsUtil';
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
+import { useEffect, useState } from 'react';
 
 const CostBreakdown = () => {
-    const { loading } = useAppSelector(state => state.exploreSavings);
+    const { storageSavingsResponse, storageSavingsLoading } = useAppSelector(state => state.exploreSavings);
+
+    const [calculatedResponse, setCalculatedResponse] = useState({});
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        setCalculatedResponse(storageSavingsResponse);
+        setLoading(storageSavingsLoading);
+    }, [storageSavingsResponse, storageSavingsLoading]);
+
     const ComparisonTableLayout = ({ data, calculatedResponse }: any) => {
         return (
             <div
@@ -51,29 +61,6 @@ const CostBreakdown = () => {
                 </Grid>
             </div>
         );
-    };
-
-    const calculatedResponse = {
-        fsx: {
-            capacity: 1000,
-            iops: 1000,
-            throughput: 1000,
-            snapshots: 1000,
-            clone: 1000,
-            compute: 1000,
-            license: 1000,
-            total: 7000
-        },
-        ebs: {
-            capacity: 2000,
-            iops: 2000,
-            throughput: 2000,
-            snapshots: '2000',
-            clone: '2000',
-            compute: '2000',
-            license: '2000',
-            total: 14000
-        }
     };
 
     return (

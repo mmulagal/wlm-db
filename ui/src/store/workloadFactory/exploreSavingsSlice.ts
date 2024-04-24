@@ -7,7 +7,11 @@ export const initialExploreSavingsState: any = {
     monthlyChangeRate: 3,
     saveConfigName: '',
     loading: false,
-    unmanagedExploreSavingsHost: []
+    unmanagedExploreSavingsHost: [],
+    selectedInstanceId: null,
+    selectedHostDetails: {},
+    storageSavingsResponse: {},
+    storageSavingsLoading: false
 };
 
 const exploreSavingsSlice = createSlice({
@@ -31,6 +35,18 @@ const exploreSavingsSlice = createSlice({
         },
         setUnmanagedExploreSavingsHost(state, action: PayloadAction<any>) {
             state.unmanagedExploreSavingsHost = action.payload;
+        },
+        setSelectedInstanceId(state, action: PayloadAction<any>) {
+            state.selectedInstanceId = action.payload;
+        },
+        setSelectedHostDetails(state, action: PayloadAction<any>) {
+            state.selectedHostDetails = action.payload;
+        },
+        setStorageSavingsResponse(state, action: PayloadAction<any>) {
+            state.storageSavingsResponse = action.payload;
+        },
+        setStorageSavingsLoading(state, action: PayloadAction<any>) {
+            state.storageSavingsLoading = action.payload;
         }
     }
 });
@@ -41,7 +57,11 @@ export const {
     setSelectedCloneRefresh,
     setMonthlyChangeRate,
     setSaveConfigName,
-    setUnmanagedExploreSavingsHost
+    setUnmanagedExploreSavingsHost,
+    setSelectedInstanceId,
+    setSelectedHostDetails,
+    setStorageSavingsResponse,
+    setStorageSavingsLoading
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

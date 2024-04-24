@@ -1,44 +1,46 @@
+import { GENERAL } from '../../../utils/appConstants';
+
 export const comparisonData = (calculatedResponse: any) => {
     return [
         {
             type: 'Capacity',
-            fsx: calculatedResponse?.fsx?.capacity,
-            ebs: calculatedResponse?.ebs?.capacity
+            fsx: calculatedResponse?.fsx?.capacity || 0,
+            ebs: calculatedResponse?.ebs?.capacity || 0
         },
         {
             type: 'IOPS',
-            fsx: calculatedResponse?.fsx?.iops,
-            ebs: calculatedResponse?.ebs?.iops
+            fsx: calculatedResponse?.fsx?.iops || 0,
+            ebs: calculatedResponse?.ebs?.iops || 0
         },
         {
             type: 'Throughput',
-            fsx: calculatedResponse?.fsx?.throughput,
-            ebs: calculatedResponse?.ebs?.throughput
+            fsx: calculatedResponse?.fsx?.throughput || 0,
+            ebs: calculatedResponse?.ebs?.throughput || 0
         },
         {
             type: 'Snapshots',
-            fsx: calculatedResponse?.fsx?.snapshots,
-            ebs: calculatedResponse?.ebs?.snapshots
+            fsx: calculatedResponse?.fsx?.snapshots || 0,
+            ebs: calculatedResponse?.ebs?.snapshots || 0
         },
         {
             type: 'Clone',
-            fsx: calculatedResponse?.fsx?.clone,
-            ebs: calculatedResponse?.ebs?.clone
+            fsx: calculatedResponse?.fsx?.clone || 0,
+            ebs: calculatedResponse?.ebs?.clone || 0
         },
         {
             type: 'Compute',
-            fsx: calculatedResponse?.fsx?.compute,
-            ebs: calculatedResponse?.ebs?.compute
+            fsx: calculatedResponse?.fsx?.compute || 0,
+            ebs: calculatedResponse?.ebs?.compute || 0
         },
         {
             type: 'SQL license',
-            fsx: calculatedResponse?.fsx?.license,
-            ebs: calculatedResponse?.ebs?.license
+            fsx: calculatedResponse?.fsx?.license || 0,
+            ebs: calculatedResponse?.ebs?.license || 0
         },
         {
             type: 'Total summary',
-            fsx: calculatedResponse?.fsx?.total,
-            ebs: calculatedResponse?.ebs?.total
+            fsx: calculatedResponse?.fsx?.total || 0,
+            ebs: calculatedResponse?.ebs?.total || 0
         }
     ];
 };
@@ -47,62 +49,75 @@ export const calculatedFSXData = (fsxData: any) => {
     return [
         {
             label: 'Region',
-            value: fsxData.regionName,
+            value: fsxData?.regionName || GENERAL.NOT_AVAILABLE,
             text: 'The AWS region that you selected.'
         },
         {
             label: 'Deployment type',
-            value: fsxData.deploymentType === 'Single' ? 'Single Availability Zone' : fsxData.deploymentType,
-            text: `A ${fsxData.deploymentType} Availability Zone is the equivalent availability for Amazon EBS.`
+            value:
+                fsxData?.deploymentType === 'Single'
+                    ? 'Single Availability Zone'
+                    : fsxData?.deploymentType || GENERAL.NOT_AVAILABLE,
+            text: `A ${fsxData?.deploymentType} Availability Zone is the equivalent availability for Amazon EBS.`
         },
         {
             label: 'Total storage capacity',
-            value: `${fsxData.totalStorageCapacity} TiB`,
+            value: fsxData?.totalStorageCapacity
+                ? `${fsxData?.totalStorageCapacity?.size} ${fsxData?.totalStorageCapacity?.unit}`
+                : GENERAL.NOT_AVAILABLE,
             text: 'The number of volumes that you need times the selected volume size.'
         },
 
         {
             label: 'Percentage of data on SSD storage',
-            value: fsxData.precentageSSD + '%',
-            text: `The potential percentage of data stored on the SSD tier for a typical ${fsxData.useCase} workload when using FSx for ONTAP data tiering capabilities.`
+            value: fsxData?.percentageSsd ? fsxData?.percentageSsd + '%' : GENERAL.NOT_AVAILABLE,
+            text: `The potential percentage of data stored on the SSD tier for a typical ${fsxData?.useCase} workload when using FSx for ONTAP data tiering capabilities.`
         },
         {
             label: 'Savings from compression + deduplication',
-            value: fsxData.savings + '%',
-            text: `Potential storage savings for ${fsxData.useCase} workload. Storage efficiency is based on a typical customer deployment.`
+            value: fsxData?.savings ? fsxData?.savings + '%' : GENERAL.NOT_AVAILABLE,
+            text: `Potential storage savings for ${fsxData?.useCase} workload. Storage efficiency is based on a typical customer deployment.`
         },
         {
             label: 'Effective capacity',
-            value: `${fsxData.effectiveCapacity.toFixed(2)} TiB`,
-            text: `Cost reduction based on ${fsxData.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
+            value: fsxData?.effectiveCapacity
+                ? `${fsxData?.effectiveCapacity?.size?.toFixed(2)} ${fsxData?.effectiveCapacity?.unit}`
+                : GENERAL.NOT_AVAILABLE,
+            text: `Cost reduction based on ${fsxData?.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
         },
         {
             label: 'SSD tier required capacity',
-            value: `${fsxData.ssdTierReqCapacity.toFixed(2)} TiB`,
-            text: `Based on a typical ${fsxData.useCase} workload, ${fsxData.precentageSSD}% of the data is on the SSD tier.`
+            value: fsxData?.ssdTierReqCapacity
+                ? `${fsxData?.ssdTierReqCapacity?.size?.toFixed(2)} ${fsxData?.ssdTierReqCapacity?.unit}`
+                : GENERAL.NOT_AVAILABLE,
+            text: `Based on a typical ${fsxData?.useCase} workload, ${fsxData?.percentageSsd}% of the data is on the SSD tier.`
         },
         {
             label: 'Capacity pool tier required capacity',
-            value: `${fsxData.capacityPoolTier.toFixed(2)} TiB`,
-            text: `Based on a typical ${fsxData.useCase} workload, ${
-                100 - fsxData.precentageSSD
+            value: fsxData?.capacityPoolTier
+                ? `${fsxData?.capacityPoolTier?.size?.toFixed(2)} ${fsxData?.capacityPoolTier?.unit}`
+                : GENERAL.NOT_AVAILABLE,
+            text: `Based on a typical ${fsxData?.useCase} workload, ${
+                100 - fsxData?.percentageSsd
             }% of the data is on the capacity pool tier.`
         },
         {
             label: 'Provisioned SSD IOPS',
-            value: fsxData.ssdIop,
+            value: fsxData?.ssdIop || GENERAL.NOT_AVAILABLE,
             text: 'For each GiB of SSD provisioned storage, Amazon FSx automatically provisions 3 SSD IOPS for the file system.'
         },
         {
             label: 'Throughput capacity',
-            value: `${fsxData.throughputCapacity} MBps`,
+            value: fsxData?.throughputCapacity ? `${fsxData?.throughputCapacity} MBps` : GENERAL.NOT_AVAILABLE,
             text: `Supported FSx for ONTAP throughput according to the consolidated EBS throughput required (${
-                fsxData.numberOfVolumes * fsxData.throughput
+                fsxData?.numberOfVolumes * fsxData?.throughput
             } Mbps).`
         },
         {
             label: 'Monthly snapshot capacity',
-            value: `${fsxData.monthlySnapshotCapacity} GiB`,
+            value: fsxData?.monthlySnapshotCapacity
+                ? `${fsxData?.monthlySnapshotCapacity?.size} ${fsxData?.monthlySnapshotCapacity?.unit}`
+                : GENERAL.NOT_AVAILABLE,
             text: 'Cost reduction is based on FSx for ONTAP data tiering capability. 90% of snapshots data will be tiered to the capacity pool tier.'
         }
     ];
@@ -112,22 +127,22 @@ export const MSSQLServerInstance = (sqlData: any) => {
     return [
         {
             label: 'Database deployment mode',
-            value: `${sqlData.deploymentMode}`,
+            value: sqlData?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
             text: 'Based on source deployment mode of Always On Availability Group, the equivalent deployment mode on FsxN is Failover cluster instance'
         },
         {
             label: 'Database edition',
-            value: `${sqlData.edition}`,
+            value: sqlData?.serverEdition || GENERAL.NOT_AVAILABLE,
             text: 'Complete'
         },
         {
             label: 'Database version',
-            value: `${sqlData.serverType}`,
+            value: sqlData?.serverVersion || GENERAL.NOT_AVAILABLE,
             text: 'Based on the source SQL server version'
         },
         {
             label: 'DB Instance type',
-            value: `${sqlData.instance}`,
+            value: sqlData?.instanceType || GENERAL.NOT_AVAILABLE,
             text: 'Based on the source Ec2 instance type'
         }
     ];

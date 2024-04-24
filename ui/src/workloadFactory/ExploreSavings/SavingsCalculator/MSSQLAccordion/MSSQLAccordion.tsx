@@ -9,6 +9,7 @@ import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../../utils/appConstants';
 import SaveConfigSavings from './SaveCongfigSavings/SaveCongfigSavings';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { useEffect, useState } from 'react';
 
 const TableLayout = ({ data }: any) => {
     return (
@@ -28,32 +29,16 @@ const TableLayout = ({ data }: any) => {
 
 const MSSQLAccordion = () => {
     const isMutliFsx = false;
-    const { loading } = useAppSelector(state => state.exploreSavings);
+    const { storageSavingsLoading, storageSavingsResponse } = useAppSelector(state => state.exploreSavings);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
-    const fsxData = {
-        regionName: 'US East (Ohio) | us-east-2',
-        deploymentType: 'Single',
-        totalStorageCapacity: '100 TiB',
-        precentageSSD: '20',
-        savings: '65',
-        useCase: 'Online archive',
-        effectiveCapacity: 35,
-        capacityPoolTier: 28,
-        ssdTierReqCapacity: 7,
-        ssdIop: '60,000',
-        throughputCapacity: '1,024',
-        numberOfVolumes: 20,
-        throughput: 10,
-        monthlySnapshotCapacity: '900'
-    };
+    const [fsxData, setFsxData] = useState({});
+    const [msSqlInstance, setMsSqlInstance] = useState({});
 
-    const msSqlInstance = {
-        deploymentMode: 'Failover cluster instance(FCI)',
-        edition: 'SQL Server Standard Edition',
-        serverType: 'SQL Server 2019',
-        instance: ' m5.xlarge'
-    };
+    useEffect(() => {
+        setFsxData(storageSavingsResponse?.fsxCalculation);
+        setMsSqlInstance(storageSavingsResponse?.mssqlInstance);
+    }, [storageSavingsResponse]);
 
     const handleSaveConfiguration = (dialogFrom: any) => {
         setDialog(
@@ -84,7 +69,7 @@ const MSSQLAccordion = () => {
                 title="Microsoft SQL Server on FSx for ONTAP"
                 variant="Default"
                 value=""
-                isDisabled={loading}
+                isDisabled={storageSavingsLoading}
                 headerActions={[
                     isMutliFsx ? (
                         <Popover
@@ -100,7 +85,7 @@ const MSSQLAccordion = () => {
                     ) : (
                         <DsButton
                             type="text"
-                            isDisabled={loading}
+                            isDisabled={storageSavingsLoading}
                             onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
                         >
                             {GENERAL.ES_SAVE_CONFIG}
@@ -110,7 +95,7 @@ const MSSQLAccordion = () => {
                     <div style={{ height: '32px' }} className={styles.buttonContainer}>
                         <DsButton
                             type="button"
-                            isDisabled={isMutliFsx || loading}
+                            isDisabled={isMutliFsx || storageSavingsLoading}
                             onClick={() => navigate(WLF_TO_FORM_NAVIGATE)}
                         >
                             Create
