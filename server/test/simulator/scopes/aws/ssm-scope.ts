@@ -34,6 +34,7 @@ import {
     GET_STANDBY_NODE_DRIVE_LIST
 } from '../../../../src/operations/workloads/mssql/ssm-script-utils';
 import { GET_SANDBOX_DETAILS } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
+import { SERVER_DETAILS } from '../../../../src/operations/workloads/mssql/queries';
 
 const ssmMock = mockClient(SSMClient);
 
