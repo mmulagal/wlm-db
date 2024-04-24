@@ -24,6 +24,7 @@ import vpcsResponse from '../../responses/aws/list-vpcs.json';
 import subnetsResponse from '../../responses/aws/list-subnets.json';
 import securityGroupsResponse from '../../responses/aws/list-security-groups.json';
 import ec2ImagesResponse from '../../responses/aws/ec2-images.json';
+import ec2AMIImagesResponse from '../../responses/aws/ec2-ami-images.json';
 import fsxRegionsResponse from '../../responses/aws/list-fsx-regions.json';
 import ec2InstanaceTypes from '../../responses/aws/ec2-instance-types.json';
 import routeTablesResponse from '../../responses/aws/list-route-tables.json';
@@ -67,6 +68,39 @@ const keyPairsResponse = {
     ]
 };
 
+const amiOwners = [
+    '801119661308',
+    '185158320714',
+    '536790793924',
+    '688423173695',
+    '878052572473',
+    '159365745649',
+    '903064639964',
+    '311529897437'
+];
+
+const generateImageFilter = (serverVersion: string, sqlVersion: string, sqlEdition: string) =>
+({
+    Filters: [
+        { Name: 'name', Values: [`Windows_Server-${serverVersion}-English-Full-SQL_${sqlVersion}_${sqlEdition}`] },
+        { Name: 'owner-alias', Values: ['amazon'] }
+    ],
+    Owners: amiOwners
+});
+
+const images = [
+    ['2016', '2016', 'SP*_Enterprise*'],
+    ['2016', '2016', 'SP*_Standard*'],
+    ['2016', '2019', 'Standard*'],
+    ['2016', '2019', 'Enterprise*'],
+    ['2019', '2016', 'SP*_Standard*'],
+    ['2019', '2019', 'Standard*'],
+    ['2019', '2022', 'Standard*'],
+    ['2019', '2016', 'SP*_Enterprise*'],
+    ['2019', '2019', 'Enterprise*'],
+    ['2019', '2022', 'Enterprise*']
+];
+
 const ec2Mock = mockClient(EC2Client);
 
 ec2Mock.on(DescribeVpcsCommand).resolves(vpcsResponse);
@@ -76,6 +110,12 @@ ec2Mock.on(DescribeSubnetsCommand).resolves(subnetsResponse);
 ec2Mock.on(DescribeSecurityGroupsCommand).resolves(securityGroupsResponse);
 
 ec2Mock.on(DescribeImagesCommand).resolves(ec2ImagesResponse);
+
+for (let i = 0; i < images.length; i += 1) {
+    const [serverVersion, sqlVersion, sqlEdition] = images[i];
+    const filter = generateImageFilter(serverVersion, sqlVersion, sqlEdition);
+    ec2Mock.on(DescribeImagesCommand, filter).resolves(ec2AMIImagesResponse[`Windows_Server-${serverVersion}-English-Full-SQL_${sqlVersion}_${sqlEdition}`]);
+}
 
 ec2Mock.on(DescribeRegionsCommand).resolves(fsxRegionsResponse);
 
