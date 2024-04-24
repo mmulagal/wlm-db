@@ -57,6 +57,9 @@
         .textContent {
             display: flex;
             flex-direction: column;
+            .secondText {
+                width: 1168px;
+            }
         }
     }
 }
