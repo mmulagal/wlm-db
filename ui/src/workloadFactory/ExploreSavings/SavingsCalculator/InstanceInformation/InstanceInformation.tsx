@@ -19,7 +19,14 @@ const InstanceInformation = () => {
             Header: 'Details',
             accessor: 'details',
             id: '1',
-            width: '190px'
+            width: '190px',
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <DsTypography variant="Regular_14" style={{ minWidth: '125px' }}>
+                        {rowData.details}
+                    </DsTypography>
+                );
+            }
         },
 
         {
@@ -29,7 +36,9 @@ const InstanceInformation = () => {
             width: '386px',
             renderCell: (cellData: any, rowData: any) => {
                 return !loading ? (
-                    <DsTypography variant="Regular_14">{rowData.value}</DsTypography>
+                    <DsTypography variant="Regular_14" style={{ minWidth: '200px' }}>
+                        {rowData.value}
+                    </DsTypography>
                 ) : (
                     <DsFlashingDotsLoader />
                 );

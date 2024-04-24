@@ -44,7 +44,9 @@ const SelectedVolumeSummary = () => {
                 return loading ? (
                     <DsFlashingDotsLoader />
                 ) : (
-                    <DsTypography variant="Regular_14">{rowData.gp3}</DsTypography>
+                    <DsTypography variant="Regular_14" style={{ minWidth: '62px' }}>
+                        {rowData.gp3}
+                    </DsTypography>
                 );
             }
         },
@@ -57,7 +59,9 @@ const SelectedVolumeSummary = () => {
                 return loading ? (
                     <DsFlashingDotsLoader />
                 ) : (
-                    <DsTypography variant="Regular_14">{rowData.gp2}</DsTypography>
+                    <DsTypography variant="Regular_14" style={{ minWidth: '62px' }}>
+                        {rowData.gp2}
+                    </DsTypography>
                 );
             }
         },
@@ -70,7 +74,9 @@ const SelectedVolumeSummary = () => {
                 return loading ? (
                     <DsFlashingDotsLoader />
                 ) : (
-                    <DsTypography variant="Regular_14">{rowData.io1}</DsTypography>
+                    <DsTypography variant="Regular_14" style={{ minWidth: '62px' }}>
+                        {rowData.io1}
+                    </DsTypography>
                 );
             }
         },
@@ -83,7 +89,9 @@ const SelectedVolumeSummary = () => {
                 return loading ? (
                     <DsFlashingDotsLoader />
                 ) : (
-                    <DsTypography variant="Regular_14">{rowData.io2}</DsTypography>
+                    <DsTypography variant="Regular_14" style={{ minWidth: '62px' }}>
+                        {rowData.io2}
+                    </DsTypography>
                 );
             }
         }
