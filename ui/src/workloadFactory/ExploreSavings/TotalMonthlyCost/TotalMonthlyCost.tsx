@@ -59,7 +59,7 @@ const TotalMonthlyCost = () => {
                     <>
                         <ComparisonChart
                             data={[calculatedResponse.fsx.total, calculatedResponse.ebs.total]}
-                            yTickFormatter={yValue => '$' + yValue}
+                            yTickFormatter={yValue => '$' + Number(yValue).toLocaleString()}
                             height={370}
                             colors={calculatedResponse && ['chart-9', 'chart-6']}
                             categories={[GENERAL.CATEGORY_POINT_ONE, GENERAL.CATEGORY_POINT_TWO]}

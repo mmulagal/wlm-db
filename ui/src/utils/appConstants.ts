@@ -809,7 +809,9 @@ export const GENERAL = {
     COST_CALCULATION: 'Cost calculation',
     DEPLOY_RATE_EXCEEDED: 'An internal error occurred when attempting to deploy the database server, please try again.',
     TOOLTIP_MESSAGE_SNAPSHOT_FREQ:
-        'EBS snapshots not detected, if you would like to compare FSxN snapshots to potential EBS snapshots cost, please update the snapshot frequency.'
+        'EBS snapshots not detected, if you would like to compare FSxN snapshots to potential EBS snapshots cost, please update the snapshot frequency.',
+    NOTICE_MESSAGE_COST_SAVINGS:
+        'This configuration cannot benefit from savings. Please check the cost breakdown below for further analysis.'
 };
 
 export const CODE_VIEWER = {
