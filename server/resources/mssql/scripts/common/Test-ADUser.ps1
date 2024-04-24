@@ -26,7 +26,7 @@ try {
     }
 
     if (-not (Get-Module -ListAvailable -Name ActiveDirectory)) {
-        Install-WindowsFeature RSAT-AD-PowerShell
+        Install-WindowsFeature RSAT-AD-PowerShell -ErrorAction SilentlyContinue *>$null
     }
 
     do {

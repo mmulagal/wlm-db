@@ -32,7 +32,7 @@ param(
        $createUserSB = {
             $ErrorActionPreference = "Stop"
             if (-not (Get-Module -ListAvailable -Name ActiveDirectory)) {
-                Install-WindowsFeature RSAT-AD-PowerShell
+                Install-WindowsFeature RSAT-AD-PowerShell -ErrorAction SilentlyContinue *>$null
             }
             Write-Host "Searching for user $Using:ServiceAccountUser"
             if (Get-ADUser -Filter {sAMAccountName -eq $Using:ServiceAccountUser}) {
