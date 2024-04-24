@@ -91,7 +91,9 @@ const SavingsCalculator = () => {
                         </div>
                         <div className={styles.textContent}>
                             <DsTypography variant="Semibold_16">{GENERAL.SELECTION_BASED_TEXT}</DsTypography>
-                            <DsTypography variant="Regular_14">{GENERAL.SELECTION_BASED_SECOND}</DsTypography>
+                            <DsTypography variant="Regular_14" className={styles.secondText}>
+                                {GENERAL.SELECTION_BASED_SECOND}
+                            </DsTypography>
                         </div>
                     </div>
 

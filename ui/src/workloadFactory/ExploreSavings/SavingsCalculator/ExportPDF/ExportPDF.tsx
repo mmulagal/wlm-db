@@ -27,6 +27,7 @@ const ExportPDF = ({ printDocument }: any) => {
                 <DsTypography
                     variant="Semibold_14"
                     className={styles.text}
+                    style={{ width: '80px' }}
                     onClick={() => (loading ? () => {} : handleExport())}
                 >
                     {GENERAL.EXPORT_PDF}
@@ -40,6 +41,7 @@ const ExportPDF = ({ printDocument }: any) => {
                 <DsTypography
                     variant="Semibold_14"
                     className={styles.text}
+                    style={{ width: '147px' }}
                     onClick={() =>
                         loading ? () => {} : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
                     }
