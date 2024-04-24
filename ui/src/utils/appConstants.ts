@@ -794,7 +794,7 @@ export const GENERAL = {
     ES_NUMBER_OF_VOLS: 'Number of volumes',
     SUMMARY_TEXT: 'The selected volumes summary per volume type:',
     SELECTION_BASED_TEXT: 'Based on your selections, we recommend creating the following:',
-    SELECTION_BASED_SECOND: 'Microsoft SQL Server on AWS Ec2 using FSx for ONTAP file system',
+    SELECTION_BASED_SECOND: 'Microsoft SQL Server on AWS EC2 using FSx for ONTAP file system',
     SAVINGS_CALCULATOR: 'Savings calculator',
     TOTAL_MONTHLY_COST: 'Total monthly cost',
     TO_VIEW_STORAGE: 'To view storage cost savings, enter your configuration.',

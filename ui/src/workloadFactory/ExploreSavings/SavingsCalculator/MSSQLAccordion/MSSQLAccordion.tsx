@@ -34,7 +34,7 @@ const MSSQLAccordion = () => {
     const fsxData = {
         regionName: 'US East (Ohio) | us-east-2',
         deploymentType: 'Single',
-        totalStorageCapacity: '100 TiB',
+        totalStorageCapacity: '100',
         precentageSSD: '20',
         savings: '65',
         useCase: 'Online archive',

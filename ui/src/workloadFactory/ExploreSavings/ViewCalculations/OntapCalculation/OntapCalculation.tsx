@@ -23,7 +23,7 @@ const TableLayout = ({ data }: any) => {
         } else if (data.label === 'Total storage charge (monthly)') {
             return {
                 backgroundColor: 'var(--main-background)',
-                height: 88,
+                height: 64,
                 marginBottom: 3
             };
         } else {

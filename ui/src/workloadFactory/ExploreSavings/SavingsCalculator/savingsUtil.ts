@@ -118,7 +118,7 @@ export const MSSQLServerInstance = (sqlData: any) => {
         {
             label: 'Database edition',
             value: `${sqlData.edition}`,
-            text: 'Complete'
+            text: 'Since source deployment mode suggested is  FCI the Enterprise replication feature is not relevant. Based on our analysis, SQL Enterprise features are not used as well, therefore we recommend using Standard edition.'
         },
         {
             label: 'Database version',
