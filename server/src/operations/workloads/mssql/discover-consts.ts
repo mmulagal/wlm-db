@@ -1,3 +1,14 @@
+const FAILURE_INFO: string = 'failureInfo';
+const IS_MODULE_INSTALLATION_IN_PROGRESS: string = 'isModuleInstallationInProgress';
+const REQUIRED_PS_MODULES_FOR_MANAGEMENT: string = `
+  'AWS.Tools.EC2',
+  'AWS.Tools.FSx',
+  'AWS.Tools.Installer',
+  'AWS.Tools.SecretsManager',
+  'AWS.Tools.SimpleSystemsManagement',
+  'NetApp.ONTAP'
+`;
+
 const SQL_SERVER_VERSION_TO_YEAR = new Map<number, number>([
     // Ref: https://learn.microsoft.com/en-AU/troubleshoot/sql/releases/download-and-install-latest-updates#sql-server-2022
     [9, 2005],
@@ -414,9 +425,61 @@ const COPY_SCIRPTS_TO_MANAGE_RESOURCE = (s3SignedUrl: string) => [
 `
 ];
 
+const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string) => [
+    `
+  Set-Variable -Option Constant -Name MODULE_INSTALL_STATE_FILE -Value 'NtapPsModuleInstallInProgressFile'
+  Set-Variable -Option Constant -Name NTAP_WF_MODULE_INSTALL_JOB -Value 'NtapWfModuleInstallJob'
+  
+  $ErrorActionPreference = "Stop"
+  $responseObject = @{}
+  $scriptStartTime = Get-Date
+  
+  try {
+    $requiredModuleList = @(${requiredModules})
+    $availableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
+    $unavailableModuleList = $requiredModuleList | ? { $_ -NotIn $availableModuleList}
+
+    if ($unavailableModuleList.Count -gt 0) {
+      if (-Not (Find-PackageProvider -Name 'Nuget')) {
+        Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force
+      }
+
+      ForEach ($moduleName in $unavailableModuleList) {
+        $null = Start-Job -Name $NTAP_WF_MODULE_INSTALL_JOB -ScriptBlock {
+          param($psModule)
+          Install-Module -Name $psModule -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue
+        } -ArgumentList $moduleName
+
+        $null = Get-Job -Name $NTAP_WF_MODULE_INSTALL_JOB | Wait-Job
+      }
+    }
+  } catch {
+    # Prevent any possible errors from clobbering JSON output
+    $responseObject['${FAILURE_INFO}'] = $_.Exception.Message
+  } finally {
+    $finallyAvailableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
+    $finallyUnavailableModuleList = $requiredModuleList | ? { $_ -NotIn $finallyAvailableModuleList}
+
+    if ($finallyUnavailableModuleList.Count -gt 0) {
+      $responseObject['${FAILURE_INFO}'] += 'PowerShell module(s) $finallyUnavailableModuleList could not be installed.'
+    }
+
+    $scriptEndTime = Get-Date
+    # Update faiureInfo if all modules aren't installed.
+    # e.g., misspell a module name and see what happens
+    $responseObject['scriptExecutionTime'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)
+    Echo $responseObject | ConvertTo-Json -Compress
+  }
+  `
+];
+
 export {
     HOST_AND_SQL_INFO_PS1,
     SQL_SERVER_VERSION_TO_YEAR,
     CLUSTER_NETWORK_IP_INFO_PS1,
-    COPY_SCIRPTS_TO_MANAGE_RESOURCE
+    COPY_SCIRPTS_TO_MANAGE_RESOURCE,
+    INSTALL_WF_POWERSHELL_PREREQS_PS1,
+    FAILURE_INFO,
+    IS_MODULE_INSTALLATION_IN_PROGRESS,
+    REQUIRED_PS_MODULES_FOR_MANAGEMENT
 };

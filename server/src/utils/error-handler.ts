@@ -46,7 +46,7 @@ export default function errorHandler(error: any, request: FastifyRequest, reply:
         logger.error('Error of type PrismaClientValidationError occurred', error);
         reply
             .status(500)
-            .send({ message: 'The request to update database failed due to bad request.Please contact support' });
+            .send({ message: 'The request to update database failed due to bad request. Please contact support' });
     } else if (error instanceof PrismaClientInitializationError) {
         logger.error('Error of type PrismaClientInitializationError occurred', error);
         reply

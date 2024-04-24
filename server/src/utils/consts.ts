@@ -147,6 +147,7 @@ enum HttpErrorCodes {
     UNAUTHORIZED = 401,
     FORBIDDEN = 403,
     NOT_FOUND = 404,
+    CONFLICT = 409,
     VALIDATION_ERROR = 422,
 
     // Server errors

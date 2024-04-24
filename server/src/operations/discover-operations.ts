@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import config from 'config';
 
-import { STORAGE_TYPE } from '@prisma/client';
+import { STORAGE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { FileSystem, FileSystemType } from '@aws-sdk/client-fsx';
 import { attempt, compact, uniqBy, isEmpty } from 'lodash-es';
 import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
@@ -18,6 +18,7 @@ import {
     pollCommandStatus,
     ssmPutParameters
 } from './aws/ssm-operations';
+import { registerJob, updateJobDetails, getJobs } from './database/job-operations';
 import {
     CloudProviders,
     HttpErrorCodes,
@@ -32,13 +33,15 @@ import {
     SQL_SERVER_VERSION_TO_YEAR,
     HOST_AND_SQL_INFO_PS1,
     CLUSTER_NETWORK_IP_INFO_PS1,
-    COPY_SCIRPTS_TO_MANAGE_RESOURCE
+    COPY_SCIRPTS_TO_MANAGE_RESOURCE,
+    INSTALL_WF_POWERSHELL_PREREQS_PS1,
+    REQUIRED_PS_MODULES_FOR_MANAGEMENT,
+    FAILURE_INFO
 } from './workloads/mssql/discover-consts';
 import { deleteParameters, getParameter, sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
 import { listFsxOntapCredentials, registerFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
 import { ResourceDetails, SSMParamterObject } from '../utils/common-types';
-
 import {
     DiscoverMsSqlResponseBodyType,
     SqlServerInstanceInfoType,
@@ -59,7 +62,6 @@ import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
 import { preSignedUrl } from '../lib/aws/s3';
 
 const { getPreSignedUrl } = preSignedUrl;
-
 const logger = getLogger();
 
 interface SsmTargetsInfo {
@@ -341,6 +343,7 @@ async function getHostAndSqlInfoFromPsOutput(
 
     if (ssmResponse?.StandardErrorContent) {
         logger.error('Failed to collect info using SSM. Reason: ', ssmResponse?.StandardErrorContent);
+        // Handle case of "exit status 1". Log error instead of throw for it.
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             `Failed to get details from EC2 instance ${ssmTarget.ec2InstanceId}. Reason: ${ssmResponse?.StandardErrorContent}`
@@ -850,64 +853,12 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     const { storage } = sqlServerInstance;
     const storageInfo = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
 
-    // Get signed url for dbcreate.zip
-    const bucketname = getArtifactsRegionBucketName(region);
-    const dbcreateS3SignedUrl = await getPreSignedUrl(region, bucketname, DBCREATE_RELATIVE_PATH);
-
-    // Copy scripts to the EC2 instance
-    const discoveryPromiseList = [
-        callSsmExecution(
-            credentialsId,
-            region,
-            COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
-            ec2InstanceId,
-            accountId,
-            true,
-            '7200' // FIXME: If frequent timeouts are seen, we shall run the command as a PS Job.
-        )
-    ];
-
-    if (node2InstanceId) {
-        discoveryPromiseList.push(
-            callSsmExecution(
-                credentialsId,
-                region,
-                COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
-                node2InstanceId,
-                accountId,
-                true,
-                '7200' // FIXME: If frequent timeouts are seen, we shall run the command as a PS Job.
-            )
-        );
-    }
-    const [ssmScriptsCopyResponse1, ssmScriptsCopyResponse2] = await Promise.all([
-        ...discoveryPromiseList,
-        verifyAndAddFSxOntapCredentials(
-            accountId,
-            credentialsId,
-            region,
-            discoverInfo?.items?.[0].sqlServerInstances?.[0]?.storage
-        )
-    ]);
-
-    logger.info(
-        `Response for copy scripts using PowerShell: ${node1InstanceId} = ${ssmScriptsCopyResponse1}, ${node2InstanceId} = ${ssmScriptsCopyResponse2}`
+    verifyAndAddFSxOntapCredentials(
+        accountId,
+        credentialsId,
+        region,
+        discoverInfo?.items?.[0].sqlServerInstances?.[0]?.storage
     );
-    if (ssmScriptsCopyResponse1?.includes('failureInfo')) {
-        logger.error('Failed to copy discovery scripts. Reason:', ssmScriptsCopyResponse1);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to manage instance '${node1InstanceId}'. Reason: failed to copy artifacts`
-        );
-    }
-
-    if (ssmScriptsCopyResponse2?.includes('failureInfo')) {
-        logger.error('Failed to copy discovery scripts. Reason:', ssmScriptsCopyResponse2);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to manage instance '${node2InstanceId}'. Reason: failed to copy artifacts`
-        );
-    }
 
     // Register the resource
     await createResource(accountId, {
@@ -1161,9 +1112,201 @@ async function verifyAndAddFSxOntapCredentials(
     }
 }
 
+// If job is already running for <=15 minutes, return old job ID itself.
+async function prepareForManage(accountId: string, credentialsId: string, region: string, ec2InstanceId: string) {
+    logger.info('Prepare for manage:', { accountId, credentialsId, region });
+
+    const ssmState = await getSSMConnectionStatus(credentialsId, region, ec2InstanceId);
+    if (ssmState.Status === ConnectionStatus.NOT_CONNECTED) {
+        throw createError(
+            HttpErrorCodes.SERVICE_UNAVAILABLE,
+            `Unable to prepare instance '${ec2InstanceId}' for management. Reason: no SSM connectivity.`
+        );
+    }
+
+    // Check if any job is already running for the same purpose.
+    const jobFilterParams = {
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: ec2InstanceId,
+        typeFilter: JOBTYPE.PREPARE_RESOURCE
+    };
+    const {
+        items: [job]
+    } = await getJobs(accountId, credentialsId, region, jobFilterParams);
+    if (job) {
+        const timeDifferenceInMilliseconds = Math.abs(Date.now() - job.startTime);
+        const timeDifferenceInMinutes = Math.floor(timeDifferenceInMilliseconds / (1000 * 60));
+
+        // As of now, installation is finishing in about 8-10 minutes.
+        // Let's wait for double that time to accomodate busy systems.
+        if (timeDifferenceInMinutes <= 20) {
+            throw createError(
+                HttpErrorCodes.CONFLICT,
+                `Preparation of ${ec2InstanceId} for management by Workload Factory is already in progress with job ID ${job.id}.`
+            );
+        }
+    }
+
+    // Create the parent job for EC2 preparation
+    const { id: parentJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.PREPARE_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: ec2InstanceId,
+        name: `Prepare EC2 '${ec2InstanceId}' for management`,
+        startTime: Date.now(),
+        description: `Prepare EC2 '${ec2InstanceId}' for management by Workload Factory database operations`
+    });
+
+    performPrepareTasks(accountId, credentialsId, region, ec2InstanceId, parentJobId);
+
+    return parentJobId;
+}
+
+async function performPrepareTasks(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    parentJobId: string
+) {
+    const [dbResponse, psResponse] = await Promise.all([
+        prepareDbScriptsForManage(accountId, credentialsId, region, ec2InstanceId, parentJobId),
+        preparePsModulesForManage(accountId, credentialsId, region, ec2InstanceId, parentJobId)
+    ]);
+
+    updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        status:
+            dbResponse === JOBSTATUS.COMPLETED && psResponse === JOBSTATUS.COMPLETED
+                ? JOBSTATUS.COMPLETED
+                : JOBSTATUS.FAILED,
+        endTime: Date.now()
+    });
+}
+
+async function prepareDbScriptsForManage(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    parentJobId: string
+) {
+    logger.debug(
+        `Prepare database scripts for managing ${ec2InstanceId}: { accountId, credentialsId, region, ec2InstanceId, parentJobId }`
+    );
+
+    let childJobStatus;
+
+    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.PREPARE_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: ec2InstanceId,
+        name: 'Copy artifacts for database operations.',
+        parentJobId,
+        description: 'Copy artificts needed for Workload Factory database operations.',
+        startTime: Date.now()
+    });
+
+    // Get signed url for dbcreate.zip
+    const bucketname = getArtifactsRegionBucketName(region);
+    const dbcreateS3SignedUrl = await getPreSignedUrl(region, bucketname, DBCREATE_RELATIVE_PATH);
+
+    // Copy scripts to the EC2 instance
+    const ssmScriptsCopyResponse = await callSsmExecution(
+        credentialsId,
+        region,
+        COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
+        ec2InstanceId,
+        accountId,
+        false,
+        '3600'
+    );
+
+    logger.info(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${ssmScriptsCopyResponse}`);
+
+    if (ssmScriptsCopyResponse?.includes('failureInfo')) {
+        const responseInJson = JSON.parse(ssmScriptsCopyResponse);
+        logger.error(
+            `Unable to prepare instance '${ec2InstanceId}'. Reason: failed to copy database operation artifacts. Error: ${ssmScriptsCopyResponse}`
+        );
+        updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: responseInJson.failureInfo
+        });
+        childJobStatus = JOBSTATUS.FAILED;
+    } else {
+        updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status: JOBSTATUS.COMPLETED,
+            endTime: Date.now()
+        });
+        childJobStatus = JOBSTATUS.COMPLETED;
+    }
+    return childJobStatus;
+}
+
+async function preparePsModulesForManage(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    parentJobId: string
+) {
+    logger.debug(
+        `Prepare database scripts for managing ${ec2InstanceId}: { accountId, credentialsId, region, ec2InstanceId, parentJobId }`
+    );
+    let childJobStatus;
+
+    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.PREPARE_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: ec2InstanceId,
+        name: 'Install PowerShell modules',
+        parentJobId,
+        description: 'Install PowerShell modules required for Workload Factory database operations',
+        startTime: Date.now()
+    });
+
+    const ssmPsModuleInstallResponse = await callSsmExecution(
+        credentialsId,
+        region,
+        INSTALL_WF_POWERSHELL_PREREQS_PS1(REQUIRED_PS_MODULES_FOR_MANAGEMENT),
+        ec2InstanceId,
+        accountId,
+        false,
+        '3600'
+    );
+    logger.info(`Response for PowerShell module installation for ${ec2InstanceId}: ${ssmPsModuleInstallResponse}`);
+
+    if (ssmPsModuleInstallResponse?.includes(FAILURE_INFO)) {
+        const responseInJson = JSON.parse(ssmPsModuleInstallResponse);
+        const failureInfo = responseInJson[FAILURE_INFO];
+        logger.error(
+            `Unable to prepare instance '${ec2InstanceId}. Reason: Failed to install PowerShell modules. Error: ${failureInfo}`
+        );
+
+        updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: FAILURE_INFO
+        });
+
+        childJobStatus = JOBSTATUS.FAILED;
+    } else {
+        updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status: JOBSTATUS.COMPLETED,
+            endTime: Date.now()
+        });
+
+        childJobStatus = JOBSTATUS.COMPLETED;
+    }
+
+    return childJobStatus;
+}
+
 export {
     getHostAndSqlServerInfo,
     validateAndStoreDiscoveredParameters,
     fetchUnmanagedHostsInformation,
-    manageSqlServer
+    manageSqlServer,
+    prepareForManage
 };
