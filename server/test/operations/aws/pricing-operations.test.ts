@@ -25,7 +25,14 @@ describe('Pricing Operations', () => {
                 iops: 0,
                 deploymentOption: 'MULTI_AZ_1'
             },
-            ebsStorage: { regionCode: 'ap-southeast-1', size: 102400, throughput: 1024, iops: 0, volumeType: 'gp2' },
+            ebsStorage: {
+                regionCode: 'ap-southeast-1',
+                ebsResourceInfo: [
+                    { id: 'vol-test-1', size: 102400, throughput: 1024, iops: 0, volumeType: 'gp3' },
+                    { id: 'vol-test-2', size: 102400, throughput: 1024, volumeType: 'gp2' },
+                    { id: 'vol-test-3', size: 102400, iops: 0, volumeType: 'st1' }
+                ]
+            },
             vpc: {
                 regionCode: 'ap-southeast-1'
             }
