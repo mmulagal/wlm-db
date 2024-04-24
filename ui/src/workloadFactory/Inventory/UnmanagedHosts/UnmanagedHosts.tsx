@@ -261,6 +261,7 @@ const UnmanagedHosts = () => {
         isHorizontalScroll: true,
         isManagedColumns: true,
         manageColumnsProps: {
+            width: '182px',
             renderCell: (cellData: any, rowData: any) => {
                 const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find(
                     (item: any) => item.type === DETECT_HOST_VAR.FSXN
