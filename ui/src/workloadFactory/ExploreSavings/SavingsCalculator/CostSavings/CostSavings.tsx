@@ -8,7 +8,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 const CostSavings = () => {
     const { loading } = useAppSelector(state => state.exploreSavings);
 
-    const costZeroCase = true;
+    const costZeroCase = false;
     return (
         <div className={styles.costSavings}>
             <div className={styles.leftSide}>

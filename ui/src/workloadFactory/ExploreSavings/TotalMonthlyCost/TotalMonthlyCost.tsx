@@ -8,6 +8,7 @@ import { GENERAL } from '../../../utils/appConstants';
 const TotalMonthlyCost = () => {
     const { loading } = useAppSelector(state => state.exploreSavings);
     const noData = false;
+    const costZeroCase = false;
 
     const calculatedResponse = {
         fsx: {
@@ -40,6 +41,17 @@ const TotalMonthlyCost = () => {
                         </div>
                     </>
                 )}
+                {!loading && costZeroCase && !noData && (
+                    <>
+                        <ComparisonChart
+                            data={[1, 1]}
+                            yTickFormatter={yValue => '$' + Number(yValue).toLocaleString()}
+                            height={370}
+                            colors={calculatedResponse && ['chart-9', 'chart-6']}
+                            categories={[GENERAL.CATEGORY_POINT_ONE, GENERAL.CATEGORY_POINT_TWO]}
+                        />
+                    </>
+                )}
                 {noData && !loading && (
                     <>
                         <div className={styles['calculate-notice']}>
@@ -55,7 +67,7 @@ const TotalMonthlyCost = () => {
                         />
                     </>
                 )}
-                {!noData && !loading && (
+                {!noData && !loading && !costZeroCase && (
                     <>
                         <ComparisonChart
                             data={[calculatedResponse.fsx.total, calculatedResponse.ebs.total]}
