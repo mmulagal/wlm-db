@@ -79,85 +79,27 @@ const amiOwners = [
     '311529897437'
 ];
 
-const FIRSTIMAGEFILTER = {
+const generateImageFilter = (serverVersion: string, sqlVersion: string, sqlEdition: string) =>
+({
     Filters: [
-        { Name: 'name', Values: ['Windows_Server-2016-English-Full-SQL_2016_SP*_Enterprise*'] },
+        { Name: 'name', Values: [`Windows_Server-${serverVersion}-English-Full-SQL_${sqlVersion}_${sqlEdition}`] },
         { Name: 'owner-alias', Values: ['amazon'] }
     ],
     Owners: amiOwners
-};
+});
 
-const SECONDIMAGEFILTER = {
-    Filters: [
-        { Name: 'name', Values: ['Windows_Server-2016-English-Full-SQL_2016_SP*_Standard*'] },
-        { Name: 'owner-alias', Values: ['amazon'] }
-    ],
-    Owners: amiOwners
-};
-
-const THIRDIMAGEFILTER = {
-    Filters: [
-        { Name: 'name', Values: ['Windows_Server-2016-English-Full-SQL_2019_Standard*'] },
-        { Name: 'owner-alias', Values: ['amazon'] }
-    ],
-    Owners: amiOwners
-};
-
-const FOURTHIMAGEFILTER = {
-    Filters: [
-        { Name: 'name', Values: ['Windows_Server-2016-English-Full-SQL_2019_Enterprise*'] },
-        { Name: 'owner-alias', Values: ['amazon'] }
-    ],
-    Owners: amiOwners
-};
-
-const FIFTHIMAGEFILTER = {
-    Filters: [
-        { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2016_SP*_Standard*'] },
-        { Name: 'owner-alias', Values: ['amazon'] }
-    ],
-    Owners: amiOwners
-};
-
-const SIXTHIMAGEFILTER = {
-    Filters: [
-        { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2019_Standard*'] },
-        { Name: 'owner-alias', Values: ['amazon'] }
-    ],
-    Owners: amiOwners
-};
-
-const SEVENTHIMAGEFILTER = {
-    Filters: [
-        { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2022_Standard*'] },
-        { Name: 'owner-alias', Values: ['amazon'] }
-    ],
-    Owners: amiOwners
-};
-
-const EIGHTHIMAGEFILTER = {
-    Filters: [
-        { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2016_SP*_Enterprise*'] },
-        { Name: 'owner-alias', Values: ['amazon'] }
-    ],
-    Owners: amiOwners
-};
-
-const NINETHIMAGEFILTER = {
-    Filters: [
-        { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2019_Enterprise*'] },
-        { Name: 'owner-alias', Values: ['amazon'] }
-    ],
-    Owners: amiOwners
-};
-
-const TENTHIMAGEFILTER = {
-    Filters: [
-        { Name: 'name', Values: ['Windows_Server-2019-English-Full-SQL_2022_Enterprise*'] },
-        { Name: 'owner-alias', Values: ['amazon'] }
-    ],
-    Owners: amiOwners
-};
+const images = [
+    ['2016', '2016', 'SP*_Enterprise*'],
+    ['2016', '2016', 'SP*_Standard*'],
+    ['2016', '2019', 'Standard*'],
+    ['2016', '2019', 'Enterprise*'],
+    ['2019', '2016', 'SP*_Standard*'],
+    ['2019', '2019', 'Standard*'],
+    ['2019', '2022', 'Standard*'],
+    ['2019', '2016', 'SP*_Enterprise*'],
+    ['2019', '2019', 'Enterprise*'],
+    ['2019', '2022', 'Enterprise*']
+];
 
 const ec2Mock = mockClient(EC2Client);
 
@@ -169,25 +111,11 @@ ec2Mock.on(DescribeSecurityGroupsCommand).resolves(securityGroupsResponse);
 
 ec2Mock.on(DescribeImagesCommand).resolves(ec2ImagesResponse);
 
-ec2Mock.on(DescribeImagesCommand, FIRSTIMAGEFILTER).resolves(ec2AMIImagesResponse[0]);
-
-ec2Mock.on(DescribeImagesCommand, SECONDIMAGEFILTER).resolves(ec2AMIImagesResponse[1]);
-
-ec2Mock.on(DescribeImagesCommand, THIRDIMAGEFILTER).resolves(ec2AMIImagesResponse[2]);
-
-ec2Mock.on(DescribeImagesCommand, FOURTHIMAGEFILTER).resolves(ec2AMIImagesResponse[3]);
-
-ec2Mock.on(DescribeImagesCommand, FIFTHIMAGEFILTER).resolves(ec2AMIImagesResponse[4]);
-
-ec2Mock.on(DescribeImagesCommand, SIXTHIMAGEFILTER).resolves(ec2AMIImagesResponse[5]);
-
-ec2Mock.on(DescribeImagesCommand, SEVENTHIMAGEFILTER).resolves(ec2AMIImagesResponse[6]);
-
-ec2Mock.on(DescribeImagesCommand, EIGHTHIMAGEFILTER).resolves(ec2AMIImagesResponse[7]);
-
-ec2Mock.on(DescribeImagesCommand, NINETHIMAGEFILTER).resolves(ec2AMIImagesResponse[8]);
-
-ec2Mock.on(DescribeImagesCommand, TENTHIMAGEFILTER).resolves(ec2AMIImagesResponse[9]);
+for (let i = 0; i < images.length; i += 1) {
+    const [serverVersion, sqlVersion, sqlEdition] = images[i];
+    const filter = generateImageFilter(serverVersion, sqlVersion, sqlEdition);
+    ec2Mock.on(DescribeImagesCommand, filter).resolves(ec2AMIImagesResponse[`Windows_Server-${serverVersion}-English-Full-SQL_${sqlVersion}_${sqlEdition}`]);
+}
 
 ec2Mock.on(DescribeRegionsCommand).resolves(fsxRegionsResponse);
 

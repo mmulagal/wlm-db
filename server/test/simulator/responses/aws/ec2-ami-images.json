@@ -1,5 +1,5 @@
-[
-    {
+{
+    "Windows_Server-2016-English-Full-SQL_2016_SP*_Enterprise*": {
         "$metadata": {
             "httpStatusCode": 200,
             "requestId": "b96cc650-e2fd-4624-beed-a6feaf576e25",
@@ -375,7 +375,7 @@
             }
         ]
     },
-    {
+    "Windows_Server-2016-English-Full-SQL_2016_SP*_Standard*": {
         "$metadata": {
             "httpStatusCode": 200,
             "requestId": "c0f7f08a-0341-4b17-a341-68ff5fe824d2",
@@ -751,7 +751,7 @@
             }
         ]
     },
-    {
+    "Windows_Server-2016-English-Full-SQL_2019_Standard*": {
         "$metadata": {
             "httpStatusCode": 200,
             "requestId": "6a104275-3dc0-4f94-a9ea-75c9ef0214de",
@@ -1127,7 +1127,7 @@
             }
         ]
     },
-    {
+    "Windows_Server-2016-English-Full-SQL_2019_Enterprise*": {
         "$metadata": {
             "httpStatusCode": 200,
             "requestId": "6ef6999b-4938-4de0-8e57-8e6e0bb13b38",
@@ -1503,7 +1503,7 @@
             }
         ]
     },
-    {
+    "Windows_Server-2019-English-Full-SQL_2016_SP*_Standard*": {
         "$metadata": {
             "httpStatusCode": 200,
             "requestId": "cc33afff-143c-439b-a501-10daa8113b46",
@@ -1879,7 +1879,7 @@
             }
         ]
     },
-    {
+    "Windows_Server-2019-English-Full-SQL_2019_Standard*": {
         "$metadata": {
             "httpStatusCode": 200,
             "requestId": "c3ba6322-cb91-4064-ab0b-35ec21915ec5",
@@ -2255,7 +2255,7 @@
             }
         ]
     },
-    {
+    "Windows_Server-2019-English-Full-SQL_2022_Standard*": {
         "$metadata": {
             "httpStatusCode": 200,
             "requestId": "c6ac1301-2e1a-4812-9cc3-41f1f18dc23d",
@@ -2631,7 +2631,7 @@
             }
         ]
     },
-    {
+    "Windows_Server-2019-English-Full-SQL_2016_SP*_Enterprise*": {
         "$metadata": {
             "httpStatusCode": 200,
             "requestId": "9c7cddbc-e535-4aed-89af-2b7a65f5de76",
@@ -3007,7 +3007,7 @@
             }
         ]
     },
-    {
+    "Windows_Server-2019-English-Full-SQL_2019_Enterprise*": {
         "$metadata": {
             "httpStatusCode": 200,
             "requestId": "0e4bf875-3eab-4a63-97ea-e1dfa44296aa",
@@ -3383,7 +3383,7 @@
             }
         ]
     },
-    {
+    "Windows_Server-2019-English-Full-SQL_2022_Enterprise*": {
         "$metadata": {
             "httpStatusCode": 200,
             "requestId": "5c525916-20df-42a2-9349-9ae090b05b4b",
@@ -3759,4 +3759,4 @@
             }
         ]
     }
-]
+}
