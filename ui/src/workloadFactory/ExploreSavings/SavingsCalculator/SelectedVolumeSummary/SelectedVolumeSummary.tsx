@@ -38,8 +38,7 @@ const SelectedVolumeSummary = () => {
             Header: 'Details',
             accessor: 'details',
             id: '1',
-            width: '190px',
-            isSticky: true
+            width: '190px'
         });
         let id = 2;
         volTypeList?.map(volType => {
