@@ -4,15 +4,36 @@ import { DsTypography } from '@netapp/design-system';
 import styles from './InstanceInformation.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
+import { useEffect, useState } from 'react';
 
 const InstanceInformation = () => {
-    const { loading } = useAppSelector(state => state.exploreSavings);
+    const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
 
-    const data = [
-        { details: 'Instance type', value: 'M5.xlarge, C4.xlarge', id: '1' },
-        { details: 'SQL Edition', value: 'SQL server enterprise edition', id: '2' },
-        { details: 'Deployment model', value: 'Always on availability group', id: '3' }
-    ];
+    const [tableData, setTableData] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        setLoading(selectedHostDetails?.loading);
+        const instanceTypelist = selectedHostDetails?.topology?.ec2Details?.map((inst: any) => inst?.instanceType);
+        const data: any = [
+            {
+                details: 'Instance type',
+                value: instanceTypelist ? instanceTypelist.join(',') : GENERAL.NOT_AVAILABLE,
+                id: '1'
+            },
+            {
+                details: 'SQL Edition',
+                value: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
+                id: '2'
+            },
+            {
+                details: 'Deployment model',
+                value: selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
+                id: '3'
+            }
+        ];
+        setTableData(data);
+    }, [selectedHostDetails]);
 
     const InstanceColDefs: ColumnProps[] = [
         {
@@ -53,7 +74,7 @@ const InstanceInformation = () => {
         manageColumnsProps: false,
 
         columns: InstanceColDefs,
-        rows: data,
+        rows: tableData,
         pageSize: 10
     });
     return (

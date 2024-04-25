@@ -4,11 +4,33 @@ import styles from './CostSavings.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import { GENERAL } from '../../../../utils/appConstants';
+import { useEffect, useState } from 'react';
+import { formatFractionalNumber } from '../../../../utils/utilityFunctions';
 
 const CostSavings = () => {
-    const { loading } = useAppSelector(state => state.exploreSavings);
+    const { storageSavingsResponse, storageSavingsLoading } = useAppSelector(state => state.exploreSavings);
 
-    const costZeroCase = false;
+    const [savings, setSavings] = useState<any>(0);
+    const [savingsPer, setSavingsPer] = useState<any>(0);
+    const [costZeroCase, setCostZeroCase] = useState(false);
+
+    useEffect(() => {
+        const fsxTotal = storageSavingsResponse?.fsx?.total;
+        const ebsTotal = storageSavingsResponse?.ebs?.total;
+        if (storageSavingsResponse && fsxTotal && ebsTotal && fsxTotal <= ebsTotal) {
+            setSavings(ebsTotal - fsxTotal);
+            const percent = 100 * ((ebsTotal - fsxTotal) / ebsTotal);
+            setSavingsPer(percent);
+            setCostZeroCase(false);
+        } else {
+            setSavings(GENERAL.NOT_AVAILABLE);
+            setSavingsPer(GENERAL.NOT_AVAILABLE);
+            if (fsxTotal > ebsTotal) {
+                setCostZeroCase(true);
+            }
+        }
+    }, [storageSavingsResponse]);
+
     return (
         <div className={styles.costSavings}>
             <div className={styles.leftSide}>
@@ -19,13 +41,16 @@ const CostSavings = () => {
                     <div className={styles.topValue}>
                         <DsTypography
                             variant="Regular_16"
-                            className={loading ? `${styles.dollar} ${styles.dollarHeight}` : styles.dollar}
+                            className={
+                                storageSavingsLoading ? `${styles.dollar} ${styles.dollarHeight}` : styles.dollar
+                            }
                         >
                             $
                         </DsTypography>
                         <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                            {!loading && !costZeroCase && Number(7000).toLocaleString()}
-                            {!loading && costZeroCase && Number(0).toLocaleString()}
+                            {/* {!storageSavingsLoading && savings} */}
+                            {!storageSavingsLoading && !costZeroCase && Number(savings).toLocaleString()}
+                            {!storageSavingsLoading && costZeroCase && Number(0).toLocaleString()}
                         </DsTypography>
                     </div>
 
@@ -33,13 +58,12 @@ const CostSavings = () => {
                         <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
                             {GENERAL.ES_COST_SAVINGS}
                         </DsTypography>
-                        {loading && <FlashingDotsLoader />}
+                        {storageSavingsLoading && <FlashingDotsLoader />}
                     </div>
                 </div>
             </div>
 
             <div className={costZeroCase ? `${styles.separator} ${styles.separatorNewWidth}` : styles.separator} />
-
             {costZeroCase && (
                 <div className={styles.costZeroCase}>
                     <div>
@@ -49,15 +73,18 @@ const CostSavings = () => {
                     <DsTypography variant="Regular_14">{GENERAL.NOTICE_MESSAGE_COST_SAVINGS}</DsTypography>
                 </div>
             )}
+
             {!costZeroCase && (
                 <div className={styles.rightSide}>
                     <div className={styles.firstRow}>
                         <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                            {!loading && 50}
+                            {!storageSavingsLoading && formatFractionalNumber(savingsPer, 2)}
                         </DsTypography>
                         <DsTypography
                             variant="Regular_16"
-                            className={loading ? `${styles.dollar} ${styles.dollarHeight}` : styles.dollar}
+                            className={
+                                storageSavingsLoading ? `${styles.dollar} ${styles.dollarHeight}` : styles.dollar
+                            }
                         >
                             %
                         </DsTypography>
@@ -67,7 +94,7 @@ const CostSavings = () => {
                         <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
                             {GENERAL.ES_SAVINGS_PERCENTAGE}
                         </DsTypography>
-                        {loading && <FlashingDotsLoader />}
+                        {storageSavingsLoading && <FlashingDotsLoader />}
                     </div>
                 </div>
             )}

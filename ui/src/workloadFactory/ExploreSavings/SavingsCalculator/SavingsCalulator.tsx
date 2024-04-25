@@ -19,10 +19,14 @@ import { useState } from 'react';
 import domToPdf from 'dom-to-pdf';
 import ExportPDF from './ExportPDF/ExportPDF';
 import { GENERAL } from '../../../utils/appConstants';
+import { addExploreSavingsInitialData } from '../../../store/workloadFactory/exploreSavingsSlice';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
+    const selectedServerName = useAppSelector(state => state.exploreSavings.selectedServerName);
+
     const printDocument = () => {
         setPrintState(true);
         setTimeout(() => {
@@ -46,10 +50,11 @@ const SavingsCalculator = () => {
                                     title: 'Explore savings',
                                     onClick: () => {
                                         dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                                        dispatch(addExploreSavingsInitialData(null));
                                     }
                                 },
                                 {
-                                    title: 'Host name'
+                                    title: selectedServerName
                                 }
                             ]}
                         />
