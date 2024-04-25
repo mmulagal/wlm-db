@@ -40,6 +40,7 @@ import SavingsCalculator from '../../ExploreSavings/SavingsCalculator/SavingsCal
 import ViewCalculations from '../../ExploreSavings/ViewCalculations/ViewCalculations';
 import SavingsCalculatorApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorApi';
 import { setSavingsCalculatorRefresh } from '../../../store/workloadFactory/exploreSavingsSlice';
+import SandboxApis from '../../Sandbox/SandboxApis';
 
 const HeaderComponent = () => {
     const dispatch = useDispatch();
@@ -62,6 +63,7 @@ const HeaderComponent = () => {
     DatabaseHomeApis();
     JobMonitoringApi();
     SavingsCalculatorApi();
+    SandboxApis();
 
     useEffect(() => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
@@ -168,6 +170,8 @@ const HeaderComponent = () => {
             dispatch(setSubJobsData([]));
         } else if (selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR) {
             dispatch(setSavingsCalculatorRefresh(true));
+        } else if (selectedHeaderTab === WLF_TABS.SANDBOXES) {
+            dispatch(setIsRefreshed(true));
         }
     };
 
