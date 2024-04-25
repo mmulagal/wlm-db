@@ -3,20 +3,4 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-
-    .loadingTable {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        align-items: center;
-        height: 240px;
-        width: -webkit-fill-available;
-        justify-content: center;
-
-        svg {
-            path {
-                fill: var(--grey-65);
-            }
-        }
-    }
 }
