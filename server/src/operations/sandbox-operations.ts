@@ -84,16 +84,20 @@ async function getSandboxDetails(
             return errorResponse(errorMessage);
         }
         const sandboxDetails = parsedResponse.Output;
+
         if (sandboxDetails === NO_SANDBOX_CREATED) {
             const errorMessage = `No sandboxes created for the instance:${parsedResponse.Instance} ,${resourceId},${accountId}.`;
             logger.error(errorMessage);
             return errorResponse(errorMessage);
         }
+
+        const finalSandboxDetails: string = Array.isArray(sandboxDetails) ? sandboxDetails.join('') : sandboxDetails;
+
         try {
             const parsedSandboxDetails: {
                 database_name: string;
                 sandbox_properties: { name: string; value: string }[];
-            }[] = sqlResponseParsing(sandboxDetails);
+            }[] = sqlResponseParsing(finalSandboxDetails);
 
             const sandboxInfo: SandboxInfoResponseType[] = [];
 
