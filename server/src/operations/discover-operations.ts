@@ -341,10 +341,16 @@ async function getHostAndSqlInfoFromPsOutput(
 
     if (ssmResponse?.StandardErrorContent) {
         logger.error('Failed to collect info using SSM. Reason: ', ssmResponse?.StandardErrorContent);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Failed to get details from EC2 instance ${ssmTarget.ec2InstanceId}. Reason: ${ssmResponse?.StandardErrorContent}`
-        );
+
+        // When the EC2 instance is restarted/shutdown/terminated, we get the message compared
+        // in the if condition.  Since any further processing for the EC2 isn't possible in
+        // such cases, we refrain from throwing.
+        if (!ssmResponse?.StandardErrorContent?.includes('failed to run commands: exit status 1')) {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                `Failed to get details from EC2 instance ${ssmTarget.ec2InstanceId}. Reason: ${ssmResponse?.StandardErrorContent}`
+            );
+        }
     }
     if (ssmResponse.Status === CommandInvocationStatus.TIMED_OUT) {
         logger.error(`SSM command ${commandId} execution  timed out on node ${ssmTarget.ec2InstanceId}`);
