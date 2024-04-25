@@ -32,6 +32,36 @@ const SelectedVolumeSummary = () => {
         return colWidth;
     };
 
+    //For loading state
+    const data = [
+        { details: 'Total volumes', id: '1' },
+        {
+            details: 'Total storage amount',
+
+            id: '2'
+        },
+        { details: 'Total provisioned IOPS', id: '3' },
+        { details: 'Total throughput MB/s', id: '4' }
+    ];
+
+    //For loading state
+    const getLoadingStateData: ColumnProps[] = [
+        {
+            Header: 'Details',
+            accessor: 'details',
+            id: '1',
+            width: '576px',
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <DsTypography variant="Regular_14" style={{ minWidth: '146px', display: 'flex', gap: '24px' }}>
+                        <div style={{ width: '250px' }}>{rowData.details}</div>
+                        <DsFlashingDotsLoader />
+                    </DsTypography>
+                );
+            }
+        }
+    ];
+
     const getColumnsList = (volTypeList: Array<String>, colWidth: string) => {
         let colList = [];
         colList.push({
@@ -139,29 +169,22 @@ const SelectedVolumeSummary = () => {
         selectAllProps: false,
         //@ts-ignore
         manageColumnsProps: false,
-        columns: columnsList,
-        rows: tableData,
+        columns: loading ? getLoadingStateData : columnsList,
+        rows: loading ? data : tableData,
         isHorizontalScroll: true,
         pageSize: 10
     });
     return (
         <div className={styles.selectedVolumeSummary}>
             <DsTypography variant="Regular_14">{GENERAL.SUMMARY_TEXT}</DsTypography>
-            {loading && (
-                <Typography variant="Regular_14" className={styles.loadingTable}>
-                    <FlashingDotsLoader />
-                    <div>{GENERAL.LOADING_DATA}</div>
-                </Typography>
-            )}
-            {!loading && (
-                <div className={styles.instanceTable}>
-                    <Table
-                        //@ts-ignore
-                        tableProps={tableProps}
-                        variant="innerTable"
-                    />
-                </div>
-            )}
+
+            <div className={styles.instanceTable}>
+                <Table
+                    //@ts-ignore
+                    tableProps={tableProps}
+                    variant="innerTable"
+                />
+            </div>
         </div>
     );
 };
