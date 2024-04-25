@@ -7,7 +7,13 @@ export const initialExploreSavingsState: any = {
     monthlyChangeRate: 3,
     saveConfigName: '',
     loading: false,
-    unmanagedExploreSavingsHost: []
+    unmanagedExploreSavingsHost: [],
+    selectedInstanceId: null,
+    selectedServerName: null,
+    selectedHostDetails: {},
+    storageSavingsResponse: {},
+    storageSavingsLoading: false,
+    savingsCalculatorRefresh: false
 };
 
 const exploreSavingsSlice = createSlice({
@@ -31,6 +37,36 @@ const exploreSavingsSlice = createSlice({
         },
         setUnmanagedExploreSavingsHost(state, action: PayloadAction<any>) {
             state.unmanagedExploreSavingsHost = action.payload;
+        },
+        setSelectedInstanceId(state, action: PayloadAction<any>) {
+            state.selectedInstanceId = action.payload;
+        },
+        setSelectedServerName(state, action: PayloadAction<any>) {
+            state.selectedServerName = action.payload;
+        },
+        setSelectedHostDetails(state, action: PayloadAction<any>) {
+            state.selectedHostDetails = action.payload;
+        },
+        setStorageSavingsResponse(state, action: PayloadAction<any>) {
+            state.storageSavingsResponse = action.payload;
+        },
+        setStorageSavingsLoading(state, action: PayloadAction<any>) {
+            state.storageSavingsLoading = action.payload;
+        },
+        setSavingsCalculatorRefresh(state, action: PayloadAction<any>) {
+            state.savingsCalculatorRefresh = action.payload;
+        },
+        addExploreSavingsInitialData(state, action: PayloadAction<any>) {
+            state.selectedSnapshotFrequency = null;
+            state.numberOfClonedCopies = 3;
+            state.selectedCloneRefresh = null;
+            state.monthlyChangeRate = 3;
+            state.selectedInstanceId = null;
+            state.selectedServerName = null;
+            state.selectedHostDetails = {};
+            state.storageSavingsResponse = {};
+            state.storageSavingsLoading = false;
+            state.savingsCalculatorRefresh = false;
         }
     }
 });
@@ -41,7 +77,14 @@ export const {
     setSelectedCloneRefresh,
     setMonthlyChangeRate,
     setSaveConfigName,
-    setUnmanagedExploreSavingsHost
+    setUnmanagedExploreSavingsHost,
+    setSelectedInstanceId,
+    setSelectedServerName,
+    setSelectedHostDetails,
+    setStorageSavingsResponse,
+    setStorageSavingsLoading,
+    setSavingsCalculatorRefresh,
+    addExploreSavingsInitialData
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

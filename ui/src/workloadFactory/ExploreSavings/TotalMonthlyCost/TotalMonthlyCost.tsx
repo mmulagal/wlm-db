@@ -6,29 +6,21 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 
 const TotalMonthlyCost = () => {
-    const { loading } = useAppSelector(state => state.exploreSavings);
+    const { storageSavingsResponse, storageSavingsLoading } = useAppSelector(state => state.exploreSavings);
     const noData = false;
     const costZeroCase = false;
 
-    const calculatedResponse = {
-        fsx: {
-            total: 7000
-        },
-        ebs: {
-            total: 14000
-        }
-    };
     return (
         <div className={styles.totalMonthlyCost}>
             <div className={styles.headSection}>
                 <DsTypography variant="Semibold_16" className={styles.title}>
                     {GENERAL.TOTAL_MONTHLY_COST}
                 </DsTypography>
-                {loading && <DsFlashingDotsLoader />}
+                {storageSavingsLoading && <DsFlashingDotsLoader />}
             </div>
 
             <div className={styles.mainSection}>
-                {loading && (
+                {storageSavingsLoading && (
                     <>
                         <div style={{ position: 'relative', top: '250px' }}>
                             <ComparisonChart
@@ -41,18 +33,18 @@ const TotalMonthlyCost = () => {
                         </div>
                     </>
                 )}
-                {!loading && costZeroCase && !noData && (
+                {!storageSavingsLoading && costZeroCase && !noData && (
                     <>
                         <ComparisonChart
                             data={[1, 1]}
                             yTickFormatter={yValue => '$' + Number(yValue).toLocaleString()}
                             height={370}
-                            colors={calculatedResponse && ['chart-9', 'chart-6']}
+                            colors={storageSavingsResponse && ['chart-9', 'chart-6']}
                             categories={[GENERAL.CATEGORY_POINT_ONE, GENERAL.CATEGORY_POINT_TWO]}
                         />
                     </>
                 )}
-                {noData && !loading && (
+                {noData && !storageSavingsLoading && (
                     <>
                         <div className={styles['calculate-notice']}>
                             <GraphIcon style={{ marginTop: 24 }} />
@@ -67,13 +59,13 @@ const TotalMonthlyCost = () => {
                         />
                     </>
                 )}
-                {!noData && !loading && !costZeroCase && (
+                {!noData && !storageSavingsLoading && !costZeroCase && (
                     <>
                         <ComparisonChart
-                            data={[calculatedResponse.fsx.total, calculatedResponse.ebs.total]}
+                            data={[storageSavingsResponse?.fsx?.total, storageSavingsResponse?.ebs?.total]}
                             yTickFormatter={yValue => '$' + Number(yValue).toLocaleString()}
                             height={370}
-                            colors={calculatedResponse && ['chart-9', 'chart-6']}
+                            colors={storageSavingsResponse && ['chart-9', 'chart-6']}
                             categories={[GENERAL.CATEGORY_POINT_ONE, GENERAL.CATEGORY_POINT_TWO]}
                         />
                     </>

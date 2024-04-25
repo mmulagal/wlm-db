@@ -9,6 +9,7 @@ import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../../utils/appConstants';
 import SaveConfigSavings from './SaveCongfigSavings/SaveCongfigSavings';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { useEffect, useState } from 'react';
 
 const TableLayout = ({ data }: any) => {
     return (
@@ -28,32 +29,29 @@ const TableLayout = ({ data }: any) => {
 
 const MSSQLAccordion = ({ printState }: any) => {
     const isMutliFsx = false;
-    const { loading } = useAppSelector(state => state.exploreSavings);
+    const { storageSavingsLoading, storageSavingsResponse, selectedHostDetails } = useAppSelector(
+        state => state.exploreSavings
+    );
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
-    const fsxData = {
-        regionName: 'US East (Ohio) | us-east-2',
-        deploymentType: 'Single',
-        totalStorageCapacity: '100',
-        precentageSSD: '20',
-        savings: '65',
-        useCase: 'Online archive',
-        effectiveCapacity: 35,
-        capacityPoolTier: 28,
-        ssdTierReqCapacity: 7,
-        ssdIop: '60,000',
-        throughputCapacity: '1,024',
-        numberOfVolumes: 20,
-        throughput: 10,
-        monthlySnapshotCapacity: '900'
-    };
+    const [fsxData, setFsxData] = useState({});
+    const [msSqlInstance, setMsSqlInstance] = useState({});
 
-    const msSqlInstance = {
-        deploymentMode: 'Failover cluster instance(FCI)',
-        edition: 'SQL Server Standard Edition',
-        serverType: 'SQL Server 2019',
-        instance: ' m5.xlarge'
-    };
+    useEffect(() => {
+        setFsxData(storageSavingsResponse?.fsxCalculation);
+        // setMsSqlInstance(storageSavingsResponse?.mssqlInstance);
+    }, [storageSavingsResponse]);
+
+    useEffect(() => {
+        const instanceTypelist = selectedHostDetails?.topology?.ec2Details?.map((inst: any) => inst?.instanceType);
+        const mssqlInstanceData = {
+            serverInstallationMode: selectedHostDetails?.serverInstallationMode,
+            serverEdition: selectedHostDetails?.databaseServer?.serverEdition,
+            serverVersion: selectedHostDetails?.databaseServer?.serverVersion,
+            instanceType: instanceTypelist
+        };
+        setMsSqlInstance(mssqlInstanceData);
+    }, [selectedHostDetails]);
 
     const handleSaveConfiguration = (dialogFrom: any) => {
         setDialog(
@@ -84,8 +82,8 @@ const MSSQLAccordion = ({ printState }: any) => {
                 title="Microsoft SQL Server on FSx for ONTAP"
                 variant="Default"
                 value=""
+                isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
                 isExpanded={printState}
-                isDisabled={loading}
                 headerActions={[
                     isMutliFsx ? (
                         <Popover
@@ -101,7 +99,7 @@ const MSSQLAccordion = ({ printState }: any) => {
                     ) : (
                         <DsButton
                             type="text"
-                            isDisabled={loading}
+                            isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
                             onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
                         >
                             {GENERAL.ES_SAVE_CONFIG}
@@ -111,7 +109,7 @@ const MSSQLAccordion = ({ printState }: any) => {
                     <div style={{ height: '32px' }} className={styles.buttonContainer}>
                         <DsButton
                             type="button"
-                            isDisabled={isMutliFsx || loading}
+                            isDisabled={isMutliFsx || storageSavingsLoading || selectedHostDetails?.loading}
                             onClick={() => navigate(WLF_TO_FORM_NAVIGATE)}
                         >
                             Create

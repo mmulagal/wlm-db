@@ -7,9 +7,12 @@ import { WLF_TABS } from '../../../utils/consts';
 import OntapCalculation from './OntapCalculation/OntapCalculation';
 import EBSCalculation from './EBSCalculation/EBSCalculation';
 import { GENERAL } from '../../../utils/appConstants';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const ViewCalculations = () => {
     const dispatch = useDispatch();
+    const selectedServerName = useAppSelector(state => state.exploreSavings.selectedServerName);
+
     return (
         <div className={styles.viewCalculations}>
             <div className={styles.breadCrumb}>
@@ -22,7 +25,7 @@ const ViewCalculations = () => {
                             }
                         },
                         {
-                            title: 'Host name',
+                            title: selectedServerName,
                             onClick: () => {
                                 dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                             }

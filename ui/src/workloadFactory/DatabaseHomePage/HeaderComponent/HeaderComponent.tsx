@@ -38,6 +38,9 @@ import JobMonitoringApi from '../../JobMonitoring/JobMonitoringApi';
 import ExploreSavings from '../../ExploreSavings/ExploreSavings';
 import SavingsCalculator from '../../ExploreSavings/SavingsCalculator/SavingsCalulator';
 import ViewCalculations from '../../ExploreSavings/ViewCalculations/ViewCalculations';
+import SavingsCalculatorApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorApi';
+import { setSavingsCalculatorRefresh } from '../../../store/workloadFactory/exploreSavingsSlice';
+import SandboxApis from '../../Sandbox/SandboxApis';
 
 const HeaderComponent = () => {
     const dispatch = useDispatch();
@@ -59,6 +62,8 @@ const HeaderComponent = () => {
     InventoryApis();
     DatabaseHomeApis();
     JobMonitoringApi();
+    SavingsCalculatorApi();
+    SandboxApis();
 
     useEffect(() => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
@@ -163,6 +168,10 @@ const HeaderComponent = () => {
         } else if (selectedHeaderTab === WLF_TABS.JOB_MONITORING) {
             dispatch(setJobsList([]));
             dispatch(setSubJobsData([]));
+        } else if (selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR) {
+            dispatch(setSavingsCalculatorRefresh(true));
+        } else if (selectedHeaderTab === WLF_TABS.SANDBOXES) {
+            dispatch(setIsRefreshed(true));
         }
     };
 
@@ -196,7 +205,11 @@ const HeaderComponent = () => {
                                     isSearchable={generateAWSAccounts.length > 5}
                                     options={generateAWSAccounts}
                                     variant="two-lines"
-                                    isReadOnly={selectedHeaderTab === WLF_TABS.OVERVIEW}
+                                    isReadOnly={
+                                        selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                                    }
                                 />
                             </div>
 
@@ -216,7 +229,11 @@ const HeaderComponent = () => {
                                     isSearchable={generateRegionsData.length > 5}
                                     options={generateRegionsData}
                                     variant="two-lines"
-                                    isReadOnly={selectedHeaderTab === WLF_TABS.OVERVIEW}
+                                    isReadOnly={
+                                        selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                                    }
                                 />
                             </div>
 

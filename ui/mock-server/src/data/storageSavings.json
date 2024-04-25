@@ -1,0 +1,59 @@
+{
+    "fsx": {
+      "capacity": 1000,
+      "iops": 1000,
+      "throughput": 1000,
+      "snapshots": 1000,
+      "clone": 1000,
+      "compute": 1000,
+      "license": 1000,
+      "total": 7000
+    },
+    "ebs": {
+      "capacity": 2000,
+      "iops": 2000,
+      "throughput": 2000,
+      "snapshots": 2000,
+      "clone": 2000,
+      "compute": 2000,
+      "license": 1000,
+      "total": 13000
+    },
+    "fsxCalculation": {
+      "deploymentType": "Single",
+      "numberOfVolumes": 20,
+      "throughput": 10,
+      "totalStorageCapacity": {
+        "size": 100,
+        "unit": "TiB"
+      },
+      "percentageSsd": 20,
+      "savings": 65,
+      "effectiveCapacity": {
+        "size": 35,
+        "unit": "TiB"
+      },
+      "ssdTierReqCapacity": {
+        "size": 7,
+        "unit": "TiB"
+      },
+      "capacityPoolTier": {
+        "size": 28,
+        "unit": "TiB"
+      },
+      "ssdIop": 60000,
+      "throughputCapacity": 1024,
+      "useCase": "Online archive",
+      "regionName": "US East (Ohio) | us-east-2",
+      "monthlySnapshotCapacity": {
+        "size": 900,
+        "unit": "GiB"
+      }
+    },
+    "mssqlInstance" : {
+      "serverInstallationMode": "FCI",
+      "instanceType": "m5.xlarge",
+      "serverEdition": "SQL Server Standard Edition",
+      "serverVersion": "SQL Server 2019"
+    }
+  }
