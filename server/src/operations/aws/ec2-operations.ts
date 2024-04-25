@@ -563,18 +563,18 @@ async function getValidationNodeInstanceType(credentialsId: string, region: stri
     return instanceType;
 }
 
-async function isEbsAwsBackupEnabled(credentialsId: string, region: string, ebsVolumeId: string) {
+async function isEbsAwsBackupEnabled(credentialsId: string, region: string, ebsVolumeIds: string[]) {
     logger.info('Check if EBS AWS backup is enabled', {
         credentialsId,
         region,
-        ebsVolumeId
+        ebsVolumeIds
     });
 
     const input: DescribeSnapshotsCommandInput = {
         Filters: [
             {
                 Name: 'volume-id',
-                Values: [ebsVolumeId]
+                Values: ebsVolumeIds
             }
         ]
     };

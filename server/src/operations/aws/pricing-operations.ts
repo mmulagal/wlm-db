@@ -162,7 +162,7 @@ function getEbsStorageInput(region: string, volumeType: string): ProductInput {
     logger.info('Getting ec2 storage (EBS) input');
 
     return {
-        name: 'ebsStorage',
+        name: `ebsStorage-${volumeType}`,
         input: {
             Filters: [
                 getRegionCodeFilter(region),
@@ -280,18 +280,28 @@ function getInputs(
     logger.info('Getting product inputs', {
         compute,
         fsxnStorage,
-        vpc
+        vpc,
+        ebsStorage,
+        fsxwStorage
     });
 
-    return [
+    let inputList: ProductInput[] = [
         getEc2InstaceInput(compute),
         getEc2StorageInput(compute),
         ...((fsxnStorage && [getProductsInputForFSxN(fsxnStorage.regionCode, fsxnStorage.deploymentOption!)]) || []),
-        ...((ebsStorage && [getEbsStorageInput(ebsStorage.regionCode, ebsStorage.volumeType)]) || []),
-        ...((vpc && [getVpcInput(vpc)]) || []),
         ...((fsxwStorage && [getProductsInputForFSxWindows(fsxwStorage.regionCode, fsxwStorage.deploymentOption!)]) ||
-            [])
+            []),
+        ...((vpc && [getVpcInput(vpc)]) || [])
     ];
+
+    if (ebsStorage && ebsStorage.ebsResourceInfo.length > 0) {
+        const ebsStorageProductInputList = ebsStorage.ebsResourceInfo.map(ebsResource =>
+            getEbsStorageInput(ebsStorage.regionCode, ebsResource.volumeType)
+        );
+        inputList = inputList.concat(ebsStorageProductInputList);
+    }
+
+    return inputList;
 }
 
 function getMetricFromProductFamily(productFamily: string): string {
@@ -336,7 +346,7 @@ function getProductsInputForFSxWindows(region: string, deploymentOption: string)
                 {
                     Type: FilterType.TERM_MATCH,
                     Field: 'deploymentOption',
-                    Value: deploymentOption
+                    Value: deploymentOption === SINGLE_AZ ? 'Single-AZ' : 'Multi-AZ'
                 },
                 {
                     Type: FilterType.TERM_MATCH,
@@ -444,8 +454,7 @@ async function calculatePrice(
         ec2Storage: {
             storage: { pricePerUnit: ec2StorageRate }
         },
-        vpc: { vpc: { pricePerUnit: vpcRate = undefined } = {} } = {},
-        ebsStorage: ebsStorageRates = undefined
+        vpc: { vpc: { pricePerUnit: vpcRate = undefined } = {} } = {}
     } = productRates;
 
     const ec2Cost = calculateEc2Cost(ec2InstanceRate, ec2StorageRate, compute?.sqlDeploymentMode);
@@ -461,14 +470,36 @@ async function calculatePrice(
         ));
     }
 
-    let ebsStorageCost = 0;
+    const ebsBreakdownByVolumeType: {
+        id: string;
+        volumeType: string;
+        cost: number;
+        size: number;
+        iops: number | undefined;
+        throughput: number | undefined;
+    }[] = [];
+    let totalEbsStorageCost = 0;
     if (!isEmpty(ebsStorage)) {
-        ebsStorageCost = calculateEbsCost(
-            ebsStorage?.volumeType,
-            ebsStorage?.size,
-            ebsStorage?.iops,
-            ebsStorage?.throughput,
-            ebsStorageRates
+        await Promise.all(
+            ebsStorage.ebsResourceInfo.map(async ebsResource => {
+                const rate = productRates[`ebsStorage-${ebsResource.volumeType}`];
+                const cost = calculateEbsCost(
+                    ebsResource.volumeType,
+                    ebsResource.size,
+                    ebsResource.iops,
+                    ebsResource.throughput,
+                    rate
+                );
+                totalEbsStorageCost += cost;
+                ebsBreakdownByVolumeType.push({
+                    id: ebsResource.id,
+                    volumeType: ebsResource.volumeType,
+                    cost,
+                    size: sizeInGigaBytes(ebsResource.size) || 0,
+                    iops: ebsResource?.iops,
+                    throughput: ebsResource?.throughput
+                });
+            })
         );
     }
 
@@ -502,8 +533,8 @@ async function calculatePrice(
         ...(vpc && { vpc: vpcCost }),
         ...(ebsStorage && {
             ebsStorage: {
-                ebsStorageCost,
-                size: sizeInGigaBytes(ebsStorage.size) || 0
+                ebsStorageCost: totalEbsStorageCost,
+                ebsBreakdownByVolumeType
             }
         }),
         ...(fsxwStorage && {
@@ -513,7 +544,7 @@ async function calculatePrice(
                 size: sizeInGigaBytes(fsxwStorage.storageCapacity) || 0
             }
         }),
-        total: ec2Cost + vpcCost + fsxnStorageCost + fsxnOperationalCost + ebsStorageCost + fsxwStorageCost
+        total: ec2Cost + vpcCost + fsxnStorageCost + fsxnOperationalCost + totalEbsStorageCost + fsxwStorageCost
     };
 }
 

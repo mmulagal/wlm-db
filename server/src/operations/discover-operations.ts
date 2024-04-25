@@ -704,13 +704,13 @@ async function fetchUnmanagedHostsInformation(
         // ec2Instance?.sqlServerInstances?.forEach(sqlInstance => { // skipping this loop as we are only considering the first running sql instance in the ec2 instance. This needs to be enabled when we support multiple sql instances in an ec2 instance.
         if (!isEmpty(sqlServerInstance)) {
             const { storage } = sqlServerInstance;
-            let ebsVolumeId: string | undefined;
+            let ebsVolumeIds: string[] | undefined = [];
             let fsxwId: string | undefined;
             let fsxnId: string | undefined;
             storage?.forEach(({ type, id }) => {
                 // if there are multiple entries in storage for the same type then only the last entry will be considered. For eg: if the same sql instance has fsxn-1 and fsxn-2, then only fsxn-2 will be considered. Such a scenario occurs when system dbs use one storage and user dbs use another storage. The reason for this limitation currently is wlmdb resources are not expecting multiple co-relation ids for the same resource.
                 // If the storage is of different type, then both will be considered while calculating protection and storage savings details.
-                ebsVolumeId = type === STORAGE_TYPE.EBS ? id : ebsVolumeId;
+                ebsVolumeIds = type === STORAGE_TYPE.EBS ? ebsVolumeIds?.concat(id) : ebsVolumeIds;
                 fsxwId = type === STORAGE_TYPE.FSXW ? id : fsxwId;
                 fsxnId = type === STORAGE_TYPE.FSXN ? id : fsxnId;
             });
@@ -720,7 +720,7 @@ async function fetchUnmanagedHostsInformation(
                 account_id: accountId,
                 resource_id: ec2Instance.ec2InstanceId,
                 resource_type: RESOURCESTYPE.MSSQL,
-                resource_name: ec2Instance.ec2InstanceId,
+                resource_name: ec2Instance.ec2InstanceName || ec2Instance.ec2InstanceId,
                 cloud_provider_name: CloudProviders.AWS,
                 co_relation_id: fsxnId || null,
                 cloud_provider_account_id: null,
@@ -731,7 +731,7 @@ async function fetchUnmanagedHostsInformation(
                     creationDate: Date.now(),
                     node1InstanceId: ec2Instance.ec2InstanceId
                 },
-                ebsVolumeId,
+                ebsVolumeIds,
                 fsxwId
             });
         } else {
@@ -750,7 +750,7 @@ async function fetchUnmanagedHostsInformation(
             getDatabaseHostSummary(
                 accountId,
                 resourceDetail.resource_id,
-                'serverDetails,performance,usageEstimation,storage,protection',
+                'serverDetails,topology,performance,usageEstimation,storage,protection',
                 resourceDetail,
                 false // unmanaged host
             )

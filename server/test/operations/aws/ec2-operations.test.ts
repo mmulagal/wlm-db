@@ -92,7 +92,7 @@ describe('EC2 Operations', () => {
     });
 
     it('Check if EBS backup is available', async () => {
-        const response = await isEbsAwsBackupEnabled(credentialsId, DEFAULT_AWS_REGION, 'vol-123445');
+        const response = await isEbsAwsBackupEnabled(credentialsId, DEFAULT_AWS_REGION, ['vol-123445']);
         expect(response).toEqual(true);
     });
 });

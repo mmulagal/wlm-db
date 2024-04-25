@@ -794,7 +794,7 @@ export const GENERAL = {
     ES_NUMBER_OF_VOLS: 'Number of volumes',
     SUMMARY_TEXT: 'The selected volumes summary per volume type:',
     SELECTION_BASED_TEXT: 'Based on your selections, we recommend creating the following:',
-    SELECTION_BASED_SECOND: 'Microsoft SQL Server on AWS Ec2 using FSx for ONTAP file system',
+    SELECTION_BASED_SECOND: 'Microsoft SQL Server on AWS EC2 using FSx for ONTAP file system',
     SAVINGS_CALCULATOR: 'Savings calculator',
     TOTAL_MONTHLY_COST: 'Total monthly cost',
     TO_VIEW_STORAGE: 'To view storage cost savings, enter your configuration.',
@@ -807,7 +807,11 @@ export const GENERAL = {
     VIEW_CALCS: 'View calculations',
     VIEW_CAL_SECONDARY_TEXT: 'All aws prices mentioned in the calculations are aws on-demand pricing.',
     COST_CALCULATION: 'Cost calculation',
-    DEPLOY_RATE_EXCEEDED: 'An internal error occurred when attempting to deploy the database server, please try again.'
+    DEPLOY_RATE_EXCEEDED: 'An internal error occurred when attempting to deploy the database server, please try again.',
+    TOOLTIP_MESSAGE_SNAPSHOT_FREQ:
+        'EBS snapshots not detected, if you would like to compare FSxN snapshots to potential EBS snapshots cost, please update the snapshot frequency.',
+    NOTICE_MESSAGE_COST_SAVINGS:
+        'This configuration cannot benefit from savings. Please check the cost breakdown below for further analysis.'
 };
 
 export const CODE_VIEWER = {

@@ -26,10 +26,15 @@ const PricingServiceRequest = Type.Object({
     ebsStorage: Type.Optional(
         Type.Object({
             regionCode: Type.String({ minLength: 1 }),
-            size: Type.Number({ description: 'Volume size in GiB' }),
-            throughput: Type.Optional(Type.Number({ description: 'Throughput is in MBps' })),
-            iops: Type.Optional(Type.Number()),
-            volumeType: Type.String(Type.String({ enum: ['gp2', 'io1', 'st1', 'sc1', 'gp3', 'io2'] }))
+            ebsResourceInfo: Type.Array(
+                Type.Object({
+                    id: Type.String({ description: 'Unique identifier for the EBS volume' }),
+                    size: Type.Number({ description: 'Volume size in GiB' }),
+                    throughput: Type.Optional(Type.Number({ description: 'Throughput is in MBps' })),
+                    iops: Type.Optional(Type.Number()),
+                    volumeType: Type.String(Type.String({ enum: ['gp2', 'io1', 'st1', 'sc1', 'gp3', 'io2'] }))
+                })
+            )
         })
     ),
     vpc: Type.Optional(
@@ -80,7 +85,16 @@ const PricingServiceResponse = Type.Object({
     ebsStorage: Type.Optional(
         Type.Object({
             ebsStorageCost: Type.Number(),
-            size: Type.Number()
+            ebsBreakdownByVolumeType: Type.Array(
+                Type.Object({
+                    id: Type.String(),
+                    volumeType: Type.String(),
+                    cost: Type.Number(),
+                    size: Type.Number(),
+                    iops: Type.Optional(Type.Number()),
+                    throughput: Type.Optional(Type.Number())
+                })
+            )
         })
     ),
     fsxwStorage: Type.Optional(

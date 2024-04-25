@@ -1,7 +1,6 @@
 import { useAppSelector } from '../../store/storeHooks';
 import { WLF_TABS } from '../../utils/consts';
 import styles from './Inventory.module.scss';
-import InventoryApis from './InventoryApis';
 import InventoryHeaderSection from './InventoryHeaderSection/InventoryHeaderSection';
 import InventoryTabs from './InventoryTabs/InventoryTabs';
 import ManagedHosts from './ManagedHosts/ManagedHosts';

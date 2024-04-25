@@ -261,40 +261,31 @@ const UnmanagedHosts = () => {
         isHorizontalScroll: true,
         isManagedColumns: true,
         manageColumnsProps: {
+            width: '182px',
             renderCell: (cellData: any, rowData: any) => {
-                // const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find(
-                //     (item: any) => item.type === DETECT_HOST_VAR.FSXN
-                // );
+                const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find(
+                    (item: any) => item.type === DETECT_HOST_VAR.FSXN
+                );
                 return (
-                    <div className={styles.jobMenuPopover}>
-                        <MenuPopover
-                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={menuItems(rowData)}
-                            toggleMenu={(toggleType: string, menuId: string) => {
-                                if (toggleType === 'close') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-                                } else if (toggleType === 'open') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(rowData.id);
-                                    menuOpenedRowDetail.current = rowData.id;
-                                } else if (toggleType === 'selectedOption') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-
-                                    if (menuId === 'manageHost') {
-                                        manageHost(rowData);
-                                    }
-
-                                    if (menuId === 'exploreSavings') {
-                                        dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
-                                    }
-                                }
-                            }}
-                            CustomMenu={undefined}
-                            disabledText={undefined}
-                        />
-                    </div>
+                    <>
+                        {hasFsx && (
+                            <div
+                                className={styles.manageHostCol}
+                                onClick={() => {
+                                    manageHost(rowData);
+                                }}
+                            >
+                                {rowData?.id in manageLoading && manageLoading[rowData?.id] && (
+                                    <Spinner className={styles.loading} />
+                                )}
+                                {!manageLoading[rowData?.id] && (
+                                    <Typography variant="Regular_14" className={styles.textStyle}>
+                                        {GENERAL.MANAGE_HOST}
+                                    </Typography>
+                                )}
+                            </div>
+                        )}
+                    </>
                 );
             }
         },

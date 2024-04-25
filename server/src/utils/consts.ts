@@ -137,7 +137,8 @@ enum RouteTags {
     PRICING = 'Pricing',
     RESOURCE = 'Resource',
     SYSTEM = 'System',
-    WORKING_ENVIRONMENT = 'Working Environment'
+    WORKING_ENVIRONMENT = 'Working Environment',
+    STORAGE_SAVINGS = 'Storage Savings'
 }
 
 enum HttpErrorCodes {
