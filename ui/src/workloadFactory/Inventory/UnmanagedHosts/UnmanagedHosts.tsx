@@ -32,7 +32,7 @@ const UnmanagedHosts = () => {
 
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
-    const unManagedHostFormatedList = useAppSelector(state => state.inventory.unmanagedFormatedData);
+    let unManagedHostFormatedList = useAppSelector(state => state.inventory.unmanagedFormatedData);
     const { unManagedHostInitialColumns } = useAppSelector(state => state.inventory);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
@@ -45,16 +45,21 @@ const UnmanagedHosts = () => {
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
-    const menuItems = (row: any) => {
+    const menuItems = (row: any, hasFsx: boolean, hasEbs: boolean) => {
+        let isManageDisable = false;
+        if (!hasFsx || (row?.id in manageLoading && manageLoading[row?.id])) {
+            isManageDisable = true;
+        }
         return [
             {
                 id: 'manageHost',
-                displayName: 'Manage host'
+                displayName: 'Manage host',
+                disabled: isManageDisable
             },
             {
                 id: 'exploreSavings',
                 displayName: 'Explore savings',
-                disabled: true
+                disabled: hasEbs ? false : true
             }
         ];
     };
@@ -261,31 +266,55 @@ const UnmanagedHosts = () => {
         isHorizontalScroll: true,
         isManagedColumns: true,
         manageColumnsProps: {
-            width: '182px',
+            width: '92px',
             renderCell: (cellData: any, rowData: any) => {
                 const hasFsx = rowData?.sqlServerInstances?.[0]?.storage?.find(
                     (item: any) => item.type === DETECT_HOST_VAR.FSXN
                 );
+                const hasEbs = rowData?.sqlServerInstances?.[0]?.storage?.find(
+                    (item: any) => item.type === DETECT_HOST_VAR.EBS
+                );
                 return (
-                    <>
-                        {hasFsx && (
-                            <div
-                                className={styles.manageHostCol}
-                                onClick={() => {
-                                    manageHost(rowData);
+                    <div className={styles.actionsCol}>
+                        <div>
+                            {rowData?.id in manageLoading && manageLoading[rowData?.id] && (
+                                <Spinner className={styles.loading} />
+                            )}
+                            {!(rowData?.id in manageLoading && manageLoading[rowData?.id]) && (
+                                <div className={styles.loading}></div>
+                            )}
+                        </div>
+                        <div className={styles.jobMenuPopover}>
+                            <MenuPopover
+                                isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                                menuItems={menuItems(rowData, hasFsx, hasEbs)}
+                                toggleMenu={(toggleType: string, menuId: string) => {
+                                    if (toggleType === 'close') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(null);
+                                    } else if (toggleType === 'open') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(rowData.id);
+                                        menuOpenedRowDetail.current = rowData.id;
+                                    } else if (toggleType === 'selectedOption') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(null);
+
+                                        if (menuId === 'manageHost') {
+                                            manageHost(rowData);
+                                        }
+
+                                        if (menuId === 'exploreSavings') {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+                                        }
+                                    }
                                 }}
-                            >
-                                {rowData?.id in manageLoading && manageLoading[rowData?.id] && (
-                                    <Spinner className={styles.loading} />
-                                )}
-                                {!manageLoading[rowData?.id] && (
-                                    <Typography variant="Regular_14" className={styles.textStyle}>
-                                        {GENERAL.MANAGE_HOST}
-                                    </Typography>
-                                )}
-                            </div>
-                        )}
-                    </>
+                                CustomMenu={undefined}
+                                disabledText={undefined}
+                            />
+                        </div>
+                    </div>
+                    
                 );
             }
         },
