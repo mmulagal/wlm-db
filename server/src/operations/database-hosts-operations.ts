@@ -346,7 +346,7 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageP
                 spaceSavingsPercentage: totalSpaceSavingsPercentage
             };
         }
-        if (ebsVolumeIds && region) {
+        if (ebsVolumeIds?.length && region) {
             const storageData = await getEbsResourceInfo(credentialsId, region, ebsVolumeIds);
             totalSize = storageData.reduce((acc, { size }) => acc + size, 0);
             response.ebs = { size: numeral(`${totalSize}GiB`).value() || 0 };
