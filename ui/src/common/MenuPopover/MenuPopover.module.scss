@@ -1,5 +1,29 @@
 .menuPopoverContainer {
-    .reactPopover.infoTooltip .content {
+    .reactPopover {
+        line-height: 1.77;
+        letter-spacing: normal;
+        text-align: justify;
+        color: var(--grey-55);
+        font-size: 13px;
+        text-align: left;
+        padding: 0px;
+        min-width: 182px;
+        padding: 8px 0px 8px 0px;
+    }
+
+    .content {
+        line-height: 1.77;
+        letter-spacing: normal;
+        text-align: justify;
+        color: var(--grey-55);
+        font-size: 13px;
+        text-align: left;
+        padding: 0px;
+        min-width: 182px;
+        padding: 8px 0px 8px 0px;
+    }
+
+    .infoTooltip {
         line-height: 1.77;
         letter-spacing: normal;
         text-align: justify;
