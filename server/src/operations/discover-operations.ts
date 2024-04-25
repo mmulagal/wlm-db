@@ -88,6 +88,7 @@ interface FSxInfo {
 }
 
 const MINIMUM_SQL_SERVER_SUPPORTED = 2016;
+const PREPARE_EC2_RERUN_DURATION: number = 20; // in minutes
 
 const NEW_SSM_PARAMETERS = 'NEW_SSM_PARAMETERS';
 const SSM_PARAM_PREFIX = '/netapp/wlmdb/';
@@ -1146,7 +1147,7 @@ async function prepareForManage(accountId: string, credentialsId: string, region
 
         // As of now, installation is finishing in about 8-10 minutes.
         // Let's wait for double that time to accomodate busy systems.
-        if (timeDifferenceInMinutes <= 20) {
+        if (timeDifferenceInMinutes <= PREPARE_EC2_RERUN_DURATION) {
             throw createError(
                 HttpErrorCodes.CONFLICT,
                 `Preparation of ${ec2InstanceId} for management by Workload Factory is already in progress with job ID ${job.id}.`
@@ -1176,6 +1177,14 @@ async function performPrepareTasks(
     ec2InstanceId: string,
     parentJobId: string
 ) {
+    logger.debug('Perform tasks to prepare EC2 for management: ', {
+        accountId,
+        credentialsId,
+        region,
+        ec2InstanceId,
+        parentJobId
+    });
+
     const [dbResponse, psResponse] = await Promise.all([
         prepareDbScriptsForManage(accountId, credentialsId, region, ec2InstanceId, parentJobId),
         preparePsModulesForManage(accountId, credentialsId, region, ec2InstanceId, parentJobId)
