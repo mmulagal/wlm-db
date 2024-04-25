@@ -26,6 +26,11 @@ import {
     renderUnmanagedHostName
 } from '../InventoryUtils';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
+import {
+    setSelectedHostDetails,
+    setSelectedInstanceId,
+    setSelectedServerName
+} from '../../../store/workloadFactory/exploreSavingsSlice';
 
 const UnmanagedHosts = () => {
     const dispatch = useDispatch();
@@ -121,6 +126,19 @@ const UnmanagedHosts = () => {
             );
             dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));
         }
+    };
+
+    const exploreSavingsAction = (rowData: any) => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+        dispatch(setSelectedInstanceId(rowData?.id));
+        dispatch(
+            setSelectedServerName(
+                rowData?.sqlServerInstances?.[0]?.sqlServerName
+                    ? rowData.sqlServerInstances?.[0].sqlServerName.toLowerCase()
+                    : 'Server name'
+            )
+        );
+        dispatch(setSelectedHostDetails(rowData));
     };
 
     const DatabasesColDefs: ColumnProps[] = [
@@ -305,7 +323,7 @@ const UnmanagedHosts = () => {
                                         }
 
                                         if (menuId === 'exploreSavings') {
-                                            dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+                                            exploreSavingsAction(rowData);
                                         }
                                     }
                                 }}
@@ -314,7 +332,6 @@ const UnmanagedHosts = () => {
                             />
                         </div>
                     </div>
-                    
                 );
             }
         },
