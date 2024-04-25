@@ -21,6 +21,7 @@ import ExportPDF from './ExportPDF/ExportPDF';
 import { GENERAL } from '../../../utils/appConstants';
 import { addExploreSavingsInitialData } from '../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../store/storeHooks';
+import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
@@ -32,10 +33,17 @@ const SavingsCalculator = () => {
         setTimeout(() => {
             const elem = document.getElementById('export-pdf') as HTMLElement;
             var options = {
-                filename: `SavingsCalculator.pdf`
+                filename: `SavingsCalculator.pdf`,
+                compression: 'MEDIUM'
             };
             domToPdf(elem, options, (pdf: any) => {
                 setPrintState(false);
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                        message: GENERAL.PDF_DOWNLOAD_SUCCESS
+                    })
+                );
             });
         }, 10);
     };
