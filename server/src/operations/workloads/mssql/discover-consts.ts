@@ -1,6 +1,22 @@
-const IS_DATABASE_CREATE_POSSIBLE = 'isDatabaseCreatePossible';
-const IS_PS7_AVAILABLE = 'isPS7Available';
-const UNAVAILABLE_PS_MODULES = 'unavailablePsModules';
+const IS_DATABASE_CREATE_POSSIBLE: string = 'isDatabaseCreatePossible';
+const IS_PS7_AVAILABLE: string = 'isPS7Available';
+const UNAVAILABLE_PS_MODULES: string = 'unavailablePsModules';
+const REQUIRED_PS_MODULES_FOR_MANAGEMENT: string = `
+  'AWS.Tools.EC2',
+  'AWS.Tools.FSx',
+  'AWS.Tools.Installer',
+  'AWS.Tools.SecretsManager',
+  'AWS.Tools.SimpleSystemsManagement',
+  'NetApp.ONTAP'
+`;
+
+const REQUIRED_DATABASE_CREATE_FILE_LIST: string = `
+  'C:\\SSM\\Cleanup-ONTAP.ps1',
+  'C:\\SSM\\Configure-LUNs.ps1',
+  'C:\\SSM\\Create-Database.ps1',
+  'C:\\SSM\\Invoke-virtualmount.ps1',
+  'C:\\SSM\\NewDB_Initialize-Iscsidisk.ps1'
+`;
 
 const SQL_SERVER_VERSION_TO_YEAR = new Map<number, number>([
     // Ref: https://learn.microsoft.com/en-AU/troubleshoot/sql/releases/download-and-install-latest-updates#sql-server-2022
@@ -431,24 +447,10 @@ const GET_MISSING_RESOURCE_DETAILS = [
       $isPS7Available = $True
     }
 
-    $databaseCreateFileList = @(
-      'C:\\SSM\\Cleanup-ONTAP.ps1'
-      'C:\\SSM\\Configure-LUNs.ps1'
-      'C:\\SSM\\Create-Database.ps1'
-      'C:\\SSM\\Invoke-virtualmount.ps1'
-      'C:\\SSM\\NewDB_Initialize-Iscsidisk.ps1'
-    )
+    $databaseCreateFileList = @(${REQUIRED_DATABASE_CREATE_FILE_LIST})
 
     $isDatabaseCreatePossible = If ((Test-path -path $databaseCreateFileList -PathType Leaf) -contains $False) { $False } Else { $True }
-
-    $requiredPsModuleList = @(
-      'AWS.Tools.EC2'
-      'AWS.Tools.FSx'
-      'AWS.Tools.Installer'
-      'AWS.Tools.SecretsManager'
-      'AWS.Tools.SimpleSystemsManagement'
-      'NetApp.ONTAP'
-    )
+    $requiredPsModuleList = @(${REQUIRED_PS_MODULES_FOR_MANAGEMENT})
 
     $availablePsModuleList = (Get-Module -ListAvailable -Name $requiredPsModuleList).Name
     $unavailablePsModuleList = $requiredPsModuleList | ? { $_ -NotIn $availablePsModuleList}
@@ -479,5 +481,6 @@ export {
     GET_MISSING_RESOURCE_DETAILS,
     IS_PS7_AVAILABLE,
     UNAVAILABLE_PS_MODULES,
-    IS_DATABASE_CREATE_POSSIBLE
+    IS_DATABASE_CREATE_POSSIBLE,
+    REQUIRED_PS_MODULES_FOR_MANAGEMENT
 };
