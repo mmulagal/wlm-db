@@ -535,14 +535,16 @@ async function calculatePrice(
         ...(ebsStorage && {
             ebsStorage: {
                 ebsStorageCost: totalEbsStorageCost,
-                ebsBreakdownByVolumeType: ebsBreakdownByVolumeType.map(ebsInfo => ({
-                    id: ebsInfo.id,
-                    volumeType: ebsInfo.volumeType,
-                    cost: ebsInfo.cost,
-                    size: numeral(`${ebsInfo.size}GiB`).value() || 0,
-                    iops: ebsInfo.iops,
-                    throughput: ebsInfo.throughput
-                }))
+                ebsBreakdownByVolumeType: ebsBreakdownByVolumeType.map(
+                    ({ id, size, volumeType, cost, iops, throughput }) => ({
+                        id,
+                        volumeType,
+                        cost,
+                        size: numeral(`${size}GiB`).value() || 0,
+                        iops,
+                        throughput
+                    })
+                )
             }
         }),
         ...(fsxwStorage && {
