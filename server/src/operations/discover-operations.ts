@@ -819,10 +819,21 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
         );
     }
 
-    const [discoverInfo, ssmResponse] = await Promise.all([
+    const [discoverInfo, ssmResponse, ec2Details] = await Promise.all([
         getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [ec2InstanceId]),
-        callSsmExecution(credentialsId, region, CLUSTER_NETWORK_IP_INFO_PS1, ec2InstanceId, accountId)
+        callSsmExecution(credentialsId, region, CLUSTER_NETWORK_IP_INFO_PS1, ec2InstanceId, accountId),
+        describeInstance(credentialsId, region, { InstanceIds: [ec2InstanceId] })
     ]);
+
+    const awsAccountId = ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn?.split(':')[4];
+
+    if (isEmpty(awsAccountId)) {
+        logger.error('Failed to get AWS account ID: ', ec2Details);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Unable to manage instance '${ec2InstanceId}'. Reason: failed to get AWS account ID.`
+        );
+    }
 
     if (ssmResponse?.includes('failureInfo')) {
         logger.error(
@@ -894,8 +905,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
 
     const fsxStorage = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
 
-    // TODO: Find AWS account ID and use instead of '464262061435' below.
-    tagResources(credentialsId, region, '464262061435', accountId, fsxStorage!.id, node1InstanceId, node2InstanceId);
+    tagResources(credentialsId, region, awsAccountId!, accountId, fsxStorage!.id, node1InstanceId, node2InstanceId);
 
     // Register the resource
     await createResource(accountId, {
