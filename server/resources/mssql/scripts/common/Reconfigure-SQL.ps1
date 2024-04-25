@@ -105,6 +105,9 @@ try {
         Invoke-Sqlcmd -Query "ALTER SERVER ROLE [sysadmin] ADD MEMBER $SQLUser ;"
 
 
+        # Grant permissions to NT AUTHORITY\SYSTEM
+        Invoke-Sqlcmd -Query 'GRANT VIEW ANY DEFINITION TO "NT AUTHORITY\SYSTEM" ;'
+
         # Update paths for tempdb,model and MSDB
         $tempDevFile = "'$Using:tempPath\tempdb.mdf'"
         $modelDevFile = "'$Using:dataPath\model.mdf'"

@@ -1,44 +1,73 @@
+import { GENERAL } from '../../../utils/appConstants';
+import { formatFractionalNumber } from '../../../utils/utilityFunctions';
+
 export const comparisonData = (calculatedResponse: any) => {
     return [
         {
             type: 'Capacity',
-            fsx: calculatedResponse?.fsx?.capacity,
-            ebs: calculatedResponse?.ebs?.capacity
+            fsx: `$ ${formatFractionalNumber(calculatedResponse?.fsx?.capacity, 2)}` || '$ 0',
+            ebs: `$ ${formatFractionalNumber(calculatedResponse?.ebs?.capacity, 2)}` || '$ 0'
         },
         {
             type: 'IOPS',
-            fsx: calculatedResponse?.fsx?.iops,
-            ebs: calculatedResponse?.ebs?.iops
+            fsx: calculatedResponse?.fsx?.iops
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.iops, 2)}`
+                : '$ 0',
+            ebs: calculatedResponse?.ebs?.iops ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.iops, 2)}` : '$ 0'
         },
         {
             type: 'Throughput',
-            fsx: calculatedResponse?.fsx?.throughput,
+            fsx: calculatedResponse?.fsx?.throughput
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.throughput, 2)}`
+                : '$ 0',
             ebs: calculatedResponse?.ebs?.throughput
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.throughput, 2)}`
+                : '$ 0'
         },
         {
             type: 'Snapshots',
-            fsx: calculatedResponse?.fsx?.snapshots,
+            fsx: calculatedResponse?.fsx?.snapshots
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.snapshots, 2)}`
+                : '$ 0',
             ebs: calculatedResponse?.ebs?.snapshots
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.snapshots, 2)}`
+                : '$ 0'
         },
         {
             type: 'Clone',
-            fsx: calculatedResponse?.fsx?.clone,
+            fsx: calculatedResponse?.fsx?.clone
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.clone, 2)}`
+                : GENERAL.NOT_AVAILABLE,
             ebs: calculatedResponse?.ebs?.clone
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.clone, 2)}`
+                : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'Compute',
-            fsx: calculatedResponse?.fsx?.compute,
+            fsx: calculatedResponse?.fsx?.compute
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.compute, 2)}`
+                : GENERAL.NOT_AVAILABLE,
             ebs: calculatedResponse?.ebs?.compute
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.compute, 2)}`
+                : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'SQL license',
-            fsx: calculatedResponse?.fsx?.license,
+            fsx: calculatedResponse?.fsx?.license
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.license, 2)}`
+                : GENERAL.NOT_AVAILABLE,
             ebs: calculatedResponse?.ebs?.license
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.license, 2)}`
+                : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'Total summary',
-            fsx: calculatedResponse?.fsx?.total,
+            fsx: calculatedResponse?.fsx?.total
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.total, 2)}`
+                : '$ 0',
             ebs: calculatedResponse?.ebs?.total
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.total, 2)}`
+                : '$ 0'
         }
     ];
 };
@@ -47,62 +76,81 @@ export const calculatedFSXData = (fsxData: any) => {
     return [
         {
             label: 'Region',
-            value: fsxData.regionName,
+            value: fsxData?.regionName || GENERAL.NOT_AVAILABLE,
             text: 'The AWS region that you selected.'
         },
         {
             label: 'Deployment type',
-            value: fsxData.deploymentType === 'Single' ? 'Single Availability Zone' : fsxData.deploymentType,
-            text: `A ${fsxData.deploymentType} Availability Zone is the equivalent availability for Amazon EBS.`
+            value:
+                fsxData?.deploymentType === 'Single'
+                    ? 'Single Availability Zone'
+                    : fsxData?.deploymentType || GENERAL.NOT_AVAILABLE,
+            text: `A ${fsxData?.deploymentType} Availability Zone is the equivalent availability for Amazon EBS.`
         },
         {
             label: 'Total storage capacity',
-            value: `${fsxData.totalStorageCapacity} TiB`,
+            value: fsxData?.totalStorageCapacity
+                ? `${formatFractionalNumber(fsxData?.totalStorageCapacity?.size, 2)} ${
+                      fsxData?.totalStorageCapacity?.unit
+                  }`
+                : GENERAL.NOT_AVAILABLE,
             text: 'The number of volumes that you need times the selected volume size.'
         },
 
         {
             label: 'Percentage of data on SSD storage',
-            value: fsxData.precentageSSD + '%',
-            text: `The potential percentage of data stored on the SSD tier for a typical ${fsxData.useCase} workload when using FSx for ONTAP data tiering capabilities.`
+            value: fsxData?.percentageSsd
+                ? formatFractionalNumber(fsxData?.percentageSsd, 2) + '%'
+                : GENERAL.NOT_AVAILABLE,
+            text: `The potential percentage of data stored on the SSD tier for a typical ${fsxData?.useCase} workload when using FSx for ONTAP data tiering capabilities.`
         },
         {
             label: 'Savings from compression + deduplication',
-            value: fsxData.savings + '%',
-            text: `Potential storage savings for ${fsxData.useCase} workload. Storage efficiency is based on a typical customer deployment.`
+            value: fsxData?.savings ? formatFractionalNumber(fsxData?.savings, 2) + '%' : GENERAL.NOT_AVAILABLE,
+            text: `Potential storage savings for ${fsxData?.useCase} workload. Storage efficiency is based on a typical customer deployment.`
         },
         {
             label: 'Effective capacity',
-            value: `${fsxData.effectiveCapacity.toFixed(2)} TiB`,
-            text: `Cost reduction based on ${fsxData.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
+            value: fsxData?.effectiveCapacity
+                ? `${formatFractionalNumber(fsxData?.effectiveCapacity?.size, 2)} ${fsxData?.effectiveCapacity?.unit}`
+                : GENERAL.NOT_AVAILABLE,
+            text: `Cost reduction based on ${fsxData?.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
         },
         {
             label: 'SSD tier required capacity',
-            value: `${fsxData.ssdTierReqCapacity.toFixed(2)} TiB`,
-            text: `Based on a typical ${fsxData.useCase} workload, ${fsxData.precentageSSD}% of the data is on the SSD tier.`
+            value: fsxData?.ssdTierReqCapacity
+                ? `${formatFractionalNumber(fsxData?.ssdTierReqCapacity?.size, 2)} ${fsxData?.ssdTierReqCapacity?.unit}`
+                : GENERAL.NOT_AVAILABLE,
+            text: `Based on a typical ${fsxData?.useCase} workload, ${fsxData?.percentageSsd}% of the data is on the SSD tier.`
         },
         {
             label: 'Capacity pool tier required capacity',
-            value: `${fsxData.capacityPoolTier.toFixed(2)} TiB`,
-            text: `Based on a typical ${fsxData.useCase} workload, ${
-                100 - fsxData.precentageSSD
+            value: fsxData?.capacityPoolTier
+                ? `${formatFractionalNumber(fsxData?.capacityPoolTier?.size, 2)} ${fsxData?.capacityPoolTier?.unit}`
+                : GENERAL.NOT_AVAILABLE,
+            text: `Based on a typical ${fsxData?.useCase} workload, ${
+                100 - fsxData?.percentageSsd
             }% of the data is on the capacity pool tier.`
         },
         {
             label: 'Provisioned SSD IOPS',
-            value: fsxData.ssdIop,
+            value: fsxData?.ssdIop || GENERAL.NOT_AVAILABLE,
             text: 'For each GiB of SSD provisioned storage, Amazon FSx automatically provisions 3 SSD IOPS for the file system.'
         },
         {
             label: 'Throughput capacity',
-            value: `${fsxData.throughputCapacity} MBps`,
+            value: fsxData?.throughputCapacity ? `${fsxData?.throughputCapacity} MBps` : GENERAL.NOT_AVAILABLE,
             text: `Supported FSx for ONTAP throughput according to the consolidated EBS throughput required (${
-                fsxData.numberOfVolumes * fsxData.throughput
+                fsxData?.numberOfVolumes * fsxData?.throughput
             } Mbps).`
         },
         {
             label: 'Monthly snapshot capacity',
-            value: `${fsxData.monthlySnapshotCapacity} GiB`,
+            value: fsxData?.monthlySnapshotCapacity
+                ? `${formatFractionalNumber(fsxData?.monthlySnapshotCapacity?.size, 2)} ${
+                      fsxData?.monthlySnapshotCapacity?.unit
+                  }`
+                : GENERAL.NOT_AVAILABLE,
             text: 'Cost reduction is based on FSx for ONTAP data tiering capability. 90% of snapshots data will be tiered to the capacity pool tier.'
         }
     ];
@@ -112,22 +160,22 @@ export const MSSQLServerInstance = (sqlData: any) => {
     return [
         {
             label: 'Database deployment mode',
-            value: `${sqlData.deploymentMode}`,
+            value: sqlData?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
             text: 'Based on source deployment mode of Always On Availability Group, the equivalent deployment mode on FsxN is Failover cluster instance'
         },
         {
             label: 'Database edition',
-            value: `${sqlData.edition}`,
+            value: sqlData?.serverEdition || GENERAL.NOT_AVAILABLE,
             text: 'Since source deployment mode suggested is  FCI the Enterprise replication feature is not relevant. Based on our analysis, SQL Enterprise features are not used as well, therefore we recommend using Standard edition.'
         },
         {
             label: 'Database version',
-            value: `${sqlData.serverType}`,
+            value: sqlData?.serverVersion || GENERAL.NOT_AVAILABLE,
             text: 'Based on the source SQL server version'
         },
         {
             label: 'DB Instance type',
-            value: `${sqlData.instance}`,
+            value: sqlData?.instanceType || GENERAL.NOT_AVAILABLE,
             text: 'Based on the source Ec2 instance type'
         }
     ];

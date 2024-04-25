@@ -12,7 +12,9 @@ const ExploreSavingHeader = () => {
                     <ExploreSaving />
                 </div>
                 <div className={styles.contentSection}>
-                    <DsTypography variant="Semibold_16">{GENERAL.ES_HEADING}</DsTypography>
+                    <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
+                        {GENERAL.ES_HEADING}
+                    </DsTypography>
                     <DsTypography variant="Regular_16" className={styles.subText}>
                         {GENERAL.ES_HEADER}
                     </DsTypography>

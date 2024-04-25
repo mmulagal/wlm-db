@@ -9,7 +9,8 @@ import {
     getFsxArn,
     isNetworkConfigurationViolated,
     splitDomainUsername,
-    getCollationForMSSQLVersion
+    getCollationForMSSQLVersion,
+    camelizeKeys
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
@@ -78,5 +79,22 @@ describe(' Secrets Manager string', () => {
             'Microsoft SQL Server 2016 (SP3-OD) (KB5006943) - 13.0.6404.1 (X64)'
         );
         expect(resp).toBeDefined();
+    });
+    it('camelizeKeys should return an array with camelized keys', () => {
+        const input = [{ CompanyName: 'NetApp', CompanyAddress: 'Bangalore' }];
+        const output = camelizeKeys(input);
+        expect(output).toEqual([{ companyName: 'NetApp', companyAddress: 'Bangalore' }]);
+    });
+
+    it('camelizeKeys should return an object with camelized keys', () => {
+        const input = { CompanyName: 'NetApp', CompanyAddress: 'Bangalore' };
+        const output = camelizeKeys(input);
+        expect(output).toEqual({ companyName: 'NetApp', companyAddress: 'Bangalore' });
+    });
+
+    it('camelizeKeys should return the input unchanged if it is not an array or object', () => {
+        const input = 'NetApp Bangalore';
+        const output = camelizeKeys(input);
+        expect(output).toBe(input);
     });
 });

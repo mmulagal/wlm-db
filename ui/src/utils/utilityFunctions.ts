@@ -1401,6 +1401,7 @@ export const formatUnamanagedHostList = (data: any, mssqlInstancesData: any) => 
                 storage: perRowInstanceData?.data?.storage,
                 estimatedUsageCost: perRowInstanceData?.data?.estimatedUsageCost,
                 resourceUtilization: perRowInstanceData?.data?.resourceUtilization,
+                ebsResourceInfo: perRowInstanceData?.data?.ebsResourceInfo,
                 loading: false
             });
         } else if (perRowInstanceData?.loading) {

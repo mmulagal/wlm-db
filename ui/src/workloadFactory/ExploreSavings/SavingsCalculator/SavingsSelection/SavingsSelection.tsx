@@ -1,7 +1,7 @@
 import { DsTypography, SelectField, TextField } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import styles from './SavingsSelection.module.scss';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import {
@@ -26,9 +26,14 @@ const SavingsSelection = ({ printState }: any) => {
             const option = generateOptionType(val, val, '', false, '', val);
             options.push(option);
         });
-
         return options;
     }, []);
+
+    useEffect(() => {
+        if (!selectedSnapshotFrequency) {
+            dispatch(setSelectedSnapshotFrequency(generateSnapshotFrequency[2]));
+        }
+    }, [generateSnapshotFrequency]);
 
     //Function to generate the options for Select Field
     const generateCloneRefresh = useMemo<optionType[]>((): optionType[] => {
@@ -41,6 +46,13 @@ const SavingsSelection = ({ printState }: any) => {
 
         return options;
     }, []);
+
+    useEffect(() => {
+        if (!selectedCloneRefresh) {
+            dispatch(setSelectedCloneRefresh(generateCloneRefresh[0]));
+        }
+    }, [generateCloneRefresh]);
+
     return (
         <div className={styles.savingsSelection}>
             <DsTypography variant="Regular_14">{GENERAL.ES_SAVINGS_SELECTION_TEXT}</DsTypography>

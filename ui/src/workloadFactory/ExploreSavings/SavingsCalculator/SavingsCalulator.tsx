@@ -19,10 +19,14 @@ import { useState } from 'react';
 import domToPdf from 'dom-to-pdf';
 import ExportPDF from './ExportPDF/ExportPDF';
 import { GENERAL } from '../../../utils/appConstants';
+import { addExploreSavingsInitialData } from '../../../store/workloadFactory/exploreSavingsSlice';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const SavingsCalculator = () => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
+    const selectedServerName = useAppSelector(state => state.exploreSavings.selectedServerName);
+
     const printDocument = () => {
         setPrintState(true);
         setTimeout(() => {
@@ -33,7 +37,7 @@ const SavingsCalculator = () => {
             domToPdf(elem, options, (pdf: any) => {
                 setPrintState(false);
             });
-        }, 200);
+        }, 10);
     };
     return (
         <div style={{ height: '90vh', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
@@ -46,10 +50,11 @@ const SavingsCalculator = () => {
                                     title: 'Explore savings',
                                     onClick: () => {
                                         dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                                        dispatch(addExploreSavingsInitialData(null));
                                     }
                                 },
                                 {
-                                    title: 'Host name'
+                                    title: selectedServerName
                                 }
                             ]}
                         />
@@ -91,16 +96,18 @@ const SavingsCalculator = () => {
                         </div>
                         <div className={styles.textContent}>
                             <DsTypography variant="Semibold_16">{GENERAL.SELECTION_BASED_TEXT}</DsTypography>
-                            <DsTypography variant="Regular_14">{GENERAL.SELECTION_BASED_SECOND}</DsTypography>
+                            <DsTypography variant="Regular_14" className={styles.secondText}>
+                                {GENERAL.SELECTION_BASED_SECOND}
+                            </DsTypography>
                         </div>
                     </div>
 
                     {/* Accordion here */}
-                    <MSSQLAccordion />
-
-                    {/* last section */}
-                    <ExportPDF printDocument={printDocument} />
+                    <MSSQLAccordion printState={printState} />
                 </div>
+
+                {/* last section */}
+                <ExportPDF printDocument={printDocument} />
             </div>
         </div>
     );

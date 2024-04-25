@@ -616,7 +616,7 @@ async function invokeSSMForDatabaseDeployment(
         }
     } catch (err: any) {
         logger.error(
-            `Error while creating database ${databaseName} in host ${resourceId} in account ${accountId}`,
+            `Error while creating database ${databaseName} in host ${resourceId} in account ${accountId} `,
             err,
             err.data
         );
