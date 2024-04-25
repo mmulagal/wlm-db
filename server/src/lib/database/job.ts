@@ -163,6 +163,10 @@ async function updateJob(
 
     accountId = checkAccount(accountId);
 
+    // When failed deployment is retried, endtime must be reset to null.
+    // https://www.prisma.io/docs/orm/prisma-client/special-fields-and-types/null-and-undefined
+    const newEndTime = endTime && endTime !== undefined ? new Date(endTime) : null;
+
     return prisma.client.job.update({
         where: {
             id: jobId,
@@ -172,7 +176,7 @@ async function updateJob(
         data: {
             ...(description && { description }),
             ...(status && { status }),
-            ...(endTime && { end_time: new Date(endTime) }),
+            ...{ end_time: newEndTime },
             ...(error && { error })
         }
     });
