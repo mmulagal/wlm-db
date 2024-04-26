@@ -206,6 +206,7 @@ const HOST_AND_SQL_INFO_PS1 = [
 
   Function GetSMBMappedDrivesWithPath() {
     $DriveLetterPath = @{}
+    $Errors = ''
     #User List
     $RootKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey(“USERS”,$Computer)
     $SubKeyNames = $RootKey.GetSubKeyNames()
@@ -214,25 +215,29 @@ const HOST_AND_SQL_INFO_PS1 = [
             if (($SubKeyName.Contains(“_Classes”) -ne $True))
                 {
                     #Drive List
+                    try {
                     $NetworkKey = $RootKey.OpenSubKey($SubKeyName + “\\Network”)
+                    } catch {$Errors += "$RootKey-$SubKeyName : $_."}
                     if ($NetworkKey -ne $Null)
                         {
                             $MappedDrives = $NetworkKey.GetSubKeyNames()
                            
                               ForEach ($MappedDrive in $MappedDrives)
                                 {
+                                  try {
                                   $DriveKey = $NetworkKey.OpenSubKey($MappedDrive)
                                   $DrivePath = ($DriveKey.GetValue(“RemotePath”) -split '\\share')[0].Trim('\\')
                                   if(! $DriveLetterPath.ContainsKey($MappedDrive.ToUpper()+':')) {
                                       $DriveLetterPath.Add($MappedDrive.ToUpper()+':', $DrivePath)            
-                                  }         
+                                  }  
+                                }catch {$Errors += "$SubKeyName-$NetworkKey : $_."}     
                                 }
                                 
                         } 
                 }
         }
 
-    return $DriveLetterPath 
+    return $DriveLetterPath, $Errors
   }
   
   Function GetSMBConnections() {
@@ -268,7 +273,7 @@ const HOST_AND_SQL_INFO_PS1 = [
     $instanceSectionStartTime = Get-Date
     $sqlServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
     $DiskTargetInfoMap = GetDiskDriveDetails
-    $MappedDrivesWithPath = GetSMBMappedDrivesWithPath
+    $MappedDrivesWithPath, $RegistryErrors = GetSMBMappedDrivesWithPath
     $SMBConnections = GetSMBConnections
   
     $instancesInfoList = ForEach ($sqlService in $sqlServiceList) {
@@ -277,6 +282,14 @@ const HOST_AND_SQL_INFO_PS1 = [
   
       If ($DiskTargetInfoMap.Count -le 0) {
         $body['failureInfo'] += "Failed to get drive letter and disk target details\`n"
+      }
+
+      If ($RegistryErrors) {
+        $responseObject['failureInfo'] += "Errors seen while reading Windows Registry: $RegistryErrors.\`n"
+      }
+
+      If ($MappedDrivesWithPath.Count -le 0) {
+        $responseObject['failureInfo'] += "Failed to get network drives from Windows Registry.\`n"
       }
   
       $editionDBCountMachineInfo = @($null, $null, $null)
@@ -335,11 +348,11 @@ const HOST_AND_SQL_INFO_PS1 = [
             if ($DiskTargetInfoMap.Keys -contains $sqlInstanceDriveLetterOrPath) {
             New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $DiskTargetInfoMap[$sqlInstanceDriveLetterOrPath] }}
             elseif ($SMBConnections -contains $sqlInstanceDriveLetterOrPath) {
-            New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $sqlInstanceDriveLetterOrPath }     
+            New-Object -TypeName PSObject -Property @{ SmbSharePath = $sqlInstanceDriveLetterOrPath }     
             }
             elseif($MappedDrivesWithPath.Keys -contains $sqlInstanceDriveLetterOrPath) { 
 
-                  New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $MappedDrivesWithPath[$sqlInstanceDriveLetterOrPath] }  
+                  New-Object -TypeName PSObject -Property @{ SmbSharePath = $MappedDrivesWithPath[$sqlInstanceDriveLetterOrPath] }  
                   
             }
             }

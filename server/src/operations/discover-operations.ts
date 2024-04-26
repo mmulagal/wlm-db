@@ -413,6 +413,7 @@ async function getHostAndSqlInfoFromPsOutput(
                             });
                         } else if (endPointIpWithFsxInfo.has(di?.SerialNumberOrScsiTarget)) {
                             const { fsxId, svmId } = endPointIpWithFsxInfo.get(di?.SerialNumberOrScsiTarget)!;
+
                             storageTypes.push({
                                 type: STORAGE_TYPE.FSXN,
                                 id: fsxId!,
@@ -437,9 +438,7 @@ async function getHostAndSqlInfoFromPsOutput(
                             // If FSxN over SMB, Match get-smbmapping with SVM ip/fqdn
 
                             const fsxEndpoints = Array.from(endPointIpWithFsxInfo.keys());
-                            const targets = di?.SerialNumberOrScsiTarget
-                                ? di.SerialNumberOrScsiTarget.toLowerCase()
-                                : '';
+                            const targets = di?.SmbSharePath ? di.SmbSharePath.toLowerCase() : '';
                             const matchedEndpoints = fsxEndpoints.filter(value =>
                                 targets.includes(value.toLowerCase())
                             );
