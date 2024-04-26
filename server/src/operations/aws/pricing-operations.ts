@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import { Filter, FilterType, GetProductsCommandInput, GetProductsCommandOutput } from '@aws-sdk/client-pricing';
 import { LazyJsonString } from '@smithy/smithy-client';
 import { compact, isEmpty } from 'lodash-es';
+import numeral from 'numeral';
 import { PricingServiceRequestType, PricingServiceResponseType } from '../../routes/types/pricing.types';
 import getLogger from '../../utils/logger';
 import { calculateFsxnStorageCapacity, sizeInGigaBytes } from '../../utils/utils';
@@ -534,7 +535,16 @@ async function calculatePrice(
         ...(ebsStorage && {
             ebsStorage: {
                 ebsStorageCost: totalEbsStorageCost,
-                ebsBreakdownByVolumeType
+                ebsBreakdownByVolumeType: ebsBreakdownByVolumeType.map(
+                    ({ id, size, volumeType, cost, iops, throughput }) => ({
+                        id,
+                        volumeType,
+                        cost,
+                        size: numeral(`${size}GiB`).value() || 0,
+                        iops,
+                        throughput
+                    })
+                )
             }
         }),
         ...(fsxwStorage && {
