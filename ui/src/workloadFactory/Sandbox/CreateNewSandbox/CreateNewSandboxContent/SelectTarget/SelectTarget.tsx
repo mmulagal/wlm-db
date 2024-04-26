@@ -103,7 +103,7 @@ const SelectTarget = () => {
                     <div className={`${CommonStyles['heading-content']} ${styles.headerSetter}`}>{setHeader()}</div>
                 )}
                 id="2"
-                title={<div className={CommonStyles.title}>{'Select Target'}</div>}
+                title={<div className={CommonStyles.title}>{GENERAL.Database_TARGET}</div>}
             >
                 <AccordionCardContent>
                     <DsTypography>
