@@ -730,6 +730,8 @@ export const GENERAL = {
     SANDBOX_SOURCE_DB_NAME: 'Source database name',
     SANDBOX_SOURCE_DB_HOST_NAME: 'Source database host name',
     SANDBOX_LAST_UPDATED: 'Last updated',
+    DATABASE_SOURCE: 'Database source',
+    Database_TARGET: 'Database target',
     AGE: 'Age',
     SANDBOX_TAG: 'Tag',
     SANDBOX_SOURCE_DATABASES: 'Source databases',

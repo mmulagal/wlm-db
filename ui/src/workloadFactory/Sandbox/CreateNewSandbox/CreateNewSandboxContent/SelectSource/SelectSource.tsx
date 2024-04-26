@@ -130,7 +130,7 @@ const SelectSource = () => {
                     <div className={`${CommonStyles['heading-content']} ${styles.headerSetter}`}>{setHeader()}</div>
                 )}
                 id="1"
-                title={<div className={CommonStyles.title}>{'Select source'}</div>}
+                title={<div className={CommonStyles.title}>{GENERAL.DATABASE_SOURCE}</div>}
             >
                 <AccordionCardContent>
                     <DsTypography>

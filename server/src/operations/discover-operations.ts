@@ -10,7 +10,7 @@ import throat from 'throat';
 import { createResource } from '../lib/database/db';
 import { getResources } from './database/database-operations';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
-import { getArtifactsRegionBucketName, getResourceNameFromTags, sleep } from '../utils/utils';
+import { getResourceNameFromTags, sleep, getArtifactsRegionBucketName } from '../utils/utils';
 import {
     getEc2SqlParameters,
     callSsmExecution,
@@ -19,6 +19,7 @@ import {
     ssmPutParameters
 } from './aws/ssm-operations';
 import { registerJob, updateJobDetails, getJobs } from './database/job-operations';
+import { tagResources } from './aws/sqs-operations';
 import {
     CloudProviders,
     HttpErrorCodes,
@@ -33,6 +34,10 @@ import {
     SQL_SERVER_VERSION_TO_YEAR,
     HOST_AND_SQL_INFO_PS1,
     CLUSTER_NETWORK_IP_INFO_PS1,
+    IS_PS7_AVAILABLE,
+    UNAVAILABLE_PS_MODULES,
+    GET_MISSING_RESOURCE_DETAILS,
+    IS_DATABASE_CREATE_POSSIBLE,
     COPY_SCIRPTS_TO_MANAGE_RESOURCE,
     INSTALL_WF_POWERSHELL_PREREQS_PS1,
     REQUIRED_PS_MODULES_FOR_MANAGEMENT,
@@ -416,6 +421,7 @@ async function getHostAndSqlInfoFromPsOutput(
                             });
                         } else if (endPointIpWithFsxInfo.has(di?.SerialNumberOrScsiTarget)) {
                             const { fsxId, svmId } = endPointIpWithFsxInfo.get(di?.SerialNumberOrScsiTarget)!;
+
                             storageTypes.push({
                                 type: STORAGE_TYPE.FSXN,
                                 id: fsxId!,
@@ -440,9 +446,7 @@ async function getHostAndSqlInfoFromPsOutput(
                             // If FSxN over SMB, Match get-smbmapping with SVM ip/fqdn
 
                             const fsxEndpoints = Array.from(endPointIpWithFsxInfo.keys());
-                            const targets = di?.SerialNumberOrScsiTarget
-                                ? di.SerialNumberOrScsiTarget.toLowerCase()
-                                : '';
+                            const targets = di?.SmbSharePath ? di.SmbSharePath.toLowerCase() : '';
                             const matchedEndpoints = fsxEndpoints.filter(value =>
                                 targets.includes(value.toLowerCase())
                             );
@@ -783,7 +787,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     if (isEmpty(ec2InstanceId)) {
         throw createError(
             HttpErrorCodes.VALIDATION_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Reason: empty instance ID`
+            `Unable to manage instance '${ec2InstanceId}'. Reason: empty instance ID.`
         );
     }
 
@@ -791,14 +795,52 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     if (ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
         throw createError(
             HttpErrorCodes.VALIDATION_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Reason: no SSM connectivity`
+            `Unable to manage instance '${ec2InstanceId}'. Reason: no SSM connectivity.`
         );
     }
 
-    const [discoverInfo, ssmResponse] = await Promise.all([
+    const missingResourceInfo = await callSsmExecution(
+        credentialsId,
+        region,
+        GET_MISSING_RESOURCE_DETAILS,
+        ec2InstanceId,
+        accountId
+    );
+    logger.debug('Missing resource info', missingResourceInfo);
+    const missingResourceResponse = JSON.parse(missingResourceInfo!);
+
+    if (missingResourceResponse[IS_PS7_AVAILABLE] === false) {
+        throw createError(
+            HttpErrorCodes.FAILED_DEPENDENCY,
+            'PowerShell 7 is needed for managing the resource. Install it manually (refer to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4) or using the API <to-be-filled>, and retry the operation.'
+        );
+    } else if (missingResourceResponse[UNAVAILABLE_PS_MODULES]) {
+        throw createError(
+            HttpErrorCodes.FAILED_DEPENDENCY,
+            `PowerShell modules ${missingResourceResponse[UNAVAILABLE_PS_MODULES]} are needed for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API <to-be-filled>, and retry the operation.`
+        );
+    } else if (missingResourceResponse[IS_DATABASE_CREATE_POSSIBLE] === false) {
+        throw createError(
+            HttpErrorCodes.FAILED_DEPENDENCY,
+            'Files required for database operations are not available. Install them using the API <to-be-filled>, and retry the operation.'
+        );
+    }
+
+    const [discoverInfo, ssmResponse, ec2Details] = await Promise.all([
         getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [ec2InstanceId]),
-        callSsmExecution(credentialsId, region, CLUSTER_NETWORK_IP_INFO_PS1, ec2InstanceId, accountId)
+        callSsmExecution(credentialsId, region, CLUSTER_NETWORK_IP_INFO_PS1, ec2InstanceId, accountId),
+        describeInstance(credentialsId, region, { InstanceIds: [ec2InstanceId] })
     ]);
+
+    const awsAccountId = ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn?.split(':')[4];
+
+    if (isEmpty(awsAccountId)) {
+        logger.error('Failed to get AWS account ID: ', ec2Details);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Unable to manage instance '${ec2InstanceId}'. Reason: failed to get AWS account ID.`
+        );
+    }
 
     if (ssmResponse?.includes('failureInfo')) {
         logger.error(
@@ -857,7 +899,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     await validateEc2InstanceManageability(discoverInfo, ec2InstanceId);
 
     const [item] = discoverInfo.items;
-    const [sqlServerInstance] = item.sqlServerInstances || [];
+    const [sqlServerInstance] = item?.sqlServerInstances || [];
     const { storage } = sqlServerInstance;
     const storageInfo = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
 
@@ -867,6 +909,10 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
         region,
         discoverInfo?.items?.[0].sqlServerInstances?.[0]?.storage
     );
+
+    const fsxStorage = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
+
+    tagResources(credentialsId, region, awsAccountId!, accountId, fsxStorage!.id, node1InstanceId, node2InstanceId);
 
     // Register the resource
     await createResource(accountId, {
@@ -1102,7 +1148,7 @@ async function verifyAndAddFSxOntapCredentials(
             } catch (error: any) {
                 throw createError(
                     HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                    `FSx for ONTAP storage '${fsxStorage.id}' isn't registered with FSxN core service. This cannot be managed`
+                    `Unable to manage the instance. Reason: FSx for ONTAP storage '${fsxStorage.id}' isn't registered with FSxN core service.`
                 );
             }
 
