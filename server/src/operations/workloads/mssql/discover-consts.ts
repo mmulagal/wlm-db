@@ -194,18 +194,22 @@ const HOST_AND_SQL_INFO_PS1 = [
             if (($SubKeyName.Contains(“_Classes”) -ne $True))
                 {
                     #Drive List
+                    try {
                     $NetworkKey = $RootKey.OpenSubKey($SubKeyName + “\\Network”)
+                    } catch {}
                     if ($NetworkKey -ne $Null)
                         {
                             $MappedDrives = $NetworkKey.GetSubKeyNames()
                            
                               ForEach ($MappedDrive in $MappedDrives)
                                 {
+                                  try {
                                   $DriveKey = $NetworkKey.OpenSubKey($MappedDrive)
                                   $DrivePath = ($DriveKey.GetValue(“RemotePath”) -split '\\share')[0].Trim('\\')
                                   if(! $DriveLetterPath.ContainsKey($MappedDrive.ToUpper()+':')) {
                                       $DriveLetterPath.Add($MappedDrive.ToUpper()+':', $DrivePath)            
-                                  }         
+                                  }  
+                                }catch {}       
                                 }
                                 
                         } 
@@ -315,11 +319,11 @@ const HOST_AND_SQL_INFO_PS1 = [
             if ($DiskTargetInfoMap.Keys -contains $sqlInstanceDriveLetterOrPath) {
             New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $DiskTargetInfoMap[$sqlInstanceDriveLetterOrPath] }}
             elseif ($SMBConnections -contains $sqlInstanceDriveLetterOrPath) {
-            New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $sqlInstanceDriveLetterOrPath }     
+            New-Object -TypeName PSObject -Property @{ SmbSharePath = $sqlInstanceDriveLetterOrPath }     
             }
             elseif($MappedDrivesWithPath.Keys -contains $sqlInstanceDriveLetterOrPath) { 
 
-                  New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $MappedDrivesWithPath[$sqlInstanceDriveLetterOrPath] }  
+                  New-Object -TypeName PSObject -Property @{ SmbSharePath = $MappedDrivesWithPath[$sqlInstanceDriveLetterOrPath] }  
                   
             }
             }
