@@ -79,8 +79,7 @@ const amiOwners = [
     '311529897437'
 ];
 
-const generateImageFilter = (serverVersion: string, sqlVersion: string, sqlEdition: string) =>
-({
+const generateImageFilter = (serverVersion: string, sqlVersion: string, sqlEdition: string) => ({
     Filters: [
         { Name: 'name', Values: [`Windows_Server-${serverVersion}-English-Full-SQL_${sqlVersion}_${sqlEdition}`] },
         { Name: 'owner-alias', Values: ['amazon'] }
@@ -114,7 +113,9 @@ ec2Mock.on(DescribeImagesCommand).resolves(ec2ImagesResponse);
 for (let i = 0; i < images.length; i += 1) {
     const [serverVersion, sqlVersion, sqlEdition] = images[i];
     const filter = generateImageFilter(serverVersion, sqlVersion, sqlEdition);
-    ec2Mock.on(DescribeImagesCommand, filter).resolves(ec2AMIImagesResponse[`Windows_Server-${serverVersion}-English-Full-SQL_${sqlVersion}_${sqlEdition}`]);
+    ec2Mock
+        .on(DescribeImagesCommand, filter)
+        .resolves(ec2AMIImagesResponse[`Windows_Server-${serverVersion}-English-Full-SQL_${sqlVersion}_${sqlEdition}`]);
 }
 
 ec2Mock.on(DescribeRegionsCommand).resolves(fsxRegionsResponse);

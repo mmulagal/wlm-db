@@ -1091,4 +1091,4 @@ function modifyStackAck(
     };
 }
 
-export { processCloudFormationMessages };
+export { processCloudFormationMessages, tagResources };

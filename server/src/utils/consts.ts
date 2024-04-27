@@ -148,6 +148,7 @@ enum HttpErrorCodes {
     FORBIDDEN = 403,
     NOT_FOUND = 404,
     VALIDATION_ERROR = 422,
+    FAILED_DEPENDENCY = 424,
 
     // Server errors
     INTERNAL_SERVER_ERROR = 500,

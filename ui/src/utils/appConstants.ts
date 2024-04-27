@@ -730,6 +730,8 @@ export const GENERAL = {
     SANDBOX_SOURCE_DB_NAME: 'Source database name',
     SANDBOX_SOURCE_DB_HOST_NAME: 'Source database host name',
     SANDBOX_LAST_UPDATED: 'Last updated',
+    DATABASE_SOURCE: 'Database source',
+    Database_TARGET: 'Database target',
     AGE: 'Age',
     SANDBOX_TAG: 'Tag',
     SANDBOX_SOURCE_DATABASES: 'Source databases',
@@ -811,7 +813,8 @@ export const GENERAL = {
     TOOLTIP_MESSAGE_SNAPSHOT_FREQ:
         'EBS snapshots not detected, if you would like to compare FSxN snapshots to potential EBS snapshots cost, please update the snapshot frequency.',
     NOTICE_MESSAGE_COST_SAVINGS:
-        'This configuration cannot benefit from savings. Please check the cost breakdown below for further analysis.'
+        'This configuration cannot benefit from savings. Please check the cost breakdown below for further analysis.',
+    PDF_DOWNLOAD_SUCCESS: 'PDF file downloaded successfully.'
 };
 
 export const CODE_VIEWER = {
