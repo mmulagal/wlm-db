@@ -1166,7 +1166,6 @@ async function verifyAndAddFSxOntapCredentials(
     }
 }
 
-// If job is already running for <=15 minutes, return old job ID itself.
 async function prepareForManage(accountId: string, credentialsId: string, region: string, ec2InstanceId: string) {
     logger.info('Prepare for manage:', { accountId, credentialsId, region });
 
@@ -1191,8 +1190,9 @@ async function prepareForManage(accountId: string, credentialsId: string, region
         const timeDifferenceInMilliseconds = Math.abs(Date.now() - job.startTime);
         const timeDifferenceInMinutes = Math.floor(timeDifferenceInMilliseconds / (1000 * 60));
 
-        // As of now, installation is finishing in about 8-10 minutes.
-        // Let's wait for double that time to accomodate busy systems.
+        // As of now, PowerShell module installation is finishing
+        // in about 8-10 minutes.  Let's wait for double that time
+        // to accomodate busy systems.
         if (timeDifferenceInMinutes <= PREPARE_EC2_RERUN_DURATION) {
             throw createError(
                 HttpErrorCodes.CONFLICT,
@@ -1349,7 +1349,7 @@ async function preparePsModulesForManage(
         updateJobDetails(accountId, credentialsId, region, childJobId, {
             status: JOBSTATUS.FAILED,
             endTime: Date.now(),
-            error: FAILURE_INFO
+            error: failureInfo
         });
 
         childJobStatus = JOBSTATUS.FAILED;
