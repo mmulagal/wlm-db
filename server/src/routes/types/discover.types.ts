@@ -140,7 +140,7 @@ type DiscoverCredentialsType = Static<typeof DiscoverCredentials>;
 const DiscoverInstanceParams = Type.Composite([
     CredentialsIdParams,
     Type.Object({
-        instanceId: Type.String()
+        instanceId: Type.String({ description: 'AWS EC2 instance ID' })
     })
 ]);
 
