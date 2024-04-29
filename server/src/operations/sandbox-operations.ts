@@ -1,24 +1,36 @@
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
-import { groupBy, isEmpty } from 'lodash-es';
+import { compact, groupBy, isEmpty } from 'lodash-es';
 import createError from 'http-errors';
+import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../utils/logger';
 import { listResources, updateResourceMetaData } from '../lib/database/db';
 import {
+    CUSTOM_SSM_EXECUTION_TIMEOUT,
     DEFAULT_INSTANCE_NAME,
     HttpErrorCodes,
     NO_SANDBOX_CREATED,
     RESOURCESTYPE,
     SANDBOX_API_SIZE
 } from '../utils/consts';
-import { GET_SANDBOX_DETAILS } from './workloads/mssql/sandbox-scripts';
+import {
+    GET_SANDBOX_DETAILS,
+    createVolumeClone as CreateVolumeCloneScript,
+    getDbMappedOntapVolumes,
+    cleanUpOntapResources,
+    addExtendedProperties,
+    createClonedDb as createCloneDbScript
+} from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails } from '../utils/common-types';
-import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
+import { checkDatabaseExists, getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
-import { sqlResponseParsing } from '../utils/utils';
+import { sleep, sqlResponseParsing } from '../utils/utils';
 import { SandboxInfoResponseType } from '../routes/types/database-hosts.types';
 import { restGetUtilForOntap } from './workloads/mssql/ssm-script-utils';
 import { getResources } from './database/database-operations';
+import { registerJob, updateJobDetails } from './database/job-operations';
+import { INVOKE_VIRTUAL_MOUNT } from './workloads/mssql/const';
+import { updateSandboxDBIntoResourceData } from './demo-operations';
 
 const logger = getLogger();
 
@@ -349,4 +361,704 @@ async function revertMetadataForSanboxTesting(accountId: string, credentialsId: 
     return 'Revereted manually updated metadatas';
 }
 
-export { getSandboxesInfo, getSandboxSavings, updateMetadataForSanboxTesting, revertMetadataForSanboxTesting };
+interface DbInfo {
+    database: string;
+    instance: string;
+    host: string;
+}
+
+interface VolumeLunMap {
+    fileName: string;
+    volumeName: string;
+    lunPath: string;
+    windowsVolumeName: string;
+    // volumeId: string;
+}
+
+interface VolumeLunMapping {
+    svm: string;
+    collation: string;
+    data: VolumeLunMap;
+    log: VolumeLunMap;
+}
+
+interface HostAndDbInfo extends DbInfo {
+    resourceName: string;
+    fsxId: string;
+    svm: string;
+    activeNodeInstaceId: string;
+    metadata: Metadata;
+}
+
+interface ClonedVolume {
+    volumeName: string;
+    volumeId: string;
+    lunSerialNumber: string;
+}
+interface ClonedVolumes {
+    log: ClonedVolume;
+    data: ClonedVolume;
+}
+
+async function createSandbox(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    source: DbInfo,
+    dest: DbInfo,
+    tag: string
+) {
+    logger.info({ source, dest });
+
+    if (source.host !== dest.host || source.instance !== dest.instance) {
+        throw createError(400, 'Creating sandbox for alternate host or instance is not supported!');
+    }
+
+    let [[srcResourceDetail], [destResourceDetail]] = await Promise.all([
+        listResources(accountId, source.host),
+        source.host === dest.host ? Promise.resolve([]) : listResources(accountId, dest.host)
+    ]);
+
+    if (source.host === dest.host) {
+        destResourceDetail = srcResourceDetail;
+    }
+
+    if (isEmpty(srcResourceDetail)) {
+        throw createError(HttpErrorCodes.NOT_FOUND, `No database host by id ${source.host} for ${accountId} is found.`);
+    }
+
+    if (isEmpty(destResourceDetail)) {
+        throw createError(HttpErrorCodes.NOT_FOUND, `No database host by id ${dest.host} for ${accountId} is found.`);
+    }
+
+    if (srcResourceDetail.co_relation_id !== destResourceDetail.co_relation_id) {
+        throw createError(
+            HttpErrorCodes.BAD_REQUEST,
+            'The source and destination host should be connected to the same FSx'
+        );
+    }
+
+    const { node1InstanceId: srcNode1, node2InstanceId: srcNode2 } = srcResourceDetail.metadata as unknown as Metadata;
+    const { node1InstanceId: destNode1, node2InstanceId: destNode2 } =
+        destResourceDetail.metadata as unknown as Metadata;
+
+    let [srcStatus, destStatus] = await Promise.all([
+        getActiveSqlNode(credentialsId, region, srcNode1, srcNode2),
+        source.host === dest.host
+            ? Promise.resolve(
+                  {} as {
+                      isSSMConnected: boolean;
+                      activeNodeInstanceId: string;
+                      standbyNodeInstanceId: string | undefined;
+                  }
+              )
+            : getActiveSqlNode(credentialsId, region, destNode1, destNode2)
+    ]);
+
+    if (source.host === dest.host) {
+        destStatus = srcStatus;
+    }
+
+    if (!srcStatus.isSSMConnected) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'SSM connection could not be established with the source host'
+        );
+    }
+
+    if (!destStatus.isSSMConnected) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'SSM connection could not be established with the destination host'
+        );
+    }
+
+    const job = await registerJob(accountId, credentialsId, region, {
+        name: `Create sandbox for database ${source.database}`,
+        description: `Create sandbox for database ${source.database} in host ${srcResourceDetail.resource_name}`,
+        resourceName: source.database,
+        initiator: 'SYSTEM',
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.CREATE_RESOURCE
+    });
+
+    const { fsxSvmId: sourceSvm } = srcResourceDetail.metadata as unknown as Metadata;
+    const { fsxSvmId: destSvm } = destResourceDetail.metadata as unknown as Metadata;
+
+    startSandboxCreation(
+        accountId,
+        credentialsId,
+        region,
+        job.id,
+        {
+            ...source,
+            resourceName: srcResourceDetail.resource_name!,
+            svm: sourceSvm!,
+            fsxId: srcResourceDetail.co_relation_id!,
+            activeNodeInstaceId: srcStatus.activeNodeInstanceId!,
+            metadata: srcResourceDetail.metadata as unknown as Metadata
+        },
+        {
+            ...dest,
+            resourceName: srcResourceDetail.resource_name!,
+            svm: destSvm!,
+            fsxId: destResourceDetail.co_relation_id!,
+            activeNodeInstaceId: destStatus.activeNodeInstanceId!,
+            metadata: destResourceDetail.metadata as unknown as Metadata
+        },
+        tag
+    );
+
+    return { jobId: job.id };
+}
+
+async function startSandboxCreation(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    srcDetails: HostAndDbInfo,
+    destDetails: HostAndDbInfo,
+    tag: string
+) {
+    logger.info('Start sandbox creation process', { tag });
+    let errorMsg;
+    let status;
+
+    let clonedVolumes;
+    let mountPaths;
+
+    try {
+        await validateCloneParams(accountId, credentialsId, region, parentJobId, srcDetails, destDetails);
+
+        const mappings = (await getMappings(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            srcDetails
+        )) as VolumeLunMapping;
+
+        logger.debug({ mappings });
+
+        clonedVolumes = (await createVolumeClone(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            srcDetails,
+            destDetails,
+            mappings
+        )) as ClonedVolumes;
+
+        mountPaths = (await invokeVirtualMount(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            srcDetails,
+            destDetails,
+            mappings,
+            clonedVolumes
+        )) as { dataPath: string; logPath: string };
+
+        await createCloneDb(accountId, credentialsId, region, parentJobId, destDetails, mountPaths, mappings.collation);
+
+        await createExtendedProperties(accountId, credentialsId, region, parentJobId, srcDetails, destDetails, tag);
+
+        status = JOBSTATUS.COMPLETED;
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            // this is used to retreive the newly created user databases in database list for demo using meta data
+            updateSandboxDBIntoResourceData(
+                accountId,
+                srcDetails.host,
+                destDetails.database,
+                `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`,
+                Date.now(),
+                tag,
+                srcDetails.metadata
+            );
+        }
+    } catch (e: any) {
+        logger.error(e);
+        errorMsg = e.message || 'Internal Server Error';
+        status = JOBSTATUS.FAILED;
+        if (clonedVolumes) {
+            startCleanup(
+                accountId,
+                credentialsId,
+                region,
+                srcDetails,
+                destDetails,
+                [clonedVolumes.data.volumeId, clonedVolumes.log.volumeId],
+                compact([mountPaths?.dataPath, mountPaths?.logPath])
+            );
+        }
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+            error: errorMsg,
+            status: status!,
+            endTime: Date.now()
+        });
+    }
+}
+
+async function validateCloneParams(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    srcDetails: HostAndDbInfo,
+    destDetails: HostAndDbInfo
+) {
+    logger.info('Validate clone params', { accountId, credentialsId, region, parentJobId, srcDetails, destDetails });
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errMsg;
+
+    const validationJob = await registerJob(accountId, credentialsId, region, {
+        description: `Validate it the sandbox ${destDetails.database} is already presesnt for source host ${srcDetails.resourceName} and database ${srcDetails.database} at destination host ${destDetails.resourceName}`,
+        startTime: Date.now(),
+        name: 'Validate if sandbox already exits',
+        status,
+        type: JOBTYPE.CREATE_RESOURCE,
+        resourceName: srcDetails.database,
+        parentJobId
+    });
+
+    try {
+        await checkDatabaseExists(
+            accountId,
+            credentialsId,
+            region,
+            destDetails.host,
+            destDetails.database,
+            destDetails.activeNodeInstaceId
+        );
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error(e);
+        errMsg = `Validate failed: ${e.message}`;
+        status = JOBSTATUS.FAILED;
+        throw createError(e.statusCode, errMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, validationJob.id, {
+            error: errMsg,
+            status,
+            endTime: Date.now()
+        });
+    }
+}
+
+async function getMappings(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    srcDetails: HostAndDbInfo
+) {
+    logger.info('Get volume mappings', { accountId, credentialsId, region, parentJobId, srcDetails });
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+
+    const mappingJob = await registerJob(accountId, credentialsId, region, {
+        description: `Get the volume lun mapping for the source database ${srcDetails.database} in host ${srcDetails.resourceName}`,
+        startTime: Date.now(),
+        name: 'Get volume lun mappings',
+        status,
+        type: JOBTYPE.CREATE_RESOURCE,
+        resourceName: srcDetails.database,
+        parentJobId
+    });
+
+    logger.info('MAPPING JOB ID>>', mappingJob.id);
+
+    try {
+        const { fsxId, database } = srcDetails;
+
+        let command = [getDbMappedOntapVolumes(fsxId, region, database)];
+
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            command = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
+        }
+
+        const mappings = await callSsmExecution(credentialsId, region, command, srcDetails.activeNodeInstaceId);
+
+        if (!mappings) {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                'Failed to get volume lun mapping for the database'
+            );
+        }
+
+        logger.info('MAPPINGS>>>', mappings);
+
+        status = JOBSTATUS.COMPLETED;
+        return sqlResponseParsing(mappings);
+    } catch (e: any) {
+        logger.error(e);
+
+        status = JOBSTATUS.FAILED;
+        errorMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, mappingJob.id, {
+            error: errorMsg,
+            status,
+            endTime: Date.now()
+        });
+    }
+}
+
+async function createVolumeClone(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    srcDetails: HostAndDbInfo,
+    destDetails: HostAndDbInfo,
+    mapping: VolumeLunMapping
+) {
+    logger.info('Create volume clone', {
+        accountId,
+        credentialsId,
+        region,
+        parentJobId
+    });
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+
+    const createVolumeCloneJob = await registerJob(accountId, credentialsId, region, {
+        description: `Create volume clone sandbox ${destDetails.database} from source volume`,
+        startTime: Date.now(),
+        name: 'Create volume clone for sandbox',
+        status,
+        type: JOBTYPE.CREATE_RESOURCE,
+        resourceName: srcDetails.database,
+        parentJobId
+    });
+
+    try {
+        let command = [
+            CreateVolumeCloneScript(
+                srcDetails.fsxId,
+                region,
+                mapping.svm,
+                mapping.data.volumeName,
+                mapping.data.lunPath,
+                mapping.log.volumeName,
+                mapping.log.lunPath,
+                mapping.svm
+            )
+        ];
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            command = [
+                CreateVolumeCloneScript(
+                    'test-fsx',
+                    'us-east-1',
+                    'wlmdb_sqlsvm_1714090636810',
+                    'wlmdb_sqldata_1714098400',
+                    '/vol/wlmdb_sqldata_1714098400/sqldata',
+                    'wlmdb_sqllog_1714098400',
+                    '/vol/wlmdb_sqllog_1714098400/sqllog',
+                    'wlmdb_sqlsvm_1714090636810'
+                )
+            ];
+        }
+
+        const clonedVolumes = await callSsmExecution(credentialsId, region, command, destDetails.activeNodeInstaceId);
+
+        if (!clonedVolumes) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to create clone volume');
+        }
+
+        logger.info('CLONE VOL RESP>>>>', clonedVolumes);
+        status = JOBSTATUS.COMPLETED;
+        return sqlResponseParsing(clonedVolumes);
+    } catch (e: any) {
+        status = JOBSTATUS.FAILED;
+        errorMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, createVolumeCloneJob.id, {
+            error: errorMsg,
+            status,
+            endTime: Date.now()
+        });
+    }
+}
+
+async function invokeVirtualMount(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    srcDetails: HostAndDbInfo,
+    destDetails: HostAndDbInfo,
+    mappings: VolumeLunMapping,
+    clonedVolumes: ClonedVolumes
+) {
+    logger.info('Invoke virtual mount', {
+        accountId,
+        credentialsId,
+        region,
+        parentJobId,
+        srcDetails,
+        destDetails,
+        mappings,
+        clonedVolumes
+    });
+
+    let retries = 3;
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+
+    const invokeMountJob = await registerJob(accountId, credentialsId, region, {
+        description: `Create virtual mount point for sandbox ${destDetails.database} in host ${destDetails.resourceName}`,
+        startTime: Date.now(),
+        name: 'Create virtual mount point',
+        status,
+        type: JOBTYPE.CREATE_RESOURCE,
+        resourceName: destDetails.database,
+        parentJobId
+    });
+
+    while (retries > 0) {
+        retries -= 1;
+
+        // its required to sleep for 30 seconds so that initialization script will go through.. the ontap LUN configure can take time depending on busy system for the multiple API calls, and the disk initialize may take time to discover the created LUNs
+        if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
+            await sleep(45000);
+        }
+
+        try {
+            let command = [
+                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${mappings.data.fileName}  -LogFilePath ${mappings.log.fileName}  -DataSerial ${clonedVolumes.data.lunSerialNumber} -LogSerial ${clonedVolumes.log.lunSerialNumber}`
+            ];
+
+            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+                command = [
+                    `${INVOKE_VIRTUAL_MOUNT} -DBName test-clone -DataFilePath D:\\MSSQL\\data\\testdb_data.mdf  -LogFilePath E:\\MSSQL\\log\\testdb_log.ldf  -DataSerial lWB44?VEq9vf -LogSerial lWB44?VEq9ve`
+                ];
+            }
+
+            const resp = await callSsmExecution(
+                credentialsId,
+                region,
+                command,
+                destDetails.activeNodeInstaceId,
+                accountId,
+                false,
+                CUSTOM_SSM_EXECUTION_TIMEOUT
+            );
+
+            if (!resp) {
+                throw createError(
+                    HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                    'Failed to get volume lun mapping for the database'
+                );
+            }
+
+            logger.info('VIRTUAL MOUNT RESP>>>', resp);
+            status = JOBSTATUS.COMPLETED;
+            return sqlResponseParsing(resp);
+        } catch (e: any) {
+            logger.error(e);
+            if (retries === 0) {
+                status = JOBSTATUS.FAILED;
+                errorMsg = e.message || 'Internal Server Error';
+                throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
+            }
+        } finally {
+            await updateJobDetails(accountId, credentialsId, region, invokeMountJob.id, {
+                error: errorMsg,
+                status,
+                endTime: Date.now()
+            });
+        }
+    }
+}
+
+async function createCloneDb(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    destDetails: HostAndDbInfo,
+    mountPaths: { dataPath: string; logPath: string },
+    collation?: string
+) {
+    logger.info(
+        'Create database clone',
+        accountId,
+        credentialsId,
+        region,
+        parentJobId,
+        destDetails,
+        mountPaths,
+        collation
+    );
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+
+    const createCloneDbJob = await registerJob(accountId, credentialsId, region, {
+        description: `Create clone database ${destDetails.database} on ${destDetails.host}`,
+        startTime: Date.now(),
+        name: 'Create clone database',
+        status,
+        type: JOBTYPE.CREATE_RESOURCE,
+        resourceName: destDetails.database,
+        parentJobId
+    });
+
+    try {
+        let command = [createCloneDbScript(destDetails.database, [mountPaths.dataPath, mountPaths.logPath])];
+
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            command = [
+                createCloneDbScript('testdb', [
+                    'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
+                    'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
+                ])
+            ];
+        }
+
+        await callSsmExecution(credentialsId, region, command, destDetails.activeNodeInstaceId);
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error(e);
+
+        status = JOBSTATUS.FAILED;
+        errorMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, createCloneDbJob.id, {
+            error: errorMsg,
+            status,
+            endTime: Date.now()
+        });
+    }
+}
+
+async function createExtendedProperties(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    srcDetails: HostAndDbInfo,
+    destDetails: HostAndDbInfo,
+    tag: string
+) {
+    logger.info('Add extended properteis', {
+        accountId
+    });
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+
+    const createExtendedPropertiesJob = await registerJob(accountId, credentialsId, region, {
+        description: `Add extended properties to database ${destDetails.database} on host ${destDetails.host}`,
+        startTime: Date.now(),
+        name: 'Add extended properties to sandbox',
+        status,
+        type: JOBTYPE.CREATE_RESOURCE,
+        resourceName: destDetails.database,
+        parentJobId
+    });
+
+    try {
+        let command = [
+            addExtendedProperties(destDetails.database, {
+                tag,
+                cloned_by: 'netapp_wlmdb',
+                source: `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}}`
+            })
+        ];
+
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            command = [
+                addExtendedProperties('testdb', {
+                    tag: 'demo',
+                    cloned_by: 'netapp_wlmdb',
+                    source: 'resource|instance|testdb'
+                })
+            ];
+        }
+        await callSsmExecution(credentialsId, region, command, destDetails.activeNodeInstaceId);
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error(e);
+
+        status = JOBSTATUS.FAILED;
+        errorMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, createExtendedPropertiesJob.id, {
+            error: errorMsg,
+            status,
+            endTime: Date.now()
+        });
+    }
+}
+
+async function startCleanup(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    srcDetails: HostAndDbInfo,
+    destDetails: HostAndDbInfo,
+    volumeIds: Array<string>,
+    filePaths: Array<string>
+) {
+    logger.info('Start cleanup', { accountId, credentialsId, region, srcDetails, destDetails, volumeIds, filePaths });
+
+    try {
+        let command = [
+            cleanUpOntapResources(
+                destDetails.fsxId,
+                region,
+                JSON.stringify(volumeIds),
+                JSON.stringify(filePaths),
+                destDetails.database
+            )
+        ];
+
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            command = [
+                cleanUpOntapResources(
+                    'test-fsx',
+                    'us-east-1',
+                    JSON.stringify(['5c1075d2-03a0-11ef-a514-55070fbfcab1', '5ace31ea-03a0-11ef-a514-55070fbfcab1']),
+                    JSON.stringify([
+                        'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
+                        'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
+                    ]),
+                    'testdb'
+                )
+            ];
+        }
+
+        const resp = await callSsmExecution(credentialsId, region, command, destDetails.activeNodeInstaceId);
+
+        if (!resp) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to cleanup');
+        }
+
+        logger.info('RESP>>', resp);
+        return sqlResponseParsing(resp);
+    } catch (e) {
+        logger.error(`Failed to perform cleanup for sandbox ${destDetails.database}`);
+    }
+}
+
+export {
+    getSandboxesInfo,
+    getSandboxSavings,
+    updateMetadataForSanboxTesting,
+    revertMetadataForSanboxTesting,
+    createSandbox
+};

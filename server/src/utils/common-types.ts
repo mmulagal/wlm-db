@@ -9,6 +9,7 @@ interface Metadata {
     fsxSvmId?: string;
     // this is used to retreive the newly created user databases in database list for demo
     userDatabase?: Array<UserDatabase>;
+    sandboxes?: Array<Sandbox>;
     createDbMetrics?: CreateDbMetrics;
     sandboxCreated?: boolean;
     updatedManually?: boolean;
@@ -30,6 +31,15 @@ interface UserDatabase {
     status: string;
     type: string;
     protection: { isAwsBackupEnabled: IsAWSBackup; isFsxOntapSnapshotsEnabled: boolean; isSqlNativeEnabled: boolean };
+}
+
+interface Sandbox {
+    name: string;
+    type: string;
+    status: string;
+    creationDate: Date;
+    tag: string;
+    source: string;
 }
 
 interface ResourceDetails {
