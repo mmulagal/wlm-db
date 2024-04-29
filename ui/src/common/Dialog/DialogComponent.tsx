@@ -50,9 +50,7 @@ const DialogComponent = ({
     const primaryButtonLoad = (() => {
         return (
             (dialogFrom === FROM_DIALOG.LOAD_CONFIG && isLoadConfig) ||
-            ((dialogFrom === FROM_DIALOG.SAVE_CONFIG ||
-                dialogFrom === FROM_DIALOG.EXPLORE_SAVE_CONFIG ||
-                dialogFrom === FROM_DIALOG.HEADER_CROSS) &&
+            ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom === FROM_DIALOG.HEADER_CROSS) &&
                 isSaveConfigLoading) ||
             (dialogFrom === FROM_DIALOG.DETECT_HOST && detectHostLoading)
         );
@@ -65,8 +63,7 @@ const DialogComponent = ({
             dialogFrom !== FROM_DIALOG.LOAD_CONFIG &&
             dialogFrom !== FROM_DIALOG.SAVE_CONFIG &&
             dialogFrom !== FROM_DIALOG.HEADER_CROSS &&
-            dialogFrom !== FROM_DIALOG.DETECT_HOST &&
-            dialogFrom !== FROM_DIALOG.EXPLORE_SAVE_CONFIG
+            dialogFrom !== FROM_DIALOG.DETECT_HOST
         ) {
             closeDialog();
         }
@@ -80,9 +77,7 @@ const DialogComponent = ({
 
     const disabledCheck = () => {
         return (
-            ((dialogFrom === FROM_DIALOG.SAVE_CONFIG ||
-                dialogFrom === FROM_DIALOG.EXPLORE_SAVE_CONFIG ||
-                dialogFrom === FROM_DIALOG.HEADER_CROSS) &&
+            ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom === FROM_DIALOG.HEADER_CROSS) &&
                 saveConfigName === '' &&
                 saveConfigFromSaving === '') ||
             (dialogFrom === FROM_DIALOG.LOAD_CONFIG && (!configData || configData.length === 0))

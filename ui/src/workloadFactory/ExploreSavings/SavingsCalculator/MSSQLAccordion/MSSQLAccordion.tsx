@@ -118,7 +118,7 @@ const MSSQLAccordion = ({ printState }: any) => {
                         <DsButton
                             type="text"
                             isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
-                            onClick={() => handleSaveConfiguration(FROM_DIALOG.EXPLORE_SAVE_CONFIG)}
+                            onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
                         >
                             {GENERAL.ES_SAVE_CONFIG}
                         </DsButton>

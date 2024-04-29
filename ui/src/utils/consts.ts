@@ -107,8 +107,7 @@ export const FROM_DIALOG = {
     LOAD_CONFIG: 'load_config',
     SAVE_CONFIG: 'save_config',
     HEADER_CROSS: 'header_cross',
-    DETECT_HOST: 'detect_host',
-    EXPLORE_SAVE_CONFIG: 'explore_save_config'
+    DETECT_HOST: 'detect_host'
 };
 
 export const API_NAME = {
