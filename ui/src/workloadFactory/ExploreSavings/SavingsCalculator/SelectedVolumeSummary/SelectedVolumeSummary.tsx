@@ -62,13 +62,23 @@ const SelectedVolumeSummary = () => {
         }
     ];
 
-    const getColumnsList = (volTypeList: Array<String>, colWidth: string) => {
+    const getColumnsList = (volTypeList: Array<String>, colWidth: string, ebsAvailable: any) => {
         let colList = [];
         colList.push({
             Header: 'Details',
             accessor: 'details',
             id: '1',
-            width: '190px'
+            width: ebsAvailable.length === 0 ? '576px' : '190px',
+            renderCell: (cellData: any, rowData: any) => {
+                return ebsAvailable.length === 0 ? (
+                    <DsTypography variant="Regular_14" style={{ minWidth: '146px', display: 'flex', gap: '24px' }}>
+                        <div style={{ width: '250px' }}>{rowData.details}</div>
+                        <DsTypography variant="Regular_14">N/A</DsTypography>
+                    </DsTypography>
+                ) : (
+                    <DsTypography variant="Regular_14">{rowData.details}</DsTypography>
+                );
+            }
         });
         let id = 2;
         volTypeList?.map(volType => {
@@ -96,7 +106,7 @@ const SelectedVolumeSummary = () => {
         // This demo response will be removed once API starts returning demo data
         if (isDemoMode) {
             setLoading(false);
-            getColumnsList(['gp3', 'gp2', 'io1', 'io2'], '96.5px');
+            getColumnsList(['gp3', 'gp2', 'io1', 'io2'], '96.5px', true);
             setTableData([
                 { details: 'Total volumes', gp3: 10, gp2: 10, io1: 10, io2: 10, id: '1' },
                 {
@@ -147,7 +157,7 @@ const SelectedVolumeSummary = () => {
         });
 
         const colWidth = getColumnsWidth(volTypeList);
-        getColumnsList(volTypeList, colWidth);
+        getColumnsList(volTypeList, colWidth, selectedHostDetails?.ebsResourceInfo);
 
         setTimeout(() => {
             storageAmount = Object.keys(storageAmount).reduce((newObj: any, key) => {

@@ -233,4 +233,34 @@ async function updateUserDBIntoResourceData(
     await updateResourceMetaData(accountId, resourceId, metaData);
 }
 
-export { createFileSystemForDemo, createDeploymentMockDataInDB, updateUserDBIntoResourceData };
+async function updateSandboxDBIntoResourceData(
+    accountId: string,
+    resourceId: string,
+    databaseName: string,
+    databaseSource: string,
+    createDate: number,
+    tag: string,
+    metaData: Metadata
+) {
+    logger.info('updating sandbox db into resource meta data', accountId, resourceId, databaseName);
+
+    // this is used to retreive the newly created user databases in database list for demo using meta data
+    const sandboxDetails = {
+        name: databaseName,
+        type: MSSQL_DATABASE_TYPES.USER,
+        status: ONLINE,
+        creationDate: new Date(createDate),
+        tag,
+        source: databaseSource
+    };
+    metaData.sandboxes = [...(metaData.sandboxes || []), sandboxDetails];
+
+    await updateResourceMetaData(accountId, resourceId, metaData);
+}
+
+export {
+    createFileSystemForDemo,
+    createDeploymentMockDataInDB,
+    updateUserDBIntoResourceData,
+    updateSandboxDBIntoResourceData
+};

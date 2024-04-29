@@ -21,6 +21,7 @@ import {
     setSourceDbInstance
 } from '../../../../../store/workloadFactory/createSandboxSlice';
 import { GENERAL } from '../../../../../utils/appConstants';
+import { STATUS_CONST } from '../../../../../utils/consts';
 
 const SelectSource = () => {
     const windowSize = useResize();
@@ -60,8 +61,10 @@ const SelectSource = () => {
     const generateHostName = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         aggregatedDbHostList?.map((obj, idx: number) => {
-            const option = generateOptionType(obj?.id, obj?.name, '', false, '', obj);
-            options.push(option);
+            if (obj.status === STATUS_CONST.UP) {
+                const option = generateOptionType(obj?.id, obj?.name, '', false, '', obj);
+                options.push(option);
+            }
         });
 
         return options;
