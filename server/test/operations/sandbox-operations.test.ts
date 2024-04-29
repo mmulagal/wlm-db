@@ -7,7 +7,7 @@ import '../simulator/scopes/opentelemetry-scope';
 import '../simulator/scopes/aws/ssm-scope';
 import { ACCOUNT_ID } from '../../src/utils/consts';
 import { createResource, deleteResource } from '../../src/lib/database/db';
-import { getSandboxesInfo } from '../../src/operations/sandbox-operations';
+import { createSandbox, getSandboxSavings, getSandboxesInfo } from '../../src/operations/sandbox-operations';
 import sandboxResponse from '../simulator/responses/workload/sandbox-response.json';
 
 beforeAll(async () => {
@@ -38,5 +38,32 @@ describe('sandbox operations ', () => {
     it('Get sandbox details for all resources', async () => {
         const resp = await getSandboxesInfo(ACCOUNT_ID, 'f6082f35-c1db-4619-bb5c-84bcb5bf3286', 'ap-southeast-1');
         expect(resp).toEqual(sandboxResponse.getSandboxDetailsResponse);
+    });
+
+    it('Get the storage savings for cloned resources', async () => {
+        const resp = await getSandboxSavings(ACCOUNT_ID, 'f6082f35-c1db-4619-bb5c-84bcb5bf3286', 'ap-southeast-1');
+        expect(Object.keys(resp).sort()).toEqual(
+            ['consumedStorage', 'sandboxSavingsPercentage', 'savedStorage'].sort()
+        );
+    });
+
+    it('create sandbox', async () => {
+        const resp = await createSandbox(
+            ACCOUNT_ID,
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
+            {
+                host: '36E53042-04E8-40C9-AE69-26E56CB0D216',
+                instance: 'default',
+                database: 'testdb1'
+            },
+            {
+                host: '36E53042-04E8-40C9-AE69-26E56CB0D216',
+                instance: 'default',
+                database: 'testdb1'
+            },
+            'other'
+        );
+        expect(resp.jobId).toBeDefined();
     });
 });

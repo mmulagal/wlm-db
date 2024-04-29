@@ -279,6 +279,34 @@ const DriveInfoResponseBody = Type.Object({
 });
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
 
+const DatabaseHostsParamsWithRegion = Type.Object({
+    accountId: Type.String(),
+    credentialsId: Type.String(),
+    region: Type.String()
+});
+
+const DatabaseHostSummaryParamsWithRegion = Type.Object({
+    accountId: Type.String({ minLength: 1 }),
+    databaseHostId: Type.String({ minLength: 1 }),
+    credentialsId: Type.String(),
+    region: Type.String()
+});
+type DatabaseHostSummaryParamsWithRegionType = Static<typeof DatabaseHostSummaryParamsWithRegion>;
+
+const CloneDatabaseHostBody = Type.Object({
+    source: Type.Object({
+        host: Type.String(), // ec2 instance
+        instance: Type.String(), // sql server instance - ideally only one would be there
+        database: Type.String() // database inside sql server instance
+    }),
+    destination: Type.Object({
+        host: Type.String(), // ec2 instance
+        instance: Type.String(), // sql server - ideally only one would be there
+        database: Type.String() // database
+    }),
+    tag: Type.String()
+});
+type CloneDatabaseHostBodyType = Static<typeof CloneDatabaseHostBody>;
 const CollationInfoResponseBody = Type.Object({
     collationList: Type.Array(
         Type.Object({
@@ -366,6 +394,11 @@ export {
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
     FileConfigType,
+    DatabaseHostsParamsWithRegion,
+    DatabaseHostSummaryParamsWithRegion,
+    DatabaseHostSummaryParamsWithRegionType,
+    CloneDatabaseHostBody,
+    CloneDatabaseHostBodyType,
     CollationInfoResponseBodyType,
     CollationInfoResponseBody,
     SandboxSavingsResponseBody,

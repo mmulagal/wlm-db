@@ -8,6 +8,7 @@ import {
     DatabaseHostsSummarySchema,
     DatabasesCreateSchema,
     GetDriveInfoSchema,
+    CloneDatabaseHostSchema,
     GetCollationDetailsSchema,
     GetSandboxSavingsSchema,
     GetSandboxesInfoSchema,
@@ -15,6 +16,7 @@ import {
     RevertPatchResourceForSandboxSchema
 } from './schemas/database-hosts-schemas';
 import {
+    createSandbox,
     getSandboxesInfo,
     getSandboxSavings,
     revertMetadataForSanboxTesting,
@@ -153,5 +155,13 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 const response = await revertMetadataForSanboxTesting(accountId, credentialsId, region);
                 return reply.send(response);
             }
-        );
+        )
+        .post(`${API_PREFIX_PATH}/sandbox`, { schema: CloneDatabaseHostSchema }, async (request, reply) => {
+            const {
+                params: { accountId, credentialsId, region },
+                body: { source, destination, tag }
+            } = request;
+            const response = await createSandbox(accountId, credentialsId, region, source, destination, tag);
+            return reply.send(response);
+        });
 }

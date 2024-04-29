@@ -129,8 +129,8 @@ async function registerJobs(accountId: string, credentialsId: string, region: st
 async function registerJob(accountId: string, credentialsId: string, region: string, job: JobRecordType) {
     logger.info('Registering job', { accountId, credentialsId, region, job });
 
-    const jobToCreate = formatJobDbSchema(accountId, credentialsId, region, job);
-    return createJob(accountId, jobToCreate);
+    const jobToCreate = await createJob(accountId, formatJobDbSchema(accountId, credentialsId, region, job));
+    return formatJob(jobToCreate);
 }
 
 async function getJobs(accountId: string, credentialsId: string, region: string, filterParams: ListJobsQueryType = {}) {

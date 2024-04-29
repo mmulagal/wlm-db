@@ -16,7 +16,7 @@ param(
     [string]$LogSerial
 )
 
-$null = (Start-Transcript -Path C:\cfn\log\NewDB_initializeiscsi.log.txt -Append)
+$null = (Start-Transcript -Path C:\cfn\log\invoke_virtualmount.log.txt -Append)
 $ErrorActionPreference = "Stop"
 
 try {
@@ -24,7 +24,7 @@ try {
 
     if ($DataFilePath -eq $null -or $LogFilePath -eq $null -or $DataSerial -eq $null -or $LogSerial -eq $null){
         write-debug "DataFilePath: $DataFilePath LogFilePath: $LogFilePath DataSerial: $DataSerial LogSerial: $LogSerial"
-        throw "DataFilePath or LogFilePath DataSerial or LogSerial is null"
+        throw "DataFilePath or LogFilePath or DataSerial or LogSerial is null"
     }
 
     $null =(echo "RESCAN" | diskpart )
@@ -57,18 +57,18 @@ try {
     #If warning is indeed serious the next step to initialize will fail and that will be caught
     $disklist | ForEach-Object {
         $disk = $_
-        if ($disk.IsOffline -ne $False) {
-            Set-Disk -Number $disk.Number -IsOffline $False -ErrorAction SilentlyContinue
-            Start-Sleep 2
-        }
-
-        if ($disk.PartitionStyle -ne 'GPT') {
-            Set-Disk -Number $disk.Number -PartitionStyle GPT -ErrorAction SilentlyContinue
-            Start-Sleep 2
-        }
-
         if ($disk.IsReadOnly -ne $False) {
-            Set-Disk -Number $disk.Number -IsReadOnly $False -ErrorAction SilentlyContinue
+            Set-Disk -Number $disk.Number -IsReadOnly $False
+            Start-Sleep 2
+        }
+
+        if ($disk.IsOffline -ne $False) {
+            Set-Disk -Number $disk.Number -IsOffline $False
+            Start-Sleep 2
+        }
+
+        if ($disk.PartitionStyle -eq 'RAW') {
+            Set-Disk -Number $disk.Number -PartitionStyle GPT
             Start-Sleep 2
         }
     }
@@ -76,6 +76,7 @@ try {
     write-debug "Error: $_.Exception"
     $responseObject['error'] = $_.Exception.Message
     $responseObject['message'] = 'Failed to modify disks'
+    return ($responseObject | ConvertTo-Json -Depth 5)
 } 
 
 try {
@@ -86,22 +87,26 @@ try {
     $datadisknumber = ($disklist | Where-Object { $_.SerialNumber -eq $DataSerial }).Number
     $logdisknumber = ($disklist | Where-Object { $_.SerialNumber -eq $LogSerial }).Number
 
-    $dataPartition = Get-Partition -DiskNumber $datadisknumber
-    $logPartition = Get-Partition -DiskNumber $logdisknumber
+    $dataPartition = Get-Partition -DiskNumber $datadisknumber | Where-Object Type -eq Basic
+    $logPartition = Get-Partition -DiskNumber $logdisknumber | Where-Object Type -eq Basic
 
     write-debug "DataAccessPaths: $($dataPartition.AccessPaths)"
     write-debug "LogAccessPaths: $($logPartition.AccessPaths)"
+    write-debug "DataFolder: $datafolder $logfolder"
 
     if ($dataPartition.AccessPaths -notcontains $datafolder + '\') {
-        $null = $dataPartition | Where-Object Type -eq Basic | Add-PartitionAccessPath -AccessPath $datafolder
+        $null = Add-PartitionAccessPath -DiskNumber $datadisknumber -PartitionNumber ($dataPartition).PartitionNumber -AccessPath $datafolder
+        $null = Set-Partition -DiskNumber $datadisknumber -PartitionNumber ($dataPartition).PartitionNumber -NoDefaultDriveLetter $true 
     }
 
     if ($logPartition.AccessPaths -notcontains $logfolder + '\') {
-        $null = $logPartition | Where-Object Type -eq Basic | Add-PartitionAccessPath -AccessPath $logfolder
+        $null = Add-PartitionAccessPath -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logfolder
+        $null = Set-Partition -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -NoDefaultDriveLetter $true 
     }
 
-    Get-Partition | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
-        $dataPartition.AccessPaths | ForEach-Object {
+    Get-Partition | Where-Object Type -eq Basic | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
+        $partition = $_
+        $partition.AccessPaths | ForEach-Object {
             $accessPath = $_
             write-debug "AccessPath: $accessPath"
             if ($accessPath) {
@@ -109,23 +114,21 @@ try {
                 write-debug "Matched: $matched"
                 if ($matched -eq $True) {
                     $accessDrive = $matches[0]
-                    $null = ($dataPartition | Remove-PartitionAccessPath -AccessPath $accessDrive)
+                    $null = ($partition | Remove-PartitionAccessPath -AccessPath $accessDrive)
                 }
             }
         }
     }
 
-    $dataPartition | Get-Volume | Set-Volume -NewFileSystemLabel $datalabel
-    $logPartition | Get-Volume | Set-Volume -NewFileSystemLabel $loglabel
-
-    Start-Service -Name ShellHWDetection
+    Get-Partition -DiskNumber $datadisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $datalabel
+    Get-Partition -DiskNumber $logdisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $loglabel
 
     $newDataFilePath = $datafolder + (Split-Path -Path $DataFilePath -NoQualifier)
     $newLogFilePath = $logfolder + (Split-Path -Path $LogFilePath -NoQualifier)
 
     if ((Test-Path $newDataFilePath) -and (Test-Path $newLogFilePath)) {
-        $responseObject['datapath'] = $newDataFilePath
-        $responseObject['logpath'] = $newLogFilePath
+        $responseObject['dataPath'] = $newDataFilePath
+        $responseObject['logPath'] = $newLogFilePath
     } else {
         $responseObject['error'] = 'Failed to validate newpaths $newDataFilePath $newLogFilePath'
     }
@@ -134,7 +137,10 @@ try {
 } catch {
     write-debug "Error: $_.Exception"
     $responseObject['error'] = $_.Exception.Message
-    $responseObject['message'] = 'Failed to initialize disks'    
+    $responseObject['message'] = 'Failed to initialize disks'
+    return ($responseObject | ConvertTo-Json -Depth 5)
+} finally {
+    Start-Service -Name ShellHWDetection
 }
 
 try {
