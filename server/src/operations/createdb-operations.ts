@@ -542,7 +542,13 @@ async function invokeSSMForDatabaseDeployment(
             const standbyIqn = standbyIqnResponse ? standbyIqnResponse.replaceAll('\r\n', '') : undefined;
             // New Drive selected, Will execute all the 3 scripts
             const {
-                Resources: { Igroup: iGroup, FSxDataVolumeName: fsxDataVolumeName, FSxLogVolumeName: fsxLogVolumeName }
+                Resources: {
+                    Igroup: iGroup,
+                    FSxDataVolumeName: fsxDataVolumeName,
+                    FSxLogVolumeName: fsxLogVolumeName,
+                    DataSerial: dataSerial,
+                    LogSerial: LogSerial
+                }
             } = await configureLuns(
                 accountId,
                 credentialsId,
@@ -578,7 +584,9 @@ async function invokeSSMForDatabaseDeployment(
                 (!isDataDriveExists).toString(),
                 iGroup,
                 fsxDataVolumeName,
-                fsxLogVolumeName
+                fsxLogVolumeName,
+                dataSerial,
+                LogSerial
             );
 
             await createDatabase(
@@ -798,7 +806,7 @@ async function configureLuns(
         ];
     } else if (standbyIqn) {
         configureLuncommands = [
-            `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CONFIGURELUNSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataLunSize ${dataVolumeSize}  -FSxLogLunSize ${logVolumeSize} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists}} -StandbyIQN ${standbyIqn}`
+            `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CONFIGURELUNSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataLunSize ${dataVolumeSize}  -FSxLogLunSize ${logVolumeSize} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists} -StandbyIQN ${standbyIqn}}`
         ];
     } else {
         configureLuncommands = [
@@ -879,7 +887,9 @@ async function newDBInitialization(
     isDataDriveExists: string,
     iGroup: string,
     fsxDataVolumeName: string,
-    fsxLogVolumeName: string
+    fsxLogVolumeName: string,
+    dataSerial: string,
+    logSerial: string
 ) {
     logger.info('Initialising new database', {
         accountId,
@@ -896,7 +906,9 @@ async function newDBInitialization(
         isDataDriveExists,
         iGroup,
         fsxDataVolumeName,
-        fsxLogVolumeName
+        fsxLogVolumeName,
+        dataSerial,
+        logSerial
     });
 
     let dbInitializecommands;
@@ -906,7 +918,7 @@ async function newDBInitialization(
         ];
     } else {
         dbInitializecommands = [
-            `${INITIALIZEDBSCRIPT} -DBName ${databaseName}  -IsClustered ${isClustered}  -DataDrive ${dataDrive}  -LogDrive ${logDrive} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists}`
+            `${INITIALIZEDBSCRIPT} -DBName ${databaseName}  -IsClustered ${isClustered}  -DataDrive ${dataDrive}  -LogDrive ${logDrive} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists} -DataSerial '${dataSerial}' -LogSerial '${logSerial}'`
         ];
     }
 

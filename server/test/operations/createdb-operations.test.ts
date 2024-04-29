@@ -52,7 +52,9 @@ const reqData = {
     sqlVMName: 'wlmdb_sqlsvm_1708791218786',
     isClustered: 'false',
     dataDrive: 'J',
-    logDrive: 'K'
+    logDrive: 'K',
+    dataSerial: 'lWB2/$WRmB4k',
+    logSerial: 'lWB2/$WRmB4l'
 };
 
 beforeAll(async () => {
@@ -157,7 +159,9 @@ describe('Create database operations', () => {
             'true',
             reqData.iGroup,
             reqData.fsxDataVolumeName,
-            reqData.fsxLogVolumeName
+            reqData.fsxLogVolumeName,
+            reqData.dataSerial,
+            reqData.logSerial
         );
 
         expect(resp.Status).toBe('Complete');
