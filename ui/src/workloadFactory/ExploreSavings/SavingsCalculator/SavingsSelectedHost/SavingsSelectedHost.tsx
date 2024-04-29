@@ -19,7 +19,7 @@ const SavingsSelectedHost = () => {
                             variant="Semibold_14"
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
                         >
-                            {selectedHostDetails?.databaseServerName || GENERAL.NOT_AVAILABLE}
+                            {selectedHostDetails?.databaseServer?.activeNode || GENERAL.NOT_AVAILABLE}
                         </DsTypography>
                     )}
                     {selectedHostDetails?.loading && (
