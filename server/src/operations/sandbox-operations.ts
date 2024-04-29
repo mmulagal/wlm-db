@@ -56,7 +56,7 @@ async function getSandboxDetails(
 ) {
     logger.info('Get sandbox details of host:', resourceDetails.resource_id, accountId, credentialsId, region);
     const { metadata, resource_id: resourceId } = resourceDetails;
-    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+    const { node1InstanceId, node2InstanceId, sandboxes } = metadata as unknown as Metadata;
 
     const { isSSMConnected, activeNodeInstanceId } = await getActiveSqlNode(
         credentialsId,
@@ -87,8 +87,8 @@ async function getSandboxDetails(
         let parsedResponse;
         try {
             parsedResponse = sqlResponseParsing(response);
-        } catch (error) {
-            return errorResponse(error);
+        } catch (error: any) {
+            return errorResponse(error.toString());
         }
         if (parsedResponse?.Error) {
             const errorMessage = `Error fetching sandbox details for host: ${resourceId},${parsedResponse.Instance},${accountId}${parsedResponse?.Error}.`;
@@ -111,7 +111,7 @@ async function getSandboxDetails(
                 sandbox_properties: { name: string; value: string }[];
             }[] = sqlResponseParsing(finalSandboxDetails);
 
-            const sandboxInfo: SandboxInfoResponseType[] = [];
+            let sandboxInfo: SandboxInfoResponseType[] = [];
 
             parsedSandboxDetails.forEach(item => {
                 const sources = getSourceDetails(item);
@@ -131,6 +131,25 @@ async function getSandboxDetails(
                 sandboxInfo.push(databaseObject);
             });
 
+            if ((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && sandboxes) {
+                const demoSandboxInfo = sandboxes.map(item => {
+                    const databaseObject = {
+                        sandboxName: item.databaseName,
+                        databaseHostName: resourceDetails.resource_name!,
+                        databaseHostId: resourceDetails.resource_id!,
+                        databaseInstanceName: DEFAULT_INSTANCE_NAME,
+                        sourceDatabaseHostName: item.source.split('|')[0],
+                        sourceDatabaseInstanceName: item.source.split('|')[1],
+                        sourceDatabaseName: item.source.split('|')[2],
+                        creationTime: item.initialCreationDate,
+                        tag: item.tag
+                    };
+                    return databaseObject;
+                });
+                if (demoSandboxInfo.length > 0) {
+                    sandboxInfo = sandboxInfo.concat(demoSandboxInfo);
+                }
+            }
             return sandboxInfo;
         } catch (error) {
             return errorResponse(error);
@@ -575,7 +594,7 @@ async function startSandboxCreation(
                 srcDetails.host,
                 destDetails.database,
                 `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`,
-                Date.now(),
+                Date.now().toString(),
                 tag,
                 srcDetails.metadata
             );
@@ -928,6 +947,7 @@ async function createCloneDb(
         }
 
         await callSsmExecution(credentialsId, region, command, destDetails.activeNodeInstaceId);
+
         status = JOBSTATUS.COMPLETED;
     } catch (e: any) {
         logger.error(e);

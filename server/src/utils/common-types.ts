@@ -34,12 +34,10 @@ interface UserDatabase {
 }
 
 interface Sandbox {
-    name: string;
-    type: string;
-    status: string;
-    creationDate: Date;
-    tag: string;
+    databaseName: string;
+    initialCreationDate: string;
     source: string;
+    tag: string;
 }
 
 interface ResourceDetails {
