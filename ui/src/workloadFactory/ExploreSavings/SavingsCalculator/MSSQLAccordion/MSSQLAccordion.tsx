@@ -1,6 +1,6 @@
 import { DsAccordion, DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import styles from './MSSQLAccordion.module.scss';
-import { MSSQLServerInstance, calculatedFSXData } from '../savingsUtil';
+import { ExploreSaveConfiguration, MSSQLServerInstance, calculatedFSXData, setRecommendedConfig } from '../savingsUtil';
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { useNavigate } from 'react-router-dom';
 import { Text } from '../../../../ui-components/Typography';
@@ -10,6 +10,11 @@ import { GENERAL } from '../../../../utils/appConstants';
 import SaveConfigSavings from './SaveCongfigSavings/SaveCongfigSavings';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
+import { setSaveConfigName } from '../../../../store/workloadFactory/exploreSavingsSlice';
+import { useDispatch } from 'react-redux';
+import { useSaveConfigDataMutation } from '../../../../utils/apiService';
+import { LoadRecommendedConfig } from '../../../../components/CreateMsSql/Configuration/LoadConfiguration';
+import { setIsLoadConfig, setIsLoading } from '../../../../store/mssql/msSqlActionSlice';
 
 const TableLayout = ({ data }: any) => {
     return (
@@ -29,6 +34,8 @@ const TableLayout = ({ data }: any) => {
 
 const MSSQLAccordion = ({ printState }: any) => {
     const isMutliFsx = false;
+    const dispatch = useDispatch();
+    const [saveConfigData] = useSaveConfigDataMutation();
     const { storageSavingsLoading, storageSavingsResponse, selectedHostDetails } = useAppSelector(
         state => state.exploreSavings
     );
@@ -66,15 +73,26 @@ const MSSQLAccordion = ({ printState }: any) => {
                 }
                 primaryButton={GENERAL.SAVE}
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => console.log('saved')}
+                callback={() => ExploreSaveConfiguration(dispatch, saveConfigData, closeDialog, msSqlInstance, fsxData)}
                 closeCallback={() => {
-                    // dispatch(setSaveConfigName(''));
+                    dispatch(setSaveConfigName(''));
                 }}
                 dialogFrom={dialogFrom}
                 customClass={styles.setWidth}
             />
         );
     };
+
+    const handleCreateClick = () => {
+        dispatch(setIsLoading(true));
+        dispatch(setIsLoadConfig(true));
+        navigate(WLF_TO_FORM_NAVIGATE);
+        setTimeout(() => {
+            const data = setRecommendedConfig(msSqlInstance, fsxData);
+            LoadRecommendedConfig(dispatch, data);
+        }, 10);
+    };
+
     return (
         <div className={styles.mssqlAccordion}>
             <DsAccordion
@@ -110,7 +128,7 @@ const MSSQLAccordion = ({ printState }: any) => {
                         <DsButton
                             type="button"
                             isDisabled={isMutliFsx || storageSavingsLoading || selectedHostDetails?.loading}
-                            onClick={() => navigate(WLF_TO_FORM_NAVIGATE)}
+                            onClick={() => handleCreateClick()}
                         >
                             Create
                         </DsButton>

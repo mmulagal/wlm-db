@@ -1,11 +1,11 @@
-import { FlashingDotsLoader, Table, Typography, useTable } from '@netapp/design-system';
+import { Table, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
 import styles from './SelectedVolumeSummary.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
-import { formatFractionalNumber } from '../../../../utils/utilityFunctions';
+import { formatSizeOnePrecision } from '../../../../utils/utilityFunctions';
 
 const SelectedVolumeSummary = () => {
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
@@ -165,7 +165,7 @@ const SelectedVolumeSummary = () => {
                     newObj[key] = storageAmount[key];
                     return newObj;
                 } else {
-                    newObj[key] = formatFractionalNumber(storageAmount[key], 2) + ' GiB';
+                    newObj[key] = formatSizeOnePrecision(storageAmount[key]);
                     return newObj;
                 }
             }, {});

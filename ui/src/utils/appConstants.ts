@@ -787,7 +787,7 @@ export const GENERAL = {
     ES_SAVINGS: 'Explore savings',
     INSTANCE_INFORMATION: 'Instance information:',
     ES_SAVE_CONFIG: 'Save configuration',
-    ES_SAVE_ERROR: 'This configuration can not be save',
+    ES_SAVE_ERROR: 'This configuration can not be saved',
     MS_SQL_TWO_INSTANCES: 'Microsoft SQL Server EC2 instance - 2 instances',
     MS_SQL_SINGLE_INSTANCES: 'Microsoft SQL Server EC2 instance',
     SAVINGS_HEADER: 'Microsoft SQL server on Amazon Elastic Block Store (EBS) configuration.',
