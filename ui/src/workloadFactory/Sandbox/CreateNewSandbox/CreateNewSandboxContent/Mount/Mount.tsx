@@ -56,6 +56,7 @@ const Mount = () => {
                                 id="2"
                                 variant="Default"
                                 onClick={() => handleRadio(GENERAL.DEFINE_MOUNT_POINT_PATH)}
+                                isDisabled={true}
                             />
                         </div>
                         <div className={styles.textField}>

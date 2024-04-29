@@ -27,9 +27,11 @@ const SelectSource = () => {
     const windowSize = useResize();
     const accordionContext = useAccordionContext()?.setOpenChildren!;
     const {
-        isDBNameAdded,
+        isSourceSelected,
+        isTargetSelected,
         isMountPathAdded,
         isCreateSandboxPressed,
+        showError,
         getDatabaseHosts,
         getDatabaseList,
         aggregatedDbHostList
@@ -48,14 +50,15 @@ const SelectSource = () => {
     }, []);
 
     useEffect(() => {
-        if (isCreateSandboxPressed && (!isDBNameAdded || isMountPathAdded)) {
+        if (isCreateSandboxPressed && (!isSourceSelected || !isTargetSelected || isMountPathAdded)) {
             accordionContext({
-                2: !isDBNameAdded ? true : false,
+                1: !isSourceSelected ? true : false,
+                2: !isTargetSelected ? true : false,
                 3: !isMountPathAdded ? true : false
             });
             dispatch(setCreateSandboxPressed(false));
         }
-    }, [accordionContext, isCreateSandboxPressed, isDBNameAdded, isMountPathAdded]);
+    }, [accordionContext, isCreateSandboxPressed, isSourceSelected, isTargetSelected, isMountPathAdded]);
 
     //Function to generate the options for Select Field
     const generateHostName = useMemo<optionType[]>((): optionType[] => {
@@ -72,10 +75,10 @@ const SelectSource = () => {
     }, [aggregatedDbHostList]);
 
     const generateSourceInstance = useMemo<optionType[]>((): optionType[] => {
-        const hostName = ['default'];
+        const hostName = [{ label: 'MS SQL SERVER', value: 'MSSQLSERVER' }];
         const options: optionType[] = [];
-        hostName?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+        hostName?.map((obj, idx: number) => {
+            const option = generateOptionType(obj?.value, obj?.label, '', false, '');
             options.push(option);
         });
 
@@ -93,6 +96,7 @@ const SelectSource = () => {
         return options;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseListData]);
+
     useEffect(() => {
         if (
             source.selectedDatabaseHost === null &&
@@ -107,6 +111,7 @@ const SelectSource = () => {
             dispatch(setSourceDatabase(generateSourceDatabase[0]));
         }
     }, [generateSourceInstance, generateSourceDatabase, generateHostName]);
+
     const setHeader = () => {
         return (
             <DsTypography
@@ -142,7 +147,6 @@ const SelectSource = () => {
                                 <SelectField
                                     label={GENERAL.SOURCE_HOST}
                                     isClearable={false}
-                                    defaultValue={selectedDatabaseHost ? selectedDatabaseHost : [generateHostName[0]]}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSourceDbHost(selectedOptions));
                                     }}
@@ -150,6 +154,7 @@ const SelectSource = () => {
                                     options={generateHostName}
                                     className={styles.selectField}
                                     isLoading={databaseHostsLoading}
+                                    error={showError && !selectedDatabaseHost ? GENERAL.ACTION_REQUIRED : ''}
                                 />
 
                                 <SelectField
@@ -181,6 +186,7 @@ const SelectSource = () => {
                                         options={generateSourceDatabase}
                                         className={styles.selectField}
                                         isLoading={databaseListLoading}
+                                        error={showError && !selectedDatabase ? GENERAL.ACTION_REQUIRED : ''}
                                     />
                                 )}
                             </div>
@@ -198,6 +204,7 @@ const SelectSource = () => {
                                         options={generateSourceDatabase}
                                         className={styles.selectField}
                                         isLoading={databaseListLoading}
+                                        error={showError && !selectedDatabase ? GENERAL.ACTION_REQUIRED : ''}
                                     />
                                 </div>
                             )}
