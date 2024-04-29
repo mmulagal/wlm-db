@@ -689,6 +689,13 @@ export const sandboxApi = createApi({
                 query: ({ credentialId, region }) => ({
                     url: `credentials/${credentialId}/regions/${region}/database-hosts/sandbox-savings`
                 })
+            }),
+            createSandbox: builder.mutation({
+                query: ({ credentialId, region, payload }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/sandbox`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -782,6 +789,6 @@ export const {
     useGetDatabaseHostsQuery
 } = inventoryApi;
 
-export const { useGetSandboxListQuery, useGetSandboxSavingsQuery } = sandboxApi;
+export const { useGetSandboxListQuery, useGetSandboxSavingsQuery, useCreateSandboxMutation } = sandboxApi;
 
 export const { useGetStorageSavingsMutation } = exploreSavingsApi;

@@ -1,18 +1,39 @@
-import { setIsDbNameAdded } from '../../../../store/workloadFactory/createSandboxSlice';
-import { setCreateSandboxPressed, setIsMountPathAdded } from '../../../../store/workloadFactory/createSandboxSlice';
+import {
+    setCreateSandboxPressed,
+    setIsMountPathAdded,
+    setIsSourceSelected,
+    setIsTargetSelected
+} from '../../../../store/workloadFactory/createSandboxSlice';
+import { generateCreateSandboxPayload } from '../../SandboxUtility';
 
 export const handleCreateNewSandbox = (state: any, dispatch: any) => {
     let payload;
     dispatch(setCreateSandboxPressed(true));
 
-    //Fields validation checks
-    const selectTargetDBName = !state.sandbox.selectedTargetDatabase;
+    const {
+        selectedDatabaseHost: sourceDatabaseHost,
+        selectedDatabaseInstance: sourceInstance,
+        selectedDatabase: sourceDatabase
+    } = state.createSandbox.source;
+    const {
+        selectedDatabaseHost: targetDatabaseHost,
+        selectedDatabaseInstance: targetInstance,
+        selectedDatabase: targetDatabase
+    } = state.createSandbox.target;
     const mountPathCheck = state.sandbox.selectedMount === 'Define mount point path' && !state.sandbox.mountPath;
 
-    if (selectTargetDBName) {
-        dispatch(setIsDbNameAdded(false));
+    if (sourceDatabase && sourceInstance && sourceDatabaseHost) {
+        dispatch(setIsSourceSelected(true));
     } else {
-        dispatch(setIsDbNameAdded(true));
+        dispatch(setIsSourceSelected(false));
+        return false;
+    }
+
+    if (targetDatabase && targetInstance && targetDatabaseHost) {
+        dispatch(setIsTargetSelected(true));
+    } else {
+        dispatch(setIsTargetSelected(false));
+        return false;
     }
 
     if (state.sandbox.selectedMount === 'Define mount point path' && mountPathCheck) {
@@ -21,11 +42,6 @@ export const handleCreateNewSandbox = (state: any, dispatch: any) => {
         dispatch(setIsMountPathAdded(true));
     }
 
-    if (!selectTargetDBName && !mountPathCheck) {
-        console.log('create');
-        return true;
-    } else {
-        console.log('error');
-        return false;
-    }
+    payload = generateCreateSandboxPayload(state?.createSandbox);
+    return payload;
 };

@@ -5,13 +5,13 @@ export const generateCreateSandboxPayload = (state: any): CreateSandboxPayloadEn
     const payload = {
         source: {
             host: state?.source?.selectedDatabaseHost?.value,
-            instance: '',
-            database: state?.source?.selectedDatabase?.value
+            instance: state?.source?.selectedDatabaseInstance?.value,
+            database: state?.source?.selectedDatabase?.value || state?.source?.selectedDatabase?.label
         },
-        target: {
+        destination: {
             host: state?.target?.selectedDatabaseHost?.value,
-            instance: '',
-            database: state?.target?.selectedDatabase?.value
+            instance: state?.target?.selectedDatabaseInstance?.value,
+            database: state?.target?.selectedDatabase
         },
         mountPt: state?.mountPath,
         tag: state?.selectedTag
