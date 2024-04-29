@@ -8,45 +8,70 @@ import styles from './CreateNewSandboxFooter.module.scss';
 import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventorySlice';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../../store/notificationSlice';
 import { WLF_TABS } from '../../../../utils/consts';
+import { useCreateSandboxMutation } from '../../../../utils/apiService';
+import { setIsLoading } from '../../../../store/mssql/msSqlActionSlice';
+import { setShowError } from '../../../../store/workloadFactory/createSandboxSlice';
 
 const CreateNewSandboxFooter = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
     const state = useAppSelector(state => state);
+
     const closeHandler = () => {
         navigate('../databases');
     };
 
-    const handleCreate = () => {
-        const payload = handleCreateNewSandbox(state, dispatch);
-        if (payload) {
-            const msgData = (
-                <div className={styles.notification}>
-                    {GENERAL.DB_CREATE_NOTIFICATION[0]} sandbox&nbsp;
-                    <span className={styles.bold}>{'<Sandbox name>'}</span>
-                    {GENERAL.DB_CREATE_NOTIFICATION[2]}
-                    <Button
-                        Component="button"
-                        variant="text"
-                        onClick={() => {
-                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                            navigate('../databases');
-                            dispatch(clearNotifications());
-                        }}
-                    >
-                        {GENERAL.JOB_MONITORING}.
-                    </Button>
-                </div>
-            );
-            dispatch(
-                addNotification({
-                    notificationType: NOTIFICATION_TYPES.INFO,
-                    message: msgData
-                })
-            );
+    const [createNewSandbox] = useCreateSandboxMutation();
 
-            navigate('../databases');
+    const handleCreate = async () => {
+        const payload = handleCreateNewSandbox(state, dispatch);
+        dispatch(setShowError(true));
+        if (payload) {
+            dispatch(setIsLoading(true));
+            try {
+                const result: any = await createNewSandbox({
+                    credentialId: state?.headers?.headerSelectedCred?.data?.credentialsId,
+                    region: state?.headers?.headerSelectedRegion?.data?.regionCode,
+                    payload: payload
+                });
+                if (result && !result?.error) {
+                    dispatch(setIsLoading(false));
+                    console.log(state);
+                    const msgData = (
+                        <div className={styles.notification}>
+                            {GENERAL.DB_CREATE_NOTIFICATION[0]}
+                            <span className={styles.bold}>{state?.createSandbox?.target?.selectedDatabase}</span>
+                            {GENERAL.DB_CREATE_NOTIFICATION[1]}
+                            <span className={styles.bold}>
+                                {state?.createSandbox?.target?.selectedDatabaseHost?.label}
+                            </span>
+                            {GENERAL.DB_CREATE_NOTIFICATION[2]}
+                            <Button
+                                Component="button"
+                                variant="text"
+                                onClick={() => {
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                    navigate('../databases');
+                                    dispatch(clearNotifications());
+                                }}
+                            >
+                                {GENERAL.JOB_MONITORING}.
+                            </Button>
+                        </div>
+                    );
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.INFO,
+                            message: msgData
+                        })
+                    );
+                    navigate('../databases');
+                }
+            } catch (error) {
+                dispatch(setIsLoading(false));
+                dispatch(addNotification({ message: error, notificationType: NOTIFICATION_TYPES.ERROR }));
+            }
         }
     };
     return (

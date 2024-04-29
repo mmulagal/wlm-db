@@ -27,10 +27,12 @@ export interface CreateSandboxEntities {
     selectedMount: string;
     mountPath: string;
     selectedTag: string;
-    isDBNameAdded: boolean;
     isCreateSandboxPressed: boolean;
     isMountPathAdded: boolean;
     isNA: boolean;
+    isSourceSelected: boolean;
+    isTargetSelected: boolean;
+    showError: boolean;
 }
 
 export interface CreateSandboxPayloadEntities {
@@ -39,7 +41,7 @@ export interface CreateSandboxPayloadEntities {
         instance: string;
         database: string;
     };
-    target: {
+    destination: {
         host: string;
         instance: string;
         database: string;

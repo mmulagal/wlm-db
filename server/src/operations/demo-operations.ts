@@ -238,7 +238,7 @@ async function updateSandboxDBIntoResourceData(
     resourceId: string,
     databaseName: string,
     databaseSource: string,
-    createDate: number,
+    createDate: string,
     tag: string,
     metaData: Metadata
 ) {
@@ -246,12 +246,10 @@ async function updateSandboxDBIntoResourceData(
 
     // this is used to retreive the newly created user databases in database list for demo using meta data
     const sandboxDetails = {
-        name: databaseName,
-        type: MSSQL_DATABASE_TYPES.USER,
-        status: ONLINE,
-        creationDate: new Date(createDate),
-        tag,
-        source: databaseSource
+        databaseName,
+        initialCreationDate: createDate,
+        source: databaseSource,
+        tag
     };
     metaData.sandboxes = [...(metaData.sandboxes || []), sandboxDetails];
 
