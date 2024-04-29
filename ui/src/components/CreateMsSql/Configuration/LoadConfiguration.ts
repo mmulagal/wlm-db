@@ -205,9 +205,7 @@ export const SaveConfiguration = (
                             message: SELECT_CONFIG.SAVE_CONFIG_SUCCESS
                         })
                     );
-                    if (configListRefetch) {
-                        configListRefetch();
-                    }
+                    configListRefetch();
                 }
                 closeSaveDialog(dialogFrom, closeDialog);
                 dispatch(setIsSaveConfigLoading(false));
