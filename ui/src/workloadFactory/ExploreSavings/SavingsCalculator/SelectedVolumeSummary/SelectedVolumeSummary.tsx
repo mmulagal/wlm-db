@@ -68,7 +68,7 @@ const SelectedVolumeSummary = () => {
             Header: 'Details',
             accessor: 'details',
             id: '1',
-            width: ebsAvailable.length === 0 ? '576px' : '576190px',
+            width: ebsAvailable.length === 0 ? '576px' : '190px',
             renderCell: (cellData: any, rowData: any) => {
                 return ebsAvailable.length === 0 ? (
                     <DsTypography variant="Regular_14" style={{ minWidth: '146px', display: 'flex', gap: '24px' }}>
