@@ -1,5 +1,17 @@
-import { GENERAL } from '../../../utils/appConstants';
-import { formatFractionalNumber } from '../../../utils/utilityFunctions';
+import { Dispatch } from 'redux';
+import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
+import { formatFractionalNumber, generateOptionType, removePasswordInConfig } from '../../../utils/utilityFunctions';
+import store from '../../../store/store';
+import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import { duplicateSaveCheck } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
+import { setIsSaveConfigLoading, setSavedConfig } from '../../../store/mssql/msSqlActionSlice';
+import {
+    DB_DEPLOYMENT_MODEL,
+    DB_EDITIONS,
+    DB_VERSIONS,
+    SQL_DEPLOYMENT_MODE,
+    THROUGHPUT_LIST
+} from '../../../utils/consts';
 
 export const comparisonData = (calculatedResponse: any) => {
     return [
@@ -602,4 +614,141 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
             }
         ]
     };
+};
+
+export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
+    const state = store.getState();
+    const initialStateForm = state.mssqlForm;
+    let result = { ...initialStateForm, selectConfig: SELECT_CONFIG.STANDARD_CREATE };
+
+    // mssql instance data
+    if (msSqlInstance) {
+        // setting instance type
+        if (msSqlInstance?.instanceType) {
+            const value = msSqlInstance?.instanceType?.[0].toLowerCase();
+            const data = { instanceType: msSqlInstance?.instanceType?.[0].toLowerCase() };
+            const option = generateOptionType(value, value, '', false, '', data);
+            result = { ...result, instanceType: option };
+        }
+        // database version
+        if (msSqlInstance?.serverVersion) {
+            const dbVersionOption = DB_VERSIONS?.filter(perRow => msSqlInstance?.serverVersion.includes(perRow?.value));
+            if (dbVersionOption) {
+                const option = generateOptionType(dbVersionOption[0].value, dbVersionOption[0].label, '', false, '');
+                result = { ...result, dbVersion: option };
+            }
+        }
+        // database Edition
+        if (msSqlInstance?.serverEdition) {
+            const dbEditionOption = DB_EDITIONS?.filter(perRow => msSqlInstance?.serverEdition.includes(perRow?.value));
+            if (dbEditionOption) {
+                result = { ...result, dbEdition: dbEditionOption[0] };
+            }
+        }
+        // Deployment Model
+        if (msSqlInstance?.serverInstallationMode) {
+            let type = msSqlInstance.serverInstallationMode.toLowerCase();
+            if (type !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+                type = SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE;
+            }
+            const dbDeploymentModel = DB_DEPLOYMENT_MODEL?.filter(perRow => type === perRow?.value);
+            if (dbDeploymentModel) {
+                result = { ...result, dbDeploymentModel: dbDeploymentModel[0] };
+            }
+        }
+    }
+
+    // fsxn data
+    if (fsxData) {
+        // IOPS
+        if (fsxData?.ssdIop) {
+            result = {
+                ...result,
+                provisionedIOPS: {
+                    provisionedType: GENERAL.USER_PROVISIONED,
+                    IOPSValue: fsxData?.ssdIop
+                }
+            };
+        }
+        // Throughput
+        if (fsxData?.throughputCapacity) {
+            const throughput = THROUGHPUT_LIST?.filter(perRow => perRow?.value === fsxData?.throughputCapacity);
+            if (throughput) {
+                const option = generateOptionType(throughput[0]?.label, throughput[0]?.label, '', false, '');
+                result = { ...result, throughput: option };
+            }
+        }
+        // Capacity
+        if (fsxData?.totalStorageCapacity?.size && fsxData?.totalStorageCapacity?.unit) {
+            let size = fsxData?.totalStorageCapacity?.size;
+            let unit = fsxData?.totalStorageCapacity?.unit;
+            if (unit === 'TiB') {
+                unit = 'GiB';
+                size = size * 1024;
+            }
+            if (unit === 'GiB') {
+                const unitOption = generateOptionType(unit, unit, '', false, '');
+                result = {
+                    ...result,
+                    storageCapacity: {
+                        capacity: formatFractionalNumber(size, 2),
+                        unit: unitOption
+                    }
+                };
+            }
+        }
+    }
+
+    return result;
+};
+
+/*
+On click of save config it will call API to store config data.
+*/
+export const ExploreSaveConfiguration = (
+    dispatch: Dispatch,
+    saveConfigData: any,
+    closeDialog: any,
+    msSqlInstance: any,
+    fsxData: any
+) => {
+    const state = store.getState();
+    const saveConfigName = state.exploreSavings.saveConfigName;
+    const existingSavedConfig = state.msSqlAction.savedConfig;
+    const payload = {
+        name: saveConfigName,
+        data: removePasswordInConfig(setRecommendedConfig(msSqlInstance, fsxData))
+    };
+    const isDuplicate = duplicateSaveCheck(state.mssqlForm, existingSavedConfig);
+    if (isDuplicate) {
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: SELECT_CONFIG.DUPLICATE_SAVED_CONFIG
+            })
+        );
+        closeDialog();
+    } else {
+        dispatch(setIsSaveConfigLoading(true));
+        saveConfigData({ payload: payload })
+            .then((data: any) => {
+                if (!data?.error) {
+                    dispatch(setSavedConfig(state.mssqlForm));
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                            message: SELECT_CONFIG.SAVE_CONFIG_SUCCESS
+                        })
+                    );
+                }
+                closeDialog();
+                dispatch(setIsSaveConfigLoading(false));
+            })
+            .catch((error: any) => {
+                console.log('Error while saving data - ', error);
+                dispatch(setIsSaveConfigLoading(false));
+                closeDialog();
+            });
+    }
+    return '';
 };

@@ -9,6 +9,7 @@ import { useDispatch } from 'react-redux';
 import { setDBVersion } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
+import { DB_VERSIONS } from '../../../../utils/consts';
 
 const DatabaseVersion = () => {
     const dispatch = useDispatch();
@@ -19,11 +20,7 @@ const DatabaseVersion = () => {
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
     const osVersion = useAppSelector(state => state.mssqlForm.operatingSystem);
 
-    const versions = [
-        { label: GENERAL.SQL_SERVER_2016, value: GENERAL.SQL_SERVER_2016_VERSION },
-        { label: GENERAL.SQL_SERVER_2019, value: GENERAL.SQL_SERVER_2019_VERSION },
-        { label: GENERAL.SQL_SERVER_2022, value: GENERAL.SQL_SERVER_2022_VERSION }
-    ];
+    const versions = DB_VERSIONS;
 
     //Function to generate the options for Select Field
     //@ts-ignore
@@ -31,7 +28,9 @@ const DatabaseVersion = () => {
         const options: optionType[] = [];
         versions?.map((val, idx: number) => {
             // If win 2016 is selected than dont show 2022 SQL server in dropdown list
-            if (!(osVersion?.value === GENERAL.WIN_SERVER_2016_VERSION && val.value === GENERAL.SQL_SERVER_2022_VERSION)) {
+            if (
+                !(osVersion?.value === GENERAL.WIN_SERVER_2016_VERSION && val.value === GENERAL.SQL_SERVER_2022_VERSION)
+            ) {
                 const option = generateOptionType(val.value, val.label, '', false, '');
                 options.push(option);
             }

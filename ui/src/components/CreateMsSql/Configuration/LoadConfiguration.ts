@@ -205,7 +205,9 @@ export const SaveConfiguration = (
                             message: SELECT_CONFIG.SAVE_CONFIG_SUCCESS
                         })
                     );
-                    configListRefetch();
+                    if (configListRefetch) {
+                        configListRefetch();
+                    }
                 }
                 closeSaveDialog(dialogFrom, closeDialog);
                 dispatch(setIsSaveConfigLoading(false));
@@ -235,7 +237,7 @@ const closeSaveDialog = (dialogFrom: string, closeDialog: any) => {
 This function is used to avoid saving config again if saved just now.
 If data is loaded recently and user is trying to save same data again than also it will not allow to save. 
 */
-const duplicateSaveCheck = (newConfig: any, oldConfig: any) => {
+export const duplicateSaveCheck = (newConfig: any, oldConfig: any) => {
     if (!oldConfig) {
         return false;
     }
