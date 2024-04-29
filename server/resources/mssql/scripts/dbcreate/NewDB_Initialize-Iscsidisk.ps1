@@ -21,10 +21,10 @@ param(
     [Parameter(Mandatory=$false)]
     [string]$Virtualmount,
     
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$true)]
     [string]$DataSerial,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$true)]
     [string]$LogSerial             
 )
 $null = (Start-Transcript -Path C:\cfn\log\NewDB_initializeiscsi.log.txt -Append)
