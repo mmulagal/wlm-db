@@ -1,3 +1,5 @@
+import { GENERAL } from './appConstants';
+
 export const AUTH_STATUS = {
     AUTH_STATUS_SUCCESS: 'AUTH_SUCCESS',
     AUTH_STATUS_ERROR: 'AUTH_ERROR',
@@ -105,7 +107,8 @@ export const FROM_DIALOG = {
     LOAD_CONFIG: 'load_config',
     SAVE_CONFIG: 'save_config',
     HEADER_CROSS: 'header_cross',
-    DETECT_HOST: 'detect_host'
+    DETECT_HOST: 'detect_host',
+    EXPLORE_SAVE_CONFIG: 'explore_save_config'
 };
 
 export const API_NAME = {
@@ -322,3 +325,40 @@ export const DETECT_HOST_VAR = {
     SHOW: 'show',
     HIDE: 'hide'
 };
+
+export const DB_VERSIONS = [
+    { label: GENERAL.SQL_SERVER_2016, value: GENERAL.SQL_SERVER_2016_VERSION },
+    { label: GENERAL.SQL_SERVER_2019, value: GENERAL.SQL_SERVER_2019_VERSION },
+    { label: GENERAL.SQL_SERVER_2022, value: GENERAL.SQL_SERVER_2022_VERSION }
+];
+
+export const DB_EDITIONS = [
+    {
+        label: GENERAL.SQL_SERVER_STANDARD_EDITION,
+        value: GENERAL.SQL_SERVER_STANDARD
+    },
+    {
+        label: GENERAL.SQL_SERVER_ENTERPRiSE_EDITION,
+        value: GENERAL.SQL_SERVER_ENTERPRISE
+    }
+];
+
+export const DB_DEPLOYMENT_MODEL = [
+    {
+        label: GENERAL.FAILOVER_CLUSTER,
+        value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+    },
+    {
+        label: GENERAL.SINGLE_INSTANCE,
+        value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+    }
+];
+
+export const THROUGHPUT_LIST = [
+    { label: '128 MBps', value: 128 },
+    { label: '256 MBps', value: 256 },
+    { label: '512 MBps', value: 512 },
+    { label: '1 GBps', value: 1024 },
+    { label: '2 GBps', value: 2048 },
+    { label: '4 GBps', value: 4096 }
+];
