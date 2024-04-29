@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+ #Requires -Version 7.0
 #Requires -Module AWS.Tools.FSX,AWS.Tools.SimpleSystemsManagement
 [CmdletBinding()]
 param(
@@ -170,19 +170,17 @@ if(($LogNew -eq "false") -And ($DataNew -eq "false")) { throw }
 
 $IGUriDynamicPart='protocols/san/igroups'
 try {
+$iqnList = $nodeiqn
 
 if($StandbyIQN) {
-    $URI=@"
-    https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($nodeiqn),$($StandbyIQN)&protocol=iscsi
-    "@
-    $igroups = (callGetApi -uri $URI -region $region -creds $base64 -result $result).records   
+   $iqnlist += ',' + $standbyIQN  
 }
-else {
-    $URI=@"
-https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($nodeiqn)&protocol=iscsi
+
+
+$URI=@"
+https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($iqnList)&protocol=iscsi
 "@
-$igroups = (callGetApi -uri $URI -region $region -creds $base64 -result $result).records
-}
+    $igroups = (callGetApi -uri $URI -region $region -creds $base64 -result $result).records
     $IGROUP = $igroups[0].name
 } catch {
     $result.Add('Status','Failed')
@@ -194,16 +192,17 @@ $igroups = (callGetApi -uri $URI -region $region -creds $base64 -result $result)
 }
 if ([string]::IsNullOrEmpty($IGROUP)) {
   $found = $nodeiqn -match '(.*\:.+?)\.'
-
   try {
   if ($found) {
     $baseiqn = $matches[1]
+    $baseiqnList = $baseiqn
     }
   else { throw}
   if($StandbyIQN) {
     $found2 = $StandbyIQN -match '(.*\:.+?)\.'
     if ($found2) {
         $standbybaseiqn = $matches[1]
+        $baseiqnList += ',' + $standbybaseiqn 
         }
       else { throw}
   }
@@ -215,21 +214,10 @@ if ([string]::IsNullOrEmpty($IGROUP)) {
     $resultjson  
     exit 1 
   }
-
-
-  if($StandbyIQN) { 
-    $SURI=@"
-  https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($baseiqn),$($standbybaseiqn)&protocol=iscsi
+$URI=@"
+https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($baseiqnList)&protocol=iscsi
 "@
-  $igroups = (callGetApi -uri $SURI -region $region -creds $base64 -result $result).records
-  
-  } else {
-    $URI=@"
-    https://$($MgmtDNS)/api/$($IGUriDynamicPart)/?svm.name=$($SQLVMName)&initiators.name=$($baseiqn)&protocol=iscsi
-  "@
-  
-    $igroups = (callGetApi -uri $URI -region $region -creds $base64 -result $result).records 
-  }
+  $igroups = (callGetApi -uri $URI -region $region -creds $base64 -result $result).records   
   $IGROUP = $igroups[0].name
   try {
   if ([string]::IsNullOrEmpty($IGROUP)) { throw }
@@ -243,6 +231,10 @@ if ([string]::IsNullOrEmpty($IGROUP)) {
   }
 
 }
+
+
+
+
 Start-Sleep 2
 
 
@@ -487,5 +479,6 @@ foreach ($perlun in $pathlist) {
     $result.Add('Message','Provisioning storage on FSx for NetApp ONTAP complete')
     $resultjson = ($result | ConvertTo-Json) 
     $resultjson 
+ 
  
  
