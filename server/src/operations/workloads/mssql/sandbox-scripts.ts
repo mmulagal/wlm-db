@@ -259,6 +259,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
             }
     
             if ($QueryFilter -ne '') {
+                $QueryFilter = [System.Web.HttpUtility]::UrlEncode($QueryFilter)
                 $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter"}
             }
 
@@ -430,7 +431,7 @@ const createVolumeClone = (
         Function Add-ObjectTagsToVolume {
             $ApiQueryFilter = 'location.volume.name='
             @($dataVolume, $logVolume) | ForEach-Object {
-                $ApiQueryFilter += $_ + '_clone_' + $epoch + '|'
+                $ApiQueryFilter += [System.Web.HttpUtility]::UrlEncode($_) + '_clone_' + $epoch + '|'
             }
     
             $ApiQueryFilter = $ApiQueryFilter.TrimEnd('|')
@@ -685,7 +686,7 @@ const cleanUpOntapResources = (
         ${ontapJobStatusTemplate}
 
         $volumeIds | ForEach-Object {
-            $volumeId = $_
+            $volumeId = [system.web.httputility]::UrlEncode($_)
             $ApiEndpoint = "/storage/volumes/$volumeId"
             $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -method "DELETE"
             $jobStatus = Get-OntapJobStatus -jobId $response.job.uuid
