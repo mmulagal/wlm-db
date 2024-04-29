@@ -745,7 +745,6 @@ export const ExploreSaveConfiguration = (
                 dispatch(setIsSaveConfigLoading(false));
             })
             .catch((error: any) => {
-                console.log('Error while saving data - ', error);
                 dispatch(setIsSaveConfigLoading(false));
                 closeDialog();
             });
