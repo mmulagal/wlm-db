@@ -582,7 +582,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             getEc2ResourceInfo(credentialsId, region, activeNodeInstanceId),
             ...(fsxnId ? [getFsxResourceInfo(credentialsId, region, fsxnId!)] : [Promise.resolve()]),
             ...(ebsVolumeIds && !isEmpty(ebsVolumeIds)
-                ? [getEbsResourceInfo(credentialsId, region, ebsVolumeIds!)]
+                ? [getEbsResourceInfo(credentialsId, region, ebsVolumeIds)]
                 : [Promise.resolve()]),
             ...(fsxwId ? [getFsxResourceInfo(credentialsId, region, fsxwId!)] : [Promise.resolve()])
         ]);
