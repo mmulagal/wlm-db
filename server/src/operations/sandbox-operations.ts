@@ -494,7 +494,7 @@ async function createSandbox(
 
     const job = await registerJob(accountId, credentialsId, region, {
         name: `Create sandbox for database ${source.database}`,
-        description: `Create sandbox for database ${source.database} using ontap flexclone`,
+        description: `Create sandbox for database ${source.database} in host ${srcResourceDetail.resource_name}`,
         resourceName: source.database,
         initiator: 'SYSTEM',
         startTime: Date.now(),
