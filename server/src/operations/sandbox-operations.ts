@@ -494,7 +494,7 @@ async function createSandbox(
 
     const job = await registerJob(accountId, credentialsId, region, {
         name: `Create sandbox for database ${source.database}`,
-        description: `Create sandbox for database ${source.database} in host ${srcResourceDetail.resource_name}`,
+        description: `Create sandbox for database ${source.database} using ontap flexclone`,
         resourceName: source.database,
         initiator: 'SYSTEM',
         startTime: Date.now(),
@@ -637,7 +637,7 @@ async function validateCloneParams(
     let errMsg;
 
     const validationJob = await registerJob(accountId, credentialsId, region, {
-        description: `Validate it the sandbox ${destDetails.database} is already presesnt for source host ${srcDetails.resourceName} and database ${srcDetails.database} at destination host ${destDetails.resourceName}`,
+        description: `Validate if the sandbox ${destDetails.database} is already present at destination host ${destDetails.resourceName}`,
         startTime: Date.now(),
         name: 'Validate if sandbox already exits',
         status,
@@ -692,8 +692,6 @@ async function getMappings(
         parentJobId
     });
 
-    logger.info('MAPPING JOB ID>>', mappingJob.id);
-
     try {
         const { fsxId, database } = srcDetails;
 
@@ -711,8 +709,6 @@ async function getMappings(
                 'Failed to get volume lun mapping for the database'
             );
         }
-
-        logger.info('MAPPINGS>>>', mappings);
 
         status = JOBSTATUS.COMPLETED;
         return sqlResponseParsing(mappings);
@@ -751,9 +747,9 @@ async function createVolumeClone(
     let errorMsg;
 
     const createVolumeCloneJob = await registerJob(accountId, credentialsId, region, {
-        description: `Create volume clone sandbox ${destDetails.database} from source volume`,
+        description: 'Create ontap flexclone volumes from the source volumes',
         startTime: Date.now(),
-        name: 'Create volume clone for sandbox',
+        name: 'Create flexclone volumes',
         status,
         type: JOBTYPE.CREATE_RESOURCE,
         resourceName: srcDetails.database,
@@ -794,7 +790,6 @@ async function createVolumeClone(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to create clone volume');
         }
 
-        logger.info('CLONE VOL RESP>>>>', clonedVolumes);
         status = JOBSTATUS.COMPLETED;
         return sqlResponseParsing(clonedVolumes);
     } catch (e: any) {
@@ -836,9 +831,9 @@ async function invokeVirtualMount(
     let errorMsg;
 
     const invokeMountJob = await registerJob(accountId, credentialsId, region, {
-        description: `Create virtual mount point for sandbox ${destDetails.database} in host ${destDetails.resourceName}`,
+        description: `Discover cloned luns and create virtual mount points in host ${destDetails.resourceName}`,
         startTime: Date.now(),
-        name: 'Create virtual mount point',
+        name: 'Discover luns and create virtual mount point',
         status,
         type: JOBTYPE.CREATE_RESOURCE,
         resourceName: destDetails.database,
@@ -881,7 +876,6 @@ async function invokeVirtualMount(
                 );
             }
 
-            logger.info('VIRTUAL MOUNT RESP>>>', resp);
             status = JOBSTATUS.COMPLETED;
             return sqlResponseParsing(resp);
         } catch (e: any) {
@@ -925,9 +919,9 @@ async function createCloneDb(
     let errorMsg;
 
     const createCloneDbJob = await registerJob(accountId, credentialsId, region, {
-        description: `Create clone database ${destDetails.database} on ${destDetails.host}`,
+        description: `Create sandbox ${destDetails.database} on ${destDetails.resourceName}`,
         startTime: Date.now(),
-        name: 'Create clone database',
+        name: 'Create sandbox',
         status,
         type: JOBTYPE.CREATE_RESOURCE,
         resourceName: destDetails.database,
@@ -981,7 +975,7 @@ async function createExtendedProperties(
     let errorMsg;
 
     const createExtendedPropertiesJob = await registerJob(accountId, credentialsId, region, {
-        description: `Add extended properties to database ${destDetails.database} on host ${destDetails.host}`,
+        description: `Add extended properties to sandbox ${destDetails.database} on host ${destDetails.resourceName}`,
         startTime: Date.now(),
         name: 'Add extended properties to sandbox',
         status,
@@ -1068,7 +1062,6 @@ async function startCleanup(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to cleanup');
         }
 
-        logger.info('RESP>>', resp);
         return sqlResponseParsing(resp);
     } catch (e) {
         logger.error(`Failed to perform cleanup for sandbox ${destDetails.database}`);
