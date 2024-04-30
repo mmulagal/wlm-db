@@ -18,6 +18,9 @@ const ThroughputCapacity = () => {
     const { throughputRegionList } = useAppSelector(state => state.mssql.getThroughputRegions);
     const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
     const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
+
     const [units, setUnit] = useState<any>([]);
 
     useEffect(() => {
@@ -49,7 +52,9 @@ const ThroughputCapacity = () => {
     }, [units]);
 
     useEffect(() => {
-        dispatch(setThroughputValue(generateThroughputUnits[0]));
+        if (!isLoadConfig && !movingFromChatbot) {
+            dispatch(setThroughputValue(generateThroughputUnits[0]));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateThroughputUnits]);
 
@@ -59,7 +64,9 @@ const ThroughputCapacity = () => {
         } else {
             setIsDisable(false);
         }
-        selectFsxThroughput(selectedFsxnType, selectedExistingFsxnName, units[0], dispatch);
+        if (!isLoadConfig && !movingFromChatbot) {
+            selectFsxThroughput(selectedFsxnType, selectedExistingFsxnName, units[0], dispatch);
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedFsxnType, selectedExistingFsxnName]);
 

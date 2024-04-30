@@ -25,6 +25,8 @@ const ProvisionedIOPS = () => {
     const iopsValue = useAppSelector(state => state.mssqlForm.provisionedIOPS.IOPSValue);
     const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
     const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const [isDisable, setIsDisable] = useState(false);
 
@@ -34,7 +36,9 @@ const ProvisionedIOPS = () => {
         } else {
             setIsDisable(false);
         }
-        selectFsxIops(selectedFsxnType, selectedExistingFsxnName, dispatch);
+        if (!isLoadConfig && !movingFromChatbot) {
+            selectFsxIops(selectedFsxnType, selectedExistingFsxnName, dispatch);
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedFsxnType, selectedExistingFsxnName]);
 
