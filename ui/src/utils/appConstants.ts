@@ -241,12 +241,12 @@ export const GENERAL = {
     RESOURCE_TEXT_TWO:
         'The provisioned resources will be deleted when you delete your deployment from the AWS console.',
     //FSX Accordion
-    CREATE_NEW_FSXN: 'Create new FSxN',
+    CREATE_NEW_FSXN: 'Create new FSx for ONTAP',
     CREATE_NEW_FSXN_SYSTEM: 'Create new file system',
-    SELECT_EXISTING_FSX: 'Select an existing FSxN ',
-    FSXN_NAME: 'FSxN name',
+    SELECT_EXISTING_FSX: 'Select an existing FSx for ONTAP ',
+    FSXN_NAME: 'FSx for ONTAP name',
     USER_NAME: 'User name',
-    FSX_PASSWORD: 'FSxN password',
+    FSX_PASSWORD: 'FSx for ONTAP password',
     NOTICE: 'Notice:',
     NOTICE_FSX_TEXT: 'New filesystem provisioning adds another 30 minutes to the total installation time.',
     PASSWORD_FSX_1: 'The password must be at least eight characters long.',
@@ -274,7 +274,8 @@ export const GENERAL = {
     AZ_Zone: 'Availability zone',
     SUBNET: 'Subnet',
     //DB credential
-    DATABASE_CREDENTIAL_TEXT: 'Create a new service account for SQL Server.',
+    DATABASE_CREDENTIAL_TEXT:
+        'Create a new service account for SQL server or use existing service account credentials in the Active Directory',
     USERNAME_TOOLTIP:
         'The user name must contain at least 5 alphanumeric characters. The user name can\'t be "admin" or "administrator".',
     USERNAME_TOOLTIP1: 'The user name must contain at least 5 alphanumeric characters.',
