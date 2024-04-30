@@ -535,7 +535,8 @@ export const GENERAL = {
     NO_DATA: 'No data',
     JM_RUNNING: 'Running',
     JM_TYPE_DEPLOYMENT: 'Deployment',
-    JM_TYPE_CREATE_RESOURCE: 'Create resource',
+    JM_TYPE_CREATE_RESOURCE: 'Create database',
+    JM_TYPE_PREPARE_RESOURCE: 'Prepare resource',
     JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
     DEMO_TITLE: 'Redirect to CloudFormation',
@@ -694,6 +695,11 @@ export const GENERAL = {
         'Host ',
         ' successfully moved to unmanaged host but failed to become a managed host. ',
         'For more details view ',
+        ' Job Monitoring.'
+    ],
+    PREPARE_HOST_INFO: [
+        'Installation of dependent PowerShell modules and copy of scripts has been triggered on host ',
+        ' . For more details view ',
         ' Job Monitoring.'
     ],
     FCI: 'FCI',

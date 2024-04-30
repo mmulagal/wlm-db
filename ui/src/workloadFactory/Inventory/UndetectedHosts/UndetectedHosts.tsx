@@ -19,8 +19,18 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { DETECT_HOST_VAR, FROM_DIALOG, FSX_DEPLOYMENT_MODE, SSM_TROUBLESHOOTING_LINK } from '../../../utils/consts';
-import { useManageHostMutation, useRegisterResourceCredentialsMutation } from '../../../utils/apiService';
+import {
+    DETECT_HOST_VAR,
+    FROM_DIALOG,
+    FSX_DEPLOYMENT_MODE,
+    SSM_TROUBLESHOOTING_LINK,
+    WLF_TABS
+} from '../../../utils/consts';
+import {
+    useManageHostMutation,
+    usePrepareHostMutation,
+    useRegisterResourceCredentialsMutation
+} from '../../../utils/apiService';
 import { setIsDetectHostError, setIsDetectHostLoading } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
 import {
@@ -31,15 +41,19 @@ import {
     setMovedToManagedHost,
     setMovedToUnmanagedHost,
     setRadioValueDetect,
+    setSelectedHeaderTab,
     setValuesForForm
 } from '../../../store/workloadFactory/inventorySlice';
 import { createDetectHostPayload } from '../../../utils/utilityFunctions';
 import { useEffect, useRef, useState } from 'react';
-import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import store from '../../../store/store';
+import { installModuleNotification, runPrepareApi } from '../InventoryUtils';
+import { useNavigate } from 'react-router-dom';
 
 const UndetectedHosts = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     const { setDialog, closeDialog } = useDialog();
     const unIdentifiableHosts = useAppSelector(state => state.inventory.unIdentifiableHosts);
@@ -58,6 +72,7 @@ const UndetectedHosts = () => {
     const valueRef = useRef(false); // For detect host dialog fields check
 
     const [manageHostApi] = useManageHostMutation();
+    const [prepareHostApi] = usePrepareHostMutation();
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
 
     const [tableData, setTableData] = useState<any>([]);
@@ -203,6 +218,15 @@ const UndetectedHosts = () => {
                 );
                 dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: managedSuccessMsg }));
             } else {
+                let running: boolean = false;
+                if (result?.error?.status === 424) {
+                    running = await runPrepareApi(
+                        prepareHostApi,
+                        headerSelectedCred?.data?.credentialsId,
+                        headerSelectedRegion?.label2,
+                        rowData?.ec2InstanceId
+                    );
+                }
                 if (manageLoading[rowData?.instanceID]) {
                     manageLoading[rowData?.instanceID] = false;
                     setManageLoading(manageLoading);
@@ -216,7 +240,14 @@ const UndetectedHosts = () => {
                         {result?.error?.data?.message || ''}
                     </div>
                 );
-                dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));
+
+                if (running) {
+                    installModuleNotification(styles, rowData?.instance, dispatch, GENERAL.HOST_MOVED_INFO);
+                } else {
+                    dispatch(
+                        addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg })
+                    );
+                }
             }
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         } else {

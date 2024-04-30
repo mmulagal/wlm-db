@@ -84,7 +84,14 @@ router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances
 
 router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances/:instanceId/mssql/manage`, async (req: {}, res: any) => {
     setTimeout(() => {
-        generateResponse(res, 200, {resourceId: '1234'});
+        generateResponse(res, 200, {resource: '1234'})
+        // generateResponse(res, 424, {message: 'Files required for database operations are not available. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare", and retry the operation.'});
+    }, 3000);
+});
+
+router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances/:instanceId/mssql/prepare`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 202, {message: '1234'});
     }, 3000);
 });
 

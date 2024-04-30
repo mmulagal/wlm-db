@@ -1,4 +1,4 @@
-import { Spinner, Table, TableTopBar, TooltipInfo, Typography, useTable } from '@netapp/design-system';
+import { Button, Spinner, Table, TableTopBar, TooltipInfo, Typography, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './UnmanagedHosts.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
@@ -6,15 +6,16 @@ import { useEffect, useState, useRef } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DETECT_HOST_VAR, WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
-import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import {
     setMovedToManagedHost,
     setSelectedHeaderTab,
     setUnManagedHostColState
 } from '../../../store/workloadFactory/inventorySlice';
-import { useManageHostMutation } from '../../../utils/apiService';
+import { useManageHostMutation, usePrepareHostMutation } from '../../../utils/apiService';
 import store from '../../../store/store';
 import {
+    installModuleNotification,
     renderAllocatedCapacity,
     renderCellData,
     renderDeploymentModel,
@@ -23,7 +24,8 @@ import {
     renderInstanceName,
     renderProtectionColumn,
     renderUnmanagedAZ,
-    renderUnmanagedHostName
+    renderUnmanagedHostName,
+    runPrepareApi
 } from '../InventoryUtils';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import {
@@ -31,9 +33,12 @@ import {
     setSelectedInstanceId,
     setSelectedServerName
 } from '../../../store/workloadFactory/exploreSavingsSlice';
+import { useNavigate } from 'react-router-dom';
 
 const UnmanagedHosts = () => {
     const dispatch = useDispatch();
+
+    const navigate = useNavigate();
 
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
@@ -47,6 +52,7 @@ const UnmanagedHosts = () => {
 
     const [manageLoading, setManageLoading] = useState<any>({});
     const [manageHostApi] = useManageHostMutation();
+    const [prepareHostApi] = usePrepareHostMutation();
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
@@ -112,6 +118,15 @@ const UnmanagedHosts = () => {
             );
             dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: managedSuccessMsg }));
         } else {
+            let running: boolean = false;
+            if (result?.error?.status === 424) {
+                running = await runPrepareApi(
+                    prepareHostApi,
+                    headerSelectedCred?.data?.credentialsId,
+                    headerSelectedRegion?.label2,
+                    rowData?.ec2InstanceId
+                );
+            }
             if (manageLoading[rowData?.id]) {
                 manageLoading[rowData?.id] = false;
                 setManageLoading(manageLoading);
@@ -124,16 +139,18 @@ const UnmanagedHosts = () => {
                     {result?.error?.data?.message || ''}
                 </div>
             );
-            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));
+            if (running) {
+                installModuleNotification(styles, name, dispatch, GENERAL.HOST_MOVED_FAILED);
+            } else {
+                dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));
+            }
         }
     };
 
     const exploreSavingsAction = (rowData: any) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
         dispatch(setSelectedInstanceId(rowData?.id));
-        dispatch(
-            setSelectedServerName(rowData.sqlServerInstances?.[0].sqlServerName || 'Server name')
-        );
+        dispatch(setSelectedServerName(rowData.sqlServerInstances?.[0].sqlServerName || 'Server name'));
         dispatch(setSelectedHostDetails(rowData));
     };
 
