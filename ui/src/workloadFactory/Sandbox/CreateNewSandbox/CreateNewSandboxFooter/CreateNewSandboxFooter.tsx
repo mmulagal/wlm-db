@@ -37,7 +37,6 @@ const CreateNewSandboxFooter = () => {
                 });
                 if (result && !result?.error) {
                     dispatch(setIsLoading(false));
-                    console.log(state);
                     const msgData = (
                         <div className={styles.notification}>
                             {GENERAL.DB_CREATE_NOTIFICATION[0]}
