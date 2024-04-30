@@ -1,12 +1,12 @@
-import { Button, Spinner, Table, TableTopBar, TooltipInfo, Typography, useTable } from '@netapp/design-system';
+import { Spinner, Table, TableTopBar, TooltipInfo, Typography, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './UnmanagedHosts.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useEffect, useState, useRef } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DETECT_HOST_VAR, WLF_TABS } from '../../../utils/consts';
+import { API_ERRORS, DETECT_HOST_VAR, WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
-import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
+import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import {
     setMovedToManagedHost,
     setSelectedHeaderTab,
@@ -37,8 +37,6 @@ import { useNavigate } from 'react-router-dom';
 
 const UnmanagedHosts = () => {
     const dispatch = useDispatch();
-
-    const navigate = useNavigate();
 
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
@@ -119,7 +117,7 @@ const UnmanagedHosts = () => {
             dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: managedSuccessMsg }));
         } else {
             let running: boolean = false;
-            if (result?.error?.status === 424) {
+            if (result?.error?.status === 424 && !result?.error?.data?.message.includes(API_ERRORS.POWERSHELL_7)) {
                 running = await runPrepareApi(
                     prepareHostApi,
                     headerSelectedCred?.data?.credentialsId,
