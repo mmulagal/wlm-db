@@ -30,7 +30,7 @@ $results = foreach ($instance in $instances) {
         FROM (
             SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'initialCreationDate', 'tag', 'baseSnapshot') FOR JSON PATH)) AS properties
             FROM #properties AS p1
-            WHERE name = 'cloned_by' AND value = 'netapp'
+            WHERE name = 'cloned_by' AND value = 'netapp_wlmdb'
         ) AS grouped_properties
         GROUP BY database_name, properties
         FOR JSON PATH; 
@@ -626,7 +626,7 @@ ${Object.keys(propObj)
 
 "@
 
-Sqlcmd -Q $query -y 0
+Sqlcmd -Q $query -m 1
 `;
 
 const cleanUpOntapResources = (

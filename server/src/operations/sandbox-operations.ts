@@ -940,7 +940,12 @@ async function createCloneDb(
             ];
         }
 
-        await callSsmExecution(credentialsId, region, command, destDetails.activeNodeInstaceId);
+        const resp = await callSsmExecution(credentialsId, region, command, destDetails.activeNodeInstaceId);
+
+        // We only get a response in case of error from query
+        if (resp) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, resp);
+        }
 
         status = JOBSTATUS.COMPLETED;
     } catch (e: any) {
@@ -967,7 +972,7 @@ async function createExtendedProperties(
     destDetails: HostAndDbInfo,
     tag: string
 ) {
-    logger.info('Add extended properteis', {
+    logger.info('Create extended properties', {
         accountId
     });
 
@@ -1002,7 +1007,13 @@ async function createExtendedProperties(
                 })
             ];
         }
-        await callSsmExecution(credentialsId, region, command, destDetails.activeNodeInstaceId);
+        const resp = await callSsmExecution(credentialsId, region, command, destDetails.activeNodeInstaceId);
+
+        // We only get a response in case of error from query
+        if (resp) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, resp);
+        }
+
         status = JOBSTATUS.COMPLETED;
     } catch (e: any) {
         logger.error(e);
