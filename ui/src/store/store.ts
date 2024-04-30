@@ -75,7 +75,8 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
         if (
             action?.meta?.arg?.endpointName === 'registerResourceCredentials' ||
             action?.meta?.arg?.endpointName === 'manageHost' ||
-            action?.meta?.arg?.endpointName === 'getMssqlInstanceData'
+            action?.meta?.arg?.endpointName === 'getMssqlInstanceData' ||
+            action?.meta?.arg?.endpointName === 'prepareHost'
         ) {
             return;
         }
