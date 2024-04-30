@@ -4,6 +4,10 @@
             height: 64px !important;
             display: flex;
             align-items: center;
+            padding-left: 24px !important;
         }
+    }
+    [class*='AccordionCard-module_accordion-card-content'] {
+        padding-right: 40px !important;
     }
 }
