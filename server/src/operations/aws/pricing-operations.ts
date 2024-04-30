@@ -130,7 +130,7 @@ function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): Prod
             ...AWS_PRICING_FORMAT_VERSION
         }
     };
-    // add this filter based on whether its sql installed winodws or not
+    // add this filter based on whether its windows sql based ami or not
     if (compute.sqlSoftwareType && compute.sqlSoftwareType !== NONE) {
         const sqlFilter = getSqlSoftwareEdition(compute.sqlSoftwareType);
         filters.input.Filters.push(sqlFilter);
