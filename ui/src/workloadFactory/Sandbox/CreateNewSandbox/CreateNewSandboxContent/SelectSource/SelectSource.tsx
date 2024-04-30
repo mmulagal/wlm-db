@@ -21,7 +21,7 @@ import {
     setSourceDbInstance
 } from '../../../../../store/workloadFactory/createSandboxSlice';
 import { GENERAL } from '../../../../../utils/appConstants';
-import { STATUS_CONST } from '../../../../../utils/consts';
+import { MSSQL_DATABASE_TYPES, STATUS_CONST } from '../../../../../utils/consts';
 
 const SelectSource = () => {
     const windowSize = useResize();
@@ -89,8 +89,10 @@ const SelectSource = () => {
     const generateSourceDatabase = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         databaseListData?.map((obj, idx: number) => {
-            const option = generateOptionType(obj?.id, obj?.name, '', false, '');
-            options.push(option);
+            if (obj.type !== MSSQL_DATABASE_TYPES.SYSTEM) {
+                const option = generateOptionType(obj?.id, obj?.name, '', false, '');
+                options.push(option);
+            }
         });
 
         return options;
