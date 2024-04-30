@@ -363,3 +363,8 @@ export const THROUGHPUT_LIST = [
     { label: '2 GBps', value: 2048 },
     { label: '4 GBps', value: 4096 }
 ];
+
+export const MSSQL_DATABASE_TYPES = {
+    SYSTEM: 'System Database',
+    USER: 'User Database'
+};

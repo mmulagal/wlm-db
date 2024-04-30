@@ -56,17 +56,19 @@ const SelectTarget = () => {
         return options;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
     useEffect(() => {
-        if (
-            selectedDatabaseHost === null &&
-            selectedDatabaseInstance === null &&
-            generateTargetName &&
-            generateTargetInstance
-        ) {
+        if (generateTargetName?.length) {
             dispatch(setTargetDbHost(generateTargetName[0]));
+        }
+    }, [generateTargetName]);
+
+    useEffect(() => {
+        if (generateTargetInstance?.length) {
             dispatch(setTargetDbInstance(generateTargetInstance[0]));
         }
-    }, [generateTargetName, generateTargetInstance]);
+    }, [generateTargetInstance]);
+
     const setHeader = () => {
         if (!selectedDatabase) {
             return (
@@ -88,7 +90,7 @@ const SelectTarget = () => {
                     </span>
                     <span className={CommonStyles.separatorSandbox} />
                     <span>
-                        {GENERAL.TARGET_INSTANCE}: {selectedDatabaseInstance ? selectedDatabaseInstance.label : 'NA'}
+                        {GENERAL.TARGET_DATABASES}: {selectedDatabase ? selectedDatabase : 'NA'}
                     </span>
                 </DsTypography>
             );
@@ -118,6 +120,7 @@ const SelectTarget = () => {
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setTargetDbHost(selectedOptions));
                                     }}
+                                    value={selectedDatabaseHost}
                                     isSearchable={true}
                                     options={generateTargetName}
                                     className={styles.selectField}

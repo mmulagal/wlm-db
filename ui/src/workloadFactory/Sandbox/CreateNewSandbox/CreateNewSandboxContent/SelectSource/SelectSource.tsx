@@ -21,7 +21,7 @@ import {
     setSourceDbInstance
 } from '../../../../../store/workloadFactory/createSandboxSlice';
 import { GENERAL } from '../../../../../utils/appConstants';
-import { STATUS_CONST } from '../../../../../utils/consts';
+import { MSSQL_DATABASE_TYPES, STATUS_CONST } from '../../../../../utils/consts';
 
 const SelectSource = () => {
     const windowSize = useResize();
@@ -89,8 +89,10 @@ const SelectSource = () => {
     const generateSourceDatabase = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         databaseListData?.map((obj, idx: number) => {
-            const option = generateOptionType(obj?.id, obj?.name, '', false, '');
-            options.push(option);
+            if (obj.type !== MSSQL_DATABASE_TYPES.SYSTEM) {
+                const option = generateOptionType(obj?.id, obj?.name, '', false, '');
+                options.push(option);
+            }
         });
 
         return options;
@@ -98,19 +100,22 @@ const SelectSource = () => {
     }, [databaseListData]);
 
     useEffect(() => {
-        if (
-            source.selectedDatabaseHost === null &&
-            source.selectedDatabaseInstance === null &&
-            source.selectedDatabaseInstance === null &&
-            generateSourceInstance &&
-            generateSourceDatabase &&
-            generateHostName
-        ) {
+        if (generateHostName?.length) {
             dispatch(setSourceDbHost(generateHostName[0]));
-            dispatch(setSourceDbInstance(generateSourceInstance[0]));
+        }
+    }, [generateHostName]);
+
+    useEffect(() => {
+        if (generateSourceDatabase?.length) {
             dispatch(setSourceDatabase(generateSourceDatabase[0]));
         }
-    }, [generateSourceInstance, generateSourceDatabase, generateHostName]);
+    }, [generateSourceDatabase]);
+
+    useEffect(() => {
+        if (generateSourceInstance?.length) {
+            dispatch(setSourceDbInstance(generateSourceInstance[0]));
+        }
+    }, [generateSourceInstance]);
 
     const setHeader = () => {
         return (
@@ -126,7 +131,7 @@ const SelectSource = () => {
                 </span>
                 <span className={CommonStyles.separatorSandbox} />
                 <span>
-                    {GENERAL.SOURCE_INSTANCE}: {selectedDatabaseInstance ? selectedDatabaseInstance.label : 'NA'}
+                    {GENERAL.SOURCE_DATABASE}: {selectedDatabase ? selectedDatabase.label : 'NA'}
                 </span>
             </DsTypography>
         );
@@ -150,6 +155,7 @@ const SelectSource = () => {
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSourceDbHost(selectedOptions));
                                     }}
+                                    value={selectedDatabaseHost}
                                     isSearchable={true}
                                     options={generateHostName}
                                     className={styles.selectField}
@@ -182,6 +188,7 @@ const SelectSource = () => {
                                         onChange={(selectedOptions: any): void => {
                                             dispatch(setSourceDatabase(selectedOptions));
                                         }}
+                                        value={selectedDatabase}
                                         isSearchable={true}
                                         options={generateSourceDatabase}
                                         className={styles.selectField}
@@ -200,6 +207,7 @@ const SelectSource = () => {
                                         onChange={(selectedOptions: any): void => {
                                             dispatch(setSourceDatabase(selectedOptions));
                                         }}
+                                        value={selectedDatabase}
                                         isSearchable={true}
                                         options={generateSourceDatabase}
                                         className={styles.selectField}
