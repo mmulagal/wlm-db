@@ -115,6 +115,9 @@ export const selectFsxThroughput = (
         const option = generateOptionType(val, val, '', false, '');
         dispatch(setThroughputValue(option));
     } else {
+        if (!defaultVal) {
+            return;
+        }
         const option = generateOptionType(defaultVal, defaultVal, '', false, '');
         dispatch(setThroughputValue(option));
     }
