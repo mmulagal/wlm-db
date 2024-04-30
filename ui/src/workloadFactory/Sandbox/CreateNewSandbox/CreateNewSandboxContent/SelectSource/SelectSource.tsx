@@ -111,6 +111,12 @@ const SelectSource = () => {
         }
     }, [generateSourceDatabase]);
 
+    useEffect(() => {
+        if (generateSourceInstance?.length) {
+            dispatch(setSourceDbInstance(generateSourceInstance[0]));
+        }
+    }, [generateSourceInstance]);
+
     const setHeader = () => {
         return (
             <DsTypography
