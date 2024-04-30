@@ -132,11 +132,7 @@ const UnmanagedHosts = () => {
         dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
         dispatch(setSelectedInstanceId(rowData?.id));
         dispatch(
-            setSelectedServerName(
-                rowData?.sqlServerInstances?.[0]?.sqlServerName
-                    ? rowData.sqlServerInstances?.[0].sqlServerName.toLowerCase()
-                    : 'Server name'
-            )
+            setSelectedServerName(rowData.sqlServerInstances?.[0].sqlServerName || 'Server name')
         );
         dispatch(setSelectedHostDetails(rowData));
     };
