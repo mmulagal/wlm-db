@@ -323,7 +323,16 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageP
         let totalUsed;
         let totalSpaceSavings;
         let totalSpaceSavingsPercentage;
-        const { region, co_relation_id: fsxnId, credentials_id: credentialsId, fsxwId, ebsVolumeIds } = resourceDetail;
+        const {
+            region,
+            co_relation_id: fsxnId,
+            credentials_id: credentialsId,
+            fsxwId,
+            ebsVolumeIds,
+            metadata
+        } = resourceDetail;
+
+        const { storageProtocol } = metadata as unknown as Metadata;
 
         const response = {} as StoragePerStorageTypeResponseType;
         if (fsxnId && region) {
@@ -333,7 +342,8 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageP
                 size: numeral(`${totalSize}GiB`).value() || 0,
                 used: totalUsed,
                 spaceSavings: totalSpaceSavings,
-                spaceSavingsPercentage: totalSpaceSavingsPercentage
+                spaceSavingsPercentage: totalSpaceSavingsPercentage,
+                protocol: storageProtocol!
             };
         }
         if (fsxwId && region) {
