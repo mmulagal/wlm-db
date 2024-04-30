@@ -812,17 +812,17 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     if (missingResourceResponse[IS_PS7_AVAILABLE] === false) {
         throw createError(
             HttpErrorCodes.FAILED_DEPENDENCY,
-            'PowerShell 7 is needed for managing the resource. Install it manually (refer to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4) or using the API <to-be-filled>, and retry the operation.'
+            'PowerShell 7 is needed for managing the resource. Install it manually (refer to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare", and retry the operation.'
         );
     } else if (missingResourceResponse[UNAVAILABLE_PS_MODULES]) {
         throw createError(
             HttpErrorCodes.FAILED_DEPENDENCY,
-            `PowerShell modules ${missingResourceResponse[UNAVAILABLE_PS_MODULES]} are needed for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API <to-be-filled>, and retry the operation.`
+            `PowerShell modules ${missingResourceResponse[UNAVAILABLE_PS_MODULES]} are needed for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare", and retry the operation.`
         );
     } else if (missingResourceResponse[IS_DATABASE_CREATE_POSSIBLE] === false) {
         throw createError(
             HttpErrorCodes.FAILED_DEPENDENCY,
-            'Files required for database operations are not available. Install them using the API <to-be-filled>, and retry the operation.'
+            'Files required for database operations are not available. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare", and retry the operation.'
         );
     }
 
