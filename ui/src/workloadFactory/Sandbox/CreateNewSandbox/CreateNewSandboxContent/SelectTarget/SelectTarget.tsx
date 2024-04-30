@@ -63,6 +63,12 @@ const SelectTarget = () => {
         }
     }, [generateTargetName]);
 
+    useEffect(() => {
+        if (generateTargetInstance?.length) {
+            dispatch(setTargetDbInstance(generateTargetInstance[0]));
+        }
+    }, [generateTargetInstance]);
+
     const setHeader = () => {
         if (!selectedDatabase) {
             return (
