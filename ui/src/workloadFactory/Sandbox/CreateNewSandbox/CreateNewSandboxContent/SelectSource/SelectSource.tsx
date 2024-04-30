@@ -128,7 +128,7 @@ const SelectSource = () => {
                 </span>
                 <span className={CommonStyles.separatorSandbox} />
                 <span>
-                    {GENERAL.SOURCE_INSTANCE}: {selectedDatabaseInstance ? selectedDatabaseInstance.label : 'NA'}
+                    {GENERAL.SOURCE_DATABASE}: {selectedDatabase ? selectedDatabase.label : 'NA'}
                 </span>
             </DsTypography>
         );

@@ -88,7 +88,7 @@ const SelectTarget = () => {
                     </span>
                     <span className={CommonStyles.separatorSandbox} />
                     <span>
-                        {GENERAL.TARGET_INSTANCE}: {selectedDatabaseInstance ? selectedDatabaseInstance.label : 'NA'}
+                        {GENERAL.TARGET_DATABASES}: {selectedDatabase ? selectedDatabase : 'NA'}
                     </span>
                 </DsTypography>
             );
