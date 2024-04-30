@@ -56,17 +56,13 @@ const SelectTarget = () => {
         return options;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
     useEffect(() => {
-        if (
-            selectedDatabaseHost === null &&
-            selectedDatabaseInstance === null &&
-            generateTargetName &&
-            generateTargetInstance
-        ) {
+        if (generateTargetName?.length) {
             dispatch(setTargetDbHost(generateTargetName[0]));
-            dispatch(setTargetDbInstance(generateTargetInstance[0]));
         }
-    }, [generateTargetName, generateTargetInstance]);
+    }, [generateTargetName]);
+
     const setHeader = () => {
         if (!selectedDatabase) {
             return (
@@ -118,6 +114,7 @@ const SelectTarget = () => {
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setTargetDbHost(selectedOptions));
                                     }}
+                                    value={selectedDatabaseHost}
                                     isSearchable={true}
                                     options={generateTargetName}
                                     className={styles.selectField}

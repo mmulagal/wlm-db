@@ -100,19 +100,16 @@ const SelectSource = () => {
     }, [databaseListData]);
 
     useEffect(() => {
-        if (
-            source.selectedDatabaseHost === null &&
-            source.selectedDatabaseInstance === null &&
-            source.selectedDatabaseInstance === null &&
-            generateSourceInstance &&
-            generateSourceDatabase &&
-            generateHostName
-        ) {
+        if (generateHostName?.length) {
             dispatch(setSourceDbHost(generateHostName[0]));
-            dispatch(setSourceDbInstance(generateSourceInstance[0]));
+        }
+    }, [generateHostName]);
+
+    useEffect(() => {
+        if (generateSourceDatabase?.length) {
             dispatch(setSourceDatabase(generateSourceDatabase[0]));
         }
-    }, [generateSourceInstance, generateSourceDatabase, generateHostName]);
+    }, [generateSourceDatabase]);
 
     const setHeader = () => {
         return (
@@ -152,6 +149,7 @@ const SelectSource = () => {
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSourceDbHost(selectedOptions));
                                     }}
+                                    value={selectedDatabaseHost}
                                     isSearchable={true}
                                     options={generateHostName}
                                     className={styles.selectField}
@@ -184,6 +182,7 @@ const SelectSource = () => {
                                         onChange={(selectedOptions: any): void => {
                                             dispatch(setSourceDatabase(selectedOptions));
                                         }}
+                                        value={selectedDatabase}
                                         isSearchable={true}
                                         options={generateSourceDatabase}
                                         className={styles.selectField}
@@ -202,6 +201,7 @@ const SelectSource = () => {
                                         onChange={(selectedOptions: any): void => {
                                             dispatch(setSourceDatabase(selectedOptions));
                                         }}
+                                        value={selectedDatabase}
                                         isSearchable={true}
                                         options={generateSourceDatabase}
                                         className={styles.selectField}
