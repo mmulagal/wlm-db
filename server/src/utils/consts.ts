@@ -987,6 +987,7 @@ const DATABASE_TYPE = 'Microsoft SQL Server';
 const SQL_STD = 'SQL std';
 const SQL_ENT = 'SQL ent';
 const SQL_WEB = 'SQL web';
+const NONE = 'NONE';
 const SQL_SOFTWARE_TYPES = new Map<string, string>([
     ['standard', SQL_STD],
     ['enterprise', SQL_ENT],
@@ -1386,5 +1387,6 @@ export {
     DEFAULT_INSTANCE_NAME,
     PERMISSION_DENIAL_POSSIBLE_REASONS,
     NO_SANDBOX_CREATED,
-    STORAGE_PROTOCOLS
+    STORAGE_PROTOCOLS,
+    NONE
 };

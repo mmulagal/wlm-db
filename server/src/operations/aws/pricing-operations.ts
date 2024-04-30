@@ -13,6 +13,7 @@ import {
     MAX_WRITE_REQUEST_FSXN,
     MIN_DISKSIZE,
     MIN_THROUGHPUT,
+    NONE,
     SINGLE_AZ,
     SQL_SOFTWARE_TYPES
 } from '../../utils/consts';
@@ -94,12 +95,11 @@ function getSqlSoftwareEdition(sqlSoftwareType: string): Filter {
 function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): ProductInput {
     logger.info('Get ec2 instance input', { compute });
 
-    return {
+    const filters = {
         name: 'ec2Instance',
         input: {
             Filters: [
                 getRegionCodeFilter(compute.regionCode),
-                getSqlSoftwareEdition(compute.sqlSoftwareType),
                 {
                     Type: FilterType.TERM_MATCH,
                     Field: 'productFamily',
@@ -130,6 +130,12 @@ function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): Prod
             ...AWS_PRICING_FORMAT_VERSION
         }
     };
+    // add this filter based on whether its sql installed winodws or not
+    if (compute.sqlSoftwareType && compute.sqlSoftwareType !== NONE) {
+        const sqlFilter = getSqlSoftwareEdition(compute.sqlSoftwareType);
+        filters.input.Filters.push(sqlFilter);
+    }
+    return filters;
 }
 
 function getEc2StorageInput(compute: PricingServiceRequestType['compute']): ProductInput {
