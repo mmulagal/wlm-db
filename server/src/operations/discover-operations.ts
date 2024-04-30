@@ -934,7 +934,8 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
                     ? SqlServerDeploymentModel.SQL_STANDALONE_SHORT
                     : SqlServerDeploymentModel.SQL_FCI_SHORT,
             source: RESOURCE_SOURCE.DISCOVER,
-            fsxSvmId: storageInfo?.svmId
+            fsxSvmId: storageInfo?.svmId,
+            storageProtocol: storageInfo?.protocol
         }
     });
 
