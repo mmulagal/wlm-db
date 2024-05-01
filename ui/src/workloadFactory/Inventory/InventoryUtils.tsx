@@ -1,9 +1,11 @@
-import { DsFlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-system';
+import { Button, DsFlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../utils/appConstants';
 import { formatFractionalNumber, isAwsBackupEnabled } from '../../utils/utilityFunctions';
 import EstimatedCostPopover from './EstimatedCostPopover/EstimatedCostPopover';
-import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE } from '../../utils/consts';
+import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
 import CommonStyles from '../../utils/CommonStyles.module.scss';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../store/notificationSlice';
+import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
 
 export const renderProtectionColumn = (cellData: any, rowData: any, styles: any) => {
     const isLoading = rowData?.loading;
@@ -198,4 +200,45 @@ export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) =
             {!deploymentType && GENERAL.NOT_AVAILABLE}
         </>
     );
+};
+
+export const runPrepareApi = async (prepareHostApi: any, credId: string, regionId: string, instanceId: string) => {
+    const result: any = await prepareHostApi({
+        credentialId: credId,
+        regionId: regionId,
+        instanceId: instanceId
+    });
+    if (result && !result?.error) {
+        return true;
+    } else {
+        return false;
+    }
+};
+
+export const installModuleNotification = (styles: any, hostname: string, dispatch: any, initialMsg: any) => {
+    const prepareHostMsg = (
+        <div className={styles.notification}>
+            {initialMsg[0]}
+            <span className={styles.bold}>{hostname}</span>
+            {initialMsg[1]}
+            {GENERAL.PREPARE_HOST_INFO[0]}
+            <span className={styles.bold}>{hostname}</span>
+            {GENERAL.PREPARE_HOST_INFO[1]}
+            {
+                <>
+                    <Button
+                        Component="button"
+                        variant="text"
+                        onClick={() => {
+                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            dispatch(clearNotifications());
+                        }}
+                    >
+                        {GENERAL.PREPARE_HOST_INFO[2]}
+                    </Button>
+                </>
+            }
+        </div>
+    );
+    dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: prepareHostMsg }));
 };

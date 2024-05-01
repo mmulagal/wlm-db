@@ -655,6 +655,12 @@ export const inventoryApi = createApi({
                     url: `credentials/${credentialId}/regions/${regionId}/database-hosts/${id}?fields=topology,serverDetails,storage,performance,protection,usageEstimation`,
                     method: 'GET'
                 })
+            }),
+            prepareHost: builder.mutation({
+                query: ({ credentialId, regionId, instanceId }) => ({
+                    url: `credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/mssql/prepare`,
+                    method: 'POST'
+                })
             })
         };
     }
@@ -786,7 +792,8 @@ export const {
     useRegisterResourceCredentialsMutation,
     useGetMssqlInstanceDataMutation,
     useGetMssqlResourceDataMutation,
-    useGetDatabaseHostsQuery
+    useGetDatabaseHostsQuery,
+    usePrepareHostMutation
 } = inventoryApi;
 
 export const { useGetSandboxListQuery, useGetSandboxSavingsQuery, useCreateSandboxMutation } = sandboxApi;

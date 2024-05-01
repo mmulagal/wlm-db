@@ -136,7 +136,8 @@ export const SQL_DEPLOYMENT_MODE = {
 
 export const API_ERRORS = {
     DUPLICATE_CONFIG_NAME: 'An unique key constraint violated uk_wlmdb_config_account_id_name_user',
-    RATE_EXCEEDED: 'rate exceeded'
+    RATE_EXCEEDED: 'rate exceeded',
+    POWERSHELL_7: 'PowerShell 7 is needed for managing the resource'
 };
 
 export const STATUS_CONST = {
@@ -156,7 +157,8 @@ export const JOB_MONITORING_STATUS = {
 
 export const JOB_MONITORING_TYPE = {
     DEPLOYMENT: 'DEPLOYMENT',
-    CREATE_RESOURCE: 'CREATE_RESOURCE'
+    CREATE_RESOURCE: 'CREATE_RESOURCE',
+    PREPARE_RESOURCE: 'PREPARE_RESOURCE'
 };
 
 export const MAX_SAVED_CONFIG = 100;

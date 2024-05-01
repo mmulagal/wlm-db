@@ -1046,6 +1046,8 @@ export const jobMonitoringTypeMapping = (val: string) => {
         typeValue = GENERAL.JM_TYPE_DEPLOYMENT;
     } else if (val === JOB_MONITORING_TYPE.CREATE_RESOURCE) {
         typeValue = GENERAL.JM_TYPE_CREATE_RESOURCE;
+    } else if (val === JOB_MONITORING_TYPE.PREPARE_RESOURCE) {
+        typeValue = GENERAL.JM_TYPE_PREPARE_RESOURCE;
     }
     return typeValue;
 };
