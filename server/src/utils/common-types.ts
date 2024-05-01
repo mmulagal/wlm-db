@@ -13,6 +13,7 @@ interface Metadata {
     createDbMetrics?: CreateDbMetrics;
     sandboxCreated?: boolean;
     updatedManually?: boolean;
+    storageProtocol?: string;
 }
 
 interface CreateDbMetrics {

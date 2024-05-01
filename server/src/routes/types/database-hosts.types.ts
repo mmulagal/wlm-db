@@ -114,7 +114,8 @@ const StorageResponse = Type.Object({
         Type.Number({
             description: 'Total disk space saved in the volume due to storage efficiency, in percentage.'
         })
-    )
+    ),
+    protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or SMB' }))
 });
 type StorageResponseType = Static<typeof StorageResponse>;
 
