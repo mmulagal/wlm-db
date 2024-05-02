@@ -21,7 +21,6 @@ const SecurityGroup = () => {
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const selectedSG = useAppSelector(state => state.mssqlForm.securityGroup?.selectedExistingSecurityGroup);
     const selectedSecurityType = useAppSelector(state => state.mssqlForm.securityGroup?.selectedSecurityType);
-    const selectConfig = useAppSelector(state => state.mssqlForm?.selectConfig);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
@@ -49,7 +48,7 @@ const SecurityGroup = () => {
             dispatch(setSelectedExistingSecurityGroup(generateExistingSecurity[0]));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [generateExistingSecurity, selectConfig]);
+    }, [generateExistingSecurity]);
 
     //Set the Header text here
     const setHeader = () => {
