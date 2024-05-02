@@ -168,6 +168,7 @@ const HeaderComponent = () => {
         } else if (selectedHeaderTab === WLF_TABS.JOB_MONITORING) {
             dispatch(setJobsList([]));
             dispatch(setSubJobsData([]));
+            dispatch(setIsRefreshed(true));
         } else if (selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR) {
             dispatch(setSavingsCalculatorRefresh(true));
         } else if (selectedHeaderTab === WLF_TABS.SANDBOXES) {
