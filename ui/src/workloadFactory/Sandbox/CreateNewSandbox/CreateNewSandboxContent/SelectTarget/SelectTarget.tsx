@@ -125,6 +125,8 @@ const SelectTarget = () => {
                                     options={generateTargetName}
                                     className={styles.selectField}
                                     error={showError && !selectedDatabaseHost ? GENERAL.ACTION_REQUIRED : ''}
+                                    //For first release the target host will be same as source host
+                                    isDisabled={true}
                                 />
 
                                 <SelectField
