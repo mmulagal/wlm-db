@@ -81,6 +81,7 @@ const UnmanagedHosts = () => {
                 id: 'exploreSavings',
                 displayName: 'Explore savings',
                 disabled: isDemoCheck(hasEbs),
+                infoText: (!hasEbs && isDemoMode) ? GENERAL.EXPLORE_SAVINGS_DISABLED : '',
                 tagAdded: !isDemoMode && true,
                 tag: !isDemoMode && <ComingSoon />
             }
