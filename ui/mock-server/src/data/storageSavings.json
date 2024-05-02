@@ -23,37 +23,16 @@
       "deploymentType": "Single",
       "numberOfVolumes": 20,
       "throughput": 10,
-      "totalStorageCapacity": {
-        "size": 100,
-        "unit": "TiB"
-      },
+      "totalStorageCapacity": 109951162777600,
       "percentageSsd": 20,
       "savings": 65,
-      "effectiveCapacity": {
-        "size": 35,
-        "unit": "TiB"
-      },
-      "ssdTierReqCapacity": {
-        "size": 7,
-        "unit": "TiB"
-      },
-      "capacityPoolTier": {
-        "size": 28,
-        "unit": "TiB"
-      },
+      "effectiveCapacity": 38482906972160,
+      "ssdTierReqCapacity": 7696581394432,
+      "capacityPoolTier": 30786325577728,
       "ssdIop": 60000,
       "throughputCapacity": 1024,
       "useCase": "Online archive",
       "regionName": "US East (Ohio) | us-east-2",
-      "monthlySnapshotCapacity": {
-        "size": 900,
-        "unit": "GiB"
-      }
-    },
-    "mssqlInstance" : {
-      "serverInstallationMode": "FCI",
-      "instanceType": "m5.xlarge",
-      "serverEdition": "SQL Server Standard Edition",
-      "serverVersion": "SQL Server 2019"
+      "monthlySnapshotCapacity": 966367641600
     }
   }
