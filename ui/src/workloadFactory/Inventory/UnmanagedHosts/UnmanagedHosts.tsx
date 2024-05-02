@@ -24,8 +24,7 @@ import {
     renderInstanceName,
     renderProtectionColumn,
     renderUnmanagedAZ,
-    renderUnmanagedHostName,
-    runPrepareApi
+    renderUnmanagedHostName
 } from '../InventoryUtils';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import {
@@ -81,7 +80,7 @@ const UnmanagedHosts = () => {
                 id: 'exploreSavings',
                 displayName: 'Explore savings',
                 disabled: isDemoCheck(hasEbs),
-                infoText: (!hasEbs && isDemoMode) ? GENERAL.EXPLORE_SAVINGS_DISABLED : '',
+                infoText: !hasEbs && isDemoMode ? GENERAL.EXPLORE_SAVINGS_DISABLED : '',
                 tagAdded: !isDemoMode && true,
                 tag: !isDemoMode && <ComingSoon />
             }
@@ -131,14 +130,20 @@ const UnmanagedHosts = () => {
             );
             dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: managedSuccessMsg }));
         } else {
-            let running: boolean = false;
+            let errorMessage: string = result?.error?.data?.message || '';
+            let jobTriggered: boolean = false;
             if (result?.error?.status === 424 && !result?.error?.data?.message.includes(API_ERRORS.POWERSHELL_7)) {
-                running = await runPrepareApi(
-                    prepareHostApi,
-                    headerSelectedCred?.data?.credentialsId,
-                    headerSelectedRegion?.label2,
-                    rowData?.ec2InstanceId
-                );
+                const prepareResult: any = await prepareHostApi({
+                    credentialId: headerSelectedCred?.data?.credentialsId,
+                    regionId: headerSelectedRegion?.label2,
+                    instanceId: rowData?.ec2InstanceId
+                });
+                if (prepareResult && !prepareResult?.error) {
+                    jobTriggered = true;
+                } else {
+                    jobTriggered = false;
+                    errorMessage = prepareResult?.error?.data?.message;
+                }
             }
             if (manageLoading[rowData?.id]) {
                 manageLoading[rowData?.id] = false;
@@ -149,10 +154,10 @@ const UnmanagedHosts = () => {
                     {GENERAL.HOST_MOVED_FAILED[0]}
                     <span className={styles.bold}>{name}</span>
                     {GENERAL.HOST_MOVED_FAILED[1]}
-                    {result?.error?.data?.message || ''}
+                    {errorMessage}
                 </div>
             );
-            if (running) {
+            if (jobTriggered) {
                 installModuleNotification(styles, name, dispatch, GENERAL.PREPARE_HOST_INFO_TAB2);
             } else {
                 dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));

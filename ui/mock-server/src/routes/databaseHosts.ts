@@ -93,6 +93,7 @@ router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances
 router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances/:instanceId/mssql/prepare`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 202, {message: '1234'});
+        // generateResponse(res, 500, {message: 'Already running job'});
     }, 3000);
 });
 

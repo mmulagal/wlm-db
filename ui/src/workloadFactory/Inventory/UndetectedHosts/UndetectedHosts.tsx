@@ -47,8 +47,7 @@ import { createDetectHostPayload } from '../../../utils/utilityFunctions';
 import { useEffect, useRef, useState } from 'react';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import store from '../../../store/store';
-import { installModuleNotification, runPrepareApi } from '../InventoryUtils';
-import { useNavigate } from 'react-router-dom';
+import { installModuleNotification } from '../InventoryUtils';
 
 const UndetectedHosts = () => {
     const dispatch = useDispatch();
@@ -216,14 +215,20 @@ const UndetectedHosts = () => {
                 );
                 dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: managedSuccessMsg }));
             } else {
-                let running: boolean = false;
+                let errorMessage: string = result?.error?.data?.message || '';
+                let jobTriggered: boolean = false;
                 if (result?.error?.status === 424 && !result?.error?.data?.message.includes(API_ERRORS.POWERSHELL_7)) {
-                    running = await runPrepareApi(
-                        prepareHostApi,
-                        headerSelectedCred?.data?.credentialsId,
-                        headerSelectedRegion?.label2,
-                        rowData?.ec2InstanceId
-                    );
+                    const prepareResult: any = await prepareHostApi({
+                        credentialId: headerSelectedCred?.data?.credentialsId,
+                        regionId: headerSelectedRegion?.label2,
+                        instanceId: rowData?.ec2InstanceId
+                    });
+                    if (prepareResult && !prepareResult?.error) {
+                        jobTriggered = true;
+                    } else {
+                        jobTriggered = false;
+                        errorMessage = prepareResult?.error?.data?.message;
+                    }
                 }
                 if (manageLoading[rowData?.instanceID]) {
                     manageLoading[rowData?.instanceID] = false;
@@ -235,11 +240,11 @@ const UndetectedHosts = () => {
                         {GENERAL.HOST_MOVED_INFO[0]}
                         <span className={styles.bold}>{rowData?.instance}</span>
                         {GENERAL.HOST_MOVED_INFO[1]}
-                        {result?.error?.data?.message || ''}
+                        {errorMessage}
                     </div>
                 );
 
-                if (running) {
+                if (jobTriggered) {
                     installModuleNotification(styles, rowData?.instance, dispatch, GENERAL.PREPARE_HOST_INFO_TAB3);
                 } else {
                     dispatch(
