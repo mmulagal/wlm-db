@@ -19,8 +19,18 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { DETECT_HOST_VAR, FROM_DIALOG, FSX_DEPLOYMENT_MODE, SSM_TROUBLESHOOTING_LINK } from '../../../utils/consts';
-import { useManageHostMutation, useRegisterResourceCredentialsMutation } from '../../../utils/apiService';
+import {
+    API_ERRORS,
+    DETECT_HOST_VAR,
+    FROM_DIALOG,
+    FSX_DEPLOYMENT_MODE,
+    SSM_TROUBLESHOOTING_LINK
+} from '../../../utils/consts';
+import {
+    useManageHostMutation,
+    usePrepareHostMutation,
+    useRegisterResourceCredentialsMutation
+} from '../../../utils/apiService';
 import { setIsDetectHostError, setIsDetectHostLoading } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
 import {
@@ -37,6 +47,7 @@ import { createDetectHostPayload } from '../../../utils/utilityFunctions';
 import { useEffect, useRef, useState } from 'react';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import store from '../../../store/store';
+import { installModuleNotification } from '../InventoryUtils';
 
 const UndetectedHosts = () => {
     const dispatch = useDispatch();
@@ -58,6 +69,7 @@ const UndetectedHosts = () => {
     const valueRef = useRef(false); // For detect host dialog fields check
 
     const [manageHostApi] = useManageHostMutation();
+    const [prepareHostApi] = usePrepareHostMutation();
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
 
     const [tableData, setTableData] = useState<any>([]);
@@ -203,6 +215,21 @@ const UndetectedHosts = () => {
                 );
                 dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: managedSuccessMsg }));
             } else {
+                let errorMessage: string = result?.error?.data?.message || '';
+                let jobTriggered: boolean = false;
+                if (result?.error?.status === 424 && !result?.error?.data?.message.includes(API_ERRORS.POWERSHELL_7)) {
+                    const prepareResult: any = await prepareHostApi({
+                        credentialId: headerSelectedCred?.data?.credentialsId,
+                        regionId: headerSelectedRegion?.label2,
+                        instanceId: rowData?.ec2InstanceId
+                    });
+                    if (prepareResult && !prepareResult?.error) {
+                        jobTriggered = true;
+                    } else {
+                        jobTriggered = false;
+                        errorMessage = prepareResult?.error?.data?.message;
+                    }
+                }
                 if (manageLoading[rowData?.instanceID]) {
                     manageLoading[rowData?.instanceID] = false;
                     setManageLoading(manageLoading);
@@ -213,10 +240,17 @@ const UndetectedHosts = () => {
                         {GENERAL.HOST_MOVED_INFO[0]}
                         <span className={styles.bold}>{rowData?.instance}</span>
                         {GENERAL.HOST_MOVED_INFO[1]}
-                        {result?.error?.data?.message || ''}
+                        {errorMessage}
                     </div>
                 );
-                dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));
+
+                if (jobTriggered) {
+                    installModuleNotification(styles, rowData?.instance, dispatch, GENERAL.PREPARE_HOST_INFO_TAB3);
+                } else {
+                    dispatch(
+                        addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg })
+                    );
+                }
             }
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         } else {

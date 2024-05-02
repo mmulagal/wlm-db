@@ -9,6 +9,7 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedKeyPair } from '../../../../store/mssql/mssqlFormSlice';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
+import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 
 const KeyPair = () => {
     const dispatch = useDispatch();
@@ -35,7 +36,7 @@ const KeyPair = () => {
     }, [keyPairData]);
 
     useEffect(() => {
-        if (!isLoadConfig && !movingFromChatbot) {
+        if ((!isLoadConfig && !movingFromChatbot) || !selectedKey) {
             dispatch(setSelectedKeyPair(generateKey[0]));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -50,8 +51,12 @@ const KeyPair = () => {
                 </Typography>
             );
         }
+        if (!selectedKey?.label) {
+            return <ActionRequired />;
+        }
         return <Typography variant="Regular_14">{selectedKey?.label}</Typography>;
     };
+
     return (
         <div className={styles.key}>
             <AccordionCard

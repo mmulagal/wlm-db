@@ -137,7 +137,9 @@ enum RouteTags {
     PRICING = 'Pricing',
     RESOURCE = 'Resource',
     SYSTEM = 'System',
-    WORKING_ENVIRONMENT = 'Working Environment'
+    WORKING_ENVIRONMENT = 'Working Environment',
+    STORAGE_SAVINGS = 'Storage Savings',
+    SANDBOX = 'Sandbox'
 }
 
 enum HttpErrorCodes {
@@ -146,7 +148,9 @@ enum HttpErrorCodes {
     UNAUTHORIZED = 401,
     FORBIDDEN = 403,
     NOT_FOUND = 404,
+    CONFLICT = 409,
     VALIDATION_ERROR = 422,
+    FAILED_DEPENDENCY = 424,
 
     // Server errors
     INTERNAL_SERVER_ERROR = 500,

@@ -1,6 +1,6 @@
 import { DsAccordion, DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import styles from './MSSQLAccordion.module.scss';
-import { MSSQLServerInstance, calculatedFSXData } from '../savingsUtil';
+import { ExploreSaveConfiguration, MSSQLServerInstance, calculatedFSXData, setRecommendedConfig } from '../savingsUtil';
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { useNavigate } from 'react-router-dom';
 import { Text } from '../../../../ui-components/Typography';
@@ -9,6 +9,12 @@ import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../../utils/appConstants';
 import SaveConfigSavings from './SaveCongfigSavings/SaveCongfigSavings';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { useEffect, useState } from 'react';
+import { setSaveConfigName } from '../../../../store/workloadFactory/exploreSavingsSlice';
+import { useDispatch } from 'react-redux';
+import { useSaveConfigDataMutation } from '../../../../utils/apiService';
+import { LoadRecommendedConfig } from '../../../../components/CreateMsSql/Configuration/LoadConfiguration';
+import { setIsLoadConfig, setIsLoading } from '../../../../store/mssql/msSqlActionSlice';
 
 const TableLayout = ({ data }: any) => {
     return (
@@ -26,34 +32,33 @@ const TableLayout = ({ data }: any) => {
     );
 };
 
-const MSSQLAccordion = () => {
+const MSSQLAccordion = ({ printState }: any) => {
     const isMutliFsx = false;
-    const { loading } = useAppSelector(state => state.exploreSavings);
+    const dispatch = useDispatch();
+    const [saveConfigData] = useSaveConfigDataMutation();
+    const { storageSavingsLoading, storageSavingsResponse, selectedHostDetails } = useAppSelector(
+        state => state.exploreSavings
+    );
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
-    const fsxData = {
-        regionName: 'US East (Ohio) | us-east-2',
-        deploymentType: 'Single',
-        totalStorageCapacity: '100 TiB',
-        precentageSSD: '20',
-        savings: '65',
-        useCase: 'Online archive',
-        effectiveCapacity: 35,
-        capacityPoolTier: 28,
-        ssdTierReqCapacity: 7,
-        ssdIop: '60,000',
-        throughputCapacity: '1,024',
-        numberOfVolumes: 20,
-        throughput: 10,
-        monthlySnapshotCapacity: '900'
-    };
+    const [fsxData, setFsxData] = useState({});
+    const [msSqlInstance, setMsSqlInstance] = useState({});
 
-    const msSqlInstance = {
-        deploymentMode: 'Failover cluster instance(FCI)',
-        edition: 'SQL Server Standard Edition',
-        serverType: 'SQL Server 2019',
-        instance: ' m5.xlarge'
-    };
+    useEffect(() => {
+        setFsxData(storageSavingsResponse?.fsxCalculation);
+        // setMsSqlInstance(storageSavingsResponse?.mssqlInstance);
+    }, [storageSavingsResponse]);
+
+    useEffect(() => {
+        const instanceTypelist = selectedHostDetails?.topology?.ec2Details?.map((inst: any) => inst?.instanceType);
+        const mssqlInstanceData = {
+            serverInstallationMode: selectedHostDetails?.serverInstallationMode,
+            serverEdition: selectedHostDetails?.databaseServer?.serverEdition,
+            serverVersion: selectedHostDetails?.databaseServer?.serverVersion,
+            instanceType: instanceTypelist
+        };
+        setMsSqlInstance(mssqlInstanceData);
+    }, [selectedHostDetails]);
 
     const handleSaveConfiguration = (dialogFrom: any) => {
         setDialog(
@@ -68,15 +73,26 @@ const MSSQLAccordion = () => {
                 }
                 primaryButton={GENERAL.SAVE}
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => console.log('saved')}
+                callback={() => ExploreSaveConfiguration(dispatch, saveConfigData, closeDialog, msSqlInstance, fsxData)}
                 closeCallback={() => {
-                    // dispatch(setSaveConfigName(''));
+                    dispatch(setSaveConfigName(''));
                 }}
                 dialogFrom={dialogFrom}
                 customClass={styles.setWidth}
             />
         );
     };
+
+    const handleCreateClick = () => {
+        dispatch(setIsLoading(true));
+        dispatch(setIsLoadConfig(true));
+        navigate(WLF_TO_FORM_NAVIGATE);
+        setTimeout(() => {
+            const data = setRecommendedConfig(msSqlInstance, fsxData);
+            LoadRecommendedConfig(dispatch, data);
+        }, 10);
+    };
+
     return (
         <div className={styles.mssqlAccordion}>
             <DsAccordion
@@ -84,7 +100,8 @@ const MSSQLAccordion = () => {
                 title="Microsoft SQL Server on FSx for ONTAP"
                 variant="Default"
                 value=""
-                isDisabled={loading}
+                isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
+                isExpanded={printState}
                 headerActions={[
                     isMutliFsx ? (
                         <Popover
@@ -100,7 +117,7 @@ const MSSQLAccordion = () => {
                     ) : (
                         <DsButton
                             type="text"
-                            isDisabled={loading}
+                            isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
                             onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
                         >
                             {GENERAL.ES_SAVE_CONFIG}
@@ -110,8 +127,8 @@ const MSSQLAccordion = () => {
                     <div style={{ height: '32px' }} className={styles.buttonContainer}>
                         <DsButton
                             type="button"
-                            isDisabled={isMutliFsx || loading}
-                            onClick={() => navigate(WLF_TO_FORM_NAVIGATE)}
+                            isDisabled={isMutliFsx || storageSavingsLoading || selectedHostDetails?.loading}
+                            onClick={() => handleCreateClick()}
                         >
                             Create
                         </DsButton>

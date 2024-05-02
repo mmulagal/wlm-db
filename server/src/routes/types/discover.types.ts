@@ -42,6 +42,7 @@ const SqlServerInstanceInfo = Type.Object({
         })
     ),
     isDefaultInstance: Type.Boolean({ description: 'Is this default SQL Server instance' }),
+    failureInfo: Type.Optional(Type.String({ description: 'Instance specific failure details, if any.' })),
     sqlServerNodes: Type.Optional(
         Type.Array(
             Type.String({
@@ -139,7 +140,7 @@ type DiscoverCredentialsType = Static<typeof DiscoverCredentials>;
 const DiscoverInstanceParams = Type.Composite([
     CredentialsIdParams,
     Type.Object({
-        instanceId: Type.String()
+        instanceId: Type.String({ description: 'AWS EC2 instance ID' })
     })
 ]);
 

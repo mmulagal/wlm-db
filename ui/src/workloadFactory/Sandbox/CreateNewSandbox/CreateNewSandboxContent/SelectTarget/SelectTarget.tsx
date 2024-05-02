@@ -20,9 +20,7 @@ const SelectTarget = () => {
     const windowSize = useResize();
     const dispatch = useDispatch();
 
-    const { target, isCreateSandboxPressed, source, aggregatedDbHostList } = useAppSelector(
-        state => state.createSandbox
-    );
+    const { target, source, aggregatedDbHostList, showError } = useAppSelector(state => state.createSandbox);
     const { selectedDatabaseHost, selectedDatabase, selectedDatabaseInstance } = target;
     const { selectedDatabaseHost: selectedSourceDbHost } = source;
 
@@ -48,27 +46,29 @@ const SelectTarget = () => {
     }, [aggregatedDbHostList, selectedSourceDbHost]);
 
     const generateTargetInstance = useMemo<optionType[]>((): optionType[] => {
-        const hostName = ['default'];
+        const hostName = [{ label: 'MS SQL SERVER', value: 'MSSQLSERVER' }];
         const options: optionType[] = [];
-        hostName?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+        hostName?.map((obj, idx: number) => {
+            const option = generateOptionType(obj?.value, obj?.label, '', false, '');
             options.push(option);
         });
 
         return options;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
     useEffect(() => {
-        if (
-            selectedDatabaseHost === null &&
-            selectedDatabaseInstance === null &&
-            generateTargetName &&
-            generateTargetInstance
-        ) {
+        if (generateTargetName?.length) {
             dispatch(setTargetDbHost(generateTargetName[0]));
+        }
+    }, [generateTargetName]);
+
+    useEffect(() => {
+        if (generateTargetInstance?.length) {
             dispatch(setTargetDbInstance(generateTargetInstance[0]));
         }
-    }, [generateTargetName, generateTargetInstance]);
+    }, [generateTargetInstance]);
+
     const setHeader = () => {
         if (!selectedDatabase) {
             return (
@@ -90,7 +90,7 @@ const SelectTarget = () => {
                     </span>
                     <span className={CommonStyles.separatorSandbox} />
                     <span>
-                        {GENERAL.TARGET_INSTANCE}: {selectedDatabaseInstance ? selectedDatabaseInstance.label : 'NA'}
+                        {GENERAL.TARGET_DATABASES}: {selectedDatabase ? selectedDatabase : 'NA'}
                     </span>
                 </DsTypography>
             );
@@ -103,7 +103,7 @@ const SelectTarget = () => {
                     <div className={`${CommonStyles['heading-content']} ${styles.headerSetter}`}>{setHeader()}</div>
                 )}
                 id="2"
-                title={<div className={CommonStyles.title}>{'Select Target'}</div>}
+                title={<div className={CommonStyles.title}>{GENERAL.Database_TARGET}</div>}
             >
                 <AccordionCardContent>
                     <DsTypography>
@@ -116,13 +116,17 @@ const SelectTarget = () => {
                                 <SelectField
                                     label={GENERAL.TARGET_HOST}
                                     isClearable={false}
-                                    defaultValue={selectedDatabaseHost ? selectedDatabaseHost : [generateTargetName[0]]}
+                                    defaultValue={selectedDatabaseHost ? selectedDatabaseHost : generateTargetName[0]}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setTargetDbHost(selectedOptions));
                                     }}
+                                    value={selectedDatabaseHost}
                                     isSearchable={true}
                                     options={generateTargetName}
                                     className={styles.selectField}
+                                    error={showError && !selectedDatabaseHost ? GENERAL.ACTION_REQUIRED : ''}
+                                    //For first release the target host will be same as source host
+                                    isDisabled={true}
                                 />
 
                                 <SelectField
@@ -145,12 +149,12 @@ const SelectTarget = () => {
                                 {windowSize.width <= 1500 && (
                                     <TextField
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                            dispatch(setTargetDbInstance(e.target.value));
+                                            dispatch(setTargetDatabase(e.target.value));
                                         }}
                                         label={GENERAL.TARGET_DATABASES}
                                         value={selectedDatabase}
                                         className={styles.keyField}
-                                        error={!selectedDatabase ? GENERAL.ACTION_REQUIRED : ''}
+                                        error={showError && !selectedDatabase ? GENERAL.ACTION_REQUIRED : ''}
                                     />
                                 )}
                             </div>
@@ -159,12 +163,12 @@ const SelectTarget = () => {
                                 <div className={styles.secondRow}>
                                     <TextField
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                            dispatch(setTargetDbInstance(e.target.value));
+                                            dispatch(setTargetDatabase(e.target.value));
                                         }}
                                         label={GENERAL.TARGET_DATABASES}
                                         value={selectedDatabase}
                                         className={styles.keyField}
-                                        error={!selectedDatabase ? GENERAL.ACTION_REQUIRED : ''}
+                                        error={showError && !selectedDatabase ? GENERAL.ACTION_REQUIRED : ''}
                                     />
                                 </div>
                             )}

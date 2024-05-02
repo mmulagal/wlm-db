@@ -30,7 +30,7 @@ $results = foreach ($instance in $instances) {
         FROM (
             SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'initialCreationDate', 'tag', 'baseSnapshot') FOR JSON PATH)) AS properties
             FROM #properties AS p1
-            WHERE name = 'cloned_by' AND value = 'netapp'
+            WHERE name = 'cloned_by' AND value = 'netapp_wlmdb'
         ) AS grouped_properties
         GROUP BY database_name, properties
         FOR JSON PATH; 
@@ -115,12 +115,12 @@ const ontapRestRequest = `
         $connection =  Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet
         if ($connection -eq $False) {
             $isprivatesubnet = $True
-            $regionCertificateificate = ''
+            $regionCertificate = ''
         } else {
             $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
             Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $Env:Temp\\FSxCertificate.pem
             $Certificate = Import-Certificate -FilePath $Env:Temp\\FSxCertificate.pem -CertStoreLocation Cert:\\LocalMachine\\Root
-            $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+            $regionCertificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
         }
 
         Function Invoke-ONTAPRequest {
@@ -164,8 +164,8 @@ const ontapRestRequest = `
                 $Params.Add("Body", $body)
             }
 
-            if ($isprivatesubnet -eq $False -and $regionCertificateificate -ne $null) {
-                return Invoke-RestMethod @Params -Certificate $regionCertificateificate
+            if ($isprivatesubnet -eq $False -and $regionCertificate -ne $null) {
+                return Invoke-RestMethod @Params -Certificate $regionCertificate
             } else {
                 return Invoke-RestMethod @Params
             }
@@ -198,9 +198,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
     $FSxRegion = '${fsxregion}'
     $dbname = '${dbName}'
 
-    if ($responeObject -eq $null) {
-        $responeObject = @{}
-    }
+    $responeObject = @{}
     
     try {
         $sqlquery = @"
@@ -224,139 +222,110 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
             $logVolume = $WinVolumes | Where-Object { $_.filename -match '\\.ldf$' } | Select-Object -ExpandProperty volumename
     
             $volumes = Get-CimInstance -Query "SELECT DeviceID, VolumeName FROM Win32_LogicalDisk where VolumeName = '$dataVolume' or VolumeName = '$logVolume'"
-            $results = @()
+            $responseObject = @{
+                "collation" = $WinVolumes[0].collation_name
+            }
             foreach ($volume in $volumes) {
-                $object = New-Object PSObject -Property @{
-                    "DriveLetter" = $volume.DeviceID
-                    "VolumeName" = $volume.VolumeName
-                    "FileName" = $WinVolumes | Where-Object { $_.volumename -eq $volume.VolumeName } | Select-Object -ExpandProperty filename
-                    "Collation" = $WinVolumes | Where-Object { $_.volumename -eq $volume.VolumeName } | Select-Object -ExpandProperty collation_name
+                $filename = $WinVolumes | Where-Object { $_.volumename -eq $volume.VolumeName } | Select-Object -ExpandProperty filename
+                $object = @{
+                    "windowsVolumeName" = $volume.VolumeName
+                    "fileName" = $filename
                 }
                 $partitions = Get-CimInstance -Query "ASSOCIATORS OF {Win32_LogicalDisk.DeviceID='$($volume.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition"
                 foreach ($partition in $partitions) {
                     $diskdrives = Get-CimInstance -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($partition.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
                     foreach ($diskdrive in $diskdrives) {
-                        $object | Add-Member -MemberType NoteProperty -Name "LUNSerialNumber" -Value $diskdrives.SerialNumber
+                        $object | Add-Member -MemberType NoteProperty -Name "lunSerialNumber" -Value $diskdrives.SerialNumber
                     }
                 }
-                $results += $object
+                $type = 'data'
+                if ($filename -match '\\.ldf$') {
+                    $type = 'log'
+                }
+                $responseObject[$type] = $object
             }
     
-            return $results
+            return $responseObject
         }
     
         ${ontapRestRequest}
 
-        Function Get-LunFromSerialNumber($SerialNumbers) {
-            Write-debug "Get ONTAP lun name from serial numbers for: $SerialNumbers"
-    
-            $lunObjects = @()
-            foreach ($SerialNumber in $SerialNumbers) {
-                if ($SerialNumber.LUNSerialNumber -eq '') {
-                    continue
-                }
-    
-                $QueryFilter = $SerialNumber.LunSerialNumber
-                $Params = @{
-                    "ApiEndPoint" = "/storage/luns"
-                }
-    
-                if ($QueryFilter -ne '') {
-                    $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter&fields=svm.name"}
-                }
-    
-                $Response = Invoke-ONTAPRequest @Params
-    
-                $LunRecords = $Response.records
-    
-                if ($LunRecords.count -gt 0) {
-                    $lunObject = @{
-                        "lunpath" = $LunRecords[0].name
-                        "svm" = $LunRecords[0].svm.name
-                        "windowsVolumeName" = $SerialNumber.VolumeName
-                        "filename" = $SerialNumber.filename
-                        "collation" = $SerialNumber.collation
-                    }
-    
-                    $lunObjects += $lunObject
-                }
-            }
-        
-            return $lunObjects
-        }
-    
-        Function Get-VolumeIdFromName($lunObjects) {
-            Write-debug "Get Volume Id from name: $lunObjects"
-    
-            $volumes = @()
-            foreach ($lunObject in $lunObjects) {
-                if ($lunObject.lunpath -eq '') {
-                    continue
-                }
-                $QueryFilter = $lunObject.lunpath
-                $Params = @{
-                    "ApiEndPoint" = "/storage/volumes"
-                }
-    
-                if ($QueryFilter -ne '') {
-                    $Params += @{"ApiQueryFilter" = "name=$QueryFilter"}
-                }
-    
-                $Response = Invoke-ONTAPRequest @Params
-    
-                $VolumeRecords = $Response.records
-                if ($VolumeRecords.count -gt 0) {
-                    $volume = @{
-                        "volumeId" = $VolumeRecords[0].uuid
-                        "lunpath" = $lunObject.lunpath
-                        "windowsVolumeName" = $lunObject.windowsVolumeName
-                        "filename" = $lunObject.filename
-                        "svm" = $lunObject.svm
-                        "collation" = $lunObject.collation
-                        "volumeName" = $VolumeRecords[0].name
-                    }
+        Function Get-LunFromSerialNumber($responseObject) {
+            Write-debug "Get ONTAP lun name from serial numbers for: $responseObject"
 
-                    $volumes += $volume
-                }
+            $QueryFilter = $responseObject.data.LunSerialNumber + '|' + $responseObject.log.LunSerialNumber
+            $Params = @{
+                "ApiEndPoint" = "/storage/luns"
             }
     
-            return $volumes
+            if ($QueryFilter -ne '') {
+                $QueryFilter = [System.Web.HttpUtility]::UrlEncode($QueryFilter)
+                $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter"}
+            }
+
+            $params += @{"ApiQueryFields" = "fields=svm.name,location.volume.name"}
+    
+            $Response = Invoke-ONTAPRequest @Params
+    
+            $LunRecords = $Response.records
+    
+            if ($LunRecords.count -gt 0) {
+                $responeObject['svm'] = $LunRecords[0].svm.name
+                $LunRecords | ForEach-Object {
+                    $lunrecord = $_
+                    if ($responseObject.data.LunSerialNumber -eq $lunrecord.serial_number) {
+                        $responseObject.data += @{
+                            "lunPath" = $lunrecord.name
+                            "volumeName" = $lunrecord.location.volume.name
+                        }
+                    } elseif ($responseObject.log.LunSerialNumber -eq $lunrecord.serial_number) {
+                        $responseObject.log += @{
+                            "lunPath" = $lunrecord.name
+                            "volumeName" = $lunrecord.location.volume.name
+                        }
+                    }
+                }
+            }
+            return $responeObject
         }
     
-        $sqlresponse =  sqlcmd -Q $sqlquery -y 0;
-        write-debug "SQL response: $sqlresponse"
-        if ([string]::IsNullOrEmpty($sqlresponse) -or $sqlresponse.count -eq 0) {
+        $responeObject =  sqlcmd -Q $sqlquery -y 0;
+        write-debug "SQL response: $responeObject"
+        if ([string]::IsNullOrEmpty($responeObject)) {
+            if ($responeObject -eq $null) {
+                $responeObject = @{}
+            }
             $responeObject['error'] = "Couldn't get database windows volumes from db $dbname"
             return $responeObject
         }
     
-        $SerialNumbers = Get-SerialNumberOfWinVolumes $sqlresponse
-        write-debug "Serial numbers: $($SerialNumbers | ConvertTo-Json)"
-        if ([string]::IsNullOrEmpty($SerialNumbers) -or $SerialNumbers.count -eq 0) {
+        $responeObject = Get-SerialNumberOfWinVolumes $responeObject
+        write-debug "Serial numbers: $($responeObject | ConvertTo-Json)"
+        if ([string]::IsNullOrEmpty($responeObject)) {
+            if ($responeObject -eq $null) {
+                $responeObject = @{}
+            }
             $responeObject['error'] = "Couldn't get windows volume serial numbers"
             return $responeObject
         }
     
-        $LunNames = Get-LunFromSerialNumber $SerialNumbers
-        write-debug "Lun Names: $($LunNames | ConvertTo-Json)"
-        if ([string]::IsNullOrEmpty($LunNames) -or $LunNames.count -eq 0) {
+        $responeObject = Get-LunFromSerialNumber $responeObject
+        write-debug "Lun Names: $($responeObject | ConvertTo-Json)"
+        if ([string]::IsNullOrEmpty($responeObject)) {
+            if ($responeObject -eq $null) {
+                $responeObject = @{}
+            }
             $responeObject['error'] = "Couldn't get associated Ontap LUN volume names"
             return $responeObject
         }
-    
-        $volumes = Get-VolumeIdFromName $LunNames
-        write-debug "Volumes: $($volumes | ConvertTo-Json)"
-        if ([string]::IsNullOrEmpty($volumes) -or $volumes.count -eq 0) {
-            $responeObject['error'] = "Couldn't get volumes from lun paths"
-            return $responeObject
-        }
-    
-        $responeObject = $volumes
     } catch {
         write-Error $_.Exception.Message
+        if ($responeObject -eq $null) {
+            $responeObject = @{}
+        }
         $responeObject['error'] = $_.Exception.Message
     }
-    
+
     $responeObject | ConvertTo-Json -Depth 5
 `;
 
@@ -371,20 +340,21 @@ const createVolumeClone = (
     logLunPath: string,
     targetSvm?: string
 ) => `
-    $fsxid = ${fsxid}
-    $fsxregion = ${fsxregion}
-    $sourceSvm = ${sourceSvm}
-    $targetSvm = ${targetSvm}
-    $dataVolume = ${dataVolumeName}
-    $logVolume = ${logVolumeName}
-    $dataLunPath = ${dataLunPath}
-    $logLunPath = ${logLunPath}
+    $fsxid = '${fsxid}'
+    $fsxregion = '${fsxregion}'
+    $sourceSvm = '${sourceSvm}'
+    $targetSvm = '${targetSvm}'
+    $dataVolume = '${dataVolumeName}'
+    $logVolume = '${logVolumeName}'
+    $dataLunPath = '${dataLunPath}'
+    $logLunPath = '${logLunPath}'
 
 
     $WarningPreference = "SilentlyContinue"
     $responeObject = @{}
     
     try {
+
         $epoch = (Get-Date -Date ((Get-Date).DateTime) -UFormat %s)
     
         $DataLunLeaf = Split-Path -Path $dataLunPath -Leaf
@@ -461,7 +431,7 @@ const createVolumeClone = (
         Function Add-ObjectTagsToVolume {
             $ApiQueryFilter = 'location.volume.name='
             @($dataVolume, $logVolume) | ForEach-Object {
-                $ApiQueryFilter += $_ + '_clone_' + $epoch + '|'
+                $ApiQueryFilter += [System.Web.HttpUtility]::UrlEncode($_) + '_clone_' + $epoch + '|'
             }
     
             $ApiQueryFilter = $ApiQueryFilter.TrimEnd('|')
@@ -475,15 +445,22 @@ const createVolumeClone = (
                 return $responeObject
             }
 
-            $volumes = @()
             $jobStatus = @()
             $response.records | ForEach-Object {
-                $volumeid = $_.location.volume.uuid
-                $volumes += @{
-                    "volumeid" = $volumeid
-                    "lun_serial_number" = $_.serial_number
-                    "volume_name" = $_.location.volume.name
+                $volume = @{
+                    "volumeId" = $_.location.volume.uuid
+                    "lunSerialNumber" = $_.serial_number
+                    "volumeName" = $_.location.volume.name
                 }
+                if ($_.location.volume.name -match $dataVolume) {
+                    $responeObject['data'] = $volume
+                } else {
+                    $responeObject['log'] = $volume
+                }
+            }
+
+            $response.records | ForEach-Object {
+                $volumeid = $_.location.volume.uuid
                 $body = @{
                     "tiering" = @{
                         "object_tags" = @("cloned_by=netapp_wlmdb", "resource_id=$resourceId")
@@ -496,7 +473,6 @@ const createVolumeClone = (
             }
     
             return @{
-                "records" = $volumes
                 "jobstatus" = $jobStatus
             }
         }
@@ -584,29 +560,28 @@ const createVolumeClone = (
             $responeObject['error'] = "Could not add tags to the cloned volumes. Ontap error: $($failedjob.message)"
             return $responeObject
         }
-        $responeObject['volumeids'] = $response.records
 
-        $errormessage = Set-LUNSignature
-        if ($errormessage -ne $null) {
-            $responeObject['error'] = "Could not set LUN signature. $($errormessage | convertto-json)"
-            return $responeObject
-        }
-    
         $result = Set-LunMap -igroup $igroup
         write-debug "Map LUNs job: $($result | convertto-json)"
         if ($result.error -or $result.records.count -eq 0) {
             $responeObject['error'] = "Could not map LUNs. Ontap error: $($result.error)"
             return $responeObject
         }
+
+        $errormessage = Set-LUNSignature
+        if ($errormessage -ne $null) {
+            $responeObject['error'] = "Could not set LUN signature. $($errormessage | convertto-json)"
+            return $responeObject
+        }
     } catch {
+        write-Debug $_.Exception.Message
         $responeObject['error'] = $_.Exception.Message
-        return $responeObject
     }
     
     $responeObject | ConvertTo-Json -Depth 5
 `;
 
-const createClonedDb = (dbName: string, fileList: string[] = [], collation?: string) => `
+const createClonedDb = (dbName: string, fileList: string[] = []) => `
     $WarningPreference = 'SilentlyContinue';
     $dbname = '${dbName}'
 
@@ -625,7 +600,6 @@ const createClonedDb = (dbName: string, fileList: string[] = [], collation?: str
         $attachQuery = @"
             CREATE DATABASE $dbname ON  
             ${fileList.map(file => (file ? `(FILENAME = '${file}')` : '')).join()}
-            ${collation ? `COLLATE '${collation}'` : ''}
             FOR ATTACH;
 "@
         sqlcmd -Q $attachQuery
@@ -652,21 +626,28 @@ ${Object.keys(propObj)
 
 "@
 
-Sqlcmd -Q $query -y 0
+Sqlcmd -Q $query -m 1
 `;
 
-const cleanUpOntapResources = (fsxid: string, fsxregion: string, volumeIds: string[], filePaths: string[]) => `
+const cleanUpOntapResources = (
+    fsxid: string,
+    fsxregion: string,
+    volumeIds: string,
+    filePaths: string,
+    dbName: string
+) => `
     $fsxid = '${fsxid}'
     $fsxregion = '${fsxregion}'
     $volumeIds = '${volumeIds}' | ConvertFrom-Json
     $filePaths = '${filePaths}' | ConvertFrom-Json
+    $DBName = '${dbName}'
 
     $WarningPreference = 'SilentlyContinue';
     $responeObject = @{}
 
     try {
         $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
-        if ($clusterServiceStatus -eq 'Running') {
+        if ($clusterServiceStatus -eq 'Running' -and $filePaths.count -ne 0) {
             #Cleanup drives from SQL dependency in case of clustered configuration
             if ($DBName.Length -gt 25) {
                 $DBName = $DBName.Substring(0,25)
@@ -690,20 +671,22 @@ const cleanUpOntapResources = (fsxid: string, fsxregion: string, volumeIds: stri
             }
         }
 
-        $virtualDrives = $filePaths | ForEach-Object {
-            $splits = $_.Split('\\')
-            $splits[0] + '\\' + $splits[1]
-        }
-
-        $virtualDrives | ForEach-Object {
-            $null = (Remove-Item -Path $_ -Force -Recurse -ErrorAction SilentlyContinue)
+        if ($filePaths.count -ne 0) {
+            $virtualDrives = $filePaths | ForEach-Object {
+                $splits = $_.Split('\\')
+                $splits[0] + '\\' + $splits[1]
+            }
+    
+            $virtualDrives | ForEach-Object {
+                $null = (Remove-Item -Path $_ -Force -Recurse -ErrorAction SilentlyContinue)
+            }
         }
 
         ${ontapRestRequest}
         ${ontapJobStatusTemplate}
 
         $volumeIds | ForEach-Object {
-            $volumeId = $_
+            $volumeId = [system.web.httputility]::UrlEncode($_)
             $ApiEndpoint = "/storage/volumes/$volumeId"
             $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -method "DELETE"
             $jobStatus = Get-OntapJobStatus -jobId $response.job.uuid

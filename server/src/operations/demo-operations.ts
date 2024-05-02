@@ -219,7 +219,11 @@ async function updateUserDBIntoResourceData(
         type: MSSQL_DATABASE_TYPES.USER,
         status: ONLINE,
         protection: {
-            isAWSBackupEnabled: false,
+            isAwsBackupEnabled: {
+                fsxn: false,
+                fsxw: false,
+                ebs: false
+            },
             isFsxOntapSnapshotsEnabled: false,
             isSqlNativeEnabled: false
         }
@@ -229,4 +233,32 @@ async function updateUserDBIntoResourceData(
     await updateResourceMetaData(accountId, resourceId, metaData);
 }
 
-export { createFileSystemForDemo, createDeploymentMockDataInDB, updateUserDBIntoResourceData };
+async function updateSandboxDBIntoResourceData(
+    accountId: string,
+    resourceId: string,
+    databaseName: string,
+    databaseSource: string,
+    createDate: string,
+    tag: string,
+    metaData: Metadata
+) {
+    logger.info('updating sandbox db into resource meta data', accountId, resourceId, databaseName);
+
+    // this is used to retreive the newly created user databases in database list for demo using meta data
+    const sandboxDetails = {
+        databaseName,
+        initialCreationDate: createDate,
+        source: databaseSource,
+        tag
+    };
+    metaData.sandboxes = [...(metaData.sandboxes || []), sandboxDetails];
+
+    await updateResourceMetaData(accountId, resourceId, metaData);
+}
+
+export {
+    createFileSystemForDemo,
+    createDeploymentMockDataInDB,
+    updateUserDBIntoResourceData,
+    updateSandboxDBIntoResourceData
+};

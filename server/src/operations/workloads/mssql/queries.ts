@@ -210,21 +210,7 @@ const SERVER_DETAILS = `
         SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS activeNode,
         @@version AS serverDetails,
         @@SERVERNAME AS clusterName,
-        COUNT(DISTINCT d.database_id) AS totalCount
-    FROM
-        (
-            SELECT
-                database_id,
-                logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),
-                rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),
-                databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))
-            FROM
-                sys.master_files
-            GROUP BY
-                database_id
-        ) t
-    JOIN
-        sys.databases d ON d.database_id = t.database_id
+        COUNT(*) AS totalCount FROM sys.databases
     ${FOR_JSON_PATH}`;
 
 export {

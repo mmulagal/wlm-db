@@ -114,7 +114,8 @@ const StorageResponse = Type.Object({
         Type.Number({
             description: 'Total disk space saved in the volume due to storage efficiency, in percentage.'
         })
-    )
+    ),
+    protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or SMB' }))
 });
 type StorageResponseType = Static<typeof StorageResponse>;
 
@@ -190,7 +191,16 @@ type ResourcesUtilizationResponseType = Static<typeof ResourcesUtilizationRespon
 
 // type DatabaseHostSummaryResponseType = Static<typeof DatabaseHostSummaryResponse>;
 // type DatabaseHostSummaryListResponseType = Static<typeof DatabaseHostSummaryListResponse>;
-
+const EbsResourceInfoResponse = Type.Array(
+    Type.Object({
+        id: Type.String(),
+        size: Type.Number(),
+        cost: Type.Number(),
+        throughput: Type.Optional(Type.Number()), // Optional for gp2 volumes
+        iops: Type.Optional(Type.Number()), // Optional for st1
+        volumeType: Type.String()
+    })
+);
 const DatabaseHostSummaryPerStorageTypeResponse = Type.Object({
     id: Type.String(),
     name: Type.String(),
@@ -201,6 +211,7 @@ const DatabaseHostSummaryPerStorageTypeResponse = Type.Object({
     protection: Type.Optional(ProtectionPerStorageTypeResponse),
     performance: Type.Optional(PerformanceResponse),
     storage: Type.Optional(StoragePerStorageTypeResponse),
+    ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),
     estimatedUsageCost: Type.Optional(UsageCostPerStorageTypeResponse),
     resourceUtilization: Type.Optional(ResourcesUtilizationResponse),
     errors: Type.Optional(Type.Any())
@@ -269,6 +280,34 @@ const DriveInfoResponseBody = Type.Object({
 });
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
 
+const DatabaseHostsParamsWithRegion = Type.Object({
+    accountId: Type.String(),
+    credentialsId: Type.String(),
+    region: Type.String()
+});
+
+const DatabaseHostSummaryParamsWithRegion = Type.Object({
+    accountId: Type.String({ minLength: 1 }),
+    databaseHostId: Type.String({ minLength: 1 }),
+    credentialsId: Type.String(),
+    region: Type.String()
+});
+type DatabaseHostSummaryParamsWithRegionType = Static<typeof DatabaseHostSummaryParamsWithRegion>;
+
+const CloneDatabaseHostBody = Type.Object({
+    source: Type.Object({
+        host: Type.String(), // ec2 instance
+        instance: Type.String(), // sql server instance - ideally only one would be there
+        database: Type.String() // database inside sql server instance
+    }),
+    destination: Type.Object({
+        host: Type.String(), // ec2 instance
+        instance: Type.String(), // sql server - ideally only one would be there
+        database: Type.String() // database
+    }),
+    tag: Type.String()
+});
+type CloneDatabaseHostBodyType = Static<typeof CloneDatabaseHostBody>;
 const CollationInfoResponseBody = Type.Object({
     collationList: Type.Array(
         Type.Object({
@@ -356,6 +395,11 @@ export {
     DriveInfoResponseBody,
     DriveInfoResponseBodyType,
     FileConfigType,
+    DatabaseHostsParamsWithRegion,
+    DatabaseHostSummaryParamsWithRegion,
+    DatabaseHostSummaryParamsWithRegionType,
+    CloneDatabaseHostBody,
+    CloneDatabaseHostBodyType,
     CollationInfoResponseBodyType,
     CollationInfoResponseBody,
     SandboxSavingsResponseBody,

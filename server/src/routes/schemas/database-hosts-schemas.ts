@@ -1,5 +1,5 @@
-import { RouteTags } from '../../utils/consts';
 import { Type } from '@fastify/type-provider-typebox';
+import { RouteTags } from '../../utils/consts';
 
 import {
     DatabaseHostQueryString,
@@ -11,6 +11,7 @@ import {
     DatabasesCreateResponse,
     CreateDatabaseParams,
     DriveInfoResponseBody,
+    CloneDatabaseHostBody,
     CollationInfoResponseBody,
     SandboxSavingsResponseBody,
     SandboxInfoResponseBody
@@ -81,6 +82,19 @@ const GetDriveInfoSchema = {
     }
 };
 
+const CloneDatabaseHostSchema = {
+    ...databaseHostsRequest,
+    tags: [RouteTags.SANDBOX],
+    summary: 'Clone database',
+    description: 'Clone database in same or alternate host',
+    body: CloneDatabaseHostBody,
+    response: {
+        200: {
+            jobId: Type.String()
+        }
+    }
+};
+
 const GetCollationDetailsSchema = {
     ...databaseHostsRequest,
     summary: 'Get database host collation details',
@@ -93,6 +107,7 @@ const GetCollationDetailsSchema = {
 
 const GetSandboxSavingsSchema = {
     ...databaseHostsRequest,
+    tags: [RouteTags.SANDBOX],
     summary: 'Get sandbox savings',
     description: 'Get savings across all the database hosts for sandboxes created',
     response: {
@@ -102,6 +117,7 @@ const GetSandboxSavingsSchema = {
 
 const GetSandboxesInfoSchema = {
     ...databaseHostsRequest,
+    tags: [RouteTags.SANDBOX],
     summary: 'Get Sandboxes Information',
     description: 'Get Sandboxes Information of all databases',
     querystring: nextTokenQueryString,
@@ -112,6 +128,8 @@ const GetSandboxesInfoSchema = {
 
 const PatchResourceForSandboxSchema = {
     ...databaseHostsRequest,
+    tags: [RouteTags.SANDBOX],
+    hide: process.env.NODE_ENV === 'production',
     summary: 'Patch for sandboxcreation resource metadata ',
     description: 'Patch for sandboxcreation resource metadata.',
     params: DatabaseHostSummaryParams,
@@ -122,6 +140,8 @@ const PatchResourceForSandboxSchema = {
 
 const RevertPatchResourceForSandboxSchema = {
     ...databaseHostsRequest,
+    tags: [RouteTags.SANDBOX],
+    hide: process.env.NODE_ENV === 'production',
     summary: 'Revert  for sandboxcreation resource metadata ',
     description: 'Revert  for sandboxcreation resource metadata.',
     response: {
@@ -135,6 +155,7 @@ export {
     DatabasesListSchema,
     GetDriveInfoSchema,
     DatabasesCreateSchema,
+    CloneDatabaseHostSchema,
     GetCollationDetailsSchema,
     GetSandboxSavingsSchema,
     GetSandboxesInfoSchema,

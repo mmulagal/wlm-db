@@ -108,6 +108,22 @@ try {
 
     ##Re-attempt once if previous step failed to install due to synchronization with second node prepare-fci and reboot
     Start-Sleep -Seconds 30
+    # Check if collation set, if not run CompleteFailoverCluster with default collation
+    $SettingCollationFailed = Select-String -Path C:\cfn\log\completefci_output.txt -Pattern "The collation $SqlCollation was not found."
+    if ($SettingCollationFailed -ne $null)
+        { 
+            Write-Host "Setting collation $SqlCollation failed with 'The collation $SqlCollation was not found.'. Configuring with default collation 'SQL_Latin1_General_CP1_CI_AS'."
+
+            $SqlCollation = "SQL_Latin1_General_CP1_CI_AS"
+            $arguments = '/QUIET /ACTION=CompleteFailoverCluster /InstanceName=MSSQLSERVER /INDICATEPROGRESS=TRUE /FAILOVERCLUSTERNETWORKNAME={0} /FAILOVERCLUSTERIPADDRESSES="IPv4;{1};Cluster Network 1;{2}" "IPv4;{3};Cluster Network 2;{4}" /CONFIRMIPDEPENDENCYCHANGE=TRUE /FAILOVERCLUSTERGROUP="SQL Server (MSSQLSERVER)" /FAILOVERCLUSTERDISKS="SQL-DATA" "SQL-LOG" "SQL-TEMPDB" /INSTALLSQLDATADIR="C:\Program Files\Microsoft SQL Server" /SQLCOLLATION={10} /SQLSYSADMINACCOUNTS={5} /INSTALLSQLDATADIR={6} /SQLUSERDBDIR={7} /SQLUSERDBLOGDIR={8} /SQLTEMPDBDIR={9}' -f $FCIName, $Node1FciIp, $Node1SubnetMask, $Node2FciIp, $Node2SubnetMask, $AdminGroup, $sqlRootPath, $sqlDataPath, $sqlLogPath, $sqlTempPath, $SqlCollation
+            Invoke-Command -scriptblock {
+                Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output1.txt -RedirectStandardError C:\cfn\log\completefci_error1.txt 
+
+            } -Credential $Credentials -ComputerName $HostName -Authentication credssp -ErrorAction SilentlyContinue -ErrorVariable errs
+        }
+
+    ##Re-attempt once if previous step failed to install due to synchronization with second node prepare-fci and reboot
+    Start-Sleep -Seconds 30
     $ClusterResource = Invoke-Command -scriptblock {
         $clusresources = Get-ClusterResource | Out-String
         $clusresources

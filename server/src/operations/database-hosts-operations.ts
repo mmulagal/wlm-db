@@ -103,11 +103,12 @@ type EstimationFSxType = {
 };
 
 type EstimationEbsType = {
+    id: string;
     size: number;
     throughput: number;
     iops: number;
     volumeType: string;
-};
+}[];
 
 async function getTopology(
     accountId: string,
@@ -323,7 +324,16 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageP
         let totalUsed;
         let totalSpaceSavings;
         let totalSpaceSavingsPercentage;
-        const { region, co_relation_id: fsxnId, credentials_id: credentialsId, fsxwId, ebsVolumeId } = resourceDetail;
+        const {
+            region,
+            co_relation_id: fsxnId,
+            credentials_id: credentialsId,
+            fsxwId,
+            ebsVolumeIds,
+            metadata
+        } = resourceDetail;
+
+        const { storageProtocol } = metadata as unknown as Metadata;
 
         const response = {} as StoragePerStorageTypeResponseType;
         if (fsxnId && region) {
@@ -333,7 +343,8 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageP
                 size: numeral(`${totalSize}GiB`).value() || 0,
                 used: totalUsed,
                 spaceSavings: totalSpaceSavings,
-                spaceSavingsPercentage: totalSpaceSavingsPercentage
+                spaceSavingsPercentage: totalSpaceSavingsPercentage,
+                protocol: storageProtocol!
             };
         }
         if (fsxwId && region) {
@@ -346,9 +357,9 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageP
                 spaceSavingsPercentage: totalSpaceSavingsPercentage
             };
         }
-        if (ebsVolumeId && region) {
-            const storageData = await getEbsResourceInfo(credentialsId, region, ebsVolumeId);
-            totalSize = storageData.size;
+        if (ebsVolumeIds?.length && region) {
+            const storageData = await getEbsResourceInfo(credentialsId, region, ebsVolumeIds);
+            totalSize = storageData.reduce((acc, { size }) => acc + size, 0);
             response.ebs = { size: numeral(`${totalSize}GiB`).value() || 0 };
         }
 
@@ -432,7 +443,7 @@ async function getProtectionStatus(
         metadata,
         credentials_id: credentialsId,
         fsxwId,
-        ebsVolumeId
+        ebsVolumeIds
     } = resourceDetail;
     if (!region) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Region not found for resource ${id}`);
@@ -454,7 +465,7 @@ async function getProtectionStatus(
                   )
                 : Promise.resolve(),
             fsxwId ? isFsxwAwsBackupEnabled(credentialsId, region, fsxwId) : Promise.resolve(),
-            ebsVolumeId ? isEbsAwsBackupEnabled(credentialsId, region, ebsVolumeId) : Promise.resolve()
+            ebsVolumeIds ? isEbsAwsBackupEnabled(credentialsId, region, ebsVolumeIds) : Promise.resolve() // returns true if backup is enabled on any of the ebs ID associated with the resource; revisit this to return information for each ebs
         ]);
 
         return {
@@ -569,7 +580,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             co_relation_id: fsxnId,
             credentials_id: credentialsId,
             metadata,
-            ebsVolumeId,
+            ebsVolumeIds,
             fsxwId
         } = resourceDetail;
         const { sqlDeploymentType } = metadata as unknown as Metadata;
@@ -581,7 +592,9 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
         const [ec2Info, fsxnInfo, ebsInfo, fsxwInfo] = await Promise.all([
             getEc2ResourceInfo(credentialsId, region, activeNodeInstanceId),
             ...(fsxnId ? [getFsxResourceInfo(credentialsId, region, fsxnId!)] : [Promise.resolve()]),
-            ...(ebsVolumeId ? [getEbsResourceInfo(credentialsId, region, ebsVolumeId!)] : [Promise.resolve()]),
+            ...(ebsVolumeIds && !isEmpty(ebsVolumeIds)
+                ? [getEbsResourceInfo(credentialsId, region, ebsVolumeIds)]
+                : [Promise.resolve()]),
             ...(fsxwId ? [getFsxResourceInfo(credentialsId, region, fsxwId!)] : [Promise.resolve()])
         ]);
 
@@ -610,10 +623,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             ...(ebsResourceInfo && {
                 ebsStorage: {
                     regionCode: region!,
-                    size: ebsResourceInfo.size,
-                    throughput: ebsResourceInfo.throughput,
-                    iops: ebsResourceInfo.iops,
-                    volumeType: ebsResourceInfo.volumeType
+                    ebsResourceInfo: ebsResourceInfo || []
                 }
             }),
             vpc: {
@@ -626,7 +636,7 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
                     throughput: fsxwResourceInfo.throughput,
                     iops: fsxwResourceInfo.iops,
                     deploymentOption: fsxwResourceInfo.deploymentOption,
-                    storageType: fsxnResourceInfo.storageType,
+                    storageType: fsxwResourceInfo.storageType,
                     diskSize: 0 // As we are calculating post deployment cost usage, we don't need disk size, we can use storageCapacity instead.
                 }
             })
@@ -648,7 +658,8 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
                 fsxw:
                     (pricingResponse?.fsxwStorage?.capacityCost || 0) +
                     (pricingResponse?.fsxwStorage?.operationalCost || 0),
-                ebs: pricingResponse.ebsStorage?.ebsStorageCost || 0
+                ebs: pricingResponse.ebsStorage?.ebsStorageCost,
+                ebsBreakdownByVolumeType: pricingResponse.ebsStorage?.ebsBreakdownByVolumeType
             },
             connectivity: pricingResponse?.vpc || 0,
             others: 0, // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
@@ -701,16 +712,16 @@ async function getFsxResourceInfo(
     region: string,
     filesystemId: string
 ): Promise<EstimationFSxType> {
-    logger.info('Getting FSxN resource info:', { credentialsId, region, filesystemId });
+    logger.info('Getting FSx resource info:', { credentialsId, region, filesystemId });
 
     const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [filesystemId] });
-    logger.info('Estimation info for FSxN:', fsxInfo);
+    logger.info('Estimation info for FSx:', fsxInfo);
 
-    const [{ StorageCapacity, OntapConfiguration, StorageType }] = fsxInfo?.FileSystems || [];
+    const [{ StorageCapacity, OntapConfiguration, StorageType, WindowsConfiguration }] = fsxInfo?.FileSystems || [];
     const storageCapacity = StorageCapacity || 0;
-    const throughput = OntapConfiguration?.ThroughputCapacity;
-    const iops = OntapConfiguration?.DiskIopsConfiguration?.Iops;
-    const deploymentOption = OntapConfiguration?.DeploymentType;
+    const throughput = OntapConfiguration?.ThroughputCapacity || WindowsConfiguration?.ThroughputCapacity;
+    const iops = OntapConfiguration?.DiskIopsConfiguration?.Iops || WindowsConfiguration?.DiskIopsConfiguration?.Iops;
+    const deploymentOption = OntapConfiguration?.DeploymentType || WindowsConfiguration?.DeploymentType;
 
     return {
         storageCapacity,
@@ -724,17 +735,23 @@ async function getFsxResourceInfo(
 async function getEbsResourceInfo(
     credentialsId: string,
     region: string,
-    ebsVolumeId: string
+    ebsVolumeIds: string[]
 ): Promise<EstimationEbsType> {
-    logger.info('Getting EBS resource info:', { credentialsId, region, ebsVolumeId });
+    logger.info('Getting EBS resource info:', { credentialsId, region, ebsVolumeIds });
 
-    const volumes = await describeVolumes(credentialsId, region, { VolumeIds: [ebsVolumeId] });
+    const volumes = await describeVolumes(credentialsId, region, { VolumeIds: ebsVolumeIds });
     if (!volumes.Volumes || volumes.Volumes.length === 0) {
-        throw new Error(`Volume ${ebsVolumeId} not found`);
+        throw new Error(`Volumes ${ebsVolumeIds} not found`);
     }
-    const [volume] = volumes.Volumes;
-    const { Size: size, VolumeType: volumeType, Iops: iops, Throughput: throughput } = volume;
-    return { size: size!, throughput: throughput!, iops: iops!, volumeType: volumeType! };
+
+    const ebsVolumes = volumes?.Volumes || [];
+    return ebsVolumes.map(({ VolumeId, Size: size, VolumeType: volumeType, Iops: iops, Throughput: throughput }) => ({
+        id: VolumeId!,
+        size: size!,
+        throughput: throughput!,
+        iops: iops!,
+        volumeType: volumeType!
+    }));
 }
 
 async function getDatabaseHostsSummary(
@@ -950,6 +967,7 @@ async function getDatabaseHostSummary(
                 : {};
             databaseHostDetails.storage = storageData!;
             databaseHostDetails.estimatedUsageCost = usageEstimationData!;
+            databaseHostDetails.ebsResourceInfo = usageEstimationData?.storage?.ebsBreakdownByVolumeType || [];
             if (getResourceutilization && resourceUtilizationData) {
                 databaseHostDetails.resourceUtilization = {
                     cpu: resourceUtilizationData.cpuUtilization! || {},

@@ -443,7 +443,7 @@ async function invokeSSMForDatabaseDeployment(
     let activeNodeId;
 
     try {
-        const { isSSMConnected, activeNodeInstanceId } = await getActiveSqlNode(
+        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await getActiveSqlNode(
             credentialsId,
             region!,
             node1InstanceId,
@@ -452,6 +452,15 @@ async function invokeSSMForDatabaseDeployment(
         if (!isSSMConnected || activeNodeInstanceId === undefined) {
             const errorMessage = `Error while creating database for ${accountId} ${resourceId} due to SSM connection issues.`;
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+        }
+
+        if (isClustered === 'true' && standbyNodeInstanceId) {
+            const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, standbyNodeInstanceId);
+            if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
+                const errorMessage = `Unable to connect to node to access IQN info for host ${databaseName} in account ${accountId}`;
+                logger.error(errorMessage);
+                throw createError(errorMessage);
+            }
         }
 
         await validateParams(
@@ -511,9 +520,35 @@ async function invokeSSMForDatabaseDeployment(
             // clearning all the ssm command cache so that we will get the fresh data once the database is created
             resetCache(SSM_COMMAND_CACHE_TYPE);
         } else {
+            let standbyIqnResponse;
+            if (isClustered === 'true' && standbyNodeInstanceId !== undefined) {
+                const standbyIqnCommand = ['(Get-InitiatorPort).NodeAddress'];
+                try {
+                    standbyIqnResponse = await callSsmExecution(
+                        credentialsId,
+                        region,
+                        standbyIqnCommand,
+                        standbyNodeInstanceId,
+                        accountId,
+                        false,
+                        CUSTOM_SSM_EXECUTION_TIMEOUT
+                    );
+                } catch (error) {
+                    const errorMessage = `Failed to fetch standby IQN value' for host ${databaseName} in account ${accountId}, ${error}`;
+                    logger.error(errorMessage);
+                    throw createError(errorMessage);
+                }
+            }
+            const standbyIqn = standbyIqnResponse ? standbyIqnResponse.replaceAll('\r\n', '') : undefined;
             // New Drive selected, Will execute all the 3 scripts
             const {
-                Resources: { Igroup: iGroup, FSxDataVolumeName: fsxDataVolumeName, FSxLogVolumeName: fsxLogVolumeName }
+                Resources: {
+                    Igroup: iGroup,
+                    FSxDataVolumeName: fsxDataVolumeName,
+                    FSxLogVolumeName: fsxLogVolumeName,
+                    DataSerial: dataSerial,
+                    LogSerial
+                }
             } = await configureLuns(
                 accountId,
                 credentialsId,
@@ -526,7 +561,8 @@ async function invokeSSMForDatabaseDeployment(
                 dataVolumeSize,
                 logVolumeSize,
                 (!isLogDriveExists).toString(),
-                (!isDataDriveExists).toString()
+                (!isDataDriveExists).toString(),
+                standbyIqn
             );
             // its required to sleep for 45 seconds so that initialization script will go through.. the ontap LUN configure can take time depending on busy system for the multiple API calls, and the disk initialize may take time to discover the created LUNs
             if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
@@ -548,7 +584,9 @@ async function invokeSSMForDatabaseDeployment(
                 (!isDataDriveExists).toString(),
                 iGroup,
                 fsxDataVolumeName,
-                fsxLogVolumeName
+                fsxLogVolumeName,
+                dataSerial,
+                LogSerial
             );
 
             await createDatabase(
@@ -742,7 +780,8 @@ async function configureLuns(
     dataVolumeSize: number,
     logVolumeSize: number,
     isLogDriveExists: string,
-    isDataDriveExists: string
+    isDataDriveExists: string,
+    standbyIqn?: string
 ) {
     logger.info('Configure Luns', {
         accountId,
@@ -756,13 +795,18 @@ async function configureLuns(
         dataVolumeSize,
         logVolumeSize,
         isLogDriveExists,
-        isDataDriveExists
+        isDataDriveExists,
+        standbyIqn
     });
 
     let configureLuncommands;
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         configureLuncommands = [
             `${CONFIGURELUNSCRIPT} -FileSystemId fs-0d5efc3057c4f12cb -SQLVMName wlmdb_sqlsvm_1708791218786  -FSxDataLunSize 1074  -FSxLogLunSize 1074 -LogNew false -DataNew false`
+        ];
+    } else if (standbyIqn) {
+        configureLuncommands = [
+            `pwsh -Command {$WarningPreference = 'SilentlyContinue';${CONFIGURELUNSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataLunSize ${dataVolumeSize}  -FSxLogLunSize ${logVolumeSize} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists} -StandbyIQN ${standbyIqn}}`
         ];
     } else {
         configureLuncommands = [
@@ -843,7 +887,9 @@ async function newDBInitialization(
     isDataDriveExists: string,
     iGroup: string,
     fsxDataVolumeName: string,
-    fsxLogVolumeName: string
+    fsxLogVolumeName: string,
+    dataSerial: string,
+    logSerial: string
 ) {
     logger.info('Initialising new database', {
         accountId,
@@ -860,7 +906,9 @@ async function newDBInitialization(
         isDataDriveExists,
         iGroup,
         fsxDataVolumeName,
-        fsxLogVolumeName
+        fsxLogVolumeName,
+        dataSerial,
+        logSerial
     });
 
     let dbInitializecommands;
@@ -870,7 +918,7 @@ async function newDBInitialization(
         ];
     } else {
         dbInitializecommands = [
-            `${INITIALIZEDBSCRIPT} -DBName ${databaseName}  -IsClustered ${isClustered}  -DataDrive ${dataDrive}  -LogDrive ${logDrive} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists}`
+            `${INITIALIZEDBSCRIPT} -DBName ${databaseName}  -IsClustered ${isClustered}  -DataDrive ${dataDrive}  -LogDrive ${logDrive} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists} -DataSerial '${dataSerial}' -LogSerial '${logSerial}'`
         ];
     }
 

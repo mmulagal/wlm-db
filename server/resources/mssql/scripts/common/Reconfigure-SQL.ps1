@@ -99,13 +99,25 @@ try {
         $SQLService.StartupParameters = $Using:params
         $SQLService.Alter()
 
-        # Create account for SQL AD user
+        # Create account for SQL Service Account user. AD user is added above as part of setting collation.
         $SQLUser = "[" + $Using:DomainNetBIOSName + "\" + $Using:SQLServiceAccount + "]"
-        $AdminUser = "[" + $Using:DomainNetBIOSName + "\" + $Using:DomainAdminUser + "]"
         Invoke-Sqlcmd -Query "CREATE LOGIN $SQLUser FROM WINDOWS ;"
-        Invoke-Sqlcmd -Query "CREATE LOGIN $AdminUser FROM WINDOWS ;"
         Invoke-Sqlcmd -Query "ALTER SERVER ROLE [sysadmin] ADD MEMBER $SQLUser ;"
-        Invoke-Sqlcmd -Query "ALTER SERVER ROLE [sysadmin] ADD MEMBER $AdminUser ;"
+
+
+        # Grant permissions to NT AUTHORITY\SYSTEM
+        Invoke-Sqlcmd -Query 'GRANT VIEW ANY DEFINITION TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT ALTER RESOURCES TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT ALTER ANY DATABASE TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT CONTROL SERVER TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT ALTER ANY LOGIN TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT CREATE ANY DATABASE TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT IMPERSONATE ANY LOGIN TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT CONNECT ANY DATABASE TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT CREATE SERVER ROLE TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT ALTER ANY SERVER ROLE TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT ALTER SETTINGS TO "NT AUTHORITY\SYSTEM" ;'
+  
 
         # Update paths for tempdb,model and MSDB
         $tempDevFile = "'$Using:tempPath\tempdb.mdf'"

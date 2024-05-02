@@ -75,7 +75,11 @@ while($installPSModulesTries -le 2) {
         if($destinationPathExists -eq $False) {
             New-Item -ItemType Directory -Path $destinationPath -Force
         }
+        try {
         Copy-Item "C:\cfn\Installer\dependent-packages\powershell\Microsoft.PackageManagement.NuGetProvider-2.8.5.208.dll" -Destination $destinationPath -Recurse -Force
+        } catch {
+            Write-Host "Error while copying NuGetProvider. $_"
+        }
         $sourcelocation = 'C:\cfn\Installer\dependent-packages\aws'
         try {
             Import-PackageProvider -Name NuGet
@@ -88,6 +92,10 @@ while($installPSModulesTries -le 2) {
             Install-Module -Name AWS.Tools.SimpleSystemsManagement -AllowClobber -Repository 'AWS'
             Install-Module -Name SqlServer -Force -AllowClobber -Repository 'AWS'
             Install-Module -Name netapp.ontap -SkipPublisherCheck -Repository 'AWS'
+
+            $modulesInstalled = $True
+            break
+
             }catch {
                 Write-Output "Failed to ONTAP Powershell modules. PowerShell Gallery unavailable could happen due to Microsoft updating site certificate. Please retry after sometime. $_"
                 $installPSModulesTries++

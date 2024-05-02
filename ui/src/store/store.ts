@@ -12,7 +12,8 @@ import {
     resourceApi,
     workloadFactoryResourceApi,
     inventoryApi,
-    sandboxApi
+    sandboxApi,
+    exploreSavingsApi
 } from '../utils/apiService';
 import authSlice from './authSlice';
 import mssqlSlice from './mssql/mssqlSlice';
@@ -60,7 +61,8 @@ const rootReducer = combineReducers({
     [sandboxSlice.reducerPath]: sandboxSlice.reducer,
     [sandboxApi.reducerPath]: sandboxApi.reducer,
     [exploreSavingsSlice.reducerPath]: exploreSavingsSlice.reducer,
-    [createSandboxSlice.reducerPath]: createSandboxSlice.reducer
+    [createSandboxSlice.reducerPath]: createSandboxSlice.reducer,
+    [exploreSavingsApi.reducerPath]: exploreSavingsApi.reducer
 });
 
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action: any) => {
@@ -73,7 +75,8 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
         if (
             action?.meta?.arg?.endpointName === 'registerResourceCredentials' ||
             action?.meta?.arg?.endpointName === 'manageHost' ||
-            action?.meta?.arg?.endpointName === 'getMssqlInstanceData'
+            action?.meta?.arg?.endpointName === 'getMssqlInstanceData' ||
+            action?.meta?.arg?.endpointName === 'prepareHost'
         ) {
             return;
         }
@@ -125,6 +128,7 @@ const store = configureStore({
             .concat(createUserDbApi.middleware)
             .concat(inventoryApi.middleware)
             .concat(sandboxApi.middleware)
+            .concat(exploreSavingsApi.middleware)
             .concat(rtkQueryErrorLogger)
 });
 

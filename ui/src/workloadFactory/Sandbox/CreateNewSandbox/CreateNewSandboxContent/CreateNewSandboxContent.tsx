@@ -10,7 +10,7 @@ const CreateNewSandboxContent = () => {
     return (
         <div className={styles.createNewSandboxContent}>
             <DsTypography variant="Semibold_16" className={styles.heading}>
-                {GENERAL.CREATE_SANDBOX}
+                {GENERAL.CREATE_NEW_SANDBOX}
             </DsTypography>
 
             <div className={styles.accordionContainer}>

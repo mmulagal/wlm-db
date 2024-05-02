@@ -53,7 +53,7 @@ import { tagFsxResource } from './fsx-operations';
 import { decryptString } from './kms-operations';
 import { registerFsxOntapCredentials } from '../../lib/cloud-manager/fsx-core';
 import { createJobs, listJobs } from '../../lib/database/job';
-import { updateJobDetails } from '../database/job-operations';
+import { getJobDetails, updateJobDetails } from '../database/job-operations';
 
 const logger = getLogger();
 
@@ -213,8 +213,7 @@ async function modifyMasterJobStatus(
     stackName: string,
     jobStatus: JOBSTATUS,
     timestamp: number,
-    masterJob?: job,
-    resourceStatusReason?: string
+    masterJob?: job
 ) {
     const masterJobName = masterJob?.name ? masterJob.name : `${databaseType} deployment with stack ${stackName}`;
     if (isEmpty(masterJob)) {
@@ -225,11 +224,19 @@ async function modifyMasterJobStatus(
         }
     }
 
+    let combinedErrors: string[] = [];
+    if (jobStatus === JOBSTATUS.FAILED) {
+        const childJobs = await getJobDetails(accountId, credentialsId, region, masterJob.id);
+        combinedErrors = (childJobs.subJobs as job[])
+            .filter(jobObject => jobObject.status === JOBSTATUS.FAILED)
+            .map(jobObject => jobObject.error!);
+    }
+
     logger.info('Update job to status :', masterJob?.id, masterJobName, jobStatus);
     const response = await updateJobDetails(accountId, credentialsId, region, masterJob.id, {
         status: jobStatus,
         endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined,
-        error: jobStatus === JOBSTATUS.FAILED ? resourceStatusReason : undefined
+        error: jobStatus === JOBSTATUS.FAILED ? [...new Set(combinedErrors)].join(',') : undefined
     });
     logger.debug('Update job response:', response);
 }
@@ -306,6 +313,16 @@ async function createOrUpdateChildJobs(
         if (resourceStatus?.includes('DELETE')) {
             jobStatus = childJob.status === JOBSTATUS.IN_PROGRESS ? JOBSTATUS.FAILED : childJob.status;
         }
+
+        let combinedErrors: string[] = [];
+        if (jobStatus === JOBSTATUS.FAILED) {
+            const childJobs = await getJobDetails(accountId, credentialsId, region, childJob.id);
+            combinedErrors = (childJobs.subJobs as job[])
+                .filter(jobObject => jobObject.status === JOBSTATUS.FAILED)
+                .map(jobObject => jobObject.error!);
+            combinedErrors.push(resourceStatusReason!);
+        }
+
         try {
             logger.info('Update child job:', {
                 parentJobId: parentJob.id,
@@ -316,7 +333,7 @@ async function createOrUpdateChildJobs(
             });
             const response = await updateJobDetails(accountId, credentialsId, region, childJob.id, {
                 status: jobStatus,
-                error: jobStatus === JOBSTATUS.FAILED ? resourceStatusReason : undefined,
+                error: jobStatus === JOBSTATUS.FAILED ? [...new Set(combinedErrors)].join(',') : undefined,
                 endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined
             });
             logger.debug('Update child job response:', response);
@@ -921,8 +938,7 @@ async function processCloudFormationMessages() {
                                                 stackName,
                                                 masterJobStatus,
                                                 messageTimestamp,
-                                                masterJob,
-                                                resourceStatusReason
+                                                masterJob
                                             );
                                         }
                                     } else if (
@@ -971,8 +987,7 @@ async function processCloudFormationMessages() {
                                                 stackName,
                                                 masterJobStatus,
                                                 messageTimestamp,
-                                                masterJob,
-                                                resourceStatusReason
+                                                masterJob
                                             );
                                         }
                                     }
@@ -1091,4 +1106,4 @@ function modifyStackAck(
     };
 }
 
-export { processCloudFormationMessages };
+export { processCloudFormationMessages, tagResources };

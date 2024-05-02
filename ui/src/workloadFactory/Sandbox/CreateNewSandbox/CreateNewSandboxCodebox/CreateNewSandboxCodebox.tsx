@@ -9,8 +9,9 @@ import { CODE_VIEWER, GENERAL } from '../../../../utils/appConstants';
 import CodeBoxScroll from '../../../../common/CodeBoxScroll/CodeBoxScroll';
 import CodeBoxColor from '../../../../common/CodeBoxColor/CodeBoxColor';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { CRED_PLACEHOLDERS } from '../../../../utils/consts';
+import { CREATE_SANDBOX_CURL_REQ_TEMPLATE, CREATE_SANDBOX_ENDPOINT, CRED_PLACEHOLDERS } from '../../../../utils/consts';
 import { generateCreateSandboxPayload } from '../../SandboxUtility';
+import { getBaseUrl } from '../../../../utils/apiService';
 
 const CreateNewSandboxCodebox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
@@ -20,7 +21,18 @@ const CreateNewSandboxCodebox = () => {
     const createSandboxState = useAppSelector(state => state.createSandbox);
 
     // To copy response based on dropdown selection
-    const copyResponseData = () => {};
+    const copyResponseData = () => {
+        const payload = generateCreateSandboxPayload(createSandboxState);
+        const baseUrl = getBaseUrl();
+        const restApiPayload = CREATE_SANDBOX_CURL_REQ_TEMPLATE(
+            baseUrl,
+            selectedCredId?.data?.credentialsId || CRED_PLACEHOLDERS.CRED_ID,
+            selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION,
+            CRED_PLACEHOLDERS.TOKEN,
+            JSON.stringify(payload, null, 2)
+        );
+        return restApiPayload;
+    };
 
     const setDisplayedDataInCodeBox = () => {
         const payload = generateCreateSandboxPayload(createSandboxState);
@@ -30,7 +42,7 @@ const CreateNewSandboxCodebox = () => {
                     credID={selectedCredId?.data?.credentialsId || CRED_PLACEHOLDERS.CRED_ID}
                     region={selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION}
                     actualData={payload}
-                    endpoint={''}
+                    endpoint={CREATE_SANDBOX_ENDPOINT}
                 />
             </>
         );

@@ -241,12 +241,12 @@ export const GENERAL = {
     RESOURCE_TEXT_TWO:
         'The provisioned resources will be deleted when you delete your deployment from the AWS console.',
     //FSX Accordion
-    CREATE_NEW_FSXN: 'Create new FSxN',
+    CREATE_NEW_FSXN: 'Create new FSx for ONTAP',
     CREATE_NEW_FSXN_SYSTEM: 'Create new file system',
-    SELECT_EXISTING_FSX: 'Select an existing FSxN ',
-    FSXN_NAME: 'FSxN name',
+    SELECT_EXISTING_FSX: 'Select an existing FSx for ONTAP ',
+    FSXN_NAME: 'FSx for ONTAP name',
     USER_NAME: 'User name',
-    FSX_PASSWORD: 'FSxN password',
+    FSX_PASSWORD: 'FSx for ONTAP password',
     NOTICE: 'Notice:',
     NOTICE_FSX_TEXT: 'New filesystem provisioning adds another 30 minutes to the total installation time.',
     PASSWORD_FSX_1: 'The password must be at least eight characters long.',
@@ -274,7 +274,8 @@ export const GENERAL = {
     AZ_Zone: 'Availability zone',
     SUBNET: 'Subnet',
     //DB credential
-    DATABASE_CREDENTIAL_TEXT: 'Create a new service account for SQL Server.',
+    DATABASE_CREDENTIAL_TEXT:
+        'Create a new service account for SQL server or use existing service account credentials in the Active Directory',
     USERNAME_TOOLTIP:
         'The user name must contain at least 5 alphanumeric characters. The user name can\'t be "admin" or "administrator".',
     USERNAME_TOOLTIP1: 'The user name must contain at least 5 alphanumeric characters.',
@@ -535,7 +536,9 @@ export const GENERAL = {
     NO_DATA: 'No data',
     JM_RUNNING: 'Running',
     JM_TYPE_DEPLOYMENT: 'Deployment',
-    JM_TYPE_CREATE_RESOURCE: 'Create resource',
+    JM_TYPE_CREATE_RESOURCE: 'Create database',
+    JM_TYPE_PREPARE_RESOURCE: 'Prepare resource',
+    JM_TYPE_SANDBOX: 'Create sandbox',
     JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
     DEMO_TITLE: 'Redirect to CloudFormation',
@@ -696,6 +699,18 @@ export const GENERAL = {
         'For more details view ',
         ' Job Monitoring.'
     ],
+    PREPARE_HOST_INFO_TAB2: [
+        'Host ',
+        ' is unable to become a managed host because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'Job monitoring',
+        ' to see when the modules have been installed.'
+    ],
+    PREPARE_HOST_INFO_TAB3: [
+        'Host ',
+        ' is now an unmanaged host. It failed to become a managed host because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'Job monitoring',
+        ' to see when the modules have been installed.'
+    ],
     FCI: 'FCI',
     CLUSTER: 'Cluster',
     STANDALONE: 'Standalone',
@@ -730,6 +745,8 @@ export const GENERAL = {
     SANDBOX_SOURCE_DB_NAME: 'Source database name',
     SANDBOX_SOURCE_DB_HOST_NAME: 'Source database host name',
     SANDBOX_LAST_UPDATED: 'Last updated',
+    DATABASE_SOURCE: 'Database source',
+    Database_TARGET: 'Database target',
     AGE: 'Age',
     SANDBOX_TAG: 'Tag',
     SANDBOX_SOURCE_DATABASES: 'Source databases',
@@ -785,7 +802,7 @@ export const GENERAL = {
     ES_SAVINGS: 'Explore savings',
     INSTANCE_INFORMATION: 'Instance information:',
     ES_SAVE_CONFIG: 'Save configuration',
-    ES_SAVE_ERROR: 'This configuration can not be save',
+    ES_SAVE_ERROR: 'This configuration can not be saved',
     MS_SQL_TWO_INSTANCES: 'Microsoft SQL Server EC2 instance - 2 instances',
     MS_SQL_SINGLE_INSTANCES: 'Microsoft SQL Server EC2 instance',
     SAVINGS_HEADER: 'Microsoft SQL server on Amazon Elastic Block Store (EBS) configuration.',
@@ -794,7 +811,7 @@ export const GENERAL = {
     ES_NUMBER_OF_VOLS: 'Number of volumes',
     SUMMARY_TEXT: 'The selected volumes summary per volume type:',
     SELECTION_BASED_TEXT: 'Based on your selections, we recommend creating the following:',
-    SELECTION_BASED_SECOND: 'Microsoft SQL Server on AWS Ec2 using FSx for ONTAP file system',
+    SELECTION_BASED_SECOND: 'Microsoft SQL Server on AWS EC2 using FSx for ONTAP file system',
     SAVINGS_CALCULATOR: 'Savings calculator',
     TOTAL_MONTHLY_COST: 'Total monthly cost',
     TO_VIEW_STORAGE: 'To view storage cost savings, enter your configuration.',
@@ -807,7 +824,14 @@ export const GENERAL = {
     VIEW_CALCS: 'View calculations',
     VIEW_CAL_SECONDARY_TEXT: 'All aws prices mentioned in the calculations are aws on-demand pricing.',
     COST_CALCULATION: 'Cost calculation',
-    DEPLOY_RATE_EXCEEDED: 'An internal error occurred when attempting to deploy the database server, please try again.'
+    DEPLOY_RATE_EXCEEDED: 'An internal error occurred when attempting to deploy the database server, please try again.',
+    TOOLTIP_MESSAGE_SNAPSHOT_FREQ:
+        'EBS snapshots not detected, if you would like to compare FSxN snapshots to potential EBS snapshots cost, please update the snapshot frequency.',
+    NOTICE_MESSAGE_COST_SAVINGS:
+        'This configuration cannot benefit from savings. Please check the cost breakdown below for further analysis.',
+    PDF_DOWNLOAD_SUCCESS: 'PDF file downloaded successfully.',
+    MANAGE_HOST_DISABLED: 'Supported only for the FSx for ONTAP storage type',
+    EXPLORE_SAVINGS_DISABLED: 'Supported only for the EBS storage type'
 };
 
 export const CODE_VIEWER = {

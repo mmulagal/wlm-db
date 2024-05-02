@@ -9,20 +9,36 @@ interface Metadata {
     fsxSvmId?: string;
     // this is used to retreive the newly created user databases in database list for demo
     userDatabase?: Array<UserDatabase>;
+    sandboxes?: Array<Sandbox>;
     createDbMetrics?: CreateDbMetrics;
     sandboxCreated?: boolean;
     updatedManually?: boolean;
+    storageProtocol?: string;
 }
 
 interface CreateDbMetrics {
     numberofUserDbsCreated: number;
 }
+
+interface IsAWSBackup {
+    fsxn: boolean;
+    fsxw: boolean;
+    ebs: boolean;
+}
+
 interface UserDatabase {
     name: string;
     size: number;
     status: string;
     type: string;
-    protection: { isAWSBackupEnabled: boolean; isFsxOntapSnapshotsEnabled: boolean; isSqlNativeEnabled: boolean };
+    protection: { isAwsBackupEnabled: IsAWSBackup; isFsxOntapSnapshotsEnabled: boolean; isSqlNativeEnabled: boolean };
+}
+
+interface Sandbox {
+    databaseName: string;
+    initialCreationDate: string;
+    source: string;
+    tag: string;
 }
 
 interface ResourceDetails {
@@ -38,7 +54,7 @@ interface ResourceDetails {
     credentials_id: string;
     storage_type: string;
     metadata: unknown;
-    ebsVolumeId?: string; // internal field used to store the ebs volume id for the unmanaged MSSQL resource
+    ebsVolumeIds?: string[]; // internal field used to store the ebs volume id for the unmanaged MSSQL resource
     fsxwId?: string; // internal field used to store the windows fsx ID for the unmanaged MSSQL resource
 }
 

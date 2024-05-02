@@ -655,6 +655,12 @@ export const inventoryApi = createApi({
                     url: `credentials/${credentialId}/regions/${regionId}/database-hosts/${id}?fields=topology,serverDetails,storage,performance,protection,usageEstimation`,
                     method: 'GET'
                 })
+            }),
+            prepareHost: builder.mutation({
+                query: ({ credentialId, regionId, instanceId }) => ({
+                    url: `credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/mssql/prepare`,
+                    method: 'POST'
+                })
             })
         };
     }
@@ -688,6 +694,30 @@ export const sandboxApi = createApi({
             getSandboxSavings: builder.query({
                 query: ({ credentialId, region }) => ({
                     url: `credentials/${credentialId}/regions/${region}/database-hosts/sandbox-savings`
+                })
+            }),
+            createSandbox: builder.mutation({
+                query: ({ credentialId, region, payload }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/sandbox`,
+                    method: 'POST',
+                    body: payload
+                })
+            })
+        };
+    }
+});
+
+export const exploreSavingsApi = createApi({
+    reducerPath: 'exploreSavingsApi',
+    baseQuery: dynamicBaseQuery,
+    refetchOnMountOrArgChange: true,
+    endpoints: builder => {
+        return {
+            getStorageSavings: builder.mutation({
+                query: ({ credentialId, regionId, instanceId, payload }) => ({
+                    url: `credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings`,
+                    method: 'POST',
+                    body: payload
                 })
             })
         };
@@ -762,7 +792,10 @@ export const {
     useRegisterResourceCredentialsMutation,
     useGetMssqlInstanceDataMutation,
     useGetMssqlResourceDataMutation,
-    useGetDatabaseHostsQuery
+    useGetDatabaseHostsQuery,
+    usePrepareHostMutation
 } = inventoryApi;
 
-export const { useGetSandboxListQuery, useGetSandboxSavingsQuery } = sandboxApi;
+export const { useGetSandboxListQuery, useGetSandboxSavingsQuery, useCreateSandboxMutation } = sandboxApi;
+
+export const { useGetStorageSavingsMutation } = exploreSavingsApi;

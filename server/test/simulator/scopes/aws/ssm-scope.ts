@@ -33,7 +33,16 @@ import {
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST
 } from '../../../../src/operations/workloads/mssql/ssm-script-utils';
-import { GET_SANDBOX_DETAILS } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
+import {
+    GET_SANDBOX_DETAILS,
+    createVolumeClone,
+    getDbMappedOntapVolumes,
+    createClonedDb,
+    addExtendedProperties,
+    cleanUpOntapResources
+} from '../../../../src/operations/workloads/mssql/sandbox-scripts';
+import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
+import { SERVER_DETAILS } from '../../../../src/operations/workloads/mssql/queries';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -262,9 +271,7 @@ const checkDBExists = {
 };
 
 const serverDetails = {
-    commands: [
-        "sqlcmd -Q \"\n    SET NOCOUNT ON;\n    SELECT\n        (\n            SELECT NodeName, is_current_owner\n            FROM sys.dm_os_cluster_nodes\n            FOR JSON PATH\n        ) AS clusterNodesInfo,\n        (\n        SELECT COUNT(1) \n        FROM sys.dm_exec_sessions \n        WHERE host_process_id is NOT NULL\n        ) AS numberOfConnections,\n        SERVERPROPERTY('Edition') AS ServerEdition,\n        SERVERPROPERTY('IsClustered') AS isClustered,\n        SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS activeNode,\n        @@version AS serverDetails,\n        @@SERVERNAME AS clusterName,\n        COUNT(DISTINCT d.database_id) AS totalCount\n    FROM\n        (\n            SELECT\n                database_id,\n                logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n                rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n                databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM\n                sys.master_files\n            GROUP BY\n                database_id\n        ) t\n    JOIN\n        sys.databases d ON d.database_id = t.database_id\n    FOR JSON PATH\" -y 0"
-    ]
+    commands: [`sqlcmd -Q "${SERVER_DETAILS}" -y 0`]
 };
 
 const clusterNetwokIpInfo = {
@@ -297,6 +304,65 @@ const getOntapSandboxVolumeSavingsParams = {
 
 const getSandboxDetails = {
     commands: [GET_SANDBOX_DETAILS(['"."'])]
+};
+
+const getVolumeLunMappingsCommand = {
+    commands: [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')]
+};
+
+const cloneVolumeCommand = {
+    commands: [
+        createVolumeClone(
+            'test-fsx',
+            'us-east-1',
+            'wlmdb_sqlsvm_1714090636810',
+            'wlmdb_sqldata_1714098400',
+            '/vol/wlmdb_sqldata_1714098400/sqldata',
+            'wlmdb_sqllog_1714098400',
+            '/vol/wlmdb_sqllog_1714098400/sqllog',
+            'wlmdb_sqlsvm_1714090636810'
+        )
+    ]
+};
+
+const invokeVirtualMountCommand = {
+    commands: [
+        `${INVOKE_VIRTUAL_MOUNT} -DBName test-clone -DataFilePath D:\\MSSQL\\data\\testdb_data.mdf  -LogFilePath E:\\MSSQL\\log\\testdb_log.ldf  -DataSerial lWB44?VEq9vf -LogSerial lWB44?VEq9ve`
+    ]
+};
+
+const createCloneDbCommand = {
+    commands: [
+        createClonedDb('testdb', [
+            'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
+            'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
+        ])
+    ]
+};
+
+const addExtendedPropertiesCommand = {
+    commands: [
+        addExtendedProperties('testdb', {
+            tag: 'demo',
+            cloned_by: 'netapp_wlmdb',
+            source: 'resource|instance|testdb'
+        })
+    ]
+};
+
+const cleanUpOntapResourcesCommand = {
+    commands: [
+        cleanUpOntapResources(
+            'test-fsx',
+            'us-east-1',
+            JSON.stringify(['5c1075d2-03a0-11ef-a514-55070fbfcab1', '5ace31ea-03a0-11ef-a514-55070fbfcab1']),
+            JSON.stringify([
+                'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
+                'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
+            ]),
+            'testdb'
+        )
+    ]
 };
 
 ssmMock
@@ -389,7 +455,19 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getOntapSandboxVolumeSavingsParams })
     .resolves(listSendCommandCommandResponse.ontapSandboxVolumesSavings)
     .on(SendCommandCommand, { Parameters: getSandboxDetails })
-    .resolves(listSendCommandCommandResponse.getSandboxDetails);
+    .resolves(listSendCommandCommandResponse.getSandboxDetails)
+    .on(SendCommandCommand, { Parameters: getVolumeLunMappingsCommand })
+    .resolves(listSendCommandCommandResponse.getDbVolumeLunMapping)
+    .on(SendCommandCommand, { Parameters: cloneVolumeCommand })
+    .resolves(listSendCommandCommandResponse.createCloneVolume)
+    .on(SendCommandCommand, { Parameters: invokeVirtualMountCommand })
+    .resolves(listSendCommandCommandResponse.invokeVirtualMount)
+    .on(SendCommandCommand, { Parameters: createCloneDbCommand })
+    .resolves(listSendCommandCommandResponse.createCloneDb)
+    .on(SendCommandCommand, { Parameters: addExtendedPropertiesCommand })
+    .resolves(listSendCommandCommandResponse.addExtendedProperties)
+    .on(SendCommandCommand, { Parameters: cleanUpOntapResourcesCommand })
+    .resolves(listSendCommandCommandResponse.cleanupOntapResource);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -481,7 +559,19 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'a271a4a7-3693-41bb-8c31-ontapSandboxVolumesSavings' })
     .resolves(getCommandInvocationResponse.ontapSandboxVolumesSavingsResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getSandboxDetailsInfo' })
-    .resolves(getCommandInvocationResponse.getSandboxDetailsInvocationResponse);
+    .resolves(getCommandInvocationResponse.getSandboxDetailsInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: '551b3294-d372-4335-85df-b95a28de6f79-getDbVolumeLunMapping' })
+    .resolves(getCommandInvocationResponse.getDbVolumeLunMapping)
+    .on(GetCommandInvocationCommand, { CommandId: '585f55b2-3bea-474a-a29e-15532e59a314-createCloneVolume' })
+    .resolves(getCommandInvocationResponse.createVolumeCloneResponse)
+    .on(GetCommandInvocationCommand, { CommandId: '7a5f55b2-3bea-174a-a29e-15532e59a314-invokeVirtualMount' })
+    .resolves(getCommandInvocationResponse.invokeVirtualMountResponse)
+    .on(GetCommandInvocationCommand, { CommandId: '0b2f55b2-3bea-174a-a29e-15532e59a112-createCloneDb' })
+    .resolves(getCommandInvocationResponse.createCloneDbResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'a91f55b2-3bea-174a-a29e-15532e59a1b4-addExtendedProperties' })
+    .resolves(getCommandInvocationResponse.addExtendedPropertiesResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-cleanupOntapResource' })
+    .resolves(getCommandInvocationResponse.addExtendedPropertiesResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

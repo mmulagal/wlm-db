@@ -1,44 +1,91 @@
+import { Dispatch } from 'redux';
+import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
+import {
+    formatFractionalNumber,
+    formatSizeOnePrecision,
+    generateOptionType,
+    removePasswordInConfig
+} from '../../../utils/utilityFunctions';
+import store from '../../../store/store';
+import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import { duplicateSaveCheck } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
+import { setIsSaveConfigLoading, setSavedConfig } from '../../../store/mssql/msSqlActionSlice';
+import {
+    DB_DEPLOYMENT_MODEL,
+    DB_EDITIONS,
+    DB_VERSIONS,
+    GIB_IN_BYTE,
+    SQL_DEPLOYMENT_MODE,
+    THROUGHPUT_LIST
+} from '../../../utils/consts';
+
 export const comparisonData = (calculatedResponse: any) => {
     return [
         {
             type: 'Capacity',
-            fsx: calculatedResponse?.fsx?.capacity,
-            ebs: calculatedResponse?.ebs?.capacity
+            fsx: `$ ${formatFractionalNumber(calculatedResponse?.fsx?.capacity, 2)}` || '$ 0',
+            ebs: `$ ${formatFractionalNumber(calculatedResponse?.ebs?.capacity, 2)}` || '$ 0'
         },
         {
             type: 'IOPS',
-            fsx: calculatedResponse?.fsx?.iops,
-            ebs: calculatedResponse?.ebs?.iops
+            fsx: calculatedResponse?.fsx?.iops
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.iops, 2)}`
+                : '$ 0',
+            ebs: calculatedResponse?.ebs?.iops ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.iops, 2)}` : '$ 0'
         },
         {
             type: 'Throughput',
-            fsx: calculatedResponse?.fsx?.throughput,
+            fsx: calculatedResponse?.fsx?.throughput
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.throughput, 2)}`
+                : '$ 0',
             ebs: calculatedResponse?.ebs?.throughput
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.throughput, 2)}`
+                : '$ 0'
         },
         {
             type: 'Snapshots',
-            fsx: calculatedResponse?.fsx?.snapshots,
+            fsx: calculatedResponse?.fsx?.snapshots
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.snapshots, 2)}`
+                : '$ 0',
             ebs: calculatedResponse?.ebs?.snapshots
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.snapshots, 2)}`
+                : '$ 0'
         },
         {
             type: 'Clone',
-            fsx: calculatedResponse?.fsx?.clone,
+            fsx: calculatedResponse?.fsx?.clone
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.clone, 2)}`
+                : GENERAL.NOT_AVAILABLE,
             ebs: calculatedResponse?.ebs?.clone
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.clone, 2)}`
+                : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'Compute',
-            fsx: calculatedResponse?.fsx?.compute,
+            fsx: calculatedResponse?.fsx?.compute
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.compute, 2)}`
+                : GENERAL.NOT_AVAILABLE,
             ebs: calculatedResponse?.ebs?.compute
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.compute, 2)}`
+                : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'SQL license',
-            fsx: calculatedResponse?.fsx?.license,
+            fsx: calculatedResponse?.fsx?.license
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.license, 2)}`
+                : GENERAL.NOT_AVAILABLE,
             ebs: calculatedResponse?.ebs?.license
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.license, 2)}`
+                : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'Total summary',
-            fsx: calculatedResponse?.fsx?.total,
+            fsx: calculatedResponse?.fsx?.total
+                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.total, 2)}`
+                : '$ 0',
             ebs: calculatedResponse?.ebs?.total
+                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.total, 2)}`
+                : '$ 0'
         }
     ];
 };
@@ -47,62 +94,77 @@ export const calculatedFSXData = (fsxData: any) => {
     return [
         {
             label: 'Region',
-            value: fsxData.regionName,
+            value: fsxData?.regionName || GENERAL.NOT_AVAILABLE,
             text: 'The AWS region that you selected.'
         },
         {
             label: 'Deployment type',
-            value: fsxData.deploymentType === 'Single' ? 'Single Availability Zone' : fsxData.deploymentType,
-            text: `A ${fsxData.deploymentType} Availability Zone is the equivalent availability for Amazon EBS.`
+            value:
+                fsxData?.deploymentType === 'Single'
+                    ? 'Single Availability Zone'
+                    : fsxData?.deploymentType || GENERAL.NOT_AVAILABLE,
+            text: `A ${fsxData?.deploymentType} Availability Zone is the equivalent availability for Amazon EBS.`
         },
         {
             label: 'Total storage capacity',
-            value: `${fsxData.totalStorageCapacity} TiB`,
+            value: fsxData?.totalStorageCapacity
+                ? formatSizeOnePrecision(fsxData?.totalStorageCapacity)
+                : GENERAL.NOT_AVAILABLE,
             text: 'The number of volumes that you need times the selected volume size.'
         },
 
         {
             label: 'Percentage of data on SSD storage',
-            value: fsxData.precentageSSD + '%',
-            text: `The potential percentage of data stored on the SSD tier for a typical ${fsxData.useCase} workload when using FSx for ONTAP data tiering capabilities.`
+            value: fsxData?.percentageSsd
+                ? formatFractionalNumber(fsxData?.percentageSsd, 2) + '%'
+                : GENERAL.NOT_AVAILABLE,
+            text: `The potential percentage of data stored on the SSD tier for a typical ${fsxData?.useCase} workload when using FSx for ONTAP data tiering capabilities.`
         },
         {
             label: 'Savings from compression + deduplication',
-            value: fsxData.savings + '%',
-            text: `Potential storage savings for ${fsxData.useCase} workload. Storage efficiency is based on a typical customer deployment.`
+            value: fsxData?.savings ? formatFractionalNumber(fsxData?.savings, 2) + '%' : GENERAL.NOT_AVAILABLE,
+            text: `Potential storage savings for ${fsxData?.useCase} workload. Storage efficiency is based on a typical customer deployment.`
         },
         {
             label: 'Effective capacity',
-            value: `${fsxData.effectiveCapacity.toFixed(2)} TiB`,
-            text: `Cost reduction based on ${fsxData.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
+            value: fsxData?.effectiveCapacity
+                ? formatSizeOnePrecision(fsxData?.effectiveCapacity)
+                : GENERAL.NOT_AVAILABLE,
+            text: `Cost reduction based on ${fsxData?.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
         },
         {
             label: 'SSD tier required capacity',
-            value: `${fsxData.ssdTierReqCapacity.toFixed(2)} TiB`,
-            text: `Based on a typical ${fsxData.useCase} workload, ${fsxData.precentageSSD}% of the data is on the SSD tier.`
+            value: fsxData?.ssdTierReqCapacity
+                ? formatSizeOnePrecision(fsxData?.ssdTierReqCapacity)
+                : GENERAL.NOT_AVAILABLE,
+            text: `Based on a typical ${fsxData?.useCase} workload, ${fsxData?.percentageSsd}% of the data is on the SSD tier.`
         },
         {
             label: 'Capacity pool tier required capacity',
-            value: `${fsxData.capacityPoolTier.toFixed(2)} TiB`,
-            text: `Based on a typical ${fsxData.useCase} workload, ${
-                100 - fsxData.precentageSSD
+            value: fsxData?.capacityPoolTier
+                ? formatSizeOnePrecision(fsxData?.capacityPoolTier)
+                : GENERAL.NOT_AVAILABLE,
+            text: `Based on a typical ${fsxData?.useCase} workload, ${
+                100 - fsxData?.percentageSsd
             }% of the data is on the capacity pool tier.`
         },
         {
             label: 'Provisioned SSD IOPS',
-            value: fsxData.ssdIop,
+            value: fsxData?.ssdIop || GENERAL.NOT_AVAILABLE,
             text: 'For each GiB of SSD provisioned storage, Amazon FSx automatically provisions 3 SSD IOPS for the file system.'
         },
         {
             label: 'Throughput capacity',
-            value: `${fsxData.throughputCapacity} MBps`,
+            value: fsxData?.throughputCapacity ? `${fsxData?.throughputCapacity} MBps` : GENERAL.NOT_AVAILABLE,
             text: `Supported FSx for ONTAP throughput according to the consolidated EBS throughput required (${
-                fsxData.numberOfVolumes * fsxData.throughput
+                fsxData?.numberOfVolumes * fsxData?.throughput
             } Mbps).`
         },
         {
             label: 'Monthly snapshot capacity',
-            value: `${fsxData.monthlySnapshotCapacity} GiB`,
+            value: fsxData?.monthlySnapshotCapacity
+                ? formatSizeOnePrecision(fsxData?.monthlySnapshotCapacity)
+                : GENERAL.NOT_AVAILABLE,
             text: 'Cost reduction is based on FSx for ONTAP data tiering capability. 90% of snapshots data will be tiered to the capacity pool tier.'
         }
     ];
@@ -112,22 +174,22 @@ export const MSSQLServerInstance = (sqlData: any) => {
     return [
         {
             label: 'Database deployment mode',
-            value: `${sqlData.deploymentMode}`,
+            value: sqlData?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
             text: 'Based on source deployment mode of Always On Availability Group, the equivalent deployment mode on FsxN is Failover cluster instance'
         },
         {
             label: 'Database edition',
-            value: `${sqlData.edition}`,
-            text: 'Complete'
+            value: sqlData?.serverEdition || GENERAL.NOT_AVAILABLE,
+            text: 'Since source deployment mode suggested is  FCI the Enterprise replication feature is not relevant. Based on our analysis, SQL Enterprise features are not used as well, therefore we recommend using Standard edition.'
         },
         {
             label: 'Database version',
-            value: `${sqlData.serverType}`,
+            value: sqlData?.serverVersion || GENERAL.NOT_AVAILABLE,
             text: 'Based on the source SQL server version'
         },
         {
             label: 'DB Instance type',
-            value: `${sqlData.instance}`,
+            value: sqlData?.instanceType || GENERAL.NOT_AVAILABLE,
             text: 'Based on the source Ec2 instance type'
         }
     ];
@@ -554,4 +616,133 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
             }
         ]
     };
+};
+
+export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
+    const state = store.getState();
+    const initialStateForm = state.mssqlForm;
+    let result = { ...initialStateForm, selectConfig: SELECT_CONFIG.STANDARD_CREATE };
+
+    // mssql instance data
+    if (msSqlInstance) {
+        // setting instance type
+        if (msSqlInstance?.instanceType) {
+            const value = msSqlInstance?.instanceType?.[0].toLowerCase();
+            const data = { instanceType: msSqlInstance?.instanceType?.[0].toLowerCase() };
+            const option = generateOptionType(value, value, '', false, '', data);
+            result = { ...result, instanceType: option };
+        }
+        // database version
+        if (msSqlInstance?.serverVersion) {
+            const dbVersionOption = DB_VERSIONS?.filter(perRow => msSqlInstance?.serverVersion.includes(perRow?.value));
+            if (dbVersionOption) {
+                const option = generateOptionType(dbVersionOption[0].value, dbVersionOption[0].label, '', false, '');
+                result = { ...result, dbVersion: option };
+            }
+        }
+        // database Edition
+        if (msSqlInstance?.serverEdition) {
+            const dbEditionOption = DB_EDITIONS?.filter(perRow => msSqlInstance?.serverEdition.includes(perRow?.value));
+            if (dbEditionOption) {
+                result = { ...result, dbEdition: dbEditionOption[0] };
+            }
+        }
+        // Deployment Model
+        if (msSqlInstance?.serverInstallationMode) {
+            let type = msSqlInstance.serverInstallationMode.toLowerCase();
+            if (type !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+                type = SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE;
+            }
+            const dbDeploymentModel = DB_DEPLOYMENT_MODEL?.filter(perRow => type === perRow?.value);
+            if (dbDeploymentModel) {
+                result = { ...result, dbDeploymentModel: dbDeploymentModel[0] };
+            }
+        }
+    }
+
+    // fsxn data
+    if (fsxData) {
+        // IOPS
+        if (fsxData?.ssdIop) {
+            result = {
+                ...result,
+                provisionedIOPS: {
+                    provisionedType: GENERAL.USER_PROVISIONED,
+                    IOPSValue: fsxData?.ssdIop
+                }
+            };
+        }
+        // Throughput
+        if (fsxData?.throughputCapacity) {
+            const throughput = THROUGHPUT_LIST?.filter(perRow => perRow?.value === fsxData?.throughputCapacity);
+            if (throughput) {
+                const option = generateOptionType(throughput[0]?.label, throughput[0]?.label, '', false, '');
+                result = { ...result, throughput: option };
+            }
+        }
+        // Capacity
+        if (fsxData?.totalStorageCapacity) {
+            let size = fsxData?.totalStorageCapacity ? fsxData?.totalStorageCapacity / GIB_IN_BYTE : 0;
+            const unitOption = generateOptionType('GiB', 'GiB', '', false, '');
+            result = {
+                ...result,
+                storageCapacity: {
+                    capacity: formatFractionalNumber(size, 2),
+                    unit: unitOption
+                }
+            };
+        }
+    }
+
+    return result;
+};
+
+/*
+On click of save config it will call API to store config data.
+*/
+export const ExploreSaveConfiguration = (
+    dispatch: Dispatch,
+    saveConfigData: any,
+    closeDialog: any,
+    msSqlInstance: any,
+    fsxData: any
+) => {
+    const state = store.getState();
+    const saveConfigName = state.exploreSavings.saveConfigName;
+    const existingSavedConfig = state.msSqlAction.savedConfig;
+    const payload = {
+        name: saveConfigName,
+        data: removePasswordInConfig(setRecommendedConfig(msSqlInstance, fsxData))
+    };
+    const isDuplicate = duplicateSaveCheck(state.mssqlForm, existingSavedConfig);
+    if (isDuplicate) {
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: SELECT_CONFIG.DUPLICATE_SAVED_CONFIG
+            })
+        );
+        closeDialog();
+    } else {
+        dispatch(setIsSaveConfigLoading(true));
+        saveConfigData({ payload: payload })
+            .then((data: any) => {
+                if (!data?.error) {
+                    dispatch(setSavedConfig(state.mssqlForm));
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                            message: SELECT_CONFIG.SAVE_CONFIG_SUCCESS
+                        })
+                    );
+                }
+                closeDialog();
+                dispatch(setIsSaveConfigLoading(false));
+            })
+            .catch((error: any) => {
+                dispatch(setIsSaveConfigLoading(false));
+                closeDialog();
+            });
+    }
+    return '';
 };

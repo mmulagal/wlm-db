@@ -1,9 +1,11 @@
-import { DsFlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-system';
+import { Button, DsFlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../utils/appConstants';
 import { formatFractionalNumber, isAwsBackupEnabled } from '../../utils/utilityFunctions';
 import EstimatedCostPopover from './EstimatedCostPopover/EstimatedCostPopover';
-import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE } from '../../utils/consts';
+import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
 import CommonStyles from '../../utils/CommonStyles.module.scss';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../store/notificationSlice';
+import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
 
 export const renderProtectionColumn = (cellData: any, rowData: any, styles: any) => {
     const isLoading = rowData?.loading;
@@ -198,4 +200,30 @@ export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) =
             {!deploymentType && GENERAL.NOT_AVAILABLE}
         </>
     );
+};
+
+export const installModuleNotification = (styles: any, hostname: string, dispatch: any, initialMsg: any) => {
+    const prepareHostMsg = (
+        <div className={styles.notification}>
+            {initialMsg[0]}
+            <span className={styles.bold}>{hostname}</span>
+            {initialMsg[1]}
+            {
+                <>
+                    <Button
+                        Component="button"
+                        variant="text"
+                        onClick={() => {
+                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            dispatch(clearNotifications());
+                        }}
+                    >
+                        {initialMsg[2]}
+                    </Button>
+                </>
+            }
+            {initialMsg[3]}
+        </div>
+    );
+    dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: prepareHostMsg }));
 };

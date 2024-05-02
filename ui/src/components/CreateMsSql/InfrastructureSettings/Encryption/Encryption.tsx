@@ -34,7 +34,7 @@ const Encryption = () => {
 
     // To select aws/fsx row if present
     useEffect(() => {
-        if (!isLoadConfig && !movingFromChatbot) {
+        if ((!isLoadConfig && !movingFromChatbot) || !selectedRow) {
             dispatch(setEncryptionRow(kmsData?.filter(key => key?.default)));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps

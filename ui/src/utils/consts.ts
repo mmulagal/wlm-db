@@ -1,3 +1,5 @@
+import { GENERAL } from './appConstants';
+
 export const AUTH_STATUS = {
     AUTH_STATUS_SUCCESS: 'AUTH_SUCCESS',
     AUTH_STATUS_ERROR: 'AUTH_ERROR',
@@ -134,7 +136,8 @@ export const SQL_DEPLOYMENT_MODE = {
 
 export const API_ERRORS = {
     DUPLICATE_CONFIG_NAME: 'An unique key constraint violated uk_wlmdb_config_account_id_name_user',
-    RATE_EXCEEDED: 'rate exceeded'
+    RATE_EXCEEDED: 'rate exceeded',
+    POWERSHELL_7: 'PowerShell 7 is needed for managing the resource'
 };
 
 export const STATUS_CONST = {
@@ -154,7 +157,10 @@ export const JOB_MONITORING_STATUS = {
 
 export const JOB_MONITORING_TYPE = {
     DEPLOYMENT: 'DEPLOYMENT',
-    CREATE_RESOURCE: 'CREATE_RESOURCE'
+    CREATE_RESOURCE: 'CREATE_RESOURCE',
+    CREATE_DATABASE: 'CREATE_DATABASE',
+    PREPARE_RESOURCE: 'PREPARE_RESOURCE',
+    SANDBOX: 'SANDBOX'
 };
 
 export const MAX_SAVED_CONFIG = 100;
@@ -285,6 +291,7 @@ export const DRIVE_LETTER_TYPE = {
 
 export const DEPLOY_ENDPOINT = '/cloudformation/deploy';
 export const CREATE_DB_ENDPOINT = (databaseHostId: any) => `/database-hosts/${databaseHostId}/database`;
+export const CREATE_SANDBOX_ENDPOINT = '/sandbox';
 
 export const CREATE_DB_CURL_REQ_TEMPLATE = (
     baseUrl: string,
@@ -295,6 +302,19 @@ export const CREATE_DB_CURL_REQ_TEMPLATE = (
     payload: any
 ) => `
 curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
+--header 'Authorization: Bearer ${token}' \\
+--header 'Content-Type: application/json' \\
+--data-raw '${payload}'
+`;
+
+export const CREATE_SANDBOX_CURL_REQ_TEMPLATE = (
+    baseUrl: string,
+    credentialId: string,
+    region: string,
+    token: string,
+    payload: any
+) => `
+curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/sandbox' \\
 --header 'Authorization: Bearer ${token}' \\
 --header 'Content-Type: application/json' \\
 --data-raw '${payload}'
@@ -321,4 +341,46 @@ export const DETECT_HOST_VAR = {
     DISABLE: 'disable',
     SHOW: 'show',
     HIDE: 'hide'
+};
+
+export const DB_VERSIONS = [
+    { label: GENERAL.SQL_SERVER_2016, value: GENERAL.SQL_SERVER_2016_VERSION },
+    { label: GENERAL.SQL_SERVER_2019, value: GENERAL.SQL_SERVER_2019_VERSION },
+    { label: GENERAL.SQL_SERVER_2022, value: GENERAL.SQL_SERVER_2022_VERSION }
+];
+
+export const DB_EDITIONS = [
+    {
+        label: GENERAL.SQL_SERVER_STANDARD_EDITION,
+        value: GENERAL.SQL_SERVER_STANDARD
+    },
+    {
+        label: GENERAL.SQL_SERVER_ENTERPRiSE_EDITION,
+        value: GENERAL.SQL_SERVER_ENTERPRISE
+    }
+];
+
+export const DB_DEPLOYMENT_MODEL = [
+    {
+        label: GENERAL.FAILOVER_CLUSTER,
+        value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+    },
+    {
+        label: GENERAL.SINGLE_INSTANCE,
+        value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+    }
+];
+
+export const THROUGHPUT_LIST = [
+    { label: '128 MBps', value: 128 },
+    { label: '256 MBps', value: 256 },
+    { label: '512 MBps', value: 512 },
+    { label: '1 GBps', value: 1024 },
+    { label: '2 GBps', value: 2048 },
+    { label: '4 GBps', value: 4096 }
+];
+
+export const MSSQL_DATABASE_TYPES = {
+    SYSTEM: 'System Database',
+    USER: 'User Database'
 };

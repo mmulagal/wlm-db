@@ -37,6 +37,15 @@ const DiscoverMsSqlSchema = {
     }
 };
 
+const PrepareForManageSchema = {
+    ...DiscoveryBaseRequest,
+    params: DiscoverInstanceParams,
+    summar: 'Prepare the EC2 for managing resources',
+    description: 'Prepare the EC2 for manage operation by copying PS modules, DB creation scripts',
+    response: {
+        200: ManageMsSqlResponseBody
+    }
+};
 const ManageMsSqlSchema = {
     ...DiscoveryBaseRequest,
     params: DiscoverInstanceParams,
@@ -77,4 +86,10 @@ const MsSqlInstancesSchema = {
         200: DatabaseHostSummaryPerStorageTypeListResponse
     }
 };
-export { DiscoverCredentialsSchema, DiscoverMsSqlSchema, ManageMsSqlSchema, MsSqlInstancesSchema };
+export {
+    DiscoverCredentialsSchema,
+    DiscoverMsSqlSchema,
+    ManageMsSqlSchema,
+    MsSqlInstancesSchema,
+    PrepareForManageSchema
+};

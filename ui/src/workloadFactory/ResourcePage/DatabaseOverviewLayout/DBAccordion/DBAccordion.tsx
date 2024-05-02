@@ -13,6 +13,7 @@ type AccordionContent = {
 
 const DbAccordion = ({ heading, toggle, open, content }: AccordionContent) => {
     const { resourceLoading } = useAppSelector(state => state.workloadFactoryResource);
+
     return (
         <div className={resourceLoading ? `${styles.dbAccordion} ${styles.disabledApplied}` : `${styles.dbAccordion}`}>
             <div

@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import config from 'config';
 
-import { STORAGE_TYPE } from '@prisma/client';
+import { STORAGE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { FileSystem, FileSystemType } from '@aws-sdk/client-fsx';
 import { attempt, compact, uniqBy, isEmpty } from 'lodash-es';
 import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
@@ -10,7 +10,7 @@ import throat from 'throat';
 import { createResource } from '../lib/database/db';
 import { getResources } from './database/database-operations';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
-import { getArtifactsRegionBucketName, getResourceNameFromTags, sleep } from '../utils/utils';
+import { getResourceNameFromTags, sleep, getArtifactsRegionBucketName } from '../utils/utils';
 import {
     getEc2SqlParameters,
     callSsmExecution,
@@ -18,6 +18,8 @@ import {
     pollCommandStatus,
     ssmPutParameters
 } from './aws/ssm-operations';
+import { registerJob, updateJobDetails, getJobs } from './database/job-operations';
+import { tagResources } from './aws/sqs-operations';
 import {
     CloudProviders,
     HttpErrorCodes,
@@ -32,13 +34,19 @@ import {
     SQL_SERVER_VERSION_TO_YEAR,
     HOST_AND_SQL_INFO_PS1,
     CLUSTER_NETWORK_IP_INFO_PS1,
-    COPY_SCIRPTS_TO_MANAGE_RESOURCE
+    IS_PS7_AVAILABLE,
+    UNAVAILABLE_PS_MODULES,
+    GET_MISSING_RESOURCE_DETAILS,
+    IS_DATABASE_CREATE_POSSIBLE,
+    COPY_SCIRPTS_TO_MANAGE_RESOURCE,
+    INSTALL_WF_POWERSHELL_PREREQS_PS1,
+    REQUIRED_PS_MODULES_FOR_MANAGEMENT,
+    FAILURE_INFO
 } from './workloads/mssql/discover-consts';
 import { deleteParameters, getParameter, sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
 import { listFsxOntapCredentials, registerFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
 import { ResourceDetails, SSMParamterObject } from '../utils/common-types';
-
 import {
     DiscoverMsSqlResponseBodyType,
     SqlServerInstanceInfoType,
@@ -59,7 +67,6 @@ import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
 import { preSignedUrl } from '../lib/aws/s3';
 
 const { getPreSignedUrl } = preSignedUrl;
-
 const logger = getLogger();
 
 interface SsmTargetsInfo {
@@ -86,6 +93,7 @@ interface FSxInfo {
 }
 
 const MINIMUM_SQL_SERVER_SUPPORTED = 2016;
+const PREPARE_EC2_RERUN_DURATION: number = 20; // in minutes
 
 const NEW_SSM_PARAMETERS = 'NEW_SSM_PARAMETERS';
 const SSM_PARAM_PREFIX = '/netapp/wlmdb/';
@@ -341,10 +349,16 @@ async function getHostAndSqlInfoFromPsOutput(
 
     if (ssmResponse?.StandardErrorContent) {
         logger.error('Failed to collect info using SSM. Reason: ', ssmResponse?.StandardErrorContent);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Failed to get details from EC2 instance ${ssmTarget.ec2InstanceId}. Reason: ${ssmResponse?.StandardErrorContent}`
-        );
+
+        // When the EC2 instance is restarted/shutdown/terminated, we get the message compared
+        // in the if condition.  Since any further processing for the EC2 isn't possible in
+        // such cases, we refrain from throwing.
+        if (!ssmResponse?.StandardErrorContent?.includes('failed to run commands: exit status 1')) {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                `Failed to get details from EC2 instance ${ssmTarget.ec2InstanceId}. Reason: ${ssmResponse?.StandardErrorContent}`
+            );
+        }
     }
     if (ssmResponse.Status === CommandInvocationStatus.TIMED_OUT) {
         logger.error(`SSM command ${commandId} execution  timed out on node ${ssmTarget.ec2InstanceId}`);
@@ -407,6 +421,7 @@ async function getHostAndSqlInfoFromPsOutput(
                             });
                         } else if (endPointIpWithFsxInfo.has(di?.SerialNumberOrScsiTarget)) {
                             const { fsxId, svmId } = endPointIpWithFsxInfo.get(di?.SerialNumberOrScsiTarget)!;
+
                             storageTypes.push({
                                 type: STORAGE_TYPE.FSXN,
                                 id: fsxId!,
@@ -431,9 +446,7 @@ async function getHostAndSqlInfoFromPsOutput(
                             // If FSxN over SMB, Match get-smbmapping with SVM ip/fqdn
 
                             const fsxEndpoints = Array.from(endPointIpWithFsxInfo.keys());
-                            const targets = di?.SerialNumberOrScsiTarget
-                                ? di.SerialNumberOrScsiTarget.toLowerCase()
-                                : '';
+                            const targets = di?.SmbSharePath ? di.SmbSharePath.toLowerCase() : '';
                             const matchedEndpoints = fsxEndpoints.filter(value =>
                                 targets.includes(value.toLowerCase())
                             );
@@ -474,7 +487,8 @@ async function getHostAndSqlInfoFromPsOutput(
                         isDefaultInstance,
                         windowsAuthentication,
                         scriptExecutionTime,
-                        databaseCount
+                        databaseCount,
+                        failureInfo
                     } = sqlServerInstanceInfo;
                     logger.info(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
@@ -497,6 +511,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerProductYear,
                         ...(sqlServerEdition && { sqlServerEdition }),
                         isDefaultInstance,
+                        ...(failureInfo && { failureInfo }),
                         windowsAuthentication,
                         sqlServerAuthentication,
                         storage: compact(uniqBy(storageTypes, 'id')),
@@ -704,13 +719,13 @@ async function fetchUnmanagedHostsInformation(
         // ec2Instance?.sqlServerInstances?.forEach(sqlInstance => { // skipping this loop as we are only considering the first running sql instance in the ec2 instance. This needs to be enabled when we support multiple sql instances in an ec2 instance.
         if (!isEmpty(sqlServerInstance)) {
             const { storage } = sqlServerInstance;
-            let ebsVolumeId: string | undefined;
+            let ebsVolumeIds: string[] | undefined = [];
             let fsxwId: string | undefined;
             let fsxnId: string | undefined;
             storage?.forEach(({ type, id }) => {
                 // if there are multiple entries in storage for the same type then only the last entry will be considered. For eg: if the same sql instance has fsxn-1 and fsxn-2, then only fsxn-2 will be considered. Such a scenario occurs when system dbs use one storage and user dbs use another storage. The reason for this limitation currently is wlmdb resources are not expecting multiple co-relation ids for the same resource.
                 // If the storage is of different type, then both will be considered while calculating protection and storage savings details.
-                ebsVolumeId = type === STORAGE_TYPE.EBS ? id : ebsVolumeId;
+                ebsVolumeIds = type === STORAGE_TYPE.EBS ? ebsVolumeIds?.concat(id) : ebsVolumeIds;
                 fsxwId = type === STORAGE_TYPE.FSXW ? id : fsxwId;
                 fsxnId = type === STORAGE_TYPE.FSXN ? id : fsxnId;
             });
@@ -720,7 +735,7 @@ async function fetchUnmanagedHostsInformation(
                 account_id: accountId,
                 resource_id: ec2Instance.ec2InstanceId,
                 resource_type: RESOURCESTYPE.MSSQL,
-                resource_name: ec2Instance.ec2InstanceId,
+                resource_name: ec2Instance.ec2InstanceName || ec2Instance.ec2InstanceId,
                 cloud_provider_name: CloudProviders.AWS,
                 co_relation_id: fsxnId || null,
                 cloud_provider_account_id: null,
@@ -731,7 +746,7 @@ async function fetchUnmanagedHostsInformation(
                     creationDate: Date.now(),
                     node1InstanceId: ec2Instance.ec2InstanceId
                 },
-                ebsVolumeId,
+                ebsVolumeIds,
                 fsxwId
             });
         } else {
@@ -750,7 +765,7 @@ async function fetchUnmanagedHostsInformation(
             getDatabaseHostSummary(
                 accountId,
                 resourceDetail.resource_id,
-                'serverDetails,performance,usageEstimation,storage,protection',
+                'serverDetails,topology,performance,usageEstimation,storage,protection',
                 resourceDetail,
                 false // unmanaged host
             )
@@ -772,7 +787,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     if (isEmpty(ec2InstanceId)) {
         throw createError(
             HttpErrorCodes.VALIDATION_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Reason: empty instance ID`
+            `Unable to manage instance '${ec2InstanceId}'. Reason: empty instance ID.`
         );
     }
 
@@ -780,14 +795,52 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     if (ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
         throw createError(
             HttpErrorCodes.VALIDATION_ERROR,
-            `Unable to manage instance '${ec2InstanceId}'. Reason: no SSM connectivity`
+            `Unable to manage instance '${ec2InstanceId}'. Reason: no SSM connectivity.`
         );
     }
 
-    const [discoverInfo, ssmResponse] = await Promise.all([
+    const missingResourceInfo = await callSsmExecution(
+        credentialsId,
+        region,
+        GET_MISSING_RESOURCE_DETAILS,
+        ec2InstanceId,
+        accountId
+    );
+    logger.debug('Missing resource info', missingResourceInfo);
+    const missingResourceResponse = JSON.parse(missingResourceInfo!);
+
+    if (missingResourceResponse[IS_PS7_AVAILABLE] === false) {
+        throw createError(
+            HttpErrorCodes.FAILED_DEPENDENCY,
+            'PowerShell 7 is needed for managing the resource. Install it manually (refer to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare", and retry the operation.'
+        );
+    } else if (missingResourceResponse[UNAVAILABLE_PS_MODULES]) {
+        throw createError(
+            HttpErrorCodes.FAILED_DEPENDENCY,
+            `PowerShell modules ${missingResourceResponse[UNAVAILABLE_PS_MODULES]} are needed for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare", and retry the operation.`
+        );
+    } else if (missingResourceResponse[IS_DATABASE_CREATE_POSSIBLE] === false) {
+        throw createError(
+            HttpErrorCodes.FAILED_DEPENDENCY,
+            'Files required for database operations are not available. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare", and retry the operation.'
+        );
+    }
+
+    const [discoverInfo, ssmResponse, ec2Details] = await Promise.all([
         getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [ec2InstanceId]),
-        callSsmExecution(credentialsId, region, CLUSTER_NETWORK_IP_INFO_PS1, ec2InstanceId, accountId)
+        callSsmExecution(credentialsId, region, CLUSTER_NETWORK_IP_INFO_PS1, ec2InstanceId, accountId),
+        describeInstance(credentialsId, region, { InstanceIds: [ec2InstanceId] })
     ]);
+
+    const awsAccountId = ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn?.split(':')[4];
+
+    if (isEmpty(awsAccountId)) {
+        logger.error('Failed to get AWS account ID: ', ec2Details);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Unable to manage instance '${ec2InstanceId}'. Reason: failed to get AWS account ID.`
+        );
+    }
 
     if (ssmResponse?.includes('failureInfo')) {
         logger.error(
@@ -846,68 +899,20 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     await validateEc2InstanceManageability(discoverInfo, ec2InstanceId);
 
     const [item] = discoverInfo.items;
-    const [sqlServerInstance] = item.sqlServerInstances || [];
+    const [sqlServerInstance] = item?.sqlServerInstances || [];
     const { storage } = sqlServerInstance;
     const storageInfo = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
 
-    // Get signed url for dbcreate.zip
-    const bucketname = getArtifactsRegionBucketName(region);
-    const dbcreateS3SignedUrl = await getPreSignedUrl(region, bucketname, DBCREATE_RELATIVE_PATH);
-
-    // Copy scripts to the EC2 instance
-    const discoveryPromiseList = [
-        callSsmExecution(
-            credentialsId,
-            region,
-            COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
-            ec2InstanceId,
-            accountId,
-            true,
-            '7200' // FIXME: If frequent timeouts are seen, we shall run the command as a PS Job.
-        )
-    ];
-
-    if (node2InstanceId) {
-        discoveryPromiseList.push(
-            callSsmExecution(
-                credentialsId,
-                region,
-                COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
-                node2InstanceId,
-                accountId,
-                true,
-                '7200' // FIXME: If frequent timeouts are seen, we shall run the command as a PS Job.
-            )
-        );
-    }
-    const [ssmScriptsCopyResponse1, ssmScriptsCopyResponse2] = await Promise.all([
-        ...discoveryPromiseList,
-        verifyAndAddFSxOntapCredentials(
-            accountId,
-            credentialsId,
-            region,
-            discoverInfo?.items?.[0].sqlServerInstances?.[0]?.storage
-        )
-    ]);
-
-    logger.info(
-        `Response for copy scripts using PowerShell: ${node1InstanceId} = ${ssmScriptsCopyResponse1}, ${node2InstanceId} = ${ssmScriptsCopyResponse2}`
+    verifyAndAddFSxOntapCredentials(
+        accountId,
+        credentialsId,
+        region,
+        discoverInfo?.items?.[0].sqlServerInstances?.[0]?.storage
     );
-    if (ssmScriptsCopyResponse1?.includes('failureInfo')) {
-        logger.error('Failed to copy discovery scripts. Reason:', ssmScriptsCopyResponse1);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to manage instance '${node1InstanceId}'. Reason: failed to copy artifacts`
-        );
-    }
 
-    if (ssmScriptsCopyResponse2?.includes('failureInfo')) {
-        logger.error('Failed to copy discovery scripts. Reason:', ssmScriptsCopyResponse2);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to manage instance '${node2InstanceId}'. Reason: failed to copy artifacts`
-        );
-    }
+    const fsxStorage = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
+
+    tagResources(credentialsId, region, awsAccountId!, accountId, fsxStorage!.id, node1InstanceId, node2InstanceId);
 
     // Register the resource
     await createResource(accountId, {
@@ -929,7 +934,8 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
                     ? SqlServerDeploymentModel.SQL_STANDALONE_SHORT
                     : SqlServerDeploymentModel.SQL_FCI_SHORT,
             source: RESOURCE_SOURCE.DISCOVER,
-            fsxSvmId: storageInfo?.svmId
+            fsxSvmId: storageInfo?.svmId,
+            storageProtocol: storageInfo?.protocol
         }
     });
 
@@ -1143,7 +1149,7 @@ async function verifyAndAddFSxOntapCredentials(
             } catch (error: any) {
                 throw createError(
                     HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                    `FSx for ONTAP storage '${fsxStorage.id}' isn't registered with FSxN core service. This cannot be managed`
+                    `Unable to manage the instance. Reason: FSx for ONTAP storage '${fsxStorage.id}' isn't registered with FSxN core service.`
                 );
             }
 
@@ -1161,9 +1167,209 @@ async function verifyAndAddFSxOntapCredentials(
     }
 }
 
+async function prepareForManage(accountId: string, credentialsId: string, region: string, ec2InstanceId: string) {
+    logger.info('Prepare for manage:', { accountId, credentialsId, region });
+
+    const ssmState = await getSSMConnectionStatus(credentialsId, region, ec2InstanceId);
+    if (ssmState.Status === ConnectionStatus.NOT_CONNECTED) {
+        throw createError(
+            HttpErrorCodes.SERVICE_UNAVAILABLE,
+            `Unable to prepare instance '${ec2InstanceId}' for management. Reason: no SSM connectivity.`
+        );
+    }
+
+    // Check if any job is already running for the same purpose.
+    const jobFilterParams = {
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: ec2InstanceId,
+        typeFilter: JOBTYPE.PREPARE_RESOURCE
+    };
+    const {
+        items: [job]
+    } = await getJobs(accountId, credentialsId, region, jobFilterParams);
+    if (job) {
+        const timeDifferenceInMilliseconds = Math.abs(Date.now() - job.startTime);
+        const timeDifferenceInMinutes = Math.floor(timeDifferenceInMilliseconds / (1000 * 60));
+
+        // As of now, PowerShell module installation is finishing
+        // in about 8-10 minutes.  Let's wait for double that time
+        // to accomodate busy systems.
+        if (timeDifferenceInMinutes <= PREPARE_EC2_RERUN_DURATION) {
+            throw createError(
+                HttpErrorCodes.CONFLICT,
+                `Preparation of ${ec2InstanceId} for management by Workload Factory is already in progress with job ID ${job.id}.`
+            );
+        }
+    }
+
+    // Create the parent job for EC2 preparation
+    const { id: parentJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.PREPARE_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: ec2InstanceId,
+        name: `Prepare EC2 '${ec2InstanceId}' for management`,
+        startTime: Date.now(),
+        description: `Prepare EC2 '${ec2InstanceId}' for management by Workload Factory database operations`
+    });
+
+    performPrepareTasks(accountId, credentialsId, region, ec2InstanceId, parentJobId);
+
+    return parentJobId;
+}
+
+async function performPrepareTasks(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    parentJobId: string
+) {
+    logger.debug('Perform tasks to prepare EC2 for management: ', {
+        accountId,
+        credentialsId,
+        region,
+        ec2InstanceId,
+        parentJobId
+    });
+
+    const [dbResponse, psResponse] = await Promise.all([
+        prepareDbScriptsForManage(accountId, credentialsId, region, ec2InstanceId, parentJobId),
+        preparePsModulesForManage(accountId, credentialsId, region, ec2InstanceId, parentJobId)
+    ]);
+
+    updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        status:
+            dbResponse === JOBSTATUS.COMPLETED && psResponse === JOBSTATUS.COMPLETED
+                ? JOBSTATUS.COMPLETED
+                : JOBSTATUS.FAILED,
+        endTime: Date.now()
+    });
+}
+
+async function prepareDbScriptsForManage(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    parentJobId: string
+) {
+    logger.debug(
+        `Prepare database scripts for managing ${ec2InstanceId}: { accountId, credentialsId, region, ec2InstanceId, parentJobId }`
+    );
+
+    let childJobStatus;
+
+    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.PREPARE_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: ec2InstanceId,
+        name: 'Copy artifacts for database operations.',
+        parentJobId,
+        description: 'Copy artificts needed for Workload Factory database operations.',
+        startTime: Date.now()
+    });
+
+    // Get signed url for dbcreate.zip
+    const bucketname = getArtifactsRegionBucketName(region);
+    const dbcreateS3SignedUrl = await getPreSignedUrl(region, bucketname, DBCREATE_RELATIVE_PATH);
+
+    // Copy scripts to the EC2 instance
+    const ssmScriptsCopyResponse = await callSsmExecution(
+        credentialsId,
+        region,
+        COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
+        ec2InstanceId,
+        accountId,
+        false,
+        '3600'
+    );
+
+    logger.info(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${ssmScriptsCopyResponse}`);
+
+    if (ssmScriptsCopyResponse?.includes('failureInfo')) {
+        const responseInJson = JSON.parse(ssmScriptsCopyResponse);
+        logger.error(
+            `Unable to prepare instance '${ec2InstanceId}'. Reason: failed to copy database operation artifacts. Error: ${ssmScriptsCopyResponse}`
+        );
+        updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: responseInJson.failureInfo
+        });
+        childJobStatus = JOBSTATUS.FAILED;
+    } else {
+        updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status: JOBSTATUS.COMPLETED,
+            endTime: Date.now()
+        });
+        childJobStatus = JOBSTATUS.COMPLETED;
+    }
+    return childJobStatus;
+}
+
+async function preparePsModulesForManage(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    parentJobId: string
+) {
+    logger.debug(
+        `Prepare database scripts for managing ${ec2InstanceId}: { accountId, credentialsId, region, ec2InstanceId, parentJobId }`
+    );
+    let childJobStatus;
+
+    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.PREPARE_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: ec2InstanceId,
+        name: 'Install PowerShell modules',
+        parentJobId,
+        description: 'Install PowerShell modules required for Workload Factory database operations',
+        startTime: Date.now()
+    });
+
+    const ssmPsModuleInstallResponse = await callSsmExecution(
+        credentialsId,
+        region,
+        INSTALL_WF_POWERSHELL_PREREQS_PS1(REQUIRED_PS_MODULES_FOR_MANAGEMENT),
+        ec2InstanceId,
+        accountId,
+        false,
+        '3600'
+    );
+    logger.info(`Response for PowerShell module installation for ${ec2InstanceId}: ${ssmPsModuleInstallResponse}`);
+
+    if (ssmPsModuleInstallResponse?.includes(FAILURE_INFO)) {
+        const responseInJson = JSON.parse(ssmPsModuleInstallResponse);
+        const failureInfo = responseInJson[FAILURE_INFO];
+        logger.error(
+            `Unable to prepare instance '${ec2InstanceId}. Reason: Failed to install PowerShell modules. Error: ${failureInfo}`
+        );
+
+        updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: failureInfo
+        });
+
+        childJobStatus = JOBSTATUS.FAILED;
+    } else {
+        updateJobDetails(accountId, credentialsId, region, childJobId, {
+            status: JOBSTATUS.COMPLETED,
+            endTime: Date.now()
+        });
+
+        childJobStatus = JOBSTATUS.COMPLETED;
+    }
+
+    return childJobStatus;
+}
+
 export {
     getHostAndSqlServerInfo,
     validateAndStoreDiscoveredParameters,
     fetchUnmanagedHostsInformation,
-    manageSqlServer
+    manageSqlServer,
+    prepareForManage
 };

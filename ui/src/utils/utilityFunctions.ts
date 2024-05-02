@@ -1044,8 +1044,12 @@ export const jobMonitoringTypeMapping = (val: string) => {
     let typeValue = val;
     if (val === JOB_MONITORING_TYPE.DEPLOYMENT) {
         typeValue = GENERAL.JM_TYPE_DEPLOYMENT;
-    } else if (val === JOB_MONITORING_TYPE.CREATE_RESOURCE) {
+    } else if (val === JOB_MONITORING_TYPE.CREATE_RESOURCE || val === JOB_MONITORING_TYPE.CREATE_DATABASE) {
         typeValue = GENERAL.JM_TYPE_CREATE_RESOURCE;
+    } else if (val === JOB_MONITORING_TYPE.PREPARE_RESOURCE) {
+        typeValue = GENERAL.JM_TYPE_PREPARE_RESOURCE;
+    } else if (val === JOB_MONITORING_TYPE.SANDBOX) {
+        typeValue = GENERAL.JM_TYPE_SANDBOX;
     }
     return typeValue;
 };
@@ -1401,6 +1405,7 @@ export const formatUnamanagedHostList = (data: any, mssqlInstancesData: any) => 
                 storage: perRowInstanceData?.data?.storage,
                 estimatedUsageCost: perRowInstanceData?.data?.estimatedUsageCost,
                 resourceUtilization: perRowInstanceData?.data?.resourceUtilization,
+                ebsResourceInfo: perRowInstanceData?.data?.ebsResourceInfo,
                 loading: false
             });
         } else if (perRowInstanceData?.loading) {

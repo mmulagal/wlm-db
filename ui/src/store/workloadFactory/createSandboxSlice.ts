@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { CreateSandboxEntities } from '../../utils/types/sandBoxTypes';
+import { GENERAL } from '../../utils/appConstants';
 
 export const initialCreateSandboxState: CreateSandboxEntities = {
     getDatabaseHosts: {
@@ -23,13 +24,15 @@ export const initialCreateSandboxState: CreateSandboxEntities = {
         selectedDatabaseInstance: null,
         selectedDatabase: `DBname_sandbox_${Date.now()}`
     },
-    selectedMount: 'Auto-assign mount point',
+    selectedMount: GENERAL.AUTO_ASSIGN_MOUNT_POINT,
     mountPath: '',
     selectedTag: 'Development',
-    isDBNameAdded: true,
+    isTargetSelected: true,
+    isSourceSelected: true,
     isCreateSandboxPressed: false,
     isMountPathAdded: true,
-    isNA: false
+    isNA: false,
+    showError: false
 };
 
 const createSandboxSlice = createSlice({
@@ -66,8 +69,11 @@ const createSandboxSlice = createSlice({
         setIsNa: (state, action: PayloadAction<any>) => {
             state.isNA = action.payload;
         },
-        setIsDbNameAdded: (state, action: PayloadAction<any>) => {
-            state.isDBNameAdded = action.payload;
+        setIsSourceSelected: (state, action: PayloadAction<any>) => {
+            state.isSourceSelected = action.payload;
+        },
+        setIsTargetSelected: (state, action: PayloadAction<any>) => {
+            state.isTargetSelected = action.payload;
         },
         setIsMountPathAdded: (state, action: PayloadAction<any>) => {
             state.isMountPathAdded = action.payload;
@@ -83,6 +89,9 @@ const createSandboxSlice = createSlice({
         },
         setMountPath: (state, action: PayloadAction<any>) => {
             state.mountPath = action.payload;
+        },
+        setShowError: (state, action: PayloadAction<any>) => {
+            state.showError = action.payload;
         }
     }
 });
@@ -97,13 +106,15 @@ export const {
     setTargetDbHost,
     setTargetDbInstance,
     setTargetDatabase,
-    setIsDbNameAdded,
+    setIsSourceSelected,
+    setIsTargetSelected,
     setMountPath,
     setSelectedTag,
     setSelectedMount,
     setCreateSandboxPressed,
     setIsMountPathAdded,
-    setIsNa
+    setIsNa,
+    setShowError
 } = createSandboxSlice.actions;
 
 export default createSandboxSlice;

@@ -154,7 +154,9 @@ function MenuPopover({
                                                         <CustomContentInfo
                                                             tooltipText={infoText}
                                                             CustomContent={
-                                                                <div className={styles.menuInfoHover}>
+                                                                <div
+                                                                    className={`${styles.menuInfoHover} ${styles.menuDisabled}`}
+                                                                >
                                                                     {displayName}
                                                                 </div>
                                                             }

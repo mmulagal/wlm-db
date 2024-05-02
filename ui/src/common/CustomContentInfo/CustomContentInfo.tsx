@@ -1,25 +1,23 @@
 import styles from './CustomContentInfo.module.scss';
-import { TooltipInfo } from '@netapp/design-system';
+import { Popover } from '@netapp/design-system';
 
-const CustomContentInfo = ({
-  tooltipText = '',
-  CustomContent = {},
-  customStyle = {},
-  isToolTip = true,
-}) => {
-  return (
-    <>
-      {isToolTip ? (
-        <div style={customStyle}>
-          <TooltipInfo className={styles.infoTooltip}>
-            {tooltipText}
-          </TooltipInfo>
-        </div>
-      ) : (
-        CustomContent && CustomContent
-      )}
-    </>
-  );
+const CustomContentInfo = ({ tooltipText = '', CustomContent = {}, customStyle = {}, isToolTip = true }) => {
+    return (
+        <>
+            {isToolTip ? (
+                <div style={customStyle}>
+                    <Popover
+                        popoverClass={styles['infoTooltip']}
+                        children={tooltipText}
+                        trigger="hover"
+                        container={<>{CustomContent}</>}
+                    />
+                </div>
+            ) : (
+                CustomContent && CustomContent
+            )}
+        </>
+    );
 };
 
 export default CustomContentInfo;
