@@ -27,6 +27,7 @@ const ExploreSavingsTable = () => {
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const lastColDetails = () => {
         return {
@@ -35,7 +36,15 @@ const ExploreSavingsTable = () => {
             accessor: '',
             width: '182px',
             renderCell: (cellData: any, rowData: any) => {
-                return (
+                return !isDemoMode ? (
+                    <>
+                        <div className={styles.detectManageDemo} onClick={() => {}}>
+                            <Typography variant="Regular_14" className={styles.textStyle}>
+                                {GENERAL.ES_SAVINGS}
+                            </Typography>
+                        </div>
+                    </>
+                ) : (
                     <>
                         <div
                             className={styles.detectManage}
@@ -43,7 +52,9 @@ const ExploreSavingsTable = () => {
                                 dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                                 dispatch(setSelectedInstanceId(rowData?.id));
                                 dispatch(
-                                    setSelectedServerName(rowData?.sqlServerInstances?.[0]?.sqlServerName || 'Server name')
+                                    setSelectedServerName(
+                                        rowData?.sqlServerInstances?.[0]?.sqlServerName || 'Server name'
+                                    )
                                 );
                                 dispatch(setSelectedHostDetails(rowData));
                             }}

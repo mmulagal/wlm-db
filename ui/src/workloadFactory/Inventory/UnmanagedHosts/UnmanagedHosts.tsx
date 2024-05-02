@@ -33,7 +33,7 @@ import {
     setSelectedInstanceId,
     setSelectedServerName
 } from '../../../store/workloadFactory/exploreSavingsSlice';
-import { useNavigate } from 'react-router-dom';
+import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 
 const UnmanagedHosts = () => {
     const dispatch = useDispatch();
@@ -43,6 +43,7 @@ const UnmanagedHosts = () => {
     let unManagedHostFormatedList = useAppSelector(state => state.inventory.unmanagedFormatedData);
     const { unManagedHostInitialColumns } = useAppSelector(state => state.inventory);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
@@ -54,6 +55,16 @@ const UnmanagedHosts = () => {
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
+
+    const isDemoCheck = (hasEbs: boolean) => {
+        if (!isDemoMode) {
+            return true;
+        } else if (!hasEbs) {
+            return true;
+        } else {
+            return false;
+        }
+    };
     const menuItems = (row: any, hasFsx: boolean, hasEbs: boolean) => {
         let isManageDisable = false;
         if (!hasFsx || (row?.id in manageLoading && manageLoading[row?.id])) {
@@ -68,7 +79,9 @@ const UnmanagedHosts = () => {
             {
                 id: 'exploreSavings',
                 displayName: 'Explore savings',
-                disabled: hasEbs ? false : true
+                disabled: isDemoCheck(hasEbs),
+                tagAdded: !isDemoMode && true,
+                tag: !isDemoMode && <ComingSoon />
             }
         ];
     };
