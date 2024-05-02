@@ -461,10 +461,10 @@ const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string) => `
 
         $SerialNumbers = Get-SerialNumberOfWinVolumes $sqlresponse
 
-        if (!($SerialNumbers.count -gt 0)) {
-            write-error "Couldn't get windows volume serial numbers"
-            return
-        }
+        #if (!($SerialNumbers.count -gt 0)) {
+        #    write-error "Couldn't get windows volume serial numbers"
+        #    return
+        #}
 
         $VolumeNames = Get-LunFromSerialNumber $SerialNumbers
 
