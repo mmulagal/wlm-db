@@ -6,9 +6,10 @@ import CreateNewSandboxFooter from './CreateNewSandboxFooter/CreateNewSandboxFoo
 import CreateNewSandboxContent from './CreateNewSandboxContent/CreateNewSandboxContent';
 import CreateNewSandboxCodebox from './CreateNewSandboxCodebox/CreateNewSandboxCodebox';
 import CreateSandboxApis from './CreateNewSandboxContent/CreateNewSandboxApis';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const CreateNewSandbox = () => {
-    const loading = false;
+    const loading = useAppSelector(state => state?.msSqlAction?.isLoading);
 
     CreateSandboxApis();
     return (

@@ -35,8 +35,8 @@ const CreateNewSandboxFooter = () => {
                     region: state?.headers?.headerSelectedRegion?.data?.regionCode,
                     payload: payload
                 });
+                dispatch(setIsLoading(false));
                 if (result && !result?.error) {
-                    dispatch(setIsLoading(false));
                     const msgData = (
                         <div className={styles.notification}>
                             {GENERAL.DB_CREATE_NOTIFICATION[0]}
