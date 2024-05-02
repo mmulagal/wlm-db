@@ -1,6 +1,11 @@
 import { Dispatch } from 'redux';
 import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
-import { formatFractionalNumber, generateOptionType, removePasswordInConfig } from '../../../utils/utilityFunctions';
+import {
+    formatFractionalNumber,
+    formatSizeOnePrecision,
+    generateOptionType,
+    removePasswordInConfig
+} from '../../../utils/utilityFunctions';
 import store from '../../../store/store';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import { duplicateSaveCheck } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
@@ -9,6 +14,7 @@ import {
     DB_DEPLOYMENT_MODEL,
     DB_EDITIONS,
     DB_VERSIONS,
+    GIB_IN_BYTE,
     SQL_DEPLOYMENT_MODE,
     THROUGHPUT_LIST
 } from '../../../utils/consts';
@@ -102,9 +108,7 @@ export const calculatedFSXData = (fsxData: any) => {
         {
             label: 'Total storage capacity',
             value: fsxData?.totalStorageCapacity
-                ? `${formatFractionalNumber(fsxData?.totalStorageCapacity?.size, 2)} ${
-                      fsxData?.totalStorageCapacity?.unit
-                  }`
+                ? formatSizeOnePrecision(fsxData?.totalStorageCapacity)
                 : GENERAL.NOT_AVAILABLE,
             text: 'The number of volumes that you need times the selected volume size.'
         },
@@ -124,21 +128,21 @@ export const calculatedFSXData = (fsxData: any) => {
         {
             label: 'Effective capacity',
             value: fsxData?.effectiveCapacity
-                ? `${formatFractionalNumber(fsxData?.effectiveCapacity?.size, 2)} ${fsxData?.effectiveCapacity?.unit}`
+                ? formatSizeOnePrecision(fsxData?.effectiveCapacity)
                 : GENERAL.NOT_AVAILABLE,
             text: `Cost reduction based on ${fsxData?.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
         },
         {
             label: 'SSD tier required capacity',
             value: fsxData?.ssdTierReqCapacity
-                ? `${formatFractionalNumber(fsxData?.ssdTierReqCapacity?.size, 2)} ${fsxData?.ssdTierReqCapacity?.unit}`
+                ? formatSizeOnePrecision(fsxData?.ssdTierReqCapacity)
                 : GENERAL.NOT_AVAILABLE,
             text: `Based on a typical ${fsxData?.useCase} workload, ${fsxData?.percentageSsd}% of the data is on the SSD tier.`
         },
         {
             label: 'Capacity pool tier required capacity',
             value: fsxData?.capacityPoolTier
-                ? `${formatFractionalNumber(fsxData?.capacityPoolTier?.size, 2)} ${fsxData?.capacityPoolTier?.unit}`
+                ? formatSizeOnePrecision(fsxData?.capacityPoolTier)
                 : GENERAL.NOT_AVAILABLE,
             text: `Based on a typical ${fsxData?.useCase} workload, ${
                 100 - fsxData?.percentageSsd
@@ -159,9 +163,7 @@ export const calculatedFSXData = (fsxData: any) => {
         {
             label: 'Monthly snapshot capacity',
             value: fsxData?.monthlySnapshotCapacity
-                ? `${formatFractionalNumber(fsxData?.monthlySnapshotCapacity?.size, 2)} ${
-                      fsxData?.monthlySnapshotCapacity?.unit
-                  }`
+                ? formatSizeOnePrecision(fsxData?.monthlySnapshotCapacity)
                 : GENERAL.NOT_AVAILABLE,
             text: 'Cost reduction is based on FSx for ONTAP data tiering capability. 90% of snapshots data will be tiered to the capacity pool tier.'
         }
@@ -679,23 +681,16 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
             }
         }
         // Capacity
-        if (fsxData?.totalStorageCapacity?.size && fsxData?.totalStorageCapacity?.unit) {
-            let size = fsxData?.totalStorageCapacity?.size;
-            let unit = fsxData?.totalStorageCapacity?.unit;
-            if (unit === 'TiB') {
-                unit = 'GiB';
-                size = size * 1024;
-            }
-            if (unit === 'GiB') {
-                const unitOption = generateOptionType(unit, unit, '', false, '');
-                result = {
-                    ...result,
-                    storageCapacity: {
-                        capacity: formatFractionalNumber(size, 2),
-                        unit: unitOption
-                    }
-                };
-            }
+        if (fsxData?.totalStorageCapacity) {
+            let size = fsxData?.totalStorageCapacity ? fsxData?.totalStorageCapacity / GIB_IN_BYTE : 0;
+            const unitOption = generateOptionType('GiB', 'GiB', '', false, '');
+            result = {
+                ...result,
+                storageCapacity: {
+                    capacity: formatFractionalNumber(size, 2),
+                    unit: unitOption
+                }
+            };
         }
     }
 
