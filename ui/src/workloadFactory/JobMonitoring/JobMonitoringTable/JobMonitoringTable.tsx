@@ -305,7 +305,8 @@ const JobMonitoringTable = () => {
             filterOptions: [
                 { value: JOB_MONITORING_TYPE.DEPLOYMENT, label: GENERAL.JM_TYPE_DEPLOYMENT },
                 { value: JOB_MONITORING_TYPE.CREATE_RESOURCE, label: GENERAL.JM_TYPE_CREATE_RESOURCE },
-                { value: JOB_MONITORING_TYPE.PREPARE_RESOURCE, label: GENERAL.JM_TYPE_PREPARE_RESOURCE }
+                { value: JOB_MONITORING_TYPE.PREPARE_RESOURCE, label: GENERAL.JM_TYPE_PREPARE_RESOURCE },
+                { value: JOB_MONITORING_TYPE.SANDBOX, label: GENERAL.JM_TYPE_SANDBOX }
             ],
             renderCell: (cellData: any) => {
                 return jobMonitoringTypeMapping(cellData);
