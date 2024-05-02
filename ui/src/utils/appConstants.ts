@@ -698,10 +698,17 @@ export const GENERAL = {
         'For more details view ',
         ' Job Monitoring.'
     ],
-    PREPARE_HOST_INFO: [
-        'Installation of dependent PowerShell modules and copy of scripts has been triggered on host ',
-        ' . For more details view ',
-        ' Job Monitoring.'
+    PREPARE_HOST_INFO_TAB2: [
+        'Host ',
+        ' is unable to become a managed host because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'Job monitoring',
+        ' to see when the modules have been installed.'
+    ],
+    PREPARE_HOST_INFO_TAB3: [
+        'Host ',
+        ' is now an unmanaged host. It failed to become a managed host because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'Job monitoring',
+        ' to see when the modules have been installed.'
     ],
     FCI: 'FCI',
     CLUSTER: 'Cluster',
@@ -821,7 +828,9 @@ export const GENERAL = {
         'EBS snapshots not detected, if you would like to compare FSxN snapshots to potential EBS snapshots cost, please update the snapshot frequency.',
     NOTICE_MESSAGE_COST_SAVINGS:
         'This configuration cannot benefit from savings. Please check the cost breakdown below for further analysis.',
-    PDF_DOWNLOAD_SUCCESS: 'PDF file downloaded successfully.'
+    PDF_DOWNLOAD_SUCCESS: 'PDF file downloaded successfully.',
+    MANAGE_HOST_DISABLED: 'Supported only for the FSx for ONTAP storage type',
+    EXPLORE_SAVINGS_DISABLED: 'Supported only for the EBS storage type'
 };
 
 export const CODE_VIEWER = {

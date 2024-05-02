@@ -240,7 +240,7 @@ const UndetectedHosts = () => {
                 );
 
                 if (running) {
-                    installModuleNotification(styles, rowData?.instance, dispatch, GENERAL.HOST_MOVED_INFO);
+                    installModuleNotification(styles, rowData?.instance, dispatch, GENERAL.PREPARE_HOST_INFO_TAB3);
                 } else {
                     dispatch(
                         addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg })
