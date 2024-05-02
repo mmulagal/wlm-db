@@ -7,7 +7,6 @@ const REQUIRED_PS_MODULES_FOR_MANAGEMENT: string = `
   'AWS.Tools.EC2',
   'AWS.Tools.FSx',
   'AWS.Tools.Installer',
-  'AWS.Tools.SecretsManager',
   'AWS.Tools.SimpleSystemsManagement',
   'NetApp.ONTAP'
 `;
