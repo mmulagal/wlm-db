@@ -74,7 +74,8 @@ const UnmanagedHosts = () => {
             {
                 id: 'manageHost',
                 displayName: 'Manage host',
-                disabled: isManageDisable
+                disabled: isManageDisable,
+                infoText: isManageDisable ? GENERAL.MANAGE_HOST_DISABLED : ''
             },
             {
                 id: 'exploreSavings',
@@ -151,7 +152,7 @@ const UnmanagedHosts = () => {
                 </div>
             );
             if (running) {
-                installModuleNotification(styles, name, dispatch, GENERAL.HOST_MOVED_FAILED);
+                installModuleNotification(styles, name, dispatch, GENERAL.PREPARE_HOST_INFO_TAB2);
             } else {
                 dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));
             }

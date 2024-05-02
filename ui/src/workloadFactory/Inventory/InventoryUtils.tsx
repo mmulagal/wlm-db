@@ -221,9 +221,6 @@ export const installModuleNotification = (styles: any, hostname: string, dispatc
             {initialMsg[0]}
             <span className={styles.bold}>{hostname}</span>
             {initialMsg[1]}
-            {GENERAL.PREPARE_HOST_INFO[0]}
-            <span className={styles.bold}>{hostname}</span>
-            {GENERAL.PREPARE_HOST_INFO[1]}
             {
                 <>
                     <Button
@@ -234,10 +231,11 @@ export const installModuleNotification = (styles: any, hostname: string, dispatc
                             dispatch(clearNotifications());
                         }}
                     >
-                        {GENERAL.PREPARE_HOST_INFO[2]}
+                        {initialMsg[2]}
                     </Button>
                 </>
             }
+            {initialMsg[3]}
         </div>
     );
     dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: prepareHostMsg }));
