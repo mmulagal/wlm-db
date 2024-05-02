@@ -228,8 +228,8 @@ async function modifyMasterJobStatus(
     if (jobStatus === JOBSTATUS.FAILED) {
         const childJobs = await getJobDetails(accountId, credentialsId, region, masterJob.id);
         combinedErrors = (childJobs.subJobs as job[])
-            .filter(job => job.status === JOBSTATUS.FAILED)
-            .map(job => job.error!);
+            .filter(jobObject => jobObject.status === JOBSTATUS.FAILED)
+            .map(jobObject => jobObject.error!);
     }
 
     logger.info('Update job to status :', masterJob?.id, masterJobName, jobStatus);
@@ -318,8 +318,8 @@ async function createOrUpdateChildJobs(
         if (jobStatus === JOBSTATUS.FAILED) {
             const childJobs = await getJobDetails(accountId, credentialsId, region, childJob.id);
             combinedErrors = (childJobs.subJobs as job[])
-                .filter(job => job.status === JOBSTATUS.FAILED)
-                .map(job => job.error!);
+                .filter(jobObject => jobObject.status === JOBSTATUS.FAILED)
+                .map(jobObject => jobObject.error!);
             combinedErrors.push(resourceStatusReason!);
         }
 

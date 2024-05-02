@@ -547,7 +547,7 @@ async function invokeSSMForDatabaseDeployment(
                     FSxDataVolumeName: fsxDataVolumeName,
                     FSxLogVolumeName: fsxLogVolumeName,
                     DataSerial: dataSerial,
-                    LogSerial: LogSerial
+                    LogSerial
                 }
             } = await configureLuns(
                 accountId,

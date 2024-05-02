@@ -5,7 +5,7 @@ import { HttpErrorCodes } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import getStorageSavings from '../../lib/cloud-manager/marketing';
 import { StorageSavingsRequestBodyType, StorageSavingsResponseType } from '../../routes/types/storage-savings.types';
-import { camelizeKeys } from '../../utils/utils';
+import { camelizeKeys, convertToBytes } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -38,11 +38,27 @@ export default async function performStorageSavingsCalculations(
         fsx,
         fsx_calculation: fsxCalculationData
     } = await getStorageSavings(accountId, credentialsId, region, ebsVolumeIds);
-    const fsxCalculation = camelizeKeys(fsxCalculationData);
+    const fsxCalculationObject = camelizeKeys(fsxCalculationData);
+
+    const { totalStorageCapacity, effectiveCapacity, ssdTierReqCapacity, capacityPoolTier, monthlySnapshotCapacity } =
+        fsxCalculationObject;
+    const capacities = [
+        { totalStorageCapacity },
+        { effectiveCapacity },
+        { ssdTierReqCapacity },
+        { capacityPoolTier },
+        { monthlySnapshotCapacity }
+    ];
+
+    capacities.forEach(capacity => {
+        const [key] = Object.keys(capacity);
+        const { size, unit } = (capacity as any)[key] as { size: number; unit: string };
+        fsxCalculationObject[`${key}`] = convertToBytes(size, unit);
+    });
 
     return {
         ebs,
         fsx,
-        fsxCalculation
+        fsxCalculation: fsxCalculationObject
     };
 }

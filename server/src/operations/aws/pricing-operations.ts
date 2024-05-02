@@ -496,7 +496,7 @@ async function calculatePrice(
                     id: ebsResource.id,
                     volumeType: ebsResource.volumeType,
                     cost,
-                    size: sizeInGigaBytes(ebsResource.size) || 0,
+                    size: ebsResource.size,
                     iops: ebsResource?.iops,
                     throughput: ebsResource?.throughput
                 });
