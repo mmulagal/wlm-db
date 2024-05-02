@@ -23,10 +23,6 @@ const StorageMetrics = Type.Object({
     total: Type.Number()
 });
 
-const SizeUnitObject = Type.Object({
-    size: Type.Number(),
-    unit: Type.String()
-});
 const StorageSavingsResponse = Type.Object({
     ebs: StorageMetrics,
     fsx: StorageMetrics,
@@ -34,17 +30,17 @@ const StorageSavingsResponse = Type.Object({
         deploymentType: Type.String(),
         numberOfVolumes: Type.Number(),
         throughput: Type.Number(),
-        totalStorageCapacity: SizeUnitObject,
+        totalStorageCapacity: Type.Number(),
         percentageSsd: Type.Number(),
         savings: Type.Number(),
-        effectiveCapacity: SizeUnitObject,
-        ssdTierReqCapacity: SizeUnitObject,
-        capacityPoolTier: SizeUnitObject,
+        effectiveCapacity: Type.Number(),
+        ssdTierReqCapacity: Type.Number(),
+        capacityPoolTier: Type.Number(),
         ssdIop: Type.Number(),
         throughputCapacity: Type.Number(),
         useCase: Type.String(),
         regionName: Type.String(),
-        monthlySnapshotCapacity: SizeUnitObject
+        monthlySnapshotCapacity: Type.Number()
     })
 });
 

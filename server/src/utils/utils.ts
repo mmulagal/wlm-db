@@ -483,6 +483,22 @@ function camelizeKeys(obj: any): any {
     return obj;
 }
 
+function convertToBytes(size: number, unit: string) {
+    const units: { [key: string]: number } = {
+        B: 1,
+        KiB: 1024 ** 1,
+        MiB: 1024 ** 2,
+        GiB: 1024 ** 3,
+        TiB: 1024 ** 4,
+        PiB: 1024 ** 5,
+        EiB: 1024 ** 6,
+        ZiB: 1024 ** 7,
+        YiB: 1024 ** 8
+    };
+
+    return size * (units[unit] || 1);
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -513,5 +529,6 @@ export {
     convertGiBToBytes,
     splitDomainUsername,
     getCollationForMSSQLVersion,
-    camelizeKeys
+    camelizeKeys,
+    convertToBytes
 };
