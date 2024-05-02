@@ -202,19 +202,6 @@ export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) =
     );
 };
 
-export const runPrepareApi = async (prepareHostApi: any, credId: string, regionId: string, instanceId: string) => {
-    const result: any = await prepareHostApi({
-        credentialId: credId,
-        regionId: regionId,
-        instanceId: instanceId
-    });
-    if (result && !result?.error) {
-        return true;
-    } else {
-        return false;
-    }
-};
-
 export const installModuleNotification = (styles: any, hostname: string, dispatch: any, initialMsg: any) => {
     const prepareHostMsg = (
         <div className={styles.notification}>
