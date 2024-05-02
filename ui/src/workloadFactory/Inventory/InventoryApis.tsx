@@ -769,7 +769,7 @@ const InventoryApis = () => {
         let nonFsxnStorageList: any = [];
         unmanagedFormatedData.map((item: any) => {
             const fileSystemType = renderFileSystemType('', item);
-            if (fileSystemType && fileSystemType.includes(GENERAL.EBS)) {
+            if (fileSystemType && fileSystemType === GENERAL.EBS) {
                 nonFsxnStorageList.push(item);
             }
         });
