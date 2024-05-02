@@ -107,6 +107,17 @@ try {
 
         # Grant permissions to NT AUTHORITY\SYSTEM
         Invoke-Sqlcmd -Query 'GRANT VIEW ANY DEFINITION TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT ALTER RESOURCES TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT ALTER ANY DATABASE TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT CONTROL SERVER TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT ALTER ANY LOGIN TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT CREATE ANY DATABASE TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT IMPERSONATE ANY LOGIN TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT CONNECT ANY DATABASE TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT CREATE SERVER ROLE TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT ALTER ANY SERVER ROLE TO "NT AUTHORITY\SYSTEM" ;'
+        Invoke-Sqlcmd -Query 'GRANT ALTER SETTINGS TO "NT AUTHORITY\SYSTEM" ;'
+  
 
         # Update paths for tempdb,model and MSDB
         $tempDevFile = "'$Using:tempPath\tempdb.mdf'"
