@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { AccordionCard, AccordionCardContent, RadioButton, Typography } from '@netapp/design-system';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
@@ -20,6 +20,7 @@ const SecurityGroup = () => {
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const selectedSG = useAppSelector(state => state.mssqlForm.securityGroup?.selectedExistingSecurityGroup);
+    const selectedSecurityType = useAppSelector(state => state.mssqlForm.securityGroup?.selectedSecurityType);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
@@ -28,9 +29,6 @@ const SecurityGroup = () => {
     const selectedExistingSecurityGroup = useSelector(
         (state: any) => state.mssqlForm.securityGroup.selectedExistingSecurityGroup
     );
-
-    // State to select security groups
-    const [securityGroup, setSecurityGroup] = useState(GENERAL.USE_AN_EXISTING_SECURITY);
 
     //Function to generate the options for Select Field
     const generateExistingSecurity = useMemo<optionType[]>((): optionType[] => {
@@ -63,7 +61,7 @@ const SecurityGroup = () => {
         } else if (!selectedVPCData) {
             return <ActionRequired disabled />;
         }
-        if (securityGroup === GENERAL.USE_AN_EXISTING_SECURITY) {
+        if (selectedSecurityType === GENERAL.USE_AN_EXISTING_SECURITY) {
             return (
                 <div className={styles.setHeaderStyle}>
                     <div>{GENERAL.USE_AN_EXISTING_SECURITY}</div>
@@ -72,7 +70,7 @@ const SecurityGroup = () => {
                 </div>
             );
         }
-        if (securityGroup === GENERAL.GENERATED_SECURITY_GROUP) {
+        if (selectedSecurityType === GENERAL.GENERATED_SECURITY_GROUP) {
             return <div className={styles.setHeaderStyle}>{GENERAL.GENERATED_SECURITY_GROUP}</div>;
         }
     };
@@ -90,9 +88,8 @@ const SecurityGroup = () => {
                     <Typography>
                         <div className={styles.handleRadio}>
                             <RadioButton
-                                isChecked={securityGroup === GENERAL.USE_AN_EXISTING_SECURITY}
+                                isChecked={selectedSecurityType === GENERAL.USE_AN_EXISTING_SECURITY}
                                 onChange={() => {
-                                    setSecurityGroup(GENERAL.USE_AN_EXISTING_SECURITY);
                                     dispatch(setSelectedSecurityGroup(GENERAL.USE_AN_EXISTING_SECURITY));
                                     dispatch(setIsWizardTouched(true));
                                     dispatch(setSelectedExistingSecurityGroup(generateExistingSecurity[0]));
@@ -101,9 +98,8 @@ const SecurityGroup = () => {
                                 className=""
                             />
                             <RadioButton
-                                isChecked={securityGroup === GENERAL.GENERATED_SECURITY_GROUP}
+                                isChecked={selectedSecurityType === GENERAL.GENERATED_SECURITY_GROUP}
                                 onChange={() => {
-                                    setSecurityGroup(GENERAL.GENERATED_SECURITY_GROUP);
                                     dispatch(setSelectedSecurityGroup(GENERAL.GENERATED_SECURITY_GROUP));
                                     dispatch(setSelectedExistingSecurityGroup(null));
                                     dispatch(setIsWizardTouched(true));
@@ -112,7 +108,7 @@ const SecurityGroup = () => {
                                 className=""
                             />
                         </div>
-                        {securityGroup === GENERAL.USE_AN_EXISTING_SECURITY && (
+                        {selectedSecurityType === GENERAL.USE_AN_EXISTING_SECURITY && (
                             <div className={styles.handleSelect}>
                                 <SelectField
                                     isLoading={sgLoading}
@@ -135,7 +131,7 @@ const SecurityGroup = () => {
                             </div>
                         )}
 
-                        {securityGroup === GENERAL.GENERATED_SECURITY_GROUP && <div className={styles.createNew} />}
+                        {selectedSecurityType === GENERAL.GENERATED_SECURITY_GROUP && <div className={styles.createNew} />}
                     </Typography>
                 </AccordionCardContent>
             </AccordionCard>

@@ -17,7 +17,7 @@ export const initialMssqlState: any = {
         selectedSubnetNode2: null
     },
     securityGroup: {
-        selectedSecurityType: GENERAL.USE_AN_EXISTING_SECURITY,
+        selectedSecurityType: '',
         selectedExistingSecurityGroup: ''
     },
     operatingSystem: {
