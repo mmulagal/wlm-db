@@ -198,6 +198,8 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
     $FSxRegion = '${fsxregion}'
     $dbname = '${dbName}'
 
+    Start-Transcript -Path "C:\\cfn\\log\\map_ontap_volumes_$dbname.log.txt" -Append | Out-Null
+
     $responeObject = @{}
     
     try {
@@ -348,6 +350,8 @@ const createVolumeClone = (
     $logVolume = '${logVolumeName}'
     $dataLunPath = '${dataLunPath}'
     $logLunPath = '${logLunPath}'
+
+    Start-Transcript -Path "C:\\cfn\\log\\create_flexclone_$dataVolume.log.txt" -Append | Out-Null
 
 
     $WarningPreference = "SilentlyContinue"
@@ -585,6 +589,8 @@ const createClonedDb = (dbName: string, fileList: string[] = []) => `
     $WarningPreference = 'SilentlyContinue';
     $dbname = '${dbName}'
 
+    Start-Transcript -Path "C:\\cfn\\log\\create_clone_db_$dbname.log.txt" -Append | Out-Null
+
     try {
         $selectquery = "SET NOCOUNT ON; SELECT name, state_desc FROM sys.databases where name = '$dbname' FOR JSON PATH;"
         $sqlresponse =  sqlcmd -Q $selectquery -y 0;
@@ -610,6 +616,8 @@ const createClonedDb = (dbName: string, fileList: string[] = []) => `
 
 const addExtendedProperties = (dbName: string, propObj: { [x: string]: string | number }) => `
 $dbname = '${dbName}'
+
+Start-Transcript -Path "C:\\cfn\\log\\add_extended_properties_$dbname.log.txt" -Append | Out-Null
 
 $query = @"
 USE $dbname;
@@ -641,6 +649,8 @@ const cleanUpOntapResources = (
     $volumeIds = '${volumeIds}' | ConvertFrom-Json
     $filePaths = '${filePaths}' | ConvertFrom-Json
     $DBName = '${dbName}'
+
+    Start-Transcript -Path "C:\\cfn\\log\\cleanup_ontap_resources_$DBName.log.txt" -Append | Out-Null
 
     $WarningPreference = 'SilentlyContinue';
     $responeObject = @{}

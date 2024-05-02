@@ -317,69 +317,6 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
     }
 }
 
-async function updateMetadataForSanboxTesting(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    databaseHostId: string
-) {
-    logger.info('Updating metadata for sandbox testing', accountId, credentialsId, region, databaseHostId);
-    const {
-        items: [resourceDetail]
-    } = await getResources(accountId, databaseHostId);
-
-    if (isEmpty(resourceDetail)) {
-        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
-    }
-    const { metadata } = resourceDetail;
-
-    const newMetadata = metadata as unknown as Metadata;
-
-    newMetadata.sandboxCreated = true;
-    newMetadata.updatedManually = true;
-    try {
-        await updateResourceMetaData(accountId, databaseHostId, newMetadata);
-        return 'metadata updated succesfully';
-    } catch (error) {
-        return error;
-    }
-}
-
-async function revertMetadataForSanboxTesting(accountId: string, credentialsId: string, region: string) {
-    const resourceDetails = await listResources(
-        accountId,
-        undefined,
-        credentialsId,
-        region,
-        RESOURCESTYPE.MSSQL,
-        undefined,
-        { updatedManually: true }
-    );
-
-    if (isEmpty(resourceDetails)) {
-        logger.error(`No manually updated resources ${accountId}.`);
-        return 'No manually updated resources';
-    }
-
-    await Promise.all(
-        resourceDetails.map(async resourceDetail => {
-            const { resource_id: resourceId, metadata } = resourceDetail;
-            const newMetadata = metadata as unknown as Metadata;
-            try {
-                delete newMetadata.sandboxCreated;
-                delete newMetadata.updatedManually;
-                await updateResourceMetaData(accountId, resourceId, newMetadata);
-            } catch (error) {
-                logger.error('Failed to update meatadata', resourceId);
-            }
-        })
-    );
-
-    return 'Revereted manually updated metadatas';
-}
-
 interface DbInfo {
     database: string;
     instance: string;
@@ -499,7 +436,7 @@ async function createSandbox(
         initiator: 'SYSTEM',
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.CREATE_RESOURCE
+        type: JOBTYPE.SANDBOX
     });
 
     const { fsxSvmId: sourceSvm } = srcResourceDetail.metadata as unknown as Metadata;
@@ -604,10 +541,11 @@ async function startSandboxCreation(
         errorMsg = e.message || 'Internal Server Error';
         status = JOBSTATUS.FAILED;
         if (clonedVolumes) {
-            startCleanup(
+            await startCleanup(
                 accountId,
                 credentialsId,
                 region,
+                parentJobId,
                 srcDetails,
                 destDetails,
                 [clonedVolumes.data.volumeId, clonedVolumes.log.volumeId],
@@ -641,7 +579,7 @@ async function validateCloneParams(
         startTime: Date.now(),
         name: 'Validate if sandbox already exits',
         status,
-        type: JOBTYPE.CREATE_RESOURCE,
+        type: JOBTYPE.SANDBOX,
         resourceName: srcDetails.database,
         parentJobId
     });
@@ -687,7 +625,7 @@ async function getMappings(
         startTime: Date.now(),
         name: 'Get volume lun mappings',
         status,
-        type: JOBTYPE.CREATE_RESOURCE,
+        type: JOBTYPE.SANDBOX,
         resourceName: srcDetails.database,
         parentJobId
     });
@@ -711,7 +649,12 @@ async function getMappings(
         }
 
         status = JOBSTATUS.COMPLETED;
-        return sqlResponseParsing(mappings);
+        const parsedResp = sqlResponseParsing(mappings);
+
+        if (parsedResp.error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
+        }
+        return parsedResp;
     } catch (e: any) {
         logger.error(e);
 
@@ -751,7 +694,7 @@ async function createVolumeClone(
         startTime: Date.now(),
         name: 'Create flexclone volumes',
         status,
-        type: JOBTYPE.CREATE_RESOURCE,
+        type: JOBTYPE.SANDBOX,
         resourceName: srcDetails.database,
         parentJobId
     });
@@ -791,7 +734,12 @@ async function createVolumeClone(
         }
 
         status = JOBSTATUS.COMPLETED;
-        return sqlResponseParsing(clonedVolumes);
+        const parsedResp = sqlResponseParsing(clonedVolumes);
+
+        if (parsedResp.error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
+        }
+        return parsedResp;
     } catch (e: any) {
         status = JOBSTATUS.FAILED;
         errorMsg = e.message || 'Internal Server Error';
@@ -835,7 +783,7 @@ async function invokeVirtualMount(
         startTime: Date.now(),
         name: 'Discover luns and create virtual mount point',
         status,
-        type: JOBTYPE.CREATE_RESOURCE,
+        type: JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
         parentJobId
     });
@@ -877,7 +825,12 @@ async function invokeVirtualMount(
             }
 
             status = JOBSTATUS.COMPLETED;
-            return sqlResponseParsing(resp);
+            const parsedResp = sqlResponseParsing(resp);
+
+            if (parsedResp.error) {
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
+            }
+            return parsedResp;
         } catch (e: any) {
             logger.error(e);
             if (retries === 0) {
@@ -923,7 +876,7 @@ async function createCloneDb(
         startTime: Date.now(),
         name: 'Create sandbox',
         status,
-        type: JOBTYPE.CREATE_RESOURCE,
+        type: JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
         parentJobId
     });
@@ -984,7 +937,7 @@ async function createExtendedProperties(
         startTime: Date.now(),
         name: 'Add extended properties to sandbox',
         status,
-        type: JOBTYPE.CREATE_RESOURCE,
+        type: JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
         parentJobId
     });
@@ -994,7 +947,7 @@ async function createExtendedProperties(
             addExtendedProperties(destDetails.database, {
                 tag,
                 cloned_by: 'netapp_wlmdb',
-                source: `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}}`
+                source: `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`
             })
         ];
 
@@ -1012,6 +965,10 @@ async function createExtendedProperties(
         // We only get a response in case of error from query
         if (resp) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, resp);
+        }
+
+        if (!destDetails.metadata.sandboxCreated) {
+            await updateMetadataForSanbox(accountId, credentialsId, region, destDetails.host);
         }
 
         status = JOBSTATUS.COMPLETED;
@@ -1034,12 +991,35 @@ async function startCleanup(
     accountId: string,
     credentialsId: string,
     region: string,
+    parentJobId: string,
     srcDetails: HostAndDbInfo,
     destDetails: HostAndDbInfo,
     volumeIds: Array<string>,
     filePaths: Array<string>
 ) {
-    logger.info('Start cleanup', { accountId, credentialsId, region, srcDetails, destDetails, volumeIds, filePaths });
+    logger.info('Start cleanup', {
+        accountId,
+        credentialsId,
+        region,
+        parentJobId,
+        srcDetails,
+        destDetails,
+        volumeIds,
+        filePaths
+    });
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+
+    const cleanupJob = await registerJob(accountId, credentialsId, region, {
+        description: `Clean up resource for sandbox ${destDetails.database}`,
+        startTime: Date.now(),
+        name: 'Clean up resources',
+        status,
+        type: JOBTYPE.SANDBOX,
+        resourceName: destDetails.database,
+        parentJobId
+    });
 
     try {
         let command = [
@@ -1073,16 +1053,118 @@ async function startCleanup(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to cleanup');
         }
 
+        status = JOBSTATUS.COMPLETED;
         return sqlResponseParsing(resp);
-    } catch (e) {
+    } catch (e: any) {
         logger.error(`Failed to perform cleanup for sandbox ${destDetails.database}`);
+        status = JOBSTATUS.FAILED;
+        errorMsg = `Failed to clean up ${e.message}`;
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, cleanupJob.id, {
+            error: errorMsg,
+            status,
+            endTime: Date.now()
+        });
     }
+}
+
+async function updateMetadataForSanbox(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string
+) {
+    logger.info('Updating metadata for sandbox operation', accountId, credentialsId, region, databaseHostId);
+    const {
+        items: [resourceDetail]
+    } = await getResources(accountId, databaseHostId);
+
+    if (isEmpty(resourceDetail)) {
+        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+    }
+    const { metadata } = resourceDetail;
+
+    const newMetadata = metadata as unknown as Metadata;
+    newMetadata.sandboxCreated = true;
+    try {
+        await updateResourceMetaData(accountId, databaseHostId, newMetadata);
+        logger.info('Metadata updated succesfully for sandbox operation', accountId, databaseHostId);
+    } catch (error) {
+        const errorMessage = `Failed to update metadata for sandbox operation, ${accountId}, ${databaseHostId}, ${error}`;
+        logger.error(errorMessage);
+        throw createError(errorMessage);
+    }
+}
+
+async function updateMetadataForSanboxTesting(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string
+) {
+    logger.info('Updating metadata for sandbox testing', accountId, credentialsId, region, databaseHostId);
+    const {
+        items: [resourceDetail]
+    } = await getResources(accountId, databaseHostId);
+
+    if (isEmpty(resourceDetail)) {
+        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+    }
+    const { metadata } = resourceDetail;
+
+    const newMetadata = metadata as unknown as Metadata;
+
+    newMetadata.sandboxCreated = true;
+    newMetadata.updatedManually = true;
+    try {
+        await updateResourceMetaData(accountId, databaseHostId, newMetadata);
+        return 'metadata updated succesfully';
+    } catch (error) {
+        return error;
+    }
+}
+
+async function revertMetadataForSanboxTesting(accountId: string, credentialsId: string, region: string) {
+    const resourceDetails = await listResources(
+        accountId,
+        undefined,
+        credentialsId,
+        region,
+        RESOURCESTYPE.MSSQL,
+        undefined,
+        { updatedManually: true }
+    );
+
+    if (isEmpty(resourceDetails)) {
+        logger.error(`No manually updated resources ${accountId}.`);
+        return 'No manually updated resources';
+    }
+
+    await Promise.all(
+        resourceDetails.map(async resourceDetail => {
+            const { resource_id: resourceId, metadata } = resourceDetail;
+            const newMetadata = metadata as unknown as Metadata;
+            try {
+                delete newMetadata.sandboxCreated;
+                delete newMetadata.updatedManually;
+                await updateResourceMetaData(accountId, resourceId, newMetadata);
+            } catch (error) {
+                logger.error('Failed to update meatadata', resourceId);
+            }
+        })
+    );
+
+    return 'Revereted manually updated metadatas';
 }
 
 export {
     getSandboxesInfo,
     getSandboxSavings,
+    createSandbox,
     updateMetadataForSanboxTesting,
-    revertMetadataForSanboxTesting,
-    createSandbox
+    revertMetadataForSanboxTesting
 };
