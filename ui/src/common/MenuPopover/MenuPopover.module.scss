@@ -85,6 +85,15 @@
         }
     }
 
+    .menuDisabled {
+        color: var(--grey-25);
+        pointer-events: none;
+
+        svg {
+            display: block;
+        }
+    }
+
     .blackContent {
         background: var(--grey-70);
 
