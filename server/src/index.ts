@@ -52,7 +52,11 @@ import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-o
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
 import { execute, initializeDatabase } from './utils/prisma-utils';
 import chatbotRoutes from './routes/chatbot';
-import { purgeOlderJobs, failLongRunningDeploymentJobs } from './operations/cron-operations';
+import {
+    purgeOlderJobs,
+    failLongRunningDeploymentJobs,
+    failLongRunningResourcePrepareJobs
+} from './operations/cron-operations';
 import { isActiveInstance } from './utils/utils';
 
 const logger = getLogger();
@@ -293,6 +297,7 @@ try {
     if (isActiveInstance()) {
         purgeOlderJobs();
         failLongRunningDeploymentJobs();
+        failLongRunningResourcePrepareJobs();
     }
 } catch (error) {
     logger.error('Failed to initialize cron jobs', error);

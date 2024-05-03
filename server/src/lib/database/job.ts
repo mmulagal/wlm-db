@@ -1,6 +1,10 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import ms from 'ms';
-import { JOBS_DEFAULT_TIME_RANGE, MASTER_STACK_TIMEOUT_MINUTES } from '../../utils/consts';
+import {
+    JOBS_DEFAULT_TIME_RANGE,
+    MASTER_STACK_TIMEOUT_MINUTES,
+    RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES
+} from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from './db';
@@ -303,6 +307,22 @@ function listLongRunningJobs() {
     });
 }
 
+function listLongRunningResourcePrepareJobs() {
+    logger.info('List all parent resource prepare jobs which are in progress');
+
+    return prisma.client.job.findMany({
+        where: {
+            type: JOBTYPE.PREPARE_RESOURCE,
+            parent_job_id: null,
+            status: JOBSTATUS.IN_PROGRESS,
+            start_time: {
+                lt: subtractHour(new Date(), Math.floor(RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES / 60))
+            },
+            end_time: null
+        }
+    });
+}
+
 export {
     countParentJobs,
     listJobs,
@@ -315,5 +335,6 @@ export {
     getJobCountByStatus,
     groupJobsByTimeAndStatus,
     createJob,
-    listLongRunningJobs
+    listLongRunningJobs,
+    listLongRunningResourcePrepareJobs
 };
