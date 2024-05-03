@@ -418,12 +418,53 @@ const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string) => `
             return Invoke-ONTAPGetRequest @Params
         }
 
+        Function GetSMBVolumes { 
+            param(
+                [Parameter(Mandatory = $true)]
+                [string[]]$sqlresponse
+            )
+            
+        $SmbShares = $sqlresponse | convertFrom-Json
+          
+        $Params = @{
+                "ApiEndPoint" = "/protocols/cifs/shares"
+            }
+            
+         $QueryFilter = ''
+         foreach ($SmbShare in $SmbShares) {
+                $volname = $SmbShare.volumename
+                if ($volname -ne '') {
+                    $QueryFilter += $volname + '|'
+                }
+            }
+        $QueryFilter = $QueryFilter.TrimEnd('|')
+        if ($QueryFilter -ne '') {
+            $Params += @{"ApiQueryFilter" = "name=$QueryFilter" + "&fields=volume"}
+        }
+          
+        $cifsShares = Invoke-ONTAPGetRequest @Params
+        $cifsRecords = $cifsShares.records
+
+        $volumeIds = @()
+        foreach ($record in $cifsRecords) {
+            $object = New-Object PSObject -Property @{ "uuid" = $record.volume.uuid }
+            $volumeIds += $object
+            }
+        
+        if ($volumeIds.count -eq 1) {
+            return @(,$volumeIds)
+        }
+        
+        return $volumeIds
+            
+        }
+
         $SerialNumbers = Get-SerialNumberOfWinVolumes $sqlresponse
 
-        if (!($SerialNumbers.count -gt 0)) {
-            write-error "Couldn't get windows volume serial numbers"
-            return
-        }
+        #if (!($SerialNumbers.count -gt 0)) {
+        #    write-error "Couldn't get windows volume serial numbers"
+        #    return
+        #}
 
         $VolumeNames = Get-LunFromSerialNumber $SerialNumbers
 
@@ -433,6 +474,16 @@ const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string) => `
         }
 
         $volumes = Get-VolumeIdFromName $VolumeNames
+
+        $cifsVolumes = GetSMBVolumes $sqlResponse
+
+        if ($volumes.count -gt 0) {
+            $volumes["records"]+=$cifsVolumes
+        }
+        else {
+            $volumes = @{"records" = $cifsVolumes} 
+            
+        }
 
         return ($volumes | ConvertTo-Json)
     } catch {

@@ -16,7 +16,7 @@ param(
     [string]$LogSerial
 )
 
-$null = (Start-Transcript -Path C:\cfn\log\invoke_virtualmount.log.txt -Append)
+$null = (Start-Transcript -Path "C:\cfn\log\invoke_virtualmount_$DBName.log.txt" -Append)
 $ErrorActionPreference = "Stop"
 
 try {

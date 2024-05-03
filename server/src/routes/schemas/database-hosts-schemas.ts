@@ -125,7 +125,6 @@ const GetSandboxesInfoSchema = {
         200: SandboxInfoResponseBody
     }
 };
-
 const PatchResourceForSandboxSchema = {
     ...databaseHostsRequest,
     tags: [RouteTags.SANDBOX],
@@ -148,7 +147,6 @@ const RevertPatchResourceForSandboxSchema = {
         200: Type.Any()
     }
 };
-
 export {
     DatabaseHostsSummarySchema,
     DatabaseHostDetailsSchema,

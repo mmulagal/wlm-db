@@ -198,6 +198,8 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
     $FSxRegion = '${fsxregion}'
     $dbname = '${dbName}'
 
+    Start-Transcript -Path "C:\\cfn\\log\\map_ontap_volumes_$dbname.log.txt" -Append | Out-Null
+
     $responeObject = @{}
     
     try {
@@ -296,7 +298,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
                 $responeObject = @{}
             }
             $responeObject['error'] = "Couldn't get database windows volumes from db $dbname"
-            return $responeObject
+            return $responeObject | ConvertTo-Json -Depth 5
         }
     
         $responeObject = Get-SerialNumberOfWinVolumes $responeObject
@@ -306,7 +308,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
                 $responeObject = @{}
             }
             $responeObject['error'] = "Couldn't get windows volume serial numbers"
-            return $responeObject
+            return $responeObject | ConvertTo-Json -Depth 5
         }
     
         $responeObject = Get-LunFromSerialNumber $responeObject
@@ -316,7 +318,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
                 $responeObject = @{}
             }
             $responeObject['error'] = "Couldn't get associated Ontap LUN volume names"
-            return $responeObject
+            return $responeObject | ConvertTo-Json -Depth 5
         }
     } catch {
         write-Error $_.Exception.Message
@@ -348,6 +350,8 @@ const createVolumeClone = (
     $logVolume = '${logVolumeName}'
     $dataLunPath = '${dataLunPath}'
     $logLunPath = '${logLunPath}'
+
+    Start-Transcript -Path "C:\\cfn\\log\\create_flexclone_$dataVolume.log.txt" -Append | Out-Null
 
 
     $WarningPreference = "SilentlyContinue"
@@ -442,7 +446,7 @@ const createVolumeClone = (
     
             if ($response.records.count -eq 0) {
                 $responeObject['error'] = "Could not find the cloned volumes to create tags."
-                return $responeObject
+                return $responeObject | ConvertTo-Json -Depth 5
             }
 
             $jobStatus = @()
@@ -541,7 +545,7 @@ const createVolumeClone = (
         write-debug "Igroup: $igroup"
         if ([string]::IsNullOrEmpty($igroup)) {
             $responeObject['error'] = "Could not find igroup for $targetSvm."
-            return $responeObject
+            return $responeObject | ConvertTo-Json -Depth 5
         }
     
         $jobStatusList = New-VolumeClone
@@ -550,7 +554,7 @@ const createVolumeClone = (
         write-debug "Clone volumes job: $($failedjob | convertto-json)"
         if ($failedjob) {
             $responeObject['error'] = "Could not clone volume. Ontap error: $($failedjob.message)"
-            return $responeObject
+            return $responeObject | ConvertTo-Json -Depth 5
         }
     
         $response = Add-ObjectTagsToVolume
@@ -558,20 +562,20 @@ const createVolumeClone = (
         $failedjob = $jobStatusList | Where-Object { $_.state -ne 'success' } | Select-Object -First 1
         if ($failedjob) {
             $responeObject['error'] = "Could not add tags to the cloned volumes. Ontap error: $($failedjob.message)"
-            return $responeObject
+            return $responeObject | ConvertTo-Json -Depth 5
         }
 
         $result = Set-LunMap -igroup $igroup
         write-debug "Map LUNs job: $($result | convertto-json)"
         if ($result.error -or $result.records.count -eq 0) {
             $responeObject['error'] = "Could not map LUNs. Ontap error: $($result.error)"
-            return $responeObject
+            return $responeObject | ConvertTo-Json -Depth 5
         }
 
         $errormessage = Set-LUNSignature
         if ($errormessage -ne $null) {
             $responeObject['error'] = "Could not set LUN signature. $($errormessage | convertto-json)"
-            return $responeObject
+            return $responeObject | ConvertTo-Json -Depth 5
         }
     } catch {
         write-Debug $_.Exception.Message
@@ -584,6 +588,8 @@ const createVolumeClone = (
 const createClonedDb = (dbName: string, fileList: string[] = []) => `
     $WarningPreference = 'SilentlyContinue';
     $dbname = '${dbName}'
+
+    Start-Transcript -Path "C:\\cfn\\log\\create_clone_db_$dbname.log.txt" -Append | Out-Null
 
     try {
         $selectquery = "SET NOCOUNT ON; SELECT name, state_desc FROM sys.databases where name = '$dbname' FOR JSON PATH;"
@@ -610,6 +616,8 @@ const createClonedDb = (dbName: string, fileList: string[] = []) => `
 
 const addExtendedProperties = (dbName: string, propObj: { [x: string]: string | number }) => `
 $dbname = '${dbName}'
+
+Start-Transcript -Path "C:\\cfn\\log\\add_extended_properties_$dbname.log.txt" -Append | Out-Null
 
 $query = @"
 USE $dbname;
@@ -641,6 +649,8 @@ const cleanUpOntapResources = (
     $volumeIds = '${volumeIds}' | ConvertFrom-Json
     $filePaths = '${filePaths}' | ConvertFrom-Json
     $DBName = '${dbName}'
+
+    Start-Transcript -Path "C:\\cfn\\log\\cleanup_ontap_resources_$DBName.log.txt" -Append | Out-Null
 
     $WarningPreference = 'SilentlyContinue';
     $responeObject = @{}
