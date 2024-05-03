@@ -74,7 +74,8 @@ import {
     DATABASE_MIN_LUN_SIZE_IN_GIB,
     DATABASE_MAX_LUN_SIZE_IN_GIB,
     TEMPLATE_USERNAME_MAPPING,
-    PERMISSION_DENIAL_POSSIBLE_REASONS
+    PERMISSION_DENIAL_POSSIBLE_REASONS,
+    STORAGE_PROTOCOLS
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -946,7 +947,8 @@ async function deployCloudFormationTemplate(
             sqlConfiguration?.sqlDeploymentMode,
             fsxConfiguration?.fsxFileSystemId,
             awsAccountId,
-            sqlConfiguration?.sqlServerName
+            sqlConfiguration?.sqlServerName,
+            STORAGE_PROTOCOLS.ISCSI
         );
         if (!fsxConfiguration.fsxFileSystemId) {
             // create a new fsx record in fsx inventory
