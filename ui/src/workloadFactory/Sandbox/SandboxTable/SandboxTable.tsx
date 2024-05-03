@@ -43,7 +43,7 @@ const SandboxTable = () => {
         },
         {
             Header: GENERAL.SANDBOX_LAST_UPDATED,
-            accessor: 'creationDate',
+            accessor: 'updatedAt',
             id: '5',
             width: '220px',
             isSortable: true

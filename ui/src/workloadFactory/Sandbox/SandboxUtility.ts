@@ -20,18 +20,20 @@ export const generateCreateSandboxPayload = (state: any): CreateSandboxPayloadEn
 };
 
 export const formatSandboxListData = (data: SandboxListEntities) => {
-    const retData = data.map(item => {
-        return {
-            id: item?.databaseHostId,
-            name: item?.sandboxName,
-            hostName: item?.databaseHostName,
-            source: item?.sourceDatabaseName,
-            sourceHost: item?.sourceDatabaseHostName,
-            creationDate: formatDateWithTime(item?.creationTime || ''),
-            age: `${getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.creationTime))} days`,
-            tag: item?.tag
-        };
-    });
+    const retData = data
+        .filter(item => !item?.error)
+        .map(item => {
+            return {
+                id: item?.databaseHostId,
+                name: item?.sandboxName,
+                hostName: item?.databaseHostName,
+                source: item?.sourceDatabaseName,
+                sourceHost: item?.sourceDatabaseHostName,
+                updatedAt: formatDateWithTime(item?.updatedAt || ''),
+                age: `${getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.createdAt))} days`,
+                tag: item?.tag
+            };
+        });
     return retData;
 };
 
@@ -53,7 +55,7 @@ export const getSandboxDistributionByAge = (sandBoxList: SandboxListEntities) =>
         '30+': 0
     };
     sandBoxList.map(item => {
-        const age = getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.creationTime));
+        const age = getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.createdAt));
         if (age < 8) {
             distribution['0-7']++;
         } else if (age < 15) {

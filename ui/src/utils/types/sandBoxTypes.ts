@@ -60,7 +60,8 @@ export interface SandboxItemEntities {
     sourceDatabaseName: string;
     sourceDatabaseHostName: string;
     sourceDatabaseInstanceName: string;
-    creationTime: string;
+    updatedAt: string;
+    createdAt: string;
     tag: string;
     error: string;
 }
