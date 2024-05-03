@@ -97,7 +97,8 @@ async function createDeploymentMockDataInDB(
     sqlDeploymentMode: string,
     fsxFileSystemId: string | undefined,
     awsAccountId: string,
-    serverName: string
+    serverName: string,
+    storageProtocol?: string
 ) {
     logger.info('create deployment, resource and job table mock data in database', {
         accountId,
@@ -141,7 +142,8 @@ async function createDeploymentMockDataInDB(
         activeDirectoryName: 'wlm.com',
         activeDirectoryAddress: generateRandomIP(),
         fsxSvmId: 'svm-0491dd89a76b7ca3d',
-        sandboxCreated: true
+        sandboxCreated: true,
+        storageProtocol
     };
 
     if (sqlDeploymentMode === 'FCI') {

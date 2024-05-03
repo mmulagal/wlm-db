@@ -14,8 +14,10 @@ import {
     MAX_WRITE_REQUEST_FSXN,
     MIN_DISKSIZE,
     MIN_THROUGHPUT,
+    CUSTOM,
     SINGLE_AZ,
-    SQL_SOFTWARE_TYPES
+    SQL_SOFTWARE_TYPES,
+    SQL_STD
 } from '../../utils/consts';
 import getProducts from '../../lib/aws/pricing';
 
@@ -83,7 +85,7 @@ function getDeploymentOption(deploymentOption?: string): Filter {
 function getSqlSoftwareEdition(sqlSoftwareType: string): Filter {
     logger.debug('Get sql software edition for filter', { sqlSoftwareType });
 
-    const edition = SQL_SOFTWARE_TYPES.get(sqlSoftwareType?.toLocaleLowerCase()) || SQL_SOFTWARE_TYPES.get('standard');
+    const edition = SQL_SOFTWARE_TYPES.get(sqlSoftwareType) || SQL_SOFTWARE_TYPES.get(SQL_STD);
 
     return {
         Type: FilterType.TERM_MATCH,
@@ -95,12 +97,11 @@ function getSqlSoftwareEdition(sqlSoftwareType: string): Filter {
 function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): ProductInput {
     logger.info('Get ec2 instance input', { compute });
 
-    return {
+    const filters = {
         name: 'ec2Instance',
         input: {
             Filters: [
                 getRegionCodeFilter(compute.regionCode),
-                getSqlSoftwareEdition(compute.sqlSoftwareType),
                 {
                     Type: FilterType.TERM_MATCH,
                     Field: 'productFamily',
@@ -131,6 +132,12 @@ function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): Prod
             ...AWS_PRICING_FORMAT_VERSION
         }
     };
+    // add this filter based on whether its windows sql based ami or not
+    if (compute.sqlSoftwareType && compute.sqlSoftwareType !== CUSTOM) {
+        const sqlFilter = getSqlSoftwareEdition(compute.sqlSoftwareType);
+        filters.input.Filters.push(sqlFilter);
+    }
+    return filters;
 }
 
 function getEc2StorageInput(compute: PricingServiceRequestType['compute']): ProductInput {
@@ -449,12 +456,8 @@ async function calculatePrice(
     const productRates = await getProductRates(inputList);
 
     const {
-        ec2Instance: {
-            compute: { pricePerUnit: ec2InstanceRate }
-        },
-        ec2Storage: {
-            storage: { pricePerUnit: ec2StorageRate }
-        },
+        ec2Instance: { compute: { pricePerUnit: ec2InstanceRate = 0 } = {} },
+        ec2Storage: { storage: { pricePerUnit: ec2StorageRate = 0 } = {} },
         vpc: { vpc: { pricePerUnit: vpcRate = undefined } = {} } = {}
     } = productRates;
 

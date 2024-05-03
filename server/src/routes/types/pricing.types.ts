@@ -1,11 +1,11 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
-import { STANDALONE, FCI, SINGLE_AZ, MULTI_AZ, SQL_STD, SQL_ENT, SQL_WEB } from '../../utils/consts';
+import { STANDALONE, FCI, SINGLE_AZ, MULTI_AZ, SQL_STD, SQL_ENT, SQL_WEB, CUSTOM } from '../../utils/consts';
 
 const PricingServiceRequest = Type.Object({
     compute: Type.Object({
         regionCode: Type.String({ minLength: 1 }),
         instanceType: Type.String({ minLength: 1 }),
-        sqlSoftwareType: Type.String({ enum: [SQL_STD, SQL_ENT, SQL_WEB] }),
+        sqlSoftwareType: Type.String({ enum: [SQL_STD, SQL_ENT, SQL_WEB, CUSTOM] }),
         sqlDeploymentMode: Type.String({ enum: [FCI, STANDALONE] })
     }),
     fsxnStorage: Type.Optional(

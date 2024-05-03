@@ -1,7 +1,7 @@
 import randomize from 'randomatic';
 import { isEmpty } from 'lodash-es';
 import { randomUUID } from 'crypto';
-import { USER_TOKEN } from '../consts';
+import { STORAGE_PROTOCOLS, USER_TOKEN } from '../consts';
 import getLogger from '../logger';
 import { saveFciConfigurationData, saveStandaloneConfigurationData } from './demoMockdata';
 import { createDeploymentMockDataInDB } from '../../operations/demo-operations';
@@ -19,7 +19,8 @@ function createDemoResources(
     region: string,
     credentialsId: string,
     awsAccountId: string,
-    demoServerName?: string
+    demoServerName?: string,
+    storageProtocol?: string
 ) {
     logger.info('Creating demo database resources and corresponding details.');
     const stackName = randomize('A', 10);
@@ -37,7 +38,8 @@ function createDemoResources(
         sqlDeploymentMode,
         fsxFilSystemId,
         awsAccountId,
-        serverName
+        serverName,
+        storageProtocol
     );
 }
 
@@ -101,8 +103,30 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
     if (isEmpty(jobs)) {
         // create 2 new resources and configurations
         logger.info('Creating demo resources');
-        createDemoResources(accountId, 'us-east-1', credentialsId, awsAccountId, 'SQLServer-Prod-01');
-        createDemoResources(accountId, 'us-east-1', credentialsId, awsAccountId, 'SQLServer-Dev-01');
+        createDemoResources(
+            accountId,
+            'us-east-1',
+            credentialsId,
+            awsAccountId,
+            'SQLServer-Prod-01',
+            STORAGE_PROTOCOLS.ISCSI
+        );
+        createDemoResources(
+            accountId,
+            'us-east-1',
+            credentialsId,
+            awsAccountId,
+            'SQLServer-Dev-01',
+            STORAGE_PROTOCOLS.ISCSI
+        );
+        createDemoResources(
+            accountId,
+            'us-east-1',
+            credentialsId,
+            awsAccountId,
+            'SQLServer-Dev-02',
+            STORAGE_PROTOCOLS.SMB
+        );
     }
     if (isEmpty(configs)) {
         logger.info('Creating demo and templates');

@@ -35,7 +35,9 @@ import {
     WLMDB_COST_ALLOCATION_TAG,
     API_PAGE_SIZE,
     SqlServerDeploymentModel,
-    FileSystemTypes
+    FileSystemTypes,
+    CUSTOM,
+    SQL_WEB
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -689,11 +691,22 @@ async function getEc2ResourceInfo(
     const amiInfo = await getAmis(credentialsId, region, { ImageIds: [imageId!] });
     logger.debug('Estimation info for AMI:', amiInfo);
 
-    const { Images: [{ PlatformDetails: sqlPlatform = undefined } = {}] = [] } = amiInfo;
+    const { Images: [{ PlatformDetails: sqlPlatform = '' } = {}] = [] } = amiInfo;
 
-    let sqlSoftwareType: string = SQL_STD; // Let's 'Windows with SQL Server Standard' be default
-    if (sqlPlatform === 'Windows with SQL Server Enterprise') {
-        sqlSoftwareType = SQL_ENT;
+    let sqlSoftwareType: string;
+
+    switch (sqlPlatform) {
+        case 'Windows with SQL Server Standard':
+            sqlSoftwareType = SQL_STD;
+            break;
+        case 'Windows with SQL Server Enterprise':
+            sqlSoftwareType = SQL_ENT;
+            break;
+        case 'Windows with SQL Server Web':
+            sqlSoftwareType = SQL_WEB;
+            break;
+        default:
+            sqlSoftwareType = CUSTOM;
     }
 
     return {
