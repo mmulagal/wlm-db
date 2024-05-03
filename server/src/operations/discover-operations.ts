@@ -30,7 +30,8 @@ import {
     SqlServerDeploymentModel,
     RESOURCE_SOURCE,
     DBCREATE_RELATIVE_PATH,
-    STORAGE_PROTOCOLS
+    STORAGE_PROTOCOLS,
+    RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -1267,7 +1268,7 @@ async function prepareDbScriptsForManage(
         resourceName: ec2InstanceId,
         name: 'Copy artifacts for database operations.',
         parentJobId,
-        description: 'Copy artificts required for Workload Factory database operations.',
+        description: 'Copy artifacts required for Workload Factory database operations.',
         startTime: Date.now()
     });
 
@@ -1284,7 +1285,7 @@ async function prepareDbScriptsForManage(
             ec2InstanceId,
             accountId,
             false,
-            '3600'
+            (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
         );
 
         logger.info(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${ssmScriptsCopyResponse}`);
@@ -1350,7 +1351,7 @@ async function preparePsModulesForManage(
             ec2InstanceId,
             accountId,
             false,
-            '3600'
+            (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
         );
         logger.info(`Response for PowerShell module installation for ${ec2InstanceId}: ${ssmPsModuleInstallResponse}`);
 

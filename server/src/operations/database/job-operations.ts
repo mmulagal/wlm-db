@@ -387,7 +387,7 @@ async function updateLongRunningResourcePrepareJobs() {
                 updateJobDetails(runningJob.account_id, runningJob.credentials_id, runningJob.region, runningJob.id, {
                     status: JOBSTATUS.FAILED,
                     endTime: new Date().valueOf(),
-                    error: 'Resource preparation failed. Job did not complete even after an hour.'
+                    error: 'Resource preparation failed due to timeout.'
                 });
             })
         );
