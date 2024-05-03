@@ -108,7 +108,7 @@ async function getSandboxDetails(
         try {
             const parsedSandboxDetails: {
                 database_name: string;
-                sandbox_properties: { name: string; value: any }[];
+                sandbox_properties: { name: string; value: string }[];
             }[] = sqlResponseParsing(finalSandboxDetails);
 
             let sandboxInfo: SandboxInfoResponseType[] = [];
