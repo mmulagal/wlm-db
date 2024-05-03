@@ -47,7 +47,7 @@ const SelectTarget = () => {
     }, [aggregatedDbHostList, selectedSourceDbHost]);
 
     const generateTargetInstance = useMemo<optionType[]>((): optionType[] => {
-        const hostName = [{ label: 'MS SQL SERVER', value: 'MSSQLSERVER' }];
+        const hostName = [{ label: 'MSSQLSERVER', value: 'MSSQLSERVER' }];
         const options: optionType[] = [];
         hostName?.map((obj, idx: number) => {
             const option = generateOptionType(obj?.value, obj?.label, '', false, '');

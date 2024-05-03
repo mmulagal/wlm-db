@@ -13,6 +13,7 @@ export interface DatabaseHostItem {
         fileSystemId: string;
         vpcId?: string;
         ec2Details: Array<Ec2Details>;
+        serverInstallationMode?: string;
     };
     protection: {
         isAwsBackupEnabled: {
@@ -35,6 +36,7 @@ export interface DatabaseHostItem {
             used?: number;
             spaceSavings?: number;
             spaceSavingsPercent?: number;
+            protocol?: 'iSCSI' | 'SMB';
         };
         fsxw?: {
             size?: number;
