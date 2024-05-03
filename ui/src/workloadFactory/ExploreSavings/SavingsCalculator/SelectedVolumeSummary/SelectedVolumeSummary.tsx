@@ -106,19 +106,16 @@ const SelectedVolumeSummary = () => {
         // This demo response will be removed once API starts returning demo data
         if (isDemoMode) {
             setLoading(false);
-            getColumnsList(['gp3', 'gp2', 'io1', 'io2'], '96.5px', true);
+            getColumnsList(['io2'], '386px', true);
             setTableData([
-                { details: 'Total volumes', gp3: 10, gp2: 10, io1: 10, io2: 10, id: '1' },
+                { details: 'Total volumes', io2: 2, id: '1' },
                 {
                     details: 'Total storage amount',
-                    gp3: '250.5 TiB',
-                    gp2: '250.5 TiB',
-                    io1: '250.5 TiB',
-                    io2: '250.5 TiB',
+                    io2: '4 TiB',
                     id: '2'
                 },
-                { details: 'Total provisioned IOPS', gp3: 60000, gp2: 60000, io1: 60000, io2: 60000, id: '3' },
-                { details: 'Total throughput MB/s', gp3: 3000, gp2: 3000, io1: 3000, io2: 3000, id: '4' }
+                { details: 'Total provisioned IOPS', io2: 80000, id: '3' },
+                { details: 'Total throughput MB/s', io2: 128, id: '4' }
             ]);
             return;
         }
