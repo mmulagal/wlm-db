@@ -14,9 +14,10 @@ import {
     MAX_WRITE_REQUEST_FSXN,
     MIN_DISKSIZE,
     MIN_THROUGHPUT,
-    NONE,
+    CUSTOM,
     SINGLE_AZ,
-    SQL_SOFTWARE_TYPES
+    SQL_SOFTWARE_TYPES,
+    SQL_STD
 } from '../../utils/consts';
 import getProducts from '../../lib/aws/pricing';
 
@@ -84,7 +85,7 @@ function getDeploymentOption(deploymentOption?: string): Filter {
 function getSqlSoftwareEdition(sqlSoftwareType: string): Filter {
     logger.debug('Get sql software edition for filter', { sqlSoftwareType });
 
-    const edition = SQL_SOFTWARE_TYPES.get(sqlSoftwareType?.toLocaleLowerCase()) || SQL_SOFTWARE_TYPES.get('standard');
+    const edition = SQL_SOFTWARE_TYPES.get(sqlSoftwareType) || SQL_SOFTWARE_TYPES.get(SQL_STD);
 
     return {
         Type: FilterType.TERM_MATCH,
@@ -132,7 +133,7 @@ function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): Prod
         }
     };
     // add this filter based on whether its windows sql based ami or not
-    if (compute.sqlSoftwareType && compute.sqlSoftwareType !== NONE) {
+    if (compute.sqlSoftwareType && compute.sqlSoftwareType !== CUSTOM) {
         const sqlFilter = getSqlSoftwareEdition(compute.sqlSoftwareType);
         filters.input.Filters.push(sqlFilter);
     }
@@ -455,12 +456,8 @@ async function calculatePrice(
     const productRates = await getProductRates(inputList);
 
     const {
-        ec2Instance: {
-            compute: { pricePerUnit: ec2InstanceRate }
-        },
-        ec2Storage: {
-            storage: { pricePerUnit: ec2StorageRate }
-        },
+        ec2Instance: { compute: { pricePerUnit: ec2InstanceRate = 0 } = {} },
+        ec2Storage: { storage: { pricePerUnit: ec2StorageRate = 0 } = {} },
         vpc: { vpc: { pricePerUnit: vpcRate = undefined } = {} } = {}
     } = productRates;
 

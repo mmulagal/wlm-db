@@ -36,7 +36,8 @@ import {
     API_PAGE_SIZE,
     SqlServerDeploymentModel,
     FileSystemTypes,
-    NONE
+    CUSTOM,
+    SQL_WEB
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -692,13 +693,20 @@ async function getEc2ResourceInfo(
 
     const { Images: [{ PlatformDetails: sqlPlatform = '' } = {}] = [] } = amiInfo;
 
-    let sqlSoftwareType: string = SQL_STD; // Let's 'Windows with SQL Server Standard' be default
-    const regex = /SQL/; // This is case-sensitive
-    if (!regex.test(sqlPlatform)) {
-        sqlSoftwareType = NONE;
-    }
-    if (sqlPlatform === 'Windows with SQL Server Enterprise') {
-        sqlSoftwareType = SQL_ENT;
+    let sqlSoftwareType: string;
+
+    switch (sqlPlatform) {
+        case 'Windows with SQL Server Standard':
+            sqlSoftwareType = SQL_STD;
+            break;
+        case 'Windows with SQL Server Enterprise':
+            sqlSoftwareType = SQL_ENT;
+            break;
+        case 'Windows with SQL Server Web':
+            sqlSoftwareType = SQL_WEB;
+            break;
+        default:
+            sqlSoftwareType = CUSTOM;
     }
 
     return {
