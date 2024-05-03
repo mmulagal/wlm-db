@@ -124,7 +124,8 @@ async function getSandboxDetails(
                     sourceDatabaseHostName: sources[0],
                     sourceDatabaseInstanceName: sources[1],
                     sourceDatabaseName: sources[2],
-                    creationTime: getProperty(item, 'initialCreationDate'),
+                    createdAt: parseInt(getProperty(item, 'createdAt'), 10),
+                    updatedAt: parseInt(getProperty(item, 'updatedAt'), 10),
                     tag: getProperty(item, 'tag')
                 };
 
@@ -141,7 +142,8 @@ async function getSandboxDetails(
                         sourceDatabaseHostName: item.source.split('|')[0],
                         sourceDatabaseInstanceName: item.source.split('|')[1],
                         sourceDatabaseName: item.source.split('|')[2],
-                        creationTime: item.initialCreationDate,
+                        createdAt: item.createdAt,
+                        updatedAt: item.updatedAt,
                         tag: item.tag
                     };
                     return databaseObject;
@@ -524,34 +526,20 @@ async function startSandboxCreation(
         await createExtendedProperties(accountId, credentialsId, region, parentJobId, srcDetails, destDetails, tag);
 
         status = JOBSTATUS.COMPLETED;
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-            // this is used to retreive the newly created user databases in database list for demo using meta data
-            updateSandboxDBIntoResourceData(
-                accountId,
-                srcDetails.host,
-                destDetails.database,
-                `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`,
-                Date.now().toString(),
-                tag,
-                srcDetails.metadata
-            );
-        }
     } catch (e: any) {
         logger.error(e);
         errorMsg = e.message || 'Internal Server Error';
         status = JOBSTATUS.FAILED;
-        if (clonedVolumes) {
-            await startCleanup(
-                accountId,
-                credentialsId,
-                region,
-                parentJobId,
-                srcDetails,
-                destDetails,
-                [clonedVolumes.data.volumeId, clonedVolumes.log.volumeId],
-                compact([mountPaths?.dataPath, mountPaths?.logPath])
-            );
-        }
+        await startCleanup(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            srcDetails,
+            destDetails,
+            clonedVolumes ? [clonedVolumes.data.volumeId, clonedVolumes.log.volumeId] : [],
+            compact([mountPaths?.dataPath, mountPaths?.logPath])
+        );
     } finally {
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             error: errorMsg,
@@ -798,7 +786,7 @@ async function invokeVirtualMount(
 
         try {
             let command = [
-                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${mappings.data.fileName}  -LogFilePath ${mappings.log.fileName}  -DataSerial ${clonedVolumes.data.lunSerialNumber} -LogSerial ${clonedVolumes.log.lunSerialNumber}`
+                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${mappings.data.fileName}  -LogFilePath ${mappings.log.fileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}'`
             ];
 
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
@@ -947,7 +935,9 @@ async function createExtendedProperties(
             addExtendedProperties(destDetails.database, {
                 tag,
                 cloned_by: 'netapp_wlmdb',
-                source: `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`
+                source: `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`,
+                createdAt: Date.now(), // to be used for calculating age
+                updatedAt: Date.now() // to be used for getting the last update
             })
         ];
 
@@ -969,6 +959,20 @@ async function createExtendedProperties(
 
         if (!destDetails.metadata.sandboxCreated) {
             await updateMetadataForSanbox(accountId, credentialsId, region, destDetails.host);
+        }
+
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            // this is used to retreive the newly created user databases in database list for demo using meta data
+            updateSandboxDBIntoResourceData(
+                accountId,
+                srcDetails.host,
+                destDetails.database,
+                `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`,
+                Date.now(),
+                Date.now(),
+                tag,
+                srcDetails.metadata
+            );
         }
 
         status = JOBSTATUS.COMPLETED;

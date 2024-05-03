@@ -36,7 +36,8 @@ interface UserDatabase {
 
 interface Sandbox {
     databaseName: string;
-    initialCreationDate: string;
+    createdAt: number;
+    updatedAt: number;
     source: string;
     tag: string;
 }

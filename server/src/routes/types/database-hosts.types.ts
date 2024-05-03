@@ -305,7 +305,7 @@ const CloneDatabaseHostBody = Type.Object({
         instance: Type.String(), // sql server - ideally only one would be there
         database: Type.String() // database
     }),
-    tag: Type.String()
+    tag: Type.String({ enum: ['Development', 'QA', 'Integration', 'Training', 'Analytics', 'Other'] })
 });
 type CloneDatabaseHostBodyType = Static<typeof CloneDatabaseHostBody>;
 const CollationInfoResponseBody = Type.Object({
@@ -334,7 +334,8 @@ const SandboxInfoResponse = Type.Object({
     sourceDatabaseName: Type.Optional(Type.String()),
     sourceDatabaseHostName: Type.Optional(Type.String()),
     sourceDatabaseInstanceName: Type.Optional(Type.String()),
-    creationTime: Type.Optional(Type.String()),
+    createdAt: Type.Optional(Type.Number()),
+    updatedAt: Type.Optional(Type.Number()),
     tag: Type.Optional(Type.String()),
     error: Type.Optional(Type.Any())
 });

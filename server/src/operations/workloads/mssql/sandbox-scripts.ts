@@ -28,7 +28,7 @@ $results = foreach ($instance in $instances) {
         
         SELECT database_name, JSON_QUERY(properties) AS sandbox_properties
         FROM (
-            SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'initialCreationDate', 'tag', 'baseSnapshot') FOR JSON PATH)) AS properties
+            SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'createdAt', 'tag', 'baseSnapshot', 'updatedAt') FOR JSON PATH)) AS properties
             FROM #properties AS p1
             WHERE name = 'cloned_by' AND value = 'netapp_wlmdb'
         ) AS grouped_properties
