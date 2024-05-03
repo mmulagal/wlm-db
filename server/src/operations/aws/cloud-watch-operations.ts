@@ -75,7 +75,7 @@ async function calculateFsxnStorageEfficiencyUsingCloudwatch(
             totalLogicalDataStored > 0 ? (storageEfficiencySavingsAverage / totalLogicalDataStored) * 100 : 0;
 
         return {
-            totalSize: convertToBytes(fsxnInfo?.FileSystems?.[0].StorageCapacity || 0, 'GiB'),
+            totalSize: convertToBytes(fsxnInfo?.FileSystems?.[0].StorageCapacity || 0, 'GiB') || 0,
             totalUsed: totalLogicalDataStored,
             totalSpaceSavings: storageEfficiencySavingsAverage,
             totalSpaceSavingsPercentage: storageEfficiencySavingsPercentage
