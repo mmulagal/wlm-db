@@ -40,7 +40,7 @@ interface SandboxObject {
 
 function getProperty(item: SandboxObject, propertyName: string) {
     const property = item.sandbox_properties.find((prop: { name: string }) => prop.name === propertyName);
-    return property ? property.value : 'N/A';
+    return property ? property.value : '';
 }
 
 function getSourceDetails(obj: SandboxObject) {
