@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { Tag } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
+import numeral from 'numeral';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
 import {
@@ -484,19 +485,7 @@ function camelizeKeys(obj: any): any {
 }
 
 function convertToBytes(size: number, unit: string) {
-    const units: { [key: string]: number } = {
-        B: 1,
-        KiB: 1024 ** 1,
-        MiB: 1024 ** 2,
-        GiB: 1024 ** 3,
-        TiB: 1024 ** 4,
-        PiB: 1024 ** 5,
-        EiB: 1024 ** 6,
-        ZiB: 1024 ** 7,
-        YiB: 1024 ** 8
-    };
-
-    return size * (units[unit] || 1);
+    return numeral(`${size}${unit}`).value();
 }
 
 export {
