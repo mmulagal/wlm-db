@@ -10,8 +10,9 @@
                 "sourceDatabaseHostName": "SQLServer-Prod-01",
                 "sourceDatabaseInstanceName": "MSSQLSERVER",
                 "sourceDatabaseName": "RetailBanking",
-                "creationTime": "1713346735514",
-                "tag": "Development"
+                "createdAt": 1714729464402,
+                "tag": "Development",
+                "updatedAt": 1714729464402
             },
             {
                 "sandboxName": "HRAudit_Sandbox",
@@ -21,8 +22,9 @@
                 "sourceDatabaseHostName": "SQLServer-Prod-01",
                 "sourceDatabaseInstanceName": "MSSQLSERVER",
                 "sourceDatabaseName": "HRAudit",
-                "creationTime": "1713346735514",
-                "tag": "QA"
+                "createdAt": 1714729464402,
+                "tag": "QA",
+                "updatedAt": 1714729464402
             }
         ]
     }
