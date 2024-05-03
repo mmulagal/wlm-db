@@ -3,7 +3,6 @@ import ms from 'ms';
 import getMetricStatistics from '../../lib/aws/cloud-watch';
 import getLogger from '../../utils/logger';
 import { describeFSx } from '../../lib/aws/fsx';
-import { convertToBytes } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -75,7 +74,7 @@ async function calculateFsxnStorageEfficiencyUsingCloudwatch(
             totalLogicalDataStored > 0 ? (storageEfficiencySavingsAverage / totalLogicalDataStored) * 100 : 0;
 
         return {
-            totalSize: convertToBytes(fsxnInfo?.FileSystems?.[0].StorageCapacity || 0, 'GiB') || 0,
+            totalSize: fsxnInfo?.FileSystems?.[0].StorageCapacity || 0,
             totalUsed: totalLogicalDataStored,
             totalSpaceSavings: storageEfficiencySavingsAverage,
             totalSpaceSavingsPercentage: storageEfficiencySavingsPercentage
@@ -166,7 +165,7 @@ async function calculateFsxwStorageEfficiencyUsingCloudwatch(
             totalLogicalDataStored > 0 ? (deduplicationSavedStorageAverage / totalLogicalDataStored) * 100 : 0;
 
         return {
-            totalSize: convertToBytes(fsxwInfo?.FileSystems?.[0]?.StorageCapacity || 0, 'GiB') || 0,
+            totalSize: fsxwInfo?.FileSystems?.[0]?.StorageCapacity || 0,
             totalUsed: storageCapacityUtilizationAverage,
             totalSpaceSavings: deduplicationSavedStorageAverage,
             totalSpaceSavingsPercentage: storageSavingsPercentage

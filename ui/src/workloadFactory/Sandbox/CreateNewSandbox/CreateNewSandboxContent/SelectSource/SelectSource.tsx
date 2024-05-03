@@ -21,7 +21,7 @@ import {
     setSourceDbInstance
 } from '../../../../../store/workloadFactory/createSandboxSlice';
 import { GENERAL } from '../../../../../utils/appConstants';
-import { MSSQL_DATABASE_TYPES, STATUS_CONST } from '../../../../../utils/consts';
+import { FSXN_STORAGE_PROTOCOLS, MSSQL_DATABASE_TYPES, STATUS_CONST } from '../../../../../utils/consts';
 
 const SelectSource = () => {
     const windowSize = useResize();
@@ -65,7 +65,20 @@ const SelectSource = () => {
         const options: optionType[] = [];
         aggregatedDbHostList?.map((obj, idx: number) => {
             if (obj.status === STATUS_CONST.UP) {
-                const option = generateOptionType(obj?.id, obj?.name, '', false, '', obj);
+                const protocolDisable = obj?.storage?.fsxn?.protocol === FSXN_STORAGE_PROTOCOLS.SMB;
+                const installationModeDisable = obj?.topology?.serverInstallationMode === GENERAL.FCI;
+                const option = generateOptionType(
+                    obj?.id,
+                    obj?.name,
+                    '',
+                    protocolDisable || installationModeDisable,
+                    installationModeDisable
+                        ? GENERAL?.SANDBOX_FCI_NOT_SUPPORTED
+                        : protocolDisable
+                        ? GENERAL?.SANDBOX_SMB_PROTOCOL_NOT_SUPPORTED
+                        : '',
+                    obj
+                );
                 options.push(option);
             }
         });
@@ -75,7 +88,7 @@ const SelectSource = () => {
     }, [aggregatedDbHostList]);
 
     const generateSourceInstance = useMemo<optionType[]>((): optionType[] => {
-        const hostName = [{ label: 'MS SQL SERVER', value: 'MSSQLSERVER' }];
+        const hostName = [{ label: 'MSSQLSERVER', value: 'MSSQLSERVER' }];
         const options: optionType[] = [];
         hostName?.map((obj, idx: number) => {
             const option = generateOptionType(obj?.value, obj?.label, '', false, '');
@@ -101,7 +114,7 @@ const SelectSource = () => {
 
     useEffect(() => {
         if (generateHostName?.length) {
-            dispatch(setSourceDbHost(generateHostName[0]));
+            dispatch(setSourceDbHost(generateHostName.find(item => !item?.isDisabled)));
         }
     }, [generateHostName]);
 

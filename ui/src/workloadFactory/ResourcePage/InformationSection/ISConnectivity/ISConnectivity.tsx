@@ -21,6 +21,14 @@ const ISConnectivity = ({ handleToggle, openKey }: accordionType) => {
                     </Typography>
                     <Typography variant="Regular_14">{resourceDetails?.topology?.vpcId}</Typography>
                 </div>
+                {resourceDetails?.storage?.fsxn?.protocol && (
+                    <div className={commonStyles.row}>
+                        <Typography variant="Semibold_14" className={commonStyles.heading}>
+                            {GENERAL.STORAGE_PROTOCOL}
+                        </Typography>
+                        <Typography variant="Regular_14">{resourceDetails?.storage?.fsxn?.protocol}</Typography>
+                    </div>
+                )}
             </>
         );
     };

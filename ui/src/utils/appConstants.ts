@@ -501,6 +501,7 @@ export const GENERAL = {
     FSX_THROUGHPUT_TYPE: 'FSx Throughput capacity:',
     KEY_PAIR_NAME_INFO: 'Key pair name:',
     VPC_INFO: 'VPC:',
+    STORAGE_PROTOCOL: 'Storage Protocol:',
     TOPOLOGY: 'Topology',
     STATUS: 'Status',
     HOST_NAME: 'Host name',
@@ -754,6 +755,8 @@ export const GENERAL = {
     SANDBOX_CONSUMED_STORAGE: 'Consumed storage',
     SANDBOX_SAVINGS: 'Sandboxes savings',
     SANDBOX_CONSUMED_SAVING: 'Consumed savings',
+    SANDBOX_FCI_NOT_SUPPORTED: 'FCI sandbox creation not supported',
+    SANDBOX_SMB_PROTOCOL_NOT_SUPPORTED: 'Sandbox creation not supported for SQL server using SMB protocol',
     DISTRIBUTION_BY_TAG: 'Sandboxes distribution by tag',
     DEVELOPMENT: 'Development',
     QA: 'QA',
@@ -762,7 +765,7 @@ export const GENERAL = {
     ANALYTICS: 'Analytics',
     SANDBOX_OTHER: 'Other',
     SANDBOXES_DISTRIBUTION_BY_AGE: 'Sandboxes distribution by age',
-    ONE_SEVEN_DAYS: '1-7 days',
+    ONE_SEVEN_DAYS: '0-7 days',
     SEVEN_FOURTEEN_DAYS: ' 8-14 days',
     FOURTEEN_THIRTY_DAYS: '15-30 days',
     THIRTY_PLUS_DAYS: '30+ days',
@@ -831,7 +834,8 @@ export const GENERAL = {
         'This configuration cannot benefit from savings. Please check the cost breakdown below for further analysis.',
     PDF_DOWNLOAD_SUCCESS: 'PDF file downloaded successfully.',
     MANAGE_HOST_DISABLED: 'Supported only for the FSx for ONTAP storage type',
-    EXPLORE_SAVINGS_DISABLED: 'Supported only for the EBS storage type'
+    EXPLORE_SAVINGS_DISABLED: 'Supported only for the EBS storage type',
+    SMB_PROTOCOL_DISABLED: 'Action not supported on SQL server using SMB protocol'
 };
 
 export const CODE_VIEWER = {

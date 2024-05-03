@@ -332,6 +332,7 @@ const createVolumeClone = (
     dataLunPath: string,
     logVolumeName: string,
     logLunPath: string,
+    resourceId: string,
     targetSvm?: string
 ) => `
     $fsxid = '${fsxid}'
@@ -342,6 +343,7 @@ const createVolumeClone = (
     $logVolume = '${logVolumeName}'
     $dataLunPath = '${dataLunPath}'
     $logLunPath = '${logLunPath}'
+    $resourceId = '${resourceId}'
 
     Start-Transcript -Path "C:\\cfn\\log\\create_flexclone_$dataVolume.log.txt" -Append | Out-Null
 
@@ -457,12 +459,14 @@ const createVolumeClone = (
 
             $response.records | ForEach-Object {
                 $volumeid = $_.location.volume.uuid
-                $body = @{
-                    "tiering" = @{
-                        "object_tags" = @("cloned_by=netapp_wlmdb", "resource_id=$resourceId")
-                    }
-                } | ConvertTo-Json
-    
+                $body = @"
+                {
+                    "tiering.object_tags": [
+                        "cloned_by=netapp_wlmdb",
+                        "resource_id=$resourceId"
+                    ]
+                }
+"@
                 $ApiEndpoint = '/storage/volumes/' + $volumeid
                 $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -body $body -method "PATCH"
                 $jobStatus += Get-OntapJobStatus -jobId $ontapResponse.job.uuid

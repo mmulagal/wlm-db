@@ -40,7 +40,7 @@ interface SandboxObject {
 
 function getProperty(item: SandboxObject, propertyName: string) {
     const property = item.sandbox_properties.find((prop: { name: string }) => prop.name === propertyName);
-    return property ? property.value : 'N/A';
+    return property ? property.value : '';
 }
 
 function getSourceDetails(obj: SandboxObject) {
@@ -124,8 +124,8 @@ async function getSandboxDetails(
                     sourceDatabaseHostName: sources[0],
                     sourceDatabaseInstanceName: sources[1],
                     sourceDatabaseName: sources[2],
-                    createdAt: parseInt(getProperty(item, 'createdAt'), 10),
-                    updatedAt: parseInt(getProperty(item, 'updatedAt'), 10),
+                    createdAt: parseInt(getProperty(item, 'createdAt') || String(Date.now()), 10),
+                    updatedAt: parseInt(getProperty(item, 'updatedAt') || String(Date.now()), 10),
                     tag: getProperty(item, 'tag')
                 };
 
@@ -671,7 +671,8 @@ async function createVolumeClone(
         accountId,
         credentialsId,
         region,
-        parentJobId
+        parentJobId,
+        mapping
     });
 
     let status: string = JOBSTATUS.IN_PROGRESS;
@@ -697,6 +698,7 @@ async function createVolumeClone(
                 mapping.data.lunPath,
                 mapping.log.volumeName,
                 mapping.log.lunPath,
+                destDetails.host,
                 mapping.svm
             )
         ];
