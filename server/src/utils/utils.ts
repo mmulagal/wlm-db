@@ -412,8 +412,8 @@ function sqlResponseParsing(response: string) {
         const jsonResponse = JSON.parse(cleanResponse);
         return jsonResponse;
     } catch (error) {
-        logger.error('Error parsing query response:', error);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing query response, ${error}`);
+        logger.error('Error parsing query response:', response);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing query response: ${response}`);
     }
 }
 
