@@ -784,7 +784,7 @@ async function invokeVirtualMount(
 
         try {
             let command = [
-                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${mappings.data.fileName}  -LogFilePath ${mappings.log.fileName}  -DataSerial ${clonedVolumes.data.lunSerialNumber} -LogSerial ${clonedVolumes.log.lunSerialNumber}`
+                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${mappings.data.fileName}  -LogFilePath ${mappings.log.fileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}'`
             ];
 
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
