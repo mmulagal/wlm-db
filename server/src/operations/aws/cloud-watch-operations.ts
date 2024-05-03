@@ -166,7 +166,7 @@ async function calculateFsxwStorageEfficiencyUsingCloudwatch(
             totalLogicalDataStored > 0 ? (deduplicationSavedStorageAverage / totalLogicalDataStored) * 100 : 0;
 
         return {
-            totalSize: convertToBytes(fsxwInfo?.FileSystems?.[0].StorageCapacity || 0, 'GiB'),
+            totalSize: convertToBytes(fsxwInfo?.FileSystems?.[0]?.StorageCapacity || 0, 'GiB') || 0,
             totalUsed: storageCapacityUtilizationAverage,
             totalSpaceSavings: deduplicationSavedStorageAverage,
             totalSpaceSavingsPercentage: storageSavingsPercentage

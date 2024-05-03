@@ -7,12 +7,12 @@ cloudwatchMock.on(GetMetricStatisticsCommand, { MetricName: 'StorageUsed' }).res
     Datapoints: [
         {
             Timestamp: new Date(),
-            Sum: 19791209299968,
+            Average: 19791209299968,
             Unit: 'Bytes'
         },
         {
             Timestamp: new Date(),
-            Sum: 19791209299968,
+            Average: 19791209299968,
             Unit: 'Bytes'
         }
     ]
