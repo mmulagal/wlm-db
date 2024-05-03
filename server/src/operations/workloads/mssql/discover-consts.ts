@@ -508,7 +508,7 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string) => [
         Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
       }
       
-      If (-Not (Find-PackageProvider -Name 'Nuget' -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
+      If (-Not (Find-PackageProvider -Name 'Nuget' -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -Force)) {
         If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
           throw "Failed to install NuGet package provider. "
         }
