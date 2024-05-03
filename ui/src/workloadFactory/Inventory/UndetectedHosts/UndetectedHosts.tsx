@@ -100,7 +100,11 @@ const UndetectedHosts = () => {
             } else if (!isSqlRunning) {
                 detectOption = DETECT_HOST_VAR.DISABLE;
                 detectOptionDisableMsg = GENERAL.SQL_SERVER_NOT_RUNNING;
-            } else if (!hasStorageTypes) {
+            } else if (
+                !hasStorageTypes &&
+                (item?.sqlServerInstances?.[0]?.windowsAuthentication ||
+                    item?.sqlServerInstances?.[0]?.sqlServerAuthentication)
+            ) {
                 detectOption = DETECT_HOST_VAR.DISABLE;
                 detectOptionDisableMsg = GENERAL.STORAGE_NOT_PRESENT;
             } else if ((fsxId && fsxId in fsxCredentialStatusObj) || !fsxId) {
