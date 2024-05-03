@@ -78,7 +78,7 @@ const CostSavings = () => {
                 <div className={styles.rightSide}>
                     <div className={styles.firstRow}>
                         <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                            {!storageSavingsLoading && formatFractionalNumber(savingsPer, 2)}
+                            {!storageSavingsLoading && formatFractionalNumber(savingsPer, 0)}
                         </DsTypography>
                         <DsTypography
                             variant="Regular_16"

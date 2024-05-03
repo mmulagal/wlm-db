@@ -992,10 +992,12 @@ const DATABASE_TYPE = 'Microsoft SQL Server';
 const SQL_STD = 'SQL std';
 const SQL_ENT = 'SQL ent';
 const SQL_WEB = 'SQL web';
+const CUSTOM = 'custom';
+
 const SQL_SOFTWARE_TYPES = new Map<string, string>([
-    ['standard', SQL_STD],
-    ['enterprise', SQL_ENT],
-    ['web', SQL_WEB]
+    [SQL_STD, SQL_STD],
+    [SQL_ENT, SQL_ENT],
+    [SQL_WEB, SQL_WEB]
 ]);
 const WLMDB_COST_ALLOCATION_TAG = 'wlmdb-cost-resource';
 
@@ -1394,5 +1396,6 @@ export {
     DEFAULT_INSTANCE_NAME,
     PERMISSION_DENIAL_POSSIBLE_REASONS,
     NO_SANDBOX_CREATED,
-    STORAGE_PROTOCOLS
+    STORAGE_PROTOCOLS,
+    CUSTOM
 };

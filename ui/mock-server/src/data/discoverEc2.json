@@ -76,10 +76,6 @@
                         {
                             "type": "EBS",
                             "id": "vol08b0788a4333c0233"
-                        },
-                        {
-                            "type": "FSXW",
-                            "id": "fsx122"
                         }
                     ],
                     "deploymentTypes": [],

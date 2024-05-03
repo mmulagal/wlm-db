@@ -1,38 +1,38 @@
 {
     "fsx": {
-      "capacity": 1000,
-      "iops": 1000,
-      "throughput": 1000,
-      "snapshots": 1000,
-      "clone": 1000,
-      "compute": 1000,
-      "license": 1000,
-      "total": 7000
+      "capacity": 562,
+      "iops": 92,
+      "throughput": 1130,
+      "snapshots": 26,
+      "clone": 195,
+      "compute": 548.96,
+      "license": 701,
+      "total": 3254.96
     },
     "ebs": {
-      "capacity": 2000,
-      "iops": 2000,
-      "throughput": 2000,
-      "snapshots": 2000,
-      "clone": 2000,
-      "compute": 2000,
-      "license": 1000,
-      "total": 13000
+      "capacity": 562,
+      "iops": 0,
+      "throughput": 4888,
+      "snapshots": 246,
+      "clone": 5134,
+      "compute": 548.96,
+      "license": 701,
+      "total": 12079.96
     },
     "fsxCalculation": {
       "deploymentType": "Single",
-      "numberOfVolumes": 20,
-      "throughput": 10,
-      "totalStorageCapacity": 109951162777600,
-      "percentageSsd": 20,
-      "savings": 65,
-      "effectiveCapacity": 38482906972160,
-      "ssdTierReqCapacity": 7696581394432,
-      "capacityPoolTier": 30786325577728,
-      "ssdIop": 60000,
-      "throughputCapacity": 1024,
-      "useCase": "Online archive",
+      "numberOfVolumes": 2,
+      "throughput": 0,
+      "totalStorageCapacity": 4398046511104,
+      "percentageSsd": 100,
+      "savings": 0,
+      "effectiveCapacity": 4398046511104,
+      "ssdTierReqCapacity": 4398046511104,
+      "capacityPoolTier": 0,
+      "ssdIop": 80000,
+      "throughputCapacity": 124,
+      "useCase": "Low latency",
       "regionName": "US East (Ohio) | us-east-2",
-      "monthlySnapshotCapacity": 966367641600
+      "monthlySnapshotCapacity": 837518622720
     }
   }

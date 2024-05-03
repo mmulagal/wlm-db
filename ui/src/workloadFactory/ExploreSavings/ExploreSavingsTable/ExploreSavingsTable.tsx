@@ -1,4 +1,4 @@
-import { Table, useTable, Typography, TableTopBar } from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar, Popover } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './ExploreSavingsTable.module.scss';
@@ -38,11 +38,20 @@ const ExploreSavingsTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return !isDemoMode ? (
                     <>
-                        <div className={styles.detectManageDemo} onClick={() => {}}>
-                            <Typography variant="Regular_14" className={styles.textStyle}>
-                                {GENERAL.ES_SAVINGS}
-                            </Typography>
-                        </div>
+                        <>
+                            <Popover
+                                popoverClass={styles['copy-popover']}
+                                children={'Coming soon'}
+                                trigger="hover"
+                                container={
+                                    <div className={styles.detectManageDemo} onClick={() => {}}>
+                                        <Typography variant="Regular_14" className={styles.textStyle}>
+                                            {GENERAL.ES_SAVINGS}
+                                        </Typography>
+                                    </div>
+                                }
+                            />
+                        </>
                     </>
                 ) : (
                     <>

@@ -53,63 +53,68 @@ const TableLayout = ({ data }: any) => {
 const OntapCalculation = () => {
     const viewCalculationData = {
         Ec2InstanceCalculation: {
-            instanceType: 'c5.2xlarge',
-            instanceHourlyPrice: '1.68',
-            ec2MachineCost: '1,226.40'
+            instanceType: 'm5.2xlarge',
+            instanceHourlyPrice: '0.75',
+            ec2MachineCost: '548.96',
+            sqlEdition: 'SQL Server Standard edition',
+            sqlLicense: 'Yes'
         },
         cloneCalculation: {
             unitConversion: {
                 cloneFrequency: 'daily',
                 cloneRateChange: '0.1',
-                desiredStorageCapacity: '184',
+                desiredStorageCapacity: '780',
                 ssdStorage: '100',
                 savingsDeduplication: 0
             },
             priceCalculation: {
                 storageSavingsDeduplication: '0',
-                effectiveStorageCapacity: '184',
-                ssdStorage: '184',
-                ssdMonthlyCost: '25.76',
-                totalMonthlyCloneCost: '25.76'
+                effectiveStorageCapacity: '780',
+                ssdStorage: '780',
+                ssdMonthlyCost: '195',
+                totalMonthlyCloneCost: '195'
             }
         },
         FSxNCalculation: {
-            storageCapacity: '23',
-            ebsCapacity: '1000',
-            volumes: '120',
-            ssdStorage: '60',
-            deduplication: '20',
+            storageCapacity: '4,096',
+            ebsCapacity: '2',
+            volumes: '2',
+            ssdStorage: '100',
+            deduplication: '0',
             priceCalculation: {
-                deduplication: '35',
-                storageCapacity: '25',
-                ssdStorage: '30',
-                minSSDStorage: '10',
-                ssdMonthlyCost: '50',
-                totalMonthlyCostStorageCapacity: '100',
-                deduplicationFactor: '50',
-                storageFactor: '35',
-                capacityMonthlyCost: '100',
-                capacityPoolStorageCapacity: '100',
-                totalStorageCharge: '30',
-                minFileSystem: '120',
-                throughputCapacity: '50',
-                sddIOPS: '65',
-                fractional: '25',
-                fileSystems: '100',
-                capacityRequired: '30',
-                provisionedThroughputCapacity: '10',
-                totalMonthlyCostThroughputCapacity: '40',
-                includedSSDIOPS: '35',
-                additionalSSDIOPS: '35',
-                billedSSD: '700',
-                additionalBilledCost: '500',
-                totalThroughputIOPS: '780',
-                totalMonthlyCost: '5270'
+                deduplication: '0',
+                storageCapacity: '4,096',
+                ssdStorage: '4,096',
+                minSSDStorage: '4,096',
+                ssdMonthlyCost: '562.95',
+                ssdStoragePrice: '0.14',
+                totalMonthlyCostStorageCapacity: '562.95',
+                deduplicationFactor: '100',
+                storageFactor: '0',
+                capacityMonthlyCost: '0',
+                fsxnCapacityPrice: '0.02',
+                capacityPoolStorageCapacity: '16.51',
+                totalStorageCharge: '562.95',
+                minFileSystem: '0.02',
+                throughputCapacity: '0.03',
+                maxSSDTierSize: '183,105.47',
+                sddIOPS: '0.5',
+                fractional: '0.5',
+                fileSystems: '1',
+                capacityRequired: '128',
+                provisionedThroughputCapacity: '128',
+                totalMonthlyCostThroughputCapacity: '92.16',
+                includedSSDIOPS: '13,511',
+                additionalSSDIOPS: '66,489',
+                billedSSD: '66,489',
+                additionalBilledCost: '1,130.31',
+                totalThroughputIOPS: '1,222.47',
+                totalMonthlyCost: '1,785.42'
             }
         }
     };
     const setHeader = () => {
-        return <DsTypography variant="Regular_14">$5,270</DsTypography>;
+        return <DsTypography variant="Regular_14">$1,785.42</DsTypography>;
     };
     return (
         <div className={styles.ontapCalculation}>
