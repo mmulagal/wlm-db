@@ -343,7 +343,7 @@ const createVolumeClone = (
     $logVolume = '${logVolumeName}'
     $dataLunPath = '${dataLunPath}'
     $logLunPath = '${logLunPath}'
-    $resourceId = '${resourceId}
+    $resourceId = '${resourceId}'
 
     Start-Transcript -Path "C:\\cfn\\log\\create_flexclone_$dataVolume.log.txt" -Append | Out-Null
 
@@ -461,9 +461,9 @@ const createVolumeClone = (
                 $volumeid = $_.location.volume.uuid
                 $body = @"
                 {
-                    \`"tiering.object_tags\`": [
-                        \`"cloned_by=netapp_wlmdb\`",
-                        \`"resource_id=$resourceId\`"
+                    "tiering.object_tags": [
+                        "cloned_by=netapp_wlmdb",
+                        "resource_id=$resourceId"
                     ]
                 }
 "@
