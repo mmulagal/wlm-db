@@ -501,6 +501,7 @@ export const GENERAL = {
     FSX_THROUGHPUT_TYPE: 'FSx Throughput capacity:',
     KEY_PAIR_NAME_INFO: 'Key pair name:',
     VPC_INFO: 'VPC:',
+    STORAGE_PROTOCOL: 'Storage Protocol:',
     TOPOLOGY: 'Topology',
     STATUS: 'Status',
     HOST_NAME: 'Host name',
@@ -831,7 +832,8 @@ export const GENERAL = {
         'This configuration cannot benefit from savings. Please check the cost breakdown below for further analysis.',
     PDF_DOWNLOAD_SUCCESS: 'PDF file downloaded successfully.',
     MANAGE_HOST_DISABLED: 'Supported only for the FSx for ONTAP storage type',
-    EXPLORE_SAVINGS_DISABLED: 'Supported only for the EBS storage type'
+    EXPLORE_SAVINGS_DISABLED: 'Supported only for the EBS storage type',
+    SMB_PROTOCOL_DISABLED: 'Action not supported on SQL server using SMB protocol'
 };
 
 export const CODE_VIEWER = {

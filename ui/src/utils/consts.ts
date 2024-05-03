@@ -163,6 +163,11 @@ export const JOB_MONITORING_TYPE = {
     SANDBOX: 'SANDBOX'
 };
 
+export const FSXN_STORAGE_PROTOCOLS = {
+    ISCSI: 'iSCSI',
+    SMB: 'SMB'
+};
+
 export const MAX_SAVED_CONFIG = 100;
 
 export const WLF_TO_FORM_NAVIGATE = '../add-working-environment/database-services/mssql/create';
