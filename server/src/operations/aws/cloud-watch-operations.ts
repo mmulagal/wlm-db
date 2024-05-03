@@ -39,7 +39,7 @@ async function calculateFsxnStorageEfficiencyUsingCloudwatch(
         Namespace: 'AWS/FSx',
         Period: 24 * 60 * 60, // 1 day
         StartTime: new Date(Date.now() - ms('1d')),
-        Statistics: ['Sum'],
+        Statistics: ['Average'],
         Dimensions: [
             {
                 Name: 'FileSystemId',
@@ -52,7 +52,6 @@ async function calculateFsxnStorageEfficiencyUsingCloudwatch(
         getMetricStatistics(credentialsId, region, storageEfficiencyParams),
         getMetricStatistics(credentialsId, region, storageUsedParams)
     ]);
-
     let storageEfficiencySavingsAverage;
     if (storageEfficiencySavingsData.Datapoints?.length) {
         [{ Average: storageEfficiencySavingsAverage }] = storageEfficiencySavingsData.Datapoints;
@@ -61,23 +60,23 @@ async function calculateFsxnStorageEfficiencyUsingCloudwatch(
         logger.error(errorMessage);
         throw new Error(errorMessage);
     }
-    let storageUsedSum;
+    let storageUsedAverage;
     if (storageUsedData.Datapoints) {
-        [{ Sum: storageUsedSum }] = storageUsedData.Datapoints;
+        [{ Average: storageUsedAverage }] = storageUsedData.Datapoints;
     } else {
         const errorMessage = 'Storage used data not found';
         logger.error(errorMessage);
         throw new Error(errorMessage);
     }
 
-    if (storageEfficiencySavingsAverage !== undefined && storageUsedSum !== undefined) {
-        const totalLogicalDataStored = storageEfficiencySavingsAverage + storageUsedSum; // includes both the data that's actually using physical storage space (storageUsedSum) and the data that's been saved due to storage efficiency features (storageEfficiencySavingsAverage).
+    if (storageEfficiencySavingsAverage !== undefined && storageUsedAverage !== undefined) {
+        const totalLogicalDataStored = storageEfficiencySavingsAverage + storageUsedAverage; // includes both the data that's actually using physical storage space (storageUsedAverage) and the data that's been saved due to storage efficiency features (storageEfficiencySavingsAverage).
         const storageEfficiencySavingsPercentage =
             totalLogicalDataStored > 0 ? (storageEfficiencySavingsAverage / totalLogicalDataStored) * 100 : 0;
 
         return {
             totalSize: convertToBytes(fsxnInfo?.FileSystems?.[0].StorageCapacity || 0, 'GiB'),
-            totalUsed: storageUsedSum,
+            totalUsed: totalLogicalDataStored,
             totalSpaceSavings: storageEfficiencySavingsAverage,
             totalSpaceSavingsPercentage: storageEfficiencySavingsPercentage
         };
@@ -167,7 +166,7 @@ async function calculateFsxwStorageEfficiencyUsingCloudwatch(
             totalLogicalDataStored > 0 ? (deduplicationSavedStorageAverage / totalLogicalDataStored) * 100 : 0;
 
         return {
-            totalSize: fsxwInfo?.FileSystems?.[0].StorageCapacity || 0,
+            totalSize: convertToBytes(fsxwInfo?.FileSystems?.[0].StorageCapacity || 0, 'GiB'),
             totalUsed: storageCapacityUtilizationAverage,
             totalSpaceSavings: deduplicationSavedStorageAverage,
             totalSpaceSavingsPercentage: storageSavingsPercentage
