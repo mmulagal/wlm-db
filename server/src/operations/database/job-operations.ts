@@ -13,7 +13,8 @@ import {
     listUniqueJob,
     updateJob,
     createJob,
-    listLongRunningJobs
+    listLongRunningJobs,
+    listLongRunningResourcePrepareJobs
 } from '../../lib/database/job';
 import getLogger from '../../utils/logger';
 import { trimAccountIdForDemo } from './database-operations';
@@ -376,6 +377,25 @@ async function updateLongRunningJobs() {
     }
 }
 
+async function updateLongRunningResourcePrepareJobs() {
+    logger.info('Checking for long running (> 1 hour) resource prepare jobs');
+    const runningJobs = await listLongRunningResourcePrepareJobs();
+    try {
+        await Promise.all(
+            runningJobs.map(async runningJob => {
+                logger.info('Marking resource prepare job as failed: ', runningJob.name);
+                updateJobDetails(runningJob.account_id, runningJob.credentials_id, runningJob.region, runningJob.id, {
+                    status: JOBSTATUS.FAILED,
+                    endTime: new Date().valueOf(),
+                    error: 'Resource preparation failed. Job did not complete even after an hour.'
+                });
+            })
+        );
+    } catch (error) {
+        logger.info('Error while marking job as failed ', error);
+    }
+}
+
 export {
     Job,
     registerJobs,
@@ -386,5 +406,6 @@ export {
     getJobSummary,
     getJobSummaryByTime,
     registerJob,
-    updateLongRunningJobs
+    updateLongRunningJobs,
+    updateLongRunningResourcePrepareJobs
 };

@@ -6,7 +6,6 @@ const FAILURE_INFO: string = 'failureInfo';
 const REQUIRED_PS_MODULES_FOR_MANAGEMENT: string = `
   'AWS.Tools.EC2',
   'AWS.Tools.FSx',
-  'AWS.Tools.Installer',
   'AWS.Tools.SimpleSystemsManagement',
   'NetApp.ONTAP'
 `;
@@ -495,40 +494,45 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string) => [
   $ErrorActionPreference = "Stop"
   $responseObject = @{}
   $scriptStartTime = Get-Date
-  
+  $exceptionInfo = $null
+
   try {
     $requiredModuleList = @(${requiredModules})
     $availableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
     $unavailableModuleList = $requiredModuleList | ? { $_ -NotIn $availableModuleList}
 
-    if ($unavailableModuleList.Count -gt 0) {
-      if (-Not (Find-PackageProvider -Name 'Nuget')) {
-        Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force
+    If ($unavailableModuleList.Count -gt 0) {
+      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+     
+      If (-Not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)) {
+        Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+      }
+      
+      If (-Not (Find-PackageProvider -Name 'Nuget' -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
+        If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
+          throw "Failed to install NuGet package provider. "
+        }
       }
 
       ForEach ($moduleName in $unavailableModuleList) {
-        $null = Start-Job -Name $NTAP_WF_MODULE_INSTALL_JOB -ScriptBlock {
-          param($psModule)
-          Install-Module -Name $psModule -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue
-        } -ArgumentList $moduleName
-
-        $null = Get-Job -Name $NTAP_WF_MODULE_INSTALL_JOB | Wait-Job
+          Install-Module -Name $moduleName -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
       }
     }
   } catch {
-    # Prevent any possible errors from clobbering JSON output
-    $responseObject['${FAILURE_INFO}'] = $_.Exception.Message
+    $exceptionInfo = $_.Exception.Message
   } finally {
-    $finallyAvailableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
-    $finallyUnavailableModuleList = $requiredModuleList | ? { $_ -NotIn $finallyAvailableModuleList}
+    if ($exceptionInfo) {
+      $responseObject['${FAILURE_INFO}'] = $exceptionInfo
+    } else {
+      $finallyAvailableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
+      $finallyUnavailableModuleList = $requiredModuleList | ? { $_ -NotIn $finallyAvailableModuleList}
 
-    if ($finallyUnavailableModuleList.Count -gt 0) {
-      $responseObject['${FAILURE_INFO}'] += 'PowerShell module(s) $finallyUnavailableModuleList could not be installed.'
+      if ($finallyUnavailableModuleList.Count -gt 0) {
+        $responseObject['${FAILURE_INFO}'] = 'PowerShell module(s) "{0}" could not be installed.' -f $finallyUnavailableModuleList
+      }
     }
 
     $scriptEndTime = Get-Date
-    # Update faiureInfo if all modules aren't installed.
-    # e.g., misspell a module name and see what happens
     $responseObject['scriptExecutionTime'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)
     Echo $responseObject | ConvertTo-Json -Compress
   }

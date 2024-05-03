@@ -19,6 +19,8 @@ import {
     ssmPutParameters
 } from './aws/ssm-operations';
 import { registerJob, updateJobDetails, getJobs } from './database/job-operations';
+import { UpdateJobRecordType } from '../routes/types/jobs.types';
+
 import { tagResources } from './aws/sqs-operations';
 import {
     CloudProviders,
@@ -812,12 +814,12 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     if (missingResourceResponse[IS_PS7_AVAILABLE] === false) {
         throw createError(
             HttpErrorCodes.FAILED_DEPENDENCY,
-            'PowerShell 7 is needed for managing the resource. Install it manually (refer to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare", and retry the operation.'
+            'PowerShell 7 is required for managing the resource. Install it manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4 and retry the operation.'
         );
     } else if (missingResourceResponse[UNAVAILABLE_PS_MODULES]) {
         throw createError(
             HttpErrorCodes.FAILED_DEPENDENCY,
-            `PowerShell modules ${missingResourceResponse[UNAVAILABLE_PS_MODULES]} are needed for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare", and retry the operation.`
+            `PowerShell modules ${missingResourceResponse[UNAVAILABLE_PS_MODULES]} are required for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare", and retry the operation.`
         );
     } else if (missingResourceResponse[IS_DATABASE_CREATE_POSSIBLE] === false) {
         throw createError(
@@ -1224,7 +1226,7 @@ async function performPrepareTasks(
     ec2InstanceId: string,
     parentJobId: string
 ) {
-    logger.debug('Perform tasks to prepare EC2 for management: ', {
+    logger.info('Perform tasks to prepare EC2 for management: ', {
         accountId,
         credentialsId,
         region,
@@ -1237,7 +1239,7 @@ async function performPrepareTasks(
         preparePsModulesForManage(accountId, credentialsId, region, ec2InstanceId, parentJobId)
     ]);
 
-    updateJobDetails(accountId, credentialsId, region, parentJobId, {
+    await updateJobDetails(accountId, credentialsId, region, parentJobId, {
         status:
             dbResponse === JOBSTATUS.COMPLETED && psResponse === JOBSTATUS.COMPLETED
                 ? JOBSTATUS.COMPLETED
@@ -1253,11 +1255,11 @@ async function prepareDbScriptsForManage(
     ec2InstanceId: string,
     parentJobId: string
 ) {
-    logger.debug(
+    logger.info(
         `Prepare database scripts for managing ${ec2InstanceId}: { accountId, credentialsId, region, ec2InstanceId, parentJobId }`
     );
 
-    let childJobStatus;
+    let jobStatusRecord: UpdateJobRecordType;
 
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.PREPARE_RESOURCE,
@@ -1265,46 +1267,56 @@ async function prepareDbScriptsForManage(
         resourceName: ec2InstanceId,
         name: 'Copy artifacts for database operations.',
         parentJobId,
-        description: 'Copy artificts needed for Workload Factory database operations.',
+        description: 'Copy artificts required for Workload Factory database operations.',
         startTime: Date.now()
     });
 
-    // Get signed url for dbcreate.zip
-    const bucketname = getArtifactsRegionBucketName(region);
-    const dbcreateS3SignedUrl = await getPreSignedUrl(region, bucketname, DBCREATE_RELATIVE_PATH);
+    try {
+        // Get signed url for dbcreate.zip
+        const bucketname = getArtifactsRegionBucketName(region);
+        const dbcreateS3SignedUrl = await getPreSignedUrl(region, bucketname, DBCREATE_RELATIVE_PATH);
 
-    // Copy scripts to the EC2 instance
-    const ssmScriptsCopyResponse = await callSsmExecution(
-        credentialsId,
-        region,
-        COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
-        ec2InstanceId,
-        accountId,
-        false,
-        '3600'
-    );
-
-    logger.info(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${ssmScriptsCopyResponse}`);
-
-    if (ssmScriptsCopyResponse?.includes('failureInfo')) {
-        const responseInJson = JSON.parse(ssmScriptsCopyResponse);
-        logger.error(
-            `Unable to prepare instance '${ec2InstanceId}'. Reason: failed to copy database operation artifacts. Error: ${ssmScriptsCopyResponse}`
+        // Copy scripts to the EC2 instance
+        const ssmScriptsCopyResponse = await callSsmExecution(
+            credentialsId,
+            region,
+            COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
+            ec2InstanceId,
+            accountId,
+            false,
+            '3600'
         );
-        updateJobDetails(accountId, credentialsId, region, childJobId, {
+
+        logger.info(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${ssmScriptsCopyResponse}`);
+
+        if (ssmScriptsCopyResponse?.includes('failureInfo')) {
+            const responseInJson = JSON.parse(ssmScriptsCopyResponse);
+            logger.error(
+                `Unable to prepare instance '${ec2InstanceId}'. Reason: failed to copy database operation artifacts. Error: ${ssmScriptsCopyResponse}`
+            );
+
+            jobStatusRecord = {
+                status: JOBSTATUS.FAILED,
+                endTime: Date.now(),
+                error: responseInJson.failureInfo
+            };
+        } else {
+            jobStatusRecord = {
+                status: JOBSTATUS.COMPLETED,
+                endTime: Date.now()
+            };
+        }
+    } catch (errorInfo: any) {
+        logger.error('SSM execution failed while copying database artifacts. Reason: ', errorInfo.message);
+        jobStatusRecord = {
             status: JOBSTATUS.FAILED,
             endTime: Date.now(),
-            error: responseInJson.failureInfo
-        });
-        childJobStatus = JOBSTATUS.FAILED;
-    } else {
-        updateJobDetails(accountId, credentialsId, region, childJobId, {
-            status: JOBSTATUS.COMPLETED,
-            endTime: Date.now()
-        });
-        childJobStatus = JOBSTATUS.COMPLETED;
+            error: errorInfo.message as string
+        };
     }
-    return childJobStatus;
+    await updateJobDetails(accountId, credentialsId, region, childJobId, jobStatusRecord);
+
+    return jobStatusRecord.status;
 }
 
 async function preparePsModulesForManage(
@@ -1314,10 +1326,11 @@ async function preparePsModulesForManage(
     ec2InstanceId: string,
     parentJobId: string
 ) {
-    logger.debug(
+    logger.info(
         `Prepare database scripts for managing ${ec2InstanceId}: { accountId, credentialsId, region, ec2InstanceId, parentJobId }`
     );
-    let childJobStatus;
+
+    let jobStatusRecord: UpdateJobRecordType;
 
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.PREPARE_RESOURCE,
@@ -1329,41 +1342,48 @@ async function preparePsModulesForManage(
         startTime: Date.now()
     });
 
-    const ssmPsModuleInstallResponse = await callSsmExecution(
-        credentialsId,
-        region,
-        INSTALL_WF_POWERSHELL_PREREQS_PS1(REQUIRED_PS_MODULES_FOR_MANAGEMENT),
-        ec2InstanceId,
-        accountId,
-        false,
-        '3600'
-    );
-    logger.info(`Response for PowerShell module installation for ${ec2InstanceId}: ${ssmPsModuleInstallResponse}`);
-
-    if (ssmPsModuleInstallResponse?.includes(FAILURE_INFO)) {
-        const responseInJson = JSON.parse(ssmPsModuleInstallResponse);
-        const failureInfo = responseInJson[FAILURE_INFO];
-        logger.error(
-            `Unable to prepare instance '${ec2InstanceId}. Reason: Failed to install PowerShell modules. Error: ${failureInfo}`
+    try {
+        const ssmPsModuleInstallResponse = await callSsmExecution(
+            credentialsId,
+            region,
+            INSTALL_WF_POWERSHELL_PREREQS_PS1(REQUIRED_PS_MODULES_FOR_MANAGEMENT),
+            ec2InstanceId,
+            accountId,
+            false,
+            '3600'
         );
+        logger.info(`Response for PowerShell module installation for ${ec2InstanceId}: ${ssmPsModuleInstallResponse}`);
 
-        updateJobDetails(accountId, credentialsId, region, childJobId, {
+        if (ssmPsModuleInstallResponse?.includes(FAILURE_INFO)) {
+            const responseInJson = JSON.parse(ssmPsModuleInstallResponse);
+            const failureInfo = responseInJson[FAILURE_INFO];
+            logger.error(
+                `Unable to prepare instance '${ec2InstanceId}. Reason: Failed to install PowerShell modules. Error: ${failureInfo}`
+            );
+
+            jobStatusRecord = {
+                status: JOBSTATUS.FAILED,
+                endTime: Date.now(),
+                error: failureInfo
+            };
+        } else {
+            jobStatusRecord = {
+                status: JOBSTATUS.COMPLETED,
+                endTime: Date.now()
+            };
+        }
+    } catch (errorInfo: any) {
+        logger.error('SSM execution failed while installing PowerShell modules. Reason: ', errorInfo.message);
+        jobStatusRecord = {
             status: JOBSTATUS.FAILED,
             endTime: Date.now(),
-            error: failureInfo
-        });
-
-        childJobStatus = JOBSTATUS.FAILED;
-    } else {
-        updateJobDetails(accountId, credentialsId, region, childJobId, {
-            status: JOBSTATUS.COMPLETED,
-            endTime: Date.now()
-        });
-
-        childJobStatus = JOBSTATUS.COMPLETED;
+            error: errorInfo.message as string
+        };
     }
 
-    return childJobStatus;
+    await updateJobDetails(accountId, credentialsId, region, childJobId, jobStatusRecord);
+
+    return jobStatusRecord.status;
 }
 
 export {

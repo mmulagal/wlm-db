@@ -7,7 +7,8 @@ import {
     DiscoverCredentialsRequestBody,
     ManageMsSqlResponseBody,
     DiscoverCredentialsResponse,
-    MsSqlInstancesRequestQuery
+    MsSqlInstancesRequestQuery,
+    PrepareResourceResponseBody
 } from '../types/discover.types';
 import { GenericHeaders, CredentialsIdParams } from '../types/generic.types';
 
@@ -40,10 +41,11 @@ const DiscoverMsSqlSchema = {
 const PrepareForManageSchema = {
     ...DiscoveryBaseRequest,
     params: DiscoverInstanceParams,
-    summar: 'Prepare the EC2 for managing resources',
-    description: 'Prepare the EC2 for manage operation by copying PS modules, DB creation scripts',
+    summary: 'Prepare the EC2 for managing resources',
+    description:
+        'Install the required PowerShell modules and copy database artifacts required by a Workload Factory managed resource.',
     response: {
-        200: ManageMsSqlResponseBody
+        200: PrepareResourceResponseBody
     }
 };
 const ManageMsSqlSchema = {

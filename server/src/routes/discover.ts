@@ -4,7 +4,8 @@ import {
     DiscoverMsSqlSchema,
     DiscoverCredentialsSchema,
     MsSqlInstancesSchema,
-    ManageMsSqlSchema
+    ManageMsSqlSchema,
+    PrepareForManageSchema
 } from './schemas/discover-schemas';
 import {
     fetchUnmanagedHostsInformation,
@@ -75,14 +76,14 @@ export default function discoverRoutes(fastify: FastifyInstance) {
 
     server.post(
         `${DISCOVER_MSSQL_API_PATH}/instances/:instanceId/mssql/prepare`,
-        { schema: ManageMsSqlSchema },
+        { schema: PrepareForManageSchema },
         async request => {
             const {
                 params: { accountId, credentialsId, region, instanceId }
             } = request;
 
             const apiInfo = await prepareForManage(accountId, credentialsId, region, instanceId);
-            return { resourceId: apiInfo };
+            return { jobId: apiInfo };
         }
     );
 }
