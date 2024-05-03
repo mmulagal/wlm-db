@@ -108,7 +108,7 @@ async function getSandboxDetails(
         try {
             const parsedSandboxDetails: {
                 database_name: string;
-                sandbox_properties: { name: string; value: string }[];
+                sandbox_properties: { name: string; value: any }[];
             }[] = sqlResponseParsing(finalSandboxDetails);
 
             let sandboxInfo: SandboxInfoResponseType[] = [];
@@ -124,7 +124,8 @@ async function getSandboxDetails(
                     sourceDatabaseHostName: sources[0],
                     sourceDatabaseInstanceName: sources[1],
                     sourceDatabaseName: sources[2],
-                    creationTime: getProperty(item, 'initialCreationDate'),
+                    createdAt: parseInt(getProperty(item, 'createdAt'), 10),
+                    updatedAt: parseInt(getProperty(item, 'updatedAt'), 10),
                     tag: getProperty(item, 'tag')
                 };
 
@@ -141,7 +142,8 @@ async function getSandboxDetails(
                         sourceDatabaseHostName: item.source.split('|')[0],
                         sourceDatabaseInstanceName: item.source.split('|')[1],
                         sourceDatabaseName: item.source.split('|')[2],
-                        creationTime: item.createdAt,
+                        createdAt: item.createdAt,
+                        updatedAt: item.updatedAt,
                         tag: item.tag
                     };
                     return databaseObject;
