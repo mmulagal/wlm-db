@@ -29,11 +29,12 @@ const SelectTarget = () => {
         const options: optionType[] = [];
         const filteredHosts = selectedSourceDbHost
             ? aggregatedDbHostList.filter(
-                  item =>
-                      item?.topology?.fileSystemId &&
-                      item?.topology?.fileSystemId === selectedSourceDbHost?.data?.topology?.fileSystemId &&
-                      item?.topology?.vpcId &&
-                      item?.topology?.vpcId === selectedSourceDbHost?.data?.topology?.vpcId
+                  item => item?.id === selectedSourceDbHost?.data?.id
+                  // Will be uncommented when supporting alternate host cloning
+                  //   item?.topology?.fileSystemId &&
+                  //   item?.topology?.fileSystemId === selectedSourceDbHost?.data?.topology?.fileSystemId &&
+                  //   item?.topology?.vpcId &&
+                  //   item?.topology?.vpcId === selectedSourceDbHost?.data?.topology?.vpcId
               )
             : [];
         filteredHosts?.map((obj, idx: number) => {
