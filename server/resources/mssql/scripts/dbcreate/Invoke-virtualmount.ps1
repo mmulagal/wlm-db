@@ -93,19 +93,19 @@ try {
     $dataPartition = Get-Partition -DiskNumber $datadisknumber | Where-Object Type -eq Basic
     $logPartition = Get-Partition -DiskNumber $logdisknumber | Where-Object Type -eq Basic
 
-    $dataPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop | Out-Null
-    $logPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop | Out-Null
+    $null = $dataPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
+    $null = $logPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
 
     write-debug "DataAccessPaths: $($dataPartition.AccessPaths)"
     write-debug "LogAccessPaths: $($logPartition.AccessPaths)"
     write-debug "DataFolder: $datafolder $logfolder"
 
     if ($dataPartition.AccessPaths -notcontains $datafolder + '\') {
-        Add-PartitionAccessPath -DiskNumber $datadisknumber -PartitionNumber ($dataPartition).PartitionNumber -AccessPath $datafolder -ErrorAction stop | Out-Null
+        $null = Add-PartitionAccessPath -DiskNumber $datadisknumber -PartitionNumber ($dataPartition).PartitionNumber -AccessPath $datafolder -ErrorAction stop
     }
 
     if ($logPartition.AccessPaths -notcontains $logfolder + '\') {
-        Add-PartitionAccessPath -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logfolder -ErrorAction stop | Out-Null
+        $null = Add-PartitionAccessPath -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logfolder -ErrorAction stop
     }
 
     Get-Partition | Where-Object Type -eq Basic | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
