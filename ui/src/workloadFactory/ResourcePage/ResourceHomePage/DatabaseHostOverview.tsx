@@ -19,13 +19,14 @@ import {
 import { resetDBHomePageState } from '../../../utils/utilityFunctions';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import DatabaseHostTile from '../DatabaseOverviewLayout/DatabaseHostTile/DatabaseHostTile';
-import { WLF_TABS } from '../../../utils/consts';
+import { FSXN_STORAGE_PROTOCOLS, WLF_TABS } from '../../../utils/consts';
 import {
     addInitialDBCreateData,
     initialCreateNewUserState,
     setDBHostName
 } from '../../../store/workloadFactory/createNewDBSlice';
 import { GENERAL } from '../../../utils/appConstants';
+import CustomContentInfo from '../../../common/CustomContentInfo/CustomContentInfo';
 
 const DatabaseHostOverview = () => {
     const navigate = useNavigate();
@@ -37,6 +38,7 @@ const DatabaseHostOverview = () => {
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const dbHostName = useAppSelector(state => state.createNewUser.dbHostName);
+    const { resourceLoading: resourceLoadingState } = useAppSelector(state => state.workloadFactoryResource);
 
     const {
         data: resourceDetails,
@@ -86,6 +88,8 @@ const DatabaseHostOverview = () => {
         dispatch(setDatabaseListLoading(databaseListFetching));
     }, [resourceFetching, databaseListFetching, dispatch]);
 
+    const storageProtocol = stateResourceDetails?.storage?.fsxn?.protocol;
+
     return (
         <div className={styles.resourcePage}>
             <div className={styles.breadCrumb}>
@@ -102,17 +106,31 @@ const DatabaseHostOverview = () => {
                         }
                     ]}
                 />
-                <Button
-                    variant="primary"
-                    onClick={() => {
-                        dispatch(addInitialDBCreateData(initialCreateNewUserState));
-                        dispatch(setDBHostName(resourceDetails?.name || dbHostName));
-                        navigate('../create-new-user');
-                    }}
-                    id={'create-new-user-button'}
-                >
-                    {GENERAL.CREATE_USER_DB_TITLE}
-                </Button>
+                {storageProtocol === FSXN_STORAGE_PROTOCOLS.SMB ? (
+                    <CustomContentInfo
+                        tooltipText={GENERAL.SMB_PROTOCOL_DISABLED}
+                        CustomContent={
+                            <Button variant="primary" onClick={() => {}} id={'create-new-user-button'} disabled={true}>
+                                {GENERAL.CREATE_USER_DB_TITLE}
+                            </Button>
+                        }
+                    />
+                ) : (
+                    <Button
+                        variant="primary"
+                        onClick={() => {
+                            if (!resourceLoadingState) {
+                                dispatch(addInitialDBCreateData(initialCreateNewUserState));
+                                dispatch(setDBHostName(resourceDetails?.name || dbHostName));
+                                navigate('../create-new-user');
+                            }
+                        }}
+                        id={'create-new-user-button'}
+                        disabled={resourceLoadingState}
+                    >
+                        {GENERAL.CREATE_USER_DB_TITLE}
+                    </Button>
+                )}
             </div>
 
             <div className={styles.hostTitle}>

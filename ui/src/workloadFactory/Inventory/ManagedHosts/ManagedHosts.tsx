@@ -15,7 +15,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { WLF_TABS, STATUS_CONST, FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
+import { WLF_TABS, STATUS_CONST, FSX_DEPLOYMENT_MODE, FSXN_STORAGE_PROTOCOLS } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
@@ -67,6 +67,7 @@ const ManagedHosts = () => {
     const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
 
     const menuItems = (row: any) => {
+        const storageProtocol = row?.storage?.fsxn?.protocol;
         return [
             {
                 id: 'viewOverview',
@@ -81,7 +82,9 @@ const ManagedHosts = () => {
             {
                 id: 'createNewUserDatabase',
                 displayName: GENERAL.CREATE_USER_DB_TITLE,
-                disabled: row?.status === STATUS_CONST.UP ? false : true
+                disabled:
+                    row?.status === STATUS_CONST.UP && storageProtocol !== FSXN_STORAGE_PROTOCOLS?.SMB ? false : true,
+                infoText: storageProtocol === FSXN_STORAGE_PROTOCOLS.SMB ? GENERAL.SMB_PROTOCOL_DISABLED : ''
             },
             {
                 id: 'remove',
