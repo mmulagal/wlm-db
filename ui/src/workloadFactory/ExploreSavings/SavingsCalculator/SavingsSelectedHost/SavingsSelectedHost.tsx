@@ -41,6 +41,7 @@ const SavingsSelectedHost = () => {
                     {!selectedHostDetails?.loading && (
                         <DsTypography
                             variant="Semibold_14"
+                            style={{ display: 'flex', justifyContent: 'center' }}
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
                         >
                             {selectedHostDetails?.databaseCount || GENERAL.NOT_AVAILABLE}
@@ -65,6 +66,7 @@ const SavingsSelectedHost = () => {
                     {!selectedHostDetails?.loading && (
                         <DsTypography
                             variant="Semibold_14"
+                            style={{ display: 'flex', justifyContent: 'center' }}
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
                         >
                             {selectedHostDetails?.ebsResourceInfo?.length || GENERAL.NOT_AVAILABLE}
