@@ -58,29 +58,32 @@ try {
     $disklist | ForEach-Object {
         $disk = $_
         if ($disk.IsReadOnly -ne $False) {
-            Set-Disk -Number $disk.Number -IsReadOnly $False
+            Set-Disk -Number $disk.Number -IsReadOnly $False -ErrorAction stop
             Start-Sleep 2
         }
 
         if ($disk.IsOffline -ne $False) {
-            Set-Disk -Number $disk.Number -IsOffline $False
+            Set-Disk -Number $disk.Number -IsOffline $False -ErrorAction stop
             Start-Sleep 2
         }
 
         if ($disk.PartitionStyle -eq 'RAW') {
-            Set-Disk -Number $disk.Number -PartitionStyle GPT
+            Set-Disk -Number $disk.Number -PartitionStyle GPT -ErrorAction stop
             Start-Sleep 2
         }
     }
 } catch{
-    write-debug "Error: $_.Exception"
+    write-debug "Error: $($_.Exception)"
     $responseObject['error'] = $_.Exception.Message
     $responseObject['message'] = 'Failed to modify disks'
     return ($responseObject | ConvertTo-Json -Depth 5)
 } 
 
 try {
-    Stop-Service -Name ShellHWDetection
+    if ((Get-Service -Name ShellHWDetection).Status -eq 'Running') {
+        Stop-Service -Name ShellHWDetection
+    }
+
     $null = (New-Item -ItemType Directory -Path $datafolder -Force)
     $null = (New-Item -ItemType Directory -Path $logfolder -Force)
 
@@ -90,18 +93,19 @@ try {
     $dataPartition = Get-Partition -DiskNumber $datadisknumber | Where-Object Type -eq Basic
     $logPartition = Get-Partition -DiskNumber $logdisknumber | Where-Object Type -eq Basic
 
+    $dataPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop | Out-Null
+    $logPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop | Out-Null
+
     write-debug "DataAccessPaths: $($dataPartition.AccessPaths)"
     write-debug "LogAccessPaths: $($logPartition.AccessPaths)"
     write-debug "DataFolder: $datafolder $logfolder"
 
     if ($dataPartition.AccessPaths -notcontains $datafolder + '\') {
-        $null = Add-PartitionAccessPath -DiskNumber $datadisknumber -PartitionNumber ($dataPartition).PartitionNumber -AccessPath $datafolder
-        $null = Set-Partition -DiskNumber $datadisknumber -PartitionNumber ($dataPartition).PartitionNumber -NoDefaultDriveLetter $true 
+        Add-PartitionAccessPath -DiskNumber $datadisknumber -PartitionNumber ($dataPartition).PartitionNumber -AccessPath $datafolder -ErrorAction stop | Out-Null
     }
 
     if ($logPartition.AccessPaths -notcontains $logfolder + '\') {
-        $null = Add-PartitionAccessPath -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logfolder
-        $null = Set-Partition -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -NoDefaultDriveLetter $true 
+        Add-PartitionAccessPath -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logfolder -ErrorAction stop | Out-Null
     }
 
     Get-Partition | Where-Object Type -eq Basic | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
@@ -112,7 +116,7 @@ try {
             if ($accessPath) {
                 $matched = $accessPath -match '^[A-Z]:\\$'
                 write-debug "Matched: $matched"
-                if ($matched -eq $True) {
+                if ($matched -eq $True -and $accessPath -notcontains $DataDriveLetter -and $accessPath -notcontains $logDriveLetter) {
                     $accessDrive = $matches[0]
                     $null = ($partition | Remove-PartitionAccessPath -AccessPath $accessDrive)
                 }
@@ -120,27 +124,32 @@ try {
         }
     }
 
+    Get-ChildItem -Path $datafolder -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
+    Get-ChildItem -Path $logfolder -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
+
     Get-Partition -DiskNumber $datadisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $datalabel
     Get-Partition -DiskNumber $logdisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $loglabel
 
-    $newDataFilePath = $datafolder + (Split-Path -Path $DataFilePath -NoQualifier)
-    $newLogFilePath = $logfolder + (Split-Path -Path $LogFilePath -NoQualifier)
+    $newDataFilePath = (Get-ChildItem -Path $datafolder -Recurse -Filter *.mdf).FullName
+    $newLogFilePath = (Get-ChildItem -Path $logfolder -Recurse -Filter *.ldf).FullName
 
     if ((Test-Path $newDataFilePath) -and (Test-Path $newLogFilePath)) {
         $responseObject['dataPath'] = $newDataFilePath
         $responseObject['logPath'] = $newLogFilePath
     } else {
-        $responseObject['error'] = 'Failed to validate newpaths $newDataFilePath $newLogFilePath'
+        $responseObject['error'] = "Failed to validate newpaths $newDataFilePath $newLogFilePath"
     }
 
     write-debug "NewFilePaths: $newDataFilePath $newLogFilePath"
 } catch {
-    write-debug "Error: $_.Exception"
+    write-debug "Error: $($_.Exception)"
     $responseObject['error'] = $_.Exception.Message
     $responseObject['message'] = 'Failed to initialize disks'
     return ($responseObject | ConvertTo-Json -Depth 5)
 } finally {
-    Start-Service -Name ShellHWDetection
+    if ((Get-Service -Name ShellHWDetection).Status -ne 'Running') {
+        Start-Service -Name ShellHWDetection
+    }
 }
 
 try {
@@ -148,27 +157,34 @@ try {
 
     if ($clusterServiceStatus -eq 'Running') {
         # Add new disks to Cluster Storage
-        $disklist | ForEach-Object {
-            $null = (Get-Disk -Number $_.Number | Add-ClusterDisk)
+
+        $clusterdatadisk = Get-ClusterResource -Name $datalabel -ErrorAction SilentlyContinue
+        $clusterlogdisk = Get-ClusterResource -Name $loglabel -ErrorAction SilentlyContinue
+
+        if ($clusterdatadisk -eq $null -or $clusterlogdisk -eq $null) {
+            $availabledatadisk = Get-ClusterAvailableDisk | Where-Object { $_.Number -eq $datadisknumber }
+            $availablelogdisk = Get-ClusterAvailableDisk | Where-Object { $_.Number -eq $logdisknumber }
+
+            $clusterdatadisk = ($availabledatadisk | Add-ClusterDisk -ErrorAction stop)
+            $clusterlogdisk = ($availablelogdisk | Add-ClusterDisk -ErrorAction stop)
         }
 
         try {
             $SQLRoleGroup =  (Get-ClusterGroup).Name -match ('SQl Server*')
             $SQLGroup = $SQLRoleGroup[0]
 
-            $datavol = ($disklist | Where-Object { $_.SerialNumber -eq $DataSerial }).Name
-            $logvol = ($disklist | Where-Object { $_.SerialNumber -eq $LogSerial }).Name
+            if (($clusterdatadisk.OwnerGroup -ne $SQLGroup) -or ($clusterlogdisk.OwnerGroup -ne $SQLGroup)) {
+                $null = (Move-ClusterResource -Name $($clusterdatadisk.Name) -Group $SQLGroup)
+                $null = (Move-ClusterResource -Name $($clusterlogdisk.Name) -Group $SQLGroup)
 
-            $null = (Move-ClusterResource -Name $logvol -Group $SQLGroup)
-            $null = (Move-ClusterResource -Name $datavol -Group $SQLGroup) 
+                #Add dependency on new disks in SQL Server Resource
+                $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $($clusterdatadisk.Name))
+                $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $($clusterlogdisk.Name))
 
-            #Add dependency on new disks in SQL Server Resource
-            $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $datavol)
-            $null = (Add-ClusterResourceDependency -Resource "SQL Server" -Provider $logvol)
-
-            #Rename new cluster disks to user friendly name
-            (Get-ClusterResource -Name $datavol).name = $datalabel
-            (Get-ClusterResource -Name $logvol).name = $loglabel
+                #Rename new cluster disks to user friendly name
+                (Get-ClusterResource -Name $($clusterdatadisk.Name)).name = $datalabel
+                (Get-ClusterResource -Name $($clusterlogdisk.Name)).name = $loglabel
+            }
         } catch {
             $responseObject['error'] = $_.Exception.Message
             $responseObject['message'] = "Failed to add disks to SQL Server Role dependency in cluster"

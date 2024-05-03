@@ -220,26 +220,18 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
             )
     
             $winvolumes = $sqlresponse | foreach { $_ | ConvertFrom-Json }
-            $dataVolume = $WinVolumes | Where-Object { $_.filename -match '\\.mdf$' } | Select-Object -ExpandProperty volumename
-            $logVolume = $WinVolumes | Where-Object { $_.filename -match '\\.ldf$' } | Select-Object -ExpandProperty volumename
-    
-            $volumes = Get-CimInstance -Query "SELECT DeviceID, VolumeName FROM Win32_LogicalDisk where VolumeName = '$dataVolume' or VolumeName = '$logVolume'"
             $responseObject = @{
                 "collation" = $WinVolumes[0].collation_name
             }
-            foreach ($volume in $volumes) {
-                $filename = $WinVolumes | Where-Object { $_.volumename -eq $volume.VolumeName } | Select-Object -ExpandProperty filename
+            foreach ($winvolume in $winvolumes) {
+                $filename = $winvolume.filename
+                $winvolumename = $winvolume.volumename
                 $object = @{
-                    "windowsVolumeName" = $volume.VolumeName
+                    "windowsVolumeName" = $winvolumename
                     "fileName" = $filename
                 }
-                $partitions = Get-CimInstance -Query "ASSOCIATORS OF {Win32_LogicalDisk.DeviceID='$($volume.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition"
-                foreach ($partition in $partitions) {
-                    $diskdrives = Get-CimInstance -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($partition.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
-                    foreach ($diskdrive in $diskdrives) {
-                        $object | Add-Member -MemberType NoteProperty -Name "lunSerialNumber" -Value $diskdrives.SerialNumber
-                    }
-                }
+                $vol = get-volume -FileSystemLabel $winvolumename | Get-Partition | get-disk | Select serialnumber
+                $object | Add-Member -MemberType NoteProperty -Name "LunSerialNumber" -Value $vol.serialnumber
                 $type = 'data'
                 if ($filename -match '\\.ldf$') {
                     $type = 'log'
