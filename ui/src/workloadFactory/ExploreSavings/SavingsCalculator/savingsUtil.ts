@@ -121,8 +121,8 @@ export const calculatedFSXData = (fsxData: any) => {
             text: `The potential percentage of data stored on the SSD tier for a typical ${fsxData?.useCase} workload when using FSx for ONTAP data tiering capabilities.`
         },
         {
-            label: 'Savings from compression + deduplication',
-            value: fsxData?.savings ? formatFractionalNumber(fsxData?.savings, 2) + '%' : GENERAL.NOT_AVAILABLE,
+            label: 'Savings from compression and deduplication',
+            value: fsxData?.savings ? formatFractionalNumber(fsxData?.savings, 2) + '%' : '0 %',
             text: `Potential storage savings for ${fsxData?.useCase} workload. Storage efficiency is based on a typical customer deployment.`
         },
         {
@@ -141,9 +141,7 @@ export const calculatedFSXData = (fsxData: any) => {
         },
         {
             label: 'Capacity pool tier required capacity',
-            value: fsxData?.capacityPoolTier
-                ? formatSizeOnePrecision(fsxData?.capacityPoolTier)
-                : GENERAL.NOT_AVAILABLE,
+            value: fsxData?.capacityPoolTier ? formatSizeOnePrecision(fsxData?.capacityPoolTier) : '0 TiB',
             text: `Based on a typical ${fsxData?.useCase} workload, ${
                 100 - fsxData?.percentageSsd
             }% of the data is on the capacity pool tier.`
@@ -199,259 +197,7 @@ export const viewCalculation = (viewCalculation: any) => {
     return {
         Ec2InstanceCalculation: [
             {
-                label: 'MsSQL Ec2 Instances calculation',
-                mainHeading: true
-            },
-            {
-                label: 'Machine 1 specification'
-            },
-            {
-                label: 'Instance type',
-                value: `${viewCalculation.Ec2InstanceCalculation.instanceType}`,
-                text: ''
-            },
-            {
-                label: 'Machine 1 pricing calculations'
-            },
-            {
-                label: 'Instance hourly price',
-                value: `${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
-                text: ''
-            },
-            {
-                label: 'Ec2 machine1 cost',
-                value: `${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
-                text: `Instance hourly price x number of hours in a month = ${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} $ x 730`
-            }
-        ],
-        FSxNCalculation: [
-            {
-                label: 'FSxN calculation',
-                mainHeading: true
-            },
-            {
-                label: 'Unit conversions'
-            },
-            {
-                label: 'Desired storage capacity',
-                value: `${viewCalculation.FSxNCalculation.storageCapacity}`,
-                text: `EBS capacity ${viewCalculation.FSxNCalculation.ebsCapacity} TiB x Number of volumes ${viewCalculation.FSxNCalculation.volumes} x 1024 `
-            },
-            {
-                label: 'Percentage of data on SSD storage',
-                value: `${viewCalculation.FSxNCalculation.ssdStorage}%`,
-                text: ''
-            },
-            {
-                label: 'Savings from compression & deduplication',
-                value: `${viewCalculation.FSxNCalculation.deduplication}%`,
-                text: ''
-            },
-            {
-                label: 'Pricing calculations'
-            },
-            {
-                label: 'Storage savings from compression & deduplication ',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.deduplication} GiB`,
-                text: `Desired storage capacity x Savings from compression & deduplication (xx%)`
-            },
-            {
-                label: 'Effective storage capacity for FSx for ONTAP',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.storageCapacity} GiB`,
-                text: `Desired storage capacity  - Storage savings from compression & deduplication`
-            },
-            {
-                label: 'SSD storage GIB per month',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.ssdStorage} GiB`,
-                text: `Effective storage capacity for FSx for ONTAP  x Percentage of data on SSD storage `
-            },
-            {
-                label: 'The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.minSSDStorage} GiB`,
-                text: ``
-            },
-            {
-                label: 'SSD monthly cost ',
-                value: `$ ${viewCalculation.FSxNCalculation.priceCalculation.ssdMonthlyCost}`,
-                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity x SSD storage price `
-            },
-            {
-                label: 'Total monthly cost for FSx for NetApp ONTAP file server - SSD storage capacity',
-                value: `$ ${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostStorageCapacity}`,
-                text: `$ ${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostStorageCapacity} `
-            },
-            {
-                label: 'Ratio after savings from compression & deduplication factor',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.deduplicationFactor}%`,
-                text: `$ ${viewCalculation.FSxNCalculation.priceCalculation.deduplicationFactor} `
-            },
-            {
-                label: 'Data on capacity pool storage factor',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.storageFactor}%`,
-                text: `100% - Percentage of data on SSD storage`
-            },
-            {
-                label: 'Capacity pool storage capacity',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.storageCapacity} GiB`,
-                text: `Desired storage capacity x Ratio after savings from compression & deduplication factor x Data on capacity pool storage factor `
-            },
-            {
-                label: 'Capacity monthly cost',
-                value: `$${viewCalculation.FSxNCalculation.priceCalculation.capacityMonthlyCost}`,
-                text: `Capacity pool storage capacity x FSx for ONTAP capacity price  `
-            },
-            {
-                label: 'Total monthly cost for FSx for NetApp ONTAP file server - Capacity pool storage capacity',
-                value: `$${viewCalculation.FSxNCalculation.priceCalculation.capacityPoolStorageCapacity}`,
-                text: ` `
-            },
-            {
-                label: 'Total storage charge (monthly)',
-                value: `$${viewCalculation.FSxNCalculation.priceCalculation.totalStorageCharge}`,
-                text: `Total monthly cost for FSx for NetApp ONTAP file server capacity pool storage capacity`
-            },
-            {
-                label: 'Minimum number of file systems required for storage capacity',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.minFileSystem}`,
-                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity ÷ Max SSD tier size 192 TiB`
-            },
-            {
-                label: 'Minimum number of file systems required for throughout capacity',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.throughputCapacity}`,
-                text: `Suggested FSx for ONTAP throughout capacity ÷ max throughput MB/s`
-            },
-            {
-                label: 'Minimum number of file systems required for SSD IOPS',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.sddIOPS}`,
-                text: `Provisioned SSD IOPS ÷ Maximum SSD IOPS`
-            },
-            {
-                label: 'Required number of FSx file systems - fractional',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.fractional}`,
-                text: ``
-            },
-            {
-                label: 'Required number of FSx file systems',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.fileSystems}`,
-                text: ``
-            },
-            {
-                label: 'Minimum throughout capacity required',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.capacityRequired}`,
-                text: `Required number of FSx file systems x Min throughput capacity GiB `
-            },
-            {
-                label: 'Provisioned throughput capacity',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.provisionedThroughputCapacity} GiB`,
-                text: ``
-            },
-            {
-                label: 'Total monthly cost for FSx for NetApp ONTAP file server - Throughput capacity',
-                value: `$${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostThroughputCapacity}`,
-                text: ` Provisioned throughput capacity  x FSx for ONTAP throughput price`
-            },
-            {
-                label: 'Included SSD IOPS',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.includedSSDIOPS}`,
-                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity x Included IOPS÷GIB `
-            },
-            {
-                label: 'Additional SSD IOPS',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.additionalSSDIOPS}`,
-                text: `Provisioned SSD IOPS - Included SSD IOPS`
-            },
-            {
-                label: 'Billed additional SSD IOPS',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.billedSSD}`,
-                text: ``
-            },
-            {
-                label: 'Additional billed cost for SSD IOPS',
-                value: `$${viewCalculation.FSxNCalculation.priceCalculation.additionalBilledCost}`,
-                text: `Billed additional SSD IOPS x FSx for ONTAP IOPS price`
-            },
-            {
-                label: 'Total throughput and IOPS (monthly)',
-                value: `$${viewCalculation.FSxNCalculation.priceCalculation.totalThroughputIOPS}`,
-                text: `Additional billed cost for SSD IOPS + Total monthly cost for FSx for NetApp ONTAP file server throughput capacity `
-            }
-        ],
-        cloneCalculation: [
-            {
-                label: 'Clone calculation',
-                mainHeading: true
-            },
-            {
-                label: 'Unit conversions'
-            },
-            {
-                label: 'Clone frequency',
-                value: `$(${viewCalculation.cloneCalculation.unitConversion.cloneFrequency})`,
-                text: ``
-            },
-            {
-                label: 'change rate between clones (%)',
-                value: `$${viewCalculation.cloneCalculation.unitConversion.cloneRateChange}%`,
-                text: `monthly change rate (%) / number of periods = 3%/30`
-            },
-            {
-                label: 'Desired storage capacity',
-                value: `${viewCalculation.cloneCalculation.unitConversion.desiredStorageCapacity}GiB`,
-                text: `number of cloned copies* (%change rate*total fsxN capacity*number of clones in a month)= 3*(0.1% *2*1024*30)`
-            },
-            {
-                label: 'Percentage of data on SSD storage',
-                value: `$${viewCalculation.cloneCalculation.unitConversion.ssdStorage}%`,
-                text: ``
-            },
-            {
-                label: 'Savings from compression & deduplication',
-                value: `$${viewCalculation.cloneCalculation.unitConversion.savingsDeduplication}%`,
-                text: ``
-            },
-            {
-                label: 'Pricing calculations'
-            },
-            {
-                label: 'Storage savings from compression & deduplication',
-                value: `${viewCalculation.cloneCalculation.priceCalculation.storageSavingsDeduplication} GiB`,
-                text: `Desired storage capacity  x Savings from compression & deduplication = 184GiB x 0% = 0GiB`
-            },
-            {
-                label: 'Effective storage capacity for FSx for ONTAP',
-                value: `${viewCalculation.cloneCalculation.priceCalculation.effectiveStorageCapacity} GiB`,
-                text: `Desired storage capacity  - Storage savings from compression & deduplication = 184GiB-0Gib`
-            },
-            {
-                label: 'SSD storage GiB per month',
-                value: `${viewCalculation.cloneCalculation.priceCalculation.ssdStorage} GiB`,
-                text: `Effective storage capacity for FSx for ONTAP (3,000 GiB) x Percentage of data on SSD storage = 184GiBx 100%`
-            },
-            {
-                label: 'SSD monthly cost',
-                value: `${viewCalculation.cloneCalculation.priceCalculation.ssdMonthlyCost}$`,
-                text: `SSD storage GiB per month  x FSx for ONTAP SSD price = 184GiB x 0.14$`
-            },
-            {
-                label: 'Total clone monthly cost',
-                value: `${viewCalculation.cloneCalculation.priceCalculation.totalMonthlyCloneCost}$`,
-                secondaryHeading: true,
-                text: ``
-            },
-            {
-                label: 'Total monthly cost',
-                value: `$(${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCost})`,
-                text: `Total throughput and IOPS (monthly) + total storage charge (monthly) `
-            }
-        ]
-    };
-};
-
-export const viewCalculationForEBS = (viewCalculation: any) => {
-    return {
-        Ec2InstanceCalculation: [
-            {
-                label: 'MsSQL Ec2 Instances calculation',
+                label: 'Microsoft SQL EC2 Instances calculation',
                 mainHeading: true
             },
             {
@@ -477,13 +223,275 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
             },
             {
                 label: 'Instance hourly price',
-                value: `${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
+                value: `$ ${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
                 text: ''
             },
             {
                 label: 'Ec2 machine1 cost',
-                value: `${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
-                text: `Instance hourly price x number of hours in a month = ${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} $ x 730`
+                value: `$ ${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
+                text: `Instance hourly price x number of hours in a month = $ ${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
+            }
+        ],
+        FSxNCalculation: [
+            {
+                label: 'FSx for ONTAP calculation',
+                mainHeading: true
+            },
+            {
+                label: 'Unit conversions'
+            },
+            {
+                label: 'Desired storage capacity',
+                value: `${viewCalculation.FSxNCalculation.storageCapacity} GiB`,
+                text: `EBS capacity (${viewCalculation.FSxNCalculation.ebsCapacity} TiB) x Number of volumes (${viewCalculation.FSxNCalculation.volumes}) x 1024 `
+            },
+            {
+                label: 'Percentage of data on SSD storage',
+                value: `${viewCalculation.FSxNCalculation.ssdStorage}%`,
+                text: ''
+            },
+            {
+                label: 'Savings from compression & deduplication',
+                value: `${viewCalculation.FSxNCalculation.deduplication}%`,
+                text: ''
+            },
+            {
+                label: 'Pricing calculations'
+            },
+            {
+                label: 'Storage savings from compression & deduplication ',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.deduplication} GiB`,
+                text: `Desired storage capacity (${viewCalculation.FSxNCalculation.storageCapacity} GiB) x Savings from compression & deduplication (${viewCalculation.FSxNCalculation.deduplication}%)`
+            },
+            {
+                label: 'Effective storage capacity for FSx for ONTAP',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.storageCapacity} GiB`,
+                text: `Desired storage capacity (${viewCalculation.FSxNCalculation.storageCapacity} GiB)  - Storage savings from compression & deduplication (${viewCalculation.FSxNCalculation.priceCalculation.deduplication} GiB)`
+            },
+            {
+                label: 'SSD storage GIB per month',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.ssdStorage} GiB`,
+                text: `Effective storage capacity for FSx for ONTAP (${viewCalculation.FSxNCalculation.priceCalculation.storageCapacity} GiB)  x Percentage of data on SSD storage (${viewCalculation.FSxNCalculation.ssdStorage}%) `
+            },
+            {
+                label: 'The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.minSSDStorage} GiB`,
+                text: ``
+            },
+            {
+                label: 'SSD monthly cost ',
+                value: `$ ${viewCalculation.FSxNCalculation.priceCalculation.ssdMonthlyCost}`,
+                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity (${viewCalculation.FSxNCalculation.priceCalculation.minSSDStorage} GiB) x SSD storage price ($${viewCalculation.FSxNCalculation.priceCalculation.ssdStoragePrice})`
+            },
+            {
+                label: 'Total monthly cost for FSx for NetApp ONTAP file server - SSD storage capacity',
+                value: `$ ${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostStorageCapacity}`,
+                text: ''
+            },
+            {
+                label: 'Ratio after savings from compression & deduplication factor',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.deduplicationFactor}%`,
+                text: `${viewCalculation.FSxNCalculation.priceCalculation.deduplicationFactor}% - Savings from compression and deduplication (${viewCalculation.FSxNCalculation.deduplication}%)`
+            },
+            {
+                label: 'Data on capacity pool storage factor',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.storageFactor}%`,
+                text: `100% - Percentage of data on SSD storage (${viewCalculation.FSxNCalculation.ssdStorage}%)`
+            },
+            {
+                label: 'Capacity pool storage capacity',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.capacityPoolStorageCapacity} GiB`,
+                text: `Desired storage capacity (${viewCalculation.FSxNCalculation.storageCapacity} GiB) x Ratio after savings from compression & deduplication factor (${viewCalculation.FSxNCalculation.priceCalculation.deduplicationFactor}%) x Data on capacity pool storage factor (${viewCalculation.FSxNCalculation.priceCalculation.storageFactor}%)`
+            },
+            {
+                label: 'Capacity monthly cost',
+                value: `$${viewCalculation.FSxNCalculation.priceCalculation.capacityMonthlyCost}`,
+                text: `Capacity pool storage capacity (${viewCalculation.FSxNCalculation.priceCalculation.capacityPoolStorageCapacity} GiB) x FSx for ONTAP capacity price ($${viewCalculation.FSxNCalculation.priceCalculation.fsxnCapacityPrice})`
+            },
+            {
+                label: 'Total monthly cost for FSx for NetApp ONTAP file server - Capacity pool storage capacity',
+                value: `$${viewCalculation.FSxNCalculation.priceCalculation.capacityPoolStorageCapacity}`,
+                text: ` `
+            },
+            {
+                label: 'Total storage charge (monthly)',
+                value: `$${viewCalculation.FSxNCalculation.priceCalculation.totalStorageCharge}`,
+                text: `Total monthly cost for FSx for NetApp ONTAP file server capacity pool storage capacity ($${viewCalculation.FSxNCalculation.priceCalculation.capacityPoolStorageCapacity}) + Total monthly cost for FSx for NetApp ONTAP file server SSD storage capacity ($${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostStorageCapacity})`
+            },
+            {
+                label: 'Minimum number of file systems required for storage capacity',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.minFileSystem}`,
+                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity (${viewCalculation.FSxNCalculation.priceCalculation.minSSDStorage} GiB) ÷ Max SSD tier size (${viewCalculation.FSxNCalculation.priceCalculation.maxSSDTierSize} GiB) `
+            },
+            {
+                label: 'Minimum number of file systems required for throughout capacity',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.throughputCapacity}`,
+                text: `Suggested FSx for ONTAP throughout capacity (128 GiB) ÷ max throughput (4096 MB/s)`
+            },
+            {
+                label: 'Minimum number of file systems required for SSD IOPS',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.sddIOPS}`,
+                text: `Provisioned SSD (80000 IOPS) ÷ Maximum SSD (160000 IOPS)`
+            },
+            {
+                label: 'Required number of FSx file systems - fractional',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.fractional}`,
+                text: ``
+            },
+            {
+                label: 'Required number of FSx file systems',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.fileSystems}`,
+                text: ``
+            },
+            {
+                label: 'Minimum throughout capacity required',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.capacityRequired} GiB`,
+                text: `Required number of FSx file systems (1) x Min throughput capacity (128 GiB)`
+            },
+            {
+                label: 'Provisioned throughput capacity',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.provisionedThroughputCapacity} GiB`,
+                text: ``
+            },
+            {
+                label: 'Total monthly cost for FSx for NetApp ONTAP file server - Throughput capacity',
+                value: `$${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostThroughputCapacity}`,
+                text: ` Provisioned throughput capacity (${viewCalculation.FSxNCalculation.priceCalculation.provisionedThroughputCapacity} GiB)  x FSx for ONTAP throughput price ($0.72)`
+            },
+            {
+                label: 'Included SSD IOPS',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.includedSSDIOPS}`,
+                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity (4,096) x Included (3.3) IOPS per GIB `
+            },
+            {
+                label: 'Additional SSD IOPS',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.additionalSSDIOPS}`,
+                text: `Provisioned SSD (80000 IOPS) - Included SSD (13,511 IOPS)`
+            },
+            {
+                label: 'Billed additional SSD IOPS',
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.billedSSD}`,
+                text: ``
+            },
+            {
+                label: 'Additional billed cost for SSD IOPS',
+                value: `$${viewCalculation.FSxNCalculation.priceCalculation.additionalBilledCost}`,
+                text: `Billed additional SSD (${viewCalculation.FSxNCalculation.priceCalculation.additionalSSDIOPS} IOPS) x FSx for ONTAP IOPS price ($0.02)`
+            },
+            {
+                label: 'Total throughput and IOPS (monthly)',
+                value: `$${viewCalculation.FSxNCalculation.priceCalculation.totalThroughputIOPS}`,
+                text: `Additional billed cost for SSD IOPS ($${viewCalculation.FSxNCalculation.priceCalculation.additionalBilledCost}) + Total monthly cost for FSx for NetApp ONTAP file server throughput capacity ($${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostThroughputCapacity})`
+            }
+        ],
+        cloneCalculation: [
+            {
+                label: 'Clone calculation',
+                mainHeading: true
+            },
+            {
+                label: 'Unit conversions'
+            },
+            {
+                label: 'Clone frequency',
+                value: `${viewCalculation.cloneCalculation.unitConversion.cloneFrequency}`,
+                text: ``
+            },
+            {
+                label: 'change rate between clones (%)',
+                value: `${viewCalculation.cloneCalculation.unitConversion.cloneRateChange}%`,
+                text: `monthly change rate (%) / number of periods = 3%/30`
+            },
+            {
+                label: 'Desired storage capacity',
+                value: `${viewCalculation.cloneCalculation.unitConversion.desiredStorageCapacity} GiB`,
+                text: `number of cloned copies* (%change rate*total fsxN capacity*number of clones in a month)= 3*(0.1% *2*1024*30)`
+            },
+            {
+                label: 'Percentage of data on SSD storage',
+                value: `${viewCalculation.cloneCalculation.unitConversion.ssdStorage}%`,
+                text: ``
+            },
+            {
+                label: 'Savings from compression & deduplication',
+                value: `${viewCalculation.cloneCalculation.unitConversion.savingsDeduplication}%`,
+                text: ``
+            },
+            {
+                label: 'Pricing calculations'
+            },
+            {
+                label: 'Storage savings from compression & deduplication',
+                value: `${viewCalculation.cloneCalculation.priceCalculation.storageSavingsDeduplication} GiB`,
+                text: `Desired storage capacity  x Savings from compression & deduplication = ${viewCalculation.cloneCalculation.unitConversion.desiredStorageCapacity} GiB x ${viewCalculation.cloneCalculation.unitConversion.savingsDeduplication}% = 0GiB`
+            },
+            {
+                label: 'Effective storage capacity for FSx for ONTAP',
+                value: `${viewCalculation.cloneCalculation.priceCalculation.effectiveStorageCapacity} GiB`,
+                text: `Desired storage capacity  - Storage savings from compression & deduplication = ${viewCalculation.cloneCalculation.unitConversion.desiredStorageCapacity} GiB - ${viewCalculation.cloneCalculation.unitConversion.savingsDeduplication} GiB`
+            },
+            {
+                label: 'SSD storage GiB per month',
+                value: `${viewCalculation.cloneCalculation.priceCalculation.ssdStorage} GiB`,
+                text: `Effective storage capacity for FSx for ONTAP x Percentage of data on SSD storage = 780 GiB x 100%`
+            },
+            {
+                label: 'SSD monthly cost',
+                value: `$${viewCalculation.cloneCalculation.priceCalculation.ssdMonthlyCost}`,
+                text: `SSD storage GiB per month  x FSx for ONTAP SSD price = 780GiB x 0.14$`
+            },
+            {
+                label: 'Total clone monthly cost',
+                value: `$${viewCalculation.cloneCalculation.priceCalculation.totalMonthlyCloneCost}`,
+                secondaryHeading: true,
+                text: ``
+            },
+            {
+                label: 'Total monthly cost',
+                value: `$${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCost}`,
+                text: `Total throughput and IOPS (monthly) ($${viewCalculation.FSxNCalculation.priceCalculation.totalThroughputIOPS})  + total storage charge (monthly) ($${viewCalculation.FSxNCalculation.priceCalculation.totalStorageCharge}) `
+            }
+        ]
+    };
+};
+
+export const viewCalculationForEBS = (viewCalculation: any) => {
+    return {
+        Ec2InstanceCalculation: [
+            {
+                label: 'Microsoft SQL EC2 instances calculation',
+                mainHeading: true
+            },
+            {
+                label: 'Machine 1 specification'
+            },
+            {
+                label: 'Instance type',
+                value: `${viewCalculation.Ec2InstanceCalculation.instanceType}`,
+                text: ''
+            },
+            {
+                label: 'SQL edition',
+                value: `${viewCalculation.Ec2InstanceCalculation.sqlEdition}`,
+                text: ''
+            },
+            {
+                label: 'SQL license included',
+                value: `${viewCalculation.Ec2InstanceCalculation.sqlLicense}`,
+                text: ''
+            },
+            {
+                label: 'Machine 1 pricing calculations'
+            },
+            {
+                label: 'Instance hourly price',
+                value: `$ ${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
+                text: ''
+            },
+            {
+                label: 'Ec2 machine1 cost',
+                value: `$ ${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
+                text: `Instance hourly price x number of hours in a month = $ ${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
             }
         ],
         EBSCalculation: [
@@ -497,7 +505,7 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
             {
                 label: 'Storage amount per volume',
                 value: `${viewCalculation.EBSCalculation.storageCapacity}`,
-                text: `Storage amount per volume x 1024`
+                text: `Storage amount per volume (2 TiB) x 1024`
             },
 
             {
@@ -506,17 +514,17 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
             {
                 label: 'Total instance hours',
                 value: `${viewCalculation.EBSCalculation.priceCalculation.totalInstanceHour}`,
-                text: `Number of volumes x Average duration each instance runs ${viewCalculation.EBSCalculation.priceCalculation.totalInstanceHour} hours`
+                text: `Number of volumes (2) x Average duration each instance runs (${viewCalculation.EBSCalculation.priceCalculation.eachInstanceHour} hours)`
             },
             {
                 label: 'Instance months',
-                value: `${viewCalculation.EBSCalculation.priceCalculation.instanceMonth} month`,
-                text: `Total instance hours  ÷ hours in a month`
+                value: `${viewCalculation.EBSCalculation.priceCalculation.instanceMonth} months`,
+                text: `Total instance hours (${viewCalculation.EBSCalculation.priceCalculation.totalInstanceHour})  ÷ hours in a month (${viewCalculation.EBSCalculation.priceCalculation.eachInstanceHour})`
             },
             {
                 label: 'EBS storage cost',
                 value: `$${viewCalculation.EBSCalculation.priceCalculation.ebsStorageCost}`,
-                text: `Storage amount per volume x instance months x EBS capacity price ${viewCalculation.EBSCalculation.priceCalculation.ebsStorageCost}`
+                text: `Storage amount per volume (${viewCalculation.EBSCalculation.storageCapacity} GiB) x instance months (${viewCalculation.EBSCalculation.priceCalculation.instanceMonth} months) x EBS capacity price ($${viewCalculation.EBSCalculation.priceCalculation.ebsCapacityPrice})`
             },
             {
                 label: 'Billable IOPS',
@@ -525,12 +533,12 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
             },
             {
                 label: 'Total billable IOPS ',
-                value: `$ ${viewCalculation.EBSCalculation.priceCalculation.totalBillableIOPS}`,
+                value: `${viewCalculation.EBSCalculation.priceCalculation.totalBillableIOPS} IOPS`,
                 text: ``
             },
             {
                 label: 'EBS IOPS cost',
-                value: `$ ${viewCalculation.EBSCalculation.priceCalculation.ebsIOPSCost}`,
+                value: `$${viewCalculation.EBSCalculation.priceCalculation.ebsIOPSCost}`,
                 text: ``
             },
             {
@@ -546,7 +554,7 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
             {
                 label: 'Billable throughput (GB/s))',
                 value: `${viewCalculation.EBSCalculation.priceCalculation.billableThroughputGbps} GB/s`,
-                text: `Billable throughput (MB/s) ÷ 1024`
+                text: `Billable throughput (${viewCalculation.EBSCalculation.priceCalculation.billableThroughputMbps} MB/s) ÷ 1024`
             },
             {
                 label: 'EBS throughput cost',
@@ -571,22 +579,22 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
             {
                 label: 'Discount for partial storage month',
                 value: `$${viewCalculation.EBSCalculation.priceCalculation.discountForPartialStorage}`,
-                text: `Monthly cost of each snapshot x discount for partial storage month (xxx)%`
+                text: `Monthly cost of each snapshot ($${viewCalculation.EBSCalculation.priceCalculation.monthlyCostOFEachSnapshot}) x discount for partial storage month (50%)`
             },
             {
                 label: 'Incremental snapshot cost',
                 value: `$${viewCalculation.EBSCalculation.priceCalculation.incrementSnapshotCost}`,
-                text: `(Monthly cost of each snapshot - discount for partial storage month) x Total snapshots `
+                text: `(Monthly cost of each snapshot ($${viewCalculation.EBSCalculation.priceCalculation.monthlyCostOFEachSnapshot}) - discount for partial storage month ($${viewCalculation.EBSCalculation.priceCalculation.discountForPartialStorage})) x Total snapshots (${viewCalculation.EBSCalculation.priceCalculation.totalSnapshots}) `
             },
             {
                 label: 'Total snapshot cost',
                 value: `$${viewCalculation.EBSCalculation.priceCalculation.totalSnapshotCost}`,
-                text: `Initial snapshot cost + Incremental snapshot cost `
+                text: `Initial snapshot cost ($${viewCalculation.EBSCalculation.priceCalculation.initialSnapshotCost}) + Incremental snapshot cost ($${viewCalculation.EBSCalculation.priceCalculation.incrementSnapshotCost}) `
             },
             {
                 label: 'Total EBS snapshot cost',
-                value: `${viewCalculation.EBSCalculation.priceCalculation.totalEBSSnapshotCost}`,
-                text: `Total snapshot cost  x instance months`
+                value: `$${viewCalculation.EBSCalculation.priceCalculation.totalEBSSnapshotCost}`,
+                text: `Total snapshot cost ($${viewCalculation.EBSCalculation.priceCalculation.totalSnapshotCost})  x instance months (${viewCalculation.EBSCalculation.priceCalculation.instanceMonth} months)`
             },
             {
                 label: 'EBS snapshot cost',
@@ -612,7 +620,7 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
             {
                 label: 'Amazon Elastic Block Storage (EBS) total cost (monthly)',
                 value: `$${viewCalculation.EBSCalculation.priceCalculation.amazonElasticBlock}`,
-                text: `EBS snapshot cost + EBS throughput cost + EBS IOPS cost + EBS storage cost `
+                text: `EBS snapshot cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsSnapshotCost}) + EBS throughput cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsThroughCost}) + EBS IOPS cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsIOPSCost}) + EBS storage cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsStorageCost})`
             }
         ]
     };

@@ -6,6 +6,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 const SavingsSelectedHost = () => {
     const isDisabled = false;
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     return (
         <div className={styles.selectedHosts}>
@@ -19,7 +20,9 @@ const SavingsSelectedHost = () => {
                             variant="Semibold_14"
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
                         >
-                            {selectedHostDetails?.databaseServer?.activeNode || GENERAL.NOT_AVAILABLE}
+                            {isDemoMode
+                                ? 'SQLserver-Finance-01'
+                                : selectedHostDetails?.databaseServer?.activeNode || GENERAL.NOT_AVAILABLE}
                         </DsTypography>
                     )}
                     {selectedHostDetails?.loading && (
@@ -43,7 +46,7 @@ const SavingsSelectedHost = () => {
                             variant="Semibold_14"
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
                         >
-                            {selectedHostDetails?.databaseCount || GENERAL.NOT_AVAILABLE}
+                            {isDemoMode ? 2 : selectedHostDetails?.databaseCount || GENERAL.NOT_AVAILABLE}
                         </DsTypography>
                     )}
                     {selectedHostDetails?.loading && (
@@ -67,7 +70,7 @@ const SavingsSelectedHost = () => {
                             variant="Semibold_14"
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
                         >
-                            {selectedHostDetails?.ebsResourceInfo?.length || GENERAL.NOT_AVAILABLE}
+                            {isDemoMode ? 2 : selectedHostDetails?.ebsResourceInfo?.length || GENERAL.NOT_AVAILABLE}
                         </DsTypography>
                     )}
                     {selectedHostDetails?.loading && (

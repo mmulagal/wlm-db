@@ -2,9 +2,9 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 export const initialExploreSavingsState: any = {
     selectedSnapshotFrequency: null,
-    numberOfClonedCopies: 3,
+    numberOfClonedCopies: 1,
     selectedCloneRefresh: null,
-    monthlyChangeRate: 3,
+    monthlyChangeRate: 10,
     saveConfigName: '',
     loading: false,
     unmanagedExploreSavingsHost: [],
