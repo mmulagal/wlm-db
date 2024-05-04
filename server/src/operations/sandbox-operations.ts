@@ -528,9 +528,6 @@ async function startSandboxCreation(
         await createExtendedProperties(accountId, credentialsId, region, parentJobId, srcDetails, destDetails, tag);
 
         status = JOBSTATUS.COMPLETED;
-
-        // clearning all the ssm command cache so that we will get the fresh data once the sandbox is created
-        resetCache(SSM_COMMAND_CACHE_TYPE);
     } catch (e: any) {
         logger.error(e);
         errorMsg = e.message || 'Internal Server Error';
@@ -546,6 +543,8 @@ async function startSandboxCreation(
             compact([mountPaths?.dataPath, mountPaths?.logPath])
         );
     } finally {
+        // clearning all the ssm command cache so that we will get the fresh data once the sandbox is created
+        resetCache(SSM_COMMAND_CACHE_TYPE);
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             error: errorMsg,
             status: status!,
