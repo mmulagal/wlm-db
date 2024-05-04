@@ -432,8 +432,8 @@ async function createSandbox(
     }
 
     const job = await registerJob(accountId, credentialsId, region, {
-        name: `Create sandbox for database ${source.database}`,
-        description: `Create sandbox for database ${source.database} in host ${srcResourceDetail.resource_name}`,
+        name: `Creating sandbox ${dest.database} in the target host ${destResourceDetail.resource_name}`,
+        description: `Creating sandbox ${dest.database} in the target host ${destResourceDetail.resource_name}`,
         resourceName: source.database,
         initiator: 'SYSTEM',
         startTime: Date.now(),
@@ -563,7 +563,7 @@ async function validateCloneParams(
     let errMsg;
 
     const validationJob = await registerJob(accountId, credentialsId, region, {
-        description: `Validate if the sandbox ${destDetails.database} is already present at destination host ${destDetails.resourceName}`,
+        description: `Validate if the sandbox ${destDetails.database} already exists in the target host ${destDetails.resourceName}`,
         startTime: Date.now(),
         name: 'Validate if sandbox already exits',
         status,
@@ -609,9 +609,9 @@ async function getMappings(
     let errorMsg;
 
     const mappingJob = await registerJob(accountId, credentialsId, region, {
-        description: `Get the volume lun mapping for the source database ${srcDetails.database} in host ${srcDetails.resourceName}`,
+        description: `Get the volume LUN mapping for the source database ${srcDetails.database} of the host ${srcDetails.resourceName}`,
         startTime: Date.now(),
-        name: 'Get volume lun mappings',
+        name: `Get volume LUN mappings for source database ${srcDetails.database}`,
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: srcDetails.database,
@@ -679,9 +679,9 @@ async function createVolumeClone(
     let errorMsg;
 
     const createVolumeCloneJob = await registerJob(accountId, credentialsId, region, {
-        description: 'Create ontap flexclone volumes from the source volumes',
+        description: 'Create ONTAP FlexClone volumes from the volumes mapped to the source SQL server',
         startTime: Date.now(),
-        name: 'Create flexclone volumes',
+        name: 'Create ONTAP FlexClone volumes',
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: srcDetails.database,
@@ -769,9 +769,9 @@ async function invokeVirtualMount(
     let errorMsg;
 
     const invokeMountJob = await registerJob(accountId, credentialsId, region, {
-        description: `Discover cloned luns and create virtual mount points in host ${destDetails.resourceName}`,
+        description: `Discover cloned LUNs and create virtual mount points in the target host ${destDetails.resourceName}`,
         startTime: Date.now(),
-        name: 'Discover luns and create virtual mount point',
+        name: 'Discover cloned LUNs and create virtual mount point',
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
@@ -862,9 +862,9 @@ async function createCloneDb(
     let errorMsg;
 
     const createCloneDbJob = await registerJob(accountId, credentialsId, region, {
-        description: `Create sandbox ${destDetails.database} on ${destDetails.resourceName}`,
+        description: `Create sandbox ${destDetails.database} on the target host ${destDetails.resourceName}`,
         startTime: Date.now(),
-        name: 'Create sandbox',
+        name: `Create sandbox ${destDetails.database}`,
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
@@ -923,9 +923,9 @@ async function createExtendedProperties(
     let errorMsg;
 
     const createExtendedPropertiesJob = await registerJob(accountId, credentialsId, region, {
-        description: `Add extended properties to sandbox ${destDetails.database} on host ${destDetails.resourceName}`,
+        description: `Add extended properties to sandbox ${destDetails.database} on the target host ${destDetails.resourceName}`,
         startTime: Date.now(),
-        name: 'Add extended properties to sandbox',
+        name: `Add extended properties to sandbox ${destDetails.database}`,
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
