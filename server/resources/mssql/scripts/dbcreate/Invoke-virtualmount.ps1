@@ -130,8 +130,10 @@ try {
     Get-Partition -DiskNumber $datadisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $datalabel
     Get-Partition -DiskNumber $logdisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $loglabel
 
-    $newDataFilePath = (Get-ChildItem -Path $datafolder -Recurse -Filter *.mdf).FullName
-    $newLogFilePath = (Get-ChildItem -Path $logfolder -Recurse -Filter *.ldf).FullName
+    $DataFileLeaf = Split-Path -Path $DataFilePath -Leaf
+    $LogFileLeaf = Split-Path -Path $LogFilePath -Leaf
+    $newDataFilePath = (Get-ChildItem -Path $datafolder -Recurse -Filter $DataFileLeaf).FullName
+    $newLogFilePath = (Get-ChildItem -Path $logfolder -Recurse -Filter $LogFileLeaf).FullName
 
     if ((Test-Path $newDataFilePath) -and (Test-Path $newLogFilePath)) {
         $responseObject['dataPath'] = $newDataFilePath
