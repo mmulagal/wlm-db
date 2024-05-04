@@ -11,7 +11,8 @@ import {
     HttpErrorCodes,
     NO_SANDBOX_CREATED,
     RESOURCESTYPE,
-    SANDBOX_API_SIZE
+    SANDBOX_API_SIZE,
+    SSM_COMMAND_CACHE_TYPE
 } from '../utils/consts';
 import {
     GET_SANDBOX_DETAILS,
@@ -31,6 +32,7 @@ import { getResources } from './database/database-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
 import { INVOKE_VIRTUAL_MOUNT } from './workloads/mssql/const';
 import { updateSandboxDBIntoResourceData } from './demo-operations';
+import { resetCache } from '../utils/cache';
 
 const logger = getLogger();
 
@@ -541,6 +543,8 @@ async function startSandboxCreation(
             compact([mountPaths?.dataPath, mountPaths?.logPath])
         );
     } finally {
+        // clearning all the ssm command cache so that we will get the fresh data once the sandbox is created
+        resetCache(SSM_COMMAND_CACHE_TYPE);
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             error: errorMsg,
             status: status!,
