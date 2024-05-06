@@ -13,6 +13,7 @@ import {
     DETECT_HOST_VAR,
     DISABLED_STATE,
     ENABLED_STATE,
+    FORM_OPTIONS,
     FSX_DEPLOYMENT_MODE,
     JM_DOWNLOAD,
     JOBS_REPORT,
@@ -172,7 +173,7 @@ export const fsxPassVal = (password: string) => {
             return '';
         }
         let fsxUserName = '';
-        if (state.mssqlForm.fsxN.fsxNType === GENERAL.SELECT_EXISTING_FSX) {
+        if (isFsxnExisting(state.mssqlForm.fsxN.fsxNType)) {
             fsxUserName = state.mssqlForm.fsxN.fsxNExistingUserName;
         } else {
             fsxUserName = state.mssqlForm.fsxN.fsxNNewUserName;
@@ -960,7 +961,7 @@ export const getChatbotParamsFromPayload = (payload: any) => {
         params.sqlServerName = payload.dbName;
     }
     if (payload?.fsxN?.fsxNType) {
-        params.fsxType = payload.fsxN.fsxNType === GENERAL.CREATE_NEW_FSXN ? 'NEW' : 'EXISTING';
+        params.fsxType = isFsxnNew(payload.fsxN.fsxNType) ? 'NEW' : 'EXISTING';
     }
     if (payload?.dbDeploymentModel?.value) {
         params.sqlDeploymentMode = payload.dbDeploymentModel.value;
@@ -1478,4 +1479,24 @@ export const checkValueSavedForCred = (options: any, value: any) => {
         }
     }
     return containsValue;
+};
+
+export const isFsxnNew = (val: string) => {
+    if (val === FORM_OPTIONS.FSXN_NEW || val === GENERAL.CREATE_NEW_FSXN || val === 'Create new FSxN') {
+        return true;
+    } else {
+        return false;
+    }
+};
+
+export const isFsxnExisting = (val: string) => {
+    if (
+        val === FORM_OPTIONS.FSXN_EXISTING ||
+        val === GENERAL.SELECT_EXISTING_FSX ||
+        val === 'Select an existing FSxN '
+    ) {
+        return true;
+    } else {
+        return false;
+    }
 };

@@ -68,7 +68,8 @@ import {
     SQL_DEPLOYMENT_MODE,
     TIMELINE_PROD_LINK,
     TIMELINE_STAGE_LINK,
-    USER_MANAGED_AD
+    USER_MANAGED_AD,
+    FORM_OPTIONS
 } from '../../../utils/consts';
 import ChatbotHeader from './ChatbotHeader/ChatbotHeader';
 import { handleCreateSQLServer } from '../MSSqlServer/MSSqlFooter/createSqlServer';
@@ -588,7 +589,7 @@ const Chatbot = () => {
                     }
                     break;
                 case 'fsxFileSystemId':
-                    dispatch(setFsxNType(GENERAL.SELECT_EXISTING_FSX));
+                    dispatch(setFsxNType(FORM_OPTIONS.FSXN_EXISTING));
                     if (mssqlFormData?.fsxN?.fsxNExistingName?.fileSystemId !== value) {
                         const selectedFsx = mssqlData?.getFsxnList?.fsxnData?.filesystems?.filter(
                             (item: any) => item.fileSystemId === value

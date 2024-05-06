@@ -17,6 +17,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
 import { selectFsxIops } from '../../MSSqlServer/MSSqlUtils';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
+import { isFsxnExisting } from '../../../../utils/utilityFunctions';
 
 const ProvisionedIOPS = () => {
     const dispatch = useDispatch();
@@ -31,7 +32,7 @@ const ProvisionedIOPS = () => {
     const [isDisable, setIsDisable] = useState(false);
 
     useEffect(() => {
-        if (selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName) {
+        if (isFsxnExisting(selectedFsxnType) && selectedExistingFsxnName) {
             setIsDisable(true);
         } else {
             setIsDisable(false);

@@ -16,6 +16,7 @@ import { useGetEstimationCostMutation } from '../../../utils/apiService';
 import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 import { FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
 import SizePopover from './SizePopover/SizePopover';
+import { isFsxnNew } from '../../../utils/utilityFunctions';
 
 type Res = {
     data: {
@@ -102,7 +103,7 @@ const EstimatedCost = () => {
             const updatedStr = splitRegion[0].replace(/\s?$/, '');
             let payload;
 
-            if (selectedFsxnType === GENERAL.CREATE_NEW_FSXN) {
+            if (isFsxnNew(selectedFsxnType)) {
                 payload = {
                     compute: computeObj(updatedStr),
                     fsxnStorage: {
@@ -258,7 +259,7 @@ const EstimatedCost = () => {
                             </div>
                         </div>
 
-                        {selectedFsxnType === GENERAL.CREATE_NEW_FSXN && (
+                        {isFsxnNew(selectedFsxnType) && (
                             <div className={styles.storageContainer}>
                                 <Typography variant="Semibold_14" className={styles.compute}>
                                     {GENERAL.STORAGE}

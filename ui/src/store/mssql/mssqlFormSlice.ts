@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { GENERAL, SELECT_CONFIG } from '../../utils/appConstants';
-import { FSXADMIN, SQL_DEPLOYMENT_MODE, SQL_USERNAME } from '../../utils/consts';
+import { FORM_OPTIONS, FSXADMIN, SQL_DEPLOYMENT_MODE, SQL_USERNAME } from '../../utils/consts';
 
 export const initialMssqlState: any = {
     awsAccount: {
@@ -59,7 +59,7 @@ export const initialMssqlState: any = {
     },
     instanceType: '',
     fsxN: {
-        fsxNType: GENERAL.CREATE_NEW_FSXN,
+        fsxNType: FORM_OPTIONS.FSXN_NEW,
         fsxNName: '',
         fsxNNewUserName: FSXADMIN,
         fsxNExistingName: null,
