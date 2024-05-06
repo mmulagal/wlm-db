@@ -13,7 +13,7 @@ import {
 import { GENERAL } from '../../../../utils/appConstants';
 import { AWS_MANAGED_AD, FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
 import { MssqlRequestBody, TagObj } from '../../../../utils/types/mssqlTypes';
-import { dbPassVal, fsxPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
+import { dbPassVal, fsxPassVal, isFsxnExisting, isFsxnNew, isValidUserName } from '../../../../utils/utilityFunctions';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 
 const createMssqlPayload = (state: any) => {
@@ -53,7 +53,7 @@ const createMssqlPayload = (state: any) => {
             fsxPassword: ''
         };
         const fsxnType = state.mssqlForm.fsxN?.fsxNType;
-        if (fsxnType === GENERAL.CREATE_NEW_FSXN) {
+        if (isFsxnNew(fsxnType)) {
             fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNNewUserName;
             fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
         } else {
@@ -104,7 +104,7 @@ const createMssqlPayload = (state: any) => {
             ontapSgGroupList.push(vpcsg);
         }
         const fsxnType = state.mssqlForm.fsxN?.fsxNType;
-        if (fsxnType === GENERAL.SELECT_EXISTING_FSX) {
+        if (isFsxnExisting(fsxnType)) {
             const fsxsg = state.mssqlForm.fsxN?.fsxNExistingName?.data?.securityGroups || [];
             fsxsg.map((val: string) => {
                 ontapSgGroupList.push(val);
@@ -201,8 +201,8 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
             !state.mssqlForm.activeDirectory.password;
 
         const fsxStateValue =
-            (state.mssqlForm.fsxN.fsxNType === GENERAL.CREATE_NEW_FSXN && !state.mssqlForm.fsxN.fsxNPassword) ||
-            (state.mssqlForm.fsxN.fsxNType === GENERAL.SELECT_EXISTING_FSX && !state.mssqlForm.fsxN.fsxNExistingName);
+            (isFsxnNew(state.mssqlForm.fsxN.fsxNType) && !state.mssqlForm.fsxN.fsxNPassword) ||
+            (isFsxnExisting(state.mssqlForm.fsxN.fsxNType) && !state.mssqlForm.fsxN.fsxNExistingName);
 
         const licenseIdCheck = !state.mssqlForm.license.selectedLicenseId;
         //Check for VPC values

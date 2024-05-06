@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AccordionCard, AccordionCardContent, Popover, SelectField, Typography } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../../utils/appConstants';
-import { generateOptionType } from '../../../../utils/utilityFunctions';
+import { generateOptionType, isFsxnExisting } from '../../../../utils/utilityFunctions';
 import styles from './ThroughputCapacity.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
@@ -59,7 +59,7 @@ const ThroughputCapacity = () => {
     }, [generateThroughputUnits]);
 
     useEffect(() => {
-        if (selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName) {
+        if (isFsxnExisting(selectedFsxnType) && selectedExistingFsxnName) {
             setIsDisable(true);
         } else {
             setIsDisable(false);

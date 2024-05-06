@@ -389,3 +389,9 @@ export const MSSQL_DATABASE_TYPES = {
     SYSTEM: 'System Database',
     USER: 'User Database'
 };
+
+// Deployment form related check points for radio button
+export const FORM_OPTIONS = {
+    FSXN_NEW: 'fsxn_new',
+    FSXN_EXISTING: 'fsxn_existing'
+};

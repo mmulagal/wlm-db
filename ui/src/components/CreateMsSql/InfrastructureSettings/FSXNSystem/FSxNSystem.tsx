@@ -11,7 +11,13 @@ import {
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { GENERAL } from '../../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
-import { fsxPassVal, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
+import {
+    fsxPassVal,
+    generateOptionType,
+    isFsxnExisting,
+    isFsxnNew,
+    sortListOfDict
+} from '../../../../utils/utilityFunctions';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -21,7 +27,7 @@ import {
     setFsxNType,
     setFsxNExistingUserName
 } from '../../../../store/mssql/mssqlFormSlice';
-import { FSXADMIN, FSX_DEPLOYMENT_MODE } from '../../../../utils/consts';
+import { FORM_OPTIONS, FSXADMIN, FSX_DEPLOYMENT_MODE } from '../../../../utils/consts';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
 
 import styles from './FSxNSystem.module.scss';
@@ -191,7 +197,7 @@ const FSxNSystem = () => {
         }
 
         //Checking for the create new option
-        if (selectedFsxnType === GENERAL.CREATE_NEW_FSXN) {
+        if (isFsxnNew(selectedFsxnType)) {
             if (!selectedFsxnNewUserName || !selectedFsxnPassword) {
                 return <ActionRequired error={!isFsxNotFilled ? true : false} />;
             } else if (fsxPassVal(password)) {
@@ -239,25 +245,25 @@ const FSxNSystem = () => {
                     <Typography>
                         <div className={styles.handleRadio}>
                             <RadioButton
-                                isChecked={selectedFsxnType === GENERAL.CREATE_NEW_FSXN}
+                                isChecked={isFsxnNew(selectedFsxnType)}
                                 onChange={() => {
-                                    dispatch(setFsxNType(GENERAL.CREATE_NEW_FSXN));
+                                    dispatch(setFsxNType(FORM_OPTIONS.FSXN_NEW));
                                     dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.CREATE_NEW_FSXN}
                                 className=""
                             />
                             <RadioButton
-                                isChecked={selectedFsxnType === GENERAL.SELECT_EXISTING_FSX}
+                                isChecked={isFsxnExisting(selectedFsxnType)}
                                 onChange={() => {
-                                    dispatch(setFsxNType(GENERAL.SELECT_EXISTING_FSX));
+                                    dispatch(setFsxNType(FORM_OPTIONS.FSXN_EXISTING));
                                     dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.SELECT_EXISTING_FSX}
                                 className=""
                             />
                         </div>
-                        {selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && (
+                        {isFsxnExisting(selectedFsxnType) && (
                             <div className={styles.firstContainer}>
                                 <SelectField
                                     label={GENERAL.FSXN_NAME}
@@ -280,7 +286,7 @@ const FSxNSystem = () => {
 
                         <div
                             className={
-                                selectedFsxnType === GENERAL.SELECT_EXISTING_FSX
+                                isFsxnExisting(selectedFsxnType)
                                     ? `${styles.secondContainer}`
                                     : `${styles.createNewContainer}`
                             }
@@ -292,12 +298,12 @@ const FSxNSystem = () => {
                                     dispatch(setIsWizardTouched(true));
                                 }}
                                 value={
-                                    selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedFsxnExistingUserName
+                                    isFsxnExisting(selectedFsxnType) && selectedFsxnExistingUserName
                                         ? selectedFsxnExistingUserName
                                         : FSXADMIN
                                 }
                                 className={styles.textField}
-                                isDisabled={selectedFsxnType === GENERAL.CREATE_NEW_FSXN}
+                                isDisabled={isFsxnNew(selectedFsxnType)}
                             />
                             <PasswordField
                                 label={GENERAL.FSX_PASSWORD}
