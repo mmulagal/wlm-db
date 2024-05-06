@@ -22,7 +22,7 @@ router.get(
                 },
                 {
                     databaseHostName: 'SQLServer-Prod-01',
-                    databaseHostId: '64de4daa-3405-47c6-8689-58f4987b6ad8',
+                    databaseHostId: '64de4daa-3405-47c6-8689-58f4987b6ad82',
                     databaseInstanceName: 'Default Instance',
                     sandboxName: 'sandboxtest2',
                     sourceDatabaseName: 'dbname2',
@@ -44,7 +44,7 @@ router.get(
                 },
                 {
                     databaseHostName: 'SQLServer-Dev-01',
-                    databaseHostId: 'fc0be6a3-f710-47db-b5b4-4ee709250777',
+                    databaseHostId: 'fc0be6a3-f710-47db-b5b4-4ee7092507774',
                     databaseInstanceName: 'Default Instance',
                     sandboxName: 'sandboxtest2',
                     sourceDatabaseName: 'dbname2',
