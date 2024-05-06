@@ -1,4 +1,6 @@
 .rebaseRollBack {
+    height: 130px;
+
     .secondLine {
         margin-top: 24px;
     }
@@ -6,5 +8,6 @@
     .widthSet {
         margin-top: 24px;
         width: 460px;
+        position: fixed;
     }
 }
