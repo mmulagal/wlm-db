@@ -12,6 +12,7 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import RebaseLineContent from './RebaseLineContent/RebaseLineContent';
 import RebaseSplitContent from './RebaseSplitContent/RebaseSplitContent';
 import RebaseRollbackContent from './RebaseRollbackContent/RebaseRollbackContent';
+import ViewDialog from '../../../common/ViewDialog/ViewDialog';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
@@ -148,6 +149,30 @@ const SandboxTable = () => {
         );
     };
 
+    const handleConnectToTools = () => {
+        setDialog(
+            <DialogComponent
+                header={'Connect to CI/CD tools'}
+                content={<ViewDialog data="data" />}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => {}}
+                customClass={styles.setWidth}
+            />
+        );
+    };
+
+    const handleShowConnectionInfo = () => {
+        setDialog(
+            <DialogComponent
+                header={' Show connection info'}
+                content={<ViewDialog data="data" />}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => {}}
+                customClass={styles.setWidth}
+            />
+        );
+    };
+
     const lastColDetails = () => {
         return {
             id: '8',
@@ -172,20 +197,30 @@ const SandboxTable = () => {
                                     menuOpenedRowDetail.current = null;
                                     setOpenedRow(null);
 
-                                    if (menuId === 'reBaseline') {
-                                        handleRebaseLine();
-                                    }
-                                    if (menuId === 'refresh') {
-                                        handleRefresh();
-                                    }
-                                    if (menuId === 'delete') {
-                                        handleDelete();
-                                    }
-                                    if (menuId === 'split') {
-                                        handleSplit();
-                                    }
-                                    if (menuId === 'rollback') {
-                                        handleRollback();
+                                    switch (menuId) {
+                                        case 'reBaseline':
+                                            handleRebaseLine();
+                                            break;
+                                        case 'refresh':
+                                            handleRefresh();
+                                            break;
+
+                                        case 'delete':
+                                            handleDelete();
+                                            break;
+                                        case 'split':
+                                            handleSplit();
+                                            break;
+                                        case 'rollback':
+                                            handleRollback();
+                                            break;
+                                        case 'connectToTools':
+                                            handleConnectToTools();
+                                            break;
+
+                                        case 'showConnectionInfo':
+                                            handleShowConnectionInfo();
+                                            break;
                                     }
                                 }
                             }}
@@ -257,7 +292,7 @@ const SandboxTable = () => {
             id: '8',
             width: '56px'
         }
-        // lastColDetails()
+        //lastColDetails()
     ];
 
     const tableProps = useTable({
