@@ -1481,19 +1481,20 @@ export const checkValueSavedForCred = (options: any, value: any) => {
     return containsValue;
 };
 
-export const isFsxnNew = (val: string) => {
-    if (val === FORM_OPTIONS.FSXN_NEW || val === GENERAL.CREATE_NEW_FSXN || val === 'Create new FSxN') {
+export const isFsxnNew = (val: any) => {
+    if (val && (val === FORM_OPTIONS.FSXN_NEW || val === GENERAL.CREATE_NEW_FSXN || val === 'Create new FSxN')) {
         return true;
     } else {
         return false;
     }
 };
 
-export const isFsxnExisting = (val: string) => {
+export const isFsxnExisting = (val: any) => {
     if (
-        val === FORM_OPTIONS.FSXN_EXISTING ||
-        val === GENERAL.SELECT_EXISTING_FSX ||
-        val === 'Select an existing FSxN '
+        val &&
+        (val === FORM_OPTIONS.FSXN_EXISTING ||
+            val === GENERAL.SELECT_EXISTING_FSX ||
+            val === 'Select an existing FSxN ')
     ) {
         return true;
     } else {
