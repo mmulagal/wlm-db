@@ -227,3 +227,17 @@ export const installModuleNotification = (styles: any, hostname: string, dispatc
     );
     dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: prepareHostMsg }));
 };
+
+export const errorNotification = (dispatch: any, errText: string, managedFailedMsg: any) => {
+    if (errText && errText.length > 200) {
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.ERROR,
+                message: GENERAL.QUERY_ERROR,
+                additionalText: managedFailedMsg
+            })
+        );
+    } else {
+        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));
+    }
+};

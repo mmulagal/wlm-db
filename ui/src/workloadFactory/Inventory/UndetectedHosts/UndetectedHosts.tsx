@@ -47,7 +47,7 @@ import { createDetectHostPayload } from '../../../utils/utilityFunctions';
 import { useEffect, useRef, useState } from 'react';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import store from '../../../store/store';
-import { installModuleNotification } from '../InventoryUtils';
+import { errorNotification, installModuleNotification } from '../InventoryUtils';
 
 const UndetectedHosts = () => {
     const dispatch = useDispatch();
@@ -251,9 +251,7 @@ const UndetectedHosts = () => {
                 if (jobTriggered) {
                     installModuleNotification(styles, rowData?.instance, dispatch, GENERAL.PREPARE_HOST_INFO_TAB3);
                 } else {
-                    dispatch(
-                        addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg })
-                    );
+                    errorNotification(dispatch, errorMessage, managedFailedMsg);
                 }
             }
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
