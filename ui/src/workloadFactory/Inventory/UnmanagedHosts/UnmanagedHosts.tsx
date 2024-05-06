@@ -15,6 +15,7 @@ import {
 import { useManageHostMutation, usePrepareHostMutation } from '../../../utils/apiService';
 import store from '../../../store/store';
 import {
+    errorNotification,
     installModuleNotification,
     renderAllocatedCapacity,
     renderCellData,
@@ -160,7 +161,7 @@ const UnmanagedHosts = () => {
             if (jobTriggered) {
                 installModuleNotification(styles, name, dispatch, GENERAL.PREPARE_HOST_INFO_TAB2);
             } else {
-                dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: managedFailedMsg }));
+                errorNotification(dispatch, errorMessage, managedFailedMsg);
             }
         }
     };
