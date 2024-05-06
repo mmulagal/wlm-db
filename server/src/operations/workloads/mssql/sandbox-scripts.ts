@@ -622,7 +622,12 @@ SET NOCOUNT ON;
 ${Object.keys(propObj)
     .map(
         k =>
-            `EXEC sp_addextendedproperty @name = N'${k}', @value = ${
+            `IF NOT EXISTS (SELECT name, value FROM fn_listextendedproperty(default, default, default, default, default, default, default) WHERE name = N'${k}') 
+                EXEC sp_addextendedproperty @name = N'${k}', @value = ${
+                typeof propObj[k] === 'string' ? `'${propObj[k]}'` : propObj[k]
+            }
+            ELSE
+                EXEC sp_updateextendedproperty @name = N'${k}', @value = ${
                 typeof propObj[k] === 'string' ? `'${propObj[k]}'` : propObj[k]
             };`
     )
