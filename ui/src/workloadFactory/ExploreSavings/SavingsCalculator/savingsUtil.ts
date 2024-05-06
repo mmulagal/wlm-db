@@ -23,69 +23,69 @@ export const comparisonData = (calculatedResponse: any) => {
     return [
         {
             type: 'Capacity',
-            fsx: `$ ${formatFractionalNumber(calculatedResponse?.fsx?.capacity, 2)}` || '$ 0',
-            ebs: `$ ${formatFractionalNumber(calculatedResponse?.ebs?.capacity, 2)}` || '$ 0'
+            fsx: `$${formatFractionalNumber(calculatedResponse?.fsx?.capacity, 2)}` || '$0',
+            ebs: `$${formatFractionalNumber(calculatedResponse?.ebs?.capacity, 2)}` || '$0'
         },
         {
             type: 'IOPS',
             fsx: calculatedResponse?.fsx?.iops
-                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.iops, 2)}`
-                : '$ 0',
-            ebs: calculatedResponse?.ebs?.iops ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.iops, 2)}` : '$ 0'
+                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.iops, 2)}`
+                : '$0',
+            ebs: calculatedResponse?.ebs?.iops ? `$${formatFractionalNumber(calculatedResponse?.ebs?.iops, 2)}` : '$0'
         },
         {
             type: 'Throughput',
             fsx: calculatedResponse?.fsx?.throughput
-                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.throughput, 2)}`
-                : '$ 0',
+                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.throughput, 2)}`
+                : '$0',
             ebs: calculatedResponse?.ebs?.throughput
-                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.throughput, 2)}`
-                : '$ 0'
+                ? `$${formatFractionalNumber(calculatedResponse?.ebs?.throughput, 2)}`
+                : '$0'
         },
         {
             type: 'Snapshots',
             fsx: calculatedResponse?.fsx?.snapshots
-                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.snapshots, 2)}`
-                : '$ 0',
+                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.snapshots, 2)}`
+                : '$0',
             ebs: calculatedResponse?.ebs?.snapshots
-                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.snapshots, 2)}`
-                : '$ 0'
+                ? `$${formatFractionalNumber(calculatedResponse?.ebs?.snapshots, 2)}`
+                : '$0'
         },
         {
             type: 'Clone',
             fsx: calculatedResponse?.fsx?.clone
-                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.clone, 2)}`
+                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.clone, 2)}`
                 : GENERAL.NOT_AVAILABLE,
             ebs: calculatedResponse?.ebs?.clone
-                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.clone, 2)}`
+                ? `$${formatFractionalNumber(calculatedResponse?.ebs?.clone, 2)}`
                 : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'Compute',
             fsx: calculatedResponse?.fsx?.compute
-                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.compute, 2)}`
+                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.compute, 2)}`
                 : GENERAL.NOT_AVAILABLE,
             ebs: calculatedResponse?.ebs?.compute
-                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.compute, 2)}`
+                ? `$${formatFractionalNumber(calculatedResponse?.ebs?.compute, 2)}`
                 : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'SQL license',
             fsx: calculatedResponse?.fsx?.license
-                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.license, 2)}`
+                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.license, 2)}`
                 : GENERAL.NOT_AVAILABLE,
             ebs: calculatedResponse?.ebs?.license
-                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.license, 2)}`
+                ? `$${formatFractionalNumber(calculatedResponse?.ebs?.license, 2)}`
                 : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'Total summary',
             fsx: calculatedResponse?.fsx?.total
-                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.total, 2)}`
-                : '$ 0',
+                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.total, 2)}`
+                : '$0',
             ebs: calculatedResponse?.ebs?.total
-                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.total, 2)}`
-                : '$ 0'
+                ? `$${formatFractionalNumber(calculatedResponse?.ebs?.total, 2)}`
+                : '$0'
         }
     ];
 };
@@ -223,13 +223,13 @@ export const viewCalculation = (viewCalculation: any) => {
             },
             {
                 label: 'Instance hourly price',
-                value: `$ ${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
+                value: `$${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
                 text: ''
             },
             {
                 label: 'Ec2 machine1 cost',
-                value: `$ ${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
-                text: `Instance hourly price x number of hours in a month = $ ${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
+                value: `$${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
+                text: `Instance hourly price x number of hours in a month = $${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
             }
         ],
         FSxNCalculation: [
@@ -280,12 +280,12 @@ export const viewCalculation = (viewCalculation: any) => {
             },
             {
                 label: 'SSD monthly cost ',
-                value: `$ ${viewCalculation.FSxNCalculation.priceCalculation.ssdMonthlyCost}`,
+                value: `$${viewCalculation.FSxNCalculation.priceCalculation.ssdMonthlyCost}`,
                 text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity (${viewCalculation.FSxNCalculation.priceCalculation.minSSDStorage} GiB) x SSD storage price ($${viewCalculation.FSxNCalculation.priceCalculation.ssdStoragePrice})`
             },
             {
                 label: 'Total monthly cost for FSx for NetApp ONTAP file server - SSD storage capacity',
-                value: `$ ${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostStorageCapacity}`,
+                value: `$${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostStorageCapacity}`,
                 text: ''
             },
             {
@@ -300,7 +300,7 @@ export const viewCalculation = (viewCalculation: any) => {
             },
             {
                 label: 'Capacity pool storage capacity',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.capacityPoolStorageCapacity} GiB`,
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.capacityPoolStorageCapacitySize} GiB`,
                 text: `Desired storage capacity (${viewCalculation.FSxNCalculation.storageCapacity} GiB) x Ratio after savings from compression & deduplication factor (${viewCalculation.FSxNCalculation.priceCalculation.deduplicationFactor}%) x Data on capacity pool storage factor (${viewCalculation.FSxNCalculation.priceCalculation.storageFactor}%)`
             },
             {
@@ -316,7 +316,7 @@ export const viewCalculation = (viewCalculation: any) => {
             {
                 label: 'Total storage charge (monthly)',
                 value: `$${viewCalculation.FSxNCalculation.priceCalculation.totalStorageCharge}`,
-                text: `Total monthly cost for FSx for NetApp ONTAP file server capacity pool storage capacity ($${viewCalculation.FSxNCalculation.priceCalculation.capacityPoolStorageCapacity}) + Total monthly cost for FSx for NetApp ONTAP file server SSD storage capacity ($${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostStorageCapacity})`
+                text: `Total monthly cost for FSx for NetApp ONTAP file server capacity pool storage capacity ($0) + Total monthly cost for FSx for NetApp ONTAP file server SSD storage capacity ($${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostStorageCapacity})`
             },
             {
                 label: 'Minimum number of file systems required for storage capacity',
@@ -398,14 +398,14 @@ export const viewCalculation = (viewCalculation: any) => {
                 text: ``
             },
             {
-                label: 'change rate between clones (%)',
+                label: 'Change rate between clones (%)',
                 value: `${viewCalculation.cloneCalculation.unitConversion.cloneRateChange}%`,
-                text: `monthly change rate (%) / number of periods = 3%/30`
+                text: `Monthly change rate (%) / Number of periods = 3%/30`
             },
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.cloneCalculation.unitConversion.desiredStorageCapacity} GiB`,
-                text: `number of cloned copies* (%change rate*total fsxN capacity*number of clones in a month)= 3*(0.1% *2*1024*30)`
+                text: `Number of cloned copies* (%change rate*total fsxN capacity*number of clones in a month)= 3*(0.1% *2*1024*30)`
             },
             {
                 label: 'Percentage of data on SSD storage',
@@ -438,7 +438,7 @@ export const viewCalculation = (viewCalculation: any) => {
             {
                 label: 'SSD monthly cost',
                 value: `$${viewCalculation.cloneCalculation.priceCalculation.ssdMonthlyCost}`,
-                text: `SSD storage GiB per month  x FSx for ONTAP SSD price = 780GiB x 0.14$`
+                text: `SSD storage GiB per month  x FSx for ONTAP SSD price = 780GiB x $0.14`
             },
             {
                 label: 'Total clone monthly cost',
@@ -485,13 +485,13 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
             },
             {
                 label: 'Instance hourly price',
-                value: `$ ${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
+                value: `$${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
                 text: ''
             },
             {
                 label: 'Ec2 machine1 cost',
-                value: `$ ${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
-                text: `Instance hourly price x number of hours in a month = $ ${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
+                value: `$${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
+                text: `Instance hourly price x number of hours in a month = $${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
             }
         ],
         EBSCalculation: [
@@ -615,7 +615,7 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
             {
                 label: 'Clone cost',
                 value: `$${viewCalculation.cloneCalculation.cloneCost}`,
-                text: `number of Cloned copies *( ebs storage cost + ebs iops cost + ebs throughput cost )= 3 * 300$`
+                text: `Number of Cloned copies *( EBS storage cost + EBS iops cost + EBS throughput cost )= 1 * $5,134`
             },
             {
                 label: 'Amazon Elastic Block Storage (EBS) total cost (monthly)',

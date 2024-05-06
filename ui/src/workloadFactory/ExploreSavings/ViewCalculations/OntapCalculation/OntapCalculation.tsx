@@ -93,6 +93,7 @@ const OntapCalculation = () => {
                 storageFactor: '0',
                 capacityMonthlyCost: '0',
                 fsxnCapacityPrice: '0.02',
+                capacityPoolStorageCapacitySize: '0',
                 capacityPoolStorageCapacity: '16.51',
                 totalStorageCharge: '562.95',
                 minFileSystem: '0.02',
