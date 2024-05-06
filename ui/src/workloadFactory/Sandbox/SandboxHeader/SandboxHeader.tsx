@@ -7,13 +7,16 @@ import { useNavigate } from 'react-router-dom';
 
 import { useDispatch } from 'react-redux';
 import { GENERAL } from '../../../utils/appConstants';
+import { setShowBanner } from '../../../store/workloadFactory/sandboxSlice';
 
 const SandboxHeader = () => {
     const windowSize = useResize();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const handleBanner = () => {
-        localStorage.setItem('showBanner', JSON.stringify(true));
+        localStorage.setItem('hideBanner', JSON.stringify(true));
+        dispatch(setShowBanner(false));
     };
     return (
         <>

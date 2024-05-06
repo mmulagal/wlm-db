@@ -67,6 +67,7 @@ export interface SandboxItemEntities {
 }
 
 export interface SandboxEntities {
+    showBanner: boolean;
     isNA: boolean;
     getSandboxList: {
         sandboxListData: SandboxListEntities;

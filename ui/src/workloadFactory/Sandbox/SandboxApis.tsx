@@ -50,7 +50,12 @@ const SandboxApis = () => {
 
     useEffect(() => {
         if (!sandboxListLoading && getSandboxList?.sandboxListLoading) {
-            dispatch(setAggregatedSandboxList([...aggregatedSandboxList, ...(sandboxList?.items || [])]));
+            dispatch(
+                setAggregatedSandboxList([
+                    ...aggregatedSandboxList,
+                    ...(sandboxList?.items?.filter((item: any) => !item?.error) || [])
+                ])
+            );
             setSandboxCursor(sandboxList?.nextToken || null);
         }
         dispatch(
