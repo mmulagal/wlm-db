@@ -2,6 +2,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { SandboxEntities } from '../../utils/types/sandBoxTypes';
 
 export const initialSandboxState: SandboxEntities = {
+    showBanner: window.localStorage.getItem('hideBanner') !== 'true',
     isNA: false,
     getSandboxList: {
         sandboxListData: [],
@@ -32,10 +33,14 @@ const sandboxSlice = createSlice({
         },
         setSandboxSavingsState: (state, action: PayloadAction<any>) => {
             state.getSandboxSavings = action.payload;
+        },
+        setShowBanner: (state, action: PayloadAction<any>) => {
+            state.showBanner = action.payload;
         }
     }
 });
 
-export const { setSandboxListState, setAggregatedSandboxList, setSandboxSavingsState } = sandboxSlice.actions;
+export const { setSandboxListState, setAggregatedSandboxList, setSandboxSavingsState, setShowBanner } =
+    sandboxSlice.actions;
 
 export default sandboxSlice;
