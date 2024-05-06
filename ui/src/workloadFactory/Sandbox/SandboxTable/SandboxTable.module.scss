@@ -3,6 +3,17 @@
     margin-left: 120px;
     margin-top: 24px;
     margin-bottom: 40px;
+
+    .jobMenuPopover {
+        margin-left: -13px;
+        [class*='MenuPopover_menuPointer'] {
+            background: none !important;
+        }
+    }
+}
+
+.setWidth {
+    width: 792px !important;
 }
 
 @media screen and (max-width: 1500px) {
