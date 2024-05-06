@@ -8,7 +8,9 @@ import {
     DescribeTagsCommandInput,
     DescribeVpcEndpointsCommandInput,
     VpcEndpoint,
-    DescribeSnapshotsCommandInput
+    DescribeSnapshotsCommandInput,
+    ImageState,
+    PlatformValues
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
 import {
@@ -38,6 +40,7 @@ import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
 import { ResourceDetails, SecurityGroup, Subnet, VPC, NetworkInterface, Metadata } from '../../utils/common-types';
+import { getRoleDetails } from '../cloud-manager/credentials-operations';
 
 const logger = getLogger();
 
@@ -262,11 +265,12 @@ async function getNetworkInterfacesList(
 async function getAmiList(
     credentialsId: string,
     region: string,
-    osType: string,
-    databaseType: string,
+    osType?: string,
+    databaseType?: string,
     osVersion?: string,
     databaseVersion?: string,
-    databaseEdition?: string
+    databaseEdition?: string,
+    customAmi?: boolean
 ) {
     logger.info('Get AWS Amis', {
         credentialsId,
@@ -275,8 +279,51 @@ async function getAmiList(
         osVersion,
         databaseType,
         databaseEdition,
-        databaseVersion
+        databaseVersion,
+        customAmi
     });
+
+    if (customAmi) {
+        const { providerAccountId } = await getRoleDetails(credentialsId);
+        const amis = await getAmis(credentialsId, region, {
+            Owners: [providerAccountId],
+            Filters: [
+                { Name: 'state', Values: [ImageState.available] },
+                { Name: 'platform', Values: [PlatformValues.Windows.toLowerCase()] }
+            ]
+        });
+        if (!amis?.Images || isEmpty(amis?.Images)) {
+            logger.info(`AWS account ${providerAccountId} does not own any amis in region ${region}.`);
+            return { amis: [] };
+        }
+        const response = amis.Images.map(
+            ({
+                Name,
+                Description,
+                Architecture,
+                ImageId,
+                ImageLocation,
+                Public,
+                Platform,
+                PlatformDetails,
+                State,
+                Hypervisor
+            }) => ({
+                name: Name as string,
+                description: Description,
+                architecture: Architecture,
+                imageId: ImageId,
+                imageLocation: ImageLocation,
+                public: Public,
+                platform: Platform,
+                platformDetails: PlatformDetails,
+                state: State,
+                hypervisor: Hypervisor
+            })
+        );
+
+        return { amis: response };
+    }
 
     const amiNames = filterSqlAmis(osVersion, databaseVersion, databaseEdition);
 
