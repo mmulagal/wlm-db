@@ -5,25 +5,15 @@ import {
     setSelectedServerName
 } from '../../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
-<<<<<<< HEAD
 import { SQL_DEPLOYMENT_MODE, TIB_IN_BYTE, WLF_TABS } from '../../utils/consts';
-=======
-import { TIB_IN_BYTE, WLF_TABS } from '../../utils/consts';
->>>>>>> d06ed9687c845a399af66d12f5b3bec3fa6729c8
 
 export const onClickESHost = (dispatch: any, rowData: any, isDemoMode: any) => {
     const deploymentModel = (() => {
         const nodes = rowData?.sqlServerInstances?.[0]?.sqlServerNodes;
         if (nodes && nodes.length > 1) {
-<<<<<<< HEAD
             return SQL_DEPLOYMENT_MODE.AOAG;
         } else {
             return SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
-=======
-            return 'aoag';
-        } else {
-            return 'standalone';
->>>>>>> d06ed9687c845a399af66d12f5b3bec3fa6729c8
         }
     })();
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
@@ -76,14 +66,11 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                     serverEdition: 'SQL Server Standard Edition',
                     serverVersion: 'Microsoft SQL Server 2019',
                     instanceType: 'm5.2xlarge'
-<<<<<<< HEAD
                 },
                 storage: {
                     ebs: {
                         size: 4 * TIB_IN_BYTE
                     }
-=======
->>>>>>> d06ed9687c845a399af66d12f5b3bec3fa6729c8
                 }
             };
         } else {
