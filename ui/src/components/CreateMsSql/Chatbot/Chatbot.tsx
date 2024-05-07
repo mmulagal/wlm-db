@@ -73,7 +73,7 @@ import {
 } from '../../../utils/consts';
 import ChatbotHeader from './ChatbotHeader/ChatbotHeader';
 import { handleCreateSQLServer } from '../MSSqlServer/MSSqlFooter/createSqlServer';
-import { setDeployRedirectToCfLink, setIsLoading } from '../../../store/mssql/msSqlActionSlice';
+import { setDeployRedirectToCfLink, setIsLoading, setPermissionData } from '../../../store/mssql/msSqlActionSlice';
 import { Button } from '@netapp/design-system';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { useNavigate } from 'react-router-dom';
@@ -327,6 +327,7 @@ const Chatbot = () => {
                             dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
                         } else if (url) {
                             dispatch(setDeployRedirectToCfLink(url));
+                            dispatch(setPermissionData(data?.data?.missingPermissions));
                             // If url comes it means it has view permissions so it will open AWS account accordion
                             dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
                             dispatch(
@@ -335,7 +336,9 @@ const Chatbot = () => {
                                     {
                                         sender: 'bot',
                                         msg: '',
-                                        customComponent: <MissingPermissionsMsg />
+                                        customComponent: (
+                                            <MissingPermissionsMsg permissionData={data?.data?.missingPermissions} />
+                                        )
                                     }
                                 ])
                             );

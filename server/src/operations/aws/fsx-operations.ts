@@ -494,5 +494,6 @@ export {
     getMappedOntapVolumes,
     tagFsxResource,
     getCostAllocationTagFsxResource,
-    getFsxStorageCapacity
+    getFsxStorageCapacity,
+    getFSXFileSystemListForDemo
 };
