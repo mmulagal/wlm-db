@@ -519,7 +519,7 @@ export const viewCalculation = (viewCalculation: any) => {
             {
                 label: 'Total monthly cost',
                 value: `$${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCost}`,
-                text: `Total throughput and IOPS (monthly) ($${viewCalculation.FSxNCalculation.priceCalculation.totalThroughputIOPS})  + total storage charge (monthly) ($${viewCalculation.FSxNCalculation.priceCalculation.totalStorageCharge}) `
+                text: `Total throughput and IOPS cost ($${viewCalculation.FSxNCalculation.priceCalculation.totalThroughputIOPS})  + Total Storage cost ($${viewCalculation.FSxNCalculation.priceCalculation.totalStorageCharge}) + Total Clone cost ($${viewCalculation.cloneCalculation.priceCalculation.totalMonthlyCloneCost})`
             }
         ]
     };
