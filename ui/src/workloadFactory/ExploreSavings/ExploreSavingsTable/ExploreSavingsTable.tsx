@@ -3,9 +3,7 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './ExploreSavingsTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
-import { WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
     renderAllocatedCapacity,
@@ -15,11 +13,7 @@ import {
     renderUnmanagedAZ,
     renderUnmanagedHostName
 } from '../../Inventory/InventoryUtils';
-import {
-    setSelectedHostDetails,
-    setSelectedInstanceId,
-    setSelectedServerName
-} from '../../../store/workloadFactory/exploreSavingsSlice';
+import { onClickESHost } from '../ExploreSavingsUtils';
 
 const ExploreSavingsTable = () => {
     const dispatch = useDispatch();
@@ -58,14 +52,7 @@ const ExploreSavingsTable = () => {
                         <div
                             className={styles.detectManage}
                             onClick={() => {
-                                dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
-                                dispatch(setSelectedInstanceId(rowData?.id));
-                                dispatch(
-                                    setSelectedServerName(
-                                        rowData?.sqlServerInstances?.[0]?.sqlServerName || 'Server name'
-                                    )
-                                );
-                                dispatch(setSelectedHostDetails(rowData));
+                                onClickESHost(dispatch, rowData, isDemoMode);
                             }}
                         >
                             <Typography variant="Regular_14" className={styles.textStyle}>

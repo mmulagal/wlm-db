@@ -9,7 +9,6 @@ import { formatSizeOnePrecision } from '../../../../utils/utilityFunctions';
 
 const SelectedVolumeSummary = () => {
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
-    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
     const [tableData, setTableData] = useState<any>([]);
     const [loading, setLoading] = useState(false);
 
@@ -103,23 +102,6 @@ const SelectedVolumeSummary = () => {
     };
 
     useEffect(() => {
-        // This demo response will be removed once API starts returning demo data
-        if (isDemoMode) {
-            setLoading(false);
-            getColumnsList(['io2'], '386px', true);
-            setTableData([
-                { details: 'Total volumes', io2: 2, id: '1' },
-                {
-                    details: 'Total storage amount',
-                    io2: '4 TiB',
-                    id: '2'
-                },
-                { details: 'Total provisioned IOPS', io2: 80000, id: '3' },
-                { details: 'Total throughput MB/s', io2: 128, id: '4' }
-            ]);
-            return;
-        }
-
         setLoading(selectedHostDetails?.loading);
 
         if (!selectedHostDetails?.ebsResourceInfo) {

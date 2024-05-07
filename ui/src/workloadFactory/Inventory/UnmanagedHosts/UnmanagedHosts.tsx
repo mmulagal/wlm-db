@@ -4,14 +4,10 @@ import styles from './UnmanagedHosts.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useEffect, useState, useRef } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { API_ERRORS, DETECT_HOST_VAR, WLF_TABS } from '../../../utils/consts';
+import { API_ERRORS, DETECT_HOST_VAR } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
-import {
-    setMovedToManagedHost,
-    setSelectedHeaderTab,
-    setUnManagedHostColState
-} from '../../../store/workloadFactory/inventorySlice';
+import { setMovedToManagedHost, setUnManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
 import { useManageHostMutation, usePrepareHostMutation } from '../../../utils/apiService';
 import store from '../../../store/store';
 import {
@@ -28,12 +24,8 @@ import {
     renderUnmanagedHostName
 } from '../InventoryUtils';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-import {
-    setSelectedHostDetails,
-    setSelectedInstanceId,
-    setSelectedServerName
-} from '../../../store/workloadFactory/exploreSavingsSlice';
 import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
+import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 
 const UnmanagedHosts = () => {
     const dispatch = useDispatch();
@@ -164,13 +156,6 @@ const UnmanagedHosts = () => {
                 errorNotification(dispatch, errorMessage, managedFailedMsg);
             }
         }
-    };
-
-    const exploreSavingsAction = (rowData: any) => {
-        dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
-        dispatch(setSelectedInstanceId(rowData?.id));
-        dispatch(setSelectedServerName(rowData.sqlServerInstances?.[0].sqlServerName || 'Server name'));
-        dispatch(setSelectedHostDetails(rowData));
     };
 
     const DatabasesColDefs: ColumnProps[] = [
@@ -355,7 +340,7 @@ const UnmanagedHosts = () => {
                                         }
 
                                         if (menuId === 'exploreSavings') {
-                                            exploreSavingsAction(rowData);
+                                            onClickESHost(dispatch, rowData, isDemoMode);
                                         }
                                     }
                                 }}

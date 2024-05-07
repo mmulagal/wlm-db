@@ -5,23 +5,29 @@ import {
     setSavingsCalculatorRefresh,
     setSelectedHostDetails,
     setStorageSavingsLoading,
-    setStorageSavingsResponse
+    setStorageSavingsResponse,
+    setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
 import storageSavingsJson from '../storageSavings.json';
+import viewCalculationJson from '../viewCalculations.json';
 import store from '../../../store/store';
 import { setMssqlInstancesData } from '../../../store/workloadFactory/inventorySlice';
+import { setESInstanceData } from '../ExploreSavingsUtils';
 
 const SavingsCalculatorApi = () => {
     const dispatch = useAppDispatch();
-    const selectedSnapshotFrequency = useAppSelector(state => state.exploreSavings.selectedSnapshotFrequency);
-    const numberOfClonedCopies = useAppSelector(state => state.exploreSavings.numberOfClonedCopies);
-    const selectedCloneRefresh = useAppSelector(state => state.exploreSavings.selectedCloneRefresh);
-    const monthlyChangeRate = useAppSelector(state => state.exploreSavings.monthlyChangeRate);
-    const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
+    const {
+        selectedSnapshotFrequency,
+        numberOfClonedCopies,
+        selectedCloneRefresh,
+        monthlyChangeRate,
+        selectedHostDetails,
+        selectedInstanceId,
+        savingsCalculatorRefresh,
+        selectedDeploymentModel
+    } = useAppSelector(state => state.exploreSavings);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
-    const selectedInstanceId = useAppSelector(state => state.exploreSavings.selectedInstanceId);
-    const savingsCalculatorRefresh = useAppSelector(state => state.exploreSavings.savingsCalculatorRefresh);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const [getStorageSavingsApi] = useGetStorageSavingsMutation();
@@ -58,10 +64,19 @@ const SavingsCalculatorApi = () => {
             if (selectedSnapshotFrequency && numberOfClonedCopies && selectedCloneRefresh && monthlyChangeRate) {
                 dispatch(setStorageSavingsLoading(true));
                 getStorageSavingsData(selectedHostDetails?.id);
+
+                // untill API is available
+                dispatch(setViewCalculationsResponse(viewCalculationJson['standalone']));
             }
         } else {
             // Demo mode code will be removed once actual demo API starts returning data
-            dispatch(setStorageSavingsResponse(storageSavingsJson));
+            if (selectedDeploymentModel?.toLowerCase() === 'standalone') {
+                dispatch(setStorageSavingsResponse(storageSavingsJson['standalone']));
+                dispatch(setViewCalculationsResponse(viewCalculationJson['standalone']));
+            } else {
+                dispatch(setStorageSavingsResponse(storageSavingsJson['aoag']));
+                dispatch(setViewCalculationsResponse(viewCalculationJson['aoag']));
+            }
         }
     };
 
@@ -136,7 +151,8 @@ const SavingsCalculatorApi = () => {
     useEffect(() => {
         const selectedRow = unManagedHostFormatedList.filter((item: any) => item?.id === selectedInstanceId);
         if (selectedRow) {
-            dispatch(setSelectedHostDetails(selectedRow[0]));
+            setESInstanceData(selectedRow[0], isDemoMode, selectedDeploymentModel, dispatch);
+            // dispatch(setSelectedHostDetails(selectedRow[0]));
         } else {
             dispatch(setSelectedHostDetails({}));
         }

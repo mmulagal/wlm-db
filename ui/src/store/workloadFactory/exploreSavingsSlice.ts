@@ -13,7 +13,10 @@ export const initialExploreSavingsState: any = {
     selectedHostDetails: {},
     storageSavingsResponse: {},
     storageSavingsLoading: false,
-    savingsCalculatorRefresh: false
+    savingsCalculatorRefresh: false,
+    selectedDeploymentModel: null,
+    viewCalculationsResponse: {},
+    viewCalculationsLoading: false
 };
 
 const exploreSavingsSlice = createSlice({
@@ -67,6 +70,15 @@ const exploreSavingsSlice = createSlice({
             state.storageSavingsResponse = {};
             state.storageSavingsLoading = false;
             state.savingsCalculatorRefresh = false;
+        },
+        setSelectedDeploymentModel(state, action: PayloadAction<any>) {
+            state.selectedDeploymentModel = action.payload;
+        },
+        setViewCalculationsResponse(state, action: PayloadAction<any>) {
+            state.viewCalculationsResponse = action.payload;
+        },
+        setViewCalculationsLoading(state, action: PayloadAction<any>) {
+            state.viewCalculationsLoading = action.payload;
         }
     }
 });
@@ -84,7 +96,10 @@ export const {
     setStorageSavingsResponse,
     setStorageSavingsLoading,
     setSavingsCalculatorRefresh,
-    addExploreSavingsInitialData
+    addExploreSavingsInitialData,
+    setSelectedDeploymentModel,
+    setViewCalculationsResponse,
+    setViewCalculationsLoading
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;
