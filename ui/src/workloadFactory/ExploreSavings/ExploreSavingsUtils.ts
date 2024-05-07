@@ -1,5 +1,22 @@
-import { setSelectedHostDetails } from '../../store/workloadFactory/exploreSavingsSlice';
-import { TIB_IN_BYTE } from '../../utils/consts';
+import { setSelectedDeploymentModel, setSelectedHostDetails, setSelectedInstanceId, setSelectedServerName } from '../../store/workloadFactory/exploreSavingsSlice';
+import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
+import { TIB_IN_BYTE, WLF_TABS } from '../../utils/consts';
+
+export const onClickESHost = (dispatch: any, rowData: any, isDemoMode: any) => {
+    const deploymentModel = (() => {
+        const nodes = rowData?.sqlServerInstances?.[0]?.sqlServerNodes;
+        if (nodes && nodes.length > 1) {
+            return 'aoag';
+        } else {
+            return 'standalone';
+        }
+    })();
+    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+    dispatch(setSelectedInstanceId(rowData?.id));
+    dispatch(setSelectedDeploymentModel(deploymentModel));
+    dispatch(setSelectedServerName(rowData.sqlServerInstances?.[0].sqlServerName || 'Server name'));
+    setESInstanceData(rowData, isDemoMode, deploymentModel, dispatch);
+}
 
 export const setESInstanceData = (data: any, isDemoMode: any, type: string, dispatch: any) => {
     if (isDemoMode) {
@@ -86,7 +103,7 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                     }
                 ],
                 recommendedInstance: {
-                    serverInstallationMode: 'FCI',
+                    serverInstallationMode: 'Failover Cluster Instances',
                     serverEdition: 'SQL Server Standard Edition',
                     serverVersion: 'Microsoft SQL Server 2019',
                     instanceType: 'm5.2xlarge'

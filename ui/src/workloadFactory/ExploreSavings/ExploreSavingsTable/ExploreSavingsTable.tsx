@@ -3,9 +3,7 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './ExploreSavingsTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
-import { WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
     renderAllocatedCapacity,
@@ -15,13 +13,7 @@ import {
     renderUnmanagedAZ,
     renderUnmanagedHostName
 } from '../../Inventory/InventoryUtils';
-import {
-    setSelectedDeploymentModel,
-    setSelectedHostDetails,
-    setSelectedInstanceId,
-    setSelectedServerName
-} from '../../../store/workloadFactory/exploreSavingsSlice';
-import { setESInstanceData } from '../ExploreSavingsUtils';
+import { onClickESHost } from '../ExploreSavingsUtils';
 
 const ExploreSavingsTable = () => {
     const dispatch = useDispatch();
@@ -30,7 +22,6 @@ const ExploreSavingsTable = () => {
     const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
-    const selectedDeploymentModel = useAppSelector(state => state.exploreSavings.selectedDeploymentModel);
 
     const lastColDetails = () => {
         return {
@@ -61,22 +52,7 @@ const ExploreSavingsTable = () => {
                         <div
                             className={styles.detectManage}
                             onClick={() => {
-                                dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
-                                dispatch(setSelectedInstanceId(rowData?.id));
-                                dispatch(
-                                    setSelectedDeploymentModel(
-                                        rowData?.serverInstallationMode?.toLowerCase() === 'standalone'
-                                            ? 'standalone'
-                                            : 'aoag'
-                                    )
-                                );
-                                dispatch(
-                                    setSelectedServerName(
-                                        rowData?.sqlServerInstances?.[0]?.sqlServerName || 'Server name'
-                                    )
-                                );
-                                setESInstanceData(rowData, isDemoMode, selectedDeploymentModel, dispatch);
-                                // dispatch(setSelectedHostDetails(rowData));
+                                onClickESHost(dispatch, rowData, isDemoMode);
                             }}
                         >
                             <Typography variant="Regular_14" className={styles.textStyle}>
