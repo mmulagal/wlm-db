@@ -952,7 +952,7 @@ async function deployCloudFormationTemplate(
         );
         if (!fsxConfiguration.fsxFileSystemId) {
             // create a new fsx record in fsx inventory
-            createFileSystemForDemo(credentialsId, region, fsxConfiguration);
+            createFileSystemForDemo(credentialsId, region, fsxConfiguration, false);
         }
     }
     return { cloudFormationStackId: deployStackResponse.StackId!, cloudFormationUrl: cfUrl };

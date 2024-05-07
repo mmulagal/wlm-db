@@ -175,14 +175,19 @@ async function createDeploymentMockDataInDB(
     await createJobs(accountId, data);
 }
 
-async function createFileSystemForDemo(credentialsId: string, region: string, fsxConfiguration: FSXConfigurationType) {
+async function createFileSystemForDemo(
+    credentialsId: string,
+    region: string,
+    fsxConfiguration: FSXConfigurationType,
+    defaultFsx: boolean
+) {
     logger.info('Creating fsx for demo', credentialsId, region, fsxConfiguration);
-
+    const fsxName = defaultFsx ? 'fsx-wlmdb-DEFAULT' : `fsx-wlmdb-${randomize('A', 5)}`;
     const { fsxDeploymentMode } = fsxConfiguration;
     const mode = fsxDeploymentMode.replace(/_\d+$/, '');
 
     const requestBody = {
-        name: `fsx-wlmdb-${randomize('A', 5)}`,
+        name: fsxName,
         credentialsId,
         region,
         storageCapacity: {
