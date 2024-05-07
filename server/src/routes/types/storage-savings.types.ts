@@ -44,12 +44,85 @@ const StorageSavingsResponse = Type.Object({
     })
 });
 
+const StorageSavingsCalculationsMetricsResponse = Type.Object({
+    fsxOntapCalculation: Type.Object({
+        desiredStorageCapacity: Type.Number(),
+        percentageOfDataOnSsdStorage: Type.Number(),
+        savingsFromCompressionAndDeduplication: Type.Number(),
+        storageSavingsFromCompressionAndDeduplication: Type.Number(),
+        effectiveFsxnStorageCapacity: Type.Number(),
+        ssdStoragePerMonth: Type.Number(),
+        greaterOfSsdAndMinAllowedSsd: Type.Number(),
+        ssdMonthlyCost: Type.Number(),
+        totalMonthlyCostForFSxSsd: Type.Number(),
+        ratioAfterSavings: Type.Number(),
+        dataOnCapacityPoolStorageFactor: Type.Number(),
+        capacityPoolStorage: Type.Number(),
+        capacityMonthlyCost: Type.Number(),
+        totalMonthlyCostForCapacity: Type.Number(),
+        totalMonthlyStorageCharge: Type.Number(),
+        minFileSystemsNumForStorage: Type.Number(),
+        minFileSystemsNumForThroughputCapacity: Type.Number(),
+        minFileSystemsNumForSsdIops: Type.Number(),
+        requiredNumOfFsxFractional: Type.Number(),
+        requiredNumOfFsx: Type.Number(),
+        minThroughputCapacityRequired: Type.Number(),
+        provisionedThroughputCapacity: Type.Number(),
+        totalMonthlyFsxnThroughputCapacityCost: Type.Number(),
+        includedSsdIops: Type.Number(),
+        additionalSsdIops: Type.Number(),
+        billedAdditionalSsdIops: Type.Number(),
+        additionalBilledCostForSsdIops: Type.Number(),
+        totalThroughputAndIopsMonthly: Type.Number()
+    }),
+    fsxOntapSnapshotCalculation: Type.Object({
+        desiredStorageCapacity: Type.Number(),
+        percentageOfDataOnSsdStorage: Type.Number(),
+        savingsFromCompressionAndDeduplication: Type.Number(),
+        storageSavingsFromCompressionAndDeduplication: Type.Number(),
+        effectiveFsxnStorageCapacity: Type.Number(),
+        ssdStoragePerMonth: Type.Number(),
+        ssdMonthlyCost: Type.Number(),
+        totalMonthlyCostForFsxSsd: Type.Number(),
+        ratioAfterSavings: Type.Number(),
+        dataOnCapacityPoolStorageFactor: Type.Number(),
+        capacityPoolStorage: Type.Number(),
+        capacityMonthlyCost: Type.Number(),
+        totalMonthlyCostForCapacity: Type.Number()
+    }),
+    ebsCalculation: Type.Object({
+        storageAmountPerVol: Type.Number(),
+        totalInstanceHours: Type.Number(),
+        ebsInstanceMonth: Type.Number(),
+        ebsStorageCost: Type.Number(),
+        billableIops: Type.Number(),
+        totalBillableIops: Type.Number(),
+        ebsIopsCost: Type.Number(),
+        billableMbps: Type.Number(),
+        billableThroughputMbps: Type.Number(),
+        billableThroughputGbps: Type.Number(),
+        ebsThroughputCost: Type.Number(),
+        totalSnapshots: Type.Number(),
+        initialSnapshotCost: Type.Number(),
+        monthlyCostPerSnapshot: Type.Number(),
+        discountForPartialStorageMonth: Type.Number(),
+        incrementalSnapshotCost: Type.Number(),
+        totalSnapshotCost: Type.Number(),
+        totalEbsSnapshotCost: Type.Number(),
+        ebsSnapshotCost: Type.Number()
+    })
+});
+
 type StorageSavingsResponseType = Static<typeof StorageSavingsResponse>;
 type StorageSavingsRequestBodyType = Static<typeof StorageSavingsRequestBody>;
+
+type StorageSavingsMetricsCalculationsResponseType = Static<typeof StorageSavingsCalculationsMetricsResponse>;
 export {
     StorageSavingsRequestParams,
     StorageSavingsRequestBody,
     StorageSavingsRequestBodyType,
     StorageSavingsResponse,
-    StorageSavingsResponseType
+    StorageSavingsResponseType,
+    StorageSavingsCalculationsMetricsResponse,
+    StorageSavingsMetricsCalculationsResponseType
 };
