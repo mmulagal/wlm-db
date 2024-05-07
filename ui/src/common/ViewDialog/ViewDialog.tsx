@@ -3,9 +3,11 @@ import { Popover } from '@netapp/design-system/dist/components/Popover';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 import { ReactComponent as CopyIcon } from '../../assets/ic_copy.svg';
+import { ReactComponent as DownloadIcon } from '@netapp/icons/ic_download.svg';
 import styles from './ViewDialog.module.scss';
+import { downloadObjectAsJson } from '../../utils/utilityFunctions';
 
-const ViewDialog = ({data} : {data: string}) => {
+const ViewDialog = ({ data, isDownload = false }: { data: string | any; isDownload?: boolean }) => {
     return (
         <div className={styles['dialog-content']}>
             <div className={styles['dialog-body']}>
@@ -25,6 +27,20 @@ const ViewDialog = ({data} : {data: string}) => {
                                 </CopyToClipboard>
                             }
                         />
+
+                        {isDownload && (
+                            <div className={styles.download}>
+                                <Popover
+                                    popoverClass={styles['copy-popover']}
+                                    children={'Rest API downloaded'}
+                                    container={
+                                        <div onClick={() => downloadObjectAsJson(data, new Date())}>
+                                            <DownloadIcon></DownloadIcon>
+                                        </div>
+                                    }
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

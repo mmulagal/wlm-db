@@ -150,10 +150,14 @@ const SandboxTable = () => {
     };
 
     const handleConnectToTools = () => {
+        const dataToDisplay = {
+            toggleState: false,
+            toggle: true
+        };
         setDialog(
             <DialogComponent
                 header={'Connect to CI/CD tools'}
-                content={<ViewDialog data="data" />}
+                content={<ViewDialog data={JSON.stringify(dataToDisplay, null, 2)} isDownload={true} />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
                 customClass={styles.setWidth}
@@ -279,6 +283,7 @@ const SandboxTable = () => {
             width: '220px',
             filterOptions: 'auto'
         },
+
         {
             Header: GENERAL.SANDBOX_TAG,
             accessor: 'tag',
@@ -286,13 +291,7 @@ const SandboxTable = () => {
             width: '220px',
             filterOptions: 'auto'
         },
-        {
-            Header: '',
-            accessor: '',
-            id: '8',
-            width: '56px'
-        }
-        //lastColDetails()
+        lastColDetails()
     ];
 
     const tableProps = useTable({
