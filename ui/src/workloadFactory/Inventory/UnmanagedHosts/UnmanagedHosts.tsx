@@ -7,10 +7,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { API_ERRORS, DETECT_HOST_VAR } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
-import {
-    setMovedToManagedHost,
-    setUnManagedHostColState
-} from '../../../store/workloadFactory/inventorySlice';
+import { setMovedToManagedHost, setUnManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
 import { useManageHostMutation, usePrepareHostMutation } from '../../../utils/apiService';
 import store from '../../../store/store';
 import {

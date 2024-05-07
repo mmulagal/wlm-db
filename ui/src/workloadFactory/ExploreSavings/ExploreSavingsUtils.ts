@@ -1,4 +1,9 @@
-import { setSelectedDeploymentModel, setSelectedHostDetails, setSelectedInstanceId, setSelectedServerName } from '../../store/workloadFactory/exploreSavingsSlice';
+import {
+    setSelectedDeploymentModel,
+    setSelectedHostDetails,
+    setSelectedInstanceId,
+    setSelectedServerName
+} from '../../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
 import { TIB_IN_BYTE, WLF_TABS } from '../../utils/consts';
 
@@ -16,7 +21,7 @@ export const onClickESHost = (dispatch: any, rowData: any, isDemoMode: any) => {
     dispatch(setSelectedDeploymentModel(deploymentModel));
     dispatch(setSelectedServerName(rowData.sqlServerInstances?.[0].sqlServerName || 'Server name'));
     setESInstanceData(rowData, isDemoMode, deploymentModel, dispatch);
-}
+};
 
 export const setESInstanceData = (data: any, isDemoMode: any, type: string, dispatch: any) => {
     if (isDemoMode) {
