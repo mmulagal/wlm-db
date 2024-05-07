@@ -69,7 +69,7 @@ model resource {
 
   @@index([account_id], map: "k_wlmdb_resource_account_id")
   @@index([resource_id], map: "k_wlmdb_resource_resource_id")
-  @@unique([resource_id, account_id],name:"uk_wlmdb_resource_resource_id_account_id", map: "uk_wlmdb_resource_resource_id_account_id")
+  @@unique([resource_id, account_id, credentials_id], name: "uk_wlmdb_resource_resource_id_account_id_credentials_id", map: "uk_wlmdb_resource_resource_id_account_id_credentials_id")
 }
 
 model config {
