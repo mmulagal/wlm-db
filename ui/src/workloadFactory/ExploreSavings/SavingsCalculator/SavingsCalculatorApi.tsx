@@ -13,6 +13,7 @@ import viewCalculationJson from '../viewCalculations.json';
 import store from '../../../store/store';
 import { setMssqlInstancesData } from '../../../store/workloadFactory/inventorySlice';
 import { setESInstanceData } from '../ExploreSavingsUtils';
+import { SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
 
 const SavingsCalculatorApi = () => {
     const dispatch = useAppDispatch();
@@ -70,7 +71,7 @@ const SavingsCalculatorApi = () => {
             }
         } else {
             // Demo mode code will be removed once actual demo API starts returning data
-            if (selectedDeploymentModel?.toLowerCase() === 'standalone') {
+            if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
                 dispatch(setStorageSavingsResponse(storageSavingsJson['standalone']));
                 dispatch(setViewCalculationsResponse(viewCalculationJson['standalone']));
             } else {

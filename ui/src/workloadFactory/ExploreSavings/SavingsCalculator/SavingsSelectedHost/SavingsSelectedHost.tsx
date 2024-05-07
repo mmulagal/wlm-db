@@ -18,6 +18,7 @@ const SavingsSelectedHost = () => {
                         <DsTypography
                             variant="Semibold_14"
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
+                            title={selectedHostDetails?.databaseServer?.activeNode}
                         >
                             {selectedHostDetails?.databaseServer?.activeNode || GENERAL.NOT_AVAILABLE}
                         </DsTypography>
