@@ -571,6 +571,7 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     fsxIOPS: 'FSxDiskIops',
     ontapSgGroupId: 'ONTAPSecurityGroupID',
     encryptionKey: 'FileSystemEncryptionKeyId',
+    snapshotPolicy: 'FsxVolumeSnapshotPolicy',
 
     sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
