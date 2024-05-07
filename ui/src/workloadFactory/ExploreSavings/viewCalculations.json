@@ -1,0 +1,218 @@
+{
+    "aoag": {
+        "ebs": {
+            "type": "aoag",
+            "Ec2InstanceCalculation": {
+                "instanceType": "m5.2xlarge",
+                "instanceHourlyPrice": "3.75",
+                "ec2MachineCost": "2738.96",
+                "sqlEdition": "SQL Server Standard edition",
+                "sqlLicense": "Yes"
+            },
+            "cloneCalculation": {
+                "numberOfClonedCopies": 1,
+                "cloneCost": "3,084"
+            },
+            "EBSCalculation": {
+                "storageCapacity": "5,120",
+                "volumeSize": 5,
+                "priceCalculation": {
+                    "volumeCount": 2,
+                    "totalInstanceHour": "1460",
+                    "eachInstanceHour": "730",
+                    "instanceMonth": "2",
+                    "ebsStorageCost": "1280",
+                    "ebsCapacityPrice": "0.14",
+                    "billableIOPS": "40,000",
+                    "totalBillableIOPS": "40,000",
+                    "ebsIOPSCost": "4,888",
+                    "billableMbps": "0",
+                    "billableThroughputMbps": "0",
+                    "billableThroughputGbps": "0",
+                    "ebsThroughCost": "0",
+                    "totalSnapshots": "30",
+                    "initialSnapshotCost": "256",
+                    "monthlyCostOFEachSnapshot": "0.65",
+                    "discountForPartialStorage": "0.325",
+                    "incrementSnapshotCost": "9.75",
+                    "totalSnapshotCost": "265.75",
+                    "totalEBSSnapshotCost": "265.75",
+                    "ebsSnapshotCost": "265.75",
+                    "amazonElasticBlock": "9517.75"
+                }
+            }
+        },
+        "fsxn": {
+            "type": "aoag",
+            "Ec2InstanceCalculation": {
+                "instanceType": "m5.2xlarge",
+                "instanceHourlyPrice": "0.752",
+                "ec2MachineCost": "548.96",
+                "sqlEdition": "SQL Server Standard edition",
+                "sqlLicense": "Yes"
+            },
+            "cloneCalculation": {
+                "unitConversion": {
+                    "cloneFrequency": "daily",
+                    "cloneRateChange": "0.1",
+                    "desiredStorageCapacity": "390",
+                    "ssdStorage": "100",
+                    "savingsDeduplication": 0
+                },
+                "priceCalculation": {
+                    "storageSavingsDeduplication": "0",
+                    "effectiveStorageCapacity": "390",
+                    "ssdStorage": "390",
+                    "ssdMonthlyCost": "97.50",
+                    "totalMonthlyCloneCost": "97.50"
+                }
+            },
+            "FSxNCalculation": {
+                "storageCapacity": "5,120",
+                "ebsCapacity": "2",
+                "volumes": "2",
+                "ssdStorage": "1",
+                "deduplication": "0",
+                "priceCalculation": {
+                    "deduplication": "0",
+                    "storageCapacity": "5,120",
+                    "ssdStorage": "5,120",
+                    "minSSDStorage": "5,120",
+                    "ssdMonthlyCost": "1280",
+                    "ssdStoragePrice": "0.14",
+                    "totalMonthlyCostStorageCapacity": "1280",
+                    "deduplicationFactor": "1",
+                    "storageFactor": "0",
+                    "capacityMonthlyCost": "0",
+                    "fsxnCapacityPrice": "0.02",
+                    "capacityPoolStorageCapacitySize": "0",
+                    "capacityPoolStorageCapacity": "0",
+                    "totalStorageCharge": "1280",
+                    "minFileSystem": "0.026",
+                    "throughputCapacity": "0.031",
+                    "maxSSDTierSize": "183,105.47",
+                    "sddIOPS": "0.25",
+                    "fractional": "0.25",
+                    "fileSystems": "1",
+                    "capacityRequired": "128",
+                    "provisionedThroughputCapacity": "128",
+                    "totalMonthlyCostThroughputCapacity": "153.6",
+                    "includedSSDIOPS": "15,360",
+                    "additionalSSDIOPS": "24,640",
+                    "billedSSD": "24,640",
+                    "additionalBilledCost": "837.76",
+                    "totalThroughputIOPS": "991.36",
+                    "totalMonthlyCost": "2,271.36"
+                }
+            }
+        }
+    },
+    "standalone": {
+        "ebs": {
+            "type": "standalone",
+            "Ec2InstanceCalculation": {
+                "instanceType": "m5.2xlarge",
+                "instanceHourlyPrice": "0.752",
+                "ec2MachineCost": "548.96",
+                "sqlEdition": "SQL Server Standard edition",
+                "sqlLicense": "Yes"
+            },
+            "cloneCalculation": {
+                "numberOfClonedCopies": 1,
+                "cloneCost": "5,134"
+            },
+            "EBSCalculation": {
+                "storageCapacity": "2,048",
+                "volumeSize": 2,
+                "priceCalculation": {
+                    "volumeCount": 2,
+                    "totalInstanceHour": "1460",
+                    "eachInstanceHour": "730",
+                    "instanceMonth": "2",
+                    "ebsStorageCost": "562.95",
+                    "ebsCapacityPrice": "0.14",
+                    "billableIOPS": "40,000",
+                    "totalBillableIOPS": "40,000",
+                    "ebsIOPSCost": "4,888",
+                    "billableMbps": "0",
+                    "billableThroughputMbps": "0",
+                    "billableThroughputGbps": "0",
+                    "ebsThroughCost": "0",
+                    "totalSnapshots": "30",
+                    "initialSnapshotCost": "112.59",
+                    "monthlyCostOFEachSnapshot": "0.7",
+                    "discountForPartialStorage": "0.35",
+                    "incrementSnapshotCost": "10.47",
+                    "totalSnapshotCost": "123.06",
+                    "totalEBSSnapshotCost": "246.12",
+                    "ebsSnapshotCost": "246.12",
+                    "amazonElasticBlock": "5,697.07"
+                }
+            }
+        },
+        "fsxn": {
+            "type": "standalone",
+            "Ec2InstanceCalculation": {
+                "instanceType": "m5.2xlarge",
+                "instanceHourlyPrice": "0.752",
+                "ec2MachineCost": "548.96",
+                "sqlEdition": "SQL Server Standard edition",
+                "sqlLicense": "Yes"
+            },
+            "cloneCalculation": {
+                "unitConversion": {
+                    "cloneFrequency": "daily",
+                    "cloneRateChange": "0.1",
+                    "desiredStorageCapacity": "780",
+                    "ssdStorage": "100",
+                    "savingsDeduplication": 0
+                },
+                "priceCalculation": {
+                    "storageSavingsDeduplication": "0",
+                    "effectiveStorageCapacity": "780",
+                    "ssdStorage": "780",
+                    "ssdMonthlyCost": "195",
+                    "totalMonthlyCloneCost": "195"
+                }
+            },
+            "FSxNCalculation": {
+                "storageCapacity": "4,096",
+                "ebsCapacity": "2",
+                "volumes": "2",
+                "ssdStorage": "100",
+                "deduplication": "0",
+                "priceCalculation": {
+                    "deduplication": "0",
+                    "storageCapacity": "4,096",
+                    "ssdStorage": "4,096",
+                    "minSSDStorage": "4,096",
+                    "ssdMonthlyCost": "562.95",
+                    "ssdStoragePrice": "0.14",
+                    "totalMonthlyCostStorageCapacity": "562.95",
+                    "deduplicationFactor": "100",
+                    "storageFactor": "0",
+                    "capacityMonthlyCost": "0",
+                    "fsxnCapacityPrice": "0.02",
+                    "capacityPoolStorageCapacitySize": "0",
+                    "capacityPoolStorageCapacity": "16.51",
+                    "totalStorageCharge": "562.95",
+                    "minFileSystem": "0.02",
+                    "throughputCapacity": "0.03",
+                    "maxSSDTierSize": "183,105.47",
+                    "sddIOPS": "0.5",
+                    "fractional": "0.5",
+                    "fileSystems": "1",
+                    "capacityRequired": "128",
+                    "provisionedThroughputCapacity": "128",
+                    "totalMonthlyCostThroughputCapacity": "92.16",
+                    "includedSSDIOPS": "13,511",
+                    "additionalSSDIOPS": "66,489",
+                    "billedSSD": "66,489",
+                    "additionalBilledCost": "1,130.31",
+                    "totalThroughputIOPS": "1,222.47",
+                    "totalMonthlyCost": "1,785.42"
+                }
+            }
+        }
+    }
+}

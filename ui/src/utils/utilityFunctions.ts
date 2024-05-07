@@ -399,7 +399,8 @@ export const formatHostData = (val: any) => {
     const nodes = val?.sqlServerInstances?.[0]?.sqlServerNodes;
     let type = '';
     if (nodes && nodes.length > 1) {
-        type = GENERAL.CLUSTER;
+        const state = store.getState();
+        type = state.auth.isDemoMode ? GENERAL.AOAG : GENERAL.CLUSTER;
     } else if (nodes && nodes.length === 1) {
         type = GENERAL.STANDALONE;
     }

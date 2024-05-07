@@ -16,10 +16,12 @@ import {
     renderUnmanagedHostName
 } from '../../Inventory/InventoryUtils';
 import {
+    setSelectedDeploymentModel,
     setSelectedHostDetails,
     setSelectedInstanceId,
     setSelectedServerName
 } from '../../../store/workloadFactory/exploreSavingsSlice';
+import { setESInstanceData } from '../ExploreSavingsUtils';
 
 const ExploreSavingsTable = () => {
     const dispatch = useDispatch();
@@ -28,6 +30,7 @@ const ExploreSavingsTable = () => {
     const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
+    const selectedDeploymentModel = useAppSelector(state => state.exploreSavings.selectedDeploymentModel);
 
     const lastColDetails = () => {
         return {
@@ -61,11 +64,19 @@ const ExploreSavingsTable = () => {
                                 dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                                 dispatch(setSelectedInstanceId(rowData?.id));
                                 dispatch(
+                                    setSelectedDeploymentModel(
+                                        rowData?.serverInstallationMode?.toLowerCase() === 'standalone'
+                                            ? 'standalone'
+                                            : 'aoag'
+                                    )
+                                );
+                                dispatch(
                                     setSelectedServerName(
                                         rowData?.sqlServerInstances?.[0]?.sqlServerName || 'Server name'
                                     )
                                 );
-                                dispatch(setSelectedHostDetails(rowData));
+                                setESInstanceData(rowData, isDemoMode, selectedDeploymentModel, dispatch);
+                                // dispatch(setSelectedHostDetails(rowData));
                             }}
                         >
                             <Typography variant="Regular_14" className={styles.textStyle}>
