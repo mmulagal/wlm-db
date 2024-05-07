@@ -39,7 +39,6 @@ const MSSQLAccordion = ({ printState }: any) => {
     const { storageSavingsLoading, storageSavingsResponse, selectedHostDetails } = useAppSelector(
         state => state.exploreSavings
     );
-    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
     const [fsxData, setFsxData] = useState({});
@@ -52,22 +51,12 @@ const MSSQLAccordion = ({ printState }: any) => {
 
     useEffect(() => {
         const instanceTypelist = selectedHostDetails?.topology?.ec2Details?.map((inst: any) => inst?.instanceType);
-        let mssqlInstanceData: any = {};
-        if (isDemoMode) {
-            mssqlInstanceData = {
-                serverInstallationMode: 'Standalone',
-                serverEdition: 'SQL Server Standard Edition',
-                serverVersion: 'Microsoft SQL Server 2019',
-                instanceType: 'm5.2xlarge'
-            };
-        } else {
-            mssqlInstanceData = {
-                serverInstallationMode: selectedHostDetails?.serverInstallationMode,
-                serverEdition: selectedHostDetails?.databaseServer?.serverEdition,
-                serverVersion: selectedHostDetails?.databaseServer?.serverVersion,
-                instanceType: instanceTypelist
-            };
-        }
+        let mssqlInstanceData = {
+            serverInstallationMode: selectedHostDetails?.recommendedInstance?.serverInstallationMode,
+            serverEdition: selectedHostDetails?.recommendedInstance?.serverEdition,
+            serverVersion: selectedHostDetails?.recommendedInstance?.serverVersion,
+            instanceType: selectedHostDetails?.recommendedInstance?.instanceType
+        };
         setMsSqlInstance(mssqlInstanceData);
     }, [selectedHostDetails]);
 

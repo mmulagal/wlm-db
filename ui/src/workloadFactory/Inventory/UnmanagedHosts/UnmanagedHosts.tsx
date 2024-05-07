@@ -29,11 +29,13 @@ import {
 } from '../InventoryUtils';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import {
+    setSelectedDeploymentModel,
     setSelectedHostDetails,
     setSelectedInstanceId,
     setSelectedServerName
 } from '../../../store/workloadFactory/exploreSavingsSlice';
 import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
+import { setESInstanceData } from '../../ExploreSavings/ExploreSavingsUtils';
 
 const UnmanagedHosts = () => {
     const dispatch = useDispatch();
@@ -44,6 +46,7 @@ const UnmanagedHosts = () => {
     const { unManagedHostInitialColumns } = useAppSelector(state => state.inventory);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
+    const selectedDeploymentModel = useAppSelector(state => state.exploreSavings.selectedDeploymentModel);
 
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
@@ -169,8 +172,13 @@ const UnmanagedHosts = () => {
     const exploreSavingsAction = (rowData: any) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
         dispatch(setSelectedInstanceId(rowData?.id));
+        dispatch(
+            setSelectedDeploymentModel(
+                rowData?.serverInstallationMode?.toLowerCase() === 'standalone' ? 'standalone' : 'aoag'
+            )
+        );
         dispatch(setSelectedServerName(rowData.sqlServerInstances?.[0].sqlServerName || 'Server name'));
-        dispatch(setSelectedHostDetails(rowData));
+        setESInstanceData(rowData, isDemoMode, selectedDeploymentModel, dispatch);
     };
 
     const DatabasesColDefs: ColumnProps[] = [

@@ -714,6 +714,7 @@ export const GENERAL = {
         ' to see when the modules have been installed.'
     ],
     FCI: 'FCI',
+    AOAG: 'Always on availability group',
     CLUSTER: 'Cluster',
     STANDALONE: 'Standalone',
     SERVICE: 'Service',
