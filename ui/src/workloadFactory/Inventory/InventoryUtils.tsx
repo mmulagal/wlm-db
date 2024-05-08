@@ -81,7 +81,7 @@ export const renderAllocatedCapacity = (cellData: any, rowData: any) => {
     return (
         <>
             {!rowData?.loading && (cellData || cellData === 0 ? cellData : GENERAL.NOT_AVAILABLE)}
-            {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+            {rowData?.loading && <DsFlashingDotsLoader />}
         </>
     );
 };

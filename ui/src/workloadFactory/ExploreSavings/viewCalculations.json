@@ -53,7 +53,7 @@
             },
             "cloneCalculation": {
                 "unitConversion": {
-                    "cloneFrequency": "daily",
+                    "cloneFrequency": "Daily",
                     "cloneRateChange": "0.1",
                     "desiredStorageCapacity": "390",
                     "ssdStorage": "100",
@@ -102,7 +102,7 @@
                     "billedSSD": "24,640",
                     "additionalBilledCost": "837.76",
                     "totalThroughputIOPS": "991.36",
-                    "totalMonthlyCost": "2,271.36"
+                    "totalMonthlyCost": "2,368.86"
                 }
             }
         }
@@ -161,7 +161,7 @@
             },
             "cloneCalculation": {
                 "unitConversion": {
-                    "cloneFrequency": "daily",
+                    "cloneFrequency": "Daily",
                     "cloneRateChange": "0.1",
                     "desiredStorageCapacity": "780",
                     "ssdStorage": "100",
@@ -210,7 +210,7 @@
                     "billedSSD": "66,489",
                     "additionalBilledCost": "1,130.31",
                     "totalThroughputIOPS": "1,222.47",
-                    "totalMonthlyCost": "1,785.42"
+                    "totalMonthlyCost": "1,980.42"
                 }
             }
         }

@@ -5,15 +5,15 @@ import {
     setSelectedServerName
 } from '../../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
-import { TIB_IN_BYTE, WLF_TABS } from '../../utils/consts';
+import { SQL_DEPLOYMENT_MODE, TIB_IN_BYTE, WLF_TABS } from '../../utils/consts';
 
 export const onClickESHost = (dispatch: any, rowData: any, isDemoMode: any) => {
     const deploymentModel = (() => {
         const nodes = rowData?.sqlServerInstances?.[0]?.sqlServerNodes;
         if (nodes && nodes.length > 1) {
-            return 'aoag';
+            return SQL_DEPLOYMENT_MODE.AOAG;
         } else {
-            return 'standalone';
+            return SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
         }
     })();
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
@@ -66,6 +66,11 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                     serverEdition: 'SQL Server Standard Edition',
                     serverVersion: 'Microsoft SQL Server 2019',
                     instanceType: 'm5.2xlarge'
+                },
+                storage: {
+                    ebs: {
+                        size: 4 * TIB_IN_BYTE
+                    }
                 }
             };
         } else {
@@ -112,6 +117,11 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                     serverEdition: 'SQL Server Standard Edition',
                     serverVersion: 'Microsoft SQL Server 2019',
                     instanceType: 'm5.2xlarge'
+                },
+                storage: {
+                    ebs: {
+                        size: 10 * TIB_IN_BYTE
+                    }
                 }
             };
         }
@@ -129,4 +139,47 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
             })
         );
     }
+};
+
+export const updateDemoEbsRows = (data: any) => {
+    const updatedNonFsxnStorageList = data?.map((perRow: any) => {
+        if (perRow?.sqlServerInstances?.[0]?.sqlServerNodes?.length <= 1) {
+            return {
+                ...perRow,
+                sizeformat: '4 TiB',
+                azType: 'Single AZ',
+                sqlServerInstances: perRow?.sqlServerInstances?.map((perInst: any) => {
+                    return {
+                        ...perInst,
+                        deploymentTypes: [
+                            {
+                                type: 'SINGLE_AZ_1',
+                                zones: ['availability-zone-3']
+                            }
+                        ]
+                    };
+                })
+            };
+        } else if (perRow?.sqlServerInstances?.[0]?.sqlServerNodes) {
+            return {
+                ...perRow,
+                sizeformat: '10 TiB',
+                azType: 'Multi AZ',
+                sqlServerInstances: perRow?.sqlServerInstances?.map((perInst: any) => {
+                    return {
+                        ...perInst,
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-3', 'availability-zone-2']
+                            }
+                        ]
+                    };
+                })
+            };
+        } else {
+            return { ...perRow };
+        }
+    });
+    return updatedNonFsxnStorageList;
 };

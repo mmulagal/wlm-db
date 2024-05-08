@@ -100,6 +100,8 @@ export const calculatedFSXData = (fsxData: any) => {
             value:
                 fsxData?.deploymentType === 'Single'
                     ? 'Single Availability Zone'
+                    : fsxData?.deploymentType === 'Multi'
+                    ? 'Multi Availability Zone'
                     : fsxData?.deploymentType || GENERAL.NOT_AVAILABLE,
             text: `A ${fsxData?.deploymentType} Availability Zone is the equivalent availability for Amazon EBS.`
         },
@@ -146,7 +148,7 @@ export const calculatedFSXData = (fsxData: any) => {
         },
         {
             label: 'Provisioned SSD IOPS',
-            value: fsxData?.ssdIop || GENERAL.NOT_AVAILABLE,
+            value: fsxData?.ssdIop ? fsxData?.ssdIop + ' IOPS' : GENERAL.NOT_AVAILABLE,
             text: 'For each GiB of SSD provisioned storage, Amazon FSx automatically provisions 3 SSD IOPS for the file system.'
         },
         {
@@ -186,7 +188,7 @@ export const MSSQLServerInstance = (sqlData: any) => {
         {
             label: 'DB Instance type',
             value: sqlData?.instanceType || GENERAL.NOT_AVAILABLE,
-            text: 'Based on the source Ec2 instance type'
+            text: 'Based on the source EC2 instance type'
         }
     ];
 };
@@ -194,7 +196,7 @@ export const MSSQLServerInstance = (sqlData: any) => {
 export const viewCalculation = (viewCalculation: any) => {
     return {
         Ec2InstanceCalculation:
-            viewCalculation?.type === 'aoag'
+            viewCalculation?.type === SQL_DEPLOYMENT_MODE.AOAG
                 ? [
                       {
                           label: 'Microsoft SQL EC2 Instances calculation',
@@ -227,7 +229,7 @@ export const viewCalculation = (viewCalculation: any) => {
                           text: ''
                       },
                       {
-                          label: 'Ec2 machine1 cost',
+                          label: 'EC2 machine1 cost',
                           value: `$${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
                           text: `Instance hourly price x number of hours in a month = $${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
                       },
@@ -258,7 +260,7 @@ export const viewCalculation = (viewCalculation: any) => {
                           text: ''
                       },
                       {
-                          label: 'Ec2 machine2 cost',
+                          label: 'EC2 machine2 cost',
                           value: `$${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
                           text: `Instance hourly price x number of hours in a month = $${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
                       }
@@ -295,7 +297,7 @@ export const viewCalculation = (viewCalculation: any) => {
                           text: ''
                       },
                       {
-                          label: 'Ec2 machine1 cost',
+                          label: 'EC2 machine1 cost',
                           value: `$${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
                           text: `Instance hourly price x number of hours in a month = $${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
                       }
@@ -374,7 +376,7 @@ export const viewCalculation = (viewCalculation: any) => {
             {
                 label: 'Capacity monthly cost',
                 value: `$${viewCalculation.FSxNCalculation.priceCalculation.capacityMonthlyCost}`,
-                text: `Capacity pool storage capacity (${viewCalculation.FSxNCalculation.priceCalculation.capacityPoolStorageCapacity} GiB) x FSx for ONTAP capacity price ($${viewCalculation.FSxNCalculation.priceCalculation.fsxnCapacityPrice})`
+                text: `Capacity pool storage capacity (${viewCalculation.FSxNCalculation.priceCalculation.capacityPoolStorageCapacitySize} GiB) x FSx for ONTAP capacity price ($${viewCalculation.FSxNCalculation.priceCalculation.fsxnCapacityPrice})`
             },
             {
                 label: 'Total monthly cost for FSx for NetApp ONTAP file server - Capacity pool storage capacity',
@@ -399,7 +401,7 @@ export const viewCalculation = (viewCalculation: any) => {
             {
                 label: 'Minimum number of file systems required for SSD IOPS',
                 value: `${viewCalculation.FSxNCalculation.priceCalculation.sddIOPS}`,
-                text: `Provisioned SSD (80000 IOPS) ÷ Maximum SSD (160000 IOPS)`
+                text: `Provisioned SSD (80,000 IOPS) ÷ Maximum SSD (1,60,000 IOPS)`
             },
             {
                 label: 'Required number of FSx file systems - fractional',
@@ -428,17 +430,17 @@ export const viewCalculation = (viewCalculation: any) => {
             },
             {
                 label: 'Included SSD IOPS',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.includedSSDIOPS}`,
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.includedSSDIOPS} IOPS`,
                 text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity (4,096) x Included (3.3) IOPS per GIB `
             },
             {
                 label: 'Additional SSD IOPS',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.additionalSSDIOPS}`,
-                text: `Provisioned SSD (80000 IOPS) - Included SSD (13,511 IOPS)`
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.additionalSSDIOPS} IOPS`,
+                text: `Provisioned SSD (80,000 IOPS) - Included SSD (13,511 IOPS)`
             },
             {
                 label: 'Billed additional SSD IOPS',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.billedSSD}`,
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.billedSSD} IOPS`,
                 text: ``
             },
             {
@@ -506,7 +508,7 @@ export const viewCalculation = (viewCalculation: any) => {
             {
                 label: 'SSD monthly cost',
                 value: `$${viewCalculation.cloneCalculation.priceCalculation.ssdMonthlyCost}`,
-                text: `SSD storage GiB per month  x FSx for ONTAP SSD price = 780GiB x $0.14`
+                text: `SSD storage GiB per month  x FSx for ONTAP SSD price = 780GiB x $0.25`
             },
             {
                 label: 'Total clone monthly cost',
@@ -517,7 +519,7 @@ export const viewCalculation = (viewCalculation: any) => {
             {
                 label: 'Total monthly cost',
                 value: `$${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCost}`,
-                text: `Total throughput and IOPS (monthly) ($${viewCalculation.FSxNCalculation.priceCalculation.totalThroughputIOPS})  + total storage charge (monthly) ($${viewCalculation.FSxNCalculation.priceCalculation.totalStorageCharge}) `
+                text: `Total throughput and IOPS cost ($${viewCalculation.FSxNCalculation.priceCalculation.totalThroughputIOPS})  + Total Storage cost ($${viewCalculation.FSxNCalculation.priceCalculation.totalStorageCharge}) + Total Clone cost ($${viewCalculation.cloneCalculation.priceCalculation.totalMonthlyCloneCost})`
             }
         ]
     };
@@ -526,7 +528,7 @@ export const viewCalculation = (viewCalculation: any) => {
 export const viewCalculationForEBS = (viewCalculation: any) => {
     return {
         Ec2InstanceCalculation:
-            viewCalculation?.type === 'aoag'
+            viewCalculation?.type === SQL_DEPLOYMENT_MODE.AOAG
                 ? [
                       {
                           label: 'Microsoft SQL EC2 instances calculation',
@@ -559,7 +561,7 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
                           text: ''
                       },
                       {
-                          label: 'Ec2 machine1 cost',
+                          label: 'EC2 machine1 cost',
                           value: `$${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
                           text: `Instance hourly price x number of hours in a month = $${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
                       },
@@ -590,7 +592,7 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
                           text: ''
                       },
                       {
-                          label: 'Ec2 machine2 cost',
+                          label: 'EC2 machine2 cost',
                           value: `$${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
                           text: `Instance hourly price x number of hours in a month = $${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
                       }
@@ -627,7 +629,7 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
                           text: ''
                       },
                       {
-                          label: 'Ec2 machine1 cost',
+                          label: 'EC2 machine1 cost',
                           value: `$${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
                           text: `Instance hourly price x number of hours in a month = $${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
                       }

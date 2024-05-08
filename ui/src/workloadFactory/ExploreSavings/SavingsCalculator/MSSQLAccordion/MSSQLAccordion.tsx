@@ -147,7 +147,7 @@ const MSSQLAccordion = ({ printState }: any) => {
                                 )
                             )}
                             <DsTypography variant="Semibold_14" style={{ marginTop: '32px', marginBottom: '6px' }}>
-                                FsxN 1
+                                FSxN 1
                             </DsTypography>
                             {calculatedFSXData(fsxData).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (
@@ -156,7 +156,7 @@ const MSSQLAccordion = ({ printState }: any) => {
                             )}
 
                             <DsTypography variant="Semibold_14" style={{ marginTop: '32px', marginBottom: '6px' }}>
-                                FsxN 2
+                                FSxN 2
                             </DsTypography>
                             {calculatedFSXData(fsxData).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (
@@ -183,7 +183,7 @@ const MSSQLAccordion = ({ printState }: any) => {
                                 )
                             )}
                             <DsTypography variant="Semibold_14" style={{ marginTop: '32px', marginBottom: '6px' }}>
-                                FsxN
+                                FSxN
                             </DsTypography>
                             {calculatedFSXData(fsxData).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (
