@@ -103,14 +103,14 @@ export const calculatedFSXData = (fsxData: any) => {
                     : fsxData?.deploymentType === 'Multi'
                     ? 'Multi Availability Zone'
                     : fsxData?.deploymentType || GENERAL.NOT_AVAILABLE,
-            text: `A ${fsxData?.deploymentType} Availability Zone is the equivalent availability for Amazon EBS.`
+            text: `${fsxData?.deploymentType} Availability Zones are the equivalent availability for Amazon EBS.`
         },
         {
             label: 'Total storage capacity',
             value: fsxData?.totalStorageCapacity
                 ? formatSizeOnePrecision(fsxData?.totalStorageCapacity)
                 : GENERAL.NOT_AVAILABLE,
-            text: 'The number of volumes that you need times the selected volume size.'
+            text: 'The number of volumes that you need multiplied by the selected volume size.'
         },
 
         {
@@ -173,22 +173,22 @@ export const MSSQLServerInstance = (sqlData: any) => {
         {
             label: 'Database deployment mode',
             value: sqlData?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
-            text: 'Based on source deployment mode of Always On Availability Group, the equivalent deployment mode on FsxN is Failover cluster instance'
+            text: sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE ? 'The equivalent deployment mode of Always On Availability Group in EBS is Failover Cluster Instance in FSx for ONTAP' : 'Database deployment mode selected based on the current EBS database deployment mode'
         },
         {
             label: 'Database edition',
             value: sqlData?.serverEdition || GENERAL.NOT_AVAILABLE,
-            text: 'Since source deployment mode suggested is  FCI the Enterprise replication feature is not relevant. Based on our analysis, SQL Enterprise features are not used as well, therefore we recommend using Standard edition.'
+            text: sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE ? 'Since source deployment mode suggested is  FCI the Enterprise replication feature is not relevant. Based on our analysis, SQL Enterprise features are not used as well, therefore we recommend using Standard edition.' : 'Database edition selected based on the source SQL database edition'
         },
         {
             label: 'Database version',
             value: sqlData?.serverVersion || GENERAL.NOT_AVAILABLE,
-            text: 'Based on the source SQL server version'
+            text: 'Database version selected based on your current EBS SQL server version'
         },
         {
-            label: 'DB Instance type',
+            label: 'Database instance type',
             value: sqlData?.instanceType || GENERAL.NOT_AVAILABLE,
-            text: 'Based on the source EC2 instance type'
+            text: 'Database instance type selected based on the source EC2 instance type'
         }
     ];
 };

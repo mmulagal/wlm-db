@@ -126,7 +126,7 @@ const SavingsSelection = ({ printState }: any) => {
                     />
                 )}
                 <SelectField
-                    label={'Clone refresh'}
+                    label={'Clone refresh frequency'}
                     isClearable={false}
                     isDisabled={loading}
                     defaultValue={selectedCloneRefresh ? selectedCloneRefresh : [generateCloneRefresh[0]]}
