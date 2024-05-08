@@ -157,6 +157,7 @@ const SavingsSelection = ({ printState }: any) => {
                         isDisabled={loading}
                         value={monthlyChangeRateNo ? monthlyChangeRateNo : ''}
                         className={styles.widthSet}
+                        info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
                     />
                 )}
                 <div className={styles.notice}>
