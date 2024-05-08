@@ -792,8 +792,7 @@ export const GENERAL = {
     ES_MSSQL_SERVER: ' MsSQL server on FSx for ONTAP',
     ES_MSSQL_EBS: 'MsSQL server on EBS',
     ES_COST_BREAKDOWN: 'Cost breakdown - Monthly charge',
-    ES_SAVINGS_SELECTION_TEXT:
-        'Provide clone and snapshot values to calculate the cost savings.',
+    ES_SAVINGS_SELECTION_TEXT: 'Provide clone and snapshot values to calculate the cost savings.',
     NUMBER_OF_CLONED_COPIES: 'Number of cloned copies',
     MONTHLY_CHANGE_RATE: 'Monthly change rate (%)',
     REFER_SNAPSHOTS: 'This field refer to clones and snapshots',
@@ -837,7 +836,8 @@ export const GENERAL = {
     PDF_DOWNLOAD_SUCCESS: 'PDF file downloaded successfully.',
     MANAGE_HOST_DISABLED: 'Supported only for the FSx for ONTAP storage type',
     EXPLORE_SAVINGS_DISABLED: 'Supported only for the EBS storage type',
-    SMB_PROTOCOL_DISABLED: 'Action not supported on SQL server using SMB protocol'
+    SMB_PROTOCOL_DISABLED: 'Action not supported on SQL server using SMB protocol',
+    MONTHLY_CHANGE_RATE_TOOLTIP: 'The monthly change rate is the % of data that changes per month.'
 };
 
 export const CODE_VIEWER = {
