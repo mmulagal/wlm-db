@@ -143,7 +143,7 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
 
 export const updateDemoEbsRows = (data: any) => {
     const updatedNonFsxnStorageList = data?.map((perRow: any) => {
-        if (perRow?.serverInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+        if (perRow?.sqlServerInstances?.[0]?.sqlServerNodes?.length <= 1) {
             return {
                 ...perRow,
                 sizeformat: '4 TiB',
@@ -160,7 +160,7 @@ export const updateDemoEbsRows = (data: any) => {
                     };
                 })
             };
-        } else if (perRow?.serverInstallationMode) {
+        } else if (perRow?.sqlServerInstances?.[0]?.sqlServerNodes) {
             return {
                 ...perRow,
                 sizeformat: '10 TiB',
