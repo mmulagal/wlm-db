@@ -793,17 +793,17 @@ export const GENERAL = {
     ES_MSSQL_EBS: 'MsSQL server on EBS',
     ES_COST_BREAKDOWN: 'Cost breakdown - Monthly charge',
     ES_SAVINGS_SELECTION_TEXT:
-        'Provide clone and snapshot values to calculate the cost savings if you use FSx for ONTAP volumes.',
+        'Provide clone and snapshot values to calculate the cost savings.',
     NUMBER_OF_CLONED_COPIES: 'Number of cloned copies',
     MONTHLY_CHANGE_RATE: 'Monthly change rate (%)',
     REFER_SNAPSHOTS: 'This field refer to clones and snapshots',
     VIEW_THE_CALCULATIONS: 'View the calculations',
     EXPORT_PDF: 'Export PDF',
     ES_COST_SAVINGS: 'Cost savings',
-    ES_SAVINGS_PERCENTAGE: 'Savings percentage',
+    ES_SAVINGS_PERCENTAGE: 'Percentage savings',
     ES_HEADING: 'Explore savings of selected host',
     ES_HEADER:
-        'Select Microsoft SQL server host from your list. Upon clicking the "Explore savings" button, we will calculate and present you with your potential savings by moving to Microsoft SQL server using FSx for ONTAP file system.',
+        'Explore cost savings with Databases automatically. Select a Microsoft SQL server host and than click "Explore Savings". We will calculate your potential savings by moving to Microsoft SQL server using FSx for ONTAP file systems.',
     ES_SAVINGS: 'Explore savings',
     INSTANCE_INFORMATION: 'Instance information:',
     ES_SAVE_CONFIG: 'Save configuration',
@@ -814,7 +814,7 @@ export const GENERAL = {
     ES_NUMBER_OF_DB: 'Number of database',
     ES_HOST_NAME: 'Host name',
     ES_NUMBER_OF_VOLS: 'Number of volumes',
-    SUMMARY_TEXT: 'The selected volumes summary per volume type:',
+    SUMMARY_TEXT: 'Summary of the selected volumes by volume type:',
     SELECTION_BASED_TEXT: 'Based on your selections, we recommend creating the following:',
     SELECTION_BASED_SECOND: 'Microsoft SQL Server on AWS EC2 using FSx for ONTAP file system',
     SAVINGS_CALCULATOR: 'Savings calculator',
@@ -831,7 +831,7 @@ export const GENERAL = {
     COST_CALCULATION: 'Cost calculation',
     DEPLOY_RATE_EXCEEDED: 'An internal error occurred when attempting to deploy the database server, please try again.',
     TOOLTIP_MESSAGE_SNAPSHOT_FREQ:
-        'EBS snapshots not detected, if you would like to compare FSxN snapshots to potential EBS snapshots cost, please update the snapshot frequency.',
+        'No EBS snapshots detected. If you would like to compare the cost of EBS snapshots to FSx for ONTAP snapshots, update the snapshot frequency.',
     NOTICE_MESSAGE_COST_SAVINGS:
         'This configuration cannot benefit from savings. Please check the cost breakdown below for further analysis.',
     PDF_DOWNLOAD_SUCCESS: 'PDF file downloaded successfully.',

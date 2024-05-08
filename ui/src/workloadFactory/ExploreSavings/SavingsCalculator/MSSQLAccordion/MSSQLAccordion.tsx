@@ -97,7 +97,7 @@ const MSSQLAccordion = ({ printState }: any) => {
         <div className={styles.mssqlAccordion}>
             <DsAccordion
                 id="1"
-                title="Microsoft SQL Server on FSx for ONTAP"
+                title="Microsoft SQL Server on AWS EC2 using FSx for ONTAP"
                 variant="Default"
                 value=""
                 isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
