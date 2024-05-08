@@ -61,15 +61,18 @@ const exploreSavingsSlice = createSlice({
         },
         addExploreSavingsInitialData(state, action: PayloadAction<any>) {
             state.selectedSnapshotFrequency = null;
-            state.numberOfClonedCopies = 3;
+            state.numberOfClonedCopies = 1;
             state.selectedCloneRefresh = null;
-            state.monthlyChangeRate = 3;
+            state.monthlyChangeRate = 10;
             state.selectedInstanceId = null;
             state.selectedServerName = null;
             state.selectedHostDetails = {};
             state.storageSavingsResponse = {};
             state.storageSavingsLoading = false;
             state.savingsCalculatorRefresh = false;
+            state.selectedDeploymentModel = null;
+            state.viewCalculationsResponse = {};
+            state.viewCalculationsLoading = false;
         },
         setSelectedDeploymentModel(state, action: PayloadAction<any>) {
             state.selectedDeploymentModel = action.payload;
