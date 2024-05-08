@@ -470,12 +470,12 @@ export const viewCalculation = (viewCalculation: any) => {
             {
                 label: 'Change rate between clones (%)',
                 value: `${viewCalculation.cloneCalculation.unitConversion.cloneRateChange}%`,
-                text: `Monthly change rate (%) / Number of periods = 3%/30`
+                text: `Monthly change rate (%) / Number of periods = 8%/30`
             },
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.cloneCalculation.unitConversion.desiredStorageCapacity} GiB`,
-                text: `Number of cloned copies* (%change rate*total fsxN capacity*number of clones in a month)= 3*(0.1% *2*1024*30)`
+                text: `Number of cloned copies* (%change rate*total fsxN capacity*number of clones in a month)= 1*(${viewCalculation.cloneCalculation.unitConversion.cloneRateChange}% *${viewCalculation.FSxNCalculation.ebsCapacity}*1024*30)`
             },
             {
                 label: 'Percentage of data on SSD storage',

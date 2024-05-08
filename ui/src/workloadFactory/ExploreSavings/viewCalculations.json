@@ -54,7 +54,7 @@
             "cloneCalculation": {
                 "unitConversion": {
                     "cloneFrequency": "Daily",
-                    "cloneRateChange": "0.1",
+                    "cloneRateChange": "0.26",
                     "desiredStorageCapacity": "390",
                     "ssdStorage": "100",
                     "savingsDeduplication": 0
@@ -69,9 +69,9 @@
             },
             "FSxNCalculation": {
                 "storageCapacity": "5,120",
-                "ebsCapacity": "2",
-                "volumes": "2",
-                "ssdStorage": "1",
+                "ebsCapacity": "5",
+                "volumes": "1",
+                "ssdStorage": "100",
                 "deduplication": "0",
                 "priceCalculation": {
                     "deduplication": "0",
@@ -81,7 +81,7 @@
                     "ssdMonthlyCost": "1280",
                     "ssdStoragePrice": "0.14",
                     "totalMonthlyCostStorageCapacity": "1280",
-                    "deduplicationFactor": "1",
+                    "deduplicationFactor": "100",
                     "storageFactor": "0",
                     "capacityMonthlyCost": "0",
                     "fsxnCapacityPrice": "0.02",

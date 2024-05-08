@@ -4,7 +4,7 @@ export const initialExploreSavingsState: any = {
     selectedSnapshotFrequency: null,
     numberOfClonedCopies: 1,
     selectedCloneRefresh: null,
-    monthlyChangeRate: 10,
+    monthlyChangeRate: 8,
     saveConfigName: '',
     loading: false,
     unmanagedExploreSavingsHost: [],
@@ -63,7 +63,7 @@ const exploreSavingsSlice = createSlice({
             state.selectedSnapshotFrequency = null;
             state.numberOfClonedCopies = 1;
             state.selectedCloneRefresh = null;
-            state.monthlyChangeRate = 10;
+            state.monthlyChangeRate = 8;
             state.selectedInstanceId = null;
             state.selectedServerName = null;
             state.selectedHostDetails = {};
