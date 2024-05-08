@@ -9,9 +9,9 @@ const StorageSavingsRequestParams = Type.Composite([
 ]);
 
 const StorageSavingsRequestBody = Type.Object({
-    snapshotFrequency: Type.String(),
+    snapshotFrequency: Type.String({ enum: ['HOURLY', 'DAILY', 'TWICE_DAILY', 'WEEKLY', 'MONTHLY'] }),
     clonedCopiesCount: Type.Number(),
-    cloneRefreshFrequency: Type.String(),
+    cloneRefreshFrequency: Type.String({ enum: ['DAILY', 'WEEKLY', 'MONTHLY'] }),
     monthlyChangeRatePercentage: Type.Number()
 });
 

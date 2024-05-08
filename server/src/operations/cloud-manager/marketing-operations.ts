@@ -9,12 +9,38 @@ import { camelizeKeys, convertToBytes } from '../../utils/utils';
 
 const logger = getLogger();
 
+function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavingsRequestBodyType) {
+    const { snapshotFrequency, clonedCopiesCount, cloneRefreshFrequency, monthlyChangeRatePercentage } = params || {};
+
+    const snapshotFrequencyLowerCase = snapshotFrequency.toLowerCase();
+    const cloneRefreshFrequencyLowerCase = cloneRefreshFrequency.toLowerCase();
+
+    return {
+        useCase: 'Backup Data',
+        volumeIds: ebsVolumeIds,
+        includeSnapshots: true,
+        deploymentType: 'Single',
+        snapshots: {
+            snapshotFreq: snapshotFrequencyLowerCase,
+            snapshotPercentageChange: monthlyChangeRatePercentage
+        },
+        clones: {
+            monthlyCloneNumber: clonedCopiesCount,
+            changeRate: monthlyChangeRatePercentage,
+            numberOfCloneEnvs:
+                cloneRefreshFrequencyLowerCase === 'daily' ? 30 : cloneRefreshFrequencyLowerCase === 'weekly' ? 4 : 1,
+            ssdStorage: 100,
+            savings: 0
+        }
+    };
+}
+
 async function performStorageSavingsCalculations(
     accountId: string,
     credentialsId: string,
     region: string,
     instanceId: string,
-    params?: StorageSavingsRequestBodyType // not using ATM, dependant on https://jira.ngage.netapp.com/browse/GROGU-2375
+    params: StorageSavingsRequestBodyType // not using ATM, dependant on https://jira.ngage.netapp.com/browse/GROGU-2375
 ): Promise<StorageSavingsResponseType> {
     logger.info('Performing storage savings calculations ', { accountId, credentialsId, region, instanceId, params });
 
@@ -32,12 +58,11 @@ async function performStorageSavingsCalculations(
     if (!ebsVolumeIds.length) {
         throw createError(HttpErrorCodes.NOT_FOUND, `No EBS volumes found for the provided instance: ${instanceId}`);
     }
-
     const {
         ebs,
         fsx,
         fsx_calculation: fsxCalculationData
-    } = await getStorageSavings(accountId, credentialsId, region, ebsVolumeIds);
+    } = await getStorageSavings(accountId, credentialsId, region, getMarketingApiRequestBody(ebsVolumeIds, params));
     const fsxCalculationObject = camelizeKeys(fsxCalculationData);
 
     const { totalStorageCapacity, effectiveCapacity, ssdTierReqCapacity, capacityPoolTier, monthlySnapshotCapacity } =
@@ -68,7 +93,7 @@ async function getStorageSavingsCalculationMetrics(
     credentialsId: string,
     region: string,
     instanceId: string,
-    params?: StorageSavingsRequestBodyType
+    params: StorageSavingsRequestBodyType
 ) {
     logger.info('Getting storage savings calculation metrics ', {
         accountId,
@@ -168,8 +193,7 @@ async function getStorageSavingsCalculationMetrics(
             totalEBSSnapshotCost: totalEbsSnapshotCost,
             ebsSnapshotCost
         }
-    } = await getStorageSavings(accountId, credentialsId, region, ebsVolumeIds);
-
+    } = await getStorageSavings(accountId, credentialsId, region, getMarketingApiRequestBody(ebsVolumeIds, params));
     return {
         fsxOntapCalculation: {
             desiredStorageCapacity: convertToBytes(ebsCapacity, ebsCapacityUnit) || 0,
@@ -250,4 +274,4 @@ async function getStorageSavingsCalculationMetrics(
     };
 }
 
-export { performStorageSavingsCalculations, getStorageSavingsCalculationMetrics };
+export { performStorageSavingsCalculations, getStorageSavingsCalculationMetrics, getMarketingApiRequestBody };

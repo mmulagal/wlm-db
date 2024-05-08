@@ -29,7 +29,13 @@ describe('Marketing API operations ', () => {
                 ACCOUNT_ID,
                 CREDENTIALS_ID,
                 DEFAULT_AWS_REGION,
-                instanceWithEbs.ec2InstanceId
+                instanceWithEbs.ec2InstanceId,
+                {
+                    snapshotFrequency: 'daily',
+                    clonedCopiesCount: 1,
+                    cloneRefreshFrequency: 'daily',
+                    monthlyChangeRatePercentage: 30
+                }
             );
             expect(resp.ebs).toBeDefined();
             expect(resp.fsx).toBeDefined();
@@ -51,7 +57,13 @@ describe('Marketing API operations ', () => {
                     ACCOUNT_ID,
                     CREDENTIALS_ID,
                     DEFAULT_AWS_REGION,
-                    instanceWithoutEbs.ec2InstanceId
+                    instanceWithoutEbs.ec2InstanceId,
+                    {
+                        snapshotFrequency: 'daily',
+                        clonedCopiesCount: 1,
+                        cloneRefreshFrequency: 'daily',
+                        monthlyChangeRatePercentage: 30
+                    }
                 );
             } catch (error: any) {
                 expect(error.message).toBe(
@@ -74,7 +86,13 @@ describe('Marketing API operations ', () => {
                 ACCOUNT_ID,
                 CREDENTIALS_ID,
                 DEFAULT_AWS_REGION,
-                instanceWithEbs.ec2InstanceId
+                instanceWithEbs.ec2InstanceId,
+                {
+                    snapshotFrequency: 'daily',
+                    clonedCopiesCount: 1,
+                    cloneRefreshFrequency: 'daily',
+                    monthlyChangeRatePercentage: 30
+                }
             );
             expect(resp.fsxOntapCalculation).toBeDefined();
             expect(resp.fsxOntapSnapshotCalculation).toBeDefined();
@@ -96,7 +114,13 @@ describe('Marketing API operations ', () => {
                     ACCOUNT_ID,
                     CREDENTIALS_ID,
                     DEFAULT_AWS_REGION,
-                    instanceWithoutEbs.ec2InstanceId
+                    instanceWithoutEbs.ec2InstanceId,
+                    {
+                        snapshotFrequency: 'daily',
+                        clonedCopiesCount: 1,
+                        cloneRefreshFrequency: 'daily',
+                        monthlyChangeRatePercentage: 30
+                    }
                 );
             } catch (error: any) {
                 expect(error.message).toBe(

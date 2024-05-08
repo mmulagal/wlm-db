@@ -207,13 +207,31 @@ interface CalculateEbsComparisonResponse {
     };
 }
 
+interface MarketingRequestBody {
+    useCase: string;
+    volumeIds: string[];
+    includeSnapshots: boolean;
+    deploymentType: string;
+    snapshots: {
+        snapshotFreq: string;
+        snapshotPercentageChange: number;
+    };
+    clones: {
+        monthlyCloneNumber: number;
+        changeRate: number;
+        numberOfCloneEnvs: number;
+        ssdStorage: number;
+        savings: number;
+    };
+}
+
 export default async function getStorageSavings(
     accountId: string,
     credentialsId: string,
     region: string,
-    ebsVolumeIds: string[]
+    params: MarketingRequestBody
 ) {
-    logger.info('Get storage savings from marketing APIs:', { accountId, credentialsId, region, ebsVolumeIds });
+    logger.info('Get storage savings from marketing APIs:', { accountId, credentialsId, region });
 
     const response = await gotInstanceForInternalRequest
         .post(`accounts/${accountId}/marketing/v1/credentials/${credentialsId}/regions/${region}/ebs/auto/calculate`, {
@@ -221,11 +239,7 @@ export default async function getStorageSavings(
             headers: {
                 [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN)
             },
-            json: {
-                useCase: 'Backup Data',
-                volumeIds: ebsVolumeIds,
-                includeSnapshots: false
-            }
+            json: params
         })
         .json<CalculateEbsComparisonResponse>();
     return response;
