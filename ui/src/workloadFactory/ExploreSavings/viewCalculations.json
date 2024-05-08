@@ -38,7 +38,7 @@
                     "totalSnapshotCost": "265.75",
                     "totalEBSSnapshotCost": "265.75",
                     "ebsSnapshotCost": "265.75",
-                    "amazonElasticBlock": "9517.75"
+                    "amazonElasticBlock": "14,995.67"
                 }
             }
         },
@@ -102,7 +102,7 @@
                     "billedSSD": "24,640",
                     "additionalBilledCost": "837.76",
                     "totalThroughputIOPS": "991.36",
-                    "totalMonthlyCost": "2,368.86"
+                    "totalMonthlyCost": "4,868.38"
                 }
             }
         }
@@ -146,7 +146,7 @@
                     "totalSnapshotCost": "123.06",
                     "totalEBSSnapshotCost": "246.12",
                     "ebsSnapshotCost": "246.12",
-                    "amazonElasticBlock": "10,831.07"
+                    "amazonElasticBlock": "12,080.83"
                 }
             }
         },
@@ -210,7 +210,7 @@
                     "billedSSD": "66,489",
                     "additionalBilledCost": "1,130.31",
                     "totalThroughputIOPS": "1,222.47",
-                    "totalMonthlyCost": "1,980.42"
+                    "totalMonthlyCost": "3,230.18"
                 }
             }
         }

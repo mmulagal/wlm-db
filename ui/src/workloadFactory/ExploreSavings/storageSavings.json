@@ -6,9 +6,9 @@
       "throughput": 153.60,
       "snapshots": 26,
       "clone": 98,
-      "compute": "1,097.92",
+      "compute": "2499.52",
       "license": "1,402",
-      "total": 4895.28
+      "total": 6296.88
     },
     "ebs": {
       "capacity": "1,280",
@@ -16,9 +16,9 @@
       "throughput": 0,
       "snapshots": 265,
       "clone": "3,084",
-      "compute": "1,097.92",
+      "compute": "5477.92",
       "license": "4,380",
-      "total": 14994.92
+      "total": 19374.92
     },
     "fsxCalculation": {
       "deploymentType": "Multi",
@@ -44,9 +44,9 @@
       "throughput": 92,
       "snapshots": 26,
       "clone": 195,
-      "compute": 548.96,
+      "compute": 1249.76,
       "license": 701,
-      "total": 3254.96
+      "total": 3955.76
     },
     "ebs": {
       "capacity": 562,
@@ -54,9 +54,9 @@
       "throughput": 0,
       "snapshots": 246,
       "clone": "5,134",
-      "compute": 548.96,
+      "compute": 1249.76,
       "license": 701,
-      "total": 12079.96
+      "total": 12780.96
     },
     "fsxCalculation": {
       "deploymentType": "Single",
