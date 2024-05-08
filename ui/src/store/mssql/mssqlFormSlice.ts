@@ -80,6 +80,7 @@ export const initialMssqlState: any = {
         snsARN: ''
     },
     cloudWatch: true,
+    snapshotPolicyToggle: true,
     encryption: {
         encryptionType: GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT,
         selectedRow: null,
@@ -95,6 +96,9 @@ const mssqlFormSlice = createSlice({
     name: 'mssqlForm',
     initialState: initialMssqlState,
     reducers: {
+        setSnapshotPolicyToggle(state, action: PayloadAction<any>) {
+            state.snapshotPolicyToggle = action.payload;
+        },
         setSelectedCredentials(state, action: PayloadAction<any>) {
             state.awsAccount.selectedCredential = action.payload;
         },
@@ -313,6 +317,7 @@ export const {
     setInstanceType,
     setTags,
     setLoadConfig,
-    setMssqlForm
+    setMssqlForm,
+    setSnapshotPolicyToggle
 } = mssqlFormSlice.actions;
 export default mssqlFormSlice;
