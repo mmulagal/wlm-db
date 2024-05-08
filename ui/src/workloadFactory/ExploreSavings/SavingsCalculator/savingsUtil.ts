@@ -519,7 +519,7 @@ export const viewCalculation = (viewCalculation: any) => {
             {
                 label: 'Total monthly cost',
                 value: `$${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCost}`,
-                text: `Total throughput and IOPS cost ($${viewCalculation.FSxNCalculation.priceCalculation.totalThroughputIOPS})  + Total Storage cost ($${viewCalculation.FSxNCalculation.priceCalculation.totalStorageCharge}) + Total Clone cost ($${viewCalculation.cloneCalculation.priceCalculation.totalMonthlyCloneCost})`
+                text: `Total EC2 cost ($${ viewCalculation?.type === SQL_DEPLOYMENT_MODE.AOAG ? 2 * viewCalculation.Ec2InstanceCalculation.ec2MachineCost : viewCalculation.Ec2InstanceCalculation.ec2MachineCost}) + Total throughput and IOPS cost ($${viewCalculation.FSxNCalculation.priceCalculation.totalThroughputIOPS})  + Total Storage cost ($${viewCalculation.FSxNCalculation.priceCalculation.totalStorageCharge}) + Total Clone cost ($${viewCalculation.cloneCalculation.priceCalculation.totalMonthlyCloneCost})`
             }
         ]
     };
@@ -760,7 +760,7 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
             {
                 label: 'Amazon Elastic Block Storage (EBS) total cost (monthly)',
                 value: `$${viewCalculation.EBSCalculation.priceCalculation.amazonElasticBlock}`,
-                text: `EBS snapshot cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsSnapshotCost}) + EBS throughput cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsThroughCost}) + EBS IOPS cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsIOPSCost}) + EBS storage cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsStorageCost}) + EBS clone cost ($${viewCalculation.cloneCalculation.cloneCost})`
+                text: `Total EC2 cost ($${ viewCalculation?.type === SQL_DEPLOYMENT_MODE.AOAG ? 2 * viewCalculation.Ec2InstanceCalculation.ec2MachineCost : viewCalculation.Ec2InstanceCalculation.ec2MachineCost}) + EBS snapshot cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsSnapshotCost}) + EBS throughput cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsThroughCost}) + EBS IOPS cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsIOPSCost}) + EBS storage cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsStorageCost}) + EBS clone cost ($${viewCalculation.cloneCalculation.cloneCost})`
             }
         ]
     };
