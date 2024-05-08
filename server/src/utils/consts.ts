@@ -1137,6 +1137,8 @@ const NO_SANDBOX_CREATED = 'No sandboxes created for the instance';
 
 const STORAGE_PROTOCOLS = { SMB: 'SMB', ISCSI: 'iSCSI' };
 
+const AMI_OWNERS = { AMAZON: 'amazon' };
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1397,5 +1399,6 @@ export {
     PERMISSION_DENIAL_POSSIBLE_REASONS,
     NO_SANDBOX_CREATED,
     STORAGE_PROTOCOLS,
-    CUSTOM
+    CUSTOM,
+    AMI_OWNERS
 };
