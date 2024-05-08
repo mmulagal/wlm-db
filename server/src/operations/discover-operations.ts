@@ -923,7 +923,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
         credentialsId,
         storageType: STORAGE_TYPE.FSXN,
         resourceName: sqlServerInstance?.sqlServerName,
-        cloudProviderAccountId: accountId,
+        cloudProviderAccountId: awsAccountId!,
         cloudProviderName: CloudProviders.AWS,
         resourceType: RESOURCESTYPE.MSSQL,
         coRelationId: storageInfo?.id,
