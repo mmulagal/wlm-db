@@ -90,6 +90,13 @@
                 "creationDate": "2023-04-11T17:50:03.333",
                 "databaseStatus": "ONLINE",
                 "databaseSize": 16777216
+            },
+            {
+                "databaseId": 154,
+                "databaseName": "RetailBanking_sandbox",
+                "creationDate": "2023-04-11T17:49:40.963",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 553648128
             }
         ]
     },
@@ -164,7 +171,7 @@
         "clusterName": "FciClusterName",
         "operatingSystem": "Windows Server 2019",
         "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
-        "dbCount": 8,
+        "dbCount": 9,
         "serverId": "36E53042-04E8-40C9-AE69-26E56CB0D216"
     },
     "mssqlRegistrationResponse": {
