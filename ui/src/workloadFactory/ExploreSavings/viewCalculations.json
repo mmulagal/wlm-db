@@ -6,7 +6,7 @@
                 "instanceType": "m5.2xlarge",
                 "instanceHourlyPrice": "3.75",
                 "ec2MachineCost": "2738.96",
-                "sqlEdition": "SQL Server Standard edition",
+                "sqlEdition": "SQL Server Enterprise Edition",
                 "sqlLicense": "Yes"
             },
             "cloneCalculation": {
