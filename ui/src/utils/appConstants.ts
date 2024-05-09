@@ -842,7 +842,8 @@ export const GENERAL = {
     MANAGE_HOST_DISABLED: 'Supported only for the FSx for ONTAP storage type',
     EXPLORE_SAVINGS_DISABLED: 'Supported only for the EBS storage type',
     SMB_PROTOCOL_DISABLED: 'Action not supported on SQL server using SMB protocol',
-    MONTHLY_CHANGE_RATE_TOOLTIP: 'The monthly change rate is the % of data that changes per month.'
+    MONTHLY_CHANGE_RATE_TOOLTIP: 'The monthly change rate is the % of data that changes per month.',
+    CLONE_TARGET_DB_LENGTH_VALIDATION: 'Target database should not exceed 128 characters'
 };
 
 export const CODE_VIEWER = {
