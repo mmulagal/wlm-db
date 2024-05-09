@@ -2,6 +2,7 @@ const IS_DATABASE_CREATE_POSSIBLE: string = 'isDatabaseCreatePossible';
 const IS_PS7_AVAILABLE: string = 'isPS7Available';
 const UNAVAILABLE_PS_MODULES: string = 'unavailablePsModules';
 const FAILURE_INFO: string = 'failureInfo';
+const ACTIVE_DIRECTORY: string = 'activeDirectory';
 
 const REQUIRED_PS_MODULES_FOR_MANAGEMENT: string = `
   'AWS.Tools.EC2',
@@ -539,6 +540,32 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string) => [
   `
 ];
 
+const GET_ACTIVE_DIRECTORY_DETAILS = [
+    `
+  $ErrorActionPreference = "Stop"
+  $responseObject = @{}
+  $scriptStartTime = Get-Date
+  $responseObject['${ACTIVE_DIRECTORY}'] = ""
+
+  try {
+    $adDomainName = (Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction SilentlyContinue -WarningAction SilentlyContinue).Domain
+    If ($adDomainName -ne "WORKGROUP") {
+      $adIpList = ([System.Net.Dns]::GetHostEntry($adDomainName)).AddressList.IpAddressToString
+  
+      $adObject = New-Object PSObject -Property @{ "domainName" = $adDomainName }
+      $adObject | Add-Member -MemberType NoteProperty -Name "ipAddresses" -Value $adIpList
+      $responseObject['${ACTIVE_DIRECTORY}'] = $adObject
+    }
+  } catch {
+    $responseObject['${FAILURE_INFO}'] = $_.Exception.Message
+  } finally {
+    $scriptEndTime = Get-Date
+    $responseObject['scriptExecutionTime'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)
+    Echo $responseObject | ConvertTo-Json -Compress
+  } 
+`
+];
+
 export {
     HOST_AND_SQL_INFO_PS1,
     SQL_SERVER_VERSION_TO_YEAR,
@@ -550,5 +577,7 @@ export {
     IS_DATABASE_CREATE_POSSIBLE,
     REQUIRED_PS_MODULES_FOR_MANAGEMENT,
     INSTALL_WF_POWERSHELL_PREREQS_PS1,
-    FAILURE_INFO
+    FAILURE_INFO,
+    ACTIVE_DIRECTORY,
+    GET_ACTIVE_DIRECTORY_DETAILS
 };
