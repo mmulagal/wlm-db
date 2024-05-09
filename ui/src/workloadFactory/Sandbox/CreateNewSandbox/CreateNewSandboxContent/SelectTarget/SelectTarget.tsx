@@ -155,7 +155,13 @@ const SelectTarget = () => {
                                         label={GENERAL.TARGET_DATABASES}
                                         value={selectedDatabase}
                                         className={styles.keyField}
-                                        error={showError && !selectedDatabase ? GENERAL.ACTION_REQUIRED : ''}
+                                        error={
+                                            showError && !selectedDatabase
+                                                ? GENERAL.ACTION_REQUIRED
+                                                : selectedDatabase?.length > 128
+                                                ? GENERAL.CLONE_TARGET_DB_LENGTH_VALIDATION
+                                                : ''
+                                        }
                                     />
                                 )}
                             </div>
