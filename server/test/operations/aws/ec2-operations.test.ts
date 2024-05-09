@@ -19,7 +19,6 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/opentelemetry-scope';
-import ec2CustomResponse from '../../simulator/responses/aws/ec2-custom-images.json'
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
 
@@ -37,8 +36,17 @@ describe('EC2 Operations', () => {
 
     it('list of EC2 custom AMIs', async () => {
         const credentialsType = DEFAULT_AWS_CREDENTIALS_TYPE;
-        const resp = await getAmiList(credentialsType, DEFAULT_AWS_REGION, WINDOWS, undefined, undefined,undefined, undefined, true);
-        expect(resp).toBeDefined()
+        const resp = await getAmiList(
+            credentialsType,
+            DEFAULT_AWS_REGION,
+            WINDOWS,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            true
+        );
+        expect(resp).toBeDefined();
     });
 
     it('list of vpc', async () => {
