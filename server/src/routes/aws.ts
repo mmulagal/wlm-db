@@ -57,7 +57,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
     server.get(`${API_PREFIX_PATH}/amis`, { schema: GetAmiSchema }, async (request, reply) => {
         const {
             params: { credentialsId, region },
-            query: { osType, databaseType, osVersion, databaseEdition, databaseVersion }
+            query: { osType, databaseType, osVersion, databaseEdition, databaseVersion, customAmi }
         } = request;
         const response = await getAmiList(
             credentialsId,
@@ -66,7 +66,8 @@ export default function awsRoutes(fastify: FastifyInstance) {
             databaseType,
             osVersion,
             databaseVersion,
-            databaseEdition
+            databaseEdition,
+            customAmi
         );
         return reply.send(response);
     });

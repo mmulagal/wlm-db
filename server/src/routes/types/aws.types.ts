@@ -83,11 +83,12 @@ const OS_TYPES = Type.Union([Type.Literal('windows')]);
 const DB_TYPES = Type.Union([Type.Literal('sql')]);
 
 const AmiQueryString = Type.Object({
-    osType: OS_TYPES,
+    osType: Type.Optional(OS_TYPES),
     osVersion: Type.Optional(Type.String()),
-    databaseType: DB_TYPES,
+    databaseType: Type.Optional(DB_TYPES),
     databaseEdition: Type.Optional(Type.String()),
-    databaseVersion: Type.Optional(Type.String())
+    databaseVersion: Type.Optional(Type.String()),
+    customAmi: Type.Optional(Type.Boolean())
 });
 
 const AmiResponse = Type.Object({

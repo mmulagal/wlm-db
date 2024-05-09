@@ -42,6 +42,11 @@ const initialState: MssqlEntities = {
         amiLoading: false,
         amiError: null
     },
+    getCustomAmiList: {
+        customAmiData: {},
+        customAmiLoading: false,
+        customAmiError: null
+    },
     getSnsList: {
         snsData: {},
         snsLoading: false,
@@ -107,6 +112,9 @@ const mssqlSlice = createSlice({
         addAmiList: (state, action: PayloadAction<any>) => {
             state.getAmiList = action.payload;
         },
+        addCustomAmiList: (state, action: PayloadAction<any>) => {
+            state.getCustomAmiList = action.payload;
+        },
         addSnsList: (state, action: PayloadAction<any>) => {
             state.getSnsList = action.payload;
         },
@@ -139,6 +147,7 @@ export const {
     addSGList,
     addAdsList,
     addAmiList,
+    addCustomAmiList,
     addSnsList,
     addKmsKeysList,
     addKeyPairList,

@@ -149,6 +149,7 @@ export const apiCallsList = (dispatch: Dispatch, loadData: any) => {
         apis.push(API_NAME.KMS);
         apis.push(API_NAME.KEYPAIR);
         apis.push(API_NAME.INSTANCE);
+        apis.push(API_NAME.CUSTOM_AMI);
     }
     if (credId && regionId && vpcId && (!isSameRegion || !isSameCred || !isSameVpc)) {
         apis.push(API_NAME.FSXN);

@@ -17,13 +17,16 @@ import {
     DescribeInstanceTypeOfferingsCommand,
     ModifyVpcAttributeCommand,
     DescribeVolumesCommand,
-    DescribeSnapshotsCommand
+    DescribeSnapshotsCommand,
+    ImageState,
+    PlatformValues
 } from '@aws-sdk/client-ec2';
 import { mockClient } from 'aws-sdk-client-mock';
 import vpcsResponse from '../../responses/aws/list-vpcs.json';
 import subnetsResponse from '../../responses/aws/list-subnets.json';
 import securityGroupsResponse from '../../responses/aws/list-security-groups.json';
 import ec2ImagesResponse from '../../responses/aws/ec2-images.json';
+import ec2CustomImagesResponse from '../../responses/aws/ec2-custom-images.json';
 import ec2AMIImagesResponse from '../../responses/aws/ec2-ami-images.json';
 import fsxRegionsResponse from '../../responses/aws/list-fsx-regions.json';
 import ec2InstanaceTypes from '../../responses/aws/ec2-instance-types.json';
@@ -109,6 +112,15 @@ ec2Mock.on(DescribeSubnetsCommand).resolves(subnetsResponse);
 ec2Mock.on(DescribeSecurityGroupsCommand).resolves(securityGroupsResponse);
 
 ec2Mock.on(DescribeImagesCommand).resolves(ec2ImagesResponse);
+
+ec2Mock
+    .on(DescribeImagesCommand, {
+        Filters: [
+            { Name: 'state', Values: [ImageState.available] },
+            { Name: 'platform', Values: [PlatformValues.Windows.toLowerCase()] }
+        ]
+    })
+    .resolves(ec2CustomImagesResponse);
 
 for (let i = 0; i < images.length; i += 1) {
     const [serverVersion, sqlVersion, sqlEdition] = images[i];
