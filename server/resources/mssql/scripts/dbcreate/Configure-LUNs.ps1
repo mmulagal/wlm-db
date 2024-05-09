@@ -316,6 +316,7 @@ $Body = @{
     "read-realloc" = "on"
     "tiering-policy" = "snapshot-only"
     "tiering-minimum-cooling-days" = "7"
+    "snapshot-policy" = "none"
     "autosize-mode" = "grow"
     "min-readahead" = "true"
 }
