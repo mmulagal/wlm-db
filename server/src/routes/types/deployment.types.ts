@@ -34,7 +34,8 @@ const FSXConfiguration = Type.Object({
     ontapSgGroupId: Type.Array(Type.String()),
     fsxVolThroughput: Type.Number({ enum: [128, 256, 512, 1024, 2048, 4096] }),
     fsxIOPS: Type.Number(),
-    encryptionKey: Type.Optional(Type.String())
+    encryptionKey: Type.Optional(Type.String()),
+    snapshotPolicy: Type.String({ enum: ['none', 'default'], default: 'default' })
 });
 
 const SQLConfiguration = Type.Object({
