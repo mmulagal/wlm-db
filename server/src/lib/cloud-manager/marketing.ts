@@ -104,14 +104,14 @@ interface CalculateEbsComparisonResponse {
             size: number;
             unit: string;
         };
-        minFileSystemsForThroughoutCapacity: number;
+        minFileSystemsForThroughputCapacity: number;
         throughputCapacity: number;
         maxThroughput: number;
         minFileSystemsRequiredForSSDIOPS: number;
         maxSSDIOPS: number;
         requiredNumOfFSx_fractional: number;
         requiredNumOfFSx_roundUp: number;
-        minThroughoutCapacityRequired: number;
+        minThroughputCapacityRequired: number;
         provisionedThroughputCapacity: number;
         totalMonthlyCostFSXnThroughputCapacity: number;
         FSXnThroughputPrice: number;
@@ -204,6 +204,53 @@ interface CalculateEbsComparisonResponse {
         totalEBSSnapshotCost: number;
         ebsSnapshotCost: number;
         AWSEBSTotalCostMonthly: number;
+    };
+    fsx_clone_cost_calculation: {
+        desiredStorageCapacityGB: {
+            size: number;
+            unit: string;
+        };
+        percentageOfDataOnSSDStorage: number;
+        savingsFromCompressionAndDeduplication: number;
+        storageSavingsFromCompressionAndDeduplication: {
+            size: number;
+            unit: string;
+        };
+        effectiveStorageCapacityForFSxForONTAP: {
+            size: number;
+            unit: string;
+        };
+        SSDCloneStorageGBPerMonth: {
+            size: number;
+            unit: string;
+        };
+        dataOnSSDStoragePercentage: number;
+        SSDStorageGBPerMonth: {
+            size: number;
+            unit: string;
+        };
+        SSDMonthlyCost: number;
+        FSXnSSDPrice: {
+            price: number;
+            unit: string;
+        };
+        totalMonthlyCostForFSxSSD: number;
+        totalCloneMonthlyCostForFSxSSD: number;
+        ratioAfterSavings: number;
+        dataOnCapacityPoolStorageFactor: number;
+        capacityPoolStorage: {
+            size: number;
+            unit: string;
+        };
+        cloneRatioAfterSavings: number;
+        cloneDataOnCapacityPoolStorageFactor: number;
+        capacityMonthlyCost: number;
+        FSXnCapacityPrice: {
+            price: number;
+            unit: string;
+        };
+        totalMonthlyCostForCapacity: number;
+        totalCloneMonthlyCost: number;
     };
 }
 

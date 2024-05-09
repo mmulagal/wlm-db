@@ -40,7 +40,7 @@ async function performStorageSavingsCalculations(
     credentialsId: string,
     region: string,
     instanceId: string,
-    params: StorageSavingsRequestBodyType // not using ATM, dependant on https://jira.ngage.netapp.com/browse/GROGU-2375
+    params: StorageSavingsRequestBodyType
 ): Promise<StorageSavingsResponseType> {
     logger.info('Performing storage savings calculations ', { accountId, credentialsId, region, instanceId, params });
 
@@ -138,11 +138,11 @@ async function getStorageSavingsCalculationMetrics(
             totalMonthlyCostForCapacity: totalMonthlyCostForCapacityWithoutSnapshot,
             totalMonthlyStorageCharge,
             minFileSystemsNumForStorage,
-            minFileSystemsForThroughoutCapacity: minFileSystemsNumForThroughputCapacity,
+            minFileSystemsForThroughputCapacity,
             minFileSystemsRequiredForSSDIOPS: minFileSystemsNumForSsdIops,
             requiredNumOfFSx_fractional: requiredNumOfFsxFractional,
             requiredNumOfFSx_roundUp: requiredNumOfFsx,
-            minThroughoutCapacityRequired: minThroughputCapacityRequired,
+            minThroughputCapacityRequired,
             provisionedThroughputCapacity,
             totalMonthlyCostFSXnThroughputCapacity: totalMonthlyFsxnThroughputCapacityCost,
             includedSSDIOPS: includedSsdIops,
@@ -192,6 +192,22 @@ async function getStorageSavingsCalculationMetrics(
             totalSnapshotCost,
             totalEBSSnapshotCost: totalEbsSnapshotCost,
             ebsSnapshotCost
+        },
+        fsx_clone_cost_calculation: {
+            desiredStorageCapacityGB: { size: cloneDesiredStorageCapacityGB, unit: cloneDesiredStorageCapacityGBUnit },
+            percentageOfDataOnSSDStorage: percentageOfDataOnSSDStorageClone,
+            savingsFromCompressionAndDeduplication: savingsFromCompressionAndDeduplicationClone,
+            storageSavingsFromCompressionAndDeduplication: {
+                size: cloneStorageSavingsFromCompressionAndDeduplication,
+                unit: cloneStorageSavingsFromCompressionAndDeduplicationUnit
+            },
+            effectiveStorageCapacityForFSxForONTAP: {
+                size: cloneEffectiveStorageCapacityForFSxForONTAP,
+                unit: cloneEffectiveStorageCapacityForFSxForONTAPUnit
+            },
+            SSDCloneStorageGBPerMonth: { size: cloneSSDStorageGBPerMonth, unit: cloneSSDStorageGBPerMonthUnit },
+            SSDMonthlyCost,
+            totalCloneMonthlyCost
         }
     } = await getStorageSavings(accountId, credentialsId, region, getMarketingApiRequestBody(ebsVolumeIds, params));
     return {
@@ -214,7 +230,7 @@ async function getStorageSavingsCalculationMetrics(
             totalMonthlyCostForCapacity: totalMonthlyCostForCapacityWithoutSnapshot,
             totalMonthlyStorageCharge,
             minFileSystemsNumForStorage,
-            minFileSystemsNumForThroughputCapacity,
+            minFileSystemsNumForThroughputCapacity: minFileSystemsForThroughputCapacity,
             minFileSystemsNumForSsdIops,
             requiredNumOfFsxFractional,
             requiredNumOfFsx,
@@ -270,6 +286,27 @@ async function getStorageSavingsCalculationMetrics(
             totalSnapshotCost,
             totalEbsSnapshotCost,
             ebsSnapshotCost
+        },
+        fsxCloneCalculation: {
+            cloneRefreshFrequency: params.cloneRefreshFrequency,
+            monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
+            desiredStorageCapacity:
+                convertToBytes(cloneDesiredStorageCapacityGB, cloneDesiredStorageCapacityGBUnit) || 0,
+            percentageOfDataOnSsdStorage: percentageOfDataOnSSDStorageClone,
+            savingsFromCompressionAndDeduplication: savingsFromCompressionAndDeduplicationClone,
+            storageSavingsFromCompressionAndDeduplication:
+                convertToBytes(
+                    cloneStorageSavingsFromCompressionAndDeduplication,
+                    cloneStorageSavingsFromCompressionAndDeduplicationUnit
+                ) || 0,
+            effectiveFsxnStorageCapacity:
+                convertToBytes(
+                    cloneEffectiveStorageCapacityForFSxForONTAP,
+                    cloneEffectiveStorageCapacityForFSxForONTAPUnit
+                ) || 0,
+            ssdStoragePerMonth: convertToBytes(cloneSSDStorageGBPerMonth, cloneSSDStorageGBPerMonthUnit) || 0,
+            ssdMonthlyCost: SSDMonthlyCost,
+            totalCloneMonthlyCost
         }
     };
 }

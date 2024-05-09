@@ -97,6 +97,7 @@ describe('Marketing API operations ', () => {
             expect(resp.fsxOntapCalculation).toBeDefined();
             expect(resp.fsxOntapSnapshotCalculation).toBeDefined();
             expect(resp.ebsCalculation).toBeDefined();
+            expect(resp.fsxCloneCalculation).toBeDefined();
         }
     });
 

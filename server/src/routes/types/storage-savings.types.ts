@@ -110,6 +110,18 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
         totalSnapshotCost: Type.Number(),
         totalEbsSnapshotCost: Type.Number(),
         ebsSnapshotCost: Type.Number()
+    }),
+    fsxCloneCalculation: Type.Object({
+        cloneRefreshFrequency: Type.String(),
+        monthlyChangeRatePercentage: Type.Number(),
+        desiredStorageCapacity: Type.Number(),
+        percentageOfDataOnSsdStorage: Type.Number(),
+        savingsFromCompressionAndDeduplication: Type.Number(),
+        storageSavingsFromCompressionAndDeduplication: Type.Number(),
+        effectiveFsxnStorageCapacity: Type.Number(),
+        ssdStoragePerMonth: Type.Number(),
+        ssdMonthlyCost: Type.Number(),
+        totalCloneMonthlyCost: Type.Number()
     })
 });
 
