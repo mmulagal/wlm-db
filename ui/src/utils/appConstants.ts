@@ -172,8 +172,10 @@ export const GENERAL = {
     //Constants for Op system
     WIN_SERVER_2016: 'Windows server 2016',
     WIN_SERVER_2019: 'Windows server 2019',
+    WIN_SERVER_2022: 'Windows server 2022',
     WIN_SERVER_2016_VERSION: '2016',
     WIN_SERVER_2019_VERSION: '2019',
+    WIN_SERVER_2022_VERSION: '2022',
     OP_SYS_TEXT: 'Choose the operating system on which to install SQL Server.',
     //Constants for DB Deployment
     FAILOVER_CLUSTER: 'Failover cluster instance (FCI)',
