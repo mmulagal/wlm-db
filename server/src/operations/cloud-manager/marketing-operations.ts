@@ -12,7 +12,6 @@ const logger = getLogger();
 function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavingsRequestBodyType) {
     const { snapshotFrequency, clonedCopiesCount, cloneRefreshFrequency, monthlyChangeRatePercentage } = params || {};
 
-    const snapshotFrequencyLowerCase = snapshotFrequency.toLowerCase();
     const cloneRefreshFrequencyLowerCase = cloneRefreshFrequency.toLowerCase();
 
     return {
@@ -21,7 +20,7 @@ function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavin
         includeSnapshots: true,
         deploymentType: 'Single',
         snapshots: {
-            snapshotFreq: snapshotFrequencyLowerCase,
+            snapshotFreq: snapshotFrequency,
             snapshotPercentageChange: monthlyChangeRatePercentage
         },
         clones: {
