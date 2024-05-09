@@ -37,40 +37,6 @@ const License = () => {
 
     const isLicenseFilled = useAppSelector(state => state.msSqlAction.licenseIdSelected);
 
-    // Custom AMI list will be blank for as it is not supported in phase 1
-    // const customAmiId: any[] = [];
-
-    // const data = {
-    //     amis: [
-    //         {
-    //             name: 'Windows_Server-2022-English-Full-SQL_2019_Enterprise-2023.04.12',
-    //             description:
-    //                 'Microsoft Windows Server 2022 Full Locale English with SQL Enterprise 2019 AMI provided by Amazon',
-    //             architecture: 'x86_64',
-    //             imageId: 'ami-0e453a02608af08a9',
-    //             imageLocation: 'amazon/Windows_Server-2022-English-Full-SQL_2019_Enterprise-2023.04.12',
-    //             public: true,
-    //             platform: 'windows',
-    //             platformDetails: 'Windows with SQL Server Enterprise',
-    //             state: 'available',
-    //             hypervisor: 'xen'
-    //         },
-    //         {
-    //             name: 'Windows_Server-2022-English-Full-SQL_2017_Standard-2023.05.10',
-    //             description:
-    //                 'Microsoft Windows Server 2022 Full Locale English with SQL Standard 2017 AMI provided by Amazon',
-    //             architecture: 'x86_64',
-    //             imageId: 'ami-08e92ddb6cc3268e2',
-    //             imageLocation: 'amazon/Windows_Server-2022-English-Full-SQL_2017_Standard-2023.05.10',
-    //             public: true,
-    //             platform: 'windows',
-    //             platformDetails: 'Windows with SQL Server Standard',
-    //             state: 'available',
-    //             hypervisor: 'xen'
-    //         }
-    //     ]
-    // };
-
     useEffect(() => {
         if (selectedLicenseId) {
             const newValLicense = {
