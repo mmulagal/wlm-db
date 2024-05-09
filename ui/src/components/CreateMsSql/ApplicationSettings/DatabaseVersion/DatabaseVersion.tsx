@@ -9,7 +9,7 @@ import { useDispatch } from 'react-redux';
 import { setDBVersion } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
-import { DB_VERSIONS } from '../../../../utils/consts';
+import { DB_VERSIONS, FORM_OPTIONS } from '../../../../utils/consts';
 
 const DatabaseVersion = () => {
     const dispatch = useDispatch();
@@ -48,8 +48,12 @@ const DatabaseVersion = () => {
 
     //Set the Header text here
     const setHeader = () => {
-        if (customAMISelected === GENERAL.USE_CUSTOM_AMI) {
-            return '';
+        if (customAMISelected === FORM_OPTIONS.CUSTOM_AMI) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.CUSTOM_AMI_DISABLE_MSG}
+                </Typography>
+            );
         }
         return <Typography variant="Regular_14">{getDBVersion?.label}</Typography>;
     };
@@ -59,7 +63,7 @@ const DatabaseVersion = () => {
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="8"
                 title={<div className={CommonStyles.title}>{GENERAL.DATABASE_VERSION}</div>}
-                isDisabled={customAMISelected === GENERAL.USE_CUSTOM_AMI}
+                isDisabled={customAMISelected === FORM_OPTIONS.CUSTOM_AMI}
             >
                 <AccordionCardContent>
                     <Typography>

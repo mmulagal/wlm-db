@@ -845,6 +845,7 @@ export const GENERAL = {
     EXPLORE_SAVINGS_DISABLED: 'Supported only for the EBS storage type',
     SMB_PROTOCOL_DISABLED: 'Action not supported on SQL server using SMB protocol',
     MONTHLY_CHANGE_RATE_TOOLTIP: 'The monthly change rate is the % of data that changes per month.',
+    CUSTOM_AMI_DISABLE_MSG: 'Not applicable for Custom AMI',
     CLONE_TARGET_DB_LENGTH_VALIDATION: 'Target database should not exceed 128 characters'
 };
 
