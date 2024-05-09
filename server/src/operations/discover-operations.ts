@@ -858,7 +858,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
         );
     }
 
-    if (adDetails?.includes(FAILURE_INFO)) {
+    if (isEmpty(adDetails) || adDetails?.includes(FAILURE_INFO)) {
         logger.error(`Failed to get Active Directory details for EC2 ${ec2InstanceId}. Reason: ${adDetails}`);
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
