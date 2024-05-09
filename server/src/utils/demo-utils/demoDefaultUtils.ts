@@ -4,15 +4,17 @@ import { randomUUID } from 'crypto';
 import { STORAGE_PROTOCOLS, USER_TOKEN } from '../consts';
 import getLogger from '../logger';
 import { saveFciConfigurationData, saveStandaloneConfigurationData } from './demoMockdata';
-import { createDeploymentMockDataInDB } from '../../operations/demo-operations';
+import { createDeploymentMockDataInDB, createFileSystemForDemo } from '../../operations/demo-operations';
 import { createAwsCredential } from '../../lib/cloud-manager/credentials';
 import { listConfig } from '../../lib/database/db';
 import { saveConfig } from '../../operations/database/database-operations';
 import { getAsyncLocalStorageResource } from '../async-local-storage';
 import { listJobs } from '../../lib/database/job';
 import { inventoryDemoData } from './demoInventoryData';
+import { getFSXFileSystemListForDemo } from '../../operations/aws/fsx-operations';
 
 const logger = getLogger();
+const demoDefaultRegion = 'us-east-1';
 
 function createDemoResources(
     accountId: string,
@@ -46,7 +48,13 @@ function createDemoResources(
 async function createConfigurations(accountId: string, awsAccountId: string, credentialsId: string) {
     logger.info('Creating demo default configurations');
     let configName = 'Staging deployment in us-east';
-    const stagingData = saveFciConfigurationData('us-east-1', awsAccountId, credentialsId, 'stagingDB', configName);
+    const stagingData = saveFciConfigurationData(
+        demoDefaultRegion,
+        awsAccountId,
+        credentialsId,
+        'stagingDB',
+        configName
+    );
     saveConfig(accountId, 'SYSTEM', configName, stagingData);
 
     configName = 'Pre-prod deployment in us-west';
@@ -54,12 +62,12 @@ async function createConfigurations(accountId: string, awsAccountId: string, cre
     saveConfig(accountId, 'SYSTEM', configName, preprodData);
 
     configName = 'MSSQL 2 nodes FCI deployment in us-east';
-    const fciData = saveFciConfigurationData('us-east-1', awsAccountId, credentialsId, 'fciDB', configName);
+    const fciData = saveFciConfigurationData(demoDefaultRegion, awsAccountId, credentialsId, 'fciDB', configName);
     saveConfig(accountId, 'SYSTEM', configName, fciData);
 
     configName = 'MSSQL Single Instance DR system deployment';
     const standaloneData = saveStandaloneConfigurationData(
-        'us-east-1',
+        demoDefaultRegion,
         awsAccountId,
         credentialsId,
         'standaloneDB',
@@ -96,16 +104,33 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
         );
         credentialsId = credentialsDetails?.id || credentialsList?.[0]?.credentialsId;
     }
+    const existingFsxCore = await getFSXFileSystemListForDemo(credentialsId, demoDefaultRegion, randomize('a0', 10));
+    const fileSystemExists = existingFsxCore.some(obj => obj.name === 'fsx-wlmdb-DEFAULT');
+    if (!fileSystemExists) {
+        const fsxConfiguration = {
+            fsxDeploymentMode: 'MULTI_AZ_1',
+            fsxFileSystemId: randomUUID(),
+            fsxUsername: 'wlmdb-user',
+            fsxPassword: randomize('a0', 10),
+            databaseSize: 1024,
+            ontapSgGroupId: [randomize('a0', 10)],
+            fsxVolThroughput: 256,
+            fsxIOPS: 10,
+            encryptionKey: randomize('a0', 10),
+            snapshotPolicy: 'default'
+        };
+        createFileSystemForDemo(credentialsId, demoDefaultRegion, fsxConfiguration, true);
+    }
 
     const configs = await listConfig(accountId);
 
-    const jobs = await listJobs(accountId, credentialsId, 'us-east-1');
+    const jobs = await listJobs(accountId, credentialsId, demoDefaultRegion);
     if (isEmpty(jobs)) {
         // create 2 new resources and configurations
         logger.info('Creating demo resources');
         createDemoResources(
             accountId,
-            'us-east-1',
+            demoDefaultRegion,
             credentialsId,
             awsAccountId,
             'SQLServer-Prod-01',
@@ -113,7 +138,7 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
         );
         createDemoResources(
             accountId,
-            'us-east-1',
+            demoDefaultRegion,
             credentialsId,
             awsAccountId,
             'SQLServer-Dev-01',
@@ -121,10 +146,10 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
         );
         createDemoResources(
             accountId,
-            'us-east-1',
+            demoDefaultRegion,
             credentialsId,
             awsAccountId,
-            'SQLServer-Dev-02',
+            'SQLServer-Dev-04',
             STORAGE_PROTOCOLS.SMB
         );
     }

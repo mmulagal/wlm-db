@@ -23,69 +23,67 @@ export const comparisonData = (calculatedResponse: any) => {
     return [
         {
             type: 'Capacity',
-            fsx: `$ ${formatFractionalNumber(calculatedResponse?.fsx?.capacity, 2)}` || '$ 0',
-            ebs: `$ ${formatFractionalNumber(calculatedResponse?.ebs?.capacity, 2)}` || '$ 0'
+            fsx: `$${formatFractionalNumber(calculatedResponse?.fsx?.capacity, 2)}` || '$0',
+            ebs: `$${formatFractionalNumber(calculatedResponse?.ebs?.capacity, 2)}` || '$0'
         },
         {
             type: 'IOPS',
-            fsx: calculatedResponse?.fsx?.iops
-                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.iops, 2)}`
-                : '$ 0',
-            ebs: calculatedResponse?.ebs?.iops ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.iops, 2)}` : '$ 0'
+            fsx: calculatedResponse?.fsx?.iops ? `$${formatFractionalNumber(calculatedResponse?.fsx?.iops, 2)}` : '$0',
+            ebs: calculatedResponse?.ebs?.iops ? `$${formatFractionalNumber(calculatedResponse?.ebs?.iops, 2)}` : '$0'
         },
         {
             type: 'Throughput',
             fsx: calculatedResponse?.fsx?.throughput
-                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.throughput, 2)}`
-                : '$ 0',
+                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.throughput, 2)}`
+                : '$0',
             ebs: calculatedResponse?.ebs?.throughput
-                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.throughput, 2)}`
-                : '$ 0'
+                ? `$${formatFractionalNumber(calculatedResponse?.ebs?.throughput, 2)}`
+                : '$0'
         },
         {
             type: 'Snapshots',
             fsx: calculatedResponse?.fsx?.snapshots
-                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.snapshots, 2)}`
-                : '$ 0',
+                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.snapshots, 2)}`
+                : '$0',
             ebs: calculatedResponse?.ebs?.snapshots
-                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.snapshots, 2)}`
-                : '$ 0'
+                ? `$${formatFractionalNumber(calculatedResponse?.ebs?.snapshots, 2)}`
+                : '$0'
         },
         {
             type: 'Clone',
             fsx: calculatedResponse?.fsx?.clone
-                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.clone, 2)}`
+                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.clone, 2)}`
                 : GENERAL.NOT_AVAILABLE,
             ebs: calculatedResponse?.ebs?.clone
-                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.clone, 2)}`
+                ? `$${formatFractionalNumber(calculatedResponse?.ebs?.clone, 2)}`
                 : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'Compute',
             fsx: calculatedResponse?.fsx?.compute
-                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.compute, 2)}`
+                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.compute, 2)}`
                 : GENERAL.NOT_AVAILABLE,
             ebs: calculatedResponse?.ebs?.compute
-                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.compute, 2)}`
+                ? `$${formatFractionalNumber(calculatedResponse?.ebs?.compute, 2)}`
                 : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'SQL license',
             fsx: calculatedResponse?.fsx?.license
-                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.license, 2)}`
+                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.license, 2)}`
                 : GENERAL.NOT_AVAILABLE,
             ebs: calculatedResponse?.ebs?.license
-                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.license, 2)}`
+                ? `$${formatFractionalNumber(calculatedResponse?.ebs?.license, 2)}`
                 : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'Total summary',
             fsx: calculatedResponse?.fsx?.total
-                ? `$ ${formatFractionalNumber(calculatedResponse?.fsx?.total, 2)}`
-                : '$ 0',
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.total, 2)).toLocaleString()}`
+                : '$0',
             ebs: calculatedResponse?.ebs?.total
-                ? `$ ${formatFractionalNumber(calculatedResponse?.ebs?.total, 2)}`
-                : '$ 0'
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.ebs?.total, 2)).toLocaleString()}`
+                : '$0'
         }
     ];
 };
@@ -102,15 +100,17 @@ export const calculatedFSXData = (fsxData: any) => {
             value:
                 fsxData?.deploymentType === 'Single'
                     ? 'Single Availability Zone'
+                    : fsxData?.deploymentType === 'Multi'
+                    ? 'Multi Availability Zone'
                     : fsxData?.deploymentType || GENERAL.NOT_AVAILABLE,
-            text: `A ${fsxData?.deploymentType} Availability Zone is the equivalent availability for Amazon EBS.`
+            text: `${fsxData?.deploymentType} Availability Zones are the equivalent availability for Amazon EBS.`
         },
         {
             label: 'Total storage capacity',
             value: fsxData?.totalStorageCapacity
                 ? formatSizeOnePrecision(fsxData?.totalStorageCapacity)
                 : GENERAL.NOT_AVAILABLE,
-            text: 'The number of volumes that you need times the selected volume size.'
+            text: 'The number of volumes that you need multiplied by the selected volume size.'
         },
 
         {
@@ -148,7 +148,7 @@ export const calculatedFSXData = (fsxData: any) => {
         },
         {
             label: 'Provisioned SSD IOPS',
-            value: fsxData?.ssdIop || GENERAL.NOT_AVAILABLE,
+            value: fsxData?.ssdIop ? fsxData?.ssdIop + ' IOPS' : GENERAL.NOT_AVAILABLE,
             text: 'For each GiB of SSD provisioned storage, Amazon FSx automatically provisions 3 SSD IOPS for the file system.'
         },
         {
@@ -173,65 +173,135 @@ export const MSSQLServerInstance = (sqlData: any) => {
         {
             label: 'Database deployment mode',
             value: sqlData?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
-            text: 'Based on source deployment mode of Always On Availability Group, the equivalent deployment mode on FsxN is Failover cluster instance'
+            text: sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE ? 'The equivalent deployment mode of Always On Availability Group in EBS is Failover Cluster Instance in FSx for ONTAP' : 'Database deployment mode selected based on the current EBS database deployment mode'
         },
         {
             label: 'Database edition',
             value: sqlData?.serverEdition || GENERAL.NOT_AVAILABLE,
-            text: 'Since source deployment mode suggested is  FCI the Enterprise replication feature is not relevant. Based on our analysis, SQL Enterprise features are not used as well, therefore we recommend using Standard edition.'
+            text: sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE ? 'Since source deployment mode suggested is  FCI the Enterprise replication feature is not relevant. Based on our analysis, SQL Enterprise features are not used as well, therefore we recommend using Standard edition.' : 'Database edition selected based on the source SQL database edition'
         },
         {
             label: 'Database version',
             value: sqlData?.serverVersion || GENERAL.NOT_AVAILABLE,
-            text: 'Based on the source SQL server version'
+            text: 'Database version selected based on your current EBS SQL server version'
         },
         {
-            label: 'DB Instance type',
+            label: 'Database instance type',
             value: sqlData?.instanceType || GENERAL.NOT_AVAILABLE,
-            text: 'Based on the source Ec2 instance type'
+            text: 'Database instance type selected based on the source EC2 instance type'
         }
     ];
 };
 
 export const viewCalculation = (viewCalculation: any) => {
     return {
-        Ec2InstanceCalculation: [
-            {
-                label: 'Microsoft SQL EC2 Instances calculation',
-                mainHeading: true
-            },
-            {
-                label: 'Machine 1 specification'
-            },
-            {
-                label: 'Instance type',
-                value: `${viewCalculation.Ec2InstanceCalculation.instanceType}`,
-                text: ''
-            },
-            {
-                label: 'SQL edition',
-                value: `${viewCalculation.Ec2InstanceCalculation.sqlEdition}`,
-                text: ''
-            },
-            {
-                label: 'SQL license included',
-                value: `${viewCalculation.Ec2InstanceCalculation.sqlLicense}`,
-                text: ''
-            },
-            {
-                label: 'Machine 1 pricing calculations'
-            },
-            {
-                label: 'Instance hourly price',
-                value: `$ ${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
-                text: ''
-            },
-            {
-                label: 'Ec2 machine1 cost',
-                value: `$ ${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
-                text: `Instance hourly price x number of hours in a month = $ ${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
-            }
-        ],
+        Ec2InstanceCalculation:
+            viewCalculation?.type === SQL_DEPLOYMENT_MODE.AOAG
+                ? [
+                      {
+                          label: 'Microsoft SQL EC2 Instances calculation',
+                          mainHeading: true
+                      },
+                      {
+                          label: 'Machine 1 specification'
+                      },
+                      {
+                          label: 'Instance type',
+                          value: `${viewCalculation.Ec2InstanceCalculation.instanceType}`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL edition',
+                          value: `${viewCalculation.Ec2InstanceCalculation.sqlEdition}`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL license included',
+                          value: `${viewCalculation.Ec2InstanceCalculation.sqlLicense}`,
+                          text: ''
+                      },
+                      {
+                          label: 'Machine 1 pricing calculations'
+                      },
+                      {
+                          label: 'Instance hourly price',
+                          value: `$${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
+                          text: ''
+                      },
+                      {
+                          label: 'EC2 machine1 cost',
+                          value: `$${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
+                      },
+                      {
+                          label: 'Machine 2 specification'
+                      },
+                      {
+                          label: 'Instance type',
+                          value: `${viewCalculation.Ec2InstanceCalculation.instanceType}`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL edition',
+                          value: `${viewCalculation.Ec2InstanceCalculation.sqlEdition}`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL license included',
+                          value: `${viewCalculation.Ec2InstanceCalculation.sqlLicense}`,
+                          text: ''
+                      },
+                      {
+                          label: 'Machine 2 pricing calculations'
+                      },
+                      {
+                          label: 'Instance hourly price',
+                          value: `$${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
+                          text: ''
+                      },
+                      {
+                          label: 'EC2 machine2 cost',
+                          value: `$${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
+                      }
+                  ]
+                : [
+                      {
+                          label: 'Microsoft SQL EC2 Instances calculation',
+                          mainHeading: true
+                      },
+                      {
+                          label: 'Machine 1 specification'
+                      },
+                      {
+                          label: 'Instance type',
+                          value: `${viewCalculation.Ec2InstanceCalculation.instanceType}`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL edition',
+                          value: `${viewCalculation.Ec2InstanceCalculation.sqlEdition}`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL license included',
+                          value: `${viewCalculation.Ec2InstanceCalculation.sqlLicense}`,
+                          text: ''
+                      },
+                      {
+                          label: 'Machine 1 pricing calculations'
+                      },
+                      {
+                          label: 'Instance hourly price',
+                          value: `$${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
+                          text: ''
+                      },
+                      {
+                          label: 'EC2 machine1 cost',
+                          value: `$${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
+                      }
+                  ],
         FSxNCalculation: [
             {
                 label: 'FSx for ONTAP calculation',
@@ -280,12 +350,12 @@ export const viewCalculation = (viewCalculation: any) => {
             },
             {
                 label: 'SSD monthly cost ',
-                value: `$ ${viewCalculation.FSxNCalculation.priceCalculation.ssdMonthlyCost}`,
+                value: `$${viewCalculation.FSxNCalculation.priceCalculation.ssdMonthlyCost}`,
                 text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity (${viewCalculation.FSxNCalculation.priceCalculation.minSSDStorage} GiB) x SSD storage price ($${viewCalculation.FSxNCalculation.priceCalculation.ssdStoragePrice})`
             },
             {
                 label: 'Total monthly cost for FSx for NetApp ONTAP file server - SSD storage capacity',
-                value: `$ ${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostStorageCapacity}`,
+                value: `$${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostStorageCapacity}`,
                 text: ''
             },
             {
@@ -300,13 +370,13 @@ export const viewCalculation = (viewCalculation: any) => {
             },
             {
                 label: 'Capacity pool storage capacity',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.capacityPoolStorageCapacity} GiB`,
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.capacityPoolStorageCapacitySize} GiB`,
                 text: `Desired storage capacity (${viewCalculation.FSxNCalculation.storageCapacity} GiB) x Ratio after savings from compression & deduplication factor (${viewCalculation.FSxNCalculation.priceCalculation.deduplicationFactor}%) x Data on capacity pool storage factor (${viewCalculation.FSxNCalculation.priceCalculation.storageFactor}%)`
             },
             {
                 label: 'Capacity monthly cost',
                 value: `$${viewCalculation.FSxNCalculation.priceCalculation.capacityMonthlyCost}`,
-                text: `Capacity pool storage capacity (${viewCalculation.FSxNCalculation.priceCalculation.capacityPoolStorageCapacity} GiB) x FSx for ONTAP capacity price ($${viewCalculation.FSxNCalculation.priceCalculation.fsxnCapacityPrice})`
+                text: `Capacity pool storage capacity (${viewCalculation.FSxNCalculation.priceCalculation.capacityPoolStorageCapacitySize} GiB) x FSx for ONTAP capacity price ($${viewCalculation.FSxNCalculation.priceCalculation.fsxnCapacityPrice})`
             },
             {
                 label: 'Total monthly cost for FSx for NetApp ONTAP file server - Capacity pool storage capacity',
@@ -316,7 +386,7 @@ export const viewCalculation = (viewCalculation: any) => {
             {
                 label: 'Total storage charge (monthly)',
                 value: `$${viewCalculation.FSxNCalculation.priceCalculation.totalStorageCharge}`,
-                text: `Total monthly cost for FSx for NetApp ONTAP file server capacity pool storage capacity ($${viewCalculation.FSxNCalculation.priceCalculation.capacityPoolStorageCapacity}) + Total monthly cost for FSx for NetApp ONTAP file server SSD storage capacity ($${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostStorageCapacity})`
+                text: `Total monthly cost for FSx for NetApp ONTAP file server capacity pool storage capacity ($0) + Total monthly cost for FSx for NetApp ONTAP file server SSD storage capacity ($${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCostStorageCapacity})`
             },
             {
                 label: 'Minimum number of file systems required for storage capacity',
@@ -331,7 +401,7 @@ export const viewCalculation = (viewCalculation: any) => {
             {
                 label: 'Minimum number of file systems required for SSD IOPS',
                 value: `${viewCalculation.FSxNCalculation.priceCalculation.sddIOPS}`,
-                text: `Provisioned SSD (80000 IOPS) ÷ Maximum SSD (160000 IOPS)`
+                text: `Provisioned SSD (80,000 IOPS) ÷ Maximum SSD (1,60,000 IOPS)`
             },
             {
                 label: 'Required number of FSx file systems - fractional',
@@ -360,17 +430,17 @@ export const viewCalculation = (viewCalculation: any) => {
             },
             {
                 label: 'Included SSD IOPS',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.includedSSDIOPS}`,
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.includedSSDIOPS} IOPS`,
                 text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity (4,096) x Included (3.3) IOPS per GIB `
             },
             {
                 label: 'Additional SSD IOPS',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.additionalSSDIOPS}`,
-                text: `Provisioned SSD (80000 IOPS) - Included SSD (13,511 IOPS)`
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.additionalSSDIOPS} IOPS`,
+                text: `Provisioned SSD (80,000 IOPS) - Included SSD (13,511 IOPS)`
             },
             {
                 label: 'Billed additional SSD IOPS',
-                value: `${viewCalculation.FSxNCalculation.priceCalculation.billedSSD}`,
+                value: `${viewCalculation.FSxNCalculation.priceCalculation.billedSSD} IOPS`,
                 text: ``
             },
             {
@@ -398,14 +468,14 @@ export const viewCalculation = (viewCalculation: any) => {
                 text: ``
             },
             {
-                label: 'change rate between clones (%)',
+                label: 'Change rate between clones (%)',
                 value: `${viewCalculation.cloneCalculation.unitConversion.cloneRateChange}%`,
-                text: `monthly change rate (%) / number of periods = 3%/30`
+                text: `Monthly change rate (%) / Number of periods = 8%/30`
             },
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.cloneCalculation.unitConversion.desiredStorageCapacity} GiB`,
-                text: `number of cloned copies* (%change rate*total fsxN capacity*number of clones in a month)= 3*(0.1% *2*1024*30)`
+                text: `Number of cloned copies* (%change rate*total fsxN capacity*number of clones in a month)= 1*(${viewCalculation.cloneCalculation.unitConversion.cloneRateChange}% *${viewCalculation.FSxNCalculation.ebsCapacity}*1024*30)`
             },
             {
                 label: 'Percentage of data on SSD storage',
@@ -438,7 +508,7 @@ export const viewCalculation = (viewCalculation: any) => {
             {
                 label: 'SSD monthly cost',
                 value: `$${viewCalculation.cloneCalculation.priceCalculation.ssdMonthlyCost}`,
-                text: `SSD storage GiB per month  x FSx for ONTAP SSD price = 780GiB x 0.14$`
+                text: `SSD storage GiB per month  x FSx for ONTAP SSD price = 780GiB x $0.25`
             },
             {
                 label: 'Total clone monthly cost',
@@ -449,7 +519,7 @@ export const viewCalculation = (viewCalculation: any) => {
             {
                 label: 'Total monthly cost',
                 value: `$${viewCalculation.FSxNCalculation.priceCalculation.totalMonthlyCost}`,
-                text: `Total throughput and IOPS (monthly) ($${viewCalculation.FSxNCalculation.priceCalculation.totalThroughputIOPS})  + total storage charge (monthly) ($${viewCalculation.FSxNCalculation.priceCalculation.totalStorageCharge}) `
+                text: `Total EC2 cost ($${ viewCalculation?.type === SQL_DEPLOYMENT_MODE.AOAG ? 2 * viewCalculation.Ec2InstanceCalculation.ec2MachineCost : viewCalculation.Ec2InstanceCalculation.ec2MachineCost}) + Total throughput and IOPS cost ($${viewCalculation.FSxNCalculation.priceCalculation.totalThroughputIOPS})  + Total Storage cost ($${viewCalculation.FSxNCalculation.priceCalculation.totalStorageCharge}) + Total Clone cost ($${viewCalculation.cloneCalculation.priceCalculation.totalMonthlyCloneCost})`
             }
         ]
     };
@@ -457,43 +527,113 @@ export const viewCalculation = (viewCalculation: any) => {
 
 export const viewCalculationForEBS = (viewCalculation: any) => {
     return {
-        Ec2InstanceCalculation: [
-            {
-                label: 'Microsoft SQL EC2 instances calculation',
-                mainHeading: true
-            },
-            {
-                label: 'Machine 1 specification'
-            },
-            {
-                label: 'Instance type',
-                value: `${viewCalculation.Ec2InstanceCalculation.instanceType}`,
-                text: ''
-            },
-            {
-                label: 'SQL edition',
-                value: `${viewCalculation.Ec2InstanceCalculation.sqlEdition}`,
-                text: ''
-            },
-            {
-                label: 'SQL license included',
-                value: `${viewCalculation.Ec2InstanceCalculation.sqlLicense}`,
-                text: ''
-            },
-            {
-                label: 'Machine 1 pricing calculations'
-            },
-            {
-                label: 'Instance hourly price',
-                value: `$ ${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
-                text: ''
-            },
-            {
-                label: 'Ec2 machine1 cost',
-                value: `$ ${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
-                text: `Instance hourly price x number of hours in a month = $ ${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
-            }
-        ],
+        Ec2InstanceCalculation:
+            viewCalculation?.type === SQL_DEPLOYMENT_MODE.AOAG
+                ? [
+                      {
+                          label: 'Microsoft SQL EC2 instances calculation',
+                          mainHeading: true
+                      },
+                      {
+                          label: 'Machine 1 specification'
+                      },
+                      {
+                          label: 'Instance type',
+                          value: `${viewCalculation.Ec2InstanceCalculation.instanceType}`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL edition',
+                          value: `${viewCalculation.Ec2InstanceCalculation.sqlEdition}`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL license included',
+                          value: `${viewCalculation.Ec2InstanceCalculation.sqlLicense}`,
+                          text: ''
+                      },
+                      {
+                          label: 'Machine 1 pricing calculations'
+                      },
+                      {
+                          label: 'Instance hourly price',
+                          value: `$${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
+                          text: ''
+                      },
+                      {
+                          label: 'EC2 machine1 cost',
+                          value: `$${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
+                      },
+                      {
+                          label: 'Machine 2 specification'
+                      },
+                      {
+                          label: 'Instance type',
+                          value: `${viewCalculation.Ec2InstanceCalculation.instanceType}`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL edition',
+                          value: `${viewCalculation.Ec2InstanceCalculation.sqlEdition}`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL license included',
+                          value: `${viewCalculation.Ec2InstanceCalculation.sqlLicense}`,
+                          text: ''
+                      },
+                      {
+                          label: 'Machine 2 pricing calculations'
+                      },
+                      {
+                          label: 'Instance hourly price',
+                          value: `$${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
+                          text: ''
+                      },
+                      {
+                          label: 'EC2 machine2 cost',
+                          value: `$${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
+                      }
+                  ]
+                : [
+                      {
+                          label: 'Microsoft SQL EC2 instances calculation',
+                          mainHeading: true
+                      },
+                      {
+                          label: 'Machine 1 specification'
+                      },
+                      {
+                          label: 'Instance type',
+                          value: `${viewCalculation.Ec2InstanceCalculation.instanceType}`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL edition',
+                          value: `${viewCalculation.Ec2InstanceCalculation.sqlEdition}`,
+                          text: ''
+                      },
+                      {
+                          label: 'SQL license included',
+                          value: `${viewCalculation.Ec2InstanceCalculation.sqlLicense}`,
+                          text: ''
+                      },
+                      {
+                          label: 'Machine 1 pricing calculations'
+                      },
+                      {
+                          label: 'Instance hourly price',
+                          value: `$${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice}`,
+                          text: ''
+                      },
+                      {
+                          label: 'EC2 machine1 cost',
+                          value: `$${viewCalculation.Ec2InstanceCalculation.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.Ec2InstanceCalculation.instanceHourlyPrice} x 730`
+                      }
+                  ],
         EBSCalculation: [
             {
                 label: 'EBS calculation',
@@ -505,7 +645,7 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
             {
                 label: 'Storage amount per volume',
                 value: `${viewCalculation.EBSCalculation.storageCapacity}`,
-                text: `Storage amount per volume (2 TiB) x 1024`
+                text: `Storage amount per volume (${viewCalculation.EBSCalculation.volumeSize} TiB) x 1024`
             },
 
             {
@@ -514,7 +654,7 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
             {
                 label: 'Total instance hours',
                 value: `${viewCalculation.EBSCalculation.priceCalculation.totalInstanceHour}`,
-                text: `Number of volumes (2) x Average duration each instance runs (${viewCalculation.EBSCalculation.priceCalculation.eachInstanceHour} hours)`
+                text: `Number of volumes (${viewCalculation.EBSCalculation.priceCalculation.volumeCount}) x Average duration each instance runs (${viewCalculation.EBSCalculation.priceCalculation.eachInstanceHour} hours)`
             },
             {
                 label: 'Instance months',
@@ -615,12 +755,12 @@ export const viewCalculationForEBS = (viewCalculation: any) => {
             {
                 label: 'Clone cost',
                 value: `$${viewCalculation.cloneCalculation.cloneCost}`,
-                text: `number of Cloned copies *( ebs storage cost + ebs iops cost + ebs throughput cost )= 3 * 300$`
+                text: `Number of Cloned copies *( EBS storage cost + EBS iops cost + EBS throughput cost )= 1 * $${viewCalculation.cloneCalculation.cloneCost}`
             },
             {
                 label: 'Amazon Elastic Block Storage (EBS) total cost (monthly)',
                 value: `$${viewCalculation.EBSCalculation.priceCalculation.amazonElasticBlock}`,
-                text: `EBS snapshot cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsSnapshotCost}) + EBS throughput cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsThroughCost}) + EBS IOPS cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsIOPSCost}) + EBS storage cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsStorageCost})`
+                text: `Total EC2 cost ($${ viewCalculation?.type === SQL_DEPLOYMENT_MODE.AOAG ? 2 * viewCalculation.Ec2InstanceCalculation.ec2MachineCost : viewCalculation.Ec2InstanceCalculation.ec2MachineCost}) + EBS snapshot cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsSnapshotCost}) + EBS throughput cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsThroughCost}) + EBS IOPS cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsIOPSCost}) + EBS storage cost ($${viewCalculation.EBSCalculation.priceCalculation.ebsStorageCost}) + EBS clone cost ($${viewCalculation.cloneCalculation.cloneCost})`
             }
         ]
     };

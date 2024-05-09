@@ -14,6 +14,9 @@
 
 .setWidth {
     width: 792px !important;
+    [class*='DialogLayout-module_buttons-container'] {
+        position: static !important;
+    }
 }
 
 @media screen and (max-width: 1500px) {

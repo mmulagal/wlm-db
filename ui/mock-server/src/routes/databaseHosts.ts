@@ -85,7 +85,7 @@ router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances
 router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instances/:instanceId/mssql/manage`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, {resource: '1234'})
-        // generateResponse(res, 424, {message: 'PowerShell 7 is needed for managing the resource. Install it manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4 and retry the operation.'})
+        // generateResponse(res, 424, {message: 'PowerShell 7 is required for managing the resource. Install it manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4 and retry the operation.'})
         // generateResponse(res, 424, {message: 'Files required for database operations are not available. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare", and retry the operation.'});
     }, 3000);
 });

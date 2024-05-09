@@ -15,7 +15,8 @@ import {
     sqlFciServerStackData,
     validationStack2Data,
     sqlStandaloneStackData,
-    endpointData
+    endpointData,
+    sandboxJobData
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
@@ -172,17 +173,34 @@ async function createDeploymentMockDataInDB(
         credentialsId,
         region
     );
+
     await createJobs(accountId, data);
+
+    const sandboxJobData = await createSandboxJobMockData(
+        accountId,
+        region,
+        'RetailBanking',
+        'RetailBanking_sandbox',
+        credentialsId,
+        'SQLServer-Prod-01',
+        resourceName
+    );
+    await createJobs(accountId, sandboxJobData);
 }
 
-async function createFileSystemForDemo(credentialsId: string, region: string, fsxConfiguration: FSXConfigurationType) {
+async function createFileSystemForDemo(
+    credentialsId: string,
+    region: string,
+    fsxConfiguration: FSXConfigurationType,
+    defaultFsx: boolean
+) {
     logger.info('Creating fsx for demo', credentialsId, region, fsxConfiguration);
-
+    const fsxName = defaultFsx ? 'fsx-wlmdb-DEFAULT' : `fsx-wlmdb-${randomize('A', 5)}`;
     const { fsxDeploymentMode } = fsxConfiguration;
     const mode = fsxDeploymentMode.replace(/_\d+$/, '');
 
     const requestBody = {
-        name: `fsx-wlmdb-${randomize('A', 5)}`,
+        name: fsxName,
         credentialsId,
         region,
         storageCapacity: {
@@ -258,11 +276,29 @@ async function updateSandboxDBIntoResourceData(
     metaData.sandboxes = [...(metaData.sandboxes || []), sandboxDetails];
 
     await updateResourceMetaData(accountId, resourceId, metaData);
+    return metaData;
+}
+
+async function createSandboxJobMockData(
+    accountId: string,
+    region: string,
+    srcDb: string,
+    destDb: string,
+    credentialsId: string,
+    srcHost: string,
+    targetHost: string
+) {
+    logger.info('Generate mock data for job table', accountId, region, srcDb, destDb, credentialsId, targetHost);
+    accountId = checkAccount(accountId);
+    const parentJobId = randomUUID();
+
+    return sandboxJobData(accountId, region, srcHost, targetHost, srcDb, destDb, parentJobId, credentialsId);
 }
 
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
     updateUserDBIntoResourceData,
-    updateSandboxDBIntoResourceData
+    updateSandboxDBIntoResourceData,
+    createSandboxJobMockData
 };

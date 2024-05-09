@@ -8,7 +8,6 @@ import { useEffect, useState } from 'react';
 
 const InstanceInformation = () => {
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
-    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const [tableData, setTableData] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -16,44 +15,23 @@ const InstanceInformation = () => {
     useEffect(() => {
         setLoading(selectedHostDetails?.loading);
         const instanceTypelist = selectedHostDetails?.topology?.ec2Details?.map((inst: any) => inst?.instanceType);
-        let data: any = [];
-        if (isDemoMode) {
-            data = [
-                {
-                    details: 'Instance type',
-                    value: 'm5.2xlarge',
-                    id: '1'
-                },
-                {
-                    details: 'SQL Edition',
-                    value: 'SQL Server Standard Edition',
-                    id: '2'
-                },
-                {
-                    details: 'Deployment model',
-                    value: 'Standalone',
-                    id: '3'
-                }
-            ];
-        } else {
-            data = [
-                {
-                    details: 'Instance type',
-                    value: instanceTypelist ? instanceTypelist.join(',') : GENERAL.NOT_AVAILABLE,
-                    id: '1'
-                },
-                {
-                    details: 'SQL Edition',
-                    value: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
-                    id: '2'
-                },
-                {
-                    details: 'Deployment model',
-                    value: selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
-                    id: '3'
-                }
-            ];
-        }
+        let data: any = [
+            {
+                details: 'Instance type',
+                value: instanceTypelist ? instanceTypelist.join(',') : GENERAL.NOT_AVAILABLE,
+                id: '1'
+            },
+            {
+                details: 'SQL Edition',
+                value: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
+                id: '2'
+            },
+            {
+                details: 'Deployment model',
+                value: selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
+                id: '3'
+            }
+        ];
         setTableData(data);
     }, [selectedHostDetails]);
 

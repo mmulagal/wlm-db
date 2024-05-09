@@ -208,7 +208,6 @@ $Body = @{
     "read-realloc" = "on"
     "tiering-policy" = "snapshot-only"
     "tiering-minimum-cooling-days" = "7"
-    "snapshot-policy" = "none"
     "autosize-mode" = "grow"
     "tiering-object-tags" = @( "wlmDeploymentId=" + $($Stackname.split('-')[0..2] -join "_") )
 }

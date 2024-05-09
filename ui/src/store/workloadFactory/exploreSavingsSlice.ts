@@ -4,7 +4,7 @@ export const initialExploreSavingsState: any = {
     selectedSnapshotFrequency: null,
     numberOfClonedCopies: 1,
     selectedCloneRefresh: null,
-    monthlyChangeRate: 10,
+    monthlyChangeRate: 8,
     saveConfigName: '',
     loading: false,
     unmanagedExploreSavingsHost: [],
@@ -13,7 +13,10 @@ export const initialExploreSavingsState: any = {
     selectedHostDetails: {},
     storageSavingsResponse: {},
     storageSavingsLoading: false,
-    savingsCalculatorRefresh: false
+    savingsCalculatorRefresh: false,
+    selectedDeploymentModel: null,
+    viewCalculationsResponse: {},
+    viewCalculationsLoading: false
 };
 
 const exploreSavingsSlice = createSlice({
@@ -58,15 +61,27 @@ const exploreSavingsSlice = createSlice({
         },
         addExploreSavingsInitialData(state, action: PayloadAction<any>) {
             state.selectedSnapshotFrequency = null;
-            state.numberOfClonedCopies = 3;
+            state.numberOfClonedCopies = 1;
             state.selectedCloneRefresh = null;
-            state.monthlyChangeRate = 3;
+            state.monthlyChangeRate = 8;
             state.selectedInstanceId = null;
             state.selectedServerName = null;
             state.selectedHostDetails = {};
             state.storageSavingsResponse = {};
             state.storageSavingsLoading = false;
             state.savingsCalculatorRefresh = false;
+            state.selectedDeploymentModel = null;
+            state.viewCalculationsResponse = {};
+            state.viewCalculationsLoading = false;
+        },
+        setSelectedDeploymentModel(state, action: PayloadAction<any>) {
+            state.selectedDeploymentModel = action.payload;
+        },
+        setViewCalculationsResponse(state, action: PayloadAction<any>) {
+            state.viewCalculationsResponse = action.payload;
+        },
+        setViewCalculationsLoading(state, action: PayloadAction<any>) {
+            state.viewCalculationsLoading = action.payload;
         }
     }
 });
@@ -84,7 +99,10 @@ export const {
     setStorageSavingsResponse,
     setStorageSavingsLoading,
     setSavingsCalculatorRefresh,
-    addExploreSavingsInitialData
+    addExploreSavingsInitialData,
+    setSelectedDeploymentModel,
+    setViewCalculationsResponse,
+    setViewCalculationsLoading
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

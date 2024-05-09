@@ -16,6 +16,7 @@ import { setEncryptionARN, setEncryptionRow, setEncryptionType } from '../../../
 import { useAppSelector } from '../../../../store/storeHooks';
 import { selectFsxKmsKey } from '../../MSSqlServer/MSSqlUtils';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
+import { isFsxnExisting } from '../../../../utils/utilityFunctions';
 
 const Encryption = () => {
     const dispatch = useDispatch();
@@ -41,7 +42,7 @@ const Encryption = () => {
     }, [kmsData]);
 
     useEffect(() => {
-        if (selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName) {
+        if (isFsxnExisting(selectedFsxnType) && selectedExistingFsxnName) {
             setIsDisable(true);
         } else {
             setIsDisable(false);

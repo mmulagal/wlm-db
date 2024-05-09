@@ -66,6 +66,7 @@ Metadata:
           - FileSystemEncryptionKeyId
           - FSxDiskIops
           - SQLSvmName
+          - FsxVolumeSnapshotPolicy
       - Label:
           default: Microsoft SQL Server Configuration
         Parameters:
@@ -155,6 +156,8 @@ Metadata:
         default: SVM for creating SQL volumes 
       FSxDiskIops:
         default: Provisioned SSD IOPS  
+      FsxVolumeSnapshotPolicy:
+        default: Snapshot policy for the volume
       EnableCloudWatchLogFeature:
         default: (optional) Enable monitoring by CloudWatch Logging
       NotificationARN:
@@ -267,6 +270,8 @@ Parameters:
   {{{FSxVolumeThroughputCapacity}}}
   
   {{{FileSystemEncryptionKeyId}}}
+
+  {{{FsxVolumeSnapshotPolicy}}}
   
   {{{VPCID}}}
   
@@ -745,6 +750,8 @@ Resources:
           Ref: FileSystemEncryptionKeyId
         FSxDiskIops:
           Ref: FSxDiskIops 
+        FsxVolumeSnapshotPolicy:
+          Ref: FsxVolumeSnapshotPolicy
         ParentStackName:
           Ref: AWS::StackName
       NotificationARNs:
@@ -788,6 +795,8 @@ Resources:
           Ref: FSxQuorumVolumeName
         FSxClusterQuorumVolumeSize:
           Ref: FSxQuorumVolumeSize
+        FsxVolumeSnapshotPolicy:
+          Ref: FsxVolumeSnapshotPolicy
       NotificationARNs:
         Fn::If:
         - IncludeNotification

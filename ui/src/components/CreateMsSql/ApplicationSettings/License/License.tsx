@@ -29,6 +29,8 @@ const License = () => {
     const selectedLicenseId = useAppSelector(state => state.mssqlForm.license.selectedLicenseId);
     const selectedCustomAMI = useAppSelector(state => state.mssqlForm.license.selectedCustomAMI);
     const [defaultValeLicense, selectedDefaultValue] = useState(selectedLicenseId);
+
+    const [defaultCustomAMILicense, selectedDefaultCustomAMILicense] = useState(selectedCustomAMI);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
@@ -37,6 +39,37 @@ const License = () => {
 
     // Custom AMI list will be blank for as it is not supported in phase 1
     const customAmiId: any[] = [];
+
+    const data = {
+        amis: [
+            {
+                name: 'Windows_Server-2022-English-Full-SQL_2019_Enterprise-2023.04.12',
+                description:
+                    'Microsoft Windows Server 2022 Full Locale English with SQL Enterprise 2019 AMI provided by Amazon',
+                architecture: 'x86_64',
+                imageId: 'ami-0e453a02608af08a9',
+                imageLocation: 'amazon/Windows_Server-2022-English-Full-SQL_2019_Enterprise-2023.04.12',
+                public: true,
+                platform: 'windows',
+                platformDetails: 'Windows with SQL Server Enterprise',
+                state: 'available',
+                hypervisor: 'xen'
+            },
+            {
+                name: 'Windows_Server-2022-English-Full-SQL_2017_Standard-2023.05.10',
+                description:
+                    'Microsoft Windows Server 2022 Full Locale English with SQL Standard 2017 AMI provided by Amazon',
+                architecture: 'x86_64',
+                imageId: 'ami-08e92ddb6cc3268e2',
+                imageLocation: 'amazon/Windows_Server-2022-English-Full-SQL_2017_Standard-2023.05.10',
+                public: true,
+                platform: 'windows',
+                platformDetails: 'Windows with SQL Server Standard',
+                state: 'available',
+                hypervisor: 'xen'
+            }
+        ]
+    };
 
     useEffect(() => {
         if (selectedLicenseId) {
@@ -48,14 +81,32 @@ const License = () => {
         } else {
             selectedDefaultValue(null);
         }
-        
     }, [selectedLicenseId]);
+
+    useEffect(() => {
+        if (selectedCustomAMI) {
+            const newValLicense = {
+                ...selectedCustomAMI,
+                label: `${selectedCustomAMI?.label} | ${selectedCustomAMI?.label2}`
+            };
+            selectedDefaultCustomAMILicense(newValLicense);
+        } else {
+            selectedDefaultCustomAMILicense(null);
+        }
+    }, [selectedCustomAMI]);
 
     //Function to generate the options for Select Field
     const generateAMIId = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        customAmiId?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+        data?.amis?.map((val, idx: number) => {
+            const amiVal = val?.imageId;
+            const amiName = val?.name;
+            const data = {
+                architecture: val?.architecture,
+                amiVal: val?.imageId,
+                amiName: val?.name
+            };
+            const option = generateOptionType(amiVal, amiVal, amiName, false, '', data);
             options.push(option);
         });
         return options;
@@ -83,6 +134,12 @@ const License = () => {
             dispatch(setSelectedLicenseId(generateAMIIdForLicense[0]));
         }
     }, [dispatch, generateAMIIdForLicense]);
+
+    useEffect(() => {
+        if (!isLoadConfig && !movingFromChatbot) {
+            dispatch(setSelectedCustomAMI(generateAMIIdForLicense[0]));
+        }
+    }, [dispatch, generateAMIId]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -153,7 +210,6 @@ const License = () => {
                                 }}
                                 children={GENERAL.USE_CUSTOM_AMI}
                                 className=""
-                                isDisabled
                             />
                         </div>
                         {licenseSelect === GENERAL.LICENSE_INCLUDED_AMI && (
@@ -194,11 +250,12 @@ const License = () => {
                                     label={GENERAL.AMI_ID}
                                     placeholder={GENERAL.SELECT_AMI_NAME}
                                     isClearable={false}
-                                    defaultValue={selectedCustomAMI}
+                                    defaultValue={defaultCustomAMILicense}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSelectedCustomAMI(selectedOptions));
                                         dispatch(setIsWizardTouched(true));
                                     }}
+                                    variant="two-lines"
                                     isSearchable={generateAMIId.length > 5}
                                     options={generateAMIId}
                                 />

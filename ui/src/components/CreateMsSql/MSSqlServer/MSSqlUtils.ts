@@ -15,7 +15,7 @@ import {
 } from '../../../store/mssql/mssqlFormSlice';
 import { GENERAL } from '../../../utils/appConstants';
 import { DEAFULT_INSTANCE_VALUE } from '../../../utils/consts';
-import { formatSize, generateOptionType } from '../../../utils/utilityFunctions';
+import { formatSize, generateOptionType, isFsxnExisting } from '../../../utils/utilityFunctions';
 
 export const selectDefaultSecurityGroup = (dispatch: any) => {
     dispatch(setSelectedSecurityGroup(GENERAL.GENERATED_SECURITY_GROUP));
@@ -105,7 +105,7 @@ export const selectFsxThroughput = (
     dispatch: any
 ) => {
     const throughput = selectedExistingFsxnName?.data?.throughput || 0;
-    if (selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName && throughput !== 0) {
+    if (isFsxnExisting(selectedFsxnType) && selectedExistingFsxnName && throughput !== 0) {
         let val = '';
         if (throughput <= 512) {
             val = throughput + ' MBps';
@@ -125,7 +125,7 @@ export const selectFsxThroughput = (
 
 export const selectFsxIops = (selectedFsxnType: string, selectedExistingFsxnName: any, dispatch: any) => {
     const iops = selectedExistingFsxnName?.data?.iops || 0;
-    if (selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName && iops !== 0) {
+    if (isFsxnExisting(selectedFsxnType) && selectedExistingFsxnName && iops !== 0) {
         dispatch(setProvisionedType(GENERAL.USER_PROVISIONED));
         dispatch(setProvisionedIOPSValue(iops));
     } else {
@@ -135,7 +135,7 @@ export const selectFsxIops = (selectedFsxnType: string, selectedExistingFsxnName
 };
 
 export const selectFsxKmsKey = (selectedFsxnType: string, selectedExistingFsxnName: any, dispatch: any) => {
-    if (selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName) {
+    if (isFsxnExisting(selectedFsxnType) && selectedExistingFsxnName) {
         const kmsKeyId = selectedExistingFsxnName?.data?.kmsKeyId;
         let kmsKeyVal = '';
         if (kmsKeyId && kmsKeyId.includes('/')) {

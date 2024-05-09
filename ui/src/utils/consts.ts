@@ -131,13 +131,14 @@ export const FSX_DEPLOYMENT_MODE = {
 
 export const SQL_DEPLOYMENT_MODE = {
     FAILOVER_CLUSTER_VALUE: 'fci',
-    SINGLE_INSTANCE_VALUE: 'standalone'
+    SINGLE_INSTANCE_VALUE: 'standalone',
+    AOAG: 'aoag'
 };
 
 export const API_ERRORS = {
     DUPLICATE_CONFIG_NAME: 'An unique key constraint violated uk_wlmdb_config_account_id_name_user',
     RATE_EXCEEDED: 'rate exceeded',
-    POWERSHELL_7: 'PowerShell 7 is needed for managing the resource'
+    POWERSHELL_7: 'PowerShell 7 is required for managing the resource'
 };
 
 export const STATUS_CONST = {
@@ -388,4 +389,10 @@ export const THROUGHPUT_LIST = [
 export const MSSQL_DATABASE_TYPES = {
     SYSTEM: 'System Database',
     USER: 'User Database'
+};
+
+// Deployment form related check points for radio button
+export const FORM_OPTIONS = {
+    FSXN_NEW: 'fsxn_new',
+    FSXN_EXISTING: 'fsxn_existing'
 };

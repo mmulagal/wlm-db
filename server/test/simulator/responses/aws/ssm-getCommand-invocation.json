@@ -66,7 +66,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"totalCount\":8}]\r\n",
+        "StandardOutputContent": "[{\"totalCount\":9}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -84,7 +84,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"databaseId\":177,\"databaseName\":\"RetailBanking\",\"creationDate\":\"2023-04-11T17:49:40.963\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":553648128.00},{\"databaseId\":34,\"databaseName\":\"MFGSales\",\"creationDate\":\"2023-04-11T17:23:39.663\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":203,\"databaseName\":\"AssetManagement\",\"creationDate\":\"2023-04-11T17:49:48.887\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":58,\"databaseName\":\"HRAudit\",\"creationDate\":\"2023-04-11T17:43:09.220\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":234,\"databaseName\":\"PrivateBanking\",\"creationDate\":\"2023-04-11T17:49:58.353\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":30,\"databaseName\":\"SalesData\",\"creationDate\":\"2023-04-11T17:23:38.587\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":24,\"databaseName\":\"ExpenseTracker\",\"creationDate\":\"2023-04-11T17:23:36.840\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":250,\"databaseName\":\"TimeSheet\",\"creationDate\":\"2023-04-11T17:50:03.333\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00}\r\n]",
+        "StandardOutputContent": "[{\"databaseId\":177,\"databaseName\":\"RetailBanking\",\"creationDate\":\"2023-04-11T17:49:40.963\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":553648128.00},{\"databaseId\":34,\"databaseName\":\"MFGSales\",\"creationDate\":\"2023-04-11T17:23:39.663\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":203,\"databaseName\":\"AssetManagement\",\"creationDate\":\"2023-04-11T17:49:48.887\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":58,\"databaseName\":\"HRAudit\",\"creationDate\":\"2023-04-11T17:43:09.220\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":234,\"databaseName\":\"PrivateBanking\",\"creationDate\":\"2023-04-11T17:49:58.353\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":30,\"databaseName\":\"SalesData\",\"creationDate\":\"2023-04-11T17:23:38.587\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":24,\"databaseName\":\"ExpenseTracker\",\"creationDate\":\"2023-04-11T17:23:36.840\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":250,\"databaseName\":\"TimeSheet\",\"creationDate\":\"2023-04-11T17:50:03.333\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":154,\"databaseName\":\"RetailBanking_sandbox\",\"creationDate\":\"2023-04-11T17:49:40.963\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":553648128.00}\r\n]",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -757,7 +757,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"clusterNodesInfo\":[{\"NodeName\":\"SQLNODE1-65579\",\"is_current_owner\":true},{\"NodeName\":\"SQLNODE2-65579\",\"is_current_owner\":false}],\"ServerEdition\":\"Standard Edition\",\"isClustered\":1,\"activeNode\":\"SQLNODE1-65579\",\"numberOfConnections\":8,\"serverDetails\":\"Microsoft SQL Server 2019 (SP3-OD) (KB5006943) - 13.0.6404.1 (X64) \\n\\tOct 18 2021 09:37:01 \\n\\tCopyright (c) Microsoft Corporation\\n\\tStandard Edition (64-bit) on Windows Server 2019 Datacenter 10.0 <X64> (Build 14393: ) (Hypervisor)\\n\",\"clusterName\":\"FciClusterName\",\"totalCount\":8}]\r\n",
+        "StandardOutputContent": "[{\"clusterNodesInfo\":[{\"NodeName\":\"SQLNODE1-65579\",\"is_current_owner\":true},{\"NodeName\":\"SQLNODE2-65579\",\"is_current_owner\":false}],\"ServerEdition\":\"Standard Edition\",\"isClustered\":1,\"activeNode\":\"SQLNODE1-65579\",\"numberOfConnections\":8,\"serverDetails\":\"Microsoft SQL Server 2019 (SP3-OD) (KB5006943) - 13.0.6404.1 (X64) \\n\\tOct 18 2021 09:37:01 \\n\\tCopyright (c) Microsoft Corporation\\n\\tStandard Edition (64-bit) on Windows Server 2019 Datacenter 10.0 <X64> (Build 14393: ) (Hypervisor)\\n\",\"clusterName\":\"FciClusterName\",\"totalCount\":9}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -852,7 +852,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\r\n    \"Instance\":  \"MSSQLSERVER\",\r\n    \"Output\":  \"[{\\\"database_name\\\":\\\"RetailBanking_sandbox\\\",\\\"sandbox_properties\\\":[{\\\"name\\\":\\\"baseSnapshot\\\",\\\"value\\\":\\\"7e1de7b5-6e0e-4f6d-9c0a-8e5e3c1d2f0a\\\"},{\\\"name\\\":\\\"createdAt\\\",\\\"value\\\":\\\"1714729464402\\\"},{\\\"name\\\":\\\"updatedAt\\\",\\\"value\\\":\\\"1714729464402\\\"},{\\\"name\\\":\\\"source\\\",\\\"value\\\":\\\"SQLServer-Prod-01|MSSQLSERVER|RetailBanking\\\"},{\\\"name\\\":\\\"tag\\\",\\\"value\\\":\\\"Development\\\"}]},{\\\"database_name\\\":\\\"HRAudit_Sandbox\\\",\\\"sandbox_properties\\\":[{\\\"name\\\":\\\"baseSnapshot\\\",\\\"value\\\":\\\"f7b0d0b1-7c8d-4e9f-a6e2-9c3b4a5d6e7f\\\"},{\\\"name\\\":\\\"createdAt\\\",\\\"value\\\":\\\"1714729464402\\\"},{\\\"name\\\":\\\"updatedAt\\\",\\\"value\\\":\\\"1714729464402\\\"},{\\\"name\\\":\\\"source\\\",\\\"value\\\":\\\"SQLServer-Prod-01|MSSQLSERVER|HRAudit\\\"},{\\\"name\\\":\\\"tag\\\",\\\"value\\\":\\\"QA\\\"}]}]\"\r\n}\r\n",
+        "StandardOutputContent": "{\r\n    \"Instance\":  \"MSSQLSERVER\",\r\n    \"Output\":  \"[{\\\"database_name\\\":\\\"RetailBanking_sandbox\\\",\\\"sandbox_properties\\\":[{\\\"name\\\":\\\"baseSnapshot\\\",\\\"value\\\":\\\"7e1de7b5-6e0e-4f6d-9c0a-8e5e3c1d2f0a\\\"},{\\\"name\\\":\\\"source\\\",\\\"value\\\":\\\"SQLServer-Prod-01|MSSQLSERVER|RetailBanking\\\"},{\\\"name\\\":\\\"tag\\\",\\\"value\\\":\\\"Development\\\"}]}]\"\r\n}\r\n",
         "Status": "Success",
         "StatusDetails": "Success"
     },

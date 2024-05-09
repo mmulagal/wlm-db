@@ -21,6 +21,7 @@ import {
     setSelectedDBDeploymentModel,
     setSelectedDBEdition,
     setSelectedOperatingSystem,
+    setSnapshotPolicyToggle,
     setSNSARN,
     setSNSState,
     setSqlServerCollation,
@@ -96,6 +97,7 @@ const PreviewDefault = () => {
             dispatch(setSNSState(false));
             dispatch(setSNSARN(''));
             dispatch(setCloudWatch(true));
+            dispatch(setSnapshotPolicyToggle(true));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedConfig]);
@@ -179,7 +181,8 @@ const PreviewDefault = () => {
             id: '14'
         },
         { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: GENERAL.ENABLED, editable: 'N/A', id: '15' },
-        { accordionName: 'Resource rollback', defaultValue: GENERAL.PD_DISABLED, editable: 'No', id: '16' }
+        { accordionName: 'Resource rollback', defaultValue: GENERAL.PD_DISABLED, editable: 'No', id: '16' },
+        { accordionName: GENERAL.SNAPSHOT_POLICY, defaultValue: GENERAL.DAILY_RETENTION, editable: 'Yes', id: '18' }
     ];
 
     const PreviewDefaultColDefs: ColumnProps[] = [

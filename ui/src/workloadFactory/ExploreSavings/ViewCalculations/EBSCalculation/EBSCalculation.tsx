@@ -5,6 +5,8 @@ import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { Text } from '../../../../ui-components/Typography';
 import { viewCalculationForEBS } from '../../SavingsCalculator/savingsUtil';
 import { GENERAL } from '../../../../utils/appConstants';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { useEffect, useState } from 'react';
 
 const TableLayout = ({ data }: any) => {
     const styleHandler = (data: any) => {
@@ -48,48 +50,18 @@ const TableLayout = ({ data }: any) => {
 };
 
 const EBSCalculation = () => {
-    const viewCalculationData = {
-        Ec2InstanceCalculation: {
-            instanceType: 'm5.2xlarge',
-            instanceHourlyPrice: '0.752',
-            ec2MachineCost: '548.96',
-            sqlEdition: 'SQL Server Standard edition',
-            sqlLicense: 'Yes'
-        },
-        cloneCalculation: {
-            numberOfClonedCopies: 1,
-            cloneCost: '5,134'
-        },
-        EBSCalculation: {
-            storageCapacity: '2,048',
+    const viewCalculationsResponse = useAppSelector(state => state.exploreSavings.viewCalculationsResponse);
+    const [viewCalculationData, setViewCalculationData] = useState(viewCalculationsResponse?.ebs || {});
+    useEffect(() => {
+        setViewCalculationData(viewCalculationsResponse?.ebs);
+    }, [viewCalculationsResponse]);
 
-            priceCalculation: {
-                totalInstanceHour: '1460',
-                eachInstanceHour: '730',
-                instanceMonth: '2',
-                ebsStorageCost: '562.95',
-                ebsCapacityPrice: '0.14',
-                billableIOPS: '40,000',
-                totalBillableIOPS: '40,000',
-                ebsIOPSCost: '4,888',
-                billableMbps: '0',
-                billableThroughputMbps: '0',
-                billableThroughputGbps: '0',
-                ebsThroughCost: '0',
-                totalSnapshots: '30',
-                initialSnapshotCost: '112.59',
-                monthlyCostOFEachSnapshot: '0.7',
-                discountForPartialStorage: '0.35',
-                incrementSnapshotCost: '10.47',
-                totalSnapshotCost: '123.06',
-                totalEBSSnapshotCost: '246.12',
-                ebsSnapshotCost: '246.12',
-                amazonElasticBlock: '5,697.07'
-            }
-        }
-    };
     const setHeader = () => {
-        return <DsTypography variant="Regular_14">$5,697.07</DsTypography>;
+        return (
+            <DsTypography variant="Regular_14">
+                ${viewCalculationData?.EBSCalculation?.priceCalculation?.amazonElasticBlock}
+            </DsTypography>
+        );
     };
     return (
         <div className={styles.ebsCalculation}>

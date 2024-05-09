@@ -37,6 +37,7 @@ const SelectSource = () => {
         aggregatedDbHostList
     } = useAppSelector(state => state.createSandbox);
     const { source } = useAppSelector(state => state.createSandbox);
+    const { isDemoMode } = useAppSelector(state => state?.auth);
     const { selectedDatabaseHost, selectedDatabaseInstance, selectedDatabase } = source;
     const { databaseListData, databaseListLoading } = getDatabaseList;
     const { databaseHostsLoading } = getDatabaseHosts;
@@ -71,7 +72,7 @@ const SelectSource = () => {
                     obj?.id,
                     obj?.name,
                     '',
-                    protocolDisable || installationModeDisable,
+                    !isDemoMode && (protocolDisable || installationModeDisable),
                     installationModeDisable
                         ? GENERAL?.SANDBOX_FCI_NOT_SUPPORTED
                         : protocolDisable
