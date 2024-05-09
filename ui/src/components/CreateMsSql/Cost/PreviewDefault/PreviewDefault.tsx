@@ -21,6 +21,7 @@ import {
     setSelectedDBDeploymentModel,
     setSelectedDBEdition,
     setSelectedOperatingSystem,
+    setSnapshotPolicyToggle,
     setSNSARN,
     setSNSState,
     setSqlServerCollation,
@@ -96,6 +97,7 @@ const PreviewDefault = () => {
             dispatch(setSNSState(false));
             dispatch(setSNSARN(''));
             dispatch(setCloudWatch(true));
+            dispatch(setSnapshotPolicyToggle(true));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedConfig]);

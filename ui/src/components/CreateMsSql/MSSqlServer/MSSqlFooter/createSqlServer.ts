@@ -124,7 +124,7 @@ const createMssqlPayload = (state: any) => {
 
     const selectedSnapshotPolicy = (() => {
         if (state.mssqlForm.snapshotPolicyToggle === true) {
-            return ' default';
+            return 'default';
         } else {
             return 'none';
         }
