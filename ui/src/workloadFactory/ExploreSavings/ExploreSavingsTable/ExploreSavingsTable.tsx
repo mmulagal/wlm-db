@@ -30,24 +30,7 @@ const ExploreSavingsTable = () => {
             accessor: '',
             width: '182px',
             renderCell: (cellData: any, rowData: any) => {
-                return !isDemoMode ? (
-                    <>
-                        <>
-                            <Popover
-                                popoverClass={styles['copy-popover']}
-                                children={'Coming soon'}
-                                trigger="hover"
-                                container={
-                                    <div className={styles.detectManageDemo} onClick={() => {}}>
-                                        <Typography variant="Regular_14" className={styles.textStyle}>
-                                            {GENERAL.ES_SAVINGS}
-                                        </Typography>
-                                    </div>
-                                }
-                            />
-                        </>
-                    </>
-                ) : (
+                return (
                     <>
                         <div
                             className={styles.detectManage}
