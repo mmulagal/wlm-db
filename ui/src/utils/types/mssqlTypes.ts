@@ -235,6 +235,7 @@ export interface MssqlRequestBody {
         fsxVolThroughput: string;
         fsxIOPS: string;
         encryptionKey: string;
+        snapshotPolicy: string;
     };
     sqlConfiguration: {
         sqlDeploymentMode: string;

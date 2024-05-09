@@ -172,8 +172,10 @@ export const GENERAL = {
     //Constants for Op system
     WIN_SERVER_2016: 'Windows server 2016',
     WIN_SERVER_2019: 'Windows server 2019',
+    WIN_SERVER_2022: 'Windows server 2022',
     WIN_SERVER_2016_VERSION: '2016',
     WIN_SERVER_2019_VERSION: '2019',
+    WIN_SERVER_2022_VERSION: '2022',
     OP_SYS_TEXT: 'Choose the operating system on which to install SQL Server.',
     //Constants for DB Deployment
     FAILOVER_CLUSTER: 'Failover cluster instance (FCI)',
@@ -843,7 +845,8 @@ export const GENERAL = {
     EXPLORE_SAVINGS_DISABLED: 'Supported only for the EBS storage type',
     SMB_PROTOCOL_DISABLED: 'Action not supported on SQL server using SMB protocol',
     MONTHLY_CHANGE_RATE_TOOLTIP: 'The monthly change rate is the % of data that changes per month.',
-    CUSTOM_AMI_DISABLE_MSG: 'Not applicable for Custom AMI'
+    CUSTOM_AMI_DISABLE_MSG: 'Not applicable for Custom AMI',
+    CLONE_TARGET_DB_LENGTH_VALIDATION: 'Target database should not exceed 128 characters'
 };
 
 export const CODE_VIEWER = {

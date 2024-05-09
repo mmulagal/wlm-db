@@ -116,7 +116,8 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
             ontapSgGroupId: [randomize('a0', 10)],
             fsxVolThroughput: 256,
             fsxIOPS: 10,
-            encryptionKey: randomize('a0', 10)
+            encryptionKey: randomize('a0', 10),
+            snapshotPolicy: 'default'
         };
         createFileSystemForDemo(credentialsId, demoDefaultRegion, fsxConfiguration, true);
     }

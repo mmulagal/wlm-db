@@ -24,7 +24,7 @@ export const formatSandboxListData = (data: SandboxListEntities) => {
         .filter(item => !item?.error)
         .map(item => {
             return {
-                id: item?.databaseHostId,
+                id: `${item?.databaseHostId}_${item?.databaseInstanceName}_${item?.sandboxName}`,
                 name: item?.sandboxName,
                 hostName: item?.databaseHostName,
                 source: item?.sourceDatabaseName,

@@ -65,6 +65,19 @@ const OperatingSystem = () => {
                                 children={GENERAL.WIN_SERVER_2019}
                                 className=""
                             />
+                            <RadioButton
+                                isChecked={osVersion?.label === GENERAL.WIN_SERVER_2022}
+                                onChange={() => {
+                                    dispatch(
+                                        setSelectedOperatingSystem({
+                                            label: GENERAL.WIN_SERVER_2022,
+                                            value: GENERAL.WIN_SERVER_2022_VERSION
+                                        })
+                                    );
+                                }}
+                                children={GENERAL.WIN_SERVER_2022}
+                                className=""
+                            />
                         </div>
                     </Typography>
                 </AccordionCardContent>

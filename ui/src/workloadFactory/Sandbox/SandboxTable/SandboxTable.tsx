@@ -27,7 +27,7 @@ const SandboxTable = () => {
     const { setDialog, closeDialog } = useDialog();
 
     useEffect(() => {
-        if ('id' in aggregatedSandboxList[0]) {
+        if (aggregatedSandboxList[0] && 'id' in aggregatedSandboxList[0]) {
             setData(aggregatedSandboxList);
         } else {
             const newData = formatSandboxListData(aggregatedSandboxList);

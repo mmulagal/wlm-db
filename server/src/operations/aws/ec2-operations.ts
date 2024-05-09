@@ -8,10 +8,13 @@ import {
     DescribeTagsCommandInput,
     DescribeVpcEndpointsCommandInput,
     VpcEndpoint,
-    DescribeSnapshotsCommandInput
+    DescribeSnapshotsCommandInput,
+    ImageState,
+    PlatformValues
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
 import {
+    AMI_OWNERS,
     AWSQueryFields,
     ENDPOINTS_DEPLOYMENT,
     HttpErrorCodes,
@@ -38,6 +41,7 @@ import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
 import { ResourceDetails, SecurityGroup, Subnet, VPC, NetworkInterface, Metadata } from '../../utils/common-types';
+import { getRoleDetails } from '../cloud-manager/credentials-operations';
 
 const logger = getLogger();
 
@@ -262,11 +266,12 @@ async function getNetworkInterfacesList(
 async function getAmiList(
     credentialsId: string,
     region: string,
-    osType: string,
-    databaseType: string,
+    osType?: string,
+    databaseType?: string,
     osVersion?: string,
     databaseVersion?: string,
-    databaseEdition?: string
+    databaseEdition?: string,
+    customAmi?: boolean
 ) {
     logger.info('Get AWS Amis', {
         credentialsId,
@@ -275,30 +280,47 @@ async function getAmiList(
         osVersion,
         databaseType,
         databaseEdition,
-        databaseVersion
+        databaseVersion,
+        customAmi
     });
 
-    const amiNames = filterSqlAmis(osVersion, databaseVersion, databaseEdition);
+    let amis;
+    if (customAmi) {
+        const { providerAccountId } = await getRoleDetails(credentialsId);
+        amis = await getAmis(credentialsId, region, {
+            Owners: [providerAccountId],
+            Filters: [
+                { Name: 'state', Values: [ImageState.available] },
+                { Name: 'platform', Values: [PlatformValues.Windows.toLowerCase()] }
+            ]
+        });
+        if (!amis?.Images || isEmpty(amis?.Images)) {
+            logger.info(`AWS account ${providerAccountId} does not own any amis in region ${region}.`);
+            return { amis: [] };
+        }
+    } else {
+        const amiNames = filterSqlAmis(osVersion, databaseVersion, databaseEdition);
 
-    const amis = await getAmis(credentialsId, region, {
-        Filters: [
-            { Name: 'name', Values: amiNames },
-            { Name: 'owner-alias', Values: ['amazon'] }
-        ],
-        Owners: [
-            '801119661308', // for regular regions
-            '185158320714', // for il-central-1
-            '536790793924', // for eu-central-2
-            '688423173695', // for eu-south-2
-            '878052572473', // for me-central-1
-            '159365745649', // for ap-south-2
-            '903064639964', // ap-southeast-3
-            '311529897437' //  ap-southeast-4
-        ]
-    });
+        amis = await getAmis(credentialsId, region, {
+            Filters: [
+                { Name: 'name', Values: amiNames },
+                { Name: 'owner-alias', Values: [AMI_OWNERS.AMAZON] }
+            ],
+            Owners: [
+                '801119661308', // for regular regions
+                '185158320714', // for il-central-1
+                '536790793924', // for eu-central-2
+                '688423173695', // for eu-south-2
+                '878052572473', // for me-central-1
+                '159365745649', // for ap-south-2
+                '903064639964', // ap-southeast-3
+                '311529897437' //  ap-southeast-4
+            ]
+        });
 
-    if (!amis?.Images) {
-        throw createError(404, `The requested ${osType} ${databaseType} AMI could not be found`);
+        if (!amis?.Images || isEmpty(amis?.Images)) {
+            throw createError(404, `The requested ${osType} ${databaseType} AMI could not be found`);
+        }
     }
     // https://jira.ngage.netapp.com/browse/DBS-1403 - Temp fix to exclude 2023.11.15 since FCI installations are failing
     const response = amis.Images.filter(image => !image.Name?.includes('2023.11.15')).map(
@@ -327,11 +349,15 @@ async function getAmiList(
         })
     );
 
-    response?.sort(
-        (a, b) =>
-            new Date(b.name.substring(b.name.length - 10)).getTime() -
-            new Date(a.name.substring(a.name.length - 10)).getTime()
-    );
+    if (!customAmi) {
+        response
+            ?.filter(image => !image.name?.includes('2023.11.15'))
+            .sort(
+                (a, b) =>
+                    new Date(b.name.substring(b.name.length - 10)).getTime() -
+                    new Date(a.name.substring(a.name.length - 10)).getTime()
+            );
+    }
 
     return { amis: response };
 }

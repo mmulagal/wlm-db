@@ -31,7 +31,7 @@ import { restGetUtilForOntap } from './workloads/mssql/ssm-script-utils';
 import { getResources } from './database/database-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
 import { INVOKE_VIRTUAL_MOUNT } from './workloads/mssql/const';
-import { updateSandboxDBIntoResourceData } from './demo-operations';
+import { updateSandboxDBIntoResourceData, updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
 
 const logger = getLogger();
@@ -184,7 +184,7 @@ async function getSandboxesInfo(accountId: string, credentialsId: string, region
         let sandboxes: SandboxInfoResponseType[] = [];
 
         await Promise.all(
-            resourceDetails.map(async resourceDetail => {
+            resourceDetails.map(async (resourceDetail: ResourceDetails) => {
                 const sandboxDetails = await getSandboxDetails(accountId, credentialsId, region, resourceDetail);
                 if (sandboxDetails && sandboxDetails.length) {
                     sandboxes = sandboxes.concat(sandboxDetails);
@@ -969,7 +969,7 @@ async function createExtendedProperties(
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             // this is used to retreive the newly created user databases in database list for demo using meta data
-            updateSandboxDBIntoResourceData(
+            const updatedMetadata: Metadata = await updateSandboxDBIntoResourceData(
                 accountId,
                 srcDetails.host,
                 destDetails.database,
@@ -979,6 +979,8 @@ async function createExtendedProperties(
                 tag,
                 srcDetails.metadata
             );
+
+            updateUserDBIntoResourceData(accountId, srcDetails.host, destDetails.database, updatedMetadata);
         }
 
         status = JOBSTATUS.COMPLETED;

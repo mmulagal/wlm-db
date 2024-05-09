@@ -571,6 +571,7 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     fsxIOPS: 'FSxDiskIops',
     ontapSgGroupId: 'ONTAPSecurityGroupID',
     encryptionKey: 'FileSystemEncryptionKeyId',
+    snapshotPolicy: 'FsxVolumeSnapshotPolicy',
 
     sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
@@ -1137,6 +1138,8 @@ const NO_SANDBOX_CREATED = 'No sandboxes created for the instance';
 
 const STORAGE_PROTOCOLS = { SMB: 'SMB', ISCSI: 'iSCSI' };
 
+const AMI_OWNERS = { AMAZON: 'amazon' };
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1397,5 +1400,6 @@ export {
     PERMISSION_DENIAL_POSSIBLE_REASONS,
     NO_SANDBOX_CREATED,
     STORAGE_PROTOCOLS,
-    CUSTOM
+    CUSTOM,
+    AMI_OWNERS
 };
