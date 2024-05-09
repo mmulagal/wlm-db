@@ -6,21 +6,34 @@ import { useNavigate } from 'react-router-dom';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { formatSandboxListData } from '../SandboxUtility';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import RebaseLineContent from './RebaseLineContent/RebaseLineContent';
 import RebaseSplitContent from './RebaseSplitContent/RebaseSplitContent';
 import RebaseRollbackContent from './RebaseRollbackContent/RebaseRollbackContent';
 import ViewDialog from '../../../common/ViewDialog/ViewDialog';
+import { useDispatch } from 'react-redux';
+import { setAggregatedSandboxList } from '../../../store/workloadFactory/sandboxSlice';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const { aggregatedSandboxList } = useAppSelector(state => state.sandbox);
+    const [data, setData] = useState<any>();
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
+
+    useEffect(() => {
+        if ('id' in aggregatedSandboxList[0]) {
+            setData(aggregatedSandboxList);
+        } else {
+            const newData = formatSandboxListData(aggregatedSandboxList);
+            setData(newData);
+        }
+    }, [aggregatedSandboxList]);
 
     const menuItems = (row: any) => {
         return [
@@ -73,7 +86,7 @@ const SandboxTable = () => {
         );
     };
 
-    const handleRefresh = () => {
+    const handleRefresh = (rowData: any) => {
         setDialog(
             <DialogComponent
                 header={'Refresh'}
@@ -81,7 +94,23 @@ const SandboxTable = () => {
                 primaryButton={'Refresh'}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    console.log('action');
+                    let output = data.map((obj: any) => {
+                        if (obj.name === rowData.name) {
+                            return { ...obj, cellProps: { isDisabled: true } };
+                        }
+                        return obj;
+                    });
+                    dispatch(setAggregatedSandboxList(output));
+
+                    setTimeout(() => {
+                        let output = data.map((obj: any) => {
+                            if (obj.name === rowData.name) {
+                                return { ...obj, cellProps: { isDisabled: false } };
+                            }
+                            return obj;
+                        });
+                        dispatch(setAggregatedSandboxList(output));
+                    }, 5000);
                 }}
                 closeCallback={() => {
                     closeDialog();
@@ -206,7 +235,7 @@ const SandboxTable = () => {
                                             handleRebaseLine();
                                             break;
                                         case 'refresh':
-                                            handleRefresh();
+                                            handleRefresh(rowData);
                                             break;
 
                                         case 'delete':
@@ -302,7 +331,7 @@ const SandboxTable = () => {
         isHorizontalScroll: true,
         isSorting: false,
         columns: SandboxColDefs,
-        rows: formatSandboxListData(aggregatedSandboxList),
+        rows: data,
         pageSize: 50
     });
     return (

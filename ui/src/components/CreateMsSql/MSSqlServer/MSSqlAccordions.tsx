@@ -36,6 +36,7 @@ import { useEffect, useState } from 'react';
 import { setMovingFromChatbot } from '../../../store/chatbot/chatbotSlice';
 import ResourceRollBack from '../InfrastructureSettings/ResourceRollBack/ResourceRollBack';
 import SqlServerCollation from '../ApplicationSettings/Collation/SqlServerCollation';
+import SnapshotPolicy from '../InfrastructureSettings/SnapshotPolicy/SnapshotPolicy';
 
 const MSSqlAccordions = () => {
     const { setDialog } = useDialog();
@@ -183,6 +184,8 @@ const MSSqlAccordions = () => {
                 {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <InstanceType />}
 
                 <FSxNSystem />
+
+                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <SnapshotPolicy />}
                 <StorageCapacity />
 
                 {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (

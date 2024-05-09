@@ -179,7 +179,8 @@ const PreviewDefault = () => {
             id: '14'
         },
         { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: GENERAL.ENABLED, editable: 'N/A', id: '15' },
-        { accordionName: 'Resource rollback', defaultValue: GENERAL.PD_DISABLED, editable: 'No', id: '16' }
+        { accordionName: 'Resource rollback', defaultValue: GENERAL.PD_DISABLED, editable: 'No', id: '16' },
+        { accordionName: GENERAL.SNAPSHOT_POLICY, defaultValue: GENERAL.DAILY_RETENTION, editable: 'Yes', id: '18' }
     ];
 
     const PreviewDefaultColDefs: ColumnProps[] = [
