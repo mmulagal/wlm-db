@@ -16,6 +16,7 @@ const DatabaseVersion = () => {
 
     // Getting selected DB version
     const getDBVersion = useAppSelector(state => state.mssqlForm.dbVersion);
+    const customAMISelected = useAppSelector(state => state.mssqlForm.license.selectedLicenseType);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
     const osVersion = useAppSelector(state => state.mssqlForm.operatingSystem);
@@ -47,6 +48,9 @@ const DatabaseVersion = () => {
 
     //Set the Header text here
     const setHeader = () => {
+        if (customAMISelected === GENERAL.USE_CUSTOM_AMI) {
+            return '';
+        }
         return <Typography variant="Regular_14">{getDBVersion?.label}</Typography>;
     };
     return (
@@ -55,6 +59,7 @@ const DatabaseVersion = () => {
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="8"
                 title={<div className={CommonStyles.title}>{GENERAL.DATABASE_VERSION}</div>}
+                isDisabled={customAMISelected === GENERAL.USE_CUSTOM_AMI}
             >
                 <AccordionCardContent>
                     <Typography>

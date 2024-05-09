@@ -10,10 +10,14 @@ import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 const DatabaseEdition = () => {
     // To get selected DB edition
     const dbEdition = useAppSelector(state => state.mssqlForm.dbEdition);
+    const customAMISelected = useAppSelector(state => state.mssqlForm.license.selectedLicenseType);
 
     const dispatch = useDispatch();
     //Set the Header text here
     const setHeader = () => {
+        if (customAMISelected === GENERAL.USE_CUSTOM_AMI) {
+            return '';
+        }
         return <Typography variant="Regular_14">{dbEdition?.label}</Typography>;
     };
     return (
@@ -22,6 +26,7 @@ const DatabaseEdition = () => {
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="7"
                 title={<div className={CommonStyles.title}>{GENERAL.DATABASE_EDITION}</div>}
+                isDisabled={customAMISelected === GENERAL.USE_CUSTOM_AMI}
             >
                 <AccordionCardContent>
                     <Typography>
