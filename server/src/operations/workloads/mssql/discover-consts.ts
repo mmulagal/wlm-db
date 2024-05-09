@@ -550,7 +550,7 @@ const GET_ACTIVE_DIRECTORY_DETAILS = [
   try {
     $adDomainName = (Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction SilentlyContinue -WarningAction SilentlyContinue).Domain
     If ($adDomainName -ne "WORKGROUP") {
-      $adIpList = ([System.Net.Dns]::GetHostEntry((Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction SilentlyContinue -WarningAction SilentlyContinue).Domain)).AddressList.IpAddressToString
+      $adIpList = ([System.Net.Dns]::GetHostEntry($adDomainName)).AddressList.IpAddressToString
   
       $adObject = New-Object PSObject -Property @{ "domainName" = $adDomainName }
       $adObject | Add-Member -MemberType NoteProperty -Name "ipAddresses" -Value $adIpList
