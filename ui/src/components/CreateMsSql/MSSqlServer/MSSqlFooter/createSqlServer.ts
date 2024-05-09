@@ -11,7 +11,7 @@ import {
     setVPCSelectedValue
 } from '../../../../store/mssql/msSqlActionSlice';
 import { GENERAL } from '../../../../utils/appConstants';
-import { AWS_MANAGED_AD, FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
+import { AWS_MANAGED_AD, FORM_OPTIONS, FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
 import { MssqlRequestBody, TagObj } from '../../../../utils/types/mssqlTypes';
 import { dbPassVal, fsxPassVal, isFsxnExisting, isFsxnNew, isValidUserName } from '../../../../utils/utilityFunctions';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
@@ -20,14 +20,14 @@ const createMssqlPayload = (state: any) => {
     let payload: MssqlRequestBody;
     const [licenseId, licenceName] = (() => {
         const licenseType = state.mssqlForm.license?.selectedLicenseType;
-        if (licenseType === GENERAL.LICENSE_INCLUDED_AMI) {
+        if (licenseType === FORM_OPTIONS.LICENSE_AMI) {
             return [
                 state.mssqlForm.license?.selectedLicenseId?.value,
                 state.mssqlForm.license?.selectedLicenseId?.data?.amiName
             ];
         } else {
             return [
-                state.mssqlForm.license?.selectedCustomAMI,
+                state.mssqlForm.license?.selectedCustomAMI?.value,
                 state.mssqlForm.license?.selectedCustomAMI?.data?.amiName
             ];
         }

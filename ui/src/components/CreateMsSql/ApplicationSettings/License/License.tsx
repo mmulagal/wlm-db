@@ -13,7 +13,7 @@ import {
     setSelectedLicenseId,
     setSelectedLicenseType
 } from '../../../../store/mssql/mssqlFormSlice';
-import { LICENSE_URL } from '../../../../utils/consts';
+import { FORM_OPTIONS, LICENSE_URL } from '../../../../utils/consts';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const License = () => {
@@ -22,6 +22,7 @@ const License = () => {
 
     // This is to get license included AMI data
     const { amiData, amiLoading } = useAppSelector(state => state.mssql.getAmiList);
+    const { customAmiData, customAmiLoading } = useAppSelector(state => state.mssql.getCustomAmiList);
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
 
@@ -35,41 +36,40 @@ const License = () => {
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const isLicenseFilled = useAppSelector(state => state.msSqlAction.licenseIdSelected);
-    const [licenseSelect, setLicenseSelect] = useState(licenseType);
 
     // Custom AMI list will be blank for as it is not supported in phase 1
-    const customAmiId: any[] = [];
+    // const customAmiId: any[] = [];
 
-    const data = {
-        amis: [
-            {
-                name: 'Windows_Server-2022-English-Full-SQL_2019_Enterprise-2023.04.12',
-                description:
-                    'Microsoft Windows Server 2022 Full Locale English with SQL Enterprise 2019 AMI provided by Amazon',
-                architecture: 'x86_64',
-                imageId: 'ami-0e453a02608af08a9',
-                imageLocation: 'amazon/Windows_Server-2022-English-Full-SQL_2019_Enterprise-2023.04.12',
-                public: true,
-                platform: 'windows',
-                platformDetails: 'Windows with SQL Server Enterprise',
-                state: 'available',
-                hypervisor: 'xen'
-            },
-            {
-                name: 'Windows_Server-2022-English-Full-SQL_2017_Standard-2023.05.10',
-                description:
-                    'Microsoft Windows Server 2022 Full Locale English with SQL Standard 2017 AMI provided by Amazon',
-                architecture: 'x86_64',
-                imageId: 'ami-08e92ddb6cc3268e2',
-                imageLocation: 'amazon/Windows_Server-2022-English-Full-SQL_2017_Standard-2023.05.10',
-                public: true,
-                platform: 'windows',
-                platformDetails: 'Windows with SQL Server Standard',
-                state: 'available',
-                hypervisor: 'xen'
-            }
-        ]
-    };
+    // const data = {
+    //     amis: [
+    //         {
+    //             name: 'Windows_Server-2022-English-Full-SQL_2019_Enterprise-2023.04.12',
+    //             description:
+    //                 'Microsoft Windows Server 2022 Full Locale English with SQL Enterprise 2019 AMI provided by Amazon',
+    //             architecture: 'x86_64',
+    //             imageId: 'ami-0e453a02608af08a9',
+    //             imageLocation: 'amazon/Windows_Server-2022-English-Full-SQL_2019_Enterprise-2023.04.12',
+    //             public: true,
+    //             platform: 'windows',
+    //             platformDetails: 'Windows with SQL Server Enterprise',
+    //             state: 'available',
+    //             hypervisor: 'xen'
+    //         },
+    //         {
+    //             name: 'Windows_Server-2022-English-Full-SQL_2017_Standard-2023.05.10',
+    //             description:
+    //                 'Microsoft Windows Server 2022 Full Locale English with SQL Standard 2017 AMI provided by Amazon',
+    //             architecture: 'x86_64',
+    //             imageId: 'ami-08e92ddb6cc3268e2',
+    //             imageLocation: 'amazon/Windows_Server-2022-English-Full-SQL_2017_Standard-2023.05.10',
+    //             public: true,
+    //             platform: 'windows',
+    //             platformDetails: 'Windows with SQL Server Standard',
+    //             state: 'available',
+    //             hypervisor: 'xen'
+    //         }
+    //     ]
+    // };
 
     useEffect(() => {
         if (selectedLicenseId) {
@@ -96,9 +96,9 @@ const License = () => {
     }, [selectedCustomAMI]);
 
     //Function to generate the options for Select Field
-    const generateAMIId = useMemo<optionType[]>((): optionType[] => {
+    const generateCustomAMIId = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        data?.amis?.map((val, idx: number) => {
+        customAmiData?.amis?.map((val, idx: number) => {
             const amiVal = val?.imageId;
             const amiName = val?.name;
             const data = {
@@ -110,7 +110,7 @@ const License = () => {
             options.push(option);
         });
         return options;
-    }, []);
+    }, [customAmiData]);
 
     //Function to generate the options for Select Field for License
     const generateAMIIdForLicense = useMemo<optionType[]>((): optionType[] => {
@@ -137,9 +137,9 @@ const License = () => {
 
     useEffect(() => {
         if (!isLoadConfig && !movingFromChatbot) {
-            dispatch(setSelectedCustomAMI(generateAMIIdForLicense[0]));
+            dispatch(setSelectedCustomAMI(generateCustomAMIId[0]));
         }
-    }, [dispatch, generateAMIId]);
+    }, [dispatch, generateCustomAMIId]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -150,15 +150,14 @@ const License = () => {
                 </Typography>
             );
         }
-        if (licenseSelect === GENERAL.LICENSE_INCLUDED_AMI) {
+        if (licenseType === FORM_OPTIONS.CUSTOM_AMI) {
+            return <Typography variant="Regular_14">{selectedCustomAMI?.value || GENERAL.USE_CUSTOM_AMI}</Typography>;
+        } else {
             return (
                 <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
-                    {licenseSelect}
+                    {GENERAL.LICENSE_INCLUDED_AMI}
                 </Typography>
             );
-        }
-        if (licenseSelect === GENERAL.USE_CUSTOM_AMI) {
-            return <Typography variant="Regular_14">{selectedCustomAMI?.value || GENERAL.USE_CUSTOM_AMI}</Typography>;
         }
     };
 
@@ -190,29 +189,25 @@ const License = () => {
                         </Button>
                         <div className={styles['radio-container']}>
                             <RadioButton
-                                isChecked={licenseSelect === GENERAL.LICENSE_INCLUDED_AMI}
+                                isChecked={licenseType === FORM_OPTIONS.LICENSE_AMI}
                                 onChange={() => {
-                                    setLicenseSelect(GENERAL.LICENSE_INCLUDED_AMI);
-                                    dispatch(setSelectedLicenseType(GENERAL.LICENSE_INCLUDED_AMI));
-                                    dispatch(setSelectedCustomAMI(null));
+                                    dispatch(setSelectedLicenseType(FORM_OPTIONS.LICENSE_AMI));
                                     dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.LICENSE_INCLUDED_AMI}
                                 className=""
                             />
                             <RadioButton
-                                isChecked={licenseSelect === GENERAL.USE_CUSTOM_AMI}
+                                isChecked={licenseType === FORM_OPTIONS.CUSTOM_AMI}
                                 onChange={() => {
-                                    setLicenseSelect(GENERAL.USE_CUSTOM_AMI);
-                                    dispatch(setSelectedLicenseType(GENERAL.USE_CUSTOM_AMI));
-                                    dispatch(setSelectedLicenseId(null));
+                                    dispatch(setSelectedLicenseType(FORM_OPTIONS.CUSTOM_AMI));
                                     dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.USE_CUSTOM_AMI}
                                 className=""
                             />
                         </div>
-                        {licenseSelect === GENERAL.LICENSE_INCLUDED_AMI && (
+                        {licenseType === FORM_OPTIONS.LICENSE_AMI && (
                             <div className={styles.handleSelect}>
                                 <SelectField
                                     label={GENERAL.LICENSE_ID}
@@ -241,23 +236,26 @@ const License = () => {
                                     isSearchable={generateAMIIdForLicense.length > 5}
                                     variant="two-lines"
                                     options={generateAMIIdForLicense}
+                                    isLoading={amiLoading}
                                 />
                             </div>
                         )}
-                        {licenseSelect === GENERAL.USE_CUSTOM_AMI && (
+                        {licenseType === FORM_OPTIONS.CUSTOM_AMI && (
                             <div className={styles.handleSelect}>
                                 <SelectField
                                     label={GENERAL.AMI_ID}
                                     placeholder={GENERAL.SELECT_AMI_NAME}
                                     isClearable={false}
                                     defaultValue={defaultCustomAMILicense}
+                                    value={defaultCustomAMILicense}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSelectedCustomAMI(selectedOptions));
                                         dispatch(setIsWizardTouched(true));
                                     }}
                                     variant="two-lines"
-                                    isSearchable={generateAMIId.length > 5}
-                                    options={generateAMIId}
+                                    isSearchable={generateCustomAMIId.length > 5}
+                                    options={generateCustomAMIId}
+                                    isLoading={customAmiLoading}
                                 />
                             </div>
                         )}

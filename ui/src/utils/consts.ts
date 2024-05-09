@@ -120,6 +120,7 @@ export const API_NAME = {
     KEYPAIR: 'keypair',
     INSTANCE: 'instance',
     AMI: 'ami',
+    CUSTOM_AMI: 'ami',
     FSXN: 'fsxn',
     COLLATION: 'collation'
 };
@@ -391,8 +392,10 @@ export const MSSQL_DATABASE_TYPES = {
     USER: 'User Database'
 };
 
-// Deployment form related check points for radio button
+// Deployment form related check points for radio button. Dont't change as this values will be used to save config.
 export const FORM_OPTIONS = {
     FSXN_NEW: 'fsxn_new',
-    FSXN_EXISTING: 'fsxn_existing'
+    FSXN_EXISTING: 'fsxn_existing',
+    LICENSE_AMI: 'License included AMI', // Already name is used in old saved config so keeping same
+    CUSTOM_AMI: 'Use custom AMI'
 };

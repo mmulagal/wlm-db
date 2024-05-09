@@ -37,7 +37,7 @@ export const initialMssqlState: any = {
         value: GENERAL.SQL_SERVER_STANDARD
     },
     license: {
-        selectedLicenseType: GENERAL.LICENSE_INCLUDED_AMI,
+        selectedLicenseType: FORM_OPTIONS.LICENSE_AMI,
         selectedLicenseId: null,
         selectedCustomAMI: null
     },

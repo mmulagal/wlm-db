@@ -14,7 +14,7 @@ import {
     setThroughputValue
 } from '../../../store/mssql/mssqlFormSlice';
 import { GENERAL } from '../../../utils/appConstants';
-import { DEAFULT_INSTANCE_VALUE } from '../../../utils/consts';
+import { DEAFULT_INSTANCE_VALUE, FORM_OPTIONS } from '../../../utils/consts';
 import { formatSize, generateOptionType, isFsxnExisting } from '../../../utils/utilityFunctions';
 
 export const selectDefaultSecurityGroup = (dispatch: any) => {
@@ -71,7 +71,7 @@ export const selectDefaultLicense = (amiData: any, dispatch: any) => {
             amiName: firstAmi?.name
         };
         const option = generateOptionType(amiVal, amiVal, amiName, false, '', data);
-        dispatch(setSelectedLicenseType(GENERAL.LICENSE_INCLUDED_AMI));
+        dispatch(setSelectedLicenseType(FORM_OPTIONS.LICENSE_AMI));
         dispatch(setSelectedLicenseId(option));
     }
 };

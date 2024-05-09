@@ -141,6 +141,11 @@ export interface MssqlEntities {
         amiLoading: false;
         amiError: null;
     };
+    getCustomAmiList: {
+        customAmiData: { amis?: Ami[] };
+        customAmiLoading: false;
+        customAmiError: null;
+    };
     getSnsList: {
         snsData: { topics?: SNS[] };
         snsLoading: false;
