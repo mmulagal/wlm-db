@@ -12,9 +12,13 @@ const OperatingSystem = () => {
 
     // To get selected OS
     const osVersion = useAppSelector(state => state.mssqlForm.operatingSystem);
+    const customAMISelected = useAppSelector(state => state.mssqlForm.license.selectedLicenseType);
 
     //Set the Header text here
     const setHeader = () => {
+        if (customAMISelected === GENERAL.USE_CUSTOM_AMI) {
+            return '';
+        }
         return <Typography variant="Regular_14">{osVersion?.label}</Typography>;
     };
     return (
@@ -23,6 +27,7 @@ const OperatingSystem = () => {
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="5"
                 title={<div className={CommonStyles.title}>{GENERAL.OPERATING_SYSTEM}</div>}
+                isDisabled={customAMISelected === GENERAL.USE_CUSTOM_AMI}
             >
                 <AccordionCardContent>
                     <Typography>
