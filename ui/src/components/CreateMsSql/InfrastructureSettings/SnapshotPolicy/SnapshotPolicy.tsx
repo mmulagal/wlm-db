@@ -1,15 +1,13 @@
-import { useEffect, useMemo } from 'react';
 import { AccordionCard, AccordionCardContent, ToggleSelector, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
-import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
+
 import styles from './SnapshotPolicy.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { formatSize, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
+
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { setInstanceType, setSnapshotPolicyToggle } from '../../../../store/mssql/mssqlFormSlice';
-import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
-import { setIsRecommendedInstance } from '../../../../store/mssql/msSqlActionSlice';
+import { setSnapshotPolicyToggle } from '../../../../store/mssql/mssqlFormSlice';
+
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const SnapshotPolicy = () => {
@@ -46,7 +44,7 @@ const SnapshotPolicy = () => {
         <div className={styles['snapshotPolicy']}>
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
-                id="22"
+                id="27"
                 title={<div className={CommonStyles.title}>{GENERAL.SNAPSHOT_POLICY}</div>}
             >
                 <AccordionCardContent>
