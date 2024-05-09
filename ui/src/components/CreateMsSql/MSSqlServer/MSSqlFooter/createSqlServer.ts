@@ -122,6 +122,14 @@ const createMssqlPayload = (state: any) => {
         }
     })();
 
+    const selectedSnapshotPolicy = (() => {
+        if (state.mssqlForm.snapshotPolicyToggle === true) {
+            return ' default';
+        } else {
+            return 'none';
+        }
+    })();
+
     payload = {
         networkConfiguration: {
             vpcId: state.mssqlForm.regionAndVpc.selectedVPC?.data?.id || '',
@@ -154,7 +162,8 @@ const createMssqlPayload = (state: any) => {
             ontapSgGroupId: ontapSgGroupIdsList,
             fsxVolThroughput: fsxVolThroughput,
             fsxIOPS: fsxIOPS,
-            encryptionKey: encryptionKey || ''
+            encryptionKey: encryptionKey || '',
+            snapshotPolicy: selectedSnapshotPolicy || ''
         },
         sqlConfiguration: {
             sqlDeploymentMode: state.mssqlForm.dbDeploymentModel?.value || SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE,
