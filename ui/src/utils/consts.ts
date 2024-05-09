@@ -120,7 +120,7 @@ export const API_NAME = {
     KEYPAIR: 'keypair',
     INSTANCE: 'instance',
     AMI: 'ami',
-    CUSTOM_AMI: 'ami',
+    CUSTOM_AMI: 'custom_ami',
     FSXN: 'fsxn',
     COLLATION: 'collation'
 };
