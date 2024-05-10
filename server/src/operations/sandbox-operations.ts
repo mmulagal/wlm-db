@@ -33,6 +33,7 @@ import { registerJob, updateJobDetails } from './database/job-operations';
 import { INVOKE_VIRTUAL_MOUNT } from './workloads/mssql/const';
 import { updateSandboxDBIntoResourceData, updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
+import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 
 const logger = getLogger();
 
@@ -689,6 +690,15 @@ async function createVolumeClone(
     });
 
     try {
+        const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
+            credentialsId,
+            region,
+            destDetails.fsxId
+        );
+
+        const svmList = fsxSVMs?.filter(svm => svm.StorageVirtualMachineId === destDetails.fsxId) || [];
+        const sqlVMName = svmList[0]?.Name;
+
         let command = [
             CreateVolumeCloneScript(
                 srcDetails.fsxId,
@@ -699,7 +709,7 @@ async function createVolumeClone(
                 mapping.log.volumeName,
                 mapping.log.lunPath,
                 destDetails.host,
-                mapping.svm
+                sqlVMName || mapping.svm
             )
         ];
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
