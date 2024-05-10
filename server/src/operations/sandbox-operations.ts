@@ -696,7 +696,7 @@ async function createVolumeClone(
             destDetails.fsxId
         );
 
-        const svmList = fsxSVMs?.filter(svm => svm.StorageVirtualMachineId === destDetails.fsxId) || [];
+        const svmList = fsxSVMs?.filter(svm => svm.StorageVirtualMachineId === destDetails.svm) || [];
         const sqlVMName = svmList[0]?.Name;
 
         let command = [
