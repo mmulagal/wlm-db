@@ -370,10 +370,6 @@ async function createSandbox(
 ) {
     logger.info({ source, dest });
 
-    if (source.host !== dest.host || source.instance !== dest.instance) {
-        throw createError(400, 'Creating sandbox for alternate host or instance is not supported!');
-    }
-
     let [[srcResourceDetail], [destResourceDetail]] = await Promise.all([
         listResources(accountId, source.host),
         source.host === dest.host ? Promise.resolve([]) : listResources(accountId, dest.host)
