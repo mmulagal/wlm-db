@@ -31,7 +31,8 @@ export const formatSandboxListData = (data: SandboxListEntities) => {
                 sourceHost: item?.sourceDatabaseHostName,
                 updatedAt: formatDateWithTime(item?.updatedAt || ''),
                 age: `${getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.createdAt))} days`,
-                tag: item?.tag
+                tag: item?.tag,
+                status: 'active'
             };
         });
     return retData;
