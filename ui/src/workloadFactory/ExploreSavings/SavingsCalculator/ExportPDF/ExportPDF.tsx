@@ -11,8 +11,9 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
 
 const ExportPDF = ({ printDocument }: any) => {
-    const { storageSavingsLoading, selectedHostDetails, viewCalculationsLoading, viewCalculationsResponse } =
-        useAppSelector(state => state.exploreSavings);
+    const { storageSavingsLoading, selectedHostDetails, viewCalculationsLoading } = useAppSelector(
+        state => state.exploreSavings
+    );
 
     const dispatch = useDispatch();
 
@@ -44,7 +45,7 @@ const ExportPDF = ({ printDocument }: any) => {
 
             <div
                 className={
-                    loading || viewCalculationsLoading || !viewCalculationsResponse
+                    loading || viewCalculationsLoading
                         ? `${styles.insideContainer} ${styles.disabled}`
                         : styles.insideContainer
                 }
@@ -59,7 +60,6 @@ const ExportPDF = ({ printDocument }: any) => {
                     onClick={() =>
                         loading ? () => {} : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
                     }
-                    title={!viewCalculationsResponse ? GENERAL.VIEW_CALC_NO_DATA : ''}
                 >
                     {GENERAL.VIEW_THE_CALCULATIONS}
                 </DsTypography>

@@ -37,11 +37,15 @@ const SavingsSelection = ({ printState }: any) => {
 
     // Debounce variable update
     useEffect(() => {
-        dispatch(setNumberOfClonedCopies(clonedText));
+        if (clonedText || clonedText === '') {
+            dispatch(setNumberOfClonedCopies(clonedText));
+        }
     }, [clonedText]);
 
     useEffect(() => {
-        dispatch(setMonthlyChangeRate(changeRateText));
+        if (changeRateText || changeRateText === '') {
+            dispatch(setMonthlyChangeRate(changeRateText));
+        }
     }, [changeRateText]);
 
     //Function to generate the options for Select Field

@@ -72,25 +72,29 @@ export const LoadConfiguration = (
 /*
 This function is used to load recommended config data
 */
-export const LoadRecommendedConfig = (dispatch: Dispatch, mssqlFormData: any) => {
+export const LoadRecommendedConfig = (dispatch: Dispatch, mssqlFormData: any, showNotification: boolean = true) => {
     resetRefetchApiCheck(dispatch);
     if (mssqlFormData) {
         dispatch(setMssqlForm(mssqlFormData));
         dispatch(setIsLoading(false));
-        dispatch(
-            addNotification({
-                notificationType: NOTIFICATION_TYPES.SUCCESS,
-                message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS
-            })
-        );
+        if (showNotification) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.SUCCESS,
+                    message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS
+                })
+            );
+        }
     } else {
         dispatch(setIsLoading(false));
-        dispatch(
-            addNotification({
-                notificationType: NOTIFICATION_TYPES.WARNING,
-                message: SELECT_CONFIG.MISSING_FIELDS_MESSAGE
-            })
-        );
+        if (showNotification) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.WARNING,
+                    message: SELECT_CONFIG.MISSING_FIELDS_MESSAGE
+                })
+            );
+        }
     }
 };
 
