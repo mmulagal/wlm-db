@@ -22,6 +22,7 @@ const StorageMetrics = Type.Object({
     iops: Type.Number(),
     throughput: Type.Number(),
     snapshots: Type.Number(),
+    clones: Type.Number(),
     total: Type.Number()
 });
 
@@ -46,9 +47,26 @@ const StorageSavingsResponse = Type.Object({
     })
 });
 
+const PriceUnitObject = Type.Object({
+    price: Type.Number(),
+    unit: Type.String()
+});
+
 const StorageSavingsCalculationsMetricsResponse = Type.Object({
     fsxOntapCalculation: Type.Object({
+        numberOfVolumes: Type.Number(),
+        percentageOfDataOnSSDStorage: Type.Number(),
+        fsxnCapacityPrice: PriceUnitObject,
+        maxSsdTierSize: Type.Number(),
+        suggestedFsxnThroughputCapacity: Type.Number(),
+        maxThroughput: Type.Number(),
+        fsxnThroughputPrice: Type.Number(),
+        provisionedSsdIops: Type.Number(),
+        includedIops: Type.Number(),
+        maxSsdIops: Type.Number(),
+        fsxnStoragePrice: PriceUnitObject,
         desiredStorageCapacity: Type.Number(),
+        ebsCapacity: Type.Number(),
         percentageOfDataOnSsdStorage: Type.Number(),
         savingsFromCompressionAndDeduplication: Type.Number(),
         storageSavingsFromCompressionAndDeduplication: Type.Number(),
@@ -78,6 +96,8 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
         totalThroughputAndIopsMonthly: Type.Number()
     }),
     fsxOntapSnapshotCalculation: Type.Object({
+        fsxnSsdPrice: PriceUnitObject,
+        fsxnCapacityPrice: PriceUnitObject,
         desiredStorageCapacity: Type.Number(),
         percentageOfDataOnSsdStorage: Type.Number(),
         savingsFromCompressionAndDeduplication: Type.Number(),
@@ -90,9 +110,14 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
         dataOnCapacityPoolStorageFactor: Type.Number(),
         capacityPoolStorage: Type.Number(),
         capacityMonthlyCost: Type.Number(),
-        totalMonthlyCostForCapacity: Type.Number()
+        totalMonthlyCostForCapacity: Type.Number(),
+        totalSnapshotMonthlyCost: Type.Number()
     }),
     ebsCalculation: Type.Object({
+        numberOfVolumes: Type.Number(),
+        instanceAvgDuration: Type.Number(),
+        hoursInAMonth: Type.Number(),
+        ebsCapacityPrice: PriceUnitObject,
         storageAmountPerVol: Type.Number(),
         totalInstanceHours: Type.Number(),
         ebsInstanceMonth: Type.Number(),
@@ -111,9 +136,13 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
         incrementalSnapshotCost: Type.Number(),
         totalSnapshotCost: Type.Number(),
         totalEbsSnapshotCost: Type.Number(),
-        ebsSnapshotCost: Type.Number()
+        ebsSnapshotCost: Type.Number(),
+        ebsTotalCostMonthly: Type.Number()
     }),
     fsxCloneCalculation: Type.Object({
+        clonedCopiesCount: Type.Number(),
+        numberOfClonesInAMonth: Type.Number(),
+        fsxnSsdPrice: PriceUnitObject,
         cloneRefreshFrequency: Type.String(),
         monthlyChangeRatePercentage: Type.Number(),
         desiredStorageCapacity: Type.Number(),

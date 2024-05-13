@@ -12,13 +12,15 @@ interface CalculateEbsComparisonResponse {
         throughput: number;
         snapshots: number;
         total: number;
+        clones: number;
     };
     fsx: {
         capacity: number;
         iops: number;
         throughput: number;
-        snapshots: number;
         total: number;
+        snapshots: number;
+        clones: number;
     };
     fsx_calculation: {
         deploymentType: string;
@@ -60,8 +62,7 @@ interface CalculateEbsComparisonResponse {
             size: number;
             unit: string;
         };
-        numberOfVolumes: number;
-
+        numberOfVolumes: 1;
         percentageOfDataOnSSDStorage: number;
         savingsFromCompressionAndDeduplication: number;
         storageSavingsFromCompressionAndDeduplication: {
@@ -110,7 +111,7 @@ interface CalculateEbsComparisonResponse {
         minFileSystemsRequiredForSSDIOPS: number;
         maxSSDIOPS: number;
         requiredNumOfFSx_fractional: number;
-        requiredNumOfFSx_roundUp: number;
+        requiredNumOfFSx_roundUp: 1;
         minThroughputCapacityRequired: number;
         provisionedThroughputCapacity: number;
         totalMonthlyCostFSXnThroughputCapacity: number;
@@ -130,7 +131,6 @@ interface CalculateEbsComparisonResponse {
             size: number;
             unit: string;
         };
-
         percentageOfDataOnSSDStorage: number;
         savingsFromCompressionAndDeduplication: number;
         storageSavingsFromCompressionAndDeduplication: {
@@ -180,9 +180,9 @@ interface CalculateEbsComparisonResponse {
             unit: string;
         };
         totalInstanceHours: number;
-        numberOfVolumes: number;
+        numberOfVolumes: 1;
         instanceAvgDuration: number;
-        EBSInstanceMonth: number;
+        EBSInstanceMonth: 1;
         EBSStorageCost: number;
         EBSCapacityPrice: {
             price: number;
@@ -210,7 +210,7 @@ interface CalculateEbsComparisonResponse {
             size: number;
             unit: string;
         };
-        percentageOfDataOnSSDStorage: number;
+        percentageOfDataOnSSDStorage: 1;
         savingsFromCompressionAndDeduplication: number;
         storageSavingsFromCompressionAndDeduplication: {
             size: number;
