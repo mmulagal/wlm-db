@@ -39,7 +39,8 @@ const FSX_CONFIGURATION = {
     fsxVolThroughput: 128,
     fsxIOPS: 3072,
     encryptionKey: '',
-    ontapSgGroupId: ['sg-3924c15c']
+    ontapSgGroupId: ['sg-3924c15c'],
+    snapshotPolicy: 'default'
 };
 
 const SQL_CONFIGURATION = {

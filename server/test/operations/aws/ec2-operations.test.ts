@@ -34,6 +34,21 @@ describe('EC2 Operations', () => {
         expect(resp).toBeDefined();
     });
 
+    it('list of EC2 custom AMIs', async () => {
+        const credentialsType = DEFAULT_AWS_CREDENTIALS_TYPE;
+        const resp = await getAmiList(
+            credentialsType,
+            DEFAULT_AWS_REGION,
+            WINDOWS,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            true
+        );
+        expect(resp).toBeDefined();
+    });
+
     it('list of vpc', async () => {
         const resp = await getVpcsList(credentialsId, DEFAULT_AWS_REGION);
         expect(resp).toBeDefined();

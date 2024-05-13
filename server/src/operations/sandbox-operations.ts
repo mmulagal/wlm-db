@@ -31,8 +31,9 @@ import { restGetUtilForOntap } from './workloads/mssql/ssm-script-utils';
 import { getResources } from './database/database-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
 import { INVOKE_VIRTUAL_MOUNT } from './workloads/mssql/const';
-import { updateSandboxDBIntoResourceData } from './demo-operations';
+import { updateSandboxDBIntoResourceData, updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
+import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 
 const logger = getLogger();
 
@@ -184,7 +185,7 @@ async function getSandboxesInfo(accountId: string, credentialsId: string, region
         let sandboxes: SandboxInfoResponseType[] = [];
 
         await Promise.all(
-            resourceDetails.map(async resourceDetail => {
+            resourceDetails.map(async (resourceDetail: ResourceDetails) => {
                 const sandboxDetails = await getSandboxDetails(accountId, credentialsId, region, resourceDetail);
                 if (sandboxDetails && sandboxDetails.length) {
                     sandboxes = sandboxes.concat(sandboxDetails);
@@ -369,10 +370,6 @@ async function createSandbox(
     tag: string
 ) {
     logger.info({ source, dest });
-
-    if (source.host !== dest.host || source.instance !== dest.instance) {
-        throw createError(400, 'Creating sandbox for alternate host or instance is not supported!');
-    }
 
     let [[srcResourceDetail], [destResourceDetail]] = await Promise.all([
         listResources(accountId, source.host),
@@ -693,6 +690,15 @@ async function createVolumeClone(
     });
 
     try {
+        const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
+            credentialsId,
+            region,
+            destDetails.fsxId
+        );
+
+        const svmList = fsxSVMs?.filter(svm => svm.StorageVirtualMachineId === destDetails.svm) || [];
+        const sqlVMName = svmList[0]?.Name;
+
         let command = [
             CreateVolumeCloneScript(
                 srcDetails.fsxId,
@@ -703,7 +709,7 @@ async function createVolumeClone(
                 mapping.log.volumeName,
                 mapping.log.lunPath,
                 destDetails.host,
-                mapping.svm
+                sqlVMName || mapping.svm
             )
         ];
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
@@ -969,7 +975,7 @@ async function createExtendedProperties(
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             // this is used to retreive the newly created user databases in database list for demo using meta data
-            updateSandboxDBIntoResourceData(
+            const updatedMetadata: Metadata = await updateSandboxDBIntoResourceData(
                 accountId,
                 srcDetails.host,
                 destDetails.database,
@@ -979,6 +985,8 @@ async function createExtendedProperties(
                 tag,
                 srcDetails.metadata
             );
+
+            updateUserDBIntoResourceData(accountId, srcDetails.host, destDetails.database, updatedMetadata);
         }
 
         status = JOBSTATUS.COMPLETED;

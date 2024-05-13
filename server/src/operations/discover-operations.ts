@@ -44,7 +44,9 @@ import {
     COPY_SCIRPTS_TO_MANAGE_RESOURCE,
     INSTALL_WF_POWERSHELL_PREREQS_PS1,
     REQUIRED_PS_MODULES_FOR_MANAGEMENT,
-    FAILURE_INFO
+    FAILURE_INFO,
+    ACTIVE_DIRECTORY,
+    GET_ACTIVE_DIRECTORY_DETAILS
 } from './workloads/mssql/discover-consts';
 import { deleteParameters, getParameter, sendSSMCommand } from '../lib/aws/ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
@@ -829,10 +831,11 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
         );
     }
 
-    const [discoverInfo, ssmResponse, ec2Details] = await Promise.all([
+    const [discoverInfo, clusterNetworkIpDetails, ec2Details, adDetails] = await Promise.all([
         getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [ec2InstanceId]),
         callSsmExecution(credentialsId, region, CLUSTER_NETWORK_IP_INFO_PS1, ec2InstanceId, accountId),
-        describeInstance(credentialsId, region, { InstanceIds: [ec2InstanceId] })
+        describeInstance(credentialsId, region, { InstanceIds: [ec2InstanceId] }),
+        callSsmExecution(credentialsId, region, GET_ACTIVE_DIRECTORY_DETAILS, ec2InstanceId, accountId)
     ]);
 
     const awsAccountId = ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn?.split(':')[4];
@@ -845,9 +848,9 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
         );
     }
 
-    if (ssmResponse?.includes('failureInfo')) {
+    if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
         logger.error(
-            `Failed to get cluster network interface details for EC2 ${ec2InstanceId}. Reason: ${ssmResponse}`
+            `Failed to get cluster network interface details for EC2 ${ec2InstanceId}. Reason: ${clusterNetworkIpDetails}`
         );
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
@@ -855,14 +858,22 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
         );
     }
 
-    const parsedResponse: { clusterNetworkIps: string[] } = JSON.parse(ssmResponse!);
+    if (isEmpty(adDetails) || adDetails?.includes(FAILURE_INFO)) {
+        logger.error(`Failed to get Active Directory details for EC2 ${ec2InstanceId}. Reason: ${adDetails}`);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Unable to manage instance '${ec2InstanceId}'. Reason: Failed to Active Directory details.`
+        );
+    }
+
+    const clusterNetworkIpDetailsInJson: { clusterNetworkIps: string[] } = JSON.parse(clusterNetworkIpDetails!);
 
     const node1InstanceId = ec2InstanceId;
     let node2InstanceId;
-    if (parsedResponse.clusterNetworkIps.length > 1) {
+    if (clusterNetworkIpDetailsInJson.clusterNetworkIps.length > 1) {
         // FCI environment
         const describeInstanceParams: DescribeInstancesCommandInput = {
-            Filters: [{ Name: 'private-ip-address', Values: parsedResponse.clusterNetworkIps }]
+            Filters: [{ Name: 'private-ip-address', Values: clusterNetworkIpDetailsInJson.clusterNetworkIps }]
         };
 
         const { Reservations } = await describeInstance(credentialsId, region, describeInstanceParams);
@@ -917,6 +928,10 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
 
     tagResources(credentialsId, region, awsAccountId!, accountId, fsxStorage!.id, node1InstanceId, node2InstanceId);
 
+    const { domainName: activeDirectoryDomainName, ipAddresses: activeDirectoryIpAddresses } = JSON.parse(adDetails!)[
+        ACTIVE_DIRECTORY
+    ];
+
     // Register the resource
     await createResource(accountId, {
         resourceId,
@@ -938,7 +953,9 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
                     : SqlServerDeploymentModel.SQL_FCI_SHORT,
             source: RESOURCE_SOURCE.DISCOVER,
             fsxSvmId: storageInfo?.svmId,
-            storageProtocol: storageInfo?.protocol
+            storageProtocol: storageInfo?.protocol,
+            ...(activeDirectoryDomainName && { activeDirectoryName: activeDirectoryDomainName }),
+            ...(activeDirectoryIpAddresses && { activeDirectoryAddress: activeDirectoryIpAddresses.join() })
         }
     });
 

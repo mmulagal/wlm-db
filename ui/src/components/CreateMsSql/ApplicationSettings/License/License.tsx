@@ -13,7 +13,7 @@ import {
     setSelectedLicenseId,
     setSelectedLicenseType
 } from '../../../../store/mssql/mssqlFormSlice';
-import { LICENSE_URL } from '../../../../utils/consts';
+import { FORM_OPTIONS, LICENSE_URL } from '../../../../utils/consts';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const License = () => {
@@ -22,6 +22,7 @@ const License = () => {
 
     // This is to get license included AMI data
     const { amiData, amiLoading } = useAppSelector(state => state.mssql.getAmiList);
+    const { customAmiData, customAmiLoading } = useAppSelector(state => state.mssql.getCustomAmiList);
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
 
@@ -29,14 +30,12 @@ const License = () => {
     const selectedLicenseId = useAppSelector(state => state.mssqlForm.license.selectedLicenseId);
     const selectedCustomAMI = useAppSelector(state => state.mssqlForm.license.selectedCustomAMI);
     const [defaultValeLicense, selectedDefaultValue] = useState(selectedLicenseId);
+
+    const [defaultCustomAMILicense, selectedDefaultCustomAMILicense] = useState(selectedCustomAMI);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const isLicenseFilled = useAppSelector(state => state.msSqlAction.licenseIdSelected);
-    const [licenseSelect, setLicenseSelect] = useState(licenseType);
-
-    // Custom AMI list will be blank for as it is not supported in phase 1
-    const customAmiId: any[] = [];
 
     useEffect(() => {
         if (selectedLicenseId) {
@@ -48,18 +47,36 @@ const License = () => {
         } else {
             selectedDefaultValue(null);
         }
-        
     }, [selectedLicenseId]);
 
+    useEffect(() => {
+        if (selectedCustomAMI) {
+            const newValLicense = {
+                ...selectedCustomAMI,
+                label: `${selectedCustomAMI?.label} | ${selectedCustomAMI?.label2}`
+            };
+            selectedDefaultCustomAMILicense(newValLicense);
+        } else {
+            selectedDefaultCustomAMILicense(null);
+        }
+    }, [selectedCustomAMI]);
+
     //Function to generate the options for Select Field
-    const generateAMIId = useMemo<optionType[]>((): optionType[] => {
+    const generateCustomAMIId = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        customAmiId?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+        customAmiData?.amis?.map((val, idx: number) => {
+            const amiVal = val?.imageId;
+            const amiName = val?.name;
+            const data = {
+                architecture: val?.architecture,
+                amiVal: val?.imageId,
+                amiName: val?.name
+            };
+            const option = generateOptionType(amiVal, amiVal, amiName, false, '', data);
             options.push(option);
         });
         return options;
-    }, []);
+    }, [customAmiData]);
 
     //Function to generate the options for Select Field for License
     const generateAMIIdForLicense = useMemo<optionType[]>((): optionType[] => {
@@ -84,6 +101,12 @@ const License = () => {
         }
     }, [dispatch, generateAMIIdForLicense]);
 
+    useEffect(() => {
+        if (!isLoadConfig && !movingFromChatbot) {
+            dispatch(setSelectedCustomAMI(generateCustomAMIId[0]));
+        }
+    }, [dispatch, generateCustomAMIId]);
+
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
@@ -93,15 +116,14 @@ const License = () => {
                 </Typography>
             );
         }
-        if (licenseSelect === GENERAL.LICENSE_INCLUDED_AMI) {
+        if (licenseType === FORM_OPTIONS.CUSTOM_AMI) {
+            return <Typography variant="Regular_14">{selectedCustomAMI?.value || GENERAL.USE_CUSTOM_AMI}</Typography>;
+        } else {
             return (
                 <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
-                    {licenseSelect}
+                    {GENERAL.LICENSE_INCLUDED_AMI}
                 </Typography>
             );
-        }
-        if (licenseSelect === GENERAL.USE_CUSTOM_AMI) {
-            return <Typography variant="Regular_14">{selectedCustomAMI?.value || GENERAL.USE_CUSTOM_AMI}</Typography>;
         }
     };
 
@@ -133,30 +155,25 @@ const License = () => {
                         </Button>
                         <div className={styles['radio-container']}>
                             <RadioButton
-                                isChecked={licenseSelect === GENERAL.LICENSE_INCLUDED_AMI}
+                                isChecked={licenseType === FORM_OPTIONS.LICENSE_AMI}
                                 onChange={() => {
-                                    setLicenseSelect(GENERAL.LICENSE_INCLUDED_AMI);
-                                    dispatch(setSelectedLicenseType(GENERAL.LICENSE_INCLUDED_AMI));
-                                    dispatch(setSelectedCustomAMI(null));
+                                    dispatch(setSelectedLicenseType(FORM_OPTIONS.LICENSE_AMI));
                                     dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.LICENSE_INCLUDED_AMI}
                                 className=""
                             />
                             <RadioButton
-                                isChecked={licenseSelect === GENERAL.USE_CUSTOM_AMI}
+                                isChecked={licenseType === FORM_OPTIONS.CUSTOM_AMI}
                                 onChange={() => {
-                                    setLicenseSelect(GENERAL.USE_CUSTOM_AMI);
-                                    dispatch(setSelectedLicenseType(GENERAL.USE_CUSTOM_AMI));
-                                    dispatch(setSelectedLicenseId(null));
+                                    dispatch(setSelectedLicenseType(FORM_OPTIONS.CUSTOM_AMI));
                                     dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.USE_CUSTOM_AMI}
                                 className=""
-                                isDisabled
                             />
                         </div>
-                        {licenseSelect === GENERAL.LICENSE_INCLUDED_AMI && (
+                        {licenseType === FORM_OPTIONS.LICENSE_AMI && (
                             <div className={styles.handleSelect}>
                                 <SelectField
                                     label={GENERAL.LICENSE_ID}
@@ -185,22 +202,26 @@ const License = () => {
                                     isSearchable={generateAMIIdForLicense.length > 5}
                                     variant="two-lines"
                                     options={generateAMIIdForLicense}
+                                    isLoading={amiLoading}
                                 />
                             </div>
                         )}
-                        {licenseSelect === GENERAL.USE_CUSTOM_AMI && (
+                        {licenseType === FORM_OPTIONS.CUSTOM_AMI && (
                             <div className={styles.handleSelect}>
                                 <SelectField
                                     label={GENERAL.AMI_ID}
                                     placeholder={GENERAL.SELECT_AMI_NAME}
                                     isClearable={false}
-                                    defaultValue={selectedCustomAMI}
+                                    defaultValue={defaultCustomAMILicense}
+                                    value={defaultCustomAMILicense}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSelectedCustomAMI(selectedOptions));
                                         dispatch(setIsWizardTouched(true));
                                     }}
-                                    isSearchable={generateAMIId.length > 5}
-                                    options={generateAMIId}
+                                    variant="two-lines"
+                                    isSearchable={generateCustomAMIId.length > 5}
+                                    options={generateCustomAMIId}
+                                    isLoading={customAmiLoading}
                                 />
                             </div>
                         )}

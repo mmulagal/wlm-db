@@ -364,11 +364,7 @@ const createVolumeClone = (
         $CloneDataLunPath = "/vol/$CloneDataVolumeName/$DataLunLeaf"
         $CloneLogLunPath = "/vol/$CloneLogVolumeName/$LogLunLeaf"
     
-        if ($sourceSvm -ne $targetSvm) {
-            $parentVserver = $sourceSvm
-        } else {
-            $parentVserver = $targetSvm
-        }
+        $parentVserver = $sourceSvm
     
         ${ontapRestRequest}
 
@@ -395,11 +391,7 @@ const createVolumeClone = (
         ${ontapJobStatusTemplate}
 
         Function New-VolumeClone {
-            if ($sourceSvm -ne $targetSvm) {
-                $parentsvm = $sourceSvm
-            } else {
-                $parentsvm = $targetSvm
-            }
+            $parentsvm = $sourceSvm
     
             $jobStatus = @()
             @($dataVolume, $logVolume) | ForEach-Object {
@@ -479,27 +471,25 @@ const createVolumeClone = (
 
         Function Set-LUNSignature {
             # Set the LUN signature only if the source and target SVMs are the same
-            if ($sourceSvm -eq $targetSvm) {
-                if (-not (Get-Module -ListAvailable -Name NetApp.ONTAP)) {
-                    Write-Debug "NetApp.ONTAP Module does not exist, installing it now"
-    
-                    Install-Module -Name NetApp.ONTAP -Force -AllowClobber
-                }
-    
-                $null = Connect-NcController -Credential $FSxCredentials -Name $FSxHostName
-    
-                $message
-                @($dataLunPath, $logLunPath) | ForEach-Object {
-                    $lunPath = $_
-    
-                    $null = Set-NcLunSignature -Path $lunPath -Vserver $targetSvm -Confirm:$False
-                    if (-not $?) {
-                        $message += "Could not change LUN signature for $lunClonePath."
-                    }
-                }
-    
-                return $message
+            if (-not (Get-Module -ListAvailable -Name NetApp.ONTAP)) {
+                Write-Debug "NetApp.ONTAP Module does not exist, installing it now"
+
+                Install-Module -Name NetApp.ONTAP -Force -AllowClobber
             }
+
+            $null = Connect-NcController -Credential $FSxCredentials -Name $FSxHostName
+
+            $message
+            @($dataLunPath, $logLunPath) | ForEach-Object {
+                $lunPath = $_
+
+                $null = Set-NcLunSignature -Path $lunPath -Vserver $targetSvm -Confirm:$False
+                if (-not $?) {
+                    $message += "Could not change LUN signature for $lunClonePath."
+                }
+            }
+
+            return $message
         }
 
         Function Set-LunMap {

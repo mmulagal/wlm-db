@@ -9,13 +9,14 @@ import { useDispatch } from 'react-redux';
 import { setDBVersion } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
-import { DB_VERSIONS } from '../../../../utils/consts';
+import { DB_VERSIONS, FORM_OPTIONS } from '../../../../utils/consts';
 
 const DatabaseVersion = () => {
     const dispatch = useDispatch();
 
     // Getting selected DB version
     const getDBVersion = useAppSelector(state => state.mssqlForm.dbVersion);
+    const customAMISelected = useAppSelector(state => state.mssqlForm.license.selectedLicenseType);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
     const osVersion = useAppSelector(state => state.mssqlForm.operatingSystem);
@@ -47,6 +48,13 @@ const DatabaseVersion = () => {
 
     //Set the Header text here
     const setHeader = () => {
+        if (customAMISelected === FORM_OPTIONS.CUSTOM_AMI) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.CUSTOM_AMI_DISABLE_MSG}
+                </Typography>
+            );
+        }
         return <Typography variant="Regular_14">{getDBVersion?.label}</Typography>;
     };
     return (
@@ -55,6 +63,7 @@ const DatabaseVersion = () => {
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="8"
                 title={<div className={CommonStyles.title}>{GENERAL.DATABASE_VERSION}</div>}
+                isDisabled={customAMISelected === FORM_OPTIONS.CUSTOM_AMI}
             >
                 <AccordionCardContent>
                     <Typography>

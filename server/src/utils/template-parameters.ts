@@ -289,6 +289,12 @@ const PARAMETERS = [
         type: 'String'
     },
     {
+        name: 'FsxVolumeSnapshotPolicy',
+        description: 'Snapshot policy for the volume. Can be either default or none.',
+        type: 'String',
+        default: 'default'
+    },
+    {
         name: 'VPCID',
         description: 'Existing VPC ID for deployment.',
         type: 'AWS::EC2::VPC::Id',

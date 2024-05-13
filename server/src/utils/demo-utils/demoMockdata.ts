@@ -1455,6 +1455,123 @@ function saveStandaloneConfigurationData(
     };
 }
 
+function sandboxJobData(
+    accountId: string,
+    region: string,
+    srcHost: string,
+    targetHost: string,
+    srcDb: string,
+    destDb: string,
+    parentJobId: string,
+    credentialsId: string
+) {
+    return [
+        {
+            id: parentJobId,
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Creating sandbox ${destDb} in the target host ${targetHost}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: srcDb,
+            type: JOBTYPE.SANDBOX,
+            start_time: new Date(Date.now() - 300000),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Validate if the sandbox ${destDb} already exists in the target host ${targetHost}`,
+            description: `Validate if the sandbox ${destDb} already exists in the target host ${targetHost}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: srcDb,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.SANDBOX,
+            start_time: new Date(Date.now() - 300000),
+            end_time: new Date(Date.now() - 300000),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Get volume LUN mappings for source database ${srcDb}`,
+            description: `Get the volume LUN mapping for the source database ${srcDb} of the host ${srcHost}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: srcDb,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.SANDBOX,
+            start_time: new Date(Date.now() - 240000),
+            end_time: new Date(Date.now() - 240000),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: 'Create ONTAP FlexClone volumes',
+            description: 'Create ONTAP FlexClone volumes from the volumes mapped to the source SQL server',
+            status: JOBSTATUS.COMPLETED,
+            resource_name: srcDb,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.SANDBOX,
+            start_time: new Date(Date.now() - 180000),
+            end_time: new Date(Date.now() - 180000),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: 'Discover cloned LUNs and create virtual mount point',
+            description: `Discover cloned LUNs and create virtual mount points in the target host ${targetHost}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: srcDb,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.SANDBOX,
+            start_time: new Date(Date.now() - 120000),
+            end_time: new Date(Date.now() - 120000),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Create sandbox ${destDb}`,
+            description: `Create sandbox ${destDb} on the target host ${targetHost}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: srcDb,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.SANDBOX,
+            start_time: new Date(Date.now() - 60000),
+            end_time: new Date(Date.now() - 60000),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Add extended properties to sandbox ${destDb}`,
+            description: `Add extended properties to sandbox ${destDb} on the target host ${targetHost}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: srcDb,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.SANDBOX,
+            start_time: new Date(Date.now()),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM'
+        }
+    ];
+}
+
 export {
     masterStackData,
     validationStack1Data,
@@ -1464,5 +1581,6 @@ export {
     sqlStandaloneStackData,
     fsxStackData,
     saveFciConfigurationData,
-    saveStandaloneConfigurationData
+    saveStandaloneConfigurationData,
+    sandboxJobData
 };

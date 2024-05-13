@@ -6,14 +6,23 @@ import { useDispatch } from 'react-redux';
 import { setSelectedDBEdition } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
+import { FORM_OPTIONS } from '../../../../utils/consts';
 
 const DatabaseEdition = () => {
     // To get selected DB edition
     const dbEdition = useAppSelector(state => state.mssqlForm.dbEdition);
+    const customAMISelected = useAppSelector(state => state.mssqlForm.license.selectedLicenseType);
 
     const dispatch = useDispatch();
     //Set the Header text here
     const setHeader = () => {
+        if (customAMISelected === FORM_OPTIONS.CUSTOM_AMI) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.CUSTOM_AMI_DISABLE_MSG}
+                </Typography>
+            );
+        }
         return <Typography variant="Regular_14">{dbEdition?.label}</Typography>;
     };
     return (
@@ -22,6 +31,7 @@ const DatabaseEdition = () => {
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="7"
                 title={<div className={CommonStyles.title}>{GENERAL.DATABASE_EDITION}</div>}
+                isDisabled={customAMISelected === FORM_OPTIONS.CUSTOM_AMI}
             >
                 <AccordionCardContent>
                     <Typography>

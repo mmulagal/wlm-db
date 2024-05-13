@@ -203,6 +203,11 @@ export const awsApi = createApi({
                     }`
                 })
             }),
+            getCustomAmiList: builder.query({
+                query: ({ credentialId, region }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/amis?customAmi=true`
+                })
+            }),
             getSnsTopics: builder.query({
                 query: ({ credentialId, region }) => ({
                     url: `credentials/${credentialId}/regions/${region}/sns-topics`
@@ -739,6 +744,7 @@ export const {
     useGetSGListQuery,
     useGetAdsListQuery,
     useGetAmiListQuery,
+    useGetCustomAmiListQuery,
     useGetSnsTopicsQuery,
     useGetKmsKeysQuery,
     useGetKeyPairsQuery,

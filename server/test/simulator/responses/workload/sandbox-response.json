@@ -1,6 +1,6 @@
 {
     "getSandboxDetailsResponse": {
-        "count": 2,
+        "count": 1,
         "items": [
             {
                 "sandboxName": "RetailBanking_sandbox",
@@ -10,21 +10,7 @@
                 "sourceDatabaseHostName": "SQLServer-Prod-01",
                 "sourceDatabaseInstanceName": "MSSQLSERVER",
                 "sourceDatabaseName": "RetailBanking",
-                "createdAt": 1714729464402,
-                "tag": "Development",
-                "updatedAt": 1714729464402
-            },
-            {
-                "sandboxName": "HRAudit_Sandbox",
-                "databaseHostName": "test-resource",
-                "databaseHostId": "36E53042-04E8-40C9-AE69-26E56CB0D216",
-                "databaseInstanceName": "MSSQLSERVER",
-                "sourceDatabaseHostName": "SQLServer-Prod-01",
-                "sourceDatabaseInstanceName": "MSSQLSERVER",
-                "sourceDatabaseName": "HRAudit",
-                "createdAt": 1714729464402,
-                "tag": "QA",
-                "updatedAt": 1714729464402
+                "tag": "Development"
             }
         ]
     }

@@ -29,12 +29,11 @@ const SelectTarget = () => {
         const options: optionType[] = [];
         const filteredHosts = selectedSourceDbHost
             ? aggregatedDbHostList.filter(
-                  item => item?.id === selectedSourceDbHost?.data?.id
-                  // Will be uncommented when supporting alternate host cloning
-                  //   item?.topology?.fileSystemId &&
-                  //   item?.topology?.fileSystemId === selectedSourceDbHost?.data?.topology?.fileSystemId &&
-                  //   item?.topology?.vpcId &&
-                  //   item?.topology?.vpcId === selectedSourceDbHost?.data?.topology?.vpcId
+                  item =>
+                      item?.topology?.fileSystemId &&
+                      item?.topology?.fileSystemId === selectedSourceDbHost?.data?.topology?.fileSystemId &&
+                      item?.topology?.vpcId &&
+                      item?.topology?.vpcId === selectedSourceDbHost?.data?.topology?.vpcId
               )
             : [];
         filteredHosts?.map((obj, idx: number) => {
@@ -126,8 +125,6 @@ const SelectTarget = () => {
                                     options={generateTargetName}
                                     className={styles.selectField}
                                     error={showError && !selectedDatabaseHost ? GENERAL.ACTION_REQUIRED : ''}
-                                    //For first release the target host will be same as source host
-                                    isDisabled={true}
                                 />
 
                                 <SelectField
@@ -155,7 +152,13 @@ const SelectTarget = () => {
                                         label={GENERAL.TARGET_DATABASES}
                                         value={selectedDatabase}
                                         className={styles.keyField}
-                                        error={showError && !selectedDatabase ? GENERAL.ACTION_REQUIRED : ''}
+                                        error={
+                                            showError && !selectedDatabase
+                                                ? GENERAL.ACTION_REQUIRED
+                                                : selectedDatabase?.length > 128
+                                                ? GENERAL.CLONE_TARGET_DB_LENGTH_VALIDATION
+                                                : ''
+                                        }
                                     />
                                 )}
                             </div>

@@ -4,6 +4,7 @@ import {
     useGetAmiListQuery,
     useGetConfigListQuery,
     useGetCredentialsQuery,
+    useGetCustomAmiListQuery,
     useGetFsxnListQuery,
     useGetInstanceTypesQuery,
     useGetKeyPairsQuery,
@@ -20,6 +21,7 @@ import {
     addAdsList,
     addAmiList,
     addCredentials,
+    addCustomAmiList,
     addFsxnList,
     addGetCollationList,
     addInstanceTypeList,
@@ -166,6 +168,21 @@ const MssqlApis = () => {
         },
         {
             skip: licenseAmiSkip
+        }
+    );
+
+    // API call to get AMIs list for selected credentials and region
+    const {
+        data: customAmiData,
+        isFetching: customAmiLoading,
+        isError: customAmiError
+    } = useGetCustomAmiListQuery(
+        {
+            credentialId: selectedCredId,
+            region: selectedRegionCode
+        },
+        {
+            skip: credAndRegionSkip
         }
     );
 
@@ -395,6 +412,24 @@ const MssqlApis = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [amiData, amiLoading, amiError]);
+
+    // To add CustomAMI information in MssqlEntities
+    useEffect(() => {
+        if (customAmiError) {
+            dispatch(addCustomAmiList({ undefined, customAmiLoading, customAmiError }));
+        } else {
+            dispatch(addCustomAmiList({ customAmiData, customAmiLoading, customAmiError }));
+        }
+        if (
+            !customAmiLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.CUSTOM_AMI)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.CUSTOM_AMI));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [customAmiData, customAmiLoading, customAmiError]);
 
     useEffect(() => {
         if (collationListError) {

@@ -2,7 +2,8 @@ import { RouteTags } from '../../utils/consts';
 import {
     StorageSavingsRequestParams,
     StorageSavingsRequestBody,
-    StorageSavingsResponse
+    StorageSavingsResponse,
+    StorageSavingsCalculationsMetricsResponse
 } from '../types/storage-savings.types';
 
 const getStorageSavingsSchema = {
@@ -16,4 +17,15 @@ const getStorageSavingsSchema = {
     }
 };
 
-export default getStorageSavingsSchema;
+const getStorageSavingsCalculationMetricsSchema = {
+    tags: [RouteTags.STORAGE_SAVINGS],
+    summary: 'Storage savings calculation metrics for MSSQL server',
+    description: 'Retrieves the calculation metrics for storage savings in MSSQL server if FSX is used instead of EBS',
+    params: StorageSavingsRequestParams,
+    body: StorageSavingsRequestBody,
+    response: {
+        200: StorageSavingsCalculationsMetricsResponse
+    }
+};
+
+export { getStorageSavingsSchema, getStorageSavingsCalculationMetricsSchema };
