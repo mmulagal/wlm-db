@@ -195,10 +195,10 @@ export const formatCalcSize = (val: any) => {
 };
 
 export const formatNumbers = (val: any) => {
-    if (val) {
+    if (val || val === 0) {
         return Number(val).toLocaleString();
     } else {
-        return "0";
+        return GENERAL.NOT_AVAILABLE;
     }
 };
 

@@ -15,7 +15,7 @@ export const initialExploreSavingsState: any = {
     storageSavingsLoading: false,
     savingsCalculatorRefresh: false,
     selectedDeploymentModel: null,
-    viewCalculationsResponse: {},
+    viewCalculationsResponse: null,
     viewCalculationsLoading: false
 };
 
@@ -71,7 +71,7 @@ const exploreSavingsSlice = createSlice({
             state.storageSavingsLoading = false;
             state.savingsCalculatorRefresh = false;
             state.selectedDeploymentModel = null;
-            state.viewCalculationsResponse = {};
+            state.viewCalculationsResponse = null;
             state.viewCalculationsLoading = false;
         },
         setSelectedDeploymentModel(state, action: PayloadAction<any>) {
