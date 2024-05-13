@@ -932,32 +932,39 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
         ACTIVE_DIRECTORY
     ];
 
-    // Register the resource
-    await createResource(accountId, {
-        resourceId,
-        credentialsId,
-        storageType: STORAGE_TYPE.FSXN,
-        resourceName: sqlServerInstance?.sqlServerName,
-        cloudProviderAccountId: awsAccountId!,
-        cloudProviderName: CloudProviders.AWS,
-        resourceType: RESOURCESTYPE.MSSQL,
-        coRelationId: storageInfo?.id,
-        region,
-        metadata: {
-            creationDate: Date.now(),
-            node1InstanceId,
-            node2InstanceId,
-            sqlDeploymentType:
-                (sqlServerInstance?.sqlServerNodes?.length || 1) === 1
-                    ? SqlServerDeploymentModel.SQL_STANDALONE_SHORT
-                    : SqlServerDeploymentModel.SQL_FCI_SHORT,
-            source: RESOURCE_SOURCE.DISCOVER,
-            fsxSvmId: storageInfo?.svmId,
-            storageProtocol: storageInfo?.protocol,
-            ...(activeDirectoryDomainName && { activeDirectoryName: activeDirectoryDomainName }),
-            ...(activeDirectoryIpAddresses && { activeDirectoryAddress: activeDirectoryIpAddresses.join() })
-        }
-    });
+    try {
+        // Register the resource
+        await createResource(accountId, {
+            resourceId,
+            credentialsId,
+            storageType: STORAGE_TYPE.FSXN,
+            resourceName: sqlServerInstance?.sqlServerName,
+            cloudProviderAccountId: awsAccountId!,
+            cloudProviderName: CloudProviders.AWS,
+            resourceType: RESOURCESTYPE.MSSQL,
+            coRelationId: storageInfo?.id,
+            region,
+            metadata: {
+                creationDate: Date.now(),
+                node1InstanceId,
+                node2InstanceId,
+                sqlDeploymentType:
+                    (sqlServerInstance?.sqlServerNodes?.length || 1) === 1
+                        ? SqlServerDeploymentModel.SQL_STANDALONE_SHORT
+                        : SqlServerDeploymentModel.SQL_FCI_SHORT,
+                source: RESOURCE_SOURCE.DISCOVER,
+                fsxSvmId: storageInfo?.svmId,
+                storageProtocol: storageInfo?.protocol,
+                ...(activeDirectoryDomainName && { activeDirectoryName: activeDirectoryDomainName }),
+                ...(activeDirectoryIpAddresses && { activeDirectoryAddress: activeDirectoryIpAddresses.join() })
+            }
+        });
+    } catch (error) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Unable to manage instance '${ec2InstanceId}'. Failed to create resource. Reason: ${error}`
+        );
+    }
 
     return {
         resourceId
