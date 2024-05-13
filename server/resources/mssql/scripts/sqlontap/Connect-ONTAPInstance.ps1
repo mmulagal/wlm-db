@@ -4,6 +4,9 @@ param(
     [string]$FileSystemId,
 
     [Parameter(Mandatory=$true)]
+    [string]$SQLVMName,
+
+    [Parameter(Mandatory=$true)]
     [string]$ResourceID,   
 
     [Parameter(Mandatory=$true)]
@@ -19,7 +22,7 @@ $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} 
 $ErrorActionPreference = "Stop"
 try{
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
-$TargetPortalAddresses = (Get-FSXStorageVirtualMachine|?{$_.FileSystemId -eq $fslist.FileSystemId}).Endpoints.Iscsi.IpAddresses
+$TargetPortalAddresses = (Get-FSXStorageVirtualMachine|?{$_.FileSystemId -eq $fslist.FileSystemId -And $_.Name -eq $SQLVMName }).Endpoints.Iscsi.IpAddresses
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
 $data= Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/local-ipv4" -Headers @{"X-aws-ec2-metadata-token" = $token} -ErrorAction Stop -UseBasicParsing
 $LocaliSCSIAddress = $data.Content
