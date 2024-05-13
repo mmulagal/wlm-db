@@ -1,4 +1,11 @@
-import { AccordionCard, AccordionCardContent, DsTypography, TextField, TooltipInfo } from '@netapp/design-system';
+import {
+    AccordionCard,
+    AccordionCardContent,
+    DsCheckbox,
+    DsTypography,
+    TextField,
+    TooltipInfo
+} from '@netapp/design-system';
 import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
 
 import { useAppSelector } from '../../../../../store/storeHooks';
@@ -9,7 +16,8 @@ import {
     setDriveLetter,
     setDriveLetterForLogFile,
     setIsExistingDataDrive,
-    setIsExistingLogDrive
+    setIsExistingLogDrive,
+    setIsVirtualMountPoint
 } from '../../../../../store/workloadFactory/createNewDBSlice';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
@@ -38,7 +46,8 @@ const FileNames = () => {
         driveLetterLogFile,
         newUserDBName,
         driveInfoList,
-        driveInfoListLoading
+        driveInfoListLoading,
+        isVirtualMountPoint
     } = useAppSelector(state => state.createNewUser);
     const isDbCreateHit = useAppSelector(state => state.msSqlAction.isDbCreateHit);
     const dbCreateDataNameAdded = useAppSelector(state => state.msSqlAction.dbCreateDataNameAdded);
@@ -69,19 +78,35 @@ const FileNames = () => {
 
     useEffect(() => {
         if (driveLetter && newUserDBFileName) {
-            setDataFilePath(`${driveLetter?.value}:\\mssql\\data\\${newUserDBFileName}.mdf`);
+            setDataFilePath(
+                `${driveLetter?.value}:${
+                    isVirtualMountPoint ? `${newUserDBName}_data` : ''
+                }\\mssql\\data\\${newUserDBFileName}.mdf`
+            );
         } else if (driveLetter) {
-            setDataFilePath(`${driveLetter?.value}:\\mssql\\data\\<db_data>.mdf`);
+            setDataFilePath(
+                `${driveLetter?.value}:${
+                    isVirtualMountPoint ? `${newUserDBName}_data` : ''
+                }\\mssql\\data\\<db_data>.mdf`
+            );
         } else {
             setDataFilePath('');
         }
-    }, [driveLetter, newUserDBFileName]);
+    }, [driveLetter, newUserDBFileName, newUserDBName]);
 
     useEffect(() => {
         if (driveLetterLogFile && newUserLogFileName) {
-            setLogFilePath(`${driveLetterLogFile?.value}:\\mssql\\log\\${newUserLogFileName}.ldf`);
+            setLogFilePath(
+                `${driveLetterLogFile?.value}:${
+                    isVirtualMountPoint ? `${newUserDBName}_log` : ''
+                }\\mssql\\log\\${newUserLogFileName}.ldf`
+            );
         } else if (driveLetterLogFile) {
-            setLogFilePath(`${driveLetterLogFile?.value}:\\mssql\\log\\<db_log>.ldf`);
+            setLogFilePath(
+                `${driveLetterLogFile?.value}:${
+                    isVirtualMountPoint ? `${newUserDBName}_log` : ''
+                }\\mssql\\log\\<db_log>.ldf`
+            );
         } else {
             setLogFilePath('');
         }
@@ -121,18 +146,20 @@ const FileNames = () => {
             );
             options.push(option);
         });
-        driveInfoList?.availableDriveLetters?.map((val: any, idx: number) => {
-            const option = generateOptionType(
-                val,
-                val,
-                DRIVE_LETTER_TYPE.NEW,
-                driveLetterLogFile?.value === val ? true : false,
-                driveLetterLogFile?.value === val ? GENERAL.SAME_NEW_DRIVE_ERROR : ''
-            );
-            options.push(option);
-        });
+        if (!isVirtualMountPoint) {
+            driveInfoList?.availableDriveLetters?.map((val: any, idx: number) => {
+                const option = generateOptionType(
+                    val,
+                    val,
+                    DRIVE_LETTER_TYPE.NEW,
+                    driveLetterLogFile?.value === val ? true : false,
+                    driveLetterLogFile?.value === val ? GENERAL.SAME_NEW_DRIVE_ERROR : ''
+                );
+                options.push(option);
+            });
+        }
         return sortListOfDict(options, 'isDisabled');
-    }, [driveInfoList, driveLetterLogFile]);
+    }, [driveInfoList, driveLetterLogFile, isVirtualMountPoint]);
 
     //Function to generate the options for log file Select Field
     const generateLogDriveLetters = useMemo<optionType[]>((): optionType[] => {
@@ -148,18 +175,20 @@ const FileNames = () => {
             );
             options.push(option);
         });
-        driveInfoList?.availableDriveLetters?.map((val: any, idx: number) => {
-            const option = generateOptionType(
-                val,
-                val,
-                DRIVE_LETTER_TYPE.NEW,
-                driveLetter?.value === val ? true : false,
-                driveLetter?.value === val ? GENERAL.SAME_NEW_DRIVE_ERROR : ''
-            );
-            options.push(option);
-        });
+        if (!isVirtualMountPoint) {
+            driveInfoList?.availableDriveLetters?.map((val: any, idx: number) => {
+                const option = generateOptionType(
+                    val,
+                    val,
+                    DRIVE_LETTER_TYPE.NEW,
+                    driveLetter?.value === val ? true : false,
+                    driveLetter?.value === val ? GENERAL.SAME_NEW_DRIVE_ERROR : ''
+                );
+                options.push(option);
+            });
+        }
         return sortListOfDict(options, 'isDisabled');
-    }, [driveInfoList, driveLetter]);
+    }, [driveInfoList, driveLetter, isVirtualMountPoint]);
 
     // Default drive letters logic to set for quick and advanced view
     useEffect(() => {
@@ -195,7 +224,7 @@ const FileNames = () => {
                 }
             });
         }
-    }, [selectedNewUserConfig, driveInfoList]);
+    }, [selectedNewUserConfig, driveInfoList, isVirtualMountPoint]);
 
     // Based of selected drive letters need to add if it is a existing or new drive letters
     useEffect(() => {
@@ -279,6 +308,16 @@ const FileNames = () => {
                                     <DsTypography variant="Regular_14">
                                         {GENERAL.FILE_SETTINGS_SECOND_TEXT}
                                     </DsTypography>
+                                </div>
+                                <div className={styles.secondSection}>
+                                    <DsCheckbox
+                                        id="virtual-mount-point"
+                                        title="Virtual mount point"
+                                        onSelect={() => {
+                                            dispatch(setIsVirtualMountPoint(!isVirtualMountPoint));
+                                        }}
+                                        isSelected={isVirtualMountPoint}
+                                    />
                                 </div>
                             </div>
                         )}
