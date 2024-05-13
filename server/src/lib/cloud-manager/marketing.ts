@@ -62,7 +62,7 @@ interface CalculateEbsComparisonResponse {
             size: number;
             unit: string;
         };
-        numberOfVolumes: 1;
+        numberOfVolumes: number;
         percentageOfDataOnSSDStorage: number;
         savingsFromCompressionAndDeduplication: number;
         storageSavingsFromCompressionAndDeduplication: {
@@ -111,7 +111,7 @@ interface CalculateEbsComparisonResponse {
         minFileSystemsRequiredForSSDIOPS: number;
         maxSSDIOPS: number;
         requiredNumOfFSx_fractional: number;
-        requiredNumOfFSx_roundUp: 1;
+        requiredNumOfFSx_roundUp: number;
         minThroughputCapacityRequired: number;
         provisionedThroughputCapacity: number;
         totalMonthlyCostFSXnThroughputCapacity: number;
@@ -180,9 +180,9 @@ interface CalculateEbsComparisonResponse {
             unit: string;
         };
         totalInstanceHours: number;
-        numberOfVolumes: 1;
+        numberOfVolumes: number;
         instanceAvgDuration: number;
-        EBSInstanceMonth: 1;
+        EBSInstanceMonth: number;
         EBSStorageCost: number;
         EBSCapacityPrice: {
             price: number;
@@ -210,7 +210,7 @@ interface CalculateEbsComparisonResponse {
             size: number;
             unit: string;
         };
-        percentageOfDataOnSSDStorage: 1;
+        percentageOfDataOnSSDStorage: number;
         savingsFromCompressionAndDeduplication: number;
         storageSavingsFromCompressionAndDeduplication: {
             size: number;
