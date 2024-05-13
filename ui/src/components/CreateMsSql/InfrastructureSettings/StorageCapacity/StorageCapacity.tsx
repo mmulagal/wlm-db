@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
+import { AccordionCard, AccordionCardContent, Table, TextField, Typography, useTable } from '@netapp/design-system';
+import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './StorageCapacity.module.scss';
@@ -97,6 +98,62 @@ const StorageCapacity = () => {
             </Typography>
         );
     };
+    const mockData = [
+        {
+            name: 'data',
+            value: '1128.6005859375',
+            id: '1'
+        },
+        {
+            name: 'log',
+            value: '282.150390625',
+            id: '2'
+        },
+
+        {
+            name: 'tempdb',
+            value: '112.8603515625',
+            id: '3'
+        },
+
+        {
+            name: 'quorum',
+            value: '11.71875',
+            id: '4'
+        },
+
+        {
+            name: 'total',
+            value: '1536',
+            id: '5'
+        }
+    ];
+
+    const dataDriveColDefs: ColumnProps[] = [
+        {
+            Header: '',
+            accessor: 'name',
+            id: '1',
+            isSortable: false,
+            width: '200px'
+        },
+        {
+            Header: 'Value',
+            accessor: 'value',
+            id: '2',
+            width: '200px'
+        }
+    ];
+
+    const tableProps = useTable({
+        isSorting: false,
+
+        columns: dataDriveColDefs,
+        rows: mockData,
+        pageSize: 10,
+        selectionType: 'none',
+        isHorizontalScroll: true
+    });
 
     return (
         <div className={styles['storage-capacity']}>
@@ -129,6 +186,14 @@ const StorageCapacity = () => {
                                 isSearchable={generateUnitsForStorage.length > 5}
                                 options={generateUnitsForStorage}
                                 className={styles.selectField}
+                            />
+                        </div>
+
+                        <div className={styles.dataDriveTable}>
+                            <Table
+                                //@ts-ignore
+                                tableProps={tableProps}
+                                variant="innerTable"
                             />
                         </div>
                     </Typography>
