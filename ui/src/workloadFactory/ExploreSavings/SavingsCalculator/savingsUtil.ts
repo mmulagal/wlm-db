@@ -367,7 +367,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Ratio after savings from compression & deduplication factor',
                 value: `${viewCalculation.fsxOntapCalculation.ratioAfterSavings}%`,
-                text: `${viewCalculation.fsxOntapCalculation.ratioAfterSavings}% - Savings from compression and deduplication (${viewCalculation.fsxOntapCalculation.savingsFromCompressionAndDeduplication}%)`
+                text: `100% - Savings from compression and deduplication (${viewCalculation.fsxOntapCalculation.savingsFromCompressionAndDeduplication}%)`
             },
             {
                 label: 'Data on capacity pool storage factor',
@@ -392,12 +392,12 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Total storage charge (monthly)',
                 value: `$${viewCalculation.fsxOntapCalculation.totalMonthlyStorageCharge}`,
-                text: `Total monthly cost for FSx for NetApp ONTAP file server capacity pool storage capacity ($0) + Total monthly cost for FSx for NetApp ONTAP file server SSD storage capacity ($${viewCalculation.fsxOntapCalculation.totalMonthlyCostForFSxSsd})`
+                text: `Total monthly cost for FSx for NetApp ONTAP file server capacity pool storage capacity ($${viewCalculation.fsxOntapCalculation.totalMonthlyCostForCapacity}) + Total monthly cost for FSx for NetApp ONTAP file server SSD storage capacity ($${viewCalculation.fsxOntapCalculation.totalMonthlyCostForFSxSsd})`
             },
             {
                 label: 'Minimum number of file systems required for storage capacity',
                 value: `${viewCalculation.fsxOntapCalculation.minFileSystemsNumForStorage}`,
-                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity (${viewCalculation.fsxOntapCalculation.greaterOfSsdAndMinAllowedSsd}) ÷ Max SSD tier size (${viewCalculation.fsxOntapCalculation.maxSSDTierSize}) `
+                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity (${viewCalculation.fsxOntapCalculation.greaterOfSsdAndMinAllowedSsd}) ÷ Max SSD tier size (${viewCalculation.fsxOntapCalculation.maxSsdTierSize}) `
             },
             {
                 label: 'Minimum number of file systems required for throughput capacity',
@@ -422,7 +422,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Minimum throughout capacity required',
                 value: `${viewCalculation.fsxOntapCalculation.minThroughputCapacityRequired}`,
-                text: `Required number of FSx file systems (${viewCalculation.fsxOntapCalculation.requiredNumOfFsx}) x Min throughput capacity (128 GiB)`
+                text: `Required number of FSx file systems (${viewCalculation.fsxOntapCalculation.requiredNumOfFsx}) x Min throughput capacity (${viewCalculation.fsxOntapCalculation.minThroughputCapacityRequired} GiB)`
             },
             {
                 label: 'Provisioned throughput capacity',
@@ -437,12 +437,12 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Included SSD IOPS',
                 value: `${viewCalculation.fsxOntapCalculation.includedSsdIops} IOPS`,
-                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity (${viewCalculation.fsxOntapCalculation.greaterOfSsdAndMinAllowedSsd}) x Included (3.3) IOPS per GIB `
+                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity (${viewCalculation.fsxOntapCalculation.greaterOfSsdAndMinAllowedSsd}) x Included (${viewCalculation.fsxOntapCalculation.includedIops}) IOPS per GIB `
             },
             {
                 label: 'Additional SSD IOPS',
                 value: `${viewCalculation.fsxOntapCalculation.additionalSsdIops} IOPS`,
-                text: `Provisioned SSD (${viewCalculation.fsxOntapCalculation.provisionedSsdIops} IOPS) - Included SSD (${viewCalculation.fsxOntapCalculation.includedIops} IOPS)`
+                text: `Provisioned SSD (${viewCalculation.fsxOntapCalculation.provisionedSsdIops} IOPS) - Included SSD (${viewCalculation.fsxOntapCalculation.includedSsdIops} IOPS)`
             },
             {
                 label: 'Billed additional SSD IOPS',
@@ -452,7 +452,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Additional billed cost for SSD IOPS',
                 value: `$${viewCalculation.fsxOntapCalculation.additionalBilledCostForSsdIops}`,
-                text: `Billed additional SSD (${viewCalculation.fsxOntapCalculation.additionalSsdIops} IOPS) x FSx for ONTAP IOPS price ($0.02)`
+                text: `Billed additional SSD (${viewCalculation.fsxOntapCalculation.additionalSsdIops} IOPS) x FSx for ONTAP IOPS price ($${viewCalculation.fsxOntapCalculation.fsxnCapacityPrice})`
             },
             {
                 label: 'Total throughput and IOPS (monthly)',
@@ -582,7 +582,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Storage savings from compression & deduplication',
                 value: `${viewCalculation.fsxCloneCalculation.storageSavingsFromCompressionAndDeduplication}`,
-                text: `Desired storage capacity  x Savings from compression & deduplication = ${viewCalculation.fsxCloneCalculation.desiredStorageCapacity} x ${viewCalculation.fsxCloneCalculation.savingsFromCompressionAndDeduplication}% = 0GiB`
+                text: `Desired storage capacity  x Savings from compression & deduplication = ${viewCalculation.fsxCloneCalculation.desiredStorageCapacity} x ${viewCalculation.fsxCloneCalculation.savingsFromCompressionAndDeduplication}%`
             },
             {
                 label: 'Effective storage capacity for FSx for ONTAP',
@@ -592,7 +592,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'SSD storage GiB per month',
                 value: `${viewCalculation.fsxCloneCalculation.ssdStoragePerMonth}`,
-                text: `Effective storage capacity for FSx for ONTAP x Percentage of data on SSD storage = 780 GiB x 100%`
+                text: `Effective storage capacity for FSx for ONTAP x Percentage of data on SSD storage = ${viewCalculation.fsxCloneCalculation.effectiveFsxnStorageCapacity} GiB x ${viewCalculation.fsxCloneCalculation.percentageOfDataOnSsdStorage}%`
             },
             {
                 label: 'SSD monthly cost',
@@ -946,7 +946,7 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
             result = {
                 ...result,
                 storageCapacity: {
-                    capacity: formatFractionalNumber(size, 2),
+                    capacity: formatFractionalNumber(size, 0),
                     unit: unitOption
                 }
             };

@@ -89,7 +89,7 @@ const MSSQLAccordion = ({ printState }: any) => {
         navigate(WLF_TO_FORM_NAVIGATE);
         setTimeout(() => {
             const data = setRecommendedConfig(msSqlInstance, fsxData);
-            LoadRecommendedConfig(dispatch, data);
+            LoadRecommendedConfig(dispatch, data, false);
         }, 10);
     };
 
