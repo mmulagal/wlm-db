@@ -38,14 +38,36 @@ BEGIN EXEC sp_dropserver @InternalInstanceName;
 EXEC sp_addserver @MachineInstanceName,
 'LOCAL';
 END"
-        Invoke-Sqlcmd -Query $query
+        Invoke-Sqlcmd -Query $query -TrustServerCertificate
     }
     Invoke-Command -Authentication Credssp -Scriptblock $renameinstance -ComputerName $NetBIOSName -Credential $DomainAdminCreds
 
-    Stop-Service SQLSERVERAGENT -Force
-    Stop-Service MSSQLSERVER -Force
-    Start-Service MSSQLSERVER
-    Start-Service SQLSERVERAGENT
+    # Get SQL server instance name
+    $SQLServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
+    $SQLInstanceName = "MSSQLSERVER"
+    $SQLInstanceNames = @()
+    ForEach ($sqlService in $sqlServiceList) {
+    $sqlServiceBinaryPath = $sqlService.PathName  -Replace "-s.*", ""
+      If (Test-Path $sqlServiceBinaryPath.Replace('"', '')) {
+        $SqlVersion = Invoke-Expression -Command "(dir $sqlServiceBinaryPath).VersionInfo"}
+        $ValidSqlVersion = $SqlVersion.ProductVersion -match '^1[3-9]'
+        If ($ValidSqlVersion -eq $true) {
+        $SQLInstanceNames +=$sqlService.Name 
+        }} 
+
+    If ($SQLInstanceNames -NotContains "MSSQLSERVER") {
+        $SQLInstanceName = $SQLInstanceNames[0]
+    }
+    
+    try {
+        # Custom ami may not have sql server agent installed
+        Stop-Service SQLSERVERAGENT -Force
+        Start-Service SQLSERVERAGENT
+    }catch{
+        Write-Host "Error while starting/stopping SQLSERVERAGENT"
+    }
+    Stop-Service $SQLInstanceName -Force
+    Start-Service $SQLInstanceName
 }
 Catch
     {
