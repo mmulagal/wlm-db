@@ -45,7 +45,8 @@ const SQLConfiguration = Type.Object({
     serviceAccountPassword: Type.String(),
     sqlServerName: Type.String(),
     sqlAmiName: Type.String(),
-    sqlCollation: Type.String()
+    sqlCollation: Type.String(),
+    isCustomAmi: Type.Optional(Type.Boolean({ default: false }))
 });
 
 // Cloud formation template creation Request and Response
