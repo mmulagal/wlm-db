@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AccordionCard, AccordionCardContent, SelectField, Typography } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -9,7 +9,12 @@ import { useDispatch } from 'react-redux';
 import { setDBVersion } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
-import { DB_VERSIONS, FORM_OPTIONS } from '../../../../utils/consts';
+import {
+    DB_VERSIONS,
+    DB_VERSIONS_EXCLUDING_2016,
+    DB_VERSIONS_EXCLUDING_2022,
+    FORM_OPTIONS
+} from '../../../../utils/consts';
 
 const DatabaseVersion = () => {
     const dispatch = useDispatch();
@@ -20,25 +25,32 @@ const DatabaseVersion = () => {
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
     const osVersion = useAppSelector(state => state.mssqlForm.operatingSystem);
+    const [versionArray, setVersionArray] = useState(DB_VERSIONS);
 
-    const versions = DB_VERSIONS;
+    useEffect(() => {
+        if (osVersion?.value === '2022') {
+            setVersionArray(DB_VERSIONS_EXCLUDING_2016);
+        } else if (osVersion?.value === '2016') {
+            setVersionArray(DB_VERSIONS_EXCLUDING_2022);
+        } else {
+            setVersionArray(DB_VERSIONS);
+        }
+    }, [osVersion]);
 
     //Function to generate the options for Select Field
     //@ts-ignore
     const generateDbVersions = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        versions?.map((val, idx: number) => {
+
+        versionArray?.map((val, idx: number) => {
             // If win 2016 is selected than dont show 2022 SQL server in dropdown list
-            if (
-                !(osVersion?.value === GENERAL.WIN_SERVER_2016_VERSION && val.value === GENERAL.SQL_SERVER_2022_VERSION)
-            ) {
-                const option = generateOptionType(val.value, val.label, '', false, '');
-                options.push(option);
-            }
+
+            const option = generateOptionType(val.value, val.label, '', false, '');
+            options.push(option);
         });
 
         return options;
-    }, [osVersion]);
+    }, [versionArray]);
 
     useEffect(() => {
         if (!isLoadConfig && !movingFromChatbot) {
