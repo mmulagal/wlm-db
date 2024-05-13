@@ -1,18 +1,23 @@
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
-import { useGetMssqlInstanceDataMutation, useGetStorageSavingsMutation } from '../../../utils/apiService';
+import {
+    useGetMssqlInstanceDataMutation,
+    useGetStorageSavingsMutation,
+    useGetViewCalculationsMutation
+} from '../../../utils/apiService';
 import {
     setSavingsCalculatorRefresh,
     setSelectedHostDetails,
     setStorageSavingsLoading,
     setStorageSavingsResponse,
+    setViewCalculationsLoading,
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
 import storageSavingsJson from '../storageSavings.json';
 import viewCalculationJson from '../viewCalculations.json';
 import store from '../../../store/store';
 import { setMssqlInstancesData } from '../../../store/workloadFactory/inventorySlice';
-import { setESInstanceData } from '../ExploreSavingsUtils';
+import { formatViewCalcData, setESInstanceData } from '../ExploreSavingsUtils';
 import { SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
 
 const SavingsCalculatorApi = () => {
@@ -32,6 +37,7 @@ const SavingsCalculatorApi = () => {
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const [getStorageSavingsApi] = useGetStorageSavingsMutation();
+    const [getViewCalculationsApi] = useGetViewCalculationsMutation();
     const [getMssqlInstanceDataApi] = useGetMssqlInstanceDataMutation();
 
     const getStorageSavingsData = async (instanceId: string) => {
@@ -60,14 +66,43 @@ const SavingsCalculatorApi = () => {
         }
     };
 
+    const getViewCalculationsData = async (instanceId: string) => {
+        const payload = {
+            snapshotFrequency: selectedSnapshotFrequency?.value,
+            clonedCopiesCount: numberOfClonedCopies,
+            cloneRefreshFrequency: selectedCloneRefresh?.value,
+            monthlyChangeRatePercentage: monthlyChangeRate
+        };
+        try {
+            const result: any = await getViewCalculationsApi({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                regionId: headerSelectedRegion?.label2,
+                instanceId: instanceId,
+                payload: payload
+            });
+            if (result && !result?.error) {
+                dispatch(
+                    setViewCalculationsResponse(
+                        formatViewCalcData(result?.data, selectedDeploymentModel, selectedHostDetails)
+                    )
+                );
+                dispatch(setViewCalculationsLoading(false));
+            } else {
+                dispatch(setViewCalculationsLoading(false));
+            }
+        } catch (error) {
+            dispatch(setViewCalculationsResponse(formatViewCalcData({}, selectedDeploymentModel, selectedHostDetails)));
+            dispatch(setViewCalculationsLoading(false));
+        }
+    };
+
     const triggerRefreshApi = () => {
         if (!isDemoMode) {
             if (selectedSnapshotFrequency && numberOfClonedCopies && selectedCloneRefresh && monthlyChangeRate) {
                 dispatch(setStorageSavingsLoading(true));
+                dispatch(setViewCalculationsLoading(true));
                 getStorageSavingsData(selectedHostDetails?.id);
-
-                // untill API is available
-                dispatch(setViewCalculationsResponse(viewCalculationJson['standalone']));
+                getViewCalculationsData(selectedHostDetails?.id);
             }
         } else {
             // Demo mode code will be removed once actual demo API starts returning data

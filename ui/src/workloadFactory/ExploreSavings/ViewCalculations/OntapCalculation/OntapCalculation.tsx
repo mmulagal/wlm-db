@@ -53,18 +53,10 @@ const TableLayout = ({ data }: any) => {
 };
 
 const OntapCalculation = () => {
-    const viewCalculationsResponse = useAppSelector(state => state.exploreSavings.viewCalculationsResponse);
-    const [viewCalculationData, setViewCalculationData] = useState(viewCalculationsResponse?.fsxn || {});
-    useEffect(() => {
-        setViewCalculationData(viewCalculationsResponse?.fsxn);
-    }, [viewCalculationsResponse]);
+    const { viewCalculationsResponse, selectedDeploymentModel } = useAppSelector(state => state.exploreSavings);
 
     const setHeader = () => {
-        return (
-            <DsTypography variant="Regular_14">
-                ${viewCalculationData?.FSxNCalculation?.priceCalculation?.totalMonthlyCost}
-            </DsTypography>
-        );
+        return <DsTypography variant="Regular_14">${viewCalculationsResponse?.fsxTotalCost}</DsTypography>;
     };
     return (
         <div className={styles.ontapCalculation}>
@@ -75,20 +67,20 @@ const OntapCalculation = () => {
             >
                 <AccordionCardContent>
                     <DsTypography className={styles.accordionContentSet}>
-                        {viewCalculation(viewCalculationData).Ec2InstanceCalculation.map(
+                        {viewCalculation(viewCalculationsResponse, selectedDeploymentModel).Ec2InstanceCalculation.map(
                             (data: { label: string; text?: string; value?: string }, index: number) => (
                                 <TableLayout key={index} data={data} />
                             )
                         )}
                         <div style={{ marginTop: '16px' }}>
-                            {viewCalculation(viewCalculationData).FSxNCalculation.map(
+                            {viewCalculation(viewCalculationsResponse, selectedDeploymentModel).FSxNCalculation.map(
                                 (data: { label: string; text?: string; value?: string }, index: number) => (
                                     <TableLayout key={index} data={data} />
                                 )
                             )}
                         </div>
                         <div style={{ marginTop: '16px' }}>
-                            {viewCalculation(viewCalculationData).cloneCalculation.map(
+                            {viewCalculation(viewCalculationsResponse, selectedDeploymentModel).cloneCalculation.map(
                                 (data: { label: string; text?: string; value?: string }, index: number) => (
                                     <TableLayout key={index} data={data} />
                                 )
