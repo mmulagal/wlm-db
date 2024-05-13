@@ -10,6 +10,20 @@
             background: none !important;
         }
     }
+
+    .statusCol {
+        display: flex;
+        gap: 16px;
+        align-items: ce;
+        .statusIcon {
+            width: 20px;
+            height: 20px;
+        }
+        svg {
+            position: relative;
+            top: 1px;
+        }
+    }
 }
 
 .setWidth {

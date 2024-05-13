@@ -759,6 +759,7 @@ export const GENERAL = {
     Database_TARGET: 'Database target',
     AGE: 'Age',
     SANDBOX_TAG: 'Tag',
+    SB_STATUS: 'Status',
     SANDBOX_SOURCE_DATABASES: 'Source databases',
     SANDBOX_STORAGE_SAVINGS: 'Storage savings',
     SANDBOX_CONSUMED_STORAGE: 'Consumed storage',
