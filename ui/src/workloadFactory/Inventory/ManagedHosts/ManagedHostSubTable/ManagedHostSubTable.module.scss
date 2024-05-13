@@ -1,0 +1,23 @@
+.managedHostSubTable {
+    margin-top: 24px;
+    width: 1389px;
+
+    padding: 40px 12px 40px 40px;
+
+    .jobMenuPopover {
+        margin-left: -13px;
+        [class*='MenuPopover_menuPointer'] {
+            background: none !important;
+        }
+    }
+
+    [class*='Table-module_horizontal-scroll'] {
+        visibility: hidden;
+    }
+
+    [class*='Table-module_row'] {
+        span {
+            background-color: var(--main-background) !important;
+        }
+    }
+}

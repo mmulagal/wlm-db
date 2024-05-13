@@ -14,6 +14,15 @@
         margin-bottom: 40px;
     }
 
+    .arrow {
+        svg {
+            &.arrow-down {
+                transform: rotate(90deg);
+                -webkit-transform: rotate(90deg);
+            }
+        }
+    }
+
     .tableScroll {
         [class*='Table-module_row'] {
             [class*='Table-module_cell']:first-child {

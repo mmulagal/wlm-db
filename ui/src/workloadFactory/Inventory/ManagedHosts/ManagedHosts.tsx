@@ -9,6 +9,7 @@ import {
 } from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
 import styles from './ManagedHosts.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
@@ -21,7 +22,7 @@ import { useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
 import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
-import { databaseTableSort } from '../../../utils/utilityFunctions';
+import { databaseTableSort, expandTableRow } from '../../../utils/utilityFunctions';
 import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
@@ -44,6 +45,7 @@ import {
     renderInstanceName,
     renderProtectionColumn
 } from '../InventoryUtils';
+import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 
 const ManagedHosts = () => {
     const dispatch = useDispatch();
@@ -140,7 +142,40 @@ const ManagedHosts = () => {
         );
     };
 
+    const ExpandedRow = ({ rowData }: any) => {
+        return (
+            <div style={{ marginTop: '30px', height: '400px', marginLeft: '40px' }}>
+                <ManagedHostSubTable />
+            </div>
+        );
+    };
+
     const DatabasesColDefs: ColumnProps[] = [
+        {
+            id: '0',
+            Header: '',
+            accessor: 'name',
+            width: '56px',
+            isSticky: true,
+            renderCell: (value: any, rowData: any, { updateRowState, rowsState }: any) => {
+                const currentRowState = rowsState[rowData.id];
+                const statusType = rowData?.status.toLowerCase();
+                return (
+                    <>
+                        <div className={`${styles.statusbar} ${styles[statusType]}`}>&nbsp;</div>
+                        <div className={styles.arrow}>
+                            <ArrowIcon
+                                className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
+                                onClick={(e: any) => {
+                                    e.stopPropagation();
+                                    expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                }}
+                            />
+                        </div>
+                    </>
+                );
+            }
+        },
         {
             id: '1',
             Header: GENERAL.DATABASE_HOST_NAME,
@@ -450,12 +485,13 @@ const ManagedHosts = () => {
     }, [resetPage]);
 
     const tableComponentProps = {
+        ExpandedRow,
         lazyLoadingText: 'Loading'
     };
 
     return (
         <>
-            <div className={styles.managedHosts}>
+            <div className={styles.managedHosts} style={{ display: 'flex', flexDirection: 'column' }}>
                 <div
                     //  @ts-ignore
                     className={
@@ -468,6 +504,22 @@ const ManagedHosts = () => {
                         //@ts-ignore
                         tableProps={tableProps}
                         pluralTitle={GENERAL.MANAGED_HOSTS_HEADING}
+                        singularTitle={GENERAL.MANAGED_HOST_HEADING}
+                    />
+                    <Table
+                        {...tableComponentProps}
+                        //@ts-ignore
+                        tableProps={tableProps}
+                        isDoubleRow={true}
+                    />
+                </div>
+
+                {/* This section is about POC */}
+                <div style={{ marginTop: '40px' }} className={styles.table}>
+                    <TableTopBar
+                        //@ts-ignore
+                        tableProps={tableProps}
+                        pluralTitle={'POC Table'}
                         singularTitle={GENERAL.MANAGED_HOST_HEADING}
                     />
                     <Table
