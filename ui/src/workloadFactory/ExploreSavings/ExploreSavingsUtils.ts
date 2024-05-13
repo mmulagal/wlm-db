@@ -306,7 +306,7 @@ export const formatViewCalcData = (
                 viewCalculationsResponse?.fsxOntapCalculation?.minFileSystemsNumForThroughputCapacity
             ),
             minFileSystemsNumForSsdIops: formatNumbers(
-                viewCalculationsResponse?.fsxOntapCalculation?.minFileSystemsNumForThroughputCapacity
+                viewCalculationsResponse?.fsxOntapCalculation?.minFileSystemsNumForSsdIops
             ),
             requiredNumOfFsxFractional: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.requiredNumOfFsxFractional
@@ -335,7 +335,7 @@ export const formatViewCalcData = (
             EBSCapacity: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.EBSCapacity),
             fsxnStoragePrice: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.fsxnStoragePrice?.price),
             fsxnCapacityPrice: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.fsxnCapacityPrice?.price),
-            maxSSDTierSize: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.maxSSDTierSize),
+            maxSsdTierSize: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.maxSsdTierSize),
             suggestedFsxnThroughputCapacity: formatCalcSize(
                 viewCalculationsResponse?.fsxOntapCalculation?.suggestedFsxnThroughputCapacity
             ),
