@@ -167,6 +167,7 @@ const createMssqlPayload = (state: any) => {
         },
         sqlConfiguration: {
             sqlDeploymentMode: state.mssqlForm.dbDeploymentModel?.value || SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE,
+            isCustomAmi: state.mssqlForm.license?.selectedLicenseType === FORM_OPTIONS.CUSTOM_AMI ? true : false,
             sqlAmiId: licenseId || '',
             sqlAmiName: licenceName || '',
             serviceAccountName: state.mssqlForm.dbCredentials?.name || '',
