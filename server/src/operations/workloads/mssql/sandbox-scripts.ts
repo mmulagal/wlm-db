@@ -703,6 +703,81 @@ const cleanUpOntapResources = (
     $responeObject | ConvertTo-Json
 `;
 
+const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string, apiEndpoint: string) => `
+    $WarningPreference = 'SilentlyContinue';
+    if ($responseObject -eq $null) {
+        $responseObject = @{
+            savedStorage = 0;
+            consumedStorage = 0;
+        }
+    }
+
+    try {
+        #Requires -Module AWS.Tools.SimpleSystemsManagement
+
+        $FSxID = '${fsxId}'
+        $FSxRegion = '${fsxRegion}'
+        $APIEndpoint = '${apiEndpoint}'
+
+
+        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+        $FSxUserName = $SsmParameter.fsx.username
+        $FSxPassword = $SsmParameter.fsx.password
+        $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
+        $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
+        
+        $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
+        $tempfileObject = New-TemporaryFile
+        $tempfile = $tempfileObject.FullName
+        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
+        $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
+        $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+        Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
+     
+        Function Invoke-ONTAPGetRequest {
+            param(
+                [Parameter(Mandatory = $true)]
+                [string]$ApiEndpoint
+            )
+
+            $Params = @{
+                "URI"     = 'https://' + $FSxHostName + $ApiEndpoint
+                "Method"  = "GET"
+                "Headers" =@{"Authorization" = "Basic $FSxCredentialsInBase64"}
+                "ContentType" = "application/json"
+            }
+     
+            return Invoke-RestMethod @Params -Certificate $regionCertificateificate
+        }
+
+        $nextToken = $null
+        
+        Do {
+            if ($null -eq $nextToken) {
+                $resp = Invoke-ONTAPGetRequest -ApiEndpoint $APIEndpoint
+            } else {
+                $resp = Invoke-ONTAPGetRequest -ApiEndpoint $nextToken
+            }
+
+            $cloneVolumes = $resp.records
+
+            foreach ($cloneVolume in $cloneVolumes) {
+                $responseObject.savedStorage += $cloneVolume.clone.split_estimate
+                $responseObject.consumedStorage += $cloneVolume.space.physical_used
+            }
+
+            $nextToken = $resp._links.next.href
+
+        } While ($null -ne $nextToken)
+    } catch {
+        $responeObject = @{
+            error = $_.Exception.Message
+        }
+    }
+    $responseObject | ConvertTo-Json -Depth 5
+
+`;
+
 export {
     GET_SANDBOX_DETAILS,
     checkDatabaseExists,
@@ -710,5 +785,6 @@ export {
     addExtendedProperties,
     createVolumeClone,
     createClonedDb,
-    cleanUpOntapResources
+    cleanUpOntapResources,
+    getStorageSavingsFromOntap
 };

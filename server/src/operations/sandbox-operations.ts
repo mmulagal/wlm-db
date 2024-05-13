@@ -20,14 +20,14 @@ import {
     getDbMappedOntapVolumes,
     cleanUpOntapResources,
     addExtendedProperties,
-    createClonedDb as createCloneDbScript
+    createClonedDb as createCloneDbScript,
+    getStorageSavingsFromOntap
 } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { checkDatabaseExists, getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { sleep, sqlResponseParsing } from '../utils/utils';
 import { SandboxInfoResponseType } from '../routes/types/database-hosts.types';
-import { restGetUtilForOntap } from './workloads/mssql/ssm-script-utils';
 import { getResources } from './database/database-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
 import { INVOKE_VIRTUAL_MOUNT } from './workloads/mssql/const';
@@ -264,12 +264,10 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                 }
 
                                 const command = [
-                                    restGetUtilForOntap(
+                                    getStorageSavingsFromOntap(
                                         fsxId,
                                         region,
-                                        '/storage/volumes',
-                                        'tiering.object_tags="cloned_by=netapp_wlmdb"',
-                                        'fields=space.used_by_afs,space.physical_used,clone.split_estimate'
+                                        '/api/storage/volumes?tiering.object_tags=cloned_by=netapp_wlmdb&fields=space.used_by_afs,space.physical_used,clone.split_estimate'
                                     )
                                 ];
 
@@ -283,25 +281,14 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                     accountId
                                 );
 
-                                const cleanResponse = response?.replaceAll('\r\n', '');
-                                const jsonResponse = JSON.parse(cleanResponse!);
-
-                                jsonResponse?.records?.forEach(
-                                    (record: {
-                                        clone?: { split_estimate: number };
-                                        space: { physical_used: number; used_by_afs: number };
-                                    }) => {
-                                        const {
-                                            clone: { split_estimate: splitEstimate } = { split_estimate: 0 },
-                                            space: { physical_used: physicalUsed }
-                                        } = record;
-                                        savingsData.consumedStorage += physicalUsed;
-                                        savingsData.savedStorage += splitEstimate;
-                                        savingsData.sandboxSavingsPercentage =
-                                            (savingsData.savedStorage * 100) /
-                                            (savingsData.consumedStorage + savingsData.savedStorage);
-                                    }
-                                );
+                                if (response) {
+                                    const { savedStorage, consumedStorage } = sqlResponseParsing(response);
+                                    savingsData.consumedStorage += consumedStorage;
+                                    savingsData.savedStorage += savedStorage;
+                                    savingsData.sandboxSavingsPercentage =
+                                        (savingsData.savedStorage * 100) /
+                                        (savingsData.consumedStorage + savingsData.savedStorage);
+                                }
                                 break;
                             }
                         } catch (e) {

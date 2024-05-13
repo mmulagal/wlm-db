@@ -39,7 +39,8 @@ import {
     getDbMappedOntapVolumes,
     createClonedDb,
     addExtendedProperties,
-    cleanUpOntapResources
+    cleanUpOntapResources,
+    getStorageSavingsFromOntap
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
 import { SERVER_DETAILS } from '../../../../src/operations/workloads/mssql/queries';
@@ -292,12 +293,10 @@ const getCollationDetails = {
 
 const getOntapSandboxVolumeSavingsParams = {
     commands: [
-        restGetUtilForOntap(
+        getStorageSavingsFromOntap(
             'test-fsx',
             'us-east-1',
-            '/storage/volumes',
-            'tiering.object_tags="cloned_by=netapp_wlmdb"',
-            'fields=space.used_by_afs,space.physical_used,clone.split_estimate'
+            '/api/storage/volumes?tiering.object_tags=cloned_by=netapp_wlmdb&fields=space.used_by_afs,space.physical_used,clone.split_estimate'
         )
     ]
 };
