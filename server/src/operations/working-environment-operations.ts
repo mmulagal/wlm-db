@@ -58,7 +58,7 @@ async function getMSSQLEnvData(resourceDetails: any, resourceId: string) {
         });
         activeNodeInstanceIp =
             activeInstanceDetails?.Reservations?.[0]?.Instances?.[0]?.NetworkInterfaces?.[0]?.PrivateIpAddress;
-        const dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId!);
+        const dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId!, '.');
         const { resource_name: serverName, cloud_provider_name: location } = resourceDetails || {};
         const deploymentState = 'SUCCESS';
         return {
