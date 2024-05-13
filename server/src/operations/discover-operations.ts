@@ -519,7 +519,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         ...(failureInfo && { failureInfo }),
                         windowsAuthentication,
                         sqlServerAuthentication,
-                        storage: compact(uniqBy(storageTypes, 'id')),
+                        storage: compact(uniqBy(storageTypes, v => [v.id, v.svmId, v.protocol].join())),
                         deploymentTypes: compact(
                             uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones }))
                         ),
