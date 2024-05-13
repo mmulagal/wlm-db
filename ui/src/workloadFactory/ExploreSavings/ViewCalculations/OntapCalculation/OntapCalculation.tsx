@@ -12,7 +12,6 @@ const TableLayout = ({ data }: any) => {
     const styleHandler = (data: any) => {
         if (
             data.label === 'Total monthly cost' ||
-            data.label === 'Total snapshot monthly cost' ||
             data.label === 'Amazon Elastic Block Storage (EBS) total cost (monthly)'
         ) {
             return {
