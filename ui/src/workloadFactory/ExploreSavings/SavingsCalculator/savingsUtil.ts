@@ -460,6 +460,89 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 text: `Additional billed cost for SSD IOPS ($${viewCalculation.fsxOntapCalculation.additionalBilledCostForSsdIops}) + Total monthly cost for FSx for NetApp ONTAP file server throughput capacity ($${viewCalculation.fsxOntapCalculation.totalMonthlyFsxnThroughputCapacityCost})`
             }
         ],
+        SnapshotCalculation: [
+            {
+                label: 'Snapshot',
+                mainHeading: true
+            },
+            {
+                label: 'Unit conversions'
+            },
+            {
+                label: 'Desired storage capacity',
+                value: `${viewCalculation.fsxOntapSnapshotCalculation.desiredStorageCapacity}`,
+                text: ''
+            },
+            {
+                label: 'Percentage of data on SSD storage',
+                value: `${viewCalculation.fsxOntapSnapshotCalculation.percentageOfDataOnSsdStorage}%`,
+                text: ''
+            },
+            {
+                label: 'Savings from compression & deduplication',
+                value: `${viewCalculation.fsxOntapSnapshotCalculation.savingsFromCompressionAndDeduplication}%`,
+                text: ''
+            },
+            {
+                label: 'Pricing calculations'
+            },
+            {
+                label: 'Storage savings from compression & deduplication ',
+                value: `${viewCalculation.fsxOntapSnapshotCalculation.storageSavingsFromCompressionAndDeduplication}`,
+                text: `Desired storage capacity (${viewCalculation.fsxOntapSnapshotCalculation.desiredStorageCapacity}) x Savings from compression & deduplication (${viewCalculation.fsxOntapSnapshotCalculation.savingsFromCompressionAndDeduplication}%)`
+            },
+            {
+                label: 'Effective storage capacity for FSx for ONTAP',
+                value: `${viewCalculation.fsxOntapSnapshotCalculation.effectiveFsxnStorageCapacity}`,
+                text: `Desired storage capacity (${viewCalculation.fsxOntapSnapshotCalculation.desiredStorageCapacity})  - Storage savings from compression & deduplication (${viewCalculation.fsxOntapSnapshotCalculation.storageSavingsFromCompressionAndDeduplication})`
+            },
+            {
+                label: 'SSD storage GIB per month',
+                value: `${viewCalculation.fsxOntapSnapshotCalculation.ssdStoragePerMonth}`,
+                text: `Effective storage capacity for FSx for ONTAP (${viewCalculation.fsxOntapSnapshotCalculation.effectiveFsxnStorageCapacity})  x Percentage of data on SSD storage (${viewCalculation.fsxOntapSnapshotCalculation.percentageOfDataOnSsdStorage}%) `
+            },
+            {
+                label: 'SSD monthly cost ',
+                value: `$${viewCalculation.fsxOntapSnapshotCalculation.ssdMonthlyCost}`,
+                text: `SSD storage GiB per month (${viewCalculation.fsxOntapSnapshotCalculation.ssdStoragePerMonth}) x FSx for ONTAP SSD price ($${viewCalculation.fsxOntapSnapshotCalculation.fsxnSsdPrice})`
+            },
+            {
+                label: 'Total monthly cost for FSx for NetApp ONTAP file server - SSD storage capacity',
+                value: `$${viewCalculation.fsxOntapSnapshotCalculation.totalMonthlyCostForFsxSsd}`,
+                text: ''
+            },
+            {
+                label: 'Ratio after savings from compression & deduplication factor',
+                value: `${viewCalculation.fsxOntapSnapshotCalculation.ratioAfterSavings}%`,
+                text: `100% - Savings from compression and deduplication (${viewCalculation.fsxOntapSnapshotCalculation.savingsFromCompressionAndDeduplication}%)`
+            },
+            {
+                label: 'Data on capacity pool storage factor',
+                value: `${viewCalculation.fsxOntapSnapshotCalculation.dataOnCapacityPoolStorageFactor}%`,
+                text: `100% - Percentage of data on SSD storage (${viewCalculation.fsxOntapSnapshotCalculation.percentageOfDataOnSsdStorage}%)`
+            },
+            {
+                label: 'Capacity pool storage capacity',
+                value: `${viewCalculation.fsxOntapSnapshotCalculation.capacityPoolStorage}`,
+                text: `Desired storage capacity (${viewCalculation.fsxOntapSnapshotCalculation.desiredStorageCapacity}) x Ratio after savings from compression & deduplication factor (${viewCalculation.fsxOntapSnapshotCalculation.ratioAfterSavings}%) x Data on capacity pool storage factor (${viewCalculation.fsxOntapSnapshotCalculation.dataOnCapacityPoolStorageFactor}%)`
+            },
+            {
+                label: 'Capacity monthly cost',
+                value: `$${viewCalculation.fsxOntapSnapshotCalculation.capacityMonthlyCost}`,
+                text: `Capacity pool storage capacity (${viewCalculation.fsxOntapSnapshotCalculation.capacityPoolStorage}) x FSx for ONTAP capacity price ($${viewCalculation.fsxOntapSnapshotCalculation.fsxnCapacityPrice})`
+            },
+            {
+                label: 'Total monthly cost for FSx for NetApp ONTAP file server - Capacity pool storage capacity',
+                value: `$${viewCalculation.fsxOntapSnapshotCalculation.totalMonthlyCostForCapacity}`,
+                text: ` `
+            },
+            {
+                label: 'Total snapshot monthly cost',
+                value: `$${viewCalculation.fsxSnapshotTotalCost}`,
+                secondaryHeading: true,
+                text: `Total monthly cost for FSx for NetApp ONTAP file server capacity pool storage capacity ($${viewCalculation.fsxOntapSnapshotCalculation.totalMonthlyCostForCapacity}) + Total monthly cost for FSx for NetApp ONTAP file server SSD storage capacity ($${viewCalculation.fsxOntapSnapshotCalculation.totalMonthlyCostForFsxSsd})`
+            }
+        ],
         cloneCalculation: [
             {
                 label: 'Clone calculation',
@@ -714,46 +797,52 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                 label: 'EBS throughput cost',
                 value: `$${viewCalculation.ebsCalculation.ebsThroughputCost}`,
                 text: ``
+            }
+        ],
+        SnapshotCalculation: [
+            {
+                label: 'Snapshot',
+                mainHeading: true
             },
             {
                 label: 'Total snapshots',
                 value: `${viewCalculation.ebsCalculation.totalSnapshots}`,
-                text: ` `
+                text: ''
             },
             {
                 label: 'Initial snapshot cost',
                 value: `$${viewCalculation.ebsCalculation.initialSnapshotCost}`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Monthly cost of each snapshot',
                 value: `$${viewCalculation.ebsCalculation.monthlyCostPerSnapshot}`,
-                text: ``
+                text: ''
             },
             {
                 label: 'Discount for partial storage month',
                 value: `$${viewCalculation.ebsCalculation.discountForPartialStorageMonth}`,
-                text: `Monthly cost of each snapshot ($${viewCalculation.ebsCalculation.monthlyCostPerSnapshot}) x discount for partial storage month (50%)`
+                text: `Monthly cost of each snapshot ($${viewCalculation.ebsCalculation.monthlyCostPerSnapshot}) * Discount for partial storage month (50%)`
             },
             {
                 label: 'Incremental snapshot cost',
                 value: `$${viewCalculation.ebsCalculation.incrementalSnapshotCost}`,
-                text: `(Monthly cost of each snapshot ($${viewCalculation.ebsCalculation.monthlyCostPerSnapshot}) - discount for partial storage month ($${viewCalculation.ebsCalculation.discountForPartialStorageMonth})) x Total snapshots (${viewCalculation.ebsCalculation.totalSnapshots}) `
+                text: `(Monthly cost of each snapshot ($${viewCalculation.ebsCalculation.monthlyCostPerSnapshot}) - Discount for partial storage month ($${viewCalculation.ebsCalculation.discountForPartialStorageMonth})) * Total snapshots (${viewCalculation.ebsCalculation.totalSnapshots})`
             },
             {
                 label: 'Total snapshot cost',
                 value: `$${viewCalculation.ebsCalculation.totalSnapshotCost}`,
-                text: `Initial snapshot cost ($${viewCalculation.ebsCalculation.initialSnapshotCost}) + Incremental snapshot cost ($${viewCalculation.ebsCalculation.incrementalSnapshotCost}) `
+                text: `Initial snapshot cost ($${viewCalculation.ebsCalculation.initialSnapshotCost}) + Incremental snapshot cost ($${viewCalculation.ebsCalculation.incrementalSnapshotCost})`
             },
             {
                 label: 'Total EBS snapshot cost',
                 value: `$${viewCalculation.ebsCalculation.totalEbsSnapshotCost}`,
-                text: `Total snapshot cost ($${viewCalculation.ebsCalculation.totalSnapshotCost})  x instance months (${viewCalculation.ebsCalculation.ebsInstanceMonth} months)`
+                text: `Total snapshot cost ($${viewCalculation.ebsCalculation.totalSnapshotCost}) * Instance months (${viewCalculation.ebsCalculation.ebsInstanceMonth})`
             },
             {
                 label: 'EBS snapshot cost',
                 value: `$${viewCalculation.ebsCalculation.ebsSnapshotCost}`,
-                text: ``
+                text: ''
             }
         ],
         cloneCalculation: [

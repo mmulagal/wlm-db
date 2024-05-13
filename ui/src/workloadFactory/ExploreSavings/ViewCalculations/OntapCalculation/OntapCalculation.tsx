@@ -12,7 +12,6 @@ const TableLayout = ({ data }: any) => {
     const styleHandler = (data: any) => {
         if (
             data.label === 'Total monthly cost' ||
-            data.label === 'Total snapshot monthly cost' ||
             data.label === 'Amazon Elastic Block Storage (EBS) total cost (monthly)'
         ) {
             return {
@@ -74,6 +73,13 @@ const OntapCalculation = () => {
                         )}
                         <div style={{ marginTop: '16px' }}>
                             {viewCalculation(viewCalculationsResponse, selectedDeploymentModel).FSxNCalculation.map(
+                                (data: { label: string; text?: string; value?: string }, index: number) => (
+                                    <TableLayout key={index} data={data} />
+                                )
+                            )}
+                        </div>
+                        <div style={{ marginTop: '16px' }}>
+                            {viewCalculation(viewCalculationsResponse, selectedDeploymentModel).SnapshotCalculation.map(
                                 (data: { label: string; text?: string; value?: string }, index: number) => (
                                     <TableLayout key={index} data={data} />
                                 )
