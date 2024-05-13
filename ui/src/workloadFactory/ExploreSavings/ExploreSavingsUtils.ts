@@ -198,7 +198,7 @@ export const formatNumbers = (val: any) => {
     if (val) {
         return Number(val).toLocaleString();
     } else {
-        return 0;
+        return "0";
     }
 };
 
