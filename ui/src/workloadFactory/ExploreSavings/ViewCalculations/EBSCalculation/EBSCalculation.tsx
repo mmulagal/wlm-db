@@ -87,6 +87,17 @@ const EBSCalculation = () => {
                             {viewCalculationForEBS(
                                 viewCalculationsResponse,
                                 selectedDeploymentModel
+                            ).SnapshotCalculation.map(
+                                (data: { label: string; text?: string; value?: string }, index: number) => (
+                                    <TableLayout key={index} data={data} />
+                                )
+                            )}
+                        </div>
+
+                        <div style={{ marginTop: '16px' }}>
+                            {viewCalculationForEBS(
+                                viewCalculationsResponse,
+                                selectedDeploymentModel
                             ).cloneCalculation.map(
                                 (data: { label: string; text?: string; value?: string }, index: number) => (
                                     <TableLayout key={index} data={data} />
