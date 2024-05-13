@@ -50,18 +50,10 @@ const TableLayout = ({ data }: any) => {
 };
 
 const EBSCalculation = () => {
-    const viewCalculationsResponse = useAppSelector(state => state.exploreSavings.viewCalculationsResponse);
-    const [viewCalculationData, setViewCalculationData] = useState(viewCalculationsResponse?.ebs || {});
-    useEffect(() => {
-        setViewCalculationData(viewCalculationsResponse?.ebs);
-    }, [viewCalculationsResponse]);
+    const { viewCalculationsResponse, selectedDeploymentModel } = useAppSelector(state => state.exploreSavings);
 
     const setHeader = () => {
-        return (
-            <DsTypography variant="Regular_14">
-                ${viewCalculationData?.EBSCalculation?.priceCalculation?.amazonElasticBlock}
-            </DsTypography>
-        );
+        return <DsTypography variant="Regular_14">${viewCalculationsResponse?.ebsTotalCost}</DsTypography>;
     };
     return (
         <div className={styles.ebsCalculation}>
@@ -72,13 +64,19 @@ const EBSCalculation = () => {
             >
                 <AccordionCardContent>
                     <DsTypography className={styles.accordionContentSet}>
-                        {viewCalculationForEBS(viewCalculationData).Ec2InstanceCalculation.map(
+                        {viewCalculationForEBS(
+                            viewCalculationsResponse,
+                            selectedDeploymentModel
+                        ).Ec2InstanceCalculation.map(
                             (data: { label: string; text?: string; value?: string }, index: number) => (
                                 <TableLayout key={index} data={data} />
                             )
                         )}
                         <div style={{ marginTop: '16px' }}>
-                            {viewCalculationForEBS(viewCalculationData).EBSCalculation.map(
+                            {viewCalculationForEBS(
+                                viewCalculationsResponse,
+                                selectedDeploymentModel
+                            ).EBSCalculation.map(
                                 (data: { label: string; text?: string; value?: string }, index: number) => (
                                     <TableLayout key={index} data={data} />
                                 )
@@ -86,7 +84,10 @@ const EBSCalculation = () => {
                         </div>
 
                         <div style={{ marginTop: '16px' }}>
-                            {viewCalculationForEBS(viewCalculationData).cloneCalculation.map(
+                            {viewCalculationForEBS(
+                                viewCalculationsResponse,
+                                selectedDeploymentModel
+                            ).cloneCalculation.map(
                                 (data: { label: string; text?: string; value?: string }, index: number) => (
                                     <TableLayout key={index} data={data} />
                                 )

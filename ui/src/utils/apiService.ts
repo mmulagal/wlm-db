@@ -719,6 +719,13 @@ export const exploreSavingsApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getViewCalculations: builder.mutation({
+                query: ({ credentialId, regionId, instanceId, payload }) => ({
+                    url: `credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings/calculations`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -798,4 +805,4 @@ export const {
 
 export const { useGetSandboxListQuery, useGetSandboxSavingsQuery, useCreateSandboxMutation } = sandboxApi;
 
-export const { useGetStorageSavingsMutation } = exploreSavingsApi;
+export const { useGetStorageSavingsMutation, useGetViewCalculationsMutation } = exploreSavingsApi;
