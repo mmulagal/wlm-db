@@ -703,7 +703,7 @@ const cleanUpOntapResources = (
     $responeObject | ConvertTo-Json
 `;
 
-const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string, apiEndpoint: string) => `
+const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string) => `
     $WarningPreference = 'SilentlyContinue';
     if ($responseObject -eq $null) {
         $responseObject = @{
@@ -717,7 +717,6 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string, apiEndpoin
 
         $FSxID = '${fsxId}'
         $FSxRegion = '${fsxRegion}'
-        $APIEndpoint = '${apiEndpoint}'
 
 
         $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
@@ -754,7 +753,7 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string, apiEndpoin
         
         Do {
             if ($null -eq $nextToken) {
-                $resp = Invoke-ONTAPGetRequest -ApiEndpoint $APIEndpoint
+                $resp = Invoke-ONTAPGetRequest -ApiEndpoint '/api/storage/volumes?tiering.object_tags=cloned_by=netapp_wlmdb&fields=space.used_by_afs,space.physical_used,clone.split_estimate'
             } else {
                 $resp = Invoke-ONTAPGetRequest -ApiEndpoint $nextToken
             }

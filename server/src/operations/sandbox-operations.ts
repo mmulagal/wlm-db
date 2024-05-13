@@ -263,13 +263,7 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                     region = 'us-east-1';
                                 }
 
-                                const command = [
-                                    getStorageSavingsFromOntap(
-                                        fsxId,
-                                        region,
-                                        '/api/storage/volumes?tiering.object_tags=cloned_by=netapp_wlmdb&fields=space.used_by_afs,space.physical_used,clone.split_estimate'
-                                    )
-                                ];
+                                const command = [getStorageSavingsFromOntap(fsxId, region)];
 
                                 const response = await callSsmExecution(
                                     credentialsId,
