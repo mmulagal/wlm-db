@@ -215,7 +215,7 @@ try {
         $tempndffile ="C:\Program Files\Microsoft SQL Server\MSSQL*.MSSQLSERVER\MSSQL\DATA\tempdb_mssql*.ndf"
         $temp2DevFile = "$Using:tempPath\tempdb_mssql_2.ndf"
         if (Test-Path -Path $tempndffile) {
-            Invoke-Sqlcmd -Query "USE master; ALTER DATABASE tempdb MODIFY FILE (NAME = temp2, FILENAME = $temp2DevFile);"
+            Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "USE master; ALTER DATABASE tempdb MODIFY FILE (NAME = temp2, FILENAME = $temp2DevFile);"
             Move-Item-Safely "C:\Program Files\Microsoft SQL Server\MSSQL*.MSSQLSERVER\MSSQL\DATA\tempdb_mssql*.ndf" $temp2DevFile
         }
 
