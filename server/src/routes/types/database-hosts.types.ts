@@ -254,7 +254,8 @@ const CreateDatabseRequestBody = Type.Object({
     databaseName: Type.String({ minLength: 1, maxLength: 123 }),
     dataFileConfig: FileConfig,
     logFileConfig: FileConfig,
-    collation: Type.String()
+    collation: Type.String(),
+    isVirtualMountSelected: Type.Optional(Type.Boolean())
 });
 
 const DatabasesCreateResponse = Type.Object({
