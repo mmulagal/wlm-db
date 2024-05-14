@@ -348,6 +348,11 @@ const SandboxInfoResponseBody = Type.Object({
 type SandboxInfoResponseBodyType = Static<typeof SandboxInfoResponseBody>;
 type SandboxInfoResponseType = Static<typeof SandboxInfoResponse>;
 
+const SandboxConnectionStringParams = Type.Composite([
+    DatabaseHostSummaryParams,
+    Type.Object({ sandboxName: Type.String() })
+]);
+
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -408,5 +413,6 @@ export {
     SandboxInfoResponse,
     SandboxInfoResponseType,
     SandboxInfoResponseBody,
-    SandboxInfoResponseBodyType
+    SandboxInfoResponseBodyType,
+    SandboxConnectionStringParams
 };
