@@ -148,7 +148,7 @@ export const calculatedFSXData = (fsxData: any) => {
         },
         {
             label: 'Provisioned SSD IOPS',
-            value: fsxData?.ssdIop ? fsxData?.ssdIop + ' IOPS' : GENERAL.NOT_AVAILABLE,
+            value: fsxData?.ssdIop ? fsxData?.ssdIop : GENERAL.NOT_AVAILABLE,
             text: 'For each GiB of SSD provisioned storage, Amazon FSx automatically provisions 3 SSD IOPS for the file system.'
         },
         {
