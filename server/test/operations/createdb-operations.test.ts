@@ -101,7 +101,8 @@ describe('Create database operations', () => {
             createDBRequest.databaseName,
             createDBRequest.dataFileConfig,
             createDBRequest.logFileConfig,
-            'SQL_Latin1_General_CP1_CI_AS'
+            'SQL_Latin1_General_CP1_CI_AS',
+            false
         );
         expect(resp.jobId).toBeDefined();
     });
@@ -161,7 +162,8 @@ describe('Create database operations', () => {
             reqData.fsxDataVolumeName,
             reqData.fsxLogVolumeName,
             reqData.dataSerial,
-            reqData.logSerial
+            reqData.logSerial,
+            'false'
         );
 
         expect(resp.Status).toBe('Complete');

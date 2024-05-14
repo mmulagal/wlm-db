@@ -311,7 +311,8 @@ async function deployDatabase(
     databaseName: string,
     dataFileConfig: FileConfigType,
     logFileConfig: FileConfigType,
-    collation: string
+    collation: string,
+    isVirtualMountSelected: boolean = false
 ): Promise<DatabaseCreateResponseType> {
     logger.info('Deploy new database', {
         accountId,
@@ -321,7 +322,8 @@ async function deployDatabase(
         databaseName,
         dataFileConfig,
         logFileConfig,
-        collation
+        collation,
+        isVirtualMountSelected
     });
 
     const {
@@ -388,6 +390,7 @@ async function deployDatabase(
         fsxSvmId,
         jobId,
         resourceId,
+        isVirtualMountSelected,
         node2InstanceId,
         metadata as Metadata
     );
@@ -408,6 +411,7 @@ async function invokeSSMForDatabaseDeployment(
     fsxSvmId: string | undefined,
     parentJobId: string,
     resourceId: string,
+    isVirtualMountSelected: boolean,
     node2InstanceId?: string,
     metaData?: Metadata
 ) {
@@ -424,6 +428,7 @@ async function invokeSSMForDatabaseDeployment(
         fsxSvmId,
         fileSystemId,
         resourceId,
+        isVirtualMountSelected,
         isClustered,
         parentJobId
     );
@@ -436,8 +441,19 @@ async function invokeSSMForDatabaseDeployment(
     const dataVolumeSize = dataFileConfig.volumeSize * 1074; // converting from GiB to MBs
     const logVolumeSize = logFileConfig.volumeSize * 1074; // converting from GiB to MBs
 
-    const dataDrivePath = `${dataDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\data\\${dataFileName}`;
-    const logDrivePath = `${logDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\log\\${logFileName}`;
+    let dataDrivePath;
+    let logDrivePath;
+
+    // constructing the path for data and log file based on virtual mount selected or not
+    const virtualDataFileName = dataFileName.split('.')[0];
+    const virtualLogFileName = logFileName.split('.')[0];
+    if (isVirtualMountSelected) {
+        dataDrivePath = `${dataDrive}:${virtualDataFileName}\\${DatabaseTypes.MS_SQL_SERVER}\\data\\${dataFileName}`;
+        logDrivePath = `${logDrive}:${virtualLogFileName}\\${DatabaseTypes.MS_SQL_SERVER}\\log\\${logFileName}`;
+    } else {
+        dataDrivePath = `${dataDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\data\\${dataFileName}`;
+        logDrivePath = `${logDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\log\\${logFileName}`;
+    }
 
     let sqlVirtualMachineName;
     let activeNodeId;
@@ -476,7 +492,8 @@ async function invokeSSMForDatabaseDeployment(
             sqlServerName as string,
             parentJobId,
             activeNodeInstanceId as string,
-            collation
+            collation,
+            isVirtualMountSelected
         );
 
         const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
@@ -491,7 +508,7 @@ async function invokeSSMForDatabaseDeployment(
         sqlVirtualMachineName = sqlVMName;
         activeNodeId = activeNodeInstanceId;
 
-        if (isDataDriveExists && isLogDriveExists) {
+        if (isDataDriveExists && isLogDriveExists && !isVirtualMountSelected) {
             // When the user selected drive as existing, we will only execute the create database script on the drive
             await createDatabase(
                 accountId,
@@ -560,8 +577,8 @@ async function invokeSSMForDatabaseDeployment(
                 sqlVMName,
                 dataVolumeSize,
                 logVolumeSize,
-                (!isLogDriveExists).toString(),
-                (!isDataDriveExists).toString(),
+                isVirtualMountSelected ? isLogDriveExists.toString() : (!isLogDriveExists).toString(),
+                isVirtualMountSelected ? isDataDriveExists.toString() : (!isDataDriveExists).toString(),
                 standbyIqn
             );
             // its required to sleep for 45 seconds so that initialization script will go through.. the ontap LUN configure can take time depending on busy system for the multiple API calls, and the disk initialize may take time to discover the created LUNs
@@ -580,13 +597,14 @@ async function invokeSSMForDatabaseDeployment(
                 isClustered,
                 dataDrive,
                 logDrive,
-                (!isLogDriveExists).toString(),
-                (!isDataDriveExists).toString(),
+                isVirtualMountSelected ? isLogDriveExists.toString() : (!isLogDriveExists).toString(),
+                isVirtualMountSelected ? isDataDriveExists.toString() : (!isDataDriveExists).toString(),
                 iGroup,
                 fsxDataVolumeName,
                 fsxLogVolumeName,
                 dataSerial,
-                LogSerial
+                LogSerial,
+                isVirtualMountSelected.toString()
             );
 
             await createDatabase(
@@ -889,7 +907,8 @@ async function newDBInitialization(
     fsxDataVolumeName: string,
     fsxLogVolumeName: string,
     dataSerial: string,
-    logSerial: string
+    logSerial: string,
+    isVirtualMountSelected: string
 ) {
     logger.info('Initialising new database', {
         accountId,
@@ -908,7 +927,8 @@ async function newDBInitialization(
         fsxDataVolumeName,
         fsxLogVolumeName,
         dataSerial,
-        logSerial
+        logSerial,
+        isVirtualMountSelected
     });
 
     let dbInitializecommands;
@@ -918,7 +938,7 @@ async function newDBInitialization(
         ];
     } else {
         dbInitializecommands = [
-            `${INITIALIZEDBSCRIPT} -DBName ${databaseName}  -IsClustered ${isClustered}  -DataDrive ${dataDrive}  -LogDrive ${logDrive} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists} -DataSerial '${dataSerial}' -LogSerial '${logSerial}'`
+            `${INITIALIZEDBSCRIPT} -DBName ${databaseName}  -IsClustered ${isClustered}  -DataDrive ${dataDrive}  -LogDrive ${logDrive} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists} -DataSerial '${dataSerial}' -LogSerial '${logSerial}' -Virtualmount '${isVirtualMountSelected}'`
         ];
     }
 
@@ -1086,7 +1106,8 @@ async function validateParams(
     sqlServerName: string,
     parentJobId: string,
     activeNodeInstanceId: string,
-    collation: string
+    collation: string,
+    isVirtualMountSelected: boolean
 ) {
     logger.info('validating parameters for database user creation', {
         accountId,
@@ -1099,7 +1120,8 @@ async function validateParams(
         fileSystemId,
         sqlServerName,
         parentJobId,
-        collation
+        collation,
+        isVirtualMountSelected
     });
 
     const {
@@ -1150,6 +1172,10 @@ async function validateParams(
 
         if (!collationExists) {
             throw createError(412, `Selected collation ${collation} is not available`);
+        }
+
+        if (isVirtualMountSelected && (!isDataDriveExists || !isLogDriveExists)) {
+            throw createError(412, 'Virtual Mount should not be selected for new drives');
         }
 
         const { existingDriveInfo, availableDriveLetters } = await getDriveInfo(
