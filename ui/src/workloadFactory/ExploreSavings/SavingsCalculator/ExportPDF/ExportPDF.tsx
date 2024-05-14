@@ -11,7 +11,10 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
 
 const ExportPDF = ({ printDocument }: any) => {
-    const { storageSavingsLoading, selectedHostDetails } = useAppSelector(state => state.exploreSavings);
+    const { storageSavingsLoading, selectedHostDetails, viewCalculationsLoading } = useAppSelector(
+        state => state.exploreSavings
+    );
+
     const dispatch = useDispatch();
 
     const [loading, setLoading] = useState(false);
@@ -40,7 +43,13 @@ const ExportPDF = ({ printDocument }: any) => {
                 </DsTypography>
             </div>
 
-            <div className={loading ? `${styles.insideContainer} ${styles.disabled}` : styles.insideContainer}>
+            <div
+                className={
+                    loading || viewCalculationsLoading
+                        ? `${styles.insideContainer} ${styles.disabled}`
+                        : styles.insideContainer
+                }
+            >
                 <div>
                     <Calculate />
                 </div>

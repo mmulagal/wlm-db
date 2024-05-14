@@ -33,6 +33,7 @@ import { registerJob, updateJobDetails } from './database/job-operations';
 import { INVOKE_VIRTUAL_MOUNT } from './workloads/mssql/const';
 import { updateSandboxDBIntoResourceData, updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
+import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 
 const logger = getLogger();
 
@@ -344,6 +345,7 @@ interface VolumeLunMapping {
 
 interface HostAndDbInfo extends DbInfo {
     resourceName: string;
+    instanceName: string;
     fsxId: string;
     svm: string;
     activeNodeInstaceId: string;
@@ -369,10 +371,6 @@ async function createSandbox(
     tag: string
 ) {
     logger.info({ source, dest });
-
-    if (source.host !== dest.host || source.instance !== dest.instance) {
-        throw createError(400, 'Creating sandbox for alternate host or instance is not supported!');
-    }
 
     let [[srcResourceDetail], [destResourceDetail]] = await Promise.all([
         listResources(accountId, source.host),
@@ -457,7 +455,8 @@ async function createSandbox(
             svm: sourceSvm!,
             fsxId: srcResourceDetail.co_relation_id!,
             activeNodeInstaceId: srcStatus.activeNodeInstanceId!,
-            metadata: srcResourceDetail.metadata as unknown as Metadata
+            metadata: srcResourceDetail.metadata as unknown as Metadata,
+            instanceName: '.'
         },
         {
             ...dest,
@@ -465,7 +464,8 @@ async function createSandbox(
             svm: destSvm!,
             fsxId: destResourceDetail.co_relation_id!,
             activeNodeInstaceId: destStatus.activeNodeInstanceId!,
-            metadata: destResourceDetail.metadata as unknown as Metadata
+            metadata: destResourceDetail.metadata as unknown as Metadata,
+            instanceName: '.'
         },
         tag
     );
@@ -583,7 +583,8 @@ async function validateCloneParams(
             region,
             destDetails.host,
             destDetails.database,
-            destDetails.activeNodeInstaceId
+            destDetails.activeNodeInstaceId,
+            destDetails.instanceName
         );
         status = JOBSTATUS.COMPLETED;
     } catch (e: any) {
@@ -693,6 +694,15 @@ async function createVolumeClone(
     });
 
     try {
+        const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
+            credentialsId,
+            region,
+            destDetails.fsxId
+        );
+
+        const svmList = fsxSVMs?.filter(svm => svm.StorageVirtualMachineId === destDetails.svm) || [];
+        const sqlVMName = svmList[0]?.Name;
+
         let command = [
             CreateVolumeCloneScript(
                 srcDetails.fsxId,
@@ -703,7 +713,7 @@ async function createVolumeClone(
                 mapping.log.volumeName,
                 mapping.log.lunPath,
                 destDetails.host,
-                mapping.svm
+                sqlVMName || mapping.svm
             )
         ];
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {

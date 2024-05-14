@@ -13,8 +13,10 @@ import RebaseLineContent from './RebaseLineContent/RebaseLineContent';
 import RebaseSplitContent from './RebaseSplitContent/RebaseSplitContent';
 import RebaseRollbackContent from './RebaseRollbackContent/RebaseRollbackContent';
 import ViewDialog from '../../../common/ViewDialog/ViewDialog';
+import { ReactComponent as Success } from '../../../assets/success.svg';
 import { useDispatch } from 'react-redux';
 import { setAggregatedSandboxList } from '../../../store/workloadFactory/sandboxSlice';
+import SmallLoader from '../../../common/SmallLoader/SmallLoader';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
@@ -96,7 +98,7 @@ const SandboxTable = () => {
                 callback={() => {
                     let output = data.map((obj: any) => {
                         if (obj.name === rowData.name) {
-                            return { ...obj, cellProps: { isDisabled: true } };
+                            return { ...obj, cellProps: { isDisabled: true }, status: 'refresh' };
                         }
                         return obj;
                     });
@@ -105,7 +107,7 @@ const SandboxTable = () => {
                     setTimeout(() => {
                         let output = data.map((obj: any) => {
                             if (obj.name === rowData.name) {
-                                return { ...obj, cellProps: { isDisabled: false } };
+                                return { ...obj, cellProps: { isDisabled: false }, status: 'active' };
                             }
                             return obj;
                         });
@@ -275,7 +277,7 @@ const SandboxTable = () => {
             id: '1',
             isSortable: true,
             isSticky: true,
-            width: '220px'
+            width: '200px'
         },
         {
             Header: GENERAL.SANDBOX_DB_HOST_NAME,
@@ -288,14 +290,14 @@ const SandboxTable = () => {
             Header: GENERAL.SANDBOX_SOURCE_DB_NAME,
             accessor: 'source',
             id: '3',
-            width: '212px',
+            width: '220px',
             isSortable: true
         },
         {
             Header: GENERAL.SANDBOX_SOURCE_DB_HOST_NAME,
             accessor: 'sourceHost',
             id: '4',
-            width: '240px',
+            width: '256px',
             filterOptions: 'auto'
         },
         {
@@ -309,7 +311,7 @@ const SandboxTable = () => {
             Header: GENERAL.AGE,
             accessor: 'age',
             id: '6',
-            width: '220px',
+            width: '128px',
             filterOptions: 'auto'
         },
 
@@ -317,8 +319,33 @@ const SandboxTable = () => {
             Header: GENERAL.SANDBOX_TAG,
             accessor: 'tag',
             id: '7',
-            width: '220px',
+            width: '128px',
             filterOptions: 'auto'
+        },
+        {
+            Header: GENERAL.SB_STATUS,
+            accessor: 'status',
+            id: '7',
+            width: '180px',
+            filterOptions: 'auto',
+            renderCell: (cellData: any) => {
+                return (
+                    <div className={styles.statusCol}>
+                        {cellData === 'active' && (
+                            <>
+                                <Success />
+                                <DsTypography variant="Regular_14">Active</DsTypography>
+                            </>
+                        )}
+                        {cellData === 'refresh' && (
+                            <>
+                                <SmallLoader />
+                                <DsTypography variant="Regular_14">Refresh</DsTypography>
+                            </>
+                        )}
+                    </div>
+                );
+            }
         },
         lastColDetails()
     ];

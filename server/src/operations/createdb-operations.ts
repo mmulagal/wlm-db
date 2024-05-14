@@ -43,10 +43,11 @@ async function getDefaultDrives(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
+    instanceName: string,
     executionTimeout?: string
 ) {
     logger.info('Getting MSSQL default data and log drives', { credentialsId, region, activeNodeInstanceId });
-    const defaultDrivesCommand = [GET_DEFAULT_DRIVES];
+    const defaultDrivesCommand = [GET_DEFAULT_DRIVES(instanceName)];
 
     const defaultDriveResponse = await callSsmExecution(
         credentialsId,
@@ -191,7 +192,7 @@ async function getDriveInfoFromSSM(
         node2InstanceId
     });
     // Check SSM Connection status
-    const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await getActiveSqlNode(
+    const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName } = await getActiveSqlNode(
         credentialsId,
         region!,
         node1InstanceId,
@@ -226,7 +227,7 @@ async function getDriveInfoFromSSM(
                 standbyNodeInstanceId!,
                 executionTimeout
             ),
-            getDefaultDrives(credentialsId, region, activeNodeInstanceId as string, executionTimeout)
+            getDefaultDrives(credentialsId, region, activeNodeInstanceId as string, instanceName, executionTimeout)
         ]);
     } catch (error) {
         const errorMessage = `Unable to get drive information ${error}.`;
@@ -459,13 +460,13 @@ async function invokeSSMForDatabaseDeployment(
     let activeNodeId;
 
     try {
-        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await getActiveSqlNode(
-            credentialsId,
-            region!,
-            node1InstanceId,
-            node2InstanceId
-        );
-        if (!isSSMConnected || activeNodeInstanceId === undefined) {
+        const {
+            isSSMConnected,
+            activeNodeInstanceId,
+            standbyNodeInstanceId,
+            instanceName: sqlInstanceName
+        } = await getActiveSqlNode(credentialsId, region!, node1InstanceId, node2InstanceId);
+        if (!isSSMConnected || activeNodeInstanceId === undefined || sqlInstanceName === undefined) {
             const errorMessage = `Error while creating database for ${accountId} ${resourceId} due to SSM connection issues.`;
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
         }
@@ -493,6 +494,7 @@ async function invokeSSMForDatabaseDeployment(
             parentJobId,
             activeNodeInstanceId as string,
             collation,
+            sqlInstanceName,
             isVirtualMountSelected
         );
 
@@ -521,7 +523,8 @@ async function invokeSSMForDatabaseDeployment(
                 databaseName,
                 dataDrivePath,
                 logDrivePath,
-                collation
+                collation,
+                sqlInstanceName
             );
             await updateJobDetails(accountId, credentialsId, region, parentJobId, {
                 status: JOBSTATUS.COMPLETED,
@@ -619,6 +622,7 @@ async function invokeSSMForDatabaseDeployment(
                 dataDrivePath,
                 logDrivePath,
                 collation,
+                sqlInstanceName,
                 iGroup,
                 fsxDataVolumeName,
                 fsxLogVolumeName
@@ -696,6 +700,7 @@ async function createDatabase(
     dataDrivePath: string,
     logDrivePath: string,
     collation: string,
+    sqlInstanceName: string,
     iGroup?: string,
     fsxDataVolumeName?: string,
     fsxLogVolumeName?: string
@@ -714,7 +719,8 @@ async function createDatabase(
         collation,
         iGroup,
         fsxDataVolumeName,
-        fsxLogVolumeName
+        fsxLogVolumeName,
+        sqlInstanceName
     });
 
     let createDatabaseCommand;
@@ -724,7 +730,7 @@ async function createDatabase(
         ];
     } else {
         createDatabaseCommand = [
-            `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath} -Collation ${collation}`
+            `${CREATEDBSCRIPT} -SQLServer ${sqlServerName}  -DBName ${databaseName}  -DataPath ${dataDrivePath}  -LogPath ${logDrivePath} -Collation ${collation} -SqlInstanceName ${sqlInstanceName} -InstanceName ${sqlInstanceName}`
         ];
     }
 
@@ -1107,6 +1113,7 @@ async function validateParams(
     parentJobId: string,
     activeNodeInstanceId: string,
     collation: string,
+    instanceName: string,
     isVirtualMountSelected: boolean
 ) {
     logger.info('validating parameters for database user creation', {
@@ -1121,7 +1128,8 @@ async function validateParams(
         sqlServerName,
         parentJobId,
         collation,
-        isVirtualMountSelected
+        isVirtualMountSelected,
+        instanceName
     });
 
     const {
@@ -1160,7 +1168,15 @@ async function validateParams(
             }
         }
 
-        await checkDatabaseExists(accountId, credentialsId, region, databaseHostId, databaseName, activeNodeInstanceId);
+        await checkDatabaseExists(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseName,
+            activeNodeInstanceId,
+            instanceName
+        );
 
         if (!collation) {
             throw createError(412, 'Collation should not be empty');
@@ -1339,7 +1355,7 @@ async function getCollationDetails(accountId: string, databaseHostId: string, cr
         const { node1InstanceId, node2InstanceId, sqlDeploymentType } = metadata as unknown as Metadata;
 
         // Check SSM Connection status
-        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await getActiveSqlNode(
+        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName } = await getActiveSqlNode(
             credentialsId,
             region,
             node1InstanceId,
@@ -1364,7 +1380,8 @@ async function getCollationDetails(accountId: string, databaseHostId: string, cr
         const { defaultCollation, mssqlVersion } = await getDefaultCollationAndVersion(
             credentialsId,
             region,
-            activeNodeInstanceId as string
+            activeNodeInstanceId as string,
+            instanceName
         );
 
         return getCollationForMSSQLVersion(mssqlVersion, defaultCollation);
@@ -1379,10 +1396,11 @@ async function getDefaultCollationAndVersion(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
+    instanceName: string,
     executionTimeout?: string
 ) {
     logger.info('Getting MSSQL default collation', { credentialsId, region, activeNodeInstanceId });
-    const defaultCollationCommand = [GET_DEFAULT_COLLATION];
+    const defaultCollationCommand = [GET_DEFAULT_COLLATION(instanceName)];
 
     const defaultCollationResponse = await callSsmExecution(
         credentialsId,

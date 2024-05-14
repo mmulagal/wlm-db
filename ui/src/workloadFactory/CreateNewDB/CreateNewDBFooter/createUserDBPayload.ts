@@ -31,7 +31,8 @@ export const createUserDbPayload = (newUserDb: any) => {
             drive: newUserDb?.driveLetterLogFile?.value || '',
             isExisting: newUserDb?.isExistingLogDrive
         },
-        collation: newUserDb?.selectedCollation?.label || ''
+        collation: newUserDb?.selectedCollation?.label || '',
+        isVirtualMountSelected: newUserDb?.isVirtualMountPoint
     };
     return payload;
 };

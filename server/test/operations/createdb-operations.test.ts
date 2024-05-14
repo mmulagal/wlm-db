@@ -119,7 +119,8 @@ describe('Create database operations', () => {
             reqData.databaseName,
             reqData.dataDrivePath,
             reqData.logDrivePath,
-            'SQL_Latin1_General_CP1_CI_AS'
+            'SQL_Latin1_General_CP1_CI_AS',
+            '.'
         );
 
         expect(resp.Status).toBe('Complete');
