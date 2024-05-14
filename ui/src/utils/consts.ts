@@ -409,3 +409,42 @@ export const FORM_OPTIONS = {
     LICENSE_AMI: 'License included AMI', // Already name is used in old saved config so keeping same
     CUSTOM_AMI: 'Use custom AMI'
 };
+
+export const SNAPSHOT_FREQUENCY = [
+    {
+        label: 'No snapshot storage',
+        value: 'NoSnapShotStorage'
+    },
+    {
+        label: 'Hourly',
+        value: 'Hourly'
+    },
+    {
+        label: 'Daily',
+        value: 'Daily'
+    },
+    {
+        label: 'Weekly',
+        value: 'Weekly'
+    },
+    {
+        label: 'Monthly',
+        value: 'Monthly'
+    },
+    {
+        label: '2 times per day',
+        value: '2xDaily'
+    },
+    {
+        label: '3 times per day',
+        value: '3xDaily'
+    },
+    {
+        label: '4 times per day',
+        value: '4xDaily'
+    },
+    {
+        label: '6 times per day',
+        value: '6xDaily'
+    }
+];

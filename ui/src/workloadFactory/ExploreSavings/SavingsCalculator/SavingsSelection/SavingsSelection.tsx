@@ -14,6 +14,7 @@ import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
+import { SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
 
 const SavingsSelection = ({ printState }: any) => {
     const dispatch = useDispatch();
@@ -50,10 +51,10 @@ const SavingsSelection = ({ printState }: any) => {
 
     //Function to generate the options for Select Field
     const generateSnapshotFrequency = useMemo<optionType[]>((): optionType[] => {
-        const frequency = ['No snapshot storage', 'Hourly', 'Daily', '2*Daily', 'Weekly', 'Monthly'];
+        const frequency = SNAPSHOT_FREQUENCY;
         const options: optionType[] = [];
         frequency?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '', val);
+            const option = generateOptionType(val?.value, val?.label, '', false, '', val);
             options.push(option);
         });
         return options;
@@ -100,7 +101,7 @@ const SavingsSelection = ({ printState }: any) => {
                     }}
                     info={
                         selectedSnapshotFrequency &&
-                        selectedSnapshotFrequency.label === 'No snapshot storage' &&
+                        selectedSnapshotFrequency?.label === 'No snapshot storage' &&
                         GENERAL.TOOLTIP_MESSAGE_SNAPSHOT_FREQ
                     }
                     isSearchable={generateSnapshotFrequency.length > 5}
