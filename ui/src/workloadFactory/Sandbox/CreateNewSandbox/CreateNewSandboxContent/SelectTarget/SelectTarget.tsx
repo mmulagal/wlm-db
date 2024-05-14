@@ -15,6 +15,7 @@ import {
 } from '../../../../../store/workloadFactory/createSandboxSlice';
 import { GENERAL } from '../../../../../utils/appConstants';
 import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
+import { STATUS_CONST } from '../../../../../utils/consts';
 
 const SelectTarget = () => {
     const windowSize = useResize();
@@ -33,7 +34,8 @@ const SelectTarget = () => {
                       item?.topology?.fileSystemId &&
                       item?.topology?.fileSystemId === selectedSourceDbHost?.data?.topology?.fileSystemId &&
                       item?.topology?.vpcId &&
-                      item?.topology?.vpcId === selectedSourceDbHost?.data?.topology?.vpcId
+                      item?.topology?.vpcId === selectedSourceDbHost?.data?.topology?.vpcId &&
+                      item?.status === STATUS_CONST.UP
               )
             : [];
         filteredHosts?.map((obj, idx: number) => {
