@@ -160,7 +160,8 @@ async function updateTemplateUrls(
             ScriptRenameComputer: decodeURI(signedUrls.get('ScriptRenameComputer')?.url || ''),
             ScriptRestartComputer: decodeURI(signedUrls.get('ScriptRestartComputer')?.url || ''),
             ScriptAdValidation: decodeURI(signedUrls.get('ScriptAdValidation')?.url || ''),
-            ScriptFSxValidation: decodeURI(signedUrls.get('ScriptFSxValidation')?.url || '')
+            ScriptFSxValidation: decodeURI(signedUrls.get('ScriptFSxValidation')?.url || ''),
+            ScriptAmiValidation: decodeURI(signedUrls.get('ScriptAmiValidation')?.url || '')
         });
 
         const ValidationTemplate = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'ValidationTemplate');

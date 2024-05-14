@@ -580,6 +580,7 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     serviceAccountPassword: 'SQLServiceAccountPassword',
     sqlServerName: 'SqlServerName',
     sqlCollation: 'SqlCollation',
+    isCustomAmi: 'IsCustomAmi',
 
     workloadInstanceType: 'WorkloadInstanceType',
     keyPairName: 'KeyPairName',
@@ -783,6 +784,10 @@ const SQL_RESOURCE_ASSETS = [
     {
         name: 'ScriptFSxValidation',
         url: `${WLMDB}/validation/Validate-FsxConnectivity.ps1`
+    },
+    {
+        name: 'ScriptAmiValidation',
+        url: `${WLMDB}/validation/Validate-Ami.ps1`
     },
     {
         name: 'DependentPackages',

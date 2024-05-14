@@ -430,6 +430,12 @@ const PARAMETERS = [
         name: 'S3EndpointRouteTables',
         description: 'Route table ids to attach to S3 gateway endpoint.',
         type: 'String'
+    },
+    {
+        name: 'IsCustomAmi',
+        description: 'Boolean to indicate if AMI includes SQL license or BYOL license.',
+        type: 'String',
+        default: 'false'
     }
 ];
 

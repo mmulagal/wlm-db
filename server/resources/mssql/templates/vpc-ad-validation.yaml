@@ -14,6 +14,7 @@ Metadata:
                   - SubnetID
                   - DNSIpAddresses
                   - Ec2RoleName
+                  - IsCustomAmi
             - Label:
                   default: Amazon EC2 Configuration
               Parameters:
@@ -67,6 +68,8 @@ Metadata:
                 default: Boolean to check whether to validate FSx for ONTAP credentials and reachability from subnet
             FSxFileSystemId:
                 default: FSx for ONTAP Filesystem ID
+            IsCustomAmi:
+                default:  Boolean to indicate if AMI includes SQL license or BYOL license
 Parameters:
     UniqueID:
         Default: UID123
@@ -132,6 +135,13 @@ Parameters:
     FSxFileSystemId:
         Description: ID for the FSx for ONTAP file system.
         Type: String
+    IsCustomAmi:
+        Description: Boolean to indicate if AMI includes SQL license or BYOL license
+        Type: String
+        AllowedValues:
+            - 'true'
+            - 'false'
+        Default: 'false'
 Conditions:
     isGovRegion: !Or
         - !Equals
@@ -289,6 +299,8 @@ Resources:
                             source: {{{ ScriptAdValidation }}}
                         C:\cfn\scripts\Validate-FsxConnectivity.ps1:
                             source: {{{ ScriptFSxValidation }}}
+                        C:\cfn\scripts\Validate-Ami.ps1:
+                            source: {{{ ScriptAmiValidation }}}
                 LaunchWizardCFNSetup:
                     commands:
                         b-unpack-launchwizard-module:
@@ -361,7 +373,24 @@ Resources:
                                     - Fn::Base64: !Ref 'ValidationNode1WaitHandler'
                                     - '"'
                                     - '"'
-                        d-signal-resource:
+                        d-validate-ami:
+                            command: !Join
+                                  - ''
+                                  - - 'powershell.exe -Command "C:\cfn\scripts\Validate-Ami.ps1 -IsCustomAmi '
+                                    - !Ref 'IsCustomAmi'
+                                    - ' -Region '
+                                    - !Ref 'AWS::Region'
+                                    - ' -Stackname '
+                                    - !Ref 'AWS::StackName'
+                                    - ' -Parentstackname '
+                                    - !Ref 'ParentStackName'
+                                    - ' -ResourceID ValidationNode1'
+                                    - ' -WaitHandler '
+                                    - '"'
+                                    - Fn::Base64: !Ref 'ValidationNode1WaitHandler'
+                                    - '"'
+                                    - '"'
+                        e-signal-resource:
                             command: !Sub 'cfn-signal.exe -e %ERRORLEVEL% --resource ValidationNode1
                                 --stack ${AWS::StackName} --region ${AWS::Region}'
                             waitAfterCompletion: '0'
