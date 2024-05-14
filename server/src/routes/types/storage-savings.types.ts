@@ -105,7 +105,7 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
         effectiveFsxnStorageCapacity: Type.Number(),
         ssdStoragePerMonth: Type.Number(),
         ssdMonthlyCost: Type.Number(),
-        totalMonthlyCostForFsxSsd: Type.Number(),
+        totalSnapshotMonthlyCostForFsxSsd: Type.Number(),
         ratioAfterSavings: Type.Number(),
         dataOnCapacityPoolStorageFactor: Type.Number(),
         capacityPoolStorage: Type.Number(),
@@ -142,6 +142,8 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
     fsxCloneCalculation: Type.Object({
         clonedCopiesCount: Type.Number(),
         numberOfClonesInAMonth: Type.Number(),
+        changeRateBetweenClones: Type.Number(),
+        // totalFsxnCapacity
         fsxnSsdPrice: PriceUnitObject,
         cloneRefreshFrequency: Type.String(),
         monthlyChangeRatePercentage: Type.Number(),
@@ -152,6 +154,13 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
         effectiveFsxnStorageCapacity: Type.Number(),
         ssdStoragePerMonth: Type.Number(),
         ssdMonthlyCost: Type.Number(),
+        totalCloneMonthlyCost: Type.Number()
+    }),
+    ebsCloneCalculation: Type.Object({
+        clonedCopiesCount: Type.Number(),
+        capacity: Type.Number(),
+        iops: Type.Number(),
+        throughput: Type.Number(),
         totalCloneMonthlyCost: Type.Number()
     })
 });
