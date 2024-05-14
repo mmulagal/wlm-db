@@ -61,7 +61,7 @@
             "billedAdditionalSsdIops": "24,640",
             "additionalBilledCostForSsdIops": "837.76",
             "totalThroughputAndIopsMonthly": "991.36",
-            "EBSCapacity": "5 TiB",
+            "ebsCapacity": "5 TiB",
             "numberOfVolumes": 1,
             "fsxnStoragePrice": "0.14",
             "fsxnCapacityPrice": "0.02",
@@ -83,12 +83,13 @@
             "effectiveFsxnStorageCapacity": "390 GiB",
             "ssdStoragePerMonth": "39 GiB",
             "ssdMonthlyCost": "9.75",
-            "totalMonthlyCostForFsxSsd": "9.75",
+            "totalSnapshotMonthlyCostForFsxSsd": "9.75",
             "ratioAfterSavings": "100",
             "dataOnCapacityPoolStorageFactor": "90",
             "capacityPoolStorage": "351 GiB",
             "capacityMonthlyCost": "15.37",
-            "totalMonthlyCostForCapacity": "15.37"
+            "totalMonthlyCostForCapacity": "15.37",
+            "totalSnapshotMonthlyCost": "25.12"
         },
         "ebsCalculation": {
             "storageAmountPerVol": "5,120 GiB",
@@ -113,13 +114,18 @@
             "numberOfVolumes": 2,
             "instanceAvgDuration": 730,
             "ebsCapacityPrice": "0.14",
-            "hoursInAMonth": 730
+            "hoursInAMonth": 730,
+            "ebsTotalCostMonthly": "14,995.67"
         },
         "fsxCloneCalculation": {
+            "clonedCopiesCount": "1",
+            "numberOfClonesInAMonth": "30",
+            "changeRateBetweenClones": "0.26",
+            "fsxnSsdPrice": "0.25",
             "cloneRefreshFrequency": "Daily",
-            "monthlyChangeRatePercentage": "0.26",
+            "monthlyChangeRatePercentage": "8",
             "desiredStorageCapacity": "390 GiB",
-            "percentageOfDataOnSsdStorage": "100",
+            "percentageOfDataOnSsdStorage": 1,
             "savingsFromCompressionAndDeduplication": 0,
             "storageSavingsFromCompressionAndDeduplication": "0 GiB",
             "effectiveFsxnStorageCapacity": "390 GiB",
@@ -128,8 +134,11 @@
             "totalCloneMonthlyCost": "97.50"
         },
         "ebsCloneCalculation": {
-            "numberOfClonedCopies": "1",
-            "cloneCost": "3,084"
+            "clonedCopiesCount": "1",
+            "capacity": "1,280",
+            "iops": "1,804",
+            "throughput": 0,
+            "totalCloneMonthlyCost": "3,084"
         },
         "fsxTotalCost": "4,868.38",
         "ebsTotalCost": "14,995.67",
@@ -183,7 +192,7 @@
             "billedAdditionalSsdIops": "66,489",
             "additionalBilledCostForSsdIops": "1,130.31",
             "totalThroughputAndIopsMonthly": "1,222.47",
-            "EBSCapacity": "2 TiB",
+            "ebsCapacity": "2 TiB",
             "numberOfVolumes": 2,
             "fsxnStoragePrice": "0.14",
             "fsxnCapacityPrice": "0.02",
@@ -205,12 +214,13 @@
             "effectiveFsxnStorageCapacity": "780 GiB",
             "ssdStoragePerMonth": "78 GiB",
             "ssdMonthlyCost": "562.95",
-            "totalMonthlyCostForFsxSsd": "562.95",
+            "totalSnapshotMonthlyCostForFsxSsd": "562.95",
             "ratioAfterSavings": "100",
             "dataOnCapacityPoolStorageFactor": "90",
             "capacityPoolStorage": "702 GiB",
             "capacityMonthlyCost": "16.51",
-            "totalMonthlyCostForCapacity": "16.51"
+            "totalMonthlyCostForCapacity": "16.51",
+            "totalSnapshotMonthlyCost": "26.98"
         },
         "ebsCalculation": {
             "storageAmountPerVol": "2,048 GiB",
@@ -235,13 +245,18 @@
             "numberOfVolumes": 2,
             "instanceAvgDuration": 730,
             "ebsCapacityPrice": "0.14",
-            "hoursInAMonth": 730
+            "hoursInAMonth": 730,
+            "ebsTotalCostMonthly": "12,080.83"
         },
         "fsxCloneCalculation": {
+            "clonedCopiesCount": "1",
+            "numberOfClonesInAMonth": "30",
+            "changeRateBetweenClones": "0.1",
+            "fsxnSsdPrice": "0.25",
             "cloneRefreshFrequency": "Daily",
-            "monthlyChangeRatePercentage": "0.1",
+            "monthlyChangeRatePercentage": "8",
             "desiredStorageCapacity": "780 GiB",
-            "percentageOfDataOnSsdStorage": "100",
+            "percentageOfDataOnSsdStorage": 1,
             "savingsFromCompressionAndDeduplication": 0,
             "storageSavingsFromCompressionAndDeduplication": "0 GiB",
             "effectiveFsxnStorageCapacity": "780 GiB",
@@ -250,8 +265,11 @@
             "totalCloneMonthlyCost": "195"
         },
         "ebsCloneCalculation": {
-            "numberOfClonedCopies": "1",
-            "cloneCost": "5,134"
+            "clonedCopiesCount": "1",
+            "capacity": "562.95",
+            "iops": "4,888",
+            "throughput": 0,
+            "totalCloneMonthlyCost": "5,134"
         },
         "fsxTotalCost": "3,230.18",
         "ebsTotalCost": "12,080.83",

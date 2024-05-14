@@ -53,10 +53,8 @@ export const comparisonData = (calculatedResponse: any) => {
             type: 'Clone',
             fsx: calculatedResponse?.fsx?.clone
                 ? `$${formatFractionalNumber(calculatedResponse?.fsx?.clone, 2)}`
-                : GENERAL.NOT_AVAILABLE,
-            ebs: calculatedResponse?.ebs?.clone
-                ? `$${formatFractionalNumber(calculatedResponse?.ebs?.clone, 2)}`
-                : GENERAL.NOT_AVAILABLE
+                : '$0',
+            ebs: calculatedResponse?.ebs?.clone ? `$${formatFractionalNumber(calculatedResponse?.ebs?.clone, 2)}` : '$0'
         },
         {
             type: 'Compute',
@@ -148,7 +146,7 @@ export const calculatedFSXData = (fsxData: any) => {
         },
         {
             label: 'Provisioned SSD IOPS',
-            value: fsxData?.ssdIop ? fsxData?.ssdIop + ' IOPS' : GENERAL.NOT_AVAILABLE,
+            value: fsxData?.ssdIop ? fsxData?.ssdIop : GENERAL.NOT_AVAILABLE,
             text: 'For each GiB of SSD provisioned storage, Amazon FSx automatically provisions 3 SSD IOPS for the file system.'
         },
         {
@@ -181,10 +179,7 @@ export const MSSQLServerInstance = (sqlData: any) => {
         {
             label: 'Database edition',
             value: sqlData?.serverEdition || GENERAL.NOT_AVAILABLE,
-            text:
-                sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-                    ? 'Since source deployment mode suggested is  FCI the Enterprise replication feature is not relevant. Based on our analysis, SQL Enterprise features are not used as well, therefore we recommend using Standard edition.'
-                    : 'Database edition selected based on the source SQL database edition'
+            text: 'Database edition selected based on the source SQL database edition'
         },
         {
             label: 'Database version',
@@ -319,7 +314,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.fsxOntapCalculation.desiredStorageCapacity}`,
-                text: `EBS capacity (${viewCalculation.fsxOntapCalculation.EBSCapacity}) x Number of volumes (${viewCalculation.fsxOntapCalculation.numberOfVolumes}) x 1024 `
+                text: `EBS capacity (${viewCalculation.fsxOntapCalculation.ebsCapacity}) x Number of volumes (${viewCalculation.fsxOntapCalculation.numberOfVolumes})`
             },
             {
                 label: 'Percentage of data on SSD storage',
@@ -402,7 +397,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Minimum number of file systems required for throughput capacity',
                 value: `${viewCalculation.fsxOntapCalculation.minFileSystemsNumForThroughputCapacity}`,
-                text: `Suggested FSx for ONTAP throughput capacity (${viewCalculation.fsxOntapCalculation.suggestedFsxnThroughputCapacity}) ÷ max throughput (${viewCalculation.fsxOntapCalculation.maxThroughput} MB/s)`
+                text: `Suggested FSx for ONTAP throughput capacity (${viewCalculation.fsxOntapCalculation.suggestedFsxnThroughputCapacity} MB/s) ÷ max throughput (${viewCalculation.fsxOntapCalculation.maxThroughput} MB/s)`
             },
             {
                 label: 'Minimum number of file systems required for SSD IOPS',
@@ -422,7 +417,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Minimum throughout capacity required',
                 value: `${viewCalculation.fsxOntapCalculation.minThroughputCapacityRequired}`,
-                text: `Required number of FSx file systems (${viewCalculation.fsxOntapCalculation.requiredNumOfFsx}) x Min throughput capacity (${viewCalculation.fsxOntapCalculation.minThroughputCapacityRequired} GiB)`
+                text: `Required number of FSx file systems (${viewCalculation.fsxOntapCalculation.requiredNumOfFsx}) x Min throughput capacity 128 MB/s)`
             },
             {
                 label: 'Provisioned throughput capacity',
@@ -508,7 +503,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             },
             {
                 label: 'Total monthly cost for FSx for NetApp ONTAP file server - SSD storage capacity',
-                value: `$${viewCalculation.fsxOntapSnapshotCalculation.totalMonthlyCostForFsxSsd}`,
+                value: `$${viewCalculation.fsxOntapSnapshotCalculation.totalSnapshotMonthlyCostForFsxSsd}`,
                 text: ''
             },
             {
@@ -538,9 +533,9 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             },
             {
                 label: 'Total snapshot monthly cost',
-                value: `$${viewCalculation.fsxSnapshotTotalCost}`,
+                value: `$${viewCalculation.fsxOntapSnapshotCalculation.totalSnapshotMonthlyCost}`,
                 secondaryHeading: true,
-                text: `Total monthly cost for FSx for NetApp ONTAP file server capacity pool storage capacity ($${viewCalculation.fsxOntapSnapshotCalculation.totalMonthlyCostForCapacity}) + Total monthly cost for FSx for NetApp ONTAP file server SSD storage capacity ($${viewCalculation.fsxOntapSnapshotCalculation.totalMonthlyCostForFsxSsd})`
+                text: `Total monthly cost for FSx for NetApp ONTAP file server capacity pool storage capacity ($${viewCalculation.fsxOntapSnapshotCalculation.totalMonthlyCostForCapacity}) + Total monthly cost for FSx for NetApp ONTAP file server SSD storage capacity ($${viewCalculation.fsxOntapSnapshotCalculation.totalSnapshotMonthlyCostForFsxSsd})`
             }
         ],
         cloneCalculation: [
@@ -558,13 +553,13 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             },
             {
                 label: 'Change rate between clones (%)',
-                value: `${viewCalculation.fsxCloneCalculation.monthlyChangeRatePercentage}%`,
-                text: `Monthly change rate (%) / Number of periods = 8%/30`
+                value: `${viewCalculation.fsxCloneCalculation.changeRateBetweenClones}%`,
+                text: `Monthly change rate (${viewCalculation.fsxCloneCalculation.monthlyChangeRatePercentage}%) / Number of periods (${viewCalculation.fsxCloneCalculation.numberOfClonesInAMonth})`
             },
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.fsxCloneCalculation.desiredStorageCapacity}`,
-                text: `Number of cloned copies* (%change rate*total fsxN capacity*number of clones in a month)= 1*(${viewCalculation.fsxCloneCalculation.monthlyChangeRatePercentage}% *${viewCalculation.fsxCloneCalculation.monthlyChangeRatePercentage}*1024*30)`
+                text: `Number of cloned copies x (%change rate x total FSx for ONTAP capacity x number of clones in a month)= ${viewCalculation.fsxCloneCalculation.clonedCopiesCount} x (${viewCalculation.fsxCloneCalculation.changeRateBetweenClones}% x 1024 x${viewCalculation.fsxCloneCalculation.numberOfClonesInAMonth})`
             },
             {
                 label: 'Percentage of data on SSD storage',
@@ -587,17 +582,17 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Effective storage capacity for FSx for ONTAP',
                 value: `${viewCalculation.fsxCloneCalculation.effectiveFsxnStorageCapacity}`,
-                text: `Desired storage capacity  - Storage savings from compression & deduplication = ${viewCalculation.fsxCloneCalculation.desiredStorageCapacity} - ${viewCalculation.fsxCloneCalculation.storageSavingsFromCompressionAndDeduplication}`
+                text: `Desired storage capacity  - Storage savings from compression & deduplication = ${viewCalculation.fsxCloneCalculation.desiredStorageCapacity} - ${viewCalculation.fsxCloneCalculation.storageSavingsFromCompressionAndDeduplication}`
             },
             {
                 label: 'SSD storage GiB per month',
                 value: `${viewCalculation.fsxCloneCalculation.ssdStoragePerMonth}`,
-                text: `Effective storage capacity for FSx for ONTAP x Percentage of data on SSD storage = ${viewCalculation.fsxCloneCalculation.effectiveFsxnStorageCapacity} GiB x ${viewCalculation.fsxCloneCalculation.percentageOfDataOnSsdStorage}%`
+                text: `Effective storage capacity for FSx for ONTAP x Percentage of data on SSD storage = ${viewCalculation.fsxCloneCalculation.effectiveFsxnStorageCapacity} x ${viewCalculation.fsxCloneCalculation.percentageOfDataOnSsdStorage}%`
             },
             {
                 label: 'SSD monthly cost',
                 value: `$${viewCalculation.fsxCloneCalculation.ssdMonthlyCost}`,
-                text: `SSD storage GiB per month  x FSx for ONTAP SSD price = ${viewCalculation.fsxCloneCalculation.ssdStoragePerMonth} x $0.25`
+                text: `SSD storage GiB per month  x FSx for ONTAP SSD price = ${viewCalculation.fsxCloneCalculation.ssdStoragePerMonth} x $${viewCalculation.fsxCloneCalculation.fsxnSsdPrice}`
             },
             {
                 label: 'Total clone monthly cost',
@@ -742,7 +737,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Storage amount per volume',
                 value: `${viewCalculation.ebsCalculation.storageAmountPerVol}`,
-                text: `Storage amount per volume (${viewCalculation.fsxOntapCalculation.EBSCapacity}) x 1024`
+                text: `Storage amount per volume (${viewCalculation.fsxOntapCalculation.ebsCapacity})`
             },
 
             {
@@ -751,7 +746,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Total instance hours',
                 value: `${viewCalculation.ebsCalculation.totalInstanceHours}`,
-                text: `Number of volumes (${viewCalculation.fsxOntapCalculation.numberOfVolumes}) x Average duration each instance runs (${viewCalculation.ebsCalculation.instanceAvgDuration} hours)`
+                text: `Number of volumes (${viewCalculation.ebsCalculation.numberOfVolumes}) x Average duration each instance runs (${viewCalculation.ebsCalculation.instanceAvgDuration} hours)`
             },
             {
                 label: 'Instance months',
@@ -822,12 +817,12 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Discount for partial storage month',
                 value: `$${viewCalculation.ebsCalculation.discountForPartialStorageMonth}`,
-                text: `Monthly cost of each snapshot ($${viewCalculation.ebsCalculation.monthlyCostPerSnapshot}) * Discount for partial storage month (50%)`
+                text: `Monthly cost of each snapshot ($${viewCalculation.ebsCalculation.monthlyCostPerSnapshot}) x Discount for partial storage month (50%)`
             },
             {
                 label: 'Incremental snapshot cost',
                 value: `$${viewCalculation.ebsCalculation.incrementalSnapshotCost}`,
-                text: `(Monthly cost of each snapshot ($${viewCalculation.ebsCalculation.monthlyCostPerSnapshot}) - Discount for partial storage month ($${viewCalculation.ebsCalculation.discountForPartialStorageMonth})) * Total snapshots (${viewCalculation.ebsCalculation.totalSnapshots})`
+                text: `(Monthly cost of each snapshot ($${viewCalculation.ebsCalculation.monthlyCostPerSnapshot}) - Discount for partial storage month ($${viewCalculation.ebsCalculation.discountForPartialStorageMonth})) x Total snapshots (${viewCalculation.ebsCalculation.totalSnapshots})`
             },
             {
                 label: 'Total snapshot cost',
@@ -837,7 +832,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Total EBS snapshot cost',
                 value: `$${viewCalculation.ebsCalculation.totalEbsSnapshotCost}`,
-                text: `Total snapshot cost ($${viewCalculation.ebsCalculation.totalSnapshotCost}) * Instance months (${viewCalculation.ebsCalculation.ebsInstanceMonth})`
+                text: `Total snapshot cost ($${viewCalculation.ebsCalculation.totalSnapshotCost}) x Instance months (${viewCalculation.ebsCalculation.ebsInstanceMonth})`
             },
             {
                 label: 'EBS snapshot cost',
@@ -852,17 +847,17 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             },
             {
                 label: 'Number of Cloned copies',
-                value: `${viewCalculation.ebsCloneCalculation.numberOfClonedCopies}`,
+                value: `${viewCalculation.ebsCloneCalculation.clonedCopiesCount}`,
                 text: ` `
             },
             {
                 label: 'Clone cost',
-                value: `$${viewCalculation.ebsCloneCalculation.cloneCost}`,
-                text: `Number of Cloned copies *( EBS storage cost + EBS iops cost + EBS throughput cost )= ${viewCalculation.ebsCloneCalculation.numberOfClonedCopies} * $${viewCalculation.ebsCloneCalculation.cloneCost}`
+                value: `$${viewCalculation.ebsCloneCalculation.totalCloneMonthlyCost}`,
+                text: `Number of Cloned copies x (EBS storage cost + EBS iops cost + EBS throughput cost)= ${viewCalculation.ebsCloneCalculation.clonedCopiesCount} x ($${viewCalculation.ebsCloneCalculation.capacity} + $${viewCalculation.ebsCloneCalculation.iops} + $${viewCalculation.ebsCloneCalculation.throughput})`
             },
             {
                 label: 'Amazon Elastic Block Storage (EBS) total cost (monthly)',
-                value: `$${viewCalculation.ebsTotalCost}`,
+                value: `$${viewCalculation.ebsCalculation.ebsTotalCostMonthly}`,
                 text: `Total EC2 cost ($${
                     selectedDeploymentModel === SQL_DEPLOYMENT_MODE.AOAG
                         ? 2 * viewCalculation.ebsInstanceCalculation?.[0].ec2MachineCost
