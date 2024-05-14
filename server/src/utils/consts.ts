@@ -161,7 +161,9 @@ enum SqlServerDeploymentModel {
     SQL_STANDALONE = 'Standalone Instance',
     SQL_FCI = 'Always On Failover Cluster Instance',
     SQL_STANDALONE_SHORT = 'Standalone',
-    SQL_FCI_SHORT = 'FCI'
+    SQL_FCI_SHORT = 'FCI',
+    SQL_AOAG = 'Always On Availability Group',
+    SQL_AOAG_SHORT = 'AOAG'
 }
 
 const VPC_COUNT_QUOTANAME = 'VPCs per Region';

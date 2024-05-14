@@ -493,7 +493,8 @@ async function getHostAndSqlInfoFromPsOutput(
                         windowsAuthentication,
                         scriptExecutionTime,
                         databaseCount,
-                        failureInfo
+                        failureInfo,
+                        sqlServerDeploymentType
                     } = sqlServerInstanceInfo;
                     logger.info(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
@@ -511,6 +512,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerVersion,
                         ...(sqlServerName && { sqlServerName }),
                         sqlServerNodes: compact(sqlServerNodes),
+                        sqlServerDeploymentType,
                         sqlServerInstance,
                         sqlServerState,
                         sqlServerProductYear,
