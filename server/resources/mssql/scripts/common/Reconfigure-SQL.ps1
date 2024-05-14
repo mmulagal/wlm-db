@@ -212,11 +212,15 @@ try {
         Move-Item-Safely "C:\Program Files\Microsoft SQL Server\MSSQL*.$Using:SQLInstanceName\MSSQL\DATA\mastlog.ldf" "$Using:logPath\mastlog.ldf"
 
         #Move and alter secondary tempdb data file if found
-        $tempndffile ="C:\Program Files\Microsoft SQL Server\MSSQL*.MSSQLSERVER\MSSQL\DATA\tempdb_mssql*.ndf"
+        $tempndffile ="C:\Program Files\Microsoft SQL Server\MSSQL*.$Using:SQLInstanceName\MSSQL\DATA\tempdb_mssql*.ndf"
         $temp2DevFile = "$Using:tempPath\tempdb_mssql_2.ndf"
         if (Test-Path -Path $tempndffile) {
-            Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "USE master; ALTER DATABASE tempdb MODIFY FILE (NAME = temp2, FILENAME = $temp2DevFile);"
-            Move-Item-Safely "C:\Program Files\Microsoft SQL Server\MSSQL*.MSSQLSERVER\MSSQL\DATA\tempdb_mssql*.ndf" $temp2DevFile
+            try {
+                Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "USE master; ALTER DATABASE tempdb MODIFY FILE (NAME = temp2, FILENAME = $temp2DevFile);"
+                Move-Item-Safely "C:\Program Files\Microsoft SQL Server\MSSQL*.$Using:SQLInstanceName\MSSQL\DATA\tempdb_mssql*.ndf" $temp2DevFile
+            } catch {
+                Write-Host "Error while moving .ndf file. Error: $_"
+            }
         }
 
 
