@@ -345,6 +345,7 @@ interface VolumeLunMapping {
 
 interface HostAndDbInfo extends DbInfo {
     resourceName: string;
+    instanceName: string;
     fsxId: string;
     svm: string;
     activeNodeInstaceId: string;
@@ -454,7 +455,8 @@ async function createSandbox(
             svm: sourceSvm!,
             fsxId: srcResourceDetail.co_relation_id!,
             activeNodeInstaceId: srcStatus.activeNodeInstanceId!,
-            metadata: srcResourceDetail.metadata as unknown as Metadata
+            metadata: srcResourceDetail.metadata as unknown as Metadata,
+            instanceName: '.'
         },
         {
             ...dest,
@@ -462,7 +464,8 @@ async function createSandbox(
             svm: destSvm!,
             fsxId: destResourceDetail.co_relation_id!,
             activeNodeInstaceId: destStatus.activeNodeInstanceId!,
-            metadata: destResourceDetail.metadata as unknown as Metadata
+            metadata: destResourceDetail.metadata as unknown as Metadata,
+            instanceName: '.'
         },
         tag
     );
@@ -580,7 +583,8 @@ async function validateCloneParams(
             region,
             destDetails.host,
             destDetails.database,
-            destDetails.activeNodeInstaceId
+            destDetails.activeNodeInstaceId,
+            destDetails.instanceName
         );
         status = JOBSTATUS.COMPLETED;
     } catch (e: any) {

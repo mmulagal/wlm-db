@@ -433,7 +433,8 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageP
 
 async function getProtectionStatus(
     resourceDetail: ResourceDetails,
-    activeNodeInstanceId: string
+    activeNodeInstanceId: string,
+    instanceName: string
 ): Promise<ProtectionPerStorageTypeResponseType | undefined> {
     logger.info('Get protection status', { resourceDetail });
 
@@ -452,7 +453,7 @@ async function getProtectionStatus(
 
     try {
         const [nativeSqlProtection, fsxnBackup, ontapProtection, fsxwBackup, ebsBackup] = await Promise.all([
-            getNativeSQLProtection(credentialsId, region, activeNodeInstanceId),
+            getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceName),
             fsxnId
                 ? isFsxnAwsBackupEnabled(credentialsId, region, fsxnId, metadata as Metadata, activeNodeInstanceId)
                 : Promise.resolve(),
@@ -883,7 +884,7 @@ async function getDatabaseHostSummary(
     try {
         const { node1InstanceId, node2InstanceId, creationDate, userDatabase = [] } = metadata as unknown as Metadata;
         // Check SSM Connection status
-        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId } = await getActiveSqlNode(
+        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName } = await getActiveSqlNode(
             credentialsId,
             region!,
             node1InstanceId,
@@ -910,7 +911,7 @@ async function getDatabaseHostSummary(
             ] = await Promise.all(
                 [
                     ...(isSSMConnected && activeNodeInstanceId && shouldQueryServerDetails
-                        ? [getServerDetails(credentialsId, region, activeNodeInstanceId)]
+                        ? [getServerDetails(credentialsId, region, activeNodeInstanceId, instanceName)]
                         : [Promise.resolve()]), // Fetch server metadata
                     ...[
                         getTopology(
@@ -924,17 +925,17 @@ async function getDatabaseHostSummary(
                         )
                     ],
                     ...(isSSMConnected && getPerformance && activeNodeInstanceId
-                        ? [getPerformanceMetrics(credentialsId, region, activeNodeInstanceId)]
+                        ? [getPerformanceMetrics(credentialsId, region, activeNodeInstanceId, instanceName)]
                         : [Promise.resolve()]), // Fetch io latency data
                     ...(isSSMConnected && getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
                     ...(isSSMConnected && getProtection && activeNodeInstanceId
-                        ? [getProtectionStatus(resourceDetail, activeNodeInstanceId)]
+                        ? [getProtectionStatus(resourceDetail, activeNodeInstanceId, instanceName)]
                         : [Promise.resolve()]), // Fetch protection status
                     ...(getUsageEstimation
                         ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId, isManagedResource)]
                         : [Promise.resolve()]), // Fetch pricing estimate data
                     ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
-                        ? [getAllResourceUtilisationDetails(credentialsId, region, activeNodeInstanceId)]
+                        ? [getAllResourceUtilisationDetails(credentialsId, region, activeNodeInstanceId, instanceName)]
                         : [Promise.resolve()])
                 ].map((p, index) =>
                     p.catch(error => {
@@ -1025,7 +1026,7 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
     }
 
     // Check SSM Connection status
-    const { isSSMConnected, activeNodeInstanceId } = await getActiveSqlNode(
+    const { isSSMConnected, activeNodeInstanceId, instanceName } = await getActiveSqlNode(
         credentialsId,
         region,
         node1InstanceId,
@@ -1039,8 +1040,8 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
 
     const [{ databases }, backedupDatabases, awsBackup, ontapBackup] = await Promise.all(
         [
-            getDataBasesSummary(databaseHostId, activeNodeInstanceId),
-            getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId),
+            getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName),
+            getNativeSQLBackedupDatabases(databaseHostId, activeNodeInstanceId, instanceName),
             isFsxnAwsBackupEnabled(
                 credentialsId,
                 region,

@@ -62,7 +62,7 @@ $results = foreach ($instance in $instances) {
 $results
 `;
 
-const checkDatabaseExists = (dbCloneName: string) => `
+const checkDatabaseExists = (dbCloneName: string, instanceName: string = '.') => `
     $WarningPreference = 'SilentlyContinue';
 
     $dbCloneName = '${dbCloneName}'
@@ -72,7 +72,7 @@ const checkDatabaseExists = (dbCloneName: string) => `
     }
 
     $sqlcmd = "SET NOCOUNT ON; SELECT name FROM sys.databases where name = '$dbCloneName' FOR JSON PATH;"
-    $sqlresponse =  sqlcmd -Q $sqlcmd -y 0;
+    $sqlresponse =  sqlcmd  -S ${instanceName} -Q $sqlcmd -y 0;
 
     [string[]]$ExistingDatabases = $sqlresponse | ConvertFrom-Json | % { $_.name }
 
@@ -192,7 +192,7 @@ const ontapJobStatusTemplate = `
         }
 `;
 
-const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: string) => `
+const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: string, instanceName: string = '.') => `
     $WarningPreference = 'SilentlyContinue';
     $FSxID = '${fsxid}'
     $FSxRegion = '${fsxregion}'
@@ -283,7 +283,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
             return $responeObject
         }
     
-        $responeObject =  sqlcmd -Q $sqlquery -y 0;
+        $responeObject =  sqlcmd -S ${instanceName} -Q $sqlquery -y 0;
         write-debug "SQL response: $responeObject"
         if ([string]::IsNullOrEmpty($responeObject)) {
             if ($responeObject -eq $null) {
