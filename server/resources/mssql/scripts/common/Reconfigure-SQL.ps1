@@ -190,6 +190,19 @@ try {
         Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master;EXEC xp_instance_regwrite N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'DefaultLog', REG_SZ, N'$Using:logPath';" 
         Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master;EXEC xp_instance_regwrite N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'BackupDirectory', REG_SZ, N'$Using:backupPath';" 
 
+        #Check if .ndf file exists andalter secondary tempdb data file
+        $tempndffile ="C:\Program Files\Microsoft SQL Server\MSSQL*.$Using:SQLInstanceName\MSSQL\DATA\tempdb_mssql*.ndf"
+        $temp2DevFile = "$Using:tempPath\tempdb_mssql_2.ndf"
+        $ndfFound = $False
+        if (Test-Path -Path $tempndffile) {
+            try {
+                Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "USE master; ALTER DATABASE tempdb MODIFY FILE (NAME = temp2, FILENAME = $temp2DevFile);"
+                $ndfFound = $True
+            } catch {
+                Write-Host "Error while moving .ndf file. Error: $_"
+            }
+        }
+
         # Stop SQL Service
         $SQLService = Get-Service -Name "$Using:SQLInstanceName"
         if ($SQLService.status -eq 'Running') { $SQLService.Stop() }
@@ -211,18 +224,14 @@ try {
         Move-Item-Safely "C:\Program Files\Microsoft SQL Server\MSSQL*.$Using:SQLInstanceName\MSSQL\DATA\master.mdf" "$Using:dataPath\master.mdf"
         Move-Item-Safely "C:\Program Files\Microsoft SQL Server\MSSQL*.$Using:SQLInstanceName\MSSQL\DATA\mastlog.ldf" "$Using:logPath\mastlog.ldf"
 
-        #Move and alter secondary tempdb data file if found
-        $tempndffile ="C:\Program Files\Microsoft SQL Server\MSSQL*.$Using:SQLInstanceName\MSSQL\DATA\tempdb_mssql*.ndf"
-        $temp2DevFile = "$Using:tempPath\tempdb_mssql_2.ndf"
-        if (Test-Path -Path $tempndffile) {
+        #Move secondary tempdb data file if found
+        if($ndfFound -eq $True) {
             try {
-                Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "USE master; ALTER DATABASE tempdb MODIFY FILE (NAME = temp2, FILENAME = $temp2DevFile);"
                 Move-Item-Safely "C:\Program Files\Microsoft SQL Server\MSSQL*.$Using:SQLInstanceName\MSSQL\DATA\tempdb_mssql*.ndf" $temp2DevFile
             } catch {
                 Write-Host "Error while moving .ndf file. Error: $_"
             }
         }
-
 
         # Set SQL Server and Agent services user to SQL AD user
         $Services = Get-WmiObject -Class Win32_Service -Filter "Name='SQLSERVERAGENT' OR Name='$Using:SQLInstanceName'"
