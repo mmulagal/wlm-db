@@ -154,6 +154,15 @@ try {
         Move-Item-Safely "C:\Program Files\Microsoft SQL Server\MSSQL*.MSSQLSERVER\MSSQL\DATA\master.mdf" "$Using:dataPath\master.mdf"
         Move-Item-Safely "C:\Program Files\Microsoft SQL Server\MSSQL*.MSSQLSERVER\MSSQL\DATA\mastlog.ldf" "$Using:logPath\mastlog.ldf"
 
+        #Move and alter secondary tempdb data file if found
+        $tempndffile ="C:\Program Files\Microsoft SQL Server\MSSQL*.MSSQLSERVER\MSSQL\DATA\tempdb_mssql*.ndf"
+        $temp2DevFile = "$Using:tempPath\tempdb_mssql_2.ndf"
+        if (Test-Path -Path $tempndffile) {
+            Invoke-Sqlcmd -Query "USE master; ALTER DATABASE tempdb MODIFY FILE (NAME = temp2, FILENAME = $temp2DevFile);"
+            Move-Item-Safely "C:\Program Files\Microsoft SQL Server\MSSQL*.MSSQLSERVER\MSSQL\DATA\tempdb_mssql*.ndf" $temp2DevFile
+        }
+
+
         # Set SQL Server and Agent services user to SQL AD user
         $Services = Get-WmiObject -Class Win32_Service -Filter "Name='SQLSERVERAGENT' OR Name='MSSQLSERVER'"
         $Services.change($null, $null, $null, $null, $null, $null, $Using:DomainAdminFullUser , $Using:DomainAdminPassword, $null, $null, $null)
