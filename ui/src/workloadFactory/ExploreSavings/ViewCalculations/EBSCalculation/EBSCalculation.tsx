@@ -6,6 +6,8 @@ import { Text } from '../../../../ui-components/Typography';
 import { viewCalculationForEBS } from '../../SavingsCalculator/savingsUtil';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { useEffect, useState } from 'react';
+import { formatViewCalcInstance } from '../../ExploreSavingsUtils';
 
 const TableLayout = ({ data }: any) => {
     const styleHandler = (data: any) => {
@@ -49,9 +51,22 @@ const TableLayout = ({ data }: any) => {
 };
 
 const EBSCalculation = () => {
-    const { viewCalculationsResponse, selectedDeploymentModel, viewCalculationsLoading } = useAppSelector(
-        state => state.exploreSavings
-    );
+    const { viewCalculationsResponse, selectedDeploymentModel, viewCalculationsLoading, selectedHostDetails } =
+        useAppSelector(state => state.exploreSavings);
+    const [viewLoading, setViewLoading] = useState(false);
+    const [ebsInstance, setEbsInstance] = useState<any>(null);
+
+    useEffect(() => {
+        if (!selectedHostDetails?.loading) {
+            setEbsInstance({
+                ebsInstanceCalculation: formatViewCalcInstance(selectedDeploymentModel, selectedHostDetails)
+            });
+        }
+    }, [selectedHostDetails]);
+
+    useEffect(() => {
+        setViewLoading(selectedHostDetails?.loading || viewCalculationsLoading);
+    }, [selectedHostDetails, viewCalculationsLoading]);
 
     const setHeader = () => {
         if (!viewCalculationsResponse) {
@@ -70,14 +85,14 @@ const EBSCalculation = () => {
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="2"
                 title={<div>{GENERAL.MS_EBS_CALCULATION}</div>}
-                isLoading={viewCalculationsLoading}
+                isLoading={viewLoading}
                 isDisabled={!viewCalculationsResponse}
             >
-                {viewCalculationsResponse && (
+                {viewCalculationsResponse && ebsInstance && (
                     <AccordionCardContent>
                         <DsTypography className={styles.accordionContentSet}>
                             {viewCalculationForEBS(
-                                viewCalculationsResponse,
+                                { ...ebsInstance, ...viewCalculationsResponse },
                                 selectedDeploymentModel
                             ).Ec2InstanceCalculation.map(
                                 (data: { label: string; text?: string; value?: string }, index: number) => (
@@ -86,7 +101,7 @@ const EBSCalculation = () => {
                             )}
                             <div style={{ marginTop: '16px' }}>
                                 {viewCalculationForEBS(
-                                    viewCalculationsResponse,
+                                    { ...ebsInstance, ...viewCalculationsResponse },
                                     selectedDeploymentModel
                                 ).EBSCalculation.map(
                                     (data: { label: string; text?: string; value?: string }, index: number) => (
@@ -97,7 +112,7 @@ const EBSCalculation = () => {
 
                             <div style={{ marginTop: '16px' }}>
                                 {viewCalculationForEBS(
-                                    viewCalculationsResponse,
+                                    { ...ebsInstance, ...viewCalculationsResponse },
                                     selectedDeploymentModel
                                 ).SnapshotCalculation.map(
                                     (data: { label: string; text?: string; value?: string }, index: number) => (
@@ -108,7 +123,7 @@ const EBSCalculation = () => {
 
                             <div style={{ marginTop: '16px' }}>
                                 {viewCalculationForEBS(
-                                    viewCalculationsResponse,
+                                    { ...ebsInstance, ...viewCalculationsResponse },
                                     selectedDeploymentModel
                                 ).cloneCalculation.map(
                                     (data: { label: string; text?: string; value?: string }, index: number) => (

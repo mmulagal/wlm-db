@@ -41,18 +41,19 @@ const MSSQLAccordion = ({ printState }: any) => {
     const { storageSavingsLoading, storageSavingsResponse, selectedHostDetails } = useAppSelector(
         state => state.exploreSavings
     );
+    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
     const [fsxData, setFsxData] = useState({});
     const [msSqlInstance, setMsSqlInstance] = useState({});
 
     useEffect(() => {
-        setFsxData(storageSavingsResponse?.fsxCalculation);
+        const selectedRegion = headerSelectedRegion?.data?.regionName + ' | ' + headerSelectedRegion?.data?.regionCode;
+        setFsxData({ ...storageSavingsResponse?.fsxCalculation, regionName: selectedRegion });
         // setMsSqlInstance(storageSavingsResponse?.mssqlInstance);
     }, [storageSavingsResponse]);
 
     useEffect(() => {
-        const instanceTypelist = selectedHostDetails?.topology?.ec2Details?.map((inst: any) => inst?.instanceType);
         let mssqlInstanceData = {
             serverInstallationMode: selectedHostDetails?.recommendedInstance?.serverInstallationMode,
             serverEdition: selectedHostDetails?.recommendedInstance?.serverEdition,
@@ -92,7 +93,7 @@ const MSSQLAccordion = ({ printState }: any) => {
         setTimeout(() => {
             const data = setRecommendedConfig(msSqlInstance, fsxData);
             LoadRecommendedConfig(dispatch, data, false);
-        }, 10);
+        }, 1);
     };
 
     return (

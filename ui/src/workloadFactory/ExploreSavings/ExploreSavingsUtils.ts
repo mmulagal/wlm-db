@@ -210,11 +210,41 @@ export const formatPercentage = (val: any) => {
     }
 };
 
-export const formatViewCalcData = (
-    viewCalculationsResponse: any,
-    selectedDeploymentModel: string,
-    selectedHostDetails: any
-) => {
+export const formatViewCalcInstance = (selectedDeploymentModel: any, selectedHostDetails: any) => {
+    const instanceCalculationData = (() => {
+        if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+            return [
+                {
+                    instanceType: selectedHostDetails?.topology?.ec2Details?.[0]?.instanceType || GENERAL.NOT_AVAILABLE,
+                    instanceHourlyPrice: GENERAL.NOT_AVAILABLE,
+                    ec2MachineCost: GENERAL.NOT_AVAILABLE,
+                    sqlEdition: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
+                    sqlLicense: GENERAL.NOT_AVAILABLE
+                }
+            ];
+        } else {
+            return [
+                {
+                    instanceType: selectedHostDetails?.topology?.ec2Details?.[0]?.instanceType || GENERAL.NOT_AVAILABLE,
+                    instanceHourlyPrice: GENERAL.NOT_AVAILABLE,
+                    ec2MachineCost: GENERAL.NOT_AVAILABLE,
+                    sqlEdition: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
+                    sqlLicense: GENERAL.NOT_AVAILABLE
+                },
+                {
+                    instanceType: selectedHostDetails?.topology?.ec2Details?.[1]?.instanceType || GENERAL.NOT_AVAILABLE,
+                    instanceHourlyPrice: GENERAL.NOT_AVAILABLE,
+                    ec2MachineCost: GENERAL.NOT_AVAILABLE,
+                    sqlEdition: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
+                    sqlLicense: GENERAL.NOT_AVAILABLE
+                }
+            ];
+        }
+    })();
+    return instanceCalculationData;
+};
+
+export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploymentModel: string) => {
     const totalEbsCost = (() => {
         let cost = 0;
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
@@ -251,25 +281,6 @@ export const formatViewCalcData = (
     })();
 
     const result = {
-        // Not available values are still not available
-        ebsInstanceCalculation: [
-            {
-                instanceType: selectedHostDetails?.recommendedInstance?.instanceType,
-                instanceHourlyPrice: GENERAL.NOT_AVAILABLE,
-                ec2MachineCost: GENERAL.NOT_AVAILABLE,
-                sqlEdition: selectedHostDetails?.recommendedInstance?.serverEdition,
-                sqlLicense: GENERAL.NOT_AVAILABLE
-            }
-        ],
-        fsxInstanceCalculation: [
-            {
-                instanceType: selectedHostDetails?.recommendedInstance?.instanceType,
-                instanceHourlyPrice: GENERAL.NOT_AVAILABLE,
-                ec2MachineCost: GENERAL.NOT_AVAILABLE,
-                sqlEdition: selectedHostDetails?.recommendedInstance?.serverEdition,
-                sqlLicense: GENERAL.NOT_AVAILABLE
-            }
-        ],
         fsxOntapCalculation: {
             numberOfVolumes: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.numberOfVolumes),
             desiredStorageCapacity: formatCalcSize(

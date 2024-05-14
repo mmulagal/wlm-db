@@ -40,6 +40,16 @@ const SavingsCalculatorApi = () => {
     const [getViewCalculationsApi] = useGetViewCalculationsMutation();
     const [getMssqlInstanceDataApi] = useGetMssqlInstanceDataMutation();
 
+    useEffect(() => {
+        const selectedRow = unManagedHostFormatedList.filter((item: any) => item?.id === selectedInstanceId);
+        if (selectedRow) {
+            setESInstanceData(selectedRow[0], isDemoMode, selectedDeploymentModel, dispatch);
+            // dispatch(setSelectedHostDetails(selectedRow[0]));
+        } else {
+            dispatch(setSelectedHostDetails({}));
+        }
+    }, [unManagedHostFormatedList, selectedInstanceId]);
+
     const getStorageSavingsData = async (instanceId: string) => {
         const payload = {
             snapshotFrequency: selectedSnapshotFrequency?.value,
@@ -81,11 +91,7 @@ const SavingsCalculatorApi = () => {
                 payload: payload
             });
             if (result && !result?.error) {
-                dispatch(
-                    setViewCalculationsResponse(
-                        formatViewCalcData(result?.data, selectedDeploymentModel, selectedHostDetails)
-                    )
-                );
+                dispatch(setViewCalculationsResponse(formatViewCalcData(result?.data, selectedDeploymentModel)));
                 dispatch(setViewCalculationsLoading(false));
             } else {
                 dispatch(setViewCalculationsLoading(false));
@@ -183,16 +189,6 @@ const SavingsCalculatorApi = () => {
         dispatch(setStorageSavingsResponse({}));
         dispatch(setStorageSavingsLoading(false));
     }, [headerSelectedCred, headerSelectedRegion]);
-
-    useEffect(() => {
-        const selectedRow = unManagedHostFormatedList.filter((item: any) => item?.id === selectedInstanceId);
-        if (selectedRow) {
-            setESInstanceData(selectedRow[0], isDemoMode, selectedDeploymentModel, dispatch);
-            // dispatch(setSelectedHostDetails(selectedRow[0]));
-        } else {
-            dispatch(setSelectedHostDetails({}));
-        }
-    }, [unManagedHostFormatedList, selectedInstanceId]);
 
     return <></>;
 };
