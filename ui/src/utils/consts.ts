@@ -356,6 +356,16 @@ export const DB_VERSIONS = [
     { label: GENERAL.SQL_SERVER_2022, value: GENERAL.SQL_SERVER_2022_VERSION }
 ];
 
+export const DB_VERSIONS_EXCLUDING_2016 = [
+    { label: GENERAL.SQL_SERVER_2019, value: GENERAL.SQL_SERVER_2019_VERSION },
+    { label: GENERAL.SQL_SERVER_2022, value: GENERAL.SQL_SERVER_2022_VERSION }
+];
+
+export const DB_VERSIONS_EXCLUDING_2022 = [
+    { label: GENERAL.SQL_SERVER_2016, value: GENERAL.SQL_SERVER_2016_VERSION },
+    { label: GENERAL.SQL_SERVER_2019, value: GENERAL.SQL_SERVER_2019_VERSION }
+];
+
 export const DB_EDITIONS = [
     {
         label: GENERAL.SQL_SERVER_STANDARD_EDITION,
@@ -399,3 +409,42 @@ export const FORM_OPTIONS = {
     LICENSE_AMI: 'License included AMI', // Already name is used in old saved config so keeping same
     CUSTOM_AMI: 'Use custom AMI'
 };
+
+export const SNAPSHOT_FREQUENCY = [
+    {
+        label: 'No snapshot storage',
+        value: 'NoSnapShotStorage'
+    },
+    {
+        label: 'Hourly',
+        value: 'Hourly'
+    },
+    {
+        label: 'Daily',
+        value: 'Daily'
+    },
+    {
+        label: 'Weekly',
+        value: 'Weekly'
+    },
+    {
+        label: 'Monthly',
+        value: 'Monthly'
+    },
+    {
+        label: '2 times per day',
+        value: '2xDaily'
+    },
+    {
+        label: '3 times per day',
+        value: '3xDaily'
+    },
+    {
+        label: '4 times per day',
+        value: '4xDaily'
+    },
+    {
+        label: '6 times per day',
+        value: '6xDaily'
+    }
+];

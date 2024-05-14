@@ -14,6 +14,7 @@ const ExportPDF = ({ printDocument }: any) => {
     const { storageSavingsLoading, selectedHostDetails, viewCalculationsLoading } = useAppSelector(
         state => state.exploreSavings
     );
+
     const dispatch = useDispatch();
 
     const [loading, setLoading] = useState(false);

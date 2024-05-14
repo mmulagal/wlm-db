@@ -20,7 +20,10 @@ param(
   [string]$InstanceName,
 
   [Parameter(Mandatory = $false)]
-  [string]$ResourceID
+  [string]$ResourceID,
+
+  [Parameter(Mandatory = $true)]
+  [string]$SqlInstanceName
 )
 
 $createlog = (New-Item -ItemType Directory -Path C:\cfn\log -Force)
@@ -97,11 +100,11 @@ try {
 
   $Dblisterrlog = 'C:\cfn\log\dblist_err.log'
   if ($ResourceID) { 
-    $dblist = (Sqlcmd -U $Dbuser -P $Dbpass -Q "SET NOCOUNT ON;SELECT name FROM sys.databases" -l 20 -y 0 -r1 2> $Dblisterrlog)
+    $dblist = (Sqlcmd -S "$SqlInstanceName" -U $Dbuser -P $Dbpass -Q "SET NOCOUNT ON;SELECT name FROM sys.databases" -l 20 -y 0 -r1 2> $Dblisterrlog)
     if (Get-Content $Dblisterrlog) { throw }
   }
   else {
-    $dblist = (Sqlcmd -Q "SET NOCOUNT ON;SELECT name FROM sys.databases" -l 20 -y 0 -r1 2> $Dblisterrlog)
+    $dblist = (Sqlcmd -S "$SqlInstanceName" -Q "SET NOCOUNT ON;SELECT name FROM sys.databases" -l 20 -y 0 -r1 2> $Dblisterrlog)
     if (Get-Content $Dblisterrlog) { throw }
   } 
 }
@@ -142,14 +145,14 @@ try {
   $Dbcreateerrlog = 'C:\cfn\log\dbcreate_err.log'
   if ($ResourceID) {
     #Execute DB create query with SQL user authentication
-    $invokecreate = (Sqlcmd  -U $Dbuser -P $Dbpass -Q "$Query" -l 20 -y 0  -r1 2> $Dbcreateerrlog 1> $Dbcreatelog)
+    $invokecreate = (Sqlcmd  -S "$SqlInstanceName" -U $Dbuser -P $Dbpass -Q "$Query" -l 20 -y 0  -r1 2> $Dbcreateerrlog 1> $Dbcreatelog)
     $ErrorExists = Test-Path -Path C:\cfn\log\dblist_err.log
     if (Get-Content $Dbcreateerrlog) { throw } 
 
   }
   else {
     #Execute DB create query with trusted connection(Windows authentication). If you omit the server, it will default to localhost.
-    $invokecreate = (Sqlcmd -Q "$Query" -l 20 -y 0 -r1 2> $Dbcreateerrlog 1> $Dbcreatelog)
+    $invokecreate = (Sqlcmd -S "$SqlInstanceName" -Q "$Query" -l 20 -y 0 -r1 2> $Dbcreateerrlog 1> $Dbcreatelog)
     if (Get-Content $Dbcreateerrlog) { throw } 
   }
   

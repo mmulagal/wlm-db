@@ -239,6 +239,7 @@ export interface MssqlRequestBody {
     };
     sqlConfiguration: {
         sqlDeploymentMode: string;
+        isCustomAmi: boolean;
         sqlAmiId: string;
         sqlAmiName: string;
         serviceAccountName: string;

@@ -82,7 +82,7 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get databases count', async () => {
-        const resp = await getDatabasesCount(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID);
+        const resp = await getDatabasesCount(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID, '.');
         expect(resp.totalCount).toEqual(9);
     });
 
@@ -112,7 +112,7 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get MSSQL native backups count ', async () => {
-        const resp = await getNativeSQLProtection(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID);
+        const resp = await getNativeSQLProtection(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID, '.');
         expect(resp).toEqual(4);
     });
 
@@ -149,7 +149,8 @@ describe('MSSQL Resource methods', () => {
                 'ap-southeast-1',
                 'd749b6e689352eeaadf7b3d3c08dbda25763a62c7a75b7159d5e96080b7433b3',
                 'tempdb18',
-                'i-0ac64c292872877c7'
+                'i-0ac64c292872877c7',
+                '.'
             );
         } catch (err: any) {
             expect(err.message).toEqual('Provided database tempdb18 already exists');

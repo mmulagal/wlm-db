@@ -91,7 +91,7 @@ const SavingsCalculatorApi = () => {
                 dispatch(setViewCalculationsLoading(false));
             }
         } catch (error) {
-            dispatch(setViewCalculationsResponse(formatViewCalcData({}, selectedDeploymentModel, selectedHostDetails)));
+            dispatch(setViewCalculationsResponse(null));
             dispatch(setViewCalculationsLoading(false));
         }
     };

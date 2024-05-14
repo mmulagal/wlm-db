@@ -23,7 +23,9 @@ const TableLayout = ({ data }: any) => {
                 <Text>{data.label}</Text>
             </GridItem>
             <GridItem lg="3">
-                <Text bold>{data.value}</Text>
+                <Text bold style={{ fontWeight: '505' }}>
+                    {data.value}
+                </Text>
             </GridItem>
             <GridItem lg="5">
                 <Text>{data.text}</Text>
@@ -89,7 +91,7 @@ const MSSQLAccordion = ({ printState }: any) => {
         navigate(WLF_TO_FORM_NAVIGATE);
         setTimeout(() => {
             const data = setRecommendedConfig(msSqlInstance, fsxData);
-            LoadRecommendedConfig(dispatch, data);
+            LoadRecommendedConfig(dispatch, data, false);
         }, 10);
     };
 
@@ -137,7 +139,10 @@ const MSSQLAccordion = ({ printState }: any) => {
                 children={
                     isMutliFsx ? (
                         <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '2351px' }}>
-                            <DsTypography variant="Semibold_14" style={{ marginBottom: '6px' }}>
+                            <DsTypography
+                                variant="Semibold_14"
+                                style={{ marginBottom: '6px', fontWeight: '505 !important' }}
+                            >
                                 {GENERAL.MS_SQL_TWO_INSTANCES}
                             </DsTypography>
 
@@ -173,7 +178,11 @@ const MSSQLAccordion = ({ printState }: any) => {
                                 overflow: 'hidden'
                             }}
                         >
-                            <DsTypography variant="Semibold_14" style={{ marginBottom: '6px' }}>
+                            <DsTypography
+                                variant="Semibold_14"
+                                style={{ marginBottom: '6px' }}
+                                className={styles.setFont}
+                            >
                                 {GENERAL.MS_SQL_SINGLE_INSTANCES}
                             </DsTypography>
 
@@ -182,7 +191,11 @@ const MSSQLAccordion = ({ printState }: any) => {
                                     <TableLayout data={data} key={index} />
                                 )
                             )}
-                            <DsTypography variant="Semibold_14" style={{ marginTop: '32px', marginBottom: '6px' }}>
+                            <DsTypography
+                                variant="Semibold_14"
+                                style={{ marginTop: '32px', marginBottom: '6px' }}
+                                className={styles.setFont}
+                            >
                                 FSxN
                             </DsTypography>
                             {calculatedFSXData(fsxData).map(

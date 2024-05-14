@@ -194,6 +194,22 @@ export const formatCalcSize = (val: any) => {
     }
 };
 
+export const formatNumbers = (val: any) => {
+    if (val || val === 0) {
+        return Number(val).toLocaleString();
+    } else {
+        return GENERAL.NOT_AVAILABLE;
+    }
+};
+
+export const formatPercentage = (val: any) => {
+    if (val || val === 0) {
+        return Number(100 * val).toLocaleString();
+    } else {
+        return GENERAL.NOT_AVAILABLE;
+    }
+};
+
 export const formatViewCalcData = (
     viewCalculationsResponse: any,
     selectedDeploymentModel: string,
@@ -230,6 +246,7 @@ export const formatViewCalcData = (
     const totalFsxSnapshotCost = (() => {
         let cost = 0;
         cost += viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalMonthlyCostForCapacity || 0;
+        cost += viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalMonthlyCostForFsxSsd || 0;
         return formatFractionalNumber(cost, 2);
     })();
 
@@ -254,16 +271,16 @@ export const formatViewCalcData = (
             }
         ],
         fsxOntapCalculation: {
-            numberOfVolumes: Number(viewCalculationsResponse?.fsxOntapCalculation?.numberOfVolumes).toLocaleString(),
+            numberOfVolumes: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.numberOfVolumes),
             desiredStorageCapacity: formatCalcSize(
                 viewCalculationsResponse?.fsxOntapCalculation?.desiredStorageCapacity
             ),
-            percentageOfDataOnSsdStorage: Number(
+            percentageOfDataOnSsdStorage: formatPercentage(
                 viewCalculationsResponse?.fsxOntapCalculation?.percentageOfDataOnSsdStorage
-            ).toLocaleString(),
-            savingsFromCompressionAndDeduplication: Number(
+            ),
+            savingsFromCompressionAndDeduplication: formatPercentage(
                 viewCalculationsResponse?.fsxOntapCalculation?.savingsFromCompressionAndDeduplication
-            ).toLocaleString(),
+            ),
             storageSavingsFromCompressionAndDeduplication: formatCalcSize(
                 viewCalculationsResponse?.fsxOntapCalculation?.storageSavingsFromCompressionAndDeduplication
             ),
@@ -274,92 +291,80 @@ export const formatViewCalcData = (
             greaterOfSsdAndMinAllowedSsd: formatCalcSize(
                 viewCalculationsResponse?.fsxOntapCalculation?.greaterOfSsdAndMinAllowedSsd
             ),
-            ssdMonthlyCost: Number(viewCalculationsResponse?.fsxOntapCalculation?.ssdMonthlyCost).toLocaleString(),
-            totalMonthlyCostForFSxSsd: Number(
+            ssdMonthlyCost: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.ssdMonthlyCost),
+            totalMonthlyCostForFSxSsd: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyCostForFSxSsd
-            ).toLocaleString(),
-            ratioAfterSavings: Number(
-                viewCalculationsResponse?.fsxOntapCalculation?.ratioAfterSavings
-            ).toLocaleString(),
-            dataOnCapacityPoolStorageFactor: Number(
+            ),
+            ratioAfterSavings: formatPercentage(viewCalculationsResponse?.fsxOntapCalculation?.ratioAfterSavings),
+            dataOnCapacityPoolStorageFactor: formatPercentage(
                 viewCalculationsResponse?.fsxOntapCalculation?.dataOnCapacityPoolStorageFactor
-            ).toLocaleString(),
+            ),
             capacityPoolStorage: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.capacityPoolStorage),
-            capacityMonthlyCost: Number(
-                viewCalculationsResponse?.fsxOntapCalculation?.capacityMonthlyCost
-            ).toLocaleString(),
-            totalMonthlyCostForCapacity: Number(
+            capacityMonthlyCost: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.capacityMonthlyCost),
+            totalMonthlyCostForCapacity: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyCostForCapacity
-            ).toLocaleString(),
-            totalMonthlyStorageCharge: Number(
+            ),
+            totalMonthlyStorageCharge: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyStorageCharge
-            ).toLocaleString(),
-            minFileSystemsNumForStorage: Number(
+            ),
+            minFileSystemsNumForStorage: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.minFileSystemsNumForStorage
-            ).toLocaleString(),
-            minFileSystemsNumForThroughputCapacity: Number(
+            ),
+            minFileSystemsNumForThroughputCapacity: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.minFileSystemsNumForThroughputCapacity
-            ).toLocaleString(),
-            minFileSystemsNumForSsdIops: Number(
-                viewCalculationsResponse?.fsxOntapCalculation?.minFileSystemsNumForThroughputCapacity
-            ).toLocaleString(),
-            requiredNumOfFsxFractional: Number(
+            ),
+            minFileSystemsNumForSsdIops: formatNumbers(
+                viewCalculationsResponse?.fsxOntapCalculation?.minFileSystemsNumForSsdIops
+            ),
+            requiredNumOfFsxFractional: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.requiredNumOfFsxFractional
-            ).toLocaleString(),
-            requiredNumOfFsx: Number(viewCalculationsResponse?.fsxOntapCalculation?.requiredNumOfFsx).toLocaleString(),
-            minThroughputCapacityRequired: formatCalcSize(
-                viewCalculationsResponse?.fsxOntapCalculation?.minThroughputCapacityRequired
             ),
-            provisionedThroughputCapacity: formatCalcSize(
-                viewCalculationsResponse?.fsxOntapCalculation?.provisionedThroughputCapacity
-            ),
-            totalMonthlyFsxnThroughputCapacityCost: Number(
+            requiredNumOfFsx: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.requiredNumOfFsx),
+            minThroughputCapacityRequired:
+                formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.minThroughputCapacityRequired) + ' GiB',
+            provisionedThroughputCapacity:
+                formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.provisionedThroughputCapacity) + ' GiB',
+            totalMonthlyFsxnThroughputCapacityCost: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyFsxnThroughputCapacityCost
-            ).toLocaleString(),
-            includedSsdIops: Number(viewCalculationsResponse?.fsxOntapCalculation?.includedSsdIops).toLocaleString(),
-            additionalSsdIops: Number(
-                viewCalculationsResponse?.fsxOntapCalculation?.additionalSsdIops
-            ).toLocaleString(),
-            billedAdditionalSsdIops: Number(
+            ),
+            includedSsdIops: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.includedSsdIops),
+            additionalSsdIops: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.additionalSsdIops),
+            billedAdditionalSsdIops: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.billedAdditionalSsdIops
-            ).toLocaleString(),
-            additionalBilledCostForSsdIops: Number(
+            ),
+            additionalBilledCostForSsdIops: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.additionalBilledCostForSsdIops
-            ).toLocaleString(),
-            totalThroughputAndIopsMonthly: Number(
+            ),
+            totalThroughputAndIopsMonthly: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.totalThroughputAndIopsMonthly
-            ).toLocaleString(),
-            EBSCapacity: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.EBSCapacity),
-            fsxnStoragePrice: Number(
-                viewCalculationsResponse?.fsxOntapCalculation?.fsxnStoragePrice?.price
-            ).toLocaleString(),
-            fsxnCapacityPrice: Number(
-                viewCalculationsResponse?.fsxOntapCalculation?.fsxnCapacityPrice?.price
-            ).toLocaleString(),
-            maxSSDTierSize: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.maxSSDTierSize),
-            suggestedFsxnThroughputCapacity: formatCalcSize(
+            ),
+            ebsCapacity: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.ebsCapacity),
+            fsxnStoragePrice: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.fsxnStoragePrice?.price),
+            fsxnCapacityPrice: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.fsxnCapacityPrice?.price),
+            maxSsdTierSize: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.maxSsdTierSize),
+            suggestedFsxnThroughputCapacity: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.suggestedFsxnThroughputCapacity
             ),
-            maxThroughput: Number(viewCalculationsResponse?.fsxOntapCalculation?.maxThroughput).toLocaleString(),
-            fsxnThroughputPrice: Number(
-                viewCalculationsResponse?.fsxOntapCalculation?.fsxnThroughputPrice
-            ).toLocaleString(),
-            provisionedSsdIops: Number(
-                viewCalculationsResponse?.fsxOntapCalculation?.provisionedSsdIops
-            ).toLocaleString(),
-            includedIops: Number(viewCalculationsResponse?.fsxOntapCalculation?.includedIops).toLocaleString(),
-            maxSsdIops: Number(viewCalculationsResponse?.fsxOntapCalculation?.maxSsdIops).toLocaleString()
+            maxThroughput: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.maxThroughput),
+            fsxnThroughputPrice: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.fsxnThroughputPrice),
+            provisionedSsdIops: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.provisionedSsdIops),
+            includedIops: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.includedIops),
+            maxSsdIops: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.maxSsdIops)
         },
         fsxOntapSnapshotCalculation: {
+            fsxnSsdPrice: formatNumbers(viewCalculationsResponse?.fsxOntapSnapshotCalculation?.fsxnSsdPrice?.price),
+            fsxnCapacityPrice: formatNumbers(
+                viewCalculationsResponse?.fsxOntapSnapshotCalculation?.fsxnCapacityPrice?.price
+            ),
             desiredStorageCapacity: formatCalcSize(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.desiredStorageCapacity
             ),
-            percentageOfDataOnSsdStorage: Number(
+            percentageOfDataOnSsdStorage: formatPercentage(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.percentageOfDataOnSsdStorage
-            ).toLocaleString(),
-            savingsFromCompressionAndDeduplication: Number(
+            ),
+            savingsFromCompressionAndDeduplication: formatPercentage(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.savingsFromCompressionAndDeduplication
-            ).toLocaleString(),
+            ),
             storageSavingsFromCompressionAndDeduplication: formatCalcSize(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.storageSavingsFromCompressionAndDeduplication
             ),
@@ -369,80 +374,79 @@ export const formatViewCalcData = (
             ssdStoragePerMonth: formatCalcSize(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.ssdStoragePerMonth
             ),
-            ssdMonthlyCost: Number(
-                viewCalculationsResponse?.fsxOntapSnapshotCalculation?.ssdMonthlyCost
-            ).toLocaleString(),
-            totalMonthlyCostForFsxSsd: Number(
-                viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalMonthlyCostForFsxSsd
-            ).toLocaleString(),
-            ratioAfterSavings: Number(
+            ssdMonthlyCost: formatNumbers(viewCalculationsResponse?.fsxOntapSnapshotCalculation?.ssdMonthlyCost),
+            totalSnapshotMonthlyCostForFsxSsd: formatNumbers(
+                viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalSnapshotMonthlyCostForFsxSsd
+            ),
+            ratioAfterSavings: formatPercentage(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.ratioAfterSavings
-            ).toLocaleString(),
-            dataOnCapacityPoolStorageFactor: Number(
+            ),
+            dataOnCapacityPoolStorageFactor: formatPercentage(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.dataOnCapacityPoolStorageFactor
-            ).toLocaleString(),
+            ),
             capacityPoolStorage: formatCalcSize(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.capacityPoolStorage
             ),
-            capacityMonthlyCost: Number(
+            capacityMonthlyCost: formatNumbers(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.capacityMonthlyCost
-            ).toLocaleString(),
-            totalMonthlyCostForCapacity: Number(
+            ),
+            totalMonthlyCostForCapacity: formatNumbers(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalMonthlyCostForCapacity
-            ).toLocaleString()
+            ),
+            totalSnapshotMonthlyCost: formatNumbers(
+                viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalSnapshotMonthlyCost
+            )
         },
         ebsCalculation: {
+            numberOfVolumes: formatNumbers(viewCalculationsResponse?.ebsCalculation?.numberOfVolumes),
             storageAmountPerVol: formatCalcSize(viewCalculationsResponse?.ebsCalculation?.storageAmountPerVol),
-            totalInstanceHours: Number(viewCalculationsResponse?.ebsCalculation?.totalInstanceHours).toLocaleString(),
-            ebsInstanceMonth: Number(viewCalculationsResponse?.ebsCalculation?.ebsInstanceMonth).toLocaleString(),
-            ebsStorageCost: Number(viewCalculationsResponse?.ebsCalculation?.ebsStorageCost).toLocaleString(),
-            billableIops: Number(viewCalculationsResponse?.ebsCalculation?.billableIops).toLocaleString(),
-            totalBillableIops: Number(viewCalculationsResponse?.ebsCalculation?.totalBillableIops).toLocaleString(),
-            ebsIopsCost: Number(viewCalculationsResponse?.ebsCalculation?.ebsIopsCost).toLocaleString(),
-            billableMbps: Number(viewCalculationsResponse?.ebsCalculation?.billableMbps).toLocaleString(),
-            billableThroughputMbps: Number(
-                viewCalculationsResponse?.ebsCalculation?.billableThroughputMbps
-            ).toLocaleString(),
-            billableThroughputGbps: Number(
-                viewCalculationsResponse?.ebsCalculation?.billableThroughputGbps
-            ).toLocaleString(),
-            ebsThroughputCost: Number(viewCalculationsResponse?.ebsCalculation?.ebsThroughputCost).toLocaleString(),
-            totalSnapshots: Number(viewCalculationsResponse?.ebsCalculation?.totalSnapshots).toLocaleString(),
-            initialSnapshotCost: Number(viewCalculationsResponse?.ebsCalculation?.initialSnapshotCost).toLocaleString(),
-            monthlyCostPerSnapshot: Number(
-                viewCalculationsResponse?.ebsCalculation?.monthlyCostPerSnapshot
-            ).toLocaleString(),
-            discountForPartialStorageMonth: Number(
+            totalInstanceHours: formatNumbers(viewCalculationsResponse?.ebsCalculation?.totalInstanceHours),
+            ebsInstanceMonth: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsInstanceMonth),
+            ebsStorageCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsStorageCost),
+            billableIops: formatNumbers(viewCalculationsResponse?.ebsCalculation?.billableIops),
+            totalBillableIops: formatNumbers(viewCalculationsResponse?.ebsCalculation?.totalBillableIops),
+            ebsIopsCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsIopsCost),
+            billableMbps: formatNumbers(viewCalculationsResponse?.ebsCalculation?.billableMbps),
+            billableThroughputMbps: formatNumbers(viewCalculationsResponse?.ebsCalculation?.billableThroughputMbps),
+            billableThroughputGbps: formatNumbers(viewCalculationsResponse?.ebsCalculation?.billableThroughputGbps),
+            ebsThroughputCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsThroughputCost),
+            totalSnapshots: formatNumbers(viewCalculationsResponse?.ebsCalculation?.totalSnapshots),
+            initialSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.initialSnapshotCost),
+            monthlyCostPerSnapshot: formatNumbers(viewCalculationsResponse?.ebsCalculation?.monthlyCostPerSnapshot),
+            discountForPartialStorageMonth: formatNumbers(
                 viewCalculationsResponse?.ebsCalculation?.discountForPartialStorageMonth
-            ).toLocaleString(),
-            incrementalSnapshotCost: Number(
-                viewCalculationsResponse?.ebsCalculation?.incrementalSnapshotCost
-            ).toLocaleString(),
-            totalSnapshotCost: Number(viewCalculationsResponse?.ebsCalculation?.totalSnapshotCost).toLocaleString(),
-            totalEbsSnapshotCost: Number(
-                viewCalculationsResponse?.ebsCalculation?.totalEbsSnapshotCost
-            ).toLocaleString(),
-            ebsSnapshotCost: Number(viewCalculationsResponse?.ebsCalculation?.ebsSnapshotCost).toLocaleString(),
-            instanceAvgDuration: Number(viewCalculationsResponse?.ebsCalculation?.instanceAvgDuration).toLocaleString(),
-            ebsCapacityPrice: Number(
-                viewCalculationsResponse?.ebsCalculation?.ebsCapacityPrice?.price
-            ).toLocaleString(),
-            hoursInAMonth: Number(viewCalculationsResponse?.ebsCalculation?.hoursInAMonth).toLocaleString()
+            ),
+            incrementalSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.incrementalSnapshotCost),
+            totalSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.totalSnapshotCost),
+            totalEbsSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.totalEbsSnapshotCost),
+            ebsSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsSnapshotCost),
+            ebsTotalCostMonthly: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsTotalCostMonthly),
+            instanceAvgDuration: formatNumbers(viewCalculationsResponse?.ebsCalculation?.instanceAvgDuration),
+            ebsCapacityPrice: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsCapacityPrice?.price),
+            hoursInAMonth: formatNumbers(viewCalculationsResponse?.ebsCalculation?.hoursInAMonth)
         },
         fsxCloneCalculation: {
+            clonedCopiesCount: formatNumbers(viewCalculationsResponse?.fsxCloneCalculation?.clonedCopiesCount),
+            numberOfClonesInAMonth: formatNumbers(
+                viewCalculationsResponse?.fsxCloneCalculation?.numberOfClonesInAMonth
+            ),
+            changeRateBetweenClones: formatNumbers(
+                viewCalculationsResponse?.fsxCloneCalculation?.changeRateBetweenClones
+            ),
+            fsxnSsdPrice: formatNumbers(viewCalculationsResponse?.fsxCloneCalculation?.fsxnSsdPrice?.price),
             cloneRefreshFrequency: viewCalculationsResponse?.fsxCloneCalculation?.cloneRefreshFrequency,
-            monthlyChangeRatePercentage: Number(
+            monthlyChangeRatePercentage: formatNumbers(
                 viewCalculationsResponse?.fsxCloneCalculation?.monthlyChangeRatePercentage
-            ).toLocaleString(),
+            ),
             desiredStorageCapacity: formatCalcSize(
                 viewCalculationsResponse?.fsxCloneCalculation?.desiredStorageCapacity
             ),
-            percentageOfDataOnSsdStorage: Number(
+            percentageOfDataOnSsdStorage: formatPercentage(
                 viewCalculationsResponse?.fsxCloneCalculation?.percentageOfDataOnSsdStorage
-            ).toLocaleString(),
-            savingsFromCompressionAndDeduplication: Number(
+            ),
+            savingsFromCompressionAndDeduplication: formatPercentage(
                 viewCalculationsResponse?.fsxCloneCalculation?.savingsFromCompressionAndDeduplication
-            ).toLocaleString(),
+            ),
             storageSavingsFromCompressionAndDeduplication: formatCalcSize(
                 viewCalculationsResponse?.fsxCloneCalculation?.storageSavingsFromCompressionAndDeduplication
             ),
@@ -450,16 +454,15 @@ export const formatViewCalcData = (
                 viewCalculationsResponse?.fsxCloneCalculation?.effectiveFsxnStorageCapacity
             ),
             ssdStoragePerMonth: formatCalcSize(viewCalculationsResponse?.fsxCloneCalculation?.ssdStoragePerMonth),
-            ssdMonthlyCost: Number(viewCalculationsResponse?.fsxCloneCalculation?.ssdMonthlyCost).toLocaleString(),
-            totalCloneMonthlyCost: Number(
-                viewCalculationsResponse?.fsxCloneCalculation?.totalCloneMonthlyCost
-            ).toLocaleString()
+            ssdMonthlyCost: formatNumbers(viewCalculationsResponse?.fsxCloneCalculation?.ssdMonthlyCost),
+            totalCloneMonthlyCost: formatNumbers(viewCalculationsResponse?.fsxCloneCalculation?.totalCloneMonthlyCost)
         },
         ebsCloneCalculation: {
-            numberOfClonedCopies: Number(
-                viewCalculationsResponse?.ebsCloneCalculation?.numberOfClonedCopies
-            ).toLocaleString(),
-            cloneCost: Number(viewCalculationsResponse?.ebsCloneCalculation?.cloneCost).toLocaleString()
+            clonedCopiesCount: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.clonedCopiesCount),
+            capacity: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.capacity),
+            iops: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.iops),
+            throughput: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.throughput),
+            totalCloneMonthlyCost: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.totalCloneMonthlyCost)
         },
         fsxTotalCost: totalFsxCost,
         ebsTotalCost: totalEbsCost,

@@ -6,7 +6,6 @@ import { Text } from '../../../../ui-components/Typography';
 import { viewCalculationForEBS } from '../../SavingsCalculator/savingsUtil';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useState } from 'react';
 
 const TableLayout = ({ data }: any) => {
     const styleHandler = (data: any) => {
@@ -50,51 +49,76 @@ const TableLayout = ({ data }: any) => {
 };
 
 const EBSCalculation = () => {
-    const { viewCalculationsResponse, selectedDeploymentModel } = useAppSelector(state => state.exploreSavings);
+    const { viewCalculationsResponse, selectedDeploymentModel, viewCalculationsLoading } = useAppSelector(
+        state => state.exploreSavings
+    );
 
     const setHeader = () => {
+        if (!viewCalculationsResponse) {
+            return (
+                <DsTypography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.NOT_AVAILABLE}
+                </DsTypography>
+            );
+        }
         return <DsTypography variant="Regular_14">${viewCalculationsResponse?.ebsTotalCost}</DsTypography>;
     };
+
     return (
         <div className={styles.ebsCalculation}>
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="2"
                 title={<div>{GENERAL.MS_EBS_CALCULATION}</div>}
+                isLoading={viewCalculationsLoading}
+                isDisabled={!viewCalculationsResponse}
             >
-                <AccordionCardContent>
-                    <DsTypography className={styles.accordionContentSet}>
-                        {viewCalculationForEBS(
-                            viewCalculationsResponse,
-                            selectedDeploymentModel
-                        ).Ec2InstanceCalculation.map(
-                            (data: { label: string; text?: string; value?: string }, index: number) => (
-                                <TableLayout key={index} data={data} />
-                            )
-                        )}
-                        <div style={{ marginTop: '16px' }}>
+                {viewCalculationsResponse && (
+                    <AccordionCardContent>
+                        <DsTypography className={styles.accordionContentSet}>
                             {viewCalculationForEBS(
                                 viewCalculationsResponse,
                                 selectedDeploymentModel
-                            ).EBSCalculation.map(
+                            ).Ec2InstanceCalculation.map(
                                 (data: { label: string; text?: string; value?: string }, index: number) => (
                                     <TableLayout key={index} data={data} />
                                 )
                             )}
-                        </div>
+                            <div style={{ marginTop: '16px' }}>
+                                {viewCalculationForEBS(
+                                    viewCalculationsResponse,
+                                    selectedDeploymentModel
+                                ).EBSCalculation.map(
+                                    (data: { label: string; text?: string; value?: string }, index: number) => (
+                                        <TableLayout key={index} data={data} />
+                                    )
+                                )}
+                            </div>
 
-                        <div style={{ marginTop: '16px' }}>
-                            {viewCalculationForEBS(
-                                viewCalculationsResponse,
-                                selectedDeploymentModel
-                            ).cloneCalculation.map(
-                                (data: { label: string; text?: string; value?: string }, index: number) => (
-                                    <TableLayout key={index} data={data} />
-                                )
-                            )}
-                        </div>
-                    </DsTypography>
-                </AccordionCardContent>
+                            <div style={{ marginTop: '16px' }}>
+                                {viewCalculationForEBS(
+                                    viewCalculationsResponse,
+                                    selectedDeploymentModel
+                                ).SnapshotCalculation.map(
+                                    (data: { label: string; text?: string; value?: string }, index: number) => (
+                                        <TableLayout key={index} data={data} />
+                                    )
+                                )}
+                            </div>
+
+                            <div style={{ marginTop: '16px' }}>
+                                {viewCalculationForEBS(
+                                    viewCalculationsResponse,
+                                    selectedDeploymentModel
+                                ).cloneCalculation.map(
+                                    (data: { label: string; text?: string; value?: string }, index: number) => (
+                                        <TableLayout key={index} data={data} />
+                                    )
+                                )}
+                            </div>
+                        </DsTypography>
+                    </AccordionCardContent>
+                )}
             </AccordionCard>
         </div>
     );
