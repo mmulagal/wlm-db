@@ -449,8 +449,8 @@ async function invokeSSMForDatabaseDeployment(
     const virtualDataFileName = dataFileName.split('.')[0];
     const virtualLogFileName = logFileName.split('.')[0];
     if (isVirtualMountSelected) {
-        dataDrivePath = `${dataDrive}:${virtualDataFileName}\\${DatabaseTypes.MS_SQL_SERVER}\\data\\${dataFileName}`;
-        logDrivePath = `${logDrive}:${virtualLogFileName}\\${DatabaseTypes.MS_SQL_SERVER}\\log\\${logFileName}`;
+        dataDrivePath = `${dataDrive}:\\${virtualDataFileName}\\${DatabaseTypes.MS_SQL_SERVER}\\data\\${dataFileName}`;
+        logDrivePath = `${logDrive}:\\${virtualLogFileName}\\${DatabaseTypes.MS_SQL_SERVER}\\log\\${logFileName}`;
     } else {
         dataDrivePath = `${dataDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\data\\${dataFileName}`;
         logDrivePath = `${logDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\log\\${logFileName}`;
