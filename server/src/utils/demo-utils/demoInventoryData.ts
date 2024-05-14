@@ -156,6 +156,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerVersion: '16.0.4105.2',
                         windowsAuthentication: false,
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        sqlServerDeploymentType: 'AOAG',
                         storage: [
                             {
                                 type: 'EBS',
@@ -264,6 +265,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsAuthentication: true,
                         sqlServerName: 'SQLServer-QA-01',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        sqlServerDeploymentType: 'AOAG',
                         storage: [
                             {
                                 type: 'EBS',
@@ -443,6 +445,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsAuthentication: true,
                         sqlServerName: 'SQLServer-Training-02',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUZ'],
+                        sqlServerDeploymentType: 'AOAG',
                         storage: [
                             {
                                 type: 'EBS',
