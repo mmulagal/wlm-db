@@ -334,7 +334,7 @@ const createCloneDbCommand = {
 
 const addExtendedPropertiesCommand = {
     commands: [
-        addExtendedProperties('testdb', {
+        addExtendedProperties('testdb', '.', {
             tag: 'demo',
             cloned_by: 'netapp_wlmdb',
             source: 'resource|instance|testdb'

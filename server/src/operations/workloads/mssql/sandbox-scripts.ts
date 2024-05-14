@@ -72,7 +72,7 @@ const checkDatabaseExists = (dbCloneName: string, instanceName: string = '.') =>
     }
 
     $sqlcmd = "SET NOCOUNT ON; SELECT name FROM sys.databases where name = '$dbCloneName' FOR JSON PATH;"
-    $sqlresponse =  sqlcmd  -S ${instanceName} -Q $sqlcmd -y 0;
+    $sqlresponse =  sqlcmd  -S "${instanceName}" -Q $sqlcmd -y 0;
 
     [string[]]$ExistingDatabases = $sqlresponse | ConvertFrom-Json | % { $_.name }
 
@@ -283,7 +283,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
             return $responeObject
         }
     
-        $responeObject =  sqlcmd -S ${instanceName} -Q $sqlquery -y 0;
+        $responeObject =  sqlcmd -S "${instanceName}" -Q $sqlquery -y 0;
         write-debug "SQL response: $responeObject"
         if ([string]::IsNullOrEmpty($responeObject)) {
             if ($responeObject -eq $null) {
@@ -571,7 +571,7 @@ const createVolumeClone = (
     $responeObject | ConvertTo-Json -Depth 5
 `;
 
-const createClonedDb = (dbName: string, fileList: string[] = []) => `
+const createClonedDb = (dbName: string, instanceName: string = '.', fileList: string[] = []) => `
     $WarningPreference = 'SilentlyContinue';
     $dbname = '${dbName}'
 
@@ -579,11 +579,11 @@ const createClonedDb = (dbName: string, fileList: string[] = []) => `
 
     try {
         $selectquery = "SET NOCOUNT ON; SELECT name, state_desc FROM sys.databases where name = '$dbname' FOR JSON PATH;"
-        $sqlresponse =  sqlcmd -Q $selectquery -y 0;
+        $sqlresponse =  sqlcmd -S "${instanceName}" -Q $selectquery -y 0;
 
         write-debug "SQL response: $sqlresponse"
         [string[]]$ExistingDatabases = $sqlresponse | ConvertFrom-Json | % { $_.name }
-        $selectresult = (sqlcmd -Q $selectquery -y 0) | ConvertFrom-Json
+        $selectresult = (sqlcmd -S "${instanceName}" -Q $selectquery -y 0) | ConvertFrom-Json
         if ($selectresult.count -gt 0) {
             Write-Error "Database $dbname already exists and is in $($selectresult[0].state_desc) state. Exiting..."
         }
@@ -594,13 +594,17 @@ const createClonedDb = (dbName: string, fileList: string[] = []) => `
             ${fileList.map(file => (file ? `(FILENAME = '${file}')` : '')).join()}
             FOR ATTACH;
 "@
-        sqlcmd -Q $attachQuery
+        sqlcmd -S "${instanceName}"  -Q $attachQuery
     } catch {
         Write-Error $_.Exception.Message
     }
 `;
 
-const addExtendedProperties = (dbName: string, propObj: { [x: string]: string | number }) => `
+const addExtendedProperties = (
+    dbName: string,
+    instanceName: string = '.',
+    propObj: { [x: string]: string | number }
+) => `
 $dbname = '${dbName}'
 
 Start-Transcript -Path "C:\\cfn\\log\\add_extended_properties_$dbname.log.txt" -Append | Out-Null
@@ -625,7 +629,7 @@ ${Object.keys(propObj)
 
 "@
 
-Sqlcmd -Q $query -m 1
+Sqlcmd -S "${instanceName}"  -Q $query -m 1
 `;
 
 const cleanUpOntapResources = (

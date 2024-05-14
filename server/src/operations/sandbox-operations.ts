@@ -389,6 +389,7 @@ async function createSandbox(
                       isSSMConnected: boolean;
                       activeNodeInstanceId: string;
                       standbyNodeInstanceId: string | undefined;
+                      instanceName: string;
                   }
               )
             : getActiveSqlNode(credentialsId, region, destNode1, destNode2)
@@ -437,7 +438,7 @@ async function createSandbox(
             fsxId: srcResourceDetail.co_relation_id!,
             activeNodeInstaceId: srcStatus.activeNodeInstanceId!,
             metadata: srcResourceDetail.metadata as unknown as Metadata,
-            instanceName: '.'
+            instanceName: srcStatus.instanceName || '.'
         },
         {
             ...dest,
@@ -446,7 +447,7 @@ async function createSandbox(
             fsxId: destResourceDetail.co_relation_id!,
             activeNodeInstaceId: destStatus.activeNodeInstanceId!,
             metadata: destResourceDetail.metadata as unknown as Metadata,
-            instanceName: '.'
+            instanceName: destStatus.instanceName || '.'
         },
         tag
     );
@@ -867,11 +868,13 @@ async function createCloneDb(
     });
 
     try {
-        let command = [createCloneDbScript(destDetails.database, [mountPaths.dataPath, mountPaths.logPath])];
+        let command = [
+            createCloneDbScript(destDetails.database, destDetails.instance, [mountPaths.dataPath, mountPaths.logPath])
+        ];
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [
-                createCloneDbScript('testdb', [
+                createCloneDbScript('testdb', '.', [
                     'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
                     'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
                 ])
@@ -929,7 +932,7 @@ async function createExtendedProperties(
 
     try {
         let command = [
-            addExtendedProperties(destDetails.database, {
+            addExtendedProperties(destDetails.database, destDetails.instance, {
                 tag,
                 cloned_by: 'netapp_wlmdb',
                 source: `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`,
@@ -940,7 +943,7 @@ async function createExtendedProperties(
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [
-                addExtendedProperties('testdb', {
+                addExtendedProperties('testdb', '.', {
                     tag: 'demo',
                     cloned_by: 'netapp_wlmdb',
                     source: 'resource|instance|testdb'
