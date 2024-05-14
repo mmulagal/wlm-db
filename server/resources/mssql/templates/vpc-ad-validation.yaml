@@ -378,6 +378,8 @@ Resources:
                                   - ''
                                   - - 'powershell.exe -Command "C:\cfn\scripts\Validate-Ami.ps1 -IsCustomAmi '
                                     - !Ref 'IsCustomAmi'
+                                    - ' -Region '
+                                    - !Ref 'AWS::Region'
                                     - ' -Stackname '
                                     - !Ref 'AWS::StackName'
                                     - ' -Parentstackname '

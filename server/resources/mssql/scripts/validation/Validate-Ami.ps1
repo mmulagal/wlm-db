@@ -2,6 +2,9 @@
     param(
         [Parameter(Mandatory=$true)]
         [string]$IsCustomAmi,
+
+        [Parameter(Mandatory=$true)]
+        [string]$Region,
         
         [Parameter(Mandatory=$true)]
         [string]$Stackname,
@@ -63,7 +66,7 @@ Get-Service AmazonSSMAgent -ErrorAction Stop
     [System.Net.ServicePointManager]::SecurityProtocol = 'TLS12'
     $progressPreference = 'silentlyContinue'
     Invoke-WebRequest `
-        https://amazon-ssm-$region.s3.$region.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe `
+        https://amazon-ssm-$Region.s3.$Region.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe `
         -OutFile $env:USERPROFILE\Desktop\SSMAgent_latest.exe
     Start-Process ` -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe ` -ArgumentList "/S"
     rm -Force $env:USERPROFILE\Desktop\SSMAgent_latest.exe
