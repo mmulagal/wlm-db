@@ -72,9 +72,9 @@ try {
     if (Test-Path -Path "C:\SQLServerSetup\setup.exe") {
         Start-Sleep 5
         try {
-            Write-Output "Setting collation on SQLServer($SQLInstanceName)"
+            Write-Output "Setting collation on SQLServer($Using:SQLInstanceName)"
             # Stop SQL Service
-            $SQLService = Get-Service -Name '$SQLInstanceName'
+            $SQLService = Get-Service -Name "$Using:SQLInstanceName"
             if ($SQLService.status -eq 'Running') { $SQLService.Stop() }
             $SQLService.WaitForStatus('Stopped', '00:01:00')
     
@@ -89,7 +89,7 @@ try {
             $SQLService.WaitForStatus('Running', '00:01:00')
         }
         catch {
-            Write-Output "Failed to set collation on SQLServer($SQLInstanceName)"
+            Write-Output "Failed to set collation on SQLServer($Using:SQLInstanceName)"
             # Start SQL service even though collation fails
             $SQLService.Start()
             $SQLService.WaitForStatus('Running', '00:01:00')
