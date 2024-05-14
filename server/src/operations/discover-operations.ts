@@ -994,6 +994,12 @@ async function validateEc2InstanceManageability(discoverInfo: DiscoverMsSqlRespo
             throw new Error('no SQL Server instances found');
         }
 
+        if (
+            sqlServerInstances!.some(elem => elem.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT)
+        ) {
+            throw new Error('Always On Availability Group environments are not supported.');
+        }
+
         // Current supported configuration is expected to be one SQL Server instance per EC2.
         // If the EC2 has more than one SQL Server instance, we are considering only the first one.
         const { windowsAuthentication, sqlServerAuthentication, storage, sqlServerNodes, sqlServerInstance } =
