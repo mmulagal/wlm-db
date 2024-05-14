@@ -64,7 +64,7 @@ END"
         Stop-Service SQLSERVERAGENT -Force
         Start-Service SQLSERVERAGENT
     }catch{
-        Write-Host "Error while starting/stopping SQLSERVERAGENT"
+        Write-Host "Error while starting/stopping SQLSERVERAGENT. Error: $_"
     }
     Stop-Service $SQLInstanceName -Force
     Start-Service $SQLInstanceName
