@@ -5,7 +5,7 @@ import styles from './SelectedVolumeSummary.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
-import { formatSizeOnePrecision } from '../../../../utils/utilityFunctions';
+import { formatSizeTwoPrecision } from '../../../../utils/utilityFunctions';
 
 const SelectedVolumeSummary = () => {
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
@@ -144,7 +144,7 @@ const SelectedVolumeSummary = () => {
                     newObj[key] = storageAmount[key];
                     return newObj;
                 } else {
-                    newObj[key] = formatSizeOnePrecision(storageAmount[key]);
+                    newObj[key] = formatSizeTwoPrecision(storageAmount[key]);
                     return newObj;
                 }
             }, {});
