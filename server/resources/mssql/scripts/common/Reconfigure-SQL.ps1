@@ -152,28 +152,28 @@ try {
         # Create account for AD user
         If($Using:SkipCollation -eq $True){
             $AdminUser = "[" + $Using:DomainNetBIOSName + "\" + $Using:DomainAdminUser + "]"
-            Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "CREATE LOGIN $AdminUser FROM WINDOWS ;" -TrustServerCertificate
-            Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "ALTER SERVER ROLE [sysadmin] ADD MEMBER $AdminUser ;" -TrustServerCertificate
+            Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "CREATE LOGIN $AdminUser FROM WINDOWS ;" 
+            Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "ALTER SERVER ROLE [sysadmin] ADD MEMBER $AdminUser ;" 
         }
 
         # Create account for SQL Service Account user. AD user is added above as part of setting collation.
         $SQLUser = "[" + $Using:DomainNetBIOSName + "\" + $Using:SQLServiceAccount + "]"
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "CREATE LOGIN $SQLUser FROM WINDOWS ;" -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "ALTER SERVER ROLE [sysadmin] ADD MEMBER $SQLUser ;" -TrustServerCertificate
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "CREATE LOGIN $SQLUser FROM WINDOWS ;" 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "ALTER SERVER ROLE [sysadmin] ADD MEMBER $SQLUser ;" 
 
 
         # Grant permissions to NT AUTHORITY\SYSTEM
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT VIEW ANY DEFINITION TO "NT AUTHORITY\SYSTEM" ;' -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT ALTER RESOURCES TO "NT AUTHORITY\SYSTEM" ;' -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT ALTER ANY DATABASE TO "NT AUTHORITY\SYSTEM" ;' -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT CONTROL SERVER TO "NT AUTHORITY\SYSTEM" ;' -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT ALTER ANY LOGIN TO "NT AUTHORITY\SYSTEM" ;' -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT CREATE ANY DATABASE TO "NT AUTHORITY\SYSTEM" ;' -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT IMPERSONATE ANY LOGIN TO "NT AUTHORITY\SYSTEM" ;' -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT CONNECT ANY DATABASE TO "NT AUTHORITY\SYSTEM" ;' -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT CREATE SERVER ROLE TO "NT AUTHORITY\SYSTEM" ;' -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT ALTER ANY SERVER ROLE TO "NT AUTHORITY\SYSTEM" ;' -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT ALTER SETTINGS TO "NT AUTHORITY\SYSTEM" ;' -TrustServerCertificate
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT VIEW ANY DEFINITION TO "NT AUTHORITY\SYSTEM" ;' 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT ALTER RESOURCES TO "NT AUTHORITY\SYSTEM" ;' 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT ALTER ANY DATABASE TO "NT AUTHORITY\SYSTEM" ;' 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT CONTROL SERVER TO "NT AUTHORITY\SYSTEM" ;' 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT ALTER ANY LOGIN TO "NT AUTHORITY\SYSTEM" ;' 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT CREATE ANY DATABASE TO "NT AUTHORITY\SYSTEM" ;' 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT IMPERSONATE ANY LOGIN TO "NT AUTHORITY\SYSTEM" ;' 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT CONNECT ANY DATABASE TO "NT AUTHORITY\SYSTEM" ;' 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT CREATE SERVER ROLE TO "NT AUTHORITY\SYSTEM" ;' 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT ALTER ANY SERVER ROLE TO "NT AUTHORITY\SYSTEM" ;' 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query 'GRANT ALTER SETTINGS TO "NT AUTHORITY\SYSTEM" ;' 
   
 
         # Update paths for tempdb,model and MSDB
@@ -183,12 +183,12 @@ try {
         $tempLogFile = "'$Using:tempPath\templog.ldf'"
         $modelLogFile = "'$Using:logPath\modellog.ldf'"
         $msdbLogFile = "'$Using:logPath\MSDBLog.ldf'"
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master; ALTER DATABASE tempdb MODIFY FILE (NAME = tempdev, FILENAME = $tempDevFile); ALTER DATABASE tempdb MODIFY FILE (NAME = templog, FILENAME = $tempLogFile);" -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master; ALTER DATABASE model MODIFY FILE (NAME = modeldev, FILENAME = $modelDevFile); ALTER DATABASE model MODIFY FILE (NAME = modellog, FILENAME = $modelLogFile);" -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master; ALTER DATABASE MSDB MODIFY FILE (NAME = MSDBData, FILENAME = $msdbDataFile); ALTER DATABASE MSDB MODIFY FILE (NAME = MSDBLog, FILENAME = $msdbLogFile);" -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master;EXEC xp_instance_regwrite N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'DefaultData', REG_SZ, N'$Using:dataPath';" -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master;EXEC xp_instance_regwrite N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'DefaultLog', REG_SZ, N'$Using:logPath';" -TrustServerCertificate
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master;EXEC xp_instance_regwrite N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'BackupDirectory', REG_SZ, N'$Using:backupPath';" -TrustServerCertificate
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master; ALTER DATABASE tempdb MODIFY FILE (NAME = tempdev, FILENAME = $tempDevFile); ALTER DATABASE tempdb MODIFY FILE (NAME = templog, FILENAME = $tempLogFile);" 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master; ALTER DATABASE model MODIFY FILE (NAME = modeldev, FILENAME = $modelDevFile); ALTER DATABASE model MODIFY FILE (NAME = modellog, FILENAME = $modelLogFile);" 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master; ALTER DATABASE MSDB MODIFY FILE (NAME = MSDBData, FILENAME = $msdbDataFile); ALTER DATABASE MSDB MODIFY FILE (NAME = MSDBLog, FILENAME = $msdbLogFile);" 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master;EXEC xp_instance_regwrite N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'DefaultData', REG_SZ, N'$Using:dataPath';" 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master;EXEC xp_instance_regwrite N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'DefaultLog', REG_SZ, N'$Using:logPath';" 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master;EXEC xp_instance_regwrite N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'BackupDirectory', REG_SZ, N'$Using:backupPath';" 
 
         # Stop SQL Service
         $SQLService = Get-Service -Name "$Using:SQLInstanceName"
