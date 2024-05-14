@@ -493,7 +493,8 @@ async function getHostAndSqlInfoFromPsOutput(
                         windowsAuthentication,
                         scriptExecutionTime,
                         databaseCount,
-                        failureInfo
+                        failureInfo,
+                        sqlServerDeploymentType
                     } = sqlServerInstanceInfo;
                     logger.info(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
@@ -511,6 +512,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerVersion,
                         ...(sqlServerName && { sqlServerName }),
                         sqlServerNodes: compact(sqlServerNodes),
+                        sqlServerDeploymentType,
                         sqlServerInstance,
                         sqlServerState,
                         sqlServerProductYear,
@@ -990,6 +992,12 @@ async function validateEc2InstanceManageability(discoverInfo: DiscoverMsSqlRespo
 
         if (isEmpty(sqlServerInstances)) {
             throw new Error('no SQL Server instances found');
+        }
+
+        if (
+            sqlServerInstances!.some(elem => elem.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT)
+        ) {
+            throw new Error('Always On Availability Group environments are not supported');
         }
 
         // Current supported configuration is expected to be one SQL Server instance per EC2.
