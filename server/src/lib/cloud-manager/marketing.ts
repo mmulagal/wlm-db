@@ -12,13 +12,15 @@ interface CalculateEbsComparisonResponse {
         throughput: number;
         snapshots: number;
         total: number;
+        clones: number;
     };
     fsx: {
         capacity: number;
         iops: number;
         throughput: number;
-        snapshots: number;
         total: number;
+        snapshots: number;
+        clones: number;
     };
     fsx_calculation: {
         deploymentType: string;
@@ -61,7 +63,6 @@ interface CalculateEbsComparisonResponse {
             unit: string;
         };
         numberOfVolumes: number;
-
         percentageOfDataOnSSDStorage: number;
         savingsFromCompressionAndDeduplication: number;
         storageSavingsFromCompressionAndDeduplication: {
@@ -130,7 +131,6 @@ interface CalculateEbsComparisonResponse {
             size: number;
             unit: string;
         };
-
         percentageOfDataOnSSDStorage: number;
         savingsFromCompressionAndDeduplication: number;
         storageSavingsFromCompressionAndDeduplication: {
