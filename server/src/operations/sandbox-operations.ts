@@ -869,6 +869,7 @@ async function createCloneDb(
 
     try {
         let command = [
+            // The instance name fix is temporary fix where the instance name is retrieved from the getActiveNode method since we are supporting only single instance. The instance value passed by the user in the body of API will ot be used. Once we support multiple instances this needs to be updated as well.
             createCloneDbScript(destDetails.database, destDetails.instanceName, [
                 mountPaths.dataPath,
                 mountPaths.logPath
