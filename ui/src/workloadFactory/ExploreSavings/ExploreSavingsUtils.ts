@@ -11,12 +11,7 @@ import { formatFractionalNumber } from '../../utils/utilityFunctions';
 
 export const onClickESHost = (dispatch: any, rowData: any, isDemoMode: any) => {
     const deploymentModel = (() => {
-        const nodes = rowData?.sqlServerInstances?.[0]?.sqlServerNodes;
-        if (nodes && nodes.length > 1) {
-            return SQL_DEPLOYMENT_MODE.AOAG;
-        } else {
-            return SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
-        }
+        return rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase();
     })();
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
     dispatch(setSelectedInstanceId(rowData?.id));

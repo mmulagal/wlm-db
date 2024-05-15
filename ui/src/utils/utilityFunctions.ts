@@ -363,6 +363,23 @@ export const isAwsBackupEnabled = (val: any) => {
     );
 };
 
+export const getDiscoveredHostDeployment = (host: any) => {
+    // This will get deployment type in case of unmanaged hosts
+    const sqlServerDeploymentType = host?.sqlServerInstances?.[0]?.sqlServerDeploymentType || '';
+    let type = '';
+
+    if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
+        type = GENERAL.AOAG;
+    } else if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+        type = GENERAL.FAILOVER_CLUSTER_INSTANCES;
+    } else if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+        type = GENERAL.STANDALONE;
+    } else {
+        type = sqlServerDeploymentType;
+    }
+    return type;
+};
+
 export const formatHostData = (val: any) => {
     // Protection text added to enable filter
     let protectionText = '';
@@ -398,15 +415,7 @@ export const formatHostData = (val: any) => {
     }
 
     // server installation mode
-    const nodes = val?.sqlServerInstances?.[0]?.sqlServerNodes;
-    let type = '';
-    if (nodes && nodes.length > 1) {
-        const state = store.getState();
-        type = state.auth.isDemoMode ? GENERAL.AOAG : GENERAL.CLUSTER;
-    } else if (nodes && nodes.length === 1) {
-        type = GENERAL.STANDALONE;
-    }
-    const serverInstallationMode = val?.topology?.serverInstallationMode || type;
+    const serverInstallationMode = val?.topology?.serverInstallationMode || getDiscoveredHostDeployment(val);
 
     // fileSystemType
     const typeList: string[] = [];

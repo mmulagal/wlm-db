@@ -723,7 +723,6 @@ export const GENERAL = {
     ],
     FCI: 'FCI',
     AOAG: 'Always on availability group',
-    CLUSTER: 'Cluster',
     STANDALONE: 'Standalone',
     SERVICE: 'Service',
     PERMISSIONS: 'Permissions',
