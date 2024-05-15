@@ -433,6 +433,7 @@ async function getHostAndSqlInfoFromPsOutput(
                                 svmId,
                                 protocol: STORAGE_PROTOCOLS.ISCSI
                             });
+
                             const { deploymentType, subnetIds } = fsIdWithDeploymentType.get(fsxId!) || {};
 
                             deploymentTypes.push({
@@ -455,6 +456,7 @@ async function getHostAndSqlInfoFromPsOutput(
                             const matchedEndpoints = fsxEndpoints.filter(value =>
                                 targets.includes(value.toLowerCase())
                             );
+
                             if (!isEmpty(matchedEndpoints)) {
                                 const fsxType = endPointIpWithFsxInfo.get(matchedEndpoints[0])?.type;
                                 if (fsxType === FileSystemType.WINDOWS) {
@@ -493,7 +495,8 @@ async function getHostAndSqlInfoFromPsOutput(
                         windowsAuthentication,
                         scriptExecutionTime,
                         databaseCount,
-                        failureInfo
+                        failureInfo,
+                        sqlServerDeploymentType
                     } = sqlServerInstanceInfo;
                     logger.info(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
@@ -511,6 +514,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerVersion,
                         ...(sqlServerName && { sqlServerName }),
                         sqlServerNodes: compact(sqlServerNodes),
+                        sqlServerDeploymentType,
                         sqlServerInstance,
                         sqlServerState,
                         sqlServerProductYear,
@@ -916,6 +920,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     const [sqlServerInstance] = item?.sqlServerInstances || [];
     const { storage } = sqlServerInstance;
     const storageInfo = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
+    const storageProtocols = storage?.filter(elem => elem.type === STORAGE_TYPE.FSXN).map(elem => elem.protocol);
 
     verifyAndAddFSxOntapCredentials(
         accountId,
@@ -954,7 +959,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
                         : SqlServerDeploymentModel.SQL_FCI_SHORT,
                 source: RESOURCE_SOURCE.DISCOVER,
                 fsxSvmId: storageInfo?.svmId,
-                storageProtocol: storageInfo?.protocol,
+                storageProtocol: storageProtocols ? storageProtocols.join() : '',
                 ...(activeDirectoryDomainName && { activeDirectoryName: activeDirectoryDomainName }),
                 ...(activeDirectoryIpAddresses && { activeDirectoryAddress: activeDirectoryIpAddresses.join() })
             }
@@ -990,6 +995,12 @@ async function validateEc2InstanceManageability(discoverInfo: DiscoverMsSqlRespo
 
         if (isEmpty(sqlServerInstances)) {
             throw new Error('no SQL Server instances found');
+        }
+
+        if (
+            sqlServerInstances!.some(elem => elem.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT)
+        ) {
+            throw new Error('Always On Availability Group environments are not supported');
         }
 
         // Current supported configuration is expected to be one SQL Server instance per EC2.

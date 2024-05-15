@@ -76,6 +76,10 @@
 
     "storage": {
         "fsxn": {
+            "protocol": [
+                "iSCSI",
+                "SMB"
+            ],
             "size": 10000000000,
             "used": 90000000,
             "spaceSavings": 10000000,

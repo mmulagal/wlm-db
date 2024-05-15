@@ -1,18 +1,18 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$DBName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$DataFilePath,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$LogFilePath,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$DataSerial,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$LogSerial
 )
 
@@ -22,34 +22,34 @@ $ErrorActionPreference = "Stop"
 try {
     $responseObject = [ordered]@{}
 
-    if ($DataFilePath -eq $null -or $LogFilePath -eq $null -or $DataSerial -eq $null -or $LogSerial -eq $null){
+    if ($DataFilePath -eq $null -or $LogFilePath -eq $null -or $DataSerial -eq $null -or $LogSerial -eq $null) {
         write-debug "DataFilePath: $DataFilePath LogFilePath: $LogFilePath DataSerial: $DataSerial LogSerial: $LogSerial"
         throw "DataFilePath or LogFilePath or DataSerial or LogSerial is null"
     }
 
-    $null =(echo "RESCAN" | diskpart )
+    $null = (echo "RESCAN" | diskpart )
     Start-Sleep 2
 
     if ($DBName.Length -gt 25) {
-        $DBName = $DBName.Substring(0,25)
+        $DBName = $DBName.Substring(0, 25)
     }
     $datalabel = $DBName + '-Data'
     $loglabel = $DBName + '-Log'
 
-    $DataDriveLetter = $DataFilePath.Substring(0,1)
-    $LogDriveLetter = $LogFilePath.Substring(0,1)
-    $datafolder = $DataDriveLetter +':\' + $datalabel
+    $DataDriveLetter = $DataFilePath.Substring(0, 1)
+    $LogDriveLetter = $LogFilePath.Substring(0, 1)
+    $datafolder = $DataDriveLetter + ':\' + $datalabel
     $logfolder = $LogDriveLetter + ':\' + $loglabel
 
     $retry = 0
     do {
-        $disklist=(Get-Disk | Where-Object{$_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.SerialNumber -eq $DataSerial -or $_.SerialNumber -eq $LogSerial})
+        $disklist = (Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.SerialNumber -eq $DataSerial -or $_.SerialNumber -eq $LogSerial })
         $diskcount = $disklist.Number.Count
         if ($retry -gt 0) {
             Start-Sleep 20
         }
         $retry++
-    } until (($retry -eq 4) -Or($diskcount -ge $2))
+    } until (($retry -eq 4) -Or ($diskcount -ge $2))
 
     write-debug "Disklist: $disklist"
 
@@ -72,7 +72,8 @@ try {
             Start-Sleep 2
         }
     }
-} catch{
+}
+catch {
     write-debug "Error: $($_.Exception)"
     $responseObject['error'] = $_.Exception.Message
     $responseObject['message'] = 'Failed to modify disks'
@@ -138,17 +139,20 @@ try {
     if ((Test-Path $newDataFilePath) -and (Test-Path $newLogFilePath)) {
         $responseObject['dataPath'] = $newDataFilePath
         $responseObject['logPath'] = $newLogFilePath
-    } else {
+    }
+    else {
         $responseObject['error'] = "Failed to validate newpaths $newDataFilePath $newLogFilePath"
     }
 
     write-debug "NewFilePaths: $newDataFilePath $newLogFilePath"
-} catch {
+}
+catch {
     write-debug "Error: $($_.Exception)"
     $responseObject['error'] = $_.Exception.Message
     $responseObject['message'] = 'Failed to initialize disks'
     return ($responseObject | ConvertTo-Json -Depth 5)
-} finally {
+}
+finally {
     if ((Get-Service -Name ShellHWDetection).Status -ne 'Running') {
         Start-Service -Name ShellHWDetection
     }
@@ -172,7 +176,7 @@ try {
         }
 
         try {
-            $SQLRoleGroup =  (Get-ClusterGroup).Name -match ('SQl Server*')
+            $SQLRoleGroup = (Get-ClusterGroup).Name -match ('SQl Server*')
             $SQLGroup = $SQLRoleGroup[0]
 
             if (($clusterdatadisk.OwnerGroup -ne $SQLGroup) -or ($clusterlogdisk.OwnerGroup -ne $SQLGroup)) {
@@ -187,12 +191,14 @@ try {
                 (Get-ClusterResource -Name $($clusterdatadisk.Name)).name = $datalabel
                 (Get-ClusterResource -Name $($clusterlogdisk.Name)).name = $loglabel
             }
-        } catch {
+        }
+        catch {
             $responseObject['error'] = $_.Exception.Message
             $responseObject['message'] = "Failed to add disks to SQL Server Role dependency in cluster"
         }
     }
-} catch{
+}
+catch {
     $responseObject['error'] = $_.Exception.Message
     $responseObject['message'] = 'Failed to add disks to cluster storage'
 }

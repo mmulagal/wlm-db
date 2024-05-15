@@ -5,6 +5,7 @@ import { setRadioValueDetect } from '../../../../store/workloadFactory/inventory
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { DETECT_HOST_VAR } from '../../../../utils/consts';
+import { getDiscoveredHostDeployment } from '../../../../utils/utilityFunctions';
 
 const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any }) => {
     const detectHostRadio = useAppSelector(state => state.inventory.detectHostRadio);
@@ -39,13 +40,7 @@ const UndetectedSecondDialog = ({ data, apiResult }: { data: any; apiResult: any
         : GENERAL.NOT_AVAILABLE;
     const hostName = data?.sqlServerInstances?.[0]?.sqlServerName || GENERAL.NOT_AVAILABLE;
 
-    const nodes = data?.sqlServerInstances?.[0]?.sqlServerNodes;
-    let type = '';
-    if (nodes && nodes.length > 1) {
-        type = GENERAL.CLUSTER;
-    } else if (nodes && nodes.length === 1) {
-        type = GENERAL.STANDALONE;
-    }
+    const type = getDiscoveredHostDeployment(data);
 
     const noOfDatabases =
         data?.sqlServerInstances?.[0]?.databaseCount || apiResult?.databaseCount || GENERAL.NOT_AVAILABLE;

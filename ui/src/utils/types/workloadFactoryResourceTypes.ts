@@ -86,7 +86,7 @@ export interface WorkloadFactoryResourceDetails {
             used?: number;
             spaceSavings?: number;
             spaceSavingsPercent?: number;
-            protocol?: 'iSCSI' | 'SMB';
+            protocol?: Array<string>;
         };
         fsxw?: {
             size?: number;

@@ -11,12 +11,7 @@ import { formatFractionalNumber } from '../../utils/utilityFunctions';
 
 export const onClickESHost = (dispatch: any, rowData: any, isDemoMode: any) => {
     const deploymentModel = (() => {
-        const nodes = rowData?.sqlServerInstances?.[0]?.sqlServerNodes;
-        if (nodes && nodes.length > 1) {
-            return SQL_DEPLOYMENT_MODE.AOAG;
-        } else {
-            return SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
-        }
+        return rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase();
     })();
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
     dispatch(setSelectedInstanceId(rowData?.id));
@@ -202,11 +197,49 @@ export const formatNumbers = (val: any) => {
     }
 };
 
-export const formatViewCalcData = (
-    viewCalculationsResponse: any,
-    selectedDeploymentModel: string,
-    selectedHostDetails: any
-) => {
+export const formatPercentage = (val: any) => {
+    if (val || val === 0) {
+        return Number(100 * val).toLocaleString();
+    } else {
+        return GENERAL.NOT_AVAILABLE;
+    }
+};
+
+export const formatViewCalcInstance = (selectedDeploymentModel: any, selectedHostDetails: any) => {
+    const instanceCalculationData = (() => {
+        if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+            return [
+                {
+                    instanceType: selectedHostDetails?.topology?.ec2Details?.[0]?.instanceType || GENERAL.NOT_AVAILABLE,
+                    instanceHourlyPrice: GENERAL.NOT_AVAILABLE,
+                    ec2MachineCost: GENERAL.NOT_AVAILABLE,
+                    sqlEdition: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
+                    sqlLicense: GENERAL.NOT_AVAILABLE
+                }
+            ];
+        } else {
+            return [
+                {
+                    instanceType: selectedHostDetails?.topology?.ec2Details?.[0]?.instanceType || GENERAL.NOT_AVAILABLE,
+                    instanceHourlyPrice: GENERAL.NOT_AVAILABLE,
+                    ec2MachineCost: GENERAL.NOT_AVAILABLE,
+                    sqlEdition: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
+                    sqlLicense: GENERAL.NOT_AVAILABLE
+                },
+                {
+                    instanceType: selectedHostDetails?.topology?.ec2Details?.[1]?.instanceType || GENERAL.NOT_AVAILABLE,
+                    instanceHourlyPrice: GENERAL.NOT_AVAILABLE,
+                    ec2MachineCost: GENERAL.NOT_AVAILABLE,
+                    sqlEdition: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
+                    sqlLicense: GENERAL.NOT_AVAILABLE
+                }
+            ];
+        }
+    })();
+    return instanceCalculationData;
+};
+
+export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploymentModel: string) => {
     const totalEbsCost = (() => {
         let cost = 0;
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
@@ -243,34 +276,15 @@ export const formatViewCalcData = (
     })();
 
     const result = {
-        // Not available values are still not available
-        ebsInstanceCalculation: [
-            {
-                instanceType: selectedHostDetails?.recommendedInstance?.instanceType,
-                instanceHourlyPrice: GENERAL.NOT_AVAILABLE,
-                ec2MachineCost: GENERAL.NOT_AVAILABLE,
-                sqlEdition: selectedHostDetails?.recommendedInstance?.serverEdition,
-                sqlLicense: GENERAL.NOT_AVAILABLE
-            }
-        ],
-        fsxInstanceCalculation: [
-            {
-                instanceType: selectedHostDetails?.recommendedInstance?.instanceType,
-                instanceHourlyPrice: GENERAL.NOT_AVAILABLE,
-                ec2MachineCost: GENERAL.NOT_AVAILABLE,
-                sqlEdition: selectedHostDetails?.recommendedInstance?.serverEdition,
-                sqlLicense: GENERAL.NOT_AVAILABLE
-            }
-        ],
         fsxOntapCalculation: {
             numberOfVolumes: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.numberOfVolumes),
             desiredStorageCapacity: formatCalcSize(
                 viewCalculationsResponse?.fsxOntapCalculation?.desiredStorageCapacity
             ),
-            percentageOfDataOnSsdStorage: formatNumbers(
+            percentageOfDataOnSsdStorage: formatPercentage(
                 viewCalculationsResponse?.fsxOntapCalculation?.percentageOfDataOnSsdStorage
             ),
-            savingsFromCompressionAndDeduplication: formatNumbers(
+            savingsFromCompressionAndDeduplication: formatPercentage(
                 viewCalculationsResponse?.fsxOntapCalculation?.savingsFromCompressionAndDeduplication
             ),
             storageSavingsFromCompressionAndDeduplication: formatCalcSize(
@@ -287,8 +301,8 @@ export const formatViewCalcData = (
             totalMonthlyCostForFSxSsd: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyCostForFSxSsd
             ),
-            ratioAfterSavings: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.ratioAfterSavings),
-            dataOnCapacityPoolStorageFactor: formatNumbers(
+            ratioAfterSavings: formatPercentage(viewCalculationsResponse?.fsxOntapCalculation?.ratioAfterSavings),
+            dataOnCapacityPoolStorageFactor: formatPercentage(
                 viewCalculationsResponse?.fsxOntapCalculation?.dataOnCapacityPoolStorageFactor
             ),
             capacityPoolStorage: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.capacityPoolStorage),
@@ -312,12 +326,10 @@ export const formatViewCalcData = (
                 viewCalculationsResponse?.fsxOntapCalculation?.requiredNumOfFsxFractional
             ),
             requiredNumOfFsx: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.requiredNumOfFsx),
-            minThroughputCapacityRequired: formatCalcSize(
-                viewCalculationsResponse?.fsxOntapCalculation?.minThroughputCapacityRequired
-            ),
-            provisionedThroughputCapacity: formatCalcSize(
-                viewCalculationsResponse?.fsxOntapCalculation?.provisionedThroughputCapacity
-            ),
+            minThroughputCapacityRequired:
+                formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.minThroughputCapacityRequired) + ' GiB',
+            provisionedThroughputCapacity:
+                formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.provisionedThroughputCapacity) + ' GiB',
             totalMonthlyFsxnThroughputCapacityCost: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyFsxnThroughputCapacityCost
             ),
@@ -332,11 +344,11 @@ export const formatViewCalcData = (
             totalThroughputAndIopsMonthly: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.totalThroughputAndIopsMonthly
             ),
-            EBSCapacity: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.EBSCapacity),
+            ebsCapacity: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.ebsCapacity),
             fsxnStoragePrice: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.fsxnStoragePrice?.price),
             fsxnCapacityPrice: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.fsxnCapacityPrice?.price),
             maxSsdTierSize: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.maxSsdTierSize),
-            suggestedFsxnThroughputCapacity: formatCalcSize(
+            suggestedFsxnThroughputCapacity: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.suggestedFsxnThroughputCapacity
             ),
             maxThroughput: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.maxThroughput),
@@ -346,17 +358,17 @@ export const formatViewCalcData = (
             maxSsdIops: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.maxSsdIops)
         },
         fsxOntapSnapshotCalculation: {
-            fsxnSsdPrice: formatCalcSize(viewCalculationsResponse?.fsxOntapSnapshotCalculation?.fsxnSsdPrice?.price),
-            fsxnCapacityPrice: formatCalcSize(
+            fsxnSsdPrice: formatNumbers(viewCalculationsResponse?.fsxOntapSnapshotCalculation?.fsxnSsdPrice?.price),
+            fsxnCapacityPrice: formatNumbers(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.fsxnCapacityPrice?.price
             ),
             desiredStorageCapacity: formatCalcSize(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.desiredStorageCapacity
             ),
-            percentageOfDataOnSsdStorage: formatNumbers(
+            percentageOfDataOnSsdStorage: formatPercentage(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.percentageOfDataOnSsdStorage
             ),
-            savingsFromCompressionAndDeduplication: formatNumbers(
+            savingsFromCompressionAndDeduplication: formatPercentage(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.savingsFromCompressionAndDeduplication
             ),
             storageSavingsFromCompressionAndDeduplication: formatCalcSize(
@@ -369,11 +381,13 @@ export const formatViewCalcData = (
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.ssdStoragePerMonth
             ),
             ssdMonthlyCost: formatNumbers(viewCalculationsResponse?.fsxOntapSnapshotCalculation?.ssdMonthlyCost),
-            totalMonthlyCostForFsxSsd: formatNumbers(
-                viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalMonthlyCostForFsxSsd
+            totalSnapshotMonthlyCostForFsxSsd: formatNumbers(
+                viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalSnapshotMonthlyCostForFsxSsd
             ),
-            ratioAfterSavings: formatNumbers(viewCalculationsResponse?.fsxOntapSnapshotCalculation?.ratioAfterSavings),
-            dataOnCapacityPoolStorageFactor: formatNumbers(
+            ratioAfterSavings: formatPercentage(
+                viewCalculationsResponse?.fsxOntapSnapshotCalculation?.ratioAfterSavings
+            ),
+            dataOnCapacityPoolStorageFactor: formatPercentage(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.dataOnCapacityPoolStorageFactor
             ),
             capacityPoolStorage: formatCalcSize(
@@ -384,9 +398,13 @@ export const formatViewCalcData = (
             ),
             totalMonthlyCostForCapacity: formatNumbers(
                 viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalMonthlyCostForCapacity
+            ),
+            totalSnapshotMonthlyCost: formatNumbers(
+                viewCalculationsResponse?.fsxOntapSnapshotCalculation?.totalSnapshotMonthlyCost
             )
         },
         ebsCalculation: {
+            numberOfVolumes: formatNumbers(viewCalculationsResponse?.ebsCalculation?.numberOfVolumes),
             storageAmountPerVol: formatCalcSize(viewCalculationsResponse?.ebsCalculation?.storageAmountPerVol),
             totalInstanceHours: formatNumbers(viewCalculationsResponse?.ebsCalculation?.totalInstanceHours),
             ebsInstanceMonth: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsInstanceMonth),
@@ -408,11 +426,20 @@ export const formatViewCalcData = (
             totalSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.totalSnapshotCost),
             totalEbsSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.totalEbsSnapshotCost),
             ebsSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsSnapshotCost),
+            ebsTotalCostMonthly: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsTotalCostMonthly),
             instanceAvgDuration: formatNumbers(viewCalculationsResponse?.ebsCalculation?.instanceAvgDuration),
             ebsCapacityPrice: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsCapacityPrice?.price),
             hoursInAMonth: formatNumbers(viewCalculationsResponse?.ebsCalculation?.hoursInAMonth)
         },
         fsxCloneCalculation: {
+            clonedCopiesCount: formatNumbers(viewCalculationsResponse?.fsxCloneCalculation?.clonedCopiesCount),
+            numberOfClonesInAMonth: formatNumbers(
+                viewCalculationsResponse?.fsxCloneCalculation?.numberOfClonesInAMonth
+            ),
+            changeRateBetweenClones: formatNumbers(
+                viewCalculationsResponse?.fsxCloneCalculation?.changeRateBetweenClones
+            ),
+            fsxnSsdPrice: formatNumbers(viewCalculationsResponse?.fsxCloneCalculation?.fsxnSsdPrice?.price),
             cloneRefreshFrequency: viewCalculationsResponse?.fsxCloneCalculation?.cloneRefreshFrequency,
             monthlyChangeRatePercentage: formatNumbers(
                 viewCalculationsResponse?.fsxCloneCalculation?.monthlyChangeRatePercentage
@@ -420,10 +447,10 @@ export const formatViewCalcData = (
             desiredStorageCapacity: formatCalcSize(
                 viewCalculationsResponse?.fsxCloneCalculation?.desiredStorageCapacity
             ),
-            percentageOfDataOnSsdStorage: formatNumbers(
+            percentageOfDataOnSsdStorage: formatPercentage(
                 viewCalculationsResponse?.fsxCloneCalculation?.percentageOfDataOnSsdStorage
             ),
-            savingsFromCompressionAndDeduplication: formatNumbers(
+            savingsFromCompressionAndDeduplication: formatPercentage(
                 viewCalculationsResponse?.fsxCloneCalculation?.savingsFromCompressionAndDeduplication
             ),
             storageSavingsFromCompressionAndDeduplication: formatCalcSize(
@@ -437,8 +464,11 @@ export const formatViewCalcData = (
             totalCloneMonthlyCost: formatNumbers(viewCalculationsResponse?.fsxCloneCalculation?.totalCloneMonthlyCost)
         },
         ebsCloneCalculation: {
-            numberOfClonedCopies: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.numberOfClonedCopies),
-            cloneCost: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.cloneCost)
+            clonedCopiesCount: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.clonedCopiesCount),
+            capacity: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.capacity),
+            iops: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.iops),
+            throughput: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.throughput),
+            totalCloneMonthlyCost: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.totalCloneMonthlyCost)
         },
         fsxTotalCost: totalFsxCost,
         ebsTotalCost: totalEbsCost,

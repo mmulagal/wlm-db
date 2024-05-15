@@ -21,14 +21,14 @@ import {
     cleanUpOntapResources,
     addExtendedProperties,
     createClonedDb as createCloneDbScript,
-    mountPointQuery
+    mountPointQuery,
+    getStorageSavingsFromOntap
 } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { checkDatabaseExists, getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { sleep, sqlResponseParsing } from '../utils/utils';
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
-import { restGetUtilForOntap } from './workloads/mssql/ssm-script-utils';
 import { getResources } from './database/database-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
 import { INVOKE_VIRTUAL_MOUNT } from './workloads/mssql/const';
@@ -264,15 +264,7 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                     region = 'us-east-1';
                                 }
 
-                                const command = [
-                                    restGetUtilForOntap(
-                                        fsxId,
-                                        region,
-                                        '/storage/volumes',
-                                        'tiering.object_tags="cloned_by=netapp_wlmdb"',
-                                        'fields=space.used_by_afs,space.physical_used,clone.split_estimate'
-                                    )
-                                ];
+                                const command = [getStorageSavingsFromOntap(fsxId, region)];
 
                                 const response = await callSsmExecution(
                                     credentialsId,
@@ -284,25 +276,14 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                     accountId
                                 );
 
-                                const cleanResponse = response?.replaceAll('\r\n', '');
-                                const jsonResponse = JSON.parse(cleanResponse!);
-
-                                jsonResponse?.records?.forEach(
-                                    (record: {
-                                        clone?: { split_estimate: number };
-                                        space: { physical_used: number; used_by_afs: number };
-                                    }) => {
-                                        const {
-                                            clone: { split_estimate: splitEstimate } = { split_estimate: 0 },
-                                            space: { physical_used: physicalUsed }
-                                        } = record;
-                                        savingsData.consumedStorage += physicalUsed;
-                                        savingsData.savedStorage += splitEstimate;
-                                        savingsData.sandboxSavingsPercentage =
-                                            (savingsData.savedStorage * 100) /
-                                            (savingsData.consumedStorage + savingsData.savedStorage);
-                                    }
-                                );
+                                if (response) {
+                                    const { savedStorage, consumedStorage } = sqlResponseParsing(response);
+                                    savingsData.consumedStorage += consumedStorage;
+                                    savingsData.savedStorage += savedStorage;
+                                    savingsData.sandboxSavingsPercentage =
+                                        (savingsData.savedStorage * 100) /
+                                        (savingsData.consumedStorage + savingsData.savedStorage);
+                                }
                                 break;
                             }
                         } catch (e) {
@@ -409,6 +390,7 @@ async function createSandbox(
                       isSSMConnected: boolean;
                       activeNodeInstanceId: string;
                       standbyNodeInstanceId: string | undefined;
+                      instanceName: string;
                   }
               )
             : getActiveSqlNode(credentialsId, region, destNode1, destNode2)
@@ -457,7 +439,7 @@ async function createSandbox(
             fsxId: srcResourceDetail.co_relation_id!,
             activeNodeInstaceId: srcStatus.activeNodeInstanceId!,
             metadata: srcResourceDetail.metadata as unknown as Metadata,
-            instanceName: '.'
+            instanceName: srcStatus.instanceName || '.'
         },
         {
             ...dest,
@@ -466,7 +448,7 @@ async function createSandbox(
             fsxId: destResourceDetail.co_relation_id!,
             activeNodeInstaceId: destStatus.activeNodeInstanceId!,
             metadata: destResourceDetail.metadata as unknown as Metadata,
-            instanceName: '.'
+            instanceName: destStatus.instanceName || '.'
         },
         tag
     );
@@ -887,11 +869,17 @@ async function createCloneDb(
     });
 
     try {
-        let command = [createCloneDbScript(destDetails.database, [mountPaths.dataPath, mountPaths.logPath])];
+        let command = [
+            // The instance name fix is temporary fix where the instance name is retrieved from the getActiveNode method since we are supporting only single instance. The instance value passed by the user in the body of API will ot be used. Once we support multiple instances this needs to be updated as well.
+            createCloneDbScript(destDetails.database, destDetails.instanceName, [
+                mountPaths.dataPath,
+                mountPaths.logPath
+            ])
+        ];
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [
-                createCloneDbScript('testdb', [
+                createCloneDbScript('testdb', '.', [
                     'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
                     'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
                 ])
@@ -949,7 +937,7 @@ async function createExtendedProperties(
 
     try {
         let command = [
-            addExtendedProperties(destDetails.database, {
+            addExtendedProperties(destDetails.database, destDetails.instanceName, {
                 tag,
                 cloned_by: 'netapp_wlmdb',
                 source: `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`,
@@ -960,7 +948,7 @@ async function createExtendedProperties(
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [
-                addExtendedProperties('testdb', {
+                addExtendedProperties('testdb', '.', {
                     tag: 'demo',
                     cloned_by: 'netapp_wlmdb',
                     source: 'resource|instance|testdb'

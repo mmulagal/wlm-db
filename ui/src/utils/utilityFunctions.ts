@@ -14,6 +14,7 @@ import {
     DISABLED_STATE,
     ENABLED_STATE,
     FORM_OPTIONS,
+    FSXN_STORAGE_PROTOCOLS,
     FSX_DEPLOYMENT_MODE,
     JM_DOWNLOAD,
     JOBS_REPORT,
@@ -325,6 +326,8 @@ export const sortListOfDict = (dataList: any, field: string, ascOrder = true) =>
 
 export const formatSizeOnePrecision = (value: number | string) => numeral(value).format('0.[0] ib');
 
+export const formatSizeTwoPrecision = (value: number | string) => numeral(value).format('0.[00] ib');
+
 export const formatSizeRoundOff = (value: number | string) => numeral(value).format('0 ib');
 
 export const formatSizeSplit = (value: number | string) => {
@@ -359,6 +362,23 @@ export const isAwsBackupEnabled = (val: any) => {
         val?.protection?.isAwsBackupEnabled?.fsxn ||
         val?.protection?.isAwsBackupEnabled?.ebs
     );
+};
+
+export const getDiscoveredHostDeployment = (host: any) => {
+    // This will get deployment type in case of unmanaged hosts
+    const sqlServerDeploymentType = host?.sqlServerInstances?.[0]?.sqlServerDeploymentType || '';
+    let type = '';
+
+    if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
+        type = GENERAL.AOAG;
+    } else if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+        type = GENERAL.FAILOVER_CLUSTER_INSTANCES;
+    } else if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+        type = GENERAL.STANDALONE;
+    } else {
+        type = sqlServerDeploymentType;
+    }
+    return type;
 };
 
 export const formatHostData = (val: any) => {
@@ -396,15 +416,7 @@ export const formatHostData = (val: any) => {
     }
 
     // server installation mode
-    const nodes = val?.sqlServerInstances?.[0]?.sqlServerNodes;
-    let type = '';
-    if (nodes && nodes.length > 1) {
-        const state = store.getState();
-        type = state.auth.isDemoMode ? GENERAL.AOAG : GENERAL.CLUSTER;
-    } else if (nodes && nodes.length === 1) {
-        type = GENERAL.STANDALONE;
-    }
-    const serverInstallationMode = val?.topology?.serverInstallationMode || type;
+    const serverInstallationMode = val?.topology?.serverInstallationMode || getDiscoveredHostDeployment(val);
 
     // fileSystemType
     const typeList: string[] = [];
@@ -1516,4 +1528,12 @@ export const downloadObjectAsJson = (obj: any, filename: any) => {
 
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+};
+
+export const isSmbProtocol = (protocolList: Array<string> | undefined) => {
+    if (protocolList && protocolList.length === 1 && protocolList[0] === FSXN_STORAGE_PROTOCOLS.SMB) {
+        return true;
+    } else {
+        return false;
+    }
 };

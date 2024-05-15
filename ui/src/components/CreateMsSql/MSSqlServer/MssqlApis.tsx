@@ -303,7 +303,14 @@ const MssqlApis = () => {
         } else {
             setCredAndRegionSkip(true);
         }
-        if (regionCode && credId && osVersion?.value && dbEdition?.value && dbVersion?.value) {
+        if (
+            regionCode &&
+            credId &&
+            osVersion?.value &&
+            dbEdition?.value &&
+            dbVersion?.value &&
+            !(osVersion?.value === '2022' && dbVersion?.value === '2016')
+        ) {
             setLicenseAmiSkip(false);
         } else {
             setLicenseAmiSkip(true);

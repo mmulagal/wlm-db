@@ -45,7 +45,8 @@ import {
     createClonedDb,
     addExtendedProperties,
     cleanUpOntapResources,
-    mountPointQuery
+    mountPointQuery,
+    getStorageSavingsFromOntap
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
 
@@ -288,15 +289,7 @@ const getCollationDetails = {
 };
 
 const getOntapSandboxVolumeSavingsParams = {
-    commands: [
-        restGetUtilForOntap(
-            'test-fsx',
-            'us-east-1',
-            '/storage/volumes',
-            'tiering.object_tags="cloned_by=netapp_wlmdb"',
-            'fields=space.used_by_afs,space.physical_used,clone.split_estimate'
-        )
-    ]
+    commands: [getStorageSavingsFromOntap('test-fsx', 'us-east-1')]
 };
 
 const getSandboxDetails = {
@@ -342,7 +335,7 @@ const createCloneDbCommand = {
 
 const addExtendedPropertiesCommand = {
     commands: [
-        addExtendedProperties('testdb', {
+        addExtendedProperties('testdb', '.', {
             tag: 'demo',
             cloned_by: 'netapp_wlmdb',
             source: 'resource|instance|testdb'

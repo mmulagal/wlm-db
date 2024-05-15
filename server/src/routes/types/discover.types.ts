@@ -1,5 +1,5 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
-import { RESOURCESTYPE } from '../../utils/consts';
+import { RESOURCESTYPE, SqlServerDeploymentModel } from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
 
 const DiscoverMsSqlQuery = Type.Object({
@@ -51,7 +51,17 @@ const SqlServerInstanceInfo = Type.Object({
             })
         )
     ),
-    databaseCount: Type.Optional(Type.Number({ description: 'Number of databases in the SQL Server instance' })),
+    sqlServerDeploymentType: Type.Optional(
+        Type.String({
+            description: 'SQL Server deployment architecture.',
+            enum: [
+                SqlServerDeploymentModel.SQL_STANDALONE_SHORT,
+                SqlServerDeploymentModel.SQL_AOAG_SHORT,
+                SqlServerDeploymentModel.SQL_FCI_SHORT
+            ]
+        })
+    ),
+    databaseCount: Type.Optional(Type.Number({ description: 'Number of databases in the SQL Server instance.' })),
     windowsAuthentication: Type.Boolean({
         description: 'Is Windows authentication possible for SQL Server?'
     }),

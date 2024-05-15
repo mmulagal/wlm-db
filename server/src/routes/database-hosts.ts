@@ -87,7 +87,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, databaseHostId, credentialsId, region },
-                    body: { databaseName, dataFileConfig, logFileConfig, collation }
+                    body: { databaseName, dataFileConfig, logFileConfig, collation, isVirtualMountSelected }
                 } = request;
                 const response = await deployDatabase(
                     accountId,
@@ -97,7 +97,8 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     databaseName,
                     dataFileConfig,
                     logFileConfig,
-                    collation
+                    collation,
+                    isVirtualMountSelected
                 );
                 return reply.send(response);
             }

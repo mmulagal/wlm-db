@@ -10,7 +10,7 @@ import {
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import styles from './SelectSource.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
-import { generateOptionType } from '../../../../../utils/utilityFunctions';
+import { generateOptionType, isSmbProtocol } from '../../../../../utils/utilityFunctions';
 import useResize from '../../../../../common/hooks/useResize';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
@@ -21,7 +21,7 @@ import {
     setSourceDbInstance
 } from '../../../../../store/workloadFactory/createSandboxSlice';
 import { GENERAL } from '../../../../../utils/appConstants';
-import { FSXN_STORAGE_PROTOCOLS, MSSQL_DATABASE_TYPES, STATUS_CONST } from '../../../../../utils/consts';
+import { MSSQL_DATABASE_TYPES, STATUS_CONST } from '../../../../../utils/consts';
 
 const SelectSource = () => {
     const windowSize = useResize();
@@ -66,7 +66,7 @@ const SelectSource = () => {
         const options: optionType[] = [];
         aggregatedDbHostList?.map((obj, idx: number) => {
             if (obj.status === STATUS_CONST.UP) {
-                const protocolDisable = obj?.storage?.fsxn?.protocol === FSXN_STORAGE_PROTOCOLS.SMB;
+                const protocolDisable = isSmbProtocol(obj?.storage?.fsxn?.protocol);
                 const installationModeDisable = obj?.topology?.serverInstallationMode === GENERAL.FCI;
                 const option = generateOptionType(
                     obj?.id,
