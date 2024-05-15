@@ -703,6 +703,19 @@ const cleanUpOntapResources = (
     $responeObject | ConvertTo-Json
 `;
 
+const mountPointQuery = (instanceName: string = '.', databaseName: string) =>
+    ` sqlcmd -S '${instanceName}' -Q 'SET NOCOUNT ON;
+    SELECT 
+        CASE WHEN mf.file_id = 1 THEN 'Data' ELSE 'Log' END AS file_type,
+        vs.logical_volume_name AS volumename,
+        mf.physical_name AS filename
+    FROM sys.master_files AS mf
+    JOIN sys.databases AS db ON db.database_id = mf.database_id
+    CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+    WHERE db.name = '${databaseName}'
+    FOR JSON PATH;' -y 0 
+`;
+
 export {
     GET_SANDBOX_DETAILS,
     checkDatabaseExists,
@@ -710,5 +723,6 @@ export {
     addExtendedProperties,
     createVolumeClone,
     createClonedDb,
-    cleanUpOntapResources
+    cleanUpOntapResources,
+    mountPointQuery
 };

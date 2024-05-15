@@ -44,7 +44,8 @@ import {
     getDbMappedOntapVolumes,
     createClonedDb,
     addExtendedProperties,
-    cleanUpOntapResources
+    cleanUpOntapResources,
+    mountPointQuery
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
 
@@ -364,6 +365,8 @@ const cleanUpOntapResourcesCommand = {
     ]
 };
 
+const mountPointQueryCommand = { commands: [mountPointQuery('.', 'test-database')] };
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -468,7 +471,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: addExtendedPropertiesCommand })
     .resolves(listSendCommandCommandResponse.addExtendedProperties)
     .on(SendCommandCommand, { Parameters: cleanUpOntapResourcesCommand })
-    .resolves(listSendCommandCommandResponse.cleanupOntapResource);
+    .resolves(listSendCommandCommandResponse.cleanupOntapResource)
+    .on(SendCommandCommand, { Parameters: mountPointQueryCommand })
+    .resolves(listSendCommandCommandResponse.mountPointQuery);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -573,8 +578,8 @@ ssmMock
     .resolves(getCommandInvocationResponse.createCloneDbResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'a91f55b2-3bea-174a-a29e-15532e59a1b4-addExtendedProperties' })
     .resolves(getCommandInvocationResponse.addExtendedPropertiesResponse)
-    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-cleanupOntapResource' })
-    .resolves(getCommandInvocationResponse.cleanupOntapResourceResponse);
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-mountPointQueryCommand' })
+    .resolves(getCommandInvocationResponse.mountPointQueryCommandResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

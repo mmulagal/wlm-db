@@ -26,6 +26,10 @@ const DatabaseHostQueryString = Type.Object({
     pageSize: Type.Optional(Type.Number())
 });
 
+const GetDriveQueryString = Type.Object({
+    forSandbox: Type.Optional(Type.Boolean())
+});
+
 const EC2InstanceDetailsResponse = Type.Object({
     id: Type.String(),
     name: Type.Optional(Type.String()),
@@ -275,7 +279,7 @@ const DriveInfoResponseBody = Type.Object({
     ),
     defaultDataDrive: Type.Optional(Type.String()),
     defaultLogDrive: Type.Optional(Type.String()),
-    availableDriveLetters: Type.Array(Type.String()),
+    availableDriveLetters: Type.Optional(Type.Array(Type.String())),
     fsxStorageCapacity: Type.Optional(Type.Number())
 });
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;
@@ -348,6 +352,17 @@ const SandboxInfoResponseBody = Type.Object({
 type SandboxInfoResponseBodyType = Static<typeof SandboxInfoResponseBody>;
 type SandboxInfoResponseType = Static<typeof SandboxInfoResponse>;
 
+const DatabaseMountPointRequestQueryParam = Type.Object({
+    databaseName: Type.String(),
+    instanceName: Type.String()
+});
+
+const DatabaseMountPointResponseBody = Type.Object({
+    sourceMountedDataDrive: Type.String(),
+    sourceMountedLogDrive: Type.String()
+});
+type DatabaseMountPointResponseType = Static<typeof DatabaseMountPointResponseBody>;
+
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -408,5 +423,9 @@ export {
     SandboxInfoResponse,
     SandboxInfoResponseType,
     SandboxInfoResponseBody,
-    SandboxInfoResponseBodyType
+    SandboxInfoResponseBodyType,
+    DatabaseMountPointRequestQueryParam,
+    GetDriveQueryString,
+    DatabaseMountPointResponseBody,
+    DatabaseMountPointResponseType
 };

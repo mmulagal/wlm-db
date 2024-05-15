@@ -14,7 +14,10 @@ import {
     CloneDatabaseHostBody,
     CollationInfoResponseBody,
     SandboxSavingsResponseBody,
-    SandboxInfoResponseBody
+    SandboxInfoResponseBody,
+    DatabaseMountPointRequestQueryParam,
+    GetDriveQueryString,
+    DatabaseMountPointResponseBody
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
@@ -74,6 +77,7 @@ const DatabasesCreateSchema = {
 
 const GetDriveInfoSchema = {
     ...databaseHostsRequest,
+    querystring: GetDriveQueryString,
     summary: 'Get database host drive information',
     description: 'Fetch drive info about the database host',
     params: DatabaseHostSummaryParams,
@@ -125,6 +129,18 @@ const GetSandboxesInfoSchema = {
         200: SandboxInfoResponseBody
     }
 };
+
+const GetSandboxesMountPointSchema = {
+    params: CreateDatabaseParams,
+    querystring: DatabaseMountPointRequestQueryParam,
+    tags: [RouteTags.SANDBOX],
+    summary: 'Get mount point information of database',
+    description: 'Get data and log file mount point information of database',
+    response: {
+        200: DatabaseMountPointResponseBody
+    }
+};
+
 const PatchResourceForSandboxSchema = {
     ...databaseHostsRequest,
     tags: [RouteTags.SANDBOX],
@@ -158,5 +174,6 @@ export {
     GetSandboxSavingsSchema,
     GetSandboxesInfoSchema,
     PatchResourceForSandboxSchema,
-    RevertPatchResourceForSandboxSchema
+    RevertPatchResourceForSandboxSchema,
+    GetSandboxesMountPointSchema
 };

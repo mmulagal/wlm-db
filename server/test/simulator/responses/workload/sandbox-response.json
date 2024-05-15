@@ -13,5 +13,9 @@
                 "tag": "Development"
             }
         ]
+    },
+    "sandboxMountPointResponse": {
+        "sourceMountedDataDrive": "D",
+        "sourceMountedLogDrive": "E"
     }
 }
