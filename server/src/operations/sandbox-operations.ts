@@ -869,7 +869,10 @@ async function createCloneDb(
 
     try {
         let command = [
-            createCloneDbScript(destDetails.database, destDetails.instance, [mountPaths.dataPath, mountPaths.logPath])
+            createCloneDbScript(destDetails.database, destDetails.instanceName, [
+                mountPaths.dataPath,
+                mountPaths.logPath
+            ])
         ];
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
@@ -932,7 +935,7 @@ async function createExtendedProperties(
 
     try {
         let command = [
-            addExtendedProperties(destDetails.database, destDetails.instance, {
+            addExtendedProperties(destDetails.database, destDetails.instanceName, {
                 tag,
                 cloned_by: 'netapp_wlmdb',
                 source: `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`,
