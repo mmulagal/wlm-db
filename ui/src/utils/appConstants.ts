@@ -210,6 +210,7 @@ export const GENERAL = {
     VIEW_THE_REQ: 'View the requirements',
     LICENSE_ID: 'SQL Server AMI',
     USE_CUSTOM_AMI: 'Use custom AMI',
+    CUSTOM_AMI: 'Custom AMI',
     AMI_ID: 'AMI ID',
     SELECT_AMI_ID: 'Select AMI ID',
     SELECT_AMI_NAME: 'Select AMI Name',
