@@ -206,12 +206,7 @@ try {
             $null = (New-Item -ItemType Directory -Path $datafolder -Force)
             $null = (New-Item -ItemType Directory -Path $logfolder -Force)
             $null = (New-Partition -DiskNumber ($getlogdisk).Number -UseMaximumSize  | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
-            $null = (New-Partition -DiskNumber ($getdatadisk).Number -UseMaximumSize | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
-            Start-Sleep 5
-            $null = (Get-Partition -DiskNumber ($getlogdisk).Number |  Where-Object Type -eq Basic | Add-PartitionAccessPath -AccessPath $logfolder)
-            $null = (Get-Partition -DiskNumber ($getdatadisk).Number |  Where-Object Type -eq Basic  | Add-PartitionAccessPath -AccessPath $datafolder)
-            $null = (Get-Partition -DiskNumber ($getlogdisk).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
-            $null = (Get-Partition -DiskNumber ($getdatadisk).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true) 
+            $null = (New-Partition -DiskNumber ($getdatadisk).Number -UseMaximumSize | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force) 
 
         }
         else {
@@ -223,8 +218,6 @@ try {
         if ($Virtualmount -eq "true") { 
             $null = (New-Item -ItemType Directory -Path $logfolder -Force)
             $null = (New-Partition -DiskNumber ($getlogdisk).Number -UseMaximumSize  | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
-            $null = (Get-Partition -DiskNumber ($getlogdisk).Number |  Where-Object Type -eq Basic  | Add-PartitionAccessPath -AccessPath $logfolder)
-            $null = (Get-Partition -DiskNumber ($getlogdisk).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
         }
         else {
             $null = (New-Partition -DiskNumber ($getlogdisk).Number -UseMaximumSize -DriveLetter $LogDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $loglabel)
@@ -234,8 +227,6 @@ try {
         if ($Virtualmount -eq "true") { 
             $null = (New-Item -ItemType Directory -Path $datafolder -Force)
             $null = (New-Partition -DiskNumber ($getdatadisk).Number -UseMaximumSize | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force)
-            $null = (Get-Partition -DiskNumber ($getdatadisk).Number |  Where-Object Type -eq Basic | Add-PartitionAccessPath -AccessPath $datafolder)
-            $null = (Get-Partition -DiskNumber ($getdatadisk).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
         }
         else {
             $null = (New-Partition -DiskNumber ($getdatadisk).Number -UseMaximumSize -DriveLetter $DataDriveLetter | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel $datalabel)    
@@ -331,7 +322,26 @@ catch {
     exit 1        
 } 
 
+try {
+Start-Sleep 5
+if ($LogNew -eq "true" -And $Virtualmount -eq "true") {
+$null = (Get-Partition -DiskNumber ($getlogdisk).Number |  Where-Object Type -eq Basic | Add-PartitionAccessPath -AccessPath $logfolder -ErrorAction Stop)
+$null = (Get-Partition -DiskNumber ($getlogdisk).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+}
+if ($DataNew -eq "true" -And $Virtualmount -eq "true") {
+$null = (Get-Partition -DiskNumber ($getdatadisk).Number |  Where-Object Type -eq Basic  | Add-PartitionAccessPath -AccessPath $datafolder -ErrorAction Stop)
+$null = (Get-Partition -DiskNumber ($getdatadisk).Number |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+}
+} catch {
+    $result.Add('Status', 'Failed')
+    $result.Add('Message', 'Failed to add access paths to disks')
+    $result.Add('Exception', $_)
+    $resultjson = ($result | ConvertTo-Json)
+    $resultjson
+    exit 1
+}
+
 $result.Add('Status', 'Complete')
 $result.Add('Message', 'Completed preparing iSCSI drives for new SQL database')
 $resultjson = ($result | ConvertTo-Json) 
-$resultjson 
+$resultjson
