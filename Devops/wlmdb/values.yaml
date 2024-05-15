@@ -27,7 +27,7 @@ resourcesaudit:
     cpu: "100m"
     memory: "100Mi"
 
-infraversion: development-b0ef1ce-1009
+infraversion: development-a370390-1010
 UseExternalIP: true
 
 # monitoring
