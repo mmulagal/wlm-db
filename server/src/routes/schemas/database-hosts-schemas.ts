@@ -159,8 +159,7 @@ const GetSandboxConnectionStringSchema = {
         200: {
             server: Type.String(),
             database: Type.String(),
-            userId: Type.Optional(Type.String()),
-            password: Type.Optional(Type.String())
+            userId: Type.Optional(Type.String())
         }
     }
 };

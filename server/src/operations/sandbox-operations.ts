@@ -1225,8 +1225,10 @@ async function getSandboxConnectionString(
         return {
             server: instanceName === '.' ? resourceName : instanceName,
             database: sandboxName,
-            userId: parsedResp?.domain?.username,
-            password: parsedResp?.domain?.password
+            userId:
+                process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
+                    ? 'admin'
+                    : parsedResp?.domain?.username
         };
     } catch (e: any) {
         logger.error(`Failed to get the connection string for sandbox ${sandboxName} in host ${databaseHostId}, ${e}`);
