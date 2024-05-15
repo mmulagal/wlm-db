@@ -192,14 +192,14 @@ try {
 
         #Check if .ndf file exists andalter secondary tempdb data file
         $tempndffile ="C:\Program Files\Microsoft SQL Server\MSSQL*.$Using:SQLInstanceName\MSSQL\DATA\tempdb_mssql*.ndf"
-        $temp2DevFile = "$Using:tempPath\tempdb_mssql_2.ndf"
+        $temp2DevFile = "'$Using:tempPath\tempdb_mssql_2.ndf'"
         $ndfFound = $False
         if (Test-Path -Path $tempndffile) {
             try {
                 Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "USE master; ALTER DATABASE tempdb MODIFY FILE (NAME = temp2, FILENAME = $temp2DevFile);"
                 $ndfFound = $True
             } catch {
-                Write-Host "Error while moving .ndf file. Error: $_"
+                Write-Host "Error while altering temp2 in tempDb. Error: $_"
             }
         }
 
