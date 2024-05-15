@@ -37,7 +37,9 @@ IF @InternalInstanceName <> @MachineInstanceName
 BEGIN EXEC sp_dropserver @InternalInstanceName;
 EXEC sp_addserver @MachineInstanceName,
 'LOCAL';
-END"    try {
+END"    
+
+        try {
             Invoke-Sqlcmd -Query $query 
         }catch{
             Write-Host "Invoking query with TrustServerCertificate. Error: $_"
