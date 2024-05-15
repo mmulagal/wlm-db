@@ -6,7 +6,8 @@ import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { Text } from '../../../../ui-components/Typography';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { formatViewCalcInstance } from '../../ExploreSavingsUtils';
 
 const TableLayout = ({ data }: any) => {
     const styleHandler = (data: any) => {
@@ -52,12 +53,26 @@ const TableLayout = ({ data }: any) => {
 };
 
 const OntapCalculation = () => {
-    const { viewCalculationsResponse, selectedDeploymentModel, viewCalculationsLoading } = useAppSelector(
-        state => state.exploreSavings
-    );
+    const { viewCalculationsResponse, selectedDeploymentModel, viewCalculationsLoading, selectedHostDetails } =
+        useAppSelector(state => state.exploreSavings);
+    const [viewLoading, setViewLoading] = useState(false);
+    const [fsxInstance, setFsxInstance] = useState<any>(null);
+
+    useEffect(() => {
+        if (!selectedHostDetails?.loading) {
+            setFsxInstance({
+                fsxInstanceCalculation: formatViewCalcInstance(selectedDeploymentModel, selectedHostDetails)
+            });
+        }
+    }, [selectedHostDetails]);
+
+    useEffect(() => {
+        setViewLoading(selectedHostDetails?.loading || viewCalculationsLoading);
+    }, [selectedHostDetails, viewCalculationsLoading]);
+
     const accordionContext = useAccordionContext()?.setOpenChildren!;
     useEffect(() => {
-        if (viewCalculationsLoading) {
+        if (viewLoading) {
             accordionContext({
                 1: false,
                 2: false
@@ -67,7 +82,7 @@ const OntapCalculation = () => {
                 1: true
             });
         }
-    }, [viewCalculationsLoading]);
+    }, [viewLoading]);
 
     const setHeader = () => {
         if (!viewCalculationsResponse) {
@@ -85,14 +100,14 @@ const OntapCalculation = () => {
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="1"
                 title={<div>{GENERAL.MS_ONTAP_CALCULATION}</div>}
-                isLoading={viewCalculationsLoading}
+                isLoading={viewLoading}
                 isDisabled={!viewCalculationsResponse}
             >
-                {viewCalculationsResponse && (
+                {viewCalculationsResponse && fsxInstance && (
                     <AccordionCardContent>
                         <DsTypography className={styles.accordionContentSet}>
                             {viewCalculation(
-                                viewCalculationsResponse,
+                                { ...fsxInstance, ...viewCalculationsResponse },
                                 selectedDeploymentModel
                             ).Ec2InstanceCalculation.map(
                                 (data: { label: string; text?: string; value?: string }, index: number) => (
@@ -100,7 +115,10 @@ const OntapCalculation = () => {
                                 )
                             )}
                             <div style={{ marginTop: '16px' }}>
-                                {viewCalculation(viewCalculationsResponse, selectedDeploymentModel).FSxNCalculation.map(
+                                {viewCalculation(
+                                    { ...fsxInstance, ...viewCalculationsResponse },
+                                    selectedDeploymentModel
+                                ).FSxNCalculation.map(
                                     (data: { label: string; text?: string; value?: string }, index: number) => (
                                         <TableLayout key={index} data={data} />
                                     )
@@ -108,7 +126,7 @@ const OntapCalculation = () => {
                             </div>
                             <div style={{ marginTop: '16px' }}>
                                 {viewCalculation(
-                                    viewCalculationsResponse,
+                                    { ...fsxInstance, ...viewCalculationsResponse },
                                     selectedDeploymentModel
                                 ).SnapshotCalculation.map(
                                     (data: { label: string; text?: string; value?: string }, index: number) => (
@@ -118,7 +136,7 @@ const OntapCalculation = () => {
                             </div>
                             <div style={{ marginTop: '16px' }}>
                                 {viewCalculation(
-                                    viewCalculationsResponse,
+                                    { ...fsxInstance, ...viewCalculationsResponse },
                                     selectedDeploymentModel
                                 ).cloneCalculation.map(
                                     (data: { label: string; text?: string; value?: string }, index: number) => (
