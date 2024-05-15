@@ -433,6 +433,7 @@ async function getHostAndSqlInfoFromPsOutput(
                                 svmId,
                                 protocol: STORAGE_PROTOCOLS.ISCSI
                             });
+
                             const { deploymentType, subnetIds } = fsIdWithDeploymentType.get(fsxId!) || {};
 
                             deploymentTypes.push({
@@ -455,6 +456,7 @@ async function getHostAndSqlInfoFromPsOutput(
                             const matchedEndpoints = fsxEndpoints.filter(value =>
                                 targets.includes(value.toLowerCase())
                             );
+
                             if (!isEmpty(matchedEndpoints)) {
                                 const fsxType = endPointIpWithFsxInfo.get(matchedEndpoints[0])?.type;
                                 if (fsxType === FileSystemType.WINDOWS) {
@@ -918,6 +920,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     const [sqlServerInstance] = item?.sqlServerInstances || [];
     const { storage } = sqlServerInstance;
     const storageInfo = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
+    const storageProtocols = storage?.filter(elem => elem.type === STORAGE_TYPE.FSXN).map(elem => elem.protocol);
 
     verifyAndAddFSxOntapCredentials(
         accountId,
@@ -956,7 +959,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
                         : SqlServerDeploymentModel.SQL_FCI_SHORT,
                 source: RESOURCE_SOURCE.DISCOVER,
                 fsxSvmId: storageInfo?.svmId,
-                storageProtocol: storageInfo?.protocol,
+                storageProtocol: storageProtocols?.join(),
                 ...(activeDirectoryDomainName && { activeDirectoryName: activeDirectoryDomainName }),
                 ...(activeDirectoryIpAddresses && { activeDirectoryAddress: activeDirectoryIpAddresses.join() })
             }
