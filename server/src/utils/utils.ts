@@ -76,7 +76,7 @@ function generateDeploymentParams(
     // To provision 4 GBps of throughput capacity, your file system must be configured with a minimum of 5,120 GiB of SSD storage capacity.
     // https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/performance.html
     if (fsxVolThroughput === FSX_VOL_THROUGHPUT && fsxStorageCapacity <= FSX_STORAGE_MIN_CAPACITY_IN_GIB) {
-        throw createError(412, 'Supported Fsxn Storage Capactiy should be minumum of 5,120 GiB');
+        throw createError(412, 'Supported FSx for ONTAP Storage Capactiy should be minumum of 5,120 GiB');
     }
 
     const stacknameSubstring = sqlDeploymentType === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME;
