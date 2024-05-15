@@ -16,7 +16,6 @@ import {
     USER_TOKEN,
     DEFAULT_AWS_REGION,
     FSX_SSD_MIN_SIZE,
-    FSX_SSD_MAX_SIZE,
     FCI_STACKNAME,
     STANDALONE_STACKNAME,
     STANDALONE,
@@ -77,7 +76,7 @@ function generateDeploymentParams(
     // To provision 4 GBps of throughput capacity, your file system must be configured with a minimum of 5,120 GiB of SSD storage capacity.
     // https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/performance.html
     if (fsxVolThroughput === FSX_VOL_THROUGHPUT && fsxStorageCapacity <= FSX_STORAGE_MIN_CAPACITY_IN_GIB) {
-        throw createError(412, 'Supported Fsxn Storage Capactiy should be minumum of 5,120 GiB');
+        throw createError(412, 'Supported FSx for ONTAP Storage Capactiy should be minumum of 5,120 GiB');
     }
 
     const stacknameSubstring = sqlDeploymentType === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME;
@@ -134,9 +133,6 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number) {
         (FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize) / 1024
     );
 
-    FSxStorageCapacity = Math.max(FSxStorageCapacity, FSX_SSD_MIN_SIZE);
-    FSxStorageCapacity = Math.min(FSxStorageCapacity, FSX_SSD_MAX_SIZE);
-
     // 20 percent of FSxStorageCapacity
     let FSxBufferVolumeSize = 0;
     // FSxBufferVolumeSize in GiB initially later converted to MiB
@@ -153,6 +149,9 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number) {
             FSxStorageCapacity += FSxBufferVolumeSize / 1024;
         }
     }
+
+    FSxStorageCapacity = Math.max(FSxStorageCapacity, FSX_SSD_MIN_SIZE);
+    FSxStorageCapacity = Math.min(FSxStorageCapacity, MAX_FSX_STORAGE_IN_GIB);
 
     logger.debug('FSx Storage Capacity', { FSxStorageCapacity });
 
