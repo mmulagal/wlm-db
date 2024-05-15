@@ -344,4 +344,4 @@ $null = (Get-Partition -DiskNumber ($getdatadisk).Number |  Where-Object Type -e
 $result.Add('Status', 'Complete')
 $result.Add('Message', 'Completed preparing iSCSI drives for new SQL database')
 $resultjson = ($result | ConvertTo-Json) 
-$resultjson  
+$resultjson
