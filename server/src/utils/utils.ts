@@ -16,7 +16,6 @@ import {
     USER_TOKEN,
     DEFAULT_AWS_REGION,
     FSX_SSD_MIN_SIZE,
-    FSX_SSD_MAX_SIZE,
     FCI_STACKNAME,
     STANDALONE_STACKNAME,
     STANDALONE,
@@ -134,9 +133,6 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number) {
         (FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize) / 1024
     );
 
-    FSxStorageCapacity = Math.max(FSxStorageCapacity, FSX_SSD_MIN_SIZE);
-    FSxStorageCapacity = Math.min(FSxStorageCapacity, FSX_SSD_MAX_SIZE);
-
     // 20 percent of FSxStorageCapacity
     let FSxBufferVolumeSize = 0;
     // FSxBufferVolumeSize in GiB initially later converted to MiB
@@ -153,6 +149,9 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number) {
             FSxStorageCapacity += FSxBufferVolumeSize / 1024;
         }
     }
+
+    FSxStorageCapacity = Math.max(FSxStorageCapacity, FSX_SSD_MIN_SIZE);
+    FSxStorageCapacity = Math.min(FSxStorageCapacity, MAX_FSX_STORAGE_IN_GIB);
 
     logger.debug('FSx Storage Capacity', { FSxStorageCapacity });
 
