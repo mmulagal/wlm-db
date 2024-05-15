@@ -348,15 +348,14 @@ async function getAmiList(
             hypervisor: Hypervisor
         })
     );
-
     if (!customAmi) {
         response
-            ?.filter(image => !image.name?.includes('2023.11.15'))
             .sort(
                 (a, b) =>
                     new Date(b.name.substring(b.name.length - 10)).getTime() -
                     new Date(a.name.substring(a.name.length - 10)).getTime()
-            );
+            )
+            .filter(image => !image.name?.includes('2023.11.15'));
     }
 
     return { amis: response };
