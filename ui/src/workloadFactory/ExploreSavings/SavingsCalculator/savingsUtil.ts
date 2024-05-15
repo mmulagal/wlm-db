@@ -197,7 +197,7 @@ export const MSSQLServerInstance = (sqlData: any) => {
 export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: string) => {
     return {
         Ec2InstanceCalculation:
-            selectedDeploymentModel === SQL_DEPLOYMENT_MODE.AOAG
+            selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                 ? [
                       {
                           label: 'Microsoft SQL EC2 Instances calculation',
@@ -604,7 +604,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 label: 'Total monthly cost',
                 value: `$${viewCalculation.fsxTotalCost}`,
                 text: `Total EC2 cost ($${
-                    selectedDeploymentModel === SQL_DEPLOYMENT_MODE.AOAG
+                    selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                         ? 2 * viewCalculation.ebsInstanceCalculation?.[0].ec2MachineCost
                         : viewCalculation.ebsInstanceCalculation?.[0].ec2MachineCost
                 }) + Total throughput and IOPS cost ($${
@@ -620,7 +620,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
 export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentModel: string) => {
     return {
         Ec2InstanceCalculation:
-            selectedDeploymentModel === SQL_DEPLOYMENT_MODE.AOAG
+            selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                 ? [
                       {
                           label: 'Microsoft SQL EC2 instances calculation',
@@ -859,7 +859,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                 label: 'Amazon Elastic Block Storage (EBS) total cost (monthly)',
                 value: `$${viewCalculation.ebsCalculation.ebsTotalCostMonthly}`,
                 text: `Total EC2 cost ($${
-                    selectedDeploymentModel === SQL_DEPLOYMENT_MODE.AOAG
+                    selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                         ? 2 * viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost
                         : viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost
                 }) + EBS snapshot cost ($${viewCalculation.ebsCalculation.ebsSnapshotCost}) + EBS throughput cost ($${

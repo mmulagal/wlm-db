@@ -1,8 +1,8 @@
 import { Button, DsFlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../utils/appConstants';
-import { formatFractionalNumber, isAwsBackupEnabled } from '../../utils/utilityFunctions';
+import { formatFractionalNumber, getDiscoveredHostDeployment, isAwsBackupEnabled } from '../../utils/utilityFunctions';
 import EstimatedCostPopover from './EstimatedCostPopover/EstimatedCostPopover';
-import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
+import { DETECT_HOST_VAR, FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE, WLF_TABS } from '../../utils/consts';
 import CommonStyles from '../../utils/CommonStyles.module.scss';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../store/notificationSlice';
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventorySlice';
@@ -142,13 +142,20 @@ export const renderInstanceName = (cellData: any, rowData: any, styles: any) => 
 };
 
 export const renderDeploymentModel = (cellData: string, rowData: any) => {
-    return (
-        <>
-            {cellData && cellData === 'FCI' ? GENERAL.FAILOVER_CLUSTER_INSTANCES : cellData}
-            {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
-            {!cellData && !rowData?.loading && GENERAL.NOT_AVAILABLE}
-        </>
-    );
+    let deploymentType = '';
+    if (cellData) {
+        // This is for managed tab
+        deploymentType =
+            cellData && cellData?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+                ? GENERAL.FAILOVER_CLUSTER_INSTANCES
+                : cellData?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG
+                ? GENERAL.AOAG
+                : cellData;
+    } else {
+        // This is for unmanaged tab or explore savings table
+        deploymentType = getDiscoveredHostDeployment(rowData);
+    }
+    return <>{deploymentType || GENERAL.NOT_AVAILABLE}</>;
 };
 
 export const renderUnmanagedHostName = (cellData: string, rowData: any, styles: any) => {
