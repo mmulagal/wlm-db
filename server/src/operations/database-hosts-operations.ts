@@ -345,7 +345,7 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageP
                 used: totalUsed,
                 spaceSavings: totalSpaceSavings,
                 spaceSavingsPercentage: totalSpaceSavingsPercentage,
-                protocol: storageProtocol!
+                protocol: storageProtocol ? storageProtocol.split(',') : []
             };
         }
         if (fsxwId && region) {

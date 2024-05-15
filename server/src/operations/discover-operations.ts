@@ -959,7 +959,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
                         : SqlServerDeploymentModel.SQL_FCI_SHORT,
                 source: RESOURCE_SOURCE.DISCOVER,
                 fsxSvmId: storageInfo?.svmId,
-                storageProtocol: storageProtocols?.join(),
+                storageProtocol: storageProtocols ? storageProtocols.join() : '',
                 ...(activeDirectoryDomainName && { activeDirectoryName: activeDirectoryDomainName }),
                 ...(activeDirectoryIpAddresses && { activeDirectoryAddress: activeDirectoryIpAddresses.join() })
             }
