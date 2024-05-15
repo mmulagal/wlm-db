@@ -14,6 +14,7 @@ import {
     DISABLED_STATE,
     ENABLED_STATE,
     FORM_OPTIONS,
+    FSXN_STORAGE_PROTOCOLS,
     FSX_DEPLOYMENT_MODE,
     JM_DOWNLOAD,
     JOBS_REPORT,
@@ -1527,4 +1528,12 @@ export const downloadObjectAsJson = (obj: any, filename: any) => {
 
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+};
+
+export const isSmbProtocol = (protocolList: Array<string> | undefined) => {
+    if (protocolList && protocolList.length === 1 && protocolList[0] === FSXN_STORAGE_PROTOCOLS.SMB) {
+        return true;
+    } else {
+        return false;
+    }
 };
