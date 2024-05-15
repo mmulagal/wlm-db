@@ -37,8 +37,12 @@ IF @InternalInstanceName <> @MachineInstanceName
 BEGIN EXEC sp_dropserver @InternalInstanceName;
 EXEC sp_addserver @MachineInstanceName,
 'LOCAL';
-END"
-        Invoke-Sqlcmd -Query $query -TrustServerCertificate
+END"    try {
+            Invoke-Sqlcmd -Query $query 
+        }catch{
+            Write-Host "Invoking query with TrustServerCertificate. Error: $_"
+            Invoke-Sqlcmd -Query $query -TrustServerCertificate
+        }
     }
     Invoke-Command -Authentication Credssp -Scriptblock $renameinstance -ComputerName $NetBIOSName -Credential $DomainAdminCreds
 
