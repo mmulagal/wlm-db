@@ -189,7 +189,7 @@ const FileNames = () => {
     }, [driveInfoList, driveLetter]);
 
     const isVirtualMountPointDisabled = useMemo(() => {
-        return driveLetter?.label2 === DRIVE_LETTER_TYPE.NEW || driveLetterLogFile.label2 === DRIVE_LETTER_TYPE.NEW;
+        return driveLetter?.label2 === DRIVE_LETTER_TYPE.NEW || driveLetterLogFile?.label2 === DRIVE_LETTER_TYPE.NEW;
     }, [driveLetter, driveLetterLogFile]);
 
     // Default drive letters logic to set for quick and advanced view
