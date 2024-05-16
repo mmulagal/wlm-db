@@ -102,25 +102,6 @@ try {
     write-debug "DataFolder: $datafolder $logfolder"
 
 
-    Get-Partition | Where-Object Type -eq Basic | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
-        $partition = $_
-        $partition.AccessPaths | ForEach-Object {
-            $accessPath = $_
-            write-debug "AccessPath: $accessPath"
-            if ($accessPath) {
-                $matched = $accessPath -match '^[A-Z]:\\$'
-                write-debug "Matched: $matched"
-                if ($matched -eq $True -and $accessPath -notcontains $DataDriveLetter -and $accessPath -notcontains $logDriveLetter) {
-                    $accessDrive = $matches[0]
-                    $null = ($partition | Remove-PartitionAccessPath -AccessPath $accessDrive)
-                }
-            }
-        }
-    }
-
-    Get-ChildItem -Path $datafolder -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
-    Get-ChildItem -Path $logfolder -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
-
     Get-Partition -DiskNumber $datadisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $datalabel
     Get-Partition -DiskNumber $logdisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $loglabel
 
@@ -128,16 +109,6 @@ try {
     $LogFileLeaf = Split-Path -Path $LogFilePath -Leaf
     $newDataFilePath = (Get-ChildItem -Path $datafolder -Recurse -Filter $DataFileLeaf).FullName
     $newLogFilePath = (Get-ChildItem -Path $logfolder -Recurse -Filter $LogFileLeaf).FullName
-
-    if ((Test-Path $newDataFilePath) -and (Test-Path $newLogFilePath)) {
-        $responseObject['dataPath'] = $newDataFilePath
-        $responseObject['logPath'] = $newLogFilePath
-    }
-    else {
-        $responseObject['error'] = "Failed to validate newpaths $newDataFilePath $newLogFilePath"
-    }
-
-    write-debug "NewFilePaths: $newDataFilePath $newLogFilePath"
 }
 catch {
     write-debug "Error: $($_.Exception)"
@@ -207,11 +178,47 @@ try {
         $null = Add-PartitionAccessPath -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logfolder -ErrorAction stop
         $null = (Get-Partition -DiskNumber $logdisknumber |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
     }
-    }
-    catch {
+}catch {
         $responseObject['error'] = $_.Exception.Message
         $responseObject['message'] = 'Failed to add access path to disks'
 
     }
+
+try {
+    Get-Partition | Where-Object Type -eq Basic | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
+        $partition = $_
+        $partition.AccessPaths | ForEach-Object {
+            $accessPath = $_
+            write-debug "AccessPath: $accessPath"
+            if ($accessPath) {
+                $matched = $accessPath -match '^[A-Z]:\\$'
+                write-debug "Matched: $matched"
+                if ($matched -eq $True -and $accessPath -notcontains $DataDriveLetter -and $accessPath -notcontains $logDriveLetter) {
+                    $accessDrive = $matches[0]
+                    $null = ($partition | Remove-PartitionAccessPath -AccessPath $accessDrive)
+                }
+            }
+        }
+    }
+
+    Get-ChildItem -Path $datafolder -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
+    Get-ChildItem -Path $logfolder -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
+} catch {
+    write-debug "Failed to remove stale junction paths"
+}
+
+try {
+    if ((Test-Path $newDataFilePath) -and (Test-Path $newLogFilePath)) {
+        $responseObject['dataPath'] = $newDataFilePath
+        $responseObject['logPath'] = $newLogFilePath
+        write-debug "NewFilePaths: $newDataFilePath $newLogFilePath"
+    }
+    else {
+        throw 
+    }
+} catch {
+    $responseObject['error'] = "Failed to validate newpaths $newDataFilePath $newLogFilePath"
+}
+
 
 $responseObject | ConvertTo-Json -Depth 5
