@@ -1,4 +1,4 @@
-import { FlashingDotsLoader, Table, Typography, useTable } from '@netapp/design-system';
+import { FlashingDotsLoader, Table, TooltipInfo, Typography, useTable } from '@netapp/design-system';
 import styles from './StorageCapacityTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useAppSelector } from '../../../../../store/storeHooks';
@@ -18,7 +18,7 @@ const StorageCapacityTable = () => {
             newList.push({
                 id: 1,
                 type: GENERAL.DATA_VOLUME,
-                size: `${formatFractionalNumber(sizeData?.data || 0, 2)} GiB`,
+                size: sizeData?.data,
                 calculation: 'Data volume size with 10% buffer'
             });
         }
@@ -26,7 +26,7 @@ const StorageCapacityTable = () => {
             newList.push({
                 id: 2,
                 type: GENERAL.LOG_VOLUME,
-                size: `${formatFractionalNumber(sizeData?.log || 0, 2)} GiB`,
+                size: sizeData?.log,
                 calculation: `25% of ${GENERAL.DATA_SIZE}`
             });
         }
@@ -34,7 +34,7 @@ const StorageCapacityTable = () => {
             newList.push({
                 id: 3,
                 type: GENERAL.TEMPDB_VOLUME,
-                size: `${formatFractionalNumber(sizeData?.tempdb || 0, 2)} GiB`,
+                size: sizeData?.tempdb,
                 calculation: `10% of ${GENERAL.DATA_SIZE}`
             });
         }
@@ -42,7 +42,7 @@ const StorageCapacityTable = () => {
             newList.push({
                 id: 4,
                 type: GENERAL.QUORUM_VOLUME,
-                size: `${formatFractionalNumber(sizeData?.quorum || 0, 2)} GiB`,
+                size: sizeData?.quorum,
                 calculation: `Witness disk for windows cluster`
             });
         }
@@ -50,7 +50,7 @@ const StorageCapacityTable = () => {
             newList.push({
                 id: 5,
                 type: GENERAL.BUFFER_SIZE,
-                size: `${formatFractionalNumber(sizeData?.buffer || 0, 2)} GiB`,
+                size: sizeData?.buffer,
                 calculation: `Upto 20% headroom over total capacity`
             });
         }
@@ -58,7 +58,7 @@ const StorageCapacityTable = () => {
             newList.push({
                 id: 6,
                 type: GENERAL.TOTAL_VOLUME,
-                size: `${formatFractionalNumber(sizeData?.total || 0, 2)} GiB`,
+                size: sizeData?.total,
                 calculation: `Total FSx for ONTAP SSD capacity`
             });
         }
@@ -71,13 +71,30 @@ const StorageCapacityTable = () => {
             accessor: 'type',
             id: '1',
             isSortable: false,
-            width: '290px'
+            width: '290px',
+            renderCell: (cellData: any, rowData: any) => {
+                if (rowData?.size <= 1024 && cellData === GENERAL.TOTAL_VOLUME) {
+                    return (
+                        <div className={styles.minColTooltip}>
+                            {cellData}{' '}
+                            <TooltipInfo className={styles.tooltipClass}>
+                                {GENERAL.MIN_FSX_CAPACITY_MESSAGE}
+                            </TooltipInfo>
+                        </div>
+                    );
+                } else {
+                    return cellData;
+                }
+            }
         },
         {
             Header: 'Size',
             accessor: 'size',
             id: '2',
-            width: '240px'
+            width: '240px',
+            renderCell: (cellData: any) => {
+                return `${formatFractionalNumber(cellData || 0, 2)} GiB`;
+            }
         },
         {
             Header: 'Calculation',
