@@ -247,15 +247,15 @@ const FileConfig = Type.Object({
     fileName: Type.String({ minLength: 5 }),
     volumeSize: Type.Number({ minimum: 1 }),
     drive: Type.String({ maxLength: 1 }),
-    isExisting: Type.Boolean()
+    isExisting: Type.Boolean(),
+    isVirtualMount: Type.Boolean()
 });
 
 const CreateDatabseRequestBody = Type.Object({
     databaseName: Type.String({ minLength: 1, maxLength: 123 }),
     dataFileConfig: FileConfig,
     logFileConfig: FileConfig,
-    collation: Type.String(),
-    isVirtualMountSelected: Type.Optional(Type.Boolean())
+    collation: Type.String()
 });
 
 const DatabasesCreateResponse = Type.Object({
