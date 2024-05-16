@@ -10,7 +10,7 @@ import {
     GET_STANDBY_NODE_DRIVE_LIST
 } from './workloads/mssql/ssm-script-utils';
 import { checkDatabaseExists, getActiveSqlNode } from './workloads/mssql/mssql-operations';
-import { convertGiBToBytes, sleep, sqlResponseParsing, getCollationForMSSQLVersion } from '../utils/utils';
+import { convertGiBToBytes, sqlResponseParsing, getCollationForMSSQLVersion } from '../utils/utils';
 import {
     ACCOUNT_ID,
     COMPLETE,
@@ -584,10 +584,6 @@ async function invokeSSMForDatabaseDeployment(
                 isDataVirtualMount ? isDataDriveExists.toString() : (!isDataDriveExists).toString(),
                 standbyIqn
             );
-            // its required to sleep for 45 seconds so that initialization script will go through.. the ontap LUN configure can take time depending on busy system for the multiple API calls, and the disk initialize may take time to discover the created LUNs
-            if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
-                await sleep(45000);
-            }
 
             let isVirtualMountSelected = 'false';
             if (isLogVirtualMount || isDataVirtualMount) {
