@@ -65,7 +65,7 @@ const DatabaseHost = () => {
                         </div>
                     </div>
 
-                    <div className={styles.dbHostSeparator} />
+                    {/* <div className={styles.dbHostSeparator} />
 
                     <div className={styles.NA}>
                         <Typography variant="Regular_16" className={styles.databaseNumber}>
@@ -77,7 +77,7 @@ const DatabaseHost = () => {
                             </Typography>
                             <ComingSoon />
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>
