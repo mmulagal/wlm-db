@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
+import { AccordionCard, AccordionCardContent, Table, TextField, Typography } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './StorageCapacity.module.scss';
@@ -11,6 +11,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { setStorageCapacity, setStorageUnit } from '../../../../store/mssql/mssqlFormSlice';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
+import StorageCapacityTable from './StorageCapacityTable/StorageCapacityTable';
 
 const StorageCapacity = () => {
     const dispatch = useDispatch();
@@ -131,6 +132,7 @@ const StorageCapacity = () => {
                                 className={styles.selectField}
                             />
                         </div>
+                        {<StorageCapacityTable />}
                     </Typography>
                 </AccordionCardContent>
             </AccordionCard>
