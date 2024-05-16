@@ -17,7 +17,8 @@ import {
     SandboxInfoResponseBody,
     DatabaseMountPointRequestQueryParam,
     GetDriveQueryString,
-    DatabaseMountPointResponseBody
+    DatabaseMountPointResponseBody,
+    SandboxConnectionStringParams
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
@@ -135,7 +136,7 @@ const GetSandboxesMountPointSchema = {
     querystring: DatabaseMountPointRequestQueryParam,
     tags: [RouteTags.SANDBOX],
     summary: 'Get mount point information of database',
-    description: 'Get data and log file mount point information of database',
+    description: 'Get data and log file mount point drive information of database',
     response: {
         200: DatabaseMountPointResponseBody
     }
@@ -163,6 +164,22 @@ const RevertPatchResourceForSandboxSchema = {
         200: Type.Any()
     }
 };
+
+const GetSandboxConnectionStringSchema = {
+    ...databaseHostsRequest,
+    params: SandboxConnectionStringParams,
+    tags: [RouteTags.SANDBOX],
+    summary: 'Get Sandbox connection string',
+    description: 'Get sandbox connection string for sql server connection',
+    response: {
+        200: {
+            server: Type.String(),
+            database: Type.String(),
+            userId: Type.Optional(Type.String())
+        }
+    }
+};
+
 export {
     DatabaseHostsSummarySchema,
     DatabaseHostDetailsSchema,
@@ -175,5 +192,6 @@ export {
     GetSandboxesInfoSchema,
     PatchResourceForSandboxSchema,
     RevertPatchResourceForSandboxSchema,
-    GetSandboxesMountPointSchema
+    GetSandboxesMountPointSchema,
+    GetSandboxConnectionStringSchema
 };

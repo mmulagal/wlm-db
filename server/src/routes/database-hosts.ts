@@ -14,10 +14,12 @@ import {
     GetSandboxesInfoSchema,
     PatchResourceForSandboxSchema,
     RevertPatchResourceForSandboxSchema,
-    GetSandboxesMountPointSchema
+    GetSandboxesMountPointSchema,
+    GetSandboxConnectionStringSchema
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
+    getSandboxConnectionString,
     getSandboxesInfo,
     getDatabaseMountPointInfo,
     getSandboxSavings,
@@ -111,7 +113,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     params: { accountId, databaseHostId, credentialsId, region },
                     query: { forSandbox }
                 } = request;
-                const response = await getDriveInfo(accountId, databaseHostId, credentialsId, region, '', forSandbox);
+                const response = await getDriveInfo(accountId, databaseHostId, credentialsId, region, forSandbox);
                 return reply.send(response);
             }
         )
@@ -139,7 +141,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH}/databaseHostId/:databaseHostId/database-mount-points`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-mount-points`,
             { schema: GetSandboxesMountPointSchema },
             async (request, reply) => {
                 const {
@@ -186,5 +188,22 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             } = request;
             const response = await createSandbox(accountId, credentialsId, region, source, destination, tag);
             return reply.send(response);
-        });
+        })
+        .get(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandbox/:sandboxName/connection-string`,
+            { schema: GetSandboxConnectionStringSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName }
+                } = request;
+                const response = await getSandboxConnectionString(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    sandboxName
+                );
+                return reply.send(response);
+            }
+        );
 }

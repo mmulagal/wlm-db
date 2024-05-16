@@ -359,10 +359,15 @@ const DatabaseMountPointRequestQueryParam = Type.Object({
 });
 
 const DatabaseMountPointResponseBody = Type.Object({
-    sourceMountedDataDrive: Type.String(),
-    sourceMountedLogDrive: Type.String()
+    databaseDataDriveLetters: Type.Array(Type.String()),
+    databaseLogDriveLetters: Type.Array(Type.String())
 });
 type DatabaseMountPointResponseType = Static<typeof DatabaseMountPointResponseBody>;
+
+const SandboxConnectionStringParams = Type.Composite([
+    DatabaseHostSummaryParams,
+    Type.Object({ sandboxName: Type.String() })
+]);
 
 export {
     DatabaseHostObjectParams,
@@ -428,5 +433,6 @@ export {
     DatabaseMountPointRequestQueryParam,
     GetDriveQueryString,
     DatabaseMountPointResponseBody,
-    DatabaseMountPointResponseType
+    DatabaseMountPointResponseType,
+    SandboxConnectionStringParams
 };

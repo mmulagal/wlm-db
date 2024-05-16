@@ -15,7 +15,7 @@
         ]
     },
     "sandboxMountPointResponse": {
-        "sourceMountedDataDrive": "D",
-        "sourceMountedLogDrive": "E"
+        "databaseDataDriveLetters": ["D"],
+        "databaseLogDriveLetters": ["E"]
     }
 }

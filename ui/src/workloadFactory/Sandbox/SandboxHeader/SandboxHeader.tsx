@@ -33,7 +33,7 @@ const SandboxHeader = () => {
                     </div>
                     <div className={styles.buttonHolder}>
                         <Button variant="primary" onClick={() => navigate('../create-new-sandbox')}>
-                            {GENERAL.CREATE_NEW_SANDBOX}
+                            {GENERAL.CREATE_SANDBOX}
                         </Button>
                         <Button variant="text" onClick={() => handleBanner()}>
                             {GENERAL.DONT_SHOW_AGAIN}
@@ -60,7 +60,7 @@ const SandboxHeader = () => {
                                 style={{ height: '32px' }}
                                 onClick={() => navigate('../create-new-sandbox')}
                             >
-                                {GENERAL.CREATE_NEW_SANDBOX}
+                                {GENERAL.CREATE_SANDBOX}
                             </Button>
                             <Button variant="text" isThin onClick={() => handleBanner()}>
                                 {GENERAL.DONT_SHOW_AGAIN}

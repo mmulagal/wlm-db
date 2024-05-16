@@ -103,7 +103,6 @@ async function getDriveInfoFromNodes(
         false,
         executionTimeout
     );
-
     // Getting list of drives present on standby node to eliminate presenting existing drive letter as available drive letter
     const existingDriveStandbyNodePromise =
         sqlDeploymentType === 'FCI' && !forSandbox
@@ -267,8 +266,8 @@ async function getDriveInfo(
     databaseHostId: string,
     credentialsId: string,
     region: string,
-    executionTimeout?: string,
-    forSandbox: boolean = false
+    forSandbox: boolean = false,
+    executionTimeout?: string
 ): Promise<DriveInfoResponseBodyType> {
     logger.info(
         'Fetching drive details and storage capacity of the database host',
@@ -1243,6 +1242,7 @@ async function validateParams(
             databaseHostId,
             credentialsId,
             region,
+            false,
             CUSTOM_SSM_EXECUTION_TIMEOUT
         );
 

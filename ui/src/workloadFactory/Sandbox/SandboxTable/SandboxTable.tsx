@@ -376,7 +376,7 @@ const SandboxTable = () => {
                             isThin={true}
                             onClick={() => navigate('../create-new-sandbox')}
                         >
-                            {GENERAL.CREATE_NEW_SANDBOX}
+                            {GENERAL.CREATE_SANDBOX}
                         </Button>
                     </div>
                 }
