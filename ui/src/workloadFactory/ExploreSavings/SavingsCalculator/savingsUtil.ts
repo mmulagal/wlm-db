@@ -23,55 +23,65 @@ export const comparisonData = (calculatedResponse: any) => {
     return [
         {
             type: 'Capacity',
-            fsx: `$${formatFractionalNumber(calculatedResponse?.fsx?.capacity, 2)}` || '$0',
-            ebs: `$${formatFractionalNumber(calculatedResponse?.ebs?.capacity, 2)}` || '$0'
+            fsx: calculatedResponse?.fsx?.capacity
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.capacity, 2)).toLocaleString()}`
+                : '$0',
+            ebs: calculatedResponse?.ebs?.capacity
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.ebs?.capacity, 2)).toLocaleString()}`
+                : '$0'
         },
         {
             type: 'IOPS',
-            fsx: calculatedResponse?.fsx?.iops ? `$${formatFractionalNumber(calculatedResponse?.fsx?.iops, 2)}` : '$0',
-            ebs: calculatedResponse?.ebs?.iops ? `$${formatFractionalNumber(calculatedResponse?.ebs?.iops, 2)}` : '$0'
+            fsx: calculatedResponse?.fsx?.iops
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.iops, 2)).toLocaleString()}`
+                : '$0',
+            ebs: calculatedResponse?.ebs?.iops
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.ebs?.iops, 2)).toLocaleString()}`
+                : '$0'
         },
         {
             type: 'Throughput',
             fsx: calculatedResponse?.fsx?.throughput
-                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.throughput, 2)}`
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.throughput, 2)).toLocaleString()}`
                 : '$0',
             ebs: calculatedResponse?.ebs?.throughput
-                ? `$${formatFractionalNumber(calculatedResponse?.ebs?.throughput, 2)}`
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.ebs?.throughput, 2)).toLocaleString()}`
                 : '$0'
         },
         {
             type: 'Snapshots',
             fsx: calculatedResponse?.fsx?.snapshots
-                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.snapshots, 2)}`
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.snapshots, 2)).toLocaleString()}`
                 : '$0',
             ebs: calculatedResponse?.ebs?.snapshots
-                ? `$${formatFractionalNumber(calculatedResponse?.ebs?.snapshots, 2)}`
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.ebs?.snapshots, 2)).toLocaleString()}`
                 : '$0'
         },
         {
-            type: 'Clone',
-            fsx: calculatedResponse?.fsx?.clone
-                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.clone, 2)}`
+            type: 'Clones',
+            fsx: calculatedResponse?.fsx?.clones
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.clones, 2)).toLocaleString()}`
                 : '$0',
-            ebs: calculatedResponse?.ebs?.clone ? `$${formatFractionalNumber(calculatedResponse?.ebs?.clone, 2)}` : '$0'
+            ebs: calculatedResponse?.ebs?.clones
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.ebs?.clones, 2)).toLocaleString()}`
+                : '$0'
         },
         {
             type: 'Compute',
             fsx: calculatedResponse?.fsx?.compute
-                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.compute, 2)}`
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.compute, 2)).toLocaleString()}`
                 : GENERAL.NOT_AVAILABLE,
             ebs: calculatedResponse?.ebs?.compute
-                ? `$${formatFractionalNumber(calculatedResponse?.ebs?.compute, 2)}`
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.ebs?.compute, 2)).toLocaleString()}`
                 : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'SQL license',
             fsx: calculatedResponse?.fsx?.license
-                ? `$${formatFractionalNumber(calculatedResponse?.fsx?.license, 2)}`
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.license, 2)).toLocaleString()}`
                 : GENERAL.NOT_AVAILABLE,
             ebs: calculatedResponse?.ebs?.license
-                ? `$${formatFractionalNumber(calculatedResponse?.ebs?.license, 2)}`
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.ebs?.license, 2)).toLocaleString()}`
                 : GENERAL.NOT_AVAILABLE
         },
         {
