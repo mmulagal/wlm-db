@@ -80,7 +80,7 @@ const MSSqlAccordions = () => {
                             }}
                             variant="Semibold_16"
                         >
-                            {GENERAL.DEPLOYMENT_MODEL}
+                            Deployment model
                         </Typography>
                         {!isWorkloadFactory && (
                             <Button
