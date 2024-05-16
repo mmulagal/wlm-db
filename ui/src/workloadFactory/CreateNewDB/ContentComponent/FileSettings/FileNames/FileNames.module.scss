@@ -9,9 +9,6 @@
             display: flex;
             gap: 16px;
         }
-        .secondSection {
-            margin-top: 16px;
-        }
     }
     .firstRow {
         display: flex;
@@ -60,6 +57,11 @@
                 text-overflow: ellipsis;
                 overflow: hidden;
             }
+        }
+
+        .virtualMountPoint {
+            top: -46px;
+            position: relative;
         }
     }
 
