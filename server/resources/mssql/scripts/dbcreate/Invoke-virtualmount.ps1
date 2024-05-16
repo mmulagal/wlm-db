@@ -101,13 +101,6 @@ try {
     write-debug "LogAccessPaths: $($logPartition.AccessPaths)"
     write-debug "DataFolder: $datafolder $logfolder"
 
-    if ($dataPartition.AccessPaths -notcontains $datafolder + '\') {
-        $null = Add-PartitionAccessPath -DiskNumber $datadisknumber -PartitionNumber ($dataPartition).PartitionNumber -AccessPath $datafolder -ErrorAction stop
-    }
-
-    if ($logPartition.AccessPaths -notcontains $logfolder + '\') {
-        $null = Add-PartitionAccessPath -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logfolder -ErrorAction stop
-    }
 
     Get-Partition | Where-Object Type -eq Basic | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
         $partition = $_
@@ -202,5 +195,23 @@ catch {
     $responseObject['error'] = $_.Exception.Message
     $responseObject['message'] = 'Failed to add disks to cluster storage'
 }
+
+try {
+    Start-Sleep 5
+    if ($dataPartition.AccessPaths -notcontains $datafolder + '\') {
+        $null = Add-PartitionAccessPath -DiskNumber $datadisknumber -PartitionNumber ($dataPartition).PartitionNumber -AccessPath $datafolder -ErrorAction stop
+        $null = (Get-Partition -DiskNumber $datadisknumber |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+    }
+
+    if ($logPartition.AccessPaths -notcontains $logfolder + '\') {
+        $null = Add-PartitionAccessPath -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logfolder -ErrorAction stop
+        $null = (Get-Partition -DiskNumber $logdisknumber |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+    }
+    }
+    catch {
+        $responseObject['error'] = $_.Exception.Message
+        $responseObject['message'] = 'Failed to add access path to disks'
+
+    }
 
 $responseObject | ConvertTo-Json -Depth 5
