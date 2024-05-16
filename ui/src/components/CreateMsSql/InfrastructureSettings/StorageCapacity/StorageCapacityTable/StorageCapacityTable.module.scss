@@ -1,0 +1,22 @@
+.table {
+    margin-top: 6px;
+    width: 963px;
+    box-shadow: 2px 2px 6px var(--grey-15);
+    padding: 20px 40px 40px 40px;
+
+    .loadingTable {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+        height: 140px;
+        width: -webkit-fill-available;
+        justify-content: center;
+
+        svg {
+            path {
+                fill: var(--grey-65);
+            }
+        }
+    }
+}

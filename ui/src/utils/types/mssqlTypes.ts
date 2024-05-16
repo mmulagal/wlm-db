@@ -181,6 +181,8 @@ export interface MssqlEntities {
         collationListLoading: false;
         collationListError: null;
     };
+    getEstimatedCostData: any;
+    getEstimatedCostLoading: false;
 }
 
 export interface Subnets {
