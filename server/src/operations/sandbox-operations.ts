@@ -12,7 +12,8 @@ import {
     NO_SANDBOX_CREATED,
     RESOURCESTYPE,
     SANDBOX_API_SIZE,
-    SSM_COMMAND_CACHE_TYPE
+    SSM_COMMAND_CACHE_TYPE,
+    SSM_PARAM_PREFIX
 } from '../utils/consts';
 import {
     GET_SANDBOX_DETAILS,
@@ -34,6 +35,7 @@ import { INVOKE_VIRTUAL_MOUNT } from './workloads/mssql/const';
 import { updateSandboxDBIntoResourceData, updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
+import { getParameter } from '../lib/aws/ssm';
 
 const logger = getLogger();
 
@@ -1171,10 +1173,62 @@ async function revertMetadataForSanboxTesting(accountId: string, credentialsId: 
     return 'Revereted manually updated metadatas';
 }
 
+async function getSandboxConnectionString(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    sandboxName: string
+) {
+    logger.info('Get connection string', { accountId, credentialsId, region, databaseHostId, sandboxName });
+    try {
+        const [{ metadata, resource_name: resourceName }] = await listResources(
+            accountId,
+            databaseHostId,
+            credentialsId
+        );
+
+        const { node1InstanceId, node2InstanceId, stackname } = metadata as unknown as Metadata;
+
+        const { instanceName } = await getActiveSqlNode(
+            credentialsId,
+            region,
+            node1InstanceId,
+            node2InstanceId,
+            databaseHostId
+        );
+
+        if (!instanceName) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the connection string');
+        }
+
+        const resp = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${stackname}`);
+
+        if (!resp) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the connection string');
+        }
+
+        const parsedResp = sqlResponseParsing(resp);
+
+        return {
+            server: instanceName === '.' ? resourceName : instanceName,
+            database: sandboxName,
+            userId:
+                process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
+                    ? 'admin'
+                    : parsedResp?.domain?.username
+        };
+    } catch (e: any) {
+        logger.error(`Failed to get the connection string for sandbox ${sandboxName} in host ${databaseHostId}, ${e}`);
+        throw createError(e.statusCode, e.message);
+    }
+}
+
 export {
     getSandboxesInfo,
     getSandboxSavings,
     createSandbox,
     updateMetadataForSanboxTesting,
-    revertMetadataForSanboxTesting
+    revertMetadataForSanboxTesting,
+    getSandboxConnectionString
 };

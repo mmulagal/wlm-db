@@ -1147,6 +1147,8 @@ const STORAGE_PROTOCOLS = { SMB: 'SMB', ISCSI: 'iSCSI' };
 
 const AMI_OWNERS = { AMAZON: 'amazon' };
 
+const SSM_PARAM_PREFIX = '/netapp/wlmdb/';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1408,5 +1410,6 @@ export {
     NO_SANDBOX_CREATED,
     STORAGE_PROTOCOLS,
     CUSTOM,
-    AMI_OWNERS
+    AMI_OWNERS,
+    SSM_PARAM_PREFIX
 };

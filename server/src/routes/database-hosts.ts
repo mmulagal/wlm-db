@@ -13,10 +13,12 @@ import {
     GetSandboxSavingsSchema,
     GetSandboxesInfoSchema,
     PatchResourceForSandboxSchema,
-    RevertPatchResourceForSandboxSchema
+    RevertPatchResourceForSandboxSchema,
+    GetSandboxConnectionStringSchema
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
+    getSandboxConnectionString,
     getSandboxesInfo,
     getSandboxSavings,
     revertMetadataForSanboxTesting,
@@ -164,5 +166,22 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             } = request;
             const response = await createSandbox(accountId, credentialsId, region, source, destination, tag);
             return reply.send(response);
-        });
+        })
+        .get(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandbox/:sandboxName/connection-string`,
+            { schema: GetSandboxConnectionStringSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName }
+                } = request;
+                const response = await getSandboxConnectionString(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    sandboxName
+                );
+                return reply.send(response);
+            }
+        );
 }
