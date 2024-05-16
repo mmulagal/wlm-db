@@ -21,7 +21,8 @@ export const initialCreateNewUserState: any = {
     isDataSizeValid: true,
     isLogSizeValid: true,
     selectedCollation: {},
-    isVirtualMountPoint: false
+    isDataVirtualMountPoint: false,
+    isLogVirtualMountPoint: false
 };
 
 const createNewUserSlice = createSlice({
@@ -91,8 +92,11 @@ const createNewUserSlice = createSlice({
         addInitialDBCreateData: (state, action: PayloadAction<any>) => {
             return { ...state, ...action.payload };
         },
-        setIsVirtualMountPoint: (state, action: PayloadAction<any>) => {
-            state.isVirtualMountPoint = action.payload;
+        setIsDataVirtualMountPoint: (state, action: PayloadAction<any>) => {
+            state.isDataVirtualMountPoint = action.payload;
+        },
+        setIsLogVirtualMountPoint: (state, action: PayloadAction<any>) => {
+            state.isLogVirtualMountPoint = action.payload;
         }
     }
 });
@@ -119,7 +123,8 @@ export const {
     setIsLogSizeValid,
     setSelectedCollation,
     addInitialDBCreateData,
-    setIsVirtualMountPoint
+    setIsDataVirtualMountPoint,
+    setIsLogVirtualMountPoint
 } = createNewUserSlice.actions;
 
 export default createNewUserSlice;
