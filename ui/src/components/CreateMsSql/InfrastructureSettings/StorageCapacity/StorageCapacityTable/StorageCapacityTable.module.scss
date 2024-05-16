@@ -20,6 +20,14 @@
         }
     }
 
+    [class*='Table-module_body'] {
+        [class*='Table-module_row']:last-child {
+            [class*='Table-module_cell'] {
+                background-color: var(--blue-20) !important;
+            }
+        }
+    }
+
     .minColTooltip {
         display: flex;
         gap: 8px;
