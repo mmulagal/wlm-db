@@ -93,8 +93,8 @@ async function getSandboxDetails(
         let parsedResponse;
         try {
             parsedResponse = sqlResponseParsing(response);
-        } catch (Error: any) {
-            return errorResponse(Error.toString());
+        } catch (err: any) {
+            return errorResponse(err.toString());
         }
         if (parsedResponse?.Error) {
             const errorMessage = `Error fetching sandbox details for host: ${resourceId},${parsedResponse.Instance},${accountId}${parsedResponse?.Error}.`;
