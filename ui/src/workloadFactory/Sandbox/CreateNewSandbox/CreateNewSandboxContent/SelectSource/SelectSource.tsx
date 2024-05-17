@@ -67,17 +67,12 @@ const SelectSource = () => {
         aggregatedDbHostList?.map((obj, idx: number) => {
             if (obj.status === STATUS_CONST.UP) {
                 const protocolDisable = isSmbProtocol(obj?.storage?.fsxn?.protocol);
-                const installationModeDisable = obj?.topology?.serverInstallationMode === GENERAL.FCI;
                 const option = generateOptionType(
                     obj?.id,
                     obj?.name,
                     '',
-                    !isDemoMode && (protocolDisable || installationModeDisable),
-                    installationModeDisable
-                        ? GENERAL?.SANDBOX_FCI_NOT_SUPPORTED
-                        : protocolDisable
-                        ? GENERAL?.SANDBOX_SMB_PROTOCOL_NOT_SUPPORTED
-                        : '',
+                    !isDemoMode && protocolDisable,
+                    protocolDisable ? GENERAL?.SANDBOX_SMB_PROTOCOL_NOT_SUPPORTED : '',
                     obj
                 );
                 options.push(option);

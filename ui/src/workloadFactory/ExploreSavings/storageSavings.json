@@ -5,7 +5,7 @@
       "iops": 837.76,
       "throughput": 153.60,
       "snapshots": 26,
-      "clone": 98,
+      "clones": 98,
       "compute": "1,097.92",
       "license": "1,402",
       "total": 4895.28
@@ -15,7 +15,7 @@
       "iops": "4,888",
       "throughput": 0,
       "snapshots": 265,
-      "clone": "3,084",
+      "clones": "3,084",
       "compute": "1,097.92",
       "license": "4,380",
       "total": 14994.92

@@ -36,6 +36,7 @@ import {
     getThroughputRegionList
 } from '../../../store/mssql/mssqlSlice';
 import { useEffect, useState } from 'react';
+
 import { API_NAME, AWS_ASSUME_ROLE, DATABASE_TYPE, OS_TYPE, VPC_API_FIELDS } from '../../../utils/consts';
 import { formatKmsData } from '../../../utils/utilityFunctions';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
@@ -167,7 +168,7 @@ const MssqlApis = () => {
             filterAmis: !isShowChatbot
         },
         {
-            skip: licenseAmiSkip
+            skip: osVersion?.value === '2022' && dbVersion?.value === '2016' ? true : licenseAmiSkip
         }
     );
 

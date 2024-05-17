@@ -17,6 +17,8 @@ import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent'
 import { FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
 import SizePopover from './SizePopover/SizePopover';
 import { isFsxnNew } from '../../../utils/utilityFunctions';
+import { setEstimatedCostData, setEstimatedCostLoading } from '../../../store/mssql/mssqlSlice';
+import { useDispatch } from 'react-redux';
 
 type Res = {
     data: {
@@ -33,6 +35,7 @@ type Res = {
 };
 
 const EstimatedCost = () => {
+    const dispatch = useDispatch();
     const [isLoading, setIsLoading] = useState(false);
     const [data, setData] = useState<Res>();
     const [fetchResult, setFetchResult] = useState(false);
@@ -123,6 +126,7 @@ const EstimatedCost = () => {
                 };
             }
             setIsLoading(true);
+            dispatch(setEstimatedCostLoading(true));
             getEstimationCost({ payload: payload })
                 .then((data: any) => {
                     setTimeout(() => {
@@ -130,16 +134,21 @@ const EstimatedCost = () => {
                         setFetchResult(true);
                         if (data.error) {
                             setIsDisabled(true);
+                            dispatch(setEstimatedCostData(null));
                         } else {
                             setData(data);
                             setIsDisabled(false);
+                            dispatch(setEstimatedCostData(data));
                         }
+                        dispatch(setEstimatedCostLoading(false));
                     }, 2000);
                 })
                 .catch((error: any) => {
                     setIsLoading(false);
                     setFetchResult(false);
                     setIsDisabled(true);
+                    dispatch(setEstimatedCostLoading(false));
+                    dispatch(setEstimatedCostData(null));
                     console.log('Error while fetching data - ', error);
                 });
         }
@@ -270,13 +279,13 @@ const EstimatedCost = () => {
                                         <Typography variant="Regular_14">
                                             {GENERAL.SIZE}: {data?.data?.fsxnStorage?.size?.total + ' GiB'}
                                         </Typography>
-                                        {/* {data?.data?.fsxnStorage?.size?.total && (
+                                        {data?.data?.fsxnStorage?.size?.total && (
                                             <TooltipInfo className={styles.tooltipClass}>
                                                 {Number(data?.data?.fsxnStorage?.size?.total || 0) > 1024
                                                     ? SizePopover(data?.data?.fsxnStorage?.size)
                                                     : GENERAL.MIN_FSX_CAPACITY_MESSAGE}
                                             </TooltipInfo>
-                                        )} */}
+                                        )}
                                     </div>
 
                                     <Typography variant="Regular_14">

@@ -108,7 +108,10 @@ router.get(`${BASE_URL}/v1/fsx-4gbps-supported-regions`, async (req: {}, res: an
 //Get Pricing Data
 router.post(`${BASE_URL}/v1/pricing`, async (req: {}, res: any) => {
     const retData = pricingData;
-    generateResponse(res, 200, retData);
+    setTimeout(() => {
+        generateResponse(res, 200, retData);
+    }, 5000); 
+    
 });
 
 // Get collation list for MSSQL
