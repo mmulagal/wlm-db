@@ -444,7 +444,7 @@ async function createSandbox(
         },
         {
             ...dest,
-            resourceName: srcResourceDetail.resource_name!,
+            resourceName: destResourceDetail.resource_name!,
             svm: destSvm!,
             fsxId: destResourceDetail.co_relation_id!,
             activeNodeInstaceId: destStatus.activeNodeInstanceId!,
