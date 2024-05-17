@@ -226,6 +226,7 @@ try {
 
         #Move secondary tempdb data file if found
         if($ndfFound -eq $True) {
+            $temp2DevFile = "$Using:tempPath\tempdb_mssql_2.ndf"
             try {
                 Move-Item-Safely "C:\Program Files\Microsoft SQL Server\MSSQL*.$Using:SQLInstanceName\MSSQL\DATA\tempdb_mssql*.ndf" $temp2DevFile
             } catch {
