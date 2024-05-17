@@ -57,18 +57,19 @@ try {
     #If warning is indeed serious the next step to initialize will fail and that will be caught
     $disklist | ForEach-Object {
         $disk = $_
+        Clear-ClusterDiskReservation -disk $disk.Number -Force
         if ($disk.IsReadOnly -ne $False) {
-            Set-Disk -Number $disk.Number -IsReadOnly $False -ErrorAction stop
+            Set-Disk -Number $disk.Number -IsReadOnly $False -ErrorAction SilentlyContinue
             Start-Sleep 2
         }
-
+ 
         if ($disk.IsOffline -ne $False) {
-            Set-Disk -Number $disk.Number -IsOffline $False -ErrorAction stop
+            Set-Disk -Number $disk.Number -IsOffline $False -ErrorAction SilentlyContinue
             Start-Sleep 2
         }
-
+ 
         if ($disk.PartitionStyle -eq 'RAW') {
-            Set-Disk -Number $disk.Number -PartitionStyle GPT -ErrorAction stop
+            Set-Disk -Number $disk.Number -PartitionStyle GPT -ErrorAction SilentlyContinue
             Start-Sleep 2
         }
     }
@@ -94,27 +95,22 @@ try {
     $dataPartition = Get-Partition -DiskNumber $datadisknumber | Where-Object Type -eq Basic
     $logPartition = Get-Partition -DiskNumber $logdisknumber | Where-Object Type -eq Basic
 
-    $null = $dataPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
-    $null = $logPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
+    #$null = $dataPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
+    #$null = $logPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
 
-    write-debug "DataAccessPaths: $($dataPartition.AccessPaths)"
-    write-debug "LogAccessPaths: $($logPartition.AccessPaths)"
     write-debug "DataFolder: $datafolder $logfolder"
 
 
     Get-Partition -DiskNumber $datadisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $datalabel
     Get-Partition -DiskNumber $logdisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $loglabel
 
-    $DataFileLeaf = Split-Path -Path $DataFilePath -Leaf
-    $LogFileLeaf = Split-Path -Path $LogFilePath -Leaf
-    $newDataFilePath = (Get-ChildItem -Path $datafolder -Recurse -Filter $DataFileLeaf).FullName
-    $newLogFilePath = (Get-ChildItem -Path $logfolder -Recurse -Filter $LogFileLeaf).FullName
 }
 catch {
     write-debug "Error: $($_.Exception)"
     $responseObject['error'] = $_.Exception.Message
     $responseObject['message'] = 'Failed to initialize disks'
     return ($responseObject | ConvertTo-Json -Depth 5)
+    exit 1
 }
 finally {
     if ((Get-Service -Name ShellHWDetection).Status -ne 'Running') {
@@ -159,12 +155,16 @@ try {
         catch {
             $responseObject['error'] = $_.Exception.Message
             $responseObject['message'] = "Failed to add disks to SQL Server Role dependency in cluster"
+            return ($responseObject | ConvertTo-Json -Depth 5)
+            exit 1
         }
     }
 }
 catch {
     $responseObject['error'] = $_.Exception.Message
     $responseObject['message'] = 'Failed to add disks to cluster storage'
+    return ($responseObject | ConvertTo-Json -Depth 5)
+    exit 1
 }
 
 try {
@@ -181,6 +181,8 @@ try {
 }catch {
         $responseObject['error'] = $_.Exception.Message
         $responseObject['message'] = 'Failed to add access path to disks'
+        return ($responseObject | ConvertTo-Json -Depth 5)
+        exit 1
 
     }
 
@@ -208,6 +210,10 @@ try {
 }
 
 try {
+    $DataFileLeaf = Split-Path -Path $DataFilePath -Leaf
+    $LogFileLeaf = Split-Path -Path $LogFilePath -Leaf
+    $newDataFilePath = (Get-ChildItem -Path $datafolder -Recurse -Filter $DataFileLeaf).FullName
+    $newLogFilePath = (Get-ChildItem -Path $logfolder -Recurse -Filter $LogFileLeaf).FullName
     if ((Test-Path $newDataFilePath) -and (Test-Path $newLogFilePath)) {
         $responseObject['dataPath'] = $newDataFilePath
         $responseObject['logPath'] = $newLogFilePath
@@ -221,4 +227,4 @@ try {
 }
 
 
-$responseObject | ConvertTo-Json -Depth 5
+$responseObject | ConvertTo-Json -Depth 5 
