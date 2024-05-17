@@ -194,7 +194,7 @@ async function getStorageSavingsCalculationMetrics(
         ebs_cost_calculation: {
             instanceAvgDuration,
             EBSCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
-
+            numberOfVolumes: ebsNumberOfVolumes,
             storageAmountPerVol: { size: storageAmountPerVolSize, unit: storageAmountPerVolUnit },
             totalInstanceHours,
             EBSInstanceMonth: ebsInstanceMonth,
@@ -311,7 +311,7 @@ async function getStorageSavingsCalculationMetrics(
             totalSnapshotMonthlyCost
         },
         ebsCalculation: {
-            numberOfVolumes,
+            numberOfVolumes: ebsNumberOfVolumes,
             instanceAvgDuration,
             hoursInAMonth: 24 * 30,
             ebsCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
