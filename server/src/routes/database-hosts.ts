@@ -14,12 +14,14 @@ import {
     GetSandboxesInfoSchema,
     PatchResourceForSandboxSchema,
     RevertPatchResourceForSandboxSchema,
+    GetSandboxesMountPointSchema,
     GetSandboxConnectionStringSchema
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
     getSandboxConnectionString,
     getSandboxesInfo,
+    getDatabaseMountPointInfo,
     getSandboxSavings,
     revertMetadataForSanboxTesting,
     updateMetadataForSanboxTesting
@@ -108,9 +110,10 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             { schema: GetDriveInfoSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, databaseHostId, credentialsId, region }
+                    params: { accountId, databaseHostId, credentialsId, region },
+                    query: { forSandbox }
                 } = request;
-                const response = await getDriveInfo(accountId, databaseHostId, credentialsId, region);
+                const response = await getDriveInfo(accountId, databaseHostId, credentialsId, region, forSandbox);
                 return reply.send(response);
             }
         )
@@ -134,6 +137,25 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     query: { nextToken }
                 } = request;
                 const response = await getSandboxesInfo(accountId, credentialsId, region, nextToken);
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-mount-points`,
+            { schema: GetSandboxesMountPointSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId },
+                    query: { databaseName, instanceName }
+                } = request;
+                const response = await getDatabaseMountPointInfo(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseName,
+                    instanceName
+                );
                 return reply.send(response);
             }
         )

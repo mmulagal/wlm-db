@@ -13,5 +13,9 @@
                 "tag": "Development"
             }
         ]
+    },
+    "sandboxMountPointResponse": {
+        "databaseDataDriveLetters": ["D"],
+        "databaseLogDriveLetters": ["E"]
     }
 }

@@ -22,13 +22,14 @@ import {
     cleanUpOntapResources,
     addExtendedProperties,
     createClonedDb as createCloneDbScript,
+    mountPointQuery,
     getStorageSavingsFromOntap
 } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { checkDatabaseExists, getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { sleep, sqlResponseParsing } from '../utils/utils';
-import { SandboxInfoResponseType } from '../routes/types/database-hosts.types';
+import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
 import { getResources } from './database/database-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
 import { INVOKE_VIRTUAL_MOUNT } from './workloads/mssql/const';
@@ -92,8 +93,8 @@ async function getSandboxDetails(
         let parsedResponse;
         try {
             parsedResponse = sqlResponseParsing(response);
-        } catch (error: any) {
-            return errorResponse(error.toString());
+        } catch (err: any) {
+            return errorResponse(err.toString());
         }
         if (parsedResponse?.Error) {
             const errorMessage = `Error fetching sandbox details for host: ${resourceId},${parsedResponse.Instance},${accountId}${parsedResponse?.Error}.`;
@@ -158,8 +159,8 @@ async function getSandboxDetails(
                 }
             }
             return sandboxInfo;
-        } catch (error) {
-            return errorResponse(error);
+        } catch (err) {
+            return errorResponse(err);
         }
     }
 }
@@ -203,8 +204,8 @@ async function getSandboxesInfo(accountId: string, credentialsId: string, region
                     ? resourceDetails[resourceDetails.length - 1].id
                     : undefined
         };
-    } catch (error) {
-        const errorMessage = `Error fetching Sandboxes info. ${error}.`;
+    } catch (err) {
+        const errorMessage = `Error fetching Sandboxes info. ${err}.`;
         logger.error(errorMessage);
     }
 }
@@ -1103,8 +1104,8 @@ async function updateMetadataForSanbox(
     try {
         await updateResourceMetaData(accountId, databaseHostId, newMetadata);
         logger.info('Metadata updated succesfully for sandbox operation', accountId, databaseHostId);
-    } catch (error) {
-        const errorMessage = `Failed to update metadata for sandbox operation, ${accountId}, ${databaseHostId}, ${error}`;
+    } catch (err) {
+        const errorMessage = `Failed to update metadata for sandbox operation, ${accountId}, ${databaseHostId}, ${err}`;
         logger.error(errorMessage);
         throw createError(errorMessage);
     }
@@ -1135,8 +1136,8 @@ async function updateMetadataForSanboxTesting(
     try {
         await updateResourceMetaData(accountId, databaseHostId, newMetadata);
         return 'metadata updated succesfully';
-    } catch (error) {
-        return error;
+    } catch (err) {
+        return err;
     }
 }
 
@@ -1164,8 +1165,8 @@ async function revertMetadataForSanboxTesting(accountId: string, credentialsId: 
                 delete newMetadata.sandboxCreated;
                 delete newMetadata.updatedManually;
                 await updateResourceMetaData(accountId, resourceId, newMetadata);
-            } catch (error) {
-                logger.error('Failed to update meatadata', resourceId);
+            } catch (err) {
+                logger.error('Failed to update meatadata', resourceId, err);
             }
         })
     );
@@ -1224,11 +1225,84 @@ async function getSandboxConnectionString(
     }
 }
 
+async function getDatabaseMountPointInfo(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseName: string,
+    instance: string
+) {
+    logger.info(
+        `Fetching mount point information for database host id ${databaseHostId} database ${databaseName} `,
+        accountId,
+        region,
+        credentialsId,
+        instance
+    );
+    const {
+        items: [resourceDetail]
+    } = await getResources(accountId, databaseHostId, credentialsId);
+
+    if (isEmpty(resourceDetail)) {
+        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+    }
+
+    const { metadata } = resourceDetail;
+    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+
+    const { isSSMConnected, activeNodeInstanceId, instanceName } = await getActiveSqlNode(
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId
+    );
+
+    if (!isSSMConnected || activeNodeInstanceId === undefined || instanceName === undefined) {
+        const errorMessage = `Unable to get mount point information for database host id ${databaseHostId} database ${databaseName} in account ${accountId} due to SSM connection issues.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        databaseName = 'test-database';
+    }
+    try {
+        const command = [mountPointQuery(instanceName, databaseName)];
+
+        const mountPoints = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
+        if (!mountPoints) {
+            throw createError('No mount points found.');
+        }
+        const parsedResp = sqlResponseParsing(mountPoints);
+
+        const result: DatabaseMountPointResponseType = {
+            databaseDataDriveLetters: [],
+            databaseLogDriveLetters: []
+        };
+
+        parsedResp.forEach((item: { filepath: string; filetype: string }) => {
+            const driveLetter = item.filepath.charAt(0);
+            const driveType = item.filetype === 'Data' ? 'databaseDataDriveLetters' : 'databaseLogDriveLetters';
+            result[driveType].push(driveLetter);
+        });
+
+        return result;
+    } catch (err) {
+        const errorMessage = `Failed to get mount point info for the database ${databaseName} in host ${databaseHostId}: ${err} `;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+}
+
 export {
     getSandboxesInfo,
     getSandboxSavings,
     createSandbox,
     updateMetadataForSanboxTesting,
     revertMetadataForSanboxTesting,
+    getDatabaseMountPointInfo,
     getSandboxConnectionString
 };

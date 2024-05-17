@@ -82,7 +82,8 @@ async function getDriveInfoFromNodes(
     sqlDeploymentType: string,
     activeNodeInstanceId: string,
     standbyNodeInstanceId: string,
-    executionTimeout?: string
+    executionTimeout?: string,
+    forSandbox: boolean = false
 ) {
     logger.info('Getting existing drives info on node', {
         credentialsId,
@@ -102,10 +103,9 @@ async function getDriveInfoFromNodes(
         false,
         executionTimeout
     );
-
     // Getting list of drives present on standby node to eliminate presenting existing drive letter as available drive letter
     const existingDriveStandbyNodePromise =
-        sqlDeploymentType === 'FCI'
+        sqlDeploymentType === 'FCI' && !forSandbox
             ? callSsmExecution(
                   credentialsId,
                   region,
@@ -152,7 +152,7 @@ async function getDriveInfoFromNodes(
                 return null;
             })
             .filter(Boolean),
-        ...(standbyNodeExistingDrives !== undefined && sqlDeploymentType === 'FCI'
+        ...(standbyNodeExistingDrives !== undefined && sqlDeploymentType === 'FCI' && !forSandbox
             ? standbyNodeExistingDrives
                   .filter((item: any) => !activeNodeExistingDrives.some(obj => obj.LogicalDisk === item))
                   .map((item: string) => ({
@@ -165,9 +165,12 @@ async function getDriveInfoFromNodes(
     ];
 
     // Constructing list of available drive letters
-    const availableDriveLetters = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).filter(
-        letter => letter >= 'D' && !updatedExitingDrives.some(obj => obj.driveLetter === letter)
-    );
+
+    const availableDriveLetters = !forSandbox
+        ? Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).filter(
+              letter => letter >= 'D' && !updatedExitingDrives.some(obj => obj.driveLetter === letter)
+          )
+        : [];
 
     logger.debug('Existing drives info', { updatedExitingDrives, availableDriveLetters });
     return { updatedExitingDrives, availableDriveLetters };
@@ -181,7 +184,8 @@ async function getDriveInfoFromSSM(
     sqlDeploymentType: string,
     node1InstanceId: string,
     node2InstanceId?: string,
-    executionTimeout?: string
+    executionTimeout?: string,
+    forSandbox: boolean = false
 ) {
     logger.info('Getting drive information from SSM', {
         accountId,
@@ -189,7 +193,8 @@ async function getDriveInfoFromSSM(
         credentialsId,
         sqlDeploymentType,
         node1InstanceId,
-        node2InstanceId
+        node2InstanceId,
+        forSandbox
     });
     // Check SSM Connection status
     const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName } = await getActiveSqlNode(
@@ -205,7 +210,7 @@ async function getDriveInfoFromSSM(
         throw createError(errorMessage);
     }
 
-    if (sqlDeploymentType === 'FCI' && standbyNodeInstanceId) {
+    if (sqlDeploymentType === 'FCI' && !forSandbox && standbyNodeInstanceId) {
         const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId!);
         if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
             const errorMessage = `Unable to connect to node to access drive details for host ${databaseHostId} in account ${accountId}`;
@@ -218,17 +223,36 @@ async function getDriveInfoFromSSM(
     let getDefaultDrivesResponse;
     try {
         // Not caching any ssm response as multiple creation will require real time data
-        [getDriveInfoFromNodesResponse, getDefaultDrivesResponse] = await Promise.all([
-            getDriveInfoFromNodes(
-                credentialsId,
-                region,
-                sqlDeploymentType,
-                activeNodeInstanceId as string,
-                standbyNodeInstanceId!,
-                executionTimeout
-            ),
-            getDefaultDrives(credentialsId, region, activeNodeInstanceId as string, instanceName, executionTimeout)
-        ]);
+        [getDriveInfoFromNodesResponse, getDefaultDrivesResponse] = forSandbox
+            ? await Promise.all([
+                  getDriveInfoFromNodes(
+                      credentialsId,
+                      region,
+                      sqlDeploymentType,
+                      activeNodeInstanceId as string,
+                      standbyNodeInstanceId!,
+                      executionTimeout,
+                      forSandbox
+                  ),
+                  Promise.resolve()
+              ])
+            : await Promise.all([
+                  getDriveInfoFromNodes(
+                      credentialsId,
+                      region,
+                      sqlDeploymentType,
+                      activeNodeInstanceId as string,
+                      standbyNodeInstanceId!,
+                      executionTimeout
+                  ),
+                  getDefaultDrives(
+                      credentialsId,
+                      region,
+                      activeNodeInstanceId as string,
+                      instanceName,
+                      executionTimeout
+                  )
+              ]);
     } catch (error) {
         const errorMessage = `Unable to get drive information ${error}.`;
         logger.error(errorMessage);
@@ -242,6 +266,7 @@ async function getDriveInfo(
     databaseHostId: string,
     credentialsId: string,
     region: string,
+    forSandbox: boolean = false,
     executionTimeout?: string
 ): Promise<DriveInfoResponseBodyType> {
     logger.info(
@@ -249,7 +274,8 @@ async function getDriveInfo(
         accountId,
         databaseHostId,
         credentialsId,
-        region
+        region,
+        forSandbox
     );
 
     const {
@@ -268,19 +294,34 @@ async function getDriveInfo(
     let fsxStorageCapacity;
     let driveResponse;
     try {
-        [fsxStorageCapacity, driveResponse] = await Promise.all([
-            getFsxStorageCapacity(credentialsId, region!, fileSystemId!),
-            getDriveInfoFromSSM(
-                accountId,
-                databaseHostId,
-                credentialsId,
-                region,
-                sqlDeploymentType!,
-                node1InstanceId,
-                node2InstanceId,
-                executionTimeout
-            )
-        ]);
+        [fsxStorageCapacity, driveResponse] = forSandbox
+            ? await Promise.all([
+                  Promise.resolve(),
+                  getDriveInfoFromSSM(
+                      accountId,
+                      databaseHostId,
+                      credentialsId,
+                      region,
+                      sqlDeploymentType!,
+                      node1InstanceId,
+                      node2InstanceId,
+                      executionTimeout,
+                      forSandbox
+                  )
+              ])
+            : await Promise.all([
+                  getFsxStorageCapacity(credentialsId, region!, fileSystemId!),
+                  getDriveInfoFromSSM(
+                      accountId,
+                      databaseHostId,
+                      credentialsId,
+                      region,
+                      sqlDeploymentType!,
+                      node1InstanceId,
+                      node2InstanceId,
+                      executionTimeout
+                  )
+              ]);
     } catch (error) {
         const errorMessage = `Unable to get drive information and FSx storage capacity. ${error}.`;
         logger.error(errorMessage);
@@ -291,14 +332,16 @@ async function getDriveInfo(
 
     const response: DriveInfoResponseBodyType = {
         existingDriveInfo: getDriveInfoFromNodesResponse.updatedExitingDrives,
-        availableDriveLetters: getDriveInfoFromNodesResponse.availableDriveLetters,
+        ...(!forSandbox && { availableDriveLetters: getDriveInfoFromNodesResponse.availableDriveLetters }),
         ...(storage && { fsxStorageCapacity: storage * 1024 * 1024 * 1024 }),
-        ...(getDefaultDrivesResponse.currentDataDrive && {
-            defaultDataDrive: getDefaultDrivesResponse.currentDataDrive
-        }),
-        ...(getDefaultDrivesResponse.currentLogDrive && {
-            defaultLogDrive: getDefaultDrivesResponse.currentLogDrive
-        })
+        ...(!forSandbox &&
+            getDefaultDrivesResponse?.currentDataDrive && {
+                defaultDataDrive: getDefaultDrivesResponse.currentDataDrive
+            }),
+        ...(!forSandbox &&
+            getDefaultDrivesResponse?.currentLogDrive && {
+                defaultLogDrive: getDefaultDrivesResponse.currentLogDrive
+            })
     };
 
     return response;
@@ -1199,6 +1242,7 @@ async function validateParams(
             databaseHostId,
             credentialsId,
             region,
+            false,
             CUSTOM_SSM_EXECUTION_TIMEOUT
         );
 
