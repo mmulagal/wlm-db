@@ -46,6 +46,7 @@
             },
             "storage": {
                 "fsxn": {
+                    "protocol" : ["SMB"],
                     "size": 0,
                     "used": 0,
                     "spaceSavings": 0,

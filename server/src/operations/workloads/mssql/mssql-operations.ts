@@ -601,7 +601,7 @@ async function isActiveSqlNode(credentialsId: string, region: string, instanceId
             let defaultInstance = true;
             let selectedInstance = InstanceDetails.find(
                 (instance: { State: string; Name: string | string[] }) =>
-                    instance.State.toLocaleLowerCase() === 'running' && !instance.Name.includes('$')
+                    instance.State.toLocaleLowerCase() === 'running' && !instance.Name.includes('$') // there is a $ present in named instances
             )?.Name;
 
             if (!selectedInstance) {

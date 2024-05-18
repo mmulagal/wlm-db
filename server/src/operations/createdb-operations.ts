@@ -10,7 +10,7 @@ import {
     GET_STANDBY_NODE_DRIVE_LIST
 } from './workloads/mssql/ssm-script-utils';
 import { checkDatabaseExists, getActiveSqlNode } from './workloads/mssql/mssql-operations';
-import { convertGiBToBytes, sleep, sqlResponseParsing, getCollationForMSSQLVersion } from '../utils/utils';
+import { convertGiBToBytes, sqlResponseParsing, getCollationForMSSQLVersion } from '../utils/utils';
 import {
     ACCOUNT_ID,
     COMPLETE,
@@ -82,7 +82,8 @@ async function getDriveInfoFromNodes(
     sqlDeploymentType: string,
     activeNodeInstanceId: string,
     standbyNodeInstanceId: string,
-    executionTimeout?: string
+    executionTimeout?: string,
+    forSandbox: boolean = false
 ) {
     logger.info('Getting existing drives info on node', {
         credentialsId,
@@ -102,10 +103,9 @@ async function getDriveInfoFromNodes(
         false,
         executionTimeout
     );
-
     // Getting list of drives present on standby node to eliminate presenting existing drive letter as available drive letter
     const existingDriveStandbyNodePromise =
-        sqlDeploymentType === 'FCI'
+        sqlDeploymentType === 'FCI' && !forSandbox
             ? callSsmExecution(
                   credentialsId,
                   region,
@@ -152,7 +152,7 @@ async function getDriveInfoFromNodes(
                 return null;
             })
             .filter(Boolean),
-        ...(standbyNodeExistingDrives !== undefined && sqlDeploymentType === 'FCI'
+        ...(standbyNodeExistingDrives !== undefined && sqlDeploymentType === 'FCI' && !forSandbox
             ? standbyNodeExistingDrives
                   .filter((item: any) => !activeNodeExistingDrives.some(obj => obj.LogicalDisk === item))
                   .map((item: string) => ({
@@ -165,9 +165,12 @@ async function getDriveInfoFromNodes(
     ];
 
     // Constructing list of available drive letters
-    const availableDriveLetters = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).filter(
-        letter => letter >= 'D' && !updatedExitingDrives.some(obj => obj.driveLetter === letter)
-    );
+
+    const availableDriveLetters = !forSandbox
+        ? Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).filter(
+              letter => letter >= 'D' && !updatedExitingDrives.some(obj => obj.driveLetter === letter)
+          )
+        : [];
 
     logger.debug('Existing drives info', { updatedExitingDrives, availableDriveLetters });
     return { updatedExitingDrives, availableDriveLetters };
@@ -181,7 +184,8 @@ async function getDriveInfoFromSSM(
     sqlDeploymentType: string,
     node1InstanceId: string,
     node2InstanceId?: string,
-    executionTimeout?: string
+    executionTimeout?: string,
+    forSandbox: boolean = false
 ) {
     logger.info('Getting drive information from SSM', {
         accountId,
@@ -189,7 +193,8 @@ async function getDriveInfoFromSSM(
         credentialsId,
         sqlDeploymentType,
         node1InstanceId,
-        node2InstanceId
+        node2InstanceId,
+        forSandbox
     });
     // Check SSM Connection status
     const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName } = await getActiveSqlNode(
@@ -205,7 +210,7 @@ async function getDriveInfoFromSSM(
         throw createError(errorMessage);
     }
 
-    if (sqlDeploymentType === 'FCI' && standbyNodeInstanceId) {
+    if (sqlDeploymentType === 'FCI' && !forSandbox && standbyNodeInstanceId) {
         const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId!);
         if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
             const errorMessage = `Unable to connect to node to access drive details for host ${databaseHostId} in account ${accountId}`;
@@ -218,17 +223,36 @@ async function getDriveInfoFromSSM(
     let getDefaultDrivesResponse;
     try {
         // Not caching any ssm response as multiple creation will require real time data
-        [getDriveInfoFromNodesResponse, getDefaultDrivesResponse] = await Promise.all([
-            getDriveInfoFromNodes(
-                credentialsId,
-                region,
-                sqlDeploymentType,
-                activeNodeInstanceId as string,
-                standbyNodeInstanceId!,
-                executionTimeout
-            ),
-            getDefaultDrives(credentialsId, region, activeNodeInstanceId as string, instanceName, executionTimeout)
-        ]);
+        [getDriveInfoFromNodesResponse, getDefaultDrivesResponse] = forSandbox
+            ? await Promise.all([
+                  getDriveInfoFromNodes(
+                      credentialsId,
+                      region,
+                      sqlDeploymentType,
+                      activeNodeInstanceId as string,
+                      standbyNodeInstanceId!,
+                      executionTimeout,
+                      forSandbox
+                  ),
+                  Promise.resolve()
+              ])
+            : await Promise.all([
+                  getDriveInfoFromNodes(
+                      credentialsId,
+                      region,
+                      sqlDeploymentType,
+                      activeNodeInstanceId as string,
+                      standbyNodeInstanceId!,
+                      executionTimeout
+                  ),
+                  getDefaultDrives(
+                      credentialsId,
+                      region,
+                      activeNodeInstanceId as string,
+                      instanceName,
+                      executionTimeout
+                  )
+              ]);
     } catch (error) {
         const errorMessage = `Unable to get drive information ${error}.`;
         logger.error(errorMessage);
@@ -242,6 +266,7 @@ async function getDriveInfo(
     databaseHostId: string,
     credentialsId: string,
     region: string,
+    forSandbox: boolean = false,
     executionTimeout?: string
 ): Promise<DriveInfoResponseBodyType> {
     logger.info(
@@ -249,7 +274,8 @@ async function getDriveInfo(
         accountId,
         databaseHostId,
         credentialsId,
-        region
+        region,
+        forSandbox
     );
 
     const {
@@ -268,19 +294,34 @@ async function getDriveInfo(
     let fsxStorageCapacity;
     let driveResponse;
     try {
-        [fsxStorageCapacity, driveResponse] = await Promise.all([
-            getFsxStorageCapacity(credentialsId, region!, fileSystemId!),
-            getDriveInfoFromSSM(
-                accountId,
-                databaseHostId,
-                credentialsId,
-                region,
-                sqlDeploymentType!,
-                node1InstanceId,
-                node2InstanceId,
-                executionTimeout
-            )
-        ]);
+        [fsxStorageCapacity, driveResponse] = forSandbox
+            ? await Promise.all([
+                  Promise.resolve(),
+                  getDriveInfoFromSSM(
+                      accountId,
+                      databaseHostId,
+                      credentialsId,
+                      region,
+                      sqlDeploymentType!,
+                      node1InstanceId,
+                      node2InstanceId,
+                      executionTimeout,
+                      forSandbox
+                  )
+              ])
+            : await Promise.all([
+                  getFsxStorageCapacity(credentialsId, region!, fileSystemId!),
+                  getDriveInfoFromSSM(
+                      accountId,
+                      databaseHostId,
+                      credentialsId,
+                      region,
+                      sqlDeploymentType!,
+                      node1InstanceId,
+                      node2InstanceId,
+                      executionTimeout
+                  )
+              ]);
     } catch (error) {
         const errorMessage = `Unable to get drive information and FSx storage capacity. ${error}.`;
         logger.error(errorMessage);
@@ -291,14 +332,16 @@ async function getDriveInfo(
 
     const response: DriveInfoResponseBodyType = {
         existingDriveInfo: getDriveInfoFromNodesResponse.updatedExitingDrives,
-        availableDriveLetters: getDriveInfoFromNodesResponse.availableDriveLetters,
+        ...(!forSandbox && { availableDriveLetters: getDriveInfoFromNodesResponse.availableDriveLetters }),
         ...(storage && { fsxStorageCapacity: storage * 1024 * 1024 * 1024 }),
-        ...(getDefaultDrivesResponse.currentDataDrive && {
-            defaultDataDrive: getDefaultDrivesResponse.currentDataDrive
-        }),
-        ...(getDefaultDrivesResponse.currentLogDrive && {
-            defaultLogDrive: getDefaultDrivesResponse.currentLogDrive
-        })
+        ...(!forSandbox &&
+            getDefaultDrivesResponse?.currentDataDrive && {
+                defaultDataDrive: getDefaultDrivesResponse.currentDataDrive
+            }),
+        ...(!forSandbox &&
+            getDefaultDrivesResponse?.currentLogDrive && {
+                defaultLogDrive: getDefaultDrivesResponse.currentLogDrive
+            })
     };
 
     return response;
@@ -312,8 +355,7 @@ async function deployDatabase(
     databaseName: string,
     dataFileConfig: FileConfigType,
     logFileConfig: FileConfigType,
-    collation: string,
-    isVirtualMountSelected: boolean = false
+    collation: string
 ): Promise<DatabaseCreateResponseType> {
     logger.info('Deploy new database', {
         accountId,
@@ -323,8 +365,7 @@ async function deployDatabase(
         databaseName,
         dataFileConfig,
         logFileConfig,
-        collation,
-        isVirtualMountSelected
+        collation
     });
 
     const {
@@ -391,7 +432,6 @@ async function deployDatabase(
         fsxSvmId,
         jobId,
         resourceId,
-        isVirtualMountSelected,
         node2InstanceId,
         metadata as Metadata
     );
@@ -412,7 +452,6 @@ async function invokeSSMForDatabaseDeployment(
     fsxSvmId: string | undefined,
     parentJobId: string,
     resourceId: string,
-    isVirtualMountSelected: boolean,
     node2InstanceId?: string,
     metaData?: Metadata
 ) {
@@ -429,32 +468,37 @@ async function invokeSSMForDatabaseDeployment(
         fsxSvmId,
         fileSystemId,
         resourceId,
-        isVirtualMountSelected,
         isClustered,
         parentJobId
     );
 
     const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
 
-    const { fileName: dataFileName, drive: dataDrive, isExisting: isDataDriveExists } = dataFileConfig;
-    const { fileName: logFileName, drive: logDrive, isExisting: isLogDriveExists } = logFileConfig;
+    const {
+        fileName: dataFileName,
+        drive: dataDrive,
+        isExisting: isDataDriveExists,
+        isVirtualMount: isDataVirtualMount
+    } = dataFileConfig;
+    const {
+        fileName: logFileName,
+        drive: logDrive,
+        isExisting: isLogDriveExists,
+        isVirtualMount: isLogVirtualMount
+    } = logFileConfig;
 
     const dataVolumeSize = dataFileConfig.volumeSize * 1074; // converting from GiB to MBs
     const logVolumeSize = logFileConfig.volumeSize * 1074; // converting from GiB to MBs
 
-    let dataDrivePath;
-    let logDrivePath;
-
     // constructing the path for data and log file based on virtual mount selected or not
     const virtualDataFileName = dataFileName.split('.')[0];
     const virtualLogFileName = logFileName.split('.')[0];
-    if (isVirtualMountSelected) {
-        dataDrivePath = `${dataDrive}:\\${virtualDataFileName}\\${DatabaseTypes.MS_SQL_SERVER}\\data\\${dataFileName}`;
-        logDrivePath = `${logDrive}:\\${virtualLogFileName}\\${DatabaseTypes.MS_SQL_SERVER}\\log\\${logFileName}`;
-    } else {
-        dataDrivePath = `${dataDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\data\\${dataFileName}`;
-        logDrivePath = `${logDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\log\\${logFileName}`;
-    }
+    const dataDrivePath = isDataVirtualMount
+        ? `${dataDrive}:\\${virtualDataFileName}\\${DatabaseTypes.MS_SQL_SERVER}\\data\\${dataFileName}`
+        : `${dataDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\data\\${dataFileName}`;
+    const logDrivePath = isLogVirtualMount
+        ? `${logDrive}:\\${virtualLogFileName}\\${DatabaseTypes.MS_SQL_SERVER}\\log\\${logFileName}`
+        : `${logDrive}:\\${DatabaseTypes.MS_SQL_SERVER}\\log\\${logFileName}`;
 
     let sqlVirtualMachineName;
     let activeNodeId;
@@ -494,8 +538,7 @@ async function invokeSSMForDatabaseDeployment(
             parentJobId,
             activeNodeInstanceId as string,
             collation,
-            sqlInstanceName,
-            isVirtualMountSelected
+            sqlInstanceName
         );
 
         const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
@@ -510,7 +553,7 @@ async function invokeSSMForDatabaseDeployment(
         sqlVirtualMachineName = sqlVMName;
         activeNodeId = activeNodeInstanceId;
 
-        if (isDataDriveExists && isLogDriveExists && !isVirtualMountSelected) {
+        if (isDataDriveExists && isLogDriveExists && !isDataVirtualMount && !isLogVirtualMount) {
             // When the user selected drive as existing, we will only execute the create database script on the drive
             await createDatabase(
                 accountId,
@@ -580,13 +623,14 @@ async function invokeSSMForDatabaseDeployment(
                 sqlVMName,
                 dataVolumeSize,
                 logVolumeSize,
-                isVirtualMountSelected ? isLogDriveExists.toString() : (!isLogDriveExists).toString(),
-                isVirtualMountSelected ? isDataDriveExists.toString() : (!isDataDriveExists).toString(),
+                isLogVirtualMount ? isLogDriveExists.toString() : (!isLogDriveExists).toString(),
+                isDataVirtualMount ? isDataDriveExists.toString() : (!isDataDriveExists).toString(),
                 standbyIqn
             );
-            // its required to sleep for 45 seconds so that initialization script will go through.. the ontap LUN configure can take time depending on busy system for the multiple API calls, and the disk initialize may take time to discover the created LUNs
-            if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
-                await sleep(45000);
+
+            let isVirtualMountSelected = 'false';
+            if (isLogVirtualMount || isDataVirtualMount) {
+                isVirtualMountSelected = 'true';
             }
 
             await newDBInitialization(
@@ -600,14 +644,14 @@ async function invokeSSMForDatabaseDeployment(
                 isClustered,
                 dataDrive,
                 logDrive,
-                isVirtualMountSelected ? isLogDriveExists.toString() : (!isLogDriveExists).toString(),
-                isVirtualMountSelected ? isDataDriveExists.toString() : (!isDataDriveExists).toString(),
+                isLogVirtualMount ? isLogDriveExists.toString() : (!isLogDriveExists).toString(),
+                isDataVirtualMount ? isDataDriveExists.toString() : (!isDataDriveExists).toString(),
                 iGroup,
                 fsxDataVolumeName,
                 fsxLogVolumeName,
                 dataSerial,
                 LogSerial,
-                isVirtualMountSelected.toString()
+                isVirtualMountSelected
             );
 
             await createDatabase(
@@ -1113,8 +1157,7 @@ async function validateParams(
     parentJobId: string,
     activeNodeInstanceId: string,
     collation: string,
-    instanceName: string,
-    isVirtualMountSelected: boolean
+    instanceName: string
 ) {
     logger.info('validating parameters for database user creation', {
         accountId,
@@ -1128,7 +1171,6 @@ async function validateParams(
         sqlServerName,
         parentJobId,
         collation,
-        isVirtualMountSelected,
         instanceName
     });
 
@@ -1136,13 +1178,15 @@ async function validateParams(
         fileName: dataFileName,
         drive: dataDrive,
         isExisting: isDataDriveExists,
-        volumeSize: dataVolumeSize
+        volumeSize: dataVolumeSize,
+        isVirtualMount: isDataVirtualMount
     } = dataFileConfig;
     const {
         fileName: logFileName,
         drive: logDrive,
         isExisting: isLogDriveExists,
-        volumeSize: logVolumeSize
+        volumeSize: logVolumeSize,
+        isVirtualMount: isLogVirtualMount
     } = logFileConfig;
 
     const dataGibIntoBytes = convertGiBToBytes(dataVolumeSize);
@@ -1190,8 +1234,12 @@ async function validateParams(
             throw createError(412, `Selected collation ${collation} is not available`);
         }
 
-        if (isVirtualMountSelected && (!isDataDriveExists || !isLogDriveExists)) {
-            throw createError(412, 'Virtual Mount should not be selected for new drives');
+        if (isDataVirtualMount && !isDataDriveExists) {
+            throw createError(412, 'Virtual Mount should not be selected for new data drives');
+        }
+
+        if (isLogVirtualMount && !isLogDriveExists) {
+            throw createError(412, 'Virtual Mount should not be selected for new log drives');
         }
 
         const { existingDriveInfo, availableDriveLetters } = await getDriveInfo(
@@ -1199,6 +1247,7 @@ async function validateParams(
             databaseHostId,
             credentialsId,
             region,
+            false,
             CUSTOM_SSM_EXECUTION_TIMEOUT
         );
 

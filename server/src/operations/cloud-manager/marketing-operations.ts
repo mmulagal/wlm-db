@@ -110,11 +110,10 @@ async function getStorageSavingsCalculationMetrics(
 
     const sqlServerInstances = ec2HostDetails?.sqlServerInstances;
     const ebsVolumeIds = compact(
-        sqlServerInstances
-            ?.filter(({ storage }) => storage?.find(sqlStorage => sqlStorage.type === 'EBS'))
-            .map(({ storage }) => storage?.find(sqlStorage => sqlStorage.type === 'EBS')?.id)
+        sqlServerInstances?.flatMap(server =>
+            server?.storage?.filter(storage => storage.type === 'EBS').map(storage => storage.id)
+        )
     );
-
     const {
         ebs: { capacity, iops, throughput },
         fsx_cost_calculation_no_snapshot: {

@@ -26,6 +26,10 @@ const DatabaseHostQueryString = Type.Object({
     pageSize: Type.Optional(Type.Number())
 });
 
+const GetDriveQueryString = Type.Object({
+    forSandbox: Type.Optional(Type.Boolean())
+});
+
 const EC2InstanceDetailsResponse = Type.Object({
     id: Type.String(),
     name: Type.Optional(Type.String()),
@@ -115,7 +119,7 @@ const StorageResponse = Type.Object({
             description: 'Total disk space saved in the volume due to storage efficiency, in percentage.'
         })
     ),
-    protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or SMB' }))
+    protocol: Type.Optional(Type.Array(Type.String({ description: 'Data sharing protocol, iSCSI,SMB or both' })))
 });
 type StorageResponseType = Static<typeof StorageResponse>;
 
@@ -247,15 +251,15 @@ const FileConfig = Type.Object({
     fileName: Type.String({ minLength: 5 }),
     volumeSize: Type.Number({ minimum: 1 }),
     drive: Type.String({ maxLength: 1 }),
-    isExisting: Type.Boolean()
+    isExisting: Type.Boolean(),
+    isVirtualMount: Type.Boolean()
 });
 
 const CreateDatabseRequestBody = Type.Object({
     databaseName: Type.String({ minLength: 1, maxLength: 123 }),
     dataFileConfig: FileConfig,
     logFileConfig: FileConfig,
-    collation: Type.String(),
-    isVirtualMountSelected: Type.Optional(Type.Boolean())
+    collation: Type.String()
 });
 
 const DatabasesCreateResponse = Type.Object({
@@ -349,6 +353,22 @@ const SandboxInfoResponseBody = Type.Object({
 type SandboxInfoResponseBodyType = Static<typeof SandboxInfoResponseBody>;
 type SandboxInfoResponseType = Static<typeof SandboxInfoResponse>;
 
+const DatabaseMountPointRequestQueryParam = Type.Object({
+    databaseName: Type.String(),
+    instanceName: Type.String()
+});
+
+const DatabaseMountPointResponseBody = Type.Object({
+    databaseDataDriveLetters: Type.Array(Type.String()),
+    databaseLogDriveLetters: Type.Array(Type.String())
+});
+type DatabaseMountPointResponseType = Static<typeof DatabaseMountPointResponseBody>;
+
+const SandboxConnectionStringParams = Type.Composite([
+    DatabaseHostSummaryParams,
+    Type.Object({ sandboxName: Type.String() })
+]);
+
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -409,5 +429,10 @@ export {
     SandboxInfoResponse,
     SandboxInfoResponseType,
     SandboxInfoResponseBody,
-    SandboxInfoResponseBodyType
+    SandboxInfoResponseBodyType,
+    DatabaseMountPointRequestQueryParam,
+    GetDriveQueryString,
+    DatabaseMountPointResponseBody,
+    DatabaseMountPointResponseType,
+    SandboxConnectionStringParams
 };

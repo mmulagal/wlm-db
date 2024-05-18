@@ -36,21 +36,21 @@ const SandboxStorageSaving = () => {
                 <div className={styles.progressBar}>
                     <div
                         className={`${styles.progress} ${styles.leftCurveBar} ${
-                            savingsPercentage === 100 ? styles.rightCurveBar : ''
+                            savingsPercentage === 0 ? styles.rightCurveBar : ''
                         }`}
                         style={{
-                            width: `${savingsPercentage}%`,
-                            backgroundColor: 'var(--chart-4)'
+                            width: `${100 - savingsPercentage}%`,
+                            backgroundColor: 'var(--chart-9)'
                         }}
                     ></div>
                     <div className={styles.separator}></div>
                     <div
                         className={`${styles.progress} ${styles.rightCurveBar} ${
-                            savingsPercentage === 0 ? styles.leftCurveBar : ''
+                            savingsPercentage === 100 ? styles.leftCurveBar : ''
                         }`}
                         style={{
-                            width: `${100 - savingsPercentage}%`,
-                            backgroundColor: 'var(--chart-9)'
+                            width: `${savingsPercentage}%`,
+                            backgroundColor: 'var(--chart-4)'
                         }}
                     ></div>
                 </div>
@@ -109,22 +109,6 @@ const SandboxStorageSaving = () => {
                             <div className={styles.bottomRow}>
                                 <div
                                     className={styles.square}
-                                    style={{ backgroundColor: isNA ? 'var(--chart-disabled)' : '#68C6B3' }}
-                                />
-                                {!isNA && (
-                                    <DsTypography variant="Semibold_14" style={{ lineHeight: 'unset' }}>
-                                        {formatSize(sandboxSavings?.savedStorage)}
-                                    </DsTypography>
-                                )}
-
-                                <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
-                                    {GENERAL.SANDBOX_STORAGE_SAVINGS}
-                                </DsTypography>
-                            </div>
-
-                            <div className={styles.bottomRow}>
-                                <div
-                                    className={styles.square}
                                     style={{ backgroundColor: isNA ? 'var(--chart-disabled)' : '#A815F3' }}
                                 />
                                 {!isNA && (
@@ -135,6 +119,22 @@ const SandboxStorageSaving = () => {
 
                                 <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
                                     {GENERAL.SANDBOX_CONSUMED_STORAGE}
+                                </DsTypography>
+                            </div>
+
+                            <div className={styles.bottomRow}>
+                                <div
+                                    className={styles.square}
+                                    style={{ backgroundColor: isNA ? 'var(--chart-disabled)' : '#68C6B3' }}
+                                />
+                                {!isNA && (
+                                    <DsTypography variant="Semibold_14" style={{ lineHeight: 'unset' }}>
+                                        {formatSize(sandboxSavings?.savedStorage)}
+                                    </DsTypography>
+                                )}
+
+                                <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
+                                    {GENERAL.SANDBOX_STORAGE_SAVINGS}
                                 </DsTypography>
                             </div>
                         </div>

@@ -16,10 +16,10 @@ import {
     setResourceDetails,
     setResourceLoading
 } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
-import { resetDBHomePageState } from '../../../utils/utilityFunctions';
+import { isSmbProtocol } from '../../../utils/utilityFunctions';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import DatabaseHostTile from '../DatabaseOverviewLayout/DatabaseHostTile/DatabaseHostTile';
-import { FSXN_STORAGE_PROTOCOLS, WLF_TABS } from '../../../utils/consts';
+import { WLF_TABS } from '../../../utils/consts';
 import {
     addInitialDBCreateData,
     initialCreateNewUserState,
@@ -88,8 +88,6 @@ const DatabaseHostOverview = () => {
         dispatch(setDatabaseListLoading(databaseListFetching));
     }, [resourceFetching, databaseListFetching, dispatch]);
 
-    const storageProtocol = stateResourceDetails?.storage?.fsxn?.protocol;
-
     return (
         <div className={styles.resourcePage}>
             <div className={styles.breadCrumb}>
@@ -106,7 +104,7 @@ const DatabaseHostOverview = () => {
                         }
                     ]}
                 />
-                {storageProtocol === FSXN_STORAGE_PROTOCOLS.SMB ? (
+                {isSmbProtocol(stateResourceDetails?.storage?.fsxn?.protocol) ? (
                     <CustomContentInfo
                         tooltipText={GENERAL.SMB_PROTOCOL_DISABLED}
                         CustomContent={

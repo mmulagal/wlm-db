@@ -471,25 +471,27 @@ const createVolumeClone = (
 
         Function Set-LUNSignature {
             # Set the LUN signature only if the source and target SVMs are the same
-            if (-not (Get-Module -ListAvailable -Name NetApp.ONTAP)) {
-                Write-Debug "NetApp.ONTAP Module does not exist, installing it now"
+            if ($sourceSvm -eq $targetSvm) {
+                if (-not (Get-Module -ListAvailable -Name NetApp.ONTAP)) {
+                    Write-Debug "NetApp.ONTAP Module does not exist, installing it now"
 
-                Install-Module -Name NetApp.ONTAP -Force -AllowClobber
-            }
-
-            $null = Connect-NcController -Credential $FSxCredentials -Name $FSxHostName
-
-            $message
-            @($dataLunPath, $logLunPath) | ForEach-Object {
-                $lunPath = $_
-
-                $null = Set-NcLunSignature -Path $lunPath -Vserver $targetSvm -Confirm:$False
-                if (-not $?) {
-                    $message += "Could not change LUN signature for $lunClonePath."
+                    Install-Module -Name NetApp.ONTAP -Force -AllowClobber
                 }
-            }
 
-            return $message
+                $null = Connect-NcController -Credential $FSxCredentials -Name $FSxHostName
+
+                $message
+                @($dataLunPath, $logLunPath) | ForEach-Object {
+                    $lunPath = $_
+
+                    $null = Set-NcLunSignature -Path $lunPath -Vserver $targetSvm -Confirm:$False
+                    if (-not $?) {
+                        $message += "Could not change LUN signature for $lunClonePath."
+                    }
+                }
+
+                return $message
+            }
         }
 
         Function Set-LunMap {
@@ -707,6 +709,18 @@ const cleanUpOntapResources = (
     $responeObject | ConvertTo-Json
 `;
 
+const mountPointQuery = (instanceName: string = '.', databaseName: string) =>
+    ` sqlcmd -S '${instanceName}' -Q "SET NOCOUNT ON;
+    SELECT 
+        CASE WHEN mf.type != 0 THEN 'Log' ELSE 'Data' END AS filetype,
+        vs.logical_volume_name AS volumename,
+        mf.physical_name AS filepath
+    FROM sys.master_files AS mf
+    JOIN sys.databases AS db ON db.database_id = mf.database_id
+    CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+    WHERE db.name = '${databaseName}'
+    FOR JSON PATH;" -y 0 `;
+
 const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string) => `
     $WarningPreference = 'SilentlyContinue';
     if ($responseObject -eq $null) {
@@ -778,7 +792,6 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string) => `
         }
     }
     $responseObject | ConvertTo-Json -Depth 5
-
 `;
 
 export {
@@ -789,5 +802,6 @@ export {
     createVolumeClone,
     createClonedDb,
     cleanUpOntapResources,
+    mountPointQuery,
     getStorageSavingsFromOntap
 };

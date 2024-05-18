@@ -20,7 +20,8 @@ export const createUserDbPayload = (newUserDb: any) => {
                     ? newUserDb?.newUserDataSize * 1024
                     : newUserDb?.newUserDataSize,
             drive: newUserDb?.driveLetter?.value || '',
-            isExisting: newUserDb?.isExistingDataDrive
+            isExisting: newUserDb?.isExistingDataDrive,
+            isVirtualMount: newUserDb?.isDataVirtualMountPoint
         },
         logFileConfig: {
             fileName: newUserDb?.newUserLogFileName ? newUserDb.newUserLogFileName + '.ldf' : '',
@@ -29,10 +30,10 @@ export const createUserDbPayload = (newUserDb: any) => {
                     ? newUserDb?.newUserLogFileSize * 1024
                     : newUserDb?.newUserLogFileSize,
             drive: newUserDb?.driveLetterLogFile?.value || '',
-            isExisting: newUserDb?.isExistingLogDrive
+            isExisting: newUserDb?.isExistingLogDrive,
+            isVirtualMount: newUserDb?.isLogVirtualMountPoint
         },
-        collation: newUserDb?.selectedCollation?.label || '',
-        isVirtualMountSelected: newUserDb?.isVirtualMountPoint
+        collation: newUserDb?.selectedCollation?.label || ''
     };
     return payload;
 };

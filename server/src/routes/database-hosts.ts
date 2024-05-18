@@ -13,11 +13,15 @@ import {
     GetSandboxSavingsSchema,
     GetSandboxesInfoSchema,
     PatchResourceForSandboxSchema,
-    RevertPatchResourceForSandboxSchema
+    RevertPatchResourceForSandboxSchema,
+    GetSandboxesMountPointSchema,
+    GetSandboxConnectionStringSchema
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
+    getSandboxConnectionString,
     getSandboxesInfo,
+    getDatabaseMountPointInfo,
     getSandboxSavings,
     revertMetadataForSanboxTesting,
     updateMetadataForSanboxTesting
@@ -85,7 +89,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, databaseHostId, credentialsId, region },
-                    body: { databaseName, dataFileConfig, logFileConfig, collation, isVirtualMountSelected }
+                    body: { databaseName, dataFileConfig, logFileConfig, collation }
                 } = request;
                 const response = await deployDatabase(
                     accountId,
@@ -95,8 +99,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     databaseName,
                     dataFileConfig,
                     logFileConfig,
-                    collation,
-                    isVirtualMountSelected
+                    collation
                 );
                 return reply.send(response);
             }
@@ -106,9 +109,10 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             { schema: GetDriveInfoSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, databaseHostId, credentialsId, region }
+                    params: { accountId, databaseHostId, credentialsId, region },
+                    query: { forSandbox }
                 } = request;
-                const response = await getDriveInfo(accountId, databaseHostId, credentialsId, region);
+                const response = await getDriveInfo(accountId, databaseHostId, credentialsId, region, forSandbox);
                 return reply.send(response);
             }
         )
@@ -132,6 +136,25 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     query: { nextToken }
                 } = request;
                 const response = await getSandboxesInfo(accountId, credentialsId, region, nextToken);
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-mount-points`,
+            { schema: GetSandboxesMountPointSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId },
+                    query: { databaseName, instanceName }
+                } = request;
+                const response = await getDatabaseMountPointInfo(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseName,
+                    instanceName
+                );
                 return reply.send(response);
             }
         )
@@ -164,5 +187,22 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             } = request;
             const response = await createSandbox(accountId, credentialsId, region, source, destination, tag);
             return reply.send(response);
-        });
+        })
+        .get(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandbox/:sandboxName/connection-string`,
+            { schema: GetSandboxConnectionStringSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName }
+                } = request;
+                const response = await getSandboxConnectionString(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    sandboxName
+                );
+                return reply.send(response);
+            }
+        );
 }

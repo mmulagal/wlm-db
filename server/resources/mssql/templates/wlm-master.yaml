@@ -346,18 +346,18 @@ Resources:
       Description: SSM Parameter for active directory, FSxN and SQL service account credentials
       Type: String
       Value: !Sub '{
-                        fsx: {
-                            username: "${FSxAdminUsername}",
-                            password: "${FSxAdminPassword}"
+                        "fsx": {
+                            "username": "${FSxAdminUsername}",
+                            "password": "${FSxAdminPassword}"
                         },
-                        domain: {
-                            username: "${DomainAdminUser}",
-                            password: "${DomainAdminPassword}"
+                        "domain": {
+                            "username": "${DomainAdminUser}",
+                            "password": "${DomainAdminPassword}"
                         },
-                        sql: [{
-                            username: "${SQLServiceAccountName}",
-                            password: "${SQLServiceAccountPassword}",
-                            sqlinstancename: "MSSQL"
+                        "sql": [{
+                            "username": "${SQLServiceAccountName}",
+                            "password": "${SQLServiceAccountPassword}",
+                            "sqlinstancename": "MSSQL"
                         }]
                     }'
 
