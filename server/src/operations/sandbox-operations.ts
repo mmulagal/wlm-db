@@ -37,6 +37,7 @@ import { updateSandboxDBIntoResourceData, updateUserDBIntoResourceData } from '.
 import { resetCache } from '../utils/cache';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { getParameter } from '../lib/aws/ssm';
+import { getDriveInfo } from './createdb-operations';
 
 const logger = getLogger();
 
@@ -346,15 +347,21 @@ interface ClonedVolumes {
     data: ClonedVolume;
 }
 
+interface MountPoints {
+    dataDrive: string;
+    logDrive: string;
+}
+
 async function createSandbox(
     accountId: string,
     credentialsId: string,
     region: string,
     source: DbInfo,
     dest: DbInfo,
-    tag: string
+    tag: string,
+    mountPoints: MountPoints
 ) {
-    logger.info({ source, dest });
+    logger.info({ source, dest, mountPoints });
 
     let [[srcResourceDetail], [destResourceDetail]] = await Promise.all([
         listResources(accountId, source.host),
@@ -452,7 +459,8 @@ async function createSandbox(
             metadata: destResourceDetail.metadata as unknown as Metadata,
             instanceName: destStatus.instanceName || '.'
         },
-        tag
+        tag,
+        mountPoints
     );
 
     return { jobId: job.id };
@@ -465,7 +473,8 @@ async function startSandboxCreation(
     parentJobId: string,
     srcDetails: HostAndDbInfo,
     destDetails: HostAndDbInfo,
-    tag: string
+    tag: string,
+    mountPoints: MountPoints
 ) {
     logger.info('Start sandbox creation process', { tag });
     let errorMsg;
@@ -475,7 +484,7 @@ async function startSandboxCreation(
     let mountPaths;
 
     try {
-        await validateCloneParams(accountId, credentialsId, region, parentJobId, srcDetails, destDetails);
+        await validateCloneParams(accountId, credentialsId, region, parentJobId, srcDetails, destDetails, mountPoints);
 
         const mappings = (await getMappings(
             accountId,
@@ -505,7 +514,8 @@ async function startSandboxCreation(
             srcDetails,
             destDetails,
             mappings,
-            clonedVolumes
+            clonedVolumes,
+            mountPoints
         )) as { dataPath: string; logPath: string };
 
         await createCloneDb(accountId, credentialsId, region, parentJobId, destDetails, mountPaths, mappings.collation);
@@ -538,13 +548,56 @@ async function startSandboxCreation(
     }
 }
 
+async function validateSelectedDrives(
+    existingDriveInfo: Array<{
+        driveLetter: string;
+        availableSize: number;
+        isNetappDrive: boolean;
+        isDriveClustered?: boolean;
+    }>,
+    selectedDrive: string,
+    metadata: Metadata
+) {
+    logger.info('checking whether the drive exists', existingDriveInfo, selectedDrive);
+
+    const { sqlDeploymentType } = metadata as unknown as Metadata;
+    const isClustered = sqlDeploymentType === 'FCI' ? 'true' : 'false';
+    const restrictedDrives = ['A', 'B'];
+
+    if (restrictedDrives.includes(selectedDrive)) {
+        throw createError(412, `Selected drive ${selectedDrive} is not a valid drive`);
+    }
+
+    const regex = /^[A-Z]{1}$/; // Allows only single Capital Alphabetical letter
+    if (!regex.test(selectedDrive)) {
+        throw createError(412, `Selected drive ${selectedDrive} is not a valid drive`);
+    }
+
+    const matchedExistingDrive = existingDriveInfo?.find(drive => drive.driveLetter === selectedDrive);
+    if (!matchedExistingDrive) {
+        throw createError(412, `Selected drive letter ${selectedDrive} does not exist`);
+    }
+    if (!matchedExistingDrive.isNetappDrive) {
+        throw createError(412, `Selected drive ${selectedDrive} is not a NetApp drive`);
+    }
+    if (isClustered === 'true' && !matchedExistingDrive.isDriveClustered) {
+        throw createError(
+            412,
+            `Selected  drive ${selectedDrive} is non clustered drive or drive not part of SQL server`
+        );
+    }
+
+    return true;
+}
+
 async function validateCloneParams(
     accountId: string,
     credentialsId: string,
     region: string,
     parentJobId: string,
     srcDetails: HostAndDbInfo,
-    destDetails: HostAndDbInfo
+    destDetails: HostAndDbInfo,
+    mountPaths: MountPoints
 ) {
     logger.info('Validate clone params', { accountId, credentialsId, region, parentJobId, srcDetails, destDetails });
 
@@ -554,7 +607,7 @@ async function validateCloneParams(
     const validationJob = await registerJob(accountId, credentialsId, region, {
         description: `Validate if the sandbox ${destDetails.database} already exists in the target host ${destDetails.resourceName}`,
         startTime: Date.now(),
-        name: 'Validate if sandbox already exits',
+        name: 'Validate if sandbox already exists and mount point drives are existing.',
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: srcDetails.database,
@@ -562,6 +615,15 @@ async function validateCloneParams(
     });
 
     try {
+        const { existingDriveInfo } = await getDriveInfo(
+            accountId,
+            destDetails.host,
+            credentialsId,
+            region,
+            true,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
+        );
+
         await checkDatabaseExists(
             accountId,
             credentialsId,
@@ -571,6 +633,26 @@ async function validateCloneParams(
             destDetails.activeNodeInstaceId,
             destDetails.instanceName
         );
+
+        const dataDriveExistsPromise = validateSelectedDrives(
+            existingDriveInfo,
+            mountPaths.dataDrive,
+            destDetails.metadata
+        );
+
+        const logDriveExistsPromise =
+            mountPaths.dataDrive === mountPaths.logDrive
+                ? Promise.resolve
+                : validateSelectedDrives(existingDriveInfo, mountPaths.logDrive, destDetails.metadata);
+
+        try {
+            await Promise.all([dataDriveExistsPromise, logDriveExistsPromise]);
+        } catch (err) {
+            const errorMessage = `Drive validation failed: ${err}`;
+            logger.error(errorMessage);
+            throw createError(errorMessage);
+        }
+
         status = JOBSTATUS.COMPLETED;
     } catch (e: any) {
         logger.error(e);
@@ -750,7 +832,8 @@ async function invokeVirtualMount(
     srcDetails: HostAndDbInfo,
     destDetails: HostAndDbInfo,
     mappings: VolumeLunMapping,
-    clonedVolumes: ClonedVolumes
+    clonedVolumes: ClonedVolumes,
+    mountPoints: MountPoints
 ) {
     logger.info('Invoke virtual mount', {
         accountId,
@@ -760,7 +843,8 @@ async function invokeVirtualMount(
         srcDetails,
         destDetails,
         mappings,
-        clonedVolumes
+        clonedVolumes,
+        mountPoints
     });
 
     let retries = 3;
@@ -784,10 +868,17 @@ async function invokeVirtualMount(
         if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
             await sleep(45000);
         }
+        const splitDataPath = mappings.data.fileName.split('\\');
+        const dataMappingfile = splitDataPath.slice(1).join('\\');
+        const splitLogPath = mappings.log.fileName.split('\\');
+        const logMappingfile = splitLogPath.slice(1).join('\\');
+
+        const dataFileName = `${mountPoints.dataDrive}:\\${dataMappingfile}`;
+        const logFileName = `${mountPoints.logDrive}:\\${logMappingfile}`;
 
         try {
             let command = [
-                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${mappings.data.fileName}  -LogFilePath ${mappings.log.fileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}'`
+                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${dataFileName}  -LogFilePath ${logFileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}'`
             ];
 
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
@@ -1266,9 +1357,6 @@ async function getDatabaseMountPointInfo(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        databaseName = 'test-database';
-    }
     try {
         const command = [mountPointQuery(instanceName, databaseName)];
 
@@ -1279,14 +1367,13 @@ async function getDatabaseMountPointInfo(
         const parsedResp = sqlResponseParsing(mountPoints);
 
         const result: DatabaseMountPointResponseType = {
-            databaseDataDriveLetters: [],
-            databaseLogDriveLetters: []
+            databaseDataPath: [],
+            databaseLogPath: []
         };
 
         parsedResp.forEach((item: { filepath: string; filetype: string }) => {
-            const driveLetter = item.filepath.charAt(0);
-            const driveType = item.filetype === 'Data' ? 'databaseDataDriveLetters' : 'databaseLogDriveLetters';
-            result[driveType].push(driveLetter);
+            const driveType = item.filetype === 'Data' ? 'databaseDataPath' : 'databaseLogPath';
+            result[driveType].push(item.filepath);
         });
 
         return result;
