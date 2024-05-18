@@ -51,9 +51,9 @@ async function performStorageSavingsCalculations(
 
     const sqlServerInstances = ec2HostDetails?.sqlServerInstances;
     const ebsVolumeIds = compact(
-        sqlServerInstances
-            ?.filter(({ storage }) => storage?.find(sqlStorage => sqlStorage.type === 'EBS'))
-            .map(({ storage }) => storage?.find(sqlStorage => sqlStorage.type === 'EBS')?.id)
+        sqlServerInstances?.flatMap(server =>
+            server?.storage?.filter(storage => storage.type === 'EBS').map(storage => storage.id)
+        )
     );
 
     if (!ebsVolumeIds.length) {
@@ -194,7 +194,7 @@ async function getStorageSavingsCalculationMetrics(
         ebs_cost_calculation: {
             instanceAvgDuration,
             EBSCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
-
+            numberOfVolumes: ebsNumberOfVolumes,
             storageAmountPerVol: { size: storageAmountPerVolSize, unit: storageAmountPerVolUnit },
             totalInstanceHours,
             EBSInstanceMonth: ebsInstanceMonth,
@@ -311,7 +311,7 @@ async function getStorageSavingsCalculationMetrics(
             totalSnapshotMonthlyCost
         },
         ebsCalculation: {
-            numberOfVolumes,
+            numberOfVolumes: ebsNumberOfVolumes,
             instanceAvgDuration,
             hoursInAMonth: 24 * 30,
             ebsCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
