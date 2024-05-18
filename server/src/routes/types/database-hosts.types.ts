@@ -310,6 +310,10 @@ const CloneDatabaseHostBody = Type.Object({
         instance: Type.String(), // sql server - ideally only one would be there
         database: Type.String() // database
     }),
+    mountPoints: Type.Object({
+        dataDrive: Type.String(),
+        logDrive: Type.String()
+    }),
     tag: Type.String({ enum: ['Development', 'QA', 'Integration', 'Training', 'Analytics', 'Other'] })
 });
 type CloneDatabaseHostBodyType = Static<typeof CloneDatabaseHostBody>;

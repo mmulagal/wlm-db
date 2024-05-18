@@ -67,7 +67,11 @@ describe('sandbox operations ', () => {
                 instance: 'default',
                 database: 'testdb1'
             },
-            'other'
+            'other',
+            {
+                dataDrive: 'D',
+                logDrive: 'E'
+            }
         );
         expect(resp.jobId).toBeDefined();
     });

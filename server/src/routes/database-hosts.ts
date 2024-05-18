@@ -184,9 +184,17 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
         .post(`${API_PREFIX_PATH}/sandbox`, { schema: CloneDatabaseHostSchema }, async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region },
-                body: { source, destination, tag }
+                body: { source, destination, tag, mountPoints }
             } = request;
-            const response = await createSandbox(accountId, credentialsId, region, source, destination, tag);
+            const response = await createSandbox(
+                accountId,
+                credentialsId,
+                region,
+                source,
+                destination,
+                tag,
+                mountPoints
+            );
             return reply.send(response);
         })
         .get(
