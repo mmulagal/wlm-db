@@ -568,7 +568,7 @@ async function validateSelectedDrives(
         throw createError(412, `Selected drive ${selectedDrive} is not a valid drive`);
     }
 
-    const regex = /^[A-Z]{1}$/; // Allows only single Capital Alphabetical letter
+    const regex = /^[D-Z]{1}$/; // Allows only single Capital Alphabetical letter
     if (!regex.test(selectedDrive)) {
         throw createError(412, `Selected drive ${selectedDrive} is not a valid drive`);
     }
