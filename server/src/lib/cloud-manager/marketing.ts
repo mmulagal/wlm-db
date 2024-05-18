@@ -278,7 +278,7 @@ export default async function getStorageSavings(
     region: string,
     params: MarketingRequestBody
 ) {
-    logger.info('Get storage savings from marketing APIs:', { accountId, credentialsId, region });
+    logger.info('Get storage savings from marketing APIs:', { accountId, credentialsId, region, params });
 
     const response = await gotInstanceForInternalRequest
         .post(`accounts/${accountId}/marketing/v1/credentials/${credentialsId}/regions/${region}/ebs/auto/calculate`, {
