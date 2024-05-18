@@ -607,7 +607,7 @@ async function validateCloneParams(
     const validationJob = await registerJob(accountId, credentialsId, region, {
         description: `Validate if the sandbox ${destDetails.database} already exists in the target host ${destDetails.resourceName}`,
         startTime: Date.now(),
-        name: 'Validate if sandbox already exits',
+        name: 'Validate if sandbox already exists and mount point drives are existing.',
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: srcDetails.database,

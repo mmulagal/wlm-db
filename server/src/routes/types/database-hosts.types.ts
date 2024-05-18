@@ -311,8 +311,8 @@ const CloneDatabaseHostBody = Type.Object({
         database: Type.String() // database
     }),
     mountPoints: Type.Object({
-        dataDrive: Type.String(),
-        logDrive: Type.String()
+        dataDrive: Type.String({ maxLength: 1 }),
+        logDrive: Type.String({ maxLength: 1 })
     }),
     tag: Type.String({ enum: ['Development', 'QA', 'Integration', 'Training', 'Analytics', 'Other'] })
 });
