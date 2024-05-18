@@ -310,6 +310,10 @@ const CloneDatabaseHostBody = Type.Object({
         instance: Type.String(), // sql server - ideally only one would be there
         database: Type.String() // database
     }),
+    mountPoints: Type.Object({
+        dataDrive: Type.String({ maxLength: 1 }),
+        logDrive: Type.String({ maxLength: 1 })
+    }),
     tag: Type.String({ enum: ['Development', 'QA', 'Integration', 'Training', 'Analytics', 'Other'] })
 });
 type CloneDatabaseHostBodyType = Static<typeof CloneDatabaseHostBody>;
@@ -359,8 +363,8 @@ const DatabaseMountPointRequestQueryParam = Type.Object({
 });
 
 const DatabaseMountPointResponseBody = Type.Object({
-    databaseDataDriveLetters: Type.Array(Type.String()),
-    databaseLogDriveLetters: Type.Array(Type.String())
+    databaseDataPath: Type.Array(Type.String()),
+    databaseLogPath: Type.Array(Type.String())
 });
 type DatabaseMountPointResponseType = Static<typeof DatabaseMountPointResponseBody>;
 

@@ -332,7 +332,7 @@ async function getDriveInfo(
 
     const response: DriveInfoResponseBodyType = {
         existingDriveInfo: getDriveInfoFromNodesResponse.updatedExitingDrives,
-        ...(!forSandbox && { availableDriveLetters: getDriveInfoFromNodesResponse.availableDriveLetters }),
+        ...{ availableDriveLetters: getDriveInfoFromNodesResponse.availableDriveLetters },
         ...(storage && { fsxStorageCapacity: storage * 1024 * 1024 * 1024 }),
         ...(!forSandbox &&
             getDefaultDrivesResponse?.currentDataDrive && {
