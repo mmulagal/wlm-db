@@ -1043,7 +1043,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"filetype\":\"Data\",\"volumename\":\"sqldatabaseuga4_DB1-Data\",\"filepath\":\"D:\\\\MSSQL\\\\data\\\\sqldatabaseuga4_DB1_data.mdf\"},{\"file_type\":\"Log\",\"volumename\":\"sqldatabaseuga4_DB1-Log\",\"filepath\":\"E:\\\\MSSQL\\\\log\\\\sqldatabaseuga4_DB1_log.ldf\"}]\r\n",
+        "StandardOutputContent": "[{\"filetype\":\"Data\",\"volumename\":\"sqldatabaseuga4_DB1-Data\",\"filepath\":\"D:\\\\MSSQL\\\\data\\\\test-database_data.mdf\"},{\"file_type\":\"Log\",\"volumename\":\"sqldatabaseuga4_DB1-Log\",\"filepath\":\"E:\\\\MSSQL\\\\log\\\\test-database_log.ldf\"}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
