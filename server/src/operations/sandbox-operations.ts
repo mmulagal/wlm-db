@@ -1367,14 +1367,13 @@ async function getDatabaseMountPointInfo(
         const parsedResp = sqlResponseParsing(mountPoints);
 
         const result: DatabaseMountPointResponseType = {
-            databaseDataDriveLetters: [],
-            databaseLogDriveLetters: []
+            databaseDataPath: [],
+            databaseLogPath: []
         };
 
         parsedResp.forEach((item: { filepath: string; filetype: string }) => {
-            const driveLetter = item.filepath.charAt(0);
-            const driveType = item.filetype === 'Data' ? 'databaseDataDriveLetters' : 'databaseLogDriveLetters';
-            result[driveType].push(driveLetter);
+            const driveType = item.filetype === 'Data' ? 'databaseDataPath' : 'databaseLogPath';
+            result[driveType].push(item.filepath);
         });
 
         return result;

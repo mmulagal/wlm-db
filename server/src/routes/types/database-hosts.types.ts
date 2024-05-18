@@ -363,8 +363,8 @@ const DatabaseMountPointRequestQueryParam = Type.Object({
 });
 
 const DatabaseMountPointResponseBody = Type.Object({
-    databaseDataDriveLetters: Type.Array(Type.String()),
-    databaseLogDriveLetters: Type.Array(Type.String())
+    databaseDataPath: Type.Array(Type.String()),
+    databaseLogPath: Type.Array(Type.String())
 });
 type DatabaseMountPointResponseType = Static<typeof DatabaseMountPointResponseBody>;
 
