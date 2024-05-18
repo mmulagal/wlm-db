@@ -280,7 +280,7 @@ const DriveInfoResponseBody = Type.Object({
     ),
     defaultDataDrive: Type.Optional(Type.String()),
     defaultLogDrive: Type.Optional(Type.String()),
-    availableDriveLetters: Type.Optional(Type.Array(Type.String())),
+    availableDriveLetters: Type.Array(Type.String()),
     fsxStorageCapacity: Type.Optional(Type.Number())
 });
 type DriveInfoResponseBodyType = Static<typeof DriveInfoResponseBody>;

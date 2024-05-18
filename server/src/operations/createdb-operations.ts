@@ -1250,7 +1250,7 @@ async function validateParams(
         await Promise.all([
             checkDriveExists(
                 existingDriveInfo,
-                availableDriveLetters!,
+                availableDriveLetters,
                 dataDrive,
                 isDataDriveExists,
                 dataGibIntoBytes,
@@ -1260,7 +1260,7 @@ async function validateParams(
             ),
             checkDriveExists(
                 existingDriveInfo,
-                availableDriveLetters!,
+                availableDriveLetters,
                 logDrive,
                 isLogDriveExists,
                 logGibIntoBytes,
