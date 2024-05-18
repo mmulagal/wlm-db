@@ -27,6 +27,9 @@ param(
     [string]$IGROUP,
 
     [Parameter(Mandatory=$true)]
+    [string]$SnapshotPolicy,
+
+    [Parameter(Mandatory=$true)]
     [string]$ResourceID,   
 
     [Parameter(Mandatory=$true)]
@@ -194,6 +197,8 @@ Start-Sleep 5
 $PolicyExists = $False
 $SnapshotPolicyPart = 'storage/snapshot-policies'
 
+if ($SnapshotPolicy -eq 'default') {
+$SnapshotPolicyPart = 'storage/snapshot-policies'
 #Check if snapshot exists
 $URI = "https://$($MgmtDNS)/api/$($SnapshotPolicyPart)?svm=$($SQLVMName)&name=daily_weekretention"
 $snapshotPolicyList = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records 
@@ -230,6 +235,7 @@ try{
     $PolicyExists = $True
 }catch{
     Write-Output "Snapshot policy creation failed." $_
+}
 }
 }
 
