@@ -20,7 +20,7 @@ function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavin
     return {
         useCase: 'Low latency',
         volumeIds: ebsVolumeIds,
-        includeSnapshots: true,
+        includeSnapshots: false,
         deploymentType: 'Single',
         snapshots: {
             snapshotFreq: snapshotFrequency,
