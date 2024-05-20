@@ -105,8 +105,7 @@ export const getDefaultDriveLetters = (
     let defaultDataDriveLetter: any, defaultLogDriveLetter: any;
     if (
         selectedMount === GENERAL.AUTO_ASSIGN_MOUNT_POINT &&
-        source?.selectedDatabaseHost?.value === target?.selectedDatabaseHost?.value &&
-        source?.selectedDatabaseInstance?.value === target?.selectedDatabaseInstance?.value
+        source?.selectedDatabaseHost?.value === target?.selectedDatabaseHost?.value
     ) {
         defaultDataDriveLetter = dataPathDrive;
         defaultLogDriveLetter = logPathDrive;
@@ -117,21 +116,29 @@ export const getDefaultDriveLetters = (
         const recommendedLogDrive = driveInfoData?.existingDriveInfo?.find(
             (drive: any) => drive.driveLetter === logPathDrive
         );
-
-        if (recommendedDataDrive?.isDriveClustered && recommendedDataDrive?.isNetappDrive) {
+        if (
+            (!recommendedDataDrive.hasOwnProperty('isDriveClustered') || recommendedDataDrive?.isDriveClustered) &&
+            recommendedDataDrive?.isNetappDrive
+        ) {
             defaultDataDriveLetter = dataPathDrive;
         } else {
             const validDrive = driveInfoData?.existingDriveInfo?.find(
-                (drive: any) => drive?.isDriveClustered && drive?.isNetappDrive
+                (drive: any) =>
+                    (!drive.hasOwnProperty('isDriveClustered') || drive?.isDriveClustered) && drive?.isNetappDrive
             );
             defaultDataDriveLetter = validDrive?.driveLetter;
         }
-        if (recommendedLogDrive?.isDriveClustered && recommendedLogDrive?.isNetappDrive) {
+        if (
+            (!recommendedLogDrive.hasOwnProperty('isDriveClustered') || recommendedLogDrive?.isDriveClustered) &&
+            recommendedLogDrive?.isNetappDrive
+        ) {
             defaultLogDriveLetter = logPathDrive;
         } else {
             const validDrive = driveInfoData?.existingDriveInfo?.find(
                 (drive: any) =>
-                    drive?.isDriveClustered && drive?.isNetappDrive && drive.driveLetter !== defaultDataDriveLetter
+                    (!drive.hasOwnProperty('isDriveClustered') || drive?.isDriveClustered) &&
+                    drive?.isNetappDrive &&
+                    drive.driveLetter !== defaultDataDriveLetter
             );
             defaultLogDriveLetter = validDrive?.driveLetter;
         }
