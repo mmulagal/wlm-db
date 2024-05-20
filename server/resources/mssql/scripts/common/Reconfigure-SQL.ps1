@@ -159,7 +159,7 @@ try {
         $LoginCheckQuery =  "select r.name as Role, m.name as Principal from sys.server_role_members rm 
                             inner join sys.server_principals r on r.principal_id = rm.role_principal_id and r.type = 'R' 
                             inner join  sys.server_principals m on m.principal_id = rm.member_principal_id 
-                            where m.name in ($AdminUser, $SQLUser)" 
+                            where m.name in ('$AdminUser', '$SQLUser')" 
 
         $LoginCheckQueryResponse = Invoke-sqlcmd -ServerInstance $ServerInstanceName -Query $LoginCheckQuery | Select-Object Principal, Role |  ConvertTo-Json | ConvertFrom-Json 
         Foreach ($i in @($LoginCheckQueryResponse)) {
