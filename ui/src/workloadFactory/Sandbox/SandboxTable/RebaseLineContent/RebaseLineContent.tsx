@@ -1,7 +1,8 @@
 import { DsTypography } from '@netapp/design-system';
 import styles from './RebaseLineContent.module.scss';
+import RebaseRollbackContent from '../RebaseRollbackContent/RebaseRollbackContent';
 
-const RebaseLineContent = (dialogType: any) => {
+const RebaseLineContent = ({ dialogType }: any) => {
     return (
         <div className={styles.rebaseLineContent}>
             <DsTypography variant="Regular_14">
@@ -18,6 +19,11 @@ const RebaseLineContent = (dialogType: any) => {
             <DsTypography variant="Regular_14" className={styles.secondLine}>
                 Any changes you made to the sandbox will be deleted.
             </DsTypography>
+            {dialogType === 'refresh' && (
+                <div className={styles.rollbackContainer}>
+                    <RebaseRollbackContent />
+                </div>
+            )}
         </div>
     );
 };
