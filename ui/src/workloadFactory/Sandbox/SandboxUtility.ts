@@ -13,7 +13,10 @@ export const generateCreateSandboxPayload = (state: any): CreateSandboxPayloadEn
             instance: state?.target?.selectedDatabaseInstance?.value,
             database: state?.target?.selectedDatabase
         },
-        mountPt: state?.mountPath,
+        mountPoints: {
+            dataDrive: state?.dataDriveMountPoint,
+            logDrive: state?.logDriveMountPoint
+        },
         tag: state?.selectedTag
     };
     return payload;
