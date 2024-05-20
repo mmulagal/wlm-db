@@ -4,182 +4,197 @@
         {
             "id": "1",
             "name": "database-1",
-            "status": "Up",
+            "status": "ONLINE",
             "size": 8388608,
             "type": "System Database",
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": true
-            }
+            },
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
             "id": "2",
             "name": "database-2",
-            "status": "Up",
+            "status": "ONLINE",
             "size": 9388608,
             "type": "System Database",
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false
-            }
+            },
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
             "id": "3",
             "name": "database-3",
-            "status": "Up",
+            "status": "ONLINE",
             "size": 2388608,
             "type": "User Database",
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
-            }
+            },
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
             "id": "4",
             "name": "database-4",
-            "status": "Down",
+            "status": "OFFLINE",
             "size": 18388608,
             "type": "System Database",
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": true
-            }
+            },
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
             "id": "5",
             "name": "database-5",
-            "status": "Down",
+            "status": "OFFLINE",
             "size": 5388608,
             "type": "User Database",
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
-            }
+            },
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
             "id": "6",
             "name": "database-6",
-            "status": "Up",
+            "status": "ONLINE",
             "size": 84388608,
             "type": "System Database",
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false
-            }
+            },
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
             "id": "7",
             "name": "database-7",
-            "status": "Up",
+            "status": "ONLINE",
             "size": 118388608,
             "type": "System Database",
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": false
-            }
+            },
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
             "id": "8",
             "name": "database-8",
-            "status": "Up",
+            "status": "ONLINE",
             "size": 8388608,
             "type": "User Database",
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
-            }
+            },
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
             "id": "9",
             "name": "database-9",
-            "status": "Up",
+            "status": "ONLINE",
             "size": 28388608,
             "type": "System Database",
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false
-            }
+            },
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
             "id": "10",
             "name": "database-10",
-            "status": "Down",
+            "status": "OFFLINE",
             "size": 38388608,
             "type": "System Database",
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
-            }
+            },
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
             "id": "11",
             "name": "database-11",
-            "status": "Up",
+            "status": "ONLINE",
             "size": 83828608,
             "type": "System Database",
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false
-            }
+            },
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
             "id": "12",
             "name": "database-12",
-            "status": "Up",
+            "status": "ONLINE",
             "size": 83828608,
             "type": "System Database",
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false
-            }
+            },
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
             "id": "13",
             "name": "database-13",
-            "status": "Up",
+            "status": "ONLINE",
             "size": 83886408,
             "type": "User Database",
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
-            }
+            },
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
             "id": "14",
             "name": "database-14",
-            "status": "Down",
+            "status": "OFFLINE",
             "size": 8388608,
             "type": "User Database",
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false
-            }
+            },
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
             "id": "15",
             "name": "database-15",
-            "status": "Up",
+            "status": "ONLINE",
             "size": 8388608,
             "type": "System Database",
             "protection": {
                 "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
-            }
+            },
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
         }
     ],
     "nextToken": "12345"

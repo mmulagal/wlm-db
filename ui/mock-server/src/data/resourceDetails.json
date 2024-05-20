@@ -7,6 +7,7 @@
         "operatingSystem": "Windows Server 2016",
         "serverEdition": "Standard",
         "serverVersion": "SQL2022",
+        "collation": "SQL_Latin1_General_CP1_CI_AS",
         "clusterName": "cluster-name-1",
         "activeNode": "SQLNODE1-39362",
         "nodeNames": [
