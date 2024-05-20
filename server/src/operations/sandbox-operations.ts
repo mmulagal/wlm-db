@@ -1385,6 +1385,92 @@ async function getDatabaseMountPointInfo(
     }
 }
 
+async function deleteSandbox(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseName: string
+) {
+    logger.info(
+        `Delete sandbox ${databaseName} in database host ${databaseHostId}`,
+        accountId,
+        region,
+        credentialsId,
+        databaseHostId,
+        databaseName
+    );
+
+    const [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
+
+    if (!resourceDetails) {
+        throw createError(HttpErrorCodes.NOT_FOUND, 'could not find the database host');
+    }
+
+    const job = await registerJob(accountId, credentialsId, region, {
+        name: `Delete sandbox ${databaseName}`,
+        description: `Delete sandbox ${databaseName} in the host ${resourceDetails.resource_name}`,
+        resourceName: databaseName,
+        initiator: 'SYSTEM',
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.SANDBOX
+    });
+
+    const { node1InstanceId, node2InstanceId, fsxSvmId } = resourceDetails.metadata as unknown as Metadata;
+
+    const { isSSMConnected, instanceName, activeNodeInstanceId } = await getActiveSqlNode(
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId,
+        databaseHostId
+    );
+
+    if (!isSSMConnected) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'SSM connection could not be established with the host'
+        );
+    }
+
+    const resDetails = {
+        resourceName: resourceDetails.resource_name || '',
+        instanceName,
+        fsxId: resourceDetails.co_relation_id!,
+        svm: fsxSvmId!,
+        activeNodeInstaceId: activeNodeInstanceId!,
+        metadata: resourceDetails.metadata as unknown as Metadata,
+        database: '',
+        instance: '',
+        host: ''
+    };
+
+    const mappings = (await getMappings(accountId, credentialsId, region, job.id, resDetails)) as VolumeLunMapping;
+
+    logger.info('MAPPINGS>>', mappings);
+
+    // DROP DB
+
+    const command = [`SQLCMD -S "${instanceName}" -Q DROP DATABASE ${databaseName}`];
+
+    const resp = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
+
+    logger.info('RESP>>>', resp);
+
+    // DELETE VOLUME
+    await startCleanup(
+        accountId,
+        credentialsId,
+        region,
+        job.id,
+        resDetails,
+        resDetails,
+        [mappings.data.volumeName, mappings.log.volumeName],
+        []
+    );
+}
+
 export {
     getSandboxesInfo,
     getSandboxSavings,
@@ -1392,5 +1478,6 @@ export {
     updateMetadataForSanboxTesting,
     revertMetadataForSanboxTesting,
     getDatabaseMountPointInfo,
-    getSandboxConnectionString
+    getSandboxConnectionString,
+    deleteSandbox
 };

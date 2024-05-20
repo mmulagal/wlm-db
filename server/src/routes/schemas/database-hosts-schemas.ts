@@ -180,6 +180,17 @@ const GetSandboxConnectionStringSchema = {
     }
 };
 
+const DeleteSandboxSchema = {
+    ...databaseHostsRequest,
+    params: SandboxConnectionStringParams,
+    tags: [RouteTags.SANDBOX],
+    summary: 'Delete sandbox',
+    description: 'Delete sandbox within a database host',
+    response: {
+        200: {}
+    }
+};
+
 export {
     DatabaseHostsSummarySchema,
     DatabaseHostDetailsSchema,
@@ -193,5 +204,6 @@ export {
     PatchResourceForSandboxSchema,
     RevertPatchResourceForSandboxSchema,
     GetSandboxesMountPointSchema,
-    GetSandboxConnectionStringSchema
+    GetSandboxConnectionStringSchema,
+    DeleteSandboxSchema
 };
