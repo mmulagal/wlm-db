@@ -149,7 +149,8 @@ const DatabaseServerMetadataResponse = Type.Object({
     activeNode: Type.String(),
     nodeNames: Type.Array(Type.String()),
     activeConnections: Type.Number(),
-    creationDate: Type.String({ minLength: 1 })
+    creationDate: Type.String({ minLength: 1 }),
+    collation: Type.String({ minLength: 1 })
 });
 type DatabaseServerMetadataResponseType = Static<typeof DatabaseServerMetadataResponse>;
 
@@ -230,7 +231,8 @@ const DatabasesResponse = Type.Object({
     status: Type.String({ minLength: 1 }),
     type: Type.String({ minLength: 1 }),
     size: Type.Number(),
-    protection: ProtectionPerStorageTypeResponse
+    protection: ProtectionPerStorageTypeResponse,
+    collation: Type.String({ minLength: 1 })
 });
 type DatabasesResponseType = Static<typeof DatabasesResponse>;
 

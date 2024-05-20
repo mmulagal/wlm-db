@@ -1060,10 +1060,16 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
     );
     try {
         const response = databases.map(
-            (database: { databaseName: string; databaseSize: number; databaseStatus: string }) => ({
+            (database: {
+                databaseName: string;
+                databaseSize: number;
+                databaseStatus: string;
+                collationName: string;
+            }) => ({
                 name: database.databaseName,
                 size: database.databaseSize,
                 status: database.databaseStatus,
+                collation: database.collationName,
                 type: MSSQL_SYSTEM_DATABASES.includes(database.databaseName.toLowerCase())
                     ? MSSQL_DATABASE_TYPES.SYSTEM
                     : MSSQL_DATABASE_TYPES.USER,
