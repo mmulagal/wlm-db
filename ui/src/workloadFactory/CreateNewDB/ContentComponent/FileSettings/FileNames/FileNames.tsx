@@ -377,17 +377,19 @@ const FileNames = () => {
                                     </DsTypography>
                                 </div>
                             </div>
-                            <div className={styles.virtualMountPoint}>
-                                <DsCheckbox
-                                    id="data-virtual-mount-point"
-                                    title="Virtual mount point"
-                                    onSelect={() => {
-                                        dispatch(setIsDataVirtualMountPoint(!isDataVirtualMountPoint));
-                                    }}
-                                    isSelected={isDataVirtualMountPoint}
-                                    isDisabled={isVirtualMountPointDisabled}
-                                />
-                            </div>
+                            {selectedNewUserConfig === GENERAL.DB_QUICK_CREATE && (
+                                <div className={styles.virtualMountPoint}>
+                                    <DsCheckbox
+                                        id="data-virtual-mount-point"
+                                        title="Virtual mount point"
+                                        onSelect={() => {
+                                            dispatch(setIsDataVirtualMountPoint(!isDataVirtualMountPoint));
+                                        }}
+                                        isSelected={isDataVirtualMountPoint}
+                                        isDisabled={isVirtualMountPointDisabled}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <div className={styles.dataFileSection}>
@@ -454,17 +456,19 @@ const FileNames = () => {
                                     </DsTypography>
                                 </div>
                             </div>
-                            <div className={styles.virtualMountPoint}>
-                                <DsCheckbox
-                                    id="log-virtual-mount-point"
-                                    title="Virtual mount point"
-                                    onSelect={() => {
-                                        dispatch(setIsLogVirtualMountPoint(!isLogVirtualMountPoint));
-                                    }}
-                                    isSelected={isLogVirtualMountPoint}
-                                    isDisabled={isVirtualMountPointDisabled}
-                                />
-                            </div>
+                            {GENERAL.DB_QUICK_CREATE && (
+                                <div className={styles.virtualMountPoint}>
+                                    <DsCheckbox
+                                        id="log-virtual-mount-point"
+                                        title="Virtual mount point"
+                                        onSelect={() => {
+                                            dispatch(setIsLogVirtualMountPoint(!isLogVirtualMountPoint));
+                                        }}
+                                        isSelected={isLogVirtualMountPoint}
+                                        isDisabled={isVirtualMountPointDisabled}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </DsTypography>
                 </AccordionCardContent>
