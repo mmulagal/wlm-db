@@ -117,9 +117,9 @@ const CreateSandboxApis = () => {
 
     useEffect(() => {
         if (!driveInfoListLoading) {
-            dispatch(setDriveInfoState({ driveInfoData: driveInfoList, driveInfoListLoading: false }));
+            dispatch(setDriveInfoState({ driveInfoData: driveInfoList, driveInfoLoading: false }));
         } else {
-            dispatch(setDriveInfoState({ driveInfoData: null, driveInfoListLoading: true }));
+            dispatch(setDriveInfoState({ driveInfoData: null, driveInfoLoading: true }));
         }
     }, [driveInfoList, driveInfoListLoading]);
 

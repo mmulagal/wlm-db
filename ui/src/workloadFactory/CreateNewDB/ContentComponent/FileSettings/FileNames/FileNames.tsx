@@ -377,7 +377,7 @@ const FileNames = () => {
                                     </DsTypography>
                                 </div>
                             </div>
-                            {selectedNewUserConfig === GENERAL.DB_QUICK_CREATE && (
+                            {selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE && (
                                 <div className={styles.virtualMountPoint}>
                                     <DsCheckbox
                                         id="data-virtual-mount-point"
@@ -456,7 +456,7 @@ const FileNames = () => {
                                     </DsTypography>
                                 </div>
                             </div>
-                            {GENERAL.DB_QUICK_CREATE && (
+                            {selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE && (
                                 <div className={styles.virtualMountPoint}>
                                     <DsCheckbox
                                         id="log-virtual-mount-point"
