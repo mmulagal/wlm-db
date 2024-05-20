@@ -26,6 +26,7 @@ export const formatSandboxListData = (data: SandboxListEntities) => {
             return {
                 id: `${item?.databaseHostId}_${item?.databaseInstanceName}_${item?.sandboxName}`,
                 name: item?.sandboxName,
+                databaseHostId: item?.databaseHostId,
                 hostName: item?.databaseHostName,
                 source: item?.sourceDatabaseName,
                 sourceHost: item?.sourceDatabaseHostName,

@@ -84,4 +84,10 @@ export interface SandboxEntities {
         sandboxSavingsLoading: boolean;
         sandboxSavingsError: string;
     };
+    connectionInfo: {
+        selectedDatabaseHostId?: string | null;
+        selectedSandboxName?: string | null;
+        connectionString?: string | null;
+        isLoading: boolean;
+    };
 }

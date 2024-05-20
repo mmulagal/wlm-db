@@ -18,6 +18,12 @@ export const initialSandboxState: SandboxEntities = {
         },
         sandboxSavingsLoading: false,
         sandboxSavingsError: ''
+    },
+    connectionInfo: {
+        selectedDatabaseHostId: null,
+        selectedSandboxName: null,
+        connectionString: null,
+        isLoading: false
     }
 };
 
@@ -36,11 +42,19 @@ const sandboxSlice = createSlice({
         },
         setShowBanner: (state, action: PayloadAction<any>) => {
             state.showBanner = action.payload;
+        },
+        updateConnectionInfo: (state, action: PayloadAction<any>) => {
+            state.connectionInfo = action.payload;
         }
     }
 });
 
-export const { setSandboxListState, setAggregatedSandboxList, setSandboxSavingsState, setShowBanner } =
-    sandboxSlice.actions;
+export const {
+    setSandboxListState,
+    setAggregatedSandboxList,
+    setSandboxSavingsState,
+    setShowBanner,
+    updateConnectionInfo
+} = sandboxSlice.actions;
 
 export default sandboxSlice;
