@@ -90,7 +90,7 @@ const SavingsSelection = ({ printState }: any) => {
 
             <div className={styles.firstRow}>
                 <SelectField
-                    label={'Snapshot frequency'}
+                    label={GENERAL.ES_SNAPSHOT_FREQUENCY}
                     isDisabled={loading}
                     isClearable={false}
                     defaultValue={
@@ -101,7 +101,7 @@ const SavingsSelection = ({ printState }: any) => {
                     }}
                     info={
                         selectedSnapshotFrequency &&
-                        selectedSnapshotFrequency?.label === 'No snapshot storage' &&
+                        selectedSnapshotFrequency?.label === GENERAL.ES_NO_SNAPSHOT_STORAGE &&
                         GENERAL.TOOLTIP_MESSAGE_SNAPSHOT_FREQ
                     }
                     isSearchable={generateSnapshotFrequency.length > 5}
@@ -131,7 +131,7 @@ const SavingsSelection = ({ printState }: any) => {
                     />
                 )}
                 <SelectField
-                    label={'Clone refresh frequency'}
+                    label={GENERAL.ES_CLONE_REFRESH_FREQUENCY}
                     isClearable={false}
                     isDisabled={loading}
                     defaultValue={selectedCloneRefresh ? selectedCloneRefresh : [generateCloneRefresh[0]]}
