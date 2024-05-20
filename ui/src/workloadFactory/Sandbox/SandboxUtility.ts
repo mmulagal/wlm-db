@@ -1,3 +1,4 @@
+import { GENERAL } from '../../utils/appConstants';
 import { CreateSandboxPayloadEntities, SandboxListEntities } from '../../utils/types/sandBoxTypes';
 import { formatDateWithTime, getTimeDifferenceInDays } from '../../utils/utilityFunctions';
 
@@ -89,4 +90,51 @@ export const getSandboxDistributionByTag = (sandBoxList: SandboxListEntities) =>
         }
     });
     return distribution;
+};
+
+export const getDefaultDriveLetters = (
+    dbMountPointsData: any,
+    source: any,
+    target: any,
+    selectedMount: any,
+    driveInfoData: any
+) => {
+    const { databaseDataPath, databaseLogPath } = dbMountPointsData || {};
+    const dataPathDrive = databaseDataPath?.[0]?.[0];
+    const logPathDrive = databaseLogPath?.[0]?.[0];
+    let defaultDataDriveLetter: any, defaultLogDriveLetter: any;
+    if (
+        selectedMount === GENERAL.AUTO_ASSIGN_MOUNT_POINT &&
+        source?.selectedDatabaseHost?.value === target?.selectedDatabaseHost?.value &&
+        source?.selectedDatabaseInstance?.value === target?.selectedDatabaseInstance?.value
+    ) {
+        defaultDataDriveLetter = dataPathDrive;
+        defaultLogDriveLetter = logPathDrive;
+    } else {
+        const recommendedDataDrive = driveInfoData?.existingDriveInfo?.find(
+            (drive: any) => drive.driveLetter === dataPathDrive
+        );
+        const recommendedLogDrive = driveInfoData?.existingDriveInfo?.find(
+            (drive: any) => drive.driveLetter === logPathDrive
+        );
+
+        if (recommendedDataDrive?.isDriveClustered && recommendedDataDrive?.isNetappDrive) {
+            defaultDataDriveLetter = dataPathDrive;
+        } else {
+            const validDrive = driveInfoData?.existingDriveInfo?.find(
+                (drive: any) => drive?.isDriveClustered && drive?.isNetappDrive
+            );
+            defaultDataDriveLetter = validDrive?.driveLetter;
+        }
+        if (recommendedLogDrive?.isDriveClustered && recommendedLogDrive?.isNetappDrive) {
+            defaultLogDriveLetter = logPathDrive;
+        } else {
+            const validDrive = driveInfoData?.existingDriveInfo?.find(
+                (drive: any) =>
+                    drive?.isDriveClustered && drive?.isNetappDrive && drive.driveLetter !== defaultDataDriveLetter
+            );
+            defaultLogDriveLetter = validDrive?.driveLetter;
+        }
+    }
+    return { dataDrive: defaultDataDriveLetter, logDrive: defaultLogDriveLetter };
 };
