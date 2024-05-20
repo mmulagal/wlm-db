@@ -960,8 +960,6 @@ Resources:
                       - "\n"
                       - 'Start-Process ` -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe ` -ArgumentList "/S"'
                       - "\n"
-                      - 'rm -Force $env:USERPROFILE\Desktop\SSMAgent_latest.exe'
-                      - "\n"
                       - '}'
                       - "\n"
                       - 'cfn-init.exe -v -c config -s '
@@ -1442,8 +1440,6 @@ Resources:
                       - '.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe ` -OutFile $env:USERPROFILE\Desktop\SSMAgent_latest.exe'
                       - "\n"
                       - 'Start-Process ` -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe ` -ArgumentList "/S"'
-                      - "\n"
-                      - 'rm -Force $env:USERPROFILE\Desktop\SSMAgent_latest.exe'
                       - "\n"
                       - '}'
                       - "\n"

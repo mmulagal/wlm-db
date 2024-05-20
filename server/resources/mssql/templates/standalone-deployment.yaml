@@ -759,8 +759,6 @@ Resources:
                       - "\n"
                       - 'Start-Process ` -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe ` -ArgumentList "/S"'
                       - "\n"
-                      - 'rm -Force $env:USERPROFILE\Desktop\SSMAgent_latest.exe'
-                      - "\n"
                       - '}'
                       - "\n"
                       - 'cfn-init.exe -v -c config -s '
