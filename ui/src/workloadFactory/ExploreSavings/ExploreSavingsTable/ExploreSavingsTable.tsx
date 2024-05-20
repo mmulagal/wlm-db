@@ -62,6 +62,16 @@ const ExploreSavingsTable = () => {
             }
         },
         {
+            Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
+            accessor: 'serverInstallationMode',
+            id: '6',
+            width: '230px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string, rowData: any) => {
+                return renderDeploymentModel(cellData, rowData);
+            }
+        },
+        {
             Header: GENERAL.DB_HOST_FILE_SYSTEM_TYPE,
             accessor: 'fileSystemType',
             id: '2',
@@ -102,16 +112,6 @@ const ExploreSavingsTable = () => {
             ],
             renderCell: (cellData: any, rowData: any) => {
                 return renderUnmanagedAZ(cellData, rowData, styles);
-            }
-        },
-        {
-            Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
-            accessor: 'serverInstallationMode',
-            id: '6',
-            width: '230px',
-            filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return renderDeploymentModel(cellData, rowData);
             }
         },
         {

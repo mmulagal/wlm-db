@@ -18,7 +18,7 @@ const InstanceInformation = () => {
         let data: any = [
             {
                 details: 'Instance type',
-                value: instanceTypelist ? instanceTypelist.join(',') : GENERAL.NOT_AVAILABLE,
+                value: instanceTypelist ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
                 id: '1'
             },
             {

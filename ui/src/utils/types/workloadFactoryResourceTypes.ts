@@ -11,6 +11,7 @@ export interface WorkloadFactoryResourceDetails {
     status: string;
     databaseCount: number;
     databaseServer: {
+        collation?: string;
         operatingSystem: string;
         serverEdition: string;
         serverVersion: string;
@@ -151,4 +152,5 @@ export interface WorkloadFactoryDatabaseItem {
         isFsxOntapSnapshotsEnabled: boolean;
         isSqlNativeEnabled: boolean;
     };
+    collation?: string;
 }
