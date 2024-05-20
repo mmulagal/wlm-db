@@ -123,7 +123,7 @@ Metadata:
             ParentStackName:
                 default: Name of the parent CloudFormation stack
             FsxVolumeSnapshotPolicy:
-                default: Snapshot policy for the volume. Can be either default or none.
+                default: Snapshot policy for the volume. Can be either daily_weekretention or none.
 Parameters:
     ParentStackName:
         Description: Name of the parent CloudFormation stack.

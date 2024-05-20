@@ -195,9 +195,8 @@ Start-Sleep 5
 
 #Create snapshot policy - daily with 7 days retention
 $PolicyExists = $False
-$SnapshotPolicyPart = 'storage/snapshot-policies'
 
-if ($SnapshotPolicy -eq 'default') {
+if ($SnapshotPolicy -eq 'daily_weekretention') {
 $SnapshotPolicyPart = 'storage/snapshot-policies'
 #Check if snapshot exists
 $URI = "https://$($MgmtDNS)/api/$($SnapshotPolicyPart)?svm=$($SQLVMName)&name=daily_weekretention"
@@ -261,7 +260,12 @@ $Body = @{
     "autosize-mode" = "grow"
     "tiering-object-tags" = @( "wlmDeploymentId=" + $($Stackname.split('-')[0..2] -join "_") )
 }
-if ($PolicyExists -eq $True) {
+
+if ($SnapshotPolicy -eq "none") {
+    $Body["snapshot-policy"] = 'none'
+}
+
+else if ($PolicyExists -eq $True) {
     $Body["snapshot-policy"] = 'daily_weekretention'
 } 
 
