@@ -6,7 +6,8 @@ const DATABASES = (offset: number, rowscount: number) =>
             databaseName = d.name,
             creationDate = d.create_date,
             databaseStatus = d.state_desc,
-            databaseSize = t.databaseSize
+            databaseSize = t.databaseSize,
+            collationName = d.collation_name
             FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),
             rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),
             databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))
@@ -210,8 +211,9 @@ const SERVER_DETAILS = `
         SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS activeNode,
         @@version AS serverDetails,
         @@SERVERNAME AS clusterName,
-        COUNT(*) AS totalCount FROM sys.databases
-    ${FOR_JSON_PATH}`;
+        (SELECT COUNT(*) FROM sys.databases) AS totalCount,
+        SERVERPROPERTY('Collation') AS ServerCollation
+        ${FOR_JSON_PATH}`;
 
 export {
     DATABASES,

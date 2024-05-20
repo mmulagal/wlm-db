@@ -1,46 +1,27 @@
-import { Button, Typography } from '@netapp/design-system';
-
-import styles from './InventoryHeaderSection.module.scss';
-import { useNavigate } from 'react-router-dom';
-import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
-import { GENERAL } from '../../../utils/appConstants';
-import InventoryChart from '../InventoryChart/InventoryChart';
+import { Typography } from '@netapp/design-system';
 import SquareComponent from '../../DatabaseHomePage/SquareComponent/SquareComponent';
+import styles from './NewInventoryHeaderSection.module.scss';
+import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
-import NewInventoryHeaderSection from '../NewInventoryHeaderSection/NewInventoryHeaderSection';
+import NewInventoryChart from './NewInventoryChart/NewInventoryChart';
 
-const InventoryHeaderSection = () => {
-    const navigate = useNavigate();
+const NewInventoryHeaderSection = () => {
+    // const navigate = useNavigate();
     const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
     const { unManagedHosts, unIdentifiableHosts } = useAppSelector(state => state.inventory);
-    const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
+    const databaseHostsList: any = useAppSelector(state => state.databaseHome.databaseHostsList);
     return (
-        <div className={styles.inventoryHeader}>
-            {/* Top button area */}
-            <div className={styles.buttonSection}>
-                <div />
-                <div>
-                    <Button
-                        variant="primary"
-                        onClick={() => {
-                            navigate(WLF_TO_FORM_NAVIGATE);
-                        }}
-                        id={'deploy-button'}
-                    >
-                        {GENERAL.DEPLOY_NEW_DATABASE}
-                    </Button>
-                </div>
-            </div>
-
-            {/* <NewInventoryHeaderSection /> */}
-
-            {/* chart area */}
-            <div className={styles.chartSection}>
-                <div className={styles.firstPart}>
-                    <InventoryChart />
-                </div>
+        <div className={styles.chartSection}>
+            <div className={styles.firstPart}>
+                <NewInventoryChart
+                    color1={'#68C6B3'}
+                    color2={'#5E8DCD'}
+                    data1={(databaseHostsList?.length || 0) + unManagedHosts.length}
+                    data2={unIdentifiableHosts.length}
+                    centerText={'Hosts'}
+                />
 
                 <div className={styles.secondPart}>
                     <Typography variant="Semibold_16" className={styles.heading}>
@@ -69,10 +50,20 @@ const InventoryHeaderSection = () => {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div className={styles.firstPart}>
+                <NewInventoryChart
+                    color1={'#A815F3'}
+                    color2={'#DE9EFF'}
+                    data1={databaseHostsList?.length || 0}
+                    data2={unManagedHosts.length}
+                    centerText={'Instances'}
+                />
 
                 <div className={styles.secondPart}>
                     <Typography variant="Semibold_16" className={styles.heading}>
-                        {GENERAL.DETECTED_DB_HOSTS_DISTRIBUTION}
+                        {GENERAL.INSTANCES_DISTRIBUTION}
                     </Typography>
 
                     <div className={styles.valueArea}>
@@ -80,7 +71,7 @@ const InventoryHeaderSection = () => {
                             <SquareComponent
                                 value={((databaseHostsList || [])?.length || 0).toString()}
                                 color="var(--chart-9)"
-                                text={GENERAL.MANAGED_BY_WLF}
+                                text={GENERAL.MANAGED_INSTANCES}
                                 isLoading={databaseHostsLoading || fullHostDataLoading}
                             />
                         </div>
@@ -91,7 +82,7 @@ const InventoryHeaderSection = () => {
                             <SquareComponent
                                 value={unManagedHosts.length}
                                 color="#DE9EFF"
-                                text={GENERAL.UNMANAGED_HOSTS}
+                                text={GENERAL.UNMANAGED_INSTANCES}
                                 isLoading={isDiscoverInProgress || isManagedHostListLoading}
                             />
                         </div>
@@ -102,4 +93,4 @@ const InventoryHeaderSection = () => {
     );
 };
 
-export default InventoryHeaderSection;
+export default NewInventoryHeaderSection;

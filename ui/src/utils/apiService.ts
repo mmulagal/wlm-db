@@ -502,8 +502,10 @@ export const createUserDbApi = createApi({
     endpoints: builder => {
         return {
             getDriveInfo: builder.query({
-                query: ({ credentialId, region, id }) => ({
-                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}/drive-information`
+                query: ({ credentialId, region, id, forSandbox }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${id}/drive-information${
+                        forSandbox ? '?forSandbox=true' : ''
+                    }`
                 })
             }),
             createUserDB: builder.mutation({
@@ -707,6 +709,16 @@ export const sandboxApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getConnectionInfo: builder.query({
+                query: ({ regionId, credentialsId, databaseHostId, sandboxName }) => ({
+                    url: `credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandbox/${sandboxName}/connection-string`
+                })
+            }),
+            getDatabaseMountPoints: builder.query({
+                query: ({ region, credentialId, databaseHostId, databaseName, instanceName }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-mount-points?databaseName=${databaseName}&instanceName=${instanceName}`
+                })
             })
         };
     }
@@ -809,6 +821,12 @@ export const {
     usePrepareHostMutation
 } = inventoryApi;
 
-export const { useGetSandboxListQuery, useGetSandboxSavingsQuery, useCreateSandboxMutation } = sandboxApi;
+export const {
+    useGetSandboxListQuery,
+    useGetSandboxSavingsQuery,
+    useCreateSandboxMutation,
+    useGetConnectionInfoQuery,
+    useGetDatabaseMountPointsQuery
+} = sandboxApi;
 
 export const { useGetStorageSavingsMutation, useGetViewCalculationsMutation } = exploreSavingsApi;

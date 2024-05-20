@@ -24,8 +24,17 @@ export const initialCreateSandboxState: CreateSandboxEntities = {
         selectedDatabaseInstance: null,
         selectedDatabase: `DBname_sandbox_${Date.now()}`
     },
+    getDriveInfo: {
+        driveInfoLoading: false,
+        driveInfoData: null
+    },
+    getDbMountPoints: {
+        dbMountPointsData: null,
+        dbMountPointsLoading: false
+    },
     selectedMount: GENERAL.AUTO_ASSIGN_MOUNT_POINT,
-    mountPath: '',
+    dataDriveMountPoint: null,
+    logDriveMountPoint: null,
     selectedTag: 'Development',
     isTargetSelected: true,
     isSourceSelected: true,
@@ -47,6 +56,12 @@ const createSandboxSlice = createSlice({
         },
         setDatabaseListState: (state, action: PayloadAction<any>) => {
             state.getDatabaseList = action.payload;
+        },
+        setDriveInfoState: (state, action: PayloadAction<any>) => {
+            state.getDriveInfo = action.payload;
+        },
+        setDbMountPointsState: (state, action: PayloadAction<any>) => {
+            state.getDbMountPoints = action.payload;
         },
         setSourceDbHost: (state, action: PayloadAction<any>) => {
             state.source.selectedDatabaseHost = action.payload;
@@ -87,8 +102,11 @@ const createSandboxSlice = createSlice({
         setSelectedMount: (state, action: PayloadAction<any>) => {
             state.selectedMount = action.payload;
         },
-        setMountPath: (state, action: PayloadAction<any>) => {
-            state.mountPath = action.payload;
+        setDataDriveMountPoint: (state, action: PayloadAction<any>) => {
+            state.dataDriveMountPoint = action.payload;
+        },
+        setLogDriveMountPoint: (state, action: PayloadAction<any>) => {
+            state.logDriveMountPoint = action.payload;
         },
         setShowError: (state, action: PayloadAction<any>) => {
             state.showError = action.payload;
@@ -108,13 +126,16 @@ export const {
     setTargetDatabase,
     setIsSourceSelected,
     setIsTargetSelected,
-    setMountPath,
+    setDataDriveMountPoint,
+    setLogDriveMountPoint,
     setSelectedTag,
     setSelectedMount,
     setCreateSandboxPressed,
     setIsMountPathAdded,
     setIsNa,
-    setShowError
+    setShowError,
+    setDriveInfoState,
+    setDbMountPointsState
 } = createSandboxSlice.actions;
 
 export default createSandboxSlice;

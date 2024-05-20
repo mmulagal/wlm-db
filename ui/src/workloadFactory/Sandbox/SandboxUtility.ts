@@ -13,7 +13,10 @@ export const generateCreateSandboxPayload = (state: any): CreateSandboxPayloadEn
             instance: state?.target?.selectedDatabaseInstance?.value,
             database: state?.target?.selectedDatabase
         },
-        mountPt: state?.mountPath,
+        mountPoints: {
+            dataDrive: state?.dataDriveMountPoint,
+            logDrive: state?.logDriveMountPoint
+        },
         tag: state?.selectedTag
     };
     return payload;
@@ -26,6 +29,7 @@ export const formatSandboxListData = (data: SandboxListEntities) => {
             return {
                 id: `${item?.databaseHostId}_${item?.databaseInstanceName}_${item?.sandboxName}`,
                 name: item?.sandboxName,
+                databaseHostId: item?.databaseHostId,
                 hostName: item?.databaseHostName,
                 source: item?.sourceDatabaseName,
                 sourceHost: item?.sourceDatabaseHostName,

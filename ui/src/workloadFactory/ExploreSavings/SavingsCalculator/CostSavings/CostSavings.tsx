@@ -15,8 +15,8 @@ const CostSavings = () => {
     const [costZeroCase, setCostZeroCase] = useState(false);
 
     useEffect(() => {
-        const fsxTotal = storageSavingsResponse?.fsx?.total;
-        const ebsTotal = storageSavingsResponse?.ebs?.total;
+        const fsxTotal = storageSavingsResponse?.fsx?.total ? Number(storageSavingsResponse?.fsx?.total) : 0;
+        const ebsTotal = storageSavingsResponse?.ebs?.total ? Number(storageSavingsResponse?.ebs?.total) : 0;
         if (storageSavingsResponse && fsxTotal && ebsTotal && fsxTotal <= ebsTotal) {
             setSavings(ebsTotal - fsxTotal);
             const percent = 100 * ((ebsTotal - fsxTotal) / ebsTotal);

@@ -405,7 +405,8 @@ async function getServerDetails(
             clusterName,
             numberOfConnections,
             clusterNodesInfo,
-            totalCount
+            totalCount,
+            ServerCollation
         }
     ] = serverAllDetails ? sqlResponseParsing(serverAllDetails) : '';
     const serverInfo = serverDetails ? serverDetails?.replaceAll('\r\n', '').split('\t') : '';
@@ -436,7 +437,8 @@ async function getServerDetails(
         ...(isClustered ? { standbyNode, clusterName } : {}),
         operatingSystem: serverDetails.match('Windows Server \\d+')?.[0] || '',
         nodeNames: standbyNode ? [activeNode!, standbyNode!] : [activeNode!],
-        dbCount: totalCount
+        dbCount: totalCount,
+        collation: ServerCollation
     };
 }
 

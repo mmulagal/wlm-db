@@ -13,8 +13,28 @@
     .radios {
         margin-top: 15px;
         display: flex;
+        flex-direction: row;
+        gap: 40px;
+    }
+
+    .autoAssignContent {
+        display: flex;
         flex-direction: column;
         gap: 24px;
+        margin-top: 24px;
+        .pathSection {
+            display: flex;
+            height: 41px;
+            width: 590px;
+            background-color: var(--main-background);
+            padding: 10px 24px;
+            white-space: nowrap;
+
+            .pathText {
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+        }
     }
 
     .textField {

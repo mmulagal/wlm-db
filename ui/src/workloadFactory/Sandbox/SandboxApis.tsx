@@ -3,15 +3,18 @@ import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     setAggregatedSandboxList,
     setSandboxListState,
-    setSandboxSavingsState
+    setSandboxSavingsState,
+    updateConnectionInfo
 } from '../../store/workloadFactory/sandboxSlice';
-import { useGetSandboxListQuery, useGetSandboxSavingsQuery } from '../../utils/apiService';
+import { useGetConnectionInfoQuery, useGetSandboxListQuery, useGetSandboxSavingsQuery } from '../../utils/apiService';
 
 const SandboxApis = () => {
     const dispatch = useAppDispatch();
 
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
-    const { getSandboxList, aggregatedSandboxList } = useAppSelector(state => state.sandbox);
+    const { getSandboxList, aggregatedSandboxList, connectionInfo } = useAppSelector(state => state.sandbox);
+
+    const { selectedDatabaseHostId, selectedSandboxName } = connectionInfo;
 
     const [credId, setCredId] = useState(null);
     const [regionId, setRegionId] = useState(null);
@@ -48,6 +51,22 @@ const SandboxApis = () => {
         { skip: !credId || !regionId }
     );
 
+    const {
+        data: connectionInfoData,
+        isFetching: fetchingConnectionInfo,
+        isError: connectionInfoError
+    } = useGetConnectionInfoQuery(
+        {
+            credentialsId: credId,
+            regionId: regionId,
+            databaseHostId: selectedDatabaseHostId,
+            sandboxName: selectedSandboxName
+        },
+        {
+            skip: !credId || !regionId || !selectedDatabaseHostId || !selectedSandboxName
+        }
+    );
+
     useEffect(() => {
         if (!sandboxListLoading && getSandboxList?.sandboxListLoading) {
             dispatch(
@@ -76,6 +95,28 @@ const SandboxApis = () => {
             })
         );
     }, [sandboxSavings, sandboxSavingsLoading, sandboxSavingsError]);
+
+    useEffect(() => {
+        if (!fetchingConnectionInfo) {
+            dispatch(
+                updateConnectionInfo({
+                    selectedDatabaseHostId,
+                    selectedSandboxName,
+                    connectionString: connectionInfoData,
+                    isLoading: false
+                })
+            );
+        } else {
+            dispatch(
+                updateConnectionInfo({
+                    selectedDatabaseHostId,
+                    selectedSandboxName,
+                    connectionString: '',
+                    isLoading: true
+                })
+            );
+        }
+    }, [connectionInfoData, fetchingConnectionInfo, connectionInfoError]);
 
     return <></>;
 };
