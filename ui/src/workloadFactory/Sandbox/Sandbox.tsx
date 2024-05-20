@@ -6,12 +6,22 @@ import SandboxDistributionDate from './SandboxDistributionDate/SandboxDistributi
 import SandboxDistributionType from './SandboxDistributionType/SandboxDistributionType';
 import SandboxTable from './SandboxTable/SandboxTable';
 import { useAppSelector } from '../../store/storeHooks';
+import { Spinner } from '@netapp/design-system';
 
 const Sandbox = () => {
-    const { showBanner } = useAppSelector(state => state?.sandbox);
+    const { showBanner, connectionInfo } = useAppSelector(state => state?.sandbox);
+    const { isLoading: connectionInfoLoading } = connectionInfo;
 
     return (
         <div className={styles.sandbox}>
+            {connectionInfoLoading && (
+                <>
+                    <div className={styles.loaderOverlay}></div>
+                    <div className={styles.spinnerPlacement}>
+                        <Spinner isLarge />
+                    </div>
+                </>
+            )}
             {showBanner && <SandboxHeader />}
 
             <div className={styles.sandboxSecondLevel}>

@@ -707,6 +707,11 @@ export const sandboxApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getConnectionInfo: builder.query({
+                query: ({ regionId, credentialsId, databaseHostId, sandboxName }) => ({
+                    url: `credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandbox/${sandboxName}/connection-string`
+                })
             })
         };
     }
@@ -809,6 +814,11 @@ export const {
     usePrepareHostMutation
 } = inventoryApi;
 
-export const { useGetSandboxListQuery, useGetSandboxSavingsQuery, useCreateSandboxMutation } = sandboxApi;
+export const {
+    useGetSandboxListQuery,
+    useGetSandboxSavingsQuery,
+    useCreateSandboxMutation,
+    useGetConnectionInfoQuery
+} = sandboxApi;
 
 export const { useGetStorageSavingsMutation, useGetViewCalculationsMutation } = exploreSavingsApi;
