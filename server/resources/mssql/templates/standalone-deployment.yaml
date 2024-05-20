@@ -504,7 +504,7 @@ Resources:
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Unjoin-Domain.ps1
                                     -Parentstackname '
-                                  - !Ref 'Parentstackname'
+                                  - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 0
                         g-restart-computer:
