@@ -876,7 +876,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                     viewCalculation.ebsCalculation.ebsThroughputCost
                 }) + EBS IOPS cost ($${viewCalculation.ebsCalculation.ebsIopsCost}) + EBS storage cost ($${
                     viewCalculation.ebsCalculation.ebsStorageCost
-                }) + EBS clone cost ($${viewCalculation.ebsCloneCalculation.cloneCost})`
+                }) + EBS clone cost ($${viewCalculation.ebsCloneCalculation.totalCloneMonthlyCost})`
             }
         ]
     };

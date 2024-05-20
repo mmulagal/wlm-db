@@ -37,7 +37,7 @@ import { addInitialData, initialDBHomepageState } from '../store/workloadFactory
 const moment = require('moment');
 
 // Extended to store data that requires for another API input or post request
-interface OptionsWithData extends optionType {
+export interface OptionsWithData extends optionType {
     data?: Object;
 }
 

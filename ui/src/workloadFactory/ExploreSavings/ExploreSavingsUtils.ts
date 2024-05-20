@@ -16,14 +16,14 @@ export const onClickESHost = (dispatch: any, rowData: any, isDemoMode: any) => {
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
     dispatch(setSelectedInstanceId(rowData?.id));
     dispatch(setSelectedDeploymentModel(deploymentModel));
-    dispatch(setSelectedServerName(rowData.sqlServerInstances?.[0].sqlServerName || 'Server name'));
+    dispatch(setSelectedServerName(rowData.sqlServerInstances?.[0].sqlServerName || GENERAL.ES_SERVER_NAME));
     setESInstanceData(rowData, isDemoMode, deploymentModel, dispatch);
 };
 
 export const setESInstanceData = (data: any, isDemoMode: any, type: string, dispatch: any) => {
     if (isDemoMode) {
         let demoData = {};
-        if (type === 'standalone') {
+        if (type === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             demoData = {
                 ...data,
                 topology: {
@@ -35,7 +35,7 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                         }
                     ]
                 },
-                serverInstallationMode: 'Standalone',
+                serverInstallationMode: GENERAL.STANDALONE,
                 databaseServer: {
                     ...data?.databaseServer,
                     activeNode: 'SQLserver-Finance-01',
@@ -59,8 +59,8 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                     }
                 ],
                 recommendedInstance: {
-                    serverInstallationMode: 'Standalone',
-                    serverEdition: 'SQL Server Standard Edition',
+                    serverInstallationMode: GENERAL.STANDALONE,
+                    serverEdition: GENERAL.SQL_SERVER_STANDARD_EDITION,
                     serverVersion: 'Microsoft SQL Server 2019',
                     instanceType: 'm5.2xlarge'
                 },
@@ -86,7 +86,7 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                         }
                     ]
                 },
-                serverInstallationMode: 'Always on availability group',
+                serverInstallationMode: GENERAL.AOAG,
                 databaseServer: {
                     ...data?.databaseServer,
                     activeNode: 'SQLserver-PLM',
@@ -110,8 +110,8 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                     }
                 ],
                 recommendedInstance: {
-                    serverInstallationMode: 'Failover Cluster Instances',
-                    serverEdition: 'SQL Server Standard Edition',
+                    serverInstallationMode: GENERAL.FAILOVER_CLUSTER_INSTANCES,
+                    serverEdition: GENERAL.SQL_SERVER_STANDARD_EDITION,
                     serverVersion: 'Microsoft SQL Server 2019',
                     instanceType: 'm5.2xlarge'
                 },
@@ -248,10 +248,10 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
             cost += 2 * (viewCalculationsResponse?.ebsInstanceCalculation?.[0]?.ec2MachineCost || 0);
         }
         cost += viewCalculationsResponse?.ebsCalculation?.ebsSnapshotCost || 0;
-        cost += viewCalculationsResponse?.ebsCloneCalculation?.cloneCost || 0;
+        cost += viewCalculationsResponse?.ebsCloneCalculation?.totalCloneMonthlyCost || 0;
         cost += viewCalculationsResponse?.ebsCalculation?.ebsIopsCost || 0;
         cost += viewCalculationsResponse?.ebsCalculation?.ebsStorageCost || 0;
-        cost += viewCalculationsResponse?.ebsCloneCalculation?.cloneCost || 0;
+        cost += viewCalculationsResponse?.ebsCloneCalculation?.totalCloneMonthlyCost || 0;
         return formatFractionalNumber(cost, 2);
     })();
 
