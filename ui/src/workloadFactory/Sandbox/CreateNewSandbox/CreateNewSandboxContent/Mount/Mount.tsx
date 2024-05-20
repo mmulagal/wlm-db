@@ -53,8 +53,8 @@ const Mount = () => {
                 source?.selectedDatabaseHost?.value === target?.selectedDatabaseHost?.value &&
                 source?.selectedDatabaseInstance?.value === target?.selectedDatabaseInstance?.value
             ) {
-                setDataFilePath(`${dataPathDrive}:/${truncatedDbName}-Data/${dataPathSuffix}`);
-                setLogFilePath(`${logPathDrive}:/${truncatedDbName}-Log/${logPathSuffix}`);
+                setDataFilePath(`${dataPathDrive}:\\${truncatedDbName}-Data\\${dataPathSuffix}`);
+                setLogFilePath(`${logPathDrive}:\\${truncatedDbName}-Log\\${logPathSuffix}`);
                 dispatch(setDataDriveMountPoint(dataPathDrive));
                 dispatch(setLogDriveMountPoint(logPathDrive));
             } else {
