@@ -1359,6 +1359,10 @@ async function getDatabaseMountPointInfo(
     }
 
     try {
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            databaseName = 'test-database';
+        }
+
         const command = [mountPointQuery(instanceName, databaseName)];
 
         const mountPoints = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
