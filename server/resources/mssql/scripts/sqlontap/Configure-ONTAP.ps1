@@ -265,7 +265,7 @@ if ($SnapshotPolicy -eq "none") {
     $Body["snapshot-policy"] = 'none'
 }
 
-else if ($PolicyExists -eq $True) {
+elseif ($PolicyExists -eq $True) {
     $Body["snapshot-policy"] = 'daily_weekretention'
 } 
 
