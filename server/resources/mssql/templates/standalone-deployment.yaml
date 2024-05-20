@@ -252,8 +252,8 @@ Parameters:
     FsxVolumeSnapshotPolicy:
         Description: Snapshot policy for the volume. Can be either daily_weekretention or none.
         Type: String
-        Default: default
-        AllowedValues: [default, none]
+        Default: daily_weekretention
+        AllowedValues: [daily_weekretention, none]
 Conditions:
     ADSGNotSelected: !Equals
         - !Ref 'DomainMemberSGID'

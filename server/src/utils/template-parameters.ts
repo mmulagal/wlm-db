@@ -292,7 +292,8 @@ const PARAMETERS = [
         name: 'FsxVolumeSnapshotPolicy',
         description: 'Snapshot policy for the volume. Can be either daily_weekretention or none.',
         type: 'String',
-        default: 'default'
+        default: 'daily_weekretention',
+        allowedValues: ['daily_weekretention', 'none']
     },
     {
         name: 'VPCID',
