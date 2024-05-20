@@ -117,26 +117,26 @@ export const getDefaultDriveLetters = (
             (drive: any) => drive.driveLetter === logPathDrive
         );
         if (
-            (!recommendedDataDrive.hasOwnProperty('isDriveClustered') || recommendedDataDrive?.isDriveClustered) &&
+            (!recommendedDataDrive?.hasOwnProperty('isDriveClustered') || recommendedDataDrive?.isDriveClustered) &&
             recommendedDataDrive?.isNetappDrive
         ) {
             defaultDataDriveLetter = dataPathDrive;
         } else {
             const validDrive = driveInfoData?.existingDriveInfo?.find(
                 (drive: any) =>
-                    (!drive.hasOwnProperty('isDriveClustered') || drive?.isDriveClustered) && drive?.isNetappDrive
+                    (!drive?.hasOwnProperty('isDriveClustered') || drive?.isDriveClustered) && drive?.isNetappDrive
             );
             defaultDataDriveLetter = validDrive?.driveLetter;
         }
         if (
-            (!recommendedLogDrive.hasOwnProperty('isDriveClustered') || recommendedLogDrive?.isDriveClustered) &&
+            (!recommendedLogDrive?.hasOwnProperty('isDriveClustered') || recommendedLogDrive?.isDriveClustered) &&
             recommendedLogDrive?.isNetappDrive
         ) {
             defaultLogDriveLetter = logPathDrive;
         } else {
             const validDrive = driveInfoData?.existingDriveInfo?.find(
                 (drive: any) =>
-                    (!drive.hasOwnProperty('isDriveClustered') || drive?.isDriveClustered) &&
+                    (!drive?.hasOwnProperty('isDriveClustered') || drive?.isDriveClustered) &&
                     drive?.isNetappDrive &&
                     drive.driveLetter !== defaultDataDriveLetter
             );
