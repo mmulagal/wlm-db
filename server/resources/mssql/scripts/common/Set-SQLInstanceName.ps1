@@ -27,6 +27,31 @@ try
     $DomainPassword = $SsmParameter.domain.password
     $pass = ConvertTo-SecureString $DomainPassword -AsPlainText -Force
     $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,$pass))
+
+    # Get SQL server instance name
+    $SQLServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
+    $SQLInstanceName = "MSSQLSERVER"
+    $SQLInstanceNames = @()
+    ForEach ($sqlService in $sqlServiceList) {
+    $sqlServiceBinaryPath = $sqlService.PathName  -Replace "-s.*", ""
+      If (Test-Path $sqlServiceBinaryPath.Replace('"', '')) {
+        $SqlVersion = Invoke-Expression -Command "(dir $sqlServiceBinaryPath).VersionInfo"}
+        $ValidSqlVersion = $SqlVersion.ProductVersion -match '^1[3-9]'
+        If ($ValidSqlVersion -eq $true) {
+        $SQLInstanceNames +=$sqlService.Name 
+        }} 
+
+    If ($SQLInstanceNames -NotContains "MSSQLSERVER") {
+        $SQLInstanceName = $SQLInstanceNames[0]
+    }
+    
+    # Instance name to be passed to Invoke-sqlcmd
+    $ServerInstanceName = "$env:COMPUTERNAME"
+    If($SQLInstanceName -ne "MSSQLSERVER") {
+        $ServerInstanceName = "$env:COMPUTERNAME\$SQLInstanceName"
+            
+    }
+ 
     $renameinstance = {
         $query = "
 DECLARE @InternalInstanceName sysname;
@@ -39,12 +64,15 @@ EXEC sp_addserver @MachineInstanceName,
 'LOCAL';
 END"    
 
-        try {
-            Invoke-Sqlcmd -Query $query 
-        }catch{
-            Write-Host "Invoking query with TrustServerCertificate. Error: $_"
-            Invoke-Sqlcmd -Query $query -TrustServerCertificate
-        }
+        # try {
+        #     Invoke-Sqlcmd -Query $query 
+        # }catch{
+        #     Write-Host "Invoking query with TrustServerCertificate. Error: $_"
+        #     Invoke-Sqlcmd -Query $query -TrustServerCertificate
+        # }
+
+        sqlcmd -S $Using:ServerInstanceName -Q $query 
+
     }
     Invoke-Command -Authentication Credssp -Scriptblock $renameinstance -ComputerName $NetBIOSName -Credential $DomainAdminCreds
 
