@@ -1,18 +1,24 @@
-import { DsTypography, SelectField } from '@netapp/design-system';
+import { DsCheckbox, SelectField } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import styles from './RebaseRollbackContent.module.scss';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
+import { GENERAL } from '../../../../utils/appConstants';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 const RebaseRollbackContent = () => {
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
+    const [rollbackSelected, setRollbackSelected] = useState(false);
     //Function to generate the options for Select Field
     const generateRollbackOptions = useMemo<optionType[]>((): optionType[] => {
-        const frequency = [
-            'DB 1 | May 1, 2024, 12:15:11',
-            'DB 1 | May 2, 2024, 12:15:11',
-            'DB 1 | May 3, 2024, 12:15:11',
-            'DB 1 | May 4, 2024, 12:15:11'
-        ];
+        const frequency = isDemoMode
+            ? [
+                  'DB 1 | May 1, 2024, 12:15:11',
+                  'DB 1 | May 2, 2024, 12:15:11',
+                  'DB 1 | May 3, 2024, 12:15:11',
+                  'DB 1 | May 4, 2024, 12:15:11'
+              ]
+            : [];
         const options: optionType[] = [];
         frequency?.map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '', val);
@@ -22,9 +28,13 @@ const RebaseRollbackContent = () => {
     }, []);
     return (
         <div className={styles.rebaseRollBack}>
-            <DsTypography variant="Regular_14">
-                Select the snapshot you would like the database to Roll-back to
-            </DsTypography>
+            <DsCheckbox
+                id="rolllback-checkbox"
+                title={GENERAL.ROLLBACK_CHECKBOX}
+                onSelect={() => setRollbackSelected(!rollbackSelected)}
+                isSelected={rollbackSelected}
+                isDisabled={!isDemoMode}
+            />
             <SelectField
                 label={'Original database snapshot'}
                 isClearable={false}
@@ -33,6 +43,7 @@ const RebaseRollbackContent = () => {
                 isSearchable={true}
                 options={generateRollbackOptions}
                 className={styles.widthSet}
+                isDisabled={!rollbackSelected}
             />
         </div>
     );

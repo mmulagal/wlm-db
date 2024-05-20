@@ -69,10 +69,6 @@ const SandboxTable = () => {
                 displayName: 'Refresh'
             },
             {
-                id: 'rollback',
-                displayName: 'Roll-back'
-            },
-            {
                 id: 'connectToTools',
                 displayName: 'Connect to CI/CD tools'
             },
@@ -267,9 +263,6 @@ const SandboxTable = () => {
                                             break;
                                         case 'split':
                                             handleSplit();
-                                            break;
-                                        case 'rollback':
-                                            handleRollback();
                                             break;
                                         case 'connectToTools':
                                             handleConnectToTools();
