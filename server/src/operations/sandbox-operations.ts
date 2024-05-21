@@ -906,12 +906,13 @@ async function invokeVirtualMount(
                 );
             }
 
-            status = JOBSTATUS.COMPLETED;
             const parsedResp = sqlResponseParsing(resp);
 
             if (parsedResp.error) {
                 throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
             }
+
+            status = JOBSTATUS.COMPLETED;
             return parsedResp;
         } catch (e: any) {
             logger.error(e);
@@ -921,11 +922,13 @@ async function invokeVirtualMount(
                 throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
             }
         } finally {
-            await updateJobDetails(accountId, credentialsId, region, invokeMountJob.id, {
-                error: errorMsg,
-                status,
-                endTime: Date.now()
-            });
+            if (status === JOBSTATUS.FAILED || status === JOBSTATUS.COMPLETED) {
+                await updateJobDetails(accountId, credentialsId, region, invokeMountJob.id, {
+                    error: errorMsg,
+                    status,
+                    endTime: Date.now()
+                });
+            }
         }
     }
 }
