@@ -171,7 +171,6 @@ const HeaderComponent = ({ tab }: Tab) => {
             dispatch(inventoryApi.util.resetApiState());
             dispatch(setIsRefreshed(true));
         } else if (selectedHeaderTab === WLF_TABS.OVERVIEW) {
-            resetDBHomePageState(dispatch);
             dispatch(workloadFactoryResourceApi.util.resetApiState());
         } else if (selectedHeaderTab === WLF_TABS.JOB_MONITORING) {
             dispatch(setJobsList([]));
