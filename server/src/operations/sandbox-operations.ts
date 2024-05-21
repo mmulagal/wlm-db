@@ -363,6 +363,10 @@ async function createSandbox(
 ) {
     logger.info({ source, dest, mountPoints });
 
+    Object.entries(mountPoints).forEach(([key, value]) => {
+        mountPoints[key as keyof MountPoints] = value.toUpperCase();
+    });
+
     let [[srcResourceDetail], [destResourceDetail]] = await Promise.all([
         listResources(accountId, source.host),
         source.host === dest.host ? Promise.resolve([]) : listResources(accountId, dest.host)
@@ -1016,7 +1020,11 @@ async function createCloneDb(
         );
 
         // We only get a response for  different server version or in case of error from query
-        if (resp && !resp.includes('Converting database') && !resp.includes('running the upgrade step from version')) {
+        if (
+            resp &&
+            !resp.toLowerCase().includes('converting database') &&
+            !resp.includes('running the upgrade step from version')
+        ) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, resp);
         }
 
