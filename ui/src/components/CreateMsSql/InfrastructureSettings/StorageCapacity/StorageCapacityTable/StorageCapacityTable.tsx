@@ -3,12 +3,13 @@ import styles from './StorageCapacityTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
-import { formatFractionalNumber } from '../../../../../utils/utilityFunctions';
+import { formatFractionalNumber, isFsxnNew } from '../../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { ReactComponent as NoDataIcon } from '../../../../../assets/ic_file.svg';
 
 const StorageCapacityTable = () => {
     const { getEstimatedCostData, getEstimatedCostLoading } = useAppSelector(state => state.mssql);
+    const fsxNType = useAppSelector((state: any) => state.mssqlForm.fsxN.fsxNType);
     const [sizeData, setSizeData] = useState<any>([]);
 
     useEffect(() => {
@@ -46,7 +47,8 @@ const StorageCapacityTable = () => {
                 calculation: `Witness disk for windows cluster`
             });
         }
-        if (sizeData?.buffer) {
+        if (sizeData?.buffer && isFsxnNew(fsxNType)) {
+            // For existing FSX buffer size should not be considered
             newList.push({
                 id: 5,
                 type: GENERAL.BUFFER_SIZE,
@@ -58,7 +60,8 @@ const StorageCapacityTable = () => {
             newList.push({
                 id: 6,
                 type: GENERAL.TOTAL_VOLUME,
-                size: sizeData?.total,
+                // For existing FSX removing buffer size
+                size: isFsxnNew(fsxNType) ? sizeData?.total : sizeData?.total - (sizeData?.buffer || 0),
                 calculation: `Total FSx for ONTAP SSD capacity`
             });
         }
