@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import { compact } from 'lodash-es';
 import { getHostAndSqlServerInfo } from '../discover-operations';
-import { HttpErrorCodes } from '../../utils/consts';
+import { HttpErrorCodes, SqlServerDeploymentModel } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import getStorageSavings from '../../lib/cloud-manager/marketing';
 import { StorageSavingsRequestBodyType, StorageSavingsResponseType } from '../../routes/types/storage-savings.types';
@@ -81,6 +81,23 @@ async function performStorageSavingsCalculations(
         const { size, unit } = (capacity as any)[key] as { size: number; unit: string };
         fsxCalculationObject[`${key}`] = convertToBytes(size, unit);
     });
+
+    if (
+        ec2HostDetails?.sqlServerInstances?.some(
+            server => server.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
+        )
+    ) {
+        // const { sqlServerDeploymentType, nodeIpDetails } = ec2HostDetails?.sqlServerInstances[0];
+        /* identify unique database volumes for snapshot calculation
+        const {
+            ebs: limitedEbsDetails,
+            fsx: limitedFsxDetails
+        } = await getStorageSavings(accountId, credentialsId, region, getMarketingApiRequestBody(limitedEbsVolumeIds, params));
+
+        ebs.snapshots = limitedEbsDetails.snapshots;
+        fsx = limitedFsxDetails;
+        */
+    }
 
     return {
         ebs,

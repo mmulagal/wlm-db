@@ -51,6 +51,9 @@ const SqlServerInstanceInfo = Type.Object({
             })
         )
     ),
+    nodeIpDetails: Type.Optional(
+        Type.Array(Type.String({ description: 'IP address details of the SQL Server nodes, if any.' }))
+    ),
     sqlServerDeploymentType: Type.Optional(
         Type.String({
             description: 'SQL Server deployment architecture.',
