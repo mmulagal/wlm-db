@@ -187,7 +187,9 @@ const DeleteSandboxSchema = {
     summary: 'Delete sandbox',
     description: 'Delete sandbox within a database host',
     response: {
-        200: {}
+        200: {
+            jobId: Type.String()
+        }
     }
 };
 
