@@ -319,7 +319,7 @@ interface VolumeLunMap {
     volumeName: string;
     lunPath: string;
     windowsVolumeName: string;
-    // volumeId: string;
+    volumeUuid: string;
 }
 
 interface VolumeLunMapping {
@@ -724,9 +724,9 @@ async function getMappings(
     let errorMsg;
 
     const mappingJob = await registerJob(accountId, credentialsId, region, {
-        description: `Get the volume LUN mapping for the source database ${srcDetails.database} of the host ${srcDetails.resourceName}`,
+        description: `Get the volume LUN mapping for the database ${srcDetails.database} of the host ${srcDetails.resourceName}`,
         startTime: Date.now(),
-        name: `Get volume LUN mappings for source database ${srcDetails.database}`,
+        name: `Get volume LUN mappings for database ${srcDetails.database}`,
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: srcDetails.database,
@@ -1455,6 +1455,115 @@ async function getDatabaseMountPointInfo(
     }
 }
 
+async function deleteSandbox(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseName: string
+) {
+    logger.info(
+        `Delete sandbox ${databaseName} in database host ${databaseHostId}`,
+        accountId,
+        region,
+        credentialsId,
+        databaseHostId,
+        databaseName
+    );
+
+    const [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
+
+    if (!resourceDetails) {
+        throw createError(HttpErrorCodes.NOT_FOUND, 'Could not find the database host');
+    }
+
+    const { node1InstanceId, node2InstanceId, fsxSvmId } = resourceDetails.metadata as unknown as Metadata;
+
+    const { isSSMConnected, instanceName, activeNodeInstanceId } = await getActiveSqlNode(
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId,
+        databaseHostId
+    );
+
+    if (!isSSMConnected) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'SSM connection could not be established with the host'
+        );
+    }
+
+    const job = await registerJob(accountId, credentialsId, region, {
+        name: `Delete sandbox ${databaseName}`,
+        description: `Delete sandbox ${databaseName} in the host ${resourceDetails.resource_name}`,
+        resourceName: databaseName,
+        initiator: 'SYSTEM',
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.SANDBOX
+    });
+
+    const resDetails = {
+        resourceName: resourceDetails.resource_name!,
+        instanceName: instanceName!,
+        fsxId: resourceDetails.co_relation_id!,
+        svm: fsxSvmId!,
+        activeNodeInstaceId: activeNodeInstanceId!,
+        metadata: resourceDetails.metadata as unknown as Metadata,
+        database: databaseName,
+        instance: instanceName!,
+        host: databaseHostId
+    };
+
+    performSandboxDeletion(accountId, region, credentialsId, job.id, resDetails);
+
+    return { jobId: job.id };
+}
+
+async function performSandboxDeletion(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    parentJobId: string,
+    resDetails: HostAndDbInfo
+) {
+    let errorMsg;
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    try {
+        const mappings = (await getMappings(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            resDetails
+        )) as VolumeLunMapping;
+
+        await startCleanup(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            resDetails,
+            resDetails,
+            [mappings.data.volumeUuid, mappings.log.volumeUuid],
+            [mappings.data.fileName, mappings.log.fileName]
+        );
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error('Failed to delete the sandbox', e);
+        status = JOBSTATUS.FAILED;
+        errorMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+            status,
+            error: errorMsg,
+            endTime: Date.now()
+        });
+    }
+}
+
 export {
     getSandboxesInfo,
     getSandboxSavings,
@@ -1462,5 +1571,6 @@ export {
     updateMetadataForSanboxTesting,
     revertMetadataForSanboxTesting,
     getDatabaseMountPointInfo,
-    getSandboxConnectionString
+    getSandboxConnectionString,
+    deleteSandbox
 };
