@@ -72,6 +72,7 @@
                     "sqlServerAuthentication": true,
                     "sqlServerName": "SQL Server 1",
                     "databaseCount": 4,
+                    "sqlServerDeploymentType": "Standalone",
                     "storage": [
                         {
                             "type": "EBS",
@@ -105,6 +106,7 @@
                     "databaseCount": 4,
                     "storage": [],
                     "deploymentTypes": [],
+                    "sqlServerDeploymentType": "FCI",
                     "sqlServerNodes": [
                         "sqlnode1-1272",
                         "sqlnode2-1272"
@@ -153,6 +155,7 @@
                     "sqlServerAuthentication": false,
                     "sqlServerName": "SQL Server 2",
                     "databaseCount": 4,
+                    "sqlServerDeploymentType": "AOAG",
                     "storage": [
                         {
                             "type": "EBS",
@@ -198,6 +201,7 @@
                     "sqlServerAuthentication": false,
                     "sqlServerName": "SQL Server 3",
                     "databaseCount": 4,
+                    "sqlServerDeploymentType": "FCI",
                     "storage": [
                         {
                             "type": "FSXN",
@@ -238,6 +242,7 @@
                     "windowsAuthentication": true,
                     "sqlServerAuthentication": true,
                     "sqlServerName": "SQL Server 4",
+                    "sqlServerDeploymentType": "AOAG",
                     "databaseCount": 4,
                     "storage": [
                         {

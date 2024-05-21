@@ -433,6 +433,7 @@ async function getHostAndSqlInfoFromPsOutput(
                                 svmId,
                                 protocol: STORAGE_PROTOCOLS.ISCSI
                             });
+
                             const { deploymentType, subnetIds } = fsIdWithDeploymentType.get(fsxId!) || {};
 
                             deploymentTypes.push({
@@ -455,6 +456,7 @@ async function getHostAndSqlInfoFromPsOutput(
                             const matchedEndpoints = fsxEndpoints.filter(value =>
                                 targets.includes(value.toLowerCase())
                             );
+
                             if (!isEmpty(matchedEndpoints)) {
                                 const fsxType = endPointIpWithFsxInfo.get(matchedEndpoints[0])?.type;
                                 if (fsxType === FileSystemType.WINDOWS) {
@@ -493,7 +495,8 @@ async function getHostAndSqlInfoFromPsOutput(
                         windowsAuthentication,
                         scriptExecutionTime,
                         databaseCount,
-                        failureInfo
+                        failureInfo,
+                        sqlServerDeploymentType
                     } = sqlServerInstanceInfo;
                     logger.info(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
@@ -511,6 +514,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerVersion,
                         ...(sqlServerName && { sqlServerName }),
                         sqlServerNodes: compact(sqlServerNodes),
+                        sqlServerDeploymentType,
                         sqlServerInstance,
                         sqlServerState,
                         sqlServerProductYear,
@@ -519,7 +523,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         ...(failureInfo && { failureInfo }),
                         windowsAuthentication,
                         sqlServerAuthentication,
-                        storage: compact(uniqBy(storageTypes, 'id')),
+                        storage: compact(uniqBy(storageTypes, v => [v.id, v.svmId, v.protocol].join())),
                         deploymentTypes: compact(
                             uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones }))
                         ),
@@ -916,6 +920,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     const [sqlServerInstance] = item?.sqlServerInstances || [];
     const { storage } = sqlServerInstance;
     const storageInfo = storage?.find(elem => elem.type === STORAGE_TYPE.FSXN);
+    const storageProtocols = storage?.filter(elem => elem.type === STORAGE_TYPE.FSXN).map(elem => elem.protocol);
 
     verifyAndAddFSxOntapCredentials(
         accountId,
@@ -932,32 +937,39 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
         ACTIVE_DIRECTORY
     ];
 
-    // Register the resource
-    await createResource(accountId, {
-        resourceId,
-        credentialsId,
-        storageType: STORAGE_TYPE.FSXN,
-        resourceName: sqlServerInstance?.sqlServerName,
-        cloudProviderAccountId: awsAccountId!,
-        cloudProviderName: CloudProviders.AWS,
-        resourceType: RESOURCESTYPE.MSSQL,
-        coRelationId: storageInfo?.id,
-        region,
-        metadata: {
-            creationDate: Date.now(),
-            node1InstanceId,
-            node2InstanceId,
-            sqlDeploymentType:
-                (sqlServerInstance?.sqlServerNodes?.length || 1) === 1
-                    ? SqlServerDeploymentModel.SQL_STANDALONE_SHORT
-                    : SqlServerDeploymentModel.SQL_FCI_SHORT,
-            source: RESOURCE_SOURCE.DISCOVER,
-            fsxSvmId: storageInfo?.svmId,
-            storageProtocol: storageInfo?.protocol,
-            ...(activeDirectoryDomainName && { activeDirectoryName: activeDirectoryDomainName }),
-            ...(activeDirectoryIpAddresses && { activeDirectoryAddress: activeDirectoryIpAddresses.join() })
-        }
-    });
+    try {
+        // Register the resource
+        await createResource(accountId, {
+            resourceId,
+            credentialsId,
+            storageType: STORAGE_TYPE.FSXN,
+            resourceName: sqlServerInstance?.sqlServerName,
+            cloudProviderAccountId: awsAccountId!,
+            cloudProviderName: CloudProviders.AWS,
+            resourceType: RESOURCESTYPE.MSSQL,
+            coRelationId: storageInfo?.id,
+            region,
+            metadata: {
+                creationDate: Date.now(),
+                node1InstanceId,
+                node2InstanceId,
+                sqlDeploymentType:
+                    (sqlServerInstance?.sqlServerNodes?.length || 1) === 1
+                        ? SqlServerDeploymentModel.SQL_STANDALONE_SHORT
+                        : SqlServerDeploymentModel.SQL_FCI_SHORT,
+                source: RESOURCE_SOURCE.DISCOVER,
+                fsxSvmId: storageInfo?.svmId,
+                storageProtocol: storageProtocols ? storageProtocols.join() : '',
+                ...(activeDirectoryDomainName && { activeDirectoryName: activeDirectoryDomainName }),
+                ...(activeDirectoryIpAddresses && { activeDirectoryAddress: activeDirectoryIpAddresses.join() })
+            }
+        });
+    } catch (error) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Unable to manage instance '${ec2InstanceId}'. Failed to create resource. Reason: ${error}`
+        );
+    }
 
     return {
         resourceId
@@ -983,6 +995,12 @@ async function validateEc2InstanceManageability(discoverInfo: DiscoverMsSqlRespo
 
         if (isEmpty(sqlServerInstances)) {
             throw new Error('no SQL Server instances found');
+        }
+
+        if (
+            sqlServerInstances!.some(elem => elem.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT)
+        ) {
+            throw new Error('Always On Availability Group environments are not supported');
         }
 
         // Current supported configuration is expected to be one SQL Server instance per EC2.

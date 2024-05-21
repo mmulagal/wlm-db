@@ -161,7 +161,9 @@ enum SqlServerDeploymentModel {
     SQL_STANDALONE = 'Standalone Instance',
     SQL_FCI = 'Always On Failover Cluster Instance',
     SQL_STANDALONE_SHORT = 'Standalone',
-    SQL_FCI_SHORT = 'FCI'
+    SQL_FCI_SHORT = 'FCI',
+    SQL_AOAG = 'Always On Availability Group',
+    SQL_AOAG_SHORT = 'AOAG'
 }
 
 const VPC_COUNT_QUOTANAME = 'VPCs per Region';
@@ -578,6 +580,7 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     serviceAccountPassword: 'SQLServiceAccountPassword',
     sqlServerName: 'SqlServerName',
     sqlCollation: 'SqlCollation',
+    isCustomAmi: 'IsCustomAmi',
 
     workloadInstanceType: 'WorkloadInstanceType',
     keyPairName: 'KeyPairName',
@@ -781,6 +784,10 @@ const SQL_RESOURCE_ASSETS = [
     {
         name: 'ScriptFSxValidation',
         url: `${WLMDB}/validation/Validate-FsxConnectivity.ps1`
+    },
+    {
+        name: 'ScriptAmiValidation',
+        url: `${WLMDB}/validation/Validate-Ami.ps1`
     },
     {
         name: 'DependentPackages',
@@ -1140,6 +1147,8 @@ const STORAGE_PROTOCOLS = { SMB: 'SMB', ISCSI: 'iSCSI' };
 
 const AMI_OWNERS = { AMAZON: 'amazon' };
 
+const SSM_PARAM_PREFIX = '/netapp/wlmdb/';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1401,5 +1410,6 @@ export {
     NO_SANDBOX_CREATED,
     STORAGE_PROTOCOLS,
     CUSTOM,
-    AMI_OWNERS
+    AMI_OWNERS,
+    SSM_PARAM_PREFIX
 };

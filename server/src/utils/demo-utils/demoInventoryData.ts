@@ -96,6 +96,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerName: 'SQLServer-PreProd-02',
                         windowsAuthentication: false,
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        sqlServerDeploymentType: 'FCI',
                         storage: [
                             {
                                 type: 'FSXN',
@@ -118,6 +119,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerVersion: '16.0.4095.4',
                         windowsAuthentication: true,
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        sqlServerDeploymentType: 'AOAG',
                         storage: [
                             {
                                 type: 'FSXN',
@@ -154,6 +156,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerVersion: '16.0.4105.2',
                         windowsAuthentication: false,
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        sqlServerDeploymentType: 'AOAG',
                         storage: [
                             {
                                 type: 'EBS',
@@ -190,6 +193,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsAuthentication: true,
                         sqlServerName: 'SQLServer-Prod-02',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
                                 type: 'FSXN',
@@ -225,6 +229,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsAuthentication: true,
                         sqlServerName: 'SQLServer-Dev-02',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
                                 type: 'FSXN',
@@ -260,6 +265,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsAuthentication: true,
                         sqlServerName: 'SQLServer-QA-01',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        sqlServerDeploymentType: 'AOAG',
                         storage: [
                             {
                                 type: 'EBS',
@@ -295,6 +301,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsAuthentication: true,
                         sqlServerName: 'SQLServer-QA-02',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
                                 type: 'FSXN',
@@ -330,6 +337,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsAuthentication: true,
                         sqlServerName: 'SQLServer-UAT-01',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
                                 type: 'FSXW',
@@ -365,6 +373,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsAuthentication: true,
                         sqlServerName: 'SQLServer-UAT-02',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
                                 type: 'FSXN',
@@ -400,6 +409,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsAuthentication: true,
                         sqlServerName: 'SQLServer-Training-01',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
                                 type: 'FSXN',
@@ -435,6 +445,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsAuthentication: true,
                         sqlServerName: 'SQLServer-Training-02',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUZ'],
+                        sqlServerDeploymentType: 'AOAG',
                         storage: [
                             {
                                 type: 'EBS',
@@ -470,6 +481,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsAuthentication: true,
                         sqlServerName: 'SQLServer-CRMDB',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
                                 type: 'EBS',
@@ -505,6 +517,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsAuthentication: true,
                         sqlServerName: 'SQLServer-CRMDB-Test',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
                                 type: 'FSXN',
@@ -540,6 +553,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsAuthentication: false,
                         sqlServerName: 'SQLServer-Prod-2',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
                                 type: 'FSXN',

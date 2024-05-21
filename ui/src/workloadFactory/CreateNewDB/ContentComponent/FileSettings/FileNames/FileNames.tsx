@@ -1,4 +1,11 @@
-import { AccordionCard, AccordionCardContent, DsTypography, TextField, TooltipInfo } from '@netapp/design-system';
+import {
+    AccordionCard,
+    AccordionCardContent,
+    DsCheckbox,
+    DsTypography,
+    TextField,
+    TooltipInfo
+} from '@netapp/design-system';
 import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
 
 import { useAppSelector } from '../../../../../store/storeHooks';
@@ -9,7 +16,9 @@ import {
     setDriveLetter,
     setDriveLetterForLogFile,
     setIsExistingDataDrive,
-    setIsExistingLogDrive
+    setIsExistingLogDrive,
+    setIsDataVirtualMountPoint,
+    setIsLogVirtualMountPoint
 } from '../../../../../store/workloadFactory/createNewDBSlice';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
@@ -38,7 +47,9 @@ const FileNames = () => {
         driveLetterLogFile,
         newUserDBName,
         driveInfoList,
-        driveInfoListLoading
+        driveInfoListLoading,
+        isDataVirtualMountPoint,
+        isLogVirtualMountPoint
     } = useAppSelector(state => state.createNewUser);
     const isDbCreateHit = useAppSelector(state => state.msSqlAction.isDbCreateHit);
     const dbCreateDataNameAdded = useAppSelector(state => state.msSqlAction.dbCreateDataNameAdded);
@@ -69,19 +80,35 @@ const FileNames = () => {
 
     useEffect(() => {
         if (driveLetter && newUserDBFileName) {
-            setDataFilePath(`${driveLetter?.value}:\\mssql\\data\\${newUserDBFileName}.mdf`);
+            setDataFilePath(
+                `${driveLetter?.value}:${
+                    isDataVirtualMountPoint ? `${newUserDBName}_data` : ''
+                }\\mssql\\data\\${newUserDBFileName}.mdf`
+            );
         } else if (driveLetter) {
-            setDataFilePath(`${driveLetter?.value}:\\mssql\\data\\<db_data>.mdf`);
+            setDataFilePath(
+                `${driveLetter?.value}:${
+                    isDataVirtualMountPoint ? `${newUserDBName}_data` : ''
+                }\\mssql\\data\\<db_data>.mdf`
+            );
         } else {
             setDataFilePath('');
         }
-    }, [driveLetter, newUserDBFileName]);
+    }, [driveLetter, newUserDBFileName, newUserDBName]);
 
     useEffect(() => {
         if (driveLetterLogFile && newUserLogFileName) {
-            setLogFilePath(`${driveLetterLogFile?.value}:\\mssql\\log\\${newUserLogFileName}.ldf`);
+            setLogFilePath(
+                `${driveLetterLogFile?.value}:${
+                    isLogVirtualMountPoint ? `${newUserDBName}_log` : ''
+                }\\mssql\\log\\${newUserLogFileName}.ldf`
+            );
         } else if (driveLetterLogFile) {
-            setLogFilePath(`${driveLetterLogFile?.value}:\\mssql\\log\\<db_log>.ldf`);
+            setLogFilePath(
+                `${driveLetterLogFile?.value}:${
+                    isLogVirtualMountPoint ? `${newUserDBName}_log` : ''
+                }\\mssql\\log\\<db_log>.ldf`
+            );
         } else {
             setLogFilePath('');
         }
@@ -161,6 +188,10 @@ const FileNames = () => {
         return sortListOfDict(options, 'isDisabled');
     }, [driveInfoList, driveLetter]);
 
+    const isVirtualMountPointDisabled = useMemo(() => {
+        return driveLetter?.label2 === DRIVE_LETTER_TYPE.NEW || driveLetterLogFile?.label2 === DRIVE_LETTER_TYPE.NEW;
+    }, [driveLetter, driveLetterLogFile]);
+
     // Default drive letters logic to set for quick and advanced view
     useEffect(() => {
         dispatch(setDriveLetter(null));
@@ -195,7 +226,7 @@ const FileNames = () => {
                 }
             });
         }
-    }, [selectedNewUserConfig, driveInfoList]);
+    }, [selectedNewUserConfig, driveInfoList, isDataVirtualMountPoint, isLogVirtualMountPoint]);
 
     // Based of selected drive letters need to add if it is a existing or new drive letters
     useEffect(() => {
@@ -346,6 +377,19 @@ const FileNames = () => {
                                     </DsTypography>
                                 </div>
                             </div>
+                            {selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE && (
+                                <div className={styles.virtualMountPoint}>
+                                    <DsCheckbox
+                                        id="data-virtual-mount-point"
+                                        title="Virtual mount point"
+                                        onSelect={() => {
+                                            dispatch(setIsDataVirtualMountPoint(!isDataVirtualMountPoint));
+                                        }}
+                                        isSelected={isDataVirtualMountPoint}
+                                        isDisabled={isVirtualMountPointDisabled}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <div className={styles.dataFileSection}>
@@ -412,6 +456,19 @@ const FileNames = () => {
                                     </DsTypography>
                                 </div>
                             </div>
+                            {selectedNewUserConfig === GENERAL.DB_ADVANCED_CREATE && (
+                                <div className={styles.virtualMountPoint}>
+                                    <DsCheckbox
+                                        id="log-virtual-mount-point"
+                                        title="Virtual mount point"
+                                        onSelect={() => {
+                                            dispatch(setIsLogVirtualMountPoint(!isLogVirtualMountPoint));
+                                        }}
+                                        isSelected={isLogVirtualMountPoint}
+                                        isDisabled={isVirtualMountPointDisabled}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </DsTypography>
                 </AccordionCardContent>

@@ -16,6 +16,7 @@ import JobMonitoring from './workloadFactory/JobMonitoring/JobMonitoring';
 import HeaderComponent from './workloadFactory/DatabaseHomePage/HeaderComponent/HeaderComponent';
 import WizardComponent from './workloadFactory/CreateNewDB/WizardComponent/WizardComponent';
 import CreateNewSandbox from './workloadFactory/Sandbox/CreateNewSandbox/CreateNewSandbox';
+import { WLF_TABS } from './utils/consts';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -45,7 +46,8 @@ const Home = () => {
                             <Route path={'databases'} element={<Databases />} />
                             <Route path={'tables'} element={<Tables />} />
                         </Route>
-                        <Route path={'databases'} element={<HeaderComponent />} />
+                        <Route path={'databases'} element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
+                        <Route path={'databases/inventory'} element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
                         <Route path={'create-new-user'} element={<WizardComponent />} />
                         <Route path={'job-monitor'} element={<JobMonitoring />} />
                         <Route path={'create-new-sandbox'} element={<CreateNewSandbox />} />

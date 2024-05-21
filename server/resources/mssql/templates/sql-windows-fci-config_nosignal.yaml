@@ -42,6 +42,7 @@ Metadata:
                   - FSxQuorumVolumeName
                   - SQLigroupname
                   - ONTAPSecurityGroupID
+                  - FsxVolumeSnapshotPolicy
             - Label:
                   default: Microsoft SQL Server FCI configurations
               Parameters:
@@ -121,6 +122,8 @@ Metadata:
                 default: (optional) Enable monitoring by CloudWatch Logging
             ParentStackName:
                 default: Name of the parent CloudFormation stack
+            FsxVolumeSnapshotPolicy:
+                default: Snapshot policy for the volume. Can be either daily_weekretention or none.
 Parameters:
     ParentStackName:
         Description: Name of the parent CloudFormation stack.
@@ -286,6 +289,11 @@ Parameters:
     FSxFileSystemId:
         Description: ID of the FSx for ONTAP file system.
         Type: String
+    FsxVolumeSnapshotPolicy:
+        Description: Snapshot policy for the volume. Can be either daily_weekretention or none.
+        Type: String
+        Default: daily_weekretention
+        AllowedValues: [daily_weekretention, none]
 Conditions:
     ADSGNotSelected: !Equals
         - !Ref 'DomainMemberSGID'
@@ -600,6 +608,8 @@ Resources:
                                   - !Ref 'FSxDataLunSize'
                                   - "' -IGROUP '"
                                   - !Ref 'SQLigroupname'
+                                  - "' -SnapshotPolicy '"
+                                  - !Ref 'FsxVolumeSnapshotPolicy'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
@@ -609,6 +619,8 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Connect-ONTAPInstance.ps1
                                     -FileSystemId '
                                   - !Ref 'FSxFileSystemId'
+                                  - "' -SQLVMName '"
+                                  - !Ref 'SQLSvmName'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
@@ -929,6 +941,27 @@ Resources:
                     - ''
                     - - ''
                       - <powershell>
+                      - "\n"
+                      - 'try {'
+                      - "\n"
+                      - 'Get-Service AmazonSSMAgent -ErrorAction Stop'
+                      - "\n"
+                      - '}catch{'
+                      - "\n"
+                      - '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12'
+                      - "\n"
+                      - '$progressPreference = "silentlyContinue"'
+                      - "\n"
+                      - 'Invoke-WebRequest `https://amazon-ssm-'
+                      - !Ref 'AWS::Region'
+                      - '.s3.'
+                      - !Ref 'AWS::Region'
+                      - '.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe ` -OutFile $env:USERPROFILE\Desktop\SSMAgent_latest.exe'
+                      - "\n"
+                      - 'Start-Process ` -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe ` -ArgumentList "/S"'
+                      - "\n"
+                      - '}'
+                      - "\n"
                       - 'cfn-init.exe -v -c config -s '
                       - !Ref 'AWS::StackId'
                       - ' -r SqlFSxInstanceMAD1'
@@ -1163,6 +1196,8 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Connect-ONTAPInstance.ps1
                                     -FileSystemId '
                                   - !Ref 'FSxFileSystemId'
+                                  - "' -SQLVMName '"
+                                  - !Ref 'SQLSvmName'
                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
@@ -1387,6 +1422,27 @@ Resources:
                     - ''
                     - - ''
                       - <powershell>
+                      - "\n"
+                      - 'try {'
+                      - "\n"
+                      - 'Get-Service AmazonSSMAgent -ErrorAction Stop'
+                      - "\n"
+                      - '}catch{'
+                      - "\n"
+                      - '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12'
+                      - "\n"
+                      - '$progressPreference = "silentlyContinue"'
+                      - "\n"
+                      - 'Invoke-WebRequest `https://amazon-ssm-'
+                      - !Ref 'AWS::Region'
+                      - '.s3.'
+                      - !Ref 'AWS::Region'
+                      - '.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe ` -OutFile $env:USERPROFILE\Desktop\SSMAgent_latest.exe'
+                      - "\n"
+                      - 'Start-Process ` -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe ` -ArgumentList "/S"'
+                      - "\n"
+                      - '}'
+                      - "\n"
                       - 'cfn-init.exe -v -c config -s '
                       - !Ref 'AWS::StackId'
                       - ' -r SqlFSxInstanceMAD2'

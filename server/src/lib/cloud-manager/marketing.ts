@@ -12,13 +12,15 @@ interface CalculateEbsComparisonResponse {
         throughput: number;
         snapshots: number;
         total: number;
+        clones: number;
     };
     fsx: {
         capacity: number;
         iops: number;
         throughput: number;
-        snapshots: number;
         total: number;
+        snapshots: number;
+        clones: number;
     };
     fsx_calculation: {
         deploymentType: string;
@@ -52,16 +54,11 @@ interface CalculateEbsComparisonResponse {
         };
     };
     fsx_cost_calculation_no_snapshot: {
-        desiredSnapshotStorageCapacityGB: {
-            size: number;
-            unit: string;
-        };
         EBSCapacity: {
             size: number;
             unit: string;
         };
         numberOfVolumes: number;
-
         percentageOfDataOnSSDStorage: number;
         savingsFromCompressionAndDeduplication: number;
         storageSavingsFromCompressionAndDeduplication: {
@@ -126,11 +123,10 @@ interface CalculateEbsComparisonResponse {
         totalMonthlyCost: number;
     };
     fsx_snapshot_cost_calculation: {
-        desiredStorageCapacityGB: {
+        desiredSnapshotStorageCapacityGB: {
             size: number;
             unit: string;
         };
-
         percentageOfDataOnSSDStorage: number;
         savingsFromCompressionAndDeduplication: number;
         storageSavingsFromCompressionAndDeduplication: {
@@ -278,7 +274,7 @@ export default async function getStorageSavings(
     region: string,
     params: MarketingRequestBody
 ) {
-    logger.info('Get storage savings from marketing APIs:', { accountId, credentialsId, region });
+    logger.info('Get storage savings from marketing APIs:', { accountId, credentialsId, region, params });
 
     const response = await gotInstanceForInternalRequest
         .post(`accounts/${accountId}/marketing/v1/credentials/${credentialsId}/regions/${region}/ebs/auto/calculate`, {

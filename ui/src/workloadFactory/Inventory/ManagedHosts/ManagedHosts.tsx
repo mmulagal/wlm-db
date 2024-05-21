@@ -16,13 +16,14 @@ import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { WLF_TABS, STATUS_CONST, FSX_DEPLOYMENT_MODE, FSXN_STORAGE_PROTOCOLS } from '../../../utils/consts';
+import { WLF_TABS, STATUS_CONST, FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
 import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
-import { databaseTableSort, expandTableRow } from '../../../utils/utilityFunctions';
+
+import { databaseTableSort, isSmbProtocol, expandTableRow } from '../../../utils/utilityFunctions';
 import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
@@ -69,7 +70,7 @@ const ManagedHosts = () => {
     const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
 
     const menuItems = (row: any) => {
-        const storageProtocol = row?.storage?.fsxn?.protocol;
+        let isSmb = isSmbProtocol(row?.storage?.fsxn?.protocol);
         return [
             {
                 id: 'viewOverview',
@@ -84,9 +85,8 @@ const ManagedHosts = () => {
             {
                 id: 'createNewUserDatabase',
                 displayName: GENERAL.CREATE_USER_DB_TITLE,
-                disabled:
-                    row?.status === STATUS_CONST.UP && storageProtocol !== FSXN_STORAGE_PROTOCOLS?.SMB ? false : true,
-                infoText: storageProtocol === FSXN_STORAGE_PROTOCOLS.SMB ? GENERAL.SMB_PROTOCOL_DISABLED : ''
+                disabled: row?.status === STATUS_CONST.UP && !isSmb ? false : true,
+                infoText: isSmb ? GENERAL.SMB_PROTOCOL_DISABLED : ''
             },
             {
                 id: 'remove',

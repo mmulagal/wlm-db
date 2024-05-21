@@ -290,9 +290,10 @@ const PARAMETERS = [
     },
     {
         name: 'FsxVolumeSnapshotPolicy',
-        description: 'Snapshot policy for the volume. Can be either default or none.',
+        description: 'Snapshot policy for the volume. Can be either daily_weekretention or none.',
         type: 'String',
-        default: 'default'
+        default: 'daily_weekretention',
+        allowedValues: ['daily_weekretention', 'none']
     },
     {
         name: 'VPCID',
@@ -430,6 +431,12 @@ const PARAMETERS = [
         name: 'S3EndpointRouteTables',
         description: 'Route table ids to attach to S3 gateway endpoint.',
         type: 'String'
+    },
+    {
+        name: 'IsCustomAmi',
+        description: 'Boolean to indicate if AMI includes SQL license or BYOL license.',
+        type: 'String',
+        default: 'false'
     }
 ];
 

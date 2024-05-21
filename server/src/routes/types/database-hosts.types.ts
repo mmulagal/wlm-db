@@ -26,6 +26,10 @@ const DatabaseHostQueryString = Type.Object({
     pageSize: Type.Optional(Type.Number())
 });
 
+const GetDriveQueryString = Type.Object({
+    forSandbox: Type.Optional(Type.Boolean())
+});
+
 const EC2InstanceDetailsResponse = Type.Object({
     id: Type.String(),
     name: Type.Optional(Type.String()),
@@ -115,7 +119,7 @@ const StorageResponse = Type.Object({
             description: 'Total disk space saved in the volume due to storage efficiency, in percentage.'
         })
     ),
-    protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or SMB' }))
+    protocol: Type.Optional(Type.Array(Type.String({ description: 'Data sharing protocol, iSCSI,SMB or both' })))
 });
 type StorageResponseType = Static<typeof StorageResponse>;
 
@@ -149,7 +153,8 @@ const DatabaseServerMetadataResponse = Type.Object({
     activeNode: Type.String(),
     nodeNames: Type.Array(Type.String()),
     activeConnections: Type.Number(),
-    creationDate: Type.String({ minLength: 1 })
+    creationDate: Type.String({ minLength: 1 }),
+    collation: Type.String({ minLength: 1 })
 });
 type DatabaseServerMetadataResponseType = Static<typeof DatabaseServerMetadataResponse>;
 
@@ -230,7 +235,8 @@ const DatabasesResponse = Type.Object({
     status: Type.String({ minLength: 1 }),
     type: Type.String({ minLength: 1 }),
     size: Type.Number(),
-    protection: ProtectionPerStorageTypeResponse
+    protection: ProtectionPerStorageTypeResponse,
+    collation: Type.String({ minLength: 1 })
 });
 type DatabasesResponseType = Static<typeof DatabasesResponse>;
 
@@ -247,7 +253,8 @@ const FileConfig = Type.Object({
     fileName: Type.String({ minLength: 5 }),
     volumeSize: Type.Number({ minimum: 1 }),
     drive: Type.String({ maxLength: 1 }),
-    isExisting: Type.Boolean()
+    isExisting: Type.Boolean(),
+    isVirtualMount: Type.Boolean()
 });
 
 const CreateDatabseRequestBody = Type.Object({
@@ -305,6 +312,10 @@ const CloneDatabaseHostBody = Type.Object({
         instance: Type.String(), // sql server - ideally only one would be there
         database: Type.String() // database
     }),
+    mountPoints: Type.Object({
+        dataDrive: Type.String({ maxLength: 1 }),
+        logDrive: Type.String({ maxLength: 1 })
+    }),
     tag: Type.String({ enum: ['Development', 'QA', 'Integration', 'Training', 'Analytics', 'Other'] })
 });
 type CloneDatabaseHostBodyType = Static<typeof CloneDatabaseHostBody>;
@@ -347,6 +358,22 @@ const SandboxInfoResponseBody = Type.Object({
 });
 type SandboxInfoResponseBodyType = Static<typeof SandboxInfoResponseBody>;
 type SandboxInfoResponseType = Static<typeof SandboxInfoResponse>;
+
+const DatabaseMountPointRequestQueryParam = Type.Object({
+    databaseName: Type.String(),
+    instanceName: Type.String()
+});
+
+const DatabaseMountPointResponseBody = Type.Object({
+    databaseDataPath: Type.Array(Type.String()),
+    databaseLogPath: Type.Array(Type.String())
+});
+type DatabaseMountPointResponseType = Static<typeof DatabaseMountPointResponseBody>;
+
+const SandboxConnectionStringParams = Type.Composite([
+    DatabaseHostSummaryParams,
+    Type.Object({ sandboxName: Type.String() })
+]);
 
 export {
     DatabaseHostObjectParams,
@@ -408,5 +435,10 @@ export {
     SandboxInfoResponse,
     SandboxInfoResponseType,
     SandboxInfoResponseBody,
-    SandboxInfoResponseBodyType
+    SandboxInfoResponseBodyType,
+    DatabaseMountPointRequestQueryParam,
+    GetDriveQueryString,
+    DatabaseMountPointResponseBody,
+    DatabaseMountPointResponseType,
+    SandboxConnectionStringParams
 };

@@ -1,6 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import { ExploreSavingsSliceEntities } from '../../utils/types/exploreSavingsType';
 
-export const initialExploreSavingsState: any = {
+export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedSnapshotFrequency: null,
     numberOfClonedCopies: 1,
     selectedCloneRefresh: null,
@@ -8,14 +9,14 @@ export const initialExploreSavingsState: any = {
     saveConfigName: '',
     loading: false,
     unmanagedExploreSavingsHost: [],
-    selectedInstanceId: null,
-    selectedServerName: null,
+    selectedInstanceId: '',
+    selectedServerName: '',
     selectedHostDetails: {},
     storageSavingsResponse: {},
     storageSavingsLoading: false,
     savingsCalculatorRefresh: false,
-    selectedDeploymentModel: null,
-    viewCalculationsResponse: {},
+    selectedDeploymentModel: '',
+    viewCalculationsResponse: null,
     viewCalculationsLoading: false
 };
 
@@ -64,14 +65,14 @@ const exploreSavingsSlice = createSlice({
             state.numberOfClonedCopies = 1;
             state.selectedCloneRefresh = null;
             state.monthlyChangeRate = 8;
-            state.selectedInstanceId = null;
-            state.selectedServerName = null;
+            state.selectedInstanceId = '';
+            state.selectedServerName = '';
             state.selectedHostDetails = {};
             state.storageSavingsResponse = {};
             state.storageSavingsLoading = false;
             state.savingsCalculatorRefresh = false;
-            state.selectedDeploymentModel = null;
-            state.viewCalculationsResponse = {};
+            state.selectedDeploymentModel = '';
+            state.viewCalculationsResponse = null;
             state.viewCalculationsLoading = false;
         },
         setSelectedDeploymentModel(state, action: PayloadAction<any>) {

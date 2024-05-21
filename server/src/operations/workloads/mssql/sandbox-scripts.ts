@@ -62,7 +62,7 @@ $results = foreach ($instance in $instances) {
 $results
 `;
 
-const checkDatabaseExists = (dbCloneName: string) => `
+const checkDatabaseExists = (dbCloneName: string, instanceName: string = '.') => `
     $WarningPreference = 'SilentlyContinue';
 
     $dbCloneName = '${dbCloneName}'
@@ -72,7 +72,7 @@ const checkDatabaseExists = (dbCloneName: string) => `
     }
 
     $sqlcmd = "SET NOCOUNT ON; SELECT name FROM sys.databases where name = '$dbCloneName' FOR JSON PATH;"
-    $sqlresponse =  sqlcmd -Q $sqlcmd -y 0;
+    $sqlresponse =  sqlcmd  -S "${instanceName}" -Q $sqlcmd -y 0;
 
     [string[]]$ExistingDatabases = $sqlresponse | ConvertFrom-Json | % { $_.name }
 
@@ -192,7 +192,7 @@ const ontapJobStatusTemplate = `
         }
 `;
 
-const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: string) => `
+const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: string, instanceName: string = '.') => `
     $WarningPreference = 'SilentlyContinue';
     $FSxID = '${fsxid}'
     $FSxRegion = '${fsxregion}'
@@ -283,7 +283,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
             return $responeObject
         }
     
-        $responeObject =  sqlcmd -Q $sqlquery -y 0;
+        $responeObject =  sqlcmd -S "${instanceName}" -Q $sqlquery -y 0;
         write-debug "SQL response: $responeObject"
         if ([string]::IsNullOrEmpty($responeObject)) {
             if ($responeObject -eq $null) {
@@ -471,25 +471,27 @@ const createVolumeClone = (
 
         Function Set-LUNSignature {
             # Set the LUN signature only if the source and target SVMs are the same
-            if (-not (Get-Module -ListAvailable -Name NetApp.ONTAP)) {
-                Write-Debug "NetApp.ONTAP Module does not exist, installing it now"
+            if ($sourceSvm -eq $targetSvm) {
+                if (-not (Get-Module -ListAvailable -Name NetApp.ONTAP)) {
+                    Write-Debug "NetApp.ONTAP Module does not exist, installing it now"
 
-                Install-Module -Name NetApp.ONTAP -Force -AllowClobber
-            }
-
-            $null = Connect-NcController -Credential $FSxCredentials -Name $FSxHostName
-
-            $message
-            @($dataLunPath, $logLunPath) | ForEach-Object {
-                $lunPath = $_
-
-                $null = Set-NcLunSignature -Path $lunPath -Vserver $targetSvm -Confirm:$False
-                if (-not $?) {
-                    $message += "Could not change LUN signature for $lunClonePath."
+                    Install-Module -Name NetApp.ONTAP -Force -AllowClobber
                 }
-            }
 
-            return $message
+                $null = Connect-NcController -Credential $FSxCredentials -Name $FSxHostName
+
+                $message
+                @($dataLunPath, $logLunPath) | ForEach-Object {
+                    $lunPath = $_
+
+                    $null = Set-NcLunSignature -Path $lunPath -Vserver $targetSvm -Confirm:$False
+                    if (-not $?) {
+                        $message += "Could not change LUN signature for $lunClonePath."
+                    }
+                }
+
+                return $message
+            }
         }
 
         Function Set-LunMap {
@@ -571,7 +573,7 @@ const createVolumeClone = (
     $responeObject | ConvertTo-Json -Depth 5
 `;
 
-const createClonedDb = (dbName: string, fileList: string[] = []) => `
+const createClonedDb = (dbName: string, instanceName: string = '.', fileList: string[] = []) => `
     $WarningPreference = 'SilentlyContinue';
     $dbname = '${dbName}'
 
@@ -579,11 +581,11 @@ const createClonedDb = (dbName: string, fileList: string[] = []) => `
 
     try {
         $selectquery = "SET NOCOUNT ON; SELECT name, state_desc FROM sys.databases where name = '$dbname' FOR JSON PATH;"
-        $sqlresponse =  sqlcmd -Q $selectquery -y 0;
+        $sqlresponse =  sqlcmd -S "${instanceName}" -Q $selectquery -y 0;
 
         write-debug "SQL response: $sqlresponse"
         [string[]]$ExistingDatabases = $sqlresponse | ConvertFrom-Json | % { $_.name }
-        $selectresult = (sqlcmd -Q $selectquery -y 0) | ConvertFrom-Json
+        $selectresult = (sqlcmd -S "${instanceName}" -Q $selectquery -y 0) | ConvertFrom-Json
         if ($selectresult.count -gt 0) {
             Write-Error "Database $dbname already exists and is in $($selectresult[0].state_desc) state. Exiting..."
         }
@@ -594,13 +596,17 @@ const createClonedDb = (dbName: string, fileList: string[] = []) => `
             ${fileList.map(file => (file ? `(FILENAME = '${file}')` : '')).join()}
             FOR ATTACH;
 "@
-        sqlcmd -Q $attachQuery
+        sqlcmd -S "${instanceName}"  -Q $attachQuery
     } catch {
         Write-Error $_.Exception.Message
     }
 `;
 
-const addExtendedProperties = (dbName: string, propObj: { [x: string]: string | number }) => `
+const addExtendedProperties = (
+    dbName: string,
+    instanceName: string = '.',
+    propObj: { [x: string]: string | number }
+) => `
 $dbname = '${dbName}'
 
 Start-Transcript -Path "C:\\cfn\\log\\add_extended_properties_$dbname.log.txt" -Append | Out-Null
@@ -625,7 +631,7 @@ ${Object.keys(propObj)
 
 "@
 
-Sqlcmd -Q $query -m 1
+Sqlcmd -S "${instanceName}"  -Q $query -m 1
 `;
 
 const cleanUpOntapResources = (
@@ -703,6 +709,91 @@ const cleanUpOntapResources = (
     $responeObject | ConvertTo-Json
 `;
 
+const mountPointQuery = (instanceName: string = '.', databaseName: string) =>
+    ` sqlcmd -S '${instanceName}' -Q "SET NOCOUNT ON;
+    SELECT 
+        CASE WHEN mf.type != 0 THEN 'Log' ELSE 'Data' END AS filetype,
+        vs.logical_volume_name AS volumename,
+        mf.physical_name AS filepath
+    FROM sys.master_files AS mf
+    JOIN sys.databases AS db ON db.database_id = mf.database_id
+    CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+    WHERE db.name = '${databaseName}'
+    FOR JSON PATH;" -y 0 `;
+
+const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string) => `
+    $WarningPreference = 'SilentlyContinue';
+    if ($responseObject -eq $null) {
+        $responseObject = @{
+            savedStorage = 0;
+            consumedStorage = 0;
+        }
+    }
+
+    try {
+        #Requires -Module AWS.Tools.SimpleSystemsManagement
+
+        $FSxID = '${fsxId}'
+        $FSxRegion = '${fsxRegion}'
+
+
+        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+        $FSxUserName = $SsmParameter.fsx.username
+        $FSxPassword = $SsmParameter.fsx.password
+        $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
+        $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
+        
+        $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
+        $tempfileObject = New-TemporaryFile
+        $tempfile = $tempfileObject.FullName
+        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
+        $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
+        $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
+        Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
+     
+        Function Invoke-ONTAPGetRequest {
+            param(
+                [Parameter(Mandatory = $true)]
+                [string]$ApiEndpoint
+            )
+
+            $Params = @{
+                "URI"     = 'https://' + $FSxHostName + $ApiEndpoint
+                "Method"  = "GET"
+                "Headers" =@{"Authorization" = "Basic $FSxCredentialsInBase64"}
+                "ContentType" = "application/json"
+            }
+     
+            return Invoke-RestMethod @Params -Certificate $regionCertificateificate
+        }
+
+        $nextToken = $null
+        
+        Do {
+            if ($null -eq $nextToken) {
+                $resp = Invoke-ONTAPGetRequest -ApiEndpoint '/api/storage/volumes?tiering.object_tags=cloned_by=netapp_wlmdb&fields=space.used_by_afs,space.physical_used,clone.split_estimate'
+            } else {
+                $resp = Invoke-ONTAPGetRequest -ApiEndpoint $nextToken
+            }
+
+            $cloneVolumes = $resp.records
+
+            foreach ($cloneVolume in $cloneVolumes) {
+                $responseObject.savedStorage += $cloneVolume.clone.split_estimate
+                $responseObject.consumedStorage += $cloneVolume.space.physical_used
+            }
+
+            $nextToken = $resp._links.next.href
+
+        } While ($null -ne $nextToken)
+    } catch {
+        $responeObject = @{
+            error = $_.Exception.Message
+        }
+    }
+    $responseObject | ConvertTo-Json -Depth 5
+`;
+
 export {
     GET_SANDBOX_DETAILS,
     checkDatabaseExists,
@@ -710,5 +801,7 @@ export {
     addExtendedProperties,
     createVolumeClone,
     createClonedDb,
-    cleanUpOntapResources
+    cleanUpOntapResources,
+    mountPointQuery,
+    getStorageSavingsFromOntap
 };

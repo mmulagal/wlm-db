@@ -13,5 +13,9 @@
                 "tag": "Development"
             }
         ]
+    },
+    "sandboxMountPointResponse": {
+        "databaseDataPath": ["D:\\MSSQL\\data\\test-database_data.mdf"],
+        "databaseLogPath": ["E:\\MSSQL\\log\\test-database_log.ldf"]
     }
 }

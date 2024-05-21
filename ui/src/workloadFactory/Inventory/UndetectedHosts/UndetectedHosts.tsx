@@ -296,24 +296,31 @@ const UndetectedHosts = () => {
                         dispatch(setIsDetectHostLoading(false));
                     } else {
                         dispatch(setIsDetectHostLoading(false));
-                        setTimeout(() => {
-                            setDialog(
-                                <DialogComponent
-                                    header={
-                                        <div className={styles.headerDialog}>
-                                            <Typography variant="Regular_20">{GENERAL.DETECT_HOST}</Typography>
-                                            <Typography variant="Semibold_14">
-                                                {GENERAL.DETECT_HOST_STEPS[1]}
-                                            </Typography>
-                                        </div>
-                                    }
-                                    content={<UndetectedSecondDialog data={rowData} apiResult={result?.data} />}
-                                    primaryButton={GENERAL.DONE}
-                                    callback={() => handleMoveToManage(rowData, fsxId)}
-                                />
-                            );
-                        }, 0);
-                        resetDialogValues();
+                        if (
+                            rowData?.sqlServerInstances?.[0]?.storage &&
+                            rowData?.sqlServerInstances?.[0]?.storage?.length > 0
+                        ) {
+                            setTimeout(() => {
+                                setDialog(
+                                    <DialogComponent
+                                        header={
+                                            <div className={styles.headerDialog}>
+                                                <Typography variant="Regular_20">{GENERAL.DETECT_HOST}</Typography>
+                                                <Typography variant="Semibold_14">
+                                                    {GENERAL.DETECT_HOST_STEPS[1]}
+                                                </Typography>
+                                            </div>
+                                        }
+                                        content={<UndetectedSecondDialog data={rowData} apiResult={result?.data} />}
+                                        primaryButton={GENERAL.DONE}
+                                        callback={() => handleMoveToManage(rowData, fsxId)}
+                                    />
+                                );
+                            }, 0);
+                            resetDialogValues();
+                        } else {
+                            dispatch(setIsDetectHostError(GENERAL.DETECT_FAILED_WITH_NO_STORAGE));
+                        }
                     }
                 } else {
                     dispatch(setIsDetectHostError(result?.error?.data?.message || GENERAL.FAILED_TO_DETECT_HOST));

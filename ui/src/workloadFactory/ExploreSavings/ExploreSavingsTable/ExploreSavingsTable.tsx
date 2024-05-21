@@ -25,10 +25,10 @@ const ExploreSavingsTable = () => {
 
     const lastColDetails = () => {
         return {
-            id: '7',
+            id: '8',
             Header: '',
             accessor: '',
-            width: '182px',
+            width: '181px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
@@ -55,17 +55,27 @@ const ExploreSavingsTable = () => {
             id: '1',
             isSortable: true,
             isSticky: true,
-            width: '324px',
+            width: '280px',
             accessorForTextFilter: 'databaseHostname',
             renderCell: (cellData: any, rowData: any) => {
                 return renderUnmanagedHostName(cellData, rowData, styles);
             }
         },
         {
+            Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
+            accessor: 'serverInstallationMode',
+            id: '6',
+            width: '230px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string, rowData: any) => {
+                return renderDeploymentModel(cellData, rowData);
+            }
+        },
+        {
             Header: GENERAL.DB_HOST_FILE_SYSTEM_TYPE,
             accessor: 'fileSystemType',
             id: '2',
-            width: '220px',
+            width: '160px',
             filterOptions: 'auto',
             accessorForTextFilter: 'fileSystemType',
             renderCell: (cellData: string, rowData: any) => {
@@ -73,10 +83,18 @@ const ExploreSavingsTable = () => {
             }
         },
         {
+            Header: GENERAL.DB_HOST_INSTANCE_ID,
+            accessor: 'ec2InstanceId',
+            id: '3',
+            width: '200px',
+            accessorForTextFilter: 'ec2InstanceId',
+            isSortable: true
+        },
+        {
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
             accessor: 'sizeformat',
-            id: '3',
-            width: '220px',
+            id: '4',
+            width: '200px',
             isSortable: true,
             accessorForTextFilter: 'sizeformat',
             renderCell: (cellData: string | number, rowData: any) => {
@@ -86,8 +104,8 @@ const ExploreSavingsTable = () => {
         {
             Header: GENERAL.DB_HOST_AVAILABILITY,
             accessor: 'azType',
-            id: '4',
-            width: '220px',
+            id: '5',
+            width: '180px',
             filterOptions: [
                 { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
                 { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
@@ -97,20 +115,10 @@ const ExploreSavingsTable = () => {
             }
         },
         {
-            Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
-            accessor: 'serverInstallationMode',
-            id: '5',
-            width: '220px',
-            filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return renderDeploymentModel(cellData, rowData);
-            }
-        },
-        {
             Header: GENERAL.DB_HOST_ESTIMATED_COST,
             accessor: 'totalCost',
-            id: '6',
-            width: '220px',
+            id: '7',
+            width: '176px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 return renderEstimatedCost(cellData, rowData, styles);
@@ -136,8 +144,8 @@ const ExploreSavingsTable = () => {
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle="Microsoft SQL server hosts"
-                singularTitle="Microsoft SQL server host"
+                pluralTitle={`${GENERAL.ES_TABLE_TITLE}s`}
+                singularTitle={GENERAL.ES_TABLE_TITLE}
             />
             <Table
                 //@ts-ignore

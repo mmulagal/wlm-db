@@ -23,7 +23,9 @@ const TableLayout = ({ data }: any) => {
                 <Text>{data.label}</Text>
             </GridItem>
             <GridItem lg="3">
-                <Text bold>{data.value}</Text>
+                <Text bold style={{ fontWeight: '505' }}>
+                    {data.value}
+                </Text>
             </GridItem>
             <GridItem lg="5">
                 <Text>{data.text}</Text>
@@ -39,18 +41,19 @@ const MSSQLAccordion = ({ printState }: any) => {
     const { storageSavingsLoading, storageSavingsResponse, selectedHostDetails } = useAppSelector(
         state => state.exploreSavings
     );
+    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
     const [fsxData, setFsxData] = useState({});
     const [msSqlInstance, setMsSqlInstance] = useState({});
 
     useEffect(() => {
-        setFsxData(storageSavingsResponse?.fsxCalculation);
+        const selectedRegion = headerSelectedRegion?.data?.regionName + ' | ' + headerSelectedRegion?.data?.regionCode;
+        setFsxData({ ...storageSavingsResponse?.fsxCalculation, regionName: selectedRegion });
         // setMsSqlInstance(storageSavingsResponse?.mssqlInstance);
     }, [storageSavingsResponse]);
 
     useEffect(() => {
-        const instanceTypelist = selectedHostDetails?.topology?.ec2Details?.map((inst: any) => inst?.instanceType);
         let mssqlInstanceData = {
             serverInstallationMode: selectedHostDetails?.recommendedInstance?.serverInstallationMode,
             serverEdition: selectedHostDetails?.recommendedInstance?.serverEdition,
@@ -63,14 +66,8 @@ const MSSQLAccordion = ({ printState }: any) => {
     const handleSaveConfiguration = (dialogFrom: any) => {
         setDialog(
             <DialogComponent
-                header={'Save configuration'}
-                content={
-                    <SaveConfigSavings
-                        description={
-                            'You can save this Microsoft SQL Server on AWS Ec2 and FSx for ONTAP file system configuration and load the configuration later for a future deployment.'
-                        }
-                    />
-                }
+                header={GENERAL.ES_SAVE_CONFIG}
+                content={<SaveConfigSavings description={GENERAL.ES_SAVE_CONFIG_DESC} />}
                 primaryButton={GENERAL.SAVE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => ExploreSaveConfiguration(dispatch, saveConfigData, closeDialog, msSqlInstance, fsxData)}
@@ -89,15 +86,15 @@ const MSSQLAccordion = ({ printState }: any) => {
         navigate(WLF_TO_FORM_NAVIGATE);
         setTimeout(() => {
             const data = setRecommendedConfig(msSqlInstance, fsxData);
-            LoadRecommendedConfig(dispatch, data);
-        }, 10);
+            LoadRecommendedConfig(dispatch, data, false);
+        }, 1);
     };
 
     return (
         <div className={styles.mssqlAccordion}>
             <DsAccordion
                 id="1"
-                title="Microsoft SQL Server on AWS EC2 using FSx for ONTAP"
+                title={GENERAL.RECOMMENDED_ES_TITLE}
                 variant="Default"
                 value=""
                 isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
@@ -130,14 +127,17 @@ const MSSQLAccordion = ({ printState }: any) => {
                             isDisabled={isMutliFsx || storageSavingsLoading || selectedHostDetails?.loading}
                             onClick={() => handleCreateClick()}
                         >
-                            Create
+                            {GENERAL.CREATE}
                         </DsButton>
                     </div>
                 ]}
                 children={
                     isMutliFsx ? (
                         <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '2351px' }}>
-                            <DsTypography variant="Semibold_14" style={{ marginBottom: '6px' }}>
+                            <DsTypography
+                                variant="Semibold_14"
+                                style={{ marginBottom: '6px', fontWeight: '505 !important' }}
+                            >
                                 {GENERAL.MS_SQL_TWO_INSTANCES}
                             </DsTypography>
 
@@ -173,7 +173,11 @@ const MSSQLAccordion = ({ printState }: any) => {
                                 overflow: 'hidden'
                             }}
                         >
-                            <DsTypography variant="Semibold_14" style={{ marginBottom: '6px' }}>
+                            <DsTypography
+                                variant="Semibold_14"
+                                style={{ marginBottom: '6px' }}
+                                className={styles.setFont}
+                            >
                                 {GENERAL.MS_SQL_SINGLE_INSTANCES}
                             </DsTypography>
 
@@ -182,7 +186,11 @@ const MSSQLAccordion = ({ printState }: any) => {
                                     <TableLayout data={data} key={index} />
                                 )
                             )}
-                            <DsTypography variant="Semibold_14" style={{ marginTop: '32px', marginBottom: '6px' }}>
+                            <DsTypography
+                                variant="Semibold_14"
+                                style={{ marginTop: '32px', marginBottom: '6px' }}
+                                className={styles.setFont}
+                            >
                                 FSxN
                             </DsTypography>
                             {calculatedFSXData(fsxData).map(

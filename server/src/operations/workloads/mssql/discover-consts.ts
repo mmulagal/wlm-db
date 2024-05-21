@@ -1,9 +1,11 @@
+import { SqlServerDeploymentModel } from '../../../utils/consts';
+
 const IS_DATABASE_CREATE_POSSIBLE: string = 'isDatabaseCreatePossible';
 const IS_PS7_AVAILABLE: string = 'isPS7Available';
 const UNAVAILABLE_PS_MODULES: string = 'unavailablePsModules';
 const FAILURE_INFO: string = 'failureInfo';
 const ACTIVE_DIRECTORY: string = 'activeDirectory';
-
+const SQL_SERVER_DEPLOYMENT_TYPE: string = 'sqlServerDeploymentType';
 const REQUIRED_PS_MODULES_FOR_MANAGEMENT: string = `
   'AWS.Tools.EC2',
   'AWS.Tools.FSx',
@@ -318,6 +320,13 @@ const HOST_AND_SQL_INFO_PS1 = [
         $clusterName = (Get-Cluster -ErrorAction SilentlyContinue).Name
         If ($clusterName) {
           $responseObject['sqlServerNodes'] = (Get-ClusterOwnerNode -ResourceType "SQL Server Availability Group" -ErrorAction SilentlyContinue).OwnerNodes.NodeName
+
+          
+          If (Get-ClusterResource -ErrorAction SilentlyContinue | ? { $_.ResourceType -eq "SQL Server Availability Group" }) {
+            $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
+          } else {
+            $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'
+          }
         } Else {
           $responseObject['failureInfo'] += "\${instanceName}: Cluster details not available." +
           " If AOAG cluster, the remote server may be paused or is in the process of being started." +
@@ -325,6 +334,7 @@ const HOST_AND_SQL_INFO_PS1 = [
         }
       } else {
         $responseObject['sqlServerNodes'] = hostname
+        $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
       }
   
       if ($sqlService.State -eq "Running") {
@@ -551,7 +561,10 @@ const GET_ACTIVE_DIRECTORY_DETAILS = [
     $adDomainName = (Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction SilentlyContinue -WarningAction SilentlyContinue).Domain
     If ($adDomainName -ne "WORKGROUP") {
       $adIpList = ([System.Net.Dns]::GetHostEntry($adDomainName)).AddressList.IpAddressToString
-  
+      if ($adIpList -IsNot [System.Array]) {
+        $adIpList = @($adIpList)
+      }
+
       $adObject = New-Object PSObject -Property @{ "domainName" = $adDomainName }
       $adObject | Add-Member -MemberType NoteProperty -Name "ipAddresses" -Value $adIpList
       $responseObject['${ACTIVE_DIRECTORY}'] = $adObject

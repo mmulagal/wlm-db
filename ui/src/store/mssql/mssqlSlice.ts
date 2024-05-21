@@ -81,7 +81,9 @@ const initialState: MssqlEntities = {
         collationList: null,
         collationListLoading: false,
         collationListError: null
-    }
+    },
+    getEstimatedCostData: null,
+    getEstimatedCostLoading: false
 };
 
 const mssqlSlice = createSlice({
@@ -135,6 +137,12 @@ const mssqlSlice = createSlice({
         },
         addGetCollationList: (state, action: PayloadAction<any>) => {
             state.getCollationList = action.payload;
+        },
+        setEstimatedCostData: (state, action: PayloadAction<any>) => {
+            state.getEstimatedCostData = action.payload;
+        },
+        setEstimatedCostLoading: (state, action: PayloadAction<any>) => {
+            state.getEstimatedCostLoading = action.payload;
         }
     }
 });
@@ -155,6 +163,8 @@ export const {
     addFsxnList,
     addSavedConfigList,
     getThroughputRegionList,
-    addGetCollationList
+    addGetCollationList,
+    setEstimatedCostData,
+    setEstimatedCostLoading
 } = mssqlSlice.actions;
 export default mssqlSlice;

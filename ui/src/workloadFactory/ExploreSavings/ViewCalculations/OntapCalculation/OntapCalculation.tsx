@@ -1,4 +1,4 @@
-import { AccordionCard, AccordionCardContent, DsTypography } from '@netapp/design-system';
+import { AccordionCard, AccordionCardContent, DsTypography, useAccordionContext } from '@netapp/design-system';
 import styles from './OntapCalculation.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { viewCalculation } from '../../SavingsCalculator/savingsUtil';
@@ -7,12 +7,12 @@ import { Text } from '../../../../ui-components/Typography';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
+import { formatViewCalcInstance } from '../../ExploreSavingsUtils';
 
 const TableLayout = ({ data }: any) => {
     const styleHandler = (data: any) => {
         if (
             data.label === 'Total monthly cost' ||
-            data.label === 'Total snapshot monthly cost' ||
             data.label === 'Amazon Elastic Block Storage (EBS) total cost (monthly)'
         ) {
             return {
@@ -53,18 +53,46 @@ const TableLayout = ({ data }: any) => {
 };
 
 const OntapCalculation = () => {
-    const viewCalculationsResponse = useAppSelector(state => state.exploreSavings.viewCalculationsResponse);
-    const [viewCalculationData, setViewCalculationData] = useState(viewCalculationsResponse?.fsxn || {});
+    const { viewCalculationsResponse, selectedDeploymentModel, viewCalculationsLoading, selectedHostDetails } =
+        useAppSelector(state => state.exploreSavings);
+    const [viewLoading, setViewLoading] = useState(false);
+    const [fsxInstance, setFsxInstance] = useState<any>(null);
+
     useEffect(() => {
-        setViewCalculationData(viewCalculationsResponse?.fsxn);
-    }, [viewCalculationsResponse]);
+        if (!selectedHostDetails?.loading) {
+            setFsxInstance({
+                fsxInstanceCalculation: formatViewCalcInstance(selectedDeploymentModel, selectedHostDetails)
+            });
+        }
+    }, [selectedHostDetails]);
+
+    useEffect(() => {
+        setViewLoading(selectedHostDetails?.loading || viewCalculationsLoading);
+    }, [selectedHostDetails, viewCalculationsLoading]);
+
+    const accordionContext = useAccordionContext()?.setOpenChildren!;
+    useEffect(() => {
+        if (viewLoading) {
+            accordionContext({
+                1: false,
+                2: false
+            });
+        } else if (viewCalculationsResponse) {
+            accordionContext({
+                1: true
+            });
+        }
+    }, [viewLoading]);
 
     const setHeader = () => {
-        return (
-            <DsTypography variant="Regular_14">
-                ${viewCalculationData?.FSxNCalculation?.priceCalculation?.totalMonthlyCost}
-            </DsTypography>
-        );
+        if (!viewCalculationsResponse) {
+            return (
+                <DsTypography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.NOT_AVAILABLE}
+                </DsTypography>
+            );
+        }
+        return <DsTypography variant="Regular_14">${viewCalculationsResponse?.fsxTotalCost}</DsTypography>;
     };
     return (
         <div className={styles.ontapCalculation}>
@@ -72,30 +100,53 @@ const OntapCalculation = () => {
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="1"
                 title={<div>{GENERAL.MS_ONTAP_CALCULATION}</div>}
+                isLoading={viewLoading}
+                isDisabled={!viewCalculationsResponse}
             >
-                <AccordionCardContent>
-                    <DsTypography className={styles.accordionContentSet}>
-                        {viewCalculation(viewCalculationData).Ec2InstanceCalculation.map(
-                            (data: { label: string; text?: string; value?: string }, index: number) => (
-                                <TableLayout key={index} data={data} />
-                            )
-                        )}
-                        <div style={{ marginTop: '16px' }}>
-                            {viewCalculation(viewCalculationData).FSxNCalculation.map(
+                {viewCalculationsResponse && fsxInstance && (
+                    <AccordionCardContent>
+                        <DsTypography className={styles.accordionContentSet}>
+                            {viewCalculation(
+                                { ...fsxInstance, ...viewCalculationsResponse },
+                                selectedDeploymentModel
+                            ).Ec2InstanceCalculation.map(
                                 (data: { label: string; text?: string; value?: string }, index: number) => (
                                     <TableLayout key={index} data={data} />
                                 )
                             )}
-                        </div>
-                        <div style={{ marginTop: '16px' }}>
-                            {viewCalculation(viewCalculationData).cloneCalculation.map(
-                                (data: { label: string; text?: string; value?: string }, index: number) => (
-                                    <TableLayout key={index} data={data} />
-                                )
-                            )}
-                        </div>
-                    </DsTypography>
-                </AccordionCardContent>
+                            <div style={{ marginTop: '16px' }}>
+                                {viewCalculation(
+                                    { ...fsxInstance, ...viewCalculationsResponse },
+                                    selectedDeploymentModel
+                                ).FSxNCalculation.map(
+                                    (data: { label: string; text?: string; value?: string }, index: number) => (
+                                        <TableLayout key={index} data={data} />
+                                    )
+                                )}
+                            </div>
+                            <div style={{ marginTop: '16px' }}>
+                                {viewCalculation(
+                                    { ...fsxInstance, ...viewCalculationsResponse },
+                                    selectedDeploymentModel
+                                ).SnapshotCalculation.map(
+                                    (data: { label: string; text?: string; value?: string }, index: number) => (
+                                        <TableLayout key={index} data={data} />
+                                    )
+                                )}
+                            </div>
+                            <div style={{ marginTop: '16px' }}>
+                                {viewCalculation(
+                                    { ...fsxInstance, ...viewCalculationsResponse },
+                                    selectedDeploymentModel
+                                ).cloneCalculation.map(
+                                    (data: { label: string; text?: string; value?: string }, index: number) => (
+                                        <TableLayout key={index} data={data} />
+                                    )
+                                )}
+                            </div>
+                        </DsTypography>
+                    </AccordionCardContent>
+                )}
             </AccordionCard>
         </div>
     );

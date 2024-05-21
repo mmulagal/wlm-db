@@ -84,7 +84,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"databaseId\":177,\"databaseName\":\"RetailBanking\",\"creationDate\":\"2023-04-11T17:49:40.963\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":553648128.00},{\"databaseId\":34,\"databaseName\":\"MFGSales\",\"creationDate\":\"2023-04-11T17:23:39.663\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":203,\"databaseName\":\"AssetManagement\",\"creationDate\":\"2023-04-11T17:49:48.887\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":58,\"databaseName\":\"HRAudit\",\"creationDate\":\"2023-04-11T17:43:09.220\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":234,\"databaseName\":\"PrivateBanking\",\"creationDate\":\"2023-04-11T17:49:58.353\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":30,\"databaseName\":\"SalesData\",\"creationDate\":\"2023-04-11T17:23:38.587\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":24,\"databaseName\":\"ExpenseTracker\",\"creationDate\":\"2023-04-11T17:23:36.840\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":250,\"databaseName\":\"TimeSheet\",\"creationDate\":\"2023-04-11T17:50:03.333\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":154,\"databaseName\":\"RetailBanking_sandbox\",\"creationDate\":\"2023-04-11T17:49:40.963\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":553648128.00}\r\n]",
+        "StandardOutputContent": "[{\"databaseId\":177,\"databaseName\":\"RetailBanking\",\"creationDate\":\"2023-04-11T17:49:40.963\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":553648128.00, \"collationName\": \"SQL_Latin1_General_CP1_CI_AS\" },{\"databaseId\":34,\"databaseName\":\"MFGSales\",\"creationDate\":\"2023-04-11T17:23:39.663\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00, \"collationName\": \"SQL_Latin1_General_CP1_CI_AS\"},{\"databaseId\":203,\"databaseName\":\"AssetManagement\",\"creationDate\":\"2023-04-11T17:49:48.887\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00, \"collationName\": \"SQL_Latin1_General_CP1_CI_AS\"},{\"databaseId\":58,\"databaseName\":\"HRAudit\",\"creationDate\":\"2023-04-11T17:43:09.220\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00, \"collationName\": \"SQL_Latin1_General_CP1_CI_AS\"},{\"databaseId\":234,\"databaseName\":\"PrivateBanking\",\"creationDate\":\"2023-04-11T17:49:58.353\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00, \"collationName\": \"SQL_Latin1_General_CP1_CI_AS\"},{\"databaseId\":30,\"databaseName\":\"SalesData\",\"creationDate\":\"2023-04-11T17:23:38.587\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00, \"collationName\": \"SQL_Latin1_General_CP1_CI_AS\"},{\"databaseId\":24,\"databaseName\":\"ExpenseTracker\",\"creationDate\":\"2023-04-11T17:23:36.840\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00, \"collationName\": \"SQL_Latin1_General_CP1_CI_AS\"},{\"databaseId\":250,\"databaseName\":\"TimeSheet\",\"creationDate\":\"2023-04-11T17:50:03.333\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00, \"collationName\": \"SQL_Latin1_General_CP1_CI_AS\"},{\"databaseId\":154,\"databaseName\":\"RetailBanking_sandbox\",\"creationDate\":\"2023-04-11T17:49:40.963\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":553648128.00, \"collationName\": \"SQL_Latin1_General_CP1_CI_AS\"}\r\n]",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -757,7 +757,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"clusterNodesInfo\":[{\"NodeName\":\"SQLNODE1-65579\",\"is_current_owner\":true},{\"NodeName\":\"SQLNODE2-65579\",\"is_current_owner\":false}],\"ServerEdition\":\"Standard Edition\",\"isClustered\":1,\"activeNode\":\"SQLNODE1-65579\",\"numberOfConnections\":8,\"serverDetails\":\"Microsoft SQL Server 2019 (SP3-OD) (KB5006943) - 13.0.6404.1 (X64) \\n\\tOct 18 2021 09:37:01 \\n\\tCopyright (c) Microsoft Corporation\\n\\tStandard Edition (64-bit) on Windows Server 2019 Datacenter 10.0 <X64> (Build 14393: ) (Hypervisor)\\n\",\"clusterName\":\"FciClusterName\",\"totalCount\":9}]\r\n",
+        "StandardOutputContent": "[{\"clusterNodesInfo\":[{\"NodeName\":\"SQLNODE1-65579\",\"is_current_owner\":true},{\"NodeName\":\"SQLNODE2-65579\",\"is_current_owner\":false}],\"ServerEdition\":\"Standard Edition\",\"isClustered\":1,\"activeNode\":\"SQLNODE1-65579\",\"numberOfConnections\":8,\"serverDetails\":\"Microsoft SQL Server 2019 (SP3-OD) (KB5006943) - 13.0.6404.1 (X64) \\n\\tOct 18 2021 09:37:01 \\n\\tCopyright (c) Microsoft Corporation\\n\\tStandard Edition (64-bit) on Windows Server 2019 Datacenter 10.0 <X64> (Build 14393: ) (Hypervisor)\\n\",\"clusterName\":\"FciClusterName\",\"totalCount\":9,\"ServerCollation\":\"SQL_Latin1_General_CP1_CI_AS\"}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -835,7 +835,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"records\":[{\"uuid\":\"d1f91312-f0c1-11ee-a11e-13a030d9dcda\",\"name\":\"vol_murali_clone\",\"tiering\":{\"object_tags\":[\"cloned_by=netapp_wlmdb\"]},\"clone\":{\"split_estimate\":6264045568},\"space\":{\"used_by_afs\":7378214912,\"physical_used\":1135968256},\"_links\":{\"self\":{\"href\":\"/api/storage/volumes/d1f91312-f0c1-11ee-a11e-13a030d9dcda\"}}}],\"num_records\":1,\"_links\":{\"self\":{\"href\":\"/api/storage/volumes?tiering.object_tags=%22cloned_by=netapp_wlmdb%22&fields=space.used_by_afs,space.physical_used,clone.split_estimate\"}}}",
+        "StandardOutputContent": "{\r\n    \"sandboxSavingsPercentage\":  97.08075257751976,\r\n    \"savedStorage\":  409595904,\r\n    \"consumedStorage\":  12316672\r\n}\r\n",
         "Status": "Success",
         "StatusDetails": "Success"
     },
@@ -853,6 +853,23 @@
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
         "StandardOutputContent": "{\r\n    \"Instance\":  \"MSSQLSERVER\",\r\n    \"Output\":  \"[{\\\"database_name\\\":\\\"RetailBanking_sandbox\\\",\\\"sandbox_properties\\\":[{\\\"name\\\":\\\"baseSnapshot\\\",\\\"value\\\":\\\"7e1de7b5-6e0e-4f6d-9c0a-8e5e3c1d2f0a\\\"},{\\\"name\\\":\\\"source\\\",\\\"value\\\":\\\"SQLServer-Prod-01|MSSQLSERVER|RetailBanking\\\"},{\\\"name\\\":\\\"tag\\\",\\\"value\\\":\\\"Development\\\"}]}]\"\r\n}\r\n",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "instanceDetailsInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\r\n    \"Name\":  \"MSSQLSERVER\",\r\n    \"State\":  \"Running\"\r\n}\r\n",
         "Status": "Success",
         "StatusDetails": "Success"
     },
@@ -876,7 +893,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\r\n    \"svm\":  \"wlmdb_sqlsvm_1714090636810\",\r\n    \"data\":  {\r\n                 \"lunPath\":  \"/vol/wlmdb_sqldata_1714098400/sqldata\",\r\n                 \"fileName\":  \"D:\\\\MSSQL\\\\data\\\\testdb_data.mdf\",\r\n                 \"windowsVolumeName\":  \"testdb-Data\",\r\n                 \"volumeName\":  \"wlmdb_sqldata_1714098400\"\r\n             },\r\n    \"collation\":  \"SQL_Latin1_General_CP1_CI_AS\",\r\n    \"log\":  {\r\n                \"lunPath\":  \"/vol/wlmdb_sqllog_1714098400/sqllog\",\r\n                \"fileName\":  \"E:\\\\MSSQL\\\\log\\\\testdb_log.ldf\",\r\n                \"windowsVolumeName\":  \"testdb-Log\",\r\n                \"volumeName\":  \"wlmdb_sqllog_1714098400\"\r\n            }\r\n}\r\n",
+        "StandardOutputContent": "{\r\n    \"svm\":  \"wlmdb_sqlsvm_1714090636810\",\r\n    \"data\":  {\r\n                 \"lunPath\":  \"/vol/wlmdb_sqldata_1714098400/sqldata\",\r\n                 \"filepath\":  \"D:\\\\MSSQL\\\\data\\\\testdb_data.mdf\",\r\n                 \"windowsVolumeName\":  \"testdb-Data\",\r\n                 \"volumeName\":  \"wlmdb_sqldata_1714098400\"\r\n             },\r\n    \"collation\":  \"SQL_Latin1_General_CP1_CI_AS\",\r\n    \"log\":  {\r\n                \"lunPath\":  \"/vol/wlmdb_sqllog_1714098400/sqllog\",\r\n                \"filepath\":  \"E:\\\\MSSQL\\\\log\\\\testdb_log.ldf\",\r\n                \"windowsVolumeName\":  \"testdb-Log\",\r\n                \"volumeName\":  \"wlmdb_sqllog_1714098400\"\r\n            }\r\n}\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -1002,6 +1019,31 @@
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
         "StandardOutputContent": "{}",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "mountPointQueryCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-cleanupOntapResource",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-cleanupOntapResource",
+        "Comment": "",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT7.723S",
+        "ExecutionEndDateTime": "2024-04-26T07:41:01.902Z",
+        "ExecutionStartDateTime": "2024-04-26T07:40:54.902Z",
+        "InstanceId": "i-07862593751ba045b",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[{\"filetype\":\"Data\",\"volumename\":\"sqldatabaseuga4_DB1-Data\",\"filepath\":\"D:\\\\MSSQL\\\\data\\\\test-database_data.mdf\"},{\"file_type\":\"Log\",\"volumename\":\"sqldatabaseuga4_DB1-Log\",\"filepath\":\"E:\\\\MSSQL\\\\log\\\\test-database_log.ldf\"}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"

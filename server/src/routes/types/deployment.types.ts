@@ -35,7 +35,7 @@ const FSXConfiguration = Type.Object({
     fsxVolThroughput: Type.Number({ enum: [128, 256, 512, 1024, 2048, 4096] }),
     fsxIOPS: Type.Number(),
     encryptionKey: Type.Optional(Type.String()),
-    snapshotPolicy: Type.String({ enum: ['none', 'default'], default: 'default' })
+    snapshotPolicy: Type.String({ enum: ['none', 'daily_weekretention'], default: 'daily_weekretention' })
 });
 
 const SQLConfiguration = Type.Object({
@@ -45,7 +45,8 @@ const SQLConfiguration = Type.Object({
     serviceAccountPassword: Type.String(),
     sqlServerName: Type.String(),
     sqlAmiName: Type.String(),
-    sqlCollation: Type.String()
+    sqlCollation: Type.String(),
+    isCustomAmi: Type.Optional(Type.Boolean({ default: false }))
 });
 
 // Cloud formation template creation Request and Response

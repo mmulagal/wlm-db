@@ -7,6 +7,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import InventoryChart from '../InventoryChart/InventoryChart';
 import SquareComponent from '../../DatabaseHomePage/SquareComponent/SquareComponent';
 import { useAppSelector } from '../../../store/storeHooks';
+import NewInventoryHeaderSection from '../NewInventoryHeaderSection/NewInventoryHeaderSection';
 
 const InventoryHeaderSection = () => {
     const navigate = useNavigate();
@@ -32,6 +33,8 @@ const InventoryHeaderSection = () => {
                     </Button>
                 </div>
             </div>
+
+            {/* <NewInventoryHeaderSection /> */}
 
             {/* chart area */}
             <div className={styles.chartSection}>

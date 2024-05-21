@@ -74,6 +74,21 @@ const SQLServer = ({ handleToggle, openKey }: sqlServer) => {
                     </Typography>
                 </div>
 
+                {resourceDetails?.databaseServer?.collation && (
+                    <div className={commonStyles.row}>
+                        <Typography variant="Semibold_14" className={commonStyles.heading}>
+                            {GENERAL.CLUSTER_COLLATION_NAME}
+                        </Typography>
+                        <Typography
+                            variant="Regular_14"
+                            className={commonStyles.valueCSS}
+                            title={resourceDetails?.databaseServer?.collation || ''}
+                        >
+                            {resourceDetails?.databaseServer?.collation}
+                        </Typography>
+                    </div>
+                )}
+
                 {resourceDetails?.databaseServer?.clusterName && (
                     <div className={commonStyles.row}>
                         <Typography variant="Semibold_14" className={commonStyles.heading}>
@@ -143,7 +158,9 @@ const SQLServer = ({ handleToggle, openKey }: sqlServer) => {
                     </Typography>
                     <Typography variant="Regular_14" className={commonStyles.valueCSS}>
                         {resourceDetails?.databaseServer?.creationDate
-                            ? moment(Number(resourceDetails?.databaseServer?.creationDate)).format('MMMM DD, YYYY, HH:mm:ss')
+                            ? moment(Number(resourceDetails?.databaseServer?.creationDate)).format(
+                                  'MMMM DD, YYYY, HH:mm:ss'
+                              )
                             : ''}
                     </Typography>
                 </div>

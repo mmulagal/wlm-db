@@ -449,7 +449,7 @@ async function calculatePrice(
     });
 
     if (fsxnStorage && fsxnStorage?.diskSize > 133120) {
-        throw createError(412, 'Supported Fsxn disk size should be between 120GiB to 130TiB');
+        throw createError(412, 'Supported FSx for ONTAP data disk size should be between 120GiB to 130TiB');
     }
 
     const inputList: ProductInput[] = compact(getInputs(compute, fsxnStorage, ebsStorage, vpc, fsxwStorage));

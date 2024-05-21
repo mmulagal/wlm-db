@@ -5,7 +5,7 @@ import styles from './SelectedVolumeSummary.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
-import { formatSizeOnePrecision } from '../../../../utils/utilityFunctions';
+import { formatSizeTwoPrecision } from '../../../../utils/utilityFunctions';
 
 const SelectedVolumeSummary = () => {
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
@@ -33,20 +33,20 @@ const SelectedVolumeSummary = () => {
 
     //For loading state
     const data = [
-        { details: 'Total volumes', id: '1' },
+        { details: GENERAL.ES_TOTAL_VOLUMES, id: '1' },
         {
-            details: 'Total storage amount',
+            details: GENERAL.ES_TOTAL_STORAGE_AMOUNT,
 
             id: '2'
         },
-        { details: 'Total provisioned IOPS', id: '3' },
-        { details: 'Total throughput MB/s', id: '4' }
+        { details: GENERAL.ES_TOTAL_PROVISIONED_IOPS, id: '3' },
+        { details: GENERAL.ES_TOTAL_THROUGHPUT_MBPS, id: '4' }
     ];
 
     //For loading state
     const getLoadingStateData: ColumnProps[] = [
         {
-            Header: 'Details',
+            Header: GENERAL.ES_DETAILS,
             accessor: 'details',
             id: '1',
             width: '576px',
@@ -64,7 +64,7 @@ const SelectedVolumeSummary = () => {
     const getColumnsList = (volTypeList: Array<String>, colWidth: string, ebsAvailable: any) => {
         let colList = [];
         colList.push({
-            Header: 'Details',
+            Header: GENERAL.ES_DETAILS,
             accessor: 'details',
             id: '1',
             width: ebsAvailable.length === 0 ? '576px' : '190px',
@@ -109,10 +109,10 @@ const SelectedVolumeSummary = () => {
         }
 
         let header = {};
-        let volumes: any = { details: 'Total volumes', id: '1' };
-        let storageAmount: any = { details: 'Total storage amount', id: '2' };
-        let iops: any = { details: 'Total provisioned IOPS', id: '3' };
-        let throughput: any = { details: 'Total throughput MB/s', id: '4' };
+        let volumes: any = { details: GENERAL.ES_TOTAL_VOLUMES, id: '1' };
+        let storageAmount: any = { details: GENERAL.ES_TOTAL_STORAGE_AMOUNT, id: '2' };
+        let iops: any = { details: GENERAL.ES_TOTAL_PROVISIONED_IOPS, id: '3' };
+        let throughput: any = { details: GENERAL.ES_TOTAL_THROUGHPUT_MBPS, id: '4' };
 
         let volTypeList: any = [];
 
@@ -144,7 +144,7 @@ const SelectedVolumeSummary = () => {
                     newObj[key] = storageAmount[key];
                     return newObj;
                 } else {
-                    newObj[key] = formatSizeOnePrecision(storageAmount[key]);
+                    newObj[key] = formatSizeTwoPrecision(storageAmount[key]);
                     return newObj;
                 }
             }, {});

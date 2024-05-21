@@ -14,7 +14,11 @@ import {
     CloneDatabaseHostBody,
     CollationInfoResponseBody,
     SandboxSavingsResponseBody,
-    SandboxInfoResponseBody
+    SandboxInfoResponseBody,
+    DatabaseMountPointRequestQueryParam,
+    GetDriveQueryString,
+    DatabaseMountPointResponseBody,
+    SandboxConnectionStringParams
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
@@ -74,6 +78,7 @@ const DatabasesCreateSchema = {
 
 const GetDriveInfoSchema = {
     ...databaseHostsRequest,
+    querystring: GetDriveQueryString,
     summary: 'Get database host drive information',
     description: 'Fetch drive info about the database host',
     params: DatabaseHostSummaryParams,
@@ -125,6 +130,18 @@ const GetSandboxesInfoSchema = {
         200: SandboxInfoResponseBody
     }
 };
+
+const GetSandboxesMountPointSchema = {
+    params: CreateDatabaseParams,
+    querystring: DatabaseMountPointRequestQueryParam,
+    tags: [RouteTags.SANDBOX],
+    summary: 'Get mount point information of database',
+    description: 'Get data and log file mount point drive information of database',
+    response: {
+        200: DatabaseMountPointResponseBody
+    }
+};
+
 const PatchResourceForSandboxSchema = {
     ...databaseHostsRequest,
     tags: [RouteTags.SANDBOX],
@@ -147,6 +164,22 @@ const RevertPatchResourceForSandboxSchema = {
         200: Type.Any()
     }
 };
+
+const GetSandboxConnectionStringSchema = {
+    ...databaseHostsRequest,
+    params: SandboxConnectionStringParams,
+    tags: [RouteTags.SANDBOX],
+    summary: 'Get Sandbox connection string',
+    description: 'Get sandbox connection string for sql server connection',
+    response: {
+        200: {
+            server: Type.String(),
+            database: Type.String(),
+            userId: Type.Optional(Type.String())
+        }
+    }
+};
+
 export {
     DatabaseHostsSummarySchema,
     DatabaseHostDetailsSchema,
@@ -158,5 +191,7 @@ export {
     GetSandboxSavingsSchema,
     GetSandboxesInfoSchema,
     PatchResourceForSandboxSchema,
-    RevertPatchResourceForSandboxSchema
+    RevertPatchResourceForSandboxSchema,
+    GetSandboxesMountPointSchema,
+    GetSandboxConnectionStringSchema
 };

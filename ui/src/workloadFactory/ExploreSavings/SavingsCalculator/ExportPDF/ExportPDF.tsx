@@ -11,14 +11,22 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
 
 const ExportPDF = ({ printDocument }: any) => {
-    const { storageSavingsLoading, selectedHostDetails } = useAppSelector(state => state.exploreSavings);
+    const { storageSavingsLoading, selectedHostDetails, viewCalculationsLoading } = useAppSelector(
+        state => state.exploreSavings
+    );
+
     const dispatch = useDispatch();
 
     const [loading, setLoading] = useState(false);
+    const [viewLoading, setViewLoading] = useState(false);
 
     useEffect(() => {
         setLoading(storageSavingsLoading || selectedHostDetails?.loading);
     }, [storageSavingsLoading, selectedHostDetails]);
+
+    useEffect(() => {
+        setViewLoading(selectedHostDetails?.loading || viewCalculationsLoading);
+    }, [selectedHostDetails, viewCalculationsLoading]);
 
     const handleExport = () => {
         printDocument();
@@ -40,7 +48,7 @@ const ExportPDF = ({ printDocument }: any) => {
                 </DsTypography>
             </div>
 
-            <div className={loading ? `${styles.insideContainer} ${styles.disabled}` : styles.insideContainer}>
+            <div className={viewLoading ? `${styles.insideContainer} ${styles.disabled}` : styles.insideContainer}>
                 <div>
                     <Calculate />
                 </div>
@@ -49,7 +57,7 @@ const ExportPDF = ({ printDocument }: any) => {
                     className={styles.text}
                     style={{ width: '147px' }}
                     onClick={() =>
-                        loading ? () => {} : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
+                        viewLoading ? () => {} : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
                     }
                 >
                     {GENERAL.VIEW_THE_CALCULATIONS}

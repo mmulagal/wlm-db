@@ -117,7 +117,7 @@ const License = () => {
             );
         }
         if (licenseType === FORM_OPTIONS.CUSTOM_AMI) {
-            return <Typography variant="Regular_14">{selectedCustomAMI?.value || GENERAL.USE_CUSTOM_AMI}</Typography>;
+            return <Typography variant="Regular_14">{GENERAL.CUSTOM_AMI}</Typography>;
         } else {
             return (
                 <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>

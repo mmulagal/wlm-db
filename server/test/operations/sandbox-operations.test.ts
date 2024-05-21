@@ -7,7 +7,12 @@ import '../simulator/scopes/opentelemetry-scope';
 import '../simulator/scopes/aws/ssm-scope';
 import { ACCOUNT_ID } from '../../src/utils/consts';
 import { createResource, deleteResource } from '../../src/lib/database/db';
-import { createSandbox, getSandboxSavings, getSandboxesInfo } from '../../src/operations/sandbox-operations';
+import {
+    createSandbox,
+    getSandboxSavings,
+    getSandboxesInfo,
+    getDatabaseMountPointInfo
+} from '../../src/operations/sandbox-operations';
 import sandboxResponse from '../simulator/responses/workload/sandbox-response.json';
 
 beforeAll(async () => {
@@ -62,8 +67,24 @@ describe('sandbox operations ', () => {
                 instance: 'default',
                 database: 'testdb1'
             },
-            'other'
+            'other',
+            {
+                dataDrive: 'D',
+                logDrive: 'E'
+            }
         );
         expect(resp.jobId).toBeDefined();
+    });
+
+    it('Get the data and log mount point drives of the database', async () => {
+        const resp = await getDatabaseMountPointInfo(
+            ACCOUNT_ID,
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
+            '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'test-database',
+            'MSSQLSERVER'
+        );
+        expect(resp).toEqual(sandboxResponse.sandboxMountPointResponse);
     });
 });

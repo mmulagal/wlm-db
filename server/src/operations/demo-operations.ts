@@ -176,7 +176,7 @@ async function createDeploymentMockDataInDB(
 
     await createJobs(accountId, data);
 
-    const sandboxJobData = await createSandboxJobMockData(
+    const sandboxJobsData = await createSandboxJobMockData(
         accountId,
         region,
         'RetailBanking',
@@ -185,7 +185,7 @@ async function createDeploymentMockDataInDB(
         'SQLServer-Prod-01',
         resourceName
     );
-    await createJobs(accountId, sandboxJobData);
+    await createJobs(accountId, sandboxJobsData);
 }
 
 async function createFileSystemForDemo(

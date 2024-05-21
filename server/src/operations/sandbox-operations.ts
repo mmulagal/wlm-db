@@ -12,7 +12,8 @@ import {
     NO_SANDBOX_CREATED,
     RESOURCESTYPE,
     SANDBOX_API_SIZE,
-    SSM_COMMAND_CACHE_TYPE
+    SSM_COMMAND_CACHE_TYPE,
+    SSM_PARAM_PREFIX
 } from '../utils/consts';
 import {
     GET_SANDBOX_DETAILS,
@@ -20,20 +21,23 @@ import {
     getDbMappedOntapVolumes,
     cleanUpOntapResources,
     addExtendedProperties,
-    createClonedDb as createCloneDbScript
+    createClonedDb as createCloneDbScript,
+    mountPointQuery,
+    getStorageSavingsFromOntap
 } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { checkDatabaseExists, getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { sleep, sqlResponseParsing } from '../utils/utils';
-import { SandboxInfoResponseType } from '../routes/types/database-hosts.types';
-import { restGetUtilForOntap } from './workloads/mssql/ssm-script-utils';
+import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
 import { getResources } from './database/database-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
 import { INVOKE_VIRTUAL_MOUNT } from './workloads/mssql/const';
 import { updateSandboxDBIntoResourceData, updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
+import { getParameter } from '../lib/aws/ssm';
+import { getDriveInfo } from './createdb-operations';
 
 const logger = getLogger();
 
@@ -90,8 +94,8 @@ async function getSandboxDetails(
         let parsedResponse;
         try {
             parsedResponse = sqlResponseParsing(response);
-        } catch (error: any) {
-            return errorResponse(error.toString());
+        } catch (err: any) {
+            return errorResponse(err.toString());
         }
         if (parsedResponse?.Error) {
             const errorMessage = `Error fetching sandbox details for host: ${resourceId},${parsedResponse.Instance},${accountId}${parsedResponse?.Error}.`;
@@ -156,8 +160,8 @@ async function getSandboxDetails(
                 }
             }
             return sandboxInfo;
-        } catch (error) {
-            return errorResponse(error);
+        } catch (err) {
+            return errorResponse(err);
         }
     }
 }
@@ -201,8 +205,8 @@ async function getSandboxesInfo(accountId: string, credentialsId: string, region
                     ? resourceDetails[resourceDetails.length - 1].id
                     : undefined
         };
-    } catch (error) {
-        const errorMessage = `Error fetching Sandboxes info. ${error}.`;
+    } catch (err) {
+        const errorMessage = `Error fetching Sandboxes info. ${err}.`;
         logger.error(errorMessage);
     }
 }
@@ -263,15 +267,7 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                     region = 'us-east-1';
                                 }
 
-                                const command = [
-                                    restGetUtilForOntap(
-                                        fsxId,
-                                        region,
-                                        '/storage/volumes',
-                                        'tiering.object_tags="cloned_by=netapp_wlmdb"',
-                                        'fields=space.used_by_afs,space.physical_used,clone.split_estimate'
-                                    )
-                                ];
+                                const command = [getStorageSavingsFromOntap(fsxId, region)];
 
                                 const response = await callSsmExecution(
                                     credentialsId,
@@ -283,25 +279,14 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                     accountId
                                 );
 
-                                const cleanResponse = response?.replaceAll('\r\n', '');
-                                const jsonResponse = JSON.parse(cleanResponse!);
-
-                                jsonResponse?.records?.forEach(
-                                    (record: {
-                                        clone?: { split_estimate: number };
-                                        space: { physical_used: number; used_by_afs: number };
-                                    }) => {
-                                        const {
-                                            clone: { split_estimate: splitEstimate } = { split_estimate: 0 },
-                                            space: { physical_used: physicalUsed }
-                                        } = record;
-                                        savingsData.consumedStorage += physicalUsed;
-                                        savingsData.savedStorage += splitEstimate;
-                                        savingsData.sandboxSavingsPercentage =
-                                            (savingsData.savedStorage * 100) /
-                                            (savingsData.consumedStorage + savingsData.savedStorage);
-                                    }
-                                );
+                                if (response) {
+                                    const { savedStorage, consumedStorage } = sqlResponseParsing(response);
+                                    savingsData.consumedStorage += consumedStorage;
+                                    savingsData.savedStorage += savedStorage;
+                                    savingsData.sandboxSavingsPercentage =
+                                        (savingsData.savedStorage * 100) /
+                                        (savingsData.consumedStorage + savingsData.savedStorage);
+                                }
                                 break;
                             }
                         } catch (e) {
@@ -345,6 +330,7 @@ interface VolumeLunMapping {
 
 interface HostAndDbInfo extends DbInfo {
     resourceName: string;
+    instanceName: string;
     fsxId: string;
     svm: string;
     activeNodeInstaceId: string;
@@ -361,15 +347,21 @@ interface ClonedVolumes {
     data: ClonedVolume;
 }
 
+interface MountPoints {
+    dataDrive: string;
+    logDrive: string;
+}
+
 async function createSandbox(
     accountId: string,
     credentialsId: string,
     region: string,
     source: DbInfo,
     dest: DbInfo,
-    tag: string
+    tag: string,
+    mountPoints: MountPoints
 ) {
-    logger.info({ source, dest });
+    logger.info({ source, dest, mountPoints });
 
     let [[srcResourceDetail], [destResourceDetail]] = await Promise.all([
         listResources(accountId, source.host),
@@ -407,6 +399,7 @@ async function createSandbox(
                       isSSMConnected: boolean;
                       activeNodeInstanceId: string;
                       standbyNodeInstanceId: string | undefined;
+                      instanceName: string;
                   }
               )
             : getActiveSqlNode(credentialsId, region, destNode1, destNode2)
@@ -454,17 +447,20 @@ async function createSandbox(
             svm: sourceSvm!,
             fsxId: srcResourceDetail.co_relation_id!,
             activeNodeInstaceId: srcStatus.activeNodeInstanceId!,
-            metadata: srcResourceDetail.metadata as unknown as Metadata
+            metadata: srcResourceDetail.metadata as unknown as Metadata,
+            instanceName: srcStatus.instanceName || '.'
         },
         {
             ...dest,
-            resourceName: srcResourceDetail.resource_name!,
+            resourceName: destResourceDetail.resource_name!,
             svm: destSvm!,
             fsxId: destResourceDetail.co_relation_id!,
             activeNodeInstaceId: destStatus.activeNodeInstanceId!,
-            metadata: destResourceDetail.metadata as unknown as Metadata
+            metadata: destResourceDetail.metadata as unknown as Metadata,
+            instanceName: destStatus.instanceName || '.'
         },
-        tag
+        tag,
+        mountPoints
     );
 
     return { jobId: job.id };
@@ -477,7 +473,8 @@ async function startSandboxCreation(
     parentJobId: string,
     srcDetails: HostAndDbInfo,
     destDetails: HostAndDbInfo,
-    tag: string
+    tag: string,
+    mountPoints: MountPoints
 ) {
     logger.info('Start sandbox creation process', { tag });
     let errorMsg;
@@ -487,7 +484,7 @@ async function startSandboxCreation(
     let mountPaths;
 
     try {
-        await validateCloneParams(accountId, credentialsId, region, parentJobId, srcDetails, destDetails);
+        await validateCloneParams(accountId, credentialsId, region, parentJobId, srcDetails, destDetails, mountPoints);
 
         const mappings = (await getMappings(
             accountId,
@@ -517,7 +514,8 @@ async function startSandboxCreation(
             srcDetails,
             destDetails,
             mappings,
-            clonedVolumes
+            clonedVolumes,
+            mountPoints
         )) as { dataPath: string; logPath: string };
 
         await createCloneDb(accountId, credentialsId, region, parentJobId, destDetails, mountPaths, mappings.collation);
@@ -550,13 +548,57 @@ async function startSandboxCreation(
     }
 }
 
+async function validateSelectedDrives(
+    existingDriveInfo: Array<{
+        driveLetter: string;
+        availableSize: number;
+        isNetappDrive: boolean;
+        isDriveClustered?: boolean;
+    }>,
+    selectedDrive: string,
+    metadata: Metadata
+) {
+    logger.info('checking whether the drive exists', existingDriveInfo, selectedDrive);
+
+    const { sqlDeploymentType } = metadata as unknown as Metadata;
+    const isClustered = sqlDeploymentType === 'FCI' ? 'true' : 'false';
+    const restrictedDrives = ['A', 'B'];
+
+    if (restrictedDrives.includes(selectedDrive)) {
+        throw createError(412, `Selected drive ${selectedDrive} is not a valid drive`);
+    }
+
+    const regex = /^[D-Z]{1}$/; // Allows only single Capital Alphabetical letter
+
+    if (!regex.test(selectedDrive)) {
+        throw createError(412, `Selected drive ${selectedDrive} is not a valid drive`);
+    }
+
+    const matchedExistingDrive = existingDriveInfo?.find(drive => drive.driveLetter === selectedDrive);
+    if (!matchedExistingDrive) {
+        throw createError(412, `Selected drive letter ${selectedDrive} does not exist`);
+    }
+    if (!matchedExistingDrive.isNetappDrive) {
+        throw createError(412, `Selected drive ${selectedDrive} is not a NetApp drive`);
+    }
+    if (isClustered === 'true' && !matchedExistingDrive.isDriveClustered) {
+        throw createError(
+            412,
+            `Selected  drive ${selectedDrive} is non clustered drive or drive not part of SQL server`
+        );
+    }
+
+    return true;
+}
+
 async function validateCloneParams(
     accountId: string,
     credentialsId: string,
     region: string,
     parentJobId: string,
     srcDetails: HostAndDbInfo,
-    destDetails: HostAndDbInfo
+    destDetails: HostAndDbInfo,
+    mountPaths: MountPoints
 ) {
     logger.info('Validate clone params', { accountId, credentialsId, region, parentJobId, srcDetails, destDetails });
 
@@ -566,7 +608,7 @@ async function validateCloneParams(
     const validationJob = await registerJob(accountId, credentialsId, region, {
         description: `Validate if the sandbox ${destDetails.database} already exists in the target host ${destDetails.resourceName}`,
         startTime: Date.now(),
-        name: 'Validate if sandbox already exits',
+        name: 'Validate if sandbox already exists and mount point drives are existing.',
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: srcDetails.database,
@@ -574,14 +616,44 @@ async function validateCloneParams(
     });
 
     try {
+        const { existingDriveInfo } = await getDriveInfo(
+            accountId,
+            destDetails.host,
+            credentialsId,
+            region,
+            true,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
+        );
+
         await checkDatabaseExists(
             accountId,
             credentialsId,
             region,
             destDetails.host,
             destDetails.database,
-            destDetails.activeNodeInstaceId
+            destDetails.activeNodeInstaceId,
+            destDetails.instanceName
         );
+
+        const dataDriveExistsPromise = validateSelectedDrives(
+            existingDriveInfo,
+            mountPaths.dataDrive,
+            destDetails.metadata
+        );
+
+        const logDriveExistsPromise =
+            mountPaths.dataDrive === mountPaths.logDrive
+                ? Promise.resolve
+                : validateSelectedDrives(existingDriveInfo, mountPaths.logDrive, destDetails.metadata);
+
+        try {
+            await Promise.all([dataDriveExistsPromise, logDriveExistsPromise]);
+        } catch (err) {
+            const errorMessage = `Drive validation failed: ${err}`;
+            logger.error(errorMessage);
+            throw createError(errorMessage);
+        }
+
         status = JOBSTATUS.COMPLETED;
     } catch (e: any) {
         logger.error(e);
@@ -761,7 +833,8 @@ async function invokeVirtualMount(
     srcDetails: HostAndDbInfo,
     destDetails: HostAndDbInfo,
     mappings: VolumeLunMapping,
-    clonedVolumes: ClonedVolumes
+    clonedVolumes: ClonedVolumes,
+    mountPoints: MountPoints
 ) {
     logger.info('Invoke virtual mount', {
         accountId,
@@ -771,7 +844,8 @@ async function invokeVirtualMount(
         srcDetails,
         destDetails,
         mappings,
-        clonedVolumes
+        clonedVolumes,
+        mountPoints
     });
 
     let retries = 3;
@@ -795,10 +869,17 @@ async function invokeVirtualMount(
         if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
             await sleep(45000);
         }
+        const splitDataPath = mappings.data.fileName.split('\\');
+        const dataMappingfile = splitDataPath.slice(1).join('\\');
+        const splitLogPath = mappings.log.fileName.split('\\');
+        const logMappingfile = splitLogPath.slice(1).join('\\');
+
+        const dataFileName = `${mountPoints.dataDrive}:\\${dataMappingfile}`;
+        const logFileName = `${mountPoints.logDrive}:\\${logMappingfile}`;
 
         try {
             let command = [
-                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${mappings.data.fileName}  -LogFilePath ${mappings.log.fileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}'`
+                `${INVOKE_VIRTUAL_MOUNT} -DBName ${destDetails.database}  -DataFilePath ${dataFileName}  -LogFilePath ${logFileName}  -DataSerial '${clonedVolumes.data.lunSerialNumber}' -LogSerial '${clonedVolumes.log.lunSerialNumber}'`
             ];
 
             if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
@@ -882,11 +963,17 @@ async function createCloneDb(
     });
 
     try {
-        let command = [createCloneDbScript(destDetails.database, [mountPaths.dataPath, mountPaths.logPath])];
+        let command = [
+            // The instance name fix is temporary fix where the instance name is retrieved from the getActiveNode method since we are supporting only single instance. The instance value passed by the user in the body of API will ot be used. Once we support multiple instances this needs to be updated as well.
+            createCloneDbScript(destDetails.database, destDetails.instanceName, [
+                mountPaths.dataPath,
+                mountPaths.logPath
+            ])
+        ];
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [
-                createCloneDbScript('testdb', [
+                createCloneDbScript('testdb', '.', [
                     'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
                     'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
                 ])
@@ -944,7 +1031,7 @@ async function createExtendedProperties(
 
     try {
         let command = [
-            addExtendedProperties(destDetails.database, {
+            addExtendedProperties(destDetails.database, destDetails.instanceName, {
                 tag,
                 cloned_by: 'netapp_wlmdb',
                 source: `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`,
@@ -955,7 +1042,7 @@ async function createExtendedProperties(
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [
-                addExtendedProperties('testdb', {
+                addExtendedProperties('testdb', '.', {
                     tag: 'demo',
                     cloned_by: 'netapp_wlmdb',
                     source: 'resource|instance|testdb'
@@ -1109,8 +1196,8 @@ async function updateMetadataForSanbox(
     try {
         await updateResourceMetaData(accountId, databaseHostId, newMetadata);
         logger.info('Metadata updated succesfully for sandbox operation', accountId, databaseHostId);
-    } catch (error) {
-        const errorMessage = `Failed to update metadata for sandbox operation, ${accountId}, ${databaseHostId}, ${error}`;
+    } catch (err) {
+        const errorMessage = `Failed to update metadata for sandbox operation, ${accountId}, ${databaseHostId}, ${err}`;
         logger.error(errorMessage);
         throw createError(errorMessage);
     }
@@ -1141,8 +1228,8 @@ async function updateMetadataForSanboxTesting(
     try {
         await updateResourceMetaData(accountId, databaseHostId, newMetadata);
         return 'metadata updated succesfully';
-    } catch (error) {
-        return error;
+    } catch (err) {
+        return err;
     }
 }
 
@@ -1170,8 +1257,8 @@ async function revertMetadataForSanboxTesting(accountId: string, credentialsId: 
                 delete newMetadata.sandboxCreated;
                 delete newMetadata.updatedManually;
                 await updateResourceMetaData(accountId, resourceId, newMetadata);
-            } catch (error) {
-                logger.error('Failed to update meatadata', resourceId);
+            } catch (err) {
+                logger.error('Failed to update meatadata', resourceId, err);
             }
         })
     );
@@ -1179,10 +1266,135 @@ async function revertMetadataForSanboxTesting(accountId: string, credentialsId: 
     return 'Revereted manually updated metadatas';
 }
 
+async function getSandboxConnectionString(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    sandboxName: string
+) {
+    logger.info('Get connection string', { accountId, credentialsId, region, databaseHostId, sandboxName });
+    try {
+        const [{ metadata, resource_name: resourceName }] = await listResources(
+            accountId,
+            databaseHostId,
+            credentialsId
+        );
+
+        const { node1InstanceId, node2InstanceId, stackname } = metadata as unknown as Metadata;
+
+        const { instanceName } = await getActiveSqlNode(
+            credentialsId,
+            region,
+            node1InstanceId,
+            node2InstanceId,
+            databaseHostId
+        );
+
+        if (!instanceName) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the connection string');
+        }
+
+        const resp = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${stackname}`);
+
+        if (!resp) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the connection string');
+        }
+
+        const parsedResp = sqlResponseParsing(resp);
+
+        return {
+            server: instanceName === '.' ? resourceName : instanceName,
+            database: sandboxName,
+            userId:
+                process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
+                    ? 'admin'
+                    : parsedResp?.domain?.username
+        };
+    } catch (e: any) {
+        logger.error(`Failed to get the connection string for sandbox ${sandboxName} in host ${databaseHostId}, ${e}`);
+        throw createError(e.statusCode, e.message);
+    }
+}
+
+async function getDatabaseMountPointInfo(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseName: string,
+    instance: string
+) {
+    logger.info(
+        `Fetching mount point information for database host id ${databaseHostId} database ${databaseName} `,
+        accountId,
+        region,
+        credentialsId,
+        instance
+    );
+    const {
+        items: [resourceDetail]
+    } = await getResources(accountId, databaseHostId, credentialsId);
+
+    if (isEmpty(resourceDetail)) {
+        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+    }
+
+    const { metadata } = resourceDetail;
+    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+
+    const { isSSMConnected, activeNodeInstanceId, instanceName } = await getActiveSqlNode(
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId
+    );
+
+    if (!isSSMConnected || activeNodeInstanceId === undefined || instanceName === undefined) {
+        const errorMessage = `Unable to get mount point information for database host id ${databaseHostId} database ${databaseName} in account ${accountId} due to SSM connection issues.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    try {
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            databaseName = 'test-database';
+        }
+
+        const command = [mountPointQuery(instanceName, databaseName)];
+
+        const mountPoints = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
+        if (!mountPoints) {
+            throw createError('No mount points found.');
+        }
+        const parsedResp = sqlResponseParsing(mountPoints);
+
+        const result: DatabaseMountPointResponseType = {
+            databaseDataPath: [],
+            databaseLogPath: []
+        };
+
+        parsedResp.forEach((item: { filepath: string; filetype: string }) => {
+            const driveType = item.filetype === 'Data' ? 'databaseDataPath' : 'databaseLogPath';
+            result[driveType].push(item.filepath);
+        });
+
+        return result;
+    } catch (err) {
+        const errorMessage = `Failed to get mount point info for the database ${databaseName} in host ${databaseHostId}: ${err} `;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+}
+
 export {
     getSandboxesInfo,
     getSandboxSavings,
     createSandbox,
     updateMetadataForSanboxTesting,
-    revertMetadataForSanboxTesting
+    revertMetadataForSanboxTesting,
+    getDatabaseMountPointInfo,
+    getSandboxConnectionString
 };

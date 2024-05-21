@@ -24,13 +24,15 @@ const createDBRequest = {
         fileName: 'tempdb8_data.mdf',
         volumeSize: 1,
         drive: 'E',
-        isExisting: true
+        isExisting: true,
+        isVirtualMount: false
     },
     logFileConfig: {
         fileName: 'tempdb8_log.ldf',
         volumeSize: 2,
         drive: 'F',
-        isExisting: true
+        isExisting: true,
+        isVirtualMount: false
     }
 };
 
@@ -118,7 +120,8 @@ describe('Create database operations', () => {
             reqData.databaseName,
             reqData.dataDrivePath,
             reqData.logDrivePath,
-            'SQL_Latin1_General_CP1_CI_AS'
+            'SQL_Latin1_General_CP1_CI_AS',
+            '.'
         );
 
         expect(resp.Status).toBe('Complete');
@@ -161,7 +164,8 @@ describe('Create database operations', () => {
             reqData.fsxDataVolumeName,
             reqData.fsxLogVolumeName,
             reqData.dataSerial,
-            reqData.logSerial
+            reqData.logSerial,
+            'false'
         );
 
         expect(resp.Status).toBe('Complete');

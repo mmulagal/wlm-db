@@ -181,6 +181,8 @@ export interface MssqlEntities {
         collationListLoading: false;
         collationListError: null;
     };
+    getEstimatedCostData: any;
+    getEstimatedCostLoading: false;
 }
 
 export interface Subnets {
@@ -239,6 +241,7 @@ export interface MssqlRequestBody {
     };
     sqlConfiguration: {
         sqlDeploymentMode: string;
+        isCustomAmi: boolean;
         sqlAmiId: string;
         sqlAmiName: string;
         serviceAccountName: string;

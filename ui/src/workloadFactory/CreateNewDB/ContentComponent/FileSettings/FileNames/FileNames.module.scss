@@ -58,6 +58,11 @@
                 overflow: hidden;
             }
         }
+
+        .virtualMountPoint {
+            top: -46px;
+            position: relative;
+        }
     }
 
     .headerText {

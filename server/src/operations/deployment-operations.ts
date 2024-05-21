@@ -141,7 +141,11 @@ async function formatTemplateParameters(
         : { roleName: '', providerAccountId: '' };
 
     const stackName = derivedParams.StackName;
-    const validationAmiImage = credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : '';
+    const validationAmiImage = sqlConfiguration.isCustomAmi
+        ? sqlConfiguration.sqlAmiId
+        : credentialsId && region
+        ? await getWindowsServerBaseAmi(credentialsId!, region!)
+        : '';
 
     const availabilityZones =
         sqlConfiguration.sqlDeploymentMode === STANDALONE
@@ -156,6 +160,7 @@ async function formatTemplateParameters(
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+
     const routeTables =
         sqlConfiguration.sqlDeploymentMode === STANDALONE
             ? [networkConfiguration.routeTable1Id!]
@@ -682,7 +687,9 @@ async function createCloudFormationTemplateForUserDeployment(
     const encodedSignedMasterTemplateURL = encodeURIComponent(signedMasterTemplateUrl);
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
-    const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
+    const validationAmiImage = sqlConfiguration.isCustomAmi
+        ? sqlConfiguration.sqlAmiId
+        : await getWindowsServerBaseAmi(credentialsId, region);
     const availabilityZones =
         sqlConfiguration.sqlDeploymentMode === STANDALONE
             ? [networkConfiguration.availabilityZone1!]

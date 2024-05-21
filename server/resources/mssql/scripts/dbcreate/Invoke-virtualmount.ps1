@@ -1,18 +1,18 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$DBName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$DataFilePath,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$LogFilePath,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$DataSerial,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$LogSerial
 )
 
@@ -22,34 +22,34 @@ $ErrorActionPreference = "Stop"
 try {
     $responseObject = [ordered]@{}
 
-    if ($DataFilePath -eq $null -or $LogFilePath -eq $null -or $DataSerial -eq $null -or $LogSerial -eq $null){
+    if ($DataFilePath -eq $null -or $LogFilePath -eq $null -or $DataSerial -eq $null -or $LogSerial -eq $null) {
         write-debug "DataFilePath: $DataFilePath LogFilePath: $LogFilePath DataSerial: $DataSerial LogSerial: $LogSerial"
         throw "DataFilePath or LogFilePath or DataSerial or LogSerial is null"
     }
 
-    $null =(echo "RESCAN" | diskpart )
+    $null = (echo "RESCAN" | diskpart )
     Start-Sleep 2
 
     if ($DBName.Length -gt 25) {
-        $DBName = $DBName.Substring(0,25)
+        $DBName = $DBName.Substring(0, 25)
     }
     $datalabel = $DBName + '-Data'
     $loglabel = $DBName + '-Log'
 
-    $DataDriveLetter = $DataFilePath.Substring(0,1)
-    $LogDriveLetter = $LogFilePath.Substring(0,1)
-    $datafolder = $DataDriveLetter +':\' + $datalabel
+    $DataDriveLetter = $DataFilePath.Substring(0, 1)
+    $LogDriveLetter = $LogFilePath.Substring(0, 1)
+    $datafolder = $DataDriveLetter + ':\' + $datalabel
     $logfolder = $LogDriveLetter + ':\' + $loglabel
 
     $retry = 0
     do {
-        $disklist=(Get-Disk | Where-Object{$_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.SerialNumber -eq $DataSerial -or $_.SerialNumber -eq $LogSerial})
+        $disklist = (Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.SerialNumber -eq $DataSerial -or $_.SerialNumber -eq $LogSerial })
         $diskcount = $disklist.Number.Count
         if ($retry -gt 0) {
             Start-Sleep 20
         }
         $retry++
-    } until (($retry -eq 4) -Or($diskcount -ge $2))
+    } until (($retry -eq 4) -Or ($diskcount -ge $2))
 
     write-debug "Disklist: $disklist"
 
@@ -57,22 +57,24 @@ try {
     #If warning is indeed serious the next step to initialize will fail and that will be caught
     $disklist | ForEach-Object {
         $disk = $_
+        Clear-ClusterDiskReservation -disk $disk.Number -Force
         if ($disk.IsReadOnly -ne $False) {
-            Set-Disk -Number $disk.Number -IsReadOnly $False -ErrorAction stop
+            Set-Disk -Number $disk.Number -IsReadOnly $False -ErrorAction SilentlyContinue
             Start-Sleep 2
         }
-
+ 
         if ($disk.IsOffline -ne $False) {
-            Set-Disk -Number $disk.Number -IsOffline $False -ErrorAction stop
+            Set-Disk -Number $disk.Number -IsOffline $False -ErrorAction SilentlyContinue
             Start-Sleep 2
         }
-
+ 
         if ($disk.PartitionStyle -eq 'RAW') {
-            Set-Disk -Number $disk.Number -PartitionStyle GPT -ErrorAction stop
+            Set-Disk -Number $disk.Number -PartitionStyle GPT -ErrorAction SilentlyContinue
             Start-Sleep 2
         }
     }
-} catch{
+}
+catch {
     write-debug "Error: $($_.Exception)"
     $responseObject['error'] = $_.Exception.Message
     $responseObject['message'] = 'Failed to modify disks'
@@ -93,62 +95,24 @@ try {
     $dataPartition = Get-Partition -DiskNumber $datadisknumber | Where-Object Type -eq Basic
     $logPartition = Get-Partition -DiskNumber $logdisknumber | Where-Object Type -eq Basic
 
-    $null = $dataPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
-    $null = $logPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
+    #$null = $dataPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
+    #$null = $logPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
 
-    write-debug "DataAccessPaths: $($dataPartition.AccessPaths)"
-    write-debug "LogAccessPaths: $($logPartition.AccessPaths)"
     write-debug "DataFolder: $datafolder $logfolder"
 
-    if ($dataPartition.AccessPaths -notcontains $datafolder + '\') {
-        $null = Add-PartitionAccessPath -DiskNumber $datadisknumber -PartitionNumber ($dataPartition).PartitionNumber -AccessPath $datafolder -ErrorAction stop
-    }
-
-    if ($logPartition.AccessPaths -notcontains $logfolder + '\') {
-        $null = Add-PartitionAccessPath -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logfolder -ErrorAction stop
-    }
-
-    Get-Partition | Where-Object Type -eq Basic | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
-        $partition = $_
-        $partition.AccessPaths | ForEach-Object {
-            $accessPath = $_
-            write-debug "AccessPath: $accessPath"
-            if ($accessPath) {
-                $matched = $accessPath -match '^[A-Z]:\\$'
-                write-debug "Matched: $matched"
-                if ($matched -eq $True -and $accessPath -notcontains $DataDriveLetter -and $accessPath -notcontains $logDriveLetter) {
-                    $accessDrive = $matches[0]
-                    $null = ($partition | Remove-PartitionAccessPath -AccessPath $accessDrive)
-                }
-            }
-        }
-    }
-
-    Get-ChildItem -Path $datafolder -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
-    Get-ChildItem -Path $logfolder -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
 
     Get-Partition -DiskNumber $datadisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $datalabel
     Get-Partition -DiskNumber $logdisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $loglabel
 
-    $DataFileLeaf = Split-Path -Path $DataFilePath -Leaf
-    $LogFileLeaf = Split-Path -Path $LogFilePath -Leaf
-    $newDataFilePath = (Get-ChildItem -Path $datafolder -Recurse -Filter $DataFileLeaf).FullName
-    $newLogFilePath = (Get-ChildItem -Path $logfolder -Recurse -Filter $LogFileLeaf).FullName
-
-    if ((Test-Path $newDataFilePath) -and (Test-Path $newLogFilePath)) {
-        $responseObject['dataPath'] = $newDataFilePath
-        $responseObject['logPath'] = $newLogFilePath
-    } else {
-        $responseObject['error'] = "Failed to validate newpaths $newDataFilePath $newLogFilePath"
-    }
-
-    write-debug "NewFilePaths: $newDataFilePath $newLogFilePath"
-} catch {
+}
+catch {
     write-debug "Error: $($_.Exception)"
     $responseObject['error'] = $_.Exception.Message
     $responseObject['message'] = 'Failed to initialize disks'
     return ($responseObject | ConvertTo-Json -Depth 5)
-} finally {
+    exit 1
+}
+finally {
     if ((Get-Service -Name ShellHWDetection).Status -ne 'Running') {
         Start-Service -Name ShellHWDetection
     }
@@ -172,7 +136,7 @@ try {
         }
 
         try {
-            $SQLRoleGroup =  (Get-ClusterGroup).Name -match ('SQl Server*')
+            $SQLRoleGroup = (Get-ClusterGroup).Name -match ('SQl Server*')
             $SQLGroup = $SQLRoleGroup[0]
 
             if (($clusterdatadisk.OwnerGroup -ne $SQLGroup) -or ($clusterlogdisk.OwnerGroup -ne $SQLGroup)) {
@@ -187,14 +151,80 @@ try {
                 (Get-ClusterResource -Name $($clusterdatadisk.Name)).name = $datalabel
                 (Get-ClusterResource -Name $($clusterlogdisk.Name)).name = $loglabel
             }
-        } catch {
+        }
+        catch {
             $responseObject['error'] = $_.Exception.Message
             $responseObject['message'] = "Failed to add disks to SQL Server Role dependency in cluster"
+            return ($responseObject | ConvertTo-Json -Depth 5)
+            exit 1
         }
     }
-} catch{
+}
+catch {
     $responseObject['error'] = $_.Exception.Message
     $responseObject['message'] = 'Failed to add disks to cluster storage'
+    return ($responseObject | ConvertTo-Json -Depth 5)
+    exit 1
 }
 
-$responseObject | ConvertTo-Json -Depth 5
+try {
+    Start-Sleep 5
+    if ($dataPartition.AccessPaths -notcontains $datafolder + '\') {
+        $null = Add-PartitionAccessPath -DiskNumber $datadisknumber -PartitionNumber ($dataPartition).PartitionNumber -AccessPath $datafolder -ErrorAction stop
+        $null = (Get-Partition -DiskNumber $datadisknumber |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+    }
+
+    if ($logPartition.AccessPaths -notcontains $logfolder + '\') {
+        $null = Add-PartitionAccessPath -DiskNumber $logdisknumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logfolder -ErrorAction stop
+        $null = (Get-Partition -DiskNumber $logdisknumber |  Where-Object Type -eq Basic | Set-Partition -NoDefaultDriveLetter $true)
+    }
+}catch {
+        $responseObject['error'] = $_.Exception.Message
+        $responseObject['message'] = 'Failed to add access path to disks'
+        return ($responseObject | ConvertTo-Json -Depth 5)
+        exit 1
+
+    }
+
+try {
+    Get-Partition | Where-Object Type -eq Basic | Where-Object { $_.DiskNumber -eq $datadisknumber -or $_.DiskNumber -eq $logdisknumber } | ForEach-Object {
+        $partition = $_
+        $partition.AccessPaths | ForEach-Object {
+            $accessPath = $_
+            write-debug "AccessPath: $accessPath"
+            if ($accessPath) {
+                $matched = $accessPath -match '^[A-Z]:\\$'
+                write-debug "Matched: $matched"
+                if ($matched -eq $True -and $accessPath -notcontains $DataDriveLetter -and $accessPath -notcontains $logDriveLetter) {
+                    $accessDrive = $matches[0]
+                    $null = ($partition | Remove-PartitionAccessPath -AccessPath $accessDrive)
+                }
+            }
+        }
+    }
+
+    Get-ChildItem -Path $datafolder -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
+    Get-ChildItem -Path $logfolder -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
+} catch {
+    write-debug "Failed to remove stale junction paths"
+}
+
+try {
+    $DataFileLeaf = Split-Path -Path $DataFilePath -Leaf
+    $LogFileLeaf = Split-Path -Path $LogFilePath -Leaf
+    $newDataFilePath = (Get-ChildItem -Path $datafolder -Recurse -Filter $DataFileLeaf).FullName
+    $newLogFilePath = (Get-ChildItem -Path $logfolder -Recurse -Filter $LogFileLeaf).FullName
+    if ((Test-Path $newDataFilePath) -and (Test-Path $newLogFilePath)) {
+        $responseObject['dataPath'] = $newDataFilePath
+        $responseObject['logPath'] = $newLogFilePath
+        write-debug "NewFilePaths: $newDataFilePath $newLogFilePath"
+    }
+    else {
+        throw 
+    }
+} catch {
+    $responseObject['error'] = "Failed to validate newpaths $newDataFilePath $newLogFilePath"
+}
+
+
+$responseObject | ConvertTo-Json -Depth 5 

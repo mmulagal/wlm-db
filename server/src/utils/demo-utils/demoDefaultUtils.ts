@@ -117,7 +117,7 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
             fsxVolThroughput: 256,
             fsxIOPS: 10,
             encryptionKey: randomize('a0', 10),
-            snapshotPolicy: 'default'
+            snapshotPolicy: 'daily_weekretention'
         };
         createFileSystemForDemo(credentialsId, demoDefaultRegion, fsxConfiguration, true);
     }
