@@ -816,7 +816,8 @@ async function checkDatabaseExists(
     databaseHostId: string,
     databaseName: string,
     activeNodeInstanceId: string,
-    instanceName: string = '.'
+    instanceName: string = '.',
+    shouldDbExist: boolean
 ) {
     logger.info('Checking Database name exists', {
         accountId,
@@ -850,7 +851,8 @@ async function checkDatabaseExists(
     const parsedDatabaseExistsResponse = checkDatabaseExistsResponse
         ? sqlResponseParsing(checkDatabaseExistsResponse)
         : {};
-    if (parsedDatabaseExistsResponse && parsedDatabaseExistsResponse.length) {
+
+    if (parsedDatabaseExistsResponse && parsedDatabaseExistsResponse.length && !shouldDbExist) {
         throw createError(412, `Provided database ${databaseName} already exists`);
     }
     return parsedDatabaseExistsResponse;

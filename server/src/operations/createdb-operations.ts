@@ -1219,7 +1219,8 @@ async function validateParams(
             databaseHostId,
             databaseName,
             activeNodeInstanceId,
-            instanceName
+            instanceName,
+            false
         );
 
         if (!collation) {

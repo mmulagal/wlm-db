@@ -616,6 +616,18 @@ async function validateCloneParams(
     });
 
     try {
+        if (srcDetails.host !== destDetails.host || srcDetails.instance !== destDetails.instance) {
+            const [srcSqlServerVersion, destSqlServerVersion] = await Promise.all([
+                getSqlServerVersion(credentialsId, region, srcDetails.activeNodeInstaceId, srcDetails.instanceName),
+                getSqlServerVersion(credentialsId, region, destDetails.activeNodeInstaceId, destDetails.instanceName)
+            ]);
+
+            if (srcSqlServerVersion > destSqlServerVersion) {
+                const errorMessage = 'Sandbox creation from higer SQL version to lower versions is not supported';
+                logger.error(errorMessage);
+                throw createError(errorMessage);
+            }
+        }
         const { existingDriveInfo } = await getDriveInfo(
             accountId,
             destDetails.host,
@@ -625,15 +637,28 @@ async function validateCloneParams(
             CUSTOM_SSM_EXECUTION_TIMEOUT
         );
 
-        await checkDatabaseExists(
-            accountId,
-            credentialsId,
-            region,
-            destDetails.host,
-            destDetails.database,
-            destDetails.activeNodeInstaceId,
-            destDetails.instanceName
-        );
+        await Promise.all([
+            checkDatabaseExists(
+                accountId,
+                credentialsId,
+                region,
+                destDetails.host,
+                destDetails.database,
+                destDetails.activeNodeInstaceId,
+                destDetails.instanceName,
+                false
+            ),
+            checkDatabaseExists(
+                accountId,
+                credentialsId,
+                region,
+                srcDetails.host,
+                srcDetails.database,
+                srcDetails.activeNodeInstaceId,
+                srcDetails.instanceName,
+                true
+            )
+        ]);
 
         const dataDriveExistsPromise = validateSelectedDrives(
             existingDriveInfo,
@@ -980,10 +1005,18 @@ async function createCloneDb(
             ];
         }
 
-        const resp = await callSsmExecution(credentialsId, region, command, destDetails.activeNodeInstaceId);
+        const resp = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            destDetails.activeNodeInstaceId,
+            accountId,
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
+        );
 
-        // We only get a response in case of error from query
-        if (resp) {
+        // We only get a response for  different server version or in case of error from query
+        if (resp && !resp.includes('Converting database') && !resp.includes('running the upgrade step from version')) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, resp);
         }
 
@@ -1358,6 +1391,8 @@ async function getDatabaseMountPointInfo(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
+    const actualDbName = databaseName;
+
     try {
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             databaseName = 'test-database';
@@ -1380,6 +1415,13 @@ async function getDatabaseMountPointInfo(
             const driveType = item.filetype === 'Data' ? 'databaseDataPath' : 'databaseLogPath';
             result[driveType].push(item.filepath);
         });
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            const updatedResult = {
+                databaseDataPath: result.databaseDataPath.map(path => path.replace('test-database', actualDbName)),
+                databaseLogPath: result.databaseLogPath.map(path => path.replace('test-database', actualDbName))
+            };
+            return updatedResult;
+        }
 
         return result;
     } catch (err) {
@@ -1387,6 +1429,21 @@ async function getDatabaseMountPointInfo(
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
+}
+
+async function getSqlServerVersion(
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string,
+    instanceName: string = '.'
+) {
+    logger.info('Get SQL server version:', { credentialsId, region, activeNodeInstanceId, instanceName });
+    const command = [`sqlcmd -S "${instanceName}"-Q "SELECT @@VERSION" -y 0`];
+    const sqlServerVersionResponse = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
+    const serverInfo = sqlServerVersionResponse ? sqlServerVersionResponse?.replaceAll('\r\n', '').split('\t') : ''; // const sqlServerVersion: parsedSqlSeverVersionResponse[0].substring(0, serverInfo[0].indexOf('(')).trim(),
+    const sqlServerVersion = serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim();
+
+    return sqlServerVersion;
 }
 
 export {

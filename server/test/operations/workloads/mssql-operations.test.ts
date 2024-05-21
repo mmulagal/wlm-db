@@ -150,7 +150,8 @@ describe('MSSQL Resource methods', () => {
                 'd749b6e689352eeaadf7b3d3c08dbda25763a62c7a75b7159d5e96080b7433b3',
                 'tempdb18',
                 'i-0ac64c292872877c7',
-                '.'
+                '.',
+                false
             );
         } catch (err: any) {
             expect(err.message).toEqual('Provided database tempdb18 already exists');
