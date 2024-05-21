@@ -117,6 +117,7 @@ async function getStorageSavingsCalculationMetrics(
     const {
         ebs: { capacity, iops, throughput },
         fsx_cost_calculation_no_snapshot: {
+            desiredStorageCapacityGB: { size: desiredStorageCapacitySize, unit: desiredStorageCapacityUnit },
             numberOfVolumes,
             FSXnCapacityPrice: { price: fsxnCapacityPriceWithoutSnapshot, unit: fsxnCapacityUnitWithoutSnapshot },
             percentageOfDataOnSSDStorage,
@@ -127,10 +128,6 @@ async function getStorageSavingsCalculationMetrics(
             provisionedSSDIOPS: provisionedSsdIops,
             includedIOPS: includedIops,
             maxSSDIOPS: maxSsdIops,
-            desiredSnapshotStorageCapacityGB: {
-                size: desiredSnapshotStorageCapacityGBSize,
-                unit: desiredSnapshotStorageCapacityGBUnit
-            },
             EBSCapacity: { size: ebsCapacity, unit: ebsCapacityUnit },
             percentageOfDataOnSSDStorage: percentageDataSsdStorage,
             savingsFromCompressionAndDeduplication: savingsCd,
@@ -169,8 +166,10 @@ async function getStorageSavingsCalculationMetrics(
         fsx_snapshot_cost_calculation: {
             FSXnSSDPrice: { price: fsxnSsdPrice, unit: fsxnSsdPriceUnit },
             FSXnCapacityPrice: { price: fsxnCapacityPrice, unit: fsxnCapacityPriceUnit },
-            desiredStorageCapacityGB: { size: desiredStorageCapacitySize, unit: desiredStorageCapacityUnit },
-
+            desiredSnapshotStorageCapacityGB: {
+                size: desiredSnapshotStorageCapacityGBSize,
+                unit: desiredSnapshotStorageCapacityGBUnit
+            },
             percentageOfDataOnSSDStorage: percentageOfDataOnSsdStorage,
             savingsFromCompressionAndDeduplication,
             storageSavingsFromCompressionAndDeduplication: {

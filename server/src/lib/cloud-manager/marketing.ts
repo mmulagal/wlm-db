@@ -54,10 +54,6 @@ interface CalculateEbsComparisonResponse {
         };
     };
     fsx_cost_calculation_no_snapshot: {
-        desiredSnapshotStorageCapacityGB: {
-            size: number;
-            unit: string;
-        };
         EBSCapacity: {
             size: number;
             unit: string;
@@ -127,7 +123,7 @@ interface CalculateEbsComparisonResponse {
         totalMonthlyCost: number;
     };
     fsx_snapshot_cost_calculation: {
-        desiredStorageCapacityGB: {
+        desiredSnapshotStorageCapacityGB: {
             size: number;
             unit: string;
         };
