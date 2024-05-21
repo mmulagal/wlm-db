@@ -281,11 +281,12 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
 
                                 if (response) {
                                     const { savedStorage, consumedStorage } = sqlResponseParsing(response);
-                                    savingsData.consumedStorage += consumedStorage;
-                                    savingsData.savedStorage += savedStorage;
+                                    savingsData.consumedStorage +=
+                                        typeof consumedStorage === 'number' ? consumedStorage : 0;
+                                    savingsData.savedStorage += typeof savedStorage === 'number' ? savedStorage : 0;
+                                    const totalStorage = savingsData.consumedStorage + savingsData.savedStorage;
                                     savingsData.sandboxSavingsPercentage =
-                                        (savingsData.savedStorage * 100) /
-                                        (savingsData.consumedStorage + savingsData.savedStorage);
+                                        totalStorage > 0 ? (savingsData.savedStorage * 100) / totalStorage : 0;
                                 }
                                 break;
                             }
