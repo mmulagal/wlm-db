@@ -4,7 +4,7 @@ import { optionType, SelectField } from '@netapp/design-system/dist/components/S
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './StorageCapacity.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { generateOptionType, isFsxnNew } from '../../../../utils/utilityFunctions';
+import { generateOptionType } from '../../../../utils/utilityFunctions';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -20,7 +20,6 @@ const StorageCapacity = () => {
     const selectedUnit = useAppSelector((state: any) => state.mssqlForm.storageCapacity.unit);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
-    const fsxNType = useAppSelector((state: any) => state.mssqlForm.fsxN.fsxNType);
 
     const [inputText, setInputText] = useState<any>(inputCapacity);
     const [textSearch, setTextSearch] = useSearchDebounce(1000);
@@ -133,7 +132,7 @@ const StorageCapacity = () => {
                                 className={styles.selectField}
                             />
                         </div>
-                        {isFsxnNew(fsxNType) && <StorageCapacityTable />}
+                        {<StorageCapacityTable />}
                     </Typography>
                 </AccordionCardContent>
             </AccordionCard>

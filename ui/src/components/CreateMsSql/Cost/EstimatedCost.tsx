@@ -122,7 +122,11 @@ const EstimatedCost = () => {
                 };
             } else {
                 payload = {
-                    compute: computeObj(updatedStr)
+                    compute: computeObj(updatedStr),
+                    fsxnStorage: {
+                        regionCode: updatedStr || '',
+                        diskSize: diskSizeUnit === 'TiB' ? 1024 * diskSize : Number(diskSize)
+                    }
                 };
             }
             setIsLoading(true);
@@ -206,7 +210,13 @@ const EstimatedCost = () => {
                 </Typography>
             );
         } else {
-            return <Typography variant="Regular_14">{`$${Number(data?.data?.total).toFixed(2)}`}</Typography>;
+            return (
+                <Typography variant="Regular_14">
+                    {isFsxnNew(selectedFsxnType)
+                        ? `$${Number(data?.data?.total).toFixed(2)}` || ''
+                        : `$${Number(data?.data?.compute).toFixed(2)}` || ''}
+                </Typography>
+            );
         }
     };
 
@@ -372,9 +382,11 @@ const EstimatedCost = () => {
                                     <div className={styles.loadingPlacement}>
                                         <LoadingComponent />
                                     </div>
-                                ) : (
-                                    //@ts-ignore
+                                ) : //@ts-ignore
+                                isFsxnNew(selectedFsxnType) ? (
                                     `$${Number(data?.data?.total).toFixed(2)}` || ''
+                                ) : (
+                                    `$${Number(data?.data?.compute).toFixed(2)}` || ''
                                 )}
                             </Typography>
                         </div>
