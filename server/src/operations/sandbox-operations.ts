@@ -318,7 +318,7 @@ interface VolumeLunMap {
     volumeName: string;
     lunPath: string;
     windowsVolumeName: string;
-    // volumeId: string;
+    volumeUuid: string;
 }
 
 interface VolumeLunMapping {
@@ -682,9 +682,9 @@ async function getMappings(
     let errorMsg;
 
     const mappingJob = await registerJob(accountId, credentialsId, region, {
-        description: `Get the volume LUN mapping for the source database ${srcDetails.database} of the host ${srcDetails.resourceName}`,
+        description: `Get the volume LUN mapping for the database ${srcDetails.database} of the host ${srcDetails.resourceName}`,
         startTime: Date.now(),
-        name: `Get volume LUN mappings for source database ${srcDetails.database}`,
+        name: `Get volume LUN mappings for database ${srcDetails.database}`,
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: srcDetails.database,
@@ -1404,18 +1404,8 @@ async function deleteSandbox(
     const [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
 
     if (!resourceDetails) {
-        throw createError(HttpErrorCodes.NOT_FOUND, 'could not find the database host');
+        throw createError(HttpErrorCodes.NOT_FOUND, 'Could not find the database host');
     }
-
-    const job = await registerJob(accountId, credentialsId, region, {
-        name: `Delete sandbox ${databaseName}`,
-        description: `Delete sandbox ${databaseName} in the host ${resourceDetails.resource_name}`,
-        resourceName: databaseName,
-        initiator: 'SYSTEM',
-        startTime: Date.now(),
-        status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.SANDBOX
-    });
 
     const { node1InstanceId, node2InstanceId, fsxSvmId } = resourceDetails.metadata as unknown as Metadata;
 
@@ -1434,41 +1424,74 @@ async function deleteSandbox(
         );
     }
 
+    const job = await registerJob(accountId, credentialsId, region, {
+        name: `Delete sandbox ${databaseName}`,
+        description: `Delete sandbox ${databaseName} in the host ${resourceDetails.resource_name}`,
+        resourceName: databaseName,
+        initiator: 'SYSTEM',
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.SANDBOX
+    });
+
     const resDetails = {
-        resourceName: resourceDetails.resource_name || '',
-        instanceName,
+        resourceName: resourceDetails.resource_name!,
+        instanceName: instanceName!,
         fsxId: resourceDetails.co_relation_id!,
         svm: fsxSvmId!,
         activeNodeInstaceId: activeNodeInstanceId!,
         metadata: resourceDetails.metadata as unknown as Metadata,
-        database: '',
-        instance: '',
-        host: ''
+        database: databaseName,
+        instance: instanceName!,
+        host: databaseHostId
     };
 
-    const mappings = (await getMappings(accountId, credentialsId, region, job.id, resDetails)) as VolumeLunMapping;
+    performSandboxDeletion(accountId, region, credentialsId, job.id, resDetails);
 
-    logger.info('MAPPINGS>>', mappings);
+    return { jobId: job.id };
+}
 
-    // DROP DB
+async function performSandboxDeletion(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    parentJobId: string,
+    resDetails: HostAndDbInfo
+) {
+    let errorMsg;
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    try {
+        const mappings = (await getMappings(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            resDetails
+        )) as VolumeLunMapping;
 
-    const command = [`SQLCMD -S "${instanceName}" -Q DROP DATABASE ${databaseName}`];
-
-    const resp = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
-
-    logger.info('RESP>>>', resp);
-
-    // DELETE VOLUME
-    await startCleanup(
-        accountId,
-        credentialsId,
-        region,
-        job.id,
-        resDetails,
-        resDetails,
-        [mappings.data.volumeName, mappings.log.volumeName],
-        []
-    );
+        await startCleanup(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            resDetails,
+            resDetails,
+            [mappings.data.volumeUuid, mappings.log.volumeUuid],
+            [mappings.data.fileName, mappings.log.fileName]
+        );
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error('Failed to delete the sandbox', e);
+        status = JOBSTATUS.FAILED;
+        errorMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+            status,
+            error: errorMsg,
+            endTime: Date.now()
+        });
+    }
 }
 
 export {
