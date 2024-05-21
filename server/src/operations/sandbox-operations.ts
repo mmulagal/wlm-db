@@ -26,7 +26,7 @@ import {
     getStorageSavingsFromOntap
 } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails } from '../utils/common-types';
-import { checkDatabaseExists, getActiveSqlNode } from './workloads/mssql/mssql-operations';
+import { checkDatabaseExists, getActiveSqlNode, getSqlServerVersion } from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { sleep, sqlResponseParsing } from '../utils/utils';
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
@@ -364,6 +364,10 @@ async function createSandbox(
 ) {
     logger.info({ source, dest, mountPoints });
 
+    Object.entries(mountPoints).forEach(([key, value]) => {
+        mountPoints[key as keyof MountPoints] = value.toUpperCase();
+    });
+
     let [[srcResourceDetail], [destResourceDetail]] = await Promise.all([
         listResources(accountId, source.host),
         source.host === dest.host ? Promise.resolve([]) : listResources(accountId, dest.host)
@@ -617,6 +621,18 @@ async function validateCloneParams(
     });
 
     try {
+        if (srcDetails.host !== destDetails.host || srcDetails.instance !== destDetails.instance) {
+            const [srcSqlServerVersion, destSqlServerVersion] = await Promise.all([
+                getSqlServerVersion(credentialsId, region, srcDetails.activeNodeInstaceId, srcDetails.instanceName),
+                getSqlServerVersion(credentialsId, region, destDetails.activeNodeInstaceId, destDetails.instanceName)
+            ]);
+
+            if (srcSqlServerVersion > destSqlServerVersion) {
+                const errorMessage = 'Sandbox creation from higer SQL version to lower versions is not supported';
+                logger.error(errorMessage);
+                throw createError(errorMessage);
+            }
+        }
         const { existingDriveInfo } = await getDriveInfo(
             accountId,
             destDetails.host,
@@ -626,15 +642,40 @@ async function validateCloneParams(
             CUSTOM_SSM_EXECUTION_TIMEOUT
         );
 
-        await checkDatabaseExists(
-            accountId,
-            credentialsId,
-            region,
-            destDetails.host,
-            destDetails.database,
-            destDetails.activeNodeInstaceId,
-            destDetails.instanceName
-        );
+        const [destDatabaseExists, srcDatabaseExists] = await Promise.all([
+            checkDatabaseExists(
+                accountId,
+                credentialsId,
+                region,
+                destDetails.host,
+                destDetails.database,
+                destDetails.activeNodeInstaceId,
+                destDetails.instanceName
+            ),
+            checkDatabaseExists(
+                accountId,
+                credentialsId,
+                region,
+                srcDetails.host,
+                srcDetails.database,
+                srcDetails.activeNodeInstaceId,
+                srcDetails.instanceName
+            )
+        ]);
+
+        if (destDatabaseExists) {
+            throw createError(
+                412,
+                `Database ${destDetails.database} already exists on destination host ${srcDetails.host}`
+            );
+        }
+
+        if (!srcDatabaseExists) {
+            throw createError(
+                412,
+                `Database ${srcDetails.database} does not exists on source host ${destDetails.host}`
+            );
+        }
 
         const dataDriveExistsPromise = validateSelectedDrives(
             existingDriveInfo,
@@ -984,10 +1025,22 @@ async function createCloneDb(
             ];
         }
 
-        const resp = await callSsmExecution(credentialsId, region, command, destDetails.activeNodeInstaceId);
+        const resp = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            destDetails.activeNodeInstaceId,
+            accountId,
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
+        );
 
-        // We only get a response in case of error from query
-        if (resp) {
+        // We only get a response for  different server version or in case of error from query
+        if (
+            resp &&
+            !resp.toLowerCase().includes('converting database') &&
+            !resp.includes('running the upgrade step from version')
+        ) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, resp);
         }
 
@@ -1362,6 +1415,8 @@ async function getDatabaseMountPointInfo(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
+    const actualDbName = databaseName;
+
     try {
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             databaseName = 'test-database';
@@ -1384,6 +1439,13 @@ async function getDatabaseMountPointInfo(
             const driveType = item.filetype === 'Data' ? 'databaseDataPath' : 'databaseLogPath';
             result[driveType].push(item.filepath);
         });
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            const updatedResult = {
+                databaseDataPath: result.databaseDataPath.map(path => path.replace('test-database', actualDbName)),
+                databaseLogPath: result.databaseLogPath.map(path => path.replace('test-database', actualDbName))
+            };
+            return updatedResult;
+        }
 
         return result;
     } catch (err) {
