@@ -750,7 +750,7 @@ export const GENERAL = {
     TEMPDB_SIZE: 'Tempdb volume size',
     QUORUM_VOLUME: 'Quorum volume',
     QUORUM_SIZE: 'Quorum volume size',
-    BUFFER_SIZE: 'Buffer',
+    BUFFER_SIZE: 'Headroom',
     MIN_FSX_CAPACITY_MESSAGE: 'Minimum SSD capacity of FSx for NetApp ONTAP',
     VPC_MESSAGE:
         'Ensure your VPC has connectivity to other AWS services (SQS, FSx, EC2, CloudWatch, CloudFormation, SSM) via VPC endpoints and S3 gateway endpoint. If not, endpoints will be created automatically during deployment.',

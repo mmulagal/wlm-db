@@ -19,7 +19,7 @@ const StorageCapacity = () => {
     const inputCapacity = useAppSelector((state: any) => state.mssqlForm.storageCapacity.capacity);
     const selectedUnit = useAppSelector((state: any) => state.mssqlForm.storageCapacity.unit);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
-    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
+    const { movingFromChatbot } = useAppSelector((state: { chatbot: any }) => state.chatbot);
 
     const [inputText, setInputText] = useState<any>(inputCapacity);
     const [textSearch, setTextSearch] = useSearchDebounce(1000);
