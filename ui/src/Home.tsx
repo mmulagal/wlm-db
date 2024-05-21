@@ -1,6 +1,6 @@
 import React, { Suspense, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import AppNotification from './common/AppNotification/AppNotification';
 import MainComponent from './components/CreateMsSql/MainComponent/MainComponent';
 import DiscoverPage from './components/Discover/DiscoverPage';
@@ -16,10 +16,14 @@ import JobMonitoring from './workloadFactory/JobMonitoring/JobMonitoring';
 import HeaderComponent from './workloadFactory/DatabaseHomePage/HeaderComponent/HeaderComponent';
 import WizardComponent from './workloadFactory/CreateNewDB/WizardComponent/WizardComponent';
 import CreateNewSandbox from './workloadFactory/Sandbox/CreateNewSandbox/CreateNewSandbox';
+import { WLF_TABS } from './utils/consts';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
     const dispatch = useDispatch();
+
+    const location = useLocation();
+    console.log(location.pathname);
 
     //@ts-ignore
     const showNotifications = useMemo(() => {
@@ -45,7 +49,8 @@ const Home = () => {
                             <Route path={'databases'} element={<Databases />} />
                             <Route path={'tables'} element={<Tables />} />
                         </Route>
-                        <Route path={'databases'} element={<HeaderComponent />} />
+                        <Route path={'databases'} element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
+                        <Route path={'databases/inventory'} element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
                         <Route path={'create-new-user'} element={<WizardComponent />} />
                         <Route path={'job-monitor'} element={<JobMonitoring />} />
                         <Route path={'create-new-sandbox'} element={<CreateNewSandbox />} />

@@ -66,14 +66,8 @@ const MSSQLAccordion = ({ printState }: any) => {
     const handleSaveConfiguration = (dialogFrom: any) => {
         setDialog(
             <DialogComponent
-                header={'Save configuration'}
-                content={
-                    <SaveConfigSavings
-                        description={
-                            'You can save this Microsoft SQL Server on AWS Ec2 and FSx for ONTAP file system configuration and load the configuration later for a future deployment.'
-                        }
-                    />
-                }
+                header={GENERAL.ES_SAVE_CONFIG}
+                content={<SaveConfigSavings description={GENERAL.ES_SAVE_CONFIG_DESC} />}
                 primaryButton={GENERAL.SAVE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => ExploreSaveConfiguration(dispatch, saveConfigData, closeDialog, msSqlInstance, fsxData)}
@@ -100,7 +94,7 @@ const MSSQLAccordion = ({ printState }: any) => {
         <div className={styles.mssqlAccordion}>
             <DsAccordion
                 id="1"
-                title="Microsoft SQL Server on AWS EC2 using FSx for ONTAP"
+                title={GENERAL.RECOMMENDED_ES_TITLE}
                 variant="Default"
                 value=""
                 isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
@@ -133,7 +127,7 @@ const MSSQLAccordion = ({ printState }: any) => {
                             isDisabled={isMutliFsx || storageSavingsLoading || selectedHostDetails?.loading}
                             onClick={() => handleCreateClick()}
                         >
-                            Create
+                            {GENERAL.CREATE}
                         </DsButton>
                     </div>
                 ]}

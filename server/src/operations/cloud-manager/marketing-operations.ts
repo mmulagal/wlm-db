@@ -20,7 +20,7 @@ function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavin
     return {
         useCase: 'Low latency',
         volumeIds: ebsVolumeIds,
-        includeSnapshots: true,
+        includeSnapshots: false,
         deploymentType: 'Single',
         snapshots: {
             snapshotFreq: snapshotFrequency,
@@ -51,9 +51,9 @@ async function performStorageSavingsCalculations(
 
     const sqlServerInstances = ec2HostDetails?.sqlServerInstances;
     const ebsVolumeIds = compact(
-        sqlServerInstances
-            ?.filter(({ storage }) => storage?.find(sqlStorage => sqlStorage.type === 'EBS'))
-            .map(({ storage }) => storage?.find(sqlStorage => sqlStorage.type === 'EBS')?.id)
+        sqlServerInstances?.flatMap(server =>
+            server?.storage?.filter(storage => storage.type === 'EBS').map(storage => storage.id)
+        )
     );
 
     if (!ebsVolumeIds.length) {
@@ -134,6 +134,7 @@ async function getStorageSavingsCalculationMetrics(
     const {
         ebs: { capacity, iops, throughput },
         fsx_cost_calculation_no_snapshot: {
+            desiredStorageCapacityGB: { size: desiredStorageCapacitySize, unit: desiredStorageCapacityUnit },
             numberOfVolumes,
             FSXnCapacityPrice: { price: fsxnCapacityPriceWithoutSnapshot, unit: fsxnCapacityUnitWithoutSnapshot },
             percentageOfDataOnSSDStorage,
@@ -144,10 +145,6 @@ async function getStorageSavingsCalculationMetrics(
             provisionedSSDIOPS: provisionedSsdIops,
             includedIOPS: includedIops,
             maxSSDIOPS: maxSsdIops,
-            desiredSnapshotStorageCapacityGB: {
-                size: desiredSnapshotStorageCapacityGBSize,
-                unit: desiredSnapshotStorageCapacityGBUnit
-            },
             EBSCapacity: { size: ebsCapacity, unit: ebsCapacityUnit },
             percentageOfDataOnSSDStorage: percentageDataSsdStorage,
             savingsFromCompressionAndDeduplication: savingsCd,
@@ -186,9 +183,11 @@ async function getStorageSavingsCalculationMetrics(
         fsx_snapshot_cost_calculation: {
             FSXnSSDPrice: { price: fsxnSsdPrice, unit: fsxnSsdPriceUnit },
             FSXnCapacityPrice: { price: fsxnCapacityPrice, unit: fsxnCapacityPriceUnit },
-            desiredStorageCapacityGB: { size: desiredStorageCapacitySize, unit: desiredStorageCapacityUnit },
-
-            percentageOfDataOnSSDStorage: percentageOfDataOnSsdStorage,
+            desiredSnapshotStorageCapacityGB: {
+                size: desiredSnapshotStorageCapacityGBSize,
+                unit: desiredSnapshotStorageCapacityGBUnit
+            },
+            dataOnSSDStoragePercentage,
             savingsFromCompressionAndDeduplication,
             storageSavingsFromCompressionAndDeduplication: {
                 size: storageSavingsFromCompressionAndDeduplicationSize,
@@ -211,7 +210,7 @@ async function getStorageSavingsCalculationMetrics(
         ebs_cost_calculation: {
             instanceAvgDuration,
             EBSCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
-
+            numberOfVolumes: ebsNumberOfVolumes,
             storageAmountPerVol: { size: storageAmountPerVolSize, unit: storageAmountPerVolUnit },
             totalInstanceHours,
             EBSInstanceMonth: ebsInstanceMonth,
@@ -251,6 +250,7 @@ async function getStorageSavingsCalculationMetrics(
             totalCloneMonthlyCost
         }
     } = await getStorageSavings(accountId, credentialsId, region, getMarketingApiRequestBody(ebsVolumeIds, params));
+    const totalClonedCopiesCount = getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency);
     return {
         fsxOntapCalculation: {
             numberOfVolumes,
@@ -305,7 +305,7 @@ async function getStorageSavingsCalculationMetrics(
 
             desiredStorageCapacity:
                 convertToBytes(desiredSnapshotStorageCapacityGBSize, desiredSnapshotStorageCapacityGBUnit) || 0,
-            percentageOfDataOnSsdStorage,
+            percentageOfDataOnSsdStorage: dataOnSSDStoragePercentage,
             savingsFromCompressionAndDeduplication,
             storageSavingsFromCompressionAndDeduplication:
                 convertToBytes(
@@ -328,7 +328,7 @@ async function getStorageSavingsCalculationMetrics(
             totalSnapshotMonthlyCost
         },
         ebsCalculation: {
-            numberOfVolumes,
+            numberOfVolumes: ebsNumberOfVolumes,
             instanceAvgDuration,
             hoursInAMonth: 24 * 30,
             ebsCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
@@ -357,10 +357,9 @@ async function getStorageSavingsCalculationMetrics(
             cloneRefreshFrequency: params.cloneRefreshFrequency,
             monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
             clonedCopiesCount: params.clonedCopiesCount,
-            changeRateBetweenClones:
-                params.monthlyChangeRatePercentage / getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency),
+            changeRateBetweenClones: params.monthlyChangeRatePercentage / totalClonedCopiesCount,
             // totalFsxnCapacity
-            numberOfClonesInAMonth: getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency),
+            numberOfClonesInAMonth: totalClonedCopiesCount,
             fsxnSsdPrice: { price: fsxnSsdClonePrice, unit: fsxnSsdClonePriceUnit },
             desiredStorageCapacity:
                 convertToBytes(cloneDesiredStorageCapacityGB, cloneDesiredStorageCapacityGBUnit) || 0,
@@ -381,11 +380,11 @@ async function getStorageSavingsCalculationMetrics(
             totalCloneMonthlyCost
         },
         ebsCloneCalculation: {
-            clonedCopiesCount: params.clonedCopiesCount,
+            clonedCopiesCount: totalClonedCopiesCount,
             capacity,
             iops,
             throughput,
-            totalCloneMonthlyCost: params.clonedCopiesCount * (capacity + iops + throughput)
+            totalCloneMonthlyCost: totalClonedCopiesCount * (capacity + iops + throughput)
         }
     };
 }

@@ -161,10 +161,14 @@ const DatabaseListTable = () => {
             width: '15%'
         },
         {
-            Header: '',
-            accessor: '',
+            Header: GENERAL.DB_HOST_COLLATION,
+            accessor: 'collation',
+            isSortable: true,
             id: '6',
-            width: '24.6%'
+            width: '24.6%',
+            renderCell: (cellData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         }
     ];
 

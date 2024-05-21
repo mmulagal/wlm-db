@@ -42,7 +42,11 @@ import SavingsCalculatorApi from '../../ExploreSavings/SavingsCalculator/Savings
 import { setSavingsCalculatorRefresh } from '../../../store/workloadFactory/exploreSavingsSlice';
 import SandboxApis from '../../Sandbox/SandboxApis';
 
-const HeaderComponent = () => {
+type Tab = {
+    tab: string;
+};
+
+const HeaderComponent = ({ tab }: Tab) => {
     const dispatch = useDispatch();
     const [statusChk, setStatusChk] = useState(false);
 
@@ -64,6 +68,10 @@ const HeaderComponent = () => {
     JobMonitoringApi();
     SavingsCalculatorApi();
     SandboxApis();
+
+    useEffect(() => {
+        dispatch(setSelectedHeaderTab(tab));
+    }, []);
 
     useEffect(() => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
@@ -163,7 +171,6 @@ const HeaderComponent = () => {
             dispatch(inventoryApi.util.resetApiState());
             dispatch(setIsRefreshed(true));
         } else if (selectedHeaderTab === WLF_TABS.OVERVIEW) {
-            resetDBHomePageState(dispatch);
             dispatch(workloadFactoryResourceApi.util.resetApiState());
         } else if (selectedHeaderTab === WLF_TABS.JOB_MONITORING) {
             dispatch(setJobsList([]));

@@ -55,7 +55,7 @@ const SavingsCalculator = () => {
                         <BreadCrumbs
                             items={[
                                 {
-                                    title: 'Explore savings',
+                                    title: GENERAL.ES_SAVINGS,
                                     onClick: () => {
                                         dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
                                         dispatch(addExploreSavingsInitialData(null));

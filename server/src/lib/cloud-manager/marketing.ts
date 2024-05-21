@@ -54,10 +54,6 @@ interface CalculateEbsComparisonResponse {
         };
     };
     fsx_cost_calculation_no_snapshot: {
-        desiredSnapshotStorageCapacityGB: {
-            size: number;
-            unit: string;
-        };
         EBSCapacity: {
             size: number;
             unit: string;
@@ -127,7 +123,7 @@ interface CalculateEbsComparisonResponse {
         totalMonthlyCost: number;
     };
     fsx_snapshot_cost_calculation: {
-        desiredStorageCapacityGB: {
+        desiredSnapshotStorageCapacityGB: {
             size: number;
             unit: string;
         };
@@ -278,7 +274,7 @@ export default async function getStorageSavings(
     region: string,
     params: MarketingRequestBody
 ) {
-    logger.info('Get storage savings from marketing APIs:', { accountId, credentialsId, region });
+    logger.info('Get storage savings from marketing APIs:', { accountId, credentialsId, region, params });
 
     const response = await gotInstanceForInternalRequest
         .post(`accounts/${accountId}/marketing/v1/credentials/${credentialsId}/regions/${region}/ebs/auto/calculate`, {

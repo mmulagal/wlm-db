@@ -14,6 +14,14 @@ export interface CreateSandboxEntities {
         databaseListLoading: boolean;
         databaseListError: string | null;
     };
+    getDriveInfo: {
+        driveInfoLoading: boolean;
+        driveInfoData: any;
+    };
+    getDbMountPoints: {
+        dbMountPointsData: any;
+        dbMountPointsLoading: boolean;
+    };
     source: {
         selectedDatabaseHost: any;
         selectedDatabaseInstance: any;
@@ -25,7 +33,8 @@ export interface CreateSandboxEntities {
         selectedDatabase: any;
     };
     selectedMount: string;
-    mountPath: string;
+    dataDriveMountPoint: string | null;
+    logDriveMountPoint: string | null;
     selectedTag: string;
     isCreateSandboxPressed: boolean;
     isMountPathAdded: boolean;
@@ -46,7 +55,10 @@ export interface CreateSandboxPayloadEntities {
         instance: string;
         database: string;
     };
-    mountPt: string;
+    mountPoints: {
+        dataDrive: string;
+        logDrive: string;
+    };
     tag: string;
 }
 
@@ -83,5 +95,11 @@ export interface SandboxEntities {
         };
         sandboxSavingsLoading: boolean;
         sandboxSavingsError: string;
+    };
+    connectionInfo: {
+        selectedDatabaseHostId?: string | null;
+        selectedSandboxName?: string | null;
+        connectionString?: string | null;
+        isLoading: boolean;
     };
 }

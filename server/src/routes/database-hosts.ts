@@ -15,7 +15,8 @@ import {
     PatchResourceForSandboxSchema,
     RevertPatchResourceForSandboxSchema,
     GetSandboxesMountPointSchema,
-    GetSandboxConnectionStringSchema
+    GetSandboxConnectionStringSchema,
+    DeleteSandboxSchema
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -24,7 +25,8 @@ import {
     getDatabaseMountPointInfo,
     getSandboxSavings,
     revertMetadataForSanboxTesting,
-    updateMetadataForSanboxTesting
+    updateMetadataForSanboxTesting,
+    deleteSandbox
 } from '../operations/sandbox-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
@@ -183,9 +185,17 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
         .post(`${API_PREFIX_PATH}/sandbox`, { schema: CloneDatabaseHostSchema }, async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region },
-                body: { source, destination, tag }
+                body: { source, destination, tag, mountPoints }
             } = request;
-            const response = await createSandbox(accountId, credentialsId, region, source, destination, tag);
+            const response = await createSandbox(
+                accountId,
+                credentialsId,
+                region,
+                source,
+                destination,
+                tag,
+                mountPoints
+            );
             return reply.send(response);
         })
         .get(
@@ -202,6 +212,17 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     databaseHostId,
                     sandboxName
                 );
+                return reply.send(response);
+            }
+        )
+        .delete(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandbox/:sandboxName`,
+            { schema: DeleteSandboxSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName }
+                } = request;
+                const response = await deleteSandbox(accountId, credentialsId, region, databaseHostId, sandboxName);
                 return reply.send(response);
             }
         );

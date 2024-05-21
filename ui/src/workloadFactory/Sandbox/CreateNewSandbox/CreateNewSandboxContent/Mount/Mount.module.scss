@@ -13,8 +13,65 @@
     .radios {
         margin-top: 15px;
         display: flex;
+        flex-direction: row;
+        gap: 40px;
+    }
+
+    .autoAssignContent {
+        display: flex;
         flex-direction: column;
         gap: 24px;
+        margin-top: 24px;
+        .pathSection {
+            display: flex;
+            height: 41px;
+            width: 660px;
+            background-color: var(--main-background);
+            padding: 10px 24px;
+            white-space: nowrap;
+
+            .pathText {
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+        }
+    }
+
+    .defineMountPointContent {
+        display: flex;
+        flex-direction: column;
+        margin-top: 24px;
+        gap: 40px;
+
+        .defineMountPointRow {
+            display: flex;
+            flex-direction: row;
+            gap: 24px;
+
+            .driveSelectField {
+                width: 190px;
+                --menu-max-height: 255px;
+
+                [class*='Select-module_option-with-secondary'] {
+                    gap: 0 !important;
+                }
+            }
+
+            .pathSection {
+                display: flex;
+                height: 41px;
+                width: 660px;
+                background-color: var(--main-background);
+                padding: 10px 24px;
+                white-space: nowrap;
+                margin-top: 27px;
+
+                .pathText {
+                    text-overflow: ellipsis;
+                    overflow: hidden;
+                }
+            }
+        }
     }
 
     .textField {
@@ -29,5 +86,14 @@
 
 @media screen and (max-width: 1500px) {
     .Mount {
+        .defineMountPointContent {
+            .defineMountPointRow {
+                flex-direction: column;
+                .pathSection {
+                    margin-top: -40px;
+                    width: 580px;
+                }
+            }
+        }
     }
 }

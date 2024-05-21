@@ -21,7 +21,6 @@ Metadata:
                   - FSxTempDbVolumeSize
                   - FSxClusterQuorumVolumeName
                   - FSxClusterQuorumVolumeSize
-                  - FsxVolumeSnapshotPolicy
         ParameterLabels:
             DeploymentMode:
                 default: File system deployment mode
@@ -43,8 +42,6 @@ Metadata:
                 default: Cluster quorum volume name
             FSxClusterQuorumVolumeSize:
                 default: Cluster quorum volume size
-            FsxVolumeSnapshotPolicy:
-                default: Snapshot policy for the volume. Can be either default or none.
 
 Parameters:
     DeploymentMode:
@@ -101,12 +98,6 @@ Parameters:
         Description: The size of the cluster quorum volume in megabytes (MiB).
         Type: Number
         Default: 2048
-    
-    FsxVolumeSnapshotPolicy:
-        Description: Snapshot policy for the volume. Can be either default or none.
-        Type: String
-        Default: default
-        AllowedValues: [default, none]
 
 Conditions:
     FSxIsMultiZoneDeployment: !Equals [!Ref DeploymentMode, 'MULTI_AZ_1']
@@ -131,7 +122,6 @@ Resources:
                 StorageVirtualMachineId: !Ref FSxSvmConfiguration
                 JunctionPath: !Join ['', [/, !Ref FSxDataVolumeName]]
                 OntapVolumeType: RW
-                SnapshotPolicy: !Ref FsxVolumeSnapshotPolicy
                 StorageEfficiencyEnabled: true
                 TieringPolicy:
                     Name: SNAPSHOT_ONLY
@@ -148,7 +138,6 @@ Resources:
                 StorageVirtualMachineId: !Ref FSxSvmConfiguration
                 JunctionPath: !Join ['', [/, !Ref FSxLogVolumeName]]
                 OntapVolumeType: RW
-                SnapshotPolicy: !Ref FsxVolumeSnapshotPolicy
                 StorageEfficiencyEnabled: true
                 TieringPolicy:
                     Name: SNAPSHOT_ONLY
@@ -165,7 +154,6 @@ Resources:
                 StorageVirtualMachineId: !Ref FSxSvmConfiguration
                 JunctionPath: !Join ['', [/, !Ref FSxTempDbVolumeName]]
                 OntapVolumeType: RW
-                SnapshotPolicy: !Ref FsxVolumeSnapshotPolicy
                 StorageEfficiencyEnabled: true
                 TieringPolicy:
                     Name: SNAPSHOT_ONLY
@@ -183,7 +171,6 @@ Resources:
                 StorageVirtualMachineId: !Ref FSxSvmConfiguration
                 JunctionPath: !Join ['', [/, !Ref FSxClusterQuorumVolumeName]]
                 OntapVolumeType: RW
-                SnapshotPolicy: !Ref FsxVolumeSnapshotPolicy
                 StorageEfficiencyEnabled: true
                 TieringPolicy:
                     Name: SNAPSHOT_ONLY

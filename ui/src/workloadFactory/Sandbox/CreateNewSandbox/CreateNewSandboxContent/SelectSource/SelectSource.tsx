@@ -98,7 +98,7 @@ const SelectSource = () => {
     const generateSourceDatabase = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         databaseListData?.map((obj, idx: number) => {
-            if (obj.type !== MSSQL_DATABASE_TYPES.SYSTEM) {
+            if (obj.type !== MSSQL_DATABASE_TYPES.SYSTEM && obj?.status === 'ONLINE') {
                 const option = generateOptionType(obj?.id, obj?.name, '', false, '');
                 options.push(option);
             }

@@ -757,8 +757,6 @@ Resources:
           Ref: FileSystemEncryptionKeyId
         FSxDiskIops:
           Ref: FSxDiskIops 
-        FsxVolumeSnapshotPolicy:
-          Ref: FsxVolumeSnapshotPolicy
         ParentStackName:
           Ref: AWS::StackName
       NotificationARNs:
@@ -802,8 +800,6 @@ Resources:
           Ref: FSxQuorumVolumeName
         FSxClusterQuorumVolumeSize:
           Ref: FSxQuorumVolumeSize
-        FsxVolumeSnapshotPolicy:
-          Ref: FsxVolumeSnapshotPolicy
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -912,6 +908,8 @@ Resources:
         NumberOfNodes: "2"
         FSxLogVolumeName:
           Ref: FSxLogVolumeName
+        FsxVolumeSnapshotPolicy:
+          Ref: FsxVolumeSnapshotPolicy
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -1006,6 +1004,8 @@ Resources:
           Ref: SqlServerName
         SqlCollation:
           Ref: SqlCollation
+        FsxVolumeSnapshotPolicy:
+          Ref: FsxVolumeSnapshotPolicy
       NotificationARNs:
         Fn::If:
         - IncludeNotification

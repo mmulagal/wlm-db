@@ -27,6 +27,9 @@ param(
     [string]$IGROUP,
 
     [Parameter(Mandatory=$true)]
+    [string]$SnapshotPolicy,
+
+    [Parameter(Mandatory=$true)]
     [string]$ResourceID,   
 
     [Parameter(Mandatory=$true)]
@@ -190,6 +193,52 @@ foreach ($perigroup in $igrouplist) {
 
 Start-Sleep 5
 
+#Create snapshot policy - daily with 7 days retention
+$PolicyExists = $False
+
+if ($SnapshotPolicy -eq 'daily_weekretention') {
+$SnapshotPolicyPart = 'storage/snapshot-policies'
+#Check if snapshot exists
+$URI = "https://$($MgmtDNS)/api/$($SnapshotPolicyPart)?svm=$($SQLVMName)&name=daily_weekretention"
+$snapshotPolicyList = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records 
+if ($snapshotPolicyList) {
+    $PolicyExists = $True
+}
+
+if ($PolicyExists -eq  $False) {
+$URI=@"
+https://$($MgmtDNS)/api/$($SnapshotPolicyPart)
+"@
+$Body = @{
+    "name" = "daily_weekretention"
+    "enabled" = "true"
+    "comment"= "NetApp Workload Factory daily snapshot with a week retention"
+    "svm" = @{"name" = "$SQLVMName"}
+    "copies" = @(@{ "count" = "7" 
+                  "schedule" = @{"name" = "daily"}})
+}
+$JsonBody = $Body | ConvertTo-Json -Depth 10
+$Params = @{
+    "URI"     = "$URI"
+    "Method"  = "POST"
+    "Headers" = @{"Authorization" = "Basic $base64"}
+    "Body" =  "$JsonBody"
+    "ContentType" = "application/json"
+}
+try{
+    if ($isprivatesubnet -eq $False) {
+            Invoke-RestMethod @Params -Certificate $restcert
+    }else {
+            Invoke-RestMethod @Params -SkipCertificateCheck
+    }
+    $PolicyExists = $True
+}catch{
+    Write-Output "Snapshot policy creation failed." $_
+}
+}
+}
+
+
 #Start ONTAP configuration
 $VolUriDynamicPart='private/cli/volume'
 
@@ -211,6 +260,14 @@ $Body = @{
     "autosize-mode" = "grow"
     "tiering-object-tags" = @( "wlmDeploymentId=" + $($Stackname.split('-')[0..2] -join "_") )
 }
+
+if ($SnapshotPolicy -eq "none") {
+    $Body["snapshot-policy"] = 'none'
+}
+
+elseif ($PolicyExists -eq $True) {
+    $Body["snapshot-policy"] = 'daily_weekretention'
+} 
 
 $JsonBody = $Body | ConvertTo-Json
 $Params = @{

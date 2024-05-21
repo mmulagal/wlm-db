@@ -332,7 +332,7 @@ async function getDriveInfo(
 
     const response: DriveInfoResponseBodyType = {
         existingDriveInfo: getDriveInfoFromNodesResponse.updatedExitingDrives,
-        ...(!forSandbox && { availableDriveLetters: getDriveInfoFromNodesResponse.availableDriveLetters }),
+        ...{ availableDriveLetters: getDriveInfoFromNodesResponse.availableDriveLetters },
         ...(storage && { fsxStorageCapacity: storage * 1024 * 1024 * 1024 }),
         ...(!forSandbox &&
             getDefaultDrivesResponse?.currentDataDrive && {
@@ -1212,7 +1212,7 @@ async function validateParams(
             }
         }
 
-        await checkDatabaseExists(
+        const databaseExists = await checkDatabaseExists(
             accountId,
             credentialsId,
             region,
@@ -1221,6 +1221,10 @@ async function validateParams(
             activeNodeInstanceId,
             instanceName
         );
+
+        if (databaseExists) {
+            throw createError(412, `Provided database ${databaseName} already exists`);
+        }
 
         if (!collation) {
             throw createError(412, 'Collation should not be empty');

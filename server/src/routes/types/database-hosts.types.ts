@@ -153,7 +153,8 @@ const DatabaseServerMetadataResponse = Type.Object({
     activeNode: Type.String(),
     nodeNames: Type.Array(Type.String()),
     activeConnections: Type.Number(),
-    creationDate: Type.String({ minLength: 1 })
+    creationDate: Type.String({ minLength: 1 }),
+    collation: Type.String({ minLength: 1 })
 });
 type DatabaseServerMetadataResponseType = Static<typeof DatabaseServerMetadataResponse>;
 
@@ -245,7 +246,8 @@ const DatabasesResponse = Type.Object({
     status: Type.String({ minLength: 1 }),
     type: Type.String({ minLength: 1 }),
     size: Type.Number(),
-    protection: ProtectionPerStorageTypeResponse
+    protection: ProtectionPerStorageTypeResponse,
+    collation: Type.String({ minLength: 1 })
 });
 type DatabasesResponseType = Static<typeof DatabasesResponse>;
 
@@ -321,6 +323,10 @@ const CloneDatabaseHostBody = Type.Object({
         instance: Type.String(), // sql server - ideally only one would be there
         database: Type.String() // database
     }),
+    mountPoints: Type.Object({
+        dataDrive: Type.String({ maxLength: 1 }),
+        logDrive: Type.String({ maxLength: 1 })
+    }),
     tag: Type.String({ enum: ['Development', 'QA', 'Integration', 'Training', 'Analytics', 'Other'] })
 });
 type CloneDatabaseHostBodyType = Static<typeof CloneDatabaseHostBody>;
@@ -370,8 +376,8 @@ const DatabaseMountPointRequestQueryParam = Type.Object({
 });
 
 const DatabaseMountPointResponseBody = Type.Object({
-    databaseDataDriveLetters: Type.Array(Type.String()),
-    databaseLogDriveLetters: Type.Array(Type.String())
+    databaseDataPath: Type.Array(Type.String()),
+    databaseLogPath: Type.Array(Type.String())
 });
 type DatabaseMountPointResponseType = Static<typeof DatabaseMountPointResponseBody>;
 

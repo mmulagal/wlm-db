@@ -15,16 +15,17 @@ import RebaseRollbackContent from './RebaseRollbackContent/RebaseRollbackContent
 import ViewDialog from '../../../common/ViewDialog/ViewDialog';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { useDispatch } from 'react-redux';
-import { setAggregatedSandboxList } from '../../../store/workloadFactory/sandboxSlice';
+import { setAggregatedSandboxList, updateConnectionInfo } from '../../../store/workloadFactory/sandboxSlice';
 import SmallLoader from '../../../common/SmallLoader/SmallLoader';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { aggregatedSandboxList } = useAppSelector(state => state.sandbox);
+    const { aggregatedSandboxList, connectionInfo } = useAppSelector(state => state.sandbox);
     const [data, setData] = useState<any>();
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
+    const [connectionInfoClicked, setConnectionInfoClicked] = useState(false);
     const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
 
@@ -37,6 +38,26 @@ const SandboxTable = () => {
         }
     }, [aggregatedSandboxList]);
 
+    useEffect(() => {
+        if (connectionInfoClicked && connectionInfo?.connectionString) {
+            const connectionString = connectionInfo.connectionString
+                ? Object.keys(connectionInfo.connectionString)
+                      .map((key: any) => `${key}=${connectionInfo.connectionString?.[key]}`)
+                      .join(';')
+                : '';
+            setDialog(
+                <DialogComponent
+                    header={' Show connection info'}
+                    content={<ViewDialog data={connectionString} />}
+                    primaryButton={GENERAL.CLOSE}
+                    callback={() => {}}
+                    customClass={styles.setWidth}
+                />
+            );
+            setConnectionInfoClicked(false);
+        }
+    }, [connectionInfoClicked, connectionInfo]);
+
     const menuItems = (row: any) => {
         return [
             {
@@ -46,10 +67,6 @@ const SandboxTable = () => {
             {
                 id: 'refresh',
                 displayName: 'Refresh'
-            },
-            {
-                id: 'rollback',
-                displayName: 'Roll-back'
             },
             {
                 id: 'connectToTools',
@@ -196,16 +213,17 @@ const SandboxTable = () => {
         );
     };
 
-    const handleShowConnectionInfo = () => {
-        setDialog(
-            <DialogComponent
-                header={' Show connection info'}
-                content={<ViewDialog data="data" />}
-                primaryButton={GENERAL.CLOSE}
-                callback={() => {}}
-                customClass={styles.setWidth}
-            />
+    const handleShowConnectionInfo = (rowData: any) => {
+        const { databaseHostId, name } = rowData;
+        dispatch(
+            updateConnectionInfo({
+                selectedDatabaseHostId: databaseHostId,
+                selectedSandboxName: name,
+                connectionString: connectionInfo?.connectionString,
+                isLoading: false
+            })
         );
+        setConnectionInfoClicked(true);
     };
 
     const lastColDetails = () => {
@@ -246,15 +264,12 @@ const SandboxTable = () => {
                                         case 'split':
                                             handleSplit();
                                             break;
-                                        case 'rollback':
-                                            handleRollback();
-                                            break;
                                         case 'connectToTools':
                                             handleConnectToTools();
                                             break;
 
                                         case 'showConnectionInfo':
-                                            handleShowConnectionInfo();
+                                            handleShowConnectionInfo(rowData);
                                             break;
                                     }
                                 }

@@ -55,10 +55,20 @@ const ExploreSavingsTable = () => {
             id: '1',
             isSortable: true,
             isSticky: true,
-            width: '300px',
+            width: '280px',
             accessorForTextFilter: 'databaseHostname',
             renderCell: (cellData: any, rowData: any) => {
                 return renderUnmanagedHostName(cellData, rowData, styles);
+            }
+        },
+        {
+            Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
+            accessor: 'serverInstallationMode',
+            id: '6',
+            width: '230px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string, rowData: any) => {
+                return renderDeploymentModel(cellData, rowData);
             }
         },
         {
@@ -76,7 +86,7 @@ const ExploreSavingsTable = () => {
             Header: GENERAL.DB_HOST_INSTANCE_ID,
             accessor: 'ec2InstanceId',
             id: '3',
-            width: '180px',
+            width: '200px',
             accessorForTextFilter: 'ec2InstanceId',
             isSortable: true
         },
@@ -102,16 +112,6 @@ const ExploreSavingsTable = () => {
             ],
             renderCell: (cellData: any, rowData: any) => {
                 return renderUnmanagedAZ(cellData, rowData, styles);
-            }
-        },
-        {
-            Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
-            accessor: 'serverInstallationMode',
-            id: '6',
-            width: '230px',
-            filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return renderDeploymentModel(cellData, rowData);
             }
         },
         {
@@ -144,8 +144,8 @@ const ExploreSavingsTable = () => {
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle="Microsoft SQL server hosts"
-                singularTitle="Microsoft SQL server host"
+                pluralTitle={`${GENERAL.ES_TABLE_TITLE}s`}
+                singularTitle={GENERAL.ES_TABLE_TITLE}
             />
             <Table
                 //@ts-ignore

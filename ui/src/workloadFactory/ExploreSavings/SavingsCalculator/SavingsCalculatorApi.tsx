@@ -27,7 +27,6 @@ const SavingsCalculatorApi = () => {
         numberOfClonedCopies,
         selectedCloneRefresh,
         monthlyChangeRate,
-        selectedHostDetails,
         selectedInstanceId,
         savingsCalculatorRefresh,
         selectedDeploymentModel
@@ -50,7 +49,7 @@ const SavingsCalculatorApi = () => {
         }
     }, [unManagedHostFormatedList, selectedInstanceId]);
 
-    const getStorageSavingsData = async (instanceId: string) => {
+    const getStorageSavingsData = async () => {
         const payload = {
             snapshotFrequency: selectedSnapshotFrequency?.value,
             clonedCopiesCount: numberOfClonedCopies,
@@ -61,7 +60,7 @@ const SavingsCalculatorApi = () => {
             const result: any = await getStorageSavingsApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
                 regionId: headerSelectedRegion?.label2,
-                instanceId: instanceId,
+                instanceId: selectedInstanceId,
                 payload: payload
             });
             if (result && !result?.error) {
@@ -76,7 +75,7 @@ const SavingsCalculatorApi = () => {
         }
     };
 
-    const getViewCalculationsData = async (instanceId: string) => {
+    const getViewCalculationsData = async () => {
         const payload = {
             snapshotFrequency: selectedSnapshotFrequency?.value,
             clonedCopiesCount: numberOfClonedCopies,
@@ -87,7 +86,7 @@ const SavingsCalculatorApi = () => {
             const result: any = await getViewCalculationsApi({
                 credentialId: headerSelectedCred?.data?.credentialsId,
                 regionId: headerSelectedRegion?.label2,
-                instanceId: instanceId,
+                instanceId: selectedInstanceId,
                 payload: payload
             });
             if (result && !result?.error) {
@@ -104,11 +103,17 @@ const SavingsCalculatorApi = () => {
 
     const triggerRefreshApi = () => {
         if (!isDemoMode) {
-            if (selectedSnapshotFrequency && numberOfClonedCopies && selectedCloneRefresh && monthlyChangeRate) {
+            if (
+                selectedSnapshotFrequency &&
+                numberOfClonedCopies &&
+                selectedCloneRefresh &&
+                monthlyChangeRate &&
+                selectedInstanceId
+            ) {
                 dispatch(setStorageSavingsLoading(true));
                 dispatch(setViewCalculationsLoading(true));
-                getStorageSavingsData(selectedHostDetails?.id);
-                getViewCalculationsData(selectedHostDetails?.id);
+                getStorageSavingsData();
+                getViewCalculationsData();
             }
         } else {
             // Demo mode code will be removed once actual demo API starts returning data

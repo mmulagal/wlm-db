@@ -11,7 +11,8 @@ import {
     createSandbox,
     getSandboxSavings,
     getSandboxesInfo,
-    getDatabaseMountPointInfo
+    getDatabaseMountPointInfo,
+    deleteSandbox
 } from '../../src/operations/sandbox-operations';
 import sandboxResponse from '../simulator/responses/workload/sandbox-response.json';
 
@@ -67,7 +68,11 @@ describe('sandbox operations ', () => {
                 instance: 'default',
                 database: 'testdb1'
             },
-            'other'
+            'other',
+            {
+                dataDrive: 'D',
+                logDrive: 'E'
+            }
         );
         expect(resp.jobId).toBeDefined();
     });
@@ -82,5 +87,16 @@ describe('sandbox operations ', () => {
             'MSSQLSERVER'
         );
         expect(resp).toEqual(sandboxResponse.sandboxMountPointResponse);
+    });
+
+    it('Deletes the sandbox', async () => {
+        const resp = await deleteSandbox(
+            ACCOUNT_ID,
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
+            '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'testdb1'
+        );
+        expect(resp.jobId).toBeDefined();
     });
 });

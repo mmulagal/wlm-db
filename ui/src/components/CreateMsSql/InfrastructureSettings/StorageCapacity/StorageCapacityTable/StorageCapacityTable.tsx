@@ -3,50 +3,44 @@ import styles from './StorageCapacityTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
-import { formatFractionalNumber } from '../../../../../utils/utilityFunctions';
+import { formatFractionalNumber, isFsxnNew } from '../../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../../utils/appConstants';
-import { ReactComponent as NoDataIcon } from '../../../../../assets/ic_file.svg';
 
 const StorageCapacityTable = () => {
     const { getEstimatedCostData, getEstimatedCostLoading } = useAppSelector(state => state.mssql);
+    const selectedUnit = useAppSelector(state => state.mssqlForm.storageCapacity.unit);
+    const fsxNType = useAppSelector((state: any) => state.mssqlForm.fsxN.fsxNType);
     const [sizeData, setSizeData] = useState<any>([]);
 
     useEffect(() => {
         const sizeData = getEstimatedCostData?.data?.fsxnStorage?.size;
         let newList = [];
-        if (sizeData?.data) {
-            newList.push({
-                id: 1,
-                type: GENERAL.DATA_VOLUME,
-                size: sizeData?.data,
-                calculation: 'Data volume size with 10% buffer'
-            });
-        }
-        if (sizeData?.log) {
-            newList.push({
-                id: 2,
-                type: GENERAL.LOG_VOLUME,
-                size: sizeData?.log,
-                calculation: `25% of ${GENERAL.DATA_SIZE}`
-            });
-        }
-        if (sizeData?.tempdb) {
-            newList.push({
-                id: 3,
-                type: GENERAL.TEMPDB_VOLUME,
-                size: sizeData?.tempdb,
-                calculation: `10% of ${GENERAL.DATA_SIZE}`
-            });
-        }
-        if (sizeData?.quorum) {
-            newList.push({
-                id: 4,
-                type: GENERAL.QUORUM_VOLUME,
-                size: sizeData?.quorum,
-                calculation: `Witness disk for windows cluster`
-            });
-        }
-        if (sizeData?.buffer) {
+        newList.push({
+            id: 1,
+            type: GENERAL.DATA_VOLUME,
+            size: sizeData?.data,
+            calculation: 'Data volume size with 10% buffer'
+        });
+        newList.push({
+            id: 2,
+            type: GENERAL.LOG_VOLUME,
+            size: sizeData?.log,
+            calculation: `25% of ${GENERAL.DATA_SIZE}`
+        });
+        newList.push({
+            id: 3,
+            type: GENERAL.TEMPDB_VOLUME,
+            size: sizeData?.tempdb,
+            calculation: `10% of ${GENERAL.DATA_SIZE}`
+        });
+        newList.push({
+            id: 4,
+            type: GENERAL.QUORUM_VOLUME,
+            size: sizeData?.quorum,
+            calculation: `Witness disk for Windows cluster`
+        });
+        if (isFsxnNew(fsxNType)) {
+            // For existing FSX buffer size should not be considered
             newList.push({
                 id: 5,
                 type: GENERAL.BUFFER_SIZE,
@@ -54,14 +48,13 @@ const StorageCapacityTable = () => {
                 calculation: `Upto 20% headroom over total capacity`
             });
         }
-        if (sizeData?.total) {
-            newList.push({
-                id: 6,
-                type: GENERAL.TOTAL_VOLUME,
-                size: sizeData?.total,
-                calculation: `Total FSx for ONTAP SSD capacity`
-            });
-        }
+        newList.push({
+            id: 6,
+            type: GENERAL.TOTAL_VOLUME,
+            // For existing FSX removing buffer size
+            size: isFsxnNew(fsxNType) ? sizeData?.total : sizeData?.total - (sizeData?.buffer || 0),
+            calculation: `Total FSx for ONTAP SSD capacity`
+        });
         setSizeData(newList);
     }, [getEstimatedCostData]);
 
@@ -93,7 +86,13 @@ const StorageCapacityTable = () => {
             id: '2',
             width: '240px',
             renderCell: (cellData: any) => {
-                return `${formatFractionalNumber(cellData || 0, 2)} GiB`;
+                if (selectedUnit?.label === 'TiB') {
+                    return cellData
+                        ? `${formatFractionalNumber((cellData || 0) / 1024, 2)} TiB`
+                        : GENERAL.NOT_AVAILABLE;
+                } else {
+                    return cellData ? `${formatFractionalNumber(cellData || 0, 2)} GiB` : GENERAL.NOT_AVAILABLE;
+                }
             }
         },
         {
@@ -122,13 +121,7 @@ const StorageCapacityTable = () => {
                     <div>{GENERAL.LOADING_DATA}</div>
                 </Typography>
             )}
-            {!getEstimatedCostLoading && !sizeData && (
-                <Typography variant="Regular_14" className={styles.loadingTable}>
-                    <NoDataIcon />
-                    <div>{GENERAL.NO_DATA}</div>
-                </Typography>
-            )}
-            {!getEstimatedCostLoading && sizeData && (
+            {!getEstimatedCostLoading && (
                 <Table
                     //@ts-ignore
                     tableProps={tableProps}

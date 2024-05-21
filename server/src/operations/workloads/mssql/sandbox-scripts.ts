@@ -257,7 +257,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
                 $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter"}
             }
 
-            $params += @{"ApiQueryFields" = "fields=svm.name,location.volume.name"}
+            $params += @{"ApiQueryFields" = "fields=svm.name,location.volume.*"}
     
             $Response = Invoke-ONTAPRequest @Params
     
@@ -271,11 +271,13 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
                         $responseObject.data += @{
                             "lunPath" = $lunrecord.name
                             "volumeName" = $lunrecord.location.volume.name
+                            "volumeUuid" = $lunrecord.location.volume.uuid
                         }
                     } elseif ($responseObject.log.LunSerialNumber -eq $lunrecord.serial_number) {
                         $responseObject.log += @{
                             "lunPath" = $lunrecord.name
                             "volumeName" = $lunrecord.location.volume.name
+                            "volumeUuid" = $lunrecord.location.volume.uuid
                         }
                     }
                 }
@@ -653,6 +655,14 @@ const cleanUpOntapResources = (
     $responeObject = @{}
 
     try {
+        try {
+            $deleteQuery = "SET NOCOUNT ON; DROP DATABASE $DBName;"
+            $sqlresponse =  sqlcmd -S "." -Q $deleteQuery -y 0;
+        } catch {
+            Write-Debug $_.Exception.Message
+        }
+
+
         $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
         if ($clusterServiceStatus -eq 'Running' -and $filePaths.count -ne 0) {
             #Cleanup drives from SQL dependency in case of clustered configuration
