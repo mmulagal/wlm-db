@@ -7,11 +7,21 @@ import CreateNewSandboxContent from './CreateNewSandboxContent/CreateNewSandboxC
 import CreateNewSandboxCodebox from './CreateNewSandboxCodebox/CreateNewSandboxCodebox';
 import CreateSandboxApis from './CreateNewSandboxContent/CreateNewSandboxApis';
 import { useAppSelector } from '../../../store/storeHooks';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { setTargetDatabase } from '../../../store/workloadFactory/createSandboxSlice';
 
 const CreateNewSandbox = () => {
     const loading = useAppSelector(state => state?.msSqlAction?.isLoading);
+    const dispatch = useDispatch();
 
     CreateSandboxApis();
+
+    //To intialize values on first render
+    useEffect(() => {
+        dispatch(setTargetDatabase(`DBname_sandbox_${Date.now()}`));
+    }, []);
+
     return (
         <div className={styles.createNewSandbox}>
             {loading && (
