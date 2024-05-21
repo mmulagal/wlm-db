@@ -155,6 +155,7 @@ const License = () => {
                         </Button>
                         <div className={styles['radio-container']}>
                             <RadioButton
+                                id="select-license-ami"
                                 isChecked={licenseType === FORM_OPTIONS.LICENSE_AMI}
                                 onChange={() => {
                                     dispatch(setSelectedLicenseType(FORM_OPTIONS.LICENSE_AMI));
@@ -164,6 +165,7 @@ const License = () => {
                                 className=""
                             />
                             <RadioButton
+                                id="select-custom-ami"
                                 isChecked={licenseType === FORM_OPTIONS.CUSTOM_AMI}
                                 onChange={() => {
                                     dispatch(setSelectedLicenseType(FORM_OPTIONS.CUSTOM_AMI));
