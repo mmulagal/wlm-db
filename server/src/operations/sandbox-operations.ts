@@ -26,7 +26,7 @@ import {
     getStorageSavingsFromOntap
 } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails } from '../utils/common-types';
-import { checkDatabaseExists, getActiveSqlNode } from './workloads/mssql/mssql-operations';
+import { checkDatabaseExists, getActiveSqlNode, getSqlServerVersion } from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { sleep, sqlResponseParsing } from '../utils/utils';
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
@@ -641,7 +641,7 @@ async function validateCloneParams(
             CUSTOM_SSM_EXECUTION_TIMEOUT
         );
 
-        await Promise.all([
+        const [destDatabaseExists, srcDatabaseExists] = await Promise.all([
             checkDatabaseExists(
                 accountId,
                 credentialsId,
@@ -649,8 +649,7 @@ async function validateCloneParams(
                 destDetails.host,
                 destDetails.database,
                 destDetails.activeNodeInstaceId,
-                destDetails.instanceName,
-                false
+                destDetails.instanceName
             ),
             checkDatabaseExists(
                 accountId,
@@ -659,10 +658,23 @@ async function validateCloneParams(
                 srcDetails.host,
                 srcDetails.database,
                 srcDetails.activeNodeInstaceId,
-                srcDetails.instanceName,
-                true
+                srcDetails.instanceName
             )
         ]);
+
+        if (destDatabaseExists) {
+            throw createError(
+                412,
+                `Database ${destDetails.database} already exists on destination host ${srcDetails.host}`
+            );
+        }
+
+        if (!srcDatabaseExists) {
+            throw createError(
+                412,
+                `Database ${srcDetails.database} does not exists on source host ${destDetails.host}`
+            );
+        }
 
         const dataDriveExistsPromise = validateSelectedDrives(
             existingDriveInfo,
@@ -1437,21 +1449,6 @@ async function getDatabaseMountPointInfo(
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
-}
-
-async function getSqlServerVersion(
-    credentialsId: string,
-    region: string,
-    activeNodeInstanceId: string,
-    instanceName: string = '.'
-) {
-    logger.info('Get SQL server version:', { credentialsId, region, activeNodeInstanceId, instanceName });
-    const command = [`sqlcmd -S "${instanceName}"-Q "SELECT @@VERSION" -y 0`];
-    const sqlServerVersionResponse = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
-    const serverInfo = sqlServerVersionResponse ? sqlServerVersionResponse?.replaceAll('\r\n', '').split('\t') : ''; // const sqlServerVersion: parsedSqlSeverVersionResponse[0].substring(0, serverInfo[0].indexOf('(')).trim(),
-    const sqlServerVersion = serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim();
-
-    return sqlServerVersion;
 }
 
 export {

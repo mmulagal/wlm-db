@@ -1212,16 +1212,19 @@ async function validateParams(
             }
         }
 
-        await checkDatabaseExists(
+        const databaseExists = await checkDatabaseExists(
             accountId,
             credentialsId,
             region,
             databaseHostId,
             databaseName,
             activeNodeInstanceId,
-            instanceName,
-            false
+            instanceName
         );
+
+        if (databaseExists) {
+            throw createError(412, `Provided database ${databaseName} already exists`);
+        }
 
         if (!collation) {
             throw createError(412, 'Collation should not be empty');
