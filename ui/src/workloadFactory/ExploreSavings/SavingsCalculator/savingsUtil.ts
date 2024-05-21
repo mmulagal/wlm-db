@@ -425,7 +425,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 text: ``
             },
             {
-                label: 'Minimum throughout capacity required',
+                label: 'Minimum throughput capacity required',
                 value: `${viewCalculation.fsxOntapCalculation.minThroughputCapacityRequired}`,
                 text: `Required number of FSx file systems (${viewCalculation.fsxOntapCalculation.requiredNumOfFsx}) x Min throughput capacity 128 MB/s)`
             },
