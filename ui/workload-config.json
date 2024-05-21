@@ -22,7 +22,7 @@
         "primaryCtaLabel": "Deploy database",
         "primaryCtaTo": "/databases/add-working-environment/database-services/mssql/create",
         "secondaryCtaLabel": "Go to databases Inventory",
-        "secondaryCtaTo": "/databases",
+        "secondaryCtaTo": "/databases/inventory",
         "isComingSoon": false,
         "dataUrl": "/wlmdb/v1/status"
     },
