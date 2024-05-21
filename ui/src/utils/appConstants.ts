@@ -671,6 +671,7 @@ export const GENERAL = {
     MANAGE_HOST: 'Manage host',
     DETECT_HOST_STEPS: ['Step 1 / 2', 'Step 2 out of 2'],
     FAILED_TO_DETECT_HOST: 'Failed to detect host',
+    DETECT_FAILED_WITH_NO_STORAGE: 'Unable to move to unmanaged hosts tab as storage could not be identified',
     DONE: 'Done',
     DETECT: 'Detect',
     SSM_CONNECTIVITY: 'SSM connectivity',
