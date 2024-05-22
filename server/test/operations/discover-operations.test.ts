@@ -60,11 +60,10 @@ describe('Discover operations', () => {
     it('Get cluster node details from private Ips', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
 
-        const response = await getClusterNodeDetailsFromPrivateIpList(
-            credentialsId,
-            'us-east-1',
-           ['sqlNode1 - 10.0.6.118','sqlNode2 - 10.0.28.145']
-        );
+        const response = await getClusterNodeDetailsFromPrivateIpList(credentialsId, 'us-east-1', [
+            'sqlNode1 - 10.0.6.118',
+            'sqlNode2 - 10.0.28.145'
+        ]);
 
         expect(response?.length).toEqual(2);
     });

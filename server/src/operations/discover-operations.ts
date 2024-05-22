@@ -798,7 +798,7 @@ async function fetchUnmanagedHostsInformation(
                     id: ec2Instance.ec2InstanceId,
                     name: ec2Instance.ec2InstanceId,
                     sqlServerDeploymentType,
-                    clusterNodeDetails,
+                    ...(clusterNodeDetails && { clusterNodeDetails }),
                     status: 'Down',
                     errors: 'No active SQL Server instances found'
                 });

@@ -113,7 +113,10 @@ describe('EC2 Operations', () => {
     });
 
     it('Get instance details by private IP', async () => {
-        const [response] = await getInstanceDetailsByPrivateIp(credentialsId, DEFAULT_AWS_REGION, ['10.0.6.118','10.0.28.145']);
-        expect(response.ec2InstanceId).toBeDefined()
+        const [response] = await getInstanceDetailsByPrivateIp(credentialsId, DEFAULT_AWS_REGION, [
+            '10.0.6.118',
+            '10.0.28.145'
+        ]);
+        expect(response.ec2InstanceId).toBeDefined();
     });
 });
