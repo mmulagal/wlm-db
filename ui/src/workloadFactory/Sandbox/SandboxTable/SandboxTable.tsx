@@ -20,6 +20,7 @@ import SmallLoader from '../../../common/SmallLoader/SmallLoader';
 import { useDeleteSandboxMutation, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import store from '../../../store/store';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
@@ -181,8 +182,13 @@ const SandboxTable = () => {
                                     id: res?.data?.jobId
                                 }).then((jobRes: any) => {
                                     const status = jobRes?.data?.status;
+                                    const state = store.getState();
+                                    const { aggregatedSandboxList } = state?.sandbox;
                                     if (status === JOB_MONITORING_STATUS.COMPLETED) {
-                                        setDeletedSandboxes([...deletedSandboxes, rowData?.id]);
+                                        const updatedSandboxList = aggregatedSandboxList.filter(
+                                            (item: any) => rowData?.id !== item?.id
+                                        );
+                                        dispatch(setAggregatedSandboxList(updatedSandboxList));
                                         clearInterval(jobInterval);
                                         dispatch(
                                             addNotification({
@@ -191,7 +197,7 @@ const SandboxTable = () => {
                                             })
                                         );
                                     } else if (status === JOB_MONITORING_STATUS.FAILED) {
-                                        let output = data.map((obj: any) => {
+                                        let output = aggregatedSandboxList.map((obj: any) => {
                                             if (obj?.id === rowData?.id && obj.name === rowData.name) {
                                                 return {
                                                     ...obj,
