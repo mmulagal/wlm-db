@@ -18,14 +18,17 @@ $NugetFileLoc = "C:\Program Files\PackageManagement\ProviderAssemblies\Microsoft
 
 #Check if private network
 $isprivatesubnet = $True
-$connection =  Test-Connection -ComputerName  www.powershellgallery.com -Quiet
-if($connection -eq $False) {
-    $isprivatesubnet = $True
+try{
+    $connection =  Invoke-WebRequest www.powershellgallery.com 
+    if($connection.StatusCode -ne "200") {
+        $isprivatesubnet = $True
+        }
+    else {
+        $isprivatesubnet = $False
     }
-else {
-    $isprivatesubnet = $False
+}catch{
+    Write-Output "Private network determination: Error while invoking webrequest to www.powershellgallery.com. $_"
 }
-
 # If PS modules installation fails, retry again. We have seen success on retry. 
 $modulesInstalled = $False
 $installPSModulesTries = 1

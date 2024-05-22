@@ -26,12 +26,16 @@ $NugetFileLoc = "C:\Program Files\PackageManagement\ProviderAssemblies\Microsoft
 
 #Check if private network
 $isprivatesubnet = $True
-$connection = Test-Connection -ComputerName www.powershellgallery.com -Quiet
-if ($connection -eq $False) {
-    $isprivatesubnet = $True
-}
-else {
-    $isprivatesubnet = $False
+try{
+    $connection =  Invoke-WebRequest www.powershellgallery.com 
+    if($connection.StatusCode -ne "200") {
+        $isprivatesubnet = $True
+        }
+    else {
+        $isprivatesubnet = $False
+    }
+}catch{
+    Write-Output "Private network determination: Error while invoking webrequest to www.powershellgallery.com. $_"
 }
 
 # Remove the list of PS modules before installing them
