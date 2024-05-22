@@ -27,6 +27,7 @@ const CreateSandboxApis = () => {
     const [selectedInstanceName, setSelectedInstanceName] = useState<any>(null);
     const [selectedTargetDbHostId, setSelectedTargetDbHostId] = useState<any>(null);
     const [databaseHostCursor, setDatabaseHostCursor] = useState(null);
+    const [fetchedDatabases, setFetchedDatabases] = useState(false);
 
     useEffect(() => {
         setCredId(headerSelectedCred?.data?.credentialsId);
@@ -88,7 +89,15 @@ const CreateSandboxApis = () => {
             databaseName: selectedDbName,
             instanceName: selectedInstanceName
         },
-        { skip: !credId || !regionId || !selectedDbHostId || !selectedDbName || !selectedInstanceName }
+        {
+            skip:
+                !credId ||
+                !regionId ||
+                !selectedDbHostId ||
+                !selectedDbName ||
+                !selectedInstanceName ||
+                !fetchedDatabases
+        }
     );
 
     useEffect(() => {
@@ -113,6 +122,9 @@ const CreateSandboxApis = () => {
                 databaseListError
             })
         );
+        if (!databaseListLoading) {
+            setFetchedDatabases(true);
+        }
     }, [databaseList, databaseListLoading, databaseListError]);
 
     useEffect(() => {

@@ -1531,6 +1531,9 @@ async function performSandboxDeletion(
     let errorMsg;
     let status: string = JOBSTATUS.IN_PROGRESS;
     try {
+        // Creating a validation job to accomodate more validations in the future in one job
+        await validateDeleteSandboxParams(accountId, credentialsId, region, parentJobId, resDetails);
+
         const mappings = (await getMappings(
             accountId,
             credentialsId,
@@ -1559,6 +1562,61 @@ async function performSandboxDeletion(
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             status,
             error: errorMsg,
+            endTime: Date.now()
+        });
+    }
+}
+
+async function validateDeleteSandboxParams(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    resourceDetails: HostAndDbInfo
+) {
+    logger.info('Validate delete sandbox params', { accountId, credentialsId, region, parentJobId, resourceDetails });
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+
+    const validationJob = await registerJob(accountId, credentialsId, region, {
+        description: `Validate if the sandbox ${resourceDetails.database} exists in the target host ${resourceDetails.resourceName}`,
+        startTime: Date.now(),
+        name: 'Validate if sandbox exists',
+        status,
+        type: JOBTYPE.SANDBOX,
+        resourceName: resourceDetails.database,
+        parentJobId
+    });
+
+    try {
+        const dbExists = await checkDatabaseExists(
+            accountId,
+            credentialsId,
+            region,
+            resourceDetails.host,
+            resourceDetails.database,
+            resourceDetails.activeNodeInstaceId,
+            resourceDetails.instanceName
+        );
+
+        if (!dbExists) {
+            throw createError(
+                412,
+                `Database ${resourceDetails.database} does not exists on source host ${resourceDetails.resourceName}`
+            );
+        }
+
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error(e);
+        errorMsg = e.message || 'Internal Server Error';
+        status = JOBSTATUS.FAILED;
+        throw createError(e.statusCode, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, validationJob.id, {
+            error: errorMsg,
+            status,
             endTime: Date.now()
         });
     }
