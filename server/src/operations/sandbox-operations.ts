@@ -322,11 +322,14 @@ interface VolumeLunMap {
     lunPath: string;
     windowsVolumeName: string;
     volumeUuid: string;
+    parentSvm?: string;
+    parentVolume?: string;
+    parentSnapshot?: string;
 }
 
 interface VolumeLunMapping {
     svm: string;
-    collation: string;
+    collation?: string;
     data: VolumeLunMap;
     log: VolumeLunMap;
 }
@@ -820,10 +823,8 @@ async function createVolumeClone(
                 srcDetails.fsxId,
                 region,
                 mapping.svm,
-                mapping.data.volumeName,
-                mapping.data.lunPath,
-                mapping.log.volumeName,
-                mapping.log.lunPath,
+                { name: mapping.data.volumeName },
+                { name: mapping.log.volumeName },
                 destDetails.host,
                 sqlVMName || mapping.svm
             )
@@ -834,11 +835,9 @@ async function createVolumeClone(
                     'test-fsx',
                     'us-east-1',
                     'wlmdb_sqlsvm_1714090636810',
-                    'wlmdb_sqldata_1714098400',
-                    '/vol/wlmdb_sqldata_1714098400/sqldata',
-                    'wlmdb_sqllog_1714098400',
-                    '/vol/wlmdb_sqllog_1714098400/sqllog',
-                    'wlmdb_sqlsvm_1714090636810'
+                    { name: '/vol/wlmdb_sqldata_1714098400/sqldata' },
+                    { name: '/vol/wlmdb_sqllog_1714098400/sqllog' },
+                    'test-res-id'
                 )
             ];
         }
@@ -1740,6 +1739,115 @@ async function getSandboxSplitEstimate(
     }));
 }
 
+async function updateSandboxLifeCycle(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    databaseHostId: string,
+    databaseName: string
+) {
+    logger.info(
+        `Update Sandbox life cycle for ${databaseName} in database host ${databaseHostId}`,
+        accountId,
+        region,
+        credentialsId,
+        databaseHostId,
+        databaseName
+    );
+
+    const job = await registerJob(accountId, credentialsId, region, {
+        name: `Update sandbox lifecycle ${databaseName}`,
+        description: `Update sandbox lifecycle ${databaseName} in the host ${databaseHostId}`,
+        initiator: 'SYSTEM',
+        type: JOBTYPE.SANDBOX,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: databaseName,
+        startTime: Date.now()
+    });
+
+    const [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
+
+    if (isEmpty(resourceDetails)) {
+        throw createError(HttpErrorCodes.NOT_FOUND, 'Could not find the database host');
+    }
+
+    const { resource_name: resourceName, metadata, co_relation_id: fsxId } = resourceDetails;
+
+    const { node1InstanceId, node2InstanceId, fsxSvmId } = metadata as unknown as Metadata;
+
+    const { isSSMConnected, instanceName, activeNodeInstanceId } = await getActiveSqlNode(
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId,
+        databaseHostId
+    );
+
+    if (!isSSMConnected) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'SSM connection could not be established with the host'
+        );
+    }
+
+    const dbExists = await checkDatabaseExists(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseName,
+        activeNodeInstanceId!,
+        instanceName
+    );
+
+    if (!dbExists) {
+        throw createError(412, `Database ${databaseName} does not exists on host ${resourceName}`);
+    }
+
+    const resDetails = {
+        resourceName: resourceName!,
+        instanceName: instanceName!,
+        fsxId: fsxId!,
+        svm: fsxSvmId!,
+        activeNodeInstaceId: activeNodeInstanceId!,
+        metadata: resourceDetails.metadata as unknown as Metadata,
+        database: databaseName,
+        instance: instanceName!,
+        host: databaseHostId
+    };
+
+    const mappings = (await getMappings(accountId, credentialsId, region, job.id, resDetails)) as VolumeLunMapping;
+
+    const clonedVolumes = await createVolumeClone(accountId, credentialsId, region, job.id, resDetails, resDetails, {
+        svm: mappings.data.parentSvm!,
+        data: {
+            ...mappings.data,
+            volumeName: mappings.data.parentVolume!
+        },
+        log: {
+            ...mappings.log,
+            volumeName: mappings.log.parentVolume!
+        }
+    });
+
+    const mountPaths = (await invokeVirtualMount(
+        accountId,
+        credentialsId,
+        region,
+        job.id,
+        resDetails,
+        resDetails,
+        mappings,
+        clonedVolumes,
+        {
+            dataDrive: mappings.data.fileName.split(':')[0],
+            logDrive: mappings.data.fileName.split(':')[0]
+        }
+    )) as { dataPath: string; logPath: string };
+
+    await createCloneDb(accountId, credentialsId, region, job.id, resDetails, mountPaths);
+}
+
 export {
     getSandboxesInfo,
     getSandboxSavings,
@@ -1749,5 +1857,6 @@ export {
     getDatabaseMountPointInfo,
     getSandboxConnectionString,
     deleteSandbox,
-    getSandboxSplitEstimate
+    getSandboxSplitEstimate,
+    updateSandboxLifeCycle
 };

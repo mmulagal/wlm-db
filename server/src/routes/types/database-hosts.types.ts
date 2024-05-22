@@ -392,6 +392,10 @@ const SplitEstimatesResponse = Type.Object({
     )
 });
 
+const SandboxLifeCycleBody = Type.Object({
+    snapshot: Type.Optional(Type.String())
+});
+
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -458,5 +462,6 @@ export {
     DatabaseMountPointResponseBody,
     DatabaseMountPointResponseType,
     SandboxParams,
-    SplitEstimatesResponse
+    SplitEstimatesResponse,
+    SandboxLifeCycleBody
 };

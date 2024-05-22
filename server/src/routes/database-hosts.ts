@@ -16,7 +16,8 @@ import {
     RevertPatchResourceForSandboxSchema,
     GetSandboxesMountPointSchema,
     GetSandboxConnectionStringSchema,
-    DeleteSandboxSchema
+    DeleteSandboxSchema,
+    SandboxLifeCycleSchema
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -236,6 +237,17 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
         .delete(
             `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandbox/:sandboxName`,
             { schema: DeleteSandboxSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName }
+                } = request;
+                const response = await deleteSandbox(accountId, credentialsId, region, databaseHostId, sandboxName);
+                return reply.send(response);
+            }
+        )
+        .patch(
+            `${API_PREFIX_PATH}/database-hosts/databaseHostId/sandbox/:sandboxName`,
+            { schema: SandboxLifeCycleSchema },
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, sandboxName }
