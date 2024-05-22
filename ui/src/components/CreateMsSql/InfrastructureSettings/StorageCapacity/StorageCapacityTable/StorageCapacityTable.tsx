@@ -66,7 +66,7 @@ const StorageCapacityTable = () => {
             isSortable: false,
             width: '290px',
             renderCell: (cellData: any, rowData: any) => {
-                if (rowData?.size <= 1024 && cellData === GENERAL.TOTAL_VOLUME) {
+                if (rowData?.size <= 1024 && cellData === GENERAL.TOTAL_VOLUME && isFsxnNew(fsxNType)) {
                     return (
                         <div className={styles.minColTooltip}>
                             {cellData}{' '}
