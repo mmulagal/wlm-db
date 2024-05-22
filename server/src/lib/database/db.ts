@@ -54,6 +54,15 @@ interface Config {
     data?: object;
 }
 
+interface DatabaseInstance {
+    credentialsId: string;
+    resourceId: string;
+    instanceId: string;
+    instanceName: string;
+    fsxnId: string;
+    isDefault: boolean;
+}
+
 async function listDeployments(
     accountId?: string,
     deploymentId?: string,
@@ -524,6 +533,81 @@ async function updateResourceMetaData(accountId: string, resourceId: string, met
     });
 }
 
+async function upsertDatabaseInstanceRecord(accountId: string, record: DatabaseInstance) {
+    logger.info('Upserting a database instance record', { accountId, record });
+
+    const { resourceId, credentialsId, instanceId, instanceName, isDefault, fsxnId } = record;
+
+    accountId = checkAccount(accountId);
+
+    return prisma.client.databaseInstances.upsert({
+        create: {
+            account_id: accountId,
+            credentials_id: credentialsId,
+            resource_id: resourceId,
+            instance_id: instanceId,
+            instance_name: instanceName,
+            fsxn_id: fsxnId,
+            is_default: isDefault
+        },
+        update: {
+            ...(instanceName && { instance_name: instanceName }),
+            ...(fsxnId && { fsxn_id: fsxnId }),
+            ...(isDefault && { is_default: isDefault })
+        },
+        where: {
+            ui_wlmdb_databaseInstances: {
+                account_id: accountId,
+                credentials_id: credentialsId,
+                resource_id: resourceId,
+                instance_id: instanceId
+            }
+        }
+    });
+}
+
+async function listDatabaseInstances(accountId: string, record: any) {
+    logger.info('List database instances for given account/credentialsId', accountId);
+
+    const { resourceId, credentialsId, instanceId, instanceName, isDefault } = record;
+
+    accountId = checkAccount(accountId);
+
+    // TODO: Add more filters based on final UX changes.
+    return prisma.client.databaseInstances.findMany({
+        where: {
+            account_id: accountId,
+            credentials_id: credentialsId,
+            ...(resourceId && { resource_id: resourceId }),
+            ...(instanceId && { instance_id: instanceId }),
+            ...(instanceName && { instance_name: instanceName }),
+            ...(isDefault && { is_default: isDefault })
+        },
+        orderBy: {
+            id: 'asc'
+        }
+    });
+}
+
+async function deleteDatabaseInstanceRecord(
+    accountId: string,
+    credentialsId: string,
+    resourceId: string,
+    instanceName: string
+) {
+    logger.info('Delete a database instance record', { accountId, credentialsId, resourceId, instanceName });
+
+    accountId = checkAccount(accountId);
+    return prisma.client.databaseInstances.deleteMany({
+        where: {
+            account_id: accountId,
+            credentials_id: credentialsId,
+            resource_id: resourceId,
+            instance_name: instanceName
+        }
+    });
+}
+
 export {
     Resource,
     listDeployments,
@@ -545,5 +629,9 @@ export {
     deleteDeploymentJobById,
     checkAccount,
     listEvents,
-    updateResourceMetaData
+    updateResourceMetaData,
+    upsertDatabaseInstanceRecord,
+    listDatabaseInstances,
+    deleteDatabaseInstanceRecord,
+    DatabaseInstance
 };

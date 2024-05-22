@@ -107,7 +107,25 @@ model job {
   @@index([parent_job_id], map: "k_wlmdb_job_parent_job_id")
   @@index([start_time], map: "k_wlmdb_job_start_time")
   @@unique([account_id, name, resource_name, initiator, start_time], name: "uk_wlmdb_config_uniqueJob")
+}
 
+model databaseInstances {
+  id                String   @id @default(uuid())
+  account_id        String   @db.VarChar(30)
+  credentials_id    String   @db.VarChar(80)
+  resource_id       String   @db.VarChar(255)
+  instance_id       String   @db.VarChar(36)
+  instance_name     String   @db.VarChar(16)
+  fsxn_id           String   @db.VarChar(20)
+  is_default        Boolean  @default(value: false)
+  manage_start_time DateTime @default(now()) @db.DateTime(3)
+  last_update_time  DateTime @default(now()) @updatedAt @db.DateTime(3)
+
+  @@unique([account_id, credentials_id, resource_id, instance_id], name: "ui_wlmdb_databaseInstances", map: "ui_wlmdb_databaseInstances")
+  @@index([account_id], map: "i_wlmdb_databaseInstances_account_id")
+  @@index([credentials_id], map: "i_wlmdb_databaseInstances_credentials_id")
+  @@index([resource_id], map: "i_wlmdb_databaseInstances_resource_id")
+  @@index([instance_name], map: "i_wlmdb_databaseInstances_instance_name")
 }
 
 enum JOBSTATUS {
