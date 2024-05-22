@@ -830,6 +830,7 @@ export const {
 export const {
     useGetSandboxListQuery,
     useGetSandboxSavingsQuery,
+    useLazyGetSandboxSavingsQuery,
     useCreateSandboxMutation,
     useGetConnectionInfoQuery,
     useGetDatabaseMountPointsQuery,
