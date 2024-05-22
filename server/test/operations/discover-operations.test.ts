@@ -2,7 +2,8 @@ import { faker } from '@faker-js/faker';
 import {
     getHostAndSqlServerInfo,
     validateAndStoreDiscoveredParameters,
-    manageSqlServer
+    manageSqlServer,
+    getClusterNodeDetailsFromPrivateIpList
 } from '../../src/operations/discover-operations';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 import '../simulator/scopes/aws/ec2-scope';
@@ -54,5 +55,17 @@ describe('Discover operations', () => {
             params
         );
         expect(response).toBeDefined();
+    });
+
+    it('Get cluster node details from private Ips', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+
+        const response = await getClusterNodeDetailsFromPrivateIpList(
+            credentialsId,
+            'us-east-1',
+           ['sqlNode1 - 10.0.6.118','sqlNode2 - 10.0.28.145']
+        );
+
+        expect(response?.length).toEqual(2);
     });
 });

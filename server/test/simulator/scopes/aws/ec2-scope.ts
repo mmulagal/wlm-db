@@ -1,6 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import { faker } from '@faker-js/faker';
+import { cloneDeep } from 'lodash-es';
 import {
     EC2Client,
     DescribeVpcsCommand,
@@ -140,7 +141,30 @@ ec2Mock.on(DescribeKeyPairsCommand).resolves(keyPairsResponse);
 
 ec2Mock.on(DescribeNetworkInterfacesCommand).resolves(networkInterfaceResponse);
 
-ec2Mock.on(DescribeInstancesCommand).resolves(describeInstanceResponse);
+ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstancesCommand) => {
+    const filters = command?.Filters || [];
+    const [instancesQueryPrivateIps] = filters?.filter(filter => filter.Name === 'private-ip-address').map(filter => filter.Values);
+    if (filters && instancesQueryPrivateIps) {
+
+        const reservations = [];
+        
+        instancesQueryPrivateIps.forEach((privateIp: string) => {
+            const instances = [];
+            const dummyInstanceDetails = cloneDeep(describeInstanceResponse.Reservations[0].Instances[0]);
+            const dummyResevation = cloneDeep(describeInstanceResponse.Reservations[0]);
+            dummyInstanceDetails.PrivateIpAddress = privateIp;
+            dummyInstanceDetails.InstanceId = `i-${faker.string.alpha(8)}`;
+            instances.push(dummyInstanceDetails);
+            dummyResevation.Instances = instances;
+            reservations.push(dummyResevation);
+        })
+
+        return { Reservations: reservations };
+
+    } else {
+        return describeInstanceResponse;
+    }
+});
 
 ec2Mock.on(DescribeVpcEndpointsCommand).resolves(describeVpcEndpointsResponse);
 
