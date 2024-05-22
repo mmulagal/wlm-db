@@ -228,6 +228,18 @@ const SandboxTable = () => {
                                                         sandboxSavingsError: ''
                                                     })
                                                 );
+                                            } else {
+                                                dispatch(
+                                                    setSandboxSavingsState({
+                                                        sandboxSavings: {
+                                                            consumedStorage: 0,
+                                                            savedStorage: 0,
+                                                            sandboxSavingsPercentage: 0
+                                                        },
+                                                        sandboxSavingsLoading: false,
+                                                        sandboxSavingsError: ''
+                                                    })
+                                                );
                                             }
                                         });
                                     } else if (status === JOB_MONITORING_STATUS.FAILED) {
