@@ -20,6 +20,7 @@ import {
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
+import { SQL_DEFAULT_COLLATION } from '../lib/chatbot/consts';
 
 const logger = getLogger();
 
@@ -246,7 +247,8 @@ async function updateUserDBIntoResourceData(
             },
             isFsxOntapSnapshotsEnabled: false,
             isSqlNativeEnabled: false
-        }
+        },
+        collation: SQL_DEFAULT_COLLATION
     };
     metaData.userDatabase = [...(metaData.userDatabase || []), databaseDetails];
 
