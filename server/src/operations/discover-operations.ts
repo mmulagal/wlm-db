@@ -703,6 +703,17 @@ async function validateAndStoreDiscoveredParameters(
     }
 }
 
+async function getClusterNodeDetailsFromPrivateIpList(credentialsId: string, region: string, nodeIpDetails: string[]) {
+    logger.info('Getting cluster node details from private IP list', { credentialsId, region, nodeIpDetails });
+
+    const [node1Details, node2Details] = nodeIpDetails || [];
+    if (node1Details && node2Details) {
+        const [, node1Ip] = node1Details.split(' - ');
+        const [, node2Ip] = node2Details.split(' - ');
+        return getInstanceDetailsByPrivateIp(credentialsId, region, [node1Ip, node2Ip]);
+    }
+}
+
 async function fetchUnmanagedHostsInformation(
     accountId: string,
     credentialsId: string,
@@ -737,15 +748,12 @@ async function fetchUnmanagedHostsInformation(
             const [{ nodeIpDetails, sqlServerDeploymentType }] = ec2Instance?.sqlServerInstances || [];
             let clusterNodeDetails: NodeDetails[] = [];
             if (
-                sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT ||
-                sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
+                (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT ||
+                    sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) &&
+                nodeIpDetails
             ) {
-                const [node1Details, node2Details] = nodeIpDetails || [];
-                if (node1Details && node2Details) {
-                    const [, node1Ip] = node1Details.split(' - ');
-                    const [, node2Ip] = node2Details.split(' - ');
-                    clusterNodeDetails = await getInstanceDetailsByPrivateIp(credentialsId, region, [node1Ip, node2Ip]);
-                }
+                clusterNodeDetails =
+                    (await getClusterNodeDetailsFromPrivateIpList(credentialsId, region, nodeIpDetails)) || [];
             }
             const sqlServerInstance = ec2Instance?.sqlServerInstances?.find(
                 sqlInstance => sqlInstance.sqlServerState === 'Running'
@@ -1457,5 +1465,6 @@ export {
     validateAndStoreDiscoveredParameters,
     fetchUnmanagedHostsInformation,
     manageSqlServer,
-    prepareForManage
+    prepareForManage,
+    getClusterNodeDetailsFromPrivateIpList
 };

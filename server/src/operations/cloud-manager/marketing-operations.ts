@@ -1,17 +1,153 @@
 import createError from 'http-errors';
-import { compact } from 'lodash-es';
-import { getHostAndSqlServerInfo } from '../discover-operations';
+import { compact, isEmpty } from 'lodash-es';
+import { getClusterNodeDetailsFromPrivateIpList, getHostAndSqlServerInfo } from '../discover-operations';
 import { HttpErrorCodes, SqlServerDeploymentModel } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import getStorageSavings from '../../lib/cloud-manager/marketing';
 import { StorageSavingsRequestBodyType, StorageSavingsResponseType } from '../../routes/types/storage-savings.types';
 import { camelizeKeys, convertToBytes } from '../../utils/utils';
+import { SqlServerInstanceInfoType } from '../../routes/types/discover.types';
 
 const logger = getLogger();
 
 function getMonthlyCloneCountFromFrequency(cloneRefreshFrequency: string) {
     const cloneRefreshFrequencyLowerCase = cloneRefreshFrequency.toLowerCase();
     return cloneRefreshFrequencyLowerCase === 'daily' ? 30 : cloneRefreshFrequencyLowerCase === 'weekly' ? 4 : 1;
+}
+
+function retrieveSpecificVolumeTypeVolumeIdsFromSqlServerInstances(
+    type: string,
+    sqlServerInstances: SqlServerInstanceInfoType[]
+) {
+    logger.debug('Retrieving specific volume type volume ids from sql server instances', { type, sqlServerInstances });
+
+    if (!sqlServerInstances) {
+        return [];
+    }
+    return compact(
+        sqlServerInstances?.flatMap(server =>
+            server?.storage?.filter(storage => storage.type === type).map(storage => storage.id)
+        )
+    );
+}
+
+async function identifyAoagVolumes(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    primaryNodeInstanceId: string,
+    nodeIpDetails: string[],
+    primaryNodeSqlServerInstances: SqlServerInstanceInfoType[],
+    primaryNodeEbsVolumeIds: string[]
+) {
+    logger.info('Identifying AOAG volumes', {
+        accountId,
+        credentialsId,
+        region,
+        primaryNodeInstanceId,
+        nodeIpDetails,
+        primaryNodeSqlServerInstances,
+        primaryNodeEbsVolumeIds
+    });
+
+    const aoagClusterNodeDetails =
+        (await getClusterNodeDetailsFromPrivateIpList(credentialsId, region, nodeIpDetails)) || [];
+    const [secondaryNodeInstanceId] = aoagClusterNodeDetails
+        .filter(node => node.ec2InstanceId !== primaryNodeInstanceId)
+        .map(node => node.ec2InstanceId); // considering only 2 nodes in the cluster; primary node is already considered so getting host details of secondary node
+
+    const {
+        items: [secondaryNodeDetails]
+    } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [
+        secondaryNodeInstanceId
+    ]);
+
+    const secondarySqlServerInstances = secondaryNodeDetails?.sqlServerInstances || [];
+    const secondaryNodeEbsVolumeIds = retrieveSpecificVolumeTypeVolumeIdsFromSqlServerInstances(
+        'EBS',
+        secondarySqlServerInstances
+    );
+
+    const uniqueSecondaryNodeSqlServerInstances =
+        secondarySqlServerInstances?.filter(
+            secondarySqlServerInstance =>
+                !primaryNodeSqlServerInstances?.some(
+                    sqlServerInstance => secondarySqlServerInstance.sqlServerName !== sqlServerInstance.sqlServerName
+                )
+        ) || [];
+    const uniqueSqlHostEbsVolumeIdsSecondaryNode = retrieveSpecificVolumeTypeVolumeIdsFromSqlServerInstances(
+        'EBS',
+        uniqueSecondaryNodeSqlServerInstances
+    );
+    const allEbsVolumeIds = primaryNodeEbsVolumeIds.concat(...secondaryNodeEbsVolumeIds);
+    const uniqueHostVolumeIds = primaryNodeEbsVolumeIds.concat(...uniqueSqlHostEbsVolumeIdsSecondaryNode);
+    return { allEbsVolumeIds, uniqueHostVolumeIds };
+}
+
+async function aoagStorageSavingsCalculations(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    primaryNodeInstanceId: string,
+    nodeIpDetails: string[],
+    primaryNodeSqlServerInstances: SqlServerInstanceInfoType[],
+    primaryNodeEbsVolumeIds: string[],
+    params: StorageSavingsRequestBodyType
+) {
+    logger.info('Performing AOAG storage savings calculations', {
+        accountId,
+        credentialsId,
+        region,
+        primaryNodeInstanceId,
+        nodeIpDetails,
+        primaryNodeSqlServerInstances,
+        primaryNodeEbsVolumeIds,
+        params
+    });
+
+    const { allEbsVolumeIds, uniqueHostVolumeIds } = await identifyAoagVolumes(
+        accountId,
+        credentialsId,
+        region,
+        primaryNodeInstanceId,
+        nodeIpDetails,
+        primaryNodeSqlServerInstances,
+        primaryNodeEbsVolumeIds
+    );
+
+    // Consider all EBS volumes for storage, iops and throughput calculation
+    const { ebs: allEbsDetails } = await getStorageSavings(
+        accountId,
+        credentialsId,
+        region,
+        getMarketingApiRequestBody(allEbsVolumeIds, params)
+    );
+
+    // Consider only volumes associated with unique database in primary and secondary node for snapshot calculation and to draw a storage savings comparison with FSXn
+
+    const {
+        ebs,
+        fsx,
+        fsx_calculation: fsxCalculationData
+    } = await getStorageSavings(
+        accountId,
+        credentialsId,
+        region,
+        getMarketingApiRequestBody(uniqueHostVolumeIds, params)
+    );
+
+    return {
+        ebs: {
+            iops: allEbsDetails.iops,
+            throughput: allEbsDetails.throughput,
+            capacity: allEbsDetails.capacity,
+            clones: ebs.clones,
+            snapshots: ebs.snapshots,
+            total: allEbsDetails.iops + allEbsDetails.throughput + allEbsDetails.capacity + ebs.clones + ebs.snapshots
+        },
+        fsx,
+        fsxCalculation: handleMarketingApiFsxCalculationObject(fsxCalculationData)
+    };
 }
 
 function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavingsRequestBodyType) {
@@ -36,36 +172,9 @@ function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavin
     };
 }
 
-async function performStorageSavingsCalculations(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    instanceId: string,
-    params: StorageSavingsRequestBodyType
-): Promise<StorageSavingsResponseType> {
-    logger.info('Performing storage savings calculations ', { accountId, credentialsId, region, instanceId, params });
-
-    const {
-        items: [ec2HostDetails]
-    } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [instanceId]);
-
-    const sqlServerInstances = ec2HostDetails?.sqlServerInstances;
-    const ebsVolumeIds = compact(
-        sqlServerInstances?.flatMap(server =>
-            server?.storage?.filter(storage => storage.type === 'EBS').map(storage => storage.id)
-        )
-    );
-
-    if (!ebsVolumeIds.length) {
-        throw createError(HttpErrorCodes.NOT_FOUND, `No EBS volumes found for the provided instance: ${instanceId}`);
-    }
-    const {
-        ebs,
-        fsx,
-        fsx_calculation: fsxCalculationData
-    } = await getStorageSavings(accountId, credentialsId, region, getMarketingApiRequestBody(ebsVolumeIds, params));
+function handleMarketingApiFsxCalculationObject(fsxCalculationData: any) {
+    logger.debug('Handling marketing FSx calculation object', fsxCalculationData);
     const fsxCalculationObject = camelizeKeys(fsxCalculationData);
-
     const { totalStorageCapacity, effectiveCapacity, ssdTierReqCapacity, capacityPoolTier, monthlySnapshotCapacity } =
         fsxCalculationObject;
     const capacities = [
@@ -82,27 +191,57 @@ async function performStorageSavingsCalculations(
         fsxCalculationObject[`${key}`] = convertToBytes(size, unit);
     });
 
-    if (
-        ec2HostDetails?.sqlServerInstances?.some(
-            server => server.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
-        )
-    ) {
-        // const { sqlServerDeploymentType, nodeIpDetails } = ec2HostDetails?.sqlServerInstances[0];
-        /* identify unique database volumes for snapshot calculation
-        const {
-            ebs: limitedEbsDetails,
-            fsx: limitedFsxDetails
-        } = await getStorageSavings(accountId, credentialsId, region, getMarketingApiRequestBody(limitedEbsVolumeIds, params));
+    return fsxCalculationObject;
+}
 
-        ebs.snapshots = limitedEbsDetails.snapshots;
-        fsx = limitedFsxDetails;
-        */
+async function performStorageSavingsCalculations(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    params: StorageSavingsRequestBodyType
+): Promise<StorageSavingsResponseType> {
+    logger.info('Performing storage savings calculations ', { accountId, credentialsId, region, instanceId, params });
+
+    const {
+        items: [ec2HostDetails]
+    } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [instanceId]);
+
+    const sqlServerInstances = ec2HostDetails?.sqlServerInstances || [];
+
+    const ebsVolumeIds = retrieveSpecificVolumeTypeVolumeIdsFromSqlServerInstances('EBS', sqlServerInstances);
+
+    if (!ebsVolumeIds.length) {
+        throw createError(HttpErrorCodes.NOT_FOUND, `No EBS volumes found for the provided instance: ${instanceId}`);
     }
+
+    const [{ sqlServerDeploymentType, nodeIpDetails }] = ec2HostDetails?.sqlServerInstances || [];
+    if (
+        nodeIpDetails &&
+        !isEmpty(nodeIpDetails) &&
+        sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
+    ) {
+        return aoagStorageSavingsCalculations(
+            accountId,
+            credentialsId,
+            region,
+            instanceId,
+            nodeIpDetails,
+            sqlServerInstances,
+            ebsVolumeIds,
+            params
+        );
+    }
+    const {
+        ebs,
+        fsx,
+        fsx_calculation: fsxCalculationData
+    } = await getStorageSavings(accountId, credentialsId, region, getMarketingApiRequestBody(ebsVolumeIds, params));
 
     return {
         ebs,
         fsx,
-        fsxCalculation: fsxCalculationObject
+        fsxCalculation: handleMarketingApiFsxCalculationObject(fsxCalculationData)
     };
 }
 
