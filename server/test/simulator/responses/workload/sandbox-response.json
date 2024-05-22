@@ -1,19 +1,4 @@
 {
-    "getSandboxDetailsResponse": {
-        "count": 1,
-        "items": [
-            {
-                "sandboxName": "RetailBanking_sandbox",
-                "databaseHostName": "test-resource",
-                "databaseHostId": "36E53042-04E8-40C9-AE69-26E56CB0D216",
-                "databaseInstanceName": "MSSQLSERVER",
-                "sourceDatabaseHostName": "SQLServer-Prod-01",
-                "sourceDatabaseInstanceName": "MSSQLSERVER",
-                "sourceDatabaseName": "RetailBanking",
-                "tag": "Development"
-            }
-        ]
-    },
     "sandboxMountPointResponse": {
         "databaseDataPath": ["D:\\MSSQL\\data\\test-database_data.mdf"],
         "databaseLogPath": ["E:\\MSSQL\\log\\test-database_log.ldf"]
