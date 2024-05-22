@@ -27,7 +27,7 @@ $NugetFileLoc = "C:\Program Files\PackageManagement\ProviderAssemblies\Microsoft
 #Check if private network
 $isprivatesubnet = $True
 try{
-    $connection =  Invoke-WebRequest www.powershellgallery.com 
+    $connection =  Invoke-WebRequest www.powershellgallery.com -UseBasicParsing 
     if($connection.StatusCode -ne "200") {
         $isprivatesubnet = $True
         }
