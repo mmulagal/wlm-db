@@ -246,7 +246,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .patch(
-            `${API_PREFIX_PATH}/database-hosts/databaseHostId/sandbox/:sandboxName`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandbox/:sandboxName`,
             { schema: SandboxLifeCycleSchema },
             async (request, reply) => {
                 const {
