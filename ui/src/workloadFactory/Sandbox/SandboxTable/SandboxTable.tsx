@@ -17,17 +17,25 @@ import { ReactComponent as Success } from '../../../assets/success.svg';
 import { useDispatch } from 'react-redux';
 import { setAggregatedSandboxList, updateConnectionInfo } from '../../../store/workloadFactory/sandboxSlice';
 import SmallLoader from '../../../common/SmallLoader/SmallLoader';
+import { useDeleteSandboxMutation, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
+import { JOB_MONITORING_STATUS } from '../../../utils/consts';
+import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { aggregatedSandboxList, connectionInfo } = useAppSelector(state => state.sandbox);
+    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [data, setData] = useState<any>();
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
+    const [deletedSandboxes, setDeletedSandboxes] = useState<any>([]);
     const [connectionInfoClicked, setConnectionInfoClicked] = useState(false);
     const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
+
+    const [deleteSandboxApi] = useDeleteSandboxMutation();
+    const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     useEffect(() => {
         if (aggregatedSandboxList[0] && 'id' in aggregatedSandboxList[0]) {
@@ -139,19 +147,74 @@ const SandboxTable = () => {
         );
     };
 
-    const handleDelete = () => {
+    const handleDelete = (rowData: any) => {
         setDialog(
             <DialogComponent
                 header={'Delete'}
                 content={
                     <DsTypography variant="Regular_14">
                         Are you sure you want to delete this sandbox database{' '}
+                        <span style={{ fontWeight: '590' }}>{rowData?.name}</span>?
                     </DsTypography>
                 }
                 primaryButton={'Delete'}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    console.log('action');
+                    let output = data.map((obj: any) => {
+                        if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                            return { ...obj, cellProps: { isDisabled: true }, status: 'delete', menuDisable: true };
+                        }
+                        return obj;
+                    });
+                    dispatch(setAggregatedSandboxList(output));
+                    deleteSandboxApi({
+                        credentialsId: headerSelectedCred?.data?.credentialsId,
+                        regionId: headerSelectedRegion?.label2,
+                        databaseHostId: rowData?.databaseHostId,
+                        sandboxName: rowData?.name
+                    }).then((res: any) => {
+                        if (res?.data) {
+                            const jobInterval = setInterval(() => {
+                                getJobDetailApi({
+                                    credentialId: headerSelectedCred?.data?.credentialsId,
+                                    region: headerSelectedRegion?.label2,
+                                    id: res?.data?.jobId
+                                }).then((jobRes: any) => {
+                                    const status = jobRes?.data?.status;
+                                    if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                                        setDeletedSandboxes([...deletedSandboxes, rowData?.id]);
+                                        clearInterval(jobInterval);
+                                        dispatch(
+                                            addNotification({
+                                                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                                message: `Sandbox database ${rowData?.name} deleted successfully.`
+                                            })
+                                        );
+                                    } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                                        let output = data.map((obj: any) => {
+                                            if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                                                return {
+                                                    ...obj,
+                                                    cellProps: { isDisabled: false },
+                                                    status: 'active',
+                                                    menuDisable: false
+                                                };
+                                            }
+                                            return obj;
+                                        });
+                                        dispatch(setAggregatedSandboxList(output));
+                                        dispatch(
+                                            addNotification({
+                                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                                message: `Sandbox database ${rowData?.name} failed to delete.`
+                                            })
+                                        );
+                                        clearInterval(jobInterval);
+                                    }
+                                });
+                            }, 5000);
+                        }
+                    });
                 }}
                 closeCallback={() => {
                     closeDialog();
@@ -259,7 +322,7 @@ const SandboxTable = () => {
                                             break;
 
                                         case 'delete':
-                                            handleDelete();
+                                            handleDelete(rowData);
                                             break;
                                         case 'split':
                                             handleSplit();
@@ -274,6 +337,7 @@ const SandboxTable = () => {
                                     }
                                 }
                             }}
+                            isDisabled={rowData?.menuDisable}
                             CustomMenu={undefined}
                             disabledText={undefined}
                         />
@@ -358,6 +422,12 @@ const SandboxTable = () => {
                                 <DsTypography variant="Regular_14">Refresh</DsTypography>
                             </>
                         )}
+                        {cellData === 'delete' && (
+                            <>
+                                <SmallLoader />
+                                <DsTypography variant="Regular_14">{GENERAL.DELETING}</DsTypography>
+                            </>
+                        )}
                     </div>
                 );
             }
@@ -373,7 +443,7 @@ const SandboxTable = () => {
         isHorizontalScroll: true,
         isSorting: false,
         columns: SandboxColDefs,
-        rows: data,
+        rows: data ? data.filter((item: any) => !deletedSandboxes.includes(item?.id)) : [],
         pageSize: 50
     });
     return (
