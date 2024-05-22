@@ -47,6 +47,21 @@
 
     .secondRow {
         margin-top: 24px;
+
+        .dbNameTooltip {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 3px;
+
+            .listItem {
+                display: flex;
+                gap: 16px;
+            }
+
+            .textWidth {
+                width: 420px;
+            }
+        }
     }
 
     .selectField {

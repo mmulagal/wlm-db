@@ -16,12 +16,16 @@ import {
 import { GENERAL } from '../../../../../utils/appConstants';
 import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
 import { STATUS_CONST } from '../../../../../utils/consts';
+import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
+import { useDelayedError } from '../../../../../common/hooks/useDelayedError';
+import { isValidDatabaseName } from '../../../../CreateNewDB/CreateNewDBFooter/createUserDBPayload';
 
 const SelectTarget = () => {
     const windowSize = useResize();
     const dispatch = useDispatch();
 
     const { target, source, aggregatedDbHostList, showError } = useAppSelector(state => state.createSandbox);
+    const { isDemoMode } = useAppSelector(state => state.auth);
     const { selectedDatabaseHost, selectedDatabase, selectedDatabaseInstance } = target;
     const { selectedDatabaseHost: selectedSourceDbHost } = source;
 
@@ -58,6 +62,16 @@ const SelectTarget = () => {
         return options;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    const isValidDBName = () => {
+        if (isDemoMode) {
+            return '';
+        }
+        if (showError && !selectedDatabase) {
+            return GENERAL.ACTION_REQUIRED;
+        }
+        return isValidDatabaseName(selectedDatabase) ? '' : GENERAL.DB_NAME_ERROR_CHECK;
+    };
 
     useEffect(() => {
         if (generateTargetName?.length) {
@@ -154,12 +168,28 @@ const SelectTarget = () => {
                                         label={GENERAL.TARGET_DATABASES}
                                         value={selectedDatabase}
                                         className={styles.keyField}
-                                        error={
-                                            showError && !selectedDatabase
-                                                ? GENERAL.ACTION_REQUIRED
-                                                : selectedDatabase?.length > 128
-                                                ? GENERAL.CLONE_TARGET_DB_LENGTH_VALIDATION
-                                                : ''
+                                        error={isValidDBName()}
+                                        info={
+                                            <div className={styles.dbNameTooltip}>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                        {GENERAL.CREATE_DB_NAME_TOOLTIP[0]}
+                                                    </DsTypography>
+                                                </div>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                        {GENERAL.CREATE_DB_NAME_TOOLTIP[1]}
+                                                    </DsTypography>
+                                                </div>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                        {GENERAL.CREATE_DB_NAME_TOOLTIP[2]}
+                                                    </DsTypography>
+                                                </div>
+                                            </div>
                                         }
                                     />
                                 )}
@@ -174,7 +204,29 @@ const SelectTarget = () => {
                                         label={GENERAL.TARGET_DATABASES}
                                         value={selectedDatabase}
                                         className={styles.keyField}
-                                        error={showError && !selectedDatabase ? GENERAL.ACTION_REQUIRED : ''}
+                                        error={isValidDBName()}
+                                        info={
+                                            <div className={styles.dbNameTooltip}>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                        {GENERAL.CREATE_DB_NAME_TOOLTIP[0]}
+                                                    </DsTypography>
+                                                </div>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                        {GENERAL.CREATE_DB_NAME_TOOLTIP[1]}
+                                                    </DsTypography>
+                                                </div>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                                                        {GENERAL.CREATE_DB_NAME_TOOLTIP[2]}
+                                                    </DsTypography>
+                                                </div>
+                                            </div>
+                                        }
                                     />
                                 </div>
                             )}

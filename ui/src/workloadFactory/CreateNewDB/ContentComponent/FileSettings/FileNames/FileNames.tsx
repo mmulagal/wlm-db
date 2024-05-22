@@ -226,7 +226,7 @@ const FileNames = () => {
                 }
             });
         }
-    }, [selectedNewUserConfig, driveInfoList, isDataVirtualMountPoint, isLogVirtualMountPoint]);
+    }, [selectedNewUserConfig, driveInfoList]);
 
     // Based of selected drive letters need to add if it is a existing or new drive letters
     useEffect(() => {
