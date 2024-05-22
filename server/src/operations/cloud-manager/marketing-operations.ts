@@ -150,6 +150,65 @@ async function aoagStorageSavingsCalculations(
     };
 }
 
+async function aoagStorageSavingsMetrics(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    primaryNodeInstanceId: string,
+    nodeIpDetails: string[],
+    primaryNodeSqlServerInstances: SqlServerInstanceInfoType[],
+    primaryNodeEbsVolumeIds: string[],
+    params: StorageSavingsRequestBodyType
+) {
+    logger.info('Performing AOAG storage savings calculations', {
+        accountId,
+        credentialsId,
+        region,
+        primaryNodeInstanceId,
+        nodeIpDetails,
+        primaryNodeSqlServerInstances,
+        primaryNodeEbsVolumeIds,
+        params
+    });
+
+    const { allEbsVolumeIds, uniqueHostVolumeIds } = await identifyAoagVolumes(
+        accountId,
+        credentialsId,
+        region,
+        primaryNodeInstanceId,
+        nodeIpDetails,
+        primaryNodeSqlServerInstances,
+        primaryNodeEbsVolumeIds
+    );
+
+    // Consider all EBS volumes for storage, iops and throughput calculation
+    const { ebsCalculation } = await formatStorageSavingsCalculationMetrics(
+        accountId,
+        credentialsId,
+        region,
+        allEbsVolumeIds,
+        params
+    );
+
+    // Consider only volumes associated with unique database in primary and secondary node for snapshot calculation and to draw a storage savings comparison with FSXn
+    const {
+        fsxOntapCalculation,
+        fsxOntapSnapshotCalculation,
+        fsxCloneCalculation,
+        ebsCloneCalculation,
+        ebsSnapshotCalculation
+    } = await formatStorageSavingsCalculationMetrics(accountId, credentialsId, region, uniqueHostVolumeIds, params);
+
+    return {
+        ebsCalculation,
+        fsxOntapCalculation,
+        fsxOntapSnapshotCalculation,
+        fsxCloneCalculation,
+        ebsCloneCalculation,
+        ebsSnapshotCalculation
+    };
+}
+
 function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavingsRequestBodyType) {
     const { snapshotFrequency, clonedCopiesCount, cloneRefreshFrequency, monthlyChangeRatePercentage } = params || {};
 
@@ -245,31 +304,22 @@ async function performStorageSavingsCalculations(
     };
 }
 
-async function getStorageSavingsCalculationMetrics(
+async function formatStorageSavingsCalculationMetrics(
     accountId: string,
     credentialsId: string,
     region: string,
-    instanceId: string,
+    ebsVolumeIds: string[],
     params: StorageSavingsRequestBodyType
 ) {
-    logger.info('Getting storage savings calculation metrics ', {
+    logger.debug('Formatting storage savings calculation metrics', {
         accountId,
         credentialsId,
         region,
-        instanceId,
+        ebsVolumeIds,
         params
     });
+    const totalClonedCopiesCount = getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency);
 
-    const {
-        items: [ec2HostDetails]
-    } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [instanceId]);
-
-    const sqlServerInstances = ec2HostDetails?.sqlServerInstances;
-    const ebsVolumeIds = compact(
-        sqlServerInstances?.flatMap(server =>
-            server?.storage?.filter(storage => storage.type === 'EBS').map(storage => storage.id)
-        )
-    );
     const {
         ebs: { capacity, iops, throughput },
         fsx_cost_calculation_no_snapshot: {
@@ -340,7 +390,7 @@ async function getStorageSavingsCalculationMetrics(
             SSDMonthlyCost: ssdMonthlyCost,
             totalSnapshotMonthlyCostForFSxSSD: totalSnapshotMonthlyCostForFsxSsd,
             ratioAfterSavings,
-            dataOnCapacityPoolStorageFactor,
+            snapshotDataOnCapacityPoolStorageFactor,
             capacityPoolStorage: { size: capacityPoolStorageSize, unit: capacityPoolStorageUnit },
             capacityMonthlyCost,
             totalMonthlyCostForCapacity,
@@ -389,7 +439,6 @@ async function getStorageSavingsCalculationMetrics(
             totalCloneMonthlyCost
         }
     } = await getStorageSavings(accountId, credentialsId, region, getMarketingApiRequestBody(ebsVolumeIds, params));
-    const totalClonedCopiesCount = getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency);
     return {
         fsxOntapCalculation: {
             numberOfVolumes,
@@ -460,7 +509,7 @@ async function getStorageSavingsCalculationMetrics(
             ssdMonthlyCost,
             totalSnapshotMonthlyCostForFsxSsd,
             ratioAfterSavings,
-            dataOnCapacityPoolStorageFactor,
+            dataOnCapacityPoolStorageFactor: snapshotDataOnCapacityPoolStorageFactor,
             capacityPoolStorage: convertToBytes(capacityPoolStorageSize, capacityPoolStorageUnit) || 0,
             capacityMonthlyCost,
             totalMonthlyCostForCapacity,
@@ -482,14 +531,6 @@ async function getStorageSavingsCalculationMetrics(
             billableThroughputMbps,
             billableThroughputGbps,
             ebsThroughputCost,
-            totalSnapshots,
-            initialSnapshotCost,
-            monthlyCostPerSnapshot,
-            discountForPartialStorageMonth,
-            incrementalSnapshotCost,
-            totalSnapshotCost,
-            totalEbsSnapshotCost,
-            ebsSnapshotCost,
             ebsTotalCostMonthly
         },
         fsxCloneCalculation: {
@@ -519,13 +560,70 @@ async function getStorageSavingsCalculationMetrics(
             totalCloneMonthlyCost
         },
         ebsCloneCalculation: {
-            clonedCopiesCount: totalClonedCopiesCount,
+            clonedCopiesCount: params.clonedCopiesCount,
             capacity,
             iops,
             throughput,
-            totalCloneMonthlyCost: totalClonedCopiesCount * (capacity + iops + throughput)
+            totalCloneMonthlyCost: params.clonedCopiesCount * (capacity + iops + throughput)
+        },
+        ebsSnapshotCalculation: {
+            ebsInstanceMonth,
+            totalSnapshots,
+            initialSnapshotCost,
+            monthlyCostPerSnapshot,
+            discountForPartialStorageMonth,
+            incrementalSnapshotCost,
+            totalSnapshotCost,
+            totalEbsSnapshotCost,
+            ebsSnapshotCost
         }
     };
+}
+
+async function getStorageSavingsCalculationMetrics(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    params: StorageSavingsRequestBodyType
+) {
+    logger.info('Getting storage savings calculation metrics ', {
+        accountId,
+        credentialsId,
+        region,
+        instanceId,
+        params
+    });
+
+    const {
+        items: [ec2HostDetails]
+    } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [instanceId]);
+
+    const sqlServerInstances = ec2HostDetails?.sqlServerInstances || [];
+    const ebsVolumeIds = compact(
+        sqlServerInstances?.flatMap(server =>
+            server?.storage?.filter(storage => storage.type === 'EBS').map(storage => storage.id)
+        )
+    );
+
+    const [{ sqlServerDeploymentType, nodeIpDetails }] = ec2HostDetails?.sqlServerInstances || [];
+    if (
+        nodeIpDetails &&
+        !isEmpty(nodeIpDetails) &&
+        sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
+    ) {
+        return aoagStorageSavingsMetrics(
+            accountId,
+            credentialsId,
+            region,
+            instanceId,
+            nodeIpDetails,
+            sqlServerInstances,
+            ebsVolumeIds,
+            params
+        );
+    }
+    return formatStorageSavingsCalculationMetrics(accountId, credentialsId, region, ebsVolumeIds, params);
 }
 
 export { performStorageSavingsCalculations, getStorageSavingsCalculationMetrics, getMarketingApiRequestBody };
