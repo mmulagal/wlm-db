@@ -2,6 +2,9 @@
 param()
 
 try {
+
+    Start-Transcript -Path C:\cfn\log\PostConfigDSC.ps1.txt -Append
+
     $ErrorActionPreference = "SilentlyContinue"
     #Set Powershell connection encryption to TLS 1.2
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -9,12 +12,16 @@ try {
 
     #Check if private network
     $isprivatesubnet = $True
-    $connection =  Test-Connection -ComputerName www.powershellgallery.com -Quiet
-    if($connection -eq $False) {
-        $isprivatesubnet = $True
+    try{
+        $connection =  Invoke-WebRequest www.powershellgallery.com  -UseBasicParsing 
+        if($connection.StatusCode -ne "200") {
+            $isprivatesubnet = $True
+            }
+        else {
+            $isprivatesubnet = $False
         }
-    else {
-        $isprivatesubnet = $False
+    }catch{
+        Write-Output "Private network determination: Error while invoking webrequest to www.powershellgallery.com. $_"
     }
 
     if ($isprivatesubnet -ne $True) {
