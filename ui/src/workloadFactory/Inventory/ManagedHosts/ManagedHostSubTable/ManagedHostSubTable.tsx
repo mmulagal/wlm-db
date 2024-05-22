@@ -1,12 +1,15 @@
-import { Table, useTable, Typography } from '@netapp/design-system';
+import { Table, useTable, useDialog } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './ManagedHostSubTable.module.scss';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { useRef, useState } from 'react';
+import DialogComponent from '../../../../common/Dialog/DialogComponent';
+import ManagedHostDialog from '../ManagedHostDialog/ManagedHostDialog';
 
 const ManagedHostSubTable = () => {
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
+    const { setDialog, closeDialog } = useDialog();
 
     const menuItems = (row: any) => {
         return [
@@ -57,6 +60,24 @@ const ManagedHostSubTable = () => {
         }
     ];
 
+    const handleDialog = () => {
+        setDialog(
+            <DialogComponent
+                header={'Manage data base host <data base name> instances'}
+                content={<ManagedHostDialog />}
+                primaryButton={'Manage'}
+                secondaryButton={'Close'}
+                callback={() => {
+                    console.log('action');
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass={styles.setWidth}
+            />
+        );
+    };
+
     const lastColDetails = () => {
         return {
             id: '8',
@@ -80,7 +101,8 @@ const ManagedHostSubTable = () => {
                                     menuOpenedRowDetail.current = null;
                                     setOpenedRow(null);
 
-                                    if (menuId === 'goToCf') {
+                                    if (menuId === 'manageInstance') {
+                                        handleDialog();
                                     }
                                 }
                             }}
