@@ -85,6 +85,31 @@ const SelectTarget = () => {
         }
     }, [generateTargetInstance]);
 
+    const DatabaseNameInfoTooltip = () => {
+        return (
+            <div className={styles.dbNameTooltip}>
+                <div className={styles.listItem}>
+                    <Bullet />
+                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                        {GENERAL.CREATE_DB_NAME_TOOLTIP[0]}
+                    </DsTypography>
+                </div>
+                <div className={styles.listItem}>
+                    <Bullet />
+                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                        {GENERAL.CREATE_DB_NAME_TOOLTIP[1]}
+                    </DsTypography>
+                </div>
+                <div className={styles.listItem}>
+                    <Bullet />
+                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                        {GENERAL.CREATE_DB_NAME_TOOLTIP[2]}
+                    </DsTypography>
+                </div>
+            </div>
+        );
+    };
+
     const setHeader = () => {
         if (!selectedDatabase) {
             return (
@@ -169,28 +194,7 @@ const SelectTarget = () => {
                                         value={selectedDatabase}
                                         className={styles.keyField}
                                         error={isValidDBName()}
-                                        info={
-                                            <div className={styles.dbNameTooltip}>
-                                                <div className={styles.listItem}>
-                                                    <Bullet />
-                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
-                                                        {GENERAL.CREATE_DB_NAME_TOOLTIP[0]}
-                                                    </DsTypography>
-                                                </div>
-                                                <div className={styles.listItem}>
-                                                    <Bullet />
-                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
-                                                        {GENERAL.CREATE_DB_NAME_TOOLTIP[1]}
-                                                    </DsTypography>
-                                                </div>
-                                                <div className={styles.listItem}>
-                                                    <Bullet />
-                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
-                                                        {GENERAL.CREATE_DB_NAME_TOOLTIP[2]}
-                                                    </DsTypography>
-                                                </div>
-                                            </div>
-                                        }
+                                        info={<DatabaseNameInfoTooltip />}
                                     />
                                 )}
                             </div>
@@ -205,28 +209,7 @@ const SelectTarget = () => {
                                         value={selectedDatabase}
                                         className={styles.keyField}
                                         error={isValidDBName()}
-                                        info={
-                                            <div className={styles.dbNameTooltip}>
-                                                <div className={styles.listItem}>
-                                                    <Bullet />
-                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
-                                                        {GENERAL.CREATE_DB_NAME_TOOLTIP[0]}
-                                                    </DsTypography>
-                                                </div>
-                                                <div className={styles.listItem}>
-                                                    <Bullet />
-                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
-                                                        {GENERAL.CREATE_DB_NAME_TOOLTIP[1]}
-                                                    </DsTypography>
-                                                </div>
-                                                <div className={styles.listItem}>
-                                                    <Bullet />
-                                                    <DsTypography variant="Regular_13" className={styles.textWidth}>
-                                                        {GENERAL.CREATE_DB_NAME_TOOLTIP[2]}
-                                                    </DsTypography>
-                                                </div>
-                                            </div>
-                                        }
+                                        info={<DatabaseNameInfoTooltip />}
                                     />
                                 </div>
                             )}
