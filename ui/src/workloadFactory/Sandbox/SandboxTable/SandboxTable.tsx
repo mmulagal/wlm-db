@@ -15,9 +15,17 @@ import RebaseRollbackContent from './RebaseRollbackContent/RebaseRollbackContent
 import ViewDialog from '../../../common/ViewDialog/ViewDialog';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { useDispatch } from 'react-redux';
-import { setAggregatedSandboxList, updateConnectionInfo } from '../../../store/workloadFactory/sandboxSlice';
+import {
+    setAggregatedSandboxList,
+    setSandboxSavingsState,
+    updateConnectionInfo
+} from '../../../store/workloadFactory/sandboxSlice';
 import SmallLoader from '../../../common/SmallLoader/SmallLoader';
-import { useDeleteSandboxMutation, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
+import {
+    useDeleteSandboxMutation,
+    useLazyGetSandboxSavingsQuery,
+    useLazyGetSubTaskListQuery
+} from '../../../utils/apiService';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import store from '../../../store/store';
@@ -37,6 +45,7 @@ const SandboxTable = () => {
 
     const [deleteSandboxApi] = useDeleteSandboxMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+    const [getSandboxSavingsApi] = useLazyGetSandboxSavingsQuery();
 
     useEffect(() => {
         if (aggregatedSandboxList[0] && 'id' in aggregatedSandboxList[0]) {
@@ -185,6 +194,17 @@ const SandboxTable = () => {
                                     const state = store.getState();
                                     const { aggregatedSandboxList } = state?.sandbox;
                                     if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                                        dispatch(
+                                            setSandboxSavingsState({
+                                                sandboxSavings: {
+                                                    consumedStorage: 0,
+                                                    savedStorage: 0,
+                                                    sandboxSavingsPercentage: 0
+                                                },
+                                                sandboxSavingsLoading: true,
+                                                sandboxSavingsError: ''
+                                            })
+                                        );
                                         const updatedSandboxList = aggregatedSandboxList.filter(
                                             (item: any) => rowData?.id !== item?.id
                                         );
@@ -196,6 +216,20 @@ const SandboxTable = () => {
                                                 message: `Sandbox database ${rowData?.name} deleted successfully.`
                                             })
                                         );
+                                        getSandboxSavingsApi({
+                                            credentialId: headerSelectedCred?.data?.credentialsId,
+                                            region: headerSelectedRegion?.label2
+                                        }).then((savingsRes: any) => {
+                                            if (savingsRes?.data) {
+                                                dispatch(
+                                                    setSandboxSavingsState({
+                                                        sandboxSavings: savingsRes?.data,
+                                                        sandboxSavingsLoading: false,
+                                                        sandboxSavingsError: ''
+                                                    })
+                                                );
+                                            }
+                                        });
                                     } else if (status === JOB_MONITORING_STATUS.FAILED) {
                                         let output = aggregatedSandboxList.map((obj: any) => {
                                             if (obj?.id === rowData?.id && obj.name === rowData.name) {
