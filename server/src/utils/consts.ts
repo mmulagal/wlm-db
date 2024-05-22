@@ -1149,6 +1149,8 @@ const AMI_OWNERS = { AMAZON: 'amazon' };
 
 const SSM_PARAM_PREFIX = '/netapp/wlmdb/';
 
+const CUSTOM_AMI_VALIDATION_INSTANCE_TYPE = 'm5.xlarge';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1411,5 +1413,6 @@ export {
     STORAGE_PROTOCOLS,
     CUSTOM,
     AMI_OWNERS,
-    SSM_PARAM_PREFIX
+    SSM_PARAM_PREFIX,
+    CUSTOM_AMI_VALIDATION_INSTANCE_TYPE
 };

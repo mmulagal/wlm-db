@@ -499,7 +499,18 @@ Resources:
                         e-config-LCM:
                             command: powershell.exe -Command "C:\cfn\scripts\sqlfci\LCM-Config.ps1"
                             waitAfterCompletion: 0
-                        f-rename-computer:
+                        f-unjoin-domain:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Unjoin-Domain.ps1
+                                    -Parentstackname '
+                                  - !Ref 'ParentStackName'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        g-restart-computer:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                            waitAfterCompletion: forever
+                        h-rename-computer:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Rename-Computer.ps1
@@ -507,7 +518,7 @@ Resources:
                                   - !Ref 'SqlServerName'
                                   - '''"'
                             waitAfterCompletion: 0
-                        g-restart-computer:
+                        i-restart-computer:
                             command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
                             waitAfterCompletion: forever
                 ontapconfig:

@@ -15,19 +15,37 @@ import RebaseRollbackContent from './RebaseRollbackContent/RebaseRollbackContent
 import ViewDialog from '../../../common/ViewDialog/ViewDialog';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { useDispatch } from 'react-redux';
-import { setAggregatedSandboxList, updateConnectionInfo } from '../../../store/workloadFactory/sandboxSlice';
+import {
+    setAggregatedSandboxList,
+    setSandboxSavingsState,
+    updateConnectionInfo
+} from '../../../store/workloadFactory/sandboxSlice';
 import SmallLoader from '../../../common/SmallLoader/SmallLoader';
+import {
+    useDeleteSandboxMutation,
+    useLazyGetSandboxSavingsQuery,
+    useLazyGetSubTaskListQuery
+} from '../../../utils/apiService';
+import { JOB_MONITORING_STATUS } from '../../../utils/consts';
+import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import store from '../../../store/store';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { aggregatedSandboxList, connectionInfo } = useAppSelector(state => state.sandbox);
+    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [data, setData] = useState<any>();
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
+    const [deletedSandboxes, setDeletedSandboxes] = useState<any>([]);
     const [connectionInfoClicked, setConnectionInfoClicked] = useState(false);
     const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
+
+    const [deleteSandboxApi] = useDeleteSandboxMutation();
+    const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+    const [getSandboxSavingsApi] = useLazyGetSandboxSavingsQuery();
 
     useEffect(() => {
         if (aggregatedSandboxList[0] && 'id' in aggregatedSandboxList[0]) {
@@ -139,19 +157,116 @@ const SandboxTable = () => {
         );
     };
 
-    const handleDelete = () => {
+    const handleDelete = (rowData: any) => {
         setDialog(
             <DialogComponent
                 header={'Delete'}
                 content={
                     <DsTypography variant="Regular_14">
                         Are you sure you want to delete this sandbox database{' '}
+                        <span style={{ fontWeight: '590' }}>{rowData?.name}</span>?
                     </DsTypography>
                 }
                 primaryButton={'Delete'}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    console.log('action');
+                    let output = data.map((obj: any) => {
+                        if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                            return { ...obj, cellProps: { isDisabled: true }, status: 'delete', menuDisable: true };
+                        }
+                        return obj;
+                    });
+                    dispatch(setAggregatedSandboxList(output));
+                    deleteSandboxApi({
+                        credentialsId: headerSelectedCred?.data?.credentialsId,
+                        regionId: headerSelectedRegion?.label2,
+                        databaseHostId: rowData?.databaseHostId,
+                        sandboxName: rowData?.name
+                    }).then((res: any) => {
+                        if (res?.data) {
+                            const jobInterval = setInterval(() => {
+                                getJobDetailApi({
+                                    credentialId: headerSelectedCred?.data?.credentialsId,
+                                    region: headerSelectedRegion?.label2,
+                                    id: res?.data?.jobId
+                                }).then((jobRes: any) => {
+                                    const status = jobRes?.data?.status;
+                                    const state = store.getState();
+                                    const { aggregatedSandboxList } = state?.sandbox;
+                                    if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                                        dispatch(
+                                            setSandboxSavingsState({
+                                                sandboxSavings: {
+                                                    consumedStorage: 0,
+                                                    savedStorage: 0,
+                                                    sandboxSavingsPercentage: 0
+                                                },
+                                                sandboxSavingsLoading: true,
+                                                sandboxSavingsError: ''
+                                            })
+                                        );
+                                        const updatedSandboxList = aggregatedSandboxList.filter(
+                                            (item: any) => rowData?.id !== item?.id
+                                        );
+                                        dispatch(setAggregatedSandboxList(updatedSandboxList));
+                                        clearInterval(jobInterval);
+                                        dispatch(
+                                            addNotification({
+                                                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                                message: `Sandbox database ${rowData?.name} deleted successfully.`
+                                            })
+                                        );
+                                        getSandboxSavingsApi({
+                                            credentialId: headerSelectedCred?.data?.credentialsId,
+                                            region: headerSelectedRegion?.label2
+                                        }).then((savingsRes: any) => {
+                                            if (savingsRes?.data) {
+                                                dispatch(
+                                                    setSandboxSavingsState({
+                                                        sandboxSavings: savingsRes?.data,
+                                                        sandboxSavingsLoading: false,
+                                                        sandboxSavingsError: ''
+                                                    })
+                                                );
+                                            } else {
+                                                dispatch(
+                                                    setSandboxSavingsState({
+                                                        sandboxSavings: {
+                                                            consumedStorage: 0,
+                                                            savedStorage: 0,
+                                                            sandboxSavingsPercentage: 0
+                                                        },
+                                                        sandboxSavingsLoading: false,
+                                                        sandboxSavingsError: ''
+                                                    })
+                                                );
+                                            }
+                                        });
+                                    } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                                        let output = aggregatedSandboxList.map((obj: any) => {
+                                            if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                                                return {
+                                                    ...obj,
+                                                    cellProps: { isDisabled: false },
+                                                    status: 'active',
+                                                    menuDisable: false
+                                                };
+                                            }
+                                            return obj;
+                                        });
+                                        dispatch(setAggregatedSandboxList(output));
+                                        dispatch(
+                                            addNotification({
+                                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                                message: `Sandbox database ${rowData?.name} failed to delete.`
+                                            })
+                                        );
+                                        clearInterval(jobInterval);
+                                    }
+                                });
+                            }, 5000);
+                        }
+                    });
                 }}
                 closeCallback={() => {
                     closeDialog();
@@ -259,7 +374,7 @@ const SandboxTable = () => {
                                             break;
 
                                         case 'delete':
-                                            handleDelete();
+                                            handleDelete(rowData);
                                             break;
                                         case 'split':
                                             handleSplit();
@@ -274,6 +389,7 @@ const SandboxTable = () => {
                                     }
                                 }
                             }}
+                            isDisabled={rowData?.menuDisable}
                             CustomMenu={undefined}
                             disabledText={undefined}
                         />
@@ -358,6 +474,12 @@ const SandboxTable = () => {
                                 <DsTypography variant="Regular_14">Refresh</DsTypography>
                             </>
                         )}
+                        {cellData === 'delete' && (
+                            <>
+                                <SmallLoader />
+                                <DsTypography variant="Regular_14">{GENERAL.DELETING}</DsTypography>
+                            </>
+                        )}
                     </div>
                 );
             }
@@ -373,7 +495,7 @@ const SandboxTable = () => {
         isHorizontalScroll: true,
         isSorting: false,
         columns: SandboxColDefs,
-        rows: data,
+        rows: data ? data.filter((item: any) => !deletedSandboxes.includes(item?.id)) : [],
         pageSize: 50
     });
     return (
