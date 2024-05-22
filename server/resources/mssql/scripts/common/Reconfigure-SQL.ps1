@@ -158,18 +158,55 @@ try {
             $ServerInstanceName = "$env:COMPUTERNAME\$Using:SQLInstanceName"
             
         }
-        
+
+        # Check if AD user and SQL user part of login
+        $AdminUser = $Using:DomainNetBIOSName + "\" + $Using:DomainAdminUser 
+        $SQLUser = $Using:DomainNetBIOSName + "\" + $Using:SQLServiceAccount 
+        $IsADUserPartOfLogin = $False
+        $IsADUserPartOfSysadmin = $False
+        $IsSQLUserPartOfLogin = $False
+        $IsSQLUserPartOfSysadmin = $False
+        $LoginCheckQuery =  "select r.name as Role, m.name as Principal from sys.server_role_members rm 
+                            inner join sys.server_principals r on r.principal_id = rm.role_principal_id and r.type = 'R' 
+                            inner join  sys.server_principals m on m.principal_id = rm.member_principal_id 
+                            where m.name in ('$AdminUser', '$SQLUser')" 
+
+        $LoginCheckQueryResponse = Invoke-sqlcmd -ServerInstance $ServerInstanceName -Query $LoginCheckQuery | Select-Object Principal, Role |  ConvertTo-Json | ConvertFrom-Json 
+        Foreach ($i in @($LoginCheckQueryResponse)) {
+            Write-Output $i
+            If($i.Principal -eq $AdminUser) {
+              $IsADUserPartOfLogin = $true
+              If($i.Role -eq 'sysadmin') {
+                $IsADUserPartOfSysadmin = $true
+              }
+            }
+            If($i.Principal -eq $SQLUser) {
+              $IsSQLUserPartOfLogin = $true
+              If($i.Role -eq 'sysadmin') {
+                $IsSQLUserPartOfSysadmin = $true
+              }
+            }
+        } 
+
         # Create account for AD user
         If($Using:SkipCollation -eq $True){
             $AdminUser = "[" + $Using:DomainNetBIOSName + "\" + $Using:DomainAdminUser + "]"
-            Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "CREATE LOGIN $AdminUser FROM WINDOWS ;" 
-            Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "ALTER SERVER ROLE [sysadmin] ADD MEMBER $AdminUser ;" 
+            If($IsADUserPartOfLogin -ne $true) {
+                Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "CREATE LOGIN $AdminUser FROM WINDOWS ;" 
+            }
+            If($IsADUserPartOfSysadmin -ne $true) {
+                Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "ALTER SERVER ROLE [sysadmin] ADD MEMBER $AdminUser ;" 
+            }
         }
 
         # Create account for SQL Service Account user. AD user is added above as part of setting collation.
         $SQLUser = "[" + $Using:DomainNetBIOSName + "\" + $Using:SQLServiceAccount + "]"
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "CREATE LOGIN $SQLUser FROM WINDOWS ;" 
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "ALTER SERVER ROLE [sysadmin] ADD MEMBER $SQLUser ;" 
+        If($IsSQLUserPartOfLogin -ne $true) {
+            Invoke-Sqlcmd -ServerInstance $ServerInstanceName -Query "CREATE LOGIN $SQLUser FROM WINDOWS ;" 
+        }
+        If($IsSQLUserPartOfSysadmin -ne $true) {
+            Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "ALTER SERVER ROLE [sysadmin] ADD MEMBER $SQLUser ;" 
+        }
 
 
         # Grant permissions to NT AUTHORITY\SYSTEM
