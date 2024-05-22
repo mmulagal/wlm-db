@@ -80,7 +80,7 @@
                 "isDriveClustered": true
             }
         ],
-        "availableDriveLetters": ["P", "G", "I", "K", "M", "N", "O", "U", "W", "X", "Y"],
+        "availableDriveLetters": ["G", "I", "K", "M", "N", "O", "P", "U", "W", "X", "Y"],
         "fsxStorageCapacity": 38482906972160,
         "defaultDataDrive": "S",
         "defaultLogDrive": "L"
