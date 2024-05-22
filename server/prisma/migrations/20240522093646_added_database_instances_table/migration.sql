@@ -6,7 +6,7 @@ CREATE TABLE `databaseInstances` (
     `resource_id`       VARCHAR(255) NOT NULL,
     `instance_id`       VARCHAR(255) NOT NULL,
     `instance_name`     VARCHAR(255) NOT NULL,
-    `fsxn_id`           VARCHAR(20)  NOT NULL,
+    `fsxn_id`           VARCHAR(255) NOT NULL,
     `is_default`        BOOLEAN      NOT NULL DEFAULT false,
     `manage_start_time` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `last_update_time`  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),

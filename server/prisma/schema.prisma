@@ -116,7 +116,7 @@ model databaseInstances {
   resource_id       String   @db.VarChar(255)
   instance_id       String   @db.VarChar(36)
   instance_name     String   @db.VarChar(16)
-  fsxn_id           String   @db.VarChar(20)
+  fsxn_id           String   @db.VarChar(255)
   is_default        Boolean  @default(value: false)
   manage_start_time DateTime @default(now()) @db.DateTime(3)
   last_update_time  DateTime @default(now()) @updatedAt @db.DateTime(3)
