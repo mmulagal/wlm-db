@@ -64,39 +64,49 @@ try {
     If ($SQLInstanceNames -NotContains "MSSQLSERVER") {
         $SQLInstanceName = $SQLInstanceNames[0]
     }
-
-    # to-do - Consume $SQLInstanceName for non-default instance
-
-    #Set collation for the sql server if installer is available. Need to check if collation is an input for custom ami. 
-    $SkipCollation = $False
+    #Acquiring MSSQL installation media from S3
     if (Test-Path -Path "C:\SQLServerSetup\setup.exe") {
-        Start-Sleep 5
-        try {
-            Write-Output "Setting collation on SQLServer($SQLInstanceName)"
-            # Stop SQL Service
-            $SQLService = Get-Service -Name "$SQLInstanceName"
-            if ($SQLService.status -eq 'Running') { $SQLService.Stop() }
-            $SQLService.WaitForStatus('Stopped', '00:01:00')
-    
-            #Set collation value and rebuild system databases
-            $rebuildarguments = '/QUIET /ACTION="REBUILDDATABASE" /INSTANCENAME="' + $SQLInstanceName + '" /SQLSYSADMINACCOUNTS="' + $DomainAdminFullUser + '" /SAPWD="' + $DomainAdminPassword + '" /SQLCOLLATION="' + $SqlCollation + '"'
-            Invoke-Command -scriptblock {
-                Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:rebuildarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\rebuild_collation.txt -RedirectStandardError C:\cfn\log\rebuild_error.txt
-            } -Credential $DomainAdminCreds -ComputerName $HostName -Authentication credssp
-    
-            # Start SQL service
-            $SQLService.Start()
-            $SQLService.WaitForStatus('Running', '00:01:00')
-        }
-        catch {
-            Write-Output "Failed to set collation on SQLServer($SQLInstanceName)"
-            # Start SQL service even though collation fails
-            $SQLService.Start()
-            $SQLService.WaitForStatus('Running', '00:01:00')
-        }
+        $SQLMediaPath = "C:\SQLServerSetup\setup.exe"
     }
     else {
-            $SkipCollation = $True
+        $SQLMediaPath = 'C:\cfn\Installer\SQLServerSetup\setup.exe'
+        If (Test-Path -path "C:\SQL*") {
+            $SQLInstallerPaths = (Get-ChildItem "C:\SQL*" -Recurse | where {$_.name -eq "setup.exe"} ).fullname
+            If($SQLInstallerPaths -is 'string')
+            {
+            $SQLMediaPath = $SQLInstallerPaths
+            }
+            Else {
+            $SQLMediaPath = $SQLInstallerPaths[0]
+            }
+        } 
+    }
+
+    $SkipCollation = $False
+    Start-Sleep 5
+    try {
+        Write-Output "Setting collation on SQLServer($SQLInstanceName)"
+        # Stop SQL Service
+        $SQLService = Get-Service -Name "$SQLInstanceName"
+        if ($SQLService.status -eq 'Running') { $SQLService.Stop() }
+        $SQLService.WaitForStatus('Stopped', '00:01:00')
+
+        #Set collation value and rebuild system databases
+        $rebuildarguments = '/QUIET /ACTION="REBUILDDATABASE" /INSTANCENAME="' + $SQLInstanceName + '" /SQLSYSADMINACCOUNTS="' + $DomainAdminFullUser + '" /SAPWD="' + $DomainAdminPassword + '" /SQLCOLLATION="' + $SqlCollation + '"'
+        Invoke-Command -scriptblock {
+            Start-Process -FilePath $SQLMediaPath -ArgumentList $Using:rebuildarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\rebuild_collation.txt -RedirectStandardError C:\cfn\log\rebuild_error.txt
+        } -Credential $DomainAdminCreds -ComputerName $HostName -Authentication credssp
+
+        # Start SQL service
+        $SQLService.Start()
+        $SQLService.WaitForStatus('Running', '00:01:00')
+    }
+    catch {
+        Write-Output "Failed to set collation on SQLServer($SQLInstanceName)"
+        # Start SQL service even though collation fails
+        $SQLService.Start()
+        $SQLService.WaitForStatus('Running', '00:01:00')
+        $SkipCollation = $True
     }
 
     $ConfigureSqlPs = {
