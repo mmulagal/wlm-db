@@ -20,7 +20,7 @@
                 "isDriveClustered": true
             },
             {
-                "driveLetter": "P",
+                "driveLetter": "D",
                 "availableSize": 1068367872,
                 "isNetappDrive": true,
                 "isDriveClustered": true
@@ -80,7 +80,7 @@
                 "isDriveClustered": true
             }
         ],
-        "availableDriveLetters": ["D", "G", "I", "K", "M", "N", "O", "U", "W", "X", "Y"],
+        "availableDriveLetters": ["G", "I", "K", "M", "N", "O", "P", "U", "W", "X", "Y"],
         "fsxStorageCapacity": 38482906972160,
         "defaultDataDrive": "S",
         "defaultLogDrive": "L"

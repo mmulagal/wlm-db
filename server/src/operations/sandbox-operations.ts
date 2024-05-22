@@ -670,7 +670,7 @@ async function validateCloneParams(
             );
         }
 
-        if (!srcDatabaseExists) {
+        if (!srcDatabaseExists && !(process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator')) {
             throw createError(
                 412,
                 `Database ${srcDetails.database} does not exists on source host ${destDetails.host}`
