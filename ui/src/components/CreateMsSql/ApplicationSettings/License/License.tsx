@@ -230,7 +230,7 @@ const License = () => {
                         {licenseType === FORM_OPTIONS.LICENSE_AMI && (
                             <div>
                                 <div className={styles.headings}>
-                                    <Typography variant="Semibold_14">{'Filter SQL Server AMI'}</Typography>
+                                    <Typography variant="Semibold_14">{GENERAL.FILTER_SQL_SERVER_AMI}</Typography>
                                     <div className={styles.filterVersions}>
                                         <div className={styles.selectVersion}>
                                             <SelectField
@@ -274,8 +274,8 @@ const License = () => {
                                     </div>
                                 </div>
                                 <div className={styles.headings}>
-                                    <Typography variant="Semibold_14">{'Select SQL Server AMI'}</Typography>
-                                    <div className={styles.handleSelect}>
+                                    <Typography variant="Semibold_14">{GENERAL.SELECT_SQL_SERVER_AMI}</Typography>
+                                    <div className={styles.handleSelect} title={defaultValeLicense?.label}>
                                         <SelectField
                                             label={GENERAL.LICENSE_ID}
                                             error={!isLicenseFilled ? GENERAL.ACTION_REQUIRED : ''}
@@ -311,8 +311,8 @@ const License = () => {
                         )}
                         {licenseType === FORM_OPTIONS.CUSTOM_AMI && (
                             <div className={styles.headings}>
-                                <Typography variant="Semibold_14">{'Select AMI ID'}</Typography>
-                                <div className={styles.handleSelect}>
+                                <Typography variant="Semibold_14">{GENERAL.SELECT_AMI_ID}</Typography>
+                                <div className={styles.handleSelect} title={defaultCustomAMILicense?.label}>
                                     <SelectField
                                         label={GENERAL.AMI_ID}
                                         placeholder={GENERAL.SELECT_AMI_NAME}
