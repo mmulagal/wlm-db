@@ -229,97 +229,106 @@ const License = () => {
                         </div>
                         {licenseType === FORM_OPTIONS.LICENSE_AMI && (
                             <div>
-                                <div className={styles.versions}>
+                                <div className={styles.headings}>
+                                    <Typography variant="Semibold_14">{'Filter SQL Server AMI'}</Typography>
                                     <div className={styles.filterVersions}>
-                                        <SelectField
-                                            label={GENERAL.OPERATING_SYSTEM}
-                                            isClearable={false}
-                                            value={operatingSystem}
-                                            onChange={(selectedOptions: any): void => {
-                                                dispatch(setSelectedOperatingSystem(selectedOptions));
-                                                dispatch(setIsWizardTouched(true));
-                                            }}
-                                            isSearchable={OS_VERSIONS_LIST.length > 5}
-                                            options={OS_VERSIONS_LIST}
-                                        />
-                                    </div>
-                                    <div className={styles.filterVersions}>
-                                        <SelectField
-                                            label={GENERAL.DATABASE_EDITION}
-                                            isClearable={false}
-                                            value={dbEdition}
-                                            onChange={(selectedOptions: any): void => {
-                                                dispatch(setSelectedDBEdition(selectedOptions));
-                                                dispatch(setIsWizardTouched(true));
-                                            }}
-                                            isSearchable={DB_EDITIONS.length > 5}
-                                            options={DB_EDITIONS}
-                                        />
-                                    </div>
-                                    <div className={styles.filterVersions}>
-                                        <SelectField
-                                            label={GENERAL.DATABASE_VERSION}
-                                            isClearable={false}
-                                            value={dbVersion ? [dbVersion] : [generateDbVersions[0]]}
-                                            onChange={(selectedOptions: any): void => {
-                                                dispatch(setDBVersion(selectedOptions));
-                                                dispatch(setIsWizardTouched(true));
-                                            }}
-                                            isSearchable={generateDbVersions.length > 5}
-                                            options={generateDbVersions}
-                                        />
+                                        <div className={styles.selectVersion}>
+                                            <SelectField
+                                                label={GENERAL.OPERATING_SYSTEM}
+                                                isClearable={false}
+                                                value={operatingSystem}
+                                                onChange={(selectedOptions: any): void => {
+                                                    dispatch(setSelectedOperatingSystem(selectedOptions));
+                                                    dispatch(setIsWizardTouched(true));
+                                                }}
+                                                isSearchable={OS_VERSIONS_LIST.length > 5}
+                                                options={OS_VERSIONS_LIST}
+                                            />
+                                        </div>
+                                        <div className={styles.selectVersion}>
+                                            <SelectField
+                                                label={GENERAL.DATABASE_EDITION}
+                                                isClearable={false}
+                                                value={dbEdition}
+                                                onChange={(selectedOptions: any): void => {
+                                                    dispatch(setSelectedDBEdition(selectedOptions));
+                                                    dispatch(setIsWizardTouched(true));
+                                                }}
+                                                isSearchable={DB_EDITIONS.length > 5}
+                                                options={DB_EDITIONS}
+                                            />
+                                        </div>
+                                        <div className={styles.selectVersion}>
+                                            <SelectField
+                                                label={GENERAL.DATABASE_VERSION}
+                                                isClearable={false}
+                                                value={dbVersion ? [dbVersion] : [generateDbVersions[0]]}
+                                                onChange={(selectedOptions: any): void => {
+                                                    dispatch(setDBVersion(selectedOptions));
+                                                    dispatch(setIsWizardTouched(true));
+                                                }}
+                                                isSearchable={generateDbVersions.length > 5}
+                                                options={generateDbVersions}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                                <div className={styles.handleSelect}>
-                                    <SelectField
-                                        label={GENERAL.LICENSE_ID}
-                                        error={!isLicenseFilled ? GENERAL.ACTION_REQUIRED : ''}
-                                        //@ts-ignore
-                                        isErrorPrefixHidden
-                                        customErrorWarningIcon={
-                                            <WarningIcon
-                                                //@ts-ignore
-                                                style={{
-                                                    width: '16px',
-                                                    height: '16px',
+                                <div className={styles.headings}>
+                                    <Typography variant="Semibold_14">{'Select SQL Server AMI'}</Typography>
+                                    <div className={styles.handleSelect}>
+                                        <SelectField
+                                            label={GENERAL.LICENSE_ID}
+                                            error={!isLicenseFilled ? GENERAL.ACTION_REQUIRED : ''}
+                                            //@ts-ignore
+                                            isErrorPrefixHidden
+                                            customErrorWarningIcon={
+                                                <WarningIcon
                                                     //@ts-ignore
-                                                    '--icon-primary-color': 'var(--error'
-                                                }}
-                                            />
-                                        }
-                                        placeholder={GENERAL.SELECT_AMI_ID}
-                                        isClearable={false}
-                                        defaultValue={defaultValeLicense}
-                                        value={defaultValeLicense}
-                                        onChange={(selectedOptions: any): void => {
-                                            dispatch(setSelectedLicenseId(selectedOptions));
-                                            dispatch(setIsWizardTouched(true));
-                                        }}
-                                        isSearchable={generateAMIIdForLicense.length > 5}
-                                        variant="two-lines"
-                                        options={generateAMIIdForLicense}
-                                        isLoading={amiLoading}
-                                    />
+                                                    style={{
+                                                        width: '16px',
+                                                        height: '16px',
+                                                        //@ts-ignore
+                                                        '--icon-primary-color': 'var(--error'
+                                                    }}
+                                                />
+                                            }
+                                            placeholder={GENERAL.SELECT_AMI_ID}
+                                            isClearable={false}
+                                            defaultValue={defaultValeLicense}
+                                            value={defaultValeLicense}
+                                            onChange={(selectedOptions: any): void => {
+                                                dispatch(setSelectedLicenseId(selectedOptions));
+                                                dispatch(setIsWizardTouched(true));
+                                            }}
+                                            isSearchable={generateAMIIdForLicense.length > 5}
+                                            variant="two-lines"
+                                            options={generateAMIIdForLicense}
+                                            isLoading={amiLoading}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         )}
                         {licenseType === FORM_OPTIONS.CUSTOM_AMI && (
-                            <div className={styles.handleSelect}>
-                                <SelectField
-                                    label={GENERAL.AMI_ID}
-                                    placeholder={GENERAL.SELECT_AMI_NAME}
-                                    isClearable={false}
-                                    defaultValue={defaultCustomAMILicense}
-                                    value={defaultCustomAMILicense}
-                                    onChange={(selectedOptions: any): void => {
-                                        dispatch(setSelectedCustomAMI(selectedOptions));
-                                        dispatch(setIsWizardTouched(true));
-                                    }}
-                                    variant="two-lines"
-                                    isSearchable={generateCustomAMIId.length > 5}
-                                    options={generateCustomAMIId}
-                                    isLoading={customAmiLoading}
-                                />
+                            <div className={styles.headings}>
+                                <Typography variant="Semibold_14">{'Select AMI ID'}</Typography>
+                                <div className={styles.handleSelect}>
+                                    <SelectField
+                                        label={GENERAL.AMI_ID}
+                                        placeholder={GENERAL.SELECT_AMI_NAME}
+                                        isClearable={false}
+                                        defaultValue={defaultCustomAMILicense}
+                                        value={defaultCustomAMILicense}
+                                        onChange={(selectedOptions: any): void => {
+                                            dispatch(setSelectedCustomAMI(selectedOptions));
+                                            dispatch(setIsWizardTouched(true));
+                                        }}
+                                        variant="two-lines"
+                                        isSearchable={generateCustomAMIId.length > 5}
+                                        options={generateCustomAMIId}
+                                        isLoading={customAmiLoading}
+                                    />
+                                </div>
                             </div>
                         )}
                     </Typography>
