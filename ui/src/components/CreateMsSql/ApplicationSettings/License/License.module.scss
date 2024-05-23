@@ -22,7 +22,22 @@
         margin-bottom: 16px;
     }
 
+    // .versions {
+    //     display: flex;
+    //     gap: 10px;
+
+    //     .filterVersions {
+    //         width: 550px;
+    //     }
+    // }
+
+    .filterVersions {
+        width: 550px;
+    }
+
     .handleSelect {
+        display: flex;
+        gap: 10px;
         width: 550px;
         --menu-max-height: 250px;
 

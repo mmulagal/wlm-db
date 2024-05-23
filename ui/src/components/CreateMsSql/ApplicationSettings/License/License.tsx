@@ -9,11 +9,22 @@ import { generateOptionType } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
+    setDBVersion,
     setSelectedCustomAMI,
+    setSelectedDBEdition,
     setSelectedLicenseId,
-    setSelectedLicenseType
+    setSelectedLicenseType,
+    setSelectedOperatingSystem
 } from '../../../../store/mssql/mssqlFormSlice';
-import { FORM_OPTIONS, LICENSE_URL } from '../../../../utils/consts';
+import {
+    DB_EDITIONS,
+    DB_VERSIONS,
+    DB_VERSIONS_EXCLUDING_2016,
+    DB_VERSIONS_EXCLUDING_2022,
+    FORM_OPTIONS,
+    LICENSE_URL,
+    OS_VERSIONS_LIST
+} from '../../../../utils/consts';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const License = () => {
@@ -23,19 +34,60 @@ const License = () => {
     // This is to get license included AMI data
     const { amiData, amiLoading } = useAppSelector(state => state.mssql.getAmiList);
     const { customAmiData, customAmiLoading } = useAppSelector(state => state.mssql.getCustomAmiList);
-
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
-
     const licenseType = useAppSelector(state => state.mssqlForm.license.selectedLicenseType);
     const selectedLicenseId = useAppSelector(state => state.mssqlForm.license.selectedLicenseId);
     const selectedCustomAMI = useAppSelector(state => state.mssqlForm.license.selectedCustomAMI);
     const [defaultValeLicense, selectedDefaultValue] = useState(selectedLicenseId);
-
     const [defaultCustomAMILicense, selectedDefaultCustomAMILicense] = useState(selectedCustomAMI);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
-
     const isLicenseFilled = useAppSelector(state => state.msSqlAction.licenseIdSelected);
+    const { operatingSystem, dbVersion, dbEdition } = useAppSelector(state => state.mssqlForm);
+    const [versionArray, setVersionArray] = useState(DB_VERSIONS);
+
+    // Set OS versions
+    useEffect(() => {
+        if (!isLoadConfig && !movingFromChatbot) {
+            dispatch(setSelectedOperatingSystem(OS_VERSIONS_LIST[0]));
+        }
+    }, []);
+
+    // Set DB editions
+    useEffect(() => {
+        if (!isLoadConfig && !movingFromChatbot) {
+            dispatch(setSelectedDBEdition(DB_EDITIONS[0]));
+        }
+    }, []);
+
+    // Set DB versions
+    useEffect(() => {
+        if (operatingSystem?.value === '2022') {
+            setVersionArray(DB_VERSIONS_EXCLUDING_2016);
+        } else if (operatingSystem?.value === '2016') {
+            setVersionArray(DB_VERSIONS_EXCLUDING_2022);
+        } else {
+            setVersionArray(DB_VERSIONS);
+        }
+    }, [operatingSystem]);
+
+    //Function to generate the options for Select Field
+    //@ts-ignore
+    const generateDbVersions = useMemo<optionType[]>((): optionType[] => {
+        const options: optionType[] = [];
+        versionArray?.map((val, idx: number) => {
+            // If win 2016 is selected than dont show 2022 SQL server in dropdown list
+            const option = generateOptionType(val.value, val.label, '', false, '');
+            options.push(option);
+        });
+        return options;
+    }, [versionArray]);
+
+    useEffect(() => {
+        if (!isLoadConfig && !movingFromChatbot) {
+            dispatch(setDBVersion(generateDbVersions[0]));
+        }
+    }, [dispatch, generateDbVersions]);
 
     useEffect(() => {
         if (selectedLicenseId) {
@@ -176,36 +228,79 @@ const License = () => {
                             />
                         </div>
                         {licenseType === FORM_OPTIONS.LICENSE_AMI && (
-                            <div className={styles.handleSelect}>
-                                <SelectField
-                                    label={GENERAL.LICENSE_ID}
-                                    error={!isLicenseFilled ? GENERAL.ACTION_REQUIRED : ''}
-                                    //@ts-ignore
-                                    isErrorPrefixHidden
-                                    customErrorWarningIcon={
-                                        <WarningIcon
-                                            //@ts-ignore
-                                            style={{
-                                                width: '16px',
-                                                height: '16px',
-                                                //@ts-ignore
-                                                '--icon-primary-color': 'var(--error'
+                            <div>
+                                <div className={styles.versions}>
+                                    <div className={styles.filterVersions}>
+                                        <SelectField
+                                            label={GENERAL.OPERATING_SYSTEM}
+                                            isClearable={false}
+                                            value={operatingSystem}
+                                            onChange={(selectedOptions: any): void => {
+                                                dispatch(setSelectedOperatingSystem(selectedOptions));
+                                                dispatch(setIsWizardTouched(true));
                                             }}
+                                            isSearchable={OS_VERSIONS_LIST.length > 5}
+                                            options={OS_VERSIONS_LIST}
                                         />
-                                    }
-                                    placeholder={GENERAL.SELECT_AMI_ID}
-                                    isClearable={false}
-                                    defaultValue={defaultValeLicense}
-                                    value={defaultValeLicense}
-                                    onChange={(selectedOptions: any): void => {
-                                        dispatch(setSelectedLicenseId(selectedOptions));
-                                        dispatch(setIsWizardTouched(true));
-                                    }}
-                                    isSearchable={generateAMIIdForLicense.length > 5}
-                                    variant="two-lines"
-                                    options={generateAMIIdForLicense}
-                                    isLoading={amiLoading}
-                                />
+                                    </div>
+                                    <div className={styles.filterVersions}>
+                                        <SelectField
+                                            label={GENERAL.DATABASE_EDITION}
+                                            isClearable={false}
+                                            value={dbEdition}
+                                            onChange={(selectedOptions: any): void => {
+                                                dispatch(setSelectedDBEdition(selectedOptions));
+                                                dispatch(setIsWizardTouched(true));
+                                            }}
+                                            isSearchable={DB_EDITIONS.length > 5}
+                                            options={DB_EDITIONS}
+                                        />
+                                    </div>
+                                    <div className={styles.filterVersions}>
+                                        <SelectField
+                                            label={GENERAL.DATABASE_VERSION}
+                                            isClearable={false}
+                                            value={dbVersion ? [dbVersion] : [generateDbVersions[0]]}
+                                            onChange={(selectedOptions: any): void => {
+                                                dispatch(setDBVersion(selectedOptions));
+                                                dispatch(setIsWizardTouched(true));
+                                            }}
+                                            isSearchable={generateDbVersions.length > 5}
+                                            options={generateDbVersions}
+                                        />
+                                    </div>
+                                </div>
+                                <div className={styles.handleSelect}>
+                                    <SelectField
+                                        label={GENERAL.LICENSE_ID}
+                                        error={!isLicenseFilled ? GENERAL.ACTION_REQUIRED : ''}
+                                        //@ts-ignore
+                                        isErrorPrefixHidden
+                                        customErrorWarningIcon={
+                                            <WarningIcon
+                                                //@ts-ignore
+                                                style={{
+                                                    width: '16px',
+                                                    height: '16px',
+                                                    //@ts-ignore
+                                                    '--icon-primary-color': 'var(--error'
+                                                }}
+                                            />
+                                        }
+                                        placeholder={GENERAL.SELECT_AMI_ID}
+                                        isClearable={false}
+                                        defaultValue={defaultValeLicense}
+                                        value={defaultValeLicense}
+                                        onChange={(selectedOptions: any): void => {
+                                            dispatch(setSelectedLicenseId(selectedOptions));
+                                            dispatch(setIsWizardTouched(true));
+                                        }}
+                                        isSearchable={generateAMIIdForLicense.length > 5}
+                                        variant="two-lines"
+                                        options={generateAMIIdForLicense}
+                                        isLoading={amiLoading}
+                                    />
+                                </div>
                             </div>
                         )}
                         {licenseType === FORM_OPTIONS.CUSTOM_AMI && (
