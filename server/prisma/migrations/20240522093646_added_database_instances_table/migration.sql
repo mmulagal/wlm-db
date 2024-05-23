@@ -1,20 +1,24 @@
--- CreateTable
+-- Create index to support foreign key relationship between 'databaseInstances' and 'resource' tables.
+CREATE INDEX `k_wlmdb_resource_account_id_credentials_id_resource_id` ON `resource`(`account_id`, `credentials_id`, `resource_id`);
+
+-- Create table for database instance details
 CREATE TABLE `databaseInstances` (
     `id`                VARCHAR(191) NOT NULL,
     `account_id`        VARCHAR(80)  NOT NULL,
     `credentials_id`    VARCHAR(80)  NOT NULL,
     `resource_id`       VARCHAR(255) NOT NULL,
-    `instance_id`       VARCHAR(255) NOT NULL,
-    `instance_name`     VARCHAR(255) NOT NULL,
-    `fsxn_id`           VARCHAR(255) NOT NULL,
+    `sql_instance_id`   VARCHAR(255) NOT NULL,
+    `sql_instance_name` VARCHAR(255) NOT NULL,
+    `fsxn_ids`          VARCHAR(255) NOT NULL,
     `is_default`        BOOLEAN      NOT NULL DEFAULT false,
-    `manage_start_time` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `last_update_time`  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `created_time`      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_time`      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `i_wlmdb_databaseInstances_account_id`(`account_id`),
-    INDEX `i_wlmdb_databaseInstances_credentials_id`(`credentials_id`),
-    INDEX `i_wlmdb_databaseInstances_resource_id`(`resource_id`),
-    INDEX `i_wlmdb_databaseInstances_instance_name`(`instance_name`),
-    UNIQUE INDEX `ui_wlmdb_databaseInstances`(`account_id`, `credentials_id`, `resource_id`, `instance_id`),
-    PRIMARY KEY (`id`)
+    INDEX `k_wlmdb_databaseInstances_account_id`(`account_id`),
+    INDEX `k_wlmdb_databaseInstances_credentials_id`(`credentials_id`),
+    INDEX `k_wlmdb_databaseInstances_resource_id`(`resource_id`),
+    INDEX `k_wlmdb_databaseInstances_sql_instance_name`(`sql_instance_name`),
+    UNIQUE INDEX `uk_wlmdb_databaseInstances`(`account_id`, `credentials_id`, `resource_id`, `sql_instance_id`),
+    PRIMARY KEY (`id`),
+    CONSTRAINT `k_wlmdb_resource_account_id_credentials_id_resource_id` FOREIGN KEY (`account_id`, `credentials_id`, `resource_id`) REFERENCES `resource`(`account_id`, `credentials_id`, `resource_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

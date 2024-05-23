@@ -545,22 +545,22 @@ async function upsertDatabaseInstanceRecord(accountId: string, record: DatabaseI
             account_id: accountId,
             credentials_id: credentialsId,
             resource_id: resourceId,
-            instance_id: instanceId,
-            instance_name: instanceName,
-            fsxn_id: fsxnId,
+            sql_instance_id: instanceId,
+            sql_instance_name: instanceName,
+            fsxn_ids: fsxnId,
             is_default: isDefault
         },
         update: {
-            ...(instanceName && { instance_name: instanceName }),
-            ...(fsxnId && { fsxn_id: fsxnId }),
+            ...(instanceName && { sql_instance_name: instanceName }),
+            ...(fsxnId && { fsxn_ids: fsxnId }),
             ...(isDefault && { is_default: isDefault })
         },
         where: {
-            ui_wlmdb_databaseInstances: {
+            uk_wlmdb_databaseInstances: {
                 account_id: accountId,
                 credentials_id: credentialsId,
                 resource_id: resourceId,
-                instance_id: instanceId
+                sql_instance_id: instanceId
             }
         }
     });
@@ -579,8 +579,8 @@ async function listDatabaseInstances(accountId: string, record: any) {
             account_id: accountId,
             credentials_id: credentialsId,
             ...(resourceId && { resource_id: resourceId }),
-            ...(instanceId && { instance_id: instanceId }),
-            ...(instanceName && { instance_name: instanceName }),
+            ...(instanceId && { sql_instance_id: instanceId }),
+            ...(instanceName && { sql_instance_name: instanceName }),
             ...(isDefault && { is_default: isDefault })
         },
         orderBy: {
@@ -603,7 +603,7 @@ async function deleteDatabaseInstanceRecord(
             account_id: accountId,
             credentials_id: credentialsId,
             resource_id: resourceId,
-            instance_name: instanceName
+            sql_instance_name: instanceName
         }
     });
 }
