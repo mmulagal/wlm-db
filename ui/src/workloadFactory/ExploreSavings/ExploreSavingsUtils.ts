@@ -206,11 +206,17 @@ export const formatPercentage = (val: any) => {
 };
 
 export const formatViewCalcInstance = (selectedDeploymentModel: any, selectedHostDetails: any) => {
+    let instanceTypelist = [];
+    if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
+        instanceTypelist = selectedHostDetails?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
+    } else {
+        instanceTypelist = selectedHostDetails?.topology?.ec2Details?.map((inst: any) => inst?.instanceType);
+    }
     const instanceCalculationData = (() => {
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             return [
                 {
-                    instanceType: selectedHostDetails?.topology?.ec2Details?.[0]?.instanceType || GENERAL.NOT_AVAILABLE,
+                    instanceType: instanceTypelist?.[0] || GENERAL.NOT_AVAILABLE,
                     instanceHourlyPrice: GENERAL.NOT_AVAILABLE, // ToDo
                     ec2MachineCost: GENERAL.NOT_AVAILABLE, // ToDo
                     sqlEdition: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
@@ -220,14 +226,14 @@ export const formatViewCalcInstance = (selectedDeploymentModel: any, selectedHos
         } else {
             return [
                 {
-                    instanceType: selectedHostDetails?.topology?.ec2Details?.[0]?.instanceType || GENERAL.NOT_AVAILABLE,
+                    instanceType: instanceTypelist?.[0] || GENERAL.NOT_AVAILABLE,
                     instanceHourlyPrice: GENERAL.NOT_AVAILABLE, // ToDo
                     ec2MachineCost: GENERAL.NOT_AVAILABLE, // ToDo
                     sqlEdition: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
                     sqlLicense: GENERAL.NOT_AVAILABLE // ToDo
                 },
                 {
-                    instanceType: selectedHostDetails?.topology?.ec2Details?.[1]?.instanceType || GENERAL.NOT_AVAILABLE,
+                    instanceType: instanceTypelist?.[1] || GENERAL.NOT_AVAILABLE,
                     instanceHourlyPrice: GENERAL.NOT_AVAILABLE, // ToDo
                     ec2MachineCost: GENERAL.NOT_AVAILABLE, // ToDo
                     sqlEdition: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,

@@ -94,10 +94,17 @@ const ExploreSavingsTable = () => {
                 return (
                     <>
                         {cellData && (
-                            <div className={CommonStyles.wrapTextIn2Line}>
-                                <Typography variant="Regular_13" className={styles.colText}>
-                                    {cellData}
-                                </Typography>
+                            <div>
+                                {cellData?.[0] && (
+                                    <Typography variant="Regular_13" className={styles.colText}>
+                                        {cellData[0]}
+                                    </Typography>
+                                )}
+                                {cellData?.[1] && (
+                                    <Typography variant="Regular_13" className={styles.colText}>
+                                        {cellData[1]}
+                                    </Typography>
+                                )}
                             </div>
                         )}
                         {!cellData && rowData?.loading && <DsFlashingDotsLoader />}

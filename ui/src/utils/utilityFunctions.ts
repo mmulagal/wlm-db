@@ -459,9 +459,11 @@ export const formatHostData = (val: any) => {
 
     let totalSize = (val?.storage?.fsxn?.size || 0) + (val?.storage?.fsxw?.size || 0) + (val?.storage?.ebs?.size || 0);
 
-    let clusterEc2Instances: Array<string> = [];
+    let clusterEc2Instances;
     if (val?.clusterNodeDetails && val?.clusterNodeDetails?.length === 2) {
         clusterEc2Instances = val?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceId);
+    } else if (val?.ec2InstanceId) {
+        clusterEc2Instances = [val?.ec2InstanceId];
     }
 
     val = {
@@ -491,7 +493,7 @@ export const formatHostData = (val: any) => {
         azType: azType,
         serverInstallationMode: serverInstallationMode,
         fileSystemType: fileSystemType,
-        clusterEc2Instances: clusterEc2Instances?.length > 0 ? clusterEc2Instances.join(', ') : val?.ec2InstanceId
+        clusterEc2Instances: clusterEc2Instances
     };
     return val;
 };
