@@ -490,7 +490,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerName,
                         sqlServerEdition,
                         sqlServerNodes,
-                        nodeIpDetails,
+                        nodeIps,
                         sqlServerInstance,
                         sqlServerState,
                         isDefaultInstance,
@@ -516,7 +516,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerVersion,
                         ...(sqlServerName && { sqlServerName }),
                         sqlServerNodes: compact(sqlServerNodes),
-                        nodeIpDetails: compact(nodeIpDetails),
+                        nodeIps: compact(nodeIps),
                         sqlServerDeploymentType,
                         sqlServerInstance,
                         sqlServerState,
@@ -703,17 +703,6 @@ async function validateAndStoreDiscoveredParameters(
     }
 }
 
-async function getClusterNodeDetailsFromPrivateIpList(credentialsId: string, region: string, nodeIpDetails: string[]) {
-    logger.info('Getting cluster node details from private IP list', { credentialsId, region, nodeIpDetails });
-
-    const [node1Details, node2Details] = nodeIpDetails || [];
-    if (node1Details && node2Details) {
-        const [, node1Ip] = node1Details.split(' - ');
-        const [, node2Ip] = node2Details.split(' - ');
-        return getInstanceDetailsByPrivateIp(credentialsId, region, [node1Ip, node2Ip]);
-    }
-}
-
 async function fetchUnmanagedHostsInformation(
     accountId: string,
     credentialsId: string,
@@ -745,15 +734,14 @@ async function fetchUnmanagedHostsInformation(
 
     await Promise.all(
         ec2HostDetails?.map(async ec2Instance => {
-            const [{ nodeIpDetails, sqlServerDeploymentType }] = ec2Instance?.sqlServerInstances || [];
+            const [{ nodeIps, sqlServerDeploymentType }] = ec2Instance?.sqlServerInstances || [];
             let clusterNodeDetails: NodeDetails[] = [];
             if (
                 (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT ||
                     sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) &&
-                nodeIpDetails
+                nodeIps
             ) {
-                clusterNodeDetails =
-                    (await getClusterNodeDetailsFromPrivateIpList(credentialsId, region, nodeIpDetails)) || [];
+                clusterNodeDetails = (await getInstanceDetailsByPrivateIp(credentialsId, region, nodeIps)) || [];
             }
             const sqlServerInstance = ec2Instance?.sqlServerInstances?.find(
                 sqlInstance => sqlInstance.sqlServerState === 'Running'
@@ -1465,6 +1453,5 @@ export {
     validateAndStoreDiscoveredParameters,
     fetchUnmanagedHostsInformation,
     manageSqlServer,
-    prepareForManage,
-    getClusterNodeDetailsFromPrivateIpList
+    prepareForManage
 };

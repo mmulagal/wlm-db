@@ -1,12 +1,13 @@
 import createError from 'http-errors';
 import { compact, isEmpty } from 'lodash-es';
-import { getClusterNodeDetailsFromPrivateIpList, getHostAndSqlServerInfo } from '../discover-operations';
-import { HttpErrorCodes, SqlServerDeploymentModel } from '../../utils/consts';
+import { getHostAndSqlServerInfo } from '../discover-operations';
+import { FileSystemTypes, HttpErrorCodes, SqlServerDeploymentModel } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import getStorageSavings from '../../lib/cloud-manager/marketing';
 import { StorageSavingsRequestBodyType, StorageSavingsResponseType } from '../../routes/types/storage-savings.types';
 import { camelizeKeys, convertToBytes } from '../../utils/utils';
 import { SqlServerInstanceInfoType } from '../../routes/types/discover.types';
+import { getInstanceDetailsByPrivateIp } from '../aws/ec2-operations';
 
 const logger = getLogger();
 
@@ -36,7 +37,7 @@ async function identifyAoagVolumes(
     credentialsId: string,
     region: string,
     primaryNodeInstanceId: string,
-    nodeIpDetails: string[],
+    nodeIps: string[],
     primaryNodeSqlServerInstances: SqlServerInstanceInfoType[],
     primaryNodeEbsVolumeIds: string[]
 ) {
@@ -45,13 +46,12 @@ async function identifyAoagVolumes(
         credentialsId,
         region,
         primaryNodeInstanceId,
-        nodeIpDetails,
+        nodeIps,
         primaryNodeSqlServerInstances,
         primaryNodeEbsVolumeIds
     });
 
-    const aoagClusterNodeDetails =
-        (await getClusterNodeDetailsFromPrivateIpList(credentialsId, region, nodeIpDetails)) || [];
+    const aoagClusterNodeDetails = (await getInstanceDetailsByPrivateIp(credentialsId, region, nodeIps)) || [];
     const [secondaryNodeInstanceId] = aoagClusterNodeDetails
         .filter(node => node.ec2InstanceId !== primaryNodeInstanceId)
         .map(node => node.ec2InstanceId); // considering only 2 nodes in the cluster; primary node is already considered so getting host details of secondary node
@@ -64,7 +64,7 @@ async function identifyAoagVolumes(
 
     const secondarySqlServerInstances = secondaryNodeDetails?.sqlServerInstances || [];
     const secondaryNodeEbsVolumeIds = retrieveSpecificVolumeTypeVolumeIdsFromSqlServerInstances(
-        'EBS',
+        FileSystemTypes.EBS,
         secondarySqlServerInstances
     );
 
@@ -76,7 +76,7 @@ async function identifyAoagVolumes(
                 )
         ) || [];
     const uniqueSqlHostEbsVolumeIdsSecondaryNode = retrieveSpecificVolumeTypeVolumeIdsFromSqlServerInstances(
-        'EBS',
+        FileSystemTypes.EBS,
         uniqueSecondaryNodeSqlServerInstances
     );
     const allEbsVolumeIds = primaryNodeEbsVolumeIds.concat(...secondaryNodeEbsVolumeIds);
@@ -89,7 +89,7 @@ async function aoagStorageSavingsCalculations(
     credentialsId: string,
     region: string,
     primaryNodeInstanceId: string,
-    nodeIpDetails: string[],
+    nodeIps: string[],
     primaryNodeSqlServerInstances: SqlServerInstanceInfoType[],
     primaryNodeEbsVolumeIds: string[],
     params: StorageSavingsRequestBodyType
@@ -99,7 +99,7 @@ async function aoagStorageSavingsCalculations(
         credentialsId,
         region,
         primaryNodeInstanceId,
-        nodeIpDetails,
+        nodeIps,
         primaryNodeSqlServerInstances,
         primaryNodeEbsVolumeIds,
         params
@@ -110,7 +110,7 @@ async function aoagStorageSavingsCalculations(
         credentialsId,
         region,
         primaryNodeInstanceId,
-        nodeIpDetails,
+        nodeIps,
         primaryNodeSqlServerInstances,
         primaryNodeEbsVolumeIds
     );
@@ -155,7 +155,7 @@ async function aoagStorageSavingsMetrics(
     credentialsId: string,
     region: string,
     primaryNodeInstanceId: string,
-    nodeIpDetails: string[],
+    nodeIps: string[],
     primaryNodeSqlServerInstances: SqlServerInstanceInfoType[],
     primaryNodeEbsVolumeIds: string[],
     params: StorageSavingsRequestBodyType
@@ -165,7 +165,7 @@ async function aoagStorageSavingsMetrics(
         credentialsId,
         region,
         primaryNodeInstanceId,
-        nodeIpDetails,
+        nodeIps,
         primaryNodeSqlServerInstances,
         primaryNodeEbsVolumeIds,
         params
@@ -176,7 +176,7 @@ async function aoagStorageSavingsMetrics(
         credentialsId,
         region,
         primaryNodeInstanceId,
-        nodeIpDetails,
+        nodeIps,
         primaryNodeSqlServerInstances,
         primaryNodeEbsVolumeIds
     );
@@ -213,7 +213,7 @@ function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavin
     const { snapshotFrequency, clonedCopiesCount, cloneRefreshFrequency, monthlyChangeRatePercentage } = params || {};
 
     return {
-        useCase: 'Low latency',
+        useCase: 'Low-latency',
         volumeIds: ebsVolumeIds,
         includeSnapshots: false,
         deploymentType: 'Single',
@@ -268,24 +268,23 @@ async function performStorageSavingsCalculations(
 
     const sqlServerInstances = ec2HostDetails?.sqlServerInstances || [];
 
-    const ebsVolumeIds = retrieveSpecificVolumeTypeVolumeIdsFromSqlServerInstances('EBS', sqlServerInstances);
+    const ebsVolumeIds = retrieveSpecificVolumeTypeVolumeIdsFromSqlServerInstances(
+        FileSystemTypes.EBS,
+        sqlServerInstances
+    );
 
     if (!ebsVolumeIds.length) {
         throw createError(HttpErrorCodes.NOT_FOUND, `No EBS volumes found for the provided instance: ${instanceId}`);
     }
 
-    const [{ sqlServerDeploymentType, nodeIpDetails }] = ec2HostDetails?.sqlServerInstances || [];
-    if (
-        nodeIpDetails &&
-        !isEmpty(nodeIpDetails) &&
-        sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
-    ) {
+    const [{ sqlServerDeploymentType, nodeIps }] = ec2HostDetails?.sqlServerInstances || [];
+    if (nodeIps && !isEmpty(nodeIps) && sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
         return aoagStorageSavingsCalculations(
             accountId,
             credentialsId,
             region,
             instanceId,
-            nodeIpDetails,
+            nodeIps,
             sqlServerInstances,
             ebsVolumeIds,
             params
@@ -478,7 +477,7 @@ async function formatStorageSavingsCalculationMetrics(
             minFileSystemsNumForSsdIops,
             requiredNumOfFsxFractional,
             requiredNumOfFsx,
-            minThroughputCapacityRequired, // discuss with sonam
+            minThroughputCapacityRequired,
             provisionedThroughputCapacity,
             totalMonthlyFsxnThroughputCapacityCost,
             includedSsdIops,
@@ -606,18 +605,14 @@ async function getStorageSavingsCalculationMetrics(
         )
     );
 
-    const [{ sqlServerDeploymentType, nodeIpDetails }] = ec2HostDetails?.sqlServerInstances || [];
-    if (
-        nodeIpDetails &&
-        !isEmpty(nodeIpDetails) &&
-        sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
-    ) {
+    const [{ sqlServerDeploymentType, nodeIps }] = ec2HostDetails?.sqlServerInstances || [];
+    if (nodeIps && !isEmpty(nodeIps) && sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
         return aoagStorageSavingsMetrics(
             accountId,
             credentialsId,
             region,
             instanceId,
-            nodeIpDetails,
+            nodeIps,
             sqlServerInstances,
             ebsVolumeIds,
             params

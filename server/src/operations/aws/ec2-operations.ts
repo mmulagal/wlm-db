@@ -630,21 +630,19 @@ async function getInstanceDetailsByPrivateIp(credentialsId: string, region: stri
         ]
     });
     const instanceDetails: NodeDetails[] = [];
-    privateIps.forEach(ip => {
-        Reservations?.forEach(({ Instances }) => {
-            const instance = Instances?.find(({ PrivateIpAddress }) => PrivateIpAddress === ip);
-            if (instance) {
-                const { InstanceId, PrivateIpAddress, InstanceType, Tags } = instance;
-                if (InstanceId && PrivateIpAddress && InstanceType) {
-                    instanceDetails.push({
-                        ec2InstanceId: InstanceId,
-                        ec2InstancePrivateIpAddress: PrivateIpAddress,
-                        ec2InstanceType: InstanceType,
-                        ec2InstanceName: Tags?.find(tag => tag?.Key === 'Name')?.Value
-                    });
-                }
+    Reservations?.forEach(({ Instances }) => {
+        const [instance] = Instances || [];
+        if (instance) {
+            const { InstanceId, PrivateIpAddress, InstanceType, Tags } = instance;
+            if (InstanceId && PrivateIpAddress && InstanceType) {
+                instanceDetails.push({
+                    ec2InstanceId: InstanceId,
+                    ec2InstancePrivateIpAddress: PrivateIpAddress,
+                    ec2InstanceType: InstanceType,
+                    ec2InstanceName: Tags?.find(tag => tag?.Key === 'Name')?.Value
+                });
             }
-        });
+        }
     });
 
     return instanceDetails;
