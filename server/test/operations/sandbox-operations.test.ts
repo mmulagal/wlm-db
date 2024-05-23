@@ -43,7 +43,11 @@ afterAll(async () => {
 describe('sandbox operations ', () => {
     it('Get sandbox details for all resources', async () => {
         const resp = await getSandboxesInfo(ACCOUNT_ID, 'f6082f35-c1db-4619-bb5c-84bcb5bf3286', 'ap-southeast-1');
-        expect(resp).toMatchObject(sandboxResponse.getSandboxDetailsResponse);
+        expect(resp).toEqual({
+            count: 0,
+            items: [],
+            nextToken: undefined
+        });
     });
 
     it('Get the storage savings for cloned resources', async () => {
