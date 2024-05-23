@@ -123,7 +123,7 @@ try {
 
     $arguments = '/QUIET /ACTION=CompleteFailoverCluster /InstanceName=MSSQLSERVER /INDICATEPROGRESS=TRUE /FAILOVERCLUSTERNETWORKNAME={0} /FAILOVERCLUSTERIPADDRESSES="IPv4;{1};Cluster Network 1;{2}" "IPv4;{3};Cluster Network 2;{4}" /CONFIRMIPDEPENDENCYCHANGE=TRUE /FAILOVERCLUSTERGROUP="SQL Server (MSSQLSERVER)" /FAILOVERCLUSTERDISKS="SQL-DATA" "SQL-LOG" "SQL-TEMPDB" /INSTALLSQLDATADIR="C:\Program Files\Microsoft SQL Server" /SQLCOLLATION={10} /SQLSYSADMINACCOUNTS={5} /INSTALLSQLDATADIR={6} /SQLUSERDBDIR={7} /SQLUSERDBLOGDIR={8} /SQLTEMPDBDIR={9}' -f $FCIName, $Node1FciIp, $Node1SubnetMask, $Node2FciIp, $Node2SubnetMask, $AdminGroup, $sqlRootPath, $sqlDataPath, $sqlLogPath, $sqlTempPath, $SqlCollation
     Invoke-Command -scriptblock {
-        Start-Process -FilePath $SQLMediaPath -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output.txt -RedirectStandardError C:\cfn\log\completefci_error.txt 
+        Start-Process -FilePath $Using:SQLMediaPath -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output.txt -RedirectStandardError C:\cfn\log\completefci_error.txt 
 
     } -Credential $Credentials -ComputerName $HostName -Authentication credssp -ErrorAction SilentlyContinue -ErrorVariable errs
 
@@ -138,7 +138,7 @@ try {
             $SqlCollation = "SQL_Latin1_General_CP1_CI_AS"
             $arguments = '/QUIET /ACTION=CompleteFailoverCluster /InstanceName=MSSQLSERVER /INDICATEPROGRESS=TRUE /FAILOVERCLUSTERNETWORKNAME={0} /FAILOVERCLUSTERIPADDRESSES="IPv4;{1};Cluster Network 1;{2}" "IPv4;{3};Cluster Network 2;{4}" /CONFIRMIPDEPENDENCYCHANGE=TRUE /FAILOVERCLUSTERGROUP="SQL Server (MSSQLSERVER)" /FAILOVERCLUSTERDISKS="SQL-DATA" "SQL-LOG" "SQL-TEMPDB" /INSTALLSQLDATADIR="C:\Program Files\Microsoft SQL Server" /SQLCOLLATION={10} /SQLSYSADMINACCOUNTS={5} /INSTALLSQLDATADIR={6} /SQLUSERDBDIR={7} /SQLUSERDBLOGDIR={8} /SQLTEMPDBDIR={9}' -f $FCIName, $Node1FciIp, $Node1SubnetMask, $Node2FciIp, $Node2SubnetMask, $AdminGroup, $sqlRootPath, $sqlDataPath, $sqlLogPath, $sqlTempPath, $SqlCollation
             Invoke-Command -scriptblock {
-                Start-Process -FilePath $SQLMediaPath -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output1.txt -RedirectStandardError C:\cfn\log\completefci_error1.txt 
+                Start-Process -FilePath $Using:SQLMediaPath -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output1.txt -RedirectStandardError C:\cfn\log\completefci_error1.txt 
 
             } -Credential $Credentials -ComputerName $HostName -Authentication credssp -ErrorAction SilentlyContinue -ErrorVariable errs
         }
@@ -154,7 +154,7 @@ try {
         Write-Output "There are errors or failures in the cluster verification report. This could happen when other node restarted during test for the deployment. Skipping cluster verify errors.Confirm that cluster configuration is fine by running tests later"
         $skipclusterarguments = '/QUIET /ACTION=CompleteFailoverCluster /SkipRules=Cluster_VerifyForErrors /InstanceName=MSSQLSERVER /INDICATEPROGRESS=TRUE /FAILOVERCLUSTERNETWORKNAME={0} /FAILOVERCLUSTERIPADDRESSES="IPv4;{1};Cluster Network 1;{2}" "IPv4;{3};Cluster Network 2;{4}" /CONFIRMIPDEPENDENCYCHANGE=TRUE /FAILOVERCLUSTERGROUP="SQL Server (MSSQLSERVER)" /FAILOVERCLUSTERDISKS="SQL-DATA" "SQL-LOG" "SQL-TEMPDB" /INSTALLSQLDATADIR="C:\Program Files\Microsoft SQL Server" /SQLCOLLATION={10} /SQLSYSADMINACCOUNTS={5} /INSTALLSQLDATADIR={6} /SQLUSERDBDIR={7} /SQLUSERDBLOGDIR={8} /SQLTEMPDBDIR={9}' -f $FCIName, $Node1FciIp, $Node1SubnetMask, $Node2FciIp, $Node2SubnetMask, $AdminGroup, $sqlRootPath, $sqlDataPath, $sqlLogPath, $sqlTempPath, $SqlCollation
         Invoke-Command -scriptblock {
-            Start-Process -FilePath $SQLMediaPath -ArgumentList $Using:skipclusterarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output.txt -RedirectStandardError C:\cfn\log\completefci_error.txt
+            Start-Process -FilePath $Using:SQLMediaPath -ArgumentList $Using:skipclusterarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output.txt -RedirectStandardError C:\cfn\log\completefci_error.txt
         } -Credential $Credentials -ComputerName $HostName -Authentication credssp
     }
 }
