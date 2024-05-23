@@ -5,10 +5,7 @@ import AvailabilityZone from '../AwsSettings/AvailabilityZone/AvailabilityZone';
 import AwsAccount from '../AwsSettings/AwsAccount/AwsAccount';
 import RegionVpc from '../AwsSettings/RegionVpc/RegionVpc';
 import SecurityGroup from '../AwsSettings/SecurityGroup/SecurityGroup';
-import OperatingSystem from '../ApplicationSettings/OperatingSystem/OperatingSystem';
 import DatabaseDeploymentModel from '../DeploymentModel/DatabaseDeploymentModel/DatabaseDeploymentModel';
-import DatabaseEdition from '../ApplicationSettings/DatabaseEdition/DatabaseEdition';
-import DatabaseVersion from '../ApplicationSettings/DatabaseVersion/DatabaseVersion';
 import License from '../ApplicationSettings/License/License';
 import DatabaseName from '../ApplicationSettings/DatabaseName/DatabaseName';
 import DatabaseCredentials from '../ApplicationSettings/DatabaseCredentials/DatabaseCredentials';
@@ -141,9 +138,6 @@ const MSSqlAccordions = () => {
                 {/* Application settings accordions */}
                 {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
                     <>
-                        <OperatingSystem />
-                        <DatabaseEdition />
-                        <DatabaseVersion />
                         <License />
                         <SqlServerCollation />
                         <DatabaseName />

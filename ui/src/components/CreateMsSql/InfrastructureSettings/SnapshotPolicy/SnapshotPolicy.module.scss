@@ -1,6 +1,9 @@
 .snapshotPolicy {
     .handleToggle {
         margin-top: 16px;
+        [class*='ToggleSelector-module_text'] {
+            font-weight: 500 !important;
+        }
     }
 
     .textArea {
