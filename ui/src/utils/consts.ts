@@ -448,3 +448,18 @@ export const SNAPSHOT_FREQUENCY = [
         value: '6xDaily'
     }
 ];
+
+export const OS_VERSIONS_LIST = [
+    {
+        label: GENERAL.WIN_SERVER_2016,
+        value: GENERAL.WIN_SERVER_2016_VERSION
+    },
+    {
+        label: GENERAL.WIN_SERVER_2019,
+        value: GENERAL.WIN_SERVER_2019_VERSION
+    },
+    {
+        label: GENERAL.WIN_SERVER_2022,
+        value: GENERAL.WIN_SERVER_2022_VERSION
+    }
+];
