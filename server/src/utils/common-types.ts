@@ -32,6 +32,7 @@ interface UserDatabase {
     status: string;
     type: string;
     protection: { isAwsBackupEnabled: IsAWSBackup; isFsxOntapSnapshotsEnabled: boolean; isSqlNativeEnabled: boolean };
+    collation: string;
 }
 
 interface Sandbox {

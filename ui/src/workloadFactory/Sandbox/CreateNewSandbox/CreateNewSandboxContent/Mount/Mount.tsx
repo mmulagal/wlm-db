@@ -37,7 +37,7 @@ const Mount = () => {
         }
         return (
             <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyleSandbox} title={''}>
-                {GENERAL.VOLUME_MOUNT_POINT_UNDER_PATH} : {''}
+                {GENERAL.DEFINE_MOUNT_POINT_PATH}
             </DsTypography>
         );
     };

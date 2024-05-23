@@ -212,10 +212,11 @@ export const GENERAL = {
     LICENSE_ID: 'SQL Server AMI',
     USE_CUSTOM_AMI: 'Use custom AMI',
     CUSTOM_AMI: 'Custom AMI',
-    AMI_ID: 'AMI ID',
-    SELECT_AMI_ID: 'Select AMI ID',
+    AMI_ID: 'AMI',
+    SELECT_AMI_ID: 'Select AMI',
     SELECT_AMI_NAME: 'Select AMI Name',
-
+    FILTER_SQL_SERVER_AMI: 'Filter SQL Server AMI',
+    SELECT_SQL_SERVER_AMI: 'Select SQL Server AMI',
     //Constants for DB name accordion
     DATABASE_INSTANCE_NAME: 'Database cluster name',
     DB_NAME_TOOLTIP:
