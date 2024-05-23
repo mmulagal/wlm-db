@@ -1,4 +1,4 @@
-import { Table, useTable, Typography, TableTopBar, Popover } from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar, Popover, DsFlashingDotsLoader } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './ExploreSavingsTable.module.scss';
@@ -14,6 +14,7 @@ import {
     renderUnmanagedHostName
 } from '../../Inventory/InventoryUtils';
 import { onClickESHost } from '../ExploreSavingsUtils';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 const ExploreSavingsTable = () => {
     const dispatch = useDispatch();
@@ -84,11 +85,26 @@ const ExploreSavingsTable = () => {
         },
         {
             Header: GENERAL.DB_HOST_INSTANCE_ID,
-            accessor: 'ec2InstanceId',
+            accessor: 'clusterEc2Instances',
             id: '3',
             width: '200px',
-            accessorForTextFilter: 'ec2InstanceId',
-            isSortable: true
+            accessorForTextFilter: 'clusterEc2Instances',
+            isSortable: true,
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <>
+                        {cellData && (
+                            <div className={CommonStyles.wrapTextIn2Line}>
+                                <Typography variant="Regular_13" className={styles.colText}>
+                                    {cellData}
+                                </Typography>
+                            </div>
+                        )}
+                        {!cellData && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!cellData && cellData !== 0 && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+                    </>
+                );
+            }
         },
         {
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
