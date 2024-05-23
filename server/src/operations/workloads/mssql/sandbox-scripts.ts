@@ -1,6 +1,6 @@
 // instances input instances = ['"computername\\instanceName"', '"."']; "." represents the default instance
 // ('source', 'initialCreationDate', 'tag', 'baseSnapshot') are the extended properties saved during creation of sandbox
-const GET_SANDBOX_DETAILS = (instances: string[]) => ` 
+const GET_SANDBOX_DETAILS = (instances: string[], accountId: string) => ` 
 $instances = (${instances})
 
 $results = foreach ($instance in $instances) {
@@ -32,6 +32,11 @@ $results = foreach ($instance in $instances) {
             FROM #properties AS p1
             WHERE name = 'cloned_by' AND value = 'netapp_wlmdb'
         ) AS grouped_properties
+        WHERE database_name IN (
+            SELECT database_name
+            FROM #properties
+            WHERE name = 'accountId' AND value = '${accountId}'
+        )
         GROUP BY database_name, properties
         FOR JSON PATH; 
 "@
