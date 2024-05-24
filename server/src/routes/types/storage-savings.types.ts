@@ -129,14 +129,6 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
         billableThroughputMbps: Type.Number(),
         billableThroughputGbps: Type.Number(),
         ebsThroughputCost: Type.Number(),
-        totalSnapshots: Type.Number(),
-        initialSnapshotCost: Type.Number(),
-        monthlyCostPerSnapshot: Type.Number(),
-        discountForPartialStorageMonth: Type.Number(),
-        incrementalSnapshotCost: Type.Number(),
-        totalSnapshotCost: Type.Number(),
-        totalEbsSnapshotCost: Type.Number(),
-        ebsSnapshotCost: Type.Number(),
         ebsTotalCostMonthly: Type.Number()
     }),
     fsxCloneCalculation: Type.Object({
@@ -162,6 +154,17 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
         iops: Type.Number(),
         throughput: Type.Number(),
         totalCloneMonthlyCost: Type.Number()
+    }),
+    ebsSnapshotCalculation: Type.Object({
+        ebsInstanceMonth: Type.Number(),
+        totalSnapshots: Type.Number(),
+        initialSnapshotCost: Type.Number(),
+        monthlyCostPerSnapshot: Type.Number(),
+        discountForPartialStorageMonth: Type.Number(),
+        incrementalSnapshotCost: Type.Number(),
+        totalSnapshotCost: Type.Number(),
+        totalEbsSnapshotCost: Type.Number(),
+        ebsSnapshotCost: Type.Number()
     })
 });
 

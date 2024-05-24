@@ -24,6 +24,11 @@
 
 Start-Transcript -Path C:\cfn\log\Validate-Ami.ps1.txt -Append
 
+#get Instance ID
+$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+
+
 if (${IsCustomAmi} -ne 'true' ) {
     Write-Output @{ status= "Skipped"; reason= "AMI is AWS database licensed." } | ConvertTo-Json -Compress
     Start-Process "cfn-signal.exe" -ArgumentList "-e 0 $WaitHandler" -Wait -NoNewWindow
@@ -64,7 +69,7 @@ If($ValidSqlVersion -ne $true) {
 
 #Check if image was created to be part of domain and if domain passed is same.
 $DomainName = (Get-WmiObject Win32_ComputerSystem).Domain
-if(($DomainName -ne "WORKGROUP" ) -and ($DomainName -ne $DomainDNSName)) {
+if(($DomainName -ne "WORKGROUP" ) -and ($DomainName.ToLower() -ne $DomainDNSName.ToLower()) -and ($DomainDNSName.ToLower().Split('.')[0] -ne $DomainName.ToLower())) {
     $FailureReason = "Image was created to be part of domain $DomainName. Domain specified in deployment is $DomainDNSName."
     Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
