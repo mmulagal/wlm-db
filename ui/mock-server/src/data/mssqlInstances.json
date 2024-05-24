@@ -92,7 +92,7 @@
           "ebs": {
               "size": 3932364972032
           }  
-      },
+        },
         "estimatedUsageCost": {
           "compute": 700,
           "storage": { "fsxn": 0, "fsxw": 0, "ebs": 200 },
@@ -163,6 +163,20 @@
             "volumeType": "io2",
             "iops": 1000,
             "throughput": 1000
+          }
+        ],
+        "clusterNodeDetails": [
+          {
+              "ec2InstanceId": "i-02dbf20711b3c8311",
+              "ec2InstancePrivateIpAddress": "10.0.6.118",
+              "ec2InstanceType": "m5.xlarge",
+              "ec2InstanceName": "ec2-name1"
+          },
+          {
+              "ec2InstanceId": "i-02dbf20711b3c8312",
+              "ec2InstancePrivateIpAddress": "10.0.28.145",
+              "ec2InstanceType": "m5.xlarge",
+              "ec2InstanceName": "ec2-name1"
           }
         ]
       },
@@ -257,7 +271,7 @@
           "ebs": {
               "size": 3932364972032
           }  
-      },
+        },
         "estimatedUsageCost": {
           "compute": 700,
           "storage": { "fsxn": 0, "fsxw": 100, "ebs": 200 },
@@ -286,8 +300,7 @@
           }
         },
         "errors": "",
-        "ebsResourceInfo": [
-          
+        "ebsResourceInfo": [        
           {
             "id": "vol -prqni3pd1s1fe04h8",
             "size": 100,
@@ -315,6 +328,20 @@
             "volumeType": "io2",
             "iops": 1000,
             "throughput": 1000
+          }
+        ],
+        "clusterNodeDetails": [
+          {
+              "ec2InstanceId": "i-0d6acde2918b1ee11",
+              "ec2InstancePrivateIpAddress": "10.0.6.118",
+              "ec2InstanceType": "m5.xlarge",
+              "ec2InstanceName": "ec2-name1"
+          },
+          {
+              "ec2InstanceId": "i-0d6acde2918b1ee12",
+              "ec2InstancePrivateIpAddress": "10.0.28.145",
+              "ec2InstanceType": "m5.xlarge",
+              "ec2InstanceName": "ec2-name1"
           }
         ]
       },
@@ -409,7 +436,7 @@
           "ebs": {
               "size": 0
           }  
-      },
+        },
         "estimatedUsageCost": {
           "compute": 700,
           "storage": { "fsxn": 0, "fsxw": 0, "ebs": 200 },
@@ -480,6 +507,20 @@
             "volumeType": "io2",
             "iops": 1000,
             "throughput": 1000
+          }
+        ],
+        "clusterNodeDetails": [
+          {
+              "ec2InstanceId": "i-0ccb393ef1e834df",
+              "ec2InstancePrivateIpAddress": "10.0.6.118",
+              "ec2InstanceType": "m5.xlarge",
+              "ec2InstanceName": "ec2-name1"
+          },
+          {
+              "ec2InstanceId": "i-0ccb393ef1e834df2",
+              "ec2InstancePrivateIpAddress": "10.0.28.145",
+              "ec2InstanceType": "m5.xlarge",
+              "ec2InstanceName": "ec2-name1"
           }
         ]
       },
@@ -574,7 +615,7 @@
           "ebs": {
               "size": 0
           }  
-      },
+        },
         "estimatedUsageCost": {
           "compute": 700,
           "storage": { "fsxn": 0, "fsxw": 0, "ebs": 200 },
@@ -645,6 +686,20 @@
             "volumeType": "io2",
             "iops": 1000,
             "throughput": 1000
+          }
+        ],
+        "clusterNodeDetails": [
+          {
+              "ec2InstanceId": "i-02dadc332885523434",
+              "ec2InstancePrivateIpAddress": "10.0.6.118",
+              "ec2InstanceType": "m5.xlarge",
+              "ec2InstanceName": "ec2-name1"
+          },
+          {
+              "ec2InstanceId": "i-02dadc3328855234342",
+              "ec2InstancePrivateIpAddress": "10.0.28.145",
+              "ec2InstanceType": "m5.xlarge",
+              "ec2InstanceName": "ec2-name1"
           }
         ]
       },
@@ -739,7 +794,7 @@
           "ebs": {
               "size": 0
           }  
-      },
+        },
         "estimatedUsageCost": {
           "compute": 700,
           "storage": { "fsxn": 200, "fsxw": 100, "ebs": 0 },
@@ -810,6 +865,20 @@
             "volumeType": "io2",
             "iops": 1000,
             "throughput": 1000
+          }
+        ],
+        "clusterNodeDetails": [
+          {
+              "ec2InstanceId": "i-0291bc7476b72344d",
+              "ec2InstancePrivateIpAddress": "10.0.6.118",
+              "ec2InstanceType": "m5.xlarge",
+              "ec2InstanceName": "ec2-name1"
+          },
+          {
+              "ec2InstanceId": "i-0291bc7476b72344d2",
+              "ec2InstancePrivateIpAddress": "10.0.28.145",
+              "ec2InstanceType": "m5.xlarge",
+              "ec2InstanceName": "ec2-name1"
           }
         ]
       }

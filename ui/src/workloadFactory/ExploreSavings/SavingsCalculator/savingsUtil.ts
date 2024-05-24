@@ -236,13 +236,13 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `$${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `$${viewCalculation.fsxInstanceCalculation?.[0]?.ec2MachineCost}`,
-                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
                       },
                       {
                           label: 'Machine 2 specification'
@@ -304,13 +304,13 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `$${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `$${viewCalculation.fsxInstanceCalculation?.[0]?.ec2MachineCost}`,
-                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
                       }
                   ],
         FSxNCalculation: [
@@ -615,8 +615,8 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 value: `$${viewCalculation.fsxTotalCost}`,
                 text: `Total EC2 cost ($${
                     selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-                        ? 2 * viewCalculation.ebsInstanceCalculation?.[0].ec2MachineCost
-                        : viewCalculation.ebsInstanceCalculation?.[0].ec2MachineCost
+                        ? 2 * viewCalculation.fsxInstanceCalculation?.[0].ec2MachineCost
+                        : viewCalculation.fsxInstanceCalculation?.[0].ec2MachineCost
                 }) + Total throughput and IOPS cost ($${
                     viewCalculation.fsxOntapCalculation.totalThroughputAndIopsMonthly
                 })  + Total Storage cost ($${
@@ -659,13 +659,13 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `$${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `$${viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost}`,
-                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
                       },
                       {
                           label: 'Machine 2 specification'
@@ -690,13 +690,13 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `$${viewCalculation.ebsInstanceCalculation?.[1]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.ebsInstanceCalculation?.[1]?.instanceHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine2 cost',
-                          value: `$${viewCalculation.ebsInstanceCalculation?.[1]?.ec2MachineCost}`,
-                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.ebsInstanceCalculation?.[1]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.ebsInstanceCalculation?.[1]?.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[1]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
                       }
                   ]
                 : [
@@ -727,13 +727,13 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `$${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `$${viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost}`,
-                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
                       }
                   ],
         EBSCalculation: [
@@ -811,42 +811,42 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             },
             {
                 label: 'Total snapshots',
-                value: `${viewCalculation.ebsCalculation.totalSnapshots}`,
+                value: `${viewCalculation.ebsSnapshotCalculation.totalSnapshots}`,
                 text: ''
             },
             {
                 label: 'Initial snapshot cost',
-                value: `$${viewCalculation.ebsCalculation.initialSnapshotCost}`,
+                value: `$${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}`,
                 text: ''
             },
             {
                 label: 'Monthly cost of each snapshot',
-                value: `$${viewCalculation.ebsCalculation.monthlyCostPerSnapshot}`,
+                value: `$${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}`,
                 text: ''
             },
             {
                 label: 'Discount for partial storage month',
-                value: `$${viewCalculation.ebsCalculation.discountForPartialStorageMonth}`,
-                text: `Monthly cost of each snapshot ($${viewCalculation.ebsCalculation.monthlyCostPerSnapshot}) x Discount for partial storage month (50%)`
+                value: `$${viewCalculation.ebsSnapshotCalculation.discountForPartialStorageMonth}`,
+                text: `Monthly cost of each snapshot ($${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}) x Discount for partial storage month (50%)`
             },
             {
                 label: 'Incremental snapshot cost',
-                value: `$${viewCalculation.ebsCalculation.incrementalSnapshotCost}`,
-                text: `(Monthly cost of each snapshot ($${viewCalculation.ebsCalculation.monthlyCostPerSnapshot}) - Discount for partial storage month ($${viewCalculation.ebsCalculation.discountForPartialStorageMonth})) x Total snapshots (${viewCalculation.ebsCalculation.totalSnapshots})`
+                value: `$${viewCalculation.ebsSnapshotCalculation.incrementalSnapshotCost}`,
+                text: `(Monthly cost of each snapshot ($${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}) - Discount for partial storage month ($${viewCalculation.ebsSnapshotCalculation.discountForPartialStorageMonth})) x Total snapshots (${viewCalculation.ebsSnapshotCalculation.totalSnapshots})`
             },
             {
                 label: 'Total snapshot cost',
-                value: `$${viewCalculation.ebsCalculation.totalSnapshotCost}`,
-                text: `Initial snapshot cost ($${viewCalculation.ebsCalculation.initialSnapshotCost}) + Incremental snapshot cost ($${viewCalculation.ebsCalculation.incrementalSnapshotCost})`
+                value: `$${viewCalculation.ebsSnapshotCalculation.totalSnapshotCost}`,
+                text: `Initial snapshot cost ($${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}) + Incremental snapshot cost ($${viewCalculation.ebsSnapshotCalculation.incrementalSnapshotCost})`
             },
             {
                 label: 'Total EBS snapshot cost',
-                value: `$${viewCalculation.ebsCalculation.totalEbsSnapshotCost}`,
-                text: `Total snapshot cost ($${viewCalculation.ebsCalculation.totalSnapshotCost}) x Instance months (${viewCalculation.ebsCalculation.ebsInstanceMonth})`
+                value: `$${viewCalculation.ebsSnapshotCalculation.totalEbsSnapshotCost}`,
+                text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.totalSnapshotCost}) x Instance months (${viewCalculation.ebsSnapshotCalculation.ebsInstanceMonth})`
             },
             {
                 label: 'EBS snapshot cost',
-                value: `$${viewCalculation.ebsCalculation.ebsSnapshotCost}`,
+                value: `$${viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost}`,
                 text: ''
             }
         ],
@@ -872,11 +872,13 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                     selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                         ? 2 * viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost
                         : viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost
-                }) + EBS snapshot cost ($${viewCalculation.ebsCalculation.ebsSnapshotCost}) + EBS throughput cost ($${
-                    viewCalculation.ebsCalculation.ebsThroughputCost
-                }) + EBS IOPS cost ($${viewCalculation.ebsCalculation.ebsIopsCost}) + EBS storage cost ($${
-                    viewCalculation.ebsCalculation.ebsStorageCost
-                }) + EBS clone cost ($${viewCalculation.ebsCloneCalculation.totalCloneMonthlyCost})`
+                }) + EBS snapshot cost ($${
+                    viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost
+                }) + EBS throughput cost ($${viewCalculation.ebsCalculation.ebsThroughputCost}) + EBS IOPS cost ($${
+                    viewCalculation.ebsCalculation.ebsIopsCost
+                }) + EBS storage cost ($${viewCalculation.ebsCalculation.ebsStorageCost}) + EBS clone cost ($${
+                    viewCalculation.ebsCloneCalculation.totalCloneMonthlyCost
+                })`
             }
         ]
     };
@@ -896,6 +898,15 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
             const option = generateOptionType(value, value, '', false, '', data);
             result = { ...result, instanceType: option };
         }
+        // OS version
+        result = {
+            ...result,
+            operatingSystem: {
+                label: GENERAL.WIN_SERVER_2019,
+                value: GENERAL.WIN_SERVER_2019_VERSION
+            }
+        };
+
         // database version
         if (msSqlInstance?.serverVersion) {
             const dbVersionOption = DB_VERSIONS?.filter(perRow => msSqlInstance?.serverVersion.includes(perRow?.value));
