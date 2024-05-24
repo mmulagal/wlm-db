@@ -65,11 +65,23 @@ try {
         $SQLInstanceName = $SQLInstanceNames[0]
     }
 
-    # to-do - Consume $SQLInstanceName for non-default instance
-
-    #Set collation for the sql server if installer is available. Need to check if collation is an input for custom ami. 
+    # Instance name to be passed to sqlcmd
+    $ServerInstanceName = "$env:COMPUTERNAME"
+    If($SQLInstanceName -ne "MSSQLSERVER") {
+        $ServerInstanceName = "$env:COMPUTERNAME\$SQLInstanceName"
+        
+    }
+    
+    try{
+        $CurrentCollation = sqlcmd -S $ServerInstanceName -Q "set nocount on; select serverproperty('collation') as collation" -h -1
+        $CurrentCollation = $CurrentCollation.TrimStart().TrimEnd()
+    }catch {
+        Write-Output "Error while determining collation set. $_"
+        $CurrentCollation = ''
+    }
+    #Set collation for the sql server if installer is available. Need to check if collation is an input for custom ami.
     $SkipCollation = $False
-    if (Test-Path -Path "C:\SQLServerSetup\setup.exe") {
+    if (($CurrentCollation -ne $SqlCollation) -and (Test-Path -Path "C:\SQLServerSetup\setup.exe")) {
         Start-Sleep 5
         try {
             Write-Output "Setting collation on SQLServer($SQLInstanceName)"
