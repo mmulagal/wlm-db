@@ -140,14 +140,6 @@ export interface ViewCalculationsInterface {
         billableThroughputMbps?: number | string;
         billableThroughputGbps?: number | string;
         ebsThroughputCost?: number | string;
-        totalSnapshots?: number | string;
-        initialSnapshotCost?: number | string;
-        monthlyCostPerSnapshot?: number | string;
-        discountForPartialStorageMonth?: number | string;
-        incrementalSnapshotCost?: number | string;
-        totalSnapshotCost?: number | string;
-        totalEbsSnapshotCost?: number | string;
-        ebsSnapshotCost?: number | string;
         numberOfVolumes?: number;
         instanceAvgDuration?: number | string;
         ebsCapacityPrice?: number | string;
@@ -176,6 +168,17 @@ export interface ViewCalculationsInterface {
         iops?: number | string;
         throughput?: number | string;
         totalCloneMonthlyCost?: number | string;
+    };
+    ebsSnapshotCalculation?: {
+        ebsInstanceMonth?: number | string;
+        totalSnapshots?: number | string;
+        initialSnapshotCost?: number | string;
+        monthlyCostPerSnapshot?: number | string;
+        discountForPartialStorageMonth?: number | string;
+        incrementalSnapshotCost?: number | string;
+        totalSnapshotCost?: number | string;
+        totalEbsSnapshotCost?: number | string;
+        ebsSnapshotCost?: number | string;
     };
     fsxTotalCost?: number | string;
     ebsTotalCost?: number | string;
