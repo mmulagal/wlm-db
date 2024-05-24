@@ -259,7 +259,7 @@ interface MarketingRequestBody {
         snapshotFreq: string;
         snapshotPercentageChange: number;
     };
-    clones: {
+    clones?: {
         monthlyCloneNumber: number;
         changeRate: number;
         numberOfCloneEnvs: number;
