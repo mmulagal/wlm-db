@@ -835,25 +835,46 @@ async function checkDatabaseExists(
     } else {
         command = [`sqlcmd -S "${instanceName}" -Q "${DATABASE_NAME_EXISTS(databaseName)}" -y 0`];
     }
+    try {
+        const checkDatabaseExistsResponse = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            activeNodeInstanceId,
+            accountId,
+            false
+        );
 
-    const checkDatabaseExistsResponse = await callSsmExecution(
-        credentialsId,
-        region,
-        command,
-        activeNodeInstanceId,
-        accountId,
-        false
-    );
+        logger.debug('checking database name exists done', checkDatabaseExistsResponse);
 
-    logger.debug('checking database name exists done', checkDatabaseExistsResponse);
+        const parsedDatabaseExistsResponse = checkDatabaseExistsResponse
+            ? sqlResponseParsing(checkDatabaseExistsResponse)
+            : {};
 
-    const parsedDatabaseExistsResponse = checkDatabaseExistsResponse
-        ? sqlResponseParsing(checkDatabaseExistsResponse)
-        : {};
-    if (parsedDatabaseExistsResponse && parsedDatabaseExistsResponse.length) {
-        throw createError(412, `Provided database ${databaseName} already exists`);
+        if (parsedDatabaseExistsResponse && parsedDatabaseExistsResponse.length) {
+            return true;
+        }
+        return false;
+    } catch (err) {
+        const errorMessage = `Checking if database ${databaseName} exists on host ${databaseHostId} failed : ${err}`;
+        logger.error(errorMessage);
+        throw createError(errorMessage);
     }
-    return parsedDatabaseExistsResponse;
+}
+
+async function getSqlServerVersion(
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string,
+    instanceName: string = '.'
+) {
+    logger.info('Get SQL server version:', { credentialsId, region, activeNodeInstanceId, instanceName });
+    const command = [`sqlcmd -S "${instanceName}"-Q "SELECT @@VERSION" -y 0`];
+    const sqlServerVersionResponse = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
+    const serverInfo = sqlServerVersionResponse ? sqlServerVersionResponse?.replaceAll('\r\n', '').split('\t') : ''; // const sqlServerVersion: parsedSqlSeverVersionResponse[0].substring(0, serverInfo[0].indexOf('(')).trim(),
+    const sqlServerVersion = serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim();
+
+    return sqlServerVersion;
 }
 
 export {
@@ -878,5 +899,6 @@ export {
     getPerformanceMetrics,
     getNativeSQLBackedupDatabases,
     getActiveSqlNode,
-    checkDatabaseExists
+    checkDatabaseExists,
+    getSqlServerVersion
 };

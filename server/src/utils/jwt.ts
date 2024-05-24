@@ -94,6 +94,7 @@ async function authorizeJwt(authToken: string, decodedToken: JwtPayload | string
             }
         }
         if (
+            !(process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') &&
             !userTenancyAccounts?.some((account: { accountPublicId: string }) => account.accountPublicId === accountId)
         ) {
             throw createError(403, unauthorizedErrorMessage);

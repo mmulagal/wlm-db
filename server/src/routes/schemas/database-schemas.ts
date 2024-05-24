@@ -38,6 +38,7 @@ const PostSqlServerSchema = {
     tags: [RouteTags.DATABASE],
     params: CredentialsIdParams,
     body: MsSqlServerDiscoverRequestBody,
+    hide: process.env.NODE_ENV === 'production',
     summary: 'Discover MSSQL',
     description: 'Discover Microsoft SQL Server',
     response: {
@@ -76,18 +77,21 @@ const GetServerSummarySchema = {
 
 const DatabaseCpuUtilisationResponseSchema = {
     ...ResourceUtilizationBaseRequest,
+    hide: process.env.NODE_ENV === 'production',
     summary: 'Get MSSQL CPU utilisation',
     description: 'Database Resource CPU Utilisation'
 };
 
 const DatabaseStorageUtilisationResponseSchema = {
     ...ResourceUtilizationBaseRequest,
+    hide: process.env.NODE_ENV === 'production',
     summary: 'Get MSSQL Storage utilisation',
     description: 'Database Resource Storage Utilisation'
 };
 
 const DatabaseMemoryUtilisationResponseSchema = {
     ...ResourceUtilizationBaseRequest,
+    hide: process.env.NODE_ENV === 'production',
     summary: 'Get MSSQL Memory utilisation',
     description: 'Database Resource Memory Utilisation'
 };

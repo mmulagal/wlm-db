@@ -219,6 +219,17 @@ const DatabaseHostSummaryPerStorageTypeResponse = Type.Object({
     ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),
     estimatedUsageCost: Type.Optional(UsageCostPerStorageTypeResponse),
     resourceUtilization: Type.Optional(ResourcesUtilizationResponse),
+    sqlServerDeploymentType: Type.Optional(Type.String()),
+    clusterNodeDetails: Type.Optional(
+        Type.Array(
+            Type.Object({
+                ec2InstanceId: Type.String(),
+                ec2InstancePrivateIpAddress: Type.String(),
+                ec2InstanceType: Type.String(),
+                ec2InstanceName: Type.Optional(Type.String())
+            })
+        )
+    ),
     errors: Type.Optional(Type.Any())
 });
 const DatabaseHostSummaryPerStorageTypeListResponse = Type.Object({

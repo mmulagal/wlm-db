@@ -977,6 +977,10 @@ async function getDatabaseHostSummary(
             databaseHostDetails.storage = storageData!;
             databaseHostDetails.estimatedUsageCost = usageEstimationData!;
             databaseHostDetails.ebsResourceInfo = usageEstimationData?.storage?.ebsBreakdownByVolumeType || [];
+            databaseHostDetails.sqlServerDeploymentType = resourceDetail?.sqlServerDeploymentType || '';
+            if (resourceDetail?.clusterNodeDetails && resourceDetail?.clusterNodeDetails?.length > 0) {
+                databaseHostDetails.clusterNodeDetails = resourceDetail?.clusterNodeDetails;
+            }
             if (getResourceutilization && resourceUtilizationData) {
                 databaseHostDetails.resourceUtilization = {
                     cpu: resourceUtilizationData.cpuUtilization! || {},

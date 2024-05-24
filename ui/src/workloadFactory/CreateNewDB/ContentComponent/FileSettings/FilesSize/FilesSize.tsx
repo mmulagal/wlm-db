@@ -33,7 +33,8 @@ const FilesSize = () => {
         newUserLogFileSize,
         newUserLogFileSizeUnit,
         driveInfoList,
-        driveLetter
+        driveLetter,
+        isDataVirtualMountPoint
     } = useAppSelector(state => state.createNewUser);
     const isDbCreateHit = useAppSelector(state => state.msSqlAction.isDbCreateHit);
     const dbCreateDataSizeValid = useAppSelector(state => state.msSqlAction.dbCreateDataSizeValid);
@@ -151,10 +152,10 @@ const FilesSize = () => {
         if (!currentSize || parseFloat(currentSize.toString()) < GIB_IN_BYTE) {
             dispatch(setIsDataSizeValid(false));
             return GENERAL.NO_DATA_SIZE_ERROR;
-        } else if (maxSize && maxSize < GIB_IN_BYTE) {
+        } else if (maxSize && maxSize < GIB_IN_BYTE && !isDataVirtualMountPoint) {
             dispatch(setIsDataSizeValid(false));
             return GENERAL.DATA_SIZE_MIN_ERROR;
-        } else if (maxSize && (currentSize < 1 || currentSize > maxSize)) {
+        } else if (maxSize && (currentSize < 1 || (currentSize > maxSize && !isDataVirtualMountPoint))) {
             dispatch(setIsDataSizeValid(false));
             return `${GENERAL.DATA_SIZE_ERROR} ${formatSizeRoundOff(maxSize)}`;
         } else {

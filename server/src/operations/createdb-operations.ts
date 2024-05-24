@@ -1212,7 +1212,7 @@ async function validateParams(
             }
         }
 
-        await checkDatabaseExists(
+        const databaseExists = await checkDatabaseExists(
             accountId,
             credentialsId,
             region,
@@ -1221,6 +1221,10 @@ async function validateParams(
             activeNodeInstanceId,
             instanceName
         );
+
+        if (databaseExists) {
+            throw createError(412, `Provided database ${databaseName} already exists`);
+        }
 
         if (!collation) {
             throw createError(412, 'Collation should not be empty');
@@ -1234,12 +1238,8 @@ async function validateParams(
             throw createError(412, `Selected collation ${collation} is not available`);
         }
 
-        if (isDataVirtualMount && !isDataDriveExists) {
-            throw createError(412, 'Virtual Mount should not be selected for new data drives');
-        }
-
-        if (isLogVirtualMount && !isLogDriveExists) {
-            throw createError(412, 'Virtual Mount should not be selected for new log drives');
+        if ((isDataVirtualMount || isLogVirtualMount) && (!isDataDriveExists || !isLogDriveExists)) {
+            throw createError(412, 'Virtual Mount should not be selected for new data/log drives');
         }
 
         const { existingDriveInfo, availableDriveLetters } = await getDriveInfo(
@@ -1261,6 +1261,7 @@ async function validateParams(
                 dataGibIntoBytes,
                 isClustered,
                 dataFileName,
+                isDataVirtualMount,
                 'data'
             ),
             checkDriveExists(
@@ -1271,6 +1272,7 @@ async function validateParams(
                 logGibIntoBytes,
                 isClustered,
                 logFileName,
+                isLogVirtualMount,
                 'log'
             )
         ]);
@@ -1304,6 +1306,7 @@ async function checkDriveExists(
     volumeSizeInBytes: number,
     isClustered: string,
     fileName: string,
+    isVirtualMount: boolean,
     driveType: string
 ) {
     logger.info(
@@ -1315,6 +1318,7 @@ async function checkDriveExists(
         volumeSizeInBytes,
         isClustered,
         fileName,
+        isVirtualMount,
         driveType
     );
 
@@ -1369,7 +1373,7 @@ async function checkDriveExists(
                 `Selected ${driveType} drive ${selectedDrive} is non clustered drive or drive not part of SQL server`
             );
         }
-        if (matchedExistingDrive.availableSize < volumeSizeInBytes) {
+        if (!isVirtualMount && matchedExistingDrive.availableSize < volumeSizeInBytes) {
             throw createError(412, `Selected ${driveType} drive ${selectedDrive} does not have sufficient capacity`);
         }
     } else {

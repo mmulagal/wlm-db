@@ -373,6 +373,7 @@ Resources:
                                     - Fn::Base64: !Ref 'ValidationNode1WaitHandler'
                                     - '"'
                                     - '"'
+                            waitAfterCompletion: '0'
                         d-validate-ami:
                             command: !Join
                                   - ''
@@ -380,6 +381,8 @@ Resources:
                                     - !Ref 'IsCustomAmi'
                                     - ' -Region '
                                     - !Ref 'AWS::Region'
+                                    - ' -DomainDNSName '
+                                    - !Ref 'DomainDNSName'
                                     - ' -Stackname '
                                     - !Ref 'AWS::StackName'
                                     - ' -Parentstackname '
@@ -390,6 +393,7 @@ Resources:
                                     - Fn::Base64: !Ref 'ValidationNode1WaitHandler'
                                     - '"'
                                     - '"'
+                            waitAfterCompletion: '0'
                         e-signal-resource:
                             command: !Sub 'cfn-signal.exe -e %ERRORLEVEL% --resource ValidationNode1
                                 --stack ${AWS::StackName} --region ${AWS::Region}'
@@ -619,6 +623,7 @@ Resources:
                                     - Fn::Base64: !Ref 'ValidationNode2WaitHandler'
                                     - '"'
                                     - '"'
+                            waitAfterCompletion: '0'
                         c-signal-resource:
                             command: !Sub 'cfn-signal.exe -e %ERRORLEVEL% --resource ValidationNode2
                                 --stack ${AWS::StackName} --region ${AWS::Region}'

@@ -2,7 +2,7 @@ import { Dispatch } from 'redux';
 import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import {
     formatFractionalNumber,
-    formatSizeOnePrecision,
+    formatSizeTwoPrecision,
     generateOptionType,
     removePasswordInConfig
 } from '../../../utils/utilityFunctions';
@@ -116,7 +116,7 @@ export const calculatedFSXData = (fsxData: any) => {
         {
             label: 'Total storage capacity',
             value: fsxData?.totalStorageCapacity
-                ? formatSizeOnePrecision(fsxData?.totalStorageCapacity)
+                ? formatSizeTwoPrecision(fsxData?.totalStorageCapacity)
                 : GENERAL.NOT_AVAILABLE,
             text: 'The number of volumes that you need multiplied by the selected volume size.'
         },
@@ -136,20 +136,20 @@ export const calculatedFSXData = (fsxData: any) => {
         {
             label: 'Effective capacity',
             value: fsxData?.effectiveCapacity
-                ? formatSizeOnePrecision(fsxData?.effectiveCapacity)
+                ? formatSizeTwoPrecision(fsxData?.effectiveCapacity)
                 : GENERAL.NOT_AVAILABLE,
             text: `Cost reduction based on ${fsxData?.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
         },
         {
             label: 'SSD tier required capacity',
             value: fsxData?.ssdTierReqCapacity
-                ? formatSizeOnePrecision(fsxData?.ssdTierReqCapacity)
+                ? formatSizeTwoPrecision(fsxData?.ssdTierReqCapacity)
                 : GENERAL.NOT_AVAILABLE,
             text: `Based on a typical ${fsxData?.useCase} workload, ${fsxData?.percentageSsd}% of the data is on the SSD tier.`
         },
         {
             label: 'Capacity pool tier required capacity',
-            value: fsxData?.capacityPoolTier ? formatSizeOnePrecision(fsxData?.capacityPoolTier) : '0 TiB',
+            value: fsxData?.capacityPoolTier ? formatSizeTwoPrecision(fsxData?.capacityPoolTier) : '0 TiB',
             text: `Based on a typical ${fsxData?.useCase} workload, ${
                 100 - fsxData?.percentageSsd
             }% of the data is on the capacity pool tier.`
@@ -169,7 +169,7 @@ export const calculatedFSXData = (fsxData: any) => {
         {
             label: 'Monthly snapshot capacity',
             value: fsxData?.monthlySnapshotCapacity
-                ? formatSizeOnePrecision(fsxData?.monthlySnapshotCapacity)
+                ? formatSizeTwoPrecision(fsxData?.monthlySnapshotCapacity)
                 : GENERAL.NOT_AVAILABLE,
             text: 'Cost reduction is based on FSx for ONTAP data tiering capability. 90% of snapshots data will be tiered to the capacity pool tier.'
         }
@@ -236,13 +236,13 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `$${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `$${viewCalculation.fsxInstanceCalculation?.[0]?.ec2MachineCost}`,
-                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
                       },
                       {
                           label: 'Machine 2 specification'
@@ -304,13 +304,13 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `$${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `$${viewCalculation.fsxInstanceCalculation?.[0]?.ec2MachineCost}`,
-                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
                       }
                   ],
         FSxNCalculation: [
@@ -350,19 +350,19 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 text: `Desired storage capacity (${viewCalculation.fsxOntapCalculation.desiredStorageCapacity})  - Storage savings from compression & deduplication (${viewCalculation.fsxOntapCalculation.storageSavingsFromCompressionAndDeduplication})`
             },
             {
-                label: 'SSD storage GIB per month',
+                label: 'SSD storage GiB per month',
                 value: `${viewCalculation.fsxOntapCalculation.ssdStoragePerMonth}`,
                 text: `Effective storage capacity for FSx for ONTAP (${viewCalculation.fsxOntapCalculation.effectiveFsxnStorageCapacity})  x Percentage of data on SSD storage (${viewCalculation.fsxOntapCalculation.percentageOfDataOnSsdStorage}%) `
             },
             {
-                label: 'The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity',
+                label: 'The greater of SSD storage GiB per month and the minimum allowed SSD storage capacity',
                 value: `${viewCalculation.fsxOntapCalculation.greaterOfSsdAndMinAllowedSsd}`,
                 text: ``
             },
             {
                 label: 'SSD monthly cost ',
                 value: `$${viewCalculation.fsxOntapCalculation.ssdMonthlyCost}`,
-                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity (${viewCalculation.fsxOntapCalculation.greaterOfSsdAndMinAllowedSsd}) x SSD storage price ($${viewCalculation.fsxOntapCalculation.fsxnStoragePrice})`
+                text: `The greater of SSD storage GiB per month and the minimum allowed SSD storage capacity (${viewCalculation.fsxOntapCalculation.greaterOfSsdAndMinAllowedSsd}) x SSD storage price ($${viewCalculation.fsxOntapCalculation.fsxnStoragePrice})`
             },
             {
                 label: 'Total monthly cost for FSx for NetApp ONTAP file server - SSD storage capacity',
@@ -402,7 +402,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Minimum number of file systems required for storage capacity',
                 value: `${viewCalculation.fsxOntapCalculation.minFileSystemsNumForStorage}`,
-                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity (${viewCalculation.fsxOntapCalculation.greaterOfSsdAndMinAllowedSsd}) ÷ Max SSD tier size (${viewCalculation.fsxOntapCalculation.maxSsdTierSize}) `
+                text: `The greater of SSD storage GiB per month and the minimum allowed SSD storage capacity (${viewCalculation.fsxOntapCalculation.greaterOfSsdAndMinAllowedSsd}) ÷ Max SSD tier size (${viewCalculation.fsxOntapCalculation.maxSsdTierSize}) `
             },
             {
                 label: 'Minimum number of file systems required for throughput capacity',
@@ -425,7 +425,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 text: ``
             },
             {
-                label: 'Minimum throughout capacity required',
+                label: 'Minimum throughput capacity required',
                 value: `${viewCalculation.fsxOntapCalculation.minThroughputCapacityRequired}`,
                 text: `Required number of FSx file systems (${viewCalculation.fsxOntapCalculation.requiredNumOfFsx}) x Min throughput capacity 128 MB/s)`
             },
@@ -442,7 +442,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Included SSD IOPS',
                 value: `${viewCalculation.fsxOntapCalculation.includedSsdIops} IOPS`,
-                text: `The greater of SSD storage GIB per month and the minimum allowed SSD storage capacity (${viewCalculation.fsxOntapCalculation.greaterOfSsdAndMinAllowedSsd}) x Included (${viewCalculation.fsxOntapCalculation.includedIops}) IOPS per GIB `
+                text: `The greater of SSD storage GiB per month and the minimum allowed SSD storage capacity (${viewCalculation.fsxOntapCalculation.greaterOfSsdAndMinAllowedSsd}) x Included (${viewCalculation.fsxOntapCalculation.includedIops}) IOPS per GiB `
             },
             {
                 label: 'Additional SSD IOPS',
@@ -502,7 +502,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 text: `Desired storage capacity (${viewCalculation.fsxOntapSnapshotCalculation.desiredStorageCapacity})  - Storage savings from compression & deduplication (${viewCalculation.fsxOntapSnapshotCalculation.storageSavingsFromCompressionAndDeduplication})`
             },
             {
-                label: 'SSD storage GIB per month',
+                label: 'SSD storage GiB per month',
                 value: `${viewCalculation.fsxOntapSnapshotCalculation.ssdStoragePerMonth}`,
                 text: `Effective storage capacity for FSx for ONTAP (${viewCalculation.fsxOntapSnapshotCalculation.effectiveFsxnStorageCapacity})  x Percentage of data on SSD storage (${viewCalculation.fsxOntapSnapshotCalculation.percentageOfDataOnSsdStorage}%) `
             },
@@ -615,8 +615,8 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                 value: `$${viewCalculation.fsxTotalCost}`,
                 text: `Total EC2 cost ($${
                     selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-                        ? 2 * viewCalculation.ebsInstanceCalculation?.[0].ec2MachineCost
-                        : viewCalculation.ebsInstanceCalculation?.[0].ec2MachineCost
+                        ? 2 * viewCalculation.fsxInstanceCalculation?.[0].ec2MachineCost
+                        : viewCalculation.fsxInstanceCalculation?.[0].ec2MachineCost
                 }) + Total throughput and IOPS cost ($${
                     viewCalculation.fsxOntapCalculation.totalThroughputAndIopsMonthly
                 })  + Total Storage cost ($${
@@ -659,13 +659,13 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `$${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `$${viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost}`,
-                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
                       },
                       {
                           label: 'Machine 2 specification'
@@ -690,13 +690,13 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `$${viewCalculation.ebsInstanceCalculation?.[1]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.ebsInstanceCalculation?.[1]?.instanceHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine2 cost',
-                          value: `$${viewCalculation.ebsInstanceCalculation?.[1]?.ec2MachineCost}`,
-                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.ebsInstanceCalculation?.[1]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.ebsInstanceCalculation?.[1]?.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[1]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
                       }
                   ]
                 : [
@@ -727,13 +727,13 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `$${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `$${viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost}`,
-                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
                       }
                   ],
         EBSCalculation: [
@@ -811,42 +811,42 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             },
             {
                 label: 'Total snapshots',
-                value: `${viewCalculation.ebsCalculation.totalSnapshots}`,
+                value: `${viewCalculation.ebsSnapshotCalculation.totalSnapshots}`,
                 text: ''
             },
             {
                 label: 'Initial snapshot cost',
-                value: `$${viewCalculation.ebsCalculation.initialSnapshotCost}`,
+                value: `$${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}`,
                 text: ''
             },
             {
                 label: 'Monthly cost of each snapshot',
-                value: `$${viewCalculation.ebsCalculation.monthlyCostPerSnapshot}`,
+                value: `$${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}`,
                 text: ''
             },
             {
                 label: 'Discount for partial storage month',
-                value: `$${viewCalculation.ebsCalculation.discountForPartialStorageMonth}`,
-                text: `Monthly cost of each snapshot ($${viewCalculation.ebsCalculation.monthlyCostPerSnapshot}) x Discount for partial storage month (50%)`
+                value: `$${viewCalculation.ebsSnapshotCalculation.discountForPartialStorageMonth}`,
+                text: `Monthly cost of each snapshot ($${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}) x Discount for partial storage month (50%)`
             },
             {
                 label: 'Incremental snapshot cost',
-                value: `$${viewCalculation.ebsCalculation.incrementalSnapshotCost}`,
-                text: `(Monthly cost of each snapshot ($${viewCalculation.ebsCalculation.monthlyCostPerSnapshot}) - Discount for partial storage month ($${viewCalculation.ebsCalculation.discountForPartialStorageMonth})) x Total snapshots (${viewCalculation.ebsCalculation.totalSnapshots})`
+                value: `$${viewCalculation.ebsSnapshotCalculation.incrementalSnapshotCost}`,
+                text: `(Monthly cost of each snapshot ($${viewCalculation.ebsSnapshotCalculation.monthlyCostPerSnapshot}) - Discount for partial storage month ($${viewCalculation.ebsSnapshotCalculation.discountForPartialStorageMonth})) x Total snapshots (${viewCalculation.ebsSnapshotCalculation.totalSnapshots})`
             },
             {
                 label: 'Total snapshot cost',
-                value: `$${viewCalculation.ebsCalculation.totalSnapshotCost}`,
-                text: `Initial snapshot cost ($${viewCalculation.ebsCalculation.initialSnapshotCost}) + Incremental snapshot cost ($${viewCalculation.ebsCalculation.incrementalSnapshotCost})`
+                value: `$${viewCalculation.ebsSnapshotCalculation.totalSnapshotCost}`,
+                text: `Initial snapshot cost ($${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}) + Incremental snapshot cost ($${viewCalculation.ebsSnapshotCalculation.incrementalSnapshotCost})`
             },
             {
                 label: 'Total EBS snapshot cost',
-                value: `$${viewCalculation.ebsCalculation.totalEbsSnapshotCost}`,
-                text: `Total snapshot cost ($${viewCalculation.ebsCalculation.totalSnapshotCost}) x Instance months (${viewCalculation.ebsCalculation.ebsInstanceMonth})`
+                value: `$${viewCalculation.ebsSnapshotCalculation.totalEbsSnapshotCost}`,
+                text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.totalSnapshotCost}) x Instance months (${viewCalculation.ebsSnapshotCalculation.ebsInstanceMonth})`
             },
             {
                 label: 'EBS snapshot cost',
-                value: `$${viewCalculation.ebsCalculation.ebsSnapshotCost}`,
+                value: `$${viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost}`,
                 text: ''
             }
         ],
@@ -872,11 +872,13 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                     selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                         ? 2 * viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost
                         : viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost
-                }) + EBS snapshot cost ($${viewCalculation.ebsCalculation.ebsSnapshotCost}) + EBS throughput cost ($${
-                    viewCalculation.ebsCalculation.ebsThroughputCost
-                }) + EBS IOPS cost ($${viewCalculation.ebsCalculation.ebsIopsCost}) + EBS storage cost ($${
-                    viewCalculation.ebsCalculation.ebsStorageCost
-                }) + EBS clone cost ($${viewCalculation.ebsCloneCalculation.totalCloneMonthlyCost})`
+                }) + EBS snapshot cost ($${
+                    viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost
+                }) + EBS throughput cost ($${viewCalculation.ebsCalculation.ebsThroughputCost}) + EBS IOPS cost ($${
+                    viewCalculation.ebsCalculation.ebsIopsCost
+                }) + EBS storage cost ($${viewCalculation.ebsCalculation.ebsStorageCost}) + EBS clone cost ($${
+                    viewCalculation.ebsCloneCalculation.totalCloneMonthlyCost
+                })`
             }
         ]
     };
@@ -896,6 +898,15 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
             const option = generateOptionType(value, value, '', false, '', data);
             result = { ...result, instanceType: option };
         }
+        // OS version
+        result = {
+            ...result,
+            operatingSystem: {
+                label: GENERAL.WIN_SERVER_2019,
+                value: GENERAL.WIN_SERVER_2019_VERSION
+            }
+        };
+
         // database version
         if (msSqlInstance?.serverVersion) {
             const dbVersionOption = DB_VERSIONS?.filter(perRow => msSqlInstance?.serverVersion.includes(perRow?.value));

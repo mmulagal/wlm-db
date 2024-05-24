@@ -97,6 +97,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsAuthentication: false,
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
                         sqlServerDeploymentType: 'FCI',
+                        nodeIps: ['10.0.6.118', '10.0.28.145'],
                         storage: [
                             {
                                 type: 'FSXN',
@@ -119,6 +120,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerVersion: '16.0.4095.4',
                         windowsAuthentication: true,
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        nodeIps: ['10.0.6.118', '10.0.28.145'],
                         sqlServerDeploymentType: 'AOAG',
                         storage: [
                             {
@@ -154,6 +156,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         isDefaultInstance: false,
                         sqlServerName: 'SQLServer-PreProd-01',
                         sqlServerVersion: '16.0.4105.2',
+                        nodeIps: ['10.0.6.118', '10.0.28.145'],
                         windowsAuthentication: false,
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
                         sqlServerDeploymentType: 'AOAG',
@@ -266,6 +269,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerName: 'SQLServer-QA-01',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
                         sqlServerDeploymentType: 'AOAG',
+                        nodeIps: ['10.0.6.118', '10.0.28.145'],
                         storage: [
                             {
                                 type: 'EBS',
@@ -445,6 +449,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsAuthentication: true,
                         sqlServerName: 'SQLServer-Training-02',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUZ'],
+                        nodeIps: ['10.0.6.118', '10.0.28.145'],
                         sqlServerDeploymentType: 'AOAG',
                         storage: [
                             {

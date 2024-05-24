@@ -212,10 +212,11 @@ export const GENERAL = {
     LICENSE_ID: 'SQL Server AMI',
     USE_CUSTOM_AMI: 'Use custom AMI',
     CUSTOM_AMI: 'Custom AMI',
-    AMI_ID: 'AMI ID',
-    SELECT_AMI_ID: 'Select AMI ID',
+    AMI_ID: 'AMI',
+    SELECT_AMI_ID: 'Select AMI',
     SELECT_AMI_NAME: 'Select AMI Name',
-
+    FILTER_SQL_SERVER_AMI: 'Filter SQL Server AMI',
+    SELECT_SQL_SERVER_AMI: 'Select SQL Server AMI',
     //Constants for DB name accordion
     DATABASE_INSTANCE_NAME: 'Database cluster name',
     DB_NAME_TOOLTIP:
@@ -551,7 +552,7 @@ export const GENERAL = {
     JM_TYPE_DEPLOYMENT: 'Deployment',
     JM_TYPE_CREATE_RESOURCE: 'Create database',
     JM_TYPE_PREPARE_RESOURCE: 'Prepare resource',
-    JM_TYPE_SANDBOX: 'Create sandbox',
+    JM_TYPE_SANDBOX: 'Sandbox',
     JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
     DEMO_TITLE: 'Redirect to CloudFormation',
@@ -875,7 +876,8 @@ export const GENERAL = {
     MONTHLY_CHANGE_RATE_TOOLTIP: 'The monthly change rate is the % of data that changes per month.',
     CUSTOM_AMI_DISABLE_MSG: 'Not applicable for Custom AMI',
     CLONE_TARGET_DB_LENGTH_VALIDATION: 'Target database should not exceed 128 characters',
-    ROLLBACK_CHECKBOX: 'Select the snapshot you would like the database to Roll-back to'
+    ROLLBACK_CHECKBOX: 'Select the snapshot you would like the database to Roll-back to',
+    DELETING: 'Deleting'
 };
 
 export const CODE_VIEWER = {

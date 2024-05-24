@@ -72,7 +72,7 @@ const SelectedVolumeSummary = () => {
                 return ebsAvailable.length === 0 ? (
                     <DsTypography variant="Regular_14" style={{ minWidth: '146px', display: 'flex', gap: '24px' }}>
                         <div style={{ width: '250px' }}>{rowData.details}</div>
-                        <DsTypography variant="Regular_14">N/A</DsTypography>
+                        <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
                     </DsTypography>
                 ) : (
                     <DsTypography variant="Regular_14">{rowData.details}</DsTypography>

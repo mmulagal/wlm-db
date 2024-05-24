@@ -75,7 +75,8 @@ import {
     DATABASE_MAX_LUN_SIZE_IN_GIB,
     TEMPLATE_USERNAME_MAPPING,
     PERMISSION_DENIAL_POSSIBLE_REASONS,
-    STORAGE_PROTOCOLS
+    STORAGE_PROTOCOLS,
+    CUSTOM_AMI_VALIDATION_INSTANCE_TYPE
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -151,10 +152,11 @@ async function formatTemplateParameters(
         sqlConfiguration.sqlDeploymentMode === STANDALONE
             ? [networkConfiguration.availabilityZone1!]
             : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
-    const validationNodeInstanceType =
-        credentialsId && region
-            ? await getValidationNodeInstanceType(credentialsId!, region, availabilityZones)
-            : VALIDATION_NODE_INSTANCETYPE.T2MICRO;
+    const validationNodeInstanceType = sqlConfiguration.isCustomAmi
+        ? CUSTOM_AMI_VALIDATION_INSTANCE_TYPE
+        : credentialsId && region
+        ? await getValidationNodeInstanceType(credentialsId!, region, availabilityZones)
+        : VALIDATION_NODE_INSTANCETYPE.T2MICRO;
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
@@ -694,7 +696,9 @@ async function createCloudFormationTemplateForUserDeployment(
         sqlConfiguration.sqlDeploymentMode === STANDALONE
             ? [networkConfiguration.availabilityZone1!]
             : [networkConfiguration.availabilityZone1!, networkConfiguration.availabilityZone2!];
-    const validationNodeInstanceType = await getValidationNodeInstanceType(credentialsId!, region!, availabilityZones);
+    const validationNodeInstanceType = sqlConfiguration.isCustomAmi
+        ? CUSTOM_AMI_VALIDATION_INSTANCE_TYPE
+        : await getValidationNodeInstanceType(credentialsId!, region!, availabilityZones);
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });

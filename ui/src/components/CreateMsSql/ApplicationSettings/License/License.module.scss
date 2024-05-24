@@ -16,18 +16,38 @@
     }
 
     .radio-container {
+        background-color: var(--blue-10);
+        padding: 16px 24px 16px 24px;
         display: flex;
         gap: 32px;
         margin-top: 24px;
-        margin-bottom: 16px;
+        margin-bottom: 40px;
     }
 
-    .handleSelect {
-        width: 550px;
-        --menu-max-height: 250px;
+    .headings {
+        display: grid;
+        gap: 16px;
 
-        [class*='design-system-select__single-value'] {
-            max-width: 480px !important;
+        .filterVersions {
+            display: flex;
+            gap: 24px;
+    
+            .selectVersion {
+                width: 312px;
+            }
+        }
+    
+        .handleSelect {
+            display: flex;
+            gap: 10px;
+            width: 647px;
+            --menu-max-height: 250px;
+    
+            [class*='design-system-select__single-value'] {
+                max-width: 578px !important;
+            }
         }
     }
+
+    
 }

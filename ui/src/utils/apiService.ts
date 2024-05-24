@@ -719,6 +719,12 @@ export const sandboxApi = createApi({
                 query: ({ region, credentialId, databaseHostId, databaseName, instanceName }) => ({
                     url: `credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-mount-points?databaseName=${databaseName}&instanceName=${instanceName}`
                 })
+            }),
+            deleteSandbox: builder.mutation({
+                query: ({ credentialsId, regionId, databaseHostId, sandboxName }) => ({
+                    url: `credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandbox/${sandboxName}`,
+                    method: 'DELETE'
+                })
             })
         };
     }
@@ -824,9 +830,11 @@ export const {
 export const {
     useGetSandboxListQuery,
     useGetSandboxSavingsQuery,
+    useLazyGetSandboxSavingsQuery,
     useCreateSandboxMutation,
     useGetConnectionInfoQuery,
-    useGetDatabaseMountPointsQuery
+    useGetDatabaseMountPointsQuery,
+    useDeleteSandboxMutation
 } = sandboxApi;
 
 export const { useGetStorageSavingsMutation, useGetViewCalculationsMutation } = exploreSavingsApi;

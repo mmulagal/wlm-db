@@ -26,7 +26,7 @@ import {
     getStorageSavingsFromOntap
 } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails } from '../utils/common-types';
-import { checkDatabaseExists, getActiveSqlNode } from './workloads/mssql/mssql-operations';
+import { checkDatabaseExists, getActiveSqlNode, getSqlServerVersion } from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { sleep, sqlResponseParsing } from '../utils/utils';
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
@@ -90,6 +90,8 @@ async function getSandboxDetails(
 
     const command = [GET_SANDBOX_DETAILS(['"."'])];
     const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
+    let sandboxInfo: SandboxInfoResponseType[] = [];
+
     if (response) {
         let parsedResponse;
         try {
@@ -118,8 +120,6 @@ async function getSandboxDetails(
                 sandbox_properties: { name: string; value: string }[];
             }[] = sqlResponseParsing(finalSandboxDetails);
 
-            let sandboxInfo: SandboxInfoResponseType[] = [];
-
             parsedSandboxDetails.forEach(item => {
                 const sources = getSourceDetails(item);
 
@@ -139,31 +139,32 @@ async function getSandboxDetails(
                 sandboxInfo.push(databaseObject);
             });
 
-            if ((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && sandboxes) {
-                const demoSandboxInfo = sandboxes.map(item => {
-                    const databaseObject = {
-                        sandboxName: item.databaseName,
-                        databaseHostName: resourceDetails.resource_name!,
-                        databaseHostId: resourceDetails.resource_id!,
-                        databaseInstanceName: DEFAULT_INSTANCE_NAME,
-                        sourceDatabaseHostName: item.source.split('|')[0],
-                        sourceDatabaseInstanceName: item.source.split('|')[1],
-                        sourceDatabaseName: item.source.split('|')[2],
-                        createdAt: item.createdAt,
-                        updatedAt: item.updatedAt,
-                        tag: item.tag
-                    };
-                    return databaseObject;
-                });
-                if (demoSandboxInfo.length > 0) {
-                    sandboxInfo = sandboxInfo.concat(demoSandboxInfo);
-                }
-            }
             return sandboxInfo;
         } catch (err) {
             return errorResponse(err);
         }
     }
+    if ((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && sandboxes) {
+        const demoSandboxInfo = sandboxes.map(item => {
+            const databaseObject = {
+                sandboxName: item.databaseName,
+                databaseHostName: resourceDetails.resource_name!,
+                databaseHostId: resourceDetails.resource_id!,
+                databaseInstanceName: DEFAULT_INSTANCE_NAME,
+                sourceDatabaseHostName: item.source.split('|')[0],
+                sourceDatabaseInstanceName: item.source.split('|')[1],
+                sourceDatabaseName: item.source.split('|')[2],
+                createdAt: item.createdAt,
+                updatedAt: item.updatedAt,
+                tag: item.tag
+            };
+            return databaseObject;
+        });
+        if (demoSandboxInfo.length > 0) {
+            sandboxInfo = sandboxInfo.concat(demoSandboxInfo);
+        }
+    }
+    return sandboxInfo;
 }
 
 async function getSandboxesInfo(accountId: string, credentialsId: string, region: string, nextToken?: string) {
@@ -319,7 +320,7 @@ interface VolumeLunMap {
     volumeName: string;
     lunPath: string;
     windowsVolumeName: string;
-    // volumeId: string;
+    volumeUuid: string;
 }
 
 interface VolumeLunMapping {
@@ -363,6 +364,10 @@ async function createSandbox(
     mountPoints: MountPoints
 ) {
     logger.info({ source, dest, mountPoints });
+
+    Object.entries(mountPoints).forEach(([key, value]) => {
+        mountPoints[key as keyof MountPoints] = value.toUpperCase();
+    });
 
     let [[srcResourceDetail], [destResourceDetail]] = await Promise.all([
         listResources(accountId, source.host),
@@ -617,6 +622,18 @@ async function validateCloneParams(
     });
 
     try {
+        if (srcDetails.host !== destDetails.host || srcDetails.instance !== destDetails.instance) {
+            const [srcSqlServerVersion, destSqlServerVersion] = await Promise.all([
+                getSqlServerVersion(credentialsId, region, srcDetails.activeNodeInstaceId, srcDetails.instanceName),
+                getSqlServerVersion(credentialsId, region, destDetails.activeNodeInstaceId, destDetails.instanceName)
+            ]);
+
+            if (srcSqlServerVersion > destSqlServerVersion) {
+                const errorMessage = 'Sandbox creation from higer SQL version to lower versions is not supported';
+                logger.error(errorMessage);
+                throw createError(errorMessage);
+            }
+        }
         const { existingDriveInfo } = await getDriveInfo(
             accountId,
             destDetails.host,
@@ -626,15 +643,40 @@ async function validateCloneParams(
             CUSTOM_SSM_EXECUTION_TIMEOUT
         );
 
-        await checkDatabaseExists(
-            accountId,
-            credentialsId,
-            region,
-            destDetails.host,
-            destDetails.database,
-            destDetails.activeNodeInstaceId,
-            destDetails.instanceName
-        );
+        const [destDatabaseExists, srcDatabaseExists] = await Promise.all([
+            checkDatabaseExists(
+                accountId,
+                credentialsId,
+                region,
+                destDetails.host,
+                destDetails.database,
+                destDetails.activeNodeInstaceId,
+                destDetails.instanceName
+            ),
+            checkDatabaseExists(
+                accountId,
+                credentialsId,
+                region,
+                srcDetails.host,
+                srcDetails.database,
+                srcDetails.activeNodeInstaceId,
+                srcDetails.instanceName
+            )
+        ]);
+
+        if (destDatabaseExists) {
+            throw createError(
+                412,
+                `Database ${destDetails.database} already exists on destination host ${srcDetails.host}`
+            );
+        }
+
+        if (!srcDatabaseExists && !(process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator')) {
+            throw createError(
+                412,
+                `Database ${srcDetails.database} does not exists on source host ${destDetails.host}`
+            );
+        }
 
         const dataDriveExistsPromise = validateSelectedDrives(
             existingDriveInfo,
@@ -683,9 +725,9 @@ async function getMappings(
     let errorMsg;
 
     const mappingJob = await registerJob(accountId, credentialsId, region, {
-        description: `Get the volume LUN mapping for the source database ${srcDetails.database} of the host ${srcDetails.resourceName}`,
+        description: `Get the volume LUN mapping for the database ${srcDetails.database} of the host ${srcDetails.resourceName}`,
         startTime: Date.now(),
-        name: `Get volume LUN mappings for source database ${srcDetails.database}`,
+        name: `Get volume LUN mappings for database ${srcDetails.database}`,
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: srcDetails.database,
@@ -984,10 +1026,22 @@ async function createCloneDb(
             ];
         }
 
-        const resp = await callSsmExecution(credentialsId, region, command, destDetails.activeNodeInstaceId);
+        const resp = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            destDetails.activeNodeInstaceId,
+            accountId,
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
+        );
 
-        // We only get a response in case of error from query
-        if (resp) {
+        // We only get a response for  different server version or in case of error from query
+        if (
+            resp &&
+            !resp.toLowerCase().includes('converting database') &&
+            !resp.includes('running the upgrade step from version')
+        ) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, resp);
         }
 
@@ -1270,6 +1324,38 @@ async function revertMetadataForSanboxTesting(accountId: string, credentialsId: 
     return 'Revereted manually updated metadatas';
 }
 
+async function updateMetadataForSanboxDeletion(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseNameToRemove: string
+) {
+    logger.info('Updating metadata for sandbox operation', accountId, credentialsId, region, databaseHostId);
+    const {
+        items: [resourceDetail]
+    } = await getResources(accountId, databaseHostId);
+
+    if (isEmpty(resourceDetail)) {
+        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+    }
+    const { metadata } = resourceDetail;
+    const newMetadata = metadata as unknown as Metadata;
+
+    newMetadata.sandboxes = newMetadata.sandboxes?.filter(sandbox => sandbox.databaseName !== databaseNameToRemove);
+    newMetadata.userDatabase = newMetadata.userDatabase?.filter(db => db.name !== databaseNameToRemove);
+    try {
+        await updateResourceMetaData(accountId, databaseHostId, newMetadata);
+        logger.info('Metadata updated succesfully for sandbox operation', accountId, databaseHostId);
+    } catch (err) {
+        const errorMessage = `Failed to update metadata for sandbox operation, ${accountId}, ${databaseHostId}, ${err}`;
+        logger.error(errorMessage);
+        throw createError(errorMessage);
+    }
+}
+
 async function getSandboxConnectionString(
     accountId: string,
     credentialsId: string,
@@ -1362,6 +1448,8 @@ async function getDatabaseMountPointInfo(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
+    const actualDbName = databaseName;
+
     try {
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             databaseName = 'test-database';
@@ -1384,12 +1472,189 @@ async function getDatabaseMountPointInfo(
             const driveType = item.filetype === 'Data' ? 'databaseDataPath' : 'databaseLogPath';
             result[driveType].push(item.filepath);
         });
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            const updatedResult = {
+                databaseDataPath: result.databaseDataPath.map(path => path.replace('test-database', actualDbName)),
+                databaseLogPath: result.databaseLogPath.map(path => path.replace('test-database', actualDbName))
+            };
+            return updatedResult;
+        }
 
         return result;
     } catch (err) {
         const errorMessage = `Failed to get mount point info for the database ${databaseName} in host ${databaseHostId}: ${err} `;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+}
+
+async function deleteSandbox(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseName: string
+) {
+    logger.info(
+        `Delete sandbox ${databaseName} in database host ${databaseHostId}`,
+        accountId,
+        region,
+        credentialsId,
+        databaseHostId,
+        databaseName
+    );
+
+    const [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
+
+    if (!resourceDetails) {
+        throw createError(HttpErrorCodes.NOT_FOUND, 'Could not find the database host');
+    }
+
+    const { node1InstanceId, node2InstanceId, fsxSvmId } = resourceDetails.metadata as unknown as Metadata;
+
+    const { isSSMConnected, instanceName, activeNodeInstanceId } = await getActiveSqlNode(
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId,
+        databaseHostId
+    );
+
+    if (!isSSMConnected) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'SSM connection could not be established with the host'
+        );
+    }
+
+    const job = await registerJob(accountId, credentialsId, region, {
+        name: `Delete sandbox ${databaseName}`,
+        description: `Delete sandbox ${databaseName} in the host ${resourceDetails.resource_name}`,
+        resourceName: databaseName,
+        initiator: 'SYSTEM',
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.SANDBOX
+    });
+
+    const resDetails = {
+        resourceName: resourceDetails.resource_name!,
+        instanceName: instanceName!,
+        fsxId: resourceDetails.co_relation_id!,
+        svm: fsxSvmId!,
+        activeNodeInstaceId: activeNodeInstanceId!,
+        metadata: resourceDetails.metadata as unknown as Metadata,
+        database: databaseName,
+        instance: instanceName!,
+        host: databaseHostId
+    };
+
+    performSandboxDeletion(accountId, region, credentialsId, job.id, resDetails);
+
+    return { jobId: job.id };
+}
+
+async function performSandboxDeletion(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    parentJobId: string,
+    resDetails: HostAndDbInfo
+) {
+    let errorMsg;
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    try {
+        // Creating a validation job to accomodate more validations in the future in one job
+        await validateDeleteSandboxParams(accountId, credentialsId, region, parentJobId, resDetails);
+
+        const mappings = (await getMappings(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            resDetails
+        )) as VolumeLunMapping;
+
+        await startCleanup(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            resDetails,
+            resDetails,
+            [mappings.data.volumeUuid, mappings.log.volumeUuid],
+            [mappings.data.fileName, mappings.log.fileName]
+        );
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error('Failed to delete the sandbox', e);
+        status = JOBSTATUS.FAILED;
+        errorMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+            status,
+            error: errorMsg,
+            endTime: Date.now()
+        });
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            updateMetadataForSanboxDeletion(accountId, credentialsId, region, resDetails.host, resDetails.database);
+        }
+    }
+}
+
+async function validateDeleteSandboxParams(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    resourceDetails: HostAndDbInfo
+) {
+    logger.info('Validate delete sandbox params', { accountId, credentialsId, region, parentJobId, resourceDetails });
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+
+    const validationJob = await registerJob(accountId, credentialsId, region, {
+        description: `Validate if the sandbox ${resourceDetails.database} exists in the target host ${resourceDetails.resourceName}`,
+        startTime: Date.now(),
+        name: 'Validate if sandbox exists',
+        status,
+        type: JOBTYPE.SANDBOX,
+        resourceName: resourceDetails.database,
+        parentJobId
+    });
+
+    try {
+        const dbExists = await checkDatabaseExists(
+            accountId,
+            credentialsId,
+            region,
+            resourceDetails.host,
+            resourceDetails.database,
+            resourceDetails.activeNodeInstaceId,
+            resourceDetails.instanceName
+        );
+
+        if (!dbExists && !(process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator')) {
+            throw createError(
+                412,
+                `Database ${resourceDetails.database} does not exists on source host ${resourceDetails.resourceName}`
+            );
+        }
+
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error(e);
+        errorMsg = e.message || 'Internal Server Error';
+        status = JOBSTATUS.FAILED;
+        throw createError(e.statusCode, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, validationJob.id, {
+            error: errorMsg,
+            status,
+            endTime: Date.now()
+        });
     }
 }
 
@@ -1400,5 +1665,6 @@ export {
     updateMetadataForSanboxTesting,
     revertMetadataForSanboxTesting,
     getDatabaseMountPointInfo,
-    getSandboxConnectionString
+    getSandboxConnectionString,
+    deleteSandbox
 };

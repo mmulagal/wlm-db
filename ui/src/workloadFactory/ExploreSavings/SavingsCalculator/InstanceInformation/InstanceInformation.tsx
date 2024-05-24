@@ -14,11 +14,16 @@ const InstanceInformation = () => {
 
     useEffect(() => {
         setLoading(selectedHostDetails?.loading);
-        const instanceTypelist = selectedHostDetails?.topology?.ec2Details?.map((inst: any) => inst?.instanceType);
+        let instanceTypelist = [];
+        if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
+            instanceTypelist = selectedHostDetails?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
+        } else {
+            instanceTypelist = selectedHostDetails?.topology?.ec2Details?.map((inst: any) => inst?.instanceType);
+        }
         let data: any = [
             {
                 details: 'Instance type',
-                value: instanceTypelist ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
+                value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
                 id: '1'
             },
             {

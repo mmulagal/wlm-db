@@ -3,15 +3,15 @@
         "ebsInstanceCalculation": [
             {
                 "instanceType": "m5.2xlarge",
-                "instanceHourlyPrice": "3.75",
-                "ec2MachineCost": "2738.96",
+                "instanceHourlyPrice": "$3.75",
+                "ec2MachineCost": "$2738.96",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes"
             },
             {
                 "instanceType": "m5.2xlarge",
-                "instanceHourlyPrice": "3.75",
-                "ec2MachineCost": "2738.96",
+                "instanceHourlyPrice": "$3.75",
+                "ec2MachineCost": "$2738.96",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes"
             }
@@ -19,14 +19,14 @@
         "fsxInstanceCalculation": [
             {
                 "instanceType": "m5.2xlarge",
-                "instanceHourlyPrice": "1.712",
+                "instanceHourlyPrice": "$1.712",
                 "ec2MachineCost": "1249.76",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes"
             },
             {
                 "instanceType": "m5.2xlarge",
-                "instanceHourlyPrice": "1.712",
+                "instanceHourlyPrice": "$1.712",
                 "ec2MachineCost": "1249.76",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes"
@@ -103,6 +103,14 @@
             "billableThroughputMbps": 0,
             "billableThroughputGbps": 0,
             "ebsThroughputCost": 0,
+            "numberOfVolumes": 2,
+            "instanceAvgDuration": 730,
+            "ebsCapacityPrice": "0.14",
+            "hoursInAMonth": 730,
+            "ebsTotalCostMonthly": "14,995.67"
+        },
+        "ebsSnapshotCalculation": {
+            "ebsInstanceMonth": 2,
             "totalSnapshots": "30",
             "initialSnapshotCost": "123.125",
             "monthlyCostPerSnapshot": "0.65",
@@ -110,12 +118,7 @@
             "incrementalSnapshotCost": "9.75",
             "totalSnapshotCost": "132.87",
             "totalEbsSnapshotCost": "265.75",
-            "ebsSnapshotCost": "265.75",
-            "numberOfVolumes": 2,
-            "instanceAvgDuration": 730,
-            "ebsCapacityPrice": "0.14",
-            "hoursInAMonth": 730,
-            "ebsTotalCostMonthly": "14,995.67"
+            "ebsSnapshotCost": "265.75"
         },
         "fsxCloneCalculation": {
             "clonedCopiesCount": "1",
@@ -148,8 +151,8 @@
         "ebsInstanceCalculation": [
             {
                 "instanceType": "m5.2xlarge",
-                "instanceHourlyPrice": "1.71",
-                "ec2MachineCost": "1249.76",
+                "instanceHourlyPrice": "$1.71",
+                "ec2MachineCost": "$1249.76",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes"
             }
@@ -157,8 +160,8 @@
         "fsxInstanceCalculation": [
             {
                 "instanceType": "m5.2xlarge",
-                "instanceHourlyPrice": "1.71",
-                "ec2MachineCost": "1249.76",
+                "instanceHourlyPrice": "$1.71",
+                "ec2MachineCost": "$1249.76",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes"
             }
@@ -234,6 +237,14 @@
             "billableThroughputMbps": 0,
             "billableThroughputGbps": 0,
             "ebsThroughputCost": 0,
+            "numberOfVolumes": 2,
+            "instanceAvgDuration": 730,
+            "ebsCapacityPrice": "0.14",
+            "hoursInAMonth": 730,
+            "ebsTotalCostMonthly": "12,080.83"
+        },
+        "ebsSnapshotCalculation": {
+            "ebsInstanceMonth": 2,
             "totalSnapshots": "30",
             "initialSnapshotCost": "112.59",
             "monthlyCostPerSnapshot": "0.7",
@@ -241,12 +252,7 @@
             "incrementalSnapshotCost": "10.47",
             "totalSnapshotCost": "123.06",
             "totalEbsSnapshotCost": "246.12",
-            "ebsSnapshotCost": "246.12",
-            "numberOfVolumes": 2,
-            "instanceAvgDuration": 730,
-            "ebsCapacityPrice": "0.14",
-            "hoursInAMonth": 730,
-            "ebsTotalCostMonthly": "12,080.83"
+            "ebsSnapshotCost": "246.12"
         },
         "fsxCloneCalculation": {
             "clonedCopiesCount": "1",
