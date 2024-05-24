@@ -1,0 +1,124 @@
+.inventoryTable {
+    display: flex;
+    gap: 24px;
+    padding: 0 120px;
+
+    [class*='Table-module_row'] {
+        [class*='Table-module_cell']:nth-child(2) {
+            box-shadow: 3px 2px 6px 0px var(--border);
+        }
+    }
+
+    .jobMenuPopover {
+        width: fit-content;
+        margin-left: -12px;
+    }
+
+    .table {
+        width: 1607px;
+        margin-top: -18px;
+        margin-bottom: 40px;
+    }
+
+    .arrow {
+        svg {
+            &.arrow-down {
+                transform: rotate(90deg);
+                -webkit-transform: rotate(90deg);
+            }
+        }
+    }
+
+    .tableScroll {
+        [class*='Table-module_row'] {
+            [class*='Table-module_cell']:first-child {
+                box-shadow: 2px 2px 6px 0px var(--border);
+            }
+        }
+    }
+
+    .firstColText {
+        display: flex;
+        gap: 8px;
+    }
+
+    .colText {
+        display: flex;
+        gap: 16px;
+    }
+
+    .protection {
+        display: flex;
+        gap: 17px;
+    }
+
+    .cost {
+        display: flex;
+        gap: 16px;
+
+        .tooltipClass {
+            [class*='TooltipInfo-module_tooltip-base'] {
+                max-width: 462px !important;
+                padding: 16px 24px;
+                box-shadow: 2px 2px 6px 0px var(--border);
+            }
+        }
+    }
+
+    .statusIcon {
+        width: 10px;
+        height: 10px;
+        align-self: center;
+        &.circle {
+            border-radius: 50%;
+            margin-top: 2px;
+        }
+        &.up {
+            background-color: var(--green-60);
+        }
+        &.down {
+            background-color: var(--orange-60);
+        }
+        &.initializing {
+            background-color: var(--cyan-30);
+        }
+        &.failed {
+            background-color: var(--red-30);
+        }
+    }
+
+    .protectionTooltip {
+        width: 184px;
+        gap: 8px;
+        .textHeight {
+            line-height: 28px;
+        }
+    }
+
+    .detectManage {
+        width: 140px;
+        height: 32px;
+        border-radius: 32px;
+        border: 1px solid var(--text-button-primary);
+        margin-left: -12px;
+        cursor: pointer;
+
+        .textStyle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2px;
+            color: var(--text-button-primary);
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 20px;
+            height: 20px;
+            margin-top: 5px;
+            margin-left: 46%;
+        }
+    }
+}

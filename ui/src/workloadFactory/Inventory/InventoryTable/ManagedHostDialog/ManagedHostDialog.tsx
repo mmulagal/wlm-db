@@ -9,7 +9,7 @@ const ManagedHostDialog = () => {
     const mockData = [
         {
             id: '1',
-
+            cellProps: { isDisabled: true },
             serverInstance: 'SQL Server instance 1',
             status: 'Unmanaged',
             storageType: 'FSx for ONTAP'
@@ -62,7 +62,8 @@ const ManagedHostDialog = () => {
         selectionType: 'multiple',
         columns: managedHostDialogColDefs,
         rows: mockData,
-        pageSize: 10
+        pageSize: 10,
+        defaultSelectedRows: ['1', '2', '3', '4', '5']
     });
 
     useEffect(() => {

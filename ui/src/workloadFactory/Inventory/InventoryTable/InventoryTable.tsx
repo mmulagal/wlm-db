@@ -9,7 +9,8 @@ import {
 } from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
-import styles from './ManagedHosts.module.scss';
+import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
+import styles from './InventoryTable.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
@@ -22,7 +23,7 @@ import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
 import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
 
-import { databaseTableSort, isSmbProtocol } from '../../../utils/utilityFunctions';
+import { databaseTableSort, isSmbProtocol, expandTableRow } from '../../../utils/utilityFunctions';
 import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
@@ -45,8 +46,10 @@ import {
     renderInstanceName,
     renderProtectionColumn
 } from '../InventoryUtils';
+import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
+import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
 
-const ManagedHosts = () => {
+const InventoryTable = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
@@ -140,13 +143,90 @@ const ManagedHosts = () => {
         );
     };
 
+    const ExpandedRow = ({ rowData }: any) => {
+        return (
+            <div style={{ marginTop: '30px', height: '400px', marginLeft: '40px' }}>
+                <ManagedHostSubTable />
+            </div>
+        );
+    };
+
+    const handleDialog = () => {
+        setDialog(
+            <DialogComponent
+                header={'Manage data base host <data base name> instances'}
+                content={<ManagedHostDialog />}
+                primaryButton={'Manage'}
+                secondaryButton={'Close'}
+                callback={() => {
+                    console.log('action');
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass={styles.setWidth}
+            />
+        );
+    };
+
+    const lastColDetails = () => {
+        return {
+            id: '9',
+            Header: '',
+            accessor: '',
+            width: '184px',
+            isSticky: true,
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <>
+                        <div
+                            className={styles.detectManage}
+                            onClick={() => {
+                                handleDialog();
+                            }}
+                        >
+                            <Typography variant="Regular_14" className={styles.textStyle}>
+                                Manage
+                            </Typography>
+                        </div>
+                    </>
+                );
+            }
+        };
+    };
+
     const DatabasesColDefs: ColumnProps[] = [
+        {
+            id: '0',
+            Header: '',
+            accessor: 'name',
+            width: '56px',
+            isSticky: true,
+            renderCell: (value: any, rowData: any, { updateRowState, rowsState }: any) => {
+                const currentRowState = rowsState[rowData.id];
+                const statusType = rowData?.status.toLowerCase();
+                return (
+                    <>
+                        <div className={`${styles.statusbar} ${styles[statusType]}`}>&nbsp;</div>
+                        <div className={styles.arrow}>
+                            <ArrowIcon
+                                className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
+                                onClick={(e: any) => {
+                                    e.stopPropagation();
+                                    expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                }}
+                            />
+                        </div>
+                    </>
+                );
+            }
+        },
         {
             id: '1',
             Header: GENERAL.DATABASE_HOST_NAME,
             accessor: 'status',
             isSortable: true,
-            width: '280px',
+            width: '228px',
             isSticky: true,
             accessorForTextFilter: 'databaseHostname',
             renderCell: (cellData: any, rowData: any) => {
@@ -187,9 +267,9 @@ const ManagedHosts = () => {
         },
         {
             id: '2',
-            Header: GENERAL.DB_HOST_FILE_SYSTEM_TYPE,
+            Header: 'SQL server instances',
             accessor: 'topology.fileSystemType',
-            width: '212px',
+            width: '216px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 if (!cellData) {
@@ -201,57 +281,17 @@ const ManagedHosts = () => {
         },
         {
             id: '3',
-            Header: GENERAL.DB_HOST_PROTECTION,
-            accessor: 'protectionText',
+            Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
+            accessor: 'serverInstallationMode',
             isSortable: true,
-            width: '212px',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderProtectionColumn(cellData, rowData, styles);
+            width: '216px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string, rowData: any) => {
+                return renderDeploymentModel(cellData, rowData);
             }
         },
         {
             id: '4',
-            Header: GENERAL.DB_HOST_PERFORMANCE,
-            accessor: 'performanceText',
-            width: '212px',
-            filterOptions: 'auto',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderCellData(cellData, rowData, styles);
-            }
-        },
-        {
-            id: '5',
-            Header: GENERAL.DB_HOST_STORAGE_SAVINGS,
-            accessor: 'storageSavingsText',
-            isSortable: true,
-            width: '212px',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderCellData(cellData, rowData, styles);
-            }
-        },
-        {
-            id: '6',
-            Header: GENERAL.DB_HOST_ESTIMATED_COST,
-            accessor: 'totalCost',
-            isSortable: true,
-            width: '212px',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderEstimatedCost(cellData, rowData, styles);
-            }
-        },
-        {
-            id: '7',
-            Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
-            accessor: 'sizeformat',
-            isSortable: true,
-            width: '212px',
-            accessorForTextFilter: 'sizeformat',
-            renderCell: (cellData: string | number, rowData: any) => {
-                return renderAllocatedCapacity(cellData, rowData);
-            }
-        },
-        {
-            id: '8',
             Header: GENERAL.DB_HOST_INSTANCE_NAME,
             accessor: 'topology',
             isSortable: true,
@@ -262,11 +302,11 @@ const ManagedHosts = () => {
             }
         },
         {
-            id: '9',
+            id: '5',
             Header: GENERAL.DB_HOST_VPC,
             accessor: 'vpcNames',
             isSortable: true,
-            width: '212px',
+            width: '140px',
             renderCell: (cellData: any, rowData: any) => {
                 let vpcName = '';
                 let vpcCidr = '';
@@ -294,64 +334,37 @@ const ManagedHosts = () => {
             }
         },
         {
-            id: '10',
-            Header: GENERAL.DB_HOST_AVAILABILITY,
-            accessor: 'azType',
-            isSortable: true,
+            id: '6',
+            Header: 'SSM connectivity',
+            accessor: 'performanceText',
             width: '212px',
-            filterOptions: [
-                { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
-                { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
-            ],
+            filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
-                let azList = [];
-                let azType = '';
-                if (rowData?.topology?.fileSystemDeploymentMode) {
-                    azList = rowData?.topology?.availabilityZones ? rowData?.topology?.availabilityZones.join(',') : '';
-                    azType =
-                        rowData?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-                            ? GENERAL.SINGLE_AZ
-                            : rowData?.topology?.fileSystemDeploymentMode === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-                            ? GENERAL.MULTI_AZ
-                            : '';
-                } else {
-                    azList = rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.zones
-                        ? rowData?.[0]?.deploymentTypes?.[0]?.zones.join(',')
-                        : '';
-                    const deploymentType = rowData?.sqlServerInstances?.[0]?.deploymentTypes?.[0]?.type;
-                    azType =
-                        deploymentType === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-                            ? GENERAL.SINGLE_AZ
-                            : deploymentType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-                            ? GENERAL.MULTI_AZ
-                            : '';
-                }
-
-                return (
-                    <>
-                        {azType && (
-                            <div className={styles.colText}>
-                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
-                                <Typography variant="Regular_14">{azType}</Typography>
-                            </div>
-                        )}
-                        {!azType && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!azType && !rowData?.loading && notAvailable()}
-                    </>
-                );
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
-            id: '11',
-            Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
-            accessor: 'serverInstallationMode',
+            id: '7',
+            Header: GENERAL.DB_HOST_ESTIMATED_COST,
+            accessor: 'totalCost',
             isSortable: true,
-            width: '212px',
-            filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return renderDeploymentModel(cellData, rowData);
+            width: '168px',
+            renderCell: (cellData: any, rowData: any) => {
+                return renderEstimatedCost(cellData, rowData, styles);
             }
-        }
+        },
+        {
+            id: '8',
+            Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
+            accessor: 'sizeformat',
+            isSortable: true,
+            width: '216px',
+            accessorForTextFilter: 'sizeformat',
+            renderCell: (cellData: string | number, rowData: any) => {
+                return renderAllocatedCapacity(cellData, rowData);
+            }
+        },
+        lastColDetails()
     ];
 
     const tableProps = useTable({
@@ -361,7 +374,7 @@ const ManagedHosts = () => {
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
-        isManagedColumns: true,
+        isManagedColumns: false,
         manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -416,7 +429,6 @@ const ManagedHosts = () => {
                 );
             }
         },
-        initialColumnState: managedHostInitialColumns,
         isLazyLoading: databaseHostsLoading || fullHostDataLoading
     });
 
@@ -450,12 +462,13 @@ const ManagedHosts = () => {
     }, [resetPage]);
 
     const tableComponentProps = {
+        ExpandedRow,
         lazyLoadingText: 'Loading'
     };
 
     return (
         <>
-            <div className={styles.managedHosts}>
+            <div className={styles.inventoryTable} style={{ display: 'flex', flexDirection: 'column' }}>
                 <div
                     //  @ts-ignore
                     className={
@@ -467,8 +480,8 @@ const ManagedHosts = () => {
                     <TableTopBar
                         //@ts-ignore
                         tableProps={tableProps}
-                        pluralTitle={GENERAL.MANAGED_HOSTS_HEADING}
-                        singularTitle={GENERAL.MANAGED_HOST_HEADING}
+                        pluralTitle="Database hosts"
+                        singularTitle="Database host"
                     />
                     <Table
                         {...tableComponentProps}
@@ -482,4 +495,4 @@ const ManagedHosts = () => {
     );
 };
 
-export default ManagedHosts;
+export default InventoryTable;
