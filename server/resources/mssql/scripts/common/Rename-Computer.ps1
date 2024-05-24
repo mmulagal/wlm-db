@@ -13,8 +13,9 @@ try {
     $renameComputerParams = @{
         NewName = $NewName
     }
-    $domainName = (Get-WmiObject Win32_ComputerSystem).Domain
-    if ($domainName -eq "WORKGROUP") {
+    $Hostname = hostname
+    $DomainNetBIOSName = $env:USERDOMAIN
+    if ($Hostname.ToLower() -eq $DomainNetBIOSName.ToLower()) {
 
         Rename-Computer @renameComputerParams
 
