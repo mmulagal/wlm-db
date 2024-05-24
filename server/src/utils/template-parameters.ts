@@ -437,6 +437,12 @@ const PARAMETERS = [
         description: 'Boolean to indicate if AMI includes SQL license or BYOL license.',
         type: 'String',
         default: 'false'
+    },
+    {
+        name: 'EBSVolumeSize',
+        description: 'Size of the EBS Volume.',
+        type: 'String',
+        minLength: 3
     }
 ];
 

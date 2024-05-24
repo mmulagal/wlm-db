@@ -54,6 +54,7 @@ Metadata:
               Parameters:
                   - EnableCloudWatchLogFeature
                   - ParentStackName
+                  - EBSVolumeSize
         ParameterLabels:
             KeyPairName:
                 default: Key Pair Name for the EC2 instance
@@ -114,6 +115,8 @@ Metadata:
                 default: Name for the SQL Server collation.
             FsxVolumeSnapshotPolicy:
                 default: Snapshot policy for the volume. Can be either daily_weekretention or none.
+            EBSVolumeSize:
+                default: Size of the EBS Volume.
 Parameters:
     ParentStackName:
         Description: Stack name for the parent CloudFormation stack.
@@ -248,6 +251,9 @@ Parameters:
         Type: String
     SqlCollation:
         Description: Collation for the SQL Server.
+        Type: String
+    EBSVolumeSize:
+        Description:  Size of the EBS Volume.
         Type: String
     FsxVolumeSnapshotPolicy:
         Description: Snapshot policy for the volume. Can be either daily_weekretention or none.
@@ -743,7 +749,7 @@ Resources:
             BlockDeviceMappings:
                 - DeviceName: /dev/sda1
                   Ebs:
-                      VolumeSize: '100'
+                      VolumeSize: !Ref 'EBSVolumeSize'
                       VolumeType: gp3
             KeyName: !Ref 'KeyPairName'
             UserData: !Base64

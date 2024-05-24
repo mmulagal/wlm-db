@@ -60,6 +60,7 @@ Metadata:
               Parameters:
                   - EnableCloudWatchLogFeature
                   - ParentStackName
+                  - EBSVolumeSize
         ParameterLabels:
             KeyPairName:
                 default: Key Pair Name for the Ec2 instances
@@ -124,6 +125,8 @@ Metadata:
                 default: Name of the parent CloudFormation stack
             FsxVolumeSnapshotPolicy:
                 default: Snapshot policy for the volume. Can be either daily_weekretention or none.
+            EBSVolumeSize:
+                default: Size of the EBS Volume.
 Parameters:
     ParentStackName:
         Description: Name of the parent CloudFormation stack.
@@ -294,6 +297,9 @@ Parameters:
         Type: String
         Default: daily_weekretention
         AllowedValues: [daily_weekretention, none]
+    EBSVolumeSize:
+        Description:  Size of the EBS Volume.
+        Type: String
 Conditions:
     ADSGNotSelected: !Equals
         - !Ref 'DomainMemberSGID'
@@ -933,7 +939,7 @@ Resources:
             BlockDeviceMappings:
                 - DeviceName: /dev/sda1
                   Ebs:
-                      VolumeSize: '100'
+                      VolumeSize: !Ref 'EBSVolumeSize'
                       VolumeType: gp3
             KeyName: !Ref 'KeyPairName'
             UserData: !Base64
@@ -1414,7 +1420,7 @@ Resources:
             BlockDeviceMappings:
                 - DeviceName: /dev/sda1
                   Ebs:
-                      VolumeSize: '100'
+                      VolumeSize: !Ref 'EBSVolumeSize'
                       VolumeType: gp3
             KeyName: !Ref 'KeyPairName'
             UserData: !Base64
