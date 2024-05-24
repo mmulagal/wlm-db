@@ -559,11 +559,11 @@ async function formatStorageSavingsCalculationMetrics(
             totalCloneMonthlyCost
         },
         ebsCloneCalculation: {
-            clonedCopiesCount: params.clonedCopiesCount,
+            clonedCopiesCount: totalClonedCopiesCount,
             capacity,
             iops,
             throughput,
-            totalCloneMonthlyCost: params.clonedCopiesCount * (capacity + iops + throughput)
+            totalCloneMonthlyCost: totalClonedCopiesCount * (capacity + iops + throughput)
         },
         ebsSnapshotCalculation: {
             ebsInstanceMonth,
