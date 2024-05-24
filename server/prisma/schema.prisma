@@ -66,7 +66,7 @@ model resource {
   cloud_provider_name       String? @db.VarChar(30)
   region                    String? @db.VarChar(30)
   metadata                  Json?   @default("{}")
-  databaseInstances         databaseInstances[]
+  database_instances        database_instances[]
 
   @@index([account_id], map: "k_wlmdb_resource_account_id")
   @@index([resource_id], map: "k_wlmdb_resource_resource_id")
@@ -111,7 +111,7 @@ model job {
   @@unique([account_id, name, resource_name, initiator, start_time], name: "uk_wlmdb_config_uniqueJob")
 }
 
-model databaseInstances {
+model database_instances {
   id                String   @id @default(uuid())
   account_id        String   @db.VarChar(30)
   credentials_id    String   @db.VarChar(80)
@@ -125,11 +125,11 @@ model databaseInstances {
 
   resource resource @relation(fields: [account_id, credentials_id, resource_id], references: [account_id, credentials_id, resource_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_resource_account_id_credentials_id_resource_id")
 
-  @@unique([account_id, credentials_id, resource_id, sql_instance_id], name: "uk_wlmdb_databaseInstances", map: "uk_wlmdb_databaseInstances")
-  @@index([account_id], map: "k_wlmdb_databaseInstances_account_id")
-  @@index([credentials_id], map: "k_wlmdb_databaseInstances_credentials_id")
-  @@index([resource_id], map: "k_wlmdb_databaseInstances_resource_id")
-  @@index([sql_instance_name], map: "k_wlmdb_databaseInstances_sql_instance_name")
+  @@unique([account_id, credentials_id, resource_id, sql_instance_id], name: "uk_wlmdb_database_instances", map: "uk_wlmdb_database_instances")
+  @@index([account_id], map: "k_wlmdb_database_instances_account_id")
+  @@index([credentials_id], map: "k_wlmdb_database_instances_credentials_id")
+  @@index([resource_id], map: "k_wlmdb_database_instances_resource_id")
+  @@index([sql_instance_name], map: "k_wlmdb_database_instances_sql_instance_name")
 }
 
 enum JOBSTATUS {
