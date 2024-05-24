@@ -112,24 +112,28 @@ const MSSQLAccordion = ({ printState }: any) => {
                             }
                         />
                     ) : (
-                        <DsButton
-                            type="text"
-                            isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
-                            onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
-                        >
-                            {GENERAL.ES_SAVE_CONFIG}
-                        </DsButton>
+                        !printState && (
+                            <DsButton
+                                type="text"
+                                isDisabled={storageSavingsLoading || selectedHostDetails?.loading}
+                                onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
+                            >
+                                {GENERAL.ES_SAVE_CONFIG}
+                            </DsButton>
+                        )
                     ),
-                    ,
-                    <div style={{ height: '32px' }} className={styles.buttonContainer}>
-                        <DsButton
-                            type="button"
-                            isDisabled={isMutliFsx || storageSavingsLoading || selectedHostDetails?.loading}
-                            onClick={() => handleCreateClick()}
-                        >
-                            {GENERAL.CREATE}
-                        </DsButton>
-                    </div>
+
+                    !printState && (
+                        <div style={{ height: '32px' }} className={styles.buttonContainer}>
+                            <DsButton
+                                type="button"
+                                isDisabled={isMutliFsx || storageSavingsLoading || selectedHostDetails?.loading}
+                                onClick={() => handleCreateClick()}
+                            >
+                                {GENERAL.CREATE}
+                            </DsButton>
+                        </div>
+                    )
                 ]}
                 children={
                     isMutliFsx ? (

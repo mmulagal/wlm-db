@@ -57,7 +57,9 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/ads`, asyn
 // Get AMI mock response
 router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/amis`, async (req: {}, res: AmisRes) => {
     const retData = amisData;
-    generateResponse(res, 200, retData);
+    setTimeout(() => {
+        generateResponse(res, 200, retData);
+    }, 2000);  
 });
 
 // Get SNS mock response

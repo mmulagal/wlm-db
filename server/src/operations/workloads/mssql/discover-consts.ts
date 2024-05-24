@@ -320,8 +320,8 @@ const HOST_AND_SQL_INFO_PS1 = [
         $clusterName = (Get-Cluster -ErrorAction SilentlyContinue).Name
         If ($clusterName) {
           $responseObject['sqlServerNodes'] = (Get-ClusterOwnerNode -ResourceType "SQL Server Availability Group" -ErrorAction SilentlyContinue).OwnerNodes.NodeName
-
-          
+          $responseObject['nodeIps'] =  (Get-ClusterNetworkInterface | select-object -ExpandProperty Address)
+                    
           If (Get-ClusterResource -ErrorAction SilentlyContinue | ? { $_.ResourceType -eq "SQL Server Availability Group" }) {
             $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
           } else {

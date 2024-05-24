@@ -1,7 +1,14 @@
 import randomize from 'randomatic';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, STORAGE_TYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
-import { CloudProviders, RESOURCESTYPE, DATABASE_TYPE, MSSQL_DATABASE_TYPES, ONLINE } from '../utils/consts';
+import {
+    CloudProviders,
+    RESOURCESTYPE,
+    DATABASE_TYPE,
+    MSSQL_DATABASE_TYPES,
+    ONLINE,
+    DEFAULT_INSTANCE_NAME
+} from '../utils/consts';
 // import { handleNotification } from './cloud-manager/notification-operations';
 import { checkAccount, createDeployment, createResource, updateResourceMetaData } from '../lib/database/db';
 import { Metadata } from '../utils/common-types';
@@ -20,6 +27,7 @@ import {
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
+import { SQL_DEFAULT_COLLATION } from '../lib/chatbot/consts';
 
 const logger = getLogger();
 
@@ -144,7 +152,30 @@ async function createDeploymentMockDataInDB(
         activeDirectoryAddress: generateRandomIP(),
         fsxSvmId: 'svm-0491dd89a76b7ca3d',
         sandboxCreated: true,
-        storageProtocol
+        storageProtocol,
+        sandboxes: [
+            {
+                databaseName: 'RetailBanking_sandbox',
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+                source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
+                tag: 'Development'
+            }
+        ],
+        userDatabase: [
+            {
+                name: 'RetailBanking_sandbox',
+                size: 16777216,
+                type: 'User Database',
+                status: 'ONLINE',
+                protection: {
+                    isAwsBackupEnabled: { fsxn: false, fsxw: false, ebs: false },
+                    isFsxOntapSnapshotsEnabled: false,
+                    isSqlNativeEnabled: false
+                },
+                collation: SQL_DEFAULT_COLLATION
+            }
+        ]
     };
 
     if (sqlDeploymentMode === 'FCI') {
@@ -246,7 +277,8 @@ async function updateUserDBIntoResourceData(
             },
             isFsxOntapSnapshotsEnabled: false,
             isSqlNativeEnabled: false
-        }
+        },
+        collation: SQL_DEFAULT_COLLATION
     };
     metaData.userDatabase = [...(metaData.userDatabase || []), databaseDetails];
 

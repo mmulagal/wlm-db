@@ -459,6 +459,13 @@ export const formatHostData = (val: any) => {
 
     let totalSize = (val?.storage?.fsxn?.size || 0) + (val?.storage?.fsxw?.size || 0) + (val?.storage?.ebs?.size || 0);
 
+    let clusterEc2Instances;
+    if (val?.clusterNodeDetails && val?.clusterNodeDetails?.length === 2) {
+        clusterEc2Instances = val?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceId);
+    } else if (val?.ec2InstanceId) {
+        clusterEc2Instances = [val?.ec2InstanceId];
+    }
+
     val = {
         ...val,
         type: DB_HOME_DATA_TYPE.HOSTS,
@@ -485,7 +492,8 @@ export const formatHostData = (val: any) => {
         vpcNames: val?.topology?.vpcName || val?.vpc?.name,
         azType: azType,
         serverInstallationMode: serverInstallationMode,
-        fileSystemType: fileSystemType
+        fileSystemType: fileSystemType,
+        clusterEc2Instances: clusterEc2Instances
     };
     return val;
 };
@@ -1420,6 +1428,7 @@ export const formatUnamanagedHostList = (data: any, mssqlInstancesData: any) => 
                 estimatedUsageCost: perRowInstanceData?.data?.estimatedUsageCost,
                 resourceUtilization: perRowInstanceData?.data?.resourceUtilization,
                 ebsResourceInfo: perRowInstanceData?.data?.ebsResourceInfo,
+                clusterNodeDetails: perRowInstanceData?.data?.clusterNodeDetails,
                 loading: false
             });
         } else if (perRowInstanceData?.loading) {

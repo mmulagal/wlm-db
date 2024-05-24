@@ -90,6 +90,8 @@ async function getSandboxDetails(
 
     const command = [GET_SANDBOX_DETAILS(['"."'])];
     const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
+    let sandboxInfo: SandboxInfoResponseType[] = [];
+
     if (response) {
         let parsedResponse;
         try {
@@ -118,8 +120,6 @@ async function getSandboxDetails(
                 sandbox_properties: { name: string; value: string }[];
             }[] = sqlResponseParsing(finalSandboxDetails);
 
-            let sandboxInfo: SandboxInfoResponseType[] = [];
-
             parsedSandboxDetails.forEach(item => {
                 const sources = getSourceDetails(item);
 
@@ -139,31 +139,32 @@ async function getSandboxDetails(
                 sandboxInfo.push(databaseObject);
             });
 
-            if ((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && sandboxes) {
-                const demoSandboxInfo = sandboxes.map(item => {
-                    const databaseObject = {
-                        sandboxName: item.databaseName,
-                        databaseHostName: resourceDetails.resource_name!,
-                        databaseHostId: resourceDetails.resource_id!,
-                        databaseInstanceName: DEFAULT_INSTANCE_NAME,
-                        sourceDatabaseHostName: item.source.split('|')[0],
-                        sourceDatabaseInstanceName: item.source.split('|')[1],
-                        sourceDatabaseName: item.source.split('|')[2],
-                        createdAt: item.createdAt,
-                        updatedAt: item.updatedAt,
-                        tag: item.tag
-                    };
-                    return databaseObject;
-                });
-                if (demoSandboxInfo.length > 0) {
-                    sandboxInfo = sandboxInfo.concat(demoSandboxInfo);
-                }
-            }
             return sandboxInfo;
         } catch (err) {
             return errorResponse(err);
         }
     }
+    if ((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && sandboxes) {
+        const demoSandboxInfo = sandboxes.map(item => {
+            const databaseObject = {
+                sandboxName: item.databaseName,
+                databaseHostName: resourceDetails.resource_name!,
+                databaseHostId: resourceDetails.resource_id!,
+                databaseInstanceName: DEFAULT_INSTANCE_NAME,
+                sourceDatabaseHostName: item.source.split('|')[0],
+                sourceDatabaseInstanceName: item.source.split('|')[1],
+                sourceDatabaseName: item.source.split('|')[2],
+                createdAt: item.createdAt,
+                updatedAt: item.updatedAt,
+                tag: item.tag
+            };
+            return databaseObject;
+        });
+        if (demoSandboxInfo.length > 0) {
+            sandboxInfo = sandboxInfo.concat(demoSandboxInfo);
+        }
+    }
+    return sandboxInfo;
 }
 
 async function getSandboxesInfo(accountId: string, credentialsId: string, region: string, nextToken?: string) {
@@ -670,7 +671,7 @@ async function validateCloneParams(
             );
         }
 
-        if (!srcDatabaseExists) {
+        if (!srcDatabaseExists && !(process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator')) {
             throw createError(
                 412,
                 `Database ${srcDetails.database} does not exists on source host ${destDetails.host}`
@@ -1323,6 +1324,38 @@ async function revertMetadataForSanboxTesting(accountId: string, credentialsId: 
     return 'Revereted manually updated metadatas';
 }
 
+async function updateMetadataForSanboxDeletion(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseNameToRemove: string
+) {
+    logger.info('Updating metadata for sandbox operation', accountId, credentialsId, region, databaseHostId);
+    const {
+        items: [resourceDetail]
+    } = await getResources(accountId, databaseHostId);
+
+    if (isEmpty(resourceDetail)) {
+        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+    }
+    const { metadata } = resourceDetail;
+    const newMetadata = metadata as unknown as Metadata;
+
+    newMetadata.sandboxes = newMetadata.sandboxes?.filter(sandbox => sandbox.databaseName !== databaseNameToRemove);
+    newMetadata.userDatabase = newMetadata.userDatabase?.filter(db => db.name !== databaseNameToRemove);
+    try {
+        await updateResourceMetaData(accountId, databaseHostId, newMetadata);
+        logger.info('Metadata updated succesfully for sandbox operation', accountId, databaseHostId);
+    } catch (err) {
+        const errorMessage = `Failed to update metadata for sandbox operation, ${accountId}, ${databaseHostId}, ${err}`;
+        logger.error(errorMessage);
+        throw createError(errorMessage);
+    }
+}
+
 async function getSandboxConnectionString(
     accountId: string,
     credentialsId: string,
@@ -1564,6 +1597,9 @@ async function performSandboxDeletion(
             error: errorMsg,
             endTime: Date.now()
         });
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            updateMetadataForSanboxDeletion(accountId, credentialsId, region, resDetails.host, resDetails.database);
+        }
     }
 }
 
@@ -1600,7 +1636,7 @@ async function validateDeleteSandboxParams(
             resourceDetails.instanceName
         );
 
-        if (!dbExists) {
+        if (!dbExists && !(process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator')) {
             throw createError(
                 412,
                 `Database ${resourceDetails.database} does not exists on source host ${resourceDetails.resourceName}`

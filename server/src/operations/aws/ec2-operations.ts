@@ -35,12 +35,21 @@ import {
     describeEndpoints,
     modifyVpcAttributes,
     describeInstanceTypeOfferings,
-    describeSnapshots
+    describeSnapshots,
+    describeInstance
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
-import { ResourceDetails, SecurityGroup, Subnet, VPC, NetworkInterface, Metadata } from '../../utils/common-types';
+import {
+    ResourceDetails,
+    SecurityGroup,
+    Subnet,
+    VPC,
+    NetworkInterface,
+    Metadata,
+    NodeDetails
+} from '../../utils/common-types';
 import { getRoleDetails } from '../cloud-manager/credentials-operations';
 
 const logger = getLogger();
@@ -609,6 +618,36 @@ async function isEbsAwsBackupEnabled(credentialsId: string, region: string, ebsV
     return backups.Snapshots?.length !== 0;
 }
 
+async function getInstanceDetailsByPrivateIp(credentialsId: string, region: string, privateIps: string[]) {
+    logger.info('Get instance details by private ip', { credentialsId, region, privateIps });
+
+    const { Reservations } = await describeInstance(credentialsId, region, {
+        Filters: [
+            {
+                Name: 'private-ip-address',
+                Values: privateIps
+            }
+        ]
+    });
+    const instanceDetails: NodeDetails[] = [];
+    Reservations?.forEach(({ Instances }) => {
+        const [instance] = Instances || [];
+        if (instance) {
+            const { InstanceId, PrivateIpAddress, InstanceType, Tags } = instance;
+            if (InstanceId && PrivateIpAddress && InstanceType) {
+                instanceDetails.push({
+                    ec2InstanceId: InstanceId,
+                    ec2InstancePrivateIpAddress: PrivateIpAddress,
+                    ec2InstanceType: InstanceType,
+                    ec2InstanceName: Tags?.find(tag => tag?.Key === 'Name')?.Value
+                });
+            }
+        }
+    });
+
+    return instanceDetails;
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -625,5 +664,6 @@ export {
     findResourceNameFromTags,
     enableVpcDnsAttributes,
     getValidationNodeInstanceType,
-    isEbsAwsBackupEnabled
+    isEbsAwsBackupEnabled,
+    getInstanceDetailsByPrivateIp
 };

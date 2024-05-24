@@ -326,7 +326,7 @@ const invokeVirtualMountCommand = {
 
 const createCloneDbCommand = {
     commands: [
-        createClonedDb('testdb', [
+        createClonedDb('testdb', '.', [
             'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
             'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
         ])

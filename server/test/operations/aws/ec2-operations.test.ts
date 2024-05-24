@@ -11,7 +11,8 @@ import {
     getServicesWithNoEndpoint,
     getValidationNodeInstanceType,
     enableVpcDnsAttributes,
-    isEbsAwsBackupEnabled
+    isEbsAwsBackupEnabled,
+    getInstanceDetailsByPrivateIp
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -109,5 +110,13 @@ describe('EC2 Operations', () => {
     it('Check if EBS backup is available', async () => {
         const response = await isEbsAwsBackupEnabled(credentialsId, DEFAULT_AWS_REGION, ['vol-123445']);
         expect(response).toEqual(true);
+    });
+
+    it('Get instance details by private IP', async () => {
+        const [response] = await getInstanceDetailsByPrivateIp(credentialsId, DEFAULT_AWS_REGION, [
+            '10.0.6.118',
+            '10.0.28.145'
+        ]);
+        expect(response.ec2InstanceId).toBeDefined();
     });
 });

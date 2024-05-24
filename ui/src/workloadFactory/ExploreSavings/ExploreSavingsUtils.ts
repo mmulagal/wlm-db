@@ -206,32 +206,38 @@ export const formatPercentage = (val: any) => {
 };
 
 export const formatViewCalcInstance = (selectedDeploymentModel: any, selectedHostDetails: any) => {
+    let instanceTypelist = [];
+    if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
+        instanceTypelist = selectedHostDetails?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
+    } else {
+        instanceTypelist = selectedHostDetails?.topology?.ec2Details?.map((inst: any) => inst?.instanceType);
+    }
     const instanceCalculationData = (() => {
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             return [
                 {
-                    instanceType: selectedHostDetails?.topology?.ec2Details?.[0]?.instanceType || GENERAL.NOT_AVAILABLE,
-                    instanceHourlyPrice: GENERAL.NOT_AVAILABLE,
-                    ec2MachineCost: GENERAL.NOT_AVAILABLE,
+                    instanceType: instanceTypelist?.[0] || GENERAL.NOT_AVAILABLE,
+                    instanceHourlyPrice: GENERAL.NOT_AVAILABLE, // ToDo
+                    ec2MachineCost: GENERAL.NOT_AVAILABLE, // ToDo
                     sqlEdition: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
-                    sqlLicense: GENERAL.NOT_AVAILABLE
+                    sqlLicense: GENERAL.NOT_AVAILABLE // ToDo
                 }
             ];
         } else {
             return [
                 {
-                    instanceType: selectedHostDetails?.topology?.ec2Details?.[0]?.instanceType || GENERAL.NOT_AVAILABLE,
-                    instanceHourlyPrice: GENERAL.NOT_AVAILABLE,
-                    ec2MachineCost: GENERAL.NOT_AVAILABLE,
+                    instanceType: instanceTypelist?.[0] || GENERAL.NOT_AVAILABLE,
+                    instanceHourlyPrice: GENERAL.NOT_AVAILABLE, // ToDo
+                    ec2MachineCost: GENERAL.NOT_AVAILABLE, // ToDo
                     sqlEdition: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
-                    sqlLicense: GENERAL.NOT_AVAILABLE
+                    sqlLicense: GENERAL.NOT_AVAILABLE // ToDo
                 },
                 {
-                    instanceType: selectedHostDetails?.topology?.ec2Details?.[1]?.instanceType || GENERAL.NOT_AVAILABLE,
-                    instanceHourlyPrice: GENERAL.NOT_AVAILABLE,
-                    ec2MachineCost: GENERAL.NOT_AVAILABLE,
+                    instanceType: instanceTypelist?.[1] || GENERAL.NOT_AVAILABLE,
+                    instanceHourlyPrice: GENERAL.NOT_AVAILABLE, // ToDo
+                    ec2MachineCost: GENERAL.NOT_AVAILABLE, // ToDo
                     sqlEdition: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
-                    sqlLicense: GENERAL.NOT_AVAILABLE
+                    sqlLicense: GENERAL.NOT_AVAILABLE // ToDo
                 }
             ];
         }
@@ -416,20 +422,27 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
             billableThroughputMbps: formatNumbers(viewCalculationsResponse?.ebsCalculation?.billableThroughputMbps),
             billableThroughputGbps: formatNumbers(viewCalculationsResponse?.ebsCalculation?.billableThroughputGbps),
             ebsThroughputCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsThroughputCost),
-            totalSnapshots: formatNumbers(viewCalculationsResponse?.ebsCalculation?.totalSnapshots),
-            initialSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.initialSnapshotCost),
-            monthlyCostPerSnapshot: formatNumbers(viewCalculationsResponse?.ebsCalculation?.monthlyCostPerSnapshot),
-            discountForPartialStorageMonth: formatNumbers(
-                viewCalculationsResponse?.ebsCalculation?.discountForPartialStorageMonth
-            ),
-            incrementalSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.incrementalSnapshotCost),
-            totalSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.totalSnapshotCost),
-            totalEbsSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.totalEbsSnapshotCost),
-            ebsSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsSnapshotCost),
             ebsTotalCostMonthly: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsTotalCostMonthly),
             instanceAvgDuration: formatNumbers(viewCalculationsResponse?.ebsCalculation?.instanceAvgDuration),
             ebsCapacityPrice: formatNumbers(viewCalculationsResponse?.ebsCalculation?.ebsCapacityPrice?.price),
             hoursInAMonth: formatNumbers(viewCalculationsResponse?.ebsCalculation?.hoursInAMonth)
+        },
+        ebsSnapshotCalculation: {
+            ebsInstanceMonth: formatNumbers(viewCalculationsResponse?.ebsSnapshotCalculation?.ebsInstanceMonth),
+            totalSnapshots: formatNumbers(viewCalculationsResponse?.ebsSnapshotCalculation?.totalSnapshots),
+            initialSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsSnapshotCalculation?.initialSnapshotCost),
+            monthlyCostPerSnapshot: formatNumbers(
+                viewCalculationsResponse?.ebsSnapshotCalculation?.monthlyCostPerSnapshot
+            ),
+            discountForPartialStorageMonth: formatNumbers(
+                viewCalculationsResponse?.ebsSnapshotCalculation?.discountForPartialStorageMonth
+            ),
+            incrementalSnapshotCost: formatNumbers(
+                viewCalculationsResponse?.ebsSnapshotCalculation?.incrementalSnapshotCost
+            ),
+            totalSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsSnapshotCalculation?.totalSnapshotCost),
+            totalEbsSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsSnapshotCalculation?.totalEbsSnapshotCost),
+            ebsSnapshotCost: formatNumbers(viewCalculationsResponse?.ebsSnapshotCalculation?.ebsSnapshotCost)
         },
         fsxCloneCalculation: {
             clonedCopiesCount: formatNumbers(viewCalculationsResponse?.fsxCloneCalculation?.clonedCopiesCount),
