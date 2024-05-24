@@ -1808,7 +1808,7 @@ async function updateSandboxLifeCycle(
         instanceName: instanceName!,
         fsxId: fsxId!,
         svm: fsxSvmId!,
-        activeNodeInstanceId,
+        activeNodeInstanceId: activeNodeInstanceId!,
         metadata: resourceDetails.metadata as unknown as Metadata,
         database: databaseName,
         instance: instanceName!,
