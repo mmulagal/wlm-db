@@ -26,7 +26,8 @@ import {
     getSandboxSavings,
     revertMetadataForSanboxTesting,
     updateMetadataForSanboxTesting,
-    deleteSandbox
+    deleteSandbox,
+    getSandboxSplitEstimate
 } from '../operations/sandbox-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
@@ -213,6 +214,23 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     sandboxName
                 );
                 return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandbox/:sandboxName/split-estimate`,
+            { schema: GetSandboxConnectionStringSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName }
+                } = request;
+                const response = await getSandboxSplitEstimate(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    sandboxName
+                );
+                return reply.send({ volumes: response });
             }
         )
         .delete(

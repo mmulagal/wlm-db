@@ -370,10 +370,16 @@ const DatabaseMountPointResponseBody = Type.Object({
 });
 type DatabaseMountPointResponseType = Static<typeof DatabaseMountPointResponseBody>;
 
-const SandboxConnectionStringParams = Type.Composite([
-    DatabaseHostSummaryParams,
-    Type.Object({ sandboxName: Type.String() })
-]);
+const SandboxParams = Type.Composite([DatabaseHostSummaryParams, Type.Object({ sandboxName: Type.String() })]);
+
+const splitEstimatesResponse = Type.Object({
+    volumes: Type.Array(
+        Type.Object({
+            name: Type.String(),
+            splitEstimate: Type.Number()
+        })
+    )
+});
 
 export {
     DatabaseHostObjectParams,
@@ -440,5 +446,6 @@ export {
     GetDriveQueryString,
     DatabaseMountPointResponseBody,
     DatabaseMountPointResponseType,
-    SandboxConnectionStringParams
+    SandboxParams,
+    splitEstimatesResponse
 };
