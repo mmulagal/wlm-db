@@ -202,9 +202,11 @@ async function formatTemplateParameters(
     // Get the volume size of an ami.. Set to minimum value of 100 if its lesser than that
     const {
         Images: [
-            { BlockDeviceMappings: [{ Ebs: { VolumeSize: amiVolumeSize = EBS_DEFAULT_VOLUME_SIZE } = {} }] = [] } = {}
+            {
+                BlockDeviceMappings: [{ Ebs: { VolumeSize: amiVolumeSize = EBS_DEFAULT_VOLUME_SIZE } = {} } = {}] = []
+            } = {}
         ] = []
-    } = await getAmis(credentialsId as string, region as string, { ImageIds: [sqlConfiguration.sqlAmiId] });
+    } = (await getAmis(credentialsId as string, region as string, { ImageIds: [sqlConfiguration.sqlAmiId] })) || [];
 
     const amiSize = Math.max(amiVolumeSize, EBS_DEFAULT_VOLUME_SIZE);
     templateParams.push({ ParameterKey: EBS_VOLUME_SIZE, ParameterValue: `'${amiSize}'` });
@@ -766,7 +768,9 @@ async function createCloudFormationTemplateForUserDeployment(
     // Get the volume size of an ami.. Set to minimum value of 100 if its lesser than that
     const {
         Images: [
-            { BlockDeviceMappings: [{ Ebs: { VolumeSize: amiVolumeSize = EBS_DEFAULT_VOLUME_SIZE } = {} }] = [] } = {}
+            {
+                BlockDeviceMappings: [{ Ebs: { VolumeSize: amiVolumeSize = EBS_DEFAULT_VOLUME_SIZE } = {} } = {}] = []
+            } = {}
         ] = []
     } = await getAmis(credentialsId, region, { ImageIds: [sqlConfiguration.sqlAmiId] });
     logger.info('info for AMI:', amiVolumeSize);

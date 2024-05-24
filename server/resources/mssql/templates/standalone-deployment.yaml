@@ -252,14 +252,14 @@ Parameters:
     SqlCollation:
         Description: Collation for the SQL Server.
         Type: String
-    EBSVolumeSize:
-        Description:  Size of the EBS Volume.
-        Type: String
     FsxVolumeSnapshotPolicy:
         Description: Snapshot policy for the volume. Can be either daily_weekretention or none.
         Type: String
         Default: daily_weekretention
         AllowedValues: [daily_weekretention, none]
+    EBSVolumeSize:
+        Description:  Size of the EBS Volume.
+        Type: String
 Conditions:
     ADSGNotSelected: !Equals
         - !Ref 'DomainMemberSGID'
