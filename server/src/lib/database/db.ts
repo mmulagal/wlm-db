@@ -540,7 +540,7 @@ async function upsertDatabaseInstanceRecord(accountId: string, record: DatabaseI
 
     accountId = checkAccount(accountId);
 
-    return prisma.client.databaseInstances.upsert({
+    return prisma.client.database_instances.upsert({
         create: {
             account_id: accountId,
             credentials_id: credentialsId,
@@ -556,7 +556,7 @@ async function upsertDatabaseInstanceRecord(accountId: string, record: DatabaseI
             ...(isDefault && { is_default: isDefault })
         },
         where: {
-            uk_wlmdb_databaseInstances: {
+            uk_wlmdb_database_instances: {
                 account_id: accountId,
                 credentials_id: credentialsId,
                 resource_id: resourceId,
@@ -573,8 +573,7 @@ async function listDatabaseInstances(accountId: string, record: any) {
 
     accountId = checkAccount(accountId);
 
-    // TODO: Add more filters based on final UX changes.
-    return prisma.client.databaseInstances.findMany({
+    return prisma.client.database_instances.findMany({
         where: {
             account_id: accountId,
             credentials_id: credentialsId,
@@ -598,7 +597,7 @@ async function deleteDatabaseInstanceRecord(
     logger.info('Delete a database instance record', { accountId, credentialsId, resourceId, instanceName });
 
     accountId = checkAccount(accountId);
-    return prisma.client.databaseInstances.deleteMany({
+    return prisma.client.database_instances.deleteMany({
         where: {
             account_id: accountId,
             credentials_id: credentialsId,
