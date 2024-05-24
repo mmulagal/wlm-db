@@ -28,7 +28,8 @@ import {
     revertMetadataForSanboxTesting,
     updateMetadataForSanboxTesting,
     deleteSandbox,
-    getSandboxSplitEstimate
+    getSandboxSplitEstimate,
+    updateSandboxLifeCycle
 } from '../operations/sandbox-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
@@ -54,7 +55,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         })
         .get(
-            `${API_PREFIX_PATH}/database-hosts/sandbox-savings`,
+            `${API_PREFIX_PATH}/database-hosts/sandboxes/savings`,
             { schema: GetSandboxSavingsSchema },
             async (request, reply) => {
                 const {
@@ -184,7 +185,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
-        .post(`${API_PREFIX_PATH}/sandbox`, { schema: CloneDatabaseHostSchema }, async (request, reply) => {
+        .post(`${API_PREFIX_PATH}/sandboxes`, { schema: CloneDatabaseHostSchema }, async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region },
                 body: { source, destination, tag, mountPoints }
@@ -201,7 +202,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         })
         .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandbox/:sandboxName/connection-string`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName/connection-string`,
             { schema: GetSandboxConnectionStringSchema },
             async (request, reply) => {
                 const {
@@ -235,7 +236,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .delete(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandbox/:sandboxName`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName`,
             { schema: DeleteSandboxSchema },
             async (request, reply) => {
                 const {
@@ -246,13 +247,21 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .patch(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandbox/:sandboxName`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName`,
             { schema: SandboxLifeCycleSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region, databaseHostId, sandboxName }
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName },
+                    body: { snapshot }
                 } = request;
-                const response = await deleteSandbox(accountId, credentialsId, region, databaseHostId, sandboxName);
+                const response = await updateSandboxLifeCycle(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    sandboxName,
+                    snapshot
+                );
                 return reply.send(response);
             }
         );

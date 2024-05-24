@@ -393,7 +393,8 @@ const SplitEstimatesResponse = Type.Object({
 });
 
 const SandboxLifeCycleBody = Type.Object({
-    snapshot: Type.Optional(Type.String())
+    snapshot: Type.Optional(Type.String()),
+    action: Type.String({ enum: ['REFRESH', 'RE-BASELINE'] })
 });
 
 export {

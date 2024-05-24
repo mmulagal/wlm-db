@@ -30,7 +30,7 @@ $results = foreach ($instance in $instances) {
         FROM (
             SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'createdAt', 'tag', 'baseSnapshot', 'updatedAt') FOR JSON PATH)) AS properties
             FROM #properties AS p1
-            WHERE name = 'cloned_by' AND value = 'netapp_wlmdb'
+            WHERE name = 'cloned_by' AND value = 'netapp_wf'
         ) AS grouped_properties
         GROUP BY database_name, properties
         FOR JSON PATH; 
@@ -229,7 +229,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
                 $object = @{
                     "windowsVolumeName" = $winvolumename
                     "fileName" = $filename
-                    "LunSerialNumber" = $vol.serialnumber
+                    "lunSerialNumber" = $vol.serialnumber
                 }
                 $type = 'data'
                 if ($winvolume.type -ne 0) {
@@ -246,7 +246,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
         Function Get-LunFromSerialNumber($responseObject) {
             Write-debug "Get ONTAP lun name from serial numbers for: $responseObject"
     
-            $QueryFilter = $responseObject.data.LunSerialNumber + '|' + $responseObject.log.LunSerialNumber
+            $QueryFilter = $responseObject.data.lunSerialNumber + '|' + $responseObject.log.lunSerialNumber
             $Params = @{
                 "ApiEndPoint" = "/storage/luns"
             }
@@ -266,13 +266,13 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
                 $responseObject['svm'] = $LunRecords[0].svm.name
                 $LunRecords | ForEach-Object {
                     $lunrecord = $_
-                    if ($responseObject.data.LunSerialNumber -eq $lunrecord.serial_number) {
+                    if ($responseObject.data.lunSerialNumber -eq $lunrecord.serial_number) {
                         $responseObject.data += @{
                             "lunPath" = $lunrecord.name
                             "volumeName" = $lunrecord.location.volume.name
                             "volumeUuid" = $lunrecord.location.volume.uuid
                         }
-                    } elseif ($responseObject.log.LunSerialNumber -eq $lunrecord.serial_number) {
+                    } elseif ($responseObject.log.lunSerialNumber -eq $lunrecord.serial_number) {
                         $responseObject.log += @{
                             "lunPath" = $lunrecord.name
                             "volumeName" = $lunrecord.location.volume.name
@@ -369,8 +369,8 @@ const createVolumeClone = (
     fsxid: string,
     fsxregion: string,
     sourceSvm: string,
-    dataVolume: { name: string; snapshot?: string },
-    logVolume: { name: string; snapshot?: string },
+    dataVolume: string,
+    logVolume: string,
     resourceId: string,
     targetSvm?: string
 ) => `
@@ -561,7 +561,7 @@ const createVolumeClone = (
                 $body = @"
                 {
                     "tiering.object_tags": [
-                        "cloned_by=netapp_wlmdb",
+                        "cloned_by=netapp_wf",
                         "resource_id=$resourceId"
                     ]
                 }
@@ -758,13 +758,15 @@ const cleanUpOntapResources = (
     fsxregion: string,
     volumeIds: string,
     filePaths: string,
-    dbName: string
+    dbName: string,
+    instanceName: string = '.'
 ) => `
     $fsxid = '${fsxid}'
     $fsxregion = '${fsxregion}'
     $volumeIds = '${volumeIds}' | ConvertFrom-Json
     $filePaths = '${filePaths}' | ConvertFrom-Json
     $DBName = '${dbName}'
+    $instanceName = '${instanceName}'
 
     Start-Transcript -Path "C:\\cfn\\log\\cleanup_ontap_resources_$DBName.log.txt" -Append | Out-Null
 
@@ -772,15 +774,15 @@ const cleanUpOntapResources = (
     $responseObject = @{}
 
     try {
-        try {
-            $deleteQuery = "SET NOCOUNT ON; DROP DATABASE $DBName;"
-            $sqlresponse =  sqlcmd -S "." -Q $deleteQuery -y 0;
-        } catch {
-            Write-Debug $_.Exception.Message
-        }
-
 
         if ($filePaths.count -ne 0) {
+            try {
+                $deleteQuery = "SET NOCOUNT ON; DROP DATABASE $DBName;"
+                $sqlresponse =  sqlcmd -S $instanceName -Q $deleteQuery -y 0;
+            } catch {
+                Write-Debug $_.Exception.Message
+            }
+
             $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
 
             if ($clusterServiceStatus -eq 'Running') {
@@ -899,7 +901,7 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string) => `
         
         Do {
             if ($null -eq $nextToken) {
-                $resp = Invoke-ONTAPGetRequest -ApiEndpoint '/api/storage/volumes?tiering.object_tags=cloned_by=netapp_wlmdb&fields=space.used_by_afs,space.physical_used,clone.split_estimate'
+                $resp = Invoke-ONTAPGetRequest -ApiEndpoint '/api/storage/volumes?tiering.object_tags=cloned_by=netapp_wf&fields=space.used_by_afs,space.physical_used,clone.split_estimate'
             } else {
                 $resp = Invoke-ONTAPGetRequest -ApiEndpoint $nextToken
             }
@@ -924,8 +926,8 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string) => `
 
 const detachDbAndRemoveAccessPath = (
     dbName: string,
-    serialNumbers: string[],
-    filePaths: string[],
+    serialNumbers: string,
+    filePaths: string,
     instanceName: string = '.'
 ) => `
     $dbname = '${dbName}'
@@ -935,9 +937,44 @@ const detachDbAndRemoveAccessPath = (
 
     Start-Transcript -Path "C:\\cfn\\log\\detachdb_remove_accesspath_$dbname.log.txt" -Append | Out-Null
 
+    if ($null -eq $responseObject) {
+        $responseObject = @{}
+    }
+
     try {
+        $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$dbname' GROUP BY dbid FOR JSON PATH"
+
+        $sqlres = sqlcmd -Q $query -y 0
+        
+        if ($sqlres -ne $null) {
+            Write-Debug "Database $dbname is in use"
+            $responseObject['error'] = 'Database $dbname is in use'
+            return $responseObject | ConvertTo-Json -Depth 5
+        }
+
+        $query = @"
+            SET NOCOUNT ON;
+            USE $dbname;
+            SELECT name, value
+            FROM fn_listextendedproperty(default, default, default, default, default, default, default) FOR JSON PATH;
+"@
+        $sqlresponse = Sqlcmd -S $instanceName -Q $query -y 0 -m 1
+        $sqlresponse = $sqlresponse | ConvertFrom-JSON
+
+        $sqlresponse | ForEach-Object {
+            $responseObject | Add-Member -MemberType NoteProperty -Name $_.name -Value $_.value
+        }
+
         $detach = "EXEC sp_detach_db '$dbname', 'true'"
         $sqlresponse =  sqlcmd -S $instanceName -Q $detach -y 0;
+
+        Write-Debug "Detach response: $sqlresponse"
+
+        if ($sqlresponse -ne $null) {
+            Write-Debug "Failed to detach the database $sqlresponse"
+            $responseObject['error'] = $sqlresponse
+            return $responseObject | ConvertTo-Json -Depth 5
+        }
 
         $disklist = Get-disk | Where-Object { $serialNumbers -contains $_.SerialNumber }
 
@@ -959,8 +996,11 @@ const detachDbAndRemoveAccessPath = (
             }
         }
     } catch {
-        Write-Error $_.Exception.Message
+        Write-Debug $_.Exception.Message
+        $responseObject['error'] = $_.Exception.Message
     }
+
+    return $responseObject | ConvertTo-Json -Depth 5
 `;
 
 const addAccessPathAndAttachDb = (
