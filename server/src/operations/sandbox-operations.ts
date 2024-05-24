@@ -1371,7 +1371,7 @@ async function getSandboxConnectionString(
             credentialsId
         );
 
-        const { node1InstanceId, node2InstanceId, stackname } = metadata as unknown as Metadata;
+        const { node1InstanceId, node2InstanceId, stackname, activeDirectoryName } = metadata as unknown as Metadata;
 
         const { instanceName } = await getActiveSqlNode(
             credentialsId,
@@ -1394,7 +1394,10 @@ async function getSandboxConnectionString(
         const parsedResp = sqlResponseParsing(resp);
 
         return {
-            server: instanceName === '.' ? resourceName : instanceName,
+            server:
+                instanceName === '.'
+                    ? `${resourceName}.${activeDirectoryName}`
+                    : `${instanceName}.${activeDirectoryName}`,
             database: sandboxName,
             userId:
                 process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
