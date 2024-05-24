@@ -222,13 +222,15 @@ function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavin
             snapshotFreq: snapshotFrequency,
             snapshotPercentageChange: monthlyChangeRatePercentage / numberOfCloneEnvs
         },
-        clones: {
-            monthlyCloneNumber: clonedCopiesCount,
-            changeRate: monthlyChangeRatePercentage / numberOfCloneEnvs,
-            numberOfCloneEnvs,
-            ssdStorage: 100,
-            savings: 0
-        }
+        ...(clonedCopiesCount > 0 && {
+            clones: {
+                monthlyCloneNumber: clonedCopiesCount,
+                changeRate: monthlyChangeRatePercentage / numberOfCloneEnvs,
+                numberOfCloneEnvs,
+                ssdStorage: 100,
+                savings: 0
+            }
+        })
     };
 }
 
