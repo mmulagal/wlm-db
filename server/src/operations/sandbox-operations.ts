@@ -1643,7 +1643,7 @@ async function validateDeleteSandboxParams(
             region,
             resourceDetails.host,
             resourceDetails.database,
-            resourceDetails.activeNodeInstaceId,
+            resourceDetails.activeNodeInstanceId,
             resourceDetails.instanceName
         );
 
