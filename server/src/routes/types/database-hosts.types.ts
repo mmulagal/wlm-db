@@ -372,7 +372,7 @@ type DatabaseMountPointResponseType = Static<typeof DatabaseMountPointResponseBo
 
 const SandboxParams = Type.Composite([DatabaseHostSummaryParams, Type.Object({ sandboxName: Type.String() })]);
 
-const splitEstimatesResponse = Type.Object({
+const SplitEstimatesResponse = Type.Object({
     volumes: Type.Array(
         Type.Object({
             name: Type.String(),
@@ -447,5 +447,5 @@ export {
     DatabaseMountPointResponseBody,
     DatabaseMountPointResponseType,
     SandboxParams,
-    splitEstimatesResponse
+    SplitEstimatesResponse
 };

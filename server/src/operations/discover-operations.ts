@@ -1071,7 +1071,7 @@ async function validateCredentials(
         );
     }
 
-    command += '$responeObject | ConvertTo-Json -Compress';
+    command += '$responseObject | ConvertTo-Json -Compress';
 
     const ssmresponse = await callSsmExecution(credentialsId, region, [command], instanceId, undefined, false);
 

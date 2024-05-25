@@ -19,7 +19,7 @@ import {
     GetDriveQueryString,
     DatabaseMountPointResponseBody,
     SandboxParams,
-    splitEstimatesResponse
+    SplitEstimatesResponse
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
@@ -186,7 +186,7 @@ const GetSandboxSplitEstimateSchema = {
     summary: 'Get Sandbox split estimate',
     description: 'Get split estimate of all the mapped ontap volumes for the given sandbox',
     response: {
-        200: splitEstimatesResponse
+        200: SplitEstimatesResponse
     }
 };
 

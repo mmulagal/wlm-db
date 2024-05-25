@@ -1690,10 +1690,12 @@ async function getSandboxSplitEstimate(
     );
 
     if (!isSSMConnected) {
+        logger.error('Failed to connect to the host through SSM', { databaseHostId });
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to connect to the host through SSM');
     }
 
     if (!activeNodeInstanceId || !instanceName || !fileSystemId) {
+        logger.error('Failed to get the active node instance id', { databaseHostId });
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the active node instance id');
     }
 
@@ -1702,6 +1704,7 @@ async function getSandboxSplitEstimate(
     const mappings = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
 
     if (!mappings) {
+        logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get volume lun mapping for the database');
     }
 
@@ -1725,6 +1728,7 @@ async function getSandboxSplitEstimate(
     const estimateResp = await callSsmExecution(credentialsId, region, estimateCommand, activeNodeInstanceId);
 
     if (!estimateResp) {
+        logger.error('Failed to get volume split estimate', { databaseHostId });
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get volume split estimate');
     }
 
