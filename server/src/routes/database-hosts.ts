@@ -17,6 +17,7 @@ import {
     GetSandboxesMountPointSchema,
     GetSandboxConnectionStringSchema,
     DeleteSandboxSchema,
+    GetSandboxSplitEstimateSchema,
     SandboxLifeCycleSchema
 } from './schemas/database-hosts-schemas';
 import {
@@ -220,7 +221,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
         )
         .get(
             `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName/split-estimate`,
-            { schema: GetSandboxConnectionStringSchema },
+            { schema: GetSandboxSplitEstimateSchema },
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, sandboxName }
