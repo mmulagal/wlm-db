@@ -204,7 +204,6 @@ const DeleteSandboxSchema = {
 };
 
 const SandboxLifeCycleSchema = {
-    ...databaseHostsRequest,
     params: SandboxParams,
     tags: [RouteTags.SANDBOX],
     summary: 'Sandbox lifecycle',

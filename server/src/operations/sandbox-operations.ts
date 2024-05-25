@@ -24,7 +24,8 @@ import {
     createClonedDb as createCloneDbScript,
     mountPointQuery,
     getStorageSavingsFromOntap,
-    detachDbAndRemoveAccessPath
+    detachDbAndRemoveAccessPath,
+    addAccessPathAndAttachDb
 } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { checkDatabaseExists, getActiveSqlNode, getSqlServerVersion } from './workloads/mssql/mssql-operations';
@@ -326,7 +327,6 @@ interface VolumeLunMap {
     volumeUuid: string;
     parentSvm?: string;
     parentVolume?: string;
-    parentSnapshot?: string;
 }
 
 interface VolumeLunMapping {
@@ -2105,28 +2105,28 @@ async function reAttachSandboxAndAccessPath(
     });
 
     try {
-        // const command = [
-        //     addAccessPathAndAttachDb(
-        //         resourceDetails.database,
-        //         JSON.stringify({ serial: mappings.data.lunSerialNumber, path: mappings.data.fileName }),
-        //         JSON.stringify({ serial: mappings.log.lunSerialNumber, path: mappings.log.fileName }),
-        //         resourceDetails.instanceName
-        //     )
-        // ];
-        // const resp = await callSsmExecution(credentialsId, region, command, resourceDetails.activeNodeInstanceId);
+        const command = [
+            addAccessPathAndAttachDb(
+                resourceDetails.database,
+                { serial: mappings.log.lunSerialNumber, path: mappings.log.fileName },
+                { serial: mappings.data.lunSerialNumber, path: mappings.data.fileName },
+                resourceDetails.instanceName
+            )
+        ];
+        const resp = await callSsmExecution(credentialsId, region, command, resourceDetails.activeNodeInstanceId);
 
-        // if (!resp) {
-        //     throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Interval Server Error');
-        // }
+        if (!resp) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Interval Server Error');
+        }
 
-        // const jsonResp = sqlResponseParsing(resp);
+        const jsonResp = sqlResponseParsing(resp);
 
-        // if (jsonResp.error) {
-        //     throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, jsonResp.error);
-        // }
+        if (jsonResp.error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, jsonResp.error);
+        }
 
         status = JOBSTATUS.COMPLETED;
-        // return jsonResp;
+        return jsonResp;
     } catch (e: any) {
         logger.error('Failed to detach sandbox and access path', e);
         status = JOBSTATUS.FAILED;

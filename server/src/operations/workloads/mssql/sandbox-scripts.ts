@@ -351,8 +351,8 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
             return $responseObject | ConvertTo-Json -Depth 5
         }
     
-        $responeObject = Get-VolumeIdFromName $responeObject
-        write-debug "Volume Names: $($responeObject | ConvertTo-Json)"
+        $responseObject = Get-VolumeIdFromName $responseObject
+        write-debug "Volume Names: $($responseObject | ConvertTo-Json)"
     } catch {
         write-Error $_.Exception.Message
         if ($responseObject -eq $null) {
@@ -430,8 +430,8 @@ const createVolumeClone = (
             write-debug ($response | ConvertTo-Json)
 
             if ($response.records.count -eq 0) {
-                $responeObject['error'] = "Could not find the cloned volumes to create snapshot."
-                return $responeObject
+                $responseObject['error'] = "Could not find the cloned volumes to create snapshot."
+                return $responseObject
             }
 
             $volumeid = $response.records[0].uuid
@@ -456,8 +456,8 @@ const createVolumeClone = (
                     # Create snapshot
                     $job = New-Snapshot -volumeName $volume.name
                     if ($job.state -ne 'success') {
-                        $responeObject['error'] = "Could not create snapshot for $($volume.name). Ontap error: $($job.message)"
-                        return $responeObject
+                        $responseObject['error'] = "Could not create snapshot for $($volume.name). Ontap error: $($job.message)"
+                        return $responseObject
                     }
                     $snapshot = $defaultSnapshot
                 }
@@ -501,7 +501,7 @@ const createVolumeClone = (
             write-debug "/volumes $($response | ConvertTo-Json)"
 
             if ($response.records.count -eq 0) {
-                $responeObject['error'] = "Could not find the cloned volumes."
+                $responseObject['error'] = "Could not find the cloned volumes."
             } else {
                 return $response.records
             }
@@ -544,11 +544,11 @@ const createVolumeClone = (
                 $volresponse | ForEach-Object {
                     $volume = $_
                     if ($volume.name -match $dataVolume.name) {
-                        $responeObject['data'] += @{
+                        $responseObject['data'] += @{
                             "parentSnapshot" = $volume.clone.parent_snapshot.name
                         }
                     } else {
-                        $responeObject['log'] += @{
+                        $responseObject['log'] += @{
                             "parentSnapshot" = $volume.clone.parent_snapshot.name
                         }
                     }
@@ -586,8 +586,8 @@ const createVolumeClone = (
                 }
 
                 $null = Connect-NcController -Credential $FSxCredentials -Name $FSxHostName
-                $CloneDataLuns = $responeObject['data'] | ForEach-Object { $_.lunPath }
-                $CloneLogLuns = $responeObject['log'] | ForEach-Object { $_.lunPath }
+                $CloneDataLuns = $responseObject['data'] | ForEach-Object { $_.lunPath }
+                $CloneLogLuns = $responseObject['log'] | ForEach-Object { $_.lunPath }
                 if ($CloneDataLuns -is [array] -or $CloneLogLuns -is [array]) {
                     $ClonedLuns = $CloneDataLuns + $CloneLogLuns
                 } else {
@@ -614,8 +614,8 @@ const createVolumeClone = (
             )
     
             $ApiEndpoint = '/protocols/san/lun-maps'
-            $CloneDataLuns = $responeObject['data'] | ForEach-Object { $_.lunPath }
-            $CloneLogLuns = $responeObject['log'] | ForEach-Object { $_.lunPath }
+            $CloneDataLuns = $responseObject['data'] | ForEach-Object { $_.lunPath }
+            $CloneLogLuns = $responseObject['log'] | ForEach-Object { $_.lunPath }
             if ($CloneDataLuns -is [array] -or $CloneLogLuns -is [array]) {
                 $lunPaths = $CloneDataLuns + $CloneLogLuns
             } else {
@@ -1010,12 +1010,13 @@ const addAccessPathAndAttachDb = (
     instanceName: string = '.'
 ) => `
     $dbname = '${dbName}'
-    $serialNumbers = '${datafile}' | ConvertFrom-Json
-    $filePaths = '${logfile}' | ConvertFrom-Json
+    $serialNumbers = '${JSON.stringify(datafile)}' | ConvertFrom-Json
+    $filePaths = '${JSON.stringify(logfile)}' | ConvertFrom-Json
     $instanceName = '${instanceName}'
 
     Start-Transcript -Path "C:\\cfn\\log\\add_accesspath_attachdb_$dbname.log.txt" -Append | Out-Null
 
+    $responseObject = @{}
     try {
         Function Get-VirtualMountPoint {
             param (
@@ -1025,25 +1026,45 @@ const addAccessPathAndAttachDb = (
             $splits = $path.Split('\\')
             return $splits[0] + '\\' + $splits[1] + '\\'
         }
-
-        $datadisk = Get-disk | Where-Object { $_.SerialNumber -eq $datafile.serial }
-        $logdisk = Get-disk | Where-Object { $_.SerialNumber -eq $logfile.serial }
-
+        
         $dataMountPoint = Get-VirtualMountPoint -path $datafile.path
         $logMountPoint = Get-VirtualMountPoint -path $logfile.path
 
-        write-debug "Mount Points: $dataMountPoint $logMountPoint"
-
-        $datapartition = Get-Partition -DiskNumber $datadisk.Number -PartitionNumber 2
-        $logpartition = Get-Partition -DiskNumber $logdisk.Number -PartitionNumber 2
-        write-debug "Partition accesspaths: $($datapartition.AccessPaths) $($logpartition.AccessPaths)"
-
-        if ($datapartition.AccessPaths -notcontains $dataMountPoint) {
-            Add-PartitionAccessPath -DiskNumber $datadisk.Number -PartitionNumber $partition.PartitionNumber -AccessPath $dataMountPoint
+        Get-Partition | ForEach-Object {
+            $partition = $_
+            if ($partition.AccessPaths -contains $dataMountPoint -or $partition.AccessPaths -contains $logMountPoint) {
+                Write-Debug "Access path already exists for $dataMountPoint or $logMountPoint"
+                $accessPathExists = $true
+            }
         }
-        
-        if ($logpartition.AccessPaths -notcontains $logMountPoint) {
-            Add-PartitionAccessPath -DiskNumber $logdisk.Number -PartitionNumber $partition.PartitionNumber -AccessPath $logMountPoint
+
+        # If access path does not exist, only then add the access path
+        if ($accessPathExists -ne $true) {
+            $datadisk = Get-disk | Where-Object { $_.SerialNumber -eq $datafile.serial }
+            $logdisk = Get-disk | Where-Object { $_.SerialNumber -eq $logfile.serial }
+
+            write-debug "Mount Points: $dataMountPoint $logMountPoint"
+
+            $datapartition = Get-Partition -DiskNumber $datadisk.Number -PartitionNumber 2
+            $logpartition = Get-Partition -DiskNumber $logdisk.Number -PartitionNumber 2
+            write-debug "Partition accesspaths: $($datapartition.AccessPaths) $($logpartition.AccessPaths)"
+
+            if ($datapartition.AccessPaths -notcontains $dataMountPoint) {
+                Add-PartitionAccessPath -DiskNumber $datadisk.Number -PartitionNumber $partition.PartitionNumber -AccessPath $dataMountPoint
+            }
+            
+            if ($logpartition.AccessPaths -notcontains $logMountPoint) {
+                Add-PartitionAccessPath -DiskNumber $logdisk.Number -PartitionNumber $partition.PartitionNumber -AccessPath $logMountPoint
+            }
+        }
+
+        $selectquery = "SET NOCOUNT ON; SELECT name FROM sys.databases where name = '$dbname' FOR JSON PATH;"
+        $sqlresponse =  sqlcmd -S $instanceName -Q $selectquery -y 0;
+
+        if ($sqlresponse -ne $null) {
+            Write-Debug "Database $dbname already exists"
+            $responseObject['info'] = 'Database $dbname already exists'
+            return $responseObject | ConvertTo-Json -Depth 5
         }
 
         $attachQuery = @"
@@ -1051,9 +1072,16 @@ const addAccessPathAndAttachDb = (
             ${[datafile.path, logfile.path].map(file => (file ? `(FILENAME = '${file}')` : '')).join()}
             FOR ATTACH;
 "@
-        $sqlresponse =  sqlcmd -S $instanceName -Q $attachQuery -y 0;
+        $attachresponse =  sqlcmd -S $instanceName -Q $attachQuery -y 0;
+        if ($attachresponse -ne $null) {
+            Write-Debug "Failed to attach the database $attachresponse"
+            $responseObject['error'] = $attachresponse
+            return $responseObject | ConvertTo-Json -Depth 5
+        }
     } catch {
-        Write-Error $_.Exception.Message
+        Write-Debug $_.Exception.Message
+        $responseObject['error'] = $_.Exception.Message
+        return $responseObject | ConvertTo-Json -Depth 5
     }
 `;
 

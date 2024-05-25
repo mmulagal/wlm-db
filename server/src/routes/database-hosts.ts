@@ -219,7 +219,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandbox/:sandboxName/split-estimate`,
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName/split-estimate`,
             { schema: GetSandboxConnectionStringSchema },
             async (request, reply) => {
                 const {
