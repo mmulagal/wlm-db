@@ -89,7 +89,8 @@ async function getSandboxDetails(
         return errorResponse(errorMessage);
     }
 
-    const command = [GET_SANDBOX_DETAILS(['"."'])];
+    accountId = process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator' ? 'test-account' : accountId;
+    const command = [GET_SANDBOX_DETAILS(['"."'], accountId)];
     const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
     let sandboxInfo: SandboxInfoResponseType[] = [];
 
@@ -1095,7 +1096,8 @@ async function createExtendedProperties(
                 cloned_by: 'netapp_wlmdb',
                 source: `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`,
                 createdAt: Date.now(), // to be used for calculating age
-                updatedAt: Date.now() // to be used for getting the last update
+                updatedAt: Date.now(), // to be used for getting the last update
+                accountId: accountId
             })
         ];
 
