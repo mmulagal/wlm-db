@@ -209,7 +209,7 @@ async function formatTemplateParameters(
     } = (await getAmis(credentialsId as string, region as string, { ImageIds: [sqlConfiguration.sqlAmiId] })) || [];
 
     const amiSize = Math.max(amiVolumeSize, EBS_DEFAULT_VOLUME_SIZE);
-    templateParams.push({ ParameterKey: EBS_VOLUME_SIZE, ParameterValue: `'${amiSize}'` });
+    templateParams.push({ ParameterKey: EBS_VOLUME_SIZE, ParameterValue: amiSize.toString() });
 
     Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
         if (!servicesWithNoEndpoint.includes(key)) {
@@ -773,10 +773,9 @@ async function createCloudFormationTemplateForUserDeployment(
             } = {}
         ] = []
     } = await getAmis(credentialsId, region, { ImageIds: [sqlConfiguration.sqlAmiId] });
-    logger.info('info for AMI:', amiVolumeSize);
 
     const amiSize = Math.max(amiVolumeSize, EBS_DEFAULT_VOLUME_SIZE);
-    templateParams += `&param_${EBS_VOLUME_SIZE}='${amiSize}'`;
+    templateParams += `&param_${EBS_VOLUME_SIZE}=${amiSize}`;
 
     templateParamsAsList.push(
         {

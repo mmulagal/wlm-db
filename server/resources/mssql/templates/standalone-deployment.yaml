@@ -26,6 +26,7 @@ Metadata:
                   - SqlFSxServerNetBIOSName
                   - KeyPairName
                   - WorkloadInstanceType
+                  - EBSVolumeSize
             - Label:
                   default: Amazon FSx for ONTAP Volume Configuration
               Parameters:
@@ -54,7 +55,6 @@ Metadata:
               Parameters:
                   - EnableCloudWatchLogFeature
                   - ParentStackName
-                  - EBSVolumeSize
         ParameterLabels:
             KeyPairName:
                 default: Key Pair Name for the EC2 instance
