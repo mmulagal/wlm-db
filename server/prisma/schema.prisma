@@ -66,9 +66,11 @@ model resource {
   cloud_provider_name       String? @db.VarChar(30)
   region                    String? @db.VarChar(30)
   metadata                  Json?   @default("{}")
+  database_instances        database_instances[]
 
   @@index([account_id], map: "k_wlmdb_resource_account_id")
   @@index([resource_id], map: "k_wlmdb_resource_resource_id")
+  @@index([account_id, credentials_id, resource_id], map: "k_wlmdb_resource_account_id_credentials_id_resource_id")
   @@unique([resource_id, account_id, credentials_id], name: "uk_wlmdb_resource_resource_id_account_id_credentials_id", map: "uk_wlmdb_resource_resource_id_account_id_credentials_id")
 }
 
@@ -107,7 +109,27 @@ model job {
   @@index([parent_job_id], map: "k_wlmdb_job_parent_job_id")
   @@index([start_time], map: "k_wlmdb_job_start_time")
   @@unique([account_id, name, resource_name, initiator, start_time], name: "uk_wlmdb_config_uniqueJob")
+}
 
+model database_instances {
+  id                String   @id @default(uuid())
+  account_id        String   @db.VarChar(30)
+  credentials_id    String   @db.VarChar(80)
+  resource_id       String   @db.VarChar(255)
+  sql_instance_id   String   @db.VarChar(36)
+  sql_instance_name String   @db.VarChar(16)
+  fsxn_ids          String   @db.VarChar(255)
+  is_default        Boolean  @default(value: false)
+  created_time      DateTime @default(now()) @db.DateTime(3)
+  updated_time      DateTime @default(now()) @updatedAt @db.DateTime(3)
+
+  resource resource @relation(fields: [account_id, credentials_id, resource_id], references: [account_id, credentials_id, resource_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_resource_account_id_credentials_id_resource_id")
+
+  @@unique([account_id, credentials_id, resource_id, sql_instance_id], name: "uk_wlmdb_database_instances", map: "uk_wlmdb_database_instances")
+  @@index([account_id], map: "k_wlmdb_database_instances_account_id")
+  @@index([credentials_id], map: "k_wlmdb_database_instances_credentials_id")
+  @@index([resource_id], map: "k_wlmdb_database_instances_resource_id")
+  @@index([sql_instance_name], map: "k_wlmdb_database_instances_sql_instance_name")
 }
 
 enum JOBSTATUS {
