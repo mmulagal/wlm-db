@@ -774,7 +774,15 @@ async function getMappings(
             command = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
         }
 
-        const mappings = await callSsmExecution(credentialsId, region, command, srcDetails.activeNodeInstanceId);
+        const mappings = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            srcDetails.activeNodeInstanceId,
+            accountId,
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
+        );
 
         if (!mappings) {
             throw createError(
@@ -873,7 +881,15 @@ async function createVolumeClone(
             ];
         }
 
-        const clonedVolumes = await callSsmExecution(credentialsId, region, command, destDetails.activeNodeInstanceId);
+        const clonedVolumes = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            destDetails.activeNodeInstanceId,
+            accountId,
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
+        );
 
         if (!clonedVolumes) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to create clone volume');
@@ -1240,7 +1256,15 @@ async function startCleanup(
             ];
         }
 
-        const resp = await callSsmExecution(credentialsId, region, command, destDetails.activeNodeInstanceId);
+        const resp = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            destDetails.activeNodeInstanceId,
+            accountId,
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
+        );
 
         if (!resp) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to cleanup');
