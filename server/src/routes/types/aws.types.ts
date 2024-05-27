@@ -103,7 +103,8 @@ const AmiResponse = Type.Object({
             platform: Type.Optional(Type.String()),
             platformDetails: Type.Optional(Type.String()),
             state: Type.Optional(Type.String()),
-            hypervisor: Type.Optional(Type.String())
+            hypervisor: Type.Optional(Type.String()),
+            ebsVolumeSize: Type.Optional(Type.Number())
         })
     )
 });
