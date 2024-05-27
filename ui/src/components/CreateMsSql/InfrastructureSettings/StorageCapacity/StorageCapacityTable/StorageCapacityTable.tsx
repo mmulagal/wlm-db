@@ -19,7 +19,7 @@ const StorageCapacityTable = () => {
             id: 1,
             type: GENERAL.DATA_VOLUME,
             size: sizeData?.data,
-            calculation: 'Data volume size with 10% buffer'
+            calculation: 'Data volume size with 10% headroom'
         });
         newList.push({
             id: 2,
@@ -37,7 +37,7 @@ const StorageCapacityTable = () => {
             id: 4,
             type: GENERAL.QUORUM_VOLUME,
             size: sizeData?.quorum,
-            calculation: `Witness disk for Windows cluster`
+            calculation: `Disk Witness for Windows cluster in FCI deployments`
         });
         if (isFsxnNew(fsxNType)) {
             // For existing FSX buffer size should not be considered
@@ -45,7 +45,7 @@ const StorageCapacityTable = () => {
                 id: 5,
                 type: GENERAL.BUFFER_SIZE,
                 size: sizeData?.buffer,
-                calculation: `Upto 20% headroom over total capacity`
+                calculation: `Up to 20% headroom over total capacity`
             });
         }
         newList.push({
@@ -53,18 +53,18 @@ const StorageCapacityTable = () => {
             type: GENERAL.TOTAL_VOLUME,
             // For existing FSX removing buffer size
             size: isFsxnNew(fsxNType) ? sizeData?.total : sizeData?.total - (sizeData?.buffer || 0),
-            calculation: `Total FSx for ONTAP SSD capacity`
+            calculation: `Total FSx for ONTAP file system SSD capacity`
         });
         setSizeData(newList);
     }, [getEstimatedCostData]);
 
     const dataDriveColDefs: ColumnProps[] = [
         {
-            Header: 'Volume type',
+            Header: 'Capacity requirements for Data drive size',
             accessor: 'type',
             id: '1',
             isSortable: false,
-            width: '290px',
+            width: '320px',
             renderCell: (cellData: any, rowData: any) => {
                 if (rowData?.size <= 1024 && cellData === GENERAL.TOTAL_VOLUME && isFsxnNew(fsxNType)) {
                     return (
@@ -84,7 +84,7 @@ const StorageCapacityTable = () => {
             Header: 'Size',
             accessor: 'size',
             id: '2',
-            width: '240px',
+            width: '180px',
             renderCell: (cellData: any) => {
                 if (selectedUnit?.label === 'TiB') {
                     return cellData
@@ -99,7 +99,7 @@ const StorageCapacityTable = () => {
             Header: 'Calculation',
             accessor: 'calculation',
             id: '3',
-            width: '350px'
+            width: '380px'
         }
     ];
 

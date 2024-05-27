@@ -37,7 +37,7 @@ const SqlServerCollation = () => {
     };
 
     useEffect(() => {
-        if (!isLoadConfig && !movingFromChatbot) {
+        if ((!isLoadConfig && !movingFromChatbot) || !sqlServerCollation) {
             selectDefaultCollation(collationList, dispatch);
         }
     }, [dispatch, generateCollationValues]);

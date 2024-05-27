@@ -91,7 +91,8 @@ async function getSandboxDetails(
         return errorResponse(errorMessage);
     }
 
-    const command = [GET_SANDBOX_DETAILS(['"."'])];
+    accountId = process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator' ? 'test-account' : accountId;
+    const command = [GET_SANDBOX_DETAILS(['"."'], accountId)];
     const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
     let sandboxInfo: SandboxInfoResponseType[] = [];
 
@@ -1382,7 +1383,7 @@ async function getSandboxConnectionString(
             credentialsId
         );
 
-        const { node1InstanceId, node2InstanceId, stackname } = metadata as unknown as Metadata;
+        const { node1InstanceId, node2InstanceId, stackname, activeDirectoryName } = metadata as unknown as Metadata;
 
         const { instanceName } = await getActiveSqlNode(
             credentialsId,
@@ -1405,7 +1406,10 @@ async function getSandboxConnectionString(
         const parsedResp = sqlResponseParsing(resp);
 
         return {
-            server: instanceName === '.' ? resourceName : instanceName,
+            server:
+                instanceName === '.'
+                    ? `${resourceName}.${activeDirectoryName}`
+                    : `${instanceName}.${activeDirectoryName}`,
             database: sandboxName,
             userId:
                 process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
