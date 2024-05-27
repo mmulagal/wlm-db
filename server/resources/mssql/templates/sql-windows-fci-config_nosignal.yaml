@@ -126,7 +126,7 @@ Metadata:
             FsxVolumeSnapshotPolicy:
                 default: Snapshot policy for the volume. Can be either daily_weekretention or none.
             EBSVolumeSize:
-                default: Size of the EBS Volume.
+                default: Size of the EBS Volume in GiB.
 Parameters:
     ParentStackName:
         Description: Name of the parent CloudFormation stack.
@@ -298,7 +298,7 @@ Parameters:
         Default: daily_weekretention
         AllowedValues: [daily_weekretention, none]
     EBSVolumeSize:
-        Description:  Size of the EBS Volume.
+        Description:  Size of the EBS Volume in GiB.
         Type: String
 Conditions:
     ADSGNotSelected: !Equals

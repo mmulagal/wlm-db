@@ -440,7 +440,7 @@ const PARAMETERS = [
     },
     {
         name: 'EBSVolumeSize',
-        description: 'Size of the EBS Volume.',
+        description: 'Size of the EBS Volume in GiB.',
         type: 'Number',
         minValue: 100
     }
