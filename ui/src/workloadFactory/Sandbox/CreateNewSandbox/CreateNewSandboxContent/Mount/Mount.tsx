@@ -171,7 +171,7 @@ const Mount = () => {
                                 <div className={styles.defineMountPointRow}>
                                     <SelectField
                                         isLoading={false}
-                                        label={GENERAL.SELECT_DATA_DRIVE_LETTER}
+                                        label={GENERAL.SELECT_DRIVE_LETTER}
                                         isClearable={false}
                                         placeholder={GENERAL.SELECT_DRIVE_LETTER}
                                         onChange={(selectedOptions: any): void => {
@@ -209,7 +209,7 @@ const Mount = () => {
                                 <div className={styles.defineMountPointRow}>
                                     <SelectField
                                         isLoading={false}
-                                        label={GENERAL.SELECT_LOG_DRIVE_LETTER}
+                                        label={GENERAL.SELECT_DRIVE_LETTER}
                                         isClearable={false}
                                         placeholder={GENERAL.SELECT_DRIVE_LETTER}
                                         onChange={(selectedOptions: any): void => {

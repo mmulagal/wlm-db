@@ -639,8 +639,6 @@ export const GENERAL = {
     DATA_FILE_PATH: 'Data file path:',
     LOG_FILE_PATH: 'Log file path:',
     SELECT_DRIVE_LETTER: 'Select drive letter',
-    SELECT_DATA_DRIVE_LETTER: 'Select data file drive letter',
-    SELECT_LOG_DRIVE_LETTER: 'Select log file drive letter',
     LOG_SIZE_MIN_ERROR: 'Log file size should be 1 GiB or more.',
     NO_DATA_SIZE_ERROR: 'Data file size should be 1 GiB or more.',
     LOG_SIZE_ERROR: 'Log file size should be less than data file size.',
