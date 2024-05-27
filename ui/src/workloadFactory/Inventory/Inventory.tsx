@@ -17,8 +17,8 @@ const Inventory = () => {
             <div className={styles.tabs}>
                 <InventoryTabs />
             </div>
-            {/* {selectedInventoryTab === WLF_TABS.MANAGED_HOSTS && <ManagedHosts />} */}
-            {selectedInventoryTab === WLF_TABS.MANAGED_HOSTS && <InventoryTable />}
+            {selectedInventoryTab === WLF_TABS.MANAGED_HOSTS && <ManagedHosts />}
+            {/* {selectedInventoryTab === WLF_TABS.MANAGED_HOSTS && <InventoryTable />} */}
             {selectedInventoryTab === WLF_TABS.UNMANAGED_HOSTS && <UnmanagedHosts />}
             {selectedInventoryTab === WLF_TABS.UNDETECTED_HOSTS && <UndetectedHosts />}
         </div>
