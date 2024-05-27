@@ -1,6 +1,6 @@
 // instances input instances = ['"computername\\instanceName"', '"."']; "." represents the default instance
 // ('source', 'initialCreationDate', 'tag', 'baseSnapshot') are the extended properties saved during creation of sandbox
-const GET_SANDBOX_DETAILS = (instances: string[]) => ` 
+const GET_SANDBOX_DETAILS = (instances: string[], accountId: string) => ` 
 $instances = (${instances})
 
 $results = foreach ($instance in $instances) {
@@ -32,6 +32,11 @@ $results = foreach ($instance in $instances) {
             FROM #properties AS p1
             WHERE name = 'cloned_by' AND value = 'netapp_wlmdb'
         ) AS grouped_properties
+        WHERE database_name IN (
+            SELECT database_name
+            FROM #properties
+            WHERE name = 'accountId' AND value = '${accountId}'
+        )
         GROUP BY database_name, properties
         FOR JSON PATH; 
 "@
@@ -67,8 +72,8 @@ const checkDatabaseExists = (dbCloneName: string, instanceName: string = '.') =>
 
     $dbCloneName = '${dbCloneName}'
 
-    if ($responeObject -eq $null) {
-        $responeObject = @{}
+    if ($responseObject -eq $null) {
+        $responseObject = @{}
     }
 
     $sqlcmd = "SET NOCOUNT ON; SELECT name FROM sys.databases where name = '$dbCloneName' FOR JSON PATH;"
@@ -78,10 +83,10 @@ const checkDatabaseExists = (dbCloneName: string, instanceName: string = '.') =>
 
     if ($ExistingDatabases.count -ne 0) {
         Write-Error "Database with name $dbCloneName already exists"
-        $responeObject.add('dbCloneNameExists', $True)
+        $responseObject.add('dbCloneNameExists', $True)
     }
 
-    $responeObject.add('dbCloneNameExists', $False)
+    $responseObject.add('dbCloneNameExists', $False)
 `;
 
 // Template for ONTAP REST request
@@ -200,7 +205,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
 
     Start-Transcript -Path "C:\\cfn\\log\\map_ontap_volumes_$dbname.log.txt" -Append | Out-Null
 
-    $responeObject = @{}
+    $responseObject = @{}
     
     try {
         $sqlquery = @"
@@ -264,7 +269,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
             $LunRecords = $Response.records
     
             if ($LunRecords.count -gt 0) {
-                $responeObject['svm'] = $LunRecords[0].svm.name
+                $responseObject['svm'] = $LunRecords[0].svm.name
                 $LunRecords | ForEach-Object {
                     $lunrecord = $_
                     if ($responseObject.data.LunSerialNumber -eq $lunrecord.serial_number) {
@@ -282,47 +287,47 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
                     }
                 }
             }
-            return $responeObject
+            return $responseObject
         }
     
-        $responeObject =  sqlcmd -S "${instanceName}" -Q $sqlquery -y 0;
-        write-debug "SQL response: $responeObject"
-        if ([string]::IsNullOrEmpty($responeObject)) {
-            if ($responeObject -eq $null) {
-                $responeObject = @{}
+        $responseObject =  sqlcmd -S "${instanceName}" -Q $sqlquery -y 0;
+        write-debug "SQL response: $responseObject"
+        if ([string]::IsNullOrEmpty($responseObject)) {
+            if ($responseObject -eq $null) {
+                $responseObject = @{}
             }
-            $responeObject['error'] = "Couldn't get database windows volumes from db $dbname"
-            return $responeObject | ConvertTo-Json -Depth 5
+            $responseObject['error'] = "Couldn't get database windows volumes from db $dbname"
+            return $responseObject | ConvertTo-Json -Depth 5
         }
     
-        $responeObject = Get-SerialNumberOfWinVolumes $responeObject
-        write-debug "Serial numbers: $($responeObject | ConvertTo-Json)"
-        if ([string]::IsNullOrEmpty($responeObject)) {
-            if ($responeObject -eq $null) {
-                $responeObject = @{}
+        $responseObject = Get-SerialNumberOfWinVolumes $responseObject
+        write-debug "Serial numbers: $($responseObject | ConvertTo-Json)"
+        if ([string]::IsNullOrEmpty($responseObject)) {
+            if ($responseObject -eq $null) {
+                $responseObject = @{}
             }
-            $responeObject['error'] = "Couldn't get windows volume serial numbers"
-            return $responeObject | ConvertTo-Json -Depth 5
+            $responseObject['error'] = "Couldn't get windows volume serial numbers"
+            return $responseObject | ConvertTo-Json -Depth 5
         }
     
-        $responeObject = Get-LunFromSerialNumber $responeObject
-        write-debug "Lun Names: $($responeObject | ConvertTo-Json)"
-        if ([string]::IsNullOrEmpty($responeObject)) {
-            if ($responeObject -eq $null) {
-                $responeObject = @{}
+        $responseObject = Get-LunFromSerialNumber $responseObject
+        write-debug "Lun Names: $($responseObject | ConvertTo-Json)"
+        if ([string]::IsNullOrEmpty($responseObject)) {
+            if ($responseObject -eq $null) {
+                $responseObject = @{}
             }
-            $responeObject['error'] = "Couldn't get associated Ontap LUN volume names"
-            return $responeObject | ConvertTo-Json -Depth 5
+            $responseObject['error'] = "Couldn't get associated Ontap LUN volume names"
+            return $responseObject | ConvertTo-Json -Depth 5
         }
     } catch {
         write-Error $_.Exception.Message
-        if ($responeObject -eq $null) {
-            $responeObject = @{}
+        if ($responseObject -eq $null) {
+            $responseObject = @{}
         }
-        $responeObject['error'] = $_.Exception.Message
+        $responseObject['error'] = $_.Exception.Message
     }
 
-    $responeObject | ConvertTo-Json -Depth 5
+    $responseObject | ConvertTo-Json -Depth 5
 `;
 
 // Create clone
@@ -351,7 +356,7 @@ const createVolumeClone = (
 
 
     $WarningPreference = "SilentlyContinue"
-    $responeObject = @{}
+    $responseObject = @{}
     
     try {
 
@@ -433,8 +438,8 @@ const createVolumeClone = (
             write-debug ($response | ConvertTo-Json)
     
             if ($response.records.count -eq 0) {
-                $responeObject['error'] = "Could not find the cloned volumes to create tags."
-                return $responeObject | ConvertTo-Json -Depth 5
+                $responseObject['error'] = "Could not find the cloned volumes to create tags."
+                return $responseObject | ConvertTo-Json -Depth 5
             }
 
             $jobStatus = @()
@@ -445,9 +450,9 @@ const createVolumeClone = (
                     "volumeName" = $_.location.volume.name
                 }
                 if ($_.location.volume.name -match $dataVolume) {
-                    $responeObject['data'] = $volume
+                    $responseObject['data'] = $volume
                 } else {
-                    $responeObject['log'] = $volume
+                    $responseObject['log'] = $volume
                 }
             }
 
@@ -534,8 +539,8 @@ const createVolumeClone = (
         $igroup = Get-IgroupName
         write-debug "Igroup: $igroup"
         if ([string]::IsNullOrEmpty($igroup)) {
-            $responeObject['error'] = "Could not find igroup for $targetSvm."
-            return $responeObject | ConvertTo-Json -Depth 5
+            $responseObject['error'] = "Could not find igroup for $targetSvm."
+            return $responseObject | ConvertTo-Json -Depth 5
         }
     
         $jobStatusList = New-VolumeClone
@@ -543,36 +548,36 @@ const createVolumeClone = (
         $failedjob = $jobStatusList | Where-Object { $_.state -ne 'success' } | Select-Object -First 1
         write-debug "Clone volumes job: $($failedjob | convertto-json)"
         if ($failedjob) {
-            $responeObject['error'] = "Could not clone volume. Ontap error: $($failedjob.message)"
-            return $responeObject | ConvertTo-Json -Depth 5
+            $responseObject['error'] = "Could not clone volume. Ontap error: $($failedjob.message)"
+            return $responseObject | ConvertTo-Json -Depth 5
         }
     
         $response = Add-ObjectTagsToVolume
         write-debug "Modify volumes job: $($jobStatusList | convertto-json)"
         $failedjob = $jobStatusList | Where-Object { $_.state -ne 'success' } | Select-Object -First 1
         if ($failedjob) {
-            $responeObject['error'] = "Could not add tags to the cloned volumes. Ontap error: $($failedjob.message)"
-            return $responeObject | ConvertTo-Json -Depth 5
+            $responseObject['error'] = "Could not add tags to the cloned volumes. Ontap error: $($failedjob.message)"
+            return $responseObject | ConvertTo-Json -Depth 5
         }
 
         $result = Set-LunMap -igroup $igroup
         write-debug "Map LUNs job: $($result | convertto-json)"
         if ($result.error -or $result.records.count -eq 0) {
-            $responeObject['error'] = "Could not map LUNs. Ontap error: $($result.error)"
-            return $responeObject | ConvertTo-Json -Depth 5
+            $responseObject['error'] = "Could not map LUNs. Ontap error: $($result.error)"
+            return $responseObject | ConvertTo-Json -Depth 5
         }
 
         $errormessage = Set-LUNSignature
         if ($errormessage -ne $null) {
-            $responeObject['error'] = "Could not set LUN signature. $($errormessage | convertto-json)"
-            return $responeObject | ConvertTo-Json -Depth 5
+            $responseObject['error'] = "Could not set LUN signature. $($errormessage | convertto-json)"
+            return $responseObject | ConvertTo-Json -Depth 5
         }
     } catch {
         write-Debug $_.Exception.Message
-        $responeObject['error'] = $_.Exception.Message
+        $responseObject['error'] = $_.Exception.Message
     }
     
-    $responeObject | ConvertTo-Json -Depth 5
+    $responseObject | ConvertTo-Json -Depth 5
 `;
 
 const createClonedDb = (dbName: string, instanceName: string = '.', fileList: string[] = []) => `
@@ -652,7 +657,7 @@ const cleanUpOntapResources = (
     Start-Transcript -Path "C:\\cfn\\log\\cleanup_ontap_resources_$DBName.log.txt" -Append | Out-Null
 
     $WarningPreference = 'SilentlyContinue';
-    $responeObject = @{}
+    $responseObject = @{}
 
     try {
         try {
@@ -713,10 +718,10 @@ const cleanUpOntapResources = (
         }
     } catch {
         Write-Debug $_.Exception.Message
-        $responeObject['error'] = $_.Exception.Message
+        $responseObject['error'] = $_.Exception.Message
     }
 
-    $responeObject | ConvertTo-Json
+    $responseObject | ConvertTo-Json
 `;
 
 const mountPointQuery = (instanceName: string = '.', databaseName: string) =>
@@ -797,7 +802,7 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string) => `
 
         } While ($null -ne $nextToken)
     } catch {
-        $responeObject = @{
+        $responseObject = @{
             error = $_.Exception.Message
         }
     }

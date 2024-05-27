@@ -38,6 +38,7 @@ import { resetCache } from '../utils/cache';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { getParameter } from '../lib/aws/ssm';
 import { getDriveInfo } from './createdb-operations';
+import { restGetUtilForOntap } from './workloads/mssql/ssm-script-utils';
 
 const logger = getLogger();
 
@@ -88,7 +89,8 @@ async function getSandboxDetails(
         return errorResponse(errorMessage);
     }
 
-    const command = [GET_SANDBOX_DETAILS(['"."'])];
+    accountId = process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator' ? 'test-account' : accountId;
+    const command = [GET_SANDBOX_DETAILS(['"."'], accountId)];
     const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
     let sandboxInfo: SandboxInfoResponseType[] = [];
 
@@ -1094,7 +1096,8 @@ async function createExtendedProperties(
                 cloned_by: 'netapp_wlmdb',
                 source: `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`,
                 createdAt: Date.now(), // to be used for calculating age
-                updatedAt: Date.now() // to be used for getting the last update
+                updatedAt: Date.now(), // to be used for getting the last update
+                accountId: accountId
             })
         ];
 
@@ -1371,7 +1374,7 @@ async function getSandboxConnectionString(
             credentialsId
         );
 
-        const { node1InstanceId, node2InstanceId, stackname } = metadata as unknown as Metadata;
+        const { node1InstanceId, node2InstanceId, stackname, activeDirectoryName } = metadata as unknown as Metadata;
 
         const { instanceName } = await getActiveSqlNode(
             credentialsId,
@@ -1394,7 +1397,10 @@ async function getSandboxConnectionString(
         const parsedResp = sqlResponseParsing(resp);
 
         return {
-            server: instanceName === '.' ? resourceName : instanceName,
+            server:
+                instanceName === '.'
+                    ? `${resourceName}.${activeDirectoryName}`
+                    : `${instanceName}.${activeDirectoryName}`,
             database: sandboxName,
             userId:
                 process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
@@ -1658,6 +1664,87 @@ async function validateDeleteSandboxParams(
     }
 }
 
+async function getSandboxSplitEstimate(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    sandboxName: string
+) {
+    logger.info('Get split estimate of mapped volumes', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        sandboxName
+    });
+
+    const [{ metadata, co_relation_id: fileSystemId }] = await listResources(
+        accountId,
+        databaseHostId,
+        credentialsId,
+        region
+    );
+    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+
+    const { isSSMConnected, activeNodeInstanceId, instanceName } = await getActiveSqlNode(
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId
+    );
+
+    if (!isSSMConnected) {
+        logger.error('Failed to connect to the host through SSM', { databaseHostId });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to connect to the host through SSM');
+    }
+
+    if (!activeNodeInstanceId || !instanceName || !fileSystemId) {
+        logger.error('Failed to get the active node instance id', { databaseHostId });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the active node instance id');
+    }
+
+    const command = [getDbMappedOntapVolumes(fileSystemId, region, sandboxName, instanceName)];
+
+    const mappings = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
+
+    if (!mappings) {
+        logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get volume lun mapping for the database');
+    }
+
+    const parsedResp = sqlResponseParsing(mappings);
+
+    if (parsedResp.error) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
+    }
+
+    // get the estimated split size
+    const estimateCommand = [
+        restGetUtilForOntap(
+            fileSystemId,
+            region,
+            '/storage/volumes',
+            `uuid=${[parsedResp.data.volumeUuid, parsedResp.log.volumeUuid].join('|')}`,
+            'fields=clone.split_estimate'
+        )
+    ];
+
+    const estimateResp = await callSsmExecution(credentialsId, region, estimateCommand, activeNodeInstanceId);
+
+    if (!estimateResp) {
+        logger.error('Failed to get volume split estimate', { databaseHostId });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get volume split estimate');
+    }
+
+    const estimateParsedResp = sqlResponseParsing(estimateResp);
+
+    return estimateParsedResp.records.map((record: { name: string; clone: { split_estimate: string } }) => ({
+        name: record.name,
+        splitEstimate: record.clone.split_estimate || 0
+    }));
+}
+
 export {
     getSandboxesInfo,
     getSandboxSavings,
@@ -1666,5 +1753,6 @@ export {
     revertMetadataForSanboxTesting,
     getDatabaseMountPointInfo,
     getSandboxConnectionString,
-    deleteSandbox
+    deleteSandbox,
+    getSandboxSplitEstimate
 };

@@ -159,7 +159,7 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
             const dummyInstanceDetails = cloneDeep(describeInstanceResponse.Reservations[0].Instances[0]);
             const dummyResevation = cloneDeep(describeInstanceResponse.Reservations[0]);
             dummyInstanceDetails.PrivateIpAddress = privateIp;
-            dummyInstanceDetails.InstanceId = `i-${faker.string.alpha(8)}`;
+            dummyInstanceDetails.InstanceId = `i-${faker.string.alphanumeric(16)}`;
             instances?.push(dummyInstanceDetails);
             dummyResevation.Instances = instances;
             reservations?.push(dummyResevation);
