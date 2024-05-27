@@ -62,7 +62,7 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                     serverInstallationMode: GENERAL.STANDALONE,
                     serverEdition: GENERAL.SQL_SERVER_STANDARD_EDITION,
                     serverVersion: 'Microsoft SQL Server 2019',
-                    instanceType: 'm5.2xlarge'
+                    instanceType: ['m5.2xlarge']
                 },
                 storage: {
                     ebs: {
@@ -113,7 +113,7 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                     serverInstallationMode: GENERAL.FAILOVER_CLUSTER_INSTANCES,
                     serverEdition: GENERAL.SQL_SERVER_STANDARD_EDITION,
                     serverVersion: 'Microsoft SQL Server 2019',
-                    instanceType: 'm5.2xlarge'
+                    instanceType: ['m5.2xlarge']
                 },
                 storage: {
                     ebs: {
@@ -333,9 +333,9 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
             ),
             requiredNumOfFsx: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.requiredNumOfFsx),
             minThroughputCapacityRequired:
-                formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.minThroughputCapacityRequired) + ' GiB',
+                formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.minThroughputCapacityRequired) + ' MB/s',
             provisionedThroughputCapacity:
-                formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.provisionedThroughputCapacity) + ' GiB',
+                formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.provisionedThroughputCapacity) + ' MB/s',
             totalMonthlyFsxnThroughputCapacityCost: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyFsxnThroughputCapacityCost
             ),
