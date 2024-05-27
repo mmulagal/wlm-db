@@ -127,17 +127,20 @@ try {
         $clusterdatadisk = Get-ClusterResource -Name $datalabel -ErrorAction SilentlyContinue
         $clusterlogdisk = Get-ClusterResource -Name $loglabel -ErrorAction SilentlyContinue
 
-        if ($clusterdatadisk -eq $null -or $clusterlogdisk -eq $null) {
+        if ([string]::IsNullOrEmpty($clusterdatadisk)) {
             $availabledatadisk = Get-ClusterAvailableDisk | Where-Object { $_.Number -eq $datadisknumber }
-            $availablelogdisk = Get-ClusterAvailableDisk | Where-Object { $_.Number -eq $logdisknumber }
-
             $clusterdatadisk = ($availabledatadisk | Add-ClusterDisk -ErrorAction stop)
+            }
+        if ([string]::IsNullOrEmpty($clusterlogdisk)) {
+            $availablelogdisk = Get-ClusterAvailableDisk | Where-Object { $_.Number -eq $logdisknumber }
             $clusterlogdisk = ($availablelogdisk | Add-ClusterDisk -ErrorAction stop)
         }
 
         try {
             $SQLRoleGroup = (Get-ClusterGroup).Name -match ('SQl Server*')
             $SQLGroup = $SQLRoleGroup[0]
+            Write-Output "Data:$($clusterdatadisk.Name)"
+            Write-Output "Log:$($clusterlogdisk.Name)"
 
             if (($clusterdatadisk.OwnerGroup -ne $SQLGroup) -or ($clusterlogdisk.OwnerGroup -ne $SQLGroup)) {
                 $null = (Move-ClusterResource -Name $($clusterdatadisk.Name) -Group $SQLGroup)
@@ -227,4 +230,4 @@ try {
 }
 
 
-$responseObject | ConvertTo-Json -Depth 5 
+$responseObject | ConvertTo-Json -Depth 5
