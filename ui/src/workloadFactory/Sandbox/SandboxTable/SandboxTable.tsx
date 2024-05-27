@@ -305,7 +305,7 @@ const SandboxTable = () => {
                                         dispatch(
                                             addNotification({
                                                 notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                                message: `Sandbox database ${rowData?.name} deleted successfully.`
+                                                message: `Sandbox of database ${rowData?.source} refreshed successfully.`
                                             })
                                         );
                                         getSandboxSavingsApi({
@@ -350,7 +350,7 @@ const SandboxTable = () => {
                                         dispatch(
                                             addNotification({
                                                 notificationType: NOTIFICATION_TYPES.ERROR,
-                                                message: `Sandbox database ${rowData?.name} failed to delete.`
+                                                message: `Sandbox of database ${rowData?.source} refresh failed.`
                                             })
                                         );
                                         clearInterval(jobInterval);
@@ -437,7 +437,7 @@ const SandboxTable = () => {
                                         dispatch(
                                             addNotification({
                                                 notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                                message: `Sandbox database ${rowData?.name} deleted successfully.`
+                                                message: `Sandbox of database ${rowData?.name} re-baselined successfully. Sandbox returned to its original version.`
                                             })
                                         );
                                         getSandboxSavingsApi({
@@ -482,7 +482,7 @@ const SandboxTable = () => {
                                         dispatch(
                                             addNotification({
                                                 notificationType: NOTIFICATION_TYPES.ERROR,
-                                                message: `Sandbox database ${rowData?.name} failed to delete.`
+                                                message: `Re-baseline of sandbox of database ${rowData?.source} failed.`
                                             })
                                         );
                                         clearInterval(jobInterval);
