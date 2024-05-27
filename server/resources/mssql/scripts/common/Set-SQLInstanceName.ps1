@@ -86,7 +86,8 @@ END"
         $SqlVersion = Invoke-Expression -Command "(dir $sqlServiceBinaryPath).VersionInfo"}
         $ValidSqlVersion = $SqlVersion.ProductVersion -match '^1[3-9]'
         If ($ValidSqlVersion -eq $true) {
-        $SQLInstanceNames +=$sqlService.Name 
+            $InstanceName =  $sqlService.Name.Replace("MSSQL$", "") 
+            $SQLInstanceNames += $InstanceName 
         }} 
 
     If ($SQLInstanceNames -NotContains "MSSQLSERVER") {
