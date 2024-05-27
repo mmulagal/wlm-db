@@ -23,8 +23,8 @@ const CostSavings = () => {
             setSavingsPer(percent);
             setCostZeroCase(false);
         } else {
-            setSavings(GENERAL.NOT_AVAILABLE);
-            setSavingsPer(GENERAL.NOT_AVAILABLE);
+            setSavings(0);
+            setSavingsPer(0);
             if (fsxTotal > ebsTotal) {
                 setCostZeroCase(true);
             }

@@ -7,6 +7,28 @@ Configuration AddAdminsToServer {
 
     )
 
+    Start-Transcript -Path C:\cfn\log\AddAdminsToServer.ps1.txt -Append
+
+    # Get SQL server instance name
+    $SQLServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
+    $SQLInstanceName = "MSSQLSERVER"
+    $SQLInstanceNames = @()
+    ForEach ($sqlService in $sqlServiceList) {
+    $sqlServiceBinaryPath = $sqlService.PathName  -Replace "-s.*", ""
+      If (Test-Path $sqlServiceBinaryPath.Replace('"', '')) {
+        $SqlVersion = Invoke-Expression -Command "(dir $sqlServiceBinaryPath).VersionInfo"}
+        $ValidSqlVersion = $SqlVersion.ProductVersion -match '^1[3-9]'
+        If ($ValidSqlVersion -eq $true) {
+            $InstanceName =  $sqlService.Name.Replace("MSSQL$", "") 
+            $SQLInstanceNames += $InstanceName
+        }} 
+
+    If ($SQLInstanceNames -NotContains "MSSQLSERVER") {
+        $SQLInstanceName = $SQLInstanceNames[0]
+    }
+
+    Write-Output "SQL instance name $SQLInstanceName."
+
     # Import needed custom DSC resources
     Import-DSCResource -ModuleName SqlServerDsc
 
@@ -18,7 +40,7 @@ Configuration AddAdminsToServer {
         Name                 = $AdminGroup
         LoginType            = 'WindowsGroup'
         ServerName           = $SQLServerName
-        InstanceName         = 'MSSQLSERVER'
+        InstanceName         = $SQLInstanceName
     }
 
     # Ensure the Admin Group is added to the sysadmin role on SQL server
@@ -27,6 +49,6 @@ Configuration AddAdminsToServer {
         ServerRoleName       = 'sysadmin'
         MembersToInclude     = $AdminGroup
         ServerName           = $SQLServerName
-        InstanceName         = 'MSSQLSERVER'
+        InstanceName         = $SQLInstanceName
     }
 }

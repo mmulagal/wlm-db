@@ -156,7 +156,7 @@ export const calculatedFSXData = (fsxData: any) => {
         },
         {
             label: 'Provisioned SSD IOPS',
-            value: fsxData?.ssdIop ? fsxData?.ssdIop : GENERAL.NOT_AVAILABLE,
+            value: fsxData?.ssdIop ? Number(fsxData?.ssdIop).toLocaleString() : GENERAL.NOT_AVAILABLE,
             text: 'For each GiB of SSD provisioned storage, Amazon FSx automatically provisions 3 SSD IOPS for the file system.'
         },
         {
@@ -918,8 +918,26 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
         // database Edition
         if (msSqlInstance?.serverEdition) {
             const dbEditionOption = DB_EDITIONS?.filter(perRow => msSqlInstance?.serverEdition.includes(perRow?.value));
-            if (dbEditionOption) {
+            if (dbEditionOption && dbEditionOption.length > 0) {
                 result = { ...result, dbEdition: dbEditionOption[0] };
+            } else if (!dbEditionOption || dbEditionOption.length === 0) {
+                if (msSqlInstance?.serverEdition?.toLowerCase().includes('express')) {
+                    result = {
+                        ...result,
+                        dbEdition: {
+                            label: GENERAL.SQL_SERVER_STANDARD_EDITION,
+                            value: GENERAL.SQL_SERVER_STANDARD
+                        }
+                    };
+                } else if (msSqlInstance?.serverEdition?.toLowerCase().includes('developer')) {
+                    result = {
+                        ...result,
+                        dbEdition: {
+                            label: GENERAL.SQL_SERVER_STANDARD_EDITION,
+                            value: GENERAL.SQL_SERVER_STANDARD
+                        }
+                    };
+                }
             }
         }
         // Deployment Model

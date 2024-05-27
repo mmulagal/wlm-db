@@ -639,8 +639,6 @@ export const GENERAL = {
     DATA_FILE_PATH: 'Data file path:',
     LOG_FILE_PATH: 'Log file path:',
     SELECT_DRIVE_LETTER: 'Select drive letter',
-    SELECT_DATA_DRIVE_LETTER: 'Select data file drive letter',
-    SELECT_LOG_DRIVE_LETTER: 'Select log file drive letter',
     LOG_SIZE_MIN_ERROR: 'Log file size should be 1 GiB or more.',
     NO_DATA_SIZE_ERROR: 'Data file size should be 1 GiB or more.',
     LOG_SIZE_ERROR: 'Log file size should be less than data file size.',
@@ -752,7 +750,7 @@ export const GENERAL = {
     QUORUM_VOLUME: 'Quorum volume',
     QUORUM_SIZE: 'Quorum volume size',
     BUFFER_SIZE: 'Headroom',
-    MIN_FSX_CAPACITY_MESSAGE: 'Minimum SSD capacity of FSx for NetApp ONTAP',
+    MIN_FSX_CAPACITY_MESSAGE: 'The minimum total SSD capacity of an FSx for ONTAP file system is 1,024 GiB.',
     VPC_MESSAGE:
         'Ensure your VPC has connectivity to other AWS services (SQS, FSx, EC2, CloudWatch, CloudFormation, SSM) via VPC endpoints and S3 gateway endpoint. If not, endpoints will be created automatically during deployment.',
     SQL_SERVER_NOT_RUNNING: 'SQL service is not running',
@@ -877,7 +875,18 @@ export const GENERAL = {
     CUSTOM_AMI_DISABLE_MSG: 'Not applicable for Custom AMI',
     CLONE_TARGET_DB_LENGTH_VALIDATION: 'Target database should not exceed 128 characters',
     ROLLBACK_CHECKBOX: 'Select the snapshot you would like the database to Roll-back to',
-    DELETING: 'Deleting'
+    DELETING: 'Deleting',
+    REBASELINE: 'Re-baseline',
+    REBASELINE_DIALOG_TITLE: 'Are you sure you want to re-baseline this sandbox for database',
+    REBASELINE_DIALOG_FIRST_BULLET:
+        'This action will revert the sandbox to its original version at the time of creation.',
+    REBASELINE_DIALOG_SECOND_BULLET: 'Any changes you made to the sandbox will be deleted.',
+    REFRESH_DIALOG_TITLE: 'Are you sure you want to refresh this sandbox for database',
+    REFRESH_DIALOG_FIRST_BULLET:
+        'This action will update the selected sandbox so that it is equivalent to the source database at the current moment.',
+    REFRESH_DIALOG_SECOND_BULLET: 'Any changes you made to the sandbox will be deleted.',
+    REFRESH_CURRENT_RADIO: 'Refresh to current time',
+    REFRESH_SNAPSHOT_RADIO: 'Refresh to Snapshot'
 };
 
 export const CODE_VIEWER = {
