@@ -1,0 +1,11 @@
+.dot {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+
+    .dotImage {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+}

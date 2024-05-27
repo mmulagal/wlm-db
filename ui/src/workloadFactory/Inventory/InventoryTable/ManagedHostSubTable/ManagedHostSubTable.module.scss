@@ -1,0 +1,72 @@
+.managedHostSubTable {
+    // width: 1500px;
+    z-index: 1 !important;
+    display: flex;
+
+    padding: 48px 12px 48px 80px;
+
+    .extraDiv2 {
+        width: 80px;
+        position: sticky;
+
+        z-index: 1;
+        background-color: var(--content-background);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .table {
+        display: flex;
+        // padding: 40px 56px 40px 0;
+        flex-direction: column;
+        align-items: flex-start;
+        align-self: stretch;
+        z-index: 1 !important;
+    }
+
+    .topDiv {
+        height: 48px;
+        width: 213px;
+        border-right: 1px solid var(--border);
+    }
+
+    [class*='Table-module_row'] {
+        [class*='Table-module_cell']:first-child {
+            // box-shadow: 3px 2px 6px 0px var(--border);
+            border-right: 1px solid var(--border);
+        }
+    }
+
+    [class*='Table-module_row'] {
+        [class*='Table-module_cell']:nth-child(2) {
+            // box-shadow: 3px 2px 6px 0px var(--border);
+            border-right: none !important;
+        }
+    }
+
+    [class*='Table-module_header-row'] {
+        z-index: 2 !important;
+    }
+
+    .jobMenuPopover {
+        margin-left: -13px;
+        [class*='MenuPopover_menuPointer'] {
+            background: none !important;
+        }
+    }
+
+    [class*='Table-module_horizontal-scroll'] {
+        visibility: hidden;
+        height: 0;
+    }
+
+    [class*='Table-module_row'] {
+        span {
+            background-color: var(--main-background) !important;
+        }
+    }
+}
+
+.setWidth {
+    z-index: 5;
+    position: relative;
+}
