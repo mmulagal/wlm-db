@@ -537,7 +537,7 @@ const createVolumeClone = (
                     "volumeName" = $_.location.volume.name
                     "lunPath" = $_.name
                 }
-                if ($_.location.volume.name -match $dataVolume) {
+                if ($_.location.volume.name -match $dataVolume.name) {
                     $responseObject['data'] = $volume
                 } else {
                     $responseObject['log'] = $volume
@@ -906,7 +906,7 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string) => `
         
         Do {
             if ($null -eq $nextToken) {
-                $resp = Invoke-ONTAPGetRequest -ApiEndpoint '/api/storage/volumes?tiering.object_tags=cloned_by=netapp_wf&fields=space.used_by_afs,space.physical_used,clone.split_estimate'
+                $resp = Invoke-ONTAPGetRequest -ApiEndpoint '/api/storage/volumes?tiering.object_tags=cloned_by=netapp_wf&fields=space.used_by_afs,space.physical_used,clone.*'
             } else {
                 $resp = Invoke-ONTAPGetRequest -ApiEndpoint $nextToken
             }
@@ -914,8 +914,10 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string) => `
             $cloneVolumes = $resp.records
 
             foreach ($cloneVolume in $cloneVolumes) {
-                $responseObject.savedStorage += $cloneVolume.clone.split_estimate
-                $responseObject.consumedStorage += $cloneVolume.space.physical_used
+                if ($cloneVolume.clone.is_flexclone) {
+                    $responseObject.savedStorage += $cloneVolume.clone.split_estimate
+                    $responseObject.consumedStorage += $cloneVolume.space.physical_used
+                }
             }
 
             $nextToken = $resp._links.next.href
