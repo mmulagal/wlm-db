@@ -79,18 +79,4 @@ if(($Hostname.ToLower() -ne $DomainNetBIOSName.ToLower() ) -and ($DomainName.ToL
     exit(1)
 }
 
-#Check if SSM Agent is installed
-try {
-Get-Service AmazonSSMAgent -ErrorAction Stop
-}catch {
-    [System.Net.ServicePointManager]::SecurityProtocol = 'TLS12'
-    $progressPreference = 'silentlyContinue'
-    Invoke-WebRequest `
-        https://amazon-ssm-$Region.s3.$Region.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe `
-        -OutFile $env:USERPROFILE\Desktop\SSMAgent_latest.exe
-    Start-Process ` -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe ` -ArgumentList "/S"
-    rm -Force $env:USERPROFILE\Desktop\SSMAgent_latest.exe
-   
-}
- 
  

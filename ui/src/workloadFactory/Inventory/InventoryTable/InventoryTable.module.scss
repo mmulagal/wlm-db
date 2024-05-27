@@ -1,7 +1,31 @@
-.managedHosts {
+.inventoryTable {
     display: flex;
     gap: 24px;
     padding: 0 120px;
+
+    [class*='Table-module_row'] {
+        [class*='Table-module_cell']:nth-child(2) {
+            // box-shadow: 3px 2px 6px 0px var(--border);
+            border-right: 1px solid var(--border);
+        }
+    }
+
+    .topBarStyle {
+        z-index: 4 !important;
+    }
+
+    [class*='Table-module_header-row'] {
+        z-index: 3 !important;
+    }
+    [class*='Table-module_highlighted-row'] {
+        [class*='Table-module_high-row'] {
+            // background-color: transparent !important;
+            border-bottom: 1px solid var(--content-background) !important;
+        }
+        span {
+            background-color: var(--content-background) !important;
+        }
+    }
 
     .jobMenuPopover {
         width: fit-content;
@@ -86,6 +110,33 @@
         gap: 8px;
         .textHeight {
             line-height: 28px;
+        }
+    }
+
+    .detectManage {
+        width: 140px;
+        height: 32px;
+        border-radius: 32px;
+        border: 1px solid var(--text-button-primary);
+        margin-left: -12px;
+        cursor: pointer;
+
+        .textStyle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2px;
+            color: var(--text-button-primary);
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 20px;
+            height: 20px;
+            margin-top: 5px;
+            margin-left: 46%;
         }
     }
 }

@@ -76,7 +76,9 @@ import {
     TEMPLATE_USERNAME_MAPPING,
     PERMISSION_DENIAL_POSSIBLE_REASONS,
     STORAGE_PROTOCOLS,
-    CUSTOM_AMI_VALIDATION_INSTANCE_TYPE
+    CUSTOM_AMI_VALIDATION_INSTANCE_TYPE,
+    EBS_VOLUME_SIZE,
+    EBS_DEFAULT_VOLUME_SIZE
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -106,6 +108,7 @@ import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
 import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
 import { createDeploymentMockDataInDB, createFileSystemForDemo } from './demo-operations';
+import { getAmis } from '../lib/aws/ec2';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -195,6 +198,18 @@ async function formatTemplateParameters(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
         }
     }
+
+    // Get the volume size of an ami.. Set to minimum value of 100 if its lesser than that
+    const {
+        Images: [
+            {
+                BlockDeviceMappings: [{ Ebs: { VolumeSize: amiVolumeSize = EBS_DEFAULT_VOLUME_SIZE } = {} } = {}] = []
+            } = {}
+        ] = []
+    } = (await getAmis(credentialsId as string, region as string, { ImageIds: [sqlConfiguration.sqlAmiId] })) || [];
+
+    const amiSize = Math.max(amiVolumeSize, EBS_DEFAULT_VOLUME_SIZE);
+    templateParams.push({ ParameterKey: EBS_VOLUME_SIZE, ParameterValue: amiSize.toString() });
 
     Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
         if (!servicesWithNoEndpoint.includes(key)) {
@@ -749,6 +764,19 @@ async function createCloudFormationTemplateForUserDeployment(
     templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.SQLServiceAccountName}=${
         sqlUsernameDetails?.username || sqlConfiguration.serviceAccountName
     }`;
+
+    // Get the volume size of an ami.. Set to minimum value of 100 if its lesser than that
+    const {
+        Images: [
+            {
+                BlockDeviceMappings: [{ Ebs: { VolumeSize: amiVolumeSize = EBS_DEFAULT_VOLUME_SIZE } = {} } = {}] = []
+            } = {}
+        ] = []
+    } = await getAmis(credentialsId, region, { ImageIds: [sqlConfiguration.sqlAmiId] });
+
+    const amiSize = Math.max(amiVolumeSize, EBS_DEFAULT_VOLUME_SIZE);
+    templateParams += `&param_${EBS_VOLUME_SIZE}=${amiSize}`;
+
     templateParamsAsList.push(
         {
             ParameterKey: TEMPLATE_USERNAME_MAPPING.DomainAdminUser,

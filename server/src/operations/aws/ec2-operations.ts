@@ -16,6 +16,7 @@ import { Static } from '@fastify/type-provider-typebox';
 import {
     AMI_OWNERS,
     AWSQueryFields,
+    EBS_DEFAULT_VOLUME_SIZE,
     ENDPOINTS_DEPLOYMENT,
     HttpErrorCodes,
     VALIDATION_NODE_INSTANCETYPE,
@@ -331,6 +332,7 @@ async function getAmiList(
             throw createError(404, `The requested ${osType} ${databaseType} AMI could not be found`);
         }
     }
+
     // https://jira.ngage.netapp.com/browse/DBS-1403 - Temp fix to exclude 2023.11.15 since FCI installations are failing
     const response = amis.Images.filter(image => !image.Name?.includes('2023.11.15')).map(
         ({
@@ -343,7 +345,8 @@ async function getAmiList(
             Platform,
             PlatformDetails,
             State,
-            Hypervisor
+            Hypervisor,
+            BlockDeviceMappings: [{ Ebs: { VolumeSize: amiVolumeSize = EBS_DEFAULT_VOLUME_SIZE } = {} } = {}] = []
         }) => ({
             name: Name as string,
             description: Description,
@@ -354,7 +357,8 @@ async function getAmiList(
             platform: Platform,
             platformDetails: PlatformDetails,
             state: State,
-            hypervisor: Hypervisor
+            hypervisor: Hypervisor,
+            ebsVolumeSize: amiVolumeSize
         })
     );
     if (!customAmi) {

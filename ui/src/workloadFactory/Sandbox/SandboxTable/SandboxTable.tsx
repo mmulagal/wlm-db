@@ -24,11 +24,13 @@ import SmallLoader from '../../../common/SmallLoader/SmallLoader';
 import {
     useDeleteSandboxMutation,
     useLazyGetSandboxSavingsQuery,
-    useLazyGetSubTaskListQuery
+    useLazyGetSubTaskListQuery,
+    useUpdateSandboxMutation
 } from '../../../utils/apiService';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import store from '../../../store/store';
+import RefreshContent from './RefreshContent/RefreshContent';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
@@ -46,6 +48,7 @@ const SandboxTable = () => {
     const [deleteSandboxApi] = useDeleteSandboxMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
     const [getSandboxSavingsApi] = useLazyGetSandboxSavingsQuery();
+    const [updateSandboxApi] = useUpdateSandboxMutation();
 
     useEffect(() => {
         if (aggregatedSandboxList[0] && 'id' in aggregatedSandboxList[0]) {
@@ -105,15 +108,133 @@ const SandboxTable = () => {
         ];
     };
 
-    const handleRebaseLine = () => {
+    const handleRebaseLine = (rowData: any) => {
         setDialog(
             <DialogComponent
                 header={GENERAL.REBASE_LINE}
-                content={<RebaseLineContent dialogType="rebase" />}
+                content={<RebaseLineContent databaseName={rowData?.source} />}
                 primaryButton={GENERAL.REBASE_LINE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    console.log('action');
+                    let output = data.map((obj: any) => {
+                        if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                            return { ...obj, cellProps: { isDisabled: true }, status: 'rebaseline', menuDisable: true };
+                        }
+                        return obj;
+                    });
+                    dispatch(setAggregatedSandboxList(output));
+                    updateSandboxApi({
+                        credentialsId: headerSelectedCred?.data?.credentialsId,
+                        regionId: headerSelectedRegion?.label2,
+                        databaseHostId: rowData?.databaseHostId,
+                        sandboxName: rowData?.name,
+                        payload: { action: 'RE-BASELINE' }
+                    }).then((res: any) => {
+                        if (res?.data) {
+                            const jobInterval = setInterval(() => {
+                                getJobDetailApi({
+                                    credentialId: headerSelectedCred?.data?.credentialsId,
+                                    region: headerSelectedRegion?.label2,
+                                    id: res?.data?.jobId
+                                }).then((jobRes: any) => {
+                                    const status = jobRes?.data?.status;
+                                    const state = store.getState();
+                                    const { aggregatedSandboxList } = state?.sandbox;
+                                    if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                                        dispatch(
+                                            setSandboxSavingsState({
+                                                sandboxSavings: {
+                                                    consumedStorage: 0,
+                                                    savedStorage: 0,
+                                                    sandboxSavingsPercentage: 0
+                                                },
+                                                sandboxSavingsLoading: true,
+                                                sandboxSavingsError: ''
+                                            })
+                                        );
+                                        clearInterval(jobInterval);
+                                        dispatch(
+                                            addNotification({
+                                                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                                message: `Sandbox database ${rowData?.name} deleted successfully.`
+                                            })
+                                        );
+                                        let output = aggregatedSandboxList.map((obj: any) => {
+                                            if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                                                return {
+                                                    ...obj,
+                                                    cellProps: { isDisabled: false },
+                                                    status: 'active',
+                                                    menuDisable: false
+                                                };
+                                            }
+                                            return obj;
+                                        });
+                                        dispatch(setAggregatedSandboxList(output));
+                                        getSandboxSavingsApi({
+                                            credentialId: headerSelectedCred?.data?.credentialsId,
+                                            region: headerSelectedRegion?.label2
+                                        }).then((savingsRes: any) => {
+                                            if (savingsRes?.data) {
+                                                dispatch(
+                                                    setSandboxSavingsState({
+                                                        sandboxSavings: savingsRes?.data,
+                                                        sandboxSavingsLoading: false,
+                                                        sandboxSavingsError: ''
+                                                    })
+                                                );
+                                            } else {
+                                                dispatch(
+                                                    setSandboxSavingsState({
+                                                        sandboxSavings: {
+                                                            consumedStorage: 0,
+                                                            savedStorage: 0,
+                                                            sandboxSavingsPercentage: 0
+                                                        },
+                                                        sandboxSavingsLoading: false,
+                                                        sandboxSavingsError: ''
+                                                    })
+                                                );
+                                            }
+                                        });
+                                    } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                                        let output = aggregatedSandboxList.map((obj: any) => {
+                                            if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                                                return {
+                                                    ...obj,
+                                                    cellProps: { isDisabled: false },
+                                                    status: 'active',
+                                                    menuDisable: false
+                                                };
+                                            }
+                                            return obj;
+                                        });
+                                        dispatch(setAggregatedSandboxList(output));
+                                        dispatch(
+                                            addNotification({
+                                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                                message: `Sandbox database ${rowData?.name} failed to delete.`
+                                            })
+                                        );
+                                        clearInterval(jobInterval);
+                                    }
+                                });
+                            }, 5000);
+                        } else {
+                            let output = aggregatedSandboxList.map((obj: any) => {
+                                if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                                    return {
+                                        ...obj,
+                                        cellProps: { isDisabled: false },
+                                        status: 'active',
+                                        menuDisable: false
+                                    };
+                                }
+                                return obj;
+                            });
+                            dispatch(setAggregatedSandboxList(output));
+                        }
+                    });
                 }}
                 closeCallback={() => {
                     closeDialog();
@@ -127,27 +248,130 @@ const SandboxTable = () => {
         setDialog(
             <DialogComponent
                 header={'Refresh'}
-                content={<RebaseLineContent dialogType="refresh" />}
+                content={<RefreshContent databaseName={rowData?.source} />}
                 primaryButton={'Refresh'}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
                     let output = data.map((obj: any) => {
-                        if (obj.name === rowData.name) {
+                        if ((obj?.id === rowData?.id && obj.name) === rowData.name) {
                             return { ...obj, cellProps: { isDisabled: true }, status: 'refresh' };
                         }
                         return obj;
                     });
                     dispatch(setAggregatedSandboxList(output));
 
-                    setTimeout(() => {
-                        let output = data.map((obj: any) => {
-                            if (obj.name === rowData.name) {
-                                return { ...obj, cellProps: { isDisabled: false }, status: 'active' };
-                            }
-                            return obj;
-                        });
-                        dispatch(setAggregatedSandboxList(output));
-                    }, 5000);
+                    updateSandboxApi({
+                        credentialsId: headerSelectedCred?.data?.credentialsId,
+                        regionId: headerSelectedRegion?.label2,
+                        databaseHostId: rowData?.databaseHostId,
+                        sandboxName: rowData?.name,
+                        payload: { action: 'REFRESH' }
+                    }).then((res: any) => {
+                        if (res?.data) {
+                            const jobInterval = setInterval(() => {
+                                getJobDetailApi({
+                                    credentialId: headerSelectedCred?.data?.credentialsId,
+                                    region: headerSelectedRegion?.label2,
+                                    id: res?.data?.jobId
+                                }).then((jobRes: any) => {
+                                    const status = jobRes?.data?.status;
+                                    const state = store.getState();
+                                    const { aggregatedSandboxList } = state?.sandbox;
+                                    if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                                        dispatch(
+                                            setSandboxSavingsState({
+                                                sandboxSavings: {
+                                                    consumedStorage: 0,
+                                                    savedStorage: 0,
+                                                    sandboxSavingsPercentage: 0
+                                                },
+                                                sandboxSavingsLoading: true,
+                                                sandboxSavingsError: ''
+                                            })
+                                        );
+                                        let output = aggregatedSandboxList.map((obj: any) => {
+                                            if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                                                return {
+                                                    ...obj,
+                                                    cellProps: { isDisabled: false },
+                                                    status: 'active',
+                                                    menuDisable: false
+                                                };
+                                            }
+                                            return obj;
+                                        });
+                                        dispatch(setAggregatedSandboxList(output));
+                                        clearInterval(jobInterval);
+                                        dispatch(
+                                            addNotification({
+                                                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                                message: `Sandbox of database ${rowData?.source} refreshed successfully.`
+                                            })
+                                        );
+                                        getSandboxSavingsApi({
+                                            credentialId: headerSelectedCred?.data?.credentialsId,
+                                            region: headerSelectedRegion?.label2
+                                        }).then((savingsRes: any) => {
+                                            if (savingsRes?.data) {
+                                                dispatch(
+                                                    setSandboxSavingsState({
+                                                        sandboxSavings: savingsRes?.data,
+                                                        sandboxSavingsLoading: false,
+                                                        sandboxSavingsError: ''
+                                                    })
+                                                );
+                                            } else {
+                                                dispatch(
+                                                    setSandboxSavingsState({
+                                                        sandboxSavings: {
+                                                            consumedStorage: 0,
+                                                            savedStorage: 0,
+                                                            sandboxSavingsPercentage: 0
+                                                        },
+                                                        sandboxSavingsLoading: false,
+                                                        sandboxSavingsError: ''
+                                                    })
+                                                );
+                                            }
+                                        });
+                                    } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                                        let output = aggregatedSandboxList.map((obj: any) => {
+                                            if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                                                return {
+                                                    ...obj,
+                                                    cellProps: { isDisabled: false },
+                                                    status: 'active',
+                                                    menuDisable: false
+                                                };
+                                            }
+                                            return obj;
+                                        });
+                                        dispatch(setAggregatedSandboxList(output));
+                                        dispatch(
+                                            addNotification({
+                                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                                message: `Sandbox of database ${rowData?.source} refresh failed.`
+                                            })
+                                        );
+                                        clearInterval(jobInterval);
+                                    }
+                                });
+                            }, 5000);
+                        } else {
+                            let output = aggregatedSandboxList.map((obj: any) => {
+                                if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                                    return {
+                                        ...obj,
+                                        cellProps: { isDisabled: false },
+                                        status: 'active',
+                                        menuDisable: false
+                                    };
+                                }
+                                return obj;
+                            });
+                            dispatch(setAggregatedSandboxList(output));
+                        }
+                    });
                 }}
                 closeCallback={() => {
                     closeDialog();
@@ -213,7 +437,7 @@ const SandboxTable = () => {
                                         dispatch(
                                             addNotification({
                                                 notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                                message: `Sandbox database ${rowData?.name} deleted successfully.`
+                                                message: `Sandbox of database ${rowData?.name} re-baselined successfully. Sandbox returned to its original version.`
                                             })
                                         );
                                         getSandboxSavingsApi({
@@ -258,7 +482,7 @@ const SandboxTable = () => {
                                         dispatch(
                                             addNotification({
                                                 notificationType: NOTIFICATION_TYPES.ERROR,
-                                                message: `Sandbox database ${rowData?.name} failed to delete.`
+                                                message: `Re-baseline of sandbox of database ${rowData?.source} failed.`
                                             })
                                         );
                                         clearInterval(jobInterval);
@@ -367,7 +591,7 @@ const SandboxTable = () => {
 
                                     switch (menuId) {
                                         case 'reBaseline':
-                                            handleRebaseLine();
+                                            handleRebaseLine(rowData);
                                             break;
                                         case 'refresh':
                                             handleRefresh(rowData);
@@ -478,6 +702,12 @@ const SandboxTable = () => {
                             <>
                                 <SmallLoader />
                                 <DsTypography variant="Regular_14">{GENERAL.DELETING}</DsTypography>
+                            </>
+                        )}
+                        {cellData === 'rebaseline' && (
+                            <>
+                                <SmallLoader />
+                                <DsTypography variant="Regular_14">{GENERAL.REBASELINE}</DsTypography>
                             </>
                         )}
                     </div>

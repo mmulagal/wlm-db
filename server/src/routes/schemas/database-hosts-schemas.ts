@@ -19,7 +19,8 @@ import {
     GetDriveQueryString,
     DatabaseMountPointResponseBody,
     SandboxParams,
-    SplitEstimatesResponse
+    SplitEstimatesResponse,
+    SandboxLifeCycleBody
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
@@ -202,6 +203,19 @@ const DeleteSandboxSchema = {
     }
 };
 
+const SandboxLifeCycleSchema = {
+    params: SandboxParams,
+    tags: [RouteTags.SANDBOX],
+    summary: 'Sandbox lifecycle',
+    description: 'Sandbox lifecycle operations',
+    body: SandboxLifeCycleBody,
+    response: {
+        200: {
+            jobId: Type.String()
+        }
+    }
+};
+
 export {
     DatabaseHostsSummarySchema,
     DatabaseHostDetailsSchema,
@@ -217,5 +231,6 @@ export {
     GetSandboxesMountPointSchema,
     GetSandboxConnectionStringSchema,
     DeleteSandboxSchema,
-    GetSandboxSplitEstimateSchema
+    GetSandboxSplitEstimateSchema,
+    SandboxLifeCycleSchema
 };
