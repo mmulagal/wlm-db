@@ -540,7 +540,8 @@ async function startSandboxCreation(
             source: `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`,
             createdAt: Date.now(), // to be used for calculating age
             updatedAt: Date.now(), // to be used for getting the last update
-            baseSnapshot: clonedVolumes.data.parentSnapshot
+            baseSnapshot: clonedVolumes.data.parentSnapshot,
+            accountId
         });
 
         status = JOBSTATUS.COMPLETED;
