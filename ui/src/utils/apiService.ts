@@ -725,6 +725,13 @@ export const sandboxApi = createApi({
                     url: `credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandbox/${sandboxName}`,
                     method: 'DELETE'
                 })
+            }),
+            updateSandbox: builder.mutation({
+                query: ({ credentialsId, regionId, databaseHostId, sandboxName, payload }) => ({
+                    url: `credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandbox/${sandboxName}`,
+                    method: 'PATCH',
+                    body: payload
+                })
             })
         };
     }
@@ -834,7 +841,8 @@ export const {
     useCreateSandboxMutation,
     useGetConnectionInfoQuery,
     useGetDatabaseMountPointsQuery,
-    useDeleteSandboxMutation
+    useDeleteSandboxMutation,
+    useUpdateSandboxMutation
 } = sandboxApi;
 
 export const { useGetStorageSavingsMutation, useGetViewCalculationsMutation } = exploreSavingsApi;

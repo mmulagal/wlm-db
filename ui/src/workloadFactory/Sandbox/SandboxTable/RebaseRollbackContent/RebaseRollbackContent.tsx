@@ -1,4 +1,4 @@
-import { DsCheckbox, SelectField } from '@netapp/design-system';
+import { DsRadioButton, SelectField } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import styles from './RebaseRollbackContent.module.scss';
 import { useMemo, useState } from 'react';
@@ -28,13 +28,21 @@ const RebaseRollbackContent = () => {
     }, []);
     return (
         <div className={styles.rebaseRollBack}>
-            <DsCheckbox
-                id="rolllback-checkbox"
-                title={GENERAL.ROLLBACK_CHECKBOX}
-                onSelect={() => setRollbackSelected(!rollbackSelected)}
-                isSelected={rollbackSelected}
-                isDisabled={!isDemoMode}
-            />
+            <div className={styles.radioContainer}>
+                <DsRadioButton
+                    id="refresh-current-time"
+                    isSelected={true}
+                    title={GENERAL.REFRESH_CURRENT_RADIO}
+                    variant="Default"
+                />
+                <DsRadioButton
+                    id="refresh-snapshot"
+                    isSelected={false}
+                    isDisabled={true}
+                    title={GENERAL.REFRESH_SNAPSHOT_RADIO}
+                    variant="Default"
+                />
+            </div>
             <SelectField
                 label={'Original database snapshot'}
                 isClearable={false}
