@@ -1,23 +1,23 @@
 {
   "aoag": {
     "fsx": {
-      "capacity": "1,280",
+      "capacity": 1280,
       "iops": 837.76,
       "throughput": 153.60,
       "snapshots": 26,
       "clones": 98,
-      "compute": "1,097.92",
-      "license": "1,402",
+      "compute": 1097.92,
+      "license": 1402,
       "total": 4895.28
     },
     "ebs": {
-      "capacity": "1,280",
-      "iops": "4,888",
+      "capacity": 1280,
+      "iops": 4888,
       "throughput": 0,
       "snapshots": 265,
-      "clones": "3,084",
-      "compute": "1,097.92",
-      "license": "4,380",
+      "clones": 3084,
+      "compute": 1097.92,
+      "license": 4380,
       "total": 14994.92
     },
     "fsxCalculation": {
@@ -30,7 +30,7 @@
       "effectiveCapacity": 5497558138880,
       "ssdTierReqCapacity": 5497558138880,
       "capacityPoolTier": 0,
-      "ssdIop": "40,000",
+      "ssdIop": 40000,
       "throughputCapacity": 128,
       "useCase": "Low latency",
       "regionName": "US East (Ohio) | us-east-2",
@@ -40,20 +40,20 @@
   "standalone": {
     "fsx": {
       "capacity": 562,
-      "iops": "1,130",
+      "iops": 1130,
       "throughput": 92,
       "snapshots": 26,
-      "clone": 195,
+      "clones": 195,
       "compute": 548.96,
       "license": 701,
       "total": 3254.96
     },
     "ebs": {
       "capacity": 562,
-      "iops": "4,888",
+      "iops": 4888,
       "throughput": 0,
       "snapshots": 246,
-      "clone": "5,134",
+      "clones": 5134,
       "compute": 548.96,
       "license": 701,
       "total": 12079.96
@@ -68,7 +68,7 @@
       "effectiveCapacity": 4398046511104,
       "ssdTierReqCapacity": 4398046511104,
       "capacityPoolTier": 0,
-      "ssdIop": "80,000",
+      "ssdIop": 80000,
       "throughputCapacity": 128,
       "useCase": "Low latency",
       "regionName": "US East (Ohio) | us-east-2",
