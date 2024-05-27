@@ -728,7 +728,7 @@ export const sandboxApi = createApi({
             }),
             updateSandbox: builder.mutation({
                 query: ({ credentialsId, regionId, databaseHostId, sandboxName, payload }) => ({
-                    url: `credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandbox/${sandboxName}`,
+                    url: `credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}`,
                     method: 'PATCH',
                     body: payload
                 })
