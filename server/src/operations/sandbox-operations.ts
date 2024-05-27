@@ -58,6 +58,15 @@ function getSourceDetails(obj: SandboxObject) {
     return source.split('|');
 }
 
+function getClonedByTagValue(accountId: string, credentialsId: string) {
+    logger.debug('Get cloned by tag value', accountId, credentialsId);
+
+    const accId = accountId.split('-')[1];
+    const credIdWithUnderScore = credentialsId.replace(/-/g, '_');
+
+    return `netapp_wf_${accId}_${credIdWithUnderScore}`;
+}
+
 async function getSandboxDetails(
     accountId: string,
     credentialsId: string,
@@ -272,7 +281,13 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                     region = 'us-east-1';
                                 }
 
-                                const command = [getStorageSavingsFromOntap(fsxId, region)];
+                                const command = [
+                                    getStorageSavingsFromOntap(
+                                        fsxId,
+                                        region,
+                                        getClonedByTagValue(accountId, credentialsId)
+                                    )
+                                ];
 
                                 const response = await callSsmExecution(
                                     credentialsId,
@@ -840,6 +855,7 @@ async function createVolumeClone(
                 JSON.stringify({ name: mapping.data.volumeName, ...(snapshot && { snapshot }) }),
                 JSON.stringify({ name: mapping.log.volumeName, ...(snapshot && { snapshot }) }),
                 destDetails.host,
+                getClonedByTagValue(accountId, credentialsId),
                 sqlVMName || mapping.svm
             )
         ];
@@ -851,7 +867,8 @@ async function createVolumeClone(
                     'wlmdb_sqlsvm_1714090636810',
                     JSON.stringify({ name: '/vol/wlmdb_sqldata_1714098400/sqldata' }),
                     JSON.stringify({ name: '/vol/wlmdb_sqllog_1714098400/sqllog' }),
-                    'test-res-id'
+                    'test-res-id',
+                    getClonedByTagValue(accountId, credentialsId)
                 )
             ];
         }
