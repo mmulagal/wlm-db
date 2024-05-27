@@ -5,7 +5,25 @@
 
     [class*='Table-module_row'] {
         [class*='Table-module_cell']:nth-child(2) {
-            box-shadow: 3px 2px 6px 0px var(--border);
+            // box-shadow: 3px 2px 6px 0px var(--border);
+            border-right: 1px solid var(--border);
+        }
+    }
+
+    .topBarStyle {
+        z-index: 4 !important;
+    }
+
+    [class*='Table-module_header-row'] {
+        z-index: 3 !important;
+    }
+    [class*='Table-module_highlighted-row'] {
+        [class*='Table-module_high-row'] {
+            // background-color: transparent !important;
+            border-bottom: 1px solid var(--content-background) !important;
+        }
+        span {
+            background-color: var(--content-background) !important;
         }
     }
 

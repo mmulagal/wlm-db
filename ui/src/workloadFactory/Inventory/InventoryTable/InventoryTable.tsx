@@ -144,11 +144,7 @@ const InventoryTable = () => {
     };
 
     const ExpandedRow = ({ rowData }: any) => {
-        return (
-            <div style={{ marginTop: '30px', height: '400px', marginLeft: '40px' }}>
-                <ManagedHostSubTable />
-            </div>
-        );
+        return <ManagedHostSubTable />;
     };
 
     const handleDialog = () => {
@@ -468,7 +464,7 @@ const InventoryTable = () => {
 
     return (
         <>
-            <div className={styles.inventoryTable} style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className={styles.inventoryTable}>
                 <div
                     //  @ts-ignore
                     className={
@@ -482,6 +478,7 @@ const InventoryTable = () => {
                         tableProps={tableProps}
                         pluralTitle="Database hosts"
                         singularTitle="Database host"
+                        className={styles.topBarStyle}
                     />
                     <Table
                         {...tableComponentProps}

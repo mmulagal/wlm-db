@@ -80,7 +80,7 @@ const ManagedHostSubTable = () => {
 
     const lastColDetails = () => {
         return {
-            id: '8',
+            id: '9',
             Header: '',
             accessor: 'name',
             renderCell: (cellData: any, rowData: any) => {
@@ -122,38 +122,58 @@ const ManagedHostSubTable = () => {
             Header: 'SQL Server instance',
             accessor: 'name',
             id: '1',
+            isSortable: true,
+            width: '212px'
+        },
+        {
+            Header: 'Status',
+            accessor: 'name',
+            id: '2',
             isSortable: false,
-            width: '200px'
+            width: '180px',
+            filterOptions: 'auto'
         },
         {
             Header: 'Storage type',
             accessor: 'storageType',
-            id: '2',
-            width: '200px'
+            id: '3',
+            width: '160px',
+            filterOptions: 'auto'
         },
         {
             Header: 'Storage savings',
             accessor: 'storageSavings',
-            id: '3',
-            width: '200px'
+            id: '4',
+            width: '172px',
+            isSortable: true
+        },
+        {
+            Header: 'Storage availability',
+            accessor: 'storageSavings',
+            id: '5',
+            width: '193px',
+            filterOptions: 'auto'
         },
         {
             Header: 'Protection',
             accessor: 'protection',
-            id: '4',
-            width: '200px'
+            id: '6',
+            width: '135px',
+            filterOptions: 'auto'
         },
         {
             Header: 'Performance',
             accessor: 'performance',
-            id: '5',
-            width: '240px'
+            id: '7',
+            width: '150px',
+            filterOptions: 'auto'
         },
         {
             Header: 'Allocation capacity',
             accessor: 'allocatedCapacity',
-            id: '6',
-            width: '240px'
+            id: '8',
+            width: '190px',
+            isSortable: true
         },
         lastColDetails()
     ];
@@ -169,11 +189,16 @@ const ManagedHostSubTable = () => {
     });
     return (
         <div className={styles.managedHostSubTable}>
+            {/* <div className={styles.topDiv} /> */}
+            {/* <div className={styles.extraDiv2} /> */}
+
             <Table
                 //@ts-ignore
                 tableProps={tableProps}
                 variant="innerTable"
             />
+
+            {/* <div className={styles.topDiv} /> */}
         </div>
     );
 };
