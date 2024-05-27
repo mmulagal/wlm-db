@@ -139,8 +139,6 @@ try {
         try {
             $SQLRoleGroup = (Get-ClusterGroup).Name -match ('SQl Server*')
             $SQLGroup = $SQLRoleGroup[0]
-            Write-Output "Data:$($clusterdatadisk.Name)"
-            Write-Output "Log:$($clusterlogdisk.Name)"
 
             if (($clusterdatadisk.OwnerGroup -ne $SQLGroup) -or ($clusterlogdisk.OwnerGroup -ne $SQLGroup)) {
                 $null = (Move-ClusterResource -Name $($clusterdatadisk.Name) -Group $SQLGroup)
