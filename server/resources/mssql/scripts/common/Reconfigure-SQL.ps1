@@ -47,7 +47,7 @@ try {
     $SQLFullUser = $DomainNetBIOSName + '\' + $SQLServiceAccount
     $HostName = hostname
 
-     # Get SQL server instance name
+    # Get SQL server instance name
     $SQLServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
     $SQLInstanceName = "MSSQLSERVER"
     $SQLInstanceNames = @()
@@ -64,6 +64,8 @@ try {
     If ($SQLInstanceNames -NotContains "MSSQLSERVER") {
         $SQLInstanceName = $SQLInstanceNames[0]
     }
+
+    Write-Output "SQL instance name $SQLInstanceName."
 
     # Instance name to be passed to sqlcmd
     $ServerInstanceName = "$env:COMPUTERNAME"
