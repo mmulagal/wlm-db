@@ -92,6 +92,13 @@ END"
     If ($SQLInstanceNames -NotContains "MSSQLSERVER") {
         $SQLInstanceName = $SQLInstanceNames[0]
     }
+
+    # Get service name
+    $ServiceName = 'MSSQLSERVER'
+    If($SQLInstanceName -ne "MSSQLSERVER") {
+        $ServiceName =  'MSSQL${0}' -f $SQLInstanceName
+            
+    }
     
     try {
         # Custom ami may not have sql server agent installed
@@ -100,8 +107,8 @@ END"
     }catch{
         Write-Host "Error while starting/stopping SQLSERVERAGENT. Error: $_"
     }
-    Stop-Service $SQLInstanceName -Force
-    Start-Service $SQLInstanceName
+    Stop-Service $ServiceName -Force
+    Start-Service $ServiceName
 }
 Catch
     {

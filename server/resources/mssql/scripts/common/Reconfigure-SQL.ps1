@@ -296,7 +296,7 @@ try {
         }
 
         # Set SQL Server and Agent services user to SQL AD user
-        $Services = Get-WmiObject -Class Win32_Service -Filter "Name='SQLSERVERAGENT' OR Name='$Using:SQLInstanceName'"
+        $Services = Get-WmiObject -Class Win32_Service -Filter "Name='SQLSERVERAGENT' OR Name='$Using:ServiceName'"
         $Services.change($null, $null, $null, $null, $null, $null, $Using:DomainAdminFullUser , $Using:DomainAdminPassword, $null, $null, $null)
  
  
