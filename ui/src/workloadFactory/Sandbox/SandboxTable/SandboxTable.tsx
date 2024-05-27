@@ -128,7 +128,7 @@ const SandboxTable = () => {
                         regionId: headerSelectedRegion?.label2,
                         databaseHostId: rowData?.databaseHostId,
                         sandboxName: rowData?.name,
-                        payload: { action: 'REBASELINE' }
+                        payload: { action: 'RE-BASELINE' }
                     }).then((res: any) => {
                         if (res?.data) {
                             const jobInterval = setInterval(() => {
