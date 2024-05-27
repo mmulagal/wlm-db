@@ -1,2 +1,13 @@
 .managedHostDialog {
+    .inProgress {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+    }
+
+    [class*='Table-module_highlighted-row'] {
+        span {
+            background-color: var(--main-background) !important;
+        }
+    }
 }
