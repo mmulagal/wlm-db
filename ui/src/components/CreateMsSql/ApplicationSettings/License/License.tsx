@@ -148,13 +148,13 @@ const License = () => {
     }, [amiData]);
 
     useEffect(() => {
-        if (!isLoadConfig && !movingFromChatbot) {
+        if ((!isLoadConfig && !movingFromChatbot) || !selectedLicenseId) {
             dispatch(setSelectedLicenseId(generateAMIIdForLicense[0]));
         }
     }, [dispatch, generateAMIIdForLicense]);
 
     useEffect(() => {
-        if (!isLoadConfig && !movingFromChatbot) {
+        if ((!isLoadConfig && !movingFromChatbot) || !selectedCustomAMI) {
             dispatch(setSelectedCustomAMI(generateCustomAMIId[0]));
         }
     }, [dispatch, generateCustomAMIId]);
