@@ -933,8 +933,8 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
                     result = {
                         ...result,
                         dbEdition: {
-                            label: GENERAL.SQL_SERVER_ENTERPRiSE_EDITION,
-                            value: GENERAL.SQL_SERVER_ENTERPRISE
+                            label: GENERAL.SQL_SERVER_STANDARD_EDITION,
+                            value: GENERAL.SQL_SERVER_STANDARD
                         }
                     };
                 }
