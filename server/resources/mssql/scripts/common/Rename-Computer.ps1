@@ -17,7 +17,7 @@ try {
     $DomainNetBIOSName = $env:USERDOMAIN
     $WmiDomainName = (Get-WmiObject Win32_ComputerSystem).Domain
     Write-Host "Hostname $Hostname. User domain  $DomainNetBIOSName. WMI domain name $WmiDomainName."
-    if (($Hostname.ToLower() -eq $DomainNetBIOSName.ToLower()) -or ($WmiDomainName -eq 'WORKGROUP')) {
+    if (($Hostname.ToLower() -eq $DomainNetBIOSName.ToLower()) -or ($DomainNetBIOSName -eq 'WORKGROUP')) {
 
         Rename-Computer @renameComputerParams
 
