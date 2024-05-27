@@ -68,8 +68,10 @@ If($ValidSqlVersion -ne $true) {
 }
 
 #Check if image was created to be part of domain and if domain passed is same.
+$Hostname = hostname
+$DomainNetBIOSName = $env:USERDOMAIN
 $DomainName = (Get-WmiObject Win32_ComputerSystem).Domain
-if(($DomainName -ne "WORKGROUP" ) -and ($DomainName.ToLower() -ne $DomainDNSName.ToLower()) -and ($DomainDNSName.ToLower().Split('.')[0] -ne $DomainName.ToLower())) {
+if(($Hostname.ToLower() -ne $DomainNetBIOSName.ToLower() ) -and ($DomainName.ToLower() -ne $DomainDNSName.ToLower()) -and ($DomainDNSName.ToLower().Split('.')[0] -ne $DomainName.ToLower())) {
     $FailureReason = "Image was created to be part of domain $DomainName. Domain specified in deployment is $DomainDNSName."
     Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
