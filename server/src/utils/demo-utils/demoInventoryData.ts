@@ -120,6 +120,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerVersion: '16.0.4095.4',
                         windowsAuthentication: true,
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        nodeIps: ['10.0.6.118', '10.0.28.145'],
                         sqlServerDeploymentType: 'AOAG',
                         storage: [
                             {
@@ -448,6 +449,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsAuthentication: true,
                         sqlServerName: 'SQLServer-Training-02',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUZ'],
+                        nodeIps: ['10.0.6.118', '10.0.28.145'],
                         sqlServerDeploymentType: 'AOAG',
                         storage: [
                             {

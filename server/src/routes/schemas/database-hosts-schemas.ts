@@ -18,7 +18,8 @@ import {
     DatabaseMountPointRequestQueryParam,
     GetDriveQueryString,
     DatabaseMountPointResponseBody,
-    SandboxConnectionStringParams
+    SandboxParams,
+    SplitEstimatesResponse
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
@@ -166,8 +167,7 @@ const RevertPatchResourceForSandboxSchema = {
 };
 
 const GetSandboxConnectionStringSchema = {
-    ...databaseHostsRequest,
-    params: SandboxConnectionStringParams,
+    params: SandboxParams,
     tags: [RouteTags.SANDBOX],
     summary: 'Get Sandbox connection string',
     description: 'Get sandbox connection string for sql server connection',
@@ -180,9 +180,18 @@ const GetSandboxConnectionStringSchema = {
     }
 };
 
+const GetSandboxSplitEstimateSchema = {
+    params: SandboxParams,
+    tags: [RouteTags.SANDBOX],
+    summary: 'Get Sandbox split estimate',
+    description: 'Get split estimate of all the mapped ontap volumes for the given sandbox',
+    response: {
+        200: SplitEstimatesResponse
+    }
+};
+
 const DeleteSandboxSchema = {
-    ...databaseHostsRequest,
-    params: SandboxConnectionStringParams,
+    params: SandboxParams,
     tags: [RouteTags.SANDBOX],
     summary: 'Delete sandbox',
     description: 'Delete sandbox within a database host',
@@ -207,5 +216,6 @@ export {
     RevertPatchResourceForSandboxSchema,
     GetSandboxesMountPointSchema,
     GetSandboxConnectionStringSchema,
-    DeleteSandboxSchema
+    DeleteSandboxSchema,
+    GetSandboxSplitEstimateSchema
 };

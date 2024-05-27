@@ -171,8 +171,8 @@ Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
 `;
 
 const validateSQLInstanceConnectivity = (ec2instanceId: string, sqlinstancename: string) => `
-    if ($responeObject -eq $null) {
-        $responeObject = @{}
+    if ($responseObject -eq $null) {
+        $responseObject = @{}
     }
 
     try {
@@ -204,19 +204,19 @@ const validateSQLInstanceConnectivity = (ec2instanceId: string, sqlinstancename:
         }
         $sqlresult = Sqlcmd -U $username -P $password -Q $sqlcmd -y 0
         $sqlresult | ConvertFrom-Json | ForEach-Object {
-            $responeObject.add('sqlEdition', $_.sqlEdition)
-            $responeObject.add('noOfDatabases', $_.noOfDatabases)
+            $responseObject.add('sqlEdition', $_.sqlEdition)
+            $responseObject.add('noOfDatabases', $_.noOfDatabases)
         }
-        $responeObject.add('sqlInstanceConnectivity', $True)
+        $responseObject.add('sqlInstanceConnectivity', $True)
     } catch {
-        $responeObject.add('sqlerror', $_.Exception.Message)
-        $responeObject.add('sqlInstanceConnectivity', $False)
+        $responseObject.add('sqlerror', $_.Exception.Message)
+        $responseObject.add('sqlInstanceConnectivity', $False)
     }
 `;
 
 const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
-    if ($responeObject -eq $null) {
-        $responeObject = @{}
+    if ($responseObject -eq $null) {
+        $responseObject = @{}
     }
 
     try {
@@ -246,35 +246,35 @@ const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
 
         $ontapresult = Invoke-RestMethod @Params -Certificate $regionCertificateificate
 
-        $responeObject.add('ontapconnectivity', $True)
+        $responseObject.add('ontapconnectivity', $True)
     } catch {
-        $responeObject.add('ontaperror', $_.Exception.Message)
-        $responeObject.add('ontapconnectivity', $False)
+        $responseObject.add('ontaperror', $_.Exception.Message)
+        $responseObject.add('ontapconnectivity', $False)
     }
 `;
 
 const installPowerShellModule = (module: string) => `
     $modulename = '${module}'
-    if ($responeObject -eq $null) {
-        $responeObject = @{}
+    if ($responseObject -eq $null) {
+        $responseObject = @{}
     }
 
     if (-not (Get-Module -ListAvailable -Name $modulename)) {
-        $responeObject.add('requiredModuleError', "$modulename Module does not exist, installing it now")
+        $responseObject.add('requiredModuleError', "$modulename Module does not exist, installing it now")
         $null = Start-Job -ScriptBlock {
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
             Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
             Install-Module -Name $args[0] -Force -AllowClobber
         } -ArgumentList $modulename
-        return $responeObject | convertto-json
+        return $responseObject | convertto-json
     }
 `;
 
 const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string, instanceName: string = '.') => `
     $WarningPreference = 'SilentlyContinue';
-    if ($responeObject -eq $null) {
-        $responeObject = @{}
+    if ($responseObject -eq $null) {
+        $responseObject = @{}
     }
 
     try {
@@ -501,8 +501,8 @@ const restGetUtilForOntap = (
     apiQueryFields: string
 ) => `
     $WarningPreference = 'SilentlyContinue';
-    if ($responeObject -eq $null) {
-        $responeObject = @{}
+    if ($responseObject -eq $null) {
+        $responseObject = @{}
     }
 
     try {
@@ -554,13 +554,13 @@ const restGetUtilForOntap = (
             return Invoke-RestMethod @Params -Certificate $regionCertificateificate
         }
      
-        $responeObject = Invoke-ONTAPGetRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
+        $responseObject = Invoke-ONTAPGetRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
     } catch {
-        $responeObject = @{
+        $responseObject = @{
             error = $_.Exception.Message
         }
     }
-    $responeObject | ConvertTo-Json -Depth 5
+    $responseObject | ConvertTo-Json -Depth 5
     
 `;
 

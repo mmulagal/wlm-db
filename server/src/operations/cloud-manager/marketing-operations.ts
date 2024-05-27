@@ -212,6 +212,7 @@ async function aoagStorageSavingsMetrics(
 function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavingsRequestBodyType) {
     const { snapshotFrequency, clonedCopiesCount, cloneRefreshFrequency, monthlyChangeRatePercentage } = params || {};
 
+    const numberOfCloneEnvs = getMonthlyCloneCountFromFrequency(cloneRefreshFrequency);
     return {
         useCase: 'Low-latency',
         volumeIds: ebsVolumeIds,
@@ -219,15 +220,17 @@ function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavin
         deploymentType: 'Single',
         snapshots: {
             snapshotFreq: snapshotFrequency,
-            snapshotPercentageChange: monthlyChangeRatePercentage
+            snapshotPercentageChange: monthlyChangeRatePercentage / numberOfCloneEnvs
         },
-        clones: {
-            monthlyCloneNumber: clonedCopiesCount,
-            changeRate: monthlyChangeRatePercentage,
-            numberOfCloneEnvs: getMonthlyCloneCountFromFrequency(cloneRefreshFrequency),
-            ssdStorage: 100,
-            savings: 0
-        }
+        ...(clonedCopiesCount > 0 && {
+            clones: {
+                monthlyCloneNumber: clonedCopiesCount,
+                changeRate: monthlyChangeRatePercentage / numberOfCloneEnvs,
+                numberOfCloneEnvs,
+                ssdStorage: 100,
+                savings: 0
+            }
+        })
     };
 }
 
@@ -559,11 +562,11 @@ async function formatStorageSavingsCalculationMetrics(
             totalCloneMonthlyCost
         },
         ebsCloneCalculation: {
-            clonedCopiesCount: params.clonedCopiesCount,
+            clonedCopiesCount: totalClonedCopiesCount,
             capacity,
             iops,
             throughput,
-            totalCloneMonthlyCost: params.clonedCopiesCount * (capacity + iops + throughput)
+            totalCloneMonthlyCost: totalClonedCopiesCount * (capacity + iops + throughput)
         },
         ebsSnapshotCalculation: {
             ebsInstanceMonth,
