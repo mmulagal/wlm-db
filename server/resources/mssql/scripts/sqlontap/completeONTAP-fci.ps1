@@ -88,7 +88,7 @@ try {
     Invoke-Command -scriptblock { Test-Cluster } -Credential $Credentials -ComputerName $HostName -Authentication credssp
 
 
-    #Acquiring MSSQL installation media from S3
+    # Find path to SQL Installer media, if not found then pick installer hosted in S3.
     If(Test-Path -path "C:\SQLServerSetup\setup.exe") {
        $SQLMediaPath = "C:\SQLServerSetup\setup.exe"
     }

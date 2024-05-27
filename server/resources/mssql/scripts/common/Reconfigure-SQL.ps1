@@ -64,7 +64,8 @@ try {
     If ($SQLInstanceNames -NotContains "MSSQLSERVER") {
         $SQLInstanceName = $SQLInstanceNames[0]
     }
-    #Acquiring MSSQL installation media from S3
+
+    # Find path to SQL Installer media, if not found then pick installer hosted in S3.
     if (Test-Path -Path "C:\SQLServerSetup\setup.exe") {
         $SQLMediaPath = "C:\SQLServerSetup\setup.exe"
     }
@@ -83,6 +84,7 @@ try {
     }
     
     Write-Host "SQL Installer path $SQLMediaPath."
+    
     $SkipCollation = $False
     Start-Sleep 5
     try {
