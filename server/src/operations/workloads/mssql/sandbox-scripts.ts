@@ -30,7 +30,7 @@ $results = foreach ($instance in $instances) {
         FROM (
             SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'createdAt', 'tag', 'baseSnapshot', 'updatedAt') FOR JSON PATH)) AS properties
             FROM #properties AS p1
-            WHERE name = 'cloned_by' AND value = 'netapp_wlmdb'
+            WHERE name = 'cloned_by' AND value = 'netapp_wf'
         ) AS grouped_properties
         WHERE database_name IN (
             SELECT database_name
@@ -202,6 +202,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
     $FSxID = '${fsxid}'
     $FSxRegion = '${fsxregion}'
     $dbname = '${dbName}'
+    $instanceName = '${instanceName}'
 
     Start-Transcript -Path "C:\\cfn\\log\\map_ontap_volumes_$dbname.log.txt" -Append | Out-Null
 
@@ -210,7 +211,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
     try {
         $sqlquery = @"
             SET NOCOUNT ON;
-            SELECT DISTINCT vs.logical_volume_name as volumename, mf.physical_name as filename, collation_name FROM sys.master_files AS mf
+            SELECT DISTINCT vs.logical_volume_name as volumename, mf.physical_name as filename, mf.type FROM sys.master_files AS mf
             join sys.databases db
             on db.database_id = mf.database_id
             CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
@@ -223,27 +224,25 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
                 [Parameter(Mandatory = $true)]
                 [string[]]$sqlresponse
             )
-    
+
+            $responseObject = [ordered]@{}
             $winvolumes = $sqlresponse | foreach { $_ | ConvertFrom-Json }
-            $responseObject = @{
-                "collation" = $WinVolumes[0].collation_name
-            }
             foreach ($winvolume in $winvolumes) {
                 $filename = $winvolume.filename
                 $winvolumename = $winvolume.volumename
+                $vol = get-volume -FileSystemLabel $winvolumename | Get-Partition | get-disk | Select serialnumber
                 $object = @{
                     "windowsVolumeName" = $winvolumename
                     "fileName" = $filename
+                    "lunSerialNumber" = $vol.serialnumber
                 }
-                $vol = get-volume -FileSystemLabel $winvolumename | Get-Partition | get-disk | Select serialnumber
-                $object | Add-Member -MemberType NoteProperty -Name "LunSerialNumber" -Value $vol.serialnumber
                 $type = 'data'
-                if ($filename -match '\\.ldf$') {
+                if ($winvolume.type -ne 0) {
                     $type = 'log'
                 }
                 $responseObject[$type] = $object
             }
-    
+
             return $responseObject
         }
     
@@ -251,8 +250,8 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
 
         Function Get-LunFromSerialNumber($responseObject) {
             Write-debug "Get ONTAP lun name from serial numbers for: $responseObject"
-
-            $QueryFilter = $responseObject.data.LunSerialNumber + '|' + $responseObject.log.LunSerialNumber
+    
+            $QueryFilter = $responseObject.data.lunSerialNumber + '|' + $responseObject.log.lunSerialNumber
             $Params = @{
                 "ApiEndPoint" = "/storage/luns"
             }
@@ -261,7 +260,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
                 $QueryFilter = [System.Web.HttpUtility]::UrlEncode($QueryFilter)
                 $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter"}
             }
-
+    
             $params += @{"ApiQueryFields" = "fields=svm.name,location.volume.*"}
     
             $Response = Invoke-ONTAPRequest @Params
@@ -272,13 +271,13 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
                 $responseObject['svm'] = $LunRecords[0].svm.name
                 $LunRecords | ForEach-Object {
                     $lunrecord = $_
-                    if ($responseObject.data.LunSerialNumber -eq $lunrecord.serial_number) {
+                    if ($responseObject.data.lunSerialNumber -eq $lunrecord.serial_number) {
                         $responseObject.data += @{
                             "lunPath" = $lunrecord.name
                             "volumeName" = $lunrecord.location.volume.name
                             "volumeUuid" = $lunrecord.location.volume.uuid
                         }
-                    } elseif ($responseObject.log.LunSerialNumber -eq $lunrecord.serial_number) {
+                    } elseif ($responseObject.log.lunSerialNumber -eq $lunrecord.serial_number) {
                         $responseObject.log += @{
                             "lunPath" = $lunrecord.name
                             "volumeName" = $lunrecord.location.volume.name
@@ -290,7 +289,44 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
             return $responseObject
         }
     
-        $responseObject =  sqlcmd -S "${instanceName}" -Q $sqlquery -y 0;
+        Function Get-VolumeIdFromName($responseObject) {
+            Write-Debug "Get Volume Id from name: $($responseObject | ConvertTo-Json)"
+            $QueryFilter = $responseObject.data.volumename + '|' + $responseObject.log.volumename
+    
+            $Params = @{
+                "ApiEndPoint" = "/storage/volumes"
+            }
+    
+            if ($QueryFilter -ne '') {
+                $QueryFilter = [System.Web.HttpUtility]::UrlEncode($QueryFilter)
+                $Params += @{"ApiQueryFilter" = "name=$QueryFilter"}
+            }
+    
+            $params += @{"ApiQueryFields" = "fields=clone.*"}
+    
+            $Response = Invoke-ONTAPRequest @Params
+    
+            $volumeRecords = $Response.records
+    
+            if ($volumeRecords.count -gt 0) {
+                $volumeRecords | ForEach-Object {
+                    $volrecord = $_
+                    if ($volrecord.clone.is_flexclone -eq $true) {
+                        $obj = @{}
+                        $obj['parentSvm'] = $volrecord.clone.parent_svm.name
+                        $obj['parentVolume'] = $volrecord.clone.parent_volume.name
+                        if ($responseObject.data.volumename -eq $volrecord.name) {
+                            $responseObject.data += $obj
+                        } elseif ($responseObject.log.volumename -eq $volrecord.name) {
+                            $responseObject.log += $obj
+                        }
+                    }
+                }
+            }
+            return $responseObject
+        }
+    
+        $responseObject =  sqlcmd -S $instanceName -Q $sqlquery -y 0;
         write-debug "SQL response: $responseObject"
         if ([string]::IsNullOrEmpty($responseObject)) {
             if ($responseObject -eq $null) {
@@ -319,6 +355,9 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
             $responseObject['error'] = "Couldn't get associated Ontap LUN volume names"
             return $responseObject | ConvertTo-Json -Depth 5
         }
+    
+        $responseObject = Get-VolumeIdFromName $responseObject
+        write-debug "Volume Names: $($responseObject | ConvertTo-Json)"
     } catch {
         write-Error $_.Exception.Message
         if ($responseObject -eq $null) {
@@ -335,10 +374,8 @@ const createVolumeClone = (
     fsxid: string,
     fsxregion: string,
     sourceSvm: string,
-    dataVolumeName: string,
-    dataLunPath: string,
-    logVolumeName: string,
-    logLunPath: string,
+    dataVolume: string,
+    logVolume: string,
     resourceId: string,
     targetSvm?: string
 ) => `
@@ -346,10 +383,8 @@ const createVolumeClone = (
     $fsxregion = '${fsxregion}'
     $sourceSvm = '${sourceSvm}'
     $targetSvm = '${targetSvm}'
-    $dataVolume = '${dataVolumeName}'
-    $logVolume = '${logVolumeName}'
-    $dataLunPath = '${dataLunPath}'
-    $logLunPath = '${logLunPath}'
+    $dataVolume = '${dataVolume}' | convertFrom-json
+    $logVolume = '${logVolume}' | convertFrom-json
     $resourceId = '${resourceId}'
 
     Start-Transcript -Path "C:\\cfn\\log\\create_flexclone_$dataVolume.log.txt" -Append | Out-Null
@@ -361,17 +396,7 @@ const createVolumeClone = (
     try {
 
         $epoch = (Get-Date -Date ((Get-Date).DateTime) -UFormat %s)
-    
-        $DataLunLeaf = Split-Path -Path $dataLunPath -Leaf
-        $LogLunLeaf = Split-Path -Path $logLunPath -Leaf
-    
-        $CloneDataVolumeName =  $dataVolume + '_clone_' + $epoch
-        $CloneLogVolumeName =  $logVolume + '_clone_' + $epoch
-    
-        $CloneDataLunPath = "/vol/$CloneDataVolumeName/$DataLunLeaf"
-        $CloneLogLunPath = "/vol/$CloneLogVolumeName/$LogLunLeaf"
-    
-        $parentVserver = $sourceSvm
+        $defaultSnapshot = 'netapp_wf_clone_' + $epoch
     
         ${ontapRestRequest}
 
@@ -397,23 +422,65 @@ const createVolumeClone = (
 
         ${ontapJobStatusTemplate}
 
+        Function New-Snapshot {
+            param(
+                [Parameter(Mandatory = $true)]
+                [string]$volumeName
+            )
+            write-debug "Creating snapshot for $volumeName"
+
+            $ApiEndpoint = "/storage/volumes"
+            $ApiQueryFilter = "name=$volumeName"
+            $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $ApiQueryFilter
+            write-debug ($response | ConvertTo-Json)
+
+            if ($response.records.count -eq 0) {
+                $responseObject['error'] = "Could not find the cloned volumes to create snapshot."
+                return $responseObject
+            }
+
+            $volumeid = $response.records[0].uuid
+            $ApiEndpoint = '/storage/volumes/' + $volumeid + '/snapshots'
+            $body = @{
+                "name" = $defaultSnapshot
+            } | ConvertTo-Json
+
+            $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -body $body -method "POST"
+            return Get-OntapJobStatus -jobId $ontapResponse.job.uuid
+        }
+
         Function New-VolumeClone {
             $parentsvm = $sourceSvm
-    
+
             $jobStatus = @()
             @($dataVolume, $logVolume) | ForEach-Object {
-                $parentvolume = $_
+                $volume = $_
+                write-debug "Volume: $($volume | convertto-json)"
+                $snapshot = $volume.snapshot
+                if ([string]::IsNullOrEmpty($snapshot)) {
+                    # Create snapshot
+                    $job = New-Snapshot -volumeName $volume.name
+                    if ($job.state -ne 'success') {
+                        $responseObject['error'] = "Could not create snapshot for $($volume.name). Ontap error: $($job.message)"
+                        return $responseObject
+                    }
+                    $snapshot = $defaultSnapshot
+                }
+                start-sleep 1
                 $ApiEndpoint = "/storage/volumes"
                 $body = @{
-                    "name" = $parentvolume + '_clone_' + $epoch
+                    "name" = $volume.name + '_clone_' + $epoch
                     "svm.name" = $targetSvm
                     "clone" = @{
                         "is_flexclone" = $True
                         "parent_volume" = @{
-                            "name" = $parentvolume
+                            "name" = $volume.name
                         }
                         "parent_svm" = @{
                             "name" = $parentsvm
+                        }
+                        "parent_snapshot" = @{
+                            "name" = $snapshot
                         }
                     }
                 } | ConvertTo-Json
@@ -425,10 +492,31 @@ const createVolumeClone = (
             return $jobStatus
         }
     
+        Function Get-OntapVolumes {
+            write-debug "Getting cloned volumes"
+            $ApiQueryFilter = 'name='
+            @($dataVolume, $logVolume) | ForEach-Object {
+                $ApiQueryFilter += [System.Web.HttpUtility]::UrlEncode($_.name) + '_clone_' + $epoch + '|'
+            }
+
+            $ApiQueryFilter = $ApiQueryFilter.TrimEnd('|')
+            $ApiQueryFields = 'fields=clone.*'
+            $ApiEndpoint = "/storage/volumes"
+            $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $ApiQueryFilter -ApiQueryFields $ApiQueryFields
+            write-debug "/volumes $($response | ConvertTo-Json)"
+
+            if ($response.records.count -eq 0) {
+                $responseObject['error'] = "Could not find the cloned volumes."
+            } else {
+                return $response.records
+            }
+        }
+
         Function Add-ObjectTagsToVolume {
+            write-debug "Adding tags to the cloned volumes."
             $ApiQueryFilter = 'location.volume.name='
             @($dataVolume, $logVolume) | ForEach-Object {
-                $ApiQueryFilter += [System.Web.HttpUtility]::UrlEncode($_) + '_clone_' + $epoch + '|'
+                $ApiQueryFilter += [System.Web.HttpUtility]::UrlEncode($_.name) + '_clone_' + $epoch + '|'
             }
     
             $ApiQueryFilter = $ApiQueryFilter.TrimEnd('|')
@@ -442,12 +530,12 @@ const createVolumeClone = (
                 return $responseObject | ConvertTo-Json -Depth 5
             }
 
-            $jobStatus = @()
             $response.records | ForEach-Object {
                 $volume = @{
                     "volumeId" = $_.location.volume.uuid
                     "lunSerialNumber" = $_.serial_number
                     "volumeName" = $_.location.volume.name
+                    "lunPath" = $_.name
                 }
                 if ($_.location.volume.name -match $dataVolume) {
                     $responseObject['data'] = $volume
@@ -456,12 +544,29 @@ const createVolumeClone = (
                 }
             }
 
+            $volresponse = Get-OntapVolumes
+            if ($volresponse.count -gt 0) {
+                $volresponse | ForEach-Object {
+                    $volume = $_
+                    if ($volume.name -match $dataVolume.name) {
+                        $responseObject['data'] += @{
+                            "parentSnapshot" = $volume.clone.parent_snapshot.name
+                        }
+                    } else {
+                        $responseObject['log'] += @{
+                            "parentSnapshot" = $volume.clone.parent_snapshot.name
+                        }
+                    }
+                }
+            }
+
+            $jobStatus = @()
             $response.records | ForEach-Object {
                 $volumeid = $_.location.volume.uuid
                 $body = @"
                 {
                     "tiering.object_tags": [
-                        "cloned_by=netapp_wlmdb",
+                        "cloned_by=netapp_wf",
                         "resource_id=$resourceId"
                     ]
                 }
@@ -486,9 +591,15 @@ const createVolumeClone = (
                 }
 
                 $null = Connect-NcController -Credential $FSxCredentials -Name $FSxHostName
-
+                $CloneDataLuns = $responseObject['data'] | ForEach-Object { $_.lunPath }
+                $CloneLogLuns = $responseObject['log'] | ForEach-Object { $_.lunPath }
+                if ($CloneDataLuns -is [array] -or $CloneLogLuns -is [array]) {
+                    $ClonedLuns = $CloneDataLuns + $CloneLogLuns
+                } else {
+                    $ClonedLuns = @($CloneDataLuns, $CloneLogLuns)
+                }
                 $message
-                @($dataLunPath, $logLunPath) | ForEach-Object {
+                $ClonedLuns | ForEach-Object {
                     $lunPath = $_
 
                     $null = Set-NcLunSignature -Path $lunPath -Vserver $targetSvm -Confirm:$False
@@ -508,7 +619,13 @@ const createVolumeClone = (
             )
     
             $ApiEndpoint = '/protocols/san/lun-maps'
-            $lunPaths = @($CloneDataLunPath, $CloneLogLunPath)
+            $CloneDataLuns = $responseObject['data'] | ForEach-Object { $_.lunPath }
+            $CloneLogLuns = $responseObject['log'] | ForEach-Object { $_.lunPath }
+            if ($CloneDataLuns -is [array] -or $CloneLogLuns -is [array]) {
+                $lunPaths = $CloneDataLuns + $CloneLogLuns
+            } else {
+                $lunPaths = @($CloneDataLuns, $CloneLogLuns)
+            }
             $records = @()
             $lunPaths | ForEach-Object {
                 $records += @{
@@ -646,13 +763,15 @@ const cleanUpOntapResources = (
     fsxregion: string,
     volumeIds: string,
     filePaths: string,
-    dbName: string
+    dbName: string,
+    instanceName: string = '.'
 ) => `
     $fsxid = '${fsxid}'
     $fsxregion = '${fsxregion}'
     $volumeIds = '${volumeIds}' | ConvertFrom-Json
     $filePaths = '${filePaths}' | ConvertFrom-Json
     $DBName = '${dbName}'
+    $instanceName = '${instanceName}'
 
     Start-Transcript -Path "C:\\cfn\\log\\cleanup_ontap_resources_$DBName.log.txt" -Append | Out-Null
 
@@ -660,40 +779,41 @@ const cleanUpOntapResources = (
     $responseObject = @{}
 
     try {
-        try {
-            $deleteQuery = "SET NOCOUNT ON; DROP DATABASE $DBName;"
-            $sqlresponse =  sqlcmd -S "." -Q $deleteQuery -y 0;
-        } catch {
-            Write-Debug $_.Exception.Message
-        }
-
-
-        $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
-        if ($clusterServiceStatus -eq 'Running' -and $filePaths.count -ne 0) {
-            #Cleanup drives from SQL dependency in case of clustered configuration
-            if ($DBName.Length -gt 25) {
-                $DBName = $DBName.Substring(0,25)
-            }
-            $datalabel = $DBName+"-Data"
-            $loglabel = $DBName+"-Log"
-
-            #Check if disks are in dependency list before cleaning up
-            $dependencylist = (Get-ClusterResourceDependency -Resource "SQL Server" -ErrorAction SilentlyContinue).DependencyExpression
-            $datafound = $dependencylist -match '\\(\\['+$datalabel+'\\]\\)'
-            $logfound =  $dependencylist -match '\\(\\['+$loglabel+'\\]\\)'
-
-            if ($datafound) {
-                $null = (Remove-ClusterResourceDependency -Resource "SQL Server" -Provider $datalabel)
-                Remove-ClusterResource -Name $datalabel -Force
-            }
-
-            if ($logfound) {
-                $null = (Remove-ClusterResourceDependency -Resource "SQL Server" -Provider $loglabel)
-                Remove-ClusterResource -Name $loglabel -Force
-            }
-        }
 
         if ($filePaths.count -ne 0) {
+            try {
+                $deleteQuery = "SET NOCOUNT ON; DROP DATABASE $DBName;"
+                $sqlresponse =  sqlcmd -S $instanceName -Q $deleteQuery -y 0;
+            } catch {
+                Write-Debug $_.Exception.Message
+            }
+
+            $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
+
+            if ($clusterServiceStatus -eq 'Running') {
+                #Cleanup drives from SQL dependency in case of clustered configuration
+                if ($DBName.Length -gt 25) {
+                    $DBName = $DBName.Substring(0,25)
+                }
+                $datalabel = $DBName+"-Data"
+                $loglabel = $DBName+"-Log"
+
+                #Check if disks are in dependency list before cleaning up
+                $dependencylist = (Get-ClusterResourceDependency -Resource "SQL Server" -ErrorAction SilentlyContinue).DependencyExpression
+                $datafound = $dependencylist -match '\\(\\['+$datalabel+'\\]\\)'
+                $logfound =  $dependencylist -match '\\(\\['+$loglabel+'\\]\\)'
+
+                if ($datafound) {
+                    $null = (Remove-ClusterResourceDependency -Resource "SQL Server" -Provider $datalabel)
+                    Remove-ClusterResource -Name $datalabel -Force
+                }
+
+                if ($logfound) {
+                    $null = (Remove-ClusterResourceDependency -Resource "SQL Server" -Provider $loglabel)
+                    Remove-ClusterResource -Name $loglabel -Force
+                }
+            }
+
             $virtualDrives = $filePaths | ForEach-Object {
                 $splits = $_.Split('\\')
                 $splits[0] + '\\' + $splits[1]
@@ -786,7 +906,7 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string) => `
         
         Do {
             if ($null -eq $nextToken) {
-                $resp = Invoke-ONTAPGetRequest -ApiEndpoint '/api/storage/volumes?tiering.object_tags=cloned_by=netapp_wlmdb&fields=space.used_by_afs,space.physical_used,clone.split_estimate'
+                $resp = Invoke-ONTAPGetRequest -ApiEndpoint '/api/storage/volumes?tiering.object_tags=cloned_by=netapp_wf&fields=space.used_by_afs,space.physical_used,clone.split_estimate'
             } else {
                 $resp = Invoke-ONTAPGetRequest -ApiEndpoint $nextToken
             }
@@ -809,6 +929,167 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string) => `
     $responseObject | ConvertTo-Json -Depth 5
 `;
 
+const detachDbAndRemoveAccessPath = (
+    dbName: string,
+    serialNumbers: string,
+    filePaths: string,
+    instanceName: string = '.'
+) => `
+    $dbname = '${dbName}'
+    $serialNumbers = '${serialNumbers}' | ConvertFrom-Json
+    $filePaths = '${filePaths}' | ConvertFrom-Json
+    $instanceName = '${instanceName}'
+
+    Start-Transcript -Path "C:\\cfn\\log\\detachdb_remove_accesspath_$dbname.log.txt" -Append | Out-Null
+
+    if ($null -eq $responseObject) {
+        $responseObject = @{}
+    }
+
+    try {
+        $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$dbname' GROUP BY dbid FOR JSON PATH"
+
+        $sqlres = sqlcmd -Q $query -y 0
+        
+        if ($sqlres -ne $null) {
+            Write-Debug "Database $dbname is in use"
+            $responseObject['error'] = 'Database $dbname is in use'
+            return $responseObject | ConvertTo-Json -Depth 5
+        }
+
+        $query = @"
+            SET NOCOUNT ON;
+            USE $dbname;
+            SELECT name, value
+            FROM fn_listextendedproperty(default, default, default, default, default, default, default) FOR JSON PATH;
+"@
+        $sqlresponse = Sqlcmd -S $instanceName -Q $query -y 0 -m 1
+        $sqlresponse = $sqlresponse | ConvertFrom-JSON
+
+        $sqlresponse | ForEach-Object {
+            $responseObject | Add-Member -MemberType NoteProperty -Name $_.name -Value $_.value
+        }
+
+        $detach = "EXEC sp_detach_db '$dbname', 'true'"
+        $sqlresponse =  sqlcmd -S $instanceName -Q $detach -y 0;
+
+        Write-Debug "Detach response: $sqlresponse"
+
+        if ($sqlresponse -ne $null) {
+            Write-Debug "Failed to detach the database $sqlresponse"
+            $responseObject['error'] = $sqlresponse
+            return $responseObject | ConvertTo-Json -Depth 5
+        }
+
+        $disklist = Get-disk | Where-Object { $serialNumbers -contains $_.SerialNumber }
+
+        $mountPoints = $filePaths | ForEach-Object {
+            $splits = $_.Split('\\')
+            $splits[0] + '\\' + $splits[1] + '\\'
+        }
+        write-debug "Mount Points: $($mountPoints | ConvertTo-Json)"
+
+        $disklist | ForEach-Object {
+            $disk = $_
+            $partition = Get-Partition -DiskNumber $disk.Number -PartitionNumber 2
+            write-debug "Partition: $($partition.PartitionNumber) $($partition.AccessPaths)"
+            $partition.AccessPaths | ForEach-Object {
+                $accesspath = $_
+                if ($accesspath -and ($mountPoints -contains $accesspath) -and ($accesspath -notmatch 'Volume')) {
+                    Remove-PartitionAccessPath -DiskNumber $disk.Number -PartitionNumber $partition.PartitionNumber -AccessPath $accesspath
+                }
+            }
+        }
+    } catch {
+        Write-Debug $_.Exception.Message
+        $responseObject['error'] = $_.Exception.Message
+    }
+
+    return $responseObject | ConvertTo-Json -Depth 5
+`;
+
+const addAccessPathAndAttachDb = (
+    dbName: string,
+    datafile: { serial: string; path: string },
+    logfile: { serial: string; path: string },
+    instanceName: string = '.'
+) => `
+    $dbname = '${dbName}'
+    $serialNumbers = '${JSON.stringify(datafile)}' | ConvertFrom-Json
+    $filePaths = '${JSON.stringify(logfile)}' | ConvertFrom-Json
+    $instanceName = '${instanceName}'
+
+    Start-Transcript -Path "C:\\cfn\\log\\add_accesspath_attachdb_$dbname.log.txt" -Append | Out-Null
+
+    $responseObject = @{}
+    try {
+        Function Get-VirtualMountPoint {
+            param (
+                [string]$path
+            )
+
+            $splits = $path.Split('\\')
+            return $splits[0] + '\\' + $splits[1] + '\\'
+        }
+        
+        $dataMountPoint = Get-VirtualMountPoint -path $datafile.path
+        $logMountPoint = Get-VirtualMountPoint -path $logfile.path
+
+        Get-Partition | ForEach-Object {
+            $partition = $_
+            if ($partition.AccessPaths -contains $dataMountPoint -or $partition.AccessPaths -contains $logMountPoint) {
+                Write-Debug "Access path already exists for $dataMountPoint or $logMountPoint"
+                $accessPathExists = $true
+            }
+        }
+
+        # If access path does not exist, only then add the access path
+        if ($accessPathExists -ne $true) {
+            $datadisk = Get-disk | Where-Object { $_.SerialNumber -eq $datafile.serial }
+            $logdisk = Get-disk | Where-Object { $_.SerialNumber -eq $logfile.serial }
+
+            write-debug "Mount Points: $dataMountPoint $logMountPoint"
+
+            $datapartition = Get-Partition -DiskNumber $datadisk.Number -PartitionNumber 2
+            $logpartition = Get-Partition -DiskNumber $logdisk.Number -PartitionNumber 2
+            write-debug "Partition accesspaths: $($datapartition.AccessPaths) $($logpartition.AccessPaths)"
+
+            if ($datapartition.AccessPaths -notcontains $dataMountPoint) {
+                Add-PartitionAccessPath -DiskNumber $datadisk.Number -PartitionNumber $partition.PartitionNumber -AccessPath $dataMountPoint
+            }
+            
+            if ($logpartition.AccessPaths -notcontains $logMountPoint) {
+                Add-PartitionAccessPath -DiskNumber $logdisk.Number -PartitionNumber $partition.PartitionNumber -AccessPath $logMountPoint
+            }
+        }
+
+        $selectquery = "SET NOCOUNT ON; SELECT name FROM sys.databases where name = '$dbname' FOR JSON PATH;"
+        $sqlresponse =  sqlcmd -S $instanceName -Q $selectquery -y 0;
+
+        if ($sqlresponse -ne $null) {
+            Write-Debug "Database $dbname already exists"
+            $responseObject['info'] = 'Database $dbname already exists'
+            return $responseObject | ConvertTo-Json -Depth 5
+        }
+
+        $attachQuery = @"
+            CREATE DATABASE $dbname ON  
+            ${[datafile.path, logfile.path].map(file => (file ? `(FILENAME = '${file}')` : '')).join()}
+            FOR ATTACH;
+"@
+        $attachresponse =  sqlcmd -S $instanceName -Q $attachQuery -y 0;
+        if ($attachresponse -ne $null) {
+            Write-Debug "Failed to attach the database $attachresponse"
+            $responseObject['error'] = $attachresponse
+            return $responseObject | ConvertTo-Json -Depth 5
+        }
+    } catch {
+        Write-Debug $_.Exception.Message
+        $responseObject['error'] = $_.Exception.Message
+        return $responseObject | ConvertTo-Json -Depth 5
+    }
+`;
+
 export {
     GET_SANDBOX_DETAILS,
     checkDatabaseExists,
@@ -818,5 +1099,7 @@ export {
     createClonedDb,
     cleanUpOntapResources,
     mountPointQuery,
-    getStorageSavingsFromOntap
+    getStorageSavingsFromOntap,
+    detachDbAndRemoveAccessPath,
+    addAccessPathAndAttachDb
 };
