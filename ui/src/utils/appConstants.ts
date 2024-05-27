@@ -752,7 +752,7 @@ export const GENERAL = {
     QUORUM_VOLUME: 'Quorum volume',
     QUORUM_SIZE: 'Quorum volume size',
     BUFFER_SIZE: 'Headroom',
-    MIN_FSX_CAPACITY_MESSAGE: 'Minimum SSD capacity of FSx for NetApp ONTAP',
+    MIN_FSX_CAPACITY_MESSAGE: 'The minimum total SSD capacity of an FSx for ONTAP file system is 1,024 GiB.',
     VPC_MESSAGE:
         'Ensure your VPC has connectivity to other AWS services (SQS, FSx, EC2, CloudWatch, CloudFormation, SSM) via VPC endpoints and S3 gateway endpoint. If not, endpoints will be created automatically during deployment.',
     SQL_SERVER_NOT_RUNNING: 'SQL service is not running',
