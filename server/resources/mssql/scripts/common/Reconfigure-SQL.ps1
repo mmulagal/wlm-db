@@ -47,7 +47,7 @@ try {
     $SQLFullUser = $DomainNetBIOSName + '\' + $SQLServiceAccount
     $HostName = hostname
 
-     # Get SQL server instance name
+    # Get SQL server instance name
     $SQLServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
     $SQLInstanceName = "MSSQLSERVER"
     $SQLInstanceNames = @()
@@ -65,12 +65,23 @@ try {
         $SQLInstanceName = $SQLInstanceNames[0]
     }
 
+    Write-Output "SQL instance name $SQLInstanceName."
+
     # Instance name to be passed to sqlcmd
     $ServerInstanceName = "$env:COMPUTERNAME"
     If($SQLInstanceName -ne "MSSQLSERVER") {
         $ServerInstanceName = "$env:COMPUTERNAME\$SQLInstanceName"
         
     }
+    Write-Output "Sql server name $ServerInstanceName."
+
+    # Get service name
+    $ServiceName = 'MSSQLSERVER'
+    If($SQLInstanceName -ne "MSSQLSERVER") {
+        $ServiceName =  'MSSQL${0}' -f $SQLInstanceName
+            
+    }
+    Write-Host "SQL service name $ServiceName."
     
     try{
         $CurrentCollation = sqlcmd -S $ServerInstanceName -Q "set nocount on; select serverproperty('collation') as collation" -h -1
@@ -86,7 +97,7 @@ try {
         try {
             Write-Output "Setting collation on SQLServer($SQLInstanceName)"
             # Stop SQL Service
-            $SQLService = Get-Service -Name "$SQLInstanceName"
+            $SQLService = Get-Service -Name "$ServiceName"
             if ($SQLService.status -eq 'Running') { $SQLService.Stop() }
             $SQLService.WaitForStatus('Stopped', '00:01:00')
     
@@ -121,7 +132,7 @@ try {
             $acl.SetAccessRule($rule)
             Set-ACL -Path $path -AclObject $acl
         }
-
+       
         # Set Default Paths
         Import-Module SQLPS
         If ($Using:SQLInstanceName -eq "MSSQLSERVER") {
@@ -252,8 +263,9 @@ try {
             }
         }
 
+        
         # Stop SQL Service
-        $SQLService = Get-Service -Name "$Using:SQLInstanceName"
+        $SQLService = Get-Service -Name "$Using:ServiceName"
         if ($SQLService.status -eq 'Running') { $SQLService.Stop() }
         $SQLService.WaitForStatus('Stopped', '00:01:00')
 
@@ -298,4 +310,4 @@ try {
 }
 catch {
     $_ | Write-AWSLaunchWizardException
-}
+} 
