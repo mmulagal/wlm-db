@@ -89,8 +89,6 @@ const SavingsSelection = ({ printState }: any) => {
     const errorForChangeRate = () => {
         if (monthlyChangeRateNo > 100) {
             return GENERAL.CHANGE_RATE_MAX_LIMIT;
-        } else {
-            return;
         }
     };
 
