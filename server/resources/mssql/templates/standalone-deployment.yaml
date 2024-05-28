@@ -116,7 +116,7 @@ Metadata:
             FsxVolumeSnapshotPolicy:
                 default: Snapshot policy for the volume. Can be either daily_weekretention or none.
             EBSVolumeSize:
-                default: Size of the EBS Volume.
+                default: Size of the EBS Volume in GiB.
 Parameters:
     ParentStackName:
         Description: Stack name for the parent CloudFormation stack.
@@ -258,7 +258,7 @@ Parameters:
         Default: daily_weekretention
         AllowedValues: [daily_weekretention, none]
     EBSVolumeSize:
-        Description:  Size of the EBS Volume.
+        Description:  Size of the EBS Volume in GiB.
         Type: String
 Conditions:
     ADSGNotSelected: !Equals
@@ -437,6 +437,8 @@ Resources:
                             source: {{{ Sqlspcu }}}
                         C:\cfn\Installer\dependent-packages.zip:
                             source: {{{ DependentPackages }}}
+                        C:\cfn\Installer\SQLServerSetup.zip:
+                            source: {{{ SQLServerSetup }}}
                 ScriptSignatureVerificationandExtract:
                     commands:
                         a-unpack-common-scripts:
@@ -482,6 +484,9 @@ Resources:
                         m-unpack-dependentpackages:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\dependent-packages.zip -Destination C:\cfn\Installer
+                        n-unpack-sqlserversetup:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\Installer\SQLServerSetup.zip -Destination C:\cfn\Installer
                 InitialSetup:
                     commands:
                         a-unpack-launchwizard-module:

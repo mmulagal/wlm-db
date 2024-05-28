@@ -64,7 +64,6 @@ try {
     If ($SQLInstanceNames -NotContains "MSSQLSERVER") {
         $SQLInstanceName = $SQLInstanceNames[0]
     }
-
     Write-Output "SQL instance name $SQLInstanceName."
 
     # Instance name to be passed to sqlcmd
@@ -82,6 +81,25 @@ try {
             
     }
     Write-Host "SQL service name $ServiceName."
+
+    # Find path to SQL Installer media, if not found then pick installer hosted in S3.
+    if (Test-Path -Path "C:\SQLServerSetup\setup.exe") {
+        $SQLMediaPath = "C:\SQLServerSetup\setup.exe"
+    }
+    else {
+        $SQLMediaPath = 'C:\cfn\Installer\SQLServerSetup\setup.exe'
+        If (Test-Path -path "C:\SQL*") {
+            $SQLInstallerPaths = (Get-ChildItem "C:\SQL*" -Recurse | where {$_.name -eq "setup.exe"} ).fullname
+            If($SQLInstallerPaths -is 'string')
+            {
+            $SQLMediaPath = $SQLInstallerPaths
+            }
+            Else {
+            $SQLMediaPath = $SQLInstallerPaths[0]
+            }
+        } 
+    }
+    Write-Host "SQL Installer path $SQLMediaPath."
     
     try{
         $CurrentCollation = sqlcmd -S $ServerInstanceName -Q "set nocount on; select serverproperty('collation') as collation" -h -1
@@ -90,6 +108,7 @@ try {
         Write-Output "Error while determining collation set. $_"
         $CurrentCollation = ''
     }
+
     #Set collation for the sql server if installer is available. Need to check if collation is an input for custom ami.
     $SkipCollation = $False
     if (($CurrentCollation -ne $SqlCollation) -and (Test-Path -Path "C:\SQLServerSetup\setup.exe")) {
@@ -104,24 +123,24 @@ try {
             #Set collation value and rebuild system databases
             $rebuildarguments = '/QUIET /ACTION="REBUILDDATABASE" /INSTANCENAME="' + $SQLInstanceName + '" /SQLSYSADMINACCOUNTS="' + $DomainAdminFullUser + '" /SAPWD="' + $DomainAdminPassword + '" /SQLCOLLATION="' + $SqlCollation + '"'
             Invoke-Command -scriptblock {
-                Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:rebuildarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\rebuild_collation.txt -RedirectStandardError C:\cfn\log\rebuild_error.txt
+                Start-Process -FilePath $Using:SQLMediaPath -ArgumentList $Using:rebuildarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\rebuild_collation.txt -RedirectStandardError C:\cfn\log\rebuild_error.txt
             } -Credential $DomainAdminCreds -ComputerName $HostName -Authentication credssp
-    
+
             # Start SQL service
             $SQLService.Start()
             $SQLService.WaitForStatus('Running', '00:01:00')
         }
         catch {
-            Write-Output "Failed to set collation on SQLServer($SQLInstanceName)"
+            Write-Output "Failed to set collation on SQLServer($SQLInstanceName).$_"
             # Start SQL service even though collation fails
             $SQLService.Start()
             $SQLService.WaitForStatus('Running', '00:01:00')
-        }
-    }
-    else {
             $SkipCollation = $True
-    }
-
+        }
+    }else {
+        $SkipCollation = $True
+        }    
+    
     $ConfigureSqlPs = {
         $ErrorActionPreference = "Stop"
 
@@ -296,7 +315,7 @@ try {
         }
 
         # Set SQL Server and Agent services user to SQL AD user
-        $Services = Get-WmiObject -Class Win32_Service -Filter "Name='SQLSERVERAGENT' OR Name='$Using:SQLInstanceName'"
+        $Services = Get-WmiObject -Class Win32_Service -Filter "Name='SQLSERVERAGENT' OR Name='$Using:ServiceName'"
         $Services.change($null, $null, $null, $null, $null, $null, $Using:DomainAdminFullUser , $Using:DomainAdminPassword, $null, $null, $null)
  
  

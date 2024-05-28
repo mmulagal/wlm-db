@@ -794,6 +794,10 @@ const SQL_RESOURCE_ASSETS = [
     {
         name: 'DependentPackages',
         url: `${WLMDB}/Installer/dependent-packages.zip`
+    },
+    {
+        name: 'SQLServerSetup',
+        url: `${WLMDB}/Installer/SQLServerSetup.zip`
     }
 ];
 
