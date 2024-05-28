@@ -1,8 +1,9 @@
 {
     "host1" : {
+        "id": "host1",
         "ec2InstanceId": "i-02dbf20711b3c8311",
         "ec2InstanceName": "sqlnode1-37211",
-        "id": "resource-id-1",
+        "resourceId": "resource-id-1",
         "name": "Database hostname 1",
         "status": "Up",
         "ssmState": "connected",
@@ -69,6 +70,7 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -104,6 +106,7 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -139,6 +142,7 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -174,14 +178,16 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             }
         ]
     },
     "host2" : {
+        "id": "host2",
         "ec2InstanceId": "i-02dbf20711b3c8312",
         "ec2InstanceName": "sqlnode1-37212",
-        "id": "resource-id-2",
+        "resourceId": "resource-id-2",
         "name": "Database hostname 2",
         "status": "Up",
         "ssmState": "connected",
@@ -243,6 +249,7 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -278,6 +285,7 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -313,6 +321,7 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -348,14 +357,16 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             }
         ]
     },
     "host3" : {
+        "id": "host3",
         "ec2InstanceId": "i-02dbf20711b3c8313",
         "ec2InstanceName": "sqlnode1-37213",
-        "id": "resource-id-3",
+        "resourceId": "resource-id-3",
         "name": "Database hostname 3",
         "status": "Up",
         "ssmState": "connected",
@@ -422,6 +433,7 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -457,6 +469,7 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -492,6 +505,7 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -527,14 +541,16 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             }
         ]
     },
     "host4" : {
+        "id": "host4",
         "ec2InstanceId": "i-02dbf20711b3c8314",
         "ec2InstanceName": "sqlnode1-37214",
-        "id": "resource-id-4",
+        "resourceId": "resource-id-4",
         "name": "Database hostname 4",
         "status": "Up",
         "ssmState": "connected",
@@ -596,6 +612,7 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -631,6 +648,7 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -666,6 +684,7 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -701,11 +720,14 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             }
         ]
     },
     "host5" : {
+        "id": "host5",
+        "resourceId": "resource-id-2",
         "ec2InstanceId": "i-02dbf20711b3c8315",
         "ec2InstanceName": "sqlnode1-37215",
         "name": "Database hostname 5",
@@ -716,9 +738,10 @@
         ]
     },
     "host6" : {
+        "id": "host6",
         "ec2InstanceId": "i-02dbf20711b3c8316",
         "ec2InstanceName": "sqlnode1-37216",
-        "id": "resource-id-6",
+        "resourceId": "resource-id-6",
         "name": "Database hostname 6",
         "status": "Up",
         "ssmState": "connected",
@@ -843,9 +866,10 @@
         ]
     },
     "host7" : {
+        "id": "host7",
         "ec2InstanceId": "i-02dbf20711b3c8317",
         "ec2InstanceName": "sqlnode1-37217",
-        "id": "resource-id-7",
+        "resourceId": "resource-id-7",
         "name": "Database hostname 7",
         "status": "Up",
         "ssmState": "connected",
@@ -965,9 +989,10 @@
         ]
     },
     "host8" : {
+        "id": "host8",
         "ec2InstanceId": "i-02dbf20711b3c8318",
         "ec2InstanceName": "sqlnode1-37218",
-        "id": "resource-id-8",
+        "resourceId": "resource-id-8",
         "name": "Database hostname 8",
         "status": "Up",
         "ssmState": "connected",
@@ -1087,9 +1112,10 @@
         ]
     },
     "host9" : {
+        "id": "host9",
         "ec2InstanceId": "i-02dbf20711b3c8319",
         "ec2InstanceName": "sqlnode1-37219",
-        "id": "resource-id-9",
+        "resourceId": "resource-id-9",
         "name": "Database hostname 9",
         "status": "Up",
         "ssmState": "connected",
@@ -1146,6 +1172,7 @@
                         "spaceSavingsPercentage": 33.33
                     }
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -1168,6 +1195,7 @@
                         "size": 0
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -1193,6 +1221,7 @@
                         "spaceSavingsPercentage": 33.33
                     } 
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -1218,14 +1247,16 @@
                         "spaceSavingsPercentage": 33.33
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             }
         ]
     },
     "host10" : {
+        "id": "host10",
         "ec2InstanceId": "i-02dbf20711b3c83110",
         "ec2InstanceName": "sqlnode1-372110",
-        "id": "resource-id-10",
+        "resourceId": "resource-id-10",
         "name": "Database hostname 10",
         "status": "Up",
         "ssmState": "connected",
@@ -1277,6 +1308,7 @@
                         "spaceSavingsPercentage": 33.33
                     } 
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -1302,6 +1334,7 @@
                         "spaceSavingsPercentage": 33.33
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -1327,6 +1360,7 @@
                         "spaceSavingsPercentage": 33.33
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -1352,14 +1386,16 @@
                         "spaceSavingsPercentage": 33.33
                     } 
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             }
         ]
     },
     "host11" : {
+        "id": "host11",
         "ec2InstanceId": "i-02dbf20711b3c83111",
         "ec2InstanceName": "sqlnode1-372111",
-        "id": "resource-id-11",
+        "resourceId": "resource-id-11",
         "name": "Database hostname 11",
         "status": "Up",
         "ssmState": "connected",
@@ -1411,6 +1447,7 @@
                         "spaceSavingsPercentage": 33.33
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -1436,6 +1473,7 @@
                         "spaceSavingsPercentage": 33.33
                     }  
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -1461,6 +1499,7 @@
                         "spaceSavingsPercentage": 33.33
                     } 
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             },
             {
@@ -1486,6 +1525,7 @@
                         "spaceSavingsPercentage": 33.33
                     } 
                 },
+                "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             }
         ]
