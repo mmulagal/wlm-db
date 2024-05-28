@@ -521,7 +521,7 @@ async function formatStorageSavingsCalculationMetrics(
         ebsCalculation: {
             numberOfVolumes: ebsNumberOfVolumes,
             instanceAvgDuration,
-            hoursInAMonth: 24 * 30,
+            hoursInAMonth: 730, // (365 * 24) / 12
             ebsCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
             storageAmountPerVol: convertToBytes(storageAmountPerVolSize, storageAmountPerVolUnit) || 0,
             totalInstanceHours,
