@@ -437,6 +437,8 @@ Resources:
                             source: {{{ Sqlspcu }}}
                         C:\cfn\Installer\dependent-packages.zip:
                             source: {{{ DependentPackages }}}
+                        C:\cfn\Installer\SQLServerSetup.zip:
+                            source: {{{ SQLServerSetup }}}
                 ScriptSignatureVerificationandExtract:
                     commands:
                         a-unpack-common-scripts:
@@ -482,6 +484,9 @@ Resources:
                         m-unpack-dependentpackages:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\dependent-packages.zip -Destination C:\cfn\Installer
+                        n-unpack-sqlserversetup:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\Installer\SQLServerSetup.zip -Destination C:\cfn\Installer
                 InitialSetup:
                     commands:
                         a-unpack-launchwizard-module:
