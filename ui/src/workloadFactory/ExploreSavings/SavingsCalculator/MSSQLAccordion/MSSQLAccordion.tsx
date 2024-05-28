@@ -195,7 +195,7 @@ const MSSQLAccordion = ({ printState }: any) => {
                                 style={{ marginTop: '32px', marginBottom: '6px' }}
                                 className={styles.setFont}
                             >
-                                FSxN
+                                {GENERAL.FSX_FOR_ONTAP}
                             </DsTypography>
                             {calculatedFSXData(fsxData).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (
