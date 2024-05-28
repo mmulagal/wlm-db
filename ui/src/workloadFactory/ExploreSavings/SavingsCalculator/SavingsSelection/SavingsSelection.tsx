@@ -33,7 +33,9 @@ const SavingsSelection = ({ printState }: any) => {
     }, [noOfClonedCopies]);
 
     useEffect(() => {
-        setChangeRateText(monthlyChangeRateNo);
+        if (monthlyChangeRateNo <= 100) {
+            setChangeRateText(monthlyChangeRateNo);
+        }
     }, [monthlyChangeRateNo]);
 
     // Debounce variable update
@@ -83,6 +85,14 @@ const SavingsSelection = ({ printState }: any) => {
             dispatch(setSelectedCloneRefresh(generateCloneRefresh[0]));
         }
     }, [generateCloneRefresh]);
+
+    const errorForChangeRate = () => {
+        if (monthlyChangeRateNo > 100) {
+            return GENERAL.CHANGE_RATE_MAX_LIMIT;
+        } else {
+            return;
+        }
+    };
 
     return (
         <div className={styles.savingsSelection}>
@@ -165,6 +175,7 @@ const SavingsSelection = ({ printState }: any) => {
                         value={monthlyChangeRateNo ? monthlyChangeRateNo : ''}
                         className={styles.widthSet}
                         info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
+                        error={errorForChangeRate()}
                     />
                 )}
                 <div className={styles.notice}>
