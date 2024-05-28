@@ -146,7 +146,8 @@ async function getSandboxDetails(
                     sourceDatabaseName: sources[2],
                     createdAt: parseInt(getProperty(item, 'createdAt') || String(Date.now()), 10),
                     updatedAt: parseInt(getProperty(item, 'updatedAt') || String(Date.now()), 10),
-                    tag: getProperty(item, 'tag')
+                    tag: getProperty(item, 'tag'),
+                    baseSnapshot: getProperty(item, 'baseSnapshot')
                 };
 
                 sandboxInfo.push(databaseObject);
@@ -873,10 +874,11 @@ async function createVolumeClone(
                     'test-fsx',
                     'us-east-1',
                     'wlmdb_sqlsvm_1714090636810',
-                    JSON.stringify({ name: '/vol/wlmdb_sqldata_1714098400/sqldata' }),
-                    JSON.stringify({ name: '/vol/wlmdb_sqllog_1714098400/sqllog' }),
-                    'test-res-id',
-                    getClonedByTagValue(accountId, credentialsId)
+                    'wlmdb_sqldata_1714098400',
+                    '/vol/wlmdb_sqldata_1714098400/sqldata',
+                    'wlmdb_sqllog_1714098400',
+                    '/vol/wlmdb_sqllog_1714098400/sqllog',
+                    'wlmdb_sqlsvm_1714090636810'
                 )
             ];
         }
@@ -1148,7 +1150,8 @@ async function createExtendedProperties(
                 addExtendedProperties('testdb', '.', {
                     tag: 'demo',
                     cloned_by: 'netapp_wf',
-                    source: 'resource|instance|testdb'
+                    source: 'resource|instance|testdb',
+                    baseSnapshot: 'parentSnapshot'
                 })
             ];
         }

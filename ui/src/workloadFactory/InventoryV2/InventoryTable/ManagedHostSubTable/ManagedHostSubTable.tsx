@@ -1,19 +1,24 @@
-import { Table, useTable, useDialog, DsTypography } from '@netapp/design-system';
+import { Table, useTable, useDialog, DsTypography, Typography } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './ManagedHostSubTable.module.scss';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { useEffect, useRef, useState } from 'react';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
-import ManagedHostDialog from '../ManagedHostDialog/ManagedHostDialog';
-import DotComponent from '../../../../common/DotComponent/DotComponent';
-import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventorySlice';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { WLF_TABS } from '../../../../utils/consts';
 import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { GENERAL } from '../../../../utils/appConstants';
+import { formatSizeTwoPrecision, isAwsBackupEnabled } from '../../../../utils/utilityFunctions';
+import { renderAllocatedCapacity } from '../../../Inventory/InventoryUtils';
+import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
+import DotComponent from '../../../../common/DotComponent/DotComponent';
 
-const ManagedHostSubTable = () => {
+const ManagedHostSubTable = ({rowId}: {rowId: string}) => {
+    const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
+
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
@@ -22,32 +27,27 @@ const ManagedHostSubTable = () => {
 
     const dispatch = useDispatch();
 
-    const mockData = [
-        {
-            id: '1',
-            name: 'instance 1',
-            storageType: 'EBS',
-            storageSavings: '5.91%',
-            protection: '100% protection',
-            allocatedCapacity: '7.2 TiB',
-            performance: 'High',
-            status: 'Unmanaged'
-        },
-        {
-            id: '2',
-            name: 'instance 2',
-            storageType: 'Fsx for ONTAP',
-            storageSavings: 'N/A',
-            protection: '100% protection',
-            allocatedCapacity: '7.2 TiB',
-            performance: 'High',
-            status: 'managed'
-        }
-    ];
-
     useEffect(() => {
-        setData(mockData);
-    }, []);
+        if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
+            const newTable = inventoryTableData?.[rowId]?.sqlServerInstances?.map((perRow) => {
+                let protectionText = '';
+                if (isAwsBackupEnabled(perRow) || perRow?.protection?.isFsxOntapSnapshotsEnabled || perRow?.protection?.isSqlNativeEnabled) {
+                    protectionText = 'Yes';
+                } else if (perRow?.protection) {
+                    protectionText = 'No';
+                }
+                return {
+                    ...perRow,
+                    status: perRow?.isManaged ? 'Managed' : 'Unmanaged',
+                    protectionText: protectionText,
+                    allocatedCapacityText: perRow?.allocatedCapacity ? formatSizeTwoPrecision(perRow?.allocatedCapacity) : ''
+                }
+            });
+            setData(newTable);
+        } else {
+            setData([]);
+        }
+    }, [rowId, inventoryTableData]);
 
     const handleDialog = () => {
         setDialog(
@@ -81,7 +81,7 @@ const ManagedHostSubTable = () => {
     const handleManage = (rowData: any) => {
         let output = data.map((obj: any) => {
             if (obj.name === rowData.name) {
-                return { ...obj, cellProps: { isDisabled: true }, status: 'inProgress' };
+                return { ...obj, cellProps: { isDisabled: true }, status: 'In progress' };
             }
             return obj;
         });
@@ -90,7 +90,7 @@ const ManagedHostSubTable = () => {
         setTimeout(() => {
             let output = data.map((obj: any) => {
                 if (obj.name === rowData.name) {
-                    return { ...obj, cellProps: { isDisabled: false }, status: 'managed' };
+                    return { ...obj, cellProps: { isDisabled: false }, status: 'Managed' };
                 }
                 return obj;
             });
@@ -196,10 +196,10 @@ const ManagedHostSubTable = () => {
             width: '180px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                if (rowData.status === 'Unmanaged') {
+                if (cellData === 'Unmanaged') {
                     return <DotComponent color={'var(--toggle-off-bg)'} value="Unmanaged" />;
                 }
-                if (rowData.status === 'inProgress') {
+                if (cellData === 'In progress') {
                     return (
                         <div className={styles.inProgress}>
                             <SmallLoader />
@@ -207,52 +207,67 @@ const ManagedHostSubTable = () => {
                         </div>
                     );
                 }
-                if (rowData.status === 'managed') {
+                if (cellData === 'Managed') {
                     return <DotComponent color={'var(--success)'} value="Managed" />;
                 }
             }
         },
         {
             Header: 'Storage type',
-            accessor: 'storageType',
+            accessor: 'fileSystemType',
             id: '3',
             width: '160px',
             filterOptions: 'auto'
         },
         {
             Header: 'Storage savings',
-            accessor: 'storageSavings',
+            accessor: 'storageSavingsText',
             id: '4',
             width: '172px',
-            isSortable: true
+            isSortable: true,
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE
+            }
         },
         {
             Header: 'Storage availability',
-            accessor: 'storageSavings',
+            accessor: 'fileSystemDeploymentMode',
             id: '5',
             width: '193px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE
+            }
         },
         {
             Header: 'Protection',
-            accessor: 'protection',
+            accessor: 'protectionText',
             id: '6',
             width: '135px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE
+            }
         },
         {
             Header: 'Performance',
-            accessor: 'performance',
+            accessor: 'performance.assessment',
             id: '7',
             width: '150px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE
+            }
         },
         {
             Header: 'Allocation capacity',
-            accessor: 'allocatedCapacity',
+            accessor: 'allocatedCapacityText',
             id: '8',
             width: '190px',
-            isSortable: true
+            isSortable: true,
+            renderCell: (cellData: string | number, rowData: any) => {
+                return renderAllocatedCapacity(cellData, rowData);
+            }
         },
         lastColDetails()
     ];

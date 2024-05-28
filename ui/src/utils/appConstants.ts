@@ -623,6 +623,11 @@ export const GENERAL = {
     DB_CREATE_HOST: 'Host:',
     CREATE: 'Create',
     DB_CREATE_NOTIFICATION: ['Creation of ', ' in ', ' is in progress. Track progress in '],
+    SANDBOX_ACTIONS_NOTIFICATIONS: {
+        delete: ['Deletion of ', ' is in progress. Track progress in '],
+        rebaseline: ['Re-baselining sandbox of ', ' is in progress. Track progress in '],
+        refresh: ['Refreshing sandbox of ', ' is in progress. Track progress in ']
+    },
     DATABASE_INFORMATION: 'Database information',
     FILE_SETTINGS: 'File settings',
     DB_CREATE_DATABASE_NAME: 'Database name',
