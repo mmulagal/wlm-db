@@ -377,6 +377,7 @@ const createVolumeClone = (
     dataVolume: string,
     logVolume: string,
     resourceId: string,
+    clonedByTagValue: string,
     targetSvm?: string
 ) => `
     $fsxid = '${fsxid}'
@@ -386,8 +387,9 @@ const createVolumeClone = (
     $dataVolume = '${dataVolume}' | convertFrom-json
     $logVolume = '${logVolume}' | convertFrom-json
     $resourceId = '${resourceId}'
+    $clonedByTagValue = '${clonedByTagValue}'
 
-    Start-Transcript -Path "C:\\cfn\\log\\create_flexclone_$dataVolume.log.txt" -Append | Out-Null
+    Start-Transcript -Path "C:\\cfn\\log\\create_ontap_flexclone_$($dataVolume.name).log.txt" -Append | Out-Null
 
 
     $WarningPreference = "SilentlyContinue"
@@ -537,7 +539,7 @@ const createVolumeClone = (
                     "volumeName" = $_.location.volume.name
                     "lunPath" = $_.name
                 }
-                if ($_.location.volume.name -match $dataVolume) {
+                if ($_.location.volume.name -match $dataVolume.name) {
                     $responseObject['data'] = $volume
                 } else {
                     $responseObject['log'] = $volume
@@ -566,7 +568,7 @@ const createVolumeClone = (
                 $body = @"
                 {
                     "tiering.object_tags": [
-                        "cloned_by=netapp_wf",
+                        "cloned_by=$clonedByTagValue",
                         "resource_id=$resourceId"
                     ]
                 }
@@ -701,7 +703,7 @@ const createClonedDb = (dbName: string, instanceName: string = '.', fileList: st
     $WarningPreference = 'SilentlyContinue';
     $dbname = '${dbName}'
 
-    Start-Transcript -Path "C:\\cfn\\log\\create_clone_db_$dbname.log.txt" -Append | Out-Null
+    Start-Transcript -Path "C:\\cfn\\log\\sqlserver_create_db_$dbname.log.txt" -Append | Out-Null
 
     try {
         $selectquery = "SET NOCOUNT ON; SELECT name, state_desc FROM sys.databases where name = '$dbname' FOR JSON PATH;"
@@ -856,7 +858,7 @@ const mountPointQuery = (instanceName: string = '.', databaseName: string) =>
     WHERE db.name = '${databaseName}'
     FOR JSON PATH;" -y 0 `;
 
-const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string) => `
+const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string, clonedBy: string) => `
     $WarningPreference = 'SilentlyContinue';
     if ($responseObject -eq $null) {
         $responseObject = @{
@@ -870,6 +872,7 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string) => `
 
         $FSxID = '${fsxId}'
         $FSxRegion = '${fsxRegion}'
+        $clonedByTagVal = '${clonedBy}'
 
 
         $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
@@ -906,7 +909,7 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string) => `
         
         Do {
             if ($null -eq $nextToken) {
-                $resp = Invoke-ONTAPGetRequest -ApiEndpoint '/api/storage/volumes?tiering.object_tags=cloned_by=netapp_wf&fields=space.used_by_afs,space.physical_used,clone.split_estimate'
+                $resp = Invoke-ONTAPGetRequest -ApiEndpoint "/api/storage/volumes?tiering.object_tags=cloned_by=$clonedByTagVal&fields=space.used_by_afs,space.physical_used,clone.*"
             } else {
                 $resp = Invoke-ONTAPGetRequest -ApiEndpoint $nextToken
             }
@@ -914,8 +917,10 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string) => `
             $cloneVolumes = $resp.records
 
             foreach ($cloneVolume in $cloneVolumes) {
-                $responseObject.savedStorage += $cloneVolume.clone.split_estimate
-                $responseObject.consumedStorage += $cloneVolume.space.physical_used
+                if ($cloneVolume.clone.is_flexclone) {
+                    $responseObject.savedStorage += $cloneVolume.clone.split_estimate
+                    $responseObject.consumedStorage += $cloneVolume.space.physical_used
+                }
             }
 
             $nextToken = $resp._links.next.href

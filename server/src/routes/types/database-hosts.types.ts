@@ -359,6 +359,7 @@ const SandboxInfoResponse = Type.Object({
     createdAt: Type.Optional(Type.Number()),
     updatedAt: Type.Optional(Type.Number()),
     tag: Type.Optional(Type.String()),
+    baseSnapshot: Type.Optional(Type.String()),
     error: Type.Optional(Type.Any())
 });
 

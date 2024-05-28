@@ -6,8 +6,10 @@ param(
 try {
     # Getting Password from Secrets Manager for AD Admin User
     $Hostname = hostname
-    $DomainNetBIOSName = $env:USERDOMAIN    
-    if($Hostname.ToLower() -ne $DomainNetBIOSName.ToLower() ) {
+    $DomainNetBIOSName = $env:USERDOMAIN
+    $IsPartOfDomain = (Get-CimInstance win32_computersystem).PartOfDomain  
+    Write-Host "Hostname $Hostname. User domain  $DomainNetBIOSName. IsPartOfDomain $IsPartOfDomain."  
+    if($IsPartOfDomain -eq $True) {
         $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$Parentstackname" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
         $AdminUsername = $SsmParameter.domain.username
         $AdminPassword = $SsmParameter.domain.password

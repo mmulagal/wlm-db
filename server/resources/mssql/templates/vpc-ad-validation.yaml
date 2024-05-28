@@ -452,6 +452,26 @@ Resources:
                       - "\n"
                       - 'Write-SSMParameter  -Name "/netapp/wlmdb/$stackname" -Value (Get-SSMParameter -Name "/netapp/wlmdb/$stackname" -WithDecryption $True).Value -Type "SecureString" -Overwrite $true'
                       - "\n"
+                      - 'try {'
+                      - "\n"
+                      - 'Get-Service AmazonSSMAgent -ErrorAction Stop'
+                      - "\n"
+                      - '}catch{'
+                      - "\n"
+                      - '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12'
+                      - "\n"
+                      - '$progressPreference = "silentlyContinue"'
+                      - "\n"
+                      - 'Invoke-WebRequest `https://amazon-ssm-'
+                      - !Ref 'AWS::Region'
+                      - '.s3.'
+                      - !Ref 'AWS::Region'
+                      - '.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe ` -OutFile $env:USERPROFILE\Desktop\SSMAgent_latest.exe'
+                      - "\n"
+                      - 'Start-Process ` -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe ` -ArgumentList "/S"'
+                      - "\n"
+                      - '}'
+                      - "\n"
                       - 'cfn-init.exe -v -c config -s '
                       - !Ref 'AWS::StackId'
                       - ' -r ValidationNode1'
@@ -675,6 +695,26 @@ Resources:
                       - 'Write-Output $StatusCode'
                       - "\n"
                       - 'if ($StatusCode -eq 200) {'
+                      - "\n"
+                      - 'try {'
+                      - "\n"
+                      - 'Get-Service AmazonSSMAgent -ErrorAction Stop'
+                      - "\n"
+                      - '}catch{'
+                      - "\n"
+                      - '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12'
+                      - "\n"
+                      - '$progressPreference = "silentlyContinue"'
+                      - "\n"
+                      - 'Invoke-WebRequest `https://amazon-ssm-'
+                      - !Ref 'AWS::Region'
+                      - '.s3.'
+                      - !Ref 'AWS::Region'
+                      - '.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe ` -OutFile $env:USERPROFILE\Desktop\SSMAgent_latest.exe'
+                      - "\n"
+                      - 'Start-Process ` -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe ` -ArgumentList "/S"'
+                      - "\n"
+                      - '}'
                       - "\n"
                       - 'cfn-init.exe -v -c config -s '
                       - !Ref 'AWS::StackId'

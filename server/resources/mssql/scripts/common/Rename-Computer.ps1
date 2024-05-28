@@ -15,7 +15,10 @@ try {
     }
     $Hostname = hostname
     $DomainNetBIOSName = $env:USERDOMAIN
-    if ($Hostname.ToLower() -eq $DomainNetBIOSName.ToLower()) {
+    $WmiDomainName = (Get-WmiObject Win32_ComputerSystem).Domain
+    $IsPartOfDomain = (Get-CimInstance win32_computersystem).PartOfDomain
+    Write-Host "Hostname $Hostname. User domain  $DomainNetBIOSName. WMI domain name $WmiDomainName. IsPartOfDomain $IsPartOfDomain."
+    if ($IsPartOfDomain -eq $False) {
 
         Rename-Computer @renameComputerParams
 

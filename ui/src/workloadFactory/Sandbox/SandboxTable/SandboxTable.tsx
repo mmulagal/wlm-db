@@ -27,10 +27,11 @@ import {
     useLazyGetSubTaskListQuery,
     useUpdateSandboxMutation
 } from '../../../utils/apiService';
-import { JOB_MONITORING_STATUS } from '../../../utils/consts';
-import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import { JOB_MONITORING_STATUS, WLF_TABS } from '../../../utils/consts';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import store from '../../../store/store';
 import RefreshContent from './RefreshContent/RefreshContent';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
@@ -108,6 +109,33 @@ const SandboxTable = () => {
         ];
     };
 
+    const showJobNotification = (action: 'delete' | 'refresh' | 'rebaseline', resourceName: string) => {
+        const notificationObj = GENERAL.SANDBOX_ACTIONS_NOTIFICATIONS[action];
+        const msgData = (
+            <div className={styles.notification}>
+                {notificationObj[0]}
+                <span className={styles.bold}>{resourceName}</span>
+                {notificationObj[1]}
+                <Button
+                    Component="button"
+                    variant="text"
+                    onClick={() => {
+                        dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                        dispatch(clearNotifications());
+                    }}
+                >
+                    {GENERAL.JOB_MONITORING}.
+                </Button>
+            </div>
+        );
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: msgData
+            })
+        );
+    };
+
     const handleRebaseLine = (rowData: any) => {
         setDialog(
             <DialogComponent
@@ -128,9 +156,10 @@ const SandboxTable = () => {
                         regionId: headerSelectedRegion?.label2,
                         databaseHostId: rowData?.databaseHostId,
                         sandboxName: rowData?.name,
-                        payload: { action: 'REBASELINE' }
+                        payload: { action: 'RE-BASELINE' }
                     }).then((res: any) => {
                         if (res?.data) {
+                            showJobNotification('rebaseline', rowData?.source);
                             const jobInterval = setInterval(() => {
                                 getJobDetailApi({
                                     credentialId: headerSelectedCred?.data?.credentialsId,
@@ -156,7 +185,7 @@ const SandboxTable = () => {
                                         dispatch(
                                             addNotification({
                                                 notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                                message: `Sandbox database ${rowData?.name} deleted successfully.`
+                                                message: `Sandbox of database ${rowData?.source} re-baselined successfully. Sandbox returned to its original version.`
                                             })
                                         );
                                         let output = aggregatedSandboxList.map((obj: any) => {
@@ -213,7 +242,7 @@ const SandboxTable = () => {
                                         dispatch(
                                             addNotification({
                                                 notificationType: NOTIFICATION_TYPES.ERROR,
-                                                message: `Sandbox database ${rowData?.name} failed to delete.`
+                                                message: `Re-baseline of sandbox of database ${rowData?.source} failed.`
                                             })
                                         );
                                         clearInterval(jobInterval);
@@ -254,7 +283,7 @@ const SandboxTable = () => {
                 callback={() => {
                     let output = data.map((obj: any) => {
                         if ((obj?.id === rowData?.id && obj.name) === rowData.name) {
-                            return { ...obj, cellProps: { isDisabled: true }, status: 'refresh' };
+                            return { ...obj, cellProps: { isDisabled: true }, status: 'refresh', menuDisable: true };
                         }
                         return obj;
                     });
@@ -268,6 +297,7 @@ const SandboxTable = () => {
                         payload: { action: 'REFRESH' }
                     }).then((res: any) => {
                         if (res?.data) {
+                            showJobNotification('refresh', rowData?.source);
                             const jobInterval = setInterval(() => {
                                 getJobDetailApi({
                                     credentialId: headerSelectedCred?.data?.credentialsId,
@@ -408,6 +438,7 @@ const SandboxTable = () => {
                         sandboxName: rowData?.name
                     }).then((res: any) => {
                         if (res?.data) {
+                            showJobNotification('delete', rowData?.name);
                             const jobInterval = setInterval(() => {
                                 getJobDetailApi({
                                     credentialId: headerSelectedCred?.data?.credentialsId,
@@ -437,7 +468,7 @@ const SandboxTable = () => {
                                         dispatch(
                                             addNotification({
                                                 notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                                message: `Sandbox of database ${rowData?.name} re-baselined successfully. Sandbox returned to its original version.`
+                                                message: `Sandbox database ${rowData?.name} deleted successfully.`
                                             })
                                         );
                                         getSandboxSavingsApi({
@@ -482,7 +513,7 @@ const SandboxTable = () => {
                                         dispatch(
                                             addNotification({
                                                 notificationType: NOTIFICATION_TYPES.ERROR,
-                                                message: `Re-baseline of sandbox of database ${rowData?.source} failed.`
+                                                message: `Sandbox database ${rowData?.name} failed to delete.`
                                             })
                                         );
                                         clearInterval(jobInterval);

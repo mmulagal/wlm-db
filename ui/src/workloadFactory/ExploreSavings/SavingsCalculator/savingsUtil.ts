@@ -508,7 +508,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             },
             {
                 label: 'SSD monthly cost ',
-                value: `$${viewCalculation.fsxOntapSnapshotCalculation.ssdMonthlyCost}`,
+                value: `$${viewCalculation.fsxOntapSnapshotCalculation.totalSnapshotMonthlyCostForFsxSsd}`,
                 text: `SSD storage GiB per month (${viewCalculation.fsxOntapSnapshotCalculation.ssdStoragePerMonth}) x FSx for ONTAP SSD price ($${viewCalculation.fsxOntapSnapshotCalculation.fsxnSsdPrice})`
             },
             {
@@ -756,12 +756,12 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Total instance hours',
                 value: `${viewCalculation.ebsCalculation.totalInstanceHours}`,
-                text: `Number of volumes (${viewCalculation.ebsCalculation.numberOfVolumes}) x Average duration each instance runs (${viewCalculation.ebsCalculation.instanceAvgDuration} hours)`
+                text: `Number of volumes (${viewCalculation.ebsCalculation.numberOfVolumes}) x Average duration each instance runs (${viewCalculation.ebsCalculation.hoursInAMonth} hours)`
             },
             {
                 label: 'Instance months',
                 value: `${viewCalculation.ebsCalculation.ebsInstanceMonth} months`,
-                text: `Total instance hours (${viewCalculation.ebsCalculation.totalInstanceHours})  ÷ hours in a month (${viewCalculation.ebsCalculation.instanceAvgDuration})`
+                text: `Total instance hours (${viewCalculation.ebsCalculation.totalInstanceHours})  ÷ hours in a month (${viewCalculation.ebsCalculation.hoursInAMonth})`
             },
             {
                 label: 'EBS storage cost',
@@ -933,8 +933,8 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
                     result = {
                         ...result,
                         dbEdition: {
-                            label: GENERAL.SQL_SERVER_ENTERPRiSE_EDITION,
-                            value: GENERAL.SQL_SERVER_ENTERPRISE
+                            label: GENERAL.SQL_SERVER_STANDARD_EDITION,
+                            value: GENERAL.SQL_SERVER_STANDARD
                         }
                     };
                 }

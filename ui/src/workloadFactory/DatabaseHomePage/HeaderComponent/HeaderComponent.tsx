@@ -41,6 +41,8 @@ import ViewCalculations from '../../ExploreSavings/ViewCalculations/ViewCalculat
 import SavingsCalculatorApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorApi';
 import { setSavingsCalculatorRefresh } from '../../../store/workloadFactory/exploreSavingsSlice';
 import SandboxApis from '../../Sandbox/SandboxApis';
+import InventoryV2 from '../../InventoryV2/InventoryV2';
+import InventoryApisV2 from '../../InventoryV2/InventoryApisV2';
 
 type Tab = {
     tab: string;
@@ -64,6 +66,7 @@ const HeaderComponent = ({ tab }: Tab) => {
 
     HeaderComponentApi();
     InventoryApis();
+    // InventoryApisV2();
     DatabaseHomeApis();
     JobMonitoringApi();
     SavingsCalculatorApi();
@@ -339,6 +342,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                 <div className={styles.extraSpace} />
                 {selectedHeaderTab === WLF_TABS.DASHBOARD && <DatabaseHomePage />}
                 {selectedHeaderTab === WLF_TABS.INVENTORY && <Inventory />}
+                {/* {selectedHeaderTab === WLF_TABS.INVENTORY && <InventoryV2 />} */}
                 {selectedHeaderTab === WLF_TABS.JOB_MONITORING && <JobMonitoring />}
                 {selectedHeaderTab === WLF_TABS.OVERVIEW && <DatabaseHostOverview />}
                 {selectedHeaderTab === WLF_TABS.SANDBOXES && <Sandbox />}

@@ -47,7 +47,7 @@ try {
     $SQLFullUser = $DomainNetBIOSName + '\' + $SQLServiceAccount
     $HostName = hostname
 
-     # Get SQL server instance name
+    # Get SQL server instance name
     $SQLServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
     $SQLInstanceName = "MSSQLSERVER"
     $SQLInstanceNames = @()
@@ -64,6 +64,7 @@ try {
     If ($SQLInstanceNames -NotContains "MSSQLSERVER") {
         $SQLInstanceName = $SQLInstanceNames[0]
     }
+    Write-Output "SQL instance name $SQLInstanceName."
 
     # Instance name to be passed to sqlcmd
     $ServerInstanceName = "$env:COMPUTERNAME"
@@ -71,6 +72,34 @@ try {
         $ServerInstanceName = "$env:COMPUTERNAME\$SQLInstanceName"
         
     }
+    Write-Output "Sql server name $ServerInstanceName."
+
+    # Get service name
+    $ServiceName = 'MSSQLSERVER'
+    If($SQLInstanceName -ne "MSSQLSERVER") {
+        $ServiceName =  'MSSQL${0}' -f $SQLInstanceName
+            
+    }
+    Write-Host "SQL service name $ServiceName."
+
+    # Find path to SQL Installer media, if not found then pick installer hosted in S3.
+    if (Test-Path -Path "C:\SQLServerSetup\setup.exe") {
+        $SQLMediaPath = "C:\SQLServerSetup\setup.exe"
+    }
+    else {
+        $SQLMediaPath = 'C:\cfn\Installer\SQLServerSetup\setup.exe'
+        If (Test-Path -path "C:\SQL*") {
+            $SQLInstallerPaths = (Get-ChildItem "C:\SQL*" -Recurse | where {$_.name -eq "setup.exe"} ).fullname
+            If($SQLInstallerPaths -is 'string')
+            {
+            $SQLMediaPath = $SQLInstallerPaths
+            }
+            Else {
+            $SQLMediaPath = $SQLInstallerPaths[0]
+            }
+        } 
+    }
+    Write-Host "SQL Installer path $SQLMediaPath."
     
     try{
         $CurrentCollation = sqlcmd -S $ServerInstanceName -Q "set nocount on; select serverproperty('collation') as collation" -h -1
@@ -79,6 +108,7 @@ try {
         Write-Output "Error while determining collation set. $_"
         $CurrentCollation = ''
     }
+
     #Set collation for the sql server if installer is available. Need to check if collation is an input for custom ami.
     $SkipCollation = $False
     if (($CurrentCollation -ne $SqlCollation) -and (Test-Path -Path "C:\SQLServerSetup\setup.exe")) {
@@ -86,31 +116,31 @@ try {
         try {
             Write-Output "Setting collation on SQLServer($SQLInstanceName)"
             # Stop SQL Service
-            $SQLService = Get-Service -Name "$SQLInstanceName"
+            $SQLService = Get-Service -Name "$ServiceName"
             if ($SQLService.status -eq 'Running') { $SQLService.Stop() }
             $SQLService.WaitForStatus('Stopped', '00:01:00')
     
             #Set collation value and rebuild system databases
             $rebuildarguments = '/QUIET /ACTION="REBUILDDATABASE" /INSTANCENAME="' + $SQLInstanceName + '" /SQLSYSADMINACCOUNTS="' + $DomainAdminFullUser + '" /SAPWD="' + $DomainAdminPassword + '" /SQLCOLLATION="' + $SqlCollation + '"'
             Invoke-Command -scriptblock {
-                Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:rebuildarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\rebuild_collation.txt -RedirectStandardError C:\cfn\log\rebuild_error.txt
+                Start-Process -FilePath $Using:SQLMediaPath -ArgumentList $Using:rebuildarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\rebuild_collation.txt -RedirectStandardError C:\cfn\log\rebuild_error.txt
             } -Credential $DomainAdminCreds -ComputerName $HostName -Authentication credssp
-    
+
             # Start SQL service
             $SQLService.Start()
             $SQLService.WaitForStatus('Running', '00:01:00')
         }
         catch {
-            Write-Output "Failed to set collation on SQLServer($SQLInstanceName)"
+            Write-Output "Failed to set collation on SQLServer($SQLInstanceName).$_"
             # Start SQL service even though collation fails
             $SQLService.Start()
             $SQLService.WaitForStatus('Running', '00:01:00')
-        }
-    }
-    else {
             $SkipCollation = $True
-    }
-
+        }
+    }else {
+        $SkipCollation = $True
+        }    
+    
     $ConfigureSqlPs = {
         $ErrorActionPreference = "Stop"
 
@@ -121,7 +151,7 @@ try {
             $acl.SetAccessRule($rule)
             Set-ACL -Path $path -AclObject $acl
         }
-
+       
         # Set Default Paths
         Import-Module SQLPS
         If ($Using:SQLInstanceName -eq "MSSQLSERVER") {
@@ -252,8 +282,9 @@ try {
             }
         }
 
+        
         # Stop SQL Service
-        $SQLService = Get-Service -Name "$Using:SQLInstanceName"
+        $SQLService = Get-Service -Name "$Using:ServiceName"
         if ($SQLService.status -eq 'Running') { $SQLService.Stop() }
         $SQLService.WaitForStatus('Stopped', '00:01:00')
 
@@ -284,7 +315,7 @@ try {
         }
 
         # Set SQL Server and Agent services user to SQL AD user
-        $Services = Get-WmiObject -Class Win32_Service -Filter "Name='SQLSERVERAGENT' OR Name='$Using:SQLInstanceName'"
+        $Services = Get-WmiObject -Class Win32_Service -Filter "Name='SQLSERVERAGENT' OR Name='$Using:ServiceName'"
         $Services.change($null, $null, $null, $null, $null, $null, $Using:DomainAdminFullUser , $Using:DomainAdminPassword, $null, $null, $null)
  
  
@@ -298,4 +329,4 @@ try {
 }
 catch {
     $_ | Write-AWSLaunchWizardException
-}
+} 
