@@ -41,8 +41,8 @@ import ViewCalculations from '../../ExploreSavings/ViewCalculations/ViewCalculat
 import SavingsCalculatorApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorApi';
 import { setSavingsCalculatorRefresh } from '../../../store/workloadFactory/exploreSavingsSlice';
 import SandboxApis from '../../Sandbox/SandboxApis';
-import InventoryV2 from '../../InventoryV2/Inventory';
-import InventoryApisV2 from '../../InventoryV2/InventoryApis';
+import InventoryV2 from '../../InventoryV2/InventoryV2';
+import InventoryApisV2 from '../../InventoryV2/InventoryApisV2';
 
 type Tab = {
     tab: string;
