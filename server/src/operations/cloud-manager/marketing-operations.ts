@@ -368,7 +368,8 @@ async function formatStorageSavingsCalculationMetrics(
             additionalSSDIOPS: additionalSsdIops,
             billedAdditionalSSDIOPS: billedAdditionalSsdIops,
             additionalBilledCostForSSDIOPS: additionalBilledCostForSsdIops,
-            totalThroughputIOPSRequestsChargeMonthly: totalThroughputAndIopsMonthly
+            totalThroughputIOPSRequestsChargeMonthly: totalThroughputAndIopsMonthly,
+            FSXnIOPSPrice
         },
         fsx_snapshot_cost_calculation: {
             FSXnSSDPrice: { price: fsxnSsdPrice, unit: fsxnSsdPriceUnit },
@@ -486,7 +487,8 @@ async function formatStorageSavingsCalculationMetrics(
             additionalSsdIops,
             billedAdditionalSsdIops,
             additionalBilledCostForSsdIops,
-            totalThroughputAndIopsMonthly
+            totalThroughputAndIopsMonthly,
+            fsxnIopsPrice: FSXnIOPSPrice
         },
         fsxOntapSnapshotCalculation: {
             fsxnSsdPrice: { price: fsxnSsdPrice, unit: fsxnSsdPriceUnit },

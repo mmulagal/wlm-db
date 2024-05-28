@@ -61,6 +61,7 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
         suggestedFsxnThroughputCapacity: Type.Number(),
         maxThroughput: Type.Number(),
         fsxnThroughputPrice: Type.Number(),
+        fsxnIopsPrice: Type.Number(),
         provisionedSsdIops: Type.Number(),
         includedIops: Type.Number(),
         maxSsdIops: Type.Number(),
