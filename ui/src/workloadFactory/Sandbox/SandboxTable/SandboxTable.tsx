@@ -254,7 +254,7 @@ const SandboxTable = () => {
                 callback={() => {
                     let output = data.map((obj: any) => {
                         if ((obj?.id === rowData?.id && obj.name) === rowData.name) {
-                            return { ...obj, cellProps: { isDisabled: true }, status: 'refresh' };
+                            return { ...obj, cellProps: { isDisabled: true }, status: 'refresh', menuDisable: true };
                         }
                         return obj;
                     });
