@@ -3,7 +3,6 @@ import InventoryHeaderSection from './InventoryHeaderSection/InventoryHeaderSect
 import InventoryTable from './InventoryTable/InventoryTable';
 
 const InventoryV2 = () => {
-
     return (
         <div className={styles.inventory}>
             <InventoryHeaderSection />

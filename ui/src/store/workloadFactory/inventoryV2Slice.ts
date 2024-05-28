@@ -1,5 +1,5 @@
-import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { InventorySliceData } from "../../utils/types/inventoryV2Types";
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import { InventorySliceData } from '../../utils/types/inventoryV2Types';
 
 const initialInventoryV2State: InventorySliceData = {
     inventoryTableData: null,
@@ -15,13 +15,10 @@ const inventoryV2Slice = createSlice({
         },
         setInventoryChartData: (state, action: PayloadAction<any>) => {
             state.inventoryChartData = action.payload;
-        },
+        }
     }
 });
 
-export const {
-    setInventoryTableData,
-    setInventoryChartData
-} = inventoryV2Slice.actions;
+export const { setInventoryTableData, setInventoryChartData } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

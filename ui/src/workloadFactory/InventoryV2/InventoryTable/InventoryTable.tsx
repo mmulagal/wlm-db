@@ -1,11 +1,4 @@
-import {
-    DsFlashingDotsLoader,
-    Table,
-    TableTopBar,
-    Typography,
-    useDialog,
-    useTable
-} from '@netapp/design-system';
+import { DsFlashingDotsLoader, Table, TableTopBar, Typography, useDialog, useTable } from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
@@ -23,19 +16,13 @@ import { isSmbProtocol, expandTableRow, formatSizeTwoPrecision } from '../../../
 import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
-import {
-    setManagedHostColState,
-    setSelectedHeaderTab
-} from '../../../store/workloadFactory/inventorySlice';
+import { setManagedHostColState, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import {
     addInitialDBCreateData,
     initialCreateNewUserState,
     setDBHostName
 } from '../../../store/workloadFactory/createNewDBSlice';
-import {
-    renderAllocatedCapacity,
-    renderEstimatedCost
-} from '../../Inventory/InventoryUtils';
+import { renderAllocatedCapacity, renderEstimatedCost } from '../../Inventory/InventoryUtils';
 import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
 
@@ -43,9 +30,7 @@ const InventoryTable = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    const inventoryTableData = useAppSelector(
-        state => state.inventoryV2.inventoryTableData
-    );
+    const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const [tableData, setTableData] = useState<any>([]);
 
@@ -61,17 +46,22 @@ const InventoryTable = () => {
         if (inventoryTableData) {
             let result: any = [];
             Object.keys(inventoryTableData).map((key: string) => {
-                let instanceList:any = [];
+                let instanceList: any = [];
                 const allocatedCapacity = inventoryTableData[key]?.allocatedCapacity || '';
                 inventoryTableData[key]?.ec2Details?.map((row: any) => {
-                    instanceList.push(row?.name + " | " + row?.id);
+                    instanceList.push(row?.name + ' | ' + row?.id);
                 });
                 const rowData = {
-                    ...inventoryTableData[key], 
-                    sqlServerInstancesText: "(" + inventoryTableData[key]?.managedInstance + " out of " + inventoryTableData[key]?.totalInstance + " managed)",
+                    ...inventoryTableData[key],
+                    sqlServerInstancesText:
+                        '(' +
+                        inventoryTableData[key]?.managedInstance +
+                        ' out of ' +
+                        inventoryTableData[key]?.totalInstance +
+                        ' managed)',
                     instanceListText: instanceList.join(','),
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
-                }
+                };
                 result.push(rowData);
             });
             setTableData(result);
@@ -139,7 +129,7 @@ const InventoryTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
-                        {!rowData?.actionDisable && 
+                        {!rowData?.actionDisable && (
                             <div
                                 className={styles.detectManage}
                                 onClick={() => {
@@ -150,7 +140,7 @@ const InventoryTable = () => {
                                     {rowData?.action}
                                 </Typography>
                             </div>
-                        }
+                        )}
                         {rowData?.actionDisable && (
                             <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
                                 <Typography variant="Regular_14" className={styles.textStyle}>
@@ -241,15 +231,15 @@ const InventoryTable = () => {
             renderCell: (cellData: string, rowData: any) => {
                 return (
                     <div>
-                        {cellData && 
+                        {cellData && (
                             <>
-                                <Typography variant="Semibold_14">{cellData + " instances"}</Typography>
+                                <Typography variant="Semibold_14">{cellData + ' instances'}</Typography>
                                 <Typography variant="Semibold_14">{rowData?.sqlServerInstancesText}</Typography>
-                            </> 
-                        }
+                            </>
+                        )}
                         {!cellData && GENERAL.NOT_AVAILABLE}
                     </div>
-                )
+                );
             }
         },
         {
@@ -270,7 +260,7 @@ const InventoryTable = () => {
             width: '212px',
             accessorForTextFilter: 'instanceListText',
             renderCell: (cellData: any, rowData: any) => {
-                let instanceList:any = cellData ? cellData.split(',') : null;
+                let instanceList: any = cellData ? cellData.split(',') : null;
                 return (
                     <>
                         {instanceList && (

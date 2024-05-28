@@ -1,8 +1,7 @@
-
 export interface InventorySliceData {
-    inventoryTableData: {[key : string] : InventoryTableData} | null;
+    inventoryTableData: { [key: string]: InventoryTableData } | null;
     inventoryChartData: InventoryChartData | null;
-};
+}
 
 export interface InventoryTableData {
     ec2InstanceId?: string;
@@ -25,12 +24,12 @@ export interface InventoryTableData {
     }>;
     estimatedUsageCost?: {
         compute?: number;
-        storage?: { fsxn?: number, fsxw?: number, ebs?: number };
+        storage?: { fsxn?: number; fsxw?: number; ebs?: number };
         connectivity?: number;
         others?: number;
         estimationType?: string;
-    },
-    allocatedCapacity?: number,
+    };
+    allocatedCapacity?: number;
     sqlServerInstances?: Array<{
         name?: string;
         isDetected?: boolean;
@@ -38,14 +37,14 @@ export interface InventoryTableData {
         fileSystemDeploymentMode?: string;
         fileSystemType?: string;
         protection?: {
-            isAwsBackupEnabled?: {fsxn?: boolean; fsxw?: boolean; ebs?: boolean };
+            isAwsBackupEnabled?: { fsxn?: boolean; fsxw?: boolean; ebs?: boolean };
             isFsxOntapSnapshotsEnabled?: boolean;
             isSqlNativeEnabled?: boolean;
             protectedDatabases?: number;
-        },
+        };
         performance?: {
             assessment?: string;
-        },
+        };
         storage?: {
             fsxn?: {
                 protocol?: Array<String>;
@@ -53,21 +52,19 @@ export interface InventoryTableData {
                 used?: number;
                 spaceSavings?: number;
                 spaceSavingsPercentage?: number;
-            },
+            };
             fsxw?: {
                 size?: number;
                 used?: number;
                 spaceSavings?: number;
                 spaceSavingsPercentage?: number;
-            },
+            };
             ebs?: {
                 size?: number;
-            }  
-        },
+            };
+        };
         allocatedCapacity?: number;
     }>;
-};
+}
 
-export interface InventoryChartData {
-
-};
+export interface InventoryChartData {}
