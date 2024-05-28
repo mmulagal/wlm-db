@@ -12,9 +12,14 @@ const StorageSavingsRequestBody = Type.Object({
     snapshotFrequency: Type.String({
         enum: ['NoSnapShotStorage', 'Hourly', 'Daily', 'Weekly', 'Monthly', '2xDaily', '3xDaily', '4xDaily', '6xDaily']
     }),
-    clonedCopiesCount: Type.Number(),
+    clonedCopiesCount: Type.Number({
+        minimum: 0
+    }),
     cloneRefreshFrequency: Type.String({ enum: ['Daily', 'Weekly', 'Monthly'] }),
-    monthlyChangeRatePercentage: Type.Number()
+    monthlyChangeRatePercentage: Type.Number({
+        minimum: 0,
+        maximum: 100
+    })
 });
 
 const StorageMetrics = Type.Object({
