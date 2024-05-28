@@ -141,7 +141,7 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
         clonedCopiesCount: Type.Number(),
         numberOfClonesInAMonth: Type.Number(),
         changeRateBetweenClones: Type.Number(),
-        // totalFsxnCapacity
+        totalFsxnCapacity: Type.Number(),
         fsxnSsdPrice: PriceUnitObject,
         cloneRefreshFrequency: Type.String(),
         monthlyChangeRatePercentage: Type.Number(),
