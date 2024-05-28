@@ -1176,7 +1176,7 @@ SET NOCOUNT ON;
 ${props
     .map(
         k => `
-IF EXISTS (SELECT name, value FROM fn_listextendedproperty(default, default, default, default, default, default, default) WHERE name = N'${k}'
+IF EXISTS (SELECT name, value FROM fn_listextendedproperty(default, default, default, default, default, default, default) WHERE name = N'${k}')
     EXEC sp_dropextendedproperty @name = N'${k}';
 `
     )

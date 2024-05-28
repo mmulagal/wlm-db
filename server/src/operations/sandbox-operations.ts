@@ -2455,7 +2455,8 @@ async function deleteExtendedProperties(
                 'source',
                 'createdAt',
                 'updatedAt',
-                'tag'
+                'tag',
+                'accountId'
             ])
         ];
 
