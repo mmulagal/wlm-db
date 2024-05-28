@@ -146,7 +146,8 @@ async function getSandboxDetails(
                     sourceDatabaseName: sources[2],
                     createdAt: parseInt(getProperty(item, 'createdAt') || String(Date.now()), 10),
                     updatedAt: parseInt(getProperty(item, 'updatedAt') || String(Date.now()), 10),
-                    tag: getProperty(item, 'tag')
+                    tag: getProperty(item, 'tag'),
+                    baseSnapshot: getProperty(item, 'baseSnapshot')
                 };
 
                 sandboxInfo.push(databaseObject);
