@@ -437,6 +437,7 @@ async function formatStorageSavingsCalculationMetrics(
             },
             FSXnSSDPrice: { price: fsxnSsdClonePrice, unit: fsxnSsdClonePriceUnit },
             SSDCloneStorageGBPerMonth: { size: cloneSSDStorageGBPerMonth, unit: cloneSSDStorageGBPerMonthUnit },
+            SSDStorageGBPerMonth: { size: totalSsdStorageGBPerMonthSize, unit: totalSsdStorageGBPerMonthUnit },
             SSDMonthlyCost,
             totalCloneMonthlyCost
         }
@@ -544,7 +545,7 @@ async function formatStorageSavingsCalculationMetrics(
                 totalMonthlyClonedCopiesCount > 0
                     ? params.monthlyChangeRatePercentage / totalMonthlyClonedCopiesCount
                     : 0,
-            // totalFsxnCapacity
+            totalFsxnCapacity: convertToBytes(totalSsdStorageGBPerMonthSize, totalSsdStorageGBPerMonthUnit) || 0,
             numberOfClonesInAMonth: totalMonthlyClonedCopiesCount,
             fsxnSsdPrice: { price: fsxnSsdClonePrice, unit: fsxnSsdClonePriceUnit },
             desiredStorageCapacity:
