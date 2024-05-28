@@ -1756,8 +1756,8 @@ async function getSandboxSplitEstimate(
 
 async function updateSandboxLifeCycle(
     accountId: string,
-    region: string,
     credentialsId: string,
+    region: string,
     databaseHostId: string,
     databaseName: string,
     snapshot?: string
@@ -1765,8 +1765,8 @@ async function updateSandboxLifeCycle(
     logger.info(
         `Update Sandbox life cycle for ${databaseName} in database host ${databaseHostId}`,
         accountId,
-        region,
         credentialsId,
+        region,
         databaseHostId,
         databaseName,
         snapshot
