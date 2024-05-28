@@ -53,6 +53,41 @@ Set-Service winrm -StartupType Automatic
 Start-Service winrm
 Enable-PSRemoting -Force 
 
+# Get SQL server instance name
+$SQLServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
+$SQLInstanceName = "MSSQLSERVER"
+$SQLInstanceNames = @()
+ForEach ($sqlService in $sqlServiceList) {
+$sqlServiceBinaryPath = $sqlService.PathName  -Replace "-s.*", ""
+  If (Test-Path $sqlServiceBinaryPath.Replace('"', '')) {
+    $SqlVersion = Invoke-Expression -Command "(dir $sqlServiceBinaryPath).VersionInfo"}
+    $ValidSqlVersion = $SqlVersion.ProductVersion -match '^1[3-9]'
+    If ($ValidSqlVersion -eq $true) {
+        $InstanceName =  $sqlService.Name.Replace("MSSQL$", "") 
+        $SQLInstanceNames += $InstanceName
+    }} 
+
+If ($SQLInstanceNames -NotContains "MSSQLSERVER") {
+    $SQLInstanceName = $SQLInstanceNames[0]
+}
+Write-Output "SQL instance name $SQLInstanceName."
+
+# Instance name to be passed to sqlcmd
+$ServerInstanceName = "$env:COMPUTERNAME"
+If($SQLInstanceName -ne "MSSQLSERVER") {
+    $ServerInstanceName = "$env:COMPUTERNAME\$SQLInstanceName"
+    
+}
+Write-Output "Sql server name $ServerInstanceName."
+
+# Get service name
+$ServiceName = 'MSSQLSERVER'
+If($SQLInstanceName -ne "MSSQLSERVER") {
+    $ServiceName =  'MSSQL${0}' -f $SQLInstanceName
+        
+}
+Write-Host "SQL service name $ServiceName."
+
 # Find path to SQL Installer media, if not found then pick installer hosted in S3.
 if (Test-Path -Path "C:\SQLServerSetup\setup.exe") {
     $SQLMediaPath = "C:\SQLServerSetup\setup.exe"
@@ -77,13 +112,13 @@ if((get-ec2image $AMIID).UsageOperation -eq 'RunInstances:0002')
 {
     Write-Output "Base Windows ami: Running prepare fci from available or s3 downloaded sql installer."
     #Prepare FCI installation
-    $arguments = '/ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /SUPPRESSPAIDEDITIONNOTICE="True" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="MSSQLSERVER" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="MSSQLSERVER" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher"' -f $SqlUserName, $SqlUserPassword
+    $arguments = '/ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /SUPPRESSPAIDEDITIONNOTICE="True" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="'+ $SQLInstanceName +'" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="' + $SQLInstanceName +'" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher"' -f $SqlUserName, $SqlUserPassword
     try {
         Invoke-Command -scriptblock {
             Start-Process -FilePath $Using:SQLMediaPath -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\preparefci_output.txt -RedirectStandardError C:\cfn\log\preparefci_error.txt 
         } -Credential $Credentials -ComputerName $HostName -Authentication credssp
     }catch {
-        $Service = Get-Service -Name 'MSSQLSERVER' -ErrorAction SilentlyContinue
+        $Service = Get-Service -Name "$Using:ServiceName" -ErrorAction SilentlyContinue
         if ([string]::IsNullOrEmpty($Service)) {
             Start-Sleep -Seconds 15
             Write-Output "Re-attempting PrepareFailoverCluster"
@@ -96,18 +131,18 @@ if((get-ec2image $AMIID).UsageOperation -eq 'RunInstances:0002')
 }
 else {    
     try {
-        $arguments = '/ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="MSSQLSERVER" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="MSSQLSERVER" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher"' -f $SqlUserName, $SqlUserPassword
+        $arguments = '/ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="'+ $SQLInstanceName +'" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="' + $SQLInstanceName + '" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher"' -f $SqlUserName, $SqlUserPassword
         Invoke-Command -scriptblock {
             Start-Process -FilePath $Using:SQLMediaPath -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\preparefci_output.txt -RedirectStandardError C:\cfn\log\preparefci_error.txt 
 
         } -Credential $Credentials -ComputerName $HostName -Authentication credssp
     }catch 
     {
-        $Service = Get-Service -Name 'MSSQLSERVER' -ErrorAction SilentlyContinue
+        $Service = Get-Service -Name "$Using:ServiceName" -ErrorAction SilentlyContinue
         if ([string]::IsNullOrEmpty($Service)) {
             Start-Sleep -Seconds 15
             Write-Output "Re-attempting PrepareFailoverCluster"
-            $arguments = '/ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="MSSQLSERVER" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="MSSQLSERVER" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher"' -f $SqlUserName, $SqlUserPassword
+            $arguments = '/ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="' + $SQLInstanceName + '" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="' + $SQLInstanceName + '" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher"' -f $SqlUserName, $SqlUserPassword
             Invoke-Command -scriptblock {
             Start-Process -FilePath $Using:SQLMediaPath -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\preparefci_output.txt -RedirectStandardError C:\cfn\log\preparefci_error.txt 
             } -Credential $Credentials -ComputerName $HostName -Authentication credssp
@@ -116,10 +151,10 @@ else {
 }
 
 Start-Sleep -Seconds 15
-$Service = Get-Service -Name 'MSSQLSERVER' -ErrorAction SilentlyContinue
+$Service = Get-Service -Name "$ServiceName" -ErrorAction SilentlyContinue
 if ([string]::IsNullOrEmpty($Service)) {
     Start-Sleep -Seconds 180
-    Write-Output "Configuring SQLServer(MSSQLSERVER) service by skipping Cluster verify errors. Validation of cluster and SQL service will be done at completion of configuration"
+    Write-Output "Configuring SQLServer($SQLInstanceName) service by skipping Cluster verify errors. Validation of cluster and SQL service will be done at completion of configuration"
     Write-Output "https://learn.microsoft.com/en-us/answers/questions/1276441/invok-command-on-localhost-not-working"
     Write-Output "DBS-2299: Enable PSRemoting Service to Start Automatic and Enable PSREmoting on both host" 
     Set-Service winrm -StartupType Automatic
@@ -128,10 +163,10 @@ if ([string]::IsNullOrEmpty($Service)) {
     
     if((get-ec2image $AMIID).UsageOperation -eq 'RunInstances:0002') {
         Write-Output "Base Windows ami: Re-attemting prepare fci from available or s3 downloaded sql installer."
-        $arguments = '/SkipRules=Cluster_VerifyForErrors /ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /SUPPRESSPAIDEDITIONNOTICE="True" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="MSSQLSERVER" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="MSSQLSERVER" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher" ' -f $SqlUserName, $SqlUserPassword
+        $arguments = '/SkipRules=Cluster_VerifyForErrors /ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /SUPPRESSPAIDEDITIONNOTICE="True" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="' + $SQLInstanceName + '" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="' + $SQLInstanceName + '" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher" ' -f $SqlUserName, $SqlUserPassword
     }
     else {
-        $arguments = '/SkipRules=Cluster_VerifyForErrors /ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="MSSQLSERVER" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="MSSQLSERVER" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher" ' -f $SqlUserName, $SqlUserPassword
+        $arguments = '/SkipRules=Cluster_VerifyForErrors /ACTION="PrepareFailoverCluster" /IAcceptSQLServerLicenseTerms="True" /IACCEPTROPENLICENSETERMS="False" /SUPPRESSPRIVACYSTATEMENTNOTICE="True" /ENU="True" /QUIET="True" /UpdateEnabled="False" /USEMICROSOFTUPDATE="False" /UpdateSource="MU" /FEATURES=SQLENGINE,REPLICATION,FULLTEXT,DQ /HELP="False" /INDICATEPROGRESS="True" /INSTANCENAME="' + $SQLInstanceName + '" /INSTALLSHAREDDIR="C:\Program Files\Microsoft SQL Server" /INSTALLSHAREDWOWDIR="C:\Program Files (x86)\Microsoft SQL Server" /INSTANCEID="' + $SQLInstanceName + '" /INSTANCEDIR="C:\Program Files\Microsoft SQL Server" /AGTSVCACCOUNT="{0}" /AGTSVCPASSWORD="{1}" /FILESTREAMLEVEL="0" /SQLSVCACCOUNT="{0}" /SQLSVCPASSWORD="{1}" /SQLSVCINSTANTFILEINIT="False" /FTSVCACCOUNT="NT Service\MSSQLFDLauncher" ' -f $SqlUserName, $SqlUserPassword
     }
 
     Invoke-Command -scriptblock {
@@ -142,16 +177,16 @@ if ([string]::IsNullOrEmpty($Service)) {
 
 } -Credential $Credentials -ComputerName $HostName -Authentication credssp
 try {
-$Service = Get-Service -Name 'MSSQLSERVER' 
+$Service = Get-Service -Name "$ServiceName" 
 }
 catch {
-        Write-Output "Failed to create SQLServer(MSSQLSERVER) service"
+        Write-Output "Failed to create SQLServer($ServiceName) service"
         Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
         $_ | Write-AWSLaunchWizardException  
 }
 }
 else {
-    Write-Output "Configured SQL Server(MSSQLSERVER) successfully"
+    Write-Output "Configured SQL Server($ServiceName) successfully"
  }
 
 } catch {
