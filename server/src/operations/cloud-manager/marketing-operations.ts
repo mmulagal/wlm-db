@@ -220,17 +220,15 @@ function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavin
         deploymentType: 'Single',
         snapshots: {
             snapshotFreq: snapshotFrequency,
-            snapshotPercentageChange: monthlyChangeRatePercentage / numberOfCloneEnvs
+            snapshotPercentageChange: monthlyChangeRatePercentage
         },
-        ...(clonedCopiesCount > 0 && {
-            clones: {
-                monthlyCloneNumber: clonedCopiesCount,
-                changeRate: monthlyChangeRatePercentage / numberOfCloneEnvs,
-                numberOfCloneEnvs,
-                ssdStorage: 100,
-                savings: 0
-            }
-        })
+        clones: {
+            monthlyCloneNumber: clonedCopiesCount > 0 ? clonedCopiesCount : 0,
+            changeRate: monthlyChangeRatePercentage,
+            numberOfCloneEnvs: clonedCopiesCount > 0 ? numberOfCloneEnvs : 0,
+            ssdStorage: 100,
+            savings: 0
+        }
     };
 }
 
@@ -320,7 +318,8 @@ async function formatStorageSavingsCalculationMetrics(
         ebsVolumeIds,
         params
     });
-    const totalClonedCopiesCount = getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency);
+    const totalClonedCopiesCount =
+        params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0;
 
     const {
         ebs: { capacity, iops, throughput },
@@ -539,7 +538,8 @@ async function formatStorageSavingsCalculationMetrics(
             cloneRefreshFrequency: params.cloneRefreshFrequency,
             monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
             clonedCopiesCount: params.clonedCopiesCount,
-            changeRateBetweenClones: params.monthlyChangeRatePercentage / totalClonedCopiesCount,
+            changeRateBetweenClones:
+                totalClonedCopiesCount > 0 ? params.monthlyChangeRatePercentage / totalClonedCopiesCount : 0,
             // totalFsxnCapacity
             numberOfClonesInAMonth: totalClonedCopiesCount,
             fsxnSsdPrice: { price: fsxnSsdClonePrice, unit: fsxnSsdClonePriceUnit },

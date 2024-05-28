@@ -3,7 +3,13 @@
     z-index: 1 !important;
     display: flex;
 
-    padding: 48px 12px 48px 80px;
+    padding: 48px 12px 48px 70px;
+
+    .inProgress {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+    }
 
     .extraDiv2 {
         width: 80px;

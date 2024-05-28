@@ -1,0 +1,1493 @@
+{
+    "host1" : {
+        "ec2InstanceId": "i-02dbf20711b3c8311",
+        "ec2InstanceName": "sqlnode1-37211",
+        "id": "resource-id-1",
+        "name": "Database hostname 1",
+        "status": "Up",
+        "ssmState": "connected",
+        "totalInstance": 4,
+        "managedInstance": 0,
+        "serverInstallationMode": "Failover Cluster Instances",
+        "vpcId": "vpc1",
+        "vpcName": "wlmdb-vpc1",
+        "vpcCidr": "10.20.30.0/24",
+        "action": "Manage",
+        "actionDisable": false,
+        "ec2Details": [
+            {
+                "id": "i-1234",
+                "name": "wlmdb1-ec2",
+                "ebsVolumeId": "ebs-volume1"
+            },
+            {
+                "id": "i-1253",
+                "name": "wlmdb2-ec2",
+                "ebsVolumeId": "ebs-volume2"
+            }
+        ],
+        "estimatedUsageCost": {
+            "compute": 700,
+            "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+            "connectivity": 100,
+            "others": 24,
+            "estimationType": "pricing"
+        },
+        "totalCost": 1024,
+        "allocatedCapacity": 22122173950853,
+        "sqlServerInstances": [
+            {
+                "name": "MSSQLSERVER",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for ONTAP",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxn": {
+                        "protocol" : ["SMB"],
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    },
+                    "fsxw": {
+                        "size": 0,
+                        "used": 0,
+                        "spaceSavings": 0,
+                        "spaceSavingsPercentage": 0
+                    },
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER2",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for ONTAP",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxn": {
+                        "protocol" : [],
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    },
+                    "fsxw": {
+                        "size": 0,
+                        "used": 0,
+                        "spaceSavings": 0,
+                        "spaceSavingsPercentage": 0
+                    },
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER3",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for ONTAP",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxn": {
+                        "protocol" : [],
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    },
+                    "fsxw": {
+                        "size": 0,
+                        "used": 0,
+                        "spaceSavings": 0,
+                        "spaceSavingsPercentage": 0
+                    },
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER4",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for ONTAP",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxn": {
+                        "protocol" : [],
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    },
+                    "fsxw": {
+                        "size": 0,
+                        "used": 0,
+                        "spaceSavings": 0,
+                        "spaceSavingsPercentage": 0
+                    },
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            }
+        ]
+    },
+    "host2" : {
+        "ec2InstanceId": "i-02dbf20711b3c8312",
+        "ec2InstanceName": "sqlnode1-37212",
+        "id": "resource-id-2",
+        "name": "Database hostname 2",
+        "status": "Up",
+        "ssmState": "connected",
+        "totalInstance": 4,
+        "managedInstance": 2,
+        "serverInstallationMode": "Standalone",
+        "vpcId": "vpc1",
+        "vpcName": "wlmdb-vpc1",
+        "vpcCidr": "10.20.30.0/24",
+        "action": "Manage",
+        "actionDisable": false,
+        "ec2Details": [
+            {
+                "id": "i-1234",
+                "name": "wlmdb1-ec2",
+                "ebsVolumeId": "ebs-volume1"
+            }
+        ],
+        "estimatedUsageCost": {
+            "compute": 700,
+            "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+            "connectivity": 100,
+            "others": 24,
+            "estimationType": "pricing"
+        },
+        "totalCost": 1024,
+        "allocatedCapacity": 22122173950853,
+        "sqlServerInstances": [
+            {
+                "name": "MSSQLSERVER",
+                "isDetected": true,
+                "isManaged": true,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for ONTAP",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxn": {
+                        "protocol" : ["SMB"],
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    },
+                    "fsxw": {
+                        "size": 0,
+                        "used": 0,
+                        "spaceSavings": 0,
+                        "spaceSavingsPercentage": 0
+                    },
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER2",
+                "isDetected": true,
+                "isManaged": true,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "FSx for ONTAP",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxn": {
+                        "protocol" : [],
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    },
+                    "fsxw": {
+                        "size": 0,
+                        "used": 0,
+                        "spaceSavings": 0,
+                        "spaceSavingsPercentage": 0
+                    },
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER3",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "FSx for ONTAP",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxn": {
+                        "protocol" : [],
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    },
+                    "fsxw": {
+                        "size": 0,
+                        "used": 0,
+                        "spaceSavings": 0,
+                        "spaceSavingsPercentage": 0
+                    },
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER4",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "FSx for ONTAP",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxn": {
+                        "protocol" : [],
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    },
+                    "fsxw": {
+                        "size": 0,
+                        "used": 0,
+                        "spaceSavings": 0,
+                        "spaceSavingsPercentage": 0
+                    },
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            }
+        ]
+    },
+    "host3" : {
+        "ec2InstanceId": "i-02dbf20711b3c8313",
+        "ec2InstanceName": "sqlnode1-37213",
+        "id": "resource-id-3",
+        "name": "Database hostname 3",
+        "status": "Up",
+        "ssmState": "connected",
+        "totalInstance": 4,
+        "managedInstance": 4,
+        "serverInstallationMode": "Failover Cluster Instances",
+        "vpcId": "vpc1",
+        "vpcName": "wlmdb-vpc1",
+        "vpcCidr": "10.20.30.0/24",
+        "action": "Manage",
+        "actionDisable": true,
+        "ec2Details": [
+            {
+                "id": "i-1234",
+                "name": "wlmdb1-ec2",
+                "ebsVolumeId": "ebs-volume1"
+            },
+            {
+                "id": "i-1253",
+                "name": "wlmdb2-ec2",
+                "ebsVolumeId": "ebs-volume2"
+            }
+        ],
+        "estimatedUsageCost": {
+            "compute": 700,
+            "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+            "connectivity": 100,
+            "others": 24,
+            "estimationType": "pricing"
+        },
+        "totalCost": 1024,
+        "allocatedCapacity": 22122173950853,
+        "sqlServerInstances": [
+            {
+                "name": "MSSQLSERVER",
+                "isDetected": true,
+                "isManaged": true,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for ONTAP",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxn": {
+                        "protocol" : [],
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    },
+                    "fsxw": {
+                        "size": 0,
+                        "used": 0,
+                        "spaceSavings": 0,
+                        "spaceSavingsPercentage": 0
+                    },
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER2",
+                "isDetected": true,
+                "isManaged": true,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for ONTAP",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxn": {
+                        "protocol" : [],
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    },
+                    "fsxw": {
+                        "size": 0,
+                        "used": 0,
+                        "spaceSavings": 0,
+                        "spaceSavingsPercentage": 0
+                    },
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER3",
+                "isDetected": true,
+                "isManaged": true,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for ONTAP",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxn": {
+                        "protocol" : [],
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    },
+                    "fsxw": {
+                        "size": 0,
+                        "used": 0,
+                        "spaceSavings": 0,
+                        "spaceSavingsPercentage": 0
+                    },
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER4",
+                "isDetected": true,
+                "isManaged": true,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for ONTAP",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxn": {
+                        "protocol" : [],
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    },
+                    "fsxw": {
+                        "size": 0,
+                        "used": 0,
+                        "spaceSavings": 0,
+                        "spaceSavingsPercentage": 0
+                    },
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            }
+        ]
+    },
+    "host4" : {
+        "ec2InstanceId": "i-02dbf20711b3c8314",
+        "ec2InstanceName": "sqlnode1-37214",
+        "id": "resource-id-4",
+        "name": "Database hostname 4",
+        "status": "Up",
+        "ssmState": "connected",
+        "totalInstance": 4,
+        "managedInstance": 0,
+        "serverInstallationMode": "Standalone",
+        "vpcId": "vpc1",
+        "vpcName": "wlmdb-vpc1",
+        "vpcCidr": "10.20.30.0/24",
+        "action": "Detect",
+        "actionDisable": false,
+        "ec2Details": [
+            {
+                "id": "i-1234",
+                "name": "wlmdb1-ec2",
+                "ebsVolumeId": "ebs-volume1"
+            }
+        ],
+        "estimatedUsageCost": {
+            "compute": 700,
+            "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+            "connectivity": 100,
+            "others": 24,
+            "estimationType": "pricing"
+        },
+        "totalCost": 1024,
+        "allocatedCapacity": 22122173950853,
+        "sqlServerInstances": [
+            {
+                "name": "MSSQLSERVER",
+                "isDetected": false,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for ONTAP",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxn": {
+                        "protocol" : [],
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    },
+                    "fsxw": {
+                        "size": 0,
+                        "used": 0,
+                        "spaceSavings": 0,
+                        "spaceSavingsPercentage": 0
+                    },
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER2",
+                "isDetected": false,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for ONTAP",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxn": {
+                        "protocol" : [],
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    },
+                    "fsxw": {
+                        "size": 0,
+                        "used": 0,
+                        "spaceSavings": 0,
+                        "spaceSavingsPercentage": 0
+                    },
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER3",
+                "isDetected": false,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for ONTAP",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxn": {
+                        "protocol" : [],
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    },
+                    "fsxw": {
+                        "size": 0,
+                        "used": 0,
+                        "spaceSavings": 0,
+                        "spaceSavingsPercentage": 0
+                    },
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER4",
+                "isDetected": false,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for ONTAP",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxn": {
+                        "protocol" : [],
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    },
+                    "fsxw": {
+                        "size": 0,
+                        "used": 0,
+                        "spaceSavings": 0,
+                        "spaceSavingsPercentage": 0
+                    },
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            }
+        ]
+    },
+    "host5" : {
+        "ec2InstanceId": "i-02dbf20711b3c8315",
+        "ec2InstanceName": "sqlnode1-37215",
+        "name": "Database hostname 5",
+        "ssmState": "not connected",
+        "action": "Detect",
+        "actionDisable": true,
+        "sqlServerInstances": [
+        ]
+    },
+    "host6" : {
+        "ec2InstanceId": "i-02dbf20711b3c8316",
+        "ec2InstanceName": "sqlnode1-37216",
+        "id": "resource-id-6",
+        "name": "Database hostname 6",
+        "status": "Up",
+        "ssmState": "connected",
+        "totalInstance": 4,
+        "managedInstance": 0,
+        "serverInstallationMode": "Always On Availability Group",
+        "vpcId": "vpc1",
+        "vpcName": "wlmdb-vpc1",
+        "vpcCidr": "10.20.30.0/24",
+        "action": "Explore savings",
+        "actionDisable": false,
+        "ec2Details": [
+            {
+                "id": "i-1234",
+                "name": "wlmdb1-ec2",
+                "ebsVolumeId": "ebs-volume1"
+            },
+            {
+                "id": "i-1253",
+                "name": "wlmdb2-ec2",
+                "ebsVolumeId": "ebs-volume2"
+            }
+        ],
+        "estimatedUsageCost": {
+            "compute": 700,
+            "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+            "connectivity": 100,
+            "others": 24,
+            "estimationType": "pricing"
+        },
+        "totalCost": 1024,
+        "allocatedCapacity": 22122173950853,
+        "sqlServerInstances": [
+            {
+                "name": "MSSQLSERVER",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "EBS",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER2",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "EBS",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER3",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "EBS",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER4",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "EBS",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            }
+        ]
+    },
+    "host7" : {
+        "ec2InstanceId": "i-02dbf20711b3c8317",
+        "ec2InstanceName": "sqlnode1-37217",
+        "id": "resource-id-7",
+        "name": "Database hostname 7",
+        "status": "Up",
+        "ssmState": "connected",
+        "totalInstance": 4,
+        "managedInstance": 0,
+        "serverInstallationMode": "Standalone",
+        "vpcId": "vpc1",
+        "vpcName": "wlmdb-vpc1",
+        "vpcCidr": "10.20.30.0/24",
+        "action": "Explore savings",
+        "actionDisable": false,
+        "ec2Details": [
+            {
+                "id": "i-1234",
+                "name": "wlmdb1-ec2",
+                "ebsVolumeId": "ebs-volume1"
+            }
+        ],
+        "estimatedUsageCost": {
+            "compute": 700,
+            "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+            "connectivity": 100,
+            "others": 24,
+            "estimationType": "pricing"
+        },
+        "totalCost": 1024,
+        "allocatedCapacity": 22122173950853,
+        "sqlServerInstances": [
+            {
+                "name": "MSSQLSERVER",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "EBS",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER2",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "EBS",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER3",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "EBS",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER4",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "EBS",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            }
+        ]
+    },
+    "host8" : {
+        "ec2InstanceId": "i-02dbf20711b3c8318",
+        "ec2InstanceName": "sqlnode1-37218",
+        "id": "resource-id-8",
+        "name": "Database hostname 8",
+        "status": "Up",
+        "ssmState": "connected",
+        "totalInstance": 4,
+        "managedInstance": 0,
+        "serverInstallationMode": "Standalone",
+        "vpcId": "vpc1",
+        "vpcName": "wlmdb-vpc1",
+        "vpcCidr": "10.20.30.0/24",
+        "action": "Explore savings",
+        "actionDisable": true,
+        "ec2Details": [
+            {
+                "id": "i-1234",
+                "name": "wlmdb1-ec2",
+                "ebsVolumeId": "ebs-volume1"
+            }
+        ],
+        "estimatedUsageCost": {
+            "compute": 700,
+            "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+            "connectivity": 100,
+            "others": 24,
+            "estimationType": "pricing"
+        },
+        "totalCost": 1024,
+        "allocatedCapacity": 22122173950853,
+        "sqlServerInstances": [
+            {
+                "name": "MSSQLSERVER",
+                "isDetected": false,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "EBS",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER2",
+                "isDetected": false,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "EBS",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER3",
+                "isDetected": false,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "EBS",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER4",
+                "isDetected": false,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "EBS",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            }
+        ]
+    },
+    "host9" : {
+        "ec2InstanceId": "i-02dbf20711b3c8319",
+        "ec2InstanceName": "sqlnode1-37219",
+        "id": "resource-id-9",
+        "name": "Database hostname 9",
+        "status": "Up",
+        "ssmState": "connected",
+        "totalInstance": 4,
+        "managedInstance": 0,
+        "serverInstallationMode": "Always On Availability Group",
+        "vpcId": "vpc1",
+        "vpcName": "wlmdb-vpc1",
+        "vpcCidr": "10.20.30.0/24",
+        "action": "Explore savings",
+        "actionDisable": false,
+        "ec2Details": [
+            {
+                "id": "i-1234",
+                "name": "wlmdb1-ec2",
+                "ebsVolumeId": "ebs-volume1"
+            },
+            {
+                "id": "i-1253",
+                "name": "wlmdb2-ec2",
+                "ebsVolumeId": "ebs-volume2"
+            }
+        ],
+        "estimatedUsageCost": {
+            "compute": 700,
+            "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+            "connectivity": 100,
+            "others": 24,
+            "estimationType": "pricing"
+        },
+        "totalCost": 1024,
+        "allocatedCapacity": 22122173950853,
+        "sqlServerInstances": [
+            {
+                "name": "MSSQLSERVER",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for Windows",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxw": {
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    }
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER2",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for Windows",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "ebs": {
+                        "size": 0
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER3",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for Windows",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxw": {
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    } 
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER4",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Multi AZ",
+                "fileSystemType": "FSx for Windows",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxw": {
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            }
+        ]
+    },
+    "host10" : {
+        "ec2InstanceId": "i-02dbf20711b3c83110",
+        "ec2InstanceName": "sqlnode1-372110",
+        "id": "resource-id-10",
+        "name": "Database hostname 10",
+        "status": "Up",
+        "ssmState": "connected",
+        "totalInstance": 4,
+        "managedInstance": 0,
+        "serverInstallationMode": "Standalone",
+        "vpcId": "vpc1",
+        "vpcName": "wlmdb-vpc1",
+        "vpcCidr": "10.20.30.0/24",
+        "action": "Explore savings",
+        "actionDisable": false,
+        "ec2Details": [
+            {
+                "id": "i-1234",
+                "name": "wlmdb1-ec2",
+                "ebsVolumeId": "ebs-volume1"
+            }
+        ],
+        "estimatedUsageCost": {
+            "compute": 700,
+            "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+            "connectivity": 100,
+            "others": 24,
+            "estimationType": "pricing"
+        },
+        "totalCost": 1024,
+        "allocatedCapacity": 22122173950853,
+        "sqlServerInstances": [
+            {
+                "name": "MSSQLSERVER",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "FSx for Windows",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxw": {
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    } 
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER2",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "FSx for Windows",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxw": {
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER3",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "FSx for Windows",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxw": {
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER4",
+                "isDetected": true,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "FSx for Windows",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxw": {
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    } 
+                },
+                "allocatedCapacity": 5530543487713.25
+            }
+        ]
+    },
+    "host11" : {
+        "ec2InstanceId": "i-02dbf20711b3c83111",
+        "ec2InstanceName": "sqlnode1-372111",
+        "id": "resource-id-11",
+        "name": "Database hostname 11",
+        "status": "Up",
+        "ssmState": "connected",
+        "totalInstance": 4,
+        "managedInstance": 0,
+        "serverInstallationMode": "Standalone",
+        "vpcId": "vpc1",
+        "vpcName": "wlmdb-vpc1",
+        "vpcCidr": "10.20.30.0/24",
+        "action": "Explore savings",
+        "actionDisable": true,
+        "ec2Details": [
+            {
+                "id": "i-1234",
+                "name": "wlmdb1-ec2",
+                "ebsVolumeId": "ebs-volume1"
+            }
+        ],
+        "estimatedUsageCost": {
+            "compute": 700,
+            "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+            "connectivity": 100,
+            "others": 24,
+            "estimationType": "pricing"
+        },
+        "totalCost": 1024,
+        "allocatedCapacity": 22122173950853,
+        "sqlServerInstances": [
+            {
+                "name": "MSSQLSERVER",
+                "isDetected": false,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "FSx for Windows",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxw": {
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER2",
+                "isDetected": false,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "FSx for Windows",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxw": {
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    }  
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER3",
+                "isDetected": false,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "FSx for Windows",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxw": {
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    } 
+                },
+                "allocatedCapacity": 5530543487713.25
+            },
+            {
+                "name": "MSSQLSERVER4",
+                "isDetected": false,
+                "isManaged": false,
+                "fileSystemDeploymentMode": "Single AZ",
+                "fileSystemType": "FSx for Windows",
+                "protection": {
+                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isFsxOntapSnapshotsEnabled": true,
+                    "isSqlNativeEnabled": true,
+                    "protectedDatabases": 8
+                },
+                "performance": {
+                    "assessment": "High"
+                },
+                "storage": {
+                    "fsxw": {
+                        "size": 5530543487713.25,
+                        "used": 29686813949952,
+                        "spaceSavings": 9895604649984,
+                        "spaceSavingsPercentage": 33.33
+                    } 
+                },
+                "allocatedCapacity": 5530543487713.25
+            }
+        ]
+    }
+}

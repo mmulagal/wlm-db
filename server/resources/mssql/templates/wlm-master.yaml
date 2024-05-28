@@ -32,6 +32,7 @@ Metadata:
           - ValidationAmi
           - ValidationNodeInstanceType
           - CfDeployRoleName
+          - EBSVolumeSize
       - Label:
           default: Microsoft Active Directory Configuration
         Parameters:
@@ -133,6 +134,8 @@ Metadata:
         default: SQL Server Collation
       IsCustomAmi:
         default: Boolean to indicate if AMI includes SQL license or BYOL license
+      EBSVolumeSize:
+        default: Size of the EBS Volume.
       VPCName:
         default: Name of VPC
       VPCCIDR:
@@ -221,6 +224,8 @@ Parameters:
   {{{SqlCollation}}}
 
   {{{IsCustomAmi}}}
+
+  {{{EBSVolumeSize}}}
 
   {{{SqlFSxWSFCName}}}
 
@@ -859,6 +864,8 @@ Resources:
           Ref: SqlServerName
         SqlCollation:
           Ref: SqlCollation
+        EBSVolumeSize:
+          Ref: EBSVolumeSize
         SQLAdminAccounts:
           Ref: SQLServiceAccountName
         VPCID:
@@ -1004,6 +1011,8 @@ Resources:
           Ref: SqlServerName
         SqlCollation:
           Ref: SqlCollation
+        EBSVolumeSize:
+          Ref: EBSVolumeSize
         FsxVolumeSnapshotPolicy:
           Ref: FsxVolumeSnapshotPolicy
       NotificationARNs:

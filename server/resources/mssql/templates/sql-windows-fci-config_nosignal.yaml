@@ -30,6 +30,7 @@ Metadata:
                   - SqlFSxServerNetBIOSName2
                   - KeyPairName
                   - WorkloadInstanceType
+                  - EBSVolumeSize
             - Label:
                   default: Amazon FSx for ONTAP Volume Configuration
               Parameters:
@@ -124,6 +125,8 @@ Metadata:
                 default: Name of the parent CloudFormation stack
             FsxVolumeSnapshotPolicy:
                 default: Snapshot policy for the volume. Can be either daily_weekretention or none.
+            EBSVolumeSize:
+                default: Size of the EBS Volume in GiB.
 Parameters:
     ParentStackName:
         Description: Name of the parent CloudFormation stack.
@@ -294,6 +297,9 @@ Parameters:
         Type: String
         Default: daily_weekretention
         AllowedValues: [daily_weekretention, none]
+    EBSVolumeSize:
+        Description:  Size of the EBS Volume in GiB.
+        Type: String
 Conditions:
     ADSGNotSelected: !Equals
         - !Ref 'DomainMemberSGID'
@@ -494,6 +500,8 @@ Resources:
                             source: {{{ Sqlspcu }}}
                         C:\cfn\Installer\dependent-packages.zip:
                             source: {{{ DependentPackages }}}
+                        C:\cfn\Installer\SQLServerSetup.zip:
+                            source: {{{ SQLServerSetup }}}
                 ScriptSignatureVerificationandExtract:
                     commands:
                         b-unpack-common-scripts:
@@ -539,6 +547,9 @@ Resources:
                         s-unpack-dependentpackages:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\dependent-packages.zip -Destination C:\cfn\Installer
+                        t-unpack-sqlserversetup:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\Installer\SQLServerSetup.zip -Destination C:\cfn\Installer
                 InitialSetup:
                     commands:
                         a-unpack-launchwizard-module:
@@ -933,7 +944,7 @@ Resources:
             BlockDeviceMappings:
                 - DeviceName: /dev/sda1
                   Ebs:
-                      VolumeSize: '100'
+                      VolumeSize: !Ref 'EBSVolumeSize'
                       VolumeType: gp3
             KeyName: !Ref 'KeyPairName'
             UserData: !Base64
@@ -1084,6 +1095,8 @@ Resources:
                             source: {{{ Sqlspcu }}}
                         C:\cfn\Installer\dependent-packages.zip:
                             source: {{{ DependentPackages }}}
+                        C:\cfn\Installer\SQLServerSetup.zip:
+                            source: {{{ SQLServerSetup }}}
                 ScriptSignatureVerificationandExtract:
                     commands:
                         b-unpack-common-scripts:
@@ -1129,6 +1142,9 @@ Resources:
                         s-unpack-dependentpackages:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\dependent-packages.zip -Destination C:\cfn\Installer
+                        t-unpack-sqlserversetup:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\Installer\SQLServerSetup.zip -Destination C:\cfn\Installer
                 InitialSetup:
                     commands:
                         a-unpack-launchwizard-module:
@@ -1414,7 +1430,7 @@ Resources:
             BlockDeviceMappings:
                 - DeviceName: /dev/sda1
                   Ebs:
-                      VolumeSize: '100'
+                      VolumeSize: !Ref 'EBSVolumeSize'
                       VolumeType: gp3
             KeyName: !Ref 'KeyPairName'
             UserData: !Base64
