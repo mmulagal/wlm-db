@@ -1090,17 +1090,96 @@ const addAccessPathAndAttachDb = (
     }
 `;
 
-console.log(
-    createVolumeClone(
-        'fs-076ce1a897b45b5cb',
-        'eu-west-3',
-        'wlmdb_sqlsvm_1716024138704',
-        JSON.stringify({ name: 'wlmdb_sqldata_1716184358' }),
-        JSON.stringify({ name: 'wlmdb_sqllog_1716184358' }),
-        '17ce8a5b5fdc45f2699251e49c76c519066e31ec4864e9ff0eb5d4a89a3948bf',
-        'wlmdb_sqlsvm_1716024138704'
+const splitFlexCloneVolumes = (fsxId: string, fsxRegion: string, volumeIds: string, instance = '.') => `
+    $fsxid = '${fsxId}'
+    $fsxregion = '${fsxRegion}'
+    $volumeIds = '${volumeIds}' | ConvertFrom-Json
+    $instance = '${instance}'
+
+    Start-Transcript -Path "C:\\cfn\\log\\split_volumes.log.txt" -Append | Out-Null
+
+    $WarningPreference = 'SilentlyContinue';
+    $responseObject = @{}
+
+    try {
+        ${ontapRestRequest}
+        ${ontapJobStatusTemplate}
+
+        Function Invoke-VolumeSplit {
+            write-debug "Invoking volume split"
+    
+            $volumeIds | ForEach-Object {
+                $volumeId = [system.web.httputility]::UrlEncode($_)
+                $ApiEndpoint = "/storage/volumes/$volumeId"
+                $body = '{ "clone": { "split_initiated": true } }'
+    
+                $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -method "PATCH" -body $body
+    
+                $jobStatus = Get-OntapJobStatus -jobId $response.job.uuid
+                if ($jobStatus.state -ne 'success') {
+                    if ($jobStatus.message -match 'Volume is not a clone') {
+                        Write-Debug "Volume $volumeId is not a clone"
+                        $responseObject['error'] = "Volume $volumeId is not a clone"
+                    } elseif ($jobStatus.message -match 'Volume has locked snapshots') {
+                        Write-Debug "Volume $volumeId has locked snapshots"
+                        $responseObject['error'] = "Volume $volumeId has locked snapshots"
+                    } else {
+                        Write-Debug "Could not split volume $volumeId. Ontap error: $($jobStatus.message)"
+                        $responseObject['error'] = "Could not split volume $volumeId. Ontap error: $($jobStatus.message)"
+                    }
+                }
+            }
+        }
+    
+        Function Remove-VolumeObjectTags {
+            write-debug "Removing volume object tags"
+    
+            $volumeIds | ForEach-Object {
+                $volumeId = [system.web.httputility]::UrlEncode($_)
+                $ApiEndpoint = "/storage/volumes/$volumeId"
+                $body = '{ "tiering.object_tags": [] }'
+    
+                $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -method "PATCH" -body $body
+    
+                $jobStatus = Get-OntapJobStatus -jobId $response.job.uuid
+                if ($jobStatus.state -ne 'success') {
+                    Write-Debug "Could not remove tags from volume $volumeId. Ontap error: $($jobStatus.message)"
+                    $responseObject['error'] = "Could not remove tags from volume $volumeId. Ontap error: $($jobStatus.message)"
+                }
+            }
+        }
+    
+        Invoke-VolumeSplit
+        Remove-VolumeObjectTags
+    } catch {
+        Write-Debug $_.Exception.Message
+        $responseObject['error'] = $_.Exception.Message
+    }
+
+    $responseObject | ConvertTo-Json
+`;
+
+const deleteExtendedPropertiesScript = (dbName: string, instanceName: string = '.', props: Array<string>) => `
+$dbname = '${dbName}'
+$instanceName = '${instanceName}'
+
+Start-Transcript -Path "C:\\cfn\\log\\delete_extended_properties_$dbname.log.txt" -Append | Out-Null
+
+$query = @"
+USE $dbname;
+SET NOCOUNT ON;
+${props
+    .map(
+        k => `
+IF EXISTS (SELECT name, value FROM fn_listextendedproperty(default, default, default, default, default, default, default) WHERE name = N'${k}'
+    EXEC sp_dropextendedproperty @name = N'${k}';
+`
     )
-);
+    .join('\n')}
+"@
+
+Sqlcmd -S $instanceName -Q $query -m 1
+`;
 
 export {
     GET_SANDBOX_DETAILS,
@@ -1113,5 +1192,7 @@ export {
     mountPointQuery,
     getStorageSavingsFromOntap,
     detachDbAndRemoveAccessPath,
-    addAccessPathAndAttachDb
+    addAccessPathAndAttachDb,
+    splitFlexCloneVolumes,
+    deleteExtendedPropertiesScript
 };

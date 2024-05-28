@@ -25,7 +25,9 @@ import {
     mountPointQuery,
     getStorageSavingsFromOntap,
     detachDbAndRemoveAccessPath,
-    addAccessPathAndAttachDb
+    addAccessPathAndAttachDb,
+    splitFlexCloneVolumes,
+    deleteExtendedPropertiesScript
 } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { checkDatabaseExists, getActiveSqlNode, getSqlServerVersion } from './workloads/mssql/mssql-operations';
@@ -2145,12 +2147,12 @@ async function reAttachSandboxAndAccessPath(
 
 async function splitSandbox(
     accountId: string,
-    region: string,
     credentialsId: string,
+    region: string,
     databaseHostId: string,
     databaseName: string
 ) {
-    logger.info('Split sandbox', { accountId, region, credentialsId, databaseHostId, databaseName });
+    logger.info('Split sandbox', { accountId, credentialsId, region, databaseHostId, databaseName });
 
     const [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
 
@@ -2199,15 +2201,15 @@ async function splitSandbox(
         host: databaseHostId
     };
 
-    performSplitOperation(accountId, region, credentialsId, job.id, resDetails);
+    performSplitOperation(accountId, credentialsId, region, job.id, resDetails);
 
     return { jobId: job.id };
 }
 
 async function performSplitOperation(
     accountId: string,
-    region: string,
     credentialsId: string,
+    region: string,
     parentJobId: string,
     resDetails: HostAndDbInfo
 ) {
@@ -2228,9 +2230,16 @@ async function performSplitOperation(
 
         logger.info('MAPPINGS>>>', mappings);
 
-        await createExtendedProperties(accountId, credentialsId, region, parentJobId, resDetails, resDetails, {
-            isSplit: true
-        });
+        await splitVolumes(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            [mappings.data.volumeUuid, mappings.log.volumeUuid],
+            resDetails
+        );
+
+        await deleteExtendedProperties(accountId, credentialsId, region, parentJobId, resDetails);
 
         status = JOBSTATUS.COMPLETED;
     } catch (e: any) {
@@ -2295,6 +2304,122 @@ async function validateSplitParams(
         await updateJobDetails(accountId, credentialsId, region, validationJob.id, {
             error: errorMsg,
             status,
+            endTime: Date.now()
+        });
+    }
+}
+
+async function splitVolumes(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    volumeIds: Array<string>,
+    resourceDetail: HostAndDbInfo
+) {
+    logger.info('Split volumes', { accountId, credentialsId, region, parentJobId, volumeIds, resourceDetail });
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+    const splitJob = await registerJob(accountId, credentialsId, region, {
+        name: `Split volumes for ${resourceDetail.database}`,
+        description: `Split volumes for ${resourceDetail.database} in the host ${resourceDetail.resourceName}`,
+        type: JOBTYPE.SANDBOX,
+        status,
+        resourceName: resourceDetail.database,
+        startTime: Date.now()
+    });
+
+    try {
+        const command = [
+            splitFlexCloneVolumes(resourceDetail.fsxId, region, JSON.stringify(volumeIds), resourceDetail.instanceName)
+        ];
+
+        const resp = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            resourceDetail.activeNodeInstanceId,
+            accountId,
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
+        );
+
+        if (!resp) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to split the volumes');
+        }
+
+        const parsedResp = sqlResponseParsing(resp);
+
+        if (parsedResp.error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
+        }
+
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error(`Failed to split the volume: ${e}`);
+        status = JOBSTATUS.FAILED;
+        errorMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, splitJob.id, {
+            status,
+            error: errorMsg,
+            endTime: Date.now()
+        });
+    }
+}
+
+async function deleteExtendedProperties(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    resourceDetail: HostAndDbInfo
+) {
+    logger.info('Delete extended properties', { accountId, credentialsId, region, parentJobId, resourceDetail });
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+
+    const deleteJob = await registerJob(accountId, credentialsId, region, {
+        description: `Delete extended properties for ${resourceDetail.database}`,
+        startTime: Date.now(),
+        name: `Delete extended properties for ${resourceDetail.database}`,
+        status,
+        type: JOBTYPE.SANDBOX,
+        resourceName: resourceDetail.database,
+        parentJobId
+    });
+
+    try {
+        const command = [
+            deleteExtendedPropertiesScript(resourceDetail.database, resourceDetail.instanceName, [
+                'cloned_by',
+                'baseSnapshot',
+                'source',
+                'createdAt',
+                'updatedAt',
+                'tag'
+            ])
+        ];
+
+        const resp = await callSsmExecution(credentialsId, region, command, resourceDetail.activeNodeInstanceId);
+
+        if (resp) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to delete the extended properties');
+        }
+
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error(`Failed to delete the extended properties: ${e}`);
+        status = JOBSTATUS.FAILED;
+        errorMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, deleteJob.id, {
+            status,
+            error: errorMsg,
             endTime: Date.now()
         });
     }
