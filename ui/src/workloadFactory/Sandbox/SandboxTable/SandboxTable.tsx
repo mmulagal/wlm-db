@@ -156,7 +156,7 @@ const SandboxTable = () => {
                                         dispatch(
                                             addNotification({
                                                 notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                                message: `Sandbox of database ${rowData?.name} re-baselined successfully. Sandbox returned to its original version.`
+                                                message: `Sandbox of database ${rowData?.source} re-baselined successfully. Sandbox returned to its original version.`
                                             })
                                         );
                                         let output = aggregatedSandboxList.map((obj: any) => {
