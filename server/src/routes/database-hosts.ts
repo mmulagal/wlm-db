@@ -18,7 +18,8 @@ import {
     GetSandboxConnectionStringSchema,
     DeleteSandboxSchema,
     GetSandboxSplitEstimateSchema,
-    SandboxLifeCycleSchema
+    SandboxLifeCycleSchema,
+    SandboxSplitSchema
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -30,7 +31,8 @@ import {
     updateMetadataForSanboxTesting,
     deleteSandbox,
     getSandboxSplitEstimate,
-    updateSandboxLifeCycle
+    updateSandboxLifeCycle,
+    splitSandbox
 } from '../operations/sandbox-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
@@ -263,6 +265,17 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     sandboxName,
                     snapshot
                 );
+                return reply.send(response);
+            }
+        )
+        .patch(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName/split`,
+            { schema: SandboxSplitSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName }
+                } = request;
+                const response = await splitSandbox(accountId, credentialsId, region, databaseHostId, sandboxName);
                 return reply.send(response);
             }
         );

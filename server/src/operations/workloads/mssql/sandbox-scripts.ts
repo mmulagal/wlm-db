@@ -729,7 +729,7 @@ const createClonedDb = (dbName: string, instanceName: string = '.', fileList: st
 const addExtendedProperties = (
     dbName: string,
     instanceName: string = '.',
-    propObj: { [x: string]: string | number }
+    propObj: { [x: string]: string | number | boolean }
 ) => `
 $dbname = '${dbName}'
 
@@ -1089,6 +1089,18 @@ const addAccessPathAndAttachDb = (
         return $responseObject | ConvertTo-Json -Depth 5
     }
 `;
+
+console.log(
+    createVolumeClone(
+        'fs-076ce1a897b45b5cb',
+        'eu-west-3',
+        'wlmdb_sqlsvm_1716024138704',
+        JSON.stringify({ name: 'wlmdb_sqldata_1716184358' }),
+        JSON.stringify({ name: 'wlmdb_sqllog_1716184358' }),
+        '17ce8a5b5fdc45f2699251e49c76c519066e31ec4864e9ff0eb5d4a89a3948bf',
+        'wlmdb_sqlsvm_1716024138704'
+    )
+);
 
 export {
     GET_SANDBOX_DETAILS,

@@ -309,11 +309,9 @@ const cloneVolumeCommand = {
             'test-fsx',
             'us-east-1',
             'wlmdb_sqlsvm_1714090636810',
-            'wlmdb_sqldata_1714098400',
-            '/vol/wlmdb_sqldata_1714098400/sqldata',
-            'wlmdb_sqllog_1714098400',
-            '/vol/wlmdb_sqllog_1714098400/sqllog',
-            'wlmdb_sqlsvm_1714090636810'
+            JSON.stringify({ name: '/vol/wlmdb_sqldata_1714098400/sqldata' }),
+            JSON.stringify({ name: '/vol/wlmdb_sqllog_1714098400/sqllog' }),
+            'test-res-id'
         )
     ]
 };
@@ -337,7 +335,7 @@ const addExtendedPropertiesCommand = {
     commands: [
         addExtendedProperties('testdb', '.', {
             tag: 'demo',
-            cloned_by: 'netapp_wlmdb',
+            cloned_by: 'netapp_wf',
             source: 'resource|instance|testdb'
         })
     ]

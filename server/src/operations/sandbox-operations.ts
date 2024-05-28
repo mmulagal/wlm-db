@@ -1081,7 +1081,7 @@ async function createExtendedProperties(
     parentJobId: string,
     srcDetails: HostAndDbInfo,
     destDetails: HostAndDbInfo,
-    extendedProps: { [x: string]: number | string }
+    extendedProps: { [x: string]: number | string | boolean }
 ) {
     logger.info('Create extended properties', {
         accountId,
@@ -1605,7 +1605,6 @@ async function performSandboxDeletion(
         logger.error('Failed to delete the sandbox', e);
         status = JOBSTATUS.FAILED;
         errorMsg = e.message || 'Internal Server Error';
-        throw createError(e.statusCode, errorMsg);
     } finally {
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             status,
@@ -1799,7 +1798,7 @@ async function updateSandboxLifeCycle(
 
     const job = await registerJob(accountId, credentialsId, region, {
         name: `Update sandbox lifecycle ${databaseName}`,
-        description: `Update sandbox lifecycle ${databaseName} in the host ${databaseHostId}`,
+        description: `Update sandbox lifecycle ${databaseName} in the host ${resourceName}`,
         initiator: 'SYSTEM',
         type: JOBTYPE.SANDBOX,
         status: JOBSTATUS.IN_PROGRESS,
@@ -2144,6 +2143,163 @@ async function reAttachSandboxAndAccessPath(
     }
 }
 
+async function splitSandbox(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    databaseHostId: string,
+    databaseName: string
+) {
+    logger.info('Split sandbox', { accountId, region, credentialsId, databaseHostId, databaseName });
+
+    const [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
+
+    if (isEmpty(resourceDetails)) {
+        throw createError(HttpErrorCodes.NOT_FOUND, 'Could not find the database host');
+    }
+
+    const { resource_name: resourceName, metadata, co_relation_id: fsxId } = resourceDetails;
+
+    const { node1InstanceId, node2InstanceId, fsxSvmId } = metadata as unknown as Metadata;
+
+    const { isSSMConnected, instanceName, activeNodeInstanceId } = await getActiveSqlNode(
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId,
+        databaseHostId
+    );
+
+    if (!isSSMConnected) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'SSM connection could not be established with the host'
+        );
+    }
+
+    const job = await registerJob(accountId, credentialsId, region, {
+        name: `Split sandbox ${databaseName}`,
+        description: `Split sandbox ${databaseName} in the host ${resourceName}`,
+        initiator: 'SYSTEM',
+        type: JOBTYPE.SANDBOX,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: databaseName,
+        startTime: Date.now()
+    });
+
+    const resDetails = {
+        resourceName: resourceName!,
+        instanceName: instanceName!,
+        fsxId: fsxId!,
+        svm: fsxSvmId!,
+        activeNodeInstanceId: activeNodeInstanceId!,
+        metadata: resourceDetails.metadata as unknown as Metadata,
+        database: databaseName,
+        instance: instanceName!,
+        host: databaseHostId
+    };
+
+    performSplitOperation(accountId, region, credentialsId, job.id, resDetails);
+
+    return { jobId: job.id };
+}
+
+async function performSplitOperation(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    parentJobId: string,
+    resDetails: HostAndDbInfo
+) {
+    logger.info('Perform split operation', { accountId, region, credentialsId, parentJobId, resDetails });
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errMsg;
+    try {
+        await validateSplitParams(accountId, credentialsId, region, parentJobId, resDetails);
+
+        const mappings = (await getMappings(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            resDetails
+        )) as VolumeLunMapping;
+
+        logger.info('MAPPINGS>>>', mappings);
+
+        await createExtendedProperties(accountId, credentialsId, region, parentJobId, resDetails, resDetails, {
+            isSplit: true
+        });
+
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        status = JOBSTATUS.FAILED;
+        errMsg = e.message || 'Internal Server Error';
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+            status,
+            error: errMsg,
+            endTime: Date.now()
+        });
+    }
+}
+
+async function validateSplitParams(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    resourceDetails: HostAndDbInfo
+) {
+    logger.info('Validate split parameters', { accountId, credentialsId, region, parentJobId, resourceDetails });
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+
+    const validationJob = await registerJob(accountId, credentialsId, region, {
+        description: `Validate if the sandbox ${resourceDetails.database} exists in the target host ${resourceDetails.resourceName}`,
+        startTime: Date.now(),
+        name: 'Validate if sandbox exists',
+        status,
+        type: JOBTYPE.SANDBOX,
+        resourceName: resourceDetails.database,
+        parentJobId
+    });
+
+    try {
+        const dbExists = await checkDatabaseExists(
+            accountId,
+            credentialsId,
+            region,
+            resourceDetails.host,
+            resourceDetails.database,
+            resourceDetails.activeNodeInstanceId,
+            resourceDetails.instanceName
+        );
+
+        if (!dbExists && !(process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator')) {
+            throw createError(
+                412,
+                `Database ${resourceDetails.database} does not exists on source host ${resourceDetails.resourceName}`
+            );
+        }
+
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error(e);
+        status = JOBSTATUS.FAILED;
+        errorMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, validationJob.id, {
+            error: errorMsg,
+            status,
+            endTime: Date.now()
+        });
+    }
+}
+
 export {
     getSandboxesInfo,
     getSandboxSavings,
@@ -2154,5 +2310,6 @@ export {
     getSandboxConnectionString,
     deleteSandbox,
     getSandboxSplitEstimate,
-    updateSandboxLifeCycle
+    updateSandboxLifeCycle,
+    splitSandbox
 };
