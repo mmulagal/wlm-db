@@ -38,12 +38,14 @@ try
         $SqlVersion = Invoke-Expression -Command "(dir $sqlServiceBinaryPath).VersionInfo"}
         $ValidSqlVersion = $SqlVersion.ProductVersion -match '^1[3-9]'
         If ($ValidSqlVersion -eq $true) {
-        $SQLInstanceNames +=$sqlService.Name 
+            $InstanceName =  $sqlService.Name.Replace("MSSQL$", "") 
+            $SQLInstanceNames += $InstanceName
         }} 
 
     If ($SQLInstanceNames -NotContains "MSSQLSERVER") {
         $SQLInstanceName = $SQLInstanceNames[0]
     }
+    Write-Host "SQL instance name $SQLInstanceName"
     
     # Instance name to be passed to Invoke-sqlcmd
     $ServerInstanceName = "$env:COMPUTERNAME"
@@ -51,7 +53,16 @@ try
         $ServerInstanceName = "$env:COMPUTERNAME\$SQLInstanceName"
             
     }
- 
+    Write-Host "SQL server name $ServerInstanceName"
+     
+    # Get service name
+    $ServiceName = 'MSSQLSERVER'
+    If($SQLInstanceName -ne "MSSQLSERVER") {
+        $ServiceName =  'MSSQL${0}' -f $SQLInstanceName
+            
+    }
+    Write-Host "SQL service name $ServiceName"
+
     $renameinstance = {
         $query = "
 DECLARE @InternalInstanceName sysname;
@@ -75,31 +86,6 @@ END"
 
     }
     Invoke-Command -Authentication Credssp -Scriptblock $renameinstance -ComputerName $NetBIOSName -Credential $DomainAdminCreds
-
-    # Get SQL server instance name
-    $SQLServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
-    $SQLInstanceName = "MSSQLSERVER"
-    $SQLInstanceNames = @()
-    ForEach ($sqlService in $sqlServiceList) {
-    $sqlServiceBinaryPath = $sqlService.PathName  -Replace "-s.*", ""
-      If (Test-Path $sqlServiceBinaryPath.Replace('"', '')) {
-        $SqlVersion = Invoke-Expression -Command "(dir $sqlServiceBinaryPath).VersionInfo"}
-        $ValidSqlVersion = $SqlVersion.ProductVersion -match '^1[3-9]'
-        If ($ValidSqlVersion -eq $true) {
-            $InstanceName =  $sqlService.Name.Replace("MSSQL$", "") 
-            $SQLInstanceNames += $InstanceName 
-        }} 
-
-    If ($SQLInstanceNames -NotContains "MSSQLSERVER") {
-        $SQLInstanceName = $SQLInstanceNames[0]
-    }
-
-    # Get service name
-    $ServiceName = 'MSSQLSERVER'
-    If($SQLInstanceName -ne "MSSQLSERVER") {
-        $ServiceName =  'MSSQL${0}' -f $SQLInstanceName
-            
-    }
     
     try {
         # Custom ami may not have sql server agent installed
@@ -115,3 +101,4 @@ Catch
     {
         $_ | Write-AWSLaunchWizardException
     }
+ 
