@@ -124,7 +124,8 @@ const SavingsSelection = ({ printState }: any) => {
                         label={GENERAL.NUMBER_OF_CLONED_COPIES}
                         isDisabled={loading}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            setNoOfClonedCopies(e.target.value);
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setNoOfClonedCopies(numVal);
                         }}
                         value={noOfClonedCopies}
                         className={styles.widthSet}
@@ -157,7 +158,8 @@ const SavingsSelection = ({ printState }: any) => {
                     <TextField
                         label={GENERAL.MONTHLY_CHANGE_RATE}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            setMonthlyChangeRateNo(e.target.value);
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setMonthlyChangeRateNo(numVal);
                         }}
                         isDisabled={loading}
                         value={monthlyChangeRateNo ? monthlyChangeRateNo : ''}
