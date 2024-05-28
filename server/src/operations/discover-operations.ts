@@ -680,6 +680,10 @@ async function validateAndStoreDiscoveredParameters(
             sqlCredentials
         );
 
+        const valid = true;
+        if (valid) {
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, 'test');
+        }
         if (!detectResponse?.requiredModuleError && fsxCredentials && !detectResponse?.fsxnError) {
             await registerFsxOntapCredentials(
                 accountId,
@@ -1090,7 +1094,6 @@ async function validateCredentials(
   'AWS.Tools.Common',
   'AWS.Tools.SimpleSystemsManagement'
 `;
-        // const moduleNames = "'AWS.Tools.Common', 'AWS.Tools.SimpleSystemsManagement'";
         command += `${copyPowerShellModule(copyPSModuleS3SignedUrl, moduleNames)};\n`;
     }
 
@@ -1114,7 +1117,6 @@ async function validateCredentials(
 
     parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
 
-    logger.info('parsed response', parsedResponse);
     if (!parsedResponse) {
         throw new Error(`Failed to validate credentials. Reason: ${cleanResponse}`);
     }
@@ -1343,7 +1345,6 @@ async function prepareDbScriptsForManage(
     });
 
     try {
-        // cpy from here
         // Get signed url for dbcreate.zip
         const bucketname = getArtifactsRegionBucketName(region);
         const dbcreateS3SignedUrl = await getPreSignedUrl(region, bucketname, DBCREATE_RELATIVE_PATH);
