@@ -680,10 +680,6 @@ async function validateAndStoreDiscoveredParameters(
             sqlCredentials
         );
 
-        const valid = true;
-        if (valid) {
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, 'test');
-        }
         if (!detectResponse?.requiredModuleError && fsxCredentials && !detectResponse?.fsxnError) {
             await registerFsxOntapCredentials(
                 accountId,
