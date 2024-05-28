@@ -96,6 +96,7 @@
         "clonedCopiesCount": 3,
         "numberOfClonesInAMonth": 30,
         "changeRateBetweenClones": 0.1,
+        "totalFsxnCapacity": 1099511627776,
         "fsxnSsdPrice": {
             "price": 0.15,
             "unit": "UsdPerGiB"

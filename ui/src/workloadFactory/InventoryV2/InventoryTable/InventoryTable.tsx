@@ -136,7 +136,7 @@ const InventoryTable = () => {
                     closeDialog();
                 }}
                 customClass={styles.setWidth}
-                primaryButtonDisabled={isManageButtonDisable}
+                // primaryButtonDisabled={isManageButtonDisable}
             />
         );
     };
