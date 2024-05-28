@@ -10,6 +10,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import {
+    setShowError,
     setSourceDatabase,
     setSourceDbHost,
     setTargetDatabase
@@ -26,6 +27,7 @@ const CreateNewSandbox = () => {
         dispatch(setTargetDatabase(`DBname_sandbox_${Date.now()}`));
         dispatch(setSourceDatabase(null));
         dispatch(setSourceDbHost(null));
+        dispatch(setShowError(false));
     }, []);
 
     return (
