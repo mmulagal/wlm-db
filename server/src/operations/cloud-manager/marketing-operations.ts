@@ -212,7 +212,7 @@ async function aoagStorageSavingsMetrics(
 function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavingsRequestBodyType) {
     const { snapshotFrequency, clonedCopiesCount, cloneRefreshFrequency, monthlyChangeRatePercentage } = params || {};
 
-    const numberOfCloneEnvs = getMonthlyCloneCountFromFrequency(cloneRefreshFrequency);
+    const monthlyCloneCount = getMonthlyCloneCountFromFrequency(cloneRefreshFrequency);
     return {
         useCase: 'Low-latency',
         volumeIds: ebsVolumeIds,
@@ -223,9 +223,9 @@ function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavin
             snapshotPercentageChange: monthlyChangeRatePercentage
         },
         clones: {
-            monthlyCloneNumber: clonedCopiesCount > 0 ? clonedCopiesCount : 0,
+            monthlyCloneNumber: clonedCopiesCount > 0 ? monthlyCloneCount : 0,
             changeRate: monthlyChangeRatePercentage,
-            numberOfCloneEnvs: clonedCopiesCount > 0 ? numberOfCloneEnvs : 0,
+            numberOfCloneEnvs: clonedCopiesCount > 0 ? clonedCopiesCount : 0,
             ssdStorage: 100,
             savings: 0
         }
@@ -318,7 +318,7 @@ async function formatStorageSavingsCalculationMetrics(
         ebsVolumeIds,
         params
     });
-    const totalClonedCopiesCount =
+    const totalMonthlyClonedCopiesCount =
         params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0;
 
     const {
@@ -541,9 +541,11 @@ async function formatStorageSavingsCalculationMetrics(
             monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
             clonedCopiesCount: params.clonedCopiesCount,
             changeRateBetweenClones:
-                totalClonedCopiesCount > 0 ? params.monthlyChangeRatePercentage / totalClonedCopiesCount : 0,
+                totalMonthlyClonedCopiesCount > 0
+                    ? params.monthlyChangeRatePercentage / totalMonthlyClonedCopiesCount
+                    : 0,
             // totalFsxnCapacity
-            numberOfClonesInAMonth: totalClonedCopiesCount,
+            numberOfClonesInAMonth: totalMonthlyClonedCopiesCount,
             fsxnSsdPrice: { price: fsxnSsdClonePrice, unit: fsxnSsdClonePriceUnit },
             desiredStorageCapacity:
                 convertToBytes(cloneDesiredStorageCapacityGB, cloneDesiredStorageCapacityGBUnit) || 0,
@@ -564,11 +566,11 @@ async function formatStorageSavingsCalculationMetrics(
             totalCloneMonthlyCost
         },
         ebsCloneCalculation: {
-            clonedCopiesCount: totalClonedCopiesCount,
+            clonedCopiesCount: params.clonedCopiesCount,
             capacity,
             iops,
             throughput,
-            totalCloneMonthlyCost: totalClonedCopiesCount * (capacity + iops + throughput)
+            totalCloneMonthlyCost: params.clonedCopiesCount * (capacity + iops + throughput)
         },
         ebsSnapshotCalculation: {
             ebsInstanceMonth,
