@@ -253,7 +253,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, sandboxName },
-                    body: { snapshot }
+                    body: { snapshot, action }
                 } = request;
                 const response = await updateSandboxLifeCycle(
                     accountId,
@@ -261,6 +261,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     region,
                     databaseHostId,
                     sandboxName,
+                    action,
                     snapshot
                 );
                 return reply.send(response);

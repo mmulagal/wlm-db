@@ -1802,6 +1802,7 @@ async function updateSandboxLifeCycle(
     region: string,
     databaseHostId: string,
     databaseName: string,
+    action: string,
     snapshot?: string
 ) {
     logger.info(
@@ -1811,6 +1812,7 @@ async function updateSandboxLifeCycle(
         region,
         databaseHostId,
         databaseName,
+        action,
         snapshot
     );
 
@@ -1840,8 +1842,10 @@ async function updateSandboxLifeCycle(
     }
 
     const job = await registerJob(accountId, credentialsId, region, {
-        name: `Update sandbox lifecycle ${databaseName}`,
-        description: `Update sandbox lifecycle ${databaseName} in the host ${databaseHostId}`,
+        name: `${action === 'REFRESH' ? 'Refresh' : 'Re-baseline'} sandbox ${databaseName}`,
+        description: `${
+            action === 'REFRESH' ? 'Refresh' : 'Re-baseline'
+        } sandbox ${databaseName} in the host ${databaseHostId}`,
         initiator: 'SYSTEM',
         type: JOBTYPE.SANDBOX,
         status: JOBSTATUS.IN_PROGRESS,
@@ -1861,7 +1865,7 @@ async function updateSandboxLifeCycle(
         host: databaseHostId
     };
 
-    performLifecycleUpdate(accountId, credentialsId, region, job.id, resDetails, snapshot);
+    performLifecycleUpdate(accountId, credentialsId, region, job.id, resDetails, action, snapshot);
 
     return { jobId: job.id };
 }
@@ -1872,6 +1876,7 @@ async function performLifecycleUpdate(
     region: string,
     parentJobId: string,
     resourceDetails: HostAndDbInfo,
+    action: string,
     snapshot?: string
 ) {
     let status: string = JOBSTATUS.IN_PROGRESS;
@@ -1880,7 +1885,7 @@ async function performLifecycleUpdate(
     let clonedVolumes;
     let mountPaths;
     try {
-        await validateLifeCycleParams(accountId, credentialsId, region, parentJobId, resourceDetails);
+        await validateLifeCycleParams(accountId, credentialsId, region, parentJobId, resourceDetails, action);
 
         mappings = (await getMappings(
             accountId,
@@ -1957,7 +1962,7 @@ async function performLifecycleUpdate(
             parentJobId,
             resourceDetails,
             resourceDetails,
-            [mappings.data.volumeUuid, mappings.data.volumeUuid],
+            [mappings.data.volumeUuid, mappings.log.volumeUuid],
             []
         );
 
@@ -2001,7 +2006,8 @@ async function validateLifeCycleParams(
     credentialsId: string,
     region: string,
     parentJobId: string,
-    resourceDetails: HostAndDbInfo
+    resourceDetails: HostAndDbInfo,
+    action: string
 ) {
     logger.info('Validate lifecycle parameters', accountId, credentialsId, region, parentJobId, resourceDetails);
 
@@ -2011,8 +2017,12 @@ async function validateLifeCycleParams(
     const validationJob = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.SANDBOX,
         status,
-        name: `Validate lifecycle parameters for sandbox ${resourceDetails.database}`,
-        description: `Validate lifecycle parameters for sandbox ${resourceDetails.database}`,
+        name: `Validate ${action === 'REFRESH' ? 'Refresh' : 'Re-baseline'} parameters for sandbox ${
+            resourceDetails.database
+        }`,
+        description: `Validate ${action === 'REFRESH' ? 'Refresh' : 'Re-baseline'} parameters for sandbox ${
+            resourceDetails.database
+        }`,
         resourceName: resourceDetails.database,
         startTime: Date.now(),
         parentJobId
