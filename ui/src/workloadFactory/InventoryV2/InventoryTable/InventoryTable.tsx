@@ -2,7 +2,6 @@ import {
     DsFlashingDotsLoader,
     Table,
     TableTopBar,
-    TooltipInfo,
     Typography,
     useDialog,
     useTable
@@ -11,24 +10,20 @@ import { useNavigate } from 'react-router-dom';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
 import styles from './InventoryTable.module.scss';
-import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { WLF_TABS, STATUS_CONST, FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
+import { WLF_TABS, STATUS_CONST } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
-import { useRemoveMSSQLMutation } from '../../../utils/apiService';
-import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
 import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
 
-import { databaseTableSort, isSmbProtocol, expandTableRow } from '../../../utils/utilityFunctions';
+import { isSmbProtocol, expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
 import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
 import {
-    addDatabaseHostsData,
     setManagedHostColState,
     setSelectedHeaderTab
 } from '../../../store/workloadFactory/inventorySlice';
@@ -39,13 +34,8 @@ import {
 } from '../../../store/workloadFactory/createNewDBSlice';
 import {
     renderAllocatedCapacity,
-    renderCellData,
-    renderDeploymentModel,
-    renderEstimatedCost,
-    renderFileSystemType,
-    renderInstanceName,
-    renderProtectionColumn
-} from '../InventoryUtils';
+    renderEstimatedCost
+} from '../../Inventory/InventoryUtils';
 import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
 
@@ -53,34 +43,54 @@ const InventoryTable = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    const { databaseHostsData, databaseHostsLoading, fullHostDataLoading } = useAppSelector(
-        state => state.inventory.getDatabaseHosts
+    const inventoryTableData = useAppSelector(
+        state => state.inventoryV2.inventoryTableData
     );
-    const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
-    const { managedHostInitialColumns } = useAppSelector(state => state.inventory);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const [tableData, setTableData] = useState<any>([]);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
 
-    const [removeDatabaseHosts] = useRemoveMSSQLMutation();
-
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
     const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
+
+    useEffect(() => {
+        if (inventoryTableData) {
+            let result: any = [];
+            Object.keys(inventoryTableData).map((key: string) => {
+                let instanceList:any = [];
+                const allocatedCapacity = inventoryTableData[key]?.allocatedCapacity || '';
+                inventoryTableData[key]?.ec2Details?.map((row: any) => {
+                    instanceList.push(row?.name + " | " + row?.id);
+                });
+                const rowData = {
+                    ...inventoryTableData[key], 
+                    sqlServerInstancesText: "(" + inventoryTableData[key]?.managedInstance + " out of " + inventoryTableData[key]?.totalInstance + " managed)",
+                    instanceListText: instanceList.join(','),
+                    allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : ''
+                }
+                result.push(rowData);
+            });
+            setTableData(result);
+        } else {
+            setTableData([]);
+        }
+    }, [inventoryTableData]);
 
     const menuItems = (row: any) => {
         let isSmb = isSmbProtocol(row?.storage?.fsxn?.protocol);
         return [
             {
                 id: 'viewOverview',
-                displayName: 'View host overview',
+                displayName: 'View instance',
                 disabled: row?.status === STATUS_CONST.UP ? false : true
             },
             {
                 id: 'viewDatabaseList',
-                displayName: 'View databases list',
+                displayName: 'View databases',
                 disabled: row?.status === STATUS_CONST.UP ? false : true
             },
             {
@@ -90,57 +100,11 @@ const InventoryTable = () => {
                 infoText: isSmb ? GENERAL.SMB_PROTOCOL_DISABLED : ''
             },
             {
-                id: 'remove',
-                displayName: 'Remove',
+                id: 'unmanage',
+                displayName: 'Unmanage',
                 disabled: row?.status === STATUS_CONST.DOWN || isDemoMode ? false : true
             }
         ];
-    };
-
-    // To delete MSSQL Resources
-    const deleteMssqlResource = (id: string, type: string) => {
-        setResetPage(true);
-        // removeDatabaseHosts delete API call when data getting from database-hosts API
-        removeDatabaseHosts(id).then((data: any) => {
-            if (!data?.error) {
-                dispatch(setRefetchJobSummaryApi(true));
-                if (databaseHostsData) {
-                    let newList: any;
-                    newList = Object.keys(databaseHostsData)
-                        .filter(objKey => objKey !== id)
-                        .reduce((newObj: any, key) => {
-                            newObj[key] = databaseHostsData[key];
-                            return newObj;
-                        }, {});
-                    dispatch(addDatabaseHostsData(newList));
-                }
-            }
-        });
-    };
-
-    const handleRemoveDialog = (row: any) => {
-        setDialog(
-            <DialogComponent
-                header={`${GENERAL.REMOVE_DATABASE_HOST} "${row?.name || row?.id}"`}
-                content={<Typography variant="Regular_14">{`${GENERAL.REMOVE_CONFIG_TEXT}`}</Typography>}
-                primaryButton={GENERAL.REMOVE}
-                secondaryButton={GENERAL.CANCEL}
-                callback={() => {
-                    deleteMssqlResource(row?.id, row?.type);
-                }}
-                closeCallback={() => {
-                    closeDialog();
-                }}
-            />
-        );
-    };
-
-    const notAvailable = () => {
-        return (
-            <Typography variant="Regular_13" className={styles.colText}>
-                {GENERAL.NOT_AVAILABLE}
-            </Typography>
-        );
     };
 
     const ExpandedRow = ({ rowData }: any) => {
@@ -175,16 +139,25 @@ const InventoryTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
-                        <div
-                            className={styles.detectManage}
-                            onClick={() => {
-                                handleDialog();
-                            }}
-                        >
-                            <Typography variant="Regular_14" className={styles.textStyle}>
-                                Manage
-                            </Typography>
-                        </div>
+                        {!rowData?.actionDisable && 
+                            <div
+                                className={styles.detectManage}
+                                onClick={() => {
+                                    handleDialog();
+                                }}
+                            >
+                                <Typography variant="Regular_14" className={styles.textStyle}>
+                                    {rowData?.action}
+                                </Typography>
+                            </div>
+                        }
+                        {rowData?.actionDisable && (
+                            <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
+                                <Typography variant="Regular_14" className={styles.textStyle}>
+                                    {rowData?.action}
+                                </Typography>
+                            </div>
+                        )}
                     </>
                 );
             }
@@ -198,12 +171,10 @@ const InventoryTable = () => {
             accessor: 'name',
             width: '56px',
             isSticky: true,
-            renderCell: (value: any, rowData: any, { updateRowState, rowsState }: any) => {
+            renderCell: (cellData: any, rowData: any, { updateRowState, rowsState }: any) => {
                 const currentRowState = rowsState[rowData.id];
-                const statusType = rowData?.status.toLowerCase();
                 return (
                     <>
-                        <div className={`${styles.statusbar} ${styles[statusType]}`}>&nbsp;</div>
                         <div className={styles.arrow}>
                             <ArrowIcon
                                 className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
@@ -224,9 +195,8 @@ const InventoryTable = () => {
             isSortable: true,
             width: '228px',
             isSticky: true,
-            accessorForTextFilter: 'databaseHostname',
             renderCell: (cellData: any, rowData: any) => {
-                const name = rowData?.sqlServerInstances?.[0]?.sqlServerName || rowData?.name;
+                const name = rowData?.name;
                 return (
                     <div>
                         <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
@@ -248,14 +218,14 @@ const InventoryTable = () => {
                             <Typography variant="Regular_13">
                                 {rowData?.status}
                                 {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                {!rowData?.status && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+                                {!rowData?.status && !rowData?.loading && 'Unknown'}
                             </Typography>
-                            <div className={CommonStyles.separator} />
+                            {/* <div className={CommonStyles.separator} />
                             <Typography variant="Regular_13">
                                 {rowData?.topology?.serverType}
                                 {!rowData?.topology?.serverType && rowData?.loading && <DsFlashingDotsLoader />}
                                 {!rowData?.topology?.serverType && !rowData?.loading && GENERAL.NOT_AVAILABLE}
-                            </Typography>
+                            </Typography> */}
                         </div>
                     </div>
                 );
@@ -264,79 +234,95 @@ const InventoryTable = () => {
         {
             id: '2',
             Header: 'SQL server instances',
-            accessor: 'topology.fileSystemType',
+            accessor: 'totalInstance',
             width: '216px',
-            filterOptions: 'auto',
+            isSortable: true,
+            accessorForTextFilter: 'sqlServerInstancesText',
             renderCell: (cellData: string, rowData: any) => {
-                if (!cellData) {
-                    return renderFileSystemType(cellData, rowData);
-                } else {
-                    return cellData || GENERAL.NOT_AVAILABLE;
-                }
+                return (
+                    <div>
+                        {cellData && 
+                            <>
+                                <Typography variant="Semibold_14">{cellData + " instances"}</Typography>
+                                <Typography variant="Semibold_14">{rowData?.sqlServerInstancesText}</Typography>
+                            </> 
+                        }
+                        {!cellData && GENERAL.NOT_AVAILABLE}
+                    </div>
+                )
             }
         },
         {
             id: '3',
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'serverInstallationMode',
-            isSortable: true,
             width: '216px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                return renderDeploymentModel(cellData, rowData);
+                return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
         {
             id: '4',
             Header: GENERAL.DB_HOST_INSTANCE_NAME,
-            accessor: 'topology',
+            accessor: 'instanceListText',
             isSortable: true,
             width: '212px',
-            accessorForTextFilter: 'instanceNames',
+            accessorForTextFilter: 'instanceListText',
             renderCell: (cellData: any, rowData: any) => {
-                return renderInstanceName(cellData, rowData, styles);
-            }
-        },
-        {
-            id: '5',
-            Header: GENERAL.DB_HOST_VPC,
-            accessor: 'vpcNames',
-            isSortable: true,
-            width: '140px',
-            renderCell: (cellData: any, rowData: any) => {
-                let vpcName = '';
-                let vpcCidr = '';
-                if (rowData?.topology?.vpcName) {
-                    vpcName = rowData?.topology?.vpcName;
-                    vpcCidr = rowData?.topology?.vpcCidr;
-                } else if (rowData?.vpc?.name) {
-                    vpcName = rowData?.vpc?.name;
-                    vpcCidr = rowData?.vpc?.cidrBlock;
-                }
+                let instanceList:any = cellData ? cellData.split(',') : null;
                 return (
                     <>
-                        {vpcName && (
-                            <div className={styles.colText}>
-                                {vpcCidr && (
-                                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>{vpcCidr}</TooltipInfo>
+                        {instanceList && (
+                            <div>
+                                {instanceList?.[0] && (
+                                    <Typography variant="Regular_13" className={styles.colText}>
+                                        {instanceList[0]}
+                                    </Typography>
                                 )}
-                                <Typography variant="Regular_14">{vpcName}</Typography>
+                                {instanceList?.[1] && (
+                                    <Typography variant="Regular_13" className={styles.colText}>
+                                        {instanceList[1]}
+                                    </Typography>
+                                )}
                             </div>
                         )}
-                        {!vpcName && rowData?.loading && <DsFlashingDotsLoader />}
-                        {!vpcName && !rowData?.loading && notAvailable()}
+                        {!instanceList && rowData?.loading && <DsFlashingDotsLoader />}
+                        {!instanceList && !rowData?.loading && GENERAL.NOT_AVAILABLE}
                     </>
                 );
             }
         },
         {
+            id: '5',
+            Header: GENERAL.DB_HOST_VPC,
+            accessor: 'vpcName',
+            isSortable: true,
+            width: '140px',
+            renderCell: (cellData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
             id: '6',
             Header: 'SSM connectivity',
-            accessor: 'performanceText',
+            accessor: 'ssmState',
             width: '212px',
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
-                return renderCellData(cellData, rowData, styles);
+                return (
+                    <div className={styles.firstColText}>
+                        {rowData?.ssmState === 'connected' && (
+                            <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
+                        )}
+                        {rowData?.ssmState !== 'connected' && (
+                            <div className={`${styles.statusIcon} ${styles['circle']} ${styles['down']}`}></div>
+                        )}
+                        <Typography variant="Regular_13">
+                            {rowData?.ssmState === 'connected' ? 'Online' : 'Offline'}
+                        </Typography>
+                    </div>
+                );
             }
         },
         {
@@ -352,10 +338,10 @@ const InventoryTable = () => {
         {
             id: '8',
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
-            accessor: 'sizeformat',
+            accessor: 'allocatedCapacityText',
             isSortable: true,
             width: '216px',
-            accessorForTextFilter: 'sizeformat',
+            accessorForTextFilter: 'allocatedCapacityText',
             renderCell: (cellData: string | number, rowData: any) => {
                 return renderAllocatedCapacity(cellData, rowData);
             }
@@ -366,7 +352,7 @@ const InventoryTable = () => {
     const tableProps = useTable({
         isSorting: false,
         columns: DatabasesColDefs,
-        rows: databaseTableSort(databaseHostsList) || [],
+        rows: tableData,
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
@@ -414,7 +400,7 @@ const InventoryTable = () => {
                                     }
 
                                     if (menuId === 'remove') {
-                                        handleRemoveDialog(rowData);
+                                        // ToDo
                                     }
                                 }
                             }}
@@ -425,7 +411,7 @@ const InventoryTable = () => {
                 );
             }
         },
-        isLazyLoading: databaseHostsLoading || fullHostDataLoading
+        isLazyLoading: false
     });
 
     useEffect(() => {
@@ -450,7 +436,7 @@ const InventoryTable = () => {
 
     useEffect(() => {
         if (resetPage) {
-            if ((databaseHostsList || []).length % pageSize === 1) {
+            if ((tableData || []).length % pageSize === 1) {
                 tableProps.pagination?.gotoPage(0);
             }
         }
