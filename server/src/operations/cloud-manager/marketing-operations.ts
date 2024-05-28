@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import { compact, isEmpty } from 'lodash-es';
 import { getHostAndSqlServerInfo } from '../discover-operations';
-import { FileSystemTypes, HttpErrorCodes, SqlServerDeploymentModel } from '../../utils/consts';
+import { FileSystemTypes, HttpErrorCodes, SqlServerDeploymentModel, HOURS_IN_MONTH } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import getStorageSavings from '../../lib/cloud-manager/marketing';
 import { StorageSavingsRequestBodyType, StorageSavingsResponseType } from '../../routes/types/storage-savings.types';
@@ -521,7 +521,7 @@ async function formatStorageSavingsCalculationMetrics(
         ebsCalculation: {
             numberOfVolumes: ebsNumberOfVolumes,
             instanceAvgDuration,
-            hoursInAMonth: 730, // (365 * 24) / 12
+            hoursInAMonth: HOURS_IN_MONTH, // (365 * 24) / 12
             ebsCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
             storageAmountPerVol: convertToBytes(storageAmountPerVolSize, storageAmountPerVolUnit) || 0,
             totalInstanceHours,

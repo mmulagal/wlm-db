@@ -17,7 +17,8 @@ import {
     CUSTOM,
     SINGLE_AZ,
     SQL_SOFTWARE_TYPES,
-    SQL_STD
+    SQL_STD,
+    HOURS_IN_MONTH
 } from '../../utils/consts';
 import getProducts from '../../lib/aws/pricing';
 
@@ -33,7 +34,6 @@ interface ProductOutput {
     output: GetProductsCommandOutput;
 }
 
-const HOURS_IN_MONTH = 730;
 const DEFAULT_EBS_STORAGE = 100; // 100GB
 
 const AWS_PRICING_FORMAT_VERSION = {
