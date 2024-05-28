@@ -1819,15 +1819,15 @@ async function updateSandboxLifeCycle(
         host: databaseHostId
     };
 
-    performLifecycleUpdate(accountId, region, credentialsId, job.id, resDetails, snapshot);
+    performLifecycleUpdate(accountId, credentialsId, region, job.id, resDetails, snapshot);
 
     return { jobId: job.id };
 }
 
 async function performLifecycleUpdate(
     accountId: string,
-    region: string,
     credentialsId: string,
+    region: string,
     parentJobId: string,
     resourceDetails: HostAndDbInfo,
     snapshot?: string
