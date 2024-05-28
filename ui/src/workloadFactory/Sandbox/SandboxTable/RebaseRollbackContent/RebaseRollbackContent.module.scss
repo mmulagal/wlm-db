@@ -10,4 +10,13 @@
         width: 460px;
         position: fixed;
     }
+
+    .radioContainer {
+        height: 56px;
+        display: flex;
+        flex-direction: row;
+        gap: 40px;
+        background-color: var(--blue-10);
+        padding-left: 24px;
+    }
 }

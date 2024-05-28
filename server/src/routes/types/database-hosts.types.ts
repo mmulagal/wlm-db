@@ -359,6 +359,7 @@ const SandboxInfoResponse = Type.Object({
     createdAt: Type.Optional(Type.Number()),
     updatedAt: Type.Optional(Type.Number()),
     tag: Type.Optional(Type.String()),
+    baseSnapshot: Type.Optional(Type.String()),
     error: Type.Optional(Type.Any())
 });
 
@@ -390,6 +391,11 @@ const SplitEstimatesResponse = Type.Object({
             splitEstimate: Type.Number()
         })
     )
+});
+
+const SandboxLifeCycleBody = Type.Object({
+    snapshot: Type.Optional(Type.String()),
+    action: Type.String({ enum: ['REFRESH', 'RE-BASELINE'] })
 });
 
 export {
@@ -458,5 +464,6 @@ export {
     DatabaseMountPointResponseBody,
     DatabaseMountPointResponseType,
     SandboxParams,
-    SplitEstimatesResponse
+    SplitEstimatesResponse,
+    SandboxLifeCycleBody
 };

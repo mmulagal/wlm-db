@@ -1,0 +1,21 @@
+.refreshContent {
+    .secondLine {
+        margin-top: 24px;
+        width: 712px;
+    }
+    .rollbackContainer {
+        margin-top: 32px;
+    }
+}
+
+.list {
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+    flex-direction: column;
+
+    .listItem {
+        display: flex;
+        gap: 16px;
+    }
+}

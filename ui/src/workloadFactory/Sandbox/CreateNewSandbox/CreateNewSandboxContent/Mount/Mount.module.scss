@@ -20,8 +20,8 @@
     .autoAssignContent {
         display: flex;
         flex-direction: column;
-        gap: 24px;
-        margin-top: 24px;
+        gap: 32px;
+        margin: 48px 0 28px 0;
         .pathSection {
             display: flex;
             height: 41px;
@@ -40,8 +40,8 @@
     .defineMountPointContent {
         display: flex;
         flex-direction: column;
-        margin-top: 24px;
-        gap: 40px;
+        margin: 34px 0 28px 0;
+        gap: -4px;
 
         .defineMountPointRow {
             display: flex;

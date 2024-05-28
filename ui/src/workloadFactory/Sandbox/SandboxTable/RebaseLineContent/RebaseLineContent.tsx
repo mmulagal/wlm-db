@@ -1,29 +1,26 @@
 import { DsTypography } from '@netapp/design-system';
 import styles from './RebaseLineContent.module.scss';
-import RebaseRollbackContent from '../RebaseRollbackContent/RebaseRollbackContent';
+import { GENERAL } from '../../../../utils/appConstants';
+import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 
-const RebaseLineContent = ({ dialogType }: any) => {
+const RebaseLineContent = ({ databaseName }: any) => {
     return (
         <div className={styles.rebaseLineContent}>
             <DsTypography variant="Regular_14">
-                {dialogType === 'rebase'
-                    ? 'Are you sure you want to Re-baseline this sandbox for database'
-                    : 'Are you sure you want to refresh this sandbox for database'}
+                {GENERAL.REBASELINE_DIALOG_TITLE} <span style={{ fontWeight: '590' }}>{databaseName}</span>?
             </DsTypography>
             <DsTypography variant="Regular_14" className={styles.secondLine}>
-                {dialogType === 'rebase'
-                    ? 'This action will return the sandbox to the original version of the selected sandbox as it was at its creation, regardless of the changes made.'
-                    : 'This action will update the selected sandbox so that it is equivalent to the source database at the current moment.'}
-            </DsTypography>
-
-            <DsTypography variant="Regular_14" className={styles.secondLine}>
-                Any changes you made to the sandbox will be deleted.
-            </DsTypography>
-            {dialogType === 'refresh' && (
-                <div className={styles.rollbackContainer}>
-                    <RebaseRollbackContent />
+                <div className={styles.list}>
+                    <div className={styles.listItem}>
+                        <Bullet />
+                        <div className={styles.textWidth}>{GENERAL.REBASELINE_DIALOG_FIRST_BULLET}</div>
+                    </div>
+                    <div className={styles.listItem}>
+                        <Bullet />
+                        <div className={styles.textWidth}>{GENERAL.REBASELINE_DIALOG_SECOND_BULLET}</div>
+                    </div>
                 </div>
-            )}
+            </DsTypography>
         </div>
     );
 };
