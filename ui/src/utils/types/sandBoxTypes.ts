@@ -76,6 +76,7 @@ export interface SandboxItemEntities {
     createdAt: string;
     tag: string;
     error: string;
+    baseSnapshot: string;
 }
 
 export interface SandboxEntities {

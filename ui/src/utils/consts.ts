@@ -298,7 +298,7 @@ export const DRIVE_LETTER_TYPE = {
 
 export const DEPLOY_ENDPOINT = '/cloudformation/deploy';
 export const CREATE_DB_ENDPOINT = (databaseHostId: any) => `/database-hosts/${databaseHostId}/database`;
-export const CREATE_SANDBOX_ENDPOINT = '/sandbox';
+export const CREATE_SANDBOX_ENDPOINT = '/sandboxes';
 
 export const CREATE_DB_CURL_REQ_TEMPLATE = (
     baseUrl: string,
@@ -321,7 +321,22 @@ export const CREATE_SANDBOX_CURL_REQ_TEMPLATE = (
     token: string,
     payload: any
 ) => `
-curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/sandbox' \\
+curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/sandboxes' \\
+--header 'Authorization: Bearer ${token}' \\
+--header 'Content-Type: application/json' \\
+--data-raw '${payload}'
+`;
+
+export const UPDATE_SANDBOX_CURL_REQ_TEMPLATE = (
+    baseUrl: string,
+    credentialId: string,
+    region: string,
+    databaseHostId: string,
+    sandboxName: string,
+    token: string,
+    payload: any
+) => `
+curl --location --request PATCH '${baseUrl}/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}' \\
 --header 'Authorization: Bearer ${token}' \\
 --header 'Content-Type: application/json' \\
 --data-raw '${payload}'
