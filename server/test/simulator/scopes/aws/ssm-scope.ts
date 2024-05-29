@@ -46,7 +46,8 @@ import {
     addExtendedProperties,
     cleanUpOntapResources,
     mountPointQuery,
-    getStorageSavingsFromOntap
+    getStorageSavingsFromOntap,
+    detachDbAndRemoveAccessPath
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
 
@@ -360,6 +361,17 @@ const cleanUpOntapResourcesCommand = {
 
 const mountPointQueryCommand = { commands: [mountPointQuery('.', 'test-database')] };
 
+const detachDbAndRemoveAccessPathCommand = {
+    commands: [
+        detachDbAndRemoveAccessPath(
+            'test-db',
+            '["123456789", "987654321"]',
+            '["S:\\test-db-Data", "L:\\test-db-Log"]',
+            '.'
+        )
+    ]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -466,6 +478,8 @@ ssmMock
     .on(SendCommandCommand, { Parameters: cleanUpOntapResourcesCommand })
     .resolves(listSendCommandCommandResponse.cleanupOntapResource)
     .on(SendCommandCommand, { Parameters: mountPointQueryCommand })
+    .resolves(listSendCommandCommandResponse.mountPointQuery)
+    .on(SendCommandCommand, { Parameters: detachDbAndRemoveAccessPathCommand })
     .resolves(listSendCommandCommandResponse.mountPointQuery);
 
 ssmMock
@@ -574,7 +588,9 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-cleanupOntapResource' })
     .resolves(getCommandInvocationResponse.cleanupOntapResourceResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-mountPointQueryCommand' })
-    .resolves(getCommandInvocationResponse.mountPointQueryCommandResponse);
+    .resolves(getCommandInvocationResponse.mountPointQueryCommandResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-detachDbAndAcessPathQuery' })
+    .resolves(getCommandInvocationResponse.detachDbAndAccessPathResp);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
