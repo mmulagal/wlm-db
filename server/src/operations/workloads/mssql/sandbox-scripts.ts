@@ -973,7 +973,7 @@ const detachDbAndRemoveAccessPath = (
         
         if ($sqlres -ne $null) {
             Write-Debug "Database $dbname is in use"
-            $responseObject['error'] = 'Database $dbname is in use'
+            $responseObject['error'] = "Database $dbname is in use"
             return $responseObject | ConvertTo-Json -Depth 5
         }
 

@@ -1849,7 +1849,7 @@ async function updateSandboxLifeCycle(
         name: `${action === 'REFRESH' ? 'Refresh' : 'Re-baseline'} sandbox ${databaseName}`,
         description: `${
             action === 'REFRESH' ? 'Refresh' : 'Re-baseline'
-        } sandbox ${databaseName} in the host ${databaseHostId}`,
+        } sandbox ${databaseName} in the host ${resourceName}`,
         initiator: 'SYSTEM',
         type: JOBTYPE.SANDBOX,
         status: JOBSTATUS.IN_PROGRESS,
@@ -2124,6 +2124,7 @@ async function detachSandboxAndAccessPath(
         logger.error('Failed to detach sandbox and access path', e);
         status = JOBSTATUS.FAILED;
         errMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg);
     } finally {
         await updateJobDetails(accountId, credentialsId, region, detachJob.id, {
             status,
@@ -2191,6 +2192,7 @@ async function reAttachSandboxAndAccessPath(
         logger.error('Failed to detach sandbox and access path', e);
         status = JOBSTATUS.FAILED;
         errMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg);
     } finally {
         await updateJobDetails(accountId, credentialsId, region, detachJob.id, {
             status,
