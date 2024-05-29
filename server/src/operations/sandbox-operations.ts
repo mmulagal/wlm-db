@@ -1172,17 +1172,14 @@ async function createExtendedProperties(
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             // this is used to retreive the newly created user databases in database list for demo using meta data
+            const props = {
+                databaseName: destDetails.database,
+                ...extendedProps
+            } as Sandbox;
             const updatedMetadata: Metadata = await updateSandboxDBIntoResourceData(
                 accountId,
                 srcDetails.host,
-                {
-                    databaseName: destDetails.database,
-                    source: `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`,
-                    createdAt: Date.now(),
-                    updatedAt: Date.now(),
-                    tag: (extendedProps?.tag || 'Other') as string,
-                    baseSnapshot: `netapp_wf_${Date.now()}`
-                },
+                props,
                 srcDetails.metadata
             );
 
@@ -2408,6 +2405,7 @@ async function splitVolumes(
         type: JOBTYPE.SANDBOX,
         status,
         resourceName: resourceDetail.database,
+        parentJobId,
         startTime: Date.now()
     });
 
@@ -2474,7 +2472,7 @@ async function deleteExtendedProperties(
     });
 
     try {
-        const command = [
+        let command = [
             deleteExtendedPropertiesScript(resourceDetail.database, resourceDetail.instanceName, [
                 'cloned_by',
                 'baseSnapshot',
@@ -2486,10 +2484,34 @@ async function deleteExtendedProperties(
             ])
         ];
 
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            command = [
+                deleteExtendedPropertiesScript('test-db', '.', [
+                    'cloned_by',
+                    'baseSnapshot',
+                    'source',
+                    'createdAt',
+                    'updatedAt',
+                    'tag',
+                    'accountId'
+                ])
+            ];
+        }
+
         const resp = await callSsmExecution(credentialsId, region, command, resourceDetail.activeNodeInstanceId);
 
         if (resp) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to delete the extended properties');
+        }
+
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            await updateMetadataForSanboxDeletion(
+                accountId,
+                credentialsId,
+                region,
+                resourceDetail.host,
+                resourceDetail.database
+            );
         }
 
         status = JOBSTATUS.COMPLETED;

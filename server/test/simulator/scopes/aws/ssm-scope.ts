@@ -47,7 +47,8 @@ import {
     cleanUpOntapResources,
     mountPointQuery,
     getStorageSavingsFromOntap,
-    detachDbAndRemoveAccessPath
+    detachDbAndRemoveAccessPath,
+    deleteExtendedPropertiesScript
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
 
@@ -372,6 +373,20 @@ const detachDbAndRemoveAccessPathCommand = {
     ]
 };
 
+const deleteExtendedPropertiesCommand = {
+    commands: [
+        deleteExtendedPropertiesScript('test-db', '.', [
+            'cloned_by',
+            'baseSnapshot',
+            'source',
+            'createdAt',
+            'updatedAt',
+            'tag',
+            'accountId'
+        ])
+    ]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -480,7 +495,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: mountPointQueryCommand })
     .resolves(listSendCommandCommandResponse.mountPointQuery)
     .on(SendCommandCommand, { Parameters: detachDbAndRemoveAccessPathCommand })
-    .resolves(listSendCommandCommandResponse.mountPointQuery);
+    .resolves(listSendCommandCommandResponse.mountPointQuery)
+    .on(SendCommandCommand, { Parameters: deleteExtendedPropertiesCommand })
+    .resolves(listSendCommandCommandResponse.deleteExtendedProperties);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -590,7 +607,9 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-mountPointQueryCommand' })
     .resolves(getCommandInvocationResponse.mountPointQueryCommandResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-detachDbAndAcessPathQuery' })
-    .resolves(getCommandInvocationResponse.detachDbAndAccessPathResp);
+    .resolves(getCommandInvocationResponse.detachDbAndAccessPathResp)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-deleteExtendedProperties' })
+    .resolves(getCommandInvocationResponse.deleteExtendedPropertiesResp);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
