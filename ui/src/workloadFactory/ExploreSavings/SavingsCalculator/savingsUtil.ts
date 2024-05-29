@@ -739,7 +739,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Storage amount per volume',
                 value: `${viewCalculation.ebsCalculation.storageAmountPerVol}`,
-                text: `Storage amount per volume (${viewCalculation.fsxOntapCalculation.ebsCapacity})`
+                text: `Storage amount per volume (${viewCalculation.ebsCalculation.storageAmountPerVol})`
             },
 
             {
