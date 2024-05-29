@@ -77,7 +77,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     SandboxApis();
 
     useEffect(() => {
-        dispatch(setSelectedHeaderTab(tab));
+        dispatch(setSelectedHeaderTab(selectedHeaderTab ? selectedHeaderTab : tab));
     }, []);
 
     useEffect(() => {
