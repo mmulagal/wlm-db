@@ -19,7 +19,7 @@
     ],
     "homepage": {
         "description": "Deploy databases end-to-end with built-in best practices for optimization. Automate thin cloning, enable application aware backup and disaster recovery, monitor and resolve database health issues.",
-        "primaryCtaLabel": "Deploy database",
+        "primaryCtaLabel": "Deploy database host",
         "primaryCtaTo": "/databases/add-working-environment/database-services/mssql/create",
         "secondaryCtaLabel": "Go to Databases inventory",
         "secondaryCtaTo": "/databases/inventory",
