@@ -269,7 +269,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
-        .patch(
+        .post(
             `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName/split`,
             { schema: SandboxSplitSchema },
             async (request, reply) => {
