@@ -70,6 +70,9 @@ $sqlServiceBinaryPath = $sqlService.PathName  -Replace "-s.*", ""
 If ($SQLInstanceNames -NotContains "MSSQLSERVER") {
     $SQLInstanceName = $SQLInstanceNames[0]
 }
+If(!$SQLInstanceName) {
+    $SQLInstanceName = "MSSQLSERVER"
+    }
 Write-Output "SQL instance name $SQLInstanceName."
 
 # Instance name to be passed to sqlcmd
