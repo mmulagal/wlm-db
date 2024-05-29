@@ -452,9 +452,7 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
             changeRateBetweenClones: formatNumbers(
                 viewCalculationsResponse?.fsxCloneCalculation?.changeRateBetweenClones
             ),
-            totalFsxnCapacity: formatCalcSize(
-                viewCalculationsResponse?.fsxCloneCalculation?.totalFsxnCapacity
-            ),
+            totalFsxnCapacity: formatCalcSize(viewCalculationsResponse?.fsxCloneCalculation?.totalFsxnCapacity),
             fsxnSsdPrice: formatNumbers(viewCalculationsResponse?.fsxCloneCalculation?.fsxnSsdPrice?.price),
             cloneRefreshFrequency: viewCalculationsResponse?.fsxCloneCalculation?.cloneRefreshFrequency,
             monthlyChangeRatePercentage: formatNumbers(
@@ -486,6 +484,8 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
             throughput: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.throughput),
             totalCloneMonthlyCost: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.totalCloneMonthlyCost)
         },
+        totalFsxEc2MachineCost: GENERAL.NOT_AVAILABLE, // ToDo
+        totalEBSEc2MachineCost: GENERAL.NOT_AVAILABLE, // ToDo
         fsxTotalCost: totalFsxCost,
         ebsTotalCost: totalEbsCost,
         fsxSnapshotTotalCost: totalFsxSnapshotCost

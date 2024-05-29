@@ -267,13 +267,13 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `$${viewCalculation.fsxInstanceCalculation?.[1]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.fsxInstanceCalculation?.[1]?.instanceHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine2 cost',
-                          value: `$${viewCalculation.fsxInstanceCalculation?.[1]?.ec2MachineCost}`,
-                          text: `Instance hourly price x number of hours in a month = $${viewCalculation.fsxInstanceCalculation?.[1]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.fsxInstanceCalculation?.[1]?.ec2MachineCost}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[1]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
                       }
                   ]
                 : [
@@ -613,15 +613,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Total monthly cost',
                 value: `$${viewCalculation.fsxTotalCost}`,
-                text: `Total EC2 cost ($${
-                    selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-                        ? 2 * viewCalculation.fsxInstanceCalculation?.[0].ec2MachineCost
-                        : viewCalculation.fsxInstanceCalculation?.[0].ec2MachineCost
-                }) + Total throughput and IOPS cost ($${
-                    viewCalculation.fsxOntapCalculation.totalThroughputAndIopsMonthly
-                })  + Total Storage cost ($${
-                    viewCalculation.fsxOntapCalculation.totalMonthlyStorageCharge
-                }) + Total Clone cost ($${viewCalculation.fsxCloneCalculation.totalCloneMonthlyCost})`
+                text: `Total EC2 cost (${viewCalculation.totalFsxEc2MachineCost}) + Total throughput and IOPS cost ($${viewCalculation.fsxOntapCalculation.totalThroughputAndIopsMonthly})  + Total Storage cost ($${viewCalculation.fsxOntapCalculation.totalMonthlyStorageCharge}) + Total Clone cost ($${viewCalculation.fsxCloneCalculation.totalCloneMonthlyCost})`
             }
         ]
     };
@@ -868,17 +860,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Amazon Elastic Block Storage (EBS) total cost (monthly)',
                 value: `$${viewCalculation.ebsCalculation.ebsTotalCostMonthly}`,
-                text: `Total EC2 cost ($${
-                    selectedDeploymentModel !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-                        ? 2 * viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost
-                        : viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost
-                }) + EBS snapshot cost ($${
-                    viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost
-                }) + EBS throughput cost ($${viewCalculation.ebsCalculation.ebsThroughputCost}) + EBS IOPS cost ($${
-                    viewCalculation.ebsCalculation.ebsIopsCost
-                }) + EBS storage cost ($${viewCalculation.ebsCalculation.ebsStorageCost}) + EBS clone cost ($${
-                    viewCalculation.ebsCloneCalculation.totalCloneMonthlyCost
-                })`
+                text: `Total EC2 cost (${viewCalculation.totalEBSEc2MachineCost}) + EBS snapshot cost ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost}) + EBS throughput cost ($${viewCalculation.ebsCalculation.ebsThroughputCost}) + EBS IOPS cost ($${viewCalculation.ebsCalculation.ebsIopsCost}) + EBS storage cost ($${viewCalculation.ebsCalculation.ebsStorageCost}) + EBS clone cost ($${viewCalculation.ebsCloneCalculation.totalCloneMonthlyCost})`
             }
         ]
     };
@@ -1038,4 +1020,16 @@ export const ExploreSaveConfiguration = (
             });
     }
     return '';
+};
+
+export const mergeAoagVolumesList = (listA: any, listB: any) => {
+    let mergedList: any = [];
+    if (listA && listB) {
+        mergedList = [...listA, ...listB];
+    } else if (listA) {
+        mergedList = [...listA];
+    } else if (listB) {
+        mergedList = [...listB];
+    }
+    return mergedList;
 };

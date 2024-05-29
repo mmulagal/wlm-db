@@ -6,9 +6,12 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
 import { formatSizeTwoPrecision } from '../../../../utils/utilityFunctions';
+import { mergeAoagVolumesList } from '../savingsUtil';
 
 const SelectedVolumeSummary = () => {
-    const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
+    const { selectedHostDetails, selectedPartnerHostDetails, getPartnerHostDetailsLoading } = useAppSelector(
+        state => state.exploreSavings
+    );
     const [tableData, setTableData] = useState<any>([]);
     const [loading, setLoading] = useState(false);
 
@@ -87,7 +90,7 @@ const SelectedVolumeSummary = () => {
                 id: id,
                 width: colWidth,
                 renderCell: (cellData: any, rowData: any) => {
-                    return selectedHostDetails?.loading ? (
+                    return selectedHostDetails?.loading || getPartnerHostDetailsLoading ? (
                         <DsFlashingDotsLoader />
                     ) : (
                         <DsTypography variant="Regular_14">{cellData}</DsTypography>
@@ -102,12 +105,12 @@ const SelectedVolumeSummary = () => {
     };
 
     useEffect(() => {
-        setLoading(selectedHostDetails?.loading);
+        setLoading(selectedHostDetails?.loading || getPartnerHostDetailsLoading);
 
-        if (!selectedHostDetails?.ebsResourceInfo) {
-            return;
-        }
-
+        let mergedEbsResourceInfo = mergeAoagVolumesList(
+            selectedHostDetails?.ebsResourceInfo,
+            selectedPartnerHostDetails?.ebsResourceInfo
+        );
         let header = {};
         let volumes: any = { details: GENERAL.ES_TOTAL_VOLUMES, id: '1' };
         let storageAmount: any = { details: GENERAL.ES_TOTAL_STORAGE_AMOUNT, id: '2' };
@@ -116,7 +119,7 @@ const SelectedVolumeSummary = () => {
 
         let volTypeList: any = [];
 
-        selectedHostDetails?.ebsResourceInfo?.map((row: any) => {
+        mergedEbsResourceInfo?.map((row: any) => {
             if (row?.volumeType && !volTypeList.find((volType: any) => volType === row?.volumeType)) {
                 volTypeList.push(row?.volumeType);
                 header = { ...header, [row?.volumeType]: true };
@@ -136,7 +139,7 @@ const SelectedVolumeSummary = () => {
         });
 
         const colWidth = getColumnsWidth(volTypeList);
-        getColumnsList(volTypeList, colWidth, selectedHostDetails?.ebsResourceInfo);
+        getColumnsList(volTypeList, colWidth, mergedEbsResourceInfo);
 
         setTimeout(() => {
             storageAmount = Object.keys(storageAmount).reduce((newObj: any, key) => {
@@ -151,7 +154,7 @@ const SelectedVolumeSummary = () => {
             let data = [volumes, storageAmount, iops, throughput];
             setTableData(data);
         }, 0);
-    }, [selectedHostDetails]);
+    }, [selectedHostDetails, selectedPartnerHostDetails]);
 
     const tableProps = useTable({
         //@ts-ignore
