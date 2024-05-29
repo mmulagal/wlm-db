@@ -5,14 +5,16 @@ import {
     DiscoverCredentialsSchema,
     MsSqlInstancesSchema,
     ManageMsSqlSchema,
-    PrepareForManageSchema
+    PrepareForManageSchema,
+    UnManageMsSqlSchema
 } from './schemas/discover-schemas';
 import {
     fetchUnmanagedHostsInformation,
     getHostAndSqlServerInfo,
     manageSqlServer,
     validateAndStoreDiscoveredParameters,
-    prepareForManage
+    prepareForManage,
+    unmanageResource
 } from '../operations/discover-operations';
 
 import getLogger from '../utils/logger';
@@ -86,4 +88,14 @@ export default function discoverRoutes(fastify: FastifyInstance) {
             return { jobId: apiInfo };
         }
     );
+
+    server.delete('/v1/credentials/:credentialsId/mssql', { schema: UnManageMsSqlSchema }, async request => {
+        const {
+            params: { accountId, credentialsId },
+            body: { resourceId, databaseInstanceIds }
+        } = request;
+
+        const response = await unmanageResource(accountId, credentialsId, resourceId, databaseInstanceIds || []);
+        return response;
+    });
 }

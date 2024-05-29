@@ -7,7 +7,7 @@ import { attempt, compact, uniqBy, isEmpty } from 'lodash-es';
 import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
-import { createResource } from '../lib/database/db';
+import { createResource, deleteResource, deleteDatabaseInstance, listDatabaseInstances } from '../lib/database/db';
 import { getResources } from './database/database-operations';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
 import { getResourceNameFromTags, sleep, getArtifactsRegionBucketName } from '../utils/utils';
@@ -1455,10 +1455,76 @@ async function preparePsModulesForManage(
     return jobStatusRecord.status;
 }
 
+async function unmanageResource(
+    accountId: string,
+    credentialsId: string,
+    resourceId: string,
+    databaseInstanceIds: string[]
+) {
+    logger.info('Unmanaging resource', { accountId, credentialsId, resourceId, databaseInstanceIds });
+
+    interface DatabaseInstance {
+        id: string;
+        account_id: string;
+        credentials_id: string;
+        resource_id: string;
+        sql_instance_id: string;
+        sql_instance_name: string;
+        fsxn_ids: string;
+        is_default: boolean;
+        created_time: Date;
+        updated_time: Date;
+    }
+
+    let dbOperationsStatus: { count: number } = { count: 0 };
+    const preDeleteDatabaseInstances: DatabaseInstance[] = await listDatabaseInstances(accountId, credentialsId, {});
+    let resourceOperationStatus: string = '';
+    const databaseInstanceResponse: {
+        databaseInstanceId: string;
+        status: string;
+        errorMessage?: string;
+    }[] = [];
+
+    if (isEmpty(databaseInstanceIds)) {
+        dbOperationsStatus = await deleteResource(accountId, resourceId);
+        resourceOperationStatus = dbOperationsStatus.count === 0 ? 'failure' : 'success';
+    } else {
+        dbOperationsStatus = await deleteDatabaseInstance(accountId, credentialsId, resourceId, databaseInstanceIds);
+
+        const postDeleteDatabaseInstances: DatabaseInstance[] = await listDatabaseInstances(
+            accountId,
+            credentialsId,
+            {}
+        );
+
+        databaseInstanceIds.forEach(databaseInstanceId => {
+            if (preDeleteDatabaseInstances.some(elem => elem.sql_instance_id === databaseInstanceId)) {
+                if (postDeleteDatabaseInstances.some(elem => elem.sql_instance_id === databaseInstanceId)) {
+                    databaseInstanceResponse.push({ databaseInstanceId, status: 'failure' });
+                } else {
+                    databaseInstanceResponse.push({ databaseInstanceId, status: 'success' });
+                }
+            } else {
+                databaseInstanceResponse.push({
+                    databaseInstanceId,
+                    status: 'failure',
+                    // eslint-disable-next-line quotes
+                    errorMessage: "Instance does't exist."
+                });
+            }
+        });
+    }
+    return {
+        resourceId,
+        ...(resourceOperationStatus && { status: resourceOperationStatus }),
+        items: databaseInstanceResponse
+    };
+}
 export {
     getHostAndSqlServerInfo,
     validateAndStoreDiscoveredParameters,
     fetchUnmanagedHostsInformation,
     manageSqlServer,
-    prepareForManage
+    prepareForManage,
+    unmanageResource
 };

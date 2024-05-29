@@ -120,6 +120,27 @@ const DiscoverMsSqlResponseBody = Type.Object({
     )
 });
 
+const UnManageRequestBody = Type.Composite([
+    Type.Object({
+        resourceId: Type.String({ description: 'Workload Factory resource ID.', minLength: 1 }),
+        databaseInstanceIds: Type.Array(
+            Type.Optional(Type.String({ description: 'List of MS SQL Server database instance IDs.' }))
+        )
+    })
+]);
+
+const MultiInstanceManagementResponseBody = Type.Object({
+    resourceId: Type.String({ description: 'Workload Factory resource ID.' }),
+    status: Type.Optional(Type.String({ description: 'Status of resource unmanage operation.' })),
+    items: Type.Array(
+        Type.Object({
+            databaseInstanceId: Type.String({ description: 'SQL Server database instance ID.' }),
+            status: Type.String({ description: 'Status of database instance unmanage operation.' }),
+            errorMessage: Type.Optional(Type.String({ description: 'Error details, if any, of a failed unmanage.' }))
+        })
+    )
+});
+
 const ManageMsSqlResponseBody = Type.Object({
     resourceId: Type.String({ description: 'ID of the managed resource' })
 });
@@ -177,5 +198,7 @@ export {
     DiscoverCredentialsType,
     MsSqlInstancesRequestQuery,
     DiscoverCredentialsResponse,
-    PrepareResourceResponseBody
+    PrepareResourceResponseBody,
+    UnManageRequestBody,
+    MultiInstanceManagementResponseBody
 };
