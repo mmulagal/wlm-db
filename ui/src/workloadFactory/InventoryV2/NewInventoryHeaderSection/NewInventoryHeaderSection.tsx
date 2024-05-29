@@ -7,19 +7,18 @@ import NewInventoryChart from './NewInventoryChart/NewInventoryChart';
 
 const NewInventoryHeaderSection = () => {
     // const navigate = useNavigate();
-    const isDiscoverInProgress = useAppSelector(state => state.inventory.discoveredHosts.discoverHostLoading);
-    const isManagedHostListLoading = useAppSelector(state => state.inventory.isManagedHostListLoading);
-    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
-    const { unManagedHosts, unIdentifiableHosts } = useAppSelector(state => state.inventory);
-    const databaseHostsList: any = useAppSelector(state => state.databaseHome.databaseHostsList);
+    const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
+    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
+    const { inventoryChartData, isManagedHostListLoading } = useAppSelector(state => state.inventoryV2);
+
     return (
         <div className={styles.chartSection}>
             <div className={styles.firstPart}>
                 <NewInventoryChart
                     color1={'#68C6B3'}
                     color2={'#5E8DCD'}
-                    data1={(databaseHostsList?.length || 0) + unManagedHosts.length}
-                    data2={unIdentifiableHosts.length}
+                    data1={inventoryChartData?.detectedHost}
+                    data2={inventoryChartData?.undetectedHost}
                     centerText={'Hosts'}
                 />
 
@@ -31,7 +30,7 @@ const NewInventoryHeaderSection = () => {
                     <div className={styles.valueArea}>
                         <div className={styles.firstBlock}>
                             <SquareComponent
-                                value={((databaseHostsList || [])?.length || 0) + unManagedHosts.length}
+                                value={String(inventoryChartData?.detectedHost || 0)}
                                 color="var(--chart-4)"
                                 text={GENERAL.DETECTED_HOSTS}
                                 isLoading={isDiscoverInProgress || isManagedHostListLoading}
@@ -42,7 +41,7 @@ const NewInventoryHeaderSection = () => {
 
                         <div className={styles.secondBlock}>
                             <SquareComponent
-                                value={unIdentifiableHosts.length}
+                                value={String(inventoryChartData?.undetectedHost || 0)}
                                 color="var(--chart-2)"
                                 text={GENERAL.UNIDENTIFIABLE_HOSTS}
                                 isLoading={isDiscoverInProgress || isManagedHostListLoading}
@@ -56,8 +55,8 @@ const NewInventoryHeaderSection = () => {
                 <NewInventoryChart
                     color1={'#A815F3'}
                     color2={'#DE9EFF'}
-                    data1={databaseHostsList?.length || 0}
-                    data2={unManagedHosts.length}
+                    data1={inventoryChartData?.managedInstance}
+                    data2={inventoryChartData?.unmanagedInstance}
                     centerText={'Instances'}
                 />
 
@@ -69,7 +68,7 @@ const NewInventoryHeaderSection = () => {
                     <div className={styles.valueArea}>
                         <div className={styles.thirdBlock}>
                             <SquareComponent
-                                value={((databaseHostsList || [])?.length || 0).toString()}
+                                value={String(inventoryChartData?.managedInstance || 0)}
                                 color="var(--chart-9)"
                                 text={GENERAL.MANAGED_INSTANCES}
                                 isLoading={databaseHostsLoading || fullHostDataLoading}
@@ -80,7 +79,7 @@ const NewInventoryHeaderSection = () => {
 
                         <div className={styles.secondBlock}>
                             <SquareComponent
-                                value={unManagedHosts.length}
+                                value={String(inventoryChartData?.unmanagedInstance || 0)}
                                 color="#DE9EFF"
                                 text={GENERAL.UNMANAGED_INSTANCES}
                                 isLoading={isDiscoverInProgress || isManagedHostListLoading}

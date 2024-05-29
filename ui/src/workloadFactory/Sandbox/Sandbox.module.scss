@@ -3,6 +3,9 @@
     width: 100vw;
     background-color: var(--main-background);
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 
     .loaderOverlay {
         position: absolute;
@@ -24,7 +27,7 @@
 
     .sandboxSecondLevel {
         margin-top: 24px;
-        margin-left: 120px;
+
         display: flex;
         gap: 24px;
     }

@@ -41,6 +41,8 @@ import ViewCalculations from '../../ExploreSavings/ViewCalculations/ViewCalculat
 import SavingsCalculatorApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorApi';
 import { setSavingsCalculatorRefresh } from '../../../store/workloadFactory/exploreSavingsSlice';
 import SandboxApis from '../../Sandbox/SandboxApis';
+import InventoryV2 from '../../InventoryV2/InventoryV2';
+import InventoryApisV2 from '../../InventoryV2/InventoryApisV2';
 
 type Tab = {
     tab: string;
@@ -61,16 +63,27 @@ const HeaderComponent = ({ tab }: Tab) => {
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
 
     HeaderComponentApi();
-    InventoryApis();
+    if (isInventoryV2) {
+        InventoryApisV2();
+    } else {
+        InventoryApis();
+    }
     DatabaseHomeApis();
     JobMonitoringApi();
     SavingsCalculatorApi();
     SandboxApis();
 
     useEffect(() => {
-        dispatch(setSelectedHeaderTab(tab));
+        let tabValue = '';
+        if (tab === WLF_TABS.INVENTORY) {
+            tabValue = WLF_TABS.INVENTORY;
+        } else {
+            tabValue = selectedHeaderTab;
+        }
+        dispatch(setSelectedHeaderTab(tabValue));
     }, []);
 
     useEffect(() => {
@@ -338,7 +351,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                 </div>
                 <div className={styles.extraSpace} />
                 {selectedHeaderTab === WLF_TABS.DASHBOARD && <DatabaseHomePage />}
-                {selectedHeaderTab === WLF_TABS.INVENTORY && <Inventory />}
+                {selectedHeaderTab === WLF_TABS.INVENTORY && !isInventoryV2 && <Inventory />}
+                {selectedHeaderTab === WLF_TABS.INVENTORY && isInventoryV2 && <InventoryV2 />}
                 {selectedHeaderTab === WLF_TABS.JOB_MONITORING && <JobMonitoring />}
                 {selectedHeaderTab === WLF_TABS.OVERVIEW && <DatabaseHostOverview />}
                 {selectedHeaderTab === WLF_TABS.SANDBOXES && <Sandbox />}

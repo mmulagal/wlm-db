@@ -20,9 +20,8 @@ type ChartType = {
 const NewInventoryChart = ({ color1, color2, data1, data2, centerText }: ChartType) => {
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
-    const { unManagedHosts, unIdentifiableHosts } = useAppSelector(state => state.inventory);
-    const databaseHostsList: any = useAppSelector(state => state.databaseHome.databaseHostsList);
-    const { discoverHostLoading } = useAppSelector(state => state.inventory.discoveredHosts);
+    const { inventoryChartData } = useAppSelector(state => state.inventoryV2);
+    const { discoverHostLoading } = useAppSelector(state => state.inventoryV2.discoveredHosts);
 
     const doughnutOptions = {
         plugins: {
@@ -57,15 +56,15 @@ const NewInventoryChart = ({ color1, color2, data1, data2, centerText }: ChartTy
                 myDoughnut.destroy();
             }
         };
-    }, [databaseHostsList, unManagedHosts, unIdentifiableHosts]);
+    }, [inventoryChartData]);
 
-    const totalHosts = (databaseHostsList?.length || 0) + unManagedHosts.length + unIdentifiableHosts.length;
+    const totalHosts = (data1 || 0) + (data2 || 0);
 
     return (
         <div className={styles.inventoryChart} id="chart-item">
             <div className={styles['center-text']}>
                 <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                    {(databaseHostsList?.length || 0) + unManagedHosts.length + unIdentifiableHosts.length}
+                    {totalHosts}
                 </Typography>
                 <Typography variant="Regular_14">{centerText}</Typography>
                 {discoverHostLoading && <DsFlashingDotsLoader />}

@@ -7,7 +7,15 @@ import { ReactComponent as DownloadIcon } from '@netapp/icons/ic_download.svg';
 import styles from './ViewDialog.module.scss';
 import { downloadObjectAsJson } from '../../utils/utilityFunctions';
 
-const ViewDialog = ({ data, isDownload = false }: { data: string | any; isDownload?: boolean }) => {
+const ViewDialog = ({
+    data,
+    isDownload = false,
+    copyResponseData
+}: {
+    data: string | any;
+    isDownload?: boolean;
+    copyResponseData?: () => void;
+}) => {
     return (
         <div className={styles['dialog-content']}>
             <div className={styles['dialog-body']}>
@@ -22,7 +30,7 @@ const ViewDialog = ({ data, isDownload = false }: { data: string | any; isDownlo
                             popoverClass={styles['copy-popover']}
                             children={'Copied to clipboard'}
                             container={
-                                <CopyToClipboard text={data}>
+                                <CopyToClipboard text={copyResponseData ? copyResponseData() : data}>
                                     <CopyIcon fill={'#A7A7A7'}></CopyIcon>
                                 </CopyToClipboard>
                             }

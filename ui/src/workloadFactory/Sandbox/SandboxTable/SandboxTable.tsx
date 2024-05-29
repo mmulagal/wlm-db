@@ -5,7 +5,7 @@ import styles from './SandboxTable.module.scss';
 import { useNavigate } from 'react-router-dom';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
-import { formatSandboxListData } from '../SandboxUtility';
+import { formatSandboxListData, getAggregatedSplitEstimate } from '../SandboxUtility';
 import { useEffect, useRef, useState } from 'react';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
@@ -18,19 +18,30 @@ import { useDispatch } from 'react-redux';
 import {
     setAggregatedSandboxList,
     setSandboxSavingsState,
-    updateConnectionInfo
+    updateConnectionInfo,
+    updateSplitEstimateLoading
 } from '../../../store/workloadFactory/sandboxSlice';
 import SmallLoader from '../../../common/SmallLoader/SmallLoader';
 import {
+    getBaseUrl,
     useDeleteSandboxMutation,
     useLazyGetSandboxSavingsQuery,
+    useLazyGetSplitEstimateInfoQuery,
     useLazyGetSubTaskListQuery,
+    useSplitSandboxMutation,
     useUpdateSandboxMutation
 } from '../../../utils/apiService';
-import { JOB_MONITORING_STATUS } from '../../../utils/consts';
-import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import {
+    CRED_PLACEHOLDERS,
+    JOB_MONITORING_STATUS,
+    UPDATE_SANDBOX_CURL_REQ_TEMPLATE,
+    WLF_TABS
+} from '../../../utils/consts';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import store from '../../../store/store';
 import RefreshContent from './RefreshContent/RefreshContent';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import ConnectToCiCdContent from './ConnectToCiCdContent/ConnectToCiCdContent';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
@@ -48,7 +59,9 @@ const SandboxTable = () => {
     const [deleteSandboxApi] = useDeleteSandboxMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
     const [getSandboxSavingsApi] = useLazyGetSandboxSavingsQuery();
+    const [getSplitEstimateApi] = useLazyGetSplitEstimateInfoQuery();
     const [updateSandboxApi] = useUpdateSandboxMutation();
+    const [splitSandboxApi] = useSplitSandboxMutation();
 
     useEffect(() => {
         if (aggregatedSandboxList[0] && 'id' in aggregatedSandboxList[0]) {
@@ -108,11 +121,38 @@ const SandboxTable = () => {
         ];
     };
 
+    const showJobNotification = (action: 'delete' | 'refresh' | 'rebaseline' | 'split', resourceName: string) => {
+        const notificationObj = GENERAL.SANDBOX_ACTIONS_NOTIFICATIONS[action];
+        const msgData = (
+            <div className={styles.notification}>
+                {notificationObj[0]}
+                <span className={styles.bold}>{resourceName}</span>
+                {notificationObj[1]}
+                <Button
+                    Component="button"
+                    variant="text"
+                    onClick={() => {
+                        dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                        dispatch(clearNotifications());
+                    }}
+                >
+                    {GENERAL.JOB_MONITORING}.
+                </Button>
+            </div>
+        );
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: msgData
+            })
+        );
+    };
+
     const handleRebaseLine = (rowData: any) => {
         setDialog(
             <DialogComponent
                 header={GENERAL.REBASE_LINE}
-                content={<RebaseLineContent databaseName={rowData?.source} />}
+                content={<RebaseLineContent databaseName={rowData?.source} sandboxName={rowData?.name} />}
                 primaryButton={GENERAL.REBASE_LINE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
@@ -128,9 +168,10 @@ const SandboxTable = () => {
                         regionId: headerSelectedRegion?.label2,
                         databaseHostId: rowData?.databaseHostId,
                         sandboxName: rowData?.name,
-                        payload: { action: 'RE-BASELINE' }
+                        payload: { action: 'RE-BASELINE', snapshot: rowData?.baseSnapshot }
                     }).then((res: any) => {
                         if (res?.data) {
+                            showJobNotification('rebaseline', rowData?.name);
                             const jobInterval = setInterval(() => {
                                 getJobDetailApi({
                                     credentialId: headerSelectedCred?.data?.credentialsId,
@@ -248,7 +289,7 @@ const SandboxTable = () => {
         setDialog(
             <DialogComponent
                 header={'Refresh'}
-                content={<RefreshContent databaseName={rowData?.source} />}
+                content={<RefreshContent databaseName={rowData?.source} sandboxName={rowData?.name} />}
                 primaryButton={'Refresh'}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
@@ -268,6 +309,7 @@ const SandboxTable = () => {
                         payload: { action: 'REFRESH' }
                     }).then((res: any) => {
                         if (res?.data) {
+                            showJobNotification('refresh', rowData?.name);
                             const jobInterval = setInterval(() => {
                                 getJobDetailApi({
                                     credentialId: headerSelectedCred?.data?.credentialsId,
@@ -408,6 +450,7 @@ const SandboxTable = () => {
                         sandboxName: rowData?.name
                     }).then((res: any) => {
                         if (res?.data) {
+                            showJobNotification('delete', rowData?.name);
                             const jobInterval = setInterval(() => {
                                 getJobDetailApi({
                                     credentialId: headerSelectedCred?.data?.credentialsId,
@@ -500,22 +543,143 @@ const SandboxTable = () => {
         );
     };
 
-    const handleSplit = () => {
-        setDialog(
-            <DialogComponent
-                header={'Split'}
-                content={<RebaseSplitContent />}
-                primaryButton={'Split'}
-                secondaryButton={GENERAL.CANCEL}
-                callback={() => {
-                    console.log('action');
-                }}
-                closeCallback={() => {
-                    closeDialog();
-                }}
-                customClass={styles.setWidth}
-            />
-        );
+    const handleSplit = (rowData: any) => {
+        dispatch(updateSplitEstimateLoading(true));
+        const { databaseHostId, name } = rowData;
+        getSplitEstimateApi({
+            credentialsId: headerSelectedCred?.data?.credentialsId,
+            regionId: headerSelectedRegion?.label2,
+            databaseHostId: databaseHostId,
+            sandboxName: name
+        }).then((splitEstimateRes: any) => {
+            dispatch(updateSplitEstimateLoading(false));
+            if (splitEstimateRes?.data) {
+                const aggSplitEstimate = getAggregatedSplitEstimate(splitEstimateRes?.data?.volumes || []);
+                setDialog(
+                    <DialogComponent
+                        header={'Split'}
+                        content={
+                            <RebaseSplitContent
+                                databaseName={rowData?.source}
+                                sandboxName={rowData?.name}
+                                aggSplitEstimate={aggSplitEstimate}
+                            />
+                        }
+                        primaryButton={'Split'}
+                        secondaryButton={GENERAL.CANCEL}
+                        callback={() => {
+                            let output = data.map((obj: any) => {
+                                if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                                    return {
+                                        ...obj,
+                                        cellProps: { isDisabled: true },
+                                        status: 'split',
+                                        menuDisable: true
+                                    };
+                                }
+                                return obj;
+                            });
+                            dispatch(setAggregatedSandboxList(output));
+                            splitSandboxApi({
+                                credentialsId: headerSelectedCred?.data?.credentialsId,
+                                regionId: headerSelectedRegion?.label2,
+                                databaseHostId: rowData?.databaseHostId,
+                                sandboxName: rowData?.name
+                            }).then((res: any) => {
+                                if (res?.data) {
+                                    showJobNotification('split', rowData?.name);
+                                    const jobInterval = setInterval(() => {
+                                        getJobDetailApi({
+                                            credentialId: headerSelectedCred?.data?.credentialsId,
+                                            region: headerSelectedRegion?.label2,
+                                            id: res?.data?.jobId
+                                        }).then((jobRes: any) => {
+                                            const status = jobRes?.data?.status;
+                                            const state = store.getState();
+                                            const { aggregatedSandboxList } = state?.sandbox;
+                                            if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                                                dispatch(
+                                                    setSandboxSavingsState({
+                                                        sandboxSavings: {
+                                                            consumedStorage: 0,
+                                                            savedStorage: 0,
+                                                            sandboxSavingsPercentage: 0
+                                                        },
+                                                        sandboxSavingsLoading: true,
+                                                        sandboxSavingsError: ''
+                                                    })
+                                                );
+                                                const updatedSandboxList = aggregatedSandboxList.filter(
+                                                    (item: any) => rowData?.id !== item?.id
+                                                );
+                                                dispatch(setAggregatedSandboxList(updatedSandboxList));
+                                                clearInterval(jobInterval);
+                                                dispatch(
+                                                    addNotification({
+                                                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                                        message: `Sandbox database ${rowData?.name} split successfully.`
+                                                    })
+                                                );
+                                                getSandboxSavingsApi({
+                                                    credentialId: headerSelectedCred?.data?.credentialsId,
+                                                    region: headerSelectedRegion?.label2
+                                                }).then((savingsRes: any) => {
+                                                    if (savingsRes?.data) {
+                                                        dispatch(
+                                                            setSandboxSavingsState({
+                                                                sandboxSavings: savingsRes?.data,
+                                                                sandboxSavingsLoading: false,
+                                                                sandboxSavingsError: ''
+                                                            })
+                                                        );
+                                                    } else {
+                                                        dispatch(
+                                                            setSandboxSavingsState({
+                                                                sandboxSavings: {
+                                                                    consumedStorage: 0,
+                                                                    savedStorage: 0,
+                                                                    sandboxSavingsPercentage: 0
+                                                                },
+                                                                sandboxSavingsLoading: false,
+                                                                sandboxSavingsError: ''
+                                                            })
+                                                        );
+                                                    }
+                                                });
+                                            } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                                                let output = aggregatedSandboxList.map((obj: any) => {
+                                                    if (obj?.id === rowData?.id && obj.name === rowData.name) {
+                                                        return {
+                                                            ...obj,
+                                                            cellProps: { isDisabled: false },
+                                                            status: 'active',
+                                                            menuDisable: false
+                                                        };
+                                                    }
+                                                    return obj;
+                                                });
+                                                dispatch(setAggregatedSandboxList(output));
+                                                dispatch(
+                                                    addNotification({
+                                                        notificationType: NOTIFICATION_TYPES.ERROR,
+                                                        message: `Sandbox database ${rowData?.name} failed to split.`
+                                                    })
+                                                );
+                                                clearInterval(jobInterval);
+                                            }
+                                        });
+                                    }, 5000);
+                                }
+                            });
+                        }}
+                        closeCallback={() => {
+                            closeDialog();
+                        }}
+                        customClass={styles.setWidth}
+                    />
+                );
+            }
+        });
     };
 
     const handleRollback = () => {
@@ -536,15 +700,42 @@ const SandboxTable = () => {
         );
     };
 
-    const handleConnectToTools = () => {
-        const dataToDisplay = {
-            toggleState: false,
-            toggle: true
+    const handleConnectToTools = (rowData: any) => {
+        const baseUrl = getBaseUrl();
+        const credID = headerSelectedCred?.data?.credentialsId;
+        const region = headerSelectedRegion?.label2;
+        const copyResponseData = () => {
+            const payload = { action: 'REFRESH' };
+            const baseUrl = getBaseUrl();
+            const restApiPayload = UPDATE_SANDBOX_CURL_REQ_TEMPLATE(
+                baseUrl,
+                credID,
+                region || CRED_PLACEHOLDERS.REGION,
+                rowData?.databaseHostId,
+                rowData?.name,
+                CRED_PLACEHOLDERS.TOKEN,
+                JSON.stringify(payload, null, 2)
+            );
+            return restApiPayload;
         };
         setDialog(
             <DialogComponent
                 header={'Connect to CI/CD tools'}
-                content={<ViewDialog data={JSON.stringify(dataToDisplay, null, 2)} isDownload={true} />}
+                content={
+                    <ViewDialog
+                        data={
+                            <ConnectToCiCdContent
+                                baseUrl={baseUrl}
+                                credID={credID}
+                                region={region}
+                                databaseHostId={rowData?.databaseHostId}
+                                sandboxName={rowData?.name}
+                                actualData={{ action: 'REFRESH' }}
+                            />
+                        }
+                        copyResponseData={copyResponseData}
+                    />
+                }
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
                 customClass={styles.setWidth}
@@ -601,10 +792,10 @@ const SandboxTable = () => {
                                             handleDelete(rowData);
                                             break;
                                         case 'split':
-                                            handleSplit();
+                                            handleSplit(rowData);
                                             break;
                                         case 'connectToTools':
-                                            handleConnectToTools();
+                                            handleConnectToTools(rowData);
                                             break;
 
                                         case 'showConnectionInfo':
@@ -708,6 +899,12 @@ const SandboxTable = () => {
                             <>
                                 <SmallLoader />
                                 <DsTypography variant="Regular_14">{GENERAL.REBASELINE}</DsTypography>
+                            </>
+                        )}
+                        {cellData === 'split' && (
+                            <>
+                                <SmallLoader />
+                                <DsTypography variant="Regular_14">{GENERAL.SPLIT}</DsTypography>
                             </>
                         )}
                     </div>

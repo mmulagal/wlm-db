@@ -731,7 +731,7 @@ const createClonedDb = (dbName: string, instanceName: string = '.', fileList: st
 const addExtendedProperties = (
     dbName: string,
     instanceName: string = '.',
-    propObj: { [x: string]: string | number }
+    propObj: { [x: string]: string | number | boolean }
 ) => `
 $dbname = '${dbName}'
 
@@ -781,13 +781,41 @@ const cleanUpOntapResources = (
     $responseObject = @{}
 
     try {
+        if ($filePaths.count -ne 0) {
+            $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$DBName' GROUP BY dbid FOR JSON PATH"
+
+            $sqlres = sqlcmd -Q $query -y 0
+
+            if (-not [string]::IsNullOrEmpty($sqlres)) {
+                Write-Debug "Database $dbname is in use"
+                $responseObject['error'] = 'SQLServerError: Database $dbname is in use'
+                return $responseObject | ConvertTo-Json -Depth 5
+            }
+        }
+
+        ${ontapRestRequest}
+        ${ontapJobStatusTemplate}
+
+        $volumeIds | ForEach-Object {
+            $volumeId = [system.web.httputility]::UrlEncode($_)
+            $ApiEndpoint = "/storage/volumes/$volumeId"
+            $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -method "DELETE"
+            $jobStatus = Get-OntapJobStatus -jobId $response.job.uuid
+            if ($jobStatus.state -ne 'success') {
+                throw "Ontap error: Could not delete volume $volumeId. $($jobStatus.message)"
+            }
+        }
 
         if ($filePaths.count -ne 0) {
             try {
                 $deleteQuery = "SET NOCOUNT ON; DROP DATABASE $DBName;"
                 $sqlresponse =  sqlcmd -S $instanceName -Q $deleteQuery -y 0;
+                if (-not [string]::IsNullOrEmpty($sqlresponse)) {
+                    throw "SQLServerError: Could not drop database $DBName. $sqlresponse"
+                }
             } catch {
                 Write-Debug $_.Exception.Message
+                throw $_.Exception.Message
             }
 
             $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
@@ -802,8 +830,8 @@ const cleanUpOntapResources = (
 
                 #Check if disks are in dependency list before cleaning up
                 $dependencylist = (Get-ClusterResourceDependency -Resource "SQL Server" -ErrorAction SilentlyContinue).DependencyExpression
-                $datafound = $dependencylist -match '\\(\\['+$datalabel+'\\]\\)'
-                $logfound =  $dependencylist -match '\\(\\['+$loglabel+'\\]\\)'
+                $datafound = $dependencylist -match $datalabel
+                $logfound =  $dependencylist -match $loglabel
 
                 if ($datafound) {
                     $null = (Remove-ClusterResourceDependency -Resource "SQL Server" -Provider $datalabel)
@@ -825,19 +853,6 @@ const cleanUpOntapResources = (
                 $null = (Remove-Item -Path $_ -Force -Recurse -ErrorAction SilentlyContinue)
             }
         }
-
-        ${ontapRestRequest}
-        ${ontapJobStatusTemplate}
-
-        $volumeIds | ForEach-Object {
-            $volumeId = [system.web.httputility]::UrlEncode($_)
-            $ApiEndpoint = "/storage/volumes/$volumeId"
-            $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -method "DELETE"
-            $jobStatus = Get-OntapJobStatus -jobId $response.job.uuid
-            if ($jobStatus.state -ne 'success') {
-                Write-Debug "Could not delete volume $volumeId. Ontap error: $($jobStatus.message)"
-            }
-        }
     } catch {
         Write-Debug $_.Exception.Message
         $responseObject['error'] = $_.Exception.Message
@@ -847,7 +862,7 @@ const cleanUpOntapResources = (
 `;
 
 const mountPointQuery = (instanceName: string = '.', databaseName: string) =>
-    ` sqlcmd -S '${instanceName}' -Q "SET NOCOUNT ON;
+    ` sqlcmd -S "${instanceName}" -Q "SET NOCOUNT ON;
     SELECT 
         CASE WHEN mf.type != 0 THEN 'Log' ELSE 'Data' END AS filetype,
         vs.logical_volume_name AS volumename,
@@ -958,7 +973,7 @@ const detachDbAndRemoveAccessPath = (
         
         if ($sqlres -ne $null) {
             Write-Debug "Database $dbname is in use"
-            $responseObject['error'] = 'Database $dbname is in use'
+            $responseObject['error'] = "Database $dbname is in use"
             return $responseObject | ConvertTo-Json -Depth 5
         }
 
@@ -1095,6 +1110,97 @@ const addAccessPathAndAttachDb = (
     }
 `;
 
+const splitFlexCloneVolumes = (fsxId: string, fsxRegion: string, volumeIds: string, instance = '.') => `
+    $fsxid = '${fsxId}'
+    $fsxregion = '${fsxRegion}'
+    $volumeIds = '${volumeIds}' | ConvertFrom-Json
+    $instance = '${instance}'
+
+    Start-Transcript -Path "C:\\cfn\\log\\split_volumes.log.txt" -Append | Out-Null
+
+    $WarningPreference = 'SilentlyContinue';
+    $responseObject = @{}
+
+    try {
+        ${ontapRestRequest}
+        ${ontapJobStatusTemplate}
+
+        Function Invoke-VolumeSplit {
+            write-debug "Invoking volume split"
+    
+            $volumeIds | ForEach-Object {
+                $volumeId = [system.web.httputility]::UrlEncode($_)
+                $ApiEndpoint = "/storage/volumes/$volumeId"
+                $body = '{ "clone": { "split_initiated": true } }'
+    
+                $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -method "PATCH" -body $body
+    
+                $jobStatus = Get-OntapJobStatus -jobId $response.job.uuid
+                if ($jobStatus.state -ne 'success') {
+                    if ($jobStatus.message -match 'Volume is not a clone') {
+                        Write-Debug "Volume $volumeId is not a clone"
+                        $responseObject['error'] = "Volume $volumeId is not a clone"
+                    } elseif ($jobStatus.message -match 'Volume has locked snapshots') {
+                        Write-Debug "Volume $volumeId has locked snapshots"
+                        $responseObject['error'] = "Volume $volumeId has locked snapshots"
+                    } else {
+                        Write-Debug "Could not split volume $volumeId. Ontap error: $($jobStatus.message)"
+                        $responseObject['error'] = "Could not split volume $volumeId. Ontap error: $($jobStatus.message)"
+                    }
+                }
+            }
+        }
+    
+        Function Remove-VolumeObjectTags {
+            write-debug "Removing volume object tags"
+    
+            $volumeIds | ForEach-Object {
+                $volumeId = [system.web.httputility]::UrlEncode($_)
+                $ApiEndpoint = "/storage/volumes/$volumeId"
+                $body = '{ "tiering.object_tags": [] }'
+    
+                $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -method "PATCH" -body $body
+    
+                $jobStatus = Get-OntapJobStatus -jobId $response.job.uuid
+                if ($jobStatus.state -ne 'success') {
+                    Write-Debug "Could not remove tags from volume $volumeId. Ontap error: $($jobStatus.message)"
+                    $responseObject['error'] = "Could not remove tags from volume $volumeId. Ontap error: $($jobStatus.message)"
+                }
+            }
+        }
+    
+        Invoke-VolumeSplit
+        Remove-VolumeObjectTags
+    } catch {
+        Write-Debug $_.Exception.Message
+        $responseObject['error'] = $_.Exception.Message
+    }
+
+    $responseObject | ConvertTo-Json
+`;
+
+const deleteExtendedPropertiesScript = (dbName: string, instanceName: string = '.', props: Array<string>) => `
+$dbname = '${dbName}'
+$instanceName = '${instanceName}'
+
+Start-Transcript -Path "C:\\cfn\\log\\delete_extended_properties_$dbname.log.txt" -Append | Out-Null
+
+$query = @"
+USE $dbname;
+SET NOCOUNT ON;
+${props
+    .map(
+        k => `
+IF EXISTS (SELECT name, value FROM fn_listextendedproperty(default, default, default, default, default, default, default) WHERE name = N'${k}')
+    EXEC sp_dropextendedproperty @name = N'${k}';
+`
+    )
+    .join('\n')}
+"@
+
+Sqlcmd -S $instanceName -Q $query -m 1
+`;
+
 export {
     GET_SANDBOX_DETAILS,
     checkDatabaseExists,
@@ -1106,5 +1212,7 @@ export {
     mountPointQuery,
     getStorageSavingsFromOntap,
     detachDbAndRemoveAccessPath,
-    addAccessPathAndAttachDb
+    addAccessPathAndAttachDb,
+    splitFlexCloneVolumes,
+    deleteExtendedPropertiesScript
 };

@@ -139,4 +139,20 @@
             margin-left: 46%;
         }
     }
+
+    .detectManageDisable {
+        width: 140px;
+        height: 32px;
+        border-radius: 32px;
+        border: 1px solid var(--text-button-disabled);
+        margin-left: -12px;
+
+        .textStyle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2px;
+            color: var(--text-button-disabled);
+        }
+    }
 }

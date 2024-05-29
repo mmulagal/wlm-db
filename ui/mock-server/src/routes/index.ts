@@ -8,6 +8,7 @@ import chatbot from './chatbot';
 import createUserDb from './createUserDb';
 import sandbox from './sandbox';
 import exploreSavings from './exploreSavings';
+import inventory from './inventory';
 
 const routes = {
     credentials,
@@ -19,6 +20,7 @@ const routes = {
     databaseHosts,
     chatbot,
     createUserDb,
-    exploreSavings
+    exploreSavings,
+    inventory
 };
 export default routes;

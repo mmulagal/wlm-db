@@ -508,7 +508,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             },
             {
                 label: 'SSD monthly cost ',
-                value: `$${viewCalculation.fsxOntapSnapshotCalculation.totalSnapshotMonthlyCostForFSxSSD}`,
+                value: `$${viewCalculation.fsxOntapSnapshotCalculation.totalSnapshotMonthlyCostForFsxSsd}`,
                 text: `SSD storage GiB per month (${viewCalculation.fsxOntapSnapshotCalculation.ssdStoragePerMonth}) x FSx for ONTAP SSD price ($${viewCalculation.fsxOntapSnapshotCalculation.fsxnSsdPrice})`
             },
             {
@@ -569,7 +569,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.fsxCloneCalculation.desiredStorageCapacity}`,
-                text: `Number of cloned copies x (%change rate x total FSx for ONTAP capacity x number of clones in a month)= ${viewCalculation.fsxCloneCalculation.clonedCopiesCount} x (${viewCalculation.fsxCloneCalculation.changeRateBetweenClones}% x 1024 x${viewCalculation.fsxCloneCalculation.numberOfClonesInAMonth})`
+                text: `Number of cloned copies x (%Change rate x Total FSx for ONTAP capacity x Number of clones in a month)= ${viewCalculation.fsxCloneCalculation.clonedCopiesCount} x (${viewCalculation.fsxCloneCalculation.changeRateBetweenClones}% x ${viewCalculation.fsxCloneCalculation.totalFsxnCapacity} x${viewCalculation.fsxCloneCalculation.numberOfClonesInAMonth})`
             },
             {
                 label: 'Percentage of data on SSD storage',
@@ -756,12 +756,12 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Total instance hours',
                 value: `${viewCalculation.ebsCalculation.totalInstanceHours}`,
-                text: `Number of volumes (${viewCalculation.ebsCalculation.numberOfVolumes}) x Average duration each instance runs (${viewCalculation.ebsCalculation.instanceAvgDuration} hours)`
+                text: `Number of volumes (${viewCalculation.ebsCalculation.numberOfVolumes}) x Average duration each instance runs (${viewCalculation.ebsCalculation.hoursInAMonth} hours)`
             },
             {
                 label: 'Instance months',
                 value: `${viewCalculation.ebsCalculation.ebsInstanceMonth} months`,
-                text: `Total instance hours (${viewCalculation.ebsCalculation.totalInstanceHours})  ÷ hours in a month (${viewCalculation.ebsCalculation.instanceAvgDuration})`
+                text: `Total instance hours (${viewCalculation.ebsCalculation.totalInstanceHours})  ÷ hours in a month (${viewCalculation.ebsCalculation.hoursInAMonth})`
             },
             {
                 label: 'EBS storage cost',
