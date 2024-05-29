@@ -1,6 +1,16 @@
 export interface InventorySliceData {
     inventoryTableData: { [key: string]: InventoryTableData } | null;
     inventoryChartData: InventoryChartData | null;
+    isManagedHostListLoading: boolean;
+    getDatabaseHosts: {
+        databaseHostsData: any;
+        databaseHostsLoading: boolean;
+        fullHostDataLoading: boolean;
+    };
+    discoveredHosts: {
+        discoveredHostData: any;
+        discoverHostLoading: boolean;
+    };
 }
 
 export interface InventoryTableData {
@@ -67,4 +77,9 @@ export interface InventoryTableData {
     }>;
 }
 
-export interface InventoryChartData {}
+export interface InventoryChartData {
+    detectedHost?: number;
+    undetectedHost?: number;
+    managedInstance?: number;
+    unmanagedInstance?: number;
+}
