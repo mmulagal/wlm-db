@@ -781,13 +781,41 @@ const cleanUpOntapResources = (
     $responseObject = @{}
 
     try {
+        if ($filePaths.count -ne 0) {
+            $query = "set nocount on; SELECT DB_NAME(dbid) as DBName, COUNT(dbid) as NumberOfConnections FROM sys.sysprocesses WHERE DB_NAME(dbid) = '$DBName' GROUP BY dbid FOR JSON PATH"
+
+            $sqlres = sqlcmd -Q $query -y 0
+
+            if (-not [string]::IsNullOrEmpty($sqlres)) {
+                Write-Debug "Database $dbname is in use"
+                $responseObject['error'] = 'SQLServerError: Database $dbname is in use'
+                return $responseObject | ConvertTo-Json -Depth 5
+            }
+        }
+
+        ${ontapRestRequest}
+        ${ontapJobStatusTemplate}
+
+        $volumeIds | ForEach-Object {
+            $volumeId = [system.web.httputility]::UrlEncode($_)
+            $ApiEndpoint = "/storage/volumes/$volumeId"
+            $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -method "DELETE"
+            $jobStatus = Get-OntapJobStatus -jobId $response.job.uuid
+            if ($jobStatus.state -ne 'success') {
+                throw "Ontap error: Could not delete volume $volumeId. $($jobStatus.message)"
+            }
+        }
 
         if ($filePaths.count -ne 0) {
             try {
                 $deleteQuery = "SET NOCOUNT ON; DROP DATABASE $DBName;"
                 $sqlresponse =  sqlcmd -S $instanceName -Q $deleteQuery -y 0;
+                if (-not [string]::IsNullOrEmpty($sqlresponse)) {
+                    throw "SQLServerError: Could not drop database $DBName. $sqlresponse"
+                }
             } catch {
                 Write-Debug $_.Exception.Message
+                throw $_.Exception.Message
             }
 
             $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
@@ -802,8 +830,8 @@ const cleanUpOntapResources = (
 
                 #Check if disks are in dependency list before cleaning up
                 $dependencylist = (Get-ClusterResourceDependency -Resource "SQL Server" -ErrorAction SilentlyContinue).DependencyExpression
-                $datafound = $dependencylist -match '\\(\\['+$datalabel+'\\]\\)'
-                $logfound =  $dependencylist -match '\\(\\['+$loglabel+'\\]\\)'
+                $datafound = $dependencylist -match $datalabel
+                $logfound =  $dependencylist -match $loglabel
 
                 if ($datafound) {
                     $null = (Remove-ClusterResourceDependency -Resource "SQL Server" -Provider $datalabel)
@@ -823,19 +851,6 @@ const cleanUpOntapResources = (
     
             $virtualDrives | ForEach-Object {
                 $null = (Remove-Item -Path $_ -Force -Recurse -ErrorAction SilentlyContinue)
-            }
-        }
-
-        ${ontapRestRequest}
-        ${ontapJobStatusTemplate}
-
-        $volumeIds | ForEach-Object {
-            $volumeId = [system.web.httputility]::UrlEncode($_)
-            $ApiEndpoint = "/storage/volumes/$volumeId"
-            $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -method "DELETE"
-            $jobStatus = Get-OntapJobStatus -jobId $response.job.uuid
-            if ($jobStatus.state -ne 'success') {
-                Write-Debug "Could not delete volume $volumeId. Ontap error: $($jobStatus.message)"
             }
         }
     } catch {
