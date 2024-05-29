@@ -847,7 +847,7 @@ const cleanUpOntapResources = (
 `;
 
 const mountPointQuery = (instanceName: string = '.', databaseName: string) =>
-    ` sqlcmd -S '${instanceName}' -Q "SET NOCOUNT ON;
+    ` sqlcmd -S "${instanceName}" -Q "SET NOCOUNT ON;
     SELECT 
         CASE WHEN mf.type != 0 THEN 'Log' ELSE 'Data' END AS filetype,
         vs.logical_volume_name AS volumename,
