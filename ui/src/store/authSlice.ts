@@ -11,6 +11,7 @@ interface AuthState {
     isDemoMode?: boolean;
     features: any;
     isWorkloadFactory: boolean;
+    isInventoryV2: boolean;
 }
 
 interface PayloadAuthSuccess {
@@ -31,7 +32,8 @@ const initialState: AuthState = {
             'Platform.BlueXP/DarkTheme': false
         }
     },
-    isWorkloadFactory: false
+    isWorkloadFactory: false,
+    isInventoryV2: false // This flag is added to check if new inventory has to run or old.
 };
 
 const authSlice = createSlice({

@@ -98,7 +98,7 @@ const InventoryTable = () => {
     };
 
     const ExpandedRow = ({ rowData }: any) => {
-        return <ManagedHostSubTable rowId={rowData?.id}/>;
+        return <ManagedHostSubTable rowId={rowData?.id} />;
     };
 
     const handleDialog = () => {

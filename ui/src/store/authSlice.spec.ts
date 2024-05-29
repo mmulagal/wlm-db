@@ -10,6 +10,7 @@ describe('authSlice reducers', () => {
         pathname: string;
         features: {};
         isWorkloadFactory: boolean;
+        isInventoryV2: boolean;
     };
 
     beforeEach(() => {
@@ -21,7 +22,8 @@ describe('authSlice reducers', () => {
             workspaceId: '',
             pathname: '',
             features: {},
-            isWorkloadFactory: false
+            isWorkloadFactory: false,
+            isInventoryV2: false
         };
     });
 
