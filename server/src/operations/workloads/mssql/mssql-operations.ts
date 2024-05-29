@@ -21,7 +21,8 @@ import {
     CPU_UTILISATION,
     DB_SIZE,
     DISK_UTILISATION,
-    MEMORY_UTILISATION
+    MEMORY_UTILISATION,
+    INSTANCE_GUID
 } from './queries';
 import { callSsmExecution, getSSMConnectionStatus } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -591,7 +592,7 @@ async function getServerIOLatency(resourceId: string, activeNodeInstanceId: stri
 }
 
 async function isActiveSqlNode(credentialsId: string, region: string, instanceId: string) {
-    logger.info('Check SQL node is active', { credentialsId, region, instanceId });
+    logger.info('Check SQL node is active', { credentialsId, region });
 
     const commands = [INSTANCE_DETAILS];
     try {
@@ -877,6 +878,46 @@ async function getSqlServerVersion(
     return sqlServerVersion;
 }
 
+async function getMssqlInstanceDetails(
+    credentialsId: string,
+    region: string,
+    node1InstanceId: string,
+    node2InstanceId?: string
+) {
+    logger.info('Fetching instance id', node1InstanceId);
+    const commands = [`sqlcmd -Q "${INSTANCE_GUID}" -y 0`];
+    let response;
+    try {
+        logger.info('Fetching instance id', node1InstanceId);
+        response = await callSsmExecution(credentialsId, region, commands, node1InstanceId);
+        if (response) {
+            const parsedResponse = sqlResponseParsing(response)[0];
+            const instanceId = parsedResponse.instance_guid;
+            return instanceId;
+        }
+    } catch (err) {
+        if (node2InstanceId) {
+            logger.info('Fetching instance id', node2InstanceId);
+            try {
+                response = await callSsmExecution(credentialsId, region, commands, node2InstanceId);
+                if (response) {
+                    const parsedResponse = sqlResponseParsing(response)[0];
+                    const instanceId = parsedResponse.instance_guid;
+                    return instanceId;
+                }
+            } catch (err) {
+                const errorMessage = `Error fetching instance id from both nodes ${node1InstanceId}, ${node2InstanceId} :',${err}`;
+                logger.error(errorMessage);
+                throw createError(errorMessage);
+            }
+        } else {
+            const errorMessage = `Error fetching instance id from node ${node1InstanceId}: ${err}`;
+            logger.error(errorMessage);
+            throw createError(errorMessage);
+        }
+    }
+}
+
 export {
     getSqlServerDetails,
     getAllResourceUtilisation,
@@ -900,5 +941,6 @@ export {
     getNativeSQLBackedupDatabases,
     getActiveSqlNode,
     checkDatabaseExists,
-    getSqlServerVersion
+    getSqlServerVersion,
+    getMssqlInstanceDetails
 };

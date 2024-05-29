@@ -37,7 +37,11 @@ import {
     GET_DEFAULT_COLLATION,
     GET_DEFAULT_DRIVES
 } from '../../../../src/operations/workloads/mssql/ssm-script-utils';
-import { SERVER_DETAILS, PERFORMANCE_METRICS_WITH_LATENCY } from '../../../../src/operations/workloads/mssql/queries';
+import {
+    SERVER_DETAILS,
+    PERFORMANCE_METRICS_WITH_LATENCY,
+    INSTANCE_GUID
+} from '../../../../src/operations/workloads/mssql/queries';
 import {
     GET_SANDBOX_DETAILS,
     createVolumeClone,
@@ -360,6 +364,8 @@ const cleanUpOntapResourcesCommand = {
 
 const mountPointQueryCommand = { commands: [mountPointQuery('.', 'test-database')] };
 
+const getInstanceGuidCommand = { commands: [`sqlcmd -Q "${INSTANCE_GUID}" -y 0`] };
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -466,7 +472,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: cleanUpOntapResourcesCommand })
     .resolves(listSendCommandCommandResponse.cleanupOntapResource)
     .on(SendCommandCommand, { Parameters: mountPointQueryCommand })
-    .resolves(listSendCommandCommandResponse.mountPointQuery);
+    .resolves(listSendCommandCommandResponse.mountPointQuery)
+    .on(SendCommandCommand, { Parameters: getInstanceGuidCommand })
+    .resolves(listSendCommandCommandResponse.getInstanceGuid);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -574,8 +582,10 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-cleanupOntapResource' })
     .resolves(getCommandInvocationResponse.cleanupOntapResourceResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-mountPointQueryCommand' })
-    .resolves(getCommandInvocationResponse.mountPointQueryCommandResponse);
-
+    .resolves(getCommandInvocationResponse.mountPointQueryCommandResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getInstanceGuid' })
+    .resolves(getCommandInvocationResponse.getInstanceGuidResponse);
+    
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);

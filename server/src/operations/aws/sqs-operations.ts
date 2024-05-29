@@ -22,7 +22,8 @@ import {
     DEPLOYMENT_JOBS_FAILED_STATUS,
     WLMDB_COST_ALLOCATION_TAG,
     CF_STACK_RESOURCE_TYPE,
-    RESOURCE_SOURCE
+    RESOURCE_SOURCE,
+    DEFAULT_INSTANCE_NAME
 } from '../../utils/consts';
 import {
     checkAndRetrieveJsonObject,
@@ -40,10 +41,12 @@ import {
     createResource,
     listEvents,
     updateDeployment,
-    upsertDeployment
+    upsertDeployment,
+    upsertDatabaseInstanceRecord,
+    DatabaseInstance
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
-import { getMsSqlResourceId } from '../workloads/mssql/mssql-operations';
+import { getMsSqlResourceId, getMssqlInstanceDetails } from '../workloads/mssql/mssql-operations';
 // import { handleNotification } from '../cloud-manager/notification-operations';
 import { lookupCredentials } from '../cloud-manager/credentials-operations';
 import { associateResource } from '../../lib/cloud-manager/credentials';
@@ -54,6 +57,7 @@ import { decryptString } from './kms-operations';
 import { registerFsxOntapCredentials } from '../../lib/cloud-manager/fsx-core';
 import { createJobs, listJobs } from '../../lib/database/job';
 import { getJobDetails, updateJobDetails } from '../database/job-operations';
+import { databaseInstanceMetadata } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -591,6 +595,40 @@ async function processCloudFormationMessages() {
                                                         fsxId,
                                                         fsxName
                                                     );
+
+                                                    try {
+                                                        const instanceId = await getMssqlInstanceDetails(
+                                                            credentialsId,
+                                                            region,
+                                                            node1InstanceId,
+                                                            node2InstanceId
+                                                        );
+
+                                                        const instanceDetails: DatabaseInstance = {
+                                                            credentialsId: credentialsId,
+                                                            resourceId: resourceId,
+                                                            instanceId: instanceId,
+                                                            instanceName: DEFAULT_INSTANCE_NAME,
+                                                            fsxnId: fsxId,
+                                                            isDefault: true
+                                                        };
+                                                        const instanceMetadata: databaseInstanceMetadata = {
+                                                            source: RESOURCE_SOURCE.DEPLOY,
+                                                            sqlDeploymentType: sqlDeploymentType,
+                                                            fsxSvmId: fsxSvmId
+                                                        };
+                                                        await upsertDatabaseInstanceRecord(
+                                                            accountId,
+                                                            instanceDetails,
+                                                            instanceMetadata
+                                                        );
+                                                    } catch (error) {
+                                                        logger.error(
+                                                            'Failed to add details to database instance table',
+                                                            error
+                                                        );
+                                                    }
+
                                                     try {
                                                         await tagResources(
                                                             credentialsId,

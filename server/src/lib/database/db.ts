@@ -533,8 +533,8 @@ async function updateResourceMetaData(accountId: string, resourceId: string, met
     });
 }
 
-async function upsertDatabaseInstanceRecord(accountId: string, record: DatabaseInstance) {
-    logger.info('Upserting a database instance record', { accountId, record });
+async function upsertDatabaseInstanceRecord(accountId: string, record: DatabaseInstance, sqlInstanceMetadata?: any) {
+    logger.info('Upserting a database instance record', { accountId, record, sqlInstanceMetadata });
 
     const { resourceId, credentialsId, instanceId, instanceName, isDefault, fsxnId } = record;
 
@@ -548,12 +548,14 @@ async function upsertDatabaseInstanceRecord(accountId: string, record: DatabaseI
             sql_instance_id: instanceId,
             sql_instance_name: instanceName,
             fsxn_ids: fsxnId,
-            is_default: isDefault
+            is_default: isDefault,
+            metadata: sqlInstanceMetadata
         },
         update: {
             ...(instanceName && { sql_instance_name: instanceName }),
             ...(fsxnId && { fsxn_ids: fsxnId }),
-            ...(isDefault && { is_default: isDefault })
+            ...(isDefault && { is_default: isDefault }),
+            ...(sqlInstanceMetadata && { metadata: sqlInstanceMetadata })
         },
         where: {
             uk_wlmdb_database_instances: {

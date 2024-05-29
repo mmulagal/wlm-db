@@ -122,6 +122,7 @@ model database_instances {
   is_default        Boolean  @default(value: false)
   created_time      DateTime @default(now()) @db.DateTime(3)
   updated_time      DateTime @default(now()) @updatedAt @db.DateTime(3)
+  metadata          Json?    @default("{}")
 
   resource resource @relation(fields: [account_id, credentials_id, resource_id], references: [account_id, credentials_id, resource_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_resource_account_id_credentials_id_resource_id")
 

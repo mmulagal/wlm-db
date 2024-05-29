@@ -15,6 +15,18 @@ interface Metadata {
     updatedManually?: boolean;
     storageProtocol?: string;
 }
+interface databaseInstanceMetadata {
+    source?: string;
+    sqlDeploymentType?: string;
+    fsxSvmId?: string;
+    // this is used to retreive the newly created user databases in database list for demo
+    userDatabase?: Array<UserDatabase>;
+    sandboxes?: Array<Sandbox>;
+    createDbMetrics?: CreateDbMetrics;
+    sandboxCreated?: boolean;
+    updatedManually?: boolean;
+    storageProtocol?: string;
+}
 
 interface CreateDbMetrics {
     numberofUserDbsCreated: number;
@@ -169,5 +181,6 @@ export {
     SSMParamterObject,
     UserDatabase,
     MissingPermission,
-    MissingPermissionInterface
+    MissingPermissionInterface,
+    databaseInstanceMetadata
 };
