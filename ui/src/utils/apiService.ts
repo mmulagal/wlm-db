@@ -48,7 +48,7 @@ export const getBaseUrl = () => {
     const state = store.getState();
     const accountId = state?.auth?.accountId;
     const apiHost = process.env.REACT_APP_CM_URL;
-    return `${apiHost}/accounts/${accountId}/wlmdb`;
+    return `${apiHost}/accounts/${accountId}/wlmdb/v1`;
 };
 
 const rawBaseQuery = fetchBaseQuery({
@@ -781,7 +781,7 @@ export const sandboxApi = createApi({
             }),
             getSplitEstimateInfo: builder.query({
                 query: ({ regionId, credentialsId, databaseHostId, sandboxName }) => ({
-                    url: `credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/split-estimate`
+                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/split-estimate`
                 })
             }),
             getDatabaseMountPoints: builder.query({
@@ -804,7 +804,7 @@ export const sandboxApi = createApi({
             }),
             splitSandbox: builder.mutation({
                 query: ({ credentialsId, regionId, databaseHostId, sandboxName, payload }) => ({
-                    url: `credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/split`,
+                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/split`,
                     method: 'POST'
                 })
             })
