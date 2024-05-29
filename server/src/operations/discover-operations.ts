@@ -31,7 +31,8 @@ import {
     RESOURCE_SOURCE,
     DBCREATE_RELATIVE_PATH,
     STORAGE_PROTOCOLS,
-    RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES
+    RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES,
+    PSMODULES_RELATIVE_PATH
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -63,7 +64,7 @@ import { describeFSxFileSystems, describeFSxStorageVirtualMachines } from '../li
 import { returnInventorydata } from '../utils/demo-utils/demoDefaultUtils';
 import { getDatabaseHostSummary } from './database-hosts-operations';
 import {
-    installPowerShellModule,
+    copyPowerShellModule,
     validateOntapConnectivity,
     validateSQLInstanceConnectivity
 } from './workloads/mssql/ssm-script-utils';
@@ -103,7 +104,6 @@ const PREPARE_EC2_RERUN_DURATION: number = 20; // in minutes
 
 const NEW_SSM_PARAMETERS = 'NEW_SSM_PARAMETERS';
 const SSM_PARAM_PREFIX = '/netapp/wlmdb/';
-const PSMODULE_AWS_SSM = 'AWS.Tools.SimpleSystemsManagement';
 
 async function getHostAndSqlServerInfo(
     accountId: string,
@@ -1083,7 +1083,14 @@ async function validateCredentials(
     let command = '$WarningPreference = "SilentlyContinue";';
 
     if (fsxCredentials || sqlCredentials.length) {
-        command += `${installPowerShellModule(PSMODULE_AWS_SSM)};\n`;
+        // Get signed url for aws_ssm.zip to install the ps modules
+        const bucketname = getArtifactsRegionBucketName(region);
+        const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PSMODULES_RELATIVE_PATH);
+        const moduleNames = `
+  'AWS.Tools.Common',
+  'AWS.Tools.SimpleSystemsManagement'
+`;
+        command += `${copyPowerShellModule(copyPSModuleS3SignedUrl, moduleNames)};\n`;
     }
 
     if (fsxCredentials) {

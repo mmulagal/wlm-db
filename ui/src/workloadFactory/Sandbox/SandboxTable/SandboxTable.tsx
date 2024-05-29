@@ -22,16 +22,23 @@ import {
 } from '../../../store/workloadFactory/sandboxSlice';
 import SmallLoader from '../../../common/SmallLoader/SmallLoader';
 import {
+    getBaseUrl,
     useDeleteSandboxMutation,
     useLazyGetSandboxSavingsQuery,
     useLazyGetSubTaskListQuery,
     useUpdateSandboxMutation
 } from '../../../utils/apiService';
-import { JOB_MONITORING_STATUS, WLF_TABS } from '../../../utils/consts';
+import {
+    CRED_PLACEHOLDERS,
+    JOB_MONITORING_STATUS,
+    UPDATE_SANDBOX_CURL_REQ_TEMPLATE,
+    WLF_TABS
+} from '../../../utils/consts';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import store from '../../../store/store';
 import RefreshContent from './RefreshContent/RefreshContent';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import ConnectToCiCdContent from './ConnectToCiCdContent/ConnectToCiCdContent';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
@@ -140,7 +147,7 @@ const SandboxTable = () => {
         setDialog(
             <DialogComponent
                 header={GENERAL.REBASE_LINE}
-                content={<RebaseLineContent databaseName={rowData?.source} />}
+                content={<RebaseLineContent databaseName={rowData?.source} sandboxName={rowData?.name} />}
                 primaryButton={GENERAL.REBASE_LINE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
@@ -156,10 +163,10 @@ const SandboxTable = () => {
                         regionId: headerSelectedRegion?.label2,
                         databaseHostId: rowData?.databaseHostId,
                         sandboxName: rowData?.name,
-                        payload: { action: 'RE-BASELINE' }
+                        payload: { action: 'RE-BASELINE', snapshot: rowData?.baseSnapshot }
                     }).then((res: any) => {
                         if (res?.data) {
-                            showJobNotification('rebaseline', rowData?.source);
+                            showJobNotification('rebaseline', rowData?.name);
                             const jobInterval = setInterval(() => {
                                 getJobDetailApi({
                                     credentialId: headerSelectedCred?.data?.credentialsId,
@@ -277,7 +284,7 @@ const SandboxTable = () => {
         setDialog(
             <DialogComponent
                 header={'Refresh'}
-                content={<RefreshContent databaseName={rowData?.source} />}
+                content={<RefreshContent databaseName={rowData?.source} sandboxName={rowData?.name} />}
                 primaryButton={'Refresh'}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
@@ -297,7 +304,7 @@ const SandboxTable = () => {
                         payload: { action: 'REFRESH' }
                     }).then((res: any) => {
                         if (res?.data) {
-                            showJobNotification('refresh', rowData?.source);
+                            showJobNotification('refresh', rowData?.name);
                             const jobInterval = setInterval(() => {
                                 getJobDetailApi({
                                     credentialId: headerSelectedCred?.data?.credentialsId,
@@ -567,15 +574,42 @@ const SandboxTable = () => {
         );
     };
 
-    const handleConnectToTools = () => {
-        const dataToDisplay = {
-            toggleState: false,
-            toggle: true
+    const handleConnectToTools = (rowData: any) => {
+        const baseUrl = getBaseUrl();
+        const credID = headerSelectedCred?.data?.credentialsId;
+        const region = headerSelectedRegion?.label2;
+        const copyResponseData = () => {
+            const payload = { action: 'REFRESH' };
+            const baseUrl = getBaseUrl();
+            const restApiPayload = UPDATE_SANDBOX_CURL_REQ_TEMPLATE(
+                baseUrl,
+                credID,
+                region || CRED_PLACEHOLDERS.REGION,
+                rowData?.databaseHostId,
+                rowData?.name,
+                CRED_PLACEHOLDERS.TOKEN,
+                JSON.stringify(payload, null, 2)
+            );
+            return restApiPayload;
         };
         setDialog(
             <DialogComponent
                 header={'Connect to CI/CD tools'}
-                content={<ViewDialog data={JSON.stringify(dataToDisplay, null, 2)} isDownload={true} />}
+                content={
+                    <ViewDialog
+                        data={
+                            <ConnectToCiCdContent
+                                baseUrl={baseUrl}
+                                credID={credID}
+                                region={region}
+                                databaseHostId={rowData?.databaseHostId}
+                                sandboxName={rowData?.name}
+                                actualData={{ action: 'REFRESH' }}
+                            />
+                        }
+                        copyResponseData={copyResponseData}
+                    />
+                }
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
                 customClass={styles.setWidth}
@@ -635,7 +669,7 @@ const SandboxTable = () => {
                                             handleSplit();
                                             break;
                                         case 'connectToTools':
-                                            handleConnectToTools();
+                                            handleConnectToTools(rowData);
                                             break;
 
                                         case 'showConnectionInfo':

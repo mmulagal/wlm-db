@@ -452,6 +452,9 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
             changeRateBetweenClones: formatNumbers(
                 viewCalculationsResponse?.fsxCloneCalculation?.changeRateBetweenClones
             ),
+            totalFsxnCapacity: formatCalcSize(
+                viewCalculationsResponse?.fsxCloneCalculation?.totalFsxnCapacity
+            ),
             fsxnSsdPrice: formatNumbers(viewCalculationsResponse?.fsxCloneCalculation?.fsxnSsdPrice?.price),
             cloneRefreshFrequency: viewCalculationsResponse?.fsxCloneCalculation?.cloneRefreshFrequency,
             monthlyChangeRatePercentage: formatNumbers(

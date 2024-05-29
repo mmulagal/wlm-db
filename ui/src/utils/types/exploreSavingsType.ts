@@ -150,6 +150,7 @@ export interface ViewCalculationsInterface {
         clonedCopiesCount?: number | string;
         numberOfClonesInAMonth?: number | string;
         changeRateBetweenClones?: number | string;
+        totalFsxnCapacity?: number | string;
         fsxnSsdPrice?: number | string;
         cloneRefreshFrequency?: string;
         monthlyChangeRatePercentage?: number | string;

@@ -223,36 +223,26 @@ async function getDriveInfoFromSSM(
     let getDefaultDrivesResponse;
     try {
         // Not caching any ssm response as multiple creation will require real time data
-        [getDriveInfoFromNodesResponse, getDefaultDrivesResponse] = forSandbox
-            ? await Promise.all([
-                  getDriveInfoFromNodes(
-                      credentialsId,
-                      region,
-                      sqlDeploymentType,
-                      activeNodeInstanceId as string,
-                      standbyNodeInstanceId!,
-                      executionTimeout,
-                      forSandbox
-                  ),
-                  Promise.resolve()
-              ])
-            : await Promise.all([
-                  getDriveInfoFromNodes(
-                      credentialsId,
-                      region,
-                      sqlDeploymentType,
-                      activeNodeInstanceId as string,
-                      standbyNodeInstanceId!,
-                      executionTimeout
-                  ),
-                  getDefaultDrives(
+        [getDriveInfoFromNodesResponse, getDefaultDrivesResponse] = await Promise.all([
+            getDriveInfoFromNodes(
+                credentialsId,
+                region,
+                sqlDeploymentType,
+                activeNodeInstanceId as string,
+                standbyNodeInstanceId!,
+                executionTimeout,
+                forSandbox
+            ),
+            forSandbox
+                ? Promise.resolve()
+                : getDefaultDrives(
                       credentialsId,
                       region,
                       activeNodeInstanceId as string,
                       instanceName,
                       executionTimeout
                   )
-              ]);
+        ]);
     } catch (error) {
         const errorMessage = `Unable to get drive information ${error}.`;
         logger.error(errorMessage);
@@ -294,34 +284,20 @@ async function getDriveInfo(
     let fsxStorageCapacity;
     let driveResponse;
     try {
-        [fsxStorageCapacity, driveResponse] = forSandbox
-            ? await Promise.all([
-                  Promise.resolve(),
-                  getDriveInfoFromSSM(
-                      accountId,
-                      databaseHostId,
-                      credentialsId,
-                      region,
-                      sqlDeploymentType!,
-                      node1InstanceId,
-                      node2InstanceId,
-                      executionTimeout,
-                      forSandbox
-                  )
-              ])
-            : await Promise.all([
-                  getFsxStorageCapacity(credentialsId, region!, fileSystemId!),
-                  getDriveInfoFromSSM(
-                      accountId,
-                      databaseHostId,
-                      credentialsId,
-                      region,
-                      sqlDeploymentType!,
-                      node1InstanceId,
-                      node2InstanceId,
-                      executionTimeout
-                  )
-              ]);
+        [fsxStorageCapacity, driveResponse] = await Promise.all([
+            forSandbox ? Promise.resolve() : getFsxStorageCapacity(credentialsId, region!, fileSystemId!),
+            getDriveInfoFromSSM(
+                accountId,
+                databaseHostId,
+                credentialsId,
+                region,
+                sqlDeploymentType!,
+                node1InstanceId,
+                node2InstanceId,
+                executionTimeout,
+                forSandbox
+            )
+        ]);
     } catch (error) {
         const errorMessage = `Unable to get drive information and FSx storage capacity. ${error}.`;
         logger.error(errorMessage);

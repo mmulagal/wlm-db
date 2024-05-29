@@ -15,7 +15,7 @@
             overflow-y: auto;
 
             .code {
-                width: 100%;
+                width: calc(100% - 56px);
                 font-weight: 400;
                 font-size: 14px;
                 line-height: 24px;
@@ -28,6 +28,8 @@
                 justify-content: flex-end;
                 height: 20px;
                 gap: 16px;
+                position: sticky;
+                left: calc(100% - 56px);
                 .copy-popover {
                     width: 140px;
                     font-size: 13px;

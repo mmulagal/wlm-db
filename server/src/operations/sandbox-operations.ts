@@ -25,7 +25,9 @@ import {
     mountPointQuery,
     getStorageSavingsFromOntap,
     detachDbAndRemoveAccessPath,
-    addAccessPathAndAttachDb
+    addAccessPathAndAttachDb,
+    splitFlexCloneVolumes,
+    deleteExtendedPropertiesScript
 } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { checkDatabaseExists, getActiveSqlNode, getSqlServerVersion } from './workloads/mssql/mssql-operations';
@@ -146,7 +148,8 @@ async function getSandboxDetails(
                     sourceDatabaseName: sources[2],
                     createdAt: parseInt(getProperty(item, 'createdAt') || String(Date.now()), 10),
                     updatedAt: parseInt(getProperty(item, 'updatedAt') || String(Date.now()), 10),
-                    tag: getProperty(item, 'tag')
+                    tag: getProperty(item, 'tag'),
+                    baseSnapshot: getProperty(item, 'baseSnapshot')
                 };
 
                 sandboxInfo.push(databaseObject);
@@ -873,10 +876,11 @@ async function createVolumeClone(
                     'test-fsx',
                     'us-east-1',
                     'wlmdb_sqlsvm_1714090636810',
-                    JSON.stringify({ name: '/vol/wlmdb_sqldata_1714098400/sqldata' }),
-                    JSON.stringify({ name: '/vol/wlmdb_sqllog_1714098400/sqllog' }),
-                    'test-res-id',
-                    getClonedByTagValue(accountId, credentialsId)
+                    'wlmdb_sqldata_1714098400',
+                    '/vol/wlmdb_sqldata_1714098400/sqldata',
+                    'wlmdb_sqllog_1714098400',
+                    '/vol/wlmdb_sqllog_1714098400/sqllog',
+                    'wlmdb_sqlsvm_1714090636810'
                 )
             ];
         }
@@ -1115,7 +1119,7 @@ async function createExtendedProperties(
     parentJobId: string,
     srcDetails: HostAndDbInfo,
     destDetails: HostAndDbInfo,
-    extendedProps: { [x: string]: number | string }
+    extendedProps: { [x: string]: number | string | boolean }
 ) {
     logger.info('Create extended properties', {
         accountId,
@@ -1148,7 +1152,8 @@ async function createExtendedProperties(
                 addExtendedProperties('testdb', '.', {
                     tag: 'demo',
                     cloned_by: 'netapp_wf',
-                    source: 'resource|instance|testdb'
+                    source: 'resource|instance|testdb',
+                    baseSnapshot: 'parentSnapshot'
                 })
             ];
         }
@@ -1647,7 +1652,6 @@ async function performSandboxDeletion(
         logger.error('Failed to delete the sandbox', e);
         status = JOBSTATUS.FAILED;
         errorMsg = e.message || 'Internal Server Error';
-        throw createError(e.statusCode, errorMsg);
     } finally {
         await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             status,
@@ -2196,6 +2200,287 @@ async function reAttachSandboxAndAccessPath(
     }
 }
 
+async function splitSandbox(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseName: string
+) {
+    logger.info('Split sandbox', { accountId, credentialsId, region, databaseHostId, databaseName });
+
+    const [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
+
+    if (isEmpty(resourceDetails)) {
+        throw createError(HttpErrorCodes.NOT_FOUND, 'Could not find the database host');
+    }
+
+    const { resource_name: resourceName, metadata, co_relation_id: fsxId } = resourceDetails;
+
+    const { node1InstanceId, node2InstanceId, fsxSvmId } = metadata as unknown as Metadata;
+
+    const { isSSMConnected, instanceName, activeNodeInstanceId } = await getActiveSqlNode(
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId,
+        databaseHostId
+    );
+
+    if (!isSSMConnected) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'SSM connection could not be established with the host'
+        );
+    }
+
+    const job = await registerJob(accountId, credentialsId, region, {
+        name: `Split sandbox ${databaseName}`,
+        description: `Split sandbox ${databaseName} in the host ${resourceName}`,
+        initiator: 'SYSTEM',
+        type: JOBTYPE.SANDBOX,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: databaseName,
+        startTime: Date.now()
+    });
+
+    const resDetails = {
+        resourceName: resourceName!,
+        instanceName: instanceName!,
+        fsxId: fsxId!,
+        svm: fsxSvmId!,
+        activeNodeInstanceId: activeNodeInstanceId!,
+        metadata: resourceDetails.metadata as unknown as Metadata,
+        database: databaseName,
+        instance: instanceName!,
+        host: databaseHostId
+    };
+
+    performSplitOperation(accountId, credentialsId, region, job.id, resDetails);
+
+    return { jobId: job.id };
+}
+
+async function performSplitOperation(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    resDetails: HostAndDbInfo
+) {
+    logger.info('Perform split operation', { accountId, region, credentialsId, parentJobId, resDetails });
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errMsg;
+    try {
+        await validateSplitParams(accountId, credentialsId, region, parentJobId, resDetails);
+
+        const mappings = (await getMappings(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            resDetails
+        )) as VolumeLunMapping;
+
+        logger.info('MAPPINGS>>>', mappings);
+
+        await splitVolumes(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            [mappings.data.volumeUuid, mappings.log.volumeUuid],
+            resDetails
+        );
+
+        await deleteExtendedProperties(accountId, credentialsId, region, parentJobId, resDetails);
+
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        status = JOBSTATUS.FAILED;
+        errMsg = e.message || 'Internal Server Error';
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+            status,
+            error: errMsg,
+            endTime: Date.now()
+        });
+    }
+}
+
+async function validateSplitParams(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    resourceDetails: HostAndDbInfo
+) {
+    logger.info('Validate split parameters', { accountId, credentialsId, region, parentJobId, resourceDetails });
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+
+    const validationJob = await registerJob(accountId, credentialsId, region, {
+        description: `Validate if the sandbox ${resourceDetails.database} exists in the target host ${resourceDetails.resourceName}`,
+        startTime: Date.now(),
+        name: 'Validate if sandbox exists',
+        status,
+        type: JOBTYPE.SANDBOX,
+        resourceName: resourceDetails.database,
+        parentJobId
+    });
+
+    try {
+        const dbExists = await checkDatabaseExists(
+            accountId,
+            credentialsId,
+            region,
+            resourceDetails.host,
+            resourceDetails.database,
+            resourceDetails.activeNodeInstanceId,
+            resourceDetails.instanceName
+        );
+
+        if (!dbExists && !(process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator')) {
+            throw createError(
+                412,
+                `Database ${resourceDetails.database} does not exists on source host ${resourceDetails.resourceName}`
+            );
+        }
+
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error(e);
+        status = JOBSTATUS.FAILED;
+        errorMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, validationJob.id, {
+            error: errorMsg,
+            status,
+            endTime: Date.now()
+        });
+    }
+}
+
+async function splitVolumes(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    volumeIds: Array<string>,
+    resourceDetail: HostAndDbInfo
+) {
+    logger.info('Split volumes', { accountId, credentialsId, region, parentJobId, volumeIds, resourceDetail });
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+    const splitJob = await registerJob(accountId, credentialsId, region, {
+        name: `Split volumes for ${resourceDetail.database}`,
+        description: `Split volumes for ${resourceDetail.database} in the host ${resourceDetail.resourceName}`,
+        type: JOBTYPE.SANDBOX,
+        status,
+        resourceName: resourceDetail.database,
+        startTime: Date.now()
+    });
+
+    try {
+        const command = [
+            splitFlexCloneVolumes(resourceDetail.fsxId, region, JSON.stringify(volumeIds), resourceDetail.instanceName)
+        ];
+
+        const resp = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            resourceDetail.activeNodeInstanceId,
+            accountId,
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
+        );
+
+        if (!resp) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to split the volumes');
+        }
+
+        const parsedResp = sqlResponseParsing(resp);
+
+        if (parsedResp.error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
+        }
+
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error(`Failed to split the volume: ${e}`);
+        status = JOBSTATUS.FAILED;
+        errorMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, splitJob.id, {
+            status,
+            error: errorMsg,
+            endTime: Date.now()
+        });
+    }
+}
+
+async function deleteExtendedProperties(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    resourceDetail: HostAndDbInfo
+) {
+    logger.info('Delete extended properties', { accountId, credentialsId, region, parentJobId, resourceDetail });
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+
+    const deleteJob = await registerJob(accountId, credentialsId, region, {
+        description: `Delete extended properties for ${resourceDetail.database}`,
+        startTime: Date.now(),
+        name: `Delete extended properties for ${resourceDetail.database}`,
+        status,
+        type: JOBTYPE.SANDBOX,
+        resourceName: resourceDetail.database,
+        parentJobId
+    });
+
+    try {
+        const command = [
+            deleteExtendedPropertiesScript(resourceDetail.database, resourceDetail.instanceName, [
+                'cloned_by',
+                'baseSnapshot',
+                'source',
+                'createdAt',
+                'updatedAt',
+                'tag',
+                'accountId'
+            ])
+        ];
+
+        const resp = await callSsmExecution(credentialsId, region, command, resourceDetail.activeNodeInstanceId);
+
+        if (resp) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to delete the extended properties');
+        }
+
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error(`Failed to delete the extended properties: ${e}`);
+        status = JOBSTATUS.FAILED;
+        errorMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, deleteJob.id, {
+            status,
+            error: errorMsg,
+            endTime: Date.now()
+        });
+    }
+}
+
 export {
     getSandboxesInfo,
     getSandboxSavings,
@@ -2206,5 +2491,6 @@ export {
     getSandboxConnectionString,
     deleteSandbox,
     getSandboxSplitEstimate,
-    updateSandboxLifeCycle
+    updateSandboxLifeCycle,
+    splitSandbox
 };
