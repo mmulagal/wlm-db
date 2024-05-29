@@ -1761,7 +1761,7 @@ async function getSandboxSplitEstimate(
 
     const command = [getDbMappedOntapVolumes(fileSystemId, region, sandboxName, instanceName)];
 
-    const mappings = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId);
+    const mappings = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId, accountId, false);
 
     if (!mappings) {
         logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
@@ -1785,7 +1785,14 @@ async function getSandboxSplitEstimate(
         )
     ];
 
-    const estimateResp = await callSsmExecution(credentialsId, region, estimateCommand, activeNodeInstanceId);
+    const estimateResp = await callSsmExecution(
+        credentialsId,
+        region,
+        estimateCommand,
+        activeNodeInstanceId,
+        accountId,
+        false
+    );
 
     if (!estimateResp) {
         logger.error('Failed to get volume split estimate', { databaseHostId });
@@ -2384,7 +2391,8 @@ async function splitVolumes(
         type: JOBTYPE.SANDBOX,
         status,
         resourceName: resourceDetail.database,
-        startTime: Date.now()
+        startTime: Date.now(),
+        parentJobId
     });
 
     try {
