@@ -6,33 +6,20 @@ import DotComponent from '../../../../common/DotComponent/DotComponent';
 import { useEffect, useRef, useState } from 'react';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 
-const ManagedHostDialog = () => {
-    const mockData = [
-        {
-            id: '1',
-            serverInstance: 'SQL Server instance 1',
-            status: 'Unmanaged',
-            storageType: 'FSx for ONTAP'
-        },
-        { id: '2', serverInstance: 'SQL Server instance 2', status: 'inProgress', storageType: 'FSx for ONTAP' },
-        { id: '3', serverInstance: 'SQL Server instance 3', status: 'Unmanaged', storageType: 'FSx for ONTAP' },
-        { id: '4', serverInstance: 'SQL Server instance 4', status: 'Unmanaged', storageType: 'FSx for ONTAP' },
-        { id: '5', serverInstance: 'SQL Server instance 5', status: 'managed', storageType: 'FSx for ONTAP' }
-    ];
-
+const ManagedHostDialog = ({ dialogData }: any) => {
     const [data, setData] = useState<any>([]);
 
     const defaultRef: any = useRef();
 
     useEffect(() => {
-        let output = mockData.map((obj: any) => {
+        let output = dialogData.map((obj: any) => {
             if (obj.status === 'inProgress' || obj.status === 'managed') {
                 return { ...obj, cellProps: { isDisabled: true } };
             } else {
                 return { ...obj, cellProps: { isDisabled: false } };
             }
         });
-        let defaultSelection = mockData.map((item: any) => {
+        let defaultSelection = dialogData.map((item: any) => {
             if (item.status === 'inProgress' || item.status === 'managed') {
                 return item.id;
             }

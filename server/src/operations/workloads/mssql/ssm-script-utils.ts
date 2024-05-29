@@ -567,6 +567,62 @@ const restGetUtilForOntap = (
 const INSTANCE_DETAILS =
     'Get-WmiObject win32_service | Where-Object {$_.DisplayName -like "sql server (*"} | Select-Object Name, State | ConvertTo-Json';
 
+const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
+    $s3SignedUrl = '${s3SignedURL}'
+    $moduleNames = ${modules}
+
+    if ($responseObject -eq $null) {
+        $responseObject = @{}
+    }
+
+    # Get the first PSModulePath that contains "Documents\\WindowsPowerShell\\Modules"
+    $destinationPath = $env:PSModulePath -split ';' | Where-Object { $_ -like '*Documents\\WindowsPowerShell\\Modules*' }
+
+    # Check if any module is not installed
+    function Check-ModuleInstalled {
+        param(
+            [Parameter(Mandatory=$true)]
+            [string[]]$moduleNames
+        )
+
+        foreach ($module in $moduleNames) {
+            if (-not (Get-Module -ListAvailable -Name $module)) {
+                return $false
+            }
+        }
+        return $true
+    }
+
+    # Call the function
+    $allModulesInstalled = Check-ModuleInstalled -moduleNames $moduleNames
+
+    if (-not $allModulesInstalled) {
+        try {
+            # Create modules folder if it doesn't exist
+            if (-not (Test-Path $destinationPath)) {
+                $null = New-Item -ItemType Directory -Path $destinationPath
+            }
+
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile "$Env:Temp\\aws_ssm.zip"
+            $Null = Expand-Archive -Path "$Env:Temp\\aws_ssm.zip" -DestinationPath $destinationPath -Force
+
+            # Ensure the modules are available for use
+            $allInstalled = Check-ModuleInstalled -moduleNames $moduleNames
+
+            if (-not $allInstalled) {
+                $responseObject.add('installStatus', "Few modules are not installed")
+            } else {
+                $responseObject.add('installStatus', "All modules are installed")
+            }
+        } catch {
+            $responseObject.add('installFailure', $_.Exception.Message)
+        }
+    } else {
+        $responseObject.add('installStatus', "All modules are already installed")
+    }
+`;
+
 export {
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST,
@@ -578,5 +634,6 @@ export {
     installPowerShellModule,
     getMappedOntapVolumesScript,
     restGetUtilForOntap,
-    INSTANCE_DETAILS
+    INSTANCE_DETAILS,
+    copyPowerShellModule
 };

@@ -76,6 +76,7 @@ export interface SandboxItemEntities {
     createdAt: string;
     tag: string;
     error: string;
+    baseSnapshot: string;
 }
 
 export interface SandboxEntities {
@@ -102,4 +103,5 @@ export interface SandboxEntities {
         connectionString?: string | null;
         isLoading: boolean;
     };
+    splitEstimateLoading: boolean;
 }

@@ -9,12 +9,12 @@ import { useAppSelector } from '../../store/storeHooks';
 import { Spinner } from '@netapp/design-system';
 
 const Sandbox = () => {
-    const { showBanner, connectionInfo } = useAppSelector(state => state?.sandbox);
+    const { showBanner, connectionInfo, splitEstimateLoading } = useAppSelector(state => state?.sandbox);
     const { isLoading: connectionInfoLoading } = connectionInfo;
 
     return (
         <div className={styles.sandbox}>
-            {connectionInfoLoading && (
+            {(connectionInfoLoading || splitEstimateLoading) && (
                 <>
                     <div className={styles.loaderOverlay}></div>
                     <div className={styles.spinnerPlacement}>

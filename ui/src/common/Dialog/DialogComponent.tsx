@@ -24,6 +24,7 @@ type DialogProps = {
     closeCallback?: any;
     dialogFrom?: string;
     customClass?: string;
+    primaryButtonDisabled?: boolean;
 };
 
 const DialogComponent = ({
@@ -34,7 +35,8 @@ const DialogComponent = ({
     callback,
     closeCallback,
     dialogFrom,
-    customClass
+    customClass,
+    primaryButtonDisabled = false
 }: DialogProps) => {
     const { closeDialog } = useDialog();
 
@@ -76,6 +78,9 @@ const DialogComponent = ({
     };
 
     const disabledCheck = () => {
+        if (primaryButtonDisabled) {
+            return true;
+        }
         return (
             ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom === FROM_DIALOG.HEADER_CROSS) &&
                 saveConfigName === '' &&

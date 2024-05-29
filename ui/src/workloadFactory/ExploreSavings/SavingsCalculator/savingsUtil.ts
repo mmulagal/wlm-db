@@ -569,7 +569,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Desired storage capacity',
                 value: `${viewCalculation.fsxCloneCalculation.desiredStorageCapacity}`,
-                text: `Number of cloned copies x (%change rate x total FSx for ONTAP capacity x number of clones in a month)= ${viewCalculation.fsxCloneCalculation.clonedCopiesCount} x (${viewCalculation.fsxCloneCalculation.changeRateBetweenClones}% x 1024 x${viewCalculation.fsxCloneCalculation.numberOfClonesInAMonth})`
+                text: `Number of cloned copies x (%Change rate x Total FSx for ONTAP capacity x Number of clones in a month)= ${viewCalculation.fsxCloneCalculation.clonedCopiesCount} x (${viewCalculation.fsxCloneCalculation.changeRateBetweenClones}% x ${viewCalculation.fsxCloneCalculation.totalFsxnCapacity} x${viewCalculation.fsxCloneCalculation.numberOfClonesInAMonth})`
             },
             {
                 label: 'Percentage of data on SSD storage',

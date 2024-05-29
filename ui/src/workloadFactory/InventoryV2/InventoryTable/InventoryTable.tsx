@@ -41,6 +41,27 @@ const InventoryTable = () => {
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
     const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
+    const [isManageButtonDisable, setIsManageButtonDisable] = useState(false);
+
+    const mockData = [
+        {
+            id: '1',
+            serverInstance: 'SQL Server instance 1',
+            status: 'Unmanaged',
+            storageType: 'FSx for ONTAP'
+        },
+        { id: '2', serverInstance: 'SQL Server instance 2', status: 'inProgress', storageType: 'FSx for ONTAP' },
+        { id: '3', serverInstance: 'SQL Server instance 3', status: 'Unmanaged', storageType: 'FSx for ONTAP' },
+        { id: '4', serverInstance: 'SQL Server instance 4', status: 'Unmanaged', storageType: 'FSx for ONTAP' },
+        { id: '5', serverInstance: 'SQL Server instance 5', status: 'managed', storageType: 'FSx for ONTAP' }
+    ];
+
+    //Use effect to check weather to disable manage button in dialog
+    useEffect(() => {
+        const checkButtonStatus = mockData.some((item: any) => item.status === 'Unmanaged');
+
+        setIsManageButtonDisable(!checkButtonStatus);
+    }, []);
 
     useEffect(() => {
         if (inventoryTableData) {
@@ -105,7 +126,7 @@ const InventoryTable = () => {
         setDialog(
             <DialogComponent
                 header={'Manage data base host <data base name> instances'}
-                content={<ManagedHostDialog />}
+                content={<ManagedHostDialog dialogData={mockData} />}
                 primaryButton={'Manage'}
                 secondaryButton={'Close'}
                 callback={() => {
@@ -115,6 +136,7 @@ const InventoryTable = () => {
                     closeDialog();
                 }}
                 customClass={styles.setWidth}
+                // primaryButtonDisabled={isManageButtonDisable}
             />
         );
     };
