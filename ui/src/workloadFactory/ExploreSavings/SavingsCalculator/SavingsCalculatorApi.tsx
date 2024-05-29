@@ -46,7 +46,7 @@ const SavingsCalculatorApi = () => {
 
     useEffect(() => {
         const selectedRow = unManagedHostFormatedList.filter((item: any) => item?.id === selectedInstanceId);
-        if (selectedRow && selectedRow.length > 0) {
+        if (selectedRow && selectedRow?.length > 0) {
             if (
                 selectedRow[0]?.serverInstallationMode === GENERAL.AOAG &&
                 selectedRow[0]?.clusterNodeDetails &&
@@ -216,7 +216,7 @@ const SavingsCalculatorApi = () => {
         }
     };
 
-    // This function is to call API2 that will return unmanaged per instance full data like SS, cost, proection, performance.
+    // This function is to call API2 for partner node
     const getMssqlDataForPartnerNode = async () => {
         dispatch(setGetPartnerHostDetailsLoading(true));
         try {
