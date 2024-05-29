@@ -644,6 +644,7 @@ export const GENERAL = {
     DATA_FILE_PATH: 'Data file path:',
     LOG_FILE_PATH: 'Log file path:',
     SELECT_DRIVE_LETTER: 'Select drive letter',
+    CLONED_COPIES_MAX_LIMIT: 'Number of cloned copies should be less than or equals to 10',
     CHANGE_RATE_MAX_LIMIT: 'Monthly change rate should be less than or equals to 100',
     LOG_SIZE_MIN_ERROR: 'Log file size should be 1 GiB or more.',
     NO_DATA_SIZE_ERROR: 'Data file size should be 1 GiB or more.',
