@@ -48,14 +48,14 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                         size: 2 * TIB_IN_BYTE,
                         volumeType: 'io2',
                         iops: 40000,
-                        throughput: 64
+                        throughput: 128
                     },
                     {
                         id: 'vol2',
                         size: 2 * TIB_IN_BYTE,
                         volumeType: 'io2',
                         iops: 40000,
-                        throughput: 64
+                        throughput: 128
                     }
                 ],
                 recommendedInstance: {
@@ -99,14 +99,14 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                         size: 5 * TIB_IN_BYTE,
                         volumeType: 'io2',
                         iops: 40000,
-                        throughput: 64
+                        throughput: 128
                     },
                     {
                         id: 'vol2',
                         size: 5 * TIB_IN_BYTE,
                         volumeType: 'io2',
                         iops: 40000,
-                        throughput: 64
+                        throughput: 128
                     }
                 ],
                 recommendedInstance: {

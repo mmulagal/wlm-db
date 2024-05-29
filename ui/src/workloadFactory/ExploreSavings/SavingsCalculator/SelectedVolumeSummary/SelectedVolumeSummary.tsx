@@ -134,7 +134,7 @@ const SelectedVolumeSummary = () => {
                     [row?.volumeType]: storageAmount[row?.volumeType] + (row?.size || 0)
                 };
                 iops = { ...iops, [row?.volumeType]: iops[row?.volumeType] + (row?.iops || 0) };
-                throughput = { ...throughput, [row?.volumeType]: throughput[row?.volumeType] + (row?.throughput || 0) };
+                throughput = { ...throughput, [row?.volumeType]: throughput[row?.volumeType] || row?.throughput || 0};
             }
         });
 
