@@ -22,7 +22,8 @@ import {
     DEPLOYMENT_JOBS_FAILED_STATUS,
     WLMDB_COST_ALLOCATION_TAG,
     CF_STACK_RESOURCE_TYPE,
-    RESOURCE_SOURCE
+    RESOURCE_SOURCE,
+    STORAGE_PROTOCOLS
 } from '../../utils/consts';
 import {
     checkAndRetrieveJsonObject,
@@ -579,7 +580,8 @@ async function processCloudFormationMessages() {
                                                             activeDirectoryName,
                                                             activeDirectoryAddress,
                                                             fsxSvmId,
-                                                            source: RESOURCE_SOURCE.DEPLOY
+                                                            source: RESOURCE_SOURCE.DEPLOY,
+                                                            storageProtocol: STORAGE_PROTOCOLS.ISCSI
                                                         }
                                                     });
 
