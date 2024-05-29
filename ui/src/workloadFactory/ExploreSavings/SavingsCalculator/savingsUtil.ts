@@ -457,7 +457,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Additional billed cost for SSD IOPS',
                 value: `$${viewCalculation.fsxOntapCalculation.additionalBilledCostForSsdIops}`,
-                text: `Billed additional SSD (${viewCalculation.fsxOntapCalculation.additionalSsdIops} IOPS) x FSx for ONTAP IOPS price ($${viewCalculation.fsxOntapCalculation.fsxnCapacityPrice})`
+                text: `Billed additional SSD (${viewCalculation.fsxOntapCalculation.additionalSsdIops} IOPS) x FSx for ONTAP IOPS price ($${viewCalculation.fsxOntapCalculation.fsxnIopsPrice})`
             },
             {
                 label: 'Total throughput and IOPS (monthly)',

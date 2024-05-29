@@ -103,6 +103,7 @@ export interface ViewCalculationsInterface {
         numberOfVolumes?: number;
         fsxnStoragePrice?: number | string;
         fsxnCapacityPrice?: number | string;
+        fsxnIopsPrice?: number | string;
         maxSsdTierSize?: number | string;
         suggestedFsxnThroughputCapacity?: number | string;
         maxThroughput?: number | string;

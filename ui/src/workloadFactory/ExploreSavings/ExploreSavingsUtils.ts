@@ -353,6 +353,7 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
             ebsCapacity: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.ebsCapacity),
             fsxnStoragePrice: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.fsxnStoragePrice?.price),
             fsxnCapacityPrice: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.fsxnCapacityPrice?.price),
+            fsxnIopsPrice: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.fsxnIopsPrice),
             maxSsdTierSize: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.maxSsdTierSize),
             suggestedFsxnThroughputCapacity: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.suggestedFsxnThroughputCapacity
