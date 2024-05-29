@@ -103,4 +103,5 @@ export interface SandboxEntities {
         connectionString?: string | null;
         isLoading: boolean;
     };
+    splitEstimateLoading: boolean;
 }

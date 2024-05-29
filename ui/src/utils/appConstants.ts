@@ -625,8 +625,9 @@ export const GENERAL = {
     DB_CREATE_NOTIFICATION: ['Creation of ', ' in ', ' is in progress. Track progress in '],
     SANDBOX_ACTIONS_NOTIFICATIONS: {
         delete: ['Deletion of ', ' sandbox is in progress. Track progress in '],
-        rebaseline: ['Re-baselining of ', 'sandbox is in progress. Track progress in '],
-        refresh: ['Refreshing of ', 'sandbox is in progress. Track progress in ']
+        rebaseline: ['Re-baselining of ', ' sandbox is in progress. Track progress in '],
+        refresh: ['Refreshing of ', ' sandbox is in progress. Track progress in '],
+        split: ['Splitting of ', ' sandbox is in progress. Track progress in ']
     },
     DATABASE_INFORMATION: 'Database information',
     FILE_SETTINGS: 'File settings',
@@ -884,11 +885,19 @@ export const GENERAL = {
     ROLLBACK_CHECKBOX: 'Select the snapshot you would like the database to Roll-back to',
     DELETING: 'Deleting',
     REBASELINE: 'Re-baseline',
+    SPLIT: 'Splitting',
     REBASELINE_DIALOG_TITLE: ['Are you sure you want to re-baseline ', ' sandbox for database '],
     REBASELINE_DIALOG_FIRST_BULLET:
         'This action will revert the sandbox to its original version at the time of creation.',
     REBASELINE_DIALOG_SECOND_BULLET: 'Any changes you made to the sandbox will be deleted.',
     REFRESH_DIALOG_TITLE: ['Are you sure you want to refresh ', ' sandbox for database'],
+    SPLIT_DIALOG_TITLE: ['Are you sure you want to split this sandbox ', ' from the source database '],
+    SPLIT_DIALOG_FIRST_BULLET: [
+        'The split will create a new database from this sandbox that will occupy ',
+        ' in storage.'
+    ],
+    SPLIT_DIALOG_SECOND_BULLET:
+        'Once the split is complete, the new database will appear in the inventory and this sandbox will be deleted.',
     REFRESH_DIALOG_FIRST_BULLET:
         'This action will update the selected sandbox so that it is equivalent to the source database at the current moment.',
     REFRESH_DIALOG_SECOND_BULLET: 'Any changes you made to the sandbox will be deleted.',
