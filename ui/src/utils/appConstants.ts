@@ -624,9 +624,9 @@ export const GENERAL = {
     CREATE: 'Create',
     DB_CREATE_NOTIFICATION: ['Creation of ', ' in ', ' is in progress. Track progress in '],
     SANDBOX_ACTIONS_NOTIFICATIONS: {
-        delete: ['Deletion of ', ' is in progress. Track progress in '],
-        rebaseline: ['Re-baselining sandbox of ', ' is in progress. Track progress in '],
-        refresh: ['Refreshing sandbox of ', ' is in progress. Track progress in ']
+        delete: ['Deletion of ', ' sandbox is in progress. Track progress in '],
+        rebaseline: ['Re-baselining of ', 'sandbox is in progress. Track progress in '],
+        refresh: ['Refreshing of ', 'sandbox is in progress. Track progress in ']
     },
     DATABASE_INFORMATION: 'Database information',
     FILE_SETTINGS: 'File settings',
@@ -883,11 +883,11 @@ export const GENERAL = {
     ROLLBACK_CHECKBOX: 'Select the snapshot you would like the database to Roll-back to',
     DELETING: 'Deleting',
     REBASELINE: 'Re-baseline',
-    REBASELINE_DIALOG_TITLE: 'Are you sure you want to re-baseline this sandbox for database',
+    REBASELINE_DIALOG_TITLE: ['Are you sure you want to re-baseline ', ' sandbox for database '],
     REBASELINE_DIALOG_FIRST_BULLET:
         'This action will revert the sandbox to its original version at the time of creation.',
     REBASELINE_DIALOG_SECOND_BULLET: 'Any changes you made to the sandbox will be deleted.',
-    REFRESH_DIALOG_TITLE: 'Are you sure you want to refresh this sandbox for database',
+    REFRESH_DIALOG_TITLE: ['Are you sure you want to refresh ', ' sandbox for database'],
     REFRESH_DIALOG_FIRST_BULLET:
         'This action will update the selected sandbox so that it is equivalent to the source database at the current moment.',
     REFRESH_DIALOG_SECOND_BULLET: 'Any changes you made to the sandbox will be deleted.',
