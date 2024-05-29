@@ -33,9 +33,7 @@ const SavingsSelection = ({ printState }: any) => {
     }, [noOfClonedCopies]);
 
     useEffect(() => {
-        
-            setChangeRateText(monthlyChangeRateNo);
-        
+        setChangeRateText(monthlyChangeRateNo);
     }, [monthlyChangeRateNo]);
 
     // Debounce variable update
