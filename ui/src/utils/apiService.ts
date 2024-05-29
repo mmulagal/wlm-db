@@ -715,6 +715,11 @@ export const sandboxApi = createApi({
                     url: `credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/connection-string`
                 })
             }),
+            getSplitEstimateInfo: builder.query({
+                query: ({ regionId, credentialsId, databaseHostId, sandboxName }) => ({
+                    url: `credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/split-estimate`
+                })
+            }),
             getDatabaseMountPoints: builder.query({
                 query: ({ region, credentialId, databaseHostId, databaseName, instanceName }) => ({
                     url: `credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-mount-points?databaseName=${databaseName}&instanceName=${instanceName}`
@@ -731,6 +736,12 @@ export const sandboxApi = createApi({
                     url: `credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}`,
                     method: 'PATCH',
                     body: payload
+                })
+            }),
+            splitSandbox: builder.mutation({
+                query: ({ credentialsId, regionId, databaseHostId, sandboxName, payload }) => ({
+                    url: `credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/split`,
+                    method: 'POST'
                 })
             })
         };
@@ -840,9 +851,11 @@ export const {
     useLazyGetSandboxSavingsQuery,
     useCreateSandboxMutation,
     useGetConnectionInfoQuery,
+    useLazyGetSplitEstimateInfoQuery,
     useGetDatabaseMountPointsQuery,
     useDeleteSandboxMutation,
-    useUpdateSandboxMutation
+    useUpdateSandboxMutation,
+    useSplitSandboxMutation
 } = sandboxApi;
 
 export const { useGetStorageSavingsMutation, useGetViewCalculationsMutation } = exploreSavingsApi;
