@@ -38,7 +38,8 @@ export const formatSandboxListData = (data: SandboxListEntities) => {
                 age: `${getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.createdAt))} days`,
                 tag: item?.tag,
                 status: 'active',
-                baseSnapshot: item?.baseSnapshot
+                baseSnapshot: item?.baseSnapshot,
+                createdAt: item?.createdAt
             };
         });
     return retData;

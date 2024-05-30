@@ -281,19 +281,24 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                 ssmStatus1.Status === ConnectionStatus.CONNECTED ||
                                 ssmStatus2.Status === ConnectionStatus.CONNECTED
                             ) {
-                                // DEMO FSX ID AND REGION
-                                if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-                                    fsxId = 'test-fsx';
-                                    region = 'us-east-1';
-                                }
-
-                                const command = [
+                                let command = [
                                     getStorageSavingsFromOntap(
                                         fsxId,
                                         region,
                                         getClonedByTagValue(accountId, credentialsId)
                                     )
                                 ];
+
+                                // DEMO FSX ID AND REGION
+                                if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+                                    command = [
+                                        getStorageSavingsFromOntap(
+                                            'test-fsx',
+                                            'us-east-1',
+                                            'netapp_wf_test_account_test_cred'
+                                        )
+                                    ];
+                                }
 
                                 const response = await callSsmExecution(
                                     credentialsId,
@@ -310,8 +315,8 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
 
                                     // Increase storage savings per sandbox for demo
                                     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-                                        savedStorage *= sandboxes?.length || 1;
-                                        consumedStorage *= sandboxes?.length || 1;
+                                        savedStorage *= sandboxes?.length || 0;
+                                        consumedStorage *= sandboxes?.length || 0;
                                     }
 
                                     savingsData.consumedStorage +=
@@ -1182,7 +1187,8 @@ async function createExtendedProperties(
             // this is used to retreive the newly created user databases in database list for demo using meta data
             const props = {
                 databaseName: destDetails.database,
-                ...extendedProps
+                ...extendedProps,
+                baseSnapshot: `netapp_wf_${Date.now()}`
             } as Sandbox;
             const updatedMetadata: Metadata = await updateSandboxDBIntoResourceData(
                 accountId,
@@ -1191,7 +1197,7 @@ async function createExtendedProperties(
                 srcDetails.metadata
             );
 
-            updateUserDBIntoResourceData(accountId, srcDetails.host, destDetails.database, updatedMetadata);
+            await updateUserDBIntoResourceData(accountId, srcDetails.host, destDetails.database, updatedMetadata);
         }
 
         status = JOBSTATUS.COMPLETED;
@@ -1769,7 +1775,11 @@ async function getSandboxSplitEstimate(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the active node instance id');
     }
 
-    const command = [getDbMappedOntapVolumes(fileSystemId, region, sandboxName, instanceName)];
+    let command = [getDbMappedOntapVolumes(fileSystemId, region, sandboxName, instanceName)];
+
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        command = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
+    }
 
     const mappings = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId, accountId, false);
 
@@ -1785,7 +1795,7 @@ async function getSandboxSplitEstimate(
     }
 
     // get the estimated split size
-    const estimateCommand = [
+    let estimateCommand = [
         restGetUtilForOntap(
             fileSystemId,
             region,
@@ -1795,6 +1805,18 @@ async function getSandboxSplitEstimate(
         )
     ];
 
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        estimateCommand = [
+            restGetUtilForOntap(
+                'test-fsx',
+                'us-east-1',
+                '/storage/volumes',
+                'uuid=5c1075d2-03a0-11ef-a514-55070fbfcab1|5ace31ea-03a0-11ef-a514-55070fbfcab1',
+                'fields=clone.split_estimate'
+            )
+        ];
+    }
+
     const estimateResp = await callSsmExecution(
         credentialsId,
         region,
@@ -1803,6 +1825,8 @@ async function getSandboxSplitEstimate(
         accountId,
         false
     );
+
+    logger.info('ESTIMATED RESP>>>', estimateResp);
 
     if (!estimateResp) {
         logger.error('Failed to get volume split estimate', { databaseHostId });
