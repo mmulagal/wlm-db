@@ -979,7 +979,7 @@ Resources:
         CreationPolicy:
             ResourceSignal:
                 Count: '1'
-                Timeout: PT120M
+                Timeout: PT180M
         Metadata:
             AWS::CloudFormation::Init:
                 configSets:
