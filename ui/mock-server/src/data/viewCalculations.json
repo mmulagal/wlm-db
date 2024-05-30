@@ -6,6 +6,7 @@
             "price": 0.0238,
             "unit": "UsdPerGiB"
         },
+        "fsxnIopsPrice": 0.0204,
         "maxSsdTierSize": 211106232532992,
         "suggestedFsxnThroughputCapacity": 128,
         "maxThroughput": 2048,
