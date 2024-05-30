@@ -164,9 +164,7 @@ async function createDeploymentMockDataInDB(
                     tag: 'Development',
                     baseSnapshot: `netapp_wf_${Date.now()}`
                 }
-            ]
-        }),
-        ...(createSandbox && {
+            ],
             userDatabase: [
                 {
                     name: 'RetailBanking_sandbox',
