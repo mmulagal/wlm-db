@@ -11,7 +11,7 @@ import {
 } from '../utils/consts';
 // import { handleNotification } from './cloud-manager/notification-operations';
 import { checkAccount, createDeployment, createResource, updateResourceMetaData } from '../lib/database/db';
-import { Metadata } from '../utils/common-types';
+import { Metadata, Sandbox } from '../utils/common-types';
 import { createJobs } from '../lib/database/job';
 import { createFSX } from '../lib/cloud-manager/fsx-core';
 import getLogger from '../utils/logger';
@@ -159,7 +159,8 @@ async function createDeploymentMockDataInDB(
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
                 source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
-                tag: 'Development'
+                tag: 'Development',
+                baseSnapshot: `netapp_wf_${Date.now()}`
             }
         ],
         userDatabase: [
@@ -288,23 +289,15 @@ async function updateUserDBIntoResourceData(
 async function updateSandboxDBIntoResourceData(
     accountId: string,
     resourceId: string,
-    databaseName: string,
-    databaseSource: string,
-    createdAt: number,
-    updatedAt: number,
-    tag: string,
+    sandboxDetails: Sandbox,
     metaData: Metadata
 ) {
-    logger.info('updating sandbox db into resource meta data', accountId, resourceId, databaseName);
+    logger.info('updating sandbox db into resource meta data', accountId, resourceId, sandboxDetails);
 
     // this is used to retreive the newly created user databases in database list for demo using meta data
-    const sandboxDetails = {
-        databaseName,
-        createdAt,
-        updatedAt,
-        source: databaseSource,
-        tag
-    };
+    if (metaData.sandboxes) {
+        metaData.sandboxes = metaData.sandboxes.filter(sandbox => sandbox.databaseName !== sandboxDetails.databaseName);
+    }
     metaData.sandboxes = [...(metaData.sandboxes || []), sandboxDetails];
 
     await updateResourceMetaData(accountId, resourceId, metaData);
