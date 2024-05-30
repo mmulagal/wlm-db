@@ -7,6 +7,9 @@
         [string]$DomainDNSName,
 
         [Parameter(Mandatory=$true)]
+        [string]$SQLDeploymentMode,
+
+        [Parameter(Mandatory=$true)]
         [string]$Region,
         
         [Parameter(Mandatory=$true)]
@@ -77,6 +80,34 @@ if(($Hostname.ToLower() -ne $DomainNetBIOSName.ToLower() ) -and ($DomainName.ToL
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
     exit(1)
+}
+
+#Check if SQL installer media is available
+If( $SQLDeploymentMode -eq 'fci'){
+    $SQLMediaPathAvailable = $False
+    if (Test-Path -Path "C:\SQLServerSetup\setup.exe") {
+        $SQLMediaPathAvailable = $True
+    }
+    else {
+        $SQLMediaPath = 'C:\cfn\Installer\SQLServerSetup\setup.exe'
+        If (Test-Path -path "C:\SQL*") {
+            $SQLInstallerPaths = (Get-ChildItem "C:\SQL*" -Recurse | where {$_.name -eq "setup.exe"} ).fullname
+            If($SQLInstallerPaths -is 'string')
+            {
+                $SQLMediaPathAvailable = $True
+            }
+            Else {
+                $SQLMediaPathAvailable = $True
+            }
+        } 
+    }
+    if ( $SQLMediaPathAvailable -eq $False) {
+        $FailureReason = "Unable to locate SQL installer media path."
+        Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
+        Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
+        Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
+        exit(1)
+    }
 }
 
  

@@ -35,6 +35,10 @@ Metadata:
               Parameters:
                   - EnableCloudWatchLogFeature
                   - ParentStackName
+            - Label:
+                  default: Microsoft SQL Server Configuration
+              Parameters:
+                  - SQLDeploymentMode
         ParameterLabels:
             UniqueID:
                 default: Unique ID for your resource tags
@@ -70,6 +74,8 @@ Metadata:
                 default: FSx for ONTAP Filesystem ID
             IsCustomAmi:
                 default:  Boolean to indicate if AMI includes SQL license or BYOL license
+            SQLDeploymentMode:
+                default: SQL server deployment mode
 Parameters:
     UniqueID:
         Default: UID123
@@ -142,6 +148,13 @@ Parameters:
             - 'true'
             - 'false'
         Default: 'false'
+    SQLDeploymentMode:
+        Description: SQL server deployment mode
+        Type: String
+        AllowedValues:
+            - 'fci'
+            - 'standalone'
+        Default: 'fci'
 Conditions:
     isGovRegion: !Or
         - !Equals
@@ -383,6 +396,8 @@ Resources:
                                     - !Ref 'AWS::Region'
                                     - ' -DomainDNSName '
                                     - !Ref 'DomainDNSName'
+                                    - ' -SQLDeploymentMode '
+                                    - !Ref 'SQLDeploymentMode'
                                     - ' -Stackname '
                                     - !Ref 'AWS::StackName'
                                     - ' -Parentstackname '
