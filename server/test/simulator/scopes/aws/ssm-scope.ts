@@ -311,8 +311,8 @@ const cloneVolumeCommand = {
             'test-fsx',
             'us-east-1',
             'wlmdb_sqlsvm_1714090636810',
-            JSON.stringify({ name: '/vol/wlmdb_sqldata_1714098400/sqldata' }),
-            JSON.stringify({ name: '/vol/wlmdb_sqllog_1714098400/sqllog' }),
+            JSON.stringify({ name: 'wlmdb_sqldata_1714098400' }),
+            JSON.stringify({ name: 'wlmdb_sqllog_1714098400' }),
             'test-res-id',
             'netapp_wf_test_account_test_cred'
         )
