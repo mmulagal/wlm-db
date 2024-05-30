@@ -18,6 +18,14 @@ interface PayloadAuthSuccess {
     accessToken: string;
 }
 
+const checkLocalStorageValue = () => {
+    const value = localStorage.getItem('inventoryV2');
+    if (value === 'true') {
+        return true;
+    }
+    return false;
+};
+
 const initialState: AuthState = {
     accountId: '',
     accessToken: '',
@@ -33,7 +41,7 @@ const initialState: AuthState = {
         }
     },
     isWorkloadFactory: false,
-    isInventoryV2: false // This flag is added to check if new inventory has to run or old.
+    isInventoryV2: checkLocalStorageValue() // This flag is added to check if new inventory has to run or old.
 };
 
 const authSlice = createSlice({

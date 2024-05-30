@@ -4,14 +4,14 @@
             {
                 "instanceType": "m5.2xlarge",
                 "instanceHourlyPrice": "$3.75",
-                "ec2MachineCost": "$2738.96",
+                "ec2MachineCost": "$2,738.96",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes"
             },
             {
                 "instanceType": "m5.2xlarge",
                 "instanceHourlyPrice": "$3.75",
-                "ec2MachineCost": "$2738.96",
+                "ec2MachineCost": "$2,738.96",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes"
             }
@@ -20,14 +20,14 @@
             {
                 "instanceType": "m5.2xlarge",
                 "instanceHourlyPrice": "$1.712",
-                "ec2MachineCost": "1249.76",
+                "ec2MachineCost": "$1,249.76",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes"
             },
             {
                 "instanceType": "m5.2xlarge",
                 "instanceHourlyPrice": "$1.712",
-                "ec2MachineCost": "1249.76",
+                "ec2MachineCost": "$1,249.76",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes"
             }
@@ -65,6 +65,7 @@
             "numberOfVolumes": 1,
             "fsxnStoragePrice": "0.14",
             "fsxnCapacityPrice": "0.02",
+            "fsxnIopsPrice": "0.02",
             "maxSsdTierSize": "183,105.47 GiB",
             "suggestedFsxnThroughputCapacity": "128 GiB",
             "maxThroughput": "4,096",
@@ -144,6 +145,8 @@
             "throughput": 0,
             "totalCloneMonthlyCost": "3,084"
         },
+        "totalFsxEc2MachineCost": "$2,499.52",
+        "totalEBSEc2MachineCost": "$5,477.92",
         "fsxTotalCost": "4,868.38",
         "ebsTotalCost": "14,995.67",
         "fsxSnapshotTotalCost": "25.12"
@@ -153,7 +156,7 @@
             {
                 "instanceType": "m5.2xlarge",
                 "instanceHourlyPrice": "$1.71",
-                "ec2MachineCost": "$1249.76",
+                "ec2MachineCost": "$1,249.76",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes"
             }
@@ -162,7 +165,7 @@
             {
                 "instanceType": "m5.2xlarge",
                 "instanceHourlyPrice": "$1.71",
-                "ec2MachineCost": "$1249.76",
+                "ec2MachineCost": "$1,249.76",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes"
             }
@@ -200,6 +203,7 @@
             "numberOfVolumes": 2,
             "fsxnStoragePrice": "0.14",
             "fsxnCapacityPrice": "0.02",
+            "fsxnIopsPrice": "0.02",
             "maxSsdTierSize": "183,105.47 GiB",
             "suggestedFsxnThroughputCapacity": "128 GiB",
             "maxThroughput": "4,096",
@@ -279,6 +283,8 @@
             "throughput": 0,
             "totalCloneMonthlyCost": "5,134"
         },
+        "totalFsxEc2MachineCost": "$1,249.76",
+        "totalEBSEc2MachineCost": "$1,249.76",
         "fsxTotalCost": "3,230.18",
         "ebsTotalCost": "12,080.83",
         "fsxSnapshotTotalCost": "26.98"

@@ -77,7 +77,13 @@ const HeaderComponent = ({ tab }: Tab) => {
     SandboxApis();
 
     useEffect(() => {
-        dispatch(setSelectedHeaderTab(tab));
+        let tabValue = '';
+        if (tab === WLF_TABS.INVENTORY) {
+            tabValue = WLF_TABS.INVENTORY;
+        } else {
+            tabValue = selectedHeaderTab;
+        }
+        dispatch(setSelectedHeaderTab(tabValue));
     }, []);
 
     useEffect(() => {

@@ -1,6 +1,6 @@
 import React, { Suspense, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import AppNotification from './common/AppNotification/AppNotification';
 import MainComponent from './components/CreateMsSql/MainComponent/MainComponent';
 import DiscoverPage from './components/Discover/DiscoverPage';
@@ -21,9 +21,6 @@ import { WLF_TABS } from './utils/consts';
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
     const dispatch = useDispatch();
-
-    const location = useLocation();
-    console.log(location.pathname);
 
     //@ts-ignore
     const showNotifications = useMemo(() => {
