@@ -291,7 +291,7 @@ const getCollationDetails = {
 };
 
 const getOntapSandboxVolumeSavingsParams = {
-    commands: [getStorageSavingsFromOntap('test-fsx', 'us-east-1')]
+    commands: [getStorageSavingsFromOntap('test-fsx', 'us-east-1', 'netapp_wf_test_account_test_cred')]
 };
 
 const getSandboxDetails = {
@@ -384,6 +384,18 @@ const deleteExtendedPropertiesCommand = {
             'tag',
             'accountId'
         ])
+    ]
+};
+
+const getSplitEstimateCommand = {
+    commands: [
+        restGetUtilForOntap(
+            'test-fsx',
+            'us-east-1',
+            '/storage/volumes',
+            'uuid=5c1075d2-03a0-11ef-a514-55070fbfcab1|5ace31ea-03a0-11ef-a514-55070fbfcab1',
+            'fields=clone.split_estimate'
+        )
     ]
 };
 
@@ -497,7 +509,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: detachDbAndRemoveAccessPathCommand })
     .resolves(listSendCommandCommandResponse.mountPointQuery)
     .on(SendCommandCommand, { Parameters: deleteExtendedPropertiesCommand })
-    .resolves(listSendCommandCommandResponse.deleteExtendedProperties);
+    .resolves(listSendCommandCommandResponse.deleteExtendedProperties)
+    .on(SendCommandCommand, { Parameters: getSplitEstimateCommand })
+    .resolves(listSendCommandCommandResponse.getSplitEstimateCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -609,7 +623,9 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-detachDbAndAcessPathQuery' })
     .resolves(getCommandInvocationResponse.detachDbAndAccessPathResp)
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-deleteExtendedProperties' })
-    .resolves(getCommandInvocationResponse.deleteExtendedPropertiesResp);
+    .resolves(getCommandInvocationResponse.deleteExtendedPropertiesResp)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getSplitEstimateCommand' })
+    .resolves(getCommandInvocationResponse.getSplitEstimateResp);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
