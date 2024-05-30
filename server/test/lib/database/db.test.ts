@@ -167,7 +167,10 @@ describe('Database instance operations', () => {
             instanceId: 'i-1234abcd',
             instanceName: 'MSSQLSERVER',
             isDefault: true,
-            fsxnId: 'fs-0f53fbecdd3d85fb2'
+            fsxnId: 'fs-0f53fbecdd3d85fb2',
+            source: 'deployment',
+            sqlDeploymentType: 'FCI',
+            fsxSvmId: 'svm-0123456789abcdef0'
         };
 
         // Insert a new record
@@ -186,7 +189,10 @@ describe('Database instance operations', () => {
             instanceId: DATABASE_INSTANCE_RECORD.instanceId,
             instanceName: 'NEWNAME',
             isDefault: true,
-            fsxnId: 'fs-00001111'
+            fsxnId: 'fs-00001111',
+            source: 'deployment',
+            sqlDeploymentType: 'FCI',
+            fsxSvmId: 'fs'
         });
         response = await listDatabaseInstances(ACCOUNT_ID, { credentialsId: DEFAULT_AWS_CREDENTIALS_ID });
         expect(response.length).toEqual(1);

@@ -15,6 +15,11 @@ interface Metadata {
     updatedManually?: boolean;
     storageProtocol?: string;
 }
+interface databaseInstanceMetadata {
+    // this is used to retreive the newly created user databases in database list for demo
+    userDatabase?: Array<UserDatabase>;
+    sandboxes?: Array<Sandbox>;
+}
 
 interface CreateDbMetrics {
     numberofUserDbsCreated: number;
@@ -171,5 +176,6 @@ export {
     UserDatabase,
     MissingPermission,
     MissingPermissionInterface,
+    databaseInstanceMetadata,
     Sandbox
 };
