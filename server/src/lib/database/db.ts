@@ -385,14 +385,15 @@ async function createResource(accountId: string, params: Resource) {
     });
 }
 
-async function deleteResource(accountId: string, resourceId: string) {
-    logger.info('Deleting resource', { accountId, resourceId });
+async function deleteResource(accountId: string, resourceId: string, credentialsId?: string) {
+    logger.info('Deleting resource', { accountId, credentialsId, resourceId });
 
     accountId = checkAccount(accountId);
     return prisma.client.resource.deleteMany({
         where: {
             account_id: accountId,
-            resource_id: resourceId
+            resource_id: resourceId,
+            ...(credentialsId && { credentials_id: credentialsId })
         }
     });
 }

@@ -1486,7 +1486,7 @@ async function unmanageResource(
     }[] = [];
 
     if (isEmpty(databaseInstanceIds)) {
-        dbOperationsStatus = await deleteResource(accountId, resourceId);
+        dbOperationsStatus = await deleteResource(accountId, resourceId, credentialsId);
         resourceOperationStatus = dbOperationsStatus.count === 0 ? 'failure' : 'success';
     } else {
         dbOperationsStatus = await deleteDatabaseInstance(accountId, credentialsId, resourceId, databaseInstanceIds);
@@ -1500,14 +1500,14 @@ async function unmanageResource(
         databaseInstanceIds.forEach(databaseInstanceId => {
             if (preDeleteDatabaseInstances.some(elem => elem.sql_instance_id === databaseInstanceId)) {
                 if (postDeleteDatabaseInstances.some(elem => elem.sql_instance_id === databaseInstanceId)) {
-                    databaseInstanceResponse.push({ databaseInstanceId, status: 'failure' });
+                    databaseInstanceResponse.push({ databaseInstanceId, status: 'failed' });
                 } else {
                     databaseInstanceResponse.push({ databaseInstanceId, status: 'success' });
                 }
             } else {
                 databaseInstanceResponse.push({
                     databaseInstanceId,
-                    status: 'failure',
+                    status: 'failed',
                     // eslint-disable-next-line quotes
                     errorMessage: "Instance does't exist."
                 });
