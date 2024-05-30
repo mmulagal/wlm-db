@@ -267,7 +267,7 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                 throat(10, async fsxId => {
                     for (const resourceDetail of fsxGroups[fsxId]) {
                         const { metadata } = resourceDetail;
-                        const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+                        const { node1InstanceId, node2InstanceId, sandboxes } = metadata as unknown as Metadata;
 
                         try {
                             const [ssmStatus1, ssmStatus2] = await Promise.all([
@@ -306,10 +306,18 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                 );
 
                                 if (response) {
-                                    const { savedStorage, consumedStorage } = sqlResponseParsing(response);
+                                    let { savedStorage, consumedStorage } = sqlResponseParsing(response);
+
+                                    // Increase storage savings per sandbox for demo
+                                    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+                                        savedStorage *= sandboxes?.length || 1;
+                                        consumedStorage *= sandboxes?.length || 1;
+                                    }
+
                                     savingsData.consumedStorage +=
                                         typeof consumedStorage === 'number' ? consumedStorage : 0;
                                     savingsData.savedStorage += typeof savedStorage === 'number' ? savedStorage : 0;
+
                                     const totalStorage = savingsData.consumedStorage + savingsData.savedStorage;
                                     savingsData.sandboxSavingsPercentage =
                                         totalStorage > 0 ? (savingsData.savedStorage * 100) / totalStorage : 0;
