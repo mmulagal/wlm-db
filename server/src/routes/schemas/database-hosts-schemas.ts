@@ -216,6 +216,18 @@ const SandboxLifeCycleSchema = {
     }
 };
 
+const SandboxSplitSchema = {
+    params: SandboxParams,
+    tags: [RouteTags.SANDBOX],
+    summary: 'Sandbox split',
+    description: 'Sandbox split operation',
+    response: {
+        200: {
+            jobId: Type.String()
+        }
+    }
+};
+
 export {
     DatabaseHostsSummarySchema,
     DatabaseHostDetailsSchema,
@@ -232,5 +244,6 @@ export {
     GetSandboxConnectionStringSchema,
     DeleteSandboxSchema,
     GetSandboxSplitEstimateSchema,
-    SandboxLifeCycleSchema
+    SandboxLifeCycleSchema,
+    SandboxSplitSchema
 };

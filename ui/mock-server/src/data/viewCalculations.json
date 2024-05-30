@@ -6,6 +6,7 @@
             "price": 0.0238,
             "unit": "UsdPerGiB"
         },
+        "fsxnIopsPrice": 0.0204,
         "maxSsdTierSize": 211106232532992,
         "suggestedFsxnThroughputCapacity": 128,
         "maxThroughput": 2048,
@@ -96,6 +97,7 @@
         "clonedCopiesCount": 3,
         "numberOfClonesInAMonth": 30,
         "changeRateBetweenClones": 0.1,
+        "totalFsxnCapacity": 1099511627776,
         "fsxnSsdPrice": {
             "price": 0.15,
             "unit": "UsdPerGiB"

@@ -12,9 +12,14 @@ const StorageSavingsRequestBody = Type.Object({
     snapshotFrequency: Type.String({
         enum: ['NoSnapShotStorage', 'Hourly', 'Daily', 'Weekly', 'Monthly', '2xDaily', '3xDaily', '4xDaily', '6xDaily']
     }),
-    clonedCopiesCount: Type.Number(),
+    clonedCopiesCount: Type.Number({
+        minimum: 0
+    }),
     cloneRefreshFrequency: Type.String({ enum: ['Daily', 'Weekly', 'Monthly'] }),
-    monthlyChangeRatePercentage: Type.Number()
+    monthlyChangeRatePercentage: Type.Number({
+        minimum: 0,
+        maximum: 100
+    })
 });
 
 const StorageMetrics = Type.Object({
@@ -61,6 +66,7 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
         suggestedFsxnThroughputCapacity: Type.Number(),
         maxThroughput: Type.Number(),
         fsxnThroughputPrice: Type.Number(),
+        fsxnIopsPrice: Type.Number(),
         provisionedSsdIops: Type.Number(),
         includedIops: Type.Number(),
         maxSsdIops: Type.Number(),
@@ -135,7 +141,7 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
         clonedCopiesCount: Type.Number(),
         numberOfClonesInAMonth: Type.Number(),
         changeRateBetweenClones: Type.Number(),
-        // totalFsxnCapacity
+        totalFsxnCapacity: Type.Number(),
         fsxnSsdPrice: PriceUnitObject,
         cloneRefreshFrequency: Type.String(),
         monthlyChangeRatePercentage: Type.Number(),

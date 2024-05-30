@@ -1,21 +1,31 @@
 import { DsTypography } from '@netapp/design-system';
 import styles from './RebaseSplitContent.module.scss';
+import { GENERAL } from '../../../../utils/appConstants';
+import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 
-const RebaseSplitContent = () => {
+const RebaseSplitContent = ({ databaseName, sandboxName, aggSplitEstimate }: any) => {
     return (
         <div className={styles.rebaseSplitContent}>
             <DsTypography variant="Regular_14">
-                Are you sure you want to split this sandbox Database name from the source database ?
+                {GENERAL.SPLIT_DIALOG_TITLE[0]} <span style={{ fontWeight: '590' }}>{sandboxName}</span>
+                {GENERAL.SPLIT_DIALOG_TITLE[1]} <span style={{ fontWeight: '590' }}>{databaseName}</span>?
             </DsTypography>
             <DsTypography variant="Regular_14" className={styles.secondLine}>
-                The split will create a new database from this sandbox that will occupy XX GiB in storage.
+                <div className={styles.list}>
+                    <div className={styles.listItem}>
+                        <Bullet />
+                        <div className={styles.textWidth}>
+                            {GENERAL.SPLIT_DIALOG_FIRST_BULLET[0]}
+                            {aggSplitEstimate}
+                            {GENERAL.SPLIT_DIALOG_FIRST_BULLET[1]}
+                        </div>
+                    </div>
+                    <div className={styles.listItem}>
+                        <Bullet />
+                        <div className={styles.textWidth}>{GENERAL.SPLIT_DIALOG_SECOND_BULLET}</div>
+                    </div>
+                </div>
             </DsTypography>
-
-            <DsTypography variant="Regular_14">
-                Once the split is done, the new database will appear in the inventory.
-            </DsTypography>
-
-            <DsTypography variant="Regular_14">The sandbox removed from the list after the split.</DsTypography>
         </div>
     );
 };

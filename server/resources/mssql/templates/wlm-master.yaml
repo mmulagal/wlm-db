@@ -626,6 +626,8 @@ Resources:
           - 'fs-id'
         IsCustomAmi:
           Ref: IsCustomAmi
+        SQLDeploymentMode:
+          Ref: SQLDeploymentMode
       NotificationARNs:
         Fn::If:
         - IncludeNotification

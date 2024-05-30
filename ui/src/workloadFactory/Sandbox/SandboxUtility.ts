@@ -1,6 +1,6 @@
 import { GENERAL } from '../../utils/appConstants';
 import { CreateSandboxPayloadEntities, SandboxListEntities } from '../../utils/types/sandBoxTypes';
-import { formatDateWithTime, getTimeDifferenceInDays } from '../../utils/utilityFunctions';
+import { formatDateWithTime, formatSize, getTimeDifferenceInDays } from '../../utils/utilityFunctions';
 
 export const generateCreateSandboxPayload = (state: any): CreateSandboxPayloadEntities => {
     const payload = {
@@ -37,7 +37,8 @@ export const formatSandboxListData = (data: SandboxListEntities) => {
                 updatedAt: formatDateWithTime(item?.updatedAt || ''),
                 age: `${getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.createdAt))} days`,
                 tag: item?.tag,
-                status: 'active'
+                status: 'active',
+                baseSnapshot: item?.baseSnapshot
             };
         });
     return retData;
@@ -144,4 +145,13 @@ export const getDefaultDriveLetters = (
         }
     }
     return { dataDrive: defaultDataDriveLetter, logDrive: defaultLogDriveLetter };
+};
+
+export const getAggregatedSplitEstimate = (volumes: any) => {
+    const aggregatedSplitEstimate = volumes
+        ? volumes.reduce((aggEstimate: number, vol: any) => {
+              return aggEstimate + (vol?.splitEstimate || 0);
+          }, 0)
+        : 0;
+    return formatSize(aggregatedSplitEstimate);
 };

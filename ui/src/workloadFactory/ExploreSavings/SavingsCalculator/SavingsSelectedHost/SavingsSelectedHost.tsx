@@ -2,10 +2,25 @@ import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import styles from './SavingsSelectedHost.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
+import { useEffect, useState } from 'react';
 
 const SavingsSelectedHost = () => {
     const isDisabled = false;
-    const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
+    const { selectedHostDetails, selectedPartnerHostDetails, getPartnerHostDetailsLoading } = useAppSelector(
+        state => state.exploreSavings
+    );
+    const [totalVolume, setTotalVolume] = useState(0);
+
+    useEffect(() => {
+        let volumeCount = 0;
+        if (selectedHostDetails?.ebsResourceInfo?.length) {
+            volumeCount += selectedHostDetails?.ebsResourceInfo?.length;
+        }
+        if (selectedPartnerHostDetails?.ebsResourceInfo?.length) {
+            volumeCount += selectedPartnerHostDetails?.ebsResourceInfo?.length;
+        }
+        setTotalVolume(volumeCount);
+    }, [selectedHostDetails, selectedPartnerHostDetails]);
 
     return (
         <div className={styles.selectedHosts}>
@@ -64,16 +79,16 @@ const SavingsSelectedHost = () => {
                 {/* <div className={styles.separator} /> */}
 
                 <div className={styles.container}>
-                    {!selectedHostDetails?.loading && (
+                    {!selectedHostDetails?.loading && !getPartnerHostDetailsLoading && (
                         <DsTypography
                             variant="Semibold_14"
                             style={{ display: 'flex', justifyContent: 'center' }}
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
                         >
-                            {selectedHostDetails?.ebsResourceInfo?.length || GENERAL.NOT_AVAILABLE}
+                            {totalVolume || GENERAL.NOT_AVAILABLE}
                         </DsTypography>
                     )}
-                    {selectedHostDetails?.loading && (
+                    {(selectedHostDetails?.loading || getPartnerHostDetailsLoading) && (
                         <div className={styles.loader}>
                             <FlashingDotsLoader />
                         </div>

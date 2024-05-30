@@ -48,14 +48,14 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                         size: 2 * TIB_IN_BYTE,
                         volumeType: 'io2',
                         iops: 40000,
-                        throughput: 64
+                        throughput: 128
                     },
                     {
                         id: 'vol2',
                         size: 2 * TIB_IN_BYTE,
                         volumeType: 'io2',
                         iops: 40000,
-                        throughput: 64
+                        throughput: 128
                     }
                 ],
                 recommendedInstance: {
@@ -99,14 +99,14 @@ export const setESInstanceData = (data: any, isDemoMode: any, type: string, disp
                         size: 5 * TIB_IN_BYTE,
                         volumeType: 'io2',
                         iops: 40000,
-                        throughput: 64
+                        throughput: 128
                     },
                     {
                         id: 'vol2',
                         size: 5 * TIB_IN_BYTE,
                         volumeType: 'io2',
                         iops: 40000,
-                        throughput: 64
+                        throughput: 128
                     }
                 ],
                 recommendedInstance: {
@@ -353,6 +353,7 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
             ebsCapacity: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.ebsCapacity),
             fsxnStoragePrice: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.fsxnStoragePrice?.price),
             fsxnCapacityPrice: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.fsxnCapacityPrice?.price),
+            fsxnIopsPrice: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.fsxnIopsPrice),
             maxSsdTierSize: formatCalcSize(viewCalculationsResponse?.fsxOntapCalculation?.maxSsdTierSize),
             suggestedFsxnThroughputCapacity: formatNumbers(
                 viewCalculationsResponse?.fsxOntapCalculation?.suggestedFsxnThroughputCapacity
@@ -452,6 +453,7 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
             changeRateBetweenClones: formatNumbers(
                 viewCalculationsResponse?.fsxCloneCalculation?.changeRateBetweenClones
             ),
+            totalFsxnCapacity: formatCalcSize(viewCalculationsResponse?.fsxCloneCalculation?.totalFsxnCapacity),
             fsxnSsdPrice: formatNumbers(viewCalculationsResponse?.fsxCloneCalculation?.fsxnSsdPrice?.price),
             cloneRefreshFrequency: viewCalculationsResponse?.fsxCloneCalculation?.cloneRefreshFrequency,
             monthlyChangeRatePercentage: formatNumbers(
@@ -483,6 +485,8 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
             throughput: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.throughput),
             totalCloneMonthlyCost: formatNumbers(viewCalculationsResponse?.ebsCloneCalculation?.totalCloneMonthlyCost)
         },
+        totalFsxEc2MachineCost: GENERAL.NOT_AVAILABLE, // ToDo
+        totalEBSEc2MachineCost: GENERAL.NOT_AVAILABLE, // ToDo
         fsxTotalCost: totalFsxCost,
         ebsTotalCost: totalEbsCost,
         fsxSnapshotTotalCost: totalFsxSnapshotCost

@@ -28,7 +28,7 @@ import {
     getNativeSQLProtection,
     checkDatabaseExists,
     getAllResourceUtilisation,
-    getMssqlInstanceDetails
+    getMssqlInstanceGuid
 } from '../../../src/operations/workloads/mssql/mssql-operations';
 import { createResource, deleteResource, listResources } from '../../../src/lib/database/db';
 import { DATABASE_METRIC_TYPE } from '../../../src/utils/consts';
@@ -156,9 +156,10 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get MSSQL instance id ', async () => {
-        const resp = await getMssqlInstanceDetails(
+        const resp = await getMssqlInstanceGuid(
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
+            '.',
             ACTIVE_INSTANCE_ID,
             STANDBY_INSTANCE_ID
         );

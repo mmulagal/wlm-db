@@ -17,6 +17,7 @@ app.use('', routers.databaseHosts);
 app.use('', routers.chatbot);
 app.use('', routers.createUserDb);
 app.use('', routers.exploreSavings);
+app.use('', routers.inventory);
 
 const server = app.listen(process.env.PORT || 8061, () => {
     const { port } = server.address() as AddressInfo;

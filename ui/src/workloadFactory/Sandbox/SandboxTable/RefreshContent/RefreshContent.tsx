@@ -4,11 +4,12 @@ import RebaseRollbackContent from '../RebaseRollbackContent/RebaseRollbackConten
 import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 
-const RefreshContent = ({ databaseName }: any) => {
+const RefreshContent = ({ databaseName, sandboxName }: any) => {
     return (
         <div className={styles.refreshContent}>
             <DsTypography variant="Regular_14">
-                {GENERAL.REFRESH_DIALOG_TITLE} <span style={{ fontWeight: '590' }}>{databaseName}</span>?
+                {GENERAL.REFRESH_DIALOG_TITLE[0]} <span style={{ fontWeight: '590' }}>{sandboxName}</span>
+                {GENERAL.REFRESH_DIALOG_TITLE[1]} <span style={{ fontWeight: '590' }}>{databaseName}</span>?
             </DsTypography>
             <DsTypography variant="Regular_14" className={styles.secondLine}>
                 <div className={styles.list}>

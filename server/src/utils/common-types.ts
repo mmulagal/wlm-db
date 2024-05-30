@@ -16,16 +16,9 @@ interface Metadata {
     storageProtocol?: string;
 }
 interface databaseInstanceMetadata {
-    source?: string;
-    sqlDeploymentType?: string;
-    fsxSvmId?: string;
     // this is used to retreive the newly created user databases in database list for demo
     userDatabase?: Array<UserDatabase>;
     sandboxes?: Array<Sandbox>;
-    createDbMetrics?: CreateDbMetrics;
-    sandboxCreated?: boolean;
-    updatedManually?: boolean;
-    storageProtocol?: string;
 }
 
 interface CreateDbMetrics {
@@ -53,6 +46,7 @@ interface Sandbox {
     updatedAt: number;
     source: string;
     tag: string;
+    baseSnapshot: string;
 }
 
 interface NodeDetails {
@@ -182,5 +176,6 @@ export {
     UserDatabase,
     MissingPermission,
     MissingPermissionInterface,
-    databaseInstanceMetadata
+    databaseInstanceMetadata,
+    Sandbox
 };

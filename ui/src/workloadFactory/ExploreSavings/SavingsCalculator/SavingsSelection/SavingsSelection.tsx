@@ -38,13 +38,13 @@ const SavingsSelection = ({ printState }: any) => {
 
     // Debounce variable update
     useEffect(() => {
-        if (clonedText || clonedText === '') {
+        if ((clonedText || clonedText === '') && clonedText <= 10) {
             dispatch(setNumberOfClonedCopies(clonedText));
         }
     }, [clonedText]);
 
     useEffect(() => {
-        if (changeRateText || changeRateText === '') {
+        if ((changeRateText || changeRateText === '') && changeRateText <= 100) {
             dispatch(setMonthlyChangeRate(changeRateText));
         }
     }, [changeRateText]);
@@ -83,6 +83,18 @@ const SavingsSelection = ({ printState }: any) => {
             dispatch(setSelectedCloneRefresh(generateCloneRefresh[0]));
         }
     }, [generateCloneRefresh]);
+
+    const errorForClonedCopiesCount = () => {
+        if (noOfClonedCopies > 10) {
+            return GENERAL.CLONED_COPIES_MAX_LIMIT;
+        }
+    };
+
+    const errorForChangeRate = () => {
+        if (monthlyChangeRateNo > 100) {
+            return GENERAL.CHANGE_RATE_MAX_LIMIT;
+        }
+    };
 
     return (
         <div className={styles.savingsSelection}>
@@ -129,6 +141,7 @@ const SavingsSelection = ({ printState }: any) => {
                         }}
                         value={noOfClonedCopies}
                         className={styles.widthSet}
+                        error={errorForClonedCopiesCount()}
                     />
                 )}
                 <SelectField
@@ -165,6 +178,7 @@ const SavingsSelection = ({ printState }: any) => {
                         value={monthlyChangeRateNo ? monthlyChangeRateNo : ''}
                         className={styles.widthSet}
                         info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
+                        error={errorForChangeRate()}
                     />
                 )}
                 <div className={styles.notice}>
