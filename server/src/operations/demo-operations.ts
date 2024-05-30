@@ -107,6 +107,7 @@ async function createDeploymentMockDataInDB(
     fsxFileSystemId: string | undefined,
     awsAccountId: string,
     serverName: string,
+    createSandbox: boolean = false,
     storageProtocol?: string
 ) {
     logger.info('create deployment, resource and job table mock data in database', {
@@ -153,30 +154,32 @@ async function createDeploymentMockDataInDB(
         fsxSvmId: 'svm-0491dd89a76b7ca3d',
         sandboxCreated: true,
         storageProtocol,
-        sandboxes: [
-            {
-                databaseName: 'RetailBanking_sandbox',
-                createdAt: Date.now(),
-                updatedAt: Date.now(),
-                source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
-                tag: 'Development',
-                baseSnapshot: `netapp_wf_${Date.now()}`
-            }
-        ],
-        userDatabase: [
-            {
-                name: 'RetailBanking_sandbox',
-                size: 16777216,
-                type: 'User Database',
-                status: 'ONLINE',
-                protection: {
-                    isAwsBackupEnabled: { fsxn: false, fsxw: false, ebs: false },
-                    isFsxOntapSnapshotsEnabled: false,
-                    isSqlNativeEnabled: false
-                },
-                collation: SQL_DEFAULT_COLLATION
-            }
-        ]
+        ...(createSandbox && {
+            sandboxes: [
+                {
+                    databaseName: 'RetailBanking_sandbox',
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                    source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
+                    tag: 'Development',
+                    baseSnapshot: `netapp_wf_${Date.now()}`
+                }
+            ],
+            userDatabase: [
+                {
+                    name: 'RetailBanking_sandbox',
+                    size: 16777216,
+                    type: 'User Database',
+                    status: 'ONLINE',
+                    protection: {
+                        isAwsBackupEnabled: { fsxn: false, fsxw: false, ebs: false },
+                        isFsxOntapSnapshotsEnabled: false,
+                        isSqlNativeEnabled: false
+                    },
+                    collation: SQL_DEFAULT_COLLATION
+                }
+            ]
+        })
     };
 
     if (sqlDeploymentMode === 'FCI') {
@@ -208,16 +211,18 @@ async function createDeploymentMockDataInDB(
 
     await createJobs(accountId, data);
 
-    const sandboxJobsData = await createSandboxJobMockData(
-        accountId,
-        region,
-        'RetailBanking',
-        'RetailBanking_sandbox',
-        credentialsId,
-        'SQLServer-Prod-01',
-        resourceName
-    );
-    await createJobs(accountId, sandboxJobsData);
+    if (createSandbox) {
+        const sandboxJobsData = await createSandboxJobMockData(
+            accountId,
+            region,
+            'RetailBanking',
+            'RetailBanking_sandbox',
+            credentialsId,
+            'SQLServer-Prod-01',
+            resourceName
+        );
+        await createJobs(accountId, sandboxJobsData);
+    }
 }
 
 async function createFileSystemForDemo(
