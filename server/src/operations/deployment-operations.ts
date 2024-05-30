@@ -992,6 +992,7 @@ async function deployCloudFormationTemplate(
             fsxConfiguration?.fsxFileSystemId,
             awsAccountId,
             sqlConfiguration?.sqlServerName,
+            false,
             STORAGE_PROTOCOLS.ISCSI
         );
         if (!fsxConfiguration.fsxFileSystemId) {
