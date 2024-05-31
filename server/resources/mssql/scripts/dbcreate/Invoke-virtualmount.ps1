@@ -98,8 +98,8 @@ try {
     $dataPartition = Get-Partition -DiskNumber $datadisknumber | Where-Object Type -eq Basic
     $logPartition = Get-Partition -DiskNumber $logdisknumber | Where-Object Type -eq Basic
 
-    #$null = $dataPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
-    #$null = $logPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
+    $null = $dataPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
+    $null = $logPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
 
     write-debug "DataFolder: $datafolder $logfolder"
 
