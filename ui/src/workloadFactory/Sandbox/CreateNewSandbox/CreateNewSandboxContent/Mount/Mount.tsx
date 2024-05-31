@@ -6,7 +6,9 @@ import { useDispatch } from 'react-redux';
 import {
     setDataDriveMountPoint,
     setLogDriveMountPoint,
-    setSelectedMount
+    setSelectedMount,
+    updateDataFilePath,
+    updateLogFilePath
 } from '../../../../../store/workloadFactory/createSandboxSlice';
 import { GENERAL } from '../../../../../utils/appConstants';
 import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
@@ -71,6 +73,8 @@ const Mount = () => {
             : '';
         setDataFilePath(`${dataDriveMountPoint}:\\${truncatedDbName}-Data\\${dataFilePathSuffix}`);
         setLogFilePath(`${logDriveMountPoint}:\\${truncatedDbName}-Log\\${logFilePathSuffix}`);
+        dispatch(updateDataFilePath(`${dataDriveMountPoint}:\\${truncatedDbName}-Data\\${dataFilePathSuffix}`));
+        dispatch(updateLogFilePath(`${logDriveMountPoint}:\\${truncatedDbName}-Log\\${logFilePathSuffix}`));
     }, [dataFilePathSuffix, logFilePathSuffix, dataDriveMountPoint, logDriveMountPoint, target]);
 
     const disableDriveMsg = (val: any) => {
