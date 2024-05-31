@@ -3,9 +3,8 @@ import { ReactComponent as Download } from '@netapp/icons/ic_download.svg';
 import { ReactComponent as Calculate } from '../../../../assets/ic_calculate.svg';
 
 import styles from './ExportPDF.module.scss';
-import { DsTypography } from '@netapp/design-system';
-import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventorySlice';
-import { WLF_TABS } from '../../../../utils/consts';
+import { DsTypography, Popover } from '@netapp/design-system';
+
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
@@ -48,20 +47,29 @@ const ExportPDF = ({ printDocument }: any) => {
                 </DsTypography>
             </div>
 
-            <div className={viewLoading ? `${styles.insideContainer} ${styles.disabled}` : styles.insideContainer}>
+            {/* <div className={viewLoading ? `${styles.insideContainer} ${styles.disabled}` : styles.insideContainer}> */}
+            <div className={`${styles.insideContainer} ${styles.disabled}`}>
                 <div>
                     <Calculate />
                 </div>
-                <DsTypography
-                    variant="Semibold_14"
-                    className={styles.text}
-                    style={{ width: '147px' }}
-                    onClick={() =>
-                        viewLoading ? () => {} : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
+                <Popover
+                    popoverClass={styles['popover']}
+                    children={'This feature is currently unavailable'}
+                    trigger="hover"
+                    container={
+                        <DsTypography
+                            variant="Semibold_14"
+                            className={styles.text}
+                            style={{ width: '147px' }}
+                            // onClick={() =>
+                            //     viewLoading ? () => {} : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
+                            // }
+                            onClick={() => () => {}}
+                        >
+                            {GENERAL.VIEW_THE_CALCULATIONS}
+                        </DsTypography>
                     }
-                >
-                    {GENERAL.VIEW_THE_CALCULATIONS}
-                </DsTypography>
+                />
             </div>
         </div>
     );
