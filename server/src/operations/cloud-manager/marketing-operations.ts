@@ -5,7 +5,7 @@ import { FileSystemTypes, HttpErrorCodes, SqlServerDeploymentModel, HOURS_IN_MON
 import getLogger from '../../utils/logger';
 import getStorageSavings from '../../lib/cloud-manager/marketing';
 import {
-    ComputeLicenseHourlyCostType,
+    ComputeLicenseCostType,
     StorageSavingsMetricsCalculationsResponseType,
     StorageSavingsRequestBodyType,
     StorageSavingsResponseType
@@ -129,7 +129,7 @@ async function aoagStorageSavingsCalculations(
     const { ec2InstanceId: nodeInstanceId, sqlServerInstances } = nodeDetails;
     const [{ nodeIps }] = sqlServerInstances || [];
     if (sqlServerInstances !== undefined && nodeIps && nodeIps.length > 0) {
-        const currentNodeComputeLicenseDetails = await retrieveComputeAndLicenseHourlyCost(region, [nodeDetails]);
+        const currentNodeComputeLicenseDetails = await retrieveComputeAndLicenseCost(region, [nodeDetails]);
         const { items: partnerNodeDetails } = await getAoagPartnerNodesDetails(
             accountId,
             credentialsId,
@@ -137,7 +137,7 @@ async function aoagStorageSavingsCalculations(
             nodeInstanceId,
             nodeIps
         );
-        const partnerNodeComputeLicenseDetails = await retrieveComputeAndLicenseHourlyCost(region, partnerNodeDetails);
+        const partnerNodeComputeLicenseDetails = await retrieveComputeAndLicenseCost(region, partnerNodeDetails);
 
         const { allEbsVolumeIds, uniqueHostVolumeIds } = await identifyAoagVolumes(
             accountId,
@@ -268,7 +268,7 @@ async function aoagStorageSavingsMetrics(
     nodeEbsVolumeIds: string[],
     params: StorageSavingsRequestBodyType,
     nodeDetails: DiscoverResponseInfoType,
-    currentNodeComputeLicenseDetails: ComputeLicenseHourlyCostType
+    currentNodeComputeLicenseDetails: ComputeLicenseCostType
 ) {
     logger.info('Performing AOAG storage savings calculations', {
         accountId,
@@ -290,7 +290,7 @@ async function aoagStorageSavingsMetrics(
         );
 
         const partnerNodeComputeLicenseDetails = partnerNodeDetails
-            ? await retrieveComputeAndLicenseHourlyCost(region, partnerNodeDetails)
+            ? await retrieveComputeAndLicenseCost(region, partnerNodeDetails)
             : undefined;
         const allNodesComputeLicenseDetails = partnerNodeComputeLicenseDetails
             ? [currentNodeComputeLicenseDetails, ...partnerNodeComputeLicenseDetails]
@@ -400,63 +400,11 @@ function handleMarketingApiFsxCalculationObject(fsxCalculationData: any) {
     return fsxCalculationObject;
 }
 
-async function retrieveComputeAndLicenseMonthlyCost(region: string, ec2HostDetails: any[]) {
-    logger.info('Retrieving compute and license monthly cost', { region, ec2HostDetails });
-
-    const allNodesComputeLicenseDetails = await retrieveComputeAndLicenseHourlyCost(region, ec2HostDetails);
-    return Promise.all(
-        allNodesComputeLicenseDetails.map(async ({ ec2InstanceId, ec2InstanceType, compute, license }) => {
-            const { instanceType, computeHourlyPrice } = compute.existing;
-            const existingComputeMonthlyPrice = computeHourlyPrice ? computeHourlyPrice * HOURS_IN_MONTH : undefined;
-
-            const { licenseType, licenseHourlyPrice } = license.existing;
-            const existingLicenseMonthlyPrice = licenseHourlyPrice ? licenseHourlyPrice * HOURS_IN_MONTH : undefined;
-
-            const { instanceType: recommendedInstanceType, computeHourlyPrice: recommendedComputeHourlyPrice } =
-                compute.recommended;
-            const recommendedComputeMonthlyPrice = recommendedComputeHourlyPrice
-                ? recommendedComputeHourlyPrice * HOURS_IN_MONTH
-                : undefined;
-            const { licenseType: recommendedLicenceType, licenseHourlyPrice: recommendedLicenseHourlyPrice } =
-                license.existing;
-
-            const recommendedLicenseMonthlyPrice = recommendedLicenseHourlyPrice
-                ? recommendedLicenseHourlyPrice * HOURS_IN_MONTH
-                : undefined;
-
-            return {
-                ec2InstanceId,
-                ec2InstanceType,
-                compute: {
-                    existing: {
-                        instanceType,
-                        computeMonthlyPrice: existingComputeMonthlyPrice
-                    },
-                    recommended: {
-                        instanceType: recommendedInstanceType,
-                        computeMonthlyPrice: recommendedComputeMonthlyPrice
-                    }
-                },
-                license: {
-                    existing: {
-                        licenseType,
-                        licenseMonthlyPrice: existingLicenseMonthlyPrice
-                    },
-                    recommended: {
-                        licenseType: recommendedLicenceType,
-                        licenseMonthlyPrice: recommendedLicenseMonthlyPrice
-                    }
-                }
-            };
-        })
-    );
-}
-
-async function retrieveComputeAndLicenseHourlyCost(
+async function retrieveComputeAndLicenseCost(
     region: string,
     ec2HostDetailsList: any[]
-): Promise<ComputeLicenseHourlyCostType[]> {
-    logger.info('Retrieving compute and license hourly cost', { region, ec2HostDetailsList });
+): Promise<ComputeLicenseCostType[]> {
+    logger.info('Retrieving compute and license cost', { region, ec2HostDetailsList });
     return Promise.all(
         ec2HostDetailsList.map(async ec2HostDetails => {
             const [{ sqlServerEdition }] = ec2HostDetails.sqlServerInstances || [];
@@ -493,7 +441,9 @@ async function retrieveComputeAndLicenseHourlyCost(
                     existing: {
                         instanceType: existingInstanceType,
                         computeHourlyPrice: existingcomputeHourlyPriceWithoutLicense,
-                        instanceHourlyPrice: existingcomputeHourlyPrice, // inclusive of license
+                        computeMonthlyPrice: existingcomputeHourlyPriceWithoutLicense
+                            ? existingcomputeHourlyPriceWithoutLicense * HOURS_IN_MONTH
+                            : undefined,
                         instanceMonthlyPrice: existingcomputeHourlyPrice
                             ? existingcomputeHourlyPrice * HOURS_IN_MONTH
                             : undefined,
@@ -502,8 +452,10 @@ async function retrieveComputeAndLicenseHourlyCost(
                     recommended: {
                         instanceType: existingInstanceType,
                         computeHourlyPrice: existingcomputeHourlyPriceWithoutLicense,
-                        instanceHourlyPrice: existingcomputeHourlyPrice,
-                        instanceMonthlyPrice: existingcomputeHourlyPrice
+                        computeMonthlyPrice: existingcomputeHourlyPriceWithoutLicense
+                            ? existingcomputeHourlyPriceWithoutLicense * HOURS_IN_MONTH
+                            : undefined,
+                        instanceMonthlyPrice: existingcomputeHourlyPrice // inclusive of license
                             ? existingcomputeHourlyPrice * HOURS_IN_MONTH
                             : undefined,
                         hoursInMonth: HOURS_IN_MONTH
@@ -514,13 +466,17 @@ async function retrieveComputeAndLicenseHourlyCost(
                         sqlServerEdition,
                         licenseType: existingLicenseType,
                         licenseHourlyPrice: existingLicensePrice,
-                        licenseIncluded: !!(existingLicensePrice && existingLicensePrice > 0)
+                        licenseIncluded: !!(existingLicensePrice && existingLicensePrice > 0),
+                        licenseMontlyPrice: existingLicensePrice ? existingLicensePrice * HOURS_IN_MONTH : undefined,
+                        hoursInMonth: HOURS_IN_MONTH
                     },
                     recommended: {
                         sqlServerEdition,
                         licenseType: existingLicenseType,
                         licenseHourlyPrice: existingLicensePrice,
-                        licenseIncluded: !!(existingLicensePrice && existingLicensePrice > 0)
+                        licenseIncluded: !!(existingLicensePrice && existingLicensePrice > 0),
+                        licenseMontlyPrice: existingLicensePrice ? existingLicensePrice * HOURS_IN_MONTH : undefined,
+                        hoursInMonth: HOURS_IN_MONTH
                     }
                 }
             };
@@ -554,7 +510,7 @@ async function performStorageSavingsCalculations(
         return aoagStorageSavingsCalculations(accountId, credentialsId, region, ebsVolumeIds, params, ec2HostDetails);
     }
 
-    const [{ compute, license }] = await retrieveComputeAndLicenseMonthlyCost(region, [ec2HostDetails]);
+    const [{ compute, license }] = await retrieveComputeAndLicenseCost(region, [ec2HostDetails]);
 
     const {
         ebs,
@@ -562,14 +518,8 @@ async function performStorageSavingsCalculations(
         fsx_calculation: fsxCalculationData
     } = await getStorageSavings(accountId, credentialsId, region, getMarketingApiRequestBody(ebsVolumeIds, params));
 
-    const existingComputeLicensePrice =
-        compute?.existing?.computeMonthlyPrice && license?.existing?.licenseMonthlyPrice
-            ? compute.existing.computeMonthlyPrice + license.existing.licenseMonthlyPrice
-            : 0;
-    const recommendedComputeLicensePrice =
-        compute?.recommended?.computeMonthlyPrice && license?.recommended?.licenseMonthlyPrice
-            ? compute.recommended.computeMonthlyPrice + license.recommended.licenseMonthlyPrice
-            : 0;
+    const existingComputeLicensePrice = compute?.existing?.instanceMonthlyPrice || 0;
+    const recommendedComputeLicensePrice = compute?.recommended?.instanceMonthlyPrice || 0;
     return {
         compute,
         license,
@@ -589,7 +539,7 @@ async function formatStorageSavingsCalculationMetrics(
     region: string,
     ebsVolumeIds: string[],
     params: StorageSavingsRequestBodyType,
-    nodesComputeLicenseDetails: ComputeLicenseHourlyCostType[]
+    nodesComputeLicenseDetails: ComputeLicenseCostType[]
 ) {
     logger.debug('Formatting storage savings calculation metrics', {
         accountId,
@@ -898,7 +848,7 @@ async function getStorageSavingsCalculationMetrics(
     );
 
     const [{ sqlServerDeploymentType, nodeIps }] = ec2HostDetails?.sqlServerInstances || [];
-    const [currentNodeComputeLicenseDetails] = await retrieveComputeAndLicenseHourlyCost(region, [ec2HostDetails]);
+    const [currentNodeComputeLicenseDetails] = await retrieveComputeAndLicenseCost(region, [ec2HostDetails]);
     if (nodeIps && !isEmpty(nodeIps) && sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
         return aoagStorageSavingsMetrics(
             accountId,

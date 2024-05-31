@@ -76,14 +76,16 @@ const ComputeCalculationObject = Type.Object({
     instanceType: Type.String(),
     computeHourlyPrice: Type.Optional(Type.Number()),
     instanceHourlyPrice: Type.Optional(Type.Number()),
-    hoursInAMonth: Type.Number(),
-    instanceMonthlyPrice: Type.Number()
+    hoursInMonth: Type.Number(),
+    instanceMonthlyPrice: Type.Optional(Type.Number()),
+    computeMonthlyPrice: Type.Optional(Type.Number())
 });
 const LicenseCalculationObject = Type.Object({
     sqlServerEdition: Type.String(),
     licenseType: Type.String(),
     licenseHourlyPrice: Type.Optional(Type.Number()),
-    licenseIncluded: Type.Optional(Type.Boolean())
+    licenseIncluded: Type.Optional(Type.Boolean()),
+    hoursInMonth: Type.Number()
 });
 const StorageSavingsCalculationsMetricsResponse = Type.Object({
     recommendedComputeCalculation: Type.Array(ComputeCalculationObject),
@@ -209,37 +211,42 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
 type StorageSavingsResponseType = Static<typeof StorageSavingsResponse>;
 type StorageSavingsRequestBodyType = Static<typeof StorageSavingsRequestBody>;
 
-const ComputeHourlyDetails = Type.Object({
+const ComputeDetails = Type.Object({
     instanceType: Type.String(),
     computeHourlyPrice: Type.Optional(Type.Number()),
-    instanceHourlyPrice: Type.Optional(Type.Number())
+    instanceHourlyPrice: Type.Optional(Type.Number()),
+    computeMonthlyPrice: Type.Optional(Type.Number()),
+    instanceMonthlyPrice: Type.Optional(Type.Number()),
+    hoursInMonth: Type.Number()
 });
 
-const LicenseHourlyDetails = Type.Object({
+const LicenseDetails = Type.Object({
     sqlServerEdition: Type.String(),
     licenseType: Type.String(),
     licenseHourlyPrice: Type.Optional(Type.Number()),
-    licenseIncluded: Type.Optional(Type.Boolean())
+    licenseIncluded: Type.Optional(Type.Boolean()),
+    licenseMonthlyPrice: Type.Optional(Type.Number()),
+    hoursInMonth: Type.Number()
 });
 
-const ComputeHourly = Type.Object({
-    existing: ComputeHourlyDetails,
-    recommended: ComputeHourlyDetails
+const Compute = Type.Object({
+    existing: ComputeDetails,
+    recommended: ComputeDetails
 });
 
-const LicenseHourly = Type.Object({
-    existing: LicenseHourlyDetails,
-    recommended: LicenseHourlyDetails
+const License = Type.Object({
+    existing: LicenseDetails,
+    recommended: LicenseDetails
 });
 
-const ComputeLicenseHourlyCost = Type.Object({
+const ComputeLicenseCost = Type.Object({
     ec2InstanceId: Type.String(),
     ec2InstanceType: Type.String(),
-    compute: ComputeHourly,
-    license: LicenseHourly
+    compute: Compute,
+    license: License
 });
 
-type ComputeLicenseHourlyCostType = Static<typeof ComputeLicenseHourlyCost>;
+type ComputeLicenseCostType = Static<typeof ComputeLicenseCost>;
 
 type StorageSavingsMetricsCalculationsResponseType = Static<typeof StorageSavingsCalculationsMetricsResponse>;
 export {
@@ -250,5 +257,5 @@ export {
     StorageSavingsResponseType,
     StorageSavingsCalculationsMetricsResponse,
     StorageSavingsMetricsCalculationsResponseType,
-    ComputeLicenseHourlyCostType
+    ComputeLicenseCostType
 };
