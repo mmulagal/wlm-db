@@ -679,16 +679,16 @@ const createVolumeClone = (
             return $responseObject | ConvertTo-Json -Depth 5
         }
 
+        $errormessage = Set-LUNSignature
+        if ($errormessage -ne $null) {
+            $responseObject['error'] = "Could not set LUN signature. $($errormessage | convertto-json)"
+            return $responseObject | ConvertTo-Json -Depth 5
+        }
+
         $result = Set-LunMap -igroup $igroup
         write-debug "Map LUNs job: $($result | convertto-json)"
         if ($result.error -or $result.records.count -eq 0) {
             $responseObject['error'] = "Could not map LUNs. Ontap error: $($result.error)"
-            return $responseObject | ConvertTo-Json -Depth 5
-        }
-
-        $errormessage = Set-LUNSignature
-        if ($errormessage -ne $null) {
-            $responseObject['error'] = "Could not set LUN signature. $($errormessage | convertto-json)"
             return $responseObject | ConvertTo-Json -Depth 5
         }
     } catch {
@@ -1065,8 +1065,8 @@ const addAccessPathAndAttachDb = (
 
         # If access path does not exist, only then add the access path
         if ($accessPathExists -ne $true) {
-            $datadisk = Get-disk | Where-Object { $_.SerialNumber -eq $datafile.serial }
-            $logdisk = Get-disk | Where-Object { $_.SerialNumber -eq $logfile.serial }
+            $datadisk = Get-disk | Where-Object { $_.SerialNumber -ceq $datafile.serial }
+            $logdisk = Get-disk | Where-Object { $_.SerialNumber -ceq $logfile.serial }
 
             write-debug "Mount Points: $dataMountPoint $logMountPoint"
 

@@ -102,11 +102,11 @@ catch {
 try {
     #Retrieve a list of FSx for ONTAP disks. 
     if ($DataNew -ne "false") {
-        $getdatadisk = (Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline' -and $_.SerialNumber -eq $DataSerial })
+        $getdatadisk = (Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline' -and $_.SerialNumber -ceq $DataSerial })
         #Retry for 1 min until disks are available on host
         if ([string]::IsNullOrEmpty($getdatadisk)) {
             do {
-                $getdatadisk = (Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline' -and $_.SerialNumber -eq $DataSerial })
+                $getdatadisk = (Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline' -and $_.SerialNumber -ceq $DataSerial })
                 $retrydata++
                 Start-Sleep 20
             } until (($retrydata -eq 4) -Or !([string]::IsNullOrEmpty($getdatadisk) ))
@@ -126,11 +126,11 @@ try {
     }
 
     if ($LogNew -ne "false") {
-        $getlogdisk = (Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline' -and $_.SerialNumber -eq $LogSerial })
+        $getlogdisk = (Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline' -and $_.SerialNumber -ceq $LogSerial })
         #Retry for 1 min until disks are available on host
         if ([string]::IsNullOrEmpty($getlogdisk)) {
             do {
-                $getlogdisk = (Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline' -and $_.SerialNumber -eq $LogSerial })
+                $getlogdisk = (Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.OperationalStatus -eq 'Offline' -and $_.SerialNumber -ceq $LogSerial })
                 $retrylog++
                 Start-Sleep 20
             } until (($retrylog -eq 4) -Or !([string]::IsNullOrEmpty($getlogdisk) ))

@@ -25,6 +25,7 @@ import {
 import { renderAllocatedCapacity, renderEstimatedCost } from '../../Inventory/InventoryUtils';
 import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
+import OfflineComponent from './OfflineComponent/OfflineComponent';
 
 const InventoryTable = () => {
     const dispatch = useDispatch();
@@ -119,7 +120,10 @@ const InventoryTable = () => {
     };
 
     const ExpandedRow = ({ rowData }: any) => {
-        return <ManagedHostSubTable rowId={rowData?.id} />;
+        if (rowData.hasOwnProperty('status')) {
+            return <ManagedHostSubTable rowId={rowData?.id} />;
+        }
+        return <OfflineComponent />;
     };
 
     const handleDialog = () => {
@@ -136,7 +140,7 @@ const InventoryTable = () => {
                     closeDialog();
                 }}
                 customClass={styles.setWidth}
-                // primaryButtonDisabled={isManageButtonDisable}
+                primaryButtonDisabled={isManageButtonDisable}
             />
         );
     };

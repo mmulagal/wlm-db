@@ -12,12 +12,16 @@ describe('Marketing lib', () => {
             ACCOUNT_ID,
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
-            getMarketingApiRequestBody(['vol-0f32f6c69fb7e40ac'], {
-                snapshotFrequency: 'daily',
-                clonedCopiesCount: 1,
-                cloneRefreshFrequency: 'daily',
-                monthlyChangeRatePercentage: 30
-            })
+            getMarketingApiRequestBody(
+                ['vol-0f32f6c69fb7e40ac'],
+                {
+                    snapshotFrequency: 'daily',
+                    clonedCopiesCount: 1,
+                    cloneRefreshFrequency: 'daily',
+                    monthlyChangeRatePercentage: 30
+                },
+                'AOAG'
+            )
         );
         expect(response.ebs).toBeDefined();
         expect(response.fsx).toBeDefined();
