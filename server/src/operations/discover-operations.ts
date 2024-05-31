@@ -1512,23 +1512,6 @@ async function unmanageDatabaseInstance(
                 });
             }
         });
-
-        databaseInstanceIds.map(databaseInstanceId => {
-            const existsBeforeDeletion = preDeleteDatabaseInstances.some(
-                elem => elem.sql_instance_id === databaseInstanceId
-            );
-            const existsAfterDeletion = postDeleteDatabaseInstances.some(
-                elem => elem.sql_instance_id === databaseInstanceId
-            );
-            const status = existsAfterDeletion ? 'failed' : 'success';
-            const errorMessage = existsBeforeDeletion ? 'Instance doesn not exist.' : undefined;
-
-            return {
-                databaseInstanceId,
-                status,
-                errorMessage
-            };
-        });
     }
 
     return {
