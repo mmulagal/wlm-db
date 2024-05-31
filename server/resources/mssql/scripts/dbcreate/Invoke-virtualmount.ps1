@@ -43,7 +43,7 @@ try {
 
     $retry = 0
     do {
-        $disklist = (Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.SerialNumber -eq $DataSerial -or $_.SerialNumber -eq $LogSerial })
+        $disklist = (Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.SerialNumber -ceq $DataSerial -or $_.SerialNumber -ceq $LogSerial })
         $diskcount = $disklist.Number.Count
         if ($retry -gt 0) {
             Start-Sleep 20
@@ -58,7 +58,7 @@ try {
     $disklist | ForEach-Object {
         $disk = $_
         $disknumber = $disk.Number
-        Invoke-command -ScriptBlock {("select disk $disknumber", "attributes disk clear readonly", "online disk", "exit") | diskpart}
+        $null= (echo "select disk $disknumber" "attributes disk clear readonly" | diskpart)
         if ($disk.IsReadOnly -ne $False) {
             Set-Disk -Number $disk.Number -IsReadOnly $False -ErrorAction SilentlyContinue
             Start-Sleep 2
@@ -90,8 +90,10 @@ try {
     $null = (New-Item -ItemType Directory -Path $datafolder -Force)
     $null = (New-Item -ItemType Directory -Path $logfolder -Force)
 
-    $datadisknumber = ($disklist | Where-Object { $_.SerialNumber -eq $DataSerial }).Number
-    $logdisknumber = ($disklist | Where-Object { $_.SerialNumber -eq $LogSerial }).Number
+    $datadisk = ($disklist | Where-Object { $_.SerialNumber -eq $DataSerial })
+    $logdisk = ($disklist | Where-Object { $_.SerialNumber -eq $LogSerial })
+    $datadisknumber = $datadisk.Number
+    $logdisknumber = $logdisk.Number
 
     $dataPartition = Get-Partition -DiskNumber $datadisknumber | Where-Object Type -eq Basic
     $logPartition = Get-Partition -DiskNumber $logdisknumber | Where-Object Type -eq Basic
@@ -124,6 +126,17 @@ try {
 
     if ($clusterServiceStatus -eq 'Running') {
         # Add new disks to Cluster Storage
+        #In some cases onlining disk and setting Filesystem label fails and volume returns empty in PS cmdlet. Fail check with diskpart
+
+        if ($datadisk.IsOffline -ne $False) {
+        $null= (echo "select disk $datadisknumber" "select partition 2" "select volume" "online vol" | diskpart)
+        Start-Sleep 20 
+        }
+
+        if ($logdisk.IsOffline -ne $False) {
+        $null= (echo "select disk $logdisknumber" "select partition 2" "select volume" "online vol" | diskpart)
+        Start-Sleep 20 
+        }
 
         $clusterdatadisk = Get-ClusterResource -Name $datalabel -ErrorAction SilentlyContinue
         $clusterlogdisk = Get-ClusterResource -Name $loglabel -ErrorAction SilentlyContinue
@@ -229,4 +242,4 @@ try {
 }
 
 
-$responseObject | ConvertTo-Json -Depth 5
+$responseObject | ConvertTo-Json -Depth 5 
