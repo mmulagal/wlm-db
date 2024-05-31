@@ -102,8 +102,7 @@ async function getSandboxDetails(
         return errorResponse(errorMessage);
     }
 
-    accountId = process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator' ? 'test-account' : accountId;
-    const command = [GET_SANDBOX_DETAILS(['"."'], accountId)];
+    const command = [GET_SANDBOX_DETAILS(['"."'])];
     const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
     let sandboxInfo: SandboxInfoResponseType[] = [];
 
@@ -135,7 +134,13 @@ async function getSandboxDetails(
                 sandbox_properties: { name: string; value: string }[];
             }[] = sqlResponseParsing(finalSandboxDetails);
 
-            parsedSandboxDetails.forEach(item => {
+            const filteredSandboxItems = parsedSandboxDetails.filter(
+                item =>
+                    item.sandbox_properties.some(prop => prop.name === 'cloned_by' && prop.value === 'netapp_wf') &&
+                    item.sandbox_properties.some(prop => prop.name === 'accountId' && prop.value === 'account-OMkOpCYM')
+            );
+
+            filteredSandboxItems.forEach(item => {
                 const sources = getSourceDetails(item);
 
                 const databaseObject = {
