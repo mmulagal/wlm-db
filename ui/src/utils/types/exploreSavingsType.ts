@@ -62,12 +62,29 @@ export interface StorageSavingsInterface {
 export interface RecommendedIntanceInterface {
     instanceType?: string;
     instanceHourlyPrice?: number | string;
-    ec2MachineCost?: number | string;
+    instanceMonthlyPrice?: number | string;
     sqlEdition?: string;
     sqlLicense?: boolean | null;
 }
 
+export interface RecommendedCompute {
+    instanceType?: string;
+    computeHourlyPrice?: number | string;
+    instanceHourlyPrice?: number | string;
+}
+
+export interface RecommendedLicense {
+    sqlServerEdition?: string;
+    licenseType?: string;
+    licenseHourlyPrice?: number;
+    licenseIncluded?: boolean;
+}
+
 export interface ViewCalculationsInterface {
+    recommendedComputeCalculation?: Array<RecommendedCompute>;
+    recommendedLicenseCalculation?: Array<RecommendedLicense>;
+    existingComputeCalculation: Array<RecommendedCompute>;
+    existingLicenseCalculation?: Array<RecommendedLicense>;
     ebsInstanceCalculation?: Array<RecommendedIntanceInterface>;
     fsxInstanceCalculation?: Array<RecommendedIntanceInterface>;
     fsxOntapCalculation?: {

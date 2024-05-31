@@ -1,5 +1,29 @@
 {
   "aoag": {
+    "compute": { 
+      "existing": { 
+        "instanceType": "m5.large", 
+        "computeMonthlyPrice": 1097.92
+      }, 
+      "recommended": { 
+        "instanceType": "m5.large", 
+        "computeMonthlyPrice": 1097.92
+      } 
+    }, 
+    "license": { 
+      "existing": { 
+        "licenseType": "SQL Std", 
+        "licenseMonthlyPrice": 4380 
+      }, 
+      "recommended": { 
+        "licenseType": "SQL Std", 
+        "licenseMonthlyPrice": 1402 
+      } 
+    },
+    "totalSummary": {
+      "existing": 14994.92,
+      "recommended": 4895.28
+    },
     "fsx": {
       "capacity": 1280,
       "iops": 837.76,
@@ -38,6 +62,30 @@
     }
   },
   "standalone": {
+    "compute": { 
+      "existing": { 
+        "instanceType": "m5.large", 
+        "computeMonthlyPrice": 548.96 
+      }, 
+      "recommended": { 
+        "instanceType": "m5.large", 
+        "computeMonthlyPrice": 548.96 
+      } 
+    }, 
+    "license": { 
+      "existing": { 
+        "licenseType": "SQL Std", 
+        "licenseMonthlyPrice": 701
+      }, 
+      "recommended": { 
+        "licenseType": "SQL Std", 
+        "licenseMonthlyPrice": 701
+      } 
+    },
+    "totalSummary": {
+      "existing": 12079.96,
+      "recommended": 3254.96
+    },
     "fsx": {
       "capacity": 562,
       "iops": 1130,

@@ -68,29 +68,39 @@ export const comparisonData = (calculatedResponse: any) => {
         },
         {
             type: 'Compute',
-            fsx: calculatedResponse?.fsx?.compute
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.compute, 2)).toLocaleString()}`
+            fsx: calculatedResponse?.compute?.recommended?.computeMonthlyPrice
+                ? `$${Number(
+                      formatFractionalNumber(calculatedResponse?.compute?.recommended?.computeMonthlyPrice, 2)
+                  ).toLocaleString()}`
                 : GENERAL.NOT_AVAILABLE,
-            ebs: calculatedResponse?.ebs?.compute
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.ebs?.compute, 2)).toLocaleString()}`
+            ebs: calculatedResponse?.compute?.existing?.computeMonthlyPrice
+                ? `$${Number(
+                      formatFractionalNumber(calculatedResponse?.compute?.existing?.computeMonthlyPrice, 2)
+                  ).toLocaleString()}`
                 : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'SQL license',
-            fsx: calculatedResponse?.fsx?.license
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.license, 2)).toLocaleString()}`
+            fsx: calculatedResponse?.license?.recommended?.licenseMonthlyPrice
+                ? `$${Number(
+                      formatFractionalNumber(calculatedResponse?.license?.recommended?.licenseMonthlyPrice, 2)
+                  ).toLocaleString()}`
                 : GENERAL.NOT_AVAILABLE,
-            ebs: calculatedResponse?.ebs?.license
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.ebs?.license, 2)).toLocaleString()}`
+            ebs: calculatedResponse?.license?.existing?.licenseMonthlyPrice
+                ? `$${Number(
+                      formatFractionalNumber(calculatedResponse?.license?.existing?.licenseMonthlyPrice, 2)
+                  ).toLocaleString()}`
                 : GENERAL.NOT_AVAILABLE
         },
         {
             type: 'Total summary',
-            fsx: calculatedResponse?.fsx?.total
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.fsx?.total, 2)).toLocaleString()}`
+            fsx: calculatedResponse?.totalSummary?.recommended
+                ? `$${Number(
+                      formatFractionalNumber(calculatedResponse?.totalSummary?.recommended, 2)
+                  ).toLocaleString()}`
                 : '$0',
-            ebs: calculatedResponse?.ebs?.total
-                ? `$${Number(formatFractionalNumber(calculatedResponse?.ebs?.total, 2)).toLocaleString()}`
+            ebs: calculatedResponse?.totalSummary?.existing
+                ? `$${Number(formatFractionalNumber(calculatedResponse?.totalSummary?.existing, 2)).toLocaleString()}`
                 : '$0'
         }
     ];
@@ -241,8 +251,8 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.ec2MachineCost}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.instanceMonthlyPrice}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.fsxInstanceCalculation?.[0]?.hoursInAMonth}`
                       },
                       {
                           label: 'Machine 2 specification'
@@ -272,8 +282,8 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       },
                       {
                           label: 'EC2 machine2 cost',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[1]?.ec2MachineCost}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[1]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.fsxInstanceCalculation?.[1]?.instanceMonthlyPrice}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[1]?.instanceHourlyPrice} x ${viewCalculation.fsxInstanceCalculation?.[1]?.hoursInAMonth}`
                       }
                   ]
                 : [
@@ -309,8 +319,8 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.ec2MachineCost}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.instanceMonthlyPrice}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.fsxInstanceCalculation?.[0]?.hoursInAMonth}`
                       }
                   ],
         FSxNCalculation: [
@@ -656,8 +666,8 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.instanceMonthlyPrice}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsInstanceCalculation?.[0]?.hoursInAMonth}`
                       },
                       {
                           label: 'Machine 2 specification'
@@ -687,7 +697,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       },
                       {
                           label: 'EC2 machine2 cost',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[1]?.ec2MachineCost}`,
+                          value: `${viewCalculation.ebsInstanceCalculation?.[1]?.instanceMonthlyPrice}`,
                           text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[1]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
                       }
                   ]
@@ -724,8 +734,8 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.ec2MachineCost}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.instanceMonthlyPrice}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsInstanceCalculation?.[0]?.hoursInAMonth}`
                       }
                   ],
         EBSCalculation: [
@@ -859,7 +869,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             },
             {
                 label: 'Amazon Elastic Block Storage (EBS) total cost (monthly)',
-                value: `$${viewCalculation.ebsCalculation.ebsTotalCostMonthly}`,
+                value: `$${viewCalculation.ebsTotalCost}`,
                 text: `Total EC2 cost (${viewCalculation.totalEBSEc2MachineCost}) + EBS snapshot cost ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotCost}) + EBS throughput cost ($${viewCalculation.ebsCalculation.ebsThroughputCost}) + EBS IOPS cost ($${viewCalculation.ebsCalculation.ebsIopsCost}) + EBS storage cost ($${viewCalculation.ebsCalculation.ebsStorageCost}) + EBS clone cost ($${viewCalculation.ebsCloneCalculation.totalCloneMonthlyCost})`
             }
         ]

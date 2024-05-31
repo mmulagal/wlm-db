@@ -4,32 +4,36 @@
             {
                 "instanceType": "m5.2xlarge",
                 "instanceHourlyPrice": "$3.75",
-                "ec2MachineCost": "$2,738.96",
+                "instanceMonthlyPrice": "$2,738.96",
                 "sqlEdition": "SQL Server Standard edition",
-                "sqlLicense": "Yes"
+                "sqlLicense": "Yes",
+                "hoursInAMonth": "730"
             },
             {
                 "instanceType": "m5.2xlarge",
                 "instanceHourlyPrice": "$3.75",
-                "ec2MachineCost": "$2,738.96",
+                "instanceMonthlyPrice": "$2,738.96",
                 "sqlEdition": "SQL Server Standard edition",
-                "sqlLicense": "Yes"
+                "sqlLicense": "Yes",
+                "hoursInAMonth": "730"
             }
         ],
         "fsxInstanceCalculation": [
             {
                 "instanceType": "m5.2xlarge",
                 "instanceHourlyPrice": "$1.712",
-                "ec2MachineCost": "$1,249.76",
+                "instanceMonthlyPrice": "$1,249.76",
                 "sqlEdition": "SQL Server Standard edition",
-                "sqlLicense": "Yes"
+                "sqlLicense": "Yes",
+                "hoursInAMonth": "730"
             },
             {
                 "instanceType": "m5.2xlarge",
                 "instanceHourlyPrice": "$1.712",
-                "ec2MachineCost": "$1,249.76",
+                "instanceMonthlyPrice": "$1,249.76",
                 "sqlEdition": "SQL Server Standard edition",
-                "sqlLicense": "Yes"
+                "sqlLicense": "Yes",
+                "hoursInAMonth": "730"
             }
         ],
         "fsxOntapCalculation": {
@@ -156,7 +160,7 @@
             {
                 "instanceType": "m5.2xlarge",
                 "instanceHourlyPrice": "$1.71",
-                "ec2MachineCost": "$1,249.76",
+                "instanceMonthlyPrice": "$1,249.76",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes"
             }
@@ -165,7 +169,7 @@
             {
                 "instanceType": "m5.2xlarge",
                 "instanceHourlyPrice": "$1.71",
-                "ec2MachineCost": "$1,249.76",
+                "instanceMonthlyPrice": "$1,249.76",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes"
             }
