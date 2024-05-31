@@ -7,7 +7,7 @@ import { attempt, compact, uniqBy, isEmpty } from 'lodash-es';
 import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
-import { createResource, deleteResource, deleteDatabaseInstance, listDatabaseInstances } from '../lib/database/db';
+import { createResource, deleteDatabaseInstance, listDatabaseInstances } from '../lib/database/db';
 import { getResources } from './database/database-operations';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
 import { getResourceNameFromTags, sleep, getArtifactsRegionBucketName } from '../utils/utils';
@@ -1455,13 +1455,13 @@ async function preparePsModulesForManage(
     return jobStatusRecord.status;
 }
 
-async function unmanageResource(
+async function unmanageDatabaseInstance(
     accountId: string,
     credentialsId: string,
     resourceId: string,
-    databaseInstanceIds: string[]
+    databaseInstanceList: string
 ) {
-    logger.info('Unmanaging resource', { accountId, credentialsId, resourceId, databaseInstanceIds });
+    logger.info('Unmanaging SQL Server instances', { accountId, credentialsId, resourceId, databaseInstanceList });
 
     interface DatabaseInstance {
         id: string;
@@ -1476,20 +1476,22 @@ async function unmanageResource(
         updated_time: Date;
     }
 
-    let dbOperationsStatus: { count: number } = { count: 0 };
-    const preDeleteDatabaseInstances: DatabaseInstance[] = await listDatabaseInstances(accountId, credentialsId, {});
-    let resourceOperationStatus: string = '';
     const databaseInstanceResponse: {
         databaseInstanceId: string;
         status: string;
         errorMessage?: string;
     }[] = [];
 
-    if (isEmpty(databaseInstanceIds)) {
-        dbOperationsStatus = await deleteResource(accountId, resourceId, credentialsId);
-        resourceOperationStatus = dbOperationsStatus.count === 0 ? 'failure' : 'success';
-    } else {
-        dbOperationsStatus = await deleteDatabaseInstance(accountId, credentialsId, resourceId, databaseInstanceIds);
+    if (!isEmpty(databaseInstanceList)) {
+        const databaseInstanceIds = databaseInstanceList.replace(/ /g, '').split(',');
+
+        const preDeleteDatabaseInstances: DatabaseInstance[] = await listDatabaseInstances(
+            accountId,
+            credentialsId,
+            {}
+        );
+
+        await deleteDatabaseInstance(accountId, credentialsId, resourceId, databaseInstanceIds);
 
         const postDeleteDatabaseInstances: DatabaseInstance[] = await listDatabaseInstances(
             accountId,
@@ -1514,9 +1516,9 @@ async function unmanageResource(
             }
         });
     }
+
     return {
         resourceId,
-        ...(resourceOperationStatus && { status: resourceOperationStatus }),
         items: databaseInstanceResponse
     };
 }
@@ -1526,5 +1528,5 @@ export {
     fetchUnmanagedHostsInformation,
     manageSqlServer,
     prepareForManage,
-    unmanageResource
+    unmanageDatabaseInstance
 };

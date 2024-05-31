@@ -1,6 +1,6 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { RESOURCESTYPE, SqlServerDeploymentModel } from '../../utils/consts';
-import { CredentialsIdParams } from './generic.types';
+import { CredentialsIdParams, AccountIdCredentialsIdParams } from './generic.types';
 
 const DiscoverMsSqlQuery = Type.Object({
     pageSize: Type.Number({
@@ -120,18 +120,8 @@ const DiscoverMsSqlResponseBody = Type.Object({
     )
 });
 
-const UnManageRequestBody = Type.Composite([
-    Type.Object({
-        resourceId: Type.String({ description: 'Workload Factory resource ID.', minLength: 1 }),
-        databaseInstanceIds: Type.Array(
-            Type.Optional(Type.String({ description: 'List of MS SQL Server database instance IDs.' }))
-        )
-    })
-]);
-
 const MultiInstanceManagementResponseBody = Type.Object({
     resourceId: Type.String({ description: 'Workload Factory resource ID.' }),
-    status: Type.Optional(Type.String({ description: 'Status of resource unmanage operation.' })),
     items: Type.Array(
         Type.Object({
             databaseInstanceId: Type.String({ description: 'SQL Server database instance ID.' }),
@@ -180,6 +170,19 @@ const DiscoverInstanceParams = Type.Composite([
     })
 ]);
 
+const UnmanageInstanceParams = Type.Composite([
+    AccountIdCredentialsIdParams,
+    Type.Object({
+        resourceId: Type.String({ description: 'Workload Factory resource ID.', minLength: 1 })
+    })
+]);
+
+const DatabaseInstanceQueryString = Type.Object({
+    databaseInstanceIds: Type.Optional(
+        Type.String({ description: 'Comma separated list of MS SQL Server instance IDs.' })
+    )
+});
+
 const MsSqlInstancesRequestQuery = Type.Object({
     instances: Type.String({
         description: 'Comma separated Ec2 instance ID associated with the MS SQL Server instance.'
@@ -199,6 +202,7 @@ export {
     MsSqlInstancesRequestQuery,
     DiscoverCredentialsResponse,
     PrepareResourceResponseBody,
-    UnManageRequestBody,
-    MultiInstanceManagementResponseBody
+    UnmanageInstanceParams,
+    MultiInstanceManagementResponseBody,
+    DatabaseInstanceQueryString
 };

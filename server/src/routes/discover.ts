@@ -14,7 +14,7 @@ import {
     manageSqlServer,
     validateAndStoreDiscoveredParameters,
     prepareForManage,
-    unmanageResource
+    unmanageDatabaseInstance
 } from '../operations/discover-operations';
 
 import getLogger from '../utils/logger';
@@ -89,13 +89,22 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         }
     );
 
-    server.delete('/v1/credentials/:credentialsId/mssql', { schema: UnManageMsSqlSchema }, async request => {
-        const {
-            params: { accountId, credentialsId },
-            body: { resourceId, databaseInstanceIds }
-        } = request;
+    server.delete(
+        '/v1/credentials/:credentialsId/resources/:resourceId/mssql/instances',
+        { schema: UnManageMsSqlSchema },
+        async request => {
+            const {
+                params: { accountId, credentialsId, resourceId },
+                query: { databaseInstanceIds }
+            } = request;
 
-        const response = await unmanageResource(accountId, credentialsId, resourceId, databaseInstanceIds || []);
-        return response;
-    });
+            const response = await unmanageDatabaseInstance(
+                accountId,
+                credentialsId,
+                resourceId,
+                databaseInstanceIds || ''
+            );
+            return response;
+        }
+    );
 }
