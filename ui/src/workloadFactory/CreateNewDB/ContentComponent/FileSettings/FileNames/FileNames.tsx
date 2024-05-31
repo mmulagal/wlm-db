@@ -83,13 +83,13 @@ const FileNames = () => {
         if (driveLetter && newUserDBFileName) {
             setDataFilePath(
                 `${driveLetter?.value}:${
-                    isDataVirtualMountPoint ? `${truncatedDbName}_data` : ''
+                    isDataVirtualMountPoint ? `\\${truncatedDbName}_data` : ''
                 }\\mssql\\data\\${newUserDBFileName}.mdf`
             );
         } else if (driveLetter) {
             setDataFilePath(
                 `${driveLetter?.value}:${
-                    isDataVirtualMountPoint ? `${truncatedDbName}_data` : ''
+                    isDataVirtualMountPoint ? `\\${truncatedDbName}_data` : ''
                 }\\mssql\\data\\<db_data>.mdf`
             );
         } else {
@@ -102,13 +102,13 @@ const FileNames = () => {
         if (driveLetterLogFile && newUserLogFileName) {
             setLogFilePath(
                 `${driveLetterLogFile?.value}:${
-                    isLogVirtualMountPoint ? `${truncatedDbName}_log` : ''
+                    isLogVirtualMountPoint ? `\\${truncatedDbName}_log` : ''
                 }\\mssql\\log\\${newUserLogFileName}.ldf`
             );
         } else if (driveLetterLogFile) {
             setLogFilePath(
                 `${driveLetterLogFile?.value}:${
-                    isLogVirtualMountPoint ? `${truncatedDbName}_log` : ''
+                    isLogVirtualMountPoint ? `\\${truncatedDbName}_log` : ''
                 }\\mssql\\log\\<db_log>.ldf`
             );
         } else {
@@ -393,7 +393,9 @@ const FileNames = () => {
                                         }}
                                         isSelected={isDataVirtualMountPoint}
                                         isDisabled={isVirtualMountPointDisabled}
+                                        className={styles.checkboxContainer}
                                     />
+                                    <TooltipInfo>{GENERAL.VIRTUAL_MOUNT_POINT_INFO_TOOLTIP}</TooltipInfo>
                                 </div>
                             )}
                         </div>
@@ -472,7 +474,9 @@ const FileNames = () => {
                                         }}
                                         isSelected={isLogVirtualMountPoint}
                                         isDisabled={isVirtualMountPointDisabled}
+                                        className={styles.checkboxContainer}
                                     />
+                                    <TooltipInfo>{GENERAL.VIRTUAL_MOUNT_POINT_INFO_TOOLTIP}</TooltipInfo>
                                 </div>
                             )}
                         </div>

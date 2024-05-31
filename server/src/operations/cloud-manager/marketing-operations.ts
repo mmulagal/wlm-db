@@ -154,7 +154,7 @@ async function aoagStorageSavingsCalculations(
             accountId,
             credentialsId,
             region,
-            getMarketingApiRequestBody(allEbsVolumeIds, params)
+            getMarketingApiRequestBody(allEbsVolumeIds, params, SqlServerDeploymentModel.SQL_AOAG_SHORT)
         );
 
         // Consider only volumes associated with unique database in primary and partner node for snapshot calculation and to draw a storage savings comparison with FSXn
@@ -167,7 +167,7 @@ async function aoagStorageSavingsCalculations(
             accountId,
             credentialsId,
             region,
-            getMarketingApiRequestBody(uniqueHostVolumeIds, params)
+            getMarketingApiRequestBody(uniqueHostVolumeIds, params, SqlServerDeploymentModel.SQL_AOAG_SHORT)
         );
 
         const allNodesComputeLicenseDetails = currentNodeComputeLicenseDetails.concat(partnerNodeComputeLicenseDetails);
@@ -313,7 +313,8 @@ async function aoagStorageSavingsMetrics(
             region,
             allEbsVolumeIds,
             params,
-            allNodesComputeLicenseDetails
+            allNodesComputeLicenseDetails,
+            SqlServerDeploymentModel.SQL_AOAG_SHORT
         );
 
         // Consider only volumes associated with unique database in primary and partner nodes for snapshot calculation and to draw a storage savings comparison with FSXn
@@ -333,7 +334,8 @@ async function aoagStorageSavingsMetrics(
             region,
             uniqueHostVolumeIds,
             params,
-            allNodesComputeLicenseDetails
+            allNodesComputeLicenseDetails,
+            SqlServerDeploymentModel.SQL_AOAG_SHORT
         );
 
         return {
@@ -355,7 +357,11 @@ async function aoagStorageSavingsMetrics(
     );
 }
 
-function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavingsRequestBodyType) {
+function getMarketingApiRequestBody(
+    ebsVolumeIds: string[],
+    params: StorageSavingsRequestBodyType,
+    sqlServerDeploymentType: string
+) {
     const { snapshotFrequency, clonedCopiesCount, cloneRefreshFrequency, monthlyChangeRatePercentage } = params || {};
 
     const monthlyCloneCount = getMonthlyCloneCountFromFrequency(cloneRefreshFrequency);
@@ -363,7 +369,7 @@ function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavin
         useCase: 'Low-latency',
         volumeIds: ebsVolumeIds,
         includeSnapshots: false,
-        deploymentType: 'Single',
+        deploymentType: sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT ? 'Multi' : 'Single',
         snapshots: {
             snapshotFreq: snapshotFrequency,
             snapshotPercentageChange: monthlyChangeRatePercentage
@@ -516,7 +522,12 @@ async function performStorageSavingsCalculations(
         ebs,
         fsx,
         fsx_calculation: fsxCalculationData
-    } = await getStorageSavings(accountId, credentialsId, region, getMarketingApiRequestBody(ebsVolumeIds, params));
+    } = await getStorageSavings(
+        accountId,
+        credentialsId,
+        region,
+        getMarketingApiRequestBody(ebsVolumeIds, params, sqlServerDeploymentType!)
+    );
 
     const existingComputeLicensePrice = compute?.existing?.instanceMonthlyPrice || 0;
     const recommendedComputeLicensePrice = compute?.recommended?.instanceMonthlyPrice || 0;
@@ -539,7 +550,8 @@ async function formatStorageSavingsCalculationMetrics(
     region: string,
     ebsVolumeIds: string[],
     params: StorageSavingsRequestBodyType,
-    nodesComputeLicenseDetails: ComputeLicenseCostType[]
+    nodesComputeLicenseDetails: ComputeLicenseCostType[],
+    sqlServerDeploymentType: string
 ) {
     logger.debug('Formatting storage savings calculation metrics', {
         accountId,
@@ -671,7 +683,12 @@ async function formatStorageSavingsCalculationMetrics(
             SSDMonthlyCost,
             totalCloneMonthlyCost
         }
-    } = await getStorageSavings(accountId, credentialsId, region, getMarketingApiRequestBody(ebsVolumeIds, params));
+    } = await getStorageSavings(
+        accountId,
+        credentialsId,
+        region,
+        getMarketingApiRequestBody(ebsVolumeIds, params, sqlServerDeploymentType)
+    );
     return {
         recommendedComputeCalculation: nodesComputeLicenseDetails.map(node => node.compute.recommended),
         recommendedLicenseCalculation: nodesComputeLicenseDetails.map(node => node.license.recommended),
@@ -860,9 +877,15 @@ async function getStorageSavingsCalculationMetrics(
             currentNodeComputeLicenseDetails
         );
     }
-    return formatStorageSavingsCalculationMetrics(accountId, credentialsId, region, ebsVolumeIds, params, [
-        currentNodeComputeLicenseDetails
-    ]);
+    return formatStorageSavingsCalculationMetrics(
+        accountId,
+        credentialsId,
+        region,
+        ebsVolumeIds,
+        params,
+        [currentNodeComputeLicenseDetails],
+        sqlServerDeploymentType!
+    );
 }
 
 export { performStorageSavingsCalculations, getStorageSavingsCalculationMetrics, getMarketingApiRequestBody };
