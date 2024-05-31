@@ -129,16 +129,15 @@ async function aoagStorageSavingsCalculations(
     const { ec2InstanceId: nodeInstanceId, sqlServerInstances } = nodeDetails;
     const [{ nodeIps }] = sqlServerInstances || [];
     if (sqlServerInstances !== undefined && nodeIps && nodeIps.length > 0) {
-        const { compute, license } = await retrieveComputeAndLicenseHourlyCost(region, nodeDetails);
-        const partnerNodeDetails = await getAoagPartnerNodesDetails(
+        const currentNodeComputeLicenseDetails = await retrieveComputeAndLicenseHourlyCost(region, [nodeDetails]);
+        const { items: partnerNodeDetails } = await getAoagPartnerNodesDetails(
             accountId,
             credentialsId,
             region,
             nodeInstanceId,
             nodeIps
         );
-        const { compute: partnerNodeComputeDetails, license: partnerNodeLicenseDetails } =
-            await retrieveComputeAndLicenseHourlyCost(region, partnerNodeDetails);
+        const partnerNodeComputeLicenseDetails = await retrieveComputeAndLicenseHourlyCost(region, partnerNodeDetails);
 
         const { allEbsVolumeIds, uniqueHostVolumeIds } = await identifyAoagVolumes(
             accountId,
@@ -171,19 +170,45 @@ async function aoagStorageSavingsCalculations(
             getMarketingApiRequestBody(uniqueHostVolumeIds, params)
         );
 
-        const instanceType = `${compute.existing.instanceType},${partnerNodeComputeDetails.existing.instanceType}`;
-        const computeMonthlyPrice =
-            compute?.existing?.computeHourlyPrice && partnerNodeComputeDetails.existing.computeHourlyPrice
-                ? compute.existing.computeHourlyPrice +
-                  partnerNodeComputeDetails.existing.computeHourlyPrice * HOURS_IN_MONTH
-                : undefined;
-
-        const licenseType = `${license?.existing?.licenseType},${partnerNodeLicenseDetails.existing.licenseType}`;
-        const licenseMonthlyPrice =
-            license?.existing?.licenseHourlyPrice && partnerNodeLicenseDetails.existing.licenseHourlyPrice
-                ? license.existing.licenseHourlyPrice +
-                  partnerNodeLicenseDetails.existing.licenseHourlyPrice * HOURS_IN_MONTH
-                : undefined;
+        const allNodesComputeLicenseDetails = currentNodeComputeLicenseDetails.concat(partnerNodeComputeLicenseDetails);
+        const instanceType = `${allNodesComputeLicenseDetails
+            .map((node: { ec2InstanceType: any }) => node.ec2InstanceType)
+            .join(',')}`;
+        const allNodesExistingComputePrice = allNodesComputeLicenseDetails.reduce(
+            (
+                acc,
+                {
+                    compute: {
+                        existing: { computeHourlyPrice }
+                    }
+                }
+            ) => {
+                acc += computeHourlyPrice || 0;
+                return acc;
+            },
+            0
+        );
+        const allNodesExistingLicensePrice = allNodesComputeLicenseDetails.reduce(
+            (
+                acc,
+                {
+                    license: {
+                        existing: { licenseHourlyPrice }
+                    }
+                }
+            ) => {
+                acc += licenseHourlyPrice || 0;
+                return acc;
+            },
+            0
+        );
+        // const allNodesRecommendedComputePrice = allNodesComputeLicenseDetails.reduce((acc, {compute: { recommended: { computeHourlyPrice }}}) => { acc += computeHourlyPrice || 0; return acc; }, 0);
+        // const allNodesRecommendedLicensePrice = allNodesComputeLicenseDetails.reduce((acc, {license: { recommended: { licenseHourlyPrice }}}) => { acc += licenseHourlyPrice || 0; return acc; }, 0);
+        const computeMonthlyPrice = allNodesExistingComputePrice * HOURS_IN_MONTH;
+        const licenseType = `${allNodesComputeLicenseDetails
+            .map((node: { license: { existing: { licenseType: any } } }) => node.license.existing.licenseType)
+            .join(',')}`;
+        const licenseMonthlyPrice = allNodesExistingLicensePrice * HOURS_IN_MONTH;
 
         return {
             compute: {
@@ -256,7 +281,7 @@ async function aoagStorageSavingsMetrics(
     const { ec2InstanceId: nodeInstanceId, sqlServerInstances } = nodeDetails;
     const [{ nodeIps }] = sqlServerInstances || [];
     if (sqlServerInstances !== undefined && nodeIps && nodeIps.length > 0) {
-        const partnerNodeDetails = await getAoagPartnerNodesDetails(
+        const { items: partnerNodeDetails } = await getAoagPartnerNodesDetails(
             accountId,
             credentialsId,
             region,
@@ -267,8 +292,8 @@ async function aoagStorageSavingsMetrics(
         const partnerNodeComputeLicenseDetails = partnerNodeDetails
             ? await retrieveComputeAndLicenseHourlyCost(region, partnerNodeDetails)
             : undefined;
-        const nodesComputeLicenseDetails = partnerNodeComputeLicenseDetails
-            ? [currentNodeComputeLicenseDetails, partnerNodeComputeLicenseDetails]
+        const allNodesComputeLicenseDetails = partnerNodeComputeLicenseDetails
+            ? [currentNodeComputeLicenseDetails, ...partnerNodeComputeLicenseDetails]
             : [currentNodeComputeLicenseDetails];
 
         const { allEbsVolumeIds, uniqueHostVolumeIds } = await identifyAoagVolumes(
@@ -288,7 +313,7 @@ async function aoagStorageSavingsMetrics(
             region,
             allEbsVolumeIds,
             params,
-            nodesComputeLicenseDetails
+            allNodesComputeLicenseDetails
         );
 
         // Consider only volumes associated with unique database in primary and partner nodes for snapshot calculation and to draw a storage savings comparison with FSXn
@@ -308,7 +333,7 @@ async function aoagStorageSavingsMetrics(
             region,
             uniqueHostVolumeIds,
             params,
-            nodesComputeLicenseDetails
+            allNodesComputeLicenseDetails
         );
 
         return {
@@ -375,101 +400,132 @@ function handleMarketingApiFsxCalculationObject(fsxCalculationData: any) {
     return fsxCalculationObject;
 }
 
-async function retrieveComputeAndLicenseMonthlyCost(region: string, ec2HostDetails: any) {
+async function retrieveComputeAndLicenseMonthlyCost(region: string, ec2HostDetails: any[]) {
     logger.info('Retrieving compute and license monthly cost', { region, ec2HostDetails });
 
-    const { compute, license } = await retrieveComputeAndLicenseHourlyCost(region, ec2HostDetails);
-    const { instanceType, computeHourlyPrice } = compute.existing;
-    const computeMonthlyPrice = computeHourlyPrice ? computeHourlyPrice * HOURS_IN_MONTH : undefined;
+    const allNodesComputeLicenseDetails = await retrieveComputeAndLicenseHourlyCost(region, ec2HostDetails);
+    return Promise.all(
+        allNodesComputeLicenseDetails.map(async ({ ec2InstanceId, ec2InstanceType, compute, license }) => {
+            const { instanceType, computeHourlyPrice } = compute.existing;
+            const existingComputeMonthlyPrice = computeHourlyPrice ? computeHourlyPrice * HOURS_IN_MONTH : undefined;
 
-    const { licenseType, licenseHourlyPrice } = license.existing;
-    const licenseMonthlyPrice = licenseHourlyPrice ? licenseHourlyPrice * HOURS_IN_MONTH : undefined;
+            const { licenseType, licenseHourlyPrice } = license.existing;
+            const existingLicenseMonthlyPrice = licenseHourlyPrice ? licenseHourlyPrice * HOURS_IN_MONTH : undefined;
 
-    return {
-        compute: {
-            existing: {
-                instanceType,
-                computeMonthlyPrice
-            },
-            recommended: {
-                instanceType,
-                computeMonthlyPrice
-            }
-        },
-        license: {
-            existing: {
-                licenseType,
-                licenseMonthlyPrice
-            },
-            recommended: {
-                licenseType,
-                licenseMonthlyPrice
-            }
-        }
-    };
+            const { instanceType: recommendedInstanceType, computeHourlyPrice: recommendedComputeHourlyPrice } =
+                compute.recommended;
+            const recommendedComputeMonthlyPrice = recommendedComputeHourlyPrice
+                ? recommendedComputeHourlyPrice * HOURS_IN_MONTH
+                : undefined;
+            const { licenseType: recommendedLicenceType, licenseHourlyPrice: recommendedLicenseHourlyPrice } =
+                license.existing;
+
+            const recommendedLicenseMonthlyPrice = recommendedLicenseHourlyPrice
+                ? recommendedLicenseHourlyPrice * HOURS_IN_MONTH
+                : undefined;
+
+            return {
+                ec2InstanceId,
+                ec2InstanceType,
+                compute: {
+                    existing: {
+                        instanceType,
+                        computeMonthlyPrice: existingComputeMonthlyPrice
+                    },
+                    recommended: {
+                        instanceType: recommendedInstanceType,
+                        computeMonthlyPrice: recommendedComputeMonthlyPrice
+                    }
+                },
+                license: {
+                    existing: {
+                        licenseType,
+                        licenseMonthlyPrice: existingLicenseMonthlyPrice
+                    },
+                    recommended: {
+                        licenseType: recommendedLicenceType,
+                        licenseMonthlyPrice: recommendedLicenseMonthlyPrice
+                    }
+                }
+            };
+        })
+    );
 }
 
 async function retrieveComputeAndLicenseHourlyCost(
     region: string,
-    ec2HostDetails: any
-): Promise<ComputeLicenseHourlyCostType> {
-    logger.info('Retrieving compute and license hourly cost', { region, ec2HostDetails });
+    ec2HostDetailsList: any[]
+): Promise<ComputeLicenseHourlyCostType[]> {
+    logger.info('Retrieving compute and license hourly cost', { region, ec2HostDetailsList });
+    return Promise.all(
+        ec2HostDetailsList.map(async ec2HostDetails => {
+            const [{ sqlServerEdition }] = ec2HostDetails.sqlServerInstances || [];
+            const existingInstanceType = ec2HostDetails.ec2InstanceType;
+            const existingInstanceTypePricingDetails = await getSqlInstancePricingDetails(
+                region,
+                existingInstanceType,
+                'windows'
+                // ec2HostDetails.ec2UsageOperation // use usage operation as a filter when supporting other OS; edition has a value like `Enterprise Evaluation Edition (64-bit)` does not narrow down operating system
+            );
+            const existingSqlServerEditionLowerCase = sqlServerEdition?.toLowerCase();
+            const existingLicenseType = existingSqlServerEditionLowerCase?.includes('enterprise')
+                ? 'SQL Ent'
+                : existingSqlServerEditionLowerCase?.includes('web')
+                ? 'SQL Web'
+                : 'SQL Std';
 
-    const [{ sqlServerEdition }] = ec2HostDetails.sqlServerInstances || [];
-    const existingInstanceType = ec2HostDetails.ec2InstanceType;
-    const existingInstanceTypePricingDetails = await getSqlInstancePricingDetails(
-        region,
-        existingInstanceType,
-        'windows'
-        // ec2HostDetails.ec2UsageOperation // use usage operation as a filter when supporting other OS; edition has a value like `Enterprise Evaluation Edition (64-bit)` does not narrow down operating system
+            const existingcomputeHourlyPrice = existingInstanceTypePricingDetails?.[existingLicenseType]?.pricePerUnit
+                ? existingInstanceTypePricingDetails[existingLicenseType].pricePerUnit
+                : undefined;
+            const existingcomputeHourlyPriceWithoutLicense = existingInstanceTypePricingDetails?.NA?.pricePerUnit
+                ? existingInstanceTypePricingDetails.NA.pricePerUnit
+                : undefined;
+
+            const existingLicensePrice =
+                existingcomputeHourlyPrice && existingcomputeHourlyPriceWithoutLicense
+                    ? existingcomputeHourlyPrice - existingcomputeHourlyPriceWithoutLicense
+                    : 0;
+
+            return {
+                ec2InstanceId: ec2HostDetails.ec2InstanceId,
+                ec2InstanceType: ec2HostDetails.ec2InstanceType,
+                compute: {
+                    existing: {
+                        instanceType: existingInstanceType,
+                        computeHourlyPrice: existingcomputeHourlyPriceWithoutLicense,
+                        instanceHourlyPrice: existingcomputeHourlyPrice, // inclusive of license
+                        instanceMonthlyPrice: existingcomputeHourlyPrice
+                            ? existingcomputeHourlyPrice * HOURS_IN_MONTH
+                            : undefined,
+                        hoursInMonth: HOURS_IN_MONTH
+                    },
+                    recommended: {
+                        instanceType: existingInstanceType,
+                        computeHourlyPrice: existingcomputeHourlyPriceWithoutLicense,
+                        instanceHourlyPrice: existingcomputeHourlyPrice,
+                        instanceMonthlyPrice: existingcomputeHourlyPrice
+                            ? existingcomputeHourlyPrice * HOURS_IN_MONTH
+                            : undefined,
+                        hoursInMonth: HOURS_IN_MONTH
+                    }
+                },
+                license: {
+                    existing: {
+                        sqlServerEdition,
+                        licenseType: existingLicenseType,
+                        licenseHourlyPrice: existingLicensePrice,
+                        licenseIncluded: !!(existingLicensePrice && existingLicensePrice > 0)
+                    },
+                    recommended: {
+                        sqlServerEdition,
+                        licenseType: existingLicenseType,
+                        licenseHourlyPrice: existingLicensePrice,
+                        licenseIncluded: !!(existingLicensePrice && existingLicensePrice > 0)
+                    }
+                }
+            };
+        })
     );
-    const existingSqlServerEditionLowerCase = sqlServerEdition?.toLowerCase();
-    const existingLicenseType = existingSqlServerEditionLowerCase?.includes('enterprise')
-        ? 'SQL Ent'
-        : existingSqlServerEditionLowerCase?.includes('web')
-        ? 'SQL Web'
-        : 'SQL Std';
-
-    const existingcomputeHourlyPrice = existingInstanceTypePricingDetails?.[existingLicenseType]?.pricePerUnit
-        ? existingInstanceTypePricingDetails[existingLicenseType].pricePerUnit
-        : undefined;
-    const existingcomputeHourlyPriceWithoutLicense = existingInstanceTypePricingDetails?.NA?.pricePerUnit
-        ? existingInstanceTypePricingDetails.NA.pricePerUnit
-        : undefined;
-
-    const existingLicensePrice =
-        existingcomputeHourlyPrice && existingcomputeHourlyPriceWithoutLicense
-            ? existingcomputeHourlyPrice - existingcomputeHourlyPriceWithoutLicense
-            : 0;
-
-    return {
-        compute: {
-            existing: {
-                instanceType: existingInstanceType,
-                computeHourlyPrice: existingcomputeHourlyPriceWithoutLicense,
-                instanceHourlyPrice: existingcomputeHourlyPrice // inclusive of license
-            },
-            recommended: {
-                instanceType: existingInstanceType,
-                computeHourlyPrice: existingcomputeHourlyPriceWithoutLicense,
-                instanceHourlyPrice: existingcomputeHourlyPrice
-            }
-        },
-        license: {
-            existing: {
-                sqlServerEdition,
-                licenseType: existingLicenseType,
-                licenseHourlyPrice: existingLicensePrice,
-                licenseIncluded: !!(existingLicensePrice && existingLicensePrice > 0)
-            },
-            recommended: {
-                sqlServerEdition,
-                licenseType: existingLicenseType,
-                licenseHourlyPrice: existingLicensePrice,
-                licenseIncluded: !!(existingLicensePrice && existingLicensePrice > 0)
-            }
-        }
-    };
 }
 
 async function performStorageSavingsCalculations(
@@ -498,7 +554,7 @@ async function performStorageSavingsCalculations(
         return aoagStorageSavingsCalculations(accountId, credentialsId, region, ebsVolumeIds, params, ec2HostDetails);
     }
 
-    const { compute, license } = await retrieveComputeAndLicenseMonthlyCost(region, ec2HostDetails);
+    const [{ compute, license }] = await retrieveComputeAndLicenseMonthlyCost(region, [ec2HostDetails]);
 
     const {
         ebs,
@@ -842,7 +898,7 @@ async function getStorageSavingsCalculationMetrics(
     );
 
     const [{ sqlServerDeploymentType, nodeIps }] = ec2HostDetails?.sqlServerInstances || [];
-    const currentNodeComputeLicenseDetails = await retrieveComputeAndLicenseHourlyCost(region, ec2HostDetails);
+    const [currentNodeComputeLicenseDetails] = await retrieveComputeAndLicenseHourlyCost(region, [ec2HostDetails]);
     if (nodeIps && !isEmpty(nodeIps) && sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
         return aoagStorageSavingsMetrics(
             accountId,

@@ -75,7 +75,9 @@ const PriceUnitObject = Type.Object({
 const ComputeCalculationObject = Type.Object({
     instanceType: Type.String(),
     computeHourlyPrice: Type.Optional(Type.Number()),
-    instanceHourlyPrice: Type.Optional(Type.Number())
+    instanceHourlyPrice: Type.Optional(Type.Number()),
+    hoursInAMonth: Type.Number(),
+    instanceMonthlyPrice: Type.Number()
 });
 const LicenseCalculationObject = Type.Object({
     sqlServerEdition: Type.String(),
@@ -231,6 +233,8 @@ const LicenseHourly = Type.Object({
 });
 
 const ComputeLicenseHourlyCost = Type.Object({
+    ec2InstanceId: Type.String(),
+    ec2InstanceType: Type.String(),
     compute: ComputeHourly,
     license: LicenseHourly
 });
