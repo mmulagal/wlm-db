@@ -596,6 +596,12 @@ export const GENERAL = {
         'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
         'Names should not be Transact-SQL reserved words.'
     ],
+    CREATE_SANDBOX_NAME_TOOLTIP: [
+        'SQL databases should have names that are no more than 27 characters long.',
+        'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
+        'Names should not be Transact-SQL reserved words.',
+        'Data file path and Log file path should not be more than 255 characters long.'
+    ],
     CREATE_DB_DATA_FILE_NAME_TOOLTIP: [
         'Data file name should have names that are no more than 128 characters long.',
         'Names can only contain alphanumeric characters, including letters, numbers and underscrores.'
@@ -902,7 +908,9 @@ export const GENERAL = {
         'This action will update the selected sandbox so that it is equivalent to the source database at the current moment.',
     REFRESH_DIALOG_SECOND_BULLET: 'Any changes you made to the sandbox will be deleted.',
     REFRESH_CURRENT_RADIO: 'Refresh to current time',
-    REFRESH_SNAPSHOT_RADIO: 'Refresh to Snapshot'
+    REFRESH_SNAPSHOT_RADIO: 'Refresh to Snapshot',
+    VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
+        'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or consolidate files under existing drives with segregation at storage.'
 };
 
 export const CODE_VIEWER = {
