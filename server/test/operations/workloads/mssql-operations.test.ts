@@ -156,13 +156,10 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get MSSQL instance id ', async () => {
-        const resp = await getMssqlInstanceGuid(
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            '.',
+        const resp = await getMssqlInstanceGuid(CREDENTIALS_ID, DEFAULT_AWS_REGION, '.', [
             ACTIVE_INSTANCE_ID,
             STANDBY_INSTANCE_ID
-        );
+        ]);
         expect(resp).toEqual('FAC00473-3CB5-46A4-A145-64CC07C35655');
     });
 });

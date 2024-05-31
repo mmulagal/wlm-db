@@ -567,12 +567,12 @@ async function upsertDatabaseInstanceRecord(accountId: string, record: DatabaseI
             account_id: accountId,
             credentials_id: credentialsId,
             resource_id: resourceId,
-            sql_instance_id: instanceId,
-            sql_instance_name: instanceName,
+            database_instance_id: instanceId,
+            database_instance_name: instanceName,
             fsxn_ids: fsxnId,
             is_default: isDefault,
             source,
-            sql_deployment_type: sqlDeploymentType,
+            database_deployment_type: sqlDeploymentType,
             ...(fsxSvmId && { fsx_svm_id: fsxSvmId }),
             ...(storageProtocol && { storage_protocol: storageProtocol }),
             ...(numberofUserDbsCreated && { number_of_user_dbs_created: numberofUserDbsCreated }),
@@ -580,7 +580,7 @@ async function upsertDatabaseInstanceRecord(accountId: string, record: DatabaseI
             ...(metaData && { metdata: metaData })
         },
         update: {
-            ...(instanceName && { sql_instance_name: instanceName }),
+            ...(instanceName && { database_instance_name: instanceName }),
             ...(fsxnId && { fsxn_ids: fsxnId }),
             ...(fsxSvmId && { fsx_svm_id: fsxSvmId }),
             ...(isDefault && { is_default: isDefault }),
@@ -592,7 +592,7 @@ async function upsertDatabaseInstanceRecord(accountId: string, record: DatabaseI
                 account_id: accountId,
                 credentials_id: credentialsId,
                 resource_id: resourceId,
-                sql_instance_id: instanceId
+                database_instance_id: instanceId
             }
         }
     });
@@ -611,7 +611,7 @@ async function updateDatabaseInstanceMetadata(
     return prisma.client.database_instances.updateMany({
         where: {
             account_id: accountId,
-            sql_instance_id: databaseInstanceId,
+            database_instance_id: databaseInstanceId,
             credentials_id: credentialsId
         },
         data: {
@@ -632,8 +632,8 @@ async function listDatabaseInstances(accountId: string, record: any) {
             account_id: accountId,
             credentials_id: credentialsId,
             ...(resourceId && { resource_id: resourceId }),
-            ...(instanceId && { sql_instance_id: instanceId }),
-            ...(instanceName && { sql_instance_name: instanceName }),
+            ...(instanceId && { database_instance_id: instanceId }),
+            ...(instanceName && { database_instance_name: instanceName }),
             ...(isDefault && { is_default: isDefault })
         },
         orderBy: {
@@ -656,7 +656,7 @@ async function deleteDatabaseInstanceRecord(
             account_id: accountId,
             credentials_id: credentialsId,
             resource_id: resourceId,
-            sql_instance_name: instanceName
+            database_instance_name: instanceName
         }
     });
 }

@@ -601,19 +601,21 @@ async function processCloudFormationMessages() {
                                                         fsxName
                                                     );
 
+                                                    const nodeIds = [node1InstanceId];
+                                                    if (node2InstanceId) {
+                                                        nodeIds.push(node2InstanceId);
+                                                    }
                                                     try {
                                                         const deployedInstanceName = await getActiveSqlInstanceName(
                                                             credentialsId,
                                                             region,
-                                                            node1InstanceId,
-                                                            node2InstanceId
+                                                            nodeIds
                                                         );
                                                         const instanceId = await getMssqlInstanceGuid(
                                                             credentialsId,
                                                             region,
                                                             deployedInstanceName,
-                                                            node1InstanceId,
-                                                            node2InstanceId
+                                                            nodeIds
                                                         );
 
                                                         const instanceDetails: DatabaseInstance = {
