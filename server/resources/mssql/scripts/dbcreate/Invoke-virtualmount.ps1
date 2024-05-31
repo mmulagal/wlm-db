@@ -57,7 +57,8 @@ try {
     #If warning is indeed serious the next step to initialize will fail and that will be caught
     $disklist | ForEach-Object {
         $disk = $_
-        Clear-ClusterDiskReservation -disk $disk.Number -Force
+        $disknumber = $disk.Number
+        Invoke-command -ScriptBlock {("select disk $disknumber", "attributes disk clear readonly", "online disk", "exit") | diskpart}
         if ($disk.IsReadOnly -ne $False) {
             Set-Disk -Number $disk.Number -IsReadOnly $False -ErrorAction SilentlyContinue
             Start-Sleep 2

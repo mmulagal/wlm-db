@@ -679,16 +679,16 @@ const createVolumeClone = (
             return $responseObject | ConvertTo-Json -Depth 5
         }
 
+        $errormessage = Set-LUNSignature
+        if ($errormessage -ne $null) {
+            $responseObject['error'] = "Could not set LUN signature. $($errormessage | convertto-json)"
+            return $responseObject | ConvertTo-Json -Depth 5
+        }
+
         $result = Set-LunMap -igroup $igroup
         write-debug "Map LUNs job: $($result | convertto-json)"
         if ($result.error -or $result.records.count -eq 0) {
             $responseObject['error'] = "Could not map LUNs. Ontap error: $($result.error)"
-            return $responseObject | ConvertTo-Json -Depth 5
-        }
-
-        $errormessage = Set-LUNSignature
-        if ($errormessage -ne $null) {
-            $responseObject['error'] = "Could not set LUN signature. $($errormessage | convertto-json)"
             return $responseObject | ConvertTo-Json -Depth 5
         }
     } catch {
