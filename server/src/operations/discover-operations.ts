@@ -1482,6 +1482,7 @@ async function unmanageDatabaseInstance(
         errorMessage?: string;
     }[] = [];
 
+    databaseInstanceList = databaseInstanceList.replace(/ /g, '');
     if (!isEmpty(databaseInstanceList)) {
         const databaseInstanceIds = databaseInstanceList.replace(/ /g, '').split(',');
 
