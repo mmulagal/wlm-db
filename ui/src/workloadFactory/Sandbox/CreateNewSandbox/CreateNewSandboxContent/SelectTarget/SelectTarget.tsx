@@ -17,14 +17,15 @@ import { GENERAL } from '../../../../../utils/appConstants';
 import ActionRequired from '../../../../../common/ActionRequired/ActionRequired';
 import { STATUS_CONST } from '../../../../../utils/consts';
 import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
-import { useDelayedError } from '../../../../../common/hooks/useDelayedError';
-import { isValidDatabaseName } from '../../../../CreateNewDB/CreateNewDBFooter/createUserDBPayload';
+import { isValidSandboxName } from '../../../SandboxUtility';
 
 const SelectTarget = () => {
     const windowSize = useResize();
     const dispatch = useDispatch();
 
-    const { target, source, aggregatedDbHostList, showError } = useAppSelector(state => state.createSandbox);
+    const { target, source, aggregatedDbHostList, showError, dataFilePath, logFilePath } = useAppSelector(
+        state => state.createSandbox
+    );
     const { isDemoMode } = useAppSelector(state => state.auth);
     const { selectedDatabaseHost, selectedDatabase, selectedDatabaseInstance } = target;
     const { selectedDatabaseHost: selectedSourceDbHost } = source;
@@ -70,7 +71,9 @@ const SelectTarget = () => {
         if (showError && !selectedDatabase) {
             return GENERAL.ACTION_REQUIRED;
         }
-        return isValidDatabaseName(selectedDatabase) ? '' : GENERAL.DB_NAME_ERROR_CHECK;
+        return isValidSandboxName(selectedDatabase) && dataFilePath.length < 255 && logFilePath.length < 255
+            ? ''
+            : GENERAL.DB_NAME_ERROR_CHECK;
     };
 
     useEffect(() => {
@@ -91,19 +94,25 @@ const SelectTarget = () => {
                 <div className={styles.listItem}>
                     <Bullet />
                     <DsTypography variant="Regular_13" className={styles.textWidth}>
-                        {GENERAL.CREATE_DB_NAME_TOOLTIP[0]}
+                        {GENERAL.CREATE_SANDBOX_NAME_TOOLTIP[0]}
                     </DsTypography>
                 </div>
                 <div className={styles.listItem}>
                     <Bullet />
                     <DsTypography variant="Regular_13" className={styles.textWidth}>
-                        {GENERAL.CREATE_DB_NAME_TOOLTIP[1]}
+                        {GENERAL.CREATE_SANDBOX_NAME_TOOLTIP[1]}
                     </DsTypography>
                 </div>
                 <div className={styles.listItem}>
                     <Bullet />
                     <DsTypography variant="Regular_13" className={styles.textWidth}>
-                        {GENERAL.CREATE_DB_NAME_TOOLTIP[2]}
+                        {GENERAL.CREATE_SANDBOX_NAME_TOOLTIP[2]}
+                    </DsTypography>
+                </div>
+                <div className={styles.listItem}>
+                    <Bullet />
+                    <DsTypography variant="Regular_13" className={styles.textWidth}>
+                        {GENERAL.CREATE_SANDBOX_NAME_TOOLTIP[3]}
                     </DsTypography>
                 </div>
             </div>
