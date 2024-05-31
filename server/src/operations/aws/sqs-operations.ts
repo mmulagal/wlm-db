@@ -600,7 +600,6 @@ async function processCloudFormationMessages() {
                                                         fsxId,
                                                         fsxName
                                                     );
-
                                                     const nodeIds = [node1InstanceId];
                                                     if (node2InstanceId) {
                                                         nodeIds.push(node2InstanceId);

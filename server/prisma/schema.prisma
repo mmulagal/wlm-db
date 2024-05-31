@@ -129,6 +129,7 @@ model database_instances {
   sandbox_created                   Boolean?  @default(value: false)
   storage_protocol                  String?   @db.VarChar(16)
   metadata                          Json?     @default("{}")
+
   resource resource @relation(fields: [account_id, credentials_id, resource_id], references: [account_id, credentials_id, resource_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_resource_account_id_credentials_id_resource_id")
 
   @@unique([account_id, credentials_id, resource_id, database_instance_id], name: "uk_wlmdb_database_instances", map: "uk_wlmdb_database_instances")
