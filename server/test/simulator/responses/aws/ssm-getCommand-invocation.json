@@ -1122,5 +1122,30 @@
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
+    },
+    "getActiveDirectoryResp": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "f171a4a7-3693-41bb-8c31-getActiveDirectory",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CommandId": "f171a4a7-3693-41bb-8c31-getActiveDirectory",
+        "Comment": "",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT7.723S",
+        "ExecutionEndDateTime": "2024-04-26T07:41:01.902Z",
+        "ExecutionStartDateTime": "2024-04-26T07:40:54.902Z",
+        "InstanceId": "i-07862593751ba045b",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"scriptExecutionTime\":235.4865,\"activeDirectory\":{\"domainName\":\"wlmdb-private.com\",\"ipAddresses\":[\"10.0.165.129\",\"10.0.189.133\"]}}\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
     }
 }
