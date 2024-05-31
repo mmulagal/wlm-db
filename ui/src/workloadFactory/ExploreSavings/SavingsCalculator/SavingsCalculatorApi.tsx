@@ -6,8 +6,11 @@ import {
     useGetViewCalculationsMutation
 } from '../../../utils/apiService';
 import {
+    setGetPartnerHostDetailsLoading,
     setSavingsCalculatorRefresh,
     setSelectedHostDetails,
+    setSelectedPartnerHostDetails,
+    setSelectedPartnerInstanceId,
     setStorageSavingsLoading,
     setStorageSavingsResponse,
     setViewCalculationsLoading,
@@ -19,6 +22,7 @@ import store from '../../../store/store';
 import { setMssqlInstancesData } from '../../../store/workloadFactory/inventorySlice';
 import { formatViewCalcData, setESInstanceData } from '../ExploreSavingsUtils';
 import { SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
+import { GENERAL } from '../../../utils/appConstants';
 
 const SavingsCalculatorApi = () => {
     const dispatch = useAppDispatch();
@@ -29,7 +33,8 @@ const SavingsCalculatorApi = () => {
         monthlyChangeRate,
         selectedInstanceId,
         savingsCalculatorRefresh,
-        selectedDeploymentModel
+        selectedDeploymentModel,
+        selectedPartnerInstanceId
     } = useAppSelector(state => state.exploreSavings);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
@@ -41,7 +46,25 @@ const SavingsCalculatorApi = () => {
 
     useEffect(() => {
         const selectedRow = unManagedHostFormatedList.filter((item: any) => item?.id === selectedInstanceId);
-        if (selectedRow) {
+        if (selectedRow && selectedRow?.length > 0) {
+            if (
+                selectedRow[0]?.serverInstallationMode === GENERAL.AOAG &&
+                selectedRow[0]?.clusterNodeDetails &&
+                selectedRow[0]?.clusterNodeDetails?.length === 2
+            ) {
+                let partnerInstanceRow = selectedRow[0]?.clusterNodeDetails?.filter(
+                    (perRow: any) => perRow?.ec2InstanceId !== selectedInstanceId
+                );
+                if (
+                    partnerInstanceRow?.[0]?.ec2InstanceId &&
+                    partnerInstanceRow[0].ec2InstanceId !== selectedPartnerInstanceId
+                ) {
+                    dispatch(setSelectedPartnerInstanceId(partnerInstanceRow[0].ec2InstanceId));
+                    if (!isDemoMode) {
+                        dispatch(setGetPartnerHostDetailsLoading(true));
+                    }
+                }
+            }
             setESInstanceData(selectedRow[0], isDemoMode, selectedDeploymentModel, dispatch);
             // dispatch(setSelectedHostDetails(selectedRow[0]));
         } else {
@@ -133,6 +156,9 @@ const SavingsCalculatorApi = () => {
 
     useEffect(() => {
         if (savingsCalculatorRefresh) {
+            if (!isDemoMode && selectedPartnerInstanceId) {
+                getMssqlDataForPartnerNode();
+            }
             getMssqlData();
             triggerRefreshApi();
         }
@@ -189,6 +215,38 @@ const SavingsCalculatorApi = () => {
             dispatch(setMssqlInstancesData({ ...mssqlInstancesData, ...mssqlInstancesDataErr }));
         }
     };
+
+    // This function is to call API2 for partner node
+    const getMssqlDataForPartnerNode = async () => {
+        dispatch(setGetPartnerHostDetailsLoading(true));
+        try {
+            const result: any = await getMssqlInstanceDataApi({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                regionId: headerSelectedRegion?.label2,
+                instances: selectedPartnerInstanceId,
+                nextToken: ''
+            });
+
+            if (result && !result?.error) {
+                dispatch(setSelectedPartnerHostDetails(result?.data?.items?.[0]));
+                dispatch(setGetPartnerHostDetailsLoading(false));
+            } else {
+                dispatch(setSelectedPartnerHostDetails(null));
+                dispatch(setGetPartnerHostDetailsLoading(false));
+            }
+        } catch (error) {
+            dispatch(setSelectedPartnerHostDetails(null));
+            dispatch(setGetPartnerHostDetailsLoading(false));
+        }
+    };
+
+    useEffect(() => {
+        if (!isDemoMode) {
+            if (selectedPartnerInstanceId && headerSelectedCred?.data?.credentialsId && headerSelectedRegion?.label2) {
+                getMssqlDataForPartnerNode();
+            }
+        }
+    }, [selectedPartnerInstanceId]);
 
     useEffect(() => {
         dispatch(setStorageSavingsResponse({}));

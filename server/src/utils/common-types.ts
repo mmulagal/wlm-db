@@ -41,6 +41,7 @@ interface Sandbox {
     updatedAt: number;
     source: string;
     tag: string;
+    baseSnapshot: string;
 }
 
 interface NodeDetails {
@@ -169,5 +170,6 @@ export {
     SSMParamterObject,
     UserDatabase,
     MissingPermission,
-    MissingPermissionInterface
+    MissingPermissionInterface,
+    Sandbox
 };

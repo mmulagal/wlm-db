@@ -21,7 +21,7 @@ function masterStackData(
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
-            start_time: new Date(Date.now() - 360000),
+            start_time: new Date(Date.now() - 420000),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
         }
@@ -1475,7 +1475,7 @@ function sandboxJobData(
             status: JOBSTATUS.COMPLETED,
             resource_name: srcDb,
             type: JOBTYPE.SANDBOX,
-            start_time: new Date(Date.now() - 300000),
+            start_time: new Date(Date.now() - 390000),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
         },

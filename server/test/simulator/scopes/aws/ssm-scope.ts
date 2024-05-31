@@ -46,7 +46,9 @@ import {
     addExtendedProperties,
     cleanUpOntapResources,
     mountPointQuery,
-    getStorageSavingsFromOntap
+    getStorageSavingsFromOntap,
+    detachDbAndRemoveAccessPath,
+    deleteExtendedPropertiesScript
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
 
@@ -289,7 +291,7 @@ const getCollationDetails = {
 };
 
 const getOntapSandboxVolumeSavingsParams = {
-    commands: [getStorageSavingsFromOntap('test-fsx', 'us-east-1')]
+    commands: [getStorageSavingsFromOntap('test-fsx', 'us-east-1', 'netapp_wf_test_account_test_cred')]
 };
 
 const getSandboxDetails = {
@@ -309,9 +311,10 @@ const cloneVolumeCommand = {
             'test-fsx',
             'us-east-1',
             'wlmdb_sqlsvm_1714090636810',
-            JSON.stringify({ name: '/vol/wlmdb_sqldata_1714098400/sqldata' }),
-            JSON.stringify({ name: '/vol/wlmdb_sqllog_1714098400/sqllog' }),
-            'test-res-id'
+            JSON.stringify({ name: 'wlmdb_sqldata_1714098400' }),
+            JSON.stringify({ name: 'wlmdb_sqllog_1714098400' }),
+            'test-res-id',
+            'netapp_wf_test_account_test_cred'
         )
     ]
 };
@@ -358,6 +361,43 @@ const cleanUpOntapResourcesCommand = {
 };
 
 const mountPointQueryCommand = { commands: [mountPointQuery('.', 'test-database')] };
+
+const detachDbAndRemoveAccessPathCommand = {
+    commands: [
+        detachDbAndRemoveAccessPath(
+            'test-db',
+            '["123456789", "987654321"]',
+            '["S:\\test-db-Data", "L:\\test-db-Log"]',
+            '.'
+        )
+    ]
+};
+
+const deleteExtendedPropertiesCommand = {
+    commands: [
+        deleteExtendedPropertiesScript('test-db', '.', [
+            'cloned_by',
+            'baseSnapshot',
+            'source',
+            'createdAt',
+            'updatedAt',
+            'tag',
+            'accountId'
+        ])
+    ]
+};
+
+const getSplitEstimateCommand = {
+    commands: [
+        restGetUtilForOntap(
+            'test-fsx',
+            'us-east-1',
+            '/storage/volumes',
+            'uuid=5c1075d2-03a0-11ef-a514-55070fbfcab1|5ace31ea-03a0-11ef-a514-55070fbfcab1',
+            'fields=clone.split_estimate'
+        )
+    ]
+};
 
 ssmMock
     .on(SendCommandCommand)
@@ -465,7 +505,13 @@ ssmMock
     .on(SendCommandCommand, { Parameters: cleanUpOntapResourcesCommand })
     .resolves(listSendCommandCommandResponse.cleanupOntapResource)
     .on(SendCommandCommand, { Parameters: mountPointQueryCommand })
-    .resolves(listSendCommandCommandResponse.mountPointQuery);
+    .resolves(listSendCommandCommandResponse.mountPointQuery)
+    .on(SendCommandCommand, { Parameters: detachDbAndRemoveAccessPathCommand })
+    .resolves(listSendCommandCommandResponse.mountPointQuery)
+    .on(SendCommandCommand, { Parameters: deleteExtendedPropertiesCommand })
+    .resolves(listSendCommandCommandResponse.deleteExtendedProperties)
+    .on(SendCommandCommand, { Parameters: getSplitEstimateCommand })
+    .resolves(listSendCommandCommandResponse.getSplitEstimateCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -573,7 +619,13 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-cleanupOntapResource' })
     .resolves(getCommandInvocationResponse.cleanupOntapResourceResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-mountPointQueryCommand' })
-    .resolves(getCommandInvocationResponse.mountPointQueryCommandResponse);
+    .resolves(getCommandInvocationResponse.mountPointQueryCommandResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-detachDbAndAcessPathQuery' })
+    .resolves(getCommandInvocationResponse.detachDbAndAccessPathResp)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-deleteExtendedProperties' })
+    .resolves(getCommandInvocationResponse.deleteExtendedPropertiesResp)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getSplitEstimateCommand' })
+    .resolves(getCommandInvocationResponse.getSplitEstimateResp);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

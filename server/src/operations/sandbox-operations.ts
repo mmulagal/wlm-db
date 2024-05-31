@@ -29,7 +29,7 @@ import {
     splitFlexCloneVolumes,
     deleteExtendedPropertiesScript
 } from './workloads/mssql/sandbox-scripts';
-import { Metadata, ResourceDetails } from '../utils/common-types';
+import { Metadata, ResourceDetails, Sandbox } from '../utils/common-types';
 import { checkDatabaseExists, getActiveSqlNode, getSqlServerVersion } from './workloads/mssql/mssql-operations';
 import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { sleep, sqlResponseParsing } from '../utils/utils';
@@ -162,17 +162,20 @@ async function getSandboxDetails(
     }
     if ((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && sandboxes) {
         const demoSandboxInfo = sandboxes.map(item => {
+            const { databaseName: sandboxName, source, createdAt, updatedAt, tag, baseSnapshot } = item;
+
             const databaseObject = {
-                sandboxName: item.databaseName,
+                sandboxName,
                 databaseHostName: resourceDetails.resource_name!,
                 databaseHostId: resourceDetails.resource_id!,
                 databaseInstanceName: DEFAULT_INSTANCE_NAME,
-                sourceDatabaseHostName: item.source.split('|')[0],
-                sourceDatabaseInstanceName: item.source.split('|')[1],
-                sourceDatabaseName: item.source.split('|')[2],
-                createdAt: item.createdAt,
-                updatedAt: item.updatedAt,
-                tag: item.tag
+                sourceDatabaseHostName: source.split('|')[0],
+                sourceDatabaseInstanceName: source.split('|')[1],
+                sourceDatabaseName: source.split('|')[2],
+                createdAt,
+                updatedAt,
+                tag,
+                baseSnapshot
             };
             return databaseObject;
         });
@@ -264,7 +267,7 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                 throat(10, async fsxId => {
                     for (const resourceDetail of fsxGroups[fsxId]) {
                         const { metadata } = resourceDetail;
-                        const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+                        const { node1InstanceId, node2InstanceId, sandboxes } = metadata as unknown as Metadata;
 
                         try {
                             const [ssmStatus1, ssmStatus2] = await Promise.all([
@@ -278,19 +281,24 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                 ssmStatus1.Status === ConnectionStatus.CONNECTED ||
                                 ssmStatus2.Status === ConnectionStatus.CONNECTED
                             ) {
-                                // DEMO FSX ID AND REGION
-                                if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-                                    fsxId = 'test-fsx';
-                                    region = 'us-east-1';
-                                }
-
-                                const command = [
+                                let command = [
                                     getStorageSavingsFromOntap(
                                         fsxId,
                                         region,
                                         getClonedByTagValue(accountId, credentialsId)
                                     )
                                 ];
+
+                                // DEMO FSX ID AND REGION
+                                if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+                                    command = [
+                                        getStorageSavingsFromOntap(
+                                            'test-fsx',
+                                            'us-east-1',
+                                            'netapp_wf_test_account_test_cred'
+                                        )
+                                    ];
+                                }
 
                                 const response = await callSsmExecution(
                                     credentialsId,
@@ -303,10 +311,18 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                 );
 
                                 if (response) {
-                                    const { savedStorage, consumedStorage } = sqlResponseParsing(response);
+                                    let { savedStorage, consumedStorage } = sqlResponseParsing(response);
+
+                                    // Increase storage savings per sandbox for demo
+                                    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+                                        savedStorage *= sandboxes?.length || 0;
+                                        consumedStorage *= sandboxes?.length || 0;
+                                    }
+
                                     savingsData.consumedStorage +=
                                         typeof consumedStorage === 'number' ? consumedStorage : 0;
                                     savingsData.savedStorage += typeof savedStorage === 'number' ? savedStorage : 0;
+
                                     const totalStorage = savingsData.consumedStorage + savingsData.savedStorage;
                                     savingsData.sandboxSavingsPercentage =
                                         totalStorage > 0 ? (savingsData.savedStorage * 100) / totalStorage : 0;
@@ -876,11 +892,10 @@ async function createVolumeClone(
                     'test-fsx',
                     'us-east-1',
                     'wlmdb_sqlsvm_1714090636810',
-                    'wlmdb_sqldata_1714098400',
-                    '/vol/wlmdb_sqldata_1714098400/sqldata',
-                    'wlmdb_sqllog_1714098400',
-                    '/vol/wlmdb_sqllog_1714098400/sqllog',
-                    'wlmdb_sqlsvm_1714090636810'
+                    JSON.stringify({ name: 'wlmdb_sqldata_1714098400' }),
+                    JSON.stringify({ name: 'wlmdb_sqllog_1714098400' }),
+                    'test-res-id',
+                    'netapp_wf_test_account_test_cred'
                 )
             ];
         }
@@ -1170,18 +1185,19 @@ async function createExtendedProperties(
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             // this is used to retreive the newly created user databases in database list for demo using meta data
+            const props = {
+                databaseName: destDetails.database,
+                ...extendedProps,
+                baseSnapshot: `netapp_wf_${Date.now()}`
+            } as Sandbox;
             const updatedMetadata: Metadata = await updateSandboxDBIntoResourceData(
                 accountId,
                 srcDetails.host,
-                destDetails.database,
-                `${srcDetails.resourceName}|${DEFAULT_INSTANCE_NAME}|${srcDetails.database}`,
-                Date.now(),
-                Date.now(),
-                (extendedProps?.tag || 'Other') as string,
+                props,
                 srcDetails.metadata
             );
 
-            updateUserDBIntoResourceData(accountId, srcDetails.host, destDetails.database, updatedMetadata);
+            await updateUserDBIntoResourceData(accountId, srcDetails.host, destDetails.database, updatedMetadata);
         }
 
         status = JOBSTATUS.COMPLETED;
@@ -1759,7 +1775,11 @@ async function getSandboxSplitEstimate(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the active node instance id');
     }
 
-    const command = [getDbMappedOntapVolumes(fileSystemId, region, sandboxName, instanceName)];
+    let command = [getDbMappedOntapVolumes(fileSystemId, region, sandboxName, instanceName)];
+
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        command = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
+    }
 
     const mappings = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId, accountId, false);
 
@@ -1775,7 +1795,7 @@ async function getSandboxSplitEstimate(
     }
 
     // get the estimated split size
-    const estimateCommand = [
+    let estimateCommand = [
         restGetUtilForOntap(
             fileSystemId,
             region,
@@ -1785,6 +1805,18 @@ async function getSandboxSplitEstimate(
         )
     ];
 
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        estimateCommand = [
+            restGetUtilForOntap(
+                'test-fsx',
+                'us-east-1',
+                '/storage/volumes',
+                'uuid=5c1075d2-03a0-11ef-a514-55070fbfcab1|5ace31ea-03a0-11ef-a514-55070fbfcab1',
+                'fields=clone.split_estimate'
+            )
+        ];
+    }
+
     const estimateResp = await callSsmExecution(
         credentialsId,
         region,
@@ -1793,6 +1825,8 @@ async function getSandboxSplitEstimate(
         accountId,
         false
     );
+
+    logger.info('ESTIMATED RESP>>>', estimateResp);
 
     if (!estimateResp) {
         logger.error('Failed to get volume split estimate', { databaseHostId });
@@ -1927,14 +1961,14 @@ async function performLifecycleUpdate(
             snapshot
         )) as ClonedVolumes;
 
-        const extendedProps = (await detachSandboxAndAccessPath(
+        let extendedProps = (await detachSandboxAndAccessPath(
             accountId,
             credentialsId,
             region,
             parentJobId,
             resourceDetails,
             mappings
-        )) as { [x: string]: string };
+        )) as Sandbox;
 
         mountPaths = (await invokeVirtualMount(
             accountId,
@@ -1952,6 +1986,15 @@ async function performLifecycleUpdate(
         )) as { dataPath: string; logPath: string };
 
         await createCloneDb(accountId, credentialsId, region, parentJobId, resourceDetails, mountPaths);
+
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            const existingProps = resourceDetails.metadata.sandboxes?.find(
+                ({ databaseName }) => databaseName === resourceDetails.database
+            );
+            if (existingProps) {
+                extendedProps = existingProps;
+            }
+        }
 
         await createExtendedProperties(
             accountId,
@@ -2052,7 +2095,7 @@ async function validateLifeCycleParams(
             instanceName
         );
 
-        if (!dbExists) {
+        if (!dbExists && !(process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator')) {
             throw createError(
                 412,
                 `Database ${resourceDetails.database} does not exists on host ${resourceDetails.resourceName}`
@@ -2105,7 +2148,7 @@ async function detachSandboxAndAccessPath(
     });
 
     try {
-        const command = [
+        let command = [
             detachDbAndRemoveAccessPath(
                 resourceDetails.database,
                 JSON.stringify([mappings.data.lunSerialNumber, mappings.log.lunSerialNumber]),
@@ -2113,6 +2156,18 @@ async function detachSandboxAndAccessPath(
                 resourceDetails.instanceName
             )
         ];
+
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            command = [
+                detachDbAndRemoveAccessPath(
+                    'test-db',
+                    '["123456789", "987654321"]',
+                    '["S:\\test-db-Data", "L:\\test-db-Log"]',
+                    '.'
+                )
+            ];
+        }
+
         const resp = await callSsmExecution(credentialsId, region, command, resourceDetails.activeNodeInstanceId);
 
         if (!resp) {
@@ -2292,8 +2347,6 @@ async function performSplitOperation(
             resDetails
         )) as VolumeLunMapping;
 
-        logger.info('MAPPINGS>>>', mappings);
-
         await splitVolumes(
             accountId,
             credentialsId,
@@ -2458,7 +2511,7 @@ async function deleteExtendedProperties(
     });
 
     try {
-        const command = [
+        let command = [
             deleteExtendedPropertiesScript(resourceDetail.database, resourceDetail.instanceName, [
                 'cloned_by',
                 'baseSnapshot',
@@ -2470,10 +2523,34 @@ async function deleteExtendedProperties(
             ])
         ];
 
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            command = [
+                deleteExtendedPropertiesScript('test-db', '.', [
+                    'cloned_by',
+                    'baseSnapshot',
+                    'source',
+                    'createdAt',
+                    'updatedAt',
+                    'tag',
+                    'accountId'
+                ])
+            ];
+        }
+
         const resp = await callSsmExecution(credentialsId, region, command, resourceDetail.activeNodeInstanceId);
 
         if (resp) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to delete the extended properties');
+        }
+
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            await updateMetadataForSanboxDeletion(
+                accountId,
+                credentialsId,
+                region,
+                resourceDetail.host,
+                resourceDetail.database
+            );
         }
 
         status = JOBSTATUS.COMPLETED;
