@@ -267,7 +267,7 @@ async function updateUserDBIntoResourceData(
     databaseName: string,
     metaData: Metadata
 ) {
-    logger.info('updating user db into resource meta data', accountId, resourceId, databaseName);
+    logger.info('updating user db into resource meta data', accountId, resourceId, databaseName, metaData.userDatabase);
 
     // this is used to retreive the newly created user databases in database list for demo using meta data
     const databaseDetails = {
@@ -287,6 +287,8 @@ async function updateUserDBIntoResourceData(
         collation: SQL_DEFAULT_COLLATION
     };
     metaData.userDatabase = [...(metaData.userDatabase || []), databaseDetails];
+
+    logger.info(metaData.userDatabase);
 
     await updateResourceMetaData(accountId, resourceId, metaData);
 }
