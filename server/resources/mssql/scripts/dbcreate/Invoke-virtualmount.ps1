@@ -90,8 +90,8 @@ try {
     $null = (New-Item -ItemType Directory -Path $datafolder -Force)
     $null = (New-Item -ItemType Directory -Path $logfolder -Force)
 
-    $datadisk = ($disklist | Where-Object { $_.SerialNumber -eq $DataSerial })
-    $logdisk = ($disklist | Where-Object { $_.SerialNumber -eq $LogSerial })
+    $datadisk = ($disklist | Where-Object { $_.SerialNumber -ceq $DataSerial })
+    $logdisk = ($disklist | Where-Object { $_.SerialNumber -ceq $LogSerial })
     $datadisknumber = $datadisk.Number
     $logdisknumber = $logdisk.Number
 
