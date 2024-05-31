@@ -1065,8 +1065,8 @@ const addAccessPathAndAttachDb = (
 
         # If access path does not exist, only then add the access path
         if ($accessPathExists -ne $true) {
-            $datadisk = Get-disk | Where-Object { $_.SerialNumber -eq $datafile.serial }
-            $logdisk = Get-disk | Where-Object { $_.SerialNumber -eq $logfile.serial }
+            $datadisk = Get-disk | Where-Object { $_.SerialNumber -ceq $datafile.serial }
+            $logdisk = Get-disk | Where-Object { $_.SerialNumber -ceq $logfile.serial }
 
             write-debug "Mount Points: $dataMountPoint $logMountPoint"
 
