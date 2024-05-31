@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import { faker } from '@faker-js/faker';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, sample } from 'lodash-es';
 import {
     EC2Client,
     DescribeVpcsCommand,
@@ -39,6 +39,7 @@ import describeInstanceTypeOfferings from '../../responses/aws/describe-instance
 import modifyVpcAttributesResponse from '../../responses/aws/modify-vpc-attributes.json';
 // import describeVolumesResponse from '../../responses/aws/describe-volumes.json';
 import describeSnapshotsResponse from '../../responses/aws/describe-snapshots.json';
+import { inventoryDemoData } from '../../../../src/utils/demo-utils/demoInventoryData';
 
 const KeyPairId = `${faker.string.alphanumeric(20)}`;
 const KeyFingerprint = `${faker.string.alphanumeric(20)}`;
@@ -153,13 +154,18 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
     }
     if (instanceFilters && instancesQueryPrivateIps) {
         const reservations = [];
-
+        const { items } = inventoryDemoData('fsx', 'ebsTest'); // private-ip-address filter is only added to get partner node details of instances using ebs; revisit when the filter is used for other purposes
+        const instancesWithEbs = items.filter(instance =>
+            instance.sqlServerInstances?.find(({ storage }) =>
+                storage?.find((sqlStorage: SqlStorage) => sqlStorage?.type === 'EBS')
+            )
+        );
         instancesQueryPrivateIps.forEach((privateIp: string) => {
             const instances = [];
             const dummyInstanceDetails = cloneDeep(describeInstanceResponse.Reservations[0].Instances[0]);
             const dummyResevation = cloneDeep(describeInstanceResponse.Reservations[0]);
             dummyInstanceDetails.PrivateIpAddress = privateIp;
-            dummyInstanceDetails.InstanceId = `i-${faker.string.alphanumeric(16)}`;
+            dummyInstanceDetails.InstanceId = sample(instancesWithEbs).ec2InstanceId;
             instances?.push(dummyInstanceDetails);
             dummyResevation.Instances = instances;
             reservations?.push(dummyResevation);

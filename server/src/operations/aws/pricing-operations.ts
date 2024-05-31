@@ -768,4 +768,90 @@ function calculateFsxWindowsCapacityPrice(
     return (capacityPrice + iopsPrice + throughputPrice) * duration;
 }
 
-export { getProductRates, calculatePrice, calculateFsxWindowsCapacityPrice };
+async function getSqlInstancePricingDetails(
+    region: string,
+    instanceType: string,
+    operatingSystem?: string,
+    usageOperation?: string
+) {
+    logger.info('Get SQL instance pricing details', { region, instanceType, operatingSystem, usageOperation });
+
+    const params: GetProductsCommandInput = {
+        Filters: [
+            {
+                Type: 'TERM_MATCH',
+                Field: 'regionCode',
+                Value: region
+            },
+            {
+                Type: 'TERM_MATCH',
+                Field: 'productFamily',
+                Value: 'Compute Instance'
+            },
+            {
+                Type: 'TERM_MATCH',
+                Field: 'instanceType',
+                Value: instanceType
+            },
+            {
+                Type: 'TERM_MATCH',
+                Field: 'tenancy',
+                Value: 'Shared'
+            },
+            {
+                Type: 'TERM_MATCH',
+                Field: 'capacitystatus',
+                Value: 'Used'
+            }
+        ],
+        ServiceCode: 'AmazonEC2',
+        FormatVersion: 'aws_v1'
+    };
+
+    if (usageOperation) {
+        params?.Filters?.push({
+            Type: 'TERM_MATCH',
+            Field: 'operation',
+            Value: usageOperation
+        });
+    }
+
+    if (operatingSystem) {
+        params?.Filters?.push({
+            Type: 'TERM_MATCH',
+            Field: 'operatingSystem',
+            Value: operatingSystem
+        });
+    }
+
+    const pricingResult = await getProducts(params);
+    const pricingDetails: { [preInstalledSw: string]: { pricePerUnit: number; unit: string } } = {};
+    if (pricingResult.PriceList) {
+        pricingResult.PriceList.forEach(priceItem => {
+            const item = (priceItem as LazyJsonString).deserializeJSON();
+            const { terms, product } = item;
+
+            if (terms && product) {
+                const term = terms[Object.keys(terms)[0]];
+                const termDetails = term[Object.keys(term)[0]];
+                const { priceDimensions } = termDetails;
+                const priceDimension = priceDimensions[Object.keys(priceDimensions)[0]];
+                const { pricePerUnit } = priceDimension;
+                const { preInstalledSw, licenseModel } = product.attributes;
+                if (licenseModel !== 'Bring your own license') {
+                    // Windows Server as BYOL- no windows license included Windows Server as BYOL (Bring Your Own License) - RunInstances:0800
+                    pricingDetails[preInstalledSw] = {
+                        pricePerUnit: Number(pricePerUnit.USD),
+                        unit: priceDimension.unit
+                    };
+                }
+            }
+        });
+    }
+
+    logger.debug('getSqlInstancePricingDetails response', pricingDetails);
+
+    return pricingDetails;
+}
+
+export { getProductRates, calculatePrice, calculateFsxWindowsCapacityPrice, getSqlInstancePricingDetails };
