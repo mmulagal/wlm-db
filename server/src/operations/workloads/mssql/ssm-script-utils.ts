@@ -180,14 +180,14 @@ const validateSQLInstanceConnectivity = (ec2instanceId: string, sqlinstancename:
         $sqlinstancename = '${sqlinstancename}'
 
         # Check if sqlcmd is installed or not
-        $sqlcmdInstalled = (Get-Command -Type Application sqlcmd) -ne $null
+        $sqlcmdInstalled = (Get-Command -Type Application sqlcmd 2> $null) -ne $null
 
         if (-not $sqlcmdInstalled) {
             $responseObject.add('sqlerror', 'sqlcmd utility is not available. Install it by referring to https://learn.microsoft.com/en-us/sql/tools/sqlcmd/sqlcmd-utility. If the command is already installed, ensure the "Path" environment variable contains the path of the command and retry the operation')
             $responseObject.add('sqlInstanceConnectivity', $False)
         } else {
             $sqlcmd = @"
-                SET NOCOUNT ON;
+            SET NOCOUNT ON;
                 SELECT 
                     SERVERPROPERTY('edition') AS sqlEdition,
                     (SELECT COUNT(*) FROM sys.databases) AS noOfDatabases
