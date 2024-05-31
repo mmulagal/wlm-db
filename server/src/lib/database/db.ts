@@ -553,7 +553,6 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
         },
         update: {
             ...(sqlInstanceName && { sql_instance_name: sqlInstanceName }),
-            ...(sqlInstanceId && { sql_instance_id: sqlInstanceId }),
             ...(fsxnId && { fsxn_ids: fsxnId }),
             ...(isDefault && { is_default: isDefault })
         },

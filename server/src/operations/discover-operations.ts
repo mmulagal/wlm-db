@@ -1483,22 +1483,18 @@ async function unmanageDatabaseInstance(
     }[] = [];
 
     databaseInstanceList = databaseInstanceList.replace(/ /g, '');
-    if (!isEmpty(databaseInstanceList)) {
-        const databaseInstanceIds = databaseInstanceList.replace(/ /g, '').split(',');
+    if (databaseInstanceList.length > 0) {
+        const databaseInstanceIds = databaseInstanceList.split(',');
 
-        const preDeleteDatabaseInstances: DatabaseInstance[] = await listDatabaseInstances(
-            accountId,
-            credentialsId,
-            {}
-        );
+        const preDeleteDatabaseInstances: DatabaseInstance[] = await listDatabaseInstances(accountId, credentialsId, {
+            resourceId
+        });
 
         await deleteDatabaseInstance(accountId, credentialsId, resourceId, databaseInstanceIds);
 
-        const postDeleteDatabaseInstances: DatabaseInstance[] = await listDatabaseInstances(
-            accountId,
-            credentialsId,
-            {}
-        );
+        const postDeleteDatabaseInstances: DatabaseInstance[] = await listDatabaseInstances(accountId, credentialsId, {
+            resourceId
+        });
 
         databaseInstanceIds.forEach(databaseInstanceId => {
             if (preDeleteDatabaseInstances.some(elem => elem.sql_instance_id === databaseInstanceId)) {
@@ -1515,6 +1511,23 @@ async function unmanageDatabaseInstance(
                     errorMessage: "Instance does't exist."
                 });
             }
+        });
+
+        databaseInstanceIds.map(databaseInstanceId => {
+            const existsBeforeDeletion = preDeleteDatabaseInstances.some(
+                elem => elem.sql_instance_id === databaseInstanceId
+            );
+            const existsAfterDeletion = postDeleteDatabaseInstances.some(
+                elem => elem.sql_instance_id === databaseInstanceId
+            );
+            const status = existsAfterDeletion ? 'failed' : 'success';
+            const errorMessage = existsBeforeDeletion ? 'Instance doesn not exist.' : undefined;
+
+            return {
+                databaseInstanceId,
+                status,
+                errorMessage
+            };
         });
     }
 
