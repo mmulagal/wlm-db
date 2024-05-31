@@ -804,8 +804,8 @@ async function getSqlInstancePricingDetails(
                 Value: 'Used'
             }
         ],
-        ServiceCode: 'AmazonEC2',
-        FormatVersion: 'aws_v1'
+        ...ec2Service,
+        ...AWS_PRICING_FORMAT_VERSION
     };
 
     if (usageOperation) {
@@ -832,17 +832,15 @@ async function getSqlInstancePricingDetails(
             const { terms, product } = item;
 
             if (terms && product) {
-                const term = terms[Object.keys(terms)[0]];
-                const termDetails = term[Object.keys(term)[0]];
-                const { priceDimensions } = termDetails;
-                const priceDimension = priceDimensions[Object.keys(priceDimensions)[0]];
-                const { pricePerUnit } = priceDimension;
+                const { OnDemand: onDemandPrice } = terms;
+                const { priceDimensions } = onDemandPrice[Object.keys(onDemandPrice)[0]];
+                const { unit, pricePerUnit } = priceDimensions[Object.keys(priceDimensions)[0]];
                 const { preInstalledSw, licenseModel } = product.attributes;
                 if (licenseModel !== 'Bring your own license') {
                     // Windows Server as BYOL- no windows license included Windows Server as BYOL (Bring Your Own License) - RunInstances:0800
                     pricingDetails[preInstalledSw] = {
                         pricePerUnit: Number(pricePerUnit.USD),
-                        unit: priceDimension.unit
+                        unit
                     };
                 }
             }

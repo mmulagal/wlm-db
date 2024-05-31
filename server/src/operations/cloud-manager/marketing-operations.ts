@@ -22,10 +22,7 @@ function getMonthlyCloneCountFromFrequency(cloneRefreshFrequency: string) {
     return cloneRefreshFrequencyLowerCase === 'daily' ? 30 : cloneRefreshFrequencyLowerCase === 'weekly' ? 4 : 1;
 }
 
-function retrieveSpecificVolumeTypeVolumeIdsFromSqlServerInstances(
-    type: string,
-    sqlServerInstances: SqlServerInstanceInfoType[]
-) {
+function fetchSqlVolumeIdsByType(type: string, sqlServerInstances: SqlServerInstanceInfoType[]) {
     logger.debug('Retrieving specific volume type volume ids from sql server instances', { type, sqlServerInstances });
 
     if (!sqlServerInstances) {
@@ -38,25 +35,29 @@ function retrieveSpecificVolumeTypeVolumeIdsFromSqlServerInstances(
     );
 }
 
-async function getAoagPartnerNodeDetails(
+async function getAoagPartnerNodesDetails(
     accountId: string,
     credentialsId: string,
     region: string,
     nodeInstanceId: string,
     nodeIps: string[]
 ) {
+    logger.info('Getting AOAG partner node details', { accountId, credentialsId, region, nodeInstanceId, nodeIps });
+
     const aoagClusterNodeDetails = (await getInstanceDetailsByPrivateIp(credentialsId, region, nodeIps)) || [];
-    const [secondaryNodeInstanceId] = aoagClusterNodeDetails
+    const partnerNodeInstanceIds = aoagClusterNodeDetails
         .filter(node => node.ec2InstanceId !== nodeInstanceId)
-        .map(node => node.ec2InstanceId); // considering only 2 nodes in the cluster; primary node is already considered so getting host details of secondary node
+        .map(node => node.ec2InstanceId);
 
-    const {
-        items: [secondaryNodeDetails]
-    } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [
-        secondaryNodeInstanceId
-    ]);
-
-    return secondaryNodeDetails;
+    const partneNodeInstanceDetails = await getHostAndSqlServerInfo(
+        accountId,
+        credentialsId,
+        region,
+        undefined,
+        undefined,
+        partnerNodeInstanceIds
+    );
+    return partneNodeInstanceDetails;
 }
 
 async function identifyAoagVolumes(
@@ -78,33 +79,34 @@ async function identifyAoagVolumes(
         nodeEbsVolumeIds
     });
 
-    const partnerNodeDetails = await getAoagPartnerNodeDetails(
+    const { items: partnerNodesDetails } = await getAoagPartnerNodesDetails(
         accountId,
         credentialsId,
         region,
         nodeInstanceId,
         nodeIps
     );
+    let allEbsVolumeIds: string[] = nodeEbsVolumeIds;
+    let uniqueHostVolumeIds: string[] = nodeEbsVolumeIds;
+    partnerNodesDetails.forEach(({ sqlServerInstances }) => {
+        const partnerSqlServerInstances = sqlServerInstances || [];
+        const partnerNodeEbsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, partnerSqlServerInstances);
 
-    const partnerSqlServerInstances = partnerNodeDetails?.sqlServerInstances || [];
-    const partnerNodeEbsVolumeIds = retrieveSpecificVolumeTypeVolumeIdsFromSqlServerInstances(
-        FileSystemTypes.EBS,
-        partnerSqlServerInstances
-    );
+        const uniquePartnerNodeSqlServerInstances =
+            partnerSqlServerInstances?.filter(
+                partnerSqlServerInstance =>
+                    !nodeSqlServerInstances?.some(
+                        sqlServerInstance => partnerSqlServerInstance.sqlServerName !== sqlServerInstance.sqlServerName
+                    )
+            ) || [];
+        const uniqueSqlHostEbsVolumeIdsPartnerNode = fetchSqlVolumeIdsByType(
+            FileSystemTypes.EBS,
+            uniquePartnerNodeSqlServerInstances
+        );
+        allEbsVolumeIds = allEbsVolumeIds.concat(...partnerNodeEbsVolumeIds);
+        uniqueHostVolumeIds = uniqueHostVolumeIds.concat(...uniqueSqlHostEbsVolumeIdsPartnerNode);
+    });
 
-    const uniquePartnerNodeSqlServerInstances =
-        partnerSqlServerInstances?.filter(
-            partnerSqlServerInstance =>
-                !nodeSqlServerInstances?.some(
-                    sqlServerInstance => partnerSqlServerInstance.sqlServerName !== sqlServerInstance.sqlServerName
-                )
-        ) || [];
-    const uniqueSqlHostEbsVolumeIdsPartnerNode = retrieveSpecificVolumeTypeVolumeIdsFromSqlServerInstances(
-        FileSystemTypes.EBS,
-        uniquePartnerNodeSqlServerInstances
-    );
-    const allEbsVolumeIds = nodeEbsVolumeIds.concat(...partnerNodeEbsVolumeIds);
-    const uniqueHostVolumeIds = nodeEbsVolumeIds.concat(...uniqueSqlHostEbsVolumeIdsPartnerNode);
     return { allEbsVolumeIds, uniqueHostVolumeIds };
 }
 
@@ -128,7 +130,7 @@ async function aoagStorageSavingsCalculations(
     const [{ nodeIps }] = sqlServerInstances || [];
     if (sqlServerInstances !== undefined && nodeIps && nodeIps.length > 0) {
         const { compute, license } = await retrieveComputeAndLicenseHourlyCost(region, nodeDetails);
-        const partnerNodeDetails = await getAoagPartnerNodeDetails(
+        const partnerNodeDetails = await getAoagPartnerNodesDetails(
             accountId,
             credentialsId,
             region,
@@ -156,7 +158,7 @@ async function aoagStorageSavingsCalculations(
             getMarketingApiRequestBody(allEbsVolumeIds, params)
         );
 
-        // Consider only volumes associated with unique database in primary and secondary node for snapshot calculation and to draw a storage savings comparison with FSXn
+        // Consider only volumes associated with unique database in primary and partner node for snapshot calculation and to draw a storage savings comparison with FSXn
 
         const {
             ebs,
@@ -254,7 +256,7 @@ async function aoagStorageSavingsMetrics(
     const { ec2InstanceId: nodeInstanceId, sqlServerInstances } = nodeDetails;
     const [{ nodeIps }] = sqlServerInstances || [];
     if (sqlServerInstances !== undefined && nodeIps && nodeIps.length > 0) {
-        const partnerNodeDetails = await getAoagPartnerNodeDetails(
+        const partnerNodeDetails = await getAoagPartnerNodesDetails(
             accountId,
             credentialsId,
             region,
@@ -289,7 +291,7 @@ async function aoagStorageSavingsMetrics(
             nodesComputeLicenseDetails
         );
 
-        // Consider only volumes associated with unique database in primary and secondary node for snapshot calculation and to draw a storage savings comparison with FSXn
+        // Consider only volumes associated with unique database in primary and partner nodes for snapshot calculation and to draw a storage savings comparison with FSXn
         const {
             recommendedComputeCalculation,
             recommendedLicenseCalculation,
@@ -324,7 +326,7 @@ async function aoagStorageSavingsMetrics(
     }
     throw createError(
         HttpErrorCodes.NOT_FOUND,
-        'Unable to get AOAG storage savings metrics as no SQL Server instances or partner node details found for the provided AOAG configuration'
+        'Unable to get AOAG storage savings metrics as no SQL Server instances or partner nodes details found for the provided AOAG configuration'
     );
 }
 
@@ -485,10 +487,7 @@ async function performStorageSavingsCalculations(
 
     const sqlServerInstances = ec2HostDetails?.sqlServerInstances || [];
 
-    const ebsVolumeIds = retrieveSpecificVolumeTypeVolumeIdsFromSqlServerInstances(
-        FileSystemTypes.EBS,
-        sqlServerInstances
-    );
+    const ebsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, sqlServerInstances);
 
     if (!ebsVolumeIds.length) {
         throw createError(HttpErrorCodes.NOT_FOUND, `No EBS volumes found for the provided instance: ${instanceId}`);
