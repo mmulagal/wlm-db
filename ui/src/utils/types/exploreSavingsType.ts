@@ -61,8 +61,8 @@ export interface StorageSavingsInterface {
 
 export interface RecommendedIntanceInterface {
     instanceType?: string;
-    instanceHourlyPrice?: number | string;
-    instanceMonthlyPrice?: number | string;
+    computeHourlyPrice?: number | string;
+    computeMonthlyPrice?: number | string;
     sqlEdition?: string;
     sqlLicense?: boolean | null;
 }
@@ -70,7 +70,9 @@ export interface RecommendedIntanceInterface {
 export interface RecommendedCompute {
     instanceType?: string;
     computeHourlyPrice?: number | string;
-    instanceHourlyPrice?: number | string;
+    computeMonthlyPrice?: number | string;
+    instanceMonthlyPrice?: number | string;
+    hoursInMonth?: number | string;
 }
 
 export interface RecommendedLicense {

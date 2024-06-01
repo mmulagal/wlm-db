@@ -3,16 +3,16 @@
         "ebsInstanceCalculation": [
             {
                 "instanceType": "m5.2xlarge",
-                "instanceHourlyPrice": "$3.75",
-                "instanceMonthlyPrice": "$2,738.96",
+                "computeHourlyPrice": "$3.75",
+                "computeMonthlyPrice": "$2,738.96",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes",
                 "hoursInAMonth": "730"
             },
             {
                 "instanceType": "m5.2xlarge",
-                "instanceHourlyPrice": "$3.75",
-                "instanceMonthlyPrice": "$2,738.96",
+                "computeHourlyPrice": "$3.75",
+                "computeMonthlyPrice": "$2,738.96",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes",
                 "hoursInAMonth": "730"
@@ -21,16 +21,16 @@
         "fsxInstanceCalculation": [
             {
                 "instanceType": "m5.2xlarge",
-                "instanceHourlyPrice": "$1.712",
-                "instanceMonthlyPrice": "$1,249.76",
+                "computeHourlyPrice": "$1.712",
+                "computeMonthlyPrice": "$1,249.76",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes",
                 "hoursInAMonth": "730"
             },
             {
                 "instanceType": "m5.2xlarge",
-                "instanceHourlyPrice": "$1.712",
-                "instanceMonthlyPrice": "$1,249.76",
+                "computeHourlyPrice": "$1.712",
+                "computeMonthlyPrice": "$1,249.76",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes",
                 "hoursInAMonth": "730"
@@ -159,8 +159,8 @@
         "ebsInstanceCalculation": [
             {
                 "instanceType": "m5.2xlarge",
-                "instanceHourlyPrice": "$1.71",
-                "instanceMonthlyPrice": "$1,249.76",
+                "computeHourlyPrice": "$1.71",
+                "computeMonthlyPrice": "$1,249.76",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes"
             }
@@ -168,8 +168,8 @@
         "fsxInstanceCalculation": [
             {
                 "instanceType": "m5.2xlarge",
-                "instanceHourlyPrice": "$1.71",
-                "instanceMonthlyPrice": "$1,249.76",
+                "computeHourlyPrice": "$1.71",
+                "computeMonthlyPrice": "$1,249.76",
                 "sqlEdition": "SQL Server Standard edition",
                 "sqlLicense": "Yes"
             }

@@ -230,8 +230,8 @@ export const formatViewCalcInstance = (
             return [
                 {
                     instanceType: computeDetails?.[0]?.instanceType || instanceTypelist?.[0] || GENERAL.NOT_AVAILABLE,
-                    instanceHourlyPrice: formatPrice(computeDetails?.[0]?.instanceHourlyPrice),
-                    instanceMonthlyPrice: formatPrice(computeDetails?.[0]?.instanceMonthlyPrice),
+                    computeHourlyPrice: formatPrice(computeDetails?.[0]?.computeHourlyPrice),
+                    computeMonthlyPrice: formatPrice(computeDetails?.[0]?.computeMonthlyPrice),
                     sqlEdition:
                         licenseDetails?.[0]?.sqlServerEdition ||
                         selectedHostDetails?.databaseServer?.serverEdition ||
@@ -244,8 +244,8 @@ export const formatViewCalcInstance = (
             return [
                 {
                     instanceType: computeDetails?.[0]?.instanceType || instanceTypelist?.[0] || GENERAL.NOT_AVAILABLE,
-                    instanceHourlyPrice: formatPrice(computeDetails?.[0]?.instanceHourlyPrice),
-                    instanceMonthlyPrice: formatPrice(computeDetails?.[0]?.instanceMonthlyPrice),
+                    computeHourlyPrice: formatPrice(computeDetails?.[0]?.computeHourlyPrice),
+                    computeMonthlyPrice: formatPrice(computeDetails?.[0]?.computeMonthlyPrice),
                     sqlEdition:
                         licenseDetails?.[0]?.sqlServerEdition ||
                         selectedHostDetails?.databaseServer?.serverEdition ||
@@ -255,8 +255,8 @@ export const formatViewCalcInstance = (
                 },
                 {
                     instanceType: computeDetails?.[1]?.instanceType || instanceTypelist?.[1] || GENERAL.NOT_AVAILABLE,
-                    instanceHourlyPrice: formatPrice(computeDetails?.[1]?.instanceHourlyPrice),
-                    instanceMonthlyPrice: formatPrice(computeDetails?.[1]?.instanceMonthlyPrice),
+                    computeHourlyPrice: formatPrice(computeDetails?.[1]?.computeHourlyPrice),
+                    computeMonthlyPrice: formatPrice(computeDetails?.[1]?.computeMonthlyPrice),
                     sqlEdition:
                         licenseDetails?.[1]?.sqlServerEdition ||
                         selectedHostDetails?.databaseServer?.serverEdition ||
@@ -274,10 +274,10 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
     const totalEbsCost = (() => {
         let cost = 0;
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-            cost += viewCalculationsResponse?.existingComputeCalculation?.[0]?.instanceMonthlyPrice || 0;
+            cost += viewCalculationsResponse?.existingComputeCalculation?.[0]?.computeMonthlyPrice || 0;
         } else {
-            cost += viewCalculationsResponse?.existingComputeCalculation?.[0]?.instanceMonthlyPrice || 0;
-            cost += viewCalculationsResponse?.existingComputeCalculation?.[1]?.instanceMonthlyPrice || 0;
+            cost += viewCalculationsResponse?.existingComputeCalculation?.[0]?.computeMonthlyPrice || 0;
+            cost += viewCalculationsResponse?.existingComputeCalculation?.[1]?.computeMonthlyPrice || 0;
         }
         cost += viewCalculationsResponse?.ebsCalculation?.ebsSnapshotCost || 0;
         cost += viewCalculationsResponse.ebsCalculation.ebsThroughputCost || 0;
@@ -290,10 +290,10 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
     const totalEbsEc2MachineCost = (() => {
         let cost = 0;
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-            cost += viewCalculationsResponse?.existingComputeCalculation?.[0]?.instanceMonthlyPrice || 0;
+            cost += viewCalculationsResponse?.existingComputeCalculation?.[0]?.computeMonthlyPrice || 0;
         } else {
-            cost += viewCalculationsResponse?.existingComputeCalculation?.[0]?.instanceMonthlyPrice || 0;
-            cost += viewCalculationsResponse?.existingComputeCalculation?.[1]?.instanceMonthlyPrice || 0;
+            cost += viewCalculationsResponse?.existingComputeCalculation?.[0]?.computeMonthlyPrice || 0;
+            cost += viewCalculationsResponse?.existingComputeCalculation?.[1]?.computeMonthlyPrice || 0;
         }
         return formatFractionalNumber(cost, 2);
     })();
@@ -301,10 +301,10 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
     const totalFsxEc2MachineCost = (() => {
         let cost = 0;
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[0]?.instanceMonthlyPrice || 0;
+            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[0]?.computeMonthlyPrice || 0;
         } else {
-            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[0]?.instanceMonthlyPrice || 0;
-            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[1]?.instanceMonthlyPrice || 0;
+            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[0]?.computeMonthlyPrice || 0;
+            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[1]?.computeMonthlyPrice || 0;
         }
         return formatFractionalNumber(cost, 2);
     })();
@@ -312,10 +312,10 @@ export const formatViewCalcData = (viewCalculationsResponse: any, selectedDeploy
     const totalFsxCost = (() => {
         let cost = 0;
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[0]?.instanceMonthlyPrice || 0;
+            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[0]?.computeMonthlyPrice || 0;
         } else {
-            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[0]?.instanceMonthlyPrice || 0;
-            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[1]?.instanceMonthlyPrice || 0;
+            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[0]?.computeMonthlyPrice || 0;
+            cost += viewCalculationsResponse?.recommendedComputeCalculation?.[1]?.computeMonthlyPrice || 0;
         }
         cost += viewCalculationsResponse?.fsxOntapCalculation?.totalThroughputAndIopsMonthly || 0;
         cost += viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyStorageCharge || 0;

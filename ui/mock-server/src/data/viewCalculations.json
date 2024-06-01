@@ -3,16 +3,16 @@
        {
           "instanceType":"m5.large",
           "computeHourlyPrice":0.204,
-          "instanceHourlyPrice":0.684,
+          "computeMonthlyPrice":499.32,
           "instanceMonthlyPrice":499.32,
-          "hoursInAMonth": 730
+          "hoursInMonth": 730
        },
        {
          "instanceType":"m5.large",
          "computeHourlyPrice":0.204,
-         "instanceHourlyPrice":0.684,
+         "computeMonthlyPrice":499.32,
          "instanceMonthlyPrice":499.32,
-         "hoursInAMonth": 730
+         "hoursInMonth": 730
       }
     ],
     "recommendedLicenseCalculation":[
@@ -30,20 +30,20 @@
        }
     ],
     "existingComputeCalculation":[
-       {
-          "instanceType":"m5.large",
-          "computeHourlyPrice":0.204,
-          "instanceHourlyPrice":0.684,
-          "instanceMonthlyPrice":499.32,
-          "hoursInAMonth": 730
-       },
-       {
+      {
          "instanceType":"m5.large",
          "computeHourlyPrice":0.204,
-         "instanceHourlyPrice":0.684,
+         "computeMonthlyPrice":499.32,
          "instanceMonthlyPrice":499.32,
-         "hoursInAMonth": 730
-      }
+         "hoursInMonth": 730
+      },
+      {
+        "instanceType":"m5.large",
+        "computeHourlyPrice":0.204,
+        "computeMonthlyPrice":499.32,
+        "instanceMonthlyPrice":499.32,
+        "hoursInMonth": 730
+     }
     ],
     "existingLicenseCalculation":[
        {

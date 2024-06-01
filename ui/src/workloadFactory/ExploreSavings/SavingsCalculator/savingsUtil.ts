@@ -246,13 +246,13 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.computeHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.instanceMonthlyPrice}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.fsxInstanceCalculation?.[0]?.hoursInAMonth}`
+                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.computeMonthlyPrice}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[0]?.computeHourlyPrice} x ${viewCalculation.fsxInstanceCalculation?.[0]?.hoursInAMonth}`
                       },
                       {
                           label: 'Machine 2 specification'
@@ -277,13 +277,13 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[1]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.fsxInstanceCalculation?.[1]?.computeHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine2 cost',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[1]?.instanceMonthlyPrice}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[1]?.instanceHourlyPrice} x ${viewCalculation.fsxInstanceCalculation?.[1]?.hoursInAMonth}`
+                          value: `${viewCalculation.fsxInstanceCalculation?.[1]?.computeMonthlyPrice}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[1]?.computeHourlyPrice} x ${viewCalculation.fsxInstanceCalculation?.[1]?.hoursInAMonth}`
                       }
                   ]
                 : [
@@ -314,13 +314,13 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.computeHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.instanceMonthlyPrice}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.fsxInstanceCalculation?.[0]?.hoursInAMonth}`
+                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.computeMonthlyPrice}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[0]?.computeHourlyPrice} x ${viewCalculation.fsxInstanceCalculation?.[0]?.hoursInAMonth}`
                       }
                   ],
         FSxNCalculation: [
@@ -661,13 +661,13 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.computeHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.instanceMonthlyPrice}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsInstanceCalculation?.[0]?.hoursInAMonth}`
+                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.computeMonthlyPrice}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[0]?.computeHourlyPrice} x ${viewCalculation.ebsInstanceCalculation?.[0]?.hoursInAMonth}`
                       },
                       {
                           label: 'Machine 2 specification'
@@ -692,13 +692,13 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[1]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.ebsInstanceCalculation?.[1]?.computeHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine2 cost',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[1]?.instanceMonthlyPrice}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[1]?.instanceHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
+                          value: `${viewCalculation.ebsInstanceCalculation?.[1]?.computeMonthlyPrice}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[1]?.computeHourlyPrice} x ${viewCalculation.ebsCalculation.hoursInAMonth}`
                       }
                   ]
                 : [
@@ -729,13 +729,13 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       },
                       {
                           label: 'Instance hourly price',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice}`,
+                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.computeHourlyPrice}`,
                           text: ''
                       },
                       {
                           label: 'EC2 machine1 cost',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.instanceMonthlyPrice}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[0]?.instanceHourlyPrice} x ${viewCalculation.ebsInstanceCalculation?.[0]?.hoursInAMonth}`
+                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.computeMonthlyPrice}`,
+                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[0]?.computeHourlyPrice} x ${viewCalculation.ebsInstanceCalculation?.[0]?.hoursInAMonth}`
                       }
                   ],
         EBSCalculation: [
