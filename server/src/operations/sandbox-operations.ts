@@ -1404,7 +1404,8 @@ async function updateMetadataForSanboxDeletion(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseNameToRemove: string
+    databaseNameToRemove: string,
+    isSplit: boolean = false
 ) {
     logger.info('Updating metadata for sandbox operation', accountId, credentialsId, region, databaseHostId);
     const {
@@ -1420,7 +1421,9 @@ async function updateMetadataForSanboxDeletion(
     const newMetadata = metadata as unknown as Metadata;
 
     newMetadata.sandboxes = newMetadata.sandboxes?.filter(sandbox => sandbox.databaseName !== databaseNameToRemove);
-    newMetadata.userDatabase = newMetadata.userDatabase?.filter(db => db.name !== databaseNameToRemove);
+    if (!isSplit) {
+        newMetadata.userDatabase = newMetadata.userDatabase?.filter(db => db.name !== databaseNameToRemove);
+    }
     try {
         await updateResourceMetaData(accountId, databaseHostId, newMetadata);
         logger.info('Metadata updated succesfully for sandbox operation', accountId, databaseHostId);
@@ -2549,7 +2552,8 @@ async function deleteExtendedProperties(
                 credentialsId,
                 region,
                 resourceDetail.host,
-                resourceDetail.database
+                resourceDetail.database,
+                true
             );
         }
 

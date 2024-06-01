@@ -62,6 +62,13 @@
         .virtualMountPoint {
             top: -46px;
             position: relative;
+            display: flex;
+            flex-direction: row;
+            gap: 16px;
+
+            .checkboxContainer {
+                width: 150px;
+            }
         }
     }
 

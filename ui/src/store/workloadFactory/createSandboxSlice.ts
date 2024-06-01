@@ -22,7 +22,7 @@ export const initialCreateSandboxState: CreateSandboxEntities = {
     target: {
         selectedDatabaseHost: null,
         selectedDatabaseInstance: null,
-        selectedDatabase: `DBname_sandbox_${Date.now()}`
+        selectedDatabase: `sandbox_${Date.now()}`
     },
     getDriveInfo: {
         driveInfoLoading: false,
@@ -41,7 +41,9 @@ export const initialCreateSandboxState: CreateSandboxEntities = {
     isCreateSandboxPressed: false,
     isMountPathAdded: true,
     isNA: false,
-    showError: false
+    showError: false,
+    dataFilePath: '',
+    logFilePath: ''
 };
 
 const createSandboxSlice = createSlice({
@@ -110,6 +112,12 @@ const createSandboxSlice = createSlice({
         },
         setShowError: (state, action: PayloadAction<any>) => {
             state.showError = action.payload;
+        },
+        updateDataFilePath: (state, action: PayloadAction<any>) => {
+            state.dataFilePath = action.payload;
+        },
+        updateLogFilePath: (state, action: PayloadAction<any>) => {
+            state.logFilePath = action.payload;
         }
     }
 });
@@ -135,7 +143,9 @@ export const {
     setIsNa,
     setShowError,
     setDriveInfoState,
-    setDbMountPointsState
+    setDbMountPointsState,
+    updateDataFilePath,
+    updateLogFilePath
 } = createSandboxSlice.actions;
 
 export default createSandboxSlice;

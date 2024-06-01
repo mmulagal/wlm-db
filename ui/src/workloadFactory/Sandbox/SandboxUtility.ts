@@ -156,3 +156,10 @@ export const getAggregatedSplitEstimate = (volumes: any) => {
         : 0;
     return formatSize(aggregatedSplitEstimate);
 };
+
+export const isValidSandboxName = (name: any) => {
+    if (name && name.length > 0 && (name.length > 27 || !/^[a-zA-Z0-9/_]+$/.test(name))) {
+        return false;
+    }
+    return true;
+};
