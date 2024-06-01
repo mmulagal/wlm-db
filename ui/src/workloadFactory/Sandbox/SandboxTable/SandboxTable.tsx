@@ -411,7 +411,9 @@ const SandboxTable = () => {
                                 }
                                 return obj;
                             });
-                            dispatch(setAggregatedSandboxList(output));
+                            setTimeout(() => {
+                                dispatch(setAggregatedSandboxList(output));
+                            }, 20000);
                         }
                     });
                 }}
@@ -765,49 +767,57 @@ const SandboxTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.jobMenuPopover}>
-                        <MenuPopover
-                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={menuItems(rowData)}
-                            toggleMenu={(toggleType: string, menuId: string) => {
-                                if (toggleType === 'close') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-                                } else if (toggleType === 'open') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(rowData.id);
-                                    menuOpenedRowDetail.current = rowData.id;
-                                } else if (toggleType === 'selectedOption') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
+                        {!rowData?.menuDisable && (
+                            <MenuPopover
+                                isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                                menuItems={menuItems(rowData)}
+                                toggleMenu={(toggleType: string, menuId: string) => {
+                                    if (toggleType === 'close') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(null);
+                                    } else if (toggleType === 'open') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(rowData.id);
+                                        menuOpenedRowDetail.current = rowData.id;
+                                    } else if (toggleType === 'selectedOption') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(null);
 
-                                    switch (menuId) {
-                                        case 'reBaseline':
-                                            handleRebaseLine(rowData);
-                                            break;
-                                        case 'refresh':
-                                            handleRefresh(rowData);
-                                            break;
+                                        switch (menuId) {
+                                            case 'reBaseline':
+                                                handleRebaseLine(rowData);
+                                                break;
+                                            case 'refresh':
+                                                handleRefresh(rowData);
+                                                break;
 
-                                        case 'delete':
-                                            handleDelete(rowData);
-                                            break;
-                                        case 'split':
-                                            handleSplit(rowData);
-                                            break;
-                                        case 'connectToTools':
-                                            handleConnectToTools(rowData);
-                                            break;
+                                            case 'delete':
+                                                handleDelete(rowData);
+                                                break;
+                                            case 'split':
+                                                handleSplit(rowData);
+                                                break;
+                                            case 'connectToTools':
+                                                handleConnectToTools(rowData);
+                                                break;
 
-                                        case 'showConnectionInfo':
-                                            handleShowConnectionInfo(rowData);
-                                            break;
+                                            case 'showConnectionInfo':
+                                                handleShowConnectionInfo(rowData);
+                                                break;
+                                        }
                                     }
-                                }
-                            }}
-                            isDisabled={rowData?.menuDisable}
-                            CustomMenu={undefined}
-                            disabledText={undefined}
-                        />
+                                }}
+                                isDisabled={rowData?.menuDisable}
+                                CustomMenu={undefined}
+                                disabledText={undefined}
+                            />
+                        )}
+
+                        {rowData?.menuDisable && (
+                            <div className={styles.menuPointerDisabled}>
+                                <span className={styles.menuPointer}>...</span>
+                            </div>
+                        )}
                     </div>
                 );
             },
