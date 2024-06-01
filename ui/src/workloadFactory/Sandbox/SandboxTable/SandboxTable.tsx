@@ -411,9 +411,8 @@ const SandboxTable = () => {
                                 }
                                 return obj;
                             });
-                            setTimeout(() => {
-                                dispatch(setAggregatedSandboxList(output));
-                            }, 20000);
+
+                            dispatch(setAggregatedSandboxList(output));
                         }
                     });
                 }}
