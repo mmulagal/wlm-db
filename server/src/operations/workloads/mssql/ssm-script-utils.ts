@@ -192,7 +192,7 @@ const validateSQLInstanceConnectivity = (ec2instanceId: string, sqlinstancename:
                     SERVERPROPERTY('edition') AS sqlEdition,
                     (SELECT COUNT(*) FROM sys.databases) AS noOfDatabases
                 FOR JSON PATH
-    "@
+"@
 
             $SQLCredStore = "/netapp/wlmdb/$ec2instanceId"
             $credobject =  (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
