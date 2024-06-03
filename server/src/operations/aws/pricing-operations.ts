@@ -470,7 +470,8 @@ async function calculatePrice(
     if (fsxnStorage) {
         ({ fsxnStorageCost, fsxnOperationalCost, fsxnDiskSizes } = calculateFsxnCost(
             fsxnStorage,
-            productRates.fsxnStorage
+            productRates.fsxnStorage,
+            compute?.sqlDeploymentMode
         ));
     }
 
@@ -561,8 +562,12 @@ async function calculatePrice(
     };
 }
 
-function calculateFsxnCost(fsxnStorage: PricingServiceRequestType['fsxnStorage'], fsxnStorageRates: any) {
-    logger.info('Calculating cost for FSx Netapp storage', { fsxnStorage, fsxnStorageRates });
+function calculateFsxnCost(
+    fsxnStorage: PricingServiceRequestType['fsxnStorage'],
+    fsxnStorageRates: any,
+    sqlDeploymentMode: string
+) {
+    logger.info('Calculating cost for FSx Netapp storage', { fsxnStorage, fsxnStorageRates, sqlDeploymentMode });
 
     if (!isEmpty(fsxnStorage) && !fsxnStorage.diskSize && !fsxnStorage.storageCapacity) {
         throw new Error('FSx Netapp storage is not available');
@@ -574,7 +579,7 @@ function calculateFsxnCost(fsxnStorage: PricingServiceRequestType['fsxnStorage']
     let fsxnDiskSizes;
     let fsxnDisksize;
     if (fsxnStorage?.diskSize) {
-        fsxnDiskSizes = calculateFsxnStorageCapacity(fsxnStorage.diskSize);
+        fsxnDiskSizes = calculateFsxnStorageCapacity(fsxnStorage.diskSize, sqlDeploymentMode);
         fsxnDisksize = fsxnDiskSizes.FSxStorageCapacity;
     } else {
         fsxnDisksize = fsxnStorage?.storageCapacity;

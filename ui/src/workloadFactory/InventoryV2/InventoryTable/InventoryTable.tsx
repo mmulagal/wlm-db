@@ -26,6 +26,7 @@ import { renderAllocatedCapacity, renderEstimatedCost } from '../../Inventory/In
 import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
 import OfflineComponent from './OfflineComponent/OfflineComponent';
+import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 
 const InventoryTable = () => {
     const dispatch = useDispatch();
@@ -159,7 +160,11 @@ const InventoryTable = () => {
                             <div
                                 className={styles.detectManage}
                                 onClick={() => {
-                                    handleDialog();
+                                    if (rowData?.action === 'Explore savings') {
+                                        onClickESHost(dispatch, rowData, isDemoMode);
+                                    } else {
+                                        handleDialog();
+                                    }
                                 }}
                             >
                                 <Typography variant="Regular_14" className={styles.textStyle}>

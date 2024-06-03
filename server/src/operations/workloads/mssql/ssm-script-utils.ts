@@ -192,7 +192,7 @@ const validateSQLInstanceConnectivity = (ec2instanceId: string, sqlinstancename:
                     SERVERPROPERTY('edition') AS sqlEdition,
                     (SELECT COUNT(*) FROM sys.databases) AS noOfDatabases
                 FOR JSON PATH
-    "@
+"@
 
             $SQLCredStore = "/netapp/wlmdb/$ec2instanceId"
             $credobject =  (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
@@ -583,8 +583,8 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
         $responseObject = @{}
     }
 
-    # Get the first PSModulePath that contains "Documents\\WindowsPowerShell\\Modules"
-    $destinationPath = $env:PSModulePath -split ';' | Where-Object { $_ -like '*Documents\\WindowsPowerShell\\Modules*' }
+    # Get the first PSModulePath that contains "WindowsPowerShell" from this path C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules
+    $destinationPath = $env:PSModulePath.split(';')[0]
 
     # Check if any module is not installed
     function Check-ModuleInstalled {
