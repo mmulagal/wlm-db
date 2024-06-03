@@ -268,13 +268,13 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
                 $responseObject['svm'] = $LunRecords[0].svm.name
                 $LunRecords | ForEach-Object {
                     $lunrecord = $_
-                    if ($responseObject.data.lunSerialNumber -eq $lunrecord.serial_number) {
+                    if ($responseObject.data.lunSerialNumber -ceq $lunrecord.serial_number) {
                         $responseObject.data += @{
                             "lunPath" = $lunrecord.name
                             "volumeName" = $lunrecord.location.volume.name
                             "volumeUuid" = $lunrecord.location.volume.uuid
                         }
-                    } elseif ($responseObject.log.lunSerialNumber -eq $lunrecord.serial_number) {
+                    } elseif ($responseObject.log.lunSerialNumber -ceq $lunrecord.serial_number) {
                         $responseObject.log += @{
                             "lunPath" = $lunrecord.name
                             "volumeName" = $lunrecord.location.volume.name
