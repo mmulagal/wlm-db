@@ -1291,12 +1291,19 @@ async function startCleanup(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to cleanup');
         }
 
+        const jsonResp = sqlResponseParsing(resp);
+
+        if (jsonResp.error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, jsonResp.error);
+        }
+
         status = JOBSTATUS.COMPLETED;
-        return sqlResponseParsing(resp);
+        return jsonResp;
     } catch (e: any) {
         logger.error(`Failed to perform cleanup for sandbox ${destDetails.database}`);
         status = JOBSTATUS.FAILED;
         errorMsg = `Failed to clean up ${e.message}`;
+        throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     } finally {
         await updateJobDetails(accountId, credentialsId, region, cleanupJob.id, {
             error: errorMsg,
