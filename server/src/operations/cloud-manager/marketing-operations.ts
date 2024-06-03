@@ -450,6 +450,7 @@ async function retrieveComputeAndLicenseCost(
                         computeMonthlyPrice: existingcomputeHourlyPriceWithoutLicense
                             ? existingcomputeHourlyPriceWithoutLicense * HOURS_IN_MONTH
                             : undefined,
+                        instanceHourlyPrice: existingcomputeHourlyPrice,
                         instanceMonthlyPrice: existingcomputeHourlyPrice
                             ? existingcomputeHourlyPrice * HOURS_IN_MONTH
                             : undefined,
@@ -461,6 +462,7 @@ async function retrieveComputeAndLicenseCost(
                         computeMonthlyPrice: existingcomputeHourlyPriceWithoutLicense
                             ? existingcomputeHourlyPriceWithoutLicense * HOURS_IN_MONTH
                             : undefined,
+                        instanceHourlyPrice: existingcomputeHourlyPrice,
                         instanceMonthlyPrice: existingcomputeHourlyPrice // inclusive of license
                             ? existingcomputeHourlyPrice * HOURS_IN_MONTH
                             : undefined,
