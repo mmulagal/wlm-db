@@ -1,5 +1,5 @@
 {
-    "host1" : {
+    "host1": {
         "id": "host1",
         "ec2InstanceId": "i-02dbf20711b3c8311",
         "ec2InstanceName": "sqlnode1-37211",
@@ -44,7 +44,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -54,7 +54,7 @@
                 },
                 "storage": {
                     "fsxn": {
-                        "protocol" : ["SMB"],
+                        "protocol": ["SMB"],
                         "size": 5530543487713.25,
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
@@ -68,7 +68,7 @@
                     },
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -80,7 +80,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -90,7 +90,7 @@
                 },
                 "storage": {
                     "fsxn": {
-                        "protocol" : [],
+                        "protocol": [],
                         "size": 5530543487713.25,
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
@@ -104,7 +104,7 @@
                     },
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -116,7 +116,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -126,7 +126,7 @@
                 },
                 "storage": {
                     "fsxn": {
-                        "protocol" : [],
+                        "protocol": [],
                         "size": 5530543487713.25,
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
@@ -140,7 +140,7 @@
                     },
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -152,7 +152,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -162,7 +162,7 @@
                 },
                 "storage": {
                     "fsxn": {
-                        "protocol" : [],
+                        "protocol": [],
                         "size": 5530543487713.25,
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
@@ -176,14 +176,14 @@
                     },
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             }
         ]
     },
-    "host2" : {
+    "host2": {
         "id": "host2",
         "ec2InstanceId": "i-02dbf20711b3c8312",
         "ec2InstanceName": "sqlnode1-37212",
@@ -223,7 +223,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -233,7 +233,7 @@
                 },
                 "storage": {
                     "fsxn": {
-                        "protocol" : ["SMB"],
+                        "protocol": ["SMB"],
                         "size": 5530543487713.25,
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
@@ -247,7 +247,7 @@
                     },
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -259,7 +259,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -269,7 +269,7 @@
                 },
                 "storage": {
                     "fsxn": {
-                        "protocol" : [],
+                        "protocol": [],
                         "size": 5530543487713.25,
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
@@ -283,7 +283,7 @@
                     },
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -295,7 +295,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -305,7 +305,7 @@
                 },
                 "storage": {
                     "fsxn": {
-                        "protocol" : [],
+                        "protocol": [],
                         "size": 5530543487713.25,
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
@@ -319,7 +319,7 @@
                     },
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -331,7 +331,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -341,7 +341,7 @@
                 },
                 "storage": {
                     "fsxn": {
-                        "protocol" : [],
+                        "protocol": [],
                         "size": 5530543487713.25,
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
@@ -355,14 +355,14 @@
                     },
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             }
         ]
     },
-    "host3" : {
+    "host3": {
         "id": "host3",
         "ec2InstanceId": "i-02dbf20711b3c8313",
         "ec2InstanceName": "sqlnode1-37213",
@@ -407,7 +407,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -417,7 +417,7 @@
                 },
                 "storage": {
                     "fsxn": {
-                        "protocol" : [],
+                        "protocol": [],
                         "size": 5530543487713.25,
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
@@ -431,7 +431,7 @@
                     },
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -443,7 +443,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -453,7 +453,7 @@
                 },
                 "storage": {
                     "fsxn": {
-                        "protocol" : [],
+                        "protocol": [],
                         "size": 5530543487713.25,
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
@@ -467,7 +467,7 @@
                     },
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -479,7 +479,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -489,7 +489,7 @@
                 },
                 "storage": {
                     "fsxn": {
-                        "protocol" : [],
+                        "protocol": [],
                         "size": 5530543487713.25,
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
@@ -503,7 +503,7 @@
                     },
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -515,7 +515,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -525,7 +525,7 @@
                 },
                 "storage": {
                     "fsxn": {
-                        "protocol" : [],
+                        "protocol": [],
                         "size": 5530543487713.25,
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
@@ -539,14 +539,14 @@
                     },
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             }
         ]
     },
-    "host4" : {
+    "host4": {
         "id": "host4",
         "ec2InstanceId": "i-02dbf20711b3c8314",
         "ec2InstanceName": "sqlnode1-37214",
@@ -560,7 +560,7 @@
         "vpcId": "vpc1",
         "vpcName": "wlmdb-vpc1",
         "vpcCidr": "10.20.30.0/24",
-        "action": "Detect",
+        "action": "Manage",
         "actionDisable": false,
         "ec2Details": [
             {
@@ -586,7 +586,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -596,7 +596,7 @@
                 },
                 "storage": {
                     "fsxn": {
-                        "protocol" : [],
+                        "protocol": [],
                         "size": 5530543487713.25,
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
@@ -610,7 +610,7 @@
                     },
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -622,7 +622,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -632,7 +632,7 @@
                 },
                 "storage": {
                     "fsxn": {
-                        "protocol" : [],
+                        "protocol": [],
                         "size": 5530543487713.25,
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
@@ -646,7 +646,7 @@
                     },
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -658,7 +658,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -668,7 +668,7 @@
                 },
                 "storage": {
                     "fsxn": {
-                        "protocol" : [],
+                        "protocol": [],
                         "size": 5530543487713.25,
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
@@ -682,7 +682,7 @@
                     },
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -694,7 +694,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -704,7 +704,7 @@
                 },
                 "storage": {
                     "fsxn": {
-                        "protocol" : [],
+                        "protocol": [],
                         "size": 5530543487713.25,
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
@@ -718,26 +718,25 @@
                     },
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             }
         ]
     },
-    "host5" : {
+    "host5": {
         "id": "host5",
         "resourceId": "resource-id-2",
         "ec2InstanceId": "i-02dbf20711b3c8315",
         "ec2InstanceName": "sqlnode1-37215",
         "name": "Database hostname 5",
         "ssmState": "not connected",
-        "action": "Detect",
+        "action": "Manage",
         "actionDisable": true,
-        "sqlServerInstances": [
-        ]
+        "sqlServerInstances": []
     },
-    "host6" : {
+    "host6": {
         "id": "host6",
         "ec2InstanceId": "i-02dbf20711b3c8316",
         "ec2InstanceName": "sqlnode1-37216",
@@ -782,7 +781,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "EBS",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -793,7 +792,7 @@
                 "storage": {
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "allocatedCapacity": 5530543487713.25
             },
@@ -804,7 +803,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "EBS",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -815,7 +814,7 @@
                 "storage": {
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "allocatedCapacity": 5530543487713.25
             },
@@ -826,7 +825,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "EBS",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -837,7 +836,7 @@
                 "storage": {
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "allocatedCapacity": 5530543487713.25
             },
@@ -848,7 +847,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "EBS",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -859,13 +858,13 @@
                 "storage": {
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "allocatedCapacity": 5530543487713.25
             }
         ]
     },
-    "host7" : {
+    "host7": {
         "id": "host7",
         "ec2InstanceId": "i-02dbf20711b3c8317",
         "ec2InstanceName": "sqlnode1-37217",
@@ -905,7 +904,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -916,7 +915,7 @@
                 "storage": {
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "allocatedCapacity": 5530543487713.25
             },
@@ -927,7 +926,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -938,7 +937,7 @@
                 "storage": {
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "allocatedCapacity": 5530543487713.25
             },
@@ -949,7 +948,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -960,7 +959,7 @@
                 "storage": {
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "allocatedCapacity": 5530543487713.25
             },
@@ -971,7 +970,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -982,13 +981,13 @@
                 "storage": {
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "allocatedCapacity": 5530543487713.25
             }
         ]
     },
-    "host8" : {
+    "host8": {
         "id": "host8",
         "ec2InstanceId": "i-02dbf20711b3c8318",
         "ec2InstanceName": "sqlnode1-37218",
@@ -1028,7 +1027,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -1039,7 +1038,7 @@
                 "storage": {
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "allocatedCapacity": 5530543487713.25
             },
@@ -1050,7 +1049,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -1061,7 +1060,7 @@
                 "storage": {
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "allocatedCapacity": 5530543487713.25
             },
@@ -1072,7 +1071,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -1083,7 +1082,7 @@
                 "storage": {
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "allocatedCapacity": 5530543487713.25
             },
@@ -1094,7 +1093,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -1105,13 +1104,13 @@
                 "storage": {
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "allocatedCapacity": 5530543487713.25
             }
         ]
     },
-    "host9" : {
+    "host9": {
         "id": "host9",
         "ec2InstanceId": "i-02dbf20711b3c8319",
         "ec2InstanceName": "sqlnode1-37219",
@@ -1156,7 +1155,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -1182,7 +1181,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -1193,7 +1192,7 @@
                 "storage": {
                     "ebs": {
                         "size": 0
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -1205,7 +1204,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -1219,7 +1218,7 @@
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
                         "spaceSavingsPercentage": 33.33
-                    } 
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -1231,7 +1230,7 @@
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -1245,14 +1244,14 @@
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
                         "spaceSavingsPercentage": 33.33
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             }
         ]
     },
-    "host10" : {
+    "host10": {
         "id": "host10",
         "ec2InstanceId": "i-02dbf20711b3c83110",
         "ec2InstanceName": "sqlnode1-372110",
@@ -1292,7 +1291,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -1306,7 +1305,7 @@
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
                         "spaceSavingsPercentage": 33.33
-                    } 
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -1318,7 +1317,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -1332,7 +1331,7 @@
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
                         "spaceSavingsPercentage": 33.33
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -1344,7 +1343,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -1358,7 +1357,7 @@
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
                         "spaceSavingsPercentage": 33.33
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -1370,7 +1369,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -1384,14 +1383,14 @@
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
                         "spaceSavingsPercentage": 33.33
-                    } 
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
             }
         ]
     },
-    "host11" : {
+    "host11": {
         "id": "host11",
         "ec2InstanceId": "i-02dbf20711b3c83111",
         "ec2InstanceName": "sqlnode1-372111",
@@ -1431,7 +1430,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -1445,7 +1444,7 @@
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
                         "spaceSavingsPercentage": 33.33
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -1457,7 +1456,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -1471,7 +1470,7 @@
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
                         "spaceSavingsPercentage": 33.33
-                    }  
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -1483,7 +1482,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -1497,7 +1496,7 @@
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
                         "spaceSavingsPercentage": 33.33
-                    } 
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
@@ -1509,7 +1508,7 @@
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
-                    "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                    "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
                     "isFsxOntapSnapshotsEnabled": true,
                     "isSqlNativeEnabled": true,
                     "protectedDatabases": 8
@@ -1523,7 +1522,7 @@
                         "used": 29686813949952,
                         "spaceSavings": 9895604649984,
                         "spaceSavingsPercentage": 33.33
-                    } 
+                    }
                 },
                 "storageSavingsText": "33.33% (9 TiB)",
                 "allocatedCapacity": 5530543487713.25
