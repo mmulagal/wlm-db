@@ -583,8 +583,8 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
         $responseObject = @{}
     }
 
-    # Get the first PSModulePath that contains "Documents\\WindowsPowerShell\\Modules"
-    $destinationPath = $env:PSModulePath -split ';' | Where-Object { $_ -like '*Documents\\WindowsPowerShell\\Modules*' }
+    # Get the first PSModulePath that contains "WindowsPowerShell" from this path C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules
+    $destinationPath = $env:PSModulePath.split(';')[0]
 
     # Check if any module is not installed
     function Check-ModuleInstalled {
