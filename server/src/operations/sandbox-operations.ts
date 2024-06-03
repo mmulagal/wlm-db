@@ -358,7 +358,6 @@ interface VolumeLunMap {
     volumeName: string;
     lunPath: string;
     lunSerialNumber: string;
-    windowsVolumeName: string;
     volumeUuid: string;
     parentSvm?: string;
     parentVolume?: string;

@@ -211,7 +211,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
     try {
         $sqlquery = @"
             SET NOCOUNT ON;
-            SELECT DISTINCT vs.logical_volume_name as volumename, mf.physical_name as filename, mf.type FROM sys.master_files AS mf
+            SELECT DISTINCT vs.volume_id as volumeid, mf.physical_name as filename, mf.type FROM sys.master_files AS mf
             join sys.databases db
             on db.database_id = mf.database_id
             CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
@@ -228,12 +228,9 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
             $responseObject = [ordered]@{}
             $winvolumes = $sqlresponse | foreach { $_ | ConvertFrom-Json }
             foreach ($winvolume in $winvolumes) {
-                $filename = $winvolume.filename
-                $winvolumename = $winvolume.volumename
-                $vol = get-volume -FileSystemLabel $winvolumename | Get-Partition | get-disk | Select serialnumber
+                $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber
                 $object = @{
-                    "windowsVolumeName" = $winvolumename
-                    "fileName" = $filename
+                    "fileName" = $winvolume.filename
                     "lunSerialNumber" = $vol.serialnumber
                 }
                 $type = 'data'
@@ -332,17 +329,17 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
             if ($responseObject -eq $null) {
                 $responseObject = @{}
             }
-            $responseObject['error'] = "Couldn't get database windows volumes from db $dbname"
+            $responseObject['error'] = "SqlServerError: Could not get volumes of database $dbname"
             return $responseObject | ConvertTo-Json -Depth 5
         }
     
         $responseObject = Get-SerialNumberOfWinVolumes $responseObject
         write-debug "Serial numbers: $($responseObject | ConvertTo-Json)"
-        if ([string]::IsNullOrEmpty($responseObject)) {
+        if ($responseObject.data.lunSerialNumber -eq $null -or $responseObject.log.lunSerialNumber -eq $null) {
             if ($responseObject -eq $null) {
                 $responseObject = @{}
             }
-            $responseObject['error'] = "Couldn't get windows volume serial numbers"
+            $responseObject['error'] = "Could not get windows volume serial numbers"
             return $responseObject | ConvertTo-Json -Depth 5
         }
     
@@ -352,7 +349,7 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
             if ($responseObject -eq $null) {
                 $responseObject = @{}
             }
-            $responseObject['error'] = "Couldn't get associated Ontap LUN volume names"
+            $responseObject['error'] = "Could not get windows volume serial numbers"
             return $responseObject | ConvertTo-Json -Depth 5
         }
     
