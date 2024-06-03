@@ -1291,8 +1291,14 @@ async function startCleanup(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to cleanup');
         }
 
+        const jsonResp = sqlResponseParsing(resp);
+
+        if (jsonResp.error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, jsonResp.error);
+        }
+
         status = JOBSTATUS.COMPLETED;
-        return sqlResponseParsing(resp);
+        return jsonResp;
     } catch (e: any) {
         logger.error(`Failed to perform cleanup for sandbox ${destDetails.database}`);
         status = JOBSTATUS.FAILED;
