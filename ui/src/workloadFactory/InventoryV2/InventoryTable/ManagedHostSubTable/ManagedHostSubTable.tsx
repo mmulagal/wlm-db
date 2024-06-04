@@ -21,28 +21,13 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
-    const [leftPos, setLeftPos] = useState(0);
+
     const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
     const [data, setData] = useState<any>();
 
     const dispatch = useDispatch();
-
-    //For scroll sync
-    useRunOnce(() => {
-        const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
-        if (currentTable[0]) {
-            setTimeout(() => {
-                currentTable[0].scrollLeft = currentTable[1].scrollLeft;
-                if (currentTable[1].scrollLeft > 70) {
-                    setLeftPos(currentTable[1].scrollLeft - 2);
-                } else {
-                    setLeftPos(currentTable[1].scrollLeft);
-                }
-            }, 10);
-        }
-    });
 
     useEffect(() => {
         if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
@@ -314,7 +299,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             {/* <div className={styles.topDiv} /> */}
             <div className={styles.extraDiv2} />
 
-            <span style={{ position: 'relative', left: `${leftPos}px` }}>
+            <span style={{ position: 'relative', left: `${scrollPosition}px` }}>
                 <Table
                     //@ts-ignore
 
