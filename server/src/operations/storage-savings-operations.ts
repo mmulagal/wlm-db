@@ -1,323 +1,641 @@
 import createError from 'http-errors';
 import { compact, isEmpty } from 'lodash-es';
-import { _InstanceType } from '@aws-sdk/client-ec2';
-import { STORAGE_TYPE } from '@prisma/client';
 import { getHostAndSqlServerInfo } from './discover-operations';
-import { HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
-import { StorageSavingsRequestBodyType } from '../routes/types/storage-savings.types';
-import { getInstanceRecommendations } from './aws/compute-optimizer-operations';
-import { performStorageSavingsCalculations } from './cloud-manager/marketing-operations';
-import { callSsmExecution } from './aws/ssm-operations';
-import { ENTERPRISE_CHECK_QUERY } from './workloads/mssql/queries';
-import { getSqlInstancePricingDetails } from './aws/pricing-operations';
+import { FileSystemTypes, HOURS_IN_MONTH, HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
+import {
+    ComputeLicenseCostType,
+    StorageSavingsMetricsCalculationsResponseType,
+    StorageSavingsRequestBodyType,
+    StorageSavingsResponseType
+} from '../routes/types/storage-savings.types';
+import {
+    formatStorageSavingsCalculationMetrics,
+    handleMarketingApiFsxCalculationObject,
+    invokeMarketingApi
+} from './cloud-manager/marketing-operations';
 import getLogger from '../utils/logger';
-import { determineSmallerInstance, getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
-import { NodeDetails } from '../utils/common-types';
+import { getMonthlyPriceFromHourlyPrice } from '../utils/utils';
+import { DiscoverResponseInfoType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
+import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
+import getSqlInstanceLicenseRecommendations from './recommendation-operations';
 
 const logger = getLogger();
 
-async function isUsingEnterpriseConfiguration(
+function fetchSqlVolumeIdsByType(type: string, sqlServerInstances: SqlServerInstanceInfoType[]) {
+    logger.debug('Retrieving specific volume type volume ids from sql server instances', { type, sqlServerInstances });
+
+    if (!sqlServerInstances) {
+        return [];
+    }
+    return compact(
+        sqlServerInstances?.flatMap(server =>
+            server?.storage?.filter(storage => storage.type === type).map(storage => storage.id)
+        )
+    );
+}
+
+async function getAoagPartnerNodesDetails(
     accountId: string,
     credentialsId: string,
     region: string,
-    instanceId: string
+    nodeInstanceId: string,
+    nodeIps: string[]
 ) {
-    logger.debug('Checking if the instance is using any enterprise features', {
+    logger.info('Getting AOAG partner node details', { accountId, credentialsId, region, nodeInstanceId, nodeIps });
+
+    const aoagClusterNodeDetails = (await getInstanceDetailsByPrivateIp(credentialsId, region, nodeIps)) || [];
+    const partnerNodeInstanceIds = aoagClusterNodeDetails
+        .filter(node => node.ec2InstanceId !== nodeInstanceId)
+        .map(node => node.ec2InstanceId);
+
+    const partneNodeInstanceDetails = await getHostAndSqlServerInfo(
         accountId,
         credentialsId,
         region,
-        instanceId
+        undefined,
+        undefined,
+        partnerNodeInstanceIds
+    );
+    return partneNodeInstanceDetails;
+}
+
+async function identifyAoagVolumes(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    nodeInstanceId: string,
+    nodeIps: string[],
+    nodeSqlServerInstances: SqlServerInstanceInfoType[],
+    nodeEbsVolumeIds: string[],
+    partnerNodesDetails: DiscoverResponseInfoType[]
+) {
+    logger.info('Identifying AOAG volumes', {
+        accountId,
+        credentialsId,
+        region,
+        nodeInstanceId,
+        nodeIps,
+        nodeSqlServerInstances,
+        nodeEbsVolumeIds
     });
 
-    const command = [`sqlcmd -Q "${ENTERPRISE_CHECK_QUERY}" -y 0`];
+    let allEbsVolumeIds: string[] = nodeEbsVolumeIds;
+    let uniqueHostVolumeIds: string[] = nodeEbsVolumeIds;
+    partnerNodesDetails.forEach(({ sqlServerInstances }) => {
+        const partnerSqlServerInstances = sqlServerInstances || [];
+        const partnerNodeEbsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, partnerSqlServerInstances);
 
-    const checkEnterpriseConfigurationList = await callSsmExecution(
+        const uniquePartnerNodeSqlServerInstances =
+            partnerSqlServerInstances?.filter(
+                partnerSqlServerInstance =>
+                    !nodeSqlServerInstances?.some(
+                        sqlServerInstance => partnerSqlServerInstance.sqlServerName !== sqlServerInstance.sqlServerName
+                    )
+            ) || [];
+        const uniqueSqlHostEbsVolumeIdsPartnerNode = fetchSqlVolumeIdsByType(
+            FileSystemTypes.EBS,
+            uniquePartnerNodeSqlServerInstances
+        );
+        allEbsVolumeIds = allEbsVolumeIds.concat(...partnerNodeEbsVolumeIds);
+        uniqueHostVolumeIds = uniqueHostVolumeIds.concat(...uniqueSqlHostEbsVolumeIdsPartnerNode);
+    });
+
+    return { allEbsVolumeIds, uniqueHostVolumeIds };
+}
+
+async function aoagStorageSavingsCalculations(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    nodeEbsVolumeIds: string[],
+    params: StorageSavingsRequestBodyType,
+    nodeDetails: DiscoverResponseInfoType
+) {
+    logger.info('Performing AOAG storage savings calculations', {
+        accountId,
         credentialsId,
         region,
-        command,
-        instanceId,
-        accountId,
-        false
-    );
+        nodeEbsVolumeIds,
+        params
+    });
 
-    if (checkEnterpriseConfigurationList) {
-        const jsonResult = JSON.parse(checkEnterpriseConfigurationList);
-        const isUsingAnyEnterpriseFeature = jsonResult?.some(
-            (checkEnterpriseConfiguration: { IsUsingFeature: number; FeatureDescription: string }) =>
-                checkEnterpriseConfiguration.IsUsingFeature === 1
+    const { ec2InstanceId: nodeInstanceId, sqlServerInstances } = nodeDetails;
+    const [{ nodeIps }] = sqlServerInstances || [];
+    if (sqlServerInstances !== undefined && nodeIps && nodeIps.length > 0) {
+        const currentNodeComputeLicenseDetails = await retrieveComputeAndLicenseCost(accountId, credentialsId, region, [
+            nodeDetails
+        ]);
+        const { items: partnerNodeDetails } = await getAoagPartnerNodesDetails(
+            accountId,
+            credentialsId,
+            region,
+            nodeInstanceId,
+            nodeIps
+        );
+        const partnerNodeComputeLicenseDetails = await retrieveComputeAndLicenseCost(
+            accountId,
+            credentialsId,
+            region,
+            partnerNodeDetails
         );
 
-        return isUsingAnyEnterpriseFeature;
-    }
+        const { allEbsVolumeIds, uniqueHostVolumeIds } = await identifyAoagVolumes(
+            accountId,
+            credentialsId,
+            region,
+            nodeInstanceId,
+            nodeIps,
+            sqlServerInstances,
+            nodeEbsVolumeIds,
+            partnerNodeDetails
+        );
 
-    return false;
+        // Consider all EBS volumes for storage, iops and throughput calculation
+        const { ebs: allEbsDetails } = await invokeMarketingApi(
+            accountId,
+            credentialsId,
+            region,
+            SqlServerDeploymentModel.SQL_AOAG_SHORT,
+            allEbsVolumeIds,
+            params
+        );
+
+        // Consider only volumes associated with unique database in primary and partner node for snapshot calculation and to draw a storage savings comparison with FSXn
+
+        const {
+            ebs,
+            fsx,
+            fsx_calculation: fsxCalculationData
+        } = await invokeMarketingApi(
+            accountId,
+            credentialsId,
+            region,
+            SqlServerDeploymentModel.SQL_AOAG_SHORT,
+            uniqueHostVolumeIds,
+            params
+        );
+
+        const allNodesComputeLicenseDetails = currentNodeComputeLicenseDetails.concat(partnerNodeComputeLicenseDetails);
+        const instanceType = `${allNodesComputeLicenseDetails
+            .map((node: { ec2InstanceType: any }) => node.ec2InstanceType)
+            .join(',')}`;
+        const allNodesExistingComputePrice = allNodesComputeLicenseDetails.reduce(
+            (
+                acc,
+                {
+                    compute: {
+                        existing: { computeHourlyPrice }
+                    }
+                }
+            ) => {
+                acc += computeHourlyPrice || 0;
+                return acc;
+            },
+            0
+        );
+        const allNodesExistingLicensePrice = allNodesComputeLicenseDetails.reduce(
+            (
+                acc,
+                {
+                    license: {
+                        existing: { licenseHourlyPrice }
+                    }
+                }
+            ) => {
+                acc += licenseHourlyPrice || 0;
+                return acc;
+            },
+            0
+        );
+
+        const existingComputeMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingComputePrice);
+        const licenseType = `${allNodesComputeLicenseDetails
+            .map(
+                ({
+                    license: {
+                        existing: { licenseType: eLicenseType }
+                    }
+                }) => eLicenseType
+            )
+            .join(',')}`;
+        const existingLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingLicensePrice);
+        const allNodesRecommendedComputePrice = allNodesComputeLicenseDetails.reduce(
+            (
+                acc,
+                {
+                    compute: {
+                        recommended: { computeHourlyPrice }
+                    }
+                }
+            ) => {
+                acc += computeHourlyPrice || 0;
+                return acc;
+            },
+            0
+        );
+        const allNodesRecommendedLicensePrice = allNodesComputeLicenseDetails.reduce(
+            (
+                acc,
+                {
+                    license: {
+                        recommended: { licenseHourlyPrice }
+                    }
+                }
+            ) => {
+                acc += licenseHourlyPrice || 0;
+                return acc;
+            },
+            0
+        );
+        const recommendedComputeMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesRecommendedComputePrice);
+        const recommendedLicenseType = `${allNodesComputeLicenseDetails
+            .map(
+                ({
+                    license: {
+                        existing: { licenseType: eLicenseType }
+                    }
+                }) => eLicenseType
+            )
+            .join(',')}`;
+        const recommendedLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesRecommendedLicensePrice);
+
+        const [
+            {
+                compute: {
+                    recommended: { message: recommendedComputeMessage }
+                }
+            }
+        ] = allNodesComputeLicenseDetails;
+        const [
+            {
+                license: {
+                    recommended: { message: recommendedLicenseMessage }
+                }
+            }
+        ] = allNodesComputeLicenseDetails;
+        return {
+            compute: {
+                existing: {
+                    instanceType,
+                    computeMonthlyPrice: existingComputeMonthlyPrice
+                },
+                recommended: {
+                    instanceType,
+                    computeMonthlyPrice: recommendedComputeMonthlyPrice,
+                    message: recommendedComputeMessage
+                }
+            },
+            license: {
+                existing: {
+                    licenseType,
+                    licenseMonthlyPrice: existingLicenseMonthlyPrice
+                },
+                recommended: {
+                    licenseType: recommendedLicenseType,
+                    licenseMonthlyPrice: recommendedLicenseMonthlyPrice,
+                    message: recommendedLicenseMessage
+                }
+            },
+            ebs: {
+                iops: allEbsDetails.iops,
+                throughput: allEbsDetails.throughput,
+                capacity: allEbsDetails.capacity,
+                clones: ebs.clones,
+                snapshots: ebs.snapshots,
+                total:
+                    allEbsDetails.iops + allEbsDetails.throughput + allEbsDetails.capacity + ebs.clones + ebs.snapshots
+            },
+            fsx,
+            totalSummary: {
+                existing:
+                    allEbsDetails.iops +
+                    allEbsDetails.throughput +
+                    allEbsDetails.capacity +
+                    ebs.clones +
+                    ebs.snapshots +
+                    existingComputeMonthlyPrice! +
+                    existingLicenseMonthlyPrice!,
+                recommended: fsx.total + recommendedComputeMonthlyPrice! + recommendedLicenseMonthlyPrice!
+            },
+            fsxCalculation: handleMarketingApiFsxCalculationObject(fsxCalculationData)
+        };
+    }
+    throw createError(
+        HttpErrorCodes.NOT_FOUND,
+        'No SQL Server instances or partner node details found for the provided AOAG configuration'
+    );
 }
 
-async function getLicenseRecommendations(accountId: string, credentialsId: string, region: string, instanceId: string) {
-    logger.info('Getting license recommendations', { accountId, credentialsId, region, instanceId });
-    /*
-           if the existing license engine is Enterprise but the instance is not using any enterprise features, recommend Standard
-
-           EngineEdition	Database Engine edition of the instance of SQL Server installed on the server.
-
-           2 = Standard (For Standard, Web, and Business Intelligence.)https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#:~:text=data%20type%3A%20bigint-,EngineEdition,-Database%20Engine%20edition
-           3 = Enterprise (For Evaluation, Developer, and Enterprise editions.)
-
-    */
-
-    const usingEnterpriseConfiguration = await isUsingEnterpriseConfiguration(
+async function aoagStorageSavingsMetrics(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    nodeEbsVolumeIds: string[],
+    params: StorageSavingsRequestBodyType,
+    nodeDetails: DiscoverResponseInfoType,
+    currentNodeComputeLicenseDetails: ComputeLicenseCostType
+) {
+    logger.info('Performing AOAG storage savings calculations', {
         accountId,
         credentialsId,
         region,
-        instanceId
-    );
+        nodeEbsVolumeIds,
+        params,
+        nodeDetails
+    });
+    const { ec2InstanceId: nodeInstanceId, sqlServerInstances } = nodeDetails;
+    const [{ nodeIps }] = sqlServerInstances || [];
+    if (sqlServerInstances !== undefined && nodeIps && nodeIps.length > 0) {
+        const { items: partnerNodeDetails } = await getAoagPartnerNodesDetails(
+            accountId,
+            credentialsId,
+            region,
+            nodeInstanceId,
+            nodeIps
+        );
 
-    if (!usingEnterpriseConfiguration) {
-        return 'SQL Std';
+        const partnerNodeComputeLicenseDetails = partnerNodeDetails
+            ? await retrieveComputeAndLicenseCost(accountId, credentialsId, region, partnerNodeDetails)
+            : undefined;
+
+        const allNodesComputeLicenseDetails = partnerNodeComputeLicenseDetails
+            ? [currentNodeComputeLicenseDetails, ...partnerNodeComputeLicenseDetails]
+            : [currentNodeComputeLicenseDetails];
+
+        const {
+            recommendedComputeCalculation,
+            recommendedLicenseCalculation,
+            existingComputeCalculation,
+            existingLicenseCalculation
+        } = formatRecommendations(allNodesComputeLicenseDetails);
+
+        const { allEbsVolumeIds, uniqueHostVolumeIds } = await identifyAoagVolumes(
+            accountId,
+            credentialsId,
+            region,
+            nodeInstanceId,
+            nodeIps,
+            sqlServerInstances,
+            nodeEbsVolumeIds,
+            partnerNodeDetails
+        );
+
+        // Consider all EBS volumes for storage, iops and throughput calculation
+        const { ebsCalculation } = await formatStorageSavingsCalculationMetrics(
+            accountId,
+            credentialsId,
+            region,
+            allEbsVolumeIds,
+            params,
+            SqlServerDeploymentModel.SQL_AOAG_SHORT
+        );
+
+        // Consider only volumes associated with unique database in primary and partner nodes for snapshot calculation and to draw a storage savings comparison with FSXn
+        const {
+            fsxOntapCalculation,
+            fsxOntapSnapshotCalculation,
+            fsxCloneCalculation,
+            ebsCloneCalculation,
+            ebsSnapshotCalculation
+        } = await formatStorageSavingsCalculationMetrics(
+            accountId,
+            credentialsId,
+            region,
+            uniqueHostVolumeIds,
+            params,
+            SqlServerDeploymentModel.SQL_AOAG_SHORT
+        );
+        return {
+            recommendedComputeCalculation,
+            recommendedLicenseCalculation,
+            existingComputeCalculation,
+            existingLicenseCalculation,
+            ebsCalculation,
+            fsxOntapCalculation,
+            fsxOntapSnapshotCalculation,
+            fsxCloneCalculation,
+            ebsCloneCalculation,
+            ebsSnapshotCalculation
+        };
     }
-    return 'SQL Ent';
+    throw createError(
+        HttpErrorCodes.NOT_FOUND,
+        'Unable to get AOAG storage savings metrics as no SQL Server instances or partner nodes details found for the provided AOAG configuration'
+    );
 }
 
-export default async function getStorageSavingsBreakdown(
+function formatRecommendations(nodesComputeLicenseDetails: ComputeLicenseCostType[]) {
+    const recommendedComputeCalculation = compact(nodesComputeLicenseDetails.map(node => node.compute?.recommended));
+    const recommendedLicenseCalculation = compact(nodesComputeLicenseDetails.map(node => node.license?.recommended));
+    const existingComputeCalculation = compact(nodesComputeLicenseDetails.map(node => node.compute?.existing));
+    const existingLicenseCalculation = compact(nodesComputeLicenseDetails.map(node => node.license?.existing));
+
+    return {
+        recommendedComputeCalculation,
+        recommendedLicenseCalculation,
+        existingComputeCalculation,
+        existingLicenseCalculation
+    };
+}
+
+async function retrieveComputeAndLicenseCost(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2HostDetailsList: DiscoverResponseInfoType[]
+): Promise<ComputeLicenseCostType[]> {
+    logger.info('Retrieving compute and license cost', { accountId, credentialsId, region, ec2HostDetailsList });
+    return Promise.all(
+        ec2HostDetailsList.map(async ec2HostDetails => {
+            const {
+                existingCompute: { price: ePrice = undefined, baseInstancePrice: eBasePrice = undefined } = {},
+                existingLicense: { licenseType: eLicenseType = undefined, price: eLicensePrice = undefined } = {},
+                recommendedCompute: {
+                    price: rPrice = undefined,
+                    baseInstancePrice: rBasePrice = undefined,
+                    message: computeMessage = undefined
+                } = {},
+                recommendedLicense: {
+                    licenseType: rLicenseType = undefined,
+                    price: rLicensePrice = undefined,
+                    message: licenseMessage = undefined
+                } = {}
+            } = (await getSqlInstanceLicenseRecommendations(accountId, credentialsId, region, ec2HostDetails)) || {};
+            const [{ sqlServerEdition }] = ec2HostDetails.sqlServerInstances || [];
+            const existingInstanceType = ec2HostDetails.ec2InstanceType;
+
+            return {
+                ec2InstanceId: ec2HostDetails.ec2InstanceId,
+                ec2InstanceType: ec2HostDetails.ec2InstanceType,
+                compute: {
+                    existing: {
+                        instanceType: existingInstanceType,
+                        computeHourlyPrice: eBasePrice,
+                        computeMonthlyPrice: eBasePrice ? getMonthlyPriceFromHourlyPrice(eBasePrice) : undefined,
+                        instanceMonthlyPrice: ePrice ? getMonthlyPriceFromHourlyPrice(ePrice) : undefined,
+                        hoursInMonth: HOURS_IN_MONTH
+                    },
+                    recommended: {
+                        instanceType: existingInstanceType,
+                        computeHourlyPrice: rBasePrice,
+                        computeMonthlyPrice: rBasePrice ? getMonthlyPriceFromHourlyPrice(rBasePrice) : undefined,
+                        instanceMonthlyPrice: rPrice // inclusive of license
+                            ? getMonthlyPriceFromHourlyPrice(rPrice)
+                            : undefined,
+                        hoursInMonth: HOURS_IN_MONTH,
+                        message: computeMessage
+                    }
+                },
+                license: {
+                    existing: {
+                        sqlServerEdition,
+                        licenseType: eLicenseType,
+                        licenseHourlyPrice: eLicensePrice,
+                        licenseIncluded: !!(eLicensePrice && eLicensePrice > 0),
+                        licenseMonthlyPrice: eLicensePrice ? getMonthlyPriceFromHourlyPrice(eLicensePrice) : undefined,
+                        hoursInMonth: HOURS_IN_MONTH
+                    },
+                    recommended: {
+                        sqlServerEdition,
+                        licenseType: rLicenseType,
+                        licenseHourlyPrice: rLicensePrice,
+                        licenseIncluded: !!(rLicensePrice && rLicensePrice > 0),
+                        licenseMonthlyPrice: rLicensePrice ? getMonthlyPriceFromHourlyPrice(rLicensePrice) : undefined,
+                        hoursInMonth: HOURS_IN_MONTH,
+                        message: licenseMessage
+                    }
+                }
+            };
+        })
+    );
+}
+
+async function performStorageSavingsCalculations(
     accountId: string,
     credentialsId: string,
     region: string,
     instanceId: string,
     params: StorageSavingsRequestBodyType
-) {
-    logger.info('Getting storage savings breakdown', { accountId, credentialsId, region, instanceId, params });
+): Promise<StorageSavingsResponseType> {
+    logger.info('Performing storage savings calculations ', { accountId, credentialsId, region, instanceId, params });
 
     const {
         items: [ec2HostDetails]
     } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [instanceId]);
 
-    const sqlServerInstances = ec2HostDetails?.sqlServerInstances;
-    const [{ sqlServerEngineEdition, sqlServerEdition, sqlServerVersion, sqlServerDeploymentType, nodeIps }] =
-        ec2HostDetails?.sqlServerInstances || []; // considering only the first sql server instance from now as the sqlServerEngineEdition;sqlServerEdition;sqlServerVersion are going to be the same for all the sql server instances within an AWS AMI.
+    const sqlServerInstances = ec2HostDetails?.sqlServerInstances || [];
 
-    let nodeInstanceTypes = [ec2HostDetails?.ec2InstanceType];
+    const ebsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, sqlServerInstances);
 
-    // considering EC2 instances with all SQL server instances with EBS volumes ONLY, as we are calculating EBS savings; if there is any other storage then NOT considering such an instance; not even a combination of EBS and FSX too
-    sqlServerInstances?.forEach(server => {
-        if (
-            server?.storage?.some(storage => storage.type === STORAGE_TYPE.FSXW || storage.type === STORAGE_TYPE.FSXN)
-        ) {
-            throw createError(
-                HttpErrorCodes.BAD_REQUEST,
-                'FSx storage is not supported for storage savings breakdown.'
-            );
-        }
+    if (!ebsVolumeIds.length) {
+        throw createError(HttpErrorCodes.NOT_FOUND, `No EBS volumes found for the provided instance: ${instanceId}`);
+    }
+
+    const [{ sqlServerDeploymentType, nodeIps }] = ec2HostDetails?.sqlServerInstances || [];
+    if (nodeIps && !isEmpty(nodeIps) && sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
+        return aoagStorageSavingsCalculations(accountId, credentialsId, region, ebsVolumeIds, params, ec2HostDetails);
+    }
+
+    const [{ compute, license }] = await retrieveComputeAndLicenseCost(accountId, credentialsId, region, [
+        ec2HostDetails
+    ]);
+
+    const {
+        ebs,
+        fsx,
+        fsx_calculation: fsxCalculationData
+    } = await invokeMarketingApi(accountId, credentialsId, region, sqlServerDeploymentType!, ebsVolumeIds, params);
+
+    const existingComputeLicensePrice = compute?.existing?.instanceMonthlyPrice || 0;
+    const recommendedComputeLicensePrice = compute?.recommended?.instanceMonthlyPrice || 0;
+    return {
+        compute,
+        license,
+        ebs,
+        fsx,
+        totalSummary: {
+            existing: ebs.total + existingComputeLicensePrice,
+            recommended: fsx.total + recommendedComputeLicensePrice
+        },
+        fsxCalculation: handleMarketingApiFsxCalculationObject(fsxCalculationData)
+    };
+}
+
+async function getStorageSavingsCalculationMetrics(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    params: StorageSavingsRequestBodyType
+): Promise<StorageSavingsMetricsCalculationsResponseType> {
+    logger.info('Getting storage savings calculation metrics ', {
+        accountId,
+        credentialsId,
+        region,
+        instanceId,
+        params
     });
 
-    if (ec2HostDetails?.ec2UsageOperation && sqlServerEngineEdition && sqlServerEdition && sqlServerDeploymentType) {
-        const ebsVolumeIds = compact(
-            sqlServerInstances?.flatMap(server =>
-                server?.storage?.filter(storage => storage.type === STORAGE_TYPE.EBS).map(storage => storage.id)
-            )
-        );
-        if (!ebsVolumeIds.length) {
-            throw createError(
-                HttpErrorCodes.NOT_FOUND,
-                `No EBS volumes found for the provided instance: ${instanceId}`
-            );
-        }
+    const {
+        items: [ec2HostDetails]
+    } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [instanceId]);
 
-        const marketingSavingsPromise = performStorageSavingsCalculations(
-            accountId,
-            credentialsId,
-            region,
-            instanceId,
-            params
-        );
-
-        let instanceIdToUseForRecommendations = instanceId;
-
-        if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT && nodeIps && nodeIps.length > 1) {
-            // in case of AOAG, we need to consider the smaller instance type for recommendations; as the AOAG is a combination of 2 or more instances
-            let clusterNodeDetails: NodeDetails[] = [];
-            clusterNodeDetails = (await getInstanceDetailsByPrivateIp(credentialsId, region, nodeIps)) || [];
-            nodeInstanceTypes = clusterNodeDetails.map(node => node.ec2InstanceType);
-
-            if (nodeInstanceTypes[0] !== nodeInstanceTypes[1]) {
-                const smallerInstanceType = await determineSmallerInstance(
-                    region,
-                    credentialsId,
-                    nodeInstanceTypes as _InstanceType[]
-                );
-                const smallerInstance = clusterNodeDetails.find(node => node.ec2InstanceType === smallerInstanceType);
-                instanceIdToUseForRecommendations = smallerInstance?.ec2InstanceId || instanceId;
-            }
-        }
-
-        const instanceRecommendationsPromise = getInstanceRecommendations(
-            region,
-            credentialsId,
-            accountId,
-            instanceIdToUseForRecommendations,
-            ebsVolumeIds,
-            sqlServerDeploymentType
-        );
-
-        const [marketingSavings, instanceRecommendations] = await Promise.all([
-            marketingSavingsPromise,
-            instanceRecommendationsPromise
-        ]);
-
-        const { ebs, fsx, fsxCalculation } = marketingSavings;
-
-        const existingInstanceTypePricingDetails = await getSqlInstancePricingDetails(
-            region,
-            ec2HostDetails.ec2InstanceType as _InstanceType,
-            'windows'
-            // ec2HostDetails.ec2UsageOperation // use usage operation as a filter when supporting other OS; edition has a value like `Enterprise Evaluation Edition (64-bit)` does not narrow down operating system
-        );
-
-        /*
-        Edition: SERVERPROPERTY('Edition')
-                    Edition	Installed product edition of the instance of SQL Server.Use the value of this property to determine the features and the limits, such as Compute capacity limits by edition of SQL Server. 64 - bit versions of the Database Engine append(64 - bit) to the version.
-        Returns:
-        'Enterprise Edition'
-        'Enterprise Edition: Core-based Licensing'
-        'Enterprise Evaluation Edition'
-        'Business Intelligence Edition'
-        'Developer Edition'
-        'Express Edition'
-        'Express Edition with Advanced Services'
-        'Standard Edition'
-        'Web Edition'
-        'SQL Azure' indicates SQL Database or Azure Synapse Analytics
-        'Azure SQL Edge Developer' indicates the development only edition for Azure SQL Edge
-        'Azure SQL Edge' indicates the paid edition for Azure SQL Edge
-        Base data type: nvarchar(128)
-
-        */
-
-        const existingSqlServerEditionLowerCase = sqlServerEdition.toLowerCase();
-        if (
-            existingSqlServerEditionLowerCase.includes('enterprise') ||
-            existingSqlServerEditionLowerCase.includes('web') ||
-            existingSqlServerEditionLowerCase.includes('standard')
-            /* CONSIDERING only instances with edition to lower case including
-                enterprise : 'Enterprise Edition','Enterprise Edition: Core-based Licensing','Enterprise Evaluation Edition'
-                standard : 'Standard Edition'
-                web : 'Web Edition'
-            */
-        ) {
-            // pricing infor is only available for SQL Ent, SQL Std, SQL Web
-            const existingLicenseType = existingSqlServerEditionLowerCase.includes('enterprise')
-                ? 'SQL Ent'
-                : existingSqlServerEditionLowerCase.includes('web')
-                ? 'SQL Web'
-                : 'SQL Std';
-            const existingInstanceMonthlyPrice = existingInstanceTypePricingDetails?.[existingLicenseType]?.pricePerUnit
-                ? existingInstanceTypePricingDetails[existingLicenseType].pricePerUnit * 24 * 30
-                : undefined;
-            const existingInstanceMonthlyPriceWithoutLicense = existingInstanceTypePricingDetails?.NA?.pricePerUnit
-                ? existingInstanceTypePricingDetails.NA.pricePerUnit * 24 * 30
-                : undefined;
-
-            let recommendedInstancePricingDetails = existingInstanceTypePricingDetails; // assuming no instance change; gets updated when a diff instance is recommended
-            let recommendedInstanceMonthlyPrice = existingInstanceMonthlyPrice;
-            let recommendedInstanceMonthlyPriceWithoutLicense = existingInstanceMonthlyPriceWithoutLicense;
-
-            const recommendedSqlLicenseType =
-                sqlServerEngineEdition === 3
-                    ? await getLicenseRecommendations(region, credentialsId, accountId, instanceId)
-                    : undefined;
-
-            // existing compute and license details
-            ebs.compute = {
-                cost: existingInstanceMonthlyPrice, // could be undefined if the pricing information is not available for a certain instance type
-                instanceType: ec2HostDetails.ec2InstanceType
-            };
-
-            ebs.license = {
-                sqlEdition: existingLicenseType, // SQL Ent or SQL Std or SQL Web
-                sqlServerVersion,
-                licenseCost:
-                    existingInstanceMonthlyPrice && existingInstanceMonthlyPriceWithoutLicense
-                        ? existingInstanceMonthlyPrice - existingInstanceMonthlyPriceWithoutLicense
-                        : undefined
-            };
-
-            // instance recommendation logic
-            const [{ recommendations: [firstRecommendationOption] = [] }] = instanceRecommendations || [];
-            const { instanceType: recommendedInstanceType } = firstRecommendationOption;
-            if (recommendedInstanceType && ec2HostDetails.ec2InstanceType !== recommendedInstanceType) {
-                recommendedInstancePricingDetails = await getSqlInstancePricingDetails(
-                    region,
-                    recommendedInstanceType as _InstanceType,
-                    undefined, // not using usage operation as a filter; usage operation is related to standard/enterprise but not for an operating system
-                    'windows' // TODO: fetch operating system from existing instance when supporting other instance operating systems
-                );
-                recommendedInstanceMonthlyPrice =
-                    recommendedSqlLicenseType &&
-                    recommendedInstancePricingDetails?.[recommendedSqlLicenseType]?.pricePerUnit
-                        ? recommendedInstancePricingDetails[recommendedSqlLicenseType].pricePerUnit * 24 * 30
-                        : existingLicenseType && recommendedInstancePricingDetails?.[existingLicenseType]?.pricePerUnit
-                        ? recommendedInstancePricingDetails[existingLicenseType].pricePerUnit * 24 * 30
-                        : undefined;
-
-                recommendedInstanceMonthlyPriceWithoutLicense = recommendedInstancePricingDetails?.NA?.pricePerUnit
-                    ? recommendedInstancePricingDetails.NA.pricePerUnit * 24 * 30
-                    : undefined;
-
-                fsx.compute = {
-                    cost: recommendedInstanceMonthlyPrice,
-                    instanceType: recommendedInstanceType || ec2HostDetails.ec2InstanceType
-                };
-            } else {
-                const message = isEmpty(recommendedInstanceType)
-                    ? 'Instance Recommendation Preferences are not updated yet, please come back after a day for better recommendations'
-                    : ec2HostDetails.ec2InstanceType === recommendedInstanceType
-                    ? 'No instance change recommended as per Compute Optimizer'
-                    : 'Instance Recommendations not available for the instance';
-
-                fsx.compute = {
-                    cost: existingInstanceMonthlyPrice,
-                    instanceType: ec2HostDetails.ec2InstanceType,
-                    message
-                };
-            }
-
-            // sql license recommendation logic; applicable only if the current instance is enterprise edition(sqlServerEngineEdition === 3)
-            if (
-                sqlServerEngineEdition === 3 &&
-                recommendedSqlLicenseType &&
-                recommendedSqlLicenseType !== existingLicenseType
-            ) {
-                fsx.license = {
-                    sqlEdition: recommendedSqlLicenseType, // SQL Ent or SQL Std
-                    sqlServerVersion,
-                    licenseCost:
-                        recommendedInstanceMonthlyPrice && recommendedInstanceMonthlyPriceWithoutLicense
-                            ? recommendedInstanceMonthlyPrice - recommendedInstanceMonthlyPriceWithoutLicense
-                            : undefined
-                };
-            } else {
-                const message =
-                    sqlServerEngineEdition === 3
-                        ? 'No license change recommended as you are already using a non-enterprise edition'
-                        : recommendedSqlLicenseType === existingLicenseType
-                        ? 'Need not change the license as the recommended type is the same as the existing license type'
-                        : 'License Recommendations not available for the instance';
-
-                fsx.license = {
-                    sqlEdition: existingLicenseType, // SQL Ent or SQL Std or SQL Web
-                    sqlServerVersion,
-                    licenseCost:
-                        existingInstanceMonthlyPrice && existingInstanceMonthlyPriceWithoutLicense
-                            ? existingInstanceMonthlyPrice - existingInstanceMonthlyPriceWithoutLicense
-                            : undefined,
-                    message
-                };
-            }
-        }
-
-        return {
-            ebs,
-            fsx,
-            fsxCalculation
-        };
+    const sqlServerInstances = ec2HostDetails?.sqlServerInstances || [];
+    const ebsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, sqlServerInstances);
+    if (!ebsVolumeIds.length) {
+        throw createError(HttpErrorCodes.NOT_FOUND, `No EBS volumes found for the provided instance: ${instanceId}`);
     }
+
+    const [{ sqlServerDeploymentType, nodeIps }] = ec2HostDetails?.sqlServerInstances || [];
+    const [currentNodeComputeLicenseDetails] = await retrieveComputeAndLicenseCost(accountId, credentialsId, region, [
+        ec2HostDetails
+    ]);
+    if (nodeIps && !isEmpty(nodeIps) && sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
+        return aoagStorageSavingsMetrics(
+            accountId,
+            credentialsId,
+            region,
+            ebsVolumeIds,
+            params,
+            ec2HostDetails,
+            currentNodeComputeLicenseDetails
+        );
+    }
+
+    const {
+        recommendedComputeCalculation,
+        recommendedLicenseCalculation,
+        existingComputeCalculation,
+        existingLicenseCalculation
+    } = formatRecommendations([currentNodeComputeLicenseDetails]);
+    const {
+        ebsCalculation,
+        ebsCloneCalculation,
+        ebsSnapshotCalculation,
+        fsxOntapCalculation,
+        fsxCloneCalculation,
+        fsxOntapSnapshotCalculation
+    } = await formatStorageSavingsCalculationMetrics(
+        accountId,
+        credentialsId,
+        region,
+        ebsVolumeIds,
+        params,
+        sqlServerDeploymentType!
+    );
+
+    return {
+        recommendedComputeCalculation,
+        recommendedLicenseCalculation,
+        existingComputeCalculation,
+        existingLicenseCalculation,
+        ebsCalculation,
+        ebsCloneCalculation,
+        ebsSnapshotCalculation,
+        fsxOntapCalculation,
+        fsxCloneCalculation,
+        fsxOntapSnapshotCalculation
+    };
 }
+
+export { performStorageSavingsCalculations, getStorageSavingsCalculationMetrics };
