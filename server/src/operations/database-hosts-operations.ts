@@ -80,6 +80,20 @@ const DATABASE_HOSTS_INDEX_MAPPING: { [index: number]: string } = {
     6: 'resourceUtilization'
 };
 
+const DATABASE_HOSTS_INDEX_MAPPING_V2: { [index: number]: string } = {
+    0: 'instanceDetails',
+    1: 'nodeTopology',
+    2: 'billing/pricing'
+};
+const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
+    0: 'serverDetails',
+    1: 'databaseInstancetopologyData',
+    2: 'performance',
+    3: 'storage',
+    4: 'protection',
+    5: 'resourceUtilization'
+};
+
 // type VolumeSpaceRecord = {
 //     uuid: string;
 //     name: string;
@@ -464,7 +478,8 @@ async function getProtectionStatus(
     instanceName: string,
     resourceDetail?: ResourceDetails,
     databaseInstanceDetails?: any,
-    version?: string
+    version?: string,
+    isInstanceRunning: boolean = true
 ): Promise<ProtectionPerStorageTypeResponseType | undefined> {
     logger.info('Get protection status', { resourceDetail });
 
@@ -487,7 +502,10 @@ async function getProtectionStatus(
 
     try {
         const [nativeSqlProtection, fsxnBackup, ontapProtection, fsxwBackup, ebsBackup] = await Promise.all([
-            getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceName),
+            ...(isInstanceRunning
+                ? [getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceName)]
+                : [Promise.resolve()]), // Fetch server metadata
+
             fsxnId ? isFsxnAwsBackupEnabled(credentialsId, region, fsxnId, activeNodeInstanceId) : Promise.resolve(),
             fsxnId
                 ? getOntapVolumesSnapshotCount(credentialsId, region, fsxnId, activeNodeInstanceId)
@@ -1157,6 +1175,7 @@ async function getNodeTopology(
         cloud_provider_account_id: awsAccountId,
         metadata
     } = resourceData;
+
     const { node1InstanceId, node2InstanceId, activeDirectoryName, activeDirectoryAddress } =
         metadata as unknown as Metadata;
 
@@ -1245,7 +1264,6 @@ async function getNodeTopology(
             });
             vpcName = findResourceNameFromTags(firstVpc?.Tags);
         }
-        // Fetch topology data
         nodeTopologyData = {
             awsAccount: awsAccountId || '',
             region: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region)! : region,
@@ -1318,6 +1336,7 @@ async function getDatabaseHostsSummaryV2(
         logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
         return { count: 0, items: [], nextToken: '' };
     }
+
     const databaseHosts: DatabaseHostSummaryForMultiInstanceResponseType[] = [];
     try {
         await Promise.all(
@@ -1454,7 +1473,7 @@ async function getDatabseInstanceSummary(
     fields?: string
 ) {
     logger.info(
-        'Fetching details about a database host ',
+        'Fetching summary of database instance',
         accountId,
         credentialsId,
         activeNodeInstanceId,
@@ -1469,7 +1488,8 @@ async function getDatabseInstanceSummary(
         is_default: isdefaultInstance,
         metadata,
         created_time: creationDate,
-        database_deployment_type: databaseDeploymentType
+        database_deployment_type: databaseDeploymentType,
+        instanceState
     } = databaseInstances;
 
     const { userDatabase = [] } = metadata as unknown as Metadata;
@@ -1481,7 +1501,6 @@ async function getDatabseInstanceSummary(
     let fieldsValues: Array<string> = [];
 
     if (fields) {
-        // remove the empty spaces in the string & split the fields by comma separated array values
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
 
@@ -1525,7 +1544,7 @@ async function getDatabseInstanceSummary(
             resourceUtilizationData
         ] = await Promise.all(
             [
-                ...(shouldQueryServerDetails
+                ...(shouldQueryServerDetails && instanceState.toLocaleLowerCase() === 'running'
                     ? [getServerDetails(credentialsId, region, activeNodeInstanceId, databaseInstanceName)]
                     : [Promise.resolve()]), // Fetch server metadata
                 ...(shouldQueryDatabaseTopology
@@ -1540,7 +1559,7 @@ async function getDatabseInstanceSummary(
                           )
                       ]
                     : [Promise.resolve()]),
-                ...(getPerformance
+                ...(getPerformance && instanceState.toLocaleLowerCase() === 'running'
                     ? [getPerformanceMetrics(credentialsId, region, activeNodeInstanceId, databaseInstanceName)]
                     : [Promise.resolve()]), // Fetch io latency data
                 ...(getStorageSavings
@@ -1553,11 +1572,12 @@ async function getDatabseInstanceSummary(
                               databaseInstanceName,
                               undefined,
                               databaseInstances,
-                              VERSION_2_0
+                              VERSION_2_0,
+                              instanceState.toLocaleLowerCase() === 'running'
                           )
                       ]
                     : [Promise.resolve()]), // Fetch protection status
-                ...(getResourceutilization
+                ...(getResourceutilization && instanceState.toLocaleLowerCase() === 'running'
                     ? [
                           getAllResourceUtilisationDetails(
                               credentialsId,
@@ -1569,18 +1589,20 @@ async function getDatabseInstanceSummary(
                     : [Promise.resolve()])
             ].map((p, index) =>
                 p.catch(error => {
-                    if (DATABASE_HOSTS_INDEX_MAPPING[index]) {
-                        errormessages[DATABASE_HOSTS_INDEX_MAPPING[index]] = JSON.stringify(error);
+                    if (DATABASE_INSTANCE_INDEX_MAPPING[index]) {
+                        errormessages[DATABASE_INSTANCE_INDEX_MAPPING[index]] = JSON.stringify(error);
                     }
                     logger.error(`Error while fetching data: ${error}.`);
                 })
             )
         );
     } catch (error) {
-        logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
+        logger.error(
+            `Error while fetching database instance summary ${accountId}, ${databaseInstanceId},  ${savedDatabaseInstanceName}, ${error}`
+        );
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while fetching database hosts details ${accountId}, ${error}`
+            `Error while fetching database instance summary ${accountId},${databaseInstanceId}, ${savedDatabaseInstanceName} ${error}`
         );
     }
 
@@ -1627,16 +1649,18 @@ async function getDatabaseInstancesDetails(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceManaged: any
+    instancesManaged: Array<{ database_instance_name: string; is_default: boolean }>,
+    resourceId?: string
 ) {
-    logger.info('Getting datanase Instances details for resource', {
+    logger.info('Getting database Instances details for resource', {
         credentialsId,
         region,
         activeNodeInstanceId,
-        instanceManaged
+        instancesManaged,
+        resourceId
     });
     const instanceDetails = await getAllInstanceDetails(credentialsId, region, [activeNodeInstanceId]);
-    const managedInstancesName = instanceManaged.map(
+    const managedInstancesName = instancesManaged.map(
         (item: { database_instance_name: string; is_default: boolean }) => ({
             instanceName: item.database_instance_name,
             isDefault: item.is_default
@@ -1691,7 +1715,7 @@ async function getDatabaseHostSummaryV2(
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
     const getInstancesDetails = fieldsValues?.includes(DatabaseHostsQueryFields.INSTANCE_DETAILS.toLocaleLowerCase());
 
-    const instanceManaged = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
+    const instancesManaged = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
 
     const databaseHostDetails: DatabaseHostSummaryForMultiInstanceResponseType = {
         id: resourceId,
@@ -1720,7 +1744,15 @@ async function getDatabaseHostSummaryV2(
             [databaseInstancesDetail, nodeTopology, usageEstimationData] = await Promise.all(
                 [
                     ...(activeNodeInstanceId
-                        ? [getDatabaseInstancesDetails(credentialsId, region, activeNodeInstanceId, instanceManaged)]
+                        ? [
+                              getDatabaseInstancesDetails(
+                                  credentialsId,
+                                  region,
+                                  activeNodeInstanceId,
+                                  instancesManaged,
+                                  resourceId
+                              )
+                          ]
                         : [Promise.resolve()]),
                     ...(shouldQueryNodeTopology && activeNodeInstanceId
                         ? [
@@ -1740,8 +1772,8 @@ async function getDatabaseHostSummaryV2(
                         : [Promise.resolve()]) // Fetch pricing estimate data
                 ].map((p, index) =>
                     p.catch(error => {
-                        if (DATABASE_HOSTS_INDEX_MAPPING[index]) {
-                            errormessages[DATABASE_HOSTS_INDEX_MAPPING[index]] = JSON.stringify(error);
+                        if (DATABASE_HOSTS_INDEX_MAPPING_V2[index]) {
+                            errormessages[DATABASE_HOSTS_INDEX_MAPPING_V2[index]] = JSON.stringify(error);
                         }
                         logger.error(`Error while fetching data: ${error}.`);
                     })
@@ -1770,12 +1802,11 @@ async function getDatabaseHostSummaryV2(
                 credentialsId &&
                 region
             ) {
-                const combinedInstances = instanceManaged
+                const runningDatabaseInstances = instancesManaged
                     .filter(instance => {
                         const matchingInstance = databaseInstancesDetail.find(
                             (dbInstance: { instanceName: string; instanceState: string }) =>
-                                dbInstance.instanceName === instance.database_instance_name &&
-                                dbInstance.instanceState === 'Running'
+                                dbInstance.instanceName === instance.database_instance_name
                         );
                         return matchingInstance !== undefined;
                     })
@@ -1787,8 +1818,8 @@ async function getDatabaseHostSummaryV2(
                                 dbInstance.instanceState === 'Running'
                         )
                     }));
-                if (combinedInstances.length > 0) {
-                    const instancePromises = combinedInstances.map(async (instance: any) => {
+                if (runningDatabaseInstances.length > 0) {
+                    const instancePromises = runningDatabaseInstances.map(async (instance: any) => {
                         const instanceResult = await getDatabseInstanceSummary(
                             accountId,
                             credentialsId,
