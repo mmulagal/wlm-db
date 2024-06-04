@@ -79,6 +79,7 @@ const logger = getLogger();
 interface SsmTargetsInfo {
     ec2InstanceId: string;
     ec2InstanceName: string;
+    ec2InstanceType: string;
     ssmState: string;
     ebsVolumeIDs: (string | undefined)[] | undefined;
     vpc?: {
@@ -157,6 +158,7 @@ async function getHostAndSqlServerInfo(
             const ssmStatus = await getSSMConnectionStatus(credentialsId, region, ec2Instance?.InstanceId || '');
             ssmTargets.push({
                 ec2InstanceId: ec2Instance?.InstanceId || '',
+                ec2InstanceType: ec2Instance?.InstanceType || '',
                 ec2InstanceName: name!,
                 ssmState: ssmStatus.Status!,
                 ebsVolumeIDs: ec2Instance?.BlockDeviceMappings?.map(bdm => bdm?.Ebs?.VolumeId),
@@ -306,6 +308,7 @@ async function getHostAndSqlServerInfo(
                     if (dbInfo.length) {
                         ssmConnectedEc2ResponseInfo.push({
                             ec2InstanceId: target.ec2InstanceId,
+                            ec2InstanceType: target.ec2InstanceType,
                             ec2InstanceName: target.ec2InstanceName,
                             ssmState: target.ssmState,
                             sqlServerInstances: dbInfo,

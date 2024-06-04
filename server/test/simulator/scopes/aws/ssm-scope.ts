@@ -240,7 +240,11 @@ const getDefaultDriveLetters = {
     commands: [GET_DEFAULT_DRIVES('.')]
 };
 
-const getActiveNodeDriveDetails = {
+const getActiveNodeDriveDetailsStandalone = {
+    commands: [GET_ACTIVE_NODE_DRIVE_INFO('Standalone')]
+};
+
+const getActiveNodeDriveDetailsFCI = {
     commands: [GET_ACTIVE_NODE_DRIVE_INFO('FCI')]
 };
 
@@ -475,7 +479,9 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getServerEdition)
     .on(SendCommandCommand, { Parameters: getHostAndSqlServerInfo })
     .resolves(listSendCommandCommandResponse.getHostAndSqlServerInfoResponse)
-    .on(SendCommandCommand, { Parameters: getActiveNodeDriveDetails })
+    .on(SendCommandCommand, { Parameters: getActiveNodeDriveDetailsStandalone })
+    .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails)
+    .on(SendCommandCommand, { Parameters: getActiveNodeDriveDetailsFCI })
     .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails)
     .on(SendCommandCommand, { Parameters: getStandbyNodeDriveList })
     .resolves(listSendCommandCommandResponse.getStandbyNodeDriveList)

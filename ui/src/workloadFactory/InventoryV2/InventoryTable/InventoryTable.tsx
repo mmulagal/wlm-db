@@ -26,6 +26,8 @@ import { renderAllocatedCapacity, renderEstimatedCost } from '../../Inventory/In
 import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
 import OfflineComponent from './OfflineComponent/OfflineComponent';
+import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
+import { useRunOnce } from '../../../common/hooks/useRunOnce';
 
 const InventoryTable = () => {
     const dispatch = useDispatch();
@@ -43,6 +45,28 @@ const InventoryTable = () => {
     const [pageSize, setPageSize] = useState(25);
     const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
     const [isManageButtonDisable, setIsManageButtonDisable] = useState(false);
+    const [scrollPos, setScrollPos] = useState(0);
+
+    //For scroll sync
+    useRunOnce(() => {
+        const handleOuterScroll = () => {
+            setScrollPos(currentTable[0].scrollLeft);
+        };
+
+        const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
+
+        if (currentTable[0]) {
+            //@ts-ignore
+            currentTable[0].addEventListener('scroll', handleOuterScroll);
+        }
+
+        return () => {
+            if (currentTable[0]) {
+                //@ts-ignore
+                currentTable[0].removeEventListener('scroll', handleOuterScroll);
+            }
+        };
+    });
 
     const mockData = [
         {
@@ -121,7 +145,7 @@ const InventoryTable = () => {
 
     const ExpandedRow = ({ rowData }: any) => {
         if (rowData.hasOwnProperty('status')) {
-            return <ManagedHostSubTable rowId={rowData?.id} />;
+            return <ManagedHostSubTable rowId={rowData?.id} scrollPosition={scrollPos} />;
         }
         return <OfflineComponent />;
     };
@@ -155,11 +179,15 @@ const InventoryTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
-                        {!rowData?.actionDisable && (
+                        {!rowData?.actionDisable && rowData.ssmState !== 'not connected' && (
                             <div
                                 className={styles.detectManage}
                                 onClick={() => {
-                                    handleDialog();
+                                    if (rowData?.action === 'Explore savings') {
+                                        onClickESHost(dispatch, rowData, isDemoMode);
+                                    } else {
+                                        handleDialog();
+                                    }
                                 }}
                             >
                                 <Typography variant="Regular_14" className={styles.textStyle}>
@@ -167,7 +195,7 @@ const InventoryTable = () => {
                                 </Typography>
                             </div>
                         )}
-                        {rowData?.actionDisable && (
+                        {rowData?.actionDisable && rowData.ssmState !== 'not connected' && (
                             <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
                                 <Typography variant="Regular_14" className={styles.textStyle}>
                                     {rowData?.action}

@@ -470,7 +470,8 @@ async function calculatePrice(
     if (fsxnStorage) {
         ({ fsxnStorageCost, fsxnOperationalCost, fsxnDiskSizes } = calculateFsxnCost(
             fsxnStorage,
-            productRates.fsxnStorage
+            productRates.fsxnStorage,
+            compute?.sqlDeploymentMode
         ));
     }
 
@@ -561,8 +562,12 @@ async function calculatePrice(
     };
 }
 
-function calculateFsxnCost(fsxnStorage: PricingServiceRequestType['fsxnStorage'], fsxnStorageRates: any) {
-    logger.info('Calculating cost for FSx Netapp storage', { fsxnStorage, fsxnStorageRates });
+function calculateFsxnCost(
+    fsxnStorage: PricingServiceRequestType['fsxnStorage'],
+    fsxnStorageRates: any,
+    sqlDeploymentMode: string
+) {
+    logger.info('Calculating cost for FSx Netapp storage', { fsxnStorage, fsxnStorageRates, sqlDeploymentMode });
 
     if (!isEmpty(fsxnStorage) && !fsxnStorage.diskSize && !fsxnStorage.storageCapacity) {
         throw new Error('FSx Netapp storage is not available');
@@ -574,7 +579,7 @@ function calculateFsxnCost(fsxnStorage: PricingServiceRequestType['fsxnStorage']
     let fsxnDiskSizes;
     let fsxnDisksize;
     if (fsxnStorage?.diskSize) {
-        fsxnDiskSizes = calculateFsxnStorageCapacity(fsxnStorage.diskSize);
+        fsxnDiskSizes = calculateFsxnStorageCapacity(fsxnStorage.diskSize, sqlDeploymentMode);
         fsxnDisksize = fsxnDiskSizes.FSxStorageCapacity;
     } else {
         fsxnDisksize = fsxnStorage?.storageCapacity;
@@ -768,4 +773,88 @@ function calculateFsxWindowsCapacityPrice(
     return (capacityPrice + iopsPrice + throughputPrice) * duration;
 }
 
-export { getProductRates, calculatePrice, calculateFsxWindowsCapacityPrice };
+async function getSqlInstancePricingDetails(
+    region: string,
+    instanceType: string,
+    operatingSystem?: string,
+    usageOperation?: string
+) {
+    logger.info('Get SQL instance pricing details', { region, instanceType, operatingSystem, usageOperation });
+
+    const params: GetProductsCommandInput = {
+        Filters: [
+            {
+                Type: 'TERM_MATCH',
+                Field: 'regionCode',
+                Value: region
+            },
+            {
+                Type: 'TERM_MATCH',
+                Field: 'productFamily',
+                Value: 'Compute Instance'
+            },
+            {
+                Type: 'TERM_MATCH',
+                Field: 'instanceType',
+                Value: instanceType
+            },
+            {
+                Type: 'TERM_MATCH',
+                Field: 'tenancy',
+                Value: 'Shared'
+            },
+            {
+                Type: 'TERM_MATCH',
+                Field: 'capacitystatus',
+                Value: 'Used'
+            }
+        ],
+        ...ec2Service,
+        ...AWS_PRICING_FORMAT_VERSION
+    };
+
+    if (usageOperation) {
+        params?.Filters?.push({
+            Type: 'TERM_MATCH',
+            Field: 'operation',
+            Value: usageOperation
+        });
+    }
+
+    if (operatingSystem) {
+        params?.Filters?.push({
+            Type: 'TERM_MATCH',
+            Field: 'operatingSystem',
+            Value: operatingSystem
+        });
+    }
+
+    const pricingResult = await getProducts(params);
+    const pricingDetails: { [preInstalledSw: string]: { pricePerUnit: number; unit: string } } = {};
+    if (pricingResult.PriceList) {
+        pricingResult.PriceList.forEach(priceItem => {
+            const item = (priceItem as LazyJsonString).deserializeJSON();
+            const { terms, product } = item;
+
+            if (terms && product) {
+                const { OnDemand: onDemandPrice } = terms;
+                const { priceDimensions } = onDemandPrice[Object.keys(onDemandPrice)[0]];
+                const { unit, pricePerUnit } = priceDimensions[Object.keys(priceDimensions)[0]];
+                const { preInstalledSw, licenseModel } = product.attributes;
+                if (licenseModel !== 'Bring your own license') {
+                    // Windows Server as BYOL- no windows license included Windows Server as BYOL (Bring Your Own License) - RunInstances:0800
+                    pricingDetails[preInstalledSw] = {
+                        pricePerUnit: Number(pricePerUnit.USD),
+                        unit
+                    };
+                }
+            }
+        });
+    }
+
+    logger.debug('getSqlInstancePricingDetails response', pricingDetails);
+
+    return pricingDetails;
+}
+
+export { getProductRates, calculatePrice, calculateFsxWindowsCapacityPrice, getSqlInstancePricingDetails };

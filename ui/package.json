@@ -1,12 +1,12 @@
 {
     "name": "ui",
-    "version": "1.0.4",
+    "version": "1.0.6",
     "homepage": "./",
     "private": true,
     "dependencies": {
-        "@netapp/design-system": "1.2.15",
+        "@netapp/design-system": "1.2.35",
         "@netapp/icons": "^1.0.8",
-        "@reduxjs/toolkit": "2.2.3",
+        "@reduxjs/toolkit": "2.2.5",
         "auth0-js": "^9.24.1",
         "axios": "^1.6.7",
         "lodash": "^4.17.21",
@@ -27,7 +27,7 @@
         "redux-mock-store": "^1.5.4",
         "sanitize-html": "^2.12.1",
         "style-inject": "^0.3.0",
-        "web-vitals": "^3.5.2"
+        "web-vitals": "^4.0.1"
     },
     "scripts": {
         "start": "cross-env HOST=localhost PORT=4300 REACT_APP_USE_CM_FORWARDER=false react-scripts start",
@@ -72,7 +72,7 @@
         "jest-teamcity-reporter": "^0.9.0",
         "react-scripts": "5.0.1",
         "sass": "^1.66.0",
-        "typescript": "5.4.4"
+        "typescript": "5.4.5"
     },
     "jest": {
         "transformIgnorePatterns": []

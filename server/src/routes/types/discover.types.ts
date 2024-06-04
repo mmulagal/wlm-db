@@ -98,6 +98,7 @@ const SqlServerInstanceInfo = Type.Object({
 
 const DiscoverResponseInfo = Type.Object({
     ec2InstanceId: Type.String({ description: 'AWS EC2 instance ID' }),
+    ec2InstanceType: Type.String({ description: 'EC2 instance type' }),
     ec2InstanceName: Type.Optional(Type.String({ description: 'EC2 tag with key "Name".' })),
     ssmState: Type.String({ description: 'SSM connection status', enum: ['connected', 'notconnected'] }),
     vpc: Type.Optional(
