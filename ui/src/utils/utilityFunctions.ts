@@ -607,7 +607,10 @@ export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryData
     };
 };
 
-export const getAggrStorageSavings = (data: DatabaseHostItem[] | WorkloadFactoryResourceDetails[]) => {
+export const getAggrStorageSavings = (
+    data: DatabaseHostItem[] | WorkloadFactoryResourceDetails[],
+    sandboxSavings?: any
+) => {
     let totalConsume = 0;
     let storageSavings = 0;
 
@@ -631,6 +634,10 @@ export const getAggrStorageSavings = (data: DatabaseHostItem[] | WorkloadFactory
         }
     });
 
+    if (storageSavings) {
+        totalConsume += sandboxSavings?.consumedStorage || 0;
+        storageSavings += sandboxSavings?.savedStorage || 0;
+    }
     const storageConsume = totalConsume - storageSavings;
 
     return {
