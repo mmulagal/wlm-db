@@ -59,6 +59,7 @@ const EstimatedCost = () => {
     const selectedZone1 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode1);
     const selectedZone2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode2);
     const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
+    const selectedLicenseType = useAppSelector(state => state.mssqlForm.license.selectedLicenseType);
 
     const fsxVolThroughput = () => {
         const value = (throughputValue || '').split(' ');
@@ -74,6 +75,13 @@ const EstimatedCost = () => {
     };
 
     const computeObj = (updatedStr: string) => {
+        if (selectedLicenseType === 'Use custom AMI') {
+            return {
+                regionCode: updatedStr || '',
+                instanceType: instanceTypeName || '',
+                sqlDeploymentMode: deploymentModel?.value
+            };
+        }
         return {
             regionCode: updatedStr || '',
             instanceType: instanceTypeName || '',
