@@ -179,7 +179,7 @@ const InventoryTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
-                        {!rowData?.actionDisable && (
+                        {!rowData?.actionDisable && rowData.ssmState !== 'not connected' && (
                             <div
                                 className={styles.detectManage}
                                 onClick={() => {
@@ -195,7 +195,7 @@ const InventoryTable = () => {
                                 </Typography>
                             </div>
                         )}
-                        {rowData?.actionDisable && (
+                        {rowData?.actionDisable && rowData.ssmState !== 'not connected' && (
                             <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
                                 <Typography variant="Regular_14" className={styles.textStyle}>
                                     {rowData?.action}
