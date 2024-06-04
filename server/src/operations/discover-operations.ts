@@ -1466,19 +1466,6 @@ async function unmanageDatabaseInstance(
 ) {
     logger.info('Unmanaging SQL Server instances', { accountId, credentialsId, resourceId, databaseInstanceList });
 
-    interface DatabaseInstance {
-        id: string;
-        account_id: string;
-        credentials_id: string;
-        resource_id: string;
-        sql_instance_id: string;
-        sql_instance_name: string;
-        fsxn_ids: string;
-        is_default: boolean;
-        created_time: Date;
-        updated_time: Date;
-    }
-
     const databaseInstanceResponse: {
         databaseInstanceId: string;
         status: string;
@@ -1489,13 +1476,13 @@ async function unmanageDatabaseInstance(
     if (databaseInstanceList.length > 0) {
         const databaseInstanceIds = databaseInstanceList.split(',');
 
-        const preDeleteDatabaseInstances: DatabaseInstance[] = await listDatabaseInstances(accountId, credentialsId, {
+        const preDeleteDatabaseInstances = await listDatabaseInstances(accountId, credentialsId, {
             resourceId
         });
 
         await deleteDatabaseInstance(accountId, credentialsId, resourceId, databaseInstanceIds);
 
-        const postDeleteDatabaseInstances: DatabaseInstance[] = await listDatabaseInstances(accountId, credentialsId, {
+        const postDeleteDatabaseInstances = await listDatabaseInstances(accountId, credentialsId, {
             resourceId
         });
 
@@ -1510,8 +1497,7 @@ async function unmanageDatabaseInstance(
                 databaseInstanceResponse.push({
                     databaseInstanceId,
                     status: 'failed',
-                    // eslint-disable-next-line quotes
-                    errorMessage: "Instance does't exist."
+                    errorMessage: 'Instance does not exist.'
                 });
             }
         });
