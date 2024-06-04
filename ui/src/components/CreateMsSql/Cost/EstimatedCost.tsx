@@ -79,6 +79,7 @@ const EstimatedCost = () => {
             return {
                 regionCode: updatedStr || '',
                 instanceType: instanceTypeName || '',
+                sqlSoftwareType: 'custom',
                 sqlDeploymentMode: deploymentModel?.value
             };
         }
