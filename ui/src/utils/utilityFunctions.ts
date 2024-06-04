@@ -634,7 +634,7 @@ export const getAggrStorageSavings = (
         }
     });
 
-    if (storageSavings) {
+    if (sandboxSavings) {
         totalConsume += sandboxSavings?.consumedStorage || 0;
         storageSavings += sandboxSavings?.savedStorage || 0;
     }
