@@ -10,6 +10,11 @@ const AccountIdParams = Type.Object({
     accountId: Type.String({ minLength: 1 })
 });
 
+const AccountIdCredentialsIdParams = Type.Object({
+    accountId: Type.String({ description: 'Workload Factory account ID.', minLength: 1 }),
+    credentialsId: Type.String({ description: 'Workload Factory credentials ID', minLength: 1 })
+});
+
 const CredentialsIdParams = Type.Object({
     accountId: Type.String({ description: 'Workload Factory account ID', minLength: 1 }),
     credentialsId: Type.String({ description: 'Workload Factory credentials ID', minLength: 1 }),
@@ -26,6 +31,7 @@ export {
     GenericHeaders,
     GenericHeadersType,
     AccountIdParams,
+    AccountIdCredentialsIdParams,
     AccountIdParamsType,
     CredentialsIdParams,
     nextTokenQueryString
