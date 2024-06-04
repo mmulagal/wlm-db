@@ -68,7 +68,7 @@ function generateDeploymentParams(
         FSxTempDbVolumeSize,
         FSxQuorumVolumeSize,
         FSxStorageCapacity
-    } = calculateFsxnStorageCapacity(FSxDataLunSize);
+    } = calculateFsxnStorageCapacity(FSxDataLunSize, sqlDeploymentType);
 
     // If the FSX total storage crosses 192Tib Means keeping it to 192TiB (196608GiB). This is because when the 130TiB is given as a data lun size, total storage capacity of is going beyond 196608 which is 197695.
     const fsxStorageCapacity = Math.min(FSxStorageCapacity, MAX_FSX_STORAGE_IN_GIB);
@@ -117,8 +117,8 @@ function generateDeploymentParams(
     return params;
 }
 
-function calculateFsxnStorageCapacity(fsxDataLunSize: number) {
-    logger.info('Calculate FSX Netapp Storage capacity from the database size', { fsxDataLunSize });
+function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode: string) {
+    logger.info('Calculate FSX Netapp Storage capacity from the database size', { fsxDataLunSize, sqlDeploymentMode });
 
     const FSxDataLunSizeInMib = fsxDataLunSize * 1024;
 
@@ -126,7 +126,10 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number) {
     const FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
     const FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
     const FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
-    const FSxQuorumVolumeSize = 12000; // 12GB
+    let FSxQuorumVolumeSize = 0;
+    if (sqlDeploymentMode !== STANDALONE) {
+        FSxQuorumVolumeSize = 12000; // 12GB
+    }
 
     // StorageCapacity in GiB
     let FSxStorageCapacity = Math.ceil(
