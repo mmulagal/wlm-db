@@ -15,17 +15,34 @@ import { formatSizeTwoPrecision, isAwsBackupEnabled } from '../../../../utils/ut
 import { renderAllocatedCapacity } from '../../../Inventory/InventoryUtils';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
+import { useRunOnce } from '../../../../common/hooks/useRunOnce';
 
-const ManagedHostSubTable = ({ rowId }: { rowId: string }) => {
+const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollPosition: any }) => {
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
+    const [leftPos, setLeftPos] = useState(0);
     const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
     const [data, setData] = useState<any>();
 
     const dispatch = useDispatch();
+
+    //For scroll sync
+    useRunOnce(() => {
+        const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
+        if (currentTable[0]) {
+            setTimeout(() => {
+                currentTable[0].scrollLeft = currentTable[1].scrollLeft;
+                if (currentTable[1].scrollLeft > 70) {
+                    setLeftPos(currentTable[1].scrollLeft - 2);
+                } else {
+                    setLeftPos(currentTable[1].scrollLeft);
+                }
+            }, 10);
+        }
+    });
 
     useEffect(() => {
         if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
@@ -297,11 +314,14 @@ const ManagedHostSubTable = ({ rowId }: { rowId: string }) => {
             {/* <div className={styles.topDiv} /> */}
             <div className={styles.extraDiv2} />
 
-            <Table
-                //@ts-ignore
-                tableProps={tableProps}
-                variant="innerTable"
-            />
+            <span style={{ position: 'relative', left: `${leftPos}px` }}>
+                <Table
+                    //@ts-ignore
+
+                    tableProps={tableProps}
+                    variant="innerTable"
+                />
+            </span>
 
             {/* <div className={styles.topDiv} /> */}
         </div>
