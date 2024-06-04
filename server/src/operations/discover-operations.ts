@@ -7,7 +7,7 @@ import { attempt, compact, uniqBy, isEmpty } from 'lodash-es';
 import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
-import { createResource } from '../lib/database/db';
+import { createResource, deleteDatabaseInstance, listDatabaseInstances } from '../lib/database/db';
 import { getResources } from './database/database-operations';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
 import { getResourceNameFromTags, sleep, getArtifactsRegionBucketName } from '../utils/utils';
@@ -79,6 +79,7 @@ const logger = getLogger();
 interface SsmTargetsInfo {
     ec2InstanceId: string;
     ec2InstanceName: string;
+    ec2InstanceType: string;
     ssmState: string;
     ebsVolumeIDs: (string | undefined)[] | undefined;
     vpc?: {
@@ -157,6 +158,7 @@ async function getHostAndSqlServerInfo(
             const ssmStatus = await getSSMConnectionStatus(credentialsId, region, ec2Instance?.InstanceId || '');
             ssmTargets.push({
                 ec2InstanceId: ec2Instance?.InstanceId || '',
+                ec2InstanceType: ec2Instance?.InstanceType || '',
                 ec2InstanceName: name!,
                 ssmState: ssmStatus.Status!,
                 ebsVolumeIDs: ec2Instance?.BlockDeviceMappings?.map(bdm => bdm?.Ebs?.VolumeId),
@@ -306,6 +308,7 @@ async function getHostAndSqlServerInfo(
                     if (dbInfo.length) {
                         ssmConnectedEc2ResponseInfo.push({
                             ec2InstanceId: target.ec2InstanceId,
+                            ec2InstanceType: target.ec2InstanceType,
                             ec2InstanceName: target.ec2InstanceName,
                             ssmState: target.ssmState,
                             sqlServerInstances: dbInfo,
@@ -1455,10 +1458,61 @@ async function preparePsModulesForManage(
     return jobStatusRecord.status;
 }
 
+async function unmanageDatabaseInstance(
+    accountId: string,
+    credentialsId: string,
+    resourceId: string,
+    databaseInstanceList: string
+) {
+    logger.info('Unmanaging SQL Server instances', { accountId, credentialsId, resourceId, databaseInstanceList });
+
+    const databaseInstanceResponse: {
+        databaseInstanceId: string;
+        status: string;
+        errorMessage?: string;
+    }[] = [];
+
+    databaseInstanceList = databaseInstanceList.replace(/ /g, '');
+    if (databaseInstanceList.length > 0) {
+        const databaseInstanceIds = databaseInstanceList.split(',');
+
+        const preDeleteDatabaseInstances = await listDatabaseInstances(accountId, credentialsId, {
+            resourceId
+        });
+
+        await deleteDatabaseInstance(accountId, credentialsId, resourceId, databaseInstanceIds);
+
+        const postDeleteDatabaseInstances = await listDatabaseInstances(accountId, credentialsId, {
+            resourceId
+        });
+
+        databaseInstanceIds.forEach(databaseInstanceId => {
+            if (preDeleteDatabaseInstances.some(elem => elem.sql_instance_id === databaseInstanceId)) {
+                if (postDeleteDatabaseInstances.some(elem => elem.sql_instance_id === databaseInstanceId)) {
+                    databaseInstanceResponse.push({ databaseInstanceId, status: 'failed' });
+                } else {
+                    databaseInstanceResponse.push({ databaseInstanceId, status: 'success' });
+                }
+            } else {
+                databaseInstanceResponse.push({
+                    databaseInstanceId,
+                    status: 'failed',
+                    errorMessage: 'Instance does not exist.'
+                });
+            }
+        });
+    }
+
+    return {
+        resourceId,
+        items: databaseInstanceResponse
+    };
+}
 export {
     getHostAndSqlServerInfo,
     validateAndStoreDiscoveredParameters,
     fetchUnmanagedHostsInformation,
     manageSqlServer,
-    prepareForManage
+    prepareForManage,
+    unmanageDatabaseInstance
 };

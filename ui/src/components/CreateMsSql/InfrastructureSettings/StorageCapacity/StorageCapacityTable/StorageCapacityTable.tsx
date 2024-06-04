@@ -33,12 +33,14 @@ const StorageCapacityTable = () => {
             size: sizeData?.tempdb,
             calculation: `10% of ${GENERAL.DATA_SIZE}`
         });
-        newList.push({
-            id: 4,
-            type: GENERAL.QUORUM_VOLUME,
-            size: sizeData?.quorum,
-            calculation: `Disk Witness for Windows cluster in FCI deployments`
-        });
+        if (sizeData?.quorum) {
+            newList.push({
+                id: 4,
+                type: GENERAL.QUORUM_VOLUME,
+                size: sizeData?.quorum,
+                calculation: `Disk Witness for Windows cluster in FCI deployments`
+            });
+        }
         if (isFsxnNew(fsxNType)) {
             // For existing FSX buffer size should not be considered
             newList.push({

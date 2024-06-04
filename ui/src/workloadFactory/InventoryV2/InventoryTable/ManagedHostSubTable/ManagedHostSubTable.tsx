@@ -15,11 +15,13 @@ import { formatSizeTwoPrecision, isAwsBackupEnabled } from '../../../../utils/ut
 import { renderAllocatedCapacity } from '../../../Inventory/InventoryUtils';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
+import { useRunOnce } from '../../../../common/hooks/useRunOnce';
 
-const ManagedHostSubTable = ({rowId}: {rowId: string}) => {
+const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollPosition: any }) => {
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
+
     const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
@@ -29,9 +31,13 @@ const ManagedHostSubTable = ({rowId}: {rowId: string}) => {
 
     useEffect(() => {
         if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
-            const newTable = inventoryTableData?.[rowId]?.sqlServerInstances?.map((perRow) => {
+            const newTable = inventoryTableData?.[rowId]?.sqlServerInstances?.map(perRow => {
                 let protectionText = '';
-                if (isAwsBackupEnabled(perRow) || perRow?.protection?.isFsxOntapSnapshotsEnabled || perRow?.protection?.isSqlNativeEnabled) {
+                if (
+                    isAwsBackupEnabled(perRow) ||
+                    perRow?.protection?.isFsxOntapSnapshotsEnabled ||
+                    perRow?.protection?.isSqlNativeEnabled
+                ) {
                     protectionText = 'Yes';
                 } else if (perRow?.protection) {
                     protectionText = 'No';
@@ -40,8 +46,10 @@ const ManagedHostSubTable = ({rowId}: {rowId: string}) => {
                     ...perRow,
                     status: perRow?.isManaged ? 'Managed' : 'Unmanaged',
                     protectionText: protectionText,
-                    allocatedCapacityText: perRow?.allocatedCapacity ? formatSizeTwoPrecision(perRow?.allocatedCapacity) : ''
-                }
+                    allocatedCapacityText: perRow?.allocatedCapacity
+                        ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
+                        : ''
+                };
             });
             setData(newTable);
         } else {
@@ -105,7 +113,12 @@ const ManagedHostSubTable = ({rowId}: {rowId: string}) => {
             accessor: 'name',
             renderCell: (cellData: any, rowData: any) => {
                 const menu = [];
-                if (rowData.status === 'Unmanaged') {
+                if (!rowData.isDetected) {
+                    menu.push({
+                        id: 'detect',
+                        displayName: 'Detect'
+                    });
+                } else if (rowData.status === 'Unmanaged') {
                     menu.push({
                         id: 'manage',
                         displayName: 'Manage'
@@ -226,7 +239,7 @@ const ManagedHostSubTable = ({rowId}: {rowId: string}) => {
             width: '172px',
             isSortable: true,
             renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE
+                return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
         {
@@ -236,7 +249,7 @@ const ManagedHostSubTable = ({rowId}: {rowId: string}) => {
             width: '193px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE
+                return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
         {
@@ -246,7 +259,7 @@ const ManagedHostSubTable = ({rowId}: {rowId: string}) => {
             width: '135px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE
+                return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
         {
@@ -256,7 +269,7 @@ const ManagedHostSubTable = ({rowId}: {rowId: string}) => {
             width: '150px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE
+                return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
         {
@@ -286,11 +299,14 @@ const ManagedHostSubTable = ({rowId}: {rowId: string}) => {
             {/* <div className={styles.topDiv} /> */}
             <div className={styles.extraDiv2} />
 
-            <Table
-                //@ts-ignore
-                tableProps={tableProps}
-                variant="innerTable"
-            />
+            <span style={{ position: 'relative', left: `${scrollPosition}px` }}>
+                <Table
+                    //@ts-ignore
+
+                    tableProps={tableProps}
+                    variant="innerTable"
+                />
+            </span>
 
             {/* <div className={styles.topDiv} /> */}
         </div>

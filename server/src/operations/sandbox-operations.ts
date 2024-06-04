@@ -358,7 +358,6 @@ interface VolumeLunMap {
     volumeName: string;
     lunPath: string;
     lunSerialNumber: string;
-    windowsVolumeName: string;
     volumeUuid: string;
     parentSvm?: string;
     parentVolume?: string;
@@ -1291,12 +1290,19 @@ async function startCleanup(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to cleanup');
         }
 
+        const jsonResp = sqlResponseParsing(resp);
+
+        if (jsonResp.error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, jsonResp.error);
+        }
+
         status = JOBSTATUS.COMPLETED;
-        return sqlResponseParsing(resp);
+        return jsonResp;
     } catch (e: any) {
         logger.error(`Failed to perform cleanup for sandbox ${destDetails.database}`);
         status = JOBSTATUS.FAILED;
         errorMsg = `Failed to clean up ${e.message}`;
+        throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     } finally {
         await updateJobDetails(accountId, credentialsId, region, cleanupJob.id, {
             error: errorMsg,
@@ -1404,7 +1410,8 @@ async function updateMetadataForSanboxDeletion(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseNameToRemove: string
+    databaseNameToRemove: string,
+    isSplit: boolean = false
 ) {
     logger.info('Updating metadata for sandbox operation', accountId, credentialsId, region, databaseHostId);
     const {
@@ -1420,7 +1427,9 @@ async function updateMetadataForSanboxDeletion(
     const newMetadata = metadata as unknown as Metadata;
 
     newMetadata.sandboxes = newMetadata.sandboxes?.filter(sandbox => sandbox.databaseName !== databaseNameToRemove);
-    newMetadata.userDatabase = newMetadata.userDatabase?.filter(db => db.name !== databaseNameToRemove);
+    if (!isSplit) {
+        newMetadata.userDatabase = newMetadata.userDatabase?.filter(db => db.name !== databaseNameToRemove);
+    }
     try {
         await updateResourceMetaData(accountId, databaseHostId, newMetadata);
         logger.info('Metadata updated succesfully for sandbox operation', accountId, databaseHostId);
@@ -2549,7 +2558,8 @@ async function deleteExtendedProperties(
                 credentialsId,
                 region,
                 resourceDetail.host,
-                resourceDetail.database
+                resourceDetail.database,
+                true
             );
         }
 

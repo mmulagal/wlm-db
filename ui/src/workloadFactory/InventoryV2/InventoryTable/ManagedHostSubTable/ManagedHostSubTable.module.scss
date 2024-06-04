@@ -2,8 +2,7 @@
     // width: 1500px;
     z-index: 1 !important;
     display: flex;
-
-    padding: 48px 12px 48px 70px;
+    border-bottom: 1px solid var(--border);
 
     .inProgress {
         display: flex;
@@ -12,12 +11,12 @@
     }
 
     .extraDiv2 {
-        width: 80px;
+        width: 70px;
         position: sticky;
-
-        z-index: 1;
+        left: 0;
+        z-index: 3;
         background-color: var(--content-background);
-        border-bottom: 1px solid var(--border);
+        // border-bottom: 1px solid var(--border);
     }
 
     .table {
@@ -33,6 +32,11 @@
         height: 48px;
         width: 213px;
         border-right: 1px solid var(--border);
+    }
+
+    [class*='Table-module_table-wrapper'] {
+        width: 1500px !important;
+        padding: 48px 12px 48px 0;
     }
 
     [class*='Table-module_row'] {
