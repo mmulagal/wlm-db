@@ -3,6 +3,9 @@
     width: 100vw;
     background-color: var(--main-background);
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 
     .tabs {
         margin-top: 40px;
