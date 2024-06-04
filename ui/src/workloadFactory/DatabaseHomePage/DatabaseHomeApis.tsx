@@ -24,6 +24,7 @@ const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
 
     const { databaseHostsData } = useAppSelector(state => state.inventory.getDatabaseHosts);
+    const { sandboxSavings } = useAppSelector(state => state.sandbox.getSandboxSavings);
     const refetchJobSummaryApi = useAppSelector(state => state.msSqlAction.refetchJobSummaryApi);
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
@@ -97,14 +98,14 @@ const DatabaseHomeApis = () => {
         const aggrProtection = getAggrProtection(mergedData);
         dispatch(addAggregatedProtectionDbCount(aggrProtection));
 
-        const aggrStorage = getAggrStorageSavings(mergedData);
+        const aggrStorage = getAggrStorageSavings(mergedData, sandboxSavings);
         dispatch(addAggregatedStorageSavings(aggrStorage));
 
         const aggrCost = getAggrCost(mergedData);
         dispatch(addAggregatedCosts(aggrCost));
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [databaseHostsData]);
+    }, [databaseHostsData, sandboxSavings]);
 
     return <></>;
 };

@@ -1,7 +1,7 @@
 import { RouteTags } from '../../utils/consts';
 import {
     DatabaseHostSummaryPerStorageTypeListResponse,
-    DatabaseHostSummaryPerStorageTypeListResponseV2
+    // DatabaseHostSummaryForMultiInstanceListResponse
 } from '../types/database-hosts.types';
 import {
     DiscoverMsSqlResponseBody,
@@ -14,6 +14,7 @@ import {
     PrepareResourceResponseBody
 } from '../types/discover.types';
 import { GenericHeaders, CredentialsIdParams } from '../types/generic.types';
+import { StatusResponse } from '../types/system.types';
 
 const DiscoveryBaseRequest = {
     Headers: GenericHeaders,
@@ -100,7 +101,7 @@ const MsSqlInstancesSchemaV2 = {
     summary: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
     description: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
     response: {
-        200: DatabaseHostSummaryPerStorageTypeListResponseV2
+        200: StatusResponse
     }
 };
 export {

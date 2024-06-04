@@ -15,11 +15,13 @@ import { formatSizeTwoPrecision, isAwsBackupEnabled } from '../../../../utils/ut
 import { renderAllocatedCapacity } from '../../../Inventory/InventoryUtils';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
+import { useRunOnce } from '../../../../common/hooks/useRunOnce';
 
-const ManagedHostSubTable = ({ rowId }: { rowId: string }) => {
+const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollPosition: any }) => {
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
+
     const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
@@ -297,11 +299,14 @@ const ManagedHostSubTable = ({ rowId }: { rowId: string }) => {
             {/* <div className={styles.topDiv} /> */}
             <div className={styles.extraDiv2} />
 
-            <Table
-                //@ts-ignore
-                tableProps={tableProps}
-                variant="innerTable"
-            />
+            <span style={{ position: 'relative', left: `${scrollPosition}px` }}>
+                <Table
+                    //@ts-ignore
+
+                    tableProps={tableProps}
+                    variant="innerTable"
+                />
+            </span>
 
             {/* <div className={styles.topDiv} /> */}
         </div>

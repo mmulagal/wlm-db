@@ -13,7 +13,8 @@ import {
     getHostAndSqlServerInfo,
     manageSqlServer,
     validateAndStoreDiscoveredParameters,
-    prepareForManage
+    prepareForManage,
+    fetchUnmanagedHostsInformationV2
 } from '../operations/discover-operations';
 
 import getLogger from '../utils/logger';
@@ -83,7 +84,7 @@ export default function discoverRoutes(fastify: FastifyInstance) {
             query: { instances }
         } = request;
 
-        return fetchUnmanagedHostsInformation(accountId, credentialsId, region, instances.split(','));
+        return fetchUnmanagedHostsInformationV2(accountId, credentialsId, region, instances.split(','));
     });
 
     server.post(

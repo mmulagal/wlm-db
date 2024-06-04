@@ -23,6 +23,7 @@ import {
     WLMDB_COST_ALLOCATION_TAG,
     CF_STACK_RESOURCE_TYPE,
     RESOURCE_SOURCE,
+    DEFAULT_INSTANCE_NAME,
     STORAGE_PROTOCOLS
 } from '../../utils/consts';
 import {
@@ -41,10 +42,16 @@ import {
     createResource,
     listEvents,
     updateDeployment,
-    upsertDeployment
+    upsertDeployment,
+    upsertDatabaseInstanceRecord,
+    DatabaseInstance
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
-import { getMsSqlResourceId } from '../workloads/mssql/mssql-operations';
+import {
+    getActiveSqlInstanceName,
+    getMsSqlResourceId,
+    getMssqlInstanceGuid
+} from '../workloads/mssql/mssql-operations';
 // import { handleNotification } from '../cloud-manager/notification-operations';
 import { lookupCredentials } from '../cloud-manager/credentials-operations';
 import { associateResource } from '../../lib/cloud-manager/credentials';
@@ -593,6 +600,43 @@ async function processCloudFormationMessages() {
                                                         fsxId,
                                                         fsxName
                                                     );
+                                                    const nodeIds = [node1InstanceId];
+                                                    if (node2InstanceId) {
+                                                        nodeIds.push(node2InstanceId);
+                                                    }
+                                                    try {
+                                                        const deployedInstanceName = await getActiveSqlInstanceName(
+                                                            credentialsId,
+                                                            region,
+                                                            nodeIds
+                                                        );
+                                                        const instanceId = await getMssqlInstanceGuid(
+                                                            credentialsId,
+                                                            region,
+                                                            deployedInstanceName,
+                                                            nodeIds
+                                                        );
+
+                                                        const instanceDetails: DatabaseInstance = {
+                                                            credentialsId,
+                                                            resourceId,
+                                                            instanceId,
+                                                            instanceName: DEFAULT_INSTANCE_NAME,
+                                                            fsxnId: fsxId,
+                                                            isDefault: true,
+                                                            source: RESOURCE_SOURCE.DEPLOY,
+                                                            fsxSvmId,
+                                                            sqlDeploymentType
+                                                        };
+
+                                                        await upsertDatabaseInstanceRecord(accountId, instanceDetails);
+                                                    } catch (error) {
+                                                        logger.error(
+                                                            'Failed to add details to database instance table',
+                                                            error
+                                                        );
+                                                    }
+
                                                     try {
                                                         await tagResources(
                                                             credentialsId,
