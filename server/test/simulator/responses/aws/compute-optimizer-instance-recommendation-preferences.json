@@ -1,0 +1,67 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "c30f3453-661b-44a4-8b9b-f923a9248be8",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "enhancedInfrastructureMetrics": "Inactive",
+    "lookBackPeriod": "DAYS_14",
+    "preferredResources": [
+        {
+            "effectiveIncludeList": [
+                "m2.xlarge",      "m4.large",
+                "m5.large",       "m5a.large",
+                "m5ad.large",     "m5d.large",
+                "m5dn.large",     "m5n.large",
+                "m5zn.large",     "m6a.large",
+                "m6i.large",      "m6id.large",
+                "m6idn.large",    "m6in.large",
+                "m7i-flex.large", "m7i.large",
+                "r3.large",       "r4.large",
+                "r5.large",       "r5a.large",
+                "r5ad.large",     "r5b.large",
+                "r5d.large",      "r5dn.large",
+                "r5n.large",      "r6a.large",
+                "r6i.large",      "r6id.large",
+                "r6idn.large",    "r6in.large",
+                "r7i.large"
+            ],
+            "includeList": [
+                "m2.xlarge",      "m4.large",
+                "m5.large",       "m5a.large",
+                "m5ad.large",     "m5d.large",
+                "m5dn.large",     "m5n.large",
+                "m5zn.large",     "m6a.large",
+                "m6i.large",      "m6id.large",
+                "m6idn.large",    "m6in.large",
+                "m7i-flex.large", "m7i.large",
+                "r3.large",       "r4.large",
+                "r5.large",       "r5a.large",
+                "r5ad.large",     "r5b.large",
+                "r5d.large",      "r5dn.large",
+                "r5n.large",      "r6a.large",
+                "r6i.large",      "r6id.large",
+                "r6idn.large",    "r6in.large",
+                "r7i.large"
+            ],
+            "excludeList":["t*"],
+            "name": "Ec2InstanceTypes"
+        }
+    ],
+    "utilizationPreferences": [
+        {
+            "metricName": "CpuUtilization",
+            "metricParameters": {
+                "headroom": "PERCENT_20",
+                "threshold": "P99_5"
+            }
+        },
+        {
+            "metricName": "MemoryUtilization",
+            "metricParameters": {
+                "headroom": "PERCENT_20"
+            }
+        }
+    ]
+}

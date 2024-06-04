@@ -772,7 +772,6 @@ function calculateFsxWindowsCapacityPrice(
 
     return (capacityPrice + iopsPrice + throughputPrice) * duration;
 }
-
 async function getSqlInstancePricingDetails(
     region: string,
     instanceType: string,

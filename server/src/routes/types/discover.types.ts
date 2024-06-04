@@ -18,6 +18,9 @@ const DiscoverMsSqlQuery = Type.Object({
 
 const SqlServerInstanceInfo = Type.Object({
     sqlServerEdition: Type.Optional(Type.String({ description: 'MS SQL Server edition' })),
+    sqlServerEngineEdition: Type.Optional(
+        Type.Number({ description: 'Database Engine edition of the instance of SQL Server installed on the server.' })
+    ),
     sqlServerInstance: Type.String({ description: 'MS SQL Server instance name' }),
     sqlServerState: Type.String({
         // Reference: https://learn.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicecontrollerstatus?view=dotnet-plat-ext-8.0
@@ -100,6 +103,7 @@ const DiscoverResponseInfo = Type.Object({
     ec2InstanceId: Type.String({ description: 'AWS EC2 instance ID' }),
     ec2InstanceType: Type.String({ description: 'EC2 instance type' }),
     ec2InstanceName: Type.Optional(Type.String({ description: 'EC2 tag with key "Name".' })),
+    ec2UsageOperation: Type.Optional(Type.String({ description: 'EC2 usage operation details' })),
     ssmState: Type.String({ description: 'SSM connection status', enum: ['connected', 'notconnected'] }),
     vpc: Type.Optional(
         Type.Object({

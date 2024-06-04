@@ -1,4 +1,4 @@
-import { GetMetricStatisticsCommandInput } from '@aws-sdk/client-cloudwatch';
+import { Statistic, GetMetricStatisticsCommandInput } from '@aws-sdk/client-cloudwatch';
 import ms from 'ms';
 import getMetricStatistics from '../../lib/aws/cloud-watch';
 import getLogger from '../../utils/logger';
@@ -176,4 +176,102 @@ async function calculateFsxwStorageEfficiencyUsingCloudwatch(
     throw new Error(errorMessage);
 }
 
-export { calculateFsxnStorageEfficiencyUsingCloudwatch, calculateFsxwStorageEfficiencyUsingCloudwatch };
+async function getEbsVolumeUtilization(region: string, credentialsId: string, ebsVolumeIds: string[] = []) {
+    logger.debug('Get EBS volume utilization:', { region, credentialsId, ebsVolumeIds });
+    const paramsEbsRead = {
+        Namespace: 'AWS/EBS',
+        MetricName: 'VolumeReadBytes',
+        Dimensions: ebsVolumeIds.map(ebsVolumeId => ({ Name: 'VolumeId', Value: ebsVolumeId })),
+        StartTime: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        EndTime: new Date(),
+        Period: 6 * 60 * 60,
+        Statistics: [Statistic.Sum]
+    };
+    const paramsEbsWrite = {
+        Namespace: 'AWS/EBS',
+        MetricName: 'VolumeWriteBytes',
+        Dimensions: ebsVolumeIds.map(ebsVolumeId => ({ Name: 'VolumeId', Value: ebsVolumeId })),
+        StartTime: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        EndTime: new Date(),
+        Period: 6 * 60 * 60,
+        Statistics: [Statistic.Sum]
+    };
+
+    const [{ Datapoints: dataEbsReadDatapoints }, { Datapoints: dataEbsWriteDatapoints }] = await Promise.all([
+        getMetricStatistics(credentialsId, region, paramsEbsRead),
+        getMetricStatistics(credentialsId, region, paramsEbsWrite)
+    ]);
+
+    let totalEbsRead = 0;
+    let totalEbsWrite = 0;
+    dataEbsReadDatapoints?.forEach(dataPoint => {
+        totalEbsRead += dataPoint?.Sum || 0;
+        return totalEbsRead;
+    });
+    dataEbsWriteDatapoints?.forEach(dataPoint => {
+        totalEbsWrite += dataPoint?.Sum || 0;
+        return totalEbsWrite;
+    });
+    const totalEbsThroughputGbps = totalEbsRead + totalEbsWrite / paramsEbsRead.Period / (1024 * 1024 * 1024); // These metrics are reported in bytes. Convert to Mib/sec
+
+    return totalEbsThroughputGbps;
+}
+
+async function getInstanceUtilization(region: string, credentialsId: string, instanceIds: string[]) {
+    logger.info('Calculating instance utilization:', { region, credentialsId, instanceIds });
+
+    const paramsCpu = {
+        Namespace: 'AWS/EC2',
+        MetricName: 'CPUUtilization',
+        Dimensions: instanceIds.map(instanceId => ({ Name: 'InstanceId', Value: instanceId })),
+        StartTime: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        EndTime: new Date(),
+        Period: 300,
+        Statistics: [Statistic.Maximum]
+    };
+    const paramsNetworkIn = {
+        Namespace: 'AWS/EC2',
+        MetricName: 'NetworkIn',
+        Dimensions: instanceIds.map(instanceId => ({ Name: 'InstanceId', Value: instanceId })),
+        StartTime: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        EndTime: new Date(),
+        Period: 300,
+        Statistics: [Statistic.Average]
+    };
+
+    const paramsNetworkOut = {
+        Namespace: 'AWS/EC2',
+        MetricName: 'NetworkOut',
+        Dimensions: instanceIds.map(instanceId => ({ Name: 'InstanceId', Value: instanceId })),
+        StartTime: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        EndTime: new Date(),
+        Period: 300,
+        Statistics: [Statistic.Average]
+    };
+
+    const [{ Datapoints: cpuDatapoints }, { Datapoints: networkInDatapoints }, { Datapoints: networkOutDatapoints }] =
+        await Promise.all([
+            getMetricStatistics(credentialsId, region, paramsCpu),
+            getMetricStatistics(credentialsId, region, paramsNetworkIn),
+            getMetricStatistics(credentialsId, region, paramsNetworkOut)
+        ]);
+
+    const peakCpuUtilizationPercentage =
+        cpuDatapoints?.reduce((acc, curr) => (curr.Maximum && curr.Maximum > acc ? curr.Maximum : acc), 0) || 0;
+    const maxAverageBytesIn =
+        networkInDatapoints?.reduce((acc, curr) => (curr.Average && curr.Average > acc ? curr.Average : acc), 0) || 0;
+    const maxAverageBytesOut =
+        networkOutDatapoints?.reduce((acc, curr) => (curr.Average && curr.Average > acc ? curr.Average : acc), 0) || 0;
+
+    const averageNetworkBandwidthGbps =
+        (maxAverageBytesIn + maxAverageBytesOut) / paramsNetworkIn.Period / (1024 * 1024 * 1024);
+
+    return { peakCpuUtilizationPercentage, averageNetworkBandwidthGbps };
+}
+
+export {
+    calculateFsxnStorageEfficiencyUsingCloudwatch,
+    calculateFsxwStorageEfficiencyUsingCloudwatch,
+    getInstanceUtilization,
+    getEbsVolumeUtilization
+};
