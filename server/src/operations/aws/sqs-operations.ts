@@ -23,7 +23,8 @@ import {
     WLMDB_COST_ALLOCATION_TAG,
     CF_STACK_RESOURCE_TYPE,
     RESOURCE_SOURCE,
-    DEFAULT_INSTANCE_NAME
+    DEFAULT_INSTANCE_NAME,
+    STORAGE_PROTOCOLS
 } from '../../utils/consts';
 import {
     checkAndRetrieveJsonObject,
@@ -46,7 +47,11 @@ import {
     DatabaseInstance
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
-import { getMsSqlResourceId, getMssqlInstanceDetails } from '../workloads/mssql/mssql-operations';
+import {
+    getActiveSqlInstanceName,
+    getMsSqlResourceId,
+    getMssqlInstanceGuid
+} from '../workloads/mssql/mssql-operations';
 // import { handleNotification } from '../cloud-manager/notification-operations';
 import { lookupCredentials } from '../cloud-manager/credentials-operations';
 import { associateResource } from '../../lib/cloud-manager/credentials';
@@ -57,7 +62,6 @@ import { decryptString } from './kms-operations';
 import { registerFsxOntapCredentials } from '../../lib/cloud-manager/fsx-core';
 import { createJobs, listJobs } from '../../lib/database/job';
 import { getJobDetails, updateJobDetails } from '../database/job-operations';
-import { databaseInstanceMetadata } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -583,7 +587,8 @@ async function processCloudFormationMessages() {
                                                             activeDirectoryName,
                                                             activeDirectoryAddress,
                                                             fsxSvmId,
-                                                            source: RESOURCE_SOURCE.DEPLOY
+                                                            source: RESOURCE_SOURCE.DEPLOY,
+                                                            storageProtocol: STORAGE_PROTOCOLS.ISCSI
                                                         }
                                                     });
 
@@ -595,33 +600,36 @@ async function processCloudFormationMessages() {
                                                         fsxId,
                                                         fsxName
                                                     );
-
+                                                    const nodeIds = [node1InstanceId];
+                                                    if (node2InstanceId) {
+                                                        nodeIds.push(node2InstanceId);
+                                                    }
                                                     try {
-                                                        const instanceId = await getMssqlInstanceDetails(
+                                                        const deployedInstanceName = await getActiveSqlInstanceName(
                                                             credentialsId,
                                                             region,
-                                                            node1InstanceId,
-                                                            node2InstanceId
+                                                            nodeIds
+                                                        );
+                                                        const instanceId = await getMssqlInstanceGuid(
+                                                            credentialsId,
+                                                            region,
+                                                            deployedInstanceName,
+                                                            nodeIds
                                                         );
 
                                                         const instanceDetails: DatabaseInstance = {
-                                                            credentialsId: credentialsId,
-                                                            resourceId: resourceId,
-                                                            instanceId: instanceId,
+                                                            credentialsId,
+                                                            resourceId,
+                                                            instanceId,
                                                             instanceName: DEFAULT_INSTANCE_NAME,
                                                             fsxnId: fsxId,
-                                                            isDefault: true
-                                                        };
-                                                        const instanceMetadata: databaseInstanceMetadata = {
+                                                            isDefault: true,
                                                             source: RESOURCE_SOURCE.DEPLOY,
-                                                            sqlDeploymentType: sqlDeploymentType,
-                                                            fsxSvmId: fsxSvmId
+                                                            fsxSvmId,
+                                                            sqlDeploymentType
                                                         };
-                                                        await upsertDatabaseInstanceRecord(
-                                                            accountId,
-                                                            instanceDetails,
-                                                            instanceMetadata
-                                                        );
+
+                                                        await upsertDatabaseInstanceRecord(accountId, instanceDetails);
                                                     } catch (error) {
                                                         logger.error(
                                                             'Failed to add details to database instance table',

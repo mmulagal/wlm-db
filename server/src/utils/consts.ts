@@ -960,7 +960,10 @@ enum DatabaseHostsQueryFields {
     USAGE_ESTIMATION = 'usageEstimation',
     RESOURCE_UTILIZATION = 'resourceUtilization',
     DB_COUNT = 'dbCount',
-    SERVER_DETAILS = 'serverDetails'
+    SERVER_DETAILS = 'serverDetails',
+    NODE_TOPOLOGY = 'nodeTopology',
+    INSTANCE_DETAILS = 'instanceDetails',
+    DATABASE_INSTANCE_TOPOLOGY = 'databaseInstanceTopology'
 }
 
 enum ServerState {
@@ -1159,6 +1162,8 @@ const SSM_PARAM_PREFIX = '/netapp/wlmdb/';
 const CUSTOM_AMI_VALIDATION_INSTANCE_TYPE = 'm5.xlarge';
 
 const HOURS_IN_MONTH = 730;
+
+const VERSION_2_0 = '2.0';
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1426,5 +1431,6 @@ export {
     PSMODULES_RELATIVE_PATH,
     EBS_VOLUME_SIZE,
     EBS_DEFAULT_VOLUME_SIZE,
-    HOURS_IN_MONTH
+    HOURS_IN_MONTH,
+    VERSION_2_0
 };

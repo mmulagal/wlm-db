@@ -130,19 +130,21 @@ const StoragePerStorageTypeResponse = Type.Object({
 });
 type StoragePerStorageTypeResponseType = Static<typeof StoragePerStorageTypeResponse>;
 
-const UsageCostPerStorageTypeResponse = Type.Object({
-    compute: Type.Number({ description: 'Compute cost in dollars' }),
-    storage: Type.Object({
-        fsxn: Type.Number({ description: 'FSX for NetApp ONTAP Storage  cost in dollars' }),
-        fsxw: Type.Optional(Type.Number({ description: 'FSX for Windows Storage cost in dollars' })),
-        ebs: Type.Optional(Type.Number({ description: 'EBS Storage cost in dollars' }))
-    }),
-    connectivity: Type.Number({ description: 'Connectivity cost in dollars' }),
-    others: Type.Number({
-        description: 'Other services like active directory, cloudwatch logging, etc costs in dollars'
-    }),
-    estimationType: Type.String({ enum: [BILLING, PRICING] })
-});
+const UsageCostPerStorageTypeResponse = Type.Optional(
+    Type.Object({
+        compute: Type.Number({ description: 'Compute cost in dollars' }),
+        storage: Type.Object({
+            fsxn: Type.Number({ description: 'FSX for NetApp ONTAP Storage  cost in dollars' }),
+            fsxw: Type.Optional(Type.Number({ description: 'FSX for Windows Storage cost in dollars' })),
+            ebs: Type.Optional(Type.Number({ description: 'EBS Storage cost in dollars' }))
+        }),
+        connectivity: Type.Number({ description: 'Connectivity cost in dollars' }),
+        others: Type.Number({
+            description: 'Other services like active directory, cloudwatch logging, etc costs in dollars'
+        }),
+        estimationType: Type.String({ enum: [BILLING, PRICING] })
+    })
+);
 type UsageCostResponseType = Static<typeof UsageCostPerStorageTypeResponse>;
 
 const DatabaseServerMetadataResponse = Type.Object({
@@ -196,15 +198,17 @@ type ResourcesUtilizationResponseType = Static<typeof ResourcesUtilizationRespon
 
 // type DatabaseHostSummaryResponseType = Static<typeof DatabaseHostSummaryResponse>;
 // type DatabaseHostSummaryListResponseType = Static<typeof DatabaseHostSummaryListResponse>;
-const EbsResourceInfoResponse = Type.Array(
-    Type.Object({
-        id: Type.String(),
-        size: Type.Number(),
-        cost: Type.Number(),
-        throughput: Type.Optional(Type.Number()), // Optional for gp2 volumes
-        iops: Type.Optional(Type.Number()), // Optional for st1
-        volumeType: Type.String()
-    })
+const EbsResourceInfoResponse = Type.Optional(
+    Type.Array(
+        Type.Object({
+            id: Type.String(),
+            size: Type.Number(),
+            cost: Type.Number(),
+            throughput: Type.Optional(Type.Number()), // Optional for gp2 volumes
+            iops: Type.Optional(Type.Number()), // Optional for st1
+            volumeType: Type.String()
+        })
+    )
 );
 const DatabaseHostSummaryPerStorageTypeResponse = Type.Object({
     id: Type.String(),
@@ -232,6 +236,7 @@ const DatabaseHostSummaryPerStorageTypeResponse = Type.Object({
     ),
     errors: Type.Optional(Type.Any())
 });
+
 const DatabaseHostSummaryPerStorageTypeListResponse = Type.Object({
     count: Type.Number(),
     items: Type.Array(DatabaseHostSummaryPerStorageTypeResponse),
@@ -398,6 +403,86 @@ const SandboxLifeCycleBody = Type.Object({
     action: Type.String({ enum: ['REFRESH', 'RE-BASELINE'] })
 });
 
+const DatabaseHostInstanceDetailsResponse = Type.Object({
+    instanceName: Type.String(),
+    isManaged: Type.Optional(Type.Boolean()),
+    instanceState: Type.Optional(Type.String({ enum: ['UP', 'DOWN'] })), // Fix the syntax error
+    isDefault: Type.Optional(Type.Boolean())
+});
+
+const nodeTopologyResponse = Type.Object({
+    awsAccount: Type.String({ minLength: 1 }),
+    region: Type.String(),
+    vpcId: Type.Optional(Type.String()),
+    // vpcName: Type.Optional(Type.String()),
+    // vpcCidr: Type.Optional(Type.String()),
+    // keyPairName: Type.Optional(Type.String()),
+    ec2Details: Type.Optional(Type.Array(EC2InstanceDetailsResponse)),
+    activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse)
+});
+
+const DatabseInstanceTopology = Type.Object({
+    serverType: Type.String({ enum: ['Microsoft SQL Server'] }),
+    serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
+    fileSystemType: Type.String({ enum: ['EBS', 'FSx for ONTAP', 'FSx for Windows'] }),
+    fileSystemId: Type.String(),
+    fileSystemName: Type.Optional(Type.String()),
+    fileSystemDeploymentMode: Type.Optional(Type.String()),
+    fileSystemStatus: Type.Optional(Type.String()),
+    fileSystemStorageCapacity: Type.Optional(Type.Number()),
+    fileSystemThroughputCapacity: Type.Optional(Type.Number()),
+    availabilityZones: Type.Optional(Type.Array(Type.String()))
+});
+
+const DatabaseHostInstanceSummaryResponse = Type.Object({
+    databaseInstanceId: Type.String(),
+    databaseInstanceName: Type.String(),
+    status: Type.String({ enum: ['Up', 'Down', 'N/A'] }),
+    databaseCount: Type.Optional(Type.Number()),
+    databaseServer: Type.Optional(DatabaseServerMetadataResponse),
+    databaseInstanceTopology: Type.Optional(DatabseInstanceTopology),
+    protection: Type.Optional(ProtectionPerStorageTypeResponse),
+    performance: Type.Optional(PerformanceResponse),
+    storage: Type.Optional(StoragePerStorageTypeResponse),
+    resourceUtilization: Type.Optional(ResourcesUtilizationResponse),
+    sqlServerDeploymentType: Type.Optional(Type.String()),
+    errors: Type.Optional(Type.Any())
+});
+type DatabaseHostInstanceSummaryResponseType = Static<typeof DatabaseHostInstanceSummaryResponse>;
+
+const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
+    id: Type.String(),
+    name: Type.String(),
+    nodeStatus: Type.String({ enum: ['ONLINE', 'OFFLINE', 'N/A'] }),
+    ssmStatus: Type.String({ enum: ['ONLINE', 'OFFLINE'] }),
+    databaseInstanceDetails: Type.Optional(Type.Array(DatabaseHostInstanceDetailsResponse)),
+    clusterNodeDetails: Type.Optional(
+        Type.Array(
+            Type.Object({
+                ec2InstanceId: Type.String(),
+                ec2InstancePrivateIpAddress: Type.String(),
+                ec2InstanceType: Type.String(),
+                ec2InstanceName: Type.Optional(Type.String())
+            })
+        )
+    ),
+    nodeTopology: Type.Optional(nodeTopologyResponse),
+    ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),
+    estimatedUsageCost: Type.Optional(UsageCostPerStorageTypeResponse),
+    databaseInstancesSummary: Type.Optional(Type.Array(DatabaseHostInstanceSummaryResponse))
+});
+
+const DatabaseHostSummaryForMultiInstanceListResponse = Type.Object({
+    count: Type.Number(),
+    items: Type.Array(DatabaseHostSummaryForMultiInstanceResponse),
+    nextToken: Type.Optional(Type.String())
+});
+
+type DatabaseHostSummaryForMultiInstanceResponseType = Static<typeof DatabaseHostSummaryForMultiInstanceResponse>;
+type DatabaseHostSummaryForMultiInstanceListResponseType = Static<
+    typeof DatabaseHostSummaryForMultiInstanceListResponse
+>;
+
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -465,5 +550,10 @@ export {
     DatabaseMountPointResponseType,
     SandboxParams,
     SplitEstimatesResponse,
-    SandboxLifeCycleBody
+    SandboxLifeCycleBody,
+    DatabaseHostSummaryForMultiInstanceResponse,
+    DatabaseHostSummaryForMultiInstanceListResponse,
+    DatabaseHostSummaryForMultiInstanceResponseType,
+    DatabaseHostSummaryForMultiInstanceListResponseType,
+    DatabaseHostInstanceSummaryResponseType
 };

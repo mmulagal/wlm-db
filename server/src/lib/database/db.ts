@@ -3,6 +3,7 @@ import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from '../../utils/utils';
+import { databaseInstanceMetadata } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -61,6 +62,13 @@ interface DatabaseInstance {
     instanceName: string;
     fsxnId: string;
     isDefault: boolean;
+    source: string;
+    sqlDeploymentType: string;
+    fsxSvmId: string;
+    storageProtocol?: string;
+    numberofUserDbsCreated?: number;
+    sandboxCreated?: boolean;
+    metaData?: databaseInstanceMetadata;
 }
 
 async function listDeployments(
@@ -533,10 +541,24 @@ async function updateResourceMetaData(accountId: string, resourceId: string, met
     });
 }
 
-async function upsertDatabaseInstanceRecord(accountId: string, record: DatabaseInstance, sqlInstanceMetadata?: any) {
-    logger.info('Upserting a database instance record', { accountId, record, sqlInstanceMetadata });
+async function upsertDatabaseInstanceRecord(accountId: string, record: DatabaseInstance) {
+    logger.info('Upserting a database instance record', { accountId, record });
 
-    const { resourceId, credentialsId, instanceId, instanceName, isDefault, fsxnId } = record;
+    const {
+        resourceId,
+        credentialsId,
+        instanceId,
+        instanceName,
+        isDefault,
+        fsxnId,
+        source,
+        sqlDeploymentType,
+        fsxSvmId,
+        numberofUserDbsCreated,
+        sandboxCreated,
+        storageProtocol,
+        metaData
+    } = record;
 
     accountId = checkAccount(accountId);
 
@@ -545,25 +567,55 @@ async function upsertDatabaseInstanceRecord(accountId: string, record: DatabaseI
             account_id: accountId,
             credentials_id: credentialsId,
             resource_id: resourceId,
-            sql_instance_id: instanceId,
-            sql_instance_name: instanceName,
+            database_instance_id: instanceId,
+            database_instance_name: instanceName,
             fsxn_ids: fsxnId,
             is_default: isDefault,
-            metadata: sqlInstanceMetadata
+            source,
+            database_deployment_type: sqlDeploymentType,
+            ...(fsxSvmId && { fsx_svm_id: fsxSvmId }),
+            ...(storageProtocol && { storage_protocol: storageProtocol }),
+            ...(numberofUserDbsCreated && { number_of_user_dbs_created: numberofUserDbsCreated }),
+            ...(sandboxCreated && { sandbox_created: sandboxCreated }),
+            ...(metaData && { metdata: metaData })
         },
         update: {
-            ...(instanceName && { sql_instance_name: instanceName }),
+            ...(instanceName && { database_instance_name: instanceName }),
             ...(fsxnId && { fsxn_ids: fsxnId }),
+            ...(fsxSvmId && { fsx_svm_id: fsxSvmId }),
             ...(isDefault && { is_default: isDefault }),
-            ...(sqlInstanceMetadata && { metadata: sqlInstanceMetadata })
+            ...(numberofUserDbsCreated && { number_of_user_dbs_created: numberofUserDbsCreated }),
+            ...(sandboxCreated && { sandbox_created: sandboxCreated })
         },
         where: {
             uk_wlmdb_database_instances: {
                 account_id: accountId,
                 credentials_id: credentialsId,
                 resource_id: resourceId,
-                sql_instance_id: instanceId
+                database_instance_id: instanceId
             }
+        }
+    });
+}
+
+async function updateDatabaseInstanceMetadata(
+    accountId: string,
+    databaseInstanceId: string,
+    credentialsId: string,
+    metaData: any
+) {
+    logger.info('Updating resource metadata', { accountId, databaseInstanceId, credentialsId });
+
+    accountId = checkAccount(accountId);
+
+    return prisma.client.database_instances.updateMany({
+        where: {
+            account_id: accountId,
+            database_instance_id: databaseInstanceId,
+            credentials_id: credentialsId
+        },
+        data: {
+            ...(!isEmpty(metaData) && { metadata: metaData })
         }
     });
 }
@@ -580,8 +632,8 @@ async function listDatabaseInstances(accountId: string, record: any) {
             account_id: accountId,
             credentials_id: credentialsId,
             ...(resourceId && { resource_id: resourceId }),
-            ...(instanceId && { sql_instance_id: instanceId }),
-            ...(instanceName && { sql_instance_name: instanceName }),
+            ...(instanceId && { database_instance_id: instanceId }),
+            ...(instanceName && { database_instance_name: instanceName }),
             ...(isDefault && { is_default: isDefault })
         },
         orderBy: {
@@ -604,7 +656,7 @@ async function deleteDatabaseInstanceRecord(
             account_id: accountId,
             credentials_id: credentialsId,
             resource_id: resourceId,
-            sql_instance_name: instanceName
+            database_instance_name: instanceName
         }
     });
 }
@@ -634,5 +686,6 @@ export {
     upsertDatabaseInstanceRecord,
     listDatabaseInstances,
     deleteDatabaseInstanceRecord,
-    DatabaseInstance
+    DatabaseInstance,
+    updateDatabaseInstanceMetadata
 };

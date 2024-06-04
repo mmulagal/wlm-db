@@ -167,36 +167,38 @@ describe('Database instance operations', () => {
             instanceId: 'i-1234abcd',
             instanceName: 'MSSQLSERVER',
             isDefault: true,
-            fsxnId: 'fs-0f53fbecdd3d85fb2'
+            fsxnId: 'fs-0f53fbecdd3d85fb2',
+            source: 'deployment',
+            sqlDeploymentType: 'FCI',
+            fsxSvmId: 'svm-0123456789abcdef0'
         };
 
         // Insert a new record
-        await upsertDatabaseInstanceRecord(ACCOUNT_ID, DATABASE_INSTANCE_RECORD, {});
+        await upsertDatabaseInstanceRecord(ACCOUNT_ID, DATABASE_INSTANCE_RECORD);
         let response = await listDatabaseInstances(ACCOUNT_ID, { credentialsId: DEFAULT_AWS_CREDENTIALS_ID });
         expect(response.length).toEqual(1);
         expect(response[0].resource_id).toEqual(DATABASE_INSTANCE_RECORD.resourceId);
-        expect(response[0].sql_instance_id).toEqual(DATABASE_INSTANCE_RECORD.instanceId);
-        expect(response[0].sql_instance_name).toEqual(DATABASE_INSTANCE_RECORD.instanceName);
+        expect(response[0].database_instance_id).toEqual(DATABASE_INSTANCE_RECORD.instanceId);
+        expect(response[0].database_instance_name).toEqual(DATABASE_INSTANCE_RECORD.instanceName);
         expect(response[0].fsxn_ids).toEqual(DATABASE_INSTANCE_RECORD.fsxnId);
 
         // Update previously inserted record
-        await upsertDatabaseInstanceRecord(
-            ACCOUNT_ID,
-            {
-                credentialsId: DATABASE_INSTANCE_RECORD.credentialsId,
-                resourceId: DATABASE_INSTANCE_RECORD.resourceId,
-                instanceId: DATABASE_INSTANCE_RECORD.instanceId,
-                instanceName: 'NEWNAME',
-                isDefault: true,
-                fsxnId: 'fs-00001111'
-            },
-            {}
-        );
+        await upsertDatabaseInstanceRecord(ACCOUNT_ID, {
+            credentialsId: DATABASE_INSTANCE_RECORD.credentialsId,
+            resourceId: DATABASE_INSTANCE_RECORD.resourceId,
+            instanceId: DATABASE_INSTANCE_RECORD.instanceId,
+            instanceName: 'NEWNAME',
+            isDefault: true,
+            fsxnId: 'fs-00001111',
+            source: 'deployment',
+            sqlDeploymentType: 'FCI',
+            fsxSvmId: 'fs'
+        });
         response = await listDatabaseInstances(ACCOUNT_ID, { credentialsId: DEFAULT_AWS_CREDENTIALS_ID });
         expect(response.length).toEqual(1);
         expect(response[0].resource_id).toEqual(DATABASE_INSTANCE_RECORD.resourceId);
-        expect(response[0].sql_instance_id).toEqual(DATABASE_INSTANCE_RECORD.instanceId);
-        expect(response[0].sql_instance_name).toEqual('NEWNAME');
+        expect(response[0].database_instance_id).toEqual(DATABASE_INSTANCE_RECORD.instanceId);
+        expect(response[0].database_instance_name).toEqual('NEWNAME');
         expect(response[0].is_default).toEqual(true);
         expect(response[0].fsxn_ids).toEqual('fs-00001111');
 

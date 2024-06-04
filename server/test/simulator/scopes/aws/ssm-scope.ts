@@ -363,7 +363,7 @@ const cleanUpOntapResourcesCommand = {
 
 const mountPointQueryCommand = { commands: [mountPointQuery('.', 'test-database')] };
 
-const getInstanceGuidCommand = { commands: [`sqlcmd -Q "${INSTANCE_GUID}" -y 0`] };
+const getInstanceGuidCommand = { commands: [`sqlcmd -S "." -Q "${INSTANCE_GUID}" -y 0`] };
 
 ssmMock
     .on(SendCommandCommand)
@@ -584,7 +584,7 @@ ssmMock
     .resolves(getCommandInvocationResponse.mountPointQueryCommandResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getInstanceGuid' })
     .resolves(getCommandInvocationResponse.getInstanceGuidResponse);
-    
+
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);
