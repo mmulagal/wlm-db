@@ -36,7 +36,8 @@ const EC2InstanceDetailsResponse = Type.Object({
     ebsVolumeId: Type.String(),
     instanceType: Type.Optional(Type.String()),
     availabilityZone: Type.Optional(Type.String()),
-    subnetId: Type.Optional(Type.String())
+    subnetId: Type.Optional(Type.String()),
+    status: Type.Optional(Type.String())
 });
 type EC2InstanceDetailsResponseType = Static<typeof EC2InstanceDetailsResponse>;
 
@@ -410,7 +411,7 @@ const DatabaseHostInstanceDetailsResponse = Type.Object({
     isDefault: Type.Optional(Type.Boolean())
 });
 
-const nodeTopologyResponse = Type.Object({
+const NodeTopologyResponse = Type.Object({
     awsAccount: Type.String({ minLength: 1 }),
     region: Type.String(),
     vpcId: Type.Optional(Type.String()),
@@ -421,18 +422,22 @@ const nodeTopologyResponse = Type.Object({
     activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse)
 });
 
-const DatabseInstanceTopology = Type.Object({
+const DatabaseInstanceTopology = Type.Object({
     serverType: Type.String({ enum: ['Microsoft SQL Server'] }),
     serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
     fileSystemType: Type.String({ enum: ['EBS', 'FSx for ONTAP', 'FSx for Windows'] }),
     fileSystemId: Type.String(),
     fileSystemName: Type.Optional(Type.String()),
     fileSystemDeploymentMode: Type.Optional(Type.String()),
-    fileSystemStatus: Type.Optional(Type.String()),
+    fileSystemStatus: Type.Optional(
+        Type.String({ enum: ['CREATING', 'AVAILABLE', 'UPDATING', 'DELETING', 'DELETED', 'FAILED'] })
+    ),
     fileSystemStorageCapacity: Type.Optional(Type.Number()),
     fileSystemThroughputCapacity: Type.Optional(Type.Number()),
     availabilityZones: Type.Optional(Type.Array(Type.String()))
 });
+
+type DatabaseInstanceTopologyType = Static<typeof DatabaseInstanceTopology>;
 
 const DatabaseHostInstanceSummaryResponse = Type.Object({
     databaseInstanceId: Type.String(),
@@ -440,7 +445,7 @@ const DatabaseHostInstanceSummaryResponse = Type.Object({
     status: Type.String({ enum: ['Up', 'Down', 'N/A'] }),
     databaseCount: Type.Optional(Type.Number()),
     databaseServer: Type.Optional(DatabaseServerMetadataResponse),
-    databaseInstanceTopology: Type.Optional(DatabseInstanceTopology),
+    databaseInstanceTopology: Type.Optional(DatabaseInstanceTopology),
     protection: Type.Optional(ProtectionPerStorageTypeResponse),
     performance: Type.Optional(PerformanceResponse),
     storage: Type.Optional(StoragePerStorageTypeResponse),
@@ -466,7 +471,7 @@ const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
             })
         )
     ),
-    nodeTopology: Type.Optional(nodeTopologyResponse),
+    nodeTopology: Type.Optional(NodeTopologyResponse),
     ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),
     estimatedUsageCost: Type.Optional(UsageCostPerStorageTypeResponse),
     databaseInstancesSummary: Type.Optional(Type.Array(DatabaseHostInstanceSummaryResponse))
@@ -555,5 +560,6 @@ export {
     DatabaseHostSummaryForMultiInstanceListResponse,
     DatabaseHostSummaryForMultiInstanceResponseType,
     DatabaseHostSummaryForMultiInstanceListResponseType,
-    DatabaseHostInstanceSummaryResponseType
+    DatabaseHostInstanceSummaryResponseType,
+    DatabaseInstanceTopologyType
 };

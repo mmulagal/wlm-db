@@ -162,6 +162,23 @@ interface MissingPermissionInterface {
     explicitlyDenied: MissingPermission[];
 }
 
+interface DatabaseInstance {
+    database_instance_name: string;
+    instanceState: string;
+    database_instance_id: string;
+    is_default: boolean;
+    metadata: databaseInstanceMetadata;
+    created_time: string;
+    database_deployment_type: string;
+    fsxnId: string;
+    credentials_id: string;
+    fsxwId: string;
+    ebsVolumeIds: string[];
+    storage_protocol: string;
+    region: string;
+    databaseType: string;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -177,5 +194,6 @@ export {
     MissingPermission,
     MissingPermissionInterface,
     databaseInstanceMetadata,
-    Sandbox
+    Sandbox,
+    DatabaseInstance
 };

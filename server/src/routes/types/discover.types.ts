@@ -1,6 +1,6 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { RESOURCESTYPE, SqlServerDeploymentModel } from '../../utils/consts';
-import { CredentialsIdParams } from './generic.types';
+import { CredentialsIdParams, AccountIdCredentialsIdParams } from './generic.types';
 
 const DiscoverMsSqlQuery = Type.Object({
     pageSize: Type.Number({
@@ -121,6 +121,17 @@ const DiscoverMsSqlResponseBody = Type.Object({
     )
 });
 
+const MultiInstanceManagementResponseBody = Type.Object({
+    resourceId: Type.String({ description: 'Workload Factory resource ID.' }),
+    items: Type.Array(
+        Type.Object({
+            databaseInstanceId: Type.String({ description: 'SQL Server database instance ID.' }),
+            status: Type.String({ description: 'Status of database instance unmanage operation.' }),
+            errorMessage: Type.Optional(Type.String({ description: 'Error details, if any, of a failed unmanage.' }))
+        })
+    )
+});
+
 const ManageMsSqlResponseBody = Type.Object({
     resourceId: Type.String({ description: 'ID of the managed resource' })
 });
@@ -160,6 +171,19 @@ const DiscoverInstanceParams = Type.Composite([
     })
 ]);
 
+const UnmanageInstanceParams = Type.Composite([
+    AccountIdCredentialsIdParams,
+    Type.Object({
+        resourceId: Type.String({ description: 'Workload Factory resource ID.', minLength: 1 })
+    })
+]);
+
+const DatabaseInstanceQueryString = Type.Object({
+    databaseInstanceIds: Type.Optional(
+        Type.String({ description: 'Comma separated list of MS SQL Server instance IDs.' })
+    )
+});
+
 const MsSqlInstancesRequestQuery = Type.Object({
     instances: Type.String({
         description: 'Comma separated Ec2 instance ID associated with the MS SQL Server instance.'
@@ -178,5 +202,8 @@ export {
     DiscoverCredentialsType,
     MsSqlInstancesRequestQuery,
     DiscoverCredentialsResponse,
-    PrepareResourceResponseBody
+    PrepareResourceResponseBody,
+    UnmanageInstanceParams,
+    MultiInstanceManagementResponseBody,
+    DatabaseInstanceQueryString
 };

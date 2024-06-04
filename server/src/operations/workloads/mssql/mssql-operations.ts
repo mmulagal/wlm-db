@@ -902,27 +902,29 @@ async function getMssqlInstanceGuid(credentialsId: string, region: string, insta
     const commands = [`sqlcmd -S "${instanceName}" -Q "${INSTANCE_GUID}" -y 0`];
     let response;
     try {
-        let instanceId;
+        let sqlInstanceGuid;
 
         for (const nodeId of nodeIds) {
             logger.info('Fetching MSSQL instance GUID', nodeId);
             response = await callSsmExecution(credentialsId, region, commands, nodeId);
             if (response) {
-                [{ instance_guid: instanceId }] = sqlResponseParsing(response);
+                [{ instance_guid: sqlInstanceGuid }] = sqlResponseParsing(response);
 
-                break;
+                return sqlInstanceGuid;
             }
         }
 
-        if (!instanceId) {
+        if (!sqlInstanceGuid) {
             const errorMessage = `Error fetching instance id from nodes: ${nodeIds.join(', ')}`;
             logger.error(errorMessage);
             throw createError(errorMessage);
         }
-
-        return instanceId;
     } catch (err) {
-        const errorMessage = `Error fetching instance id: ${err}`;
+        const errorMessage = `Error fetching mssql instance id:,
+            ${err},
+            ${credentialsId},
+            ${region},
+            ${instanceName},`;
         logger.error(errorMessage);
         throw createError(errorMessage);
     }
