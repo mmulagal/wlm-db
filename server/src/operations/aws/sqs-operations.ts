@@ -43,14 +43,10 @@ import {
     listEvents,
     updateDeployment,
     upsertDeployment,
-    upsertDatabaseInstance,
+    upsertDatabaseInstance
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
-import {
-    getAllInstanceDetails,
-    getMsSqlResourceId,
-    getMssqlInstanceGuid
-} from '../workloads/mssql/mssql-operations';
+import { getAllInstanceDetails, getMsSqlResourceId, getMssqlInstanceGuid } from '../workloads/mssql/mssql-operations';
 // import { handleNotification } from '../cloud-manager/notification-operations';
 import { lookupCredentials } from '../cloud-manager/credentials-operations';
 import { associateResource } from '../../lib/cloud-manager/credentials';
