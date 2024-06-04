@@ -5,7 +5,8 @@ import {
     DiscoverCredentialsSchema,
     MsSqlInstancesSchema,
     ManageMsSqlSchema,
-    PrepareForManageSchema
+    PrepareForManageSchema,
+    MsSqlInstancesSchemaV2
 } from './schemas/discover-schemas';
 import {
     fetchUnmanagedHostsInformation,
@@ -20,6 +21,8 @@ import getLogger from '../utils/logger';
 const logger = getLogger();
 
 const DISCOVER_MSSQL_API_PATH: string = '/v1/credentials/:credentialsId/regions/:region';
+
+const DISCOVER_MSSQL_API_PATH_V2: string = '/v2/credentials/:credentialsId/regions/:region';
 
 export default function discoverRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -66,6 +69,15 @@ export default function discoverRoutes(fastify: FastifyInstance) {
     );
 
     server.get(`${DISCOVER_MSSQL_API_PATH}/mssql/instances`, { schema: MsSqlInstancesSchema }, async request => {
+        const {
+            params: { accountId, credentialsId, region },
+            query: { instances }
+        } = request;
+
+        return fetchUnmanagedHostsInformation(accountId, credentialsId, region, instances.split(','));
+    });
+
+    server.get(`${DISCOVER_MSSQL_API_PATH_V2}/mssql/instances`, { schema: MsSqlInstancesSchemaV2 }, async request => {
         const {
             params: { accountId, credentialsId, region },
             query: { instances }

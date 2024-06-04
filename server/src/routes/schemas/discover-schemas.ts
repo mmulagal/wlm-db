@@ -1,5 +1,8 @@
 import { RouteTags } from '../../utils/consts';
-import { DatabaseHostSummaryPerStorageTypeListResponse } from '../types/database-hosts.types';
+import {
+    DatabaseHostSummaryPerStorageTypeListResponse,
+    DatabaseHostSummaryPerStorageTypeListResponseV2
+} from '../types/database-hosts.types';
 import {
     DiscoverMsSqlResponseBody,
     DiscoverMsSqlQuery,
@@ -88,10 +91,23 @@ const MsSqlInstancesSchema = {
         200: DatabaseHostSummaryPerStorageTypeListResponse
     }
 };
+
+const MsSqlInstancesSchemaV2 = {
+    Headers: GenericHeaders,
+    tags: [RouteTags.DISCOVER],
+    params: CredentialsIdParams,
+    querystring: MsSqlInstancesRequestQuery,
+    summary: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
+    description: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
+    response: {
+        200: DatabaseHostSummaryPerStorageTypeListResponseV2
+    }
+};
 export {
     DiscoverCredentialsSchema,
     DiscoverMsSqlSchema,
     ManageMsSqlSchema,
     MsSqlInstancesSchema,
-    PrepareForManageSchema
+    PrepareForManageSchema,
+    MsSqlInstancesSchemaV2
 };

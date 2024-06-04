@@ -241,6 +241,50 @@ const DatabaseHostSummaryPerStorageTypeListResponse = Type.Object({
 type DatabaseHostSummaryPerStorageTypeResponseType = Static<typeof DatabaseHostSummaryPerStorageTypeResponse>;
 type DatabaseHostSummaryPerStorageTypeListResponseType = Static<typeof DatabaseHostSummaryPerStorageTypeListResponse>;
 
+const DatabaseHostSummaryPerStorageTypeResponseV2 = Type.Object({
+    id: Type.String({ description: 'Identifier for the database resource' }),
+    name: Type.String({ description: 'Name for the database resource' }),
+    nodeStatus: Type.String({
+        description:
+            'Status of EC2 instance hosting the database server. In the case of cluster (like FCI or AOAG), running status will reflect the availabilty of either of the instances '
+    }),
+    ssmStatus: Type.String({
+        description: 'SSM connectivity status to the active EC2 instance hosting the database server.',
+        enum: ['Up', 'Down', 'N/A']
+    }),
+    databaseCount: Type.Optional(Type.Number()),
+    databaseServer: Type.Optional(DatabaseServerMetadataResponse),
+    topology: Type.Optional(TopologyResponse),
+    protection: Type.Optional(ProtectionPerStorageTypeResponse),
+    performance: Type.Optional(PerformanceResponse),
+    storage: Type.Optional(StoragePerStorageTypeResponse),
+    ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),
+    estimatedUsageCost: Type.Optional(UsageCostPerStorageTypeResponse),
+    resourceUtilization: Type.Optional(ResourcesUtilizationResponse),
+    sqlServerDeploymentType: Type.Optional(Type.String()),
+    clusterNodeDetails: Type.Optional(
+        Type.Array(
+            Type.Object({
+                ec2InstanceId: Type.String(),
+                ec2InstancePrivateIpAddress: Type.String(),
+                ec2InstanceType: Type.String(),
+                ec2InstanceName: Type.Optional(Type.String())
+            })
+        )
+    ),
+    errors: Type.Optional(Type.Any())
+});
+const DatabaseHostSummaryPerStorageTypeListResponseV2 = Type.Object({
+    count: Type.Number(),
+    items: Type.Array(DatabaseHostSummaryPerStorageTypeResponseV2),
+    nextToken: Type.Optional(Type.String())
+});
+
+type DatabaseHostSummaryPerStorageTypeResponseTypeV2 = Static<typeof DatabaseHostSummaryPerStorageTypeResponseV2>;
+type DatabaseHostSummaryPerStorageTypeListResponseTypeV2 = Static<
+    typeof DatabaseHostSummaryPerStorageTypeListResponseV2
+>;
+
 const DatabasesResponse = Type.Object({
     name: Type.String({ minLength: 1 }),
     status: Type.String({ minLength: 1 }),
@@ -465,5 +509,8 @@ export {
     DatabaseMountPointResponseType,
     SandboxParams,
     SplitEstimatesResponse,
-    SandboxLifeCycleBody
+    SandboxLifeCycleBody,
+    DatabaseHostSummaryPerStorageTypeListResponseV2,
+    DatabaseHostSummaryPerStorageTypeResponseTypeV2,
+    DatabaseHostSummaryPerStorageTypeListResponseTypeV2
 };
