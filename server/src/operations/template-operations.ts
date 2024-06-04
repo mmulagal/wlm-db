@@ -130,8 +130,7 @@ async function updateTemplateUrls(
             ScriptSQLONTAPSignature: decodeURI(signedUrls.get('ScriptSQLONTAPSignature')?.url || ''),
             ScriptDBCREATE: decodeURI(signedUrls.get('ScriptDBCREATE')?.url || ''),
             ScriptDBCREATESignature: decodeURI(signedUrls.get('ScriptDBCREATESignature')?.url || ''),
-            DependentPackages: decodeURI(signedUrls.get('DependentPackages')?.url || ''),
-            SQLServerSetup: decodeURI(signedUrls.get('SQLServerSetup')?.url || '')
+            DependentPackages: decodeURI(signedUrls.get('DependentPackages')?.url || '')
         });
 
         const sqlTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLTemplate');
@@ -212,8 +211,7 @@ async function updateTemplateUrls(
             ScriptSQLONTAPSignature: decodeURI(signedUrls.get('ScriptSQLONTAPSignature')?.url || ''),
             ScriptDBCREATE: decodeURI(signedUrls.get('ScriptDBCREATE')?.url || ''),
             ScriptDBCREATESignature: decodeURI(signedUrls.get('ScriptDBCREATESignature')?.url || ''),
-            DependentPackages: decodeURI(signedUrls.get('DependentPackages')?.url || ''),
-            SQLServerSetup: decodeURI(signedUrls.get('SQLServerSetup')?.url || '')
+            DependentPackages: decodeURI(signedUrls.get('DependentPackages')?.url || '')
         });
         const standAloneTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLStandaloneTemplate');
         const customStandAloneTemplatePath: string = `${WLMDB}/${stackName}/${standAloneTemplatePath!.url}`;

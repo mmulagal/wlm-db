@@ -1,5 +1,3 @@
-import { OptionsWithData } from '../utilityFunctions';
-
 export interface ExploreSavingsSliceEntities {
     selectedSnapshotFrequency: any;
     numberOfClonedCopies: number;
@@ -9,8 +7,11 @@ export interface ExploreSavingsSliceEntities {
     loading: boolean;
     unmanagedExploreSavingsHost: Array<any>;
     selectedInstanceId: string;
+    selectedPartnerInstanceId: string;
     selectedServerName: string;
     selectedHostDetails: any;
+    selectedPartnerHostDetails: any;
+    getPartnerHostDetailsLoading: boolean;
     storageSavingsResponse: StorageSavingsInterface;
     storageSavingsLoading: boolean;
     savingsCalculatorRefresh: boolean;
@@ -102,6 +103,7 @@ export interface ViewCalculationsInterface {
         numberOfVolumes?: number;
         fsxnStoragePrice?: number | string;
         fsxnCapacityPrice?: number | string;
+        fsxnIopsPrice?: number | string;
         maxSsdTierSize?: number | string;
         suggestedFsxnThroughputCapacity?: number | string;
         maxThroughput?: number | string;

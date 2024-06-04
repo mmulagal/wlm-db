@@ -11,11 +11,20 @@ interface AuthState {
     isDemoMode?: boolean;
     features: any;
     isWorkloadFactory: boolean;
+    isInventoryV2: boolean;
 }
 
 interface PayloadAuthSuccess {
     accessToken: string;
 }
+
+const checkLocalStorageValue = () => {
+    const value = localStorage.getItem('inventoryV2');
+    if (value === 'true') {
+        return true;
+    }
+    return false;
+};
 
 const initialState: AuthState = {
     accountId: '',
@@ -31,7 +40,8 @@ const initialState: AuthState = {
             'Platform.BlueXP/DarkTheme': false
         }
     },
-    isWorkloadFactory: false
+    isWorkloadFactory: false,
+    isInventoryV2: checkLocalStorageValue() // This flag is added to check if new inventory has to run or old.
 };
 
 const authSlice = createSlice({

@@ -610,7 +610,8 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
 
                 if (!selectedInstance) {
                     const runningServices = instanceDetails.filter(
-                        (instance: { instanceState: string }) => instance.instanceState.toLocaleLowerCase() === 'running'
+                        (instance: { instanceState: string }) =>
+                            instance.instanceState.toLocaleLowerCase() === 'running'
                     );
                     selectedInstance = runningServices.length > 0 ? runningServices[0].Name : undefined;
                     defaultInstance = false;
@@ -645,8 +646,6 @@ async function getAllInstanceDetails(credentialsId: string, region: string, node
         logger.error(`Error while fetching SQL node status for node ${nodeIds}`, { error });
     }
 }
-
-
 
 // TODO: remove if this is not being used
 

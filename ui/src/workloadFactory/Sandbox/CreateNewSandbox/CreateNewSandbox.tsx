@@ -24,7 +24,7 @@ const CreateNewSandbox = () => {
 
     //To intialize values on first render
     useEffect(() => {
-        dispatch(setTargetDatabase(`DBname_sandbox_${Date.now()}`));
+        dispatch(setTargetDatabase(`sandbox_${Date.now()}`));
         dispatch(setSourceDatabase(null));
         dispatch(setSourceDbHost(null));
         dispatch(setShowError(false));

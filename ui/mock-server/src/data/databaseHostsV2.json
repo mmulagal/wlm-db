@@ -1,0 +1,1927 @@
+{
+    "count": 6,
+    "items": [
+        {
+            "id": "d271cefe8dc4b400e2ba9aa7998c32e8d96d4a805253db6c9b10a5ab697c0d62",
+            "name": "Database hostname 1",
+            "nodeStatus": "ONLINE",                         
+            "ssmStatus": "ONLINE",
+            "databaseInstanceDetails": [                
+                {
+                    "instanceName": "MSSQLSERVER",               
+                    "isManaged": true
+                },
+                {
+                    "instanceName": "MSSQLSERVER2",               
+                    "isManaged": false
+                },
+                {
+                    "instanceName": "MSSQLSERVER3",               
+                    "isManaged": false
+                },
+                {
+                    "instanceName": "MSSQLSERVER4",               
+                    "isManaged": false
+                }
+            ],
+            "nodeTopology": {
+                "awsAccount": "1234",
+                "region": "US East (N.Virginia)",
+                "vpcId": "vpc1",
+                "vpcName": "test1-vpc",
+                "vpcCidr": "10.20.30.0/24",
+                "keyPairName": "keypair",
+                "ec2Details": [
+                    {
+                        "id": "i-0db20e831d1ce41e3",
+                        "name": "wlmdb1-ec2",
+                        "ebsVolumeId": "ebs-volume1",
+                        "instanceType": "m5.xlarge",
+                        "availabilityZone": "availability-zone-4",
+                        "subnetId": "subnet-adda86fb"
+                    },
+                    {
+                        "id": "i-0e6a7b54b2b5951e3",
+                        "name": "wlmdb2-ec2",
+                        "ebsVolumeId": "ebs-volume2",
+                        "instanceType": "m5.xlarge",
+                        "availabilityZone": "availability-zone-4",
+                        "subnetId": "subnet-adda86fb"
+                    }
+                ],
+                "activeDirectoryDetails": {
+                    "name": "",
+                    "address": ""
+                }
+            },
+            "estimatedUsageCost": {
+                "compute": 700,
+                "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+                "connectivity": 100,
+                "others": 24,
+                "estimationType": "pricing"
+            },
+            "databaseInstances": [
+                {
+                    "databaseInstanceId": "11",                             
+                    "databaseInstanceName": "MSSQLSERVER",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "12",                             
+                    "databaseInstanceName": "MSSQLSERVER2",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "13",                             
+                    "databaseInstanceName": "MSSQLSERVER3",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "14",                             
+                    "databaseInstanceName": "MSSQLSERVER4",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                }
+            ]
+        },
+        {
+            "id": "2a6fe3f6ed15439147f19e68a903f0fc6a8e9fcde16d628f17e885c4bccb1642",
+            "name": "Database hostname 2",
+            "nodeStatus": "ONLINE",                         
+            "ssmStatus": "ONLINE",
+            "databaseInstanceDetails": [                
+                {
+                    "instanceName": "MSSQLSERVER",               
+                    "isManaged": true
+                },
+                {
+                    "instanceName": "MSSQLSERVER2",               
+                    "isManaged": true
+                },
+                {
+                    "instanceName": "MSSQLSERVER3",               
+                    "isManaged": false
+                },
+                {
+                    "instanceName": "MSSQLSERVER4",               
+                    "isManaged": false
+                }
+            ],
+            "nodeTopology": {
+                "awsAccount": "1234",
+                "region": "US East (N.Virginia)",
+                "vpcId": "vpc1",
+                "vpcName": "test1-vpc",
+                "vpcCidr": "10.20.30.0/24",
+                "keyPairName": "keypair",
+                "ec2Details": [
+                    {
+                        "id": "i-04e10959ecb1e9c65",
+                        "name": "wlmdb1-ec2",
+                        "ebsVolumeId": "ebs-volume1",
+                        "instanceType": "m5.xlarge",
+                        "availabilityZone": "availability-zone-4",
+                        "subnetId": "subnet-adda86fb"
+                    },
+                    {
+                        "id": "i-04deb6bbec539f817",
+                        "name": "wlmdb2-ec2",
+                        "ebsVolumeId": "ebs-volume2",
+                        "instanceType": "m5.xlarge",
+                        "availabilityZone": "availability-zone-4",
+                        "subnetId": "subnet-adda86fb"
+                    }
+                ],
+                "activeDirectoryDetails": {
+                    "name": "",
+                    "address": ""
+                }
+            },
+            "estimatedUsageCost": {
+                "compute": 700,
+                "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+                "connectivity": 100,
+                "others": 24,
+                "estimationType": "pricing"
+            },
+            "databaseInstances": [
+                {
+                    "databaseInstanceId": "21",                             
+                    "databaseInstanceName": "MSSQLSERVER",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "22",                             
+                    "databaseInstanceName": "MSSQLSERVER2",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "23",                             
+                    "databaseInstanceName": "MSSQLSERVER3",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "24",                             
+                    "databaseInstanceName": "MSSQLSERVER4",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                }
+            ]
+        },
+        {
+            "id": "2a6fe3f6ed15439147f19e68a903f0fc6a8e9fcde16d628f17e885c4bcc32752",
+            "name": "Database hostname 3",
+            "nodeStatus": "ONLINE",                         
+            "ssmStatus": "ONLINE",
+            "databaseInstanceDetails": [                
+                {
+                    "instanceName": "MSSQLSERVER",               
+                    "isManaged": true
+                },
+                {
+                    "instanceName": "MSSQLSERVER2",               
+                    "isManaged": true
+                },
+                {
+                    "instanceName": "MSSQLSERVER3",               
+                    "isManaged": true
+                },
+                {
+                    "instanceName": "MSSQLSERVER4",               
+                    "isManaged": false
+                }
+            ],
+            "nodeTopology": {
+                "awsAccount": "1234",
+                "region": "US East (N.Virginia)",
+                "vpcId": "vpc1",
+                "vpcName": "test1-vpc",
+                "vpcCidr": "10.20.30.0/24",
+                "keyPairName": "keypair",
+                "ec2Details": [
+                    {
+                        "id": "i-04e10959ecb1e9333",
+                        "name": "wlmdb1-ec2",
+                        "ebsVolumeId": "ebs-volume1",
+                        "instanceType": "m5.xlarge",
+                        "availabilityZone": "availability-zone-4",
+                        "subnetId": "subnet-adda86fb"
+                    },
+                    {
+                        "id": "i-04deb6bbec539f333",
+                        "name": "wlmdb2-ec2",
+                        "ebsVolumeId": "ebs-volume2",
+                        "instanceType": "m5.xlarge",
+                        "availabilityZone": "availability-zone-4",
+                        "subnetId": "subnet-adda86fb"
+                    }
+                ],
+                "activeDirectoryDetails": {
+                    "name": "",
+                    "address": ""
+                }
+            },
+            "estimatedUsageCost": {
+                "compute": 700,
+                "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+                "connectivity": 100,
+                "others": 24,
+                "estimationType": "pricing"
+            },
+            "databaseInstances": [
+                {
+                    "databaseInstanceId": "31",                             
+                    "databaseInstanceName": "MSSQLSERVER",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "32",                             
+                    "databaseInstanceName": "MSSQLSERVER2",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "33",                             
+                    "databaseInstanceName": "MSSQLSERVER3",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "34",                             
+                    "databaseInstanceName": "MSSQLSERVER4",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                }
+            ]
+        },
+        {
+            "id": "2a6fe3f6ed15439147f19e68a903f0fc6a8e9fcde16d628f17e885577777642",
+            "name": "Database hostname 4",
+            "nodeStatus": "ONLINE",                         
+            "ssmStatus": "ONLINE",
+            "databaseInstanceDetails": [                
+                {
+                    "instanceName": "MSSQLSERVER",               
+                    "isManaged": true
+                },
+                {
+                    "instanceName": "MSSQLSERVER2",               
+                    "isManaged": true
+                },
+                {
+                    "instanceName": "MSSQLSERVER3",               
+                    "isManaged": true
+                },
+                {
+                    "instanceName": "MSSQLSERVER4",               
+                    "isManaged": true
+                }
+            ],
+            "nodeTopology": {
+                "awsAccount": "1234",
+                "region": "US East (N.Virginia)",
+                "vpcId": "vpc1",
+                "vpcName": "test1-vpc",
+                "vpcCidr": "10.20.30.0/24",
+                "keyPairName": "keypair",
+                "ec2Details": [
+                    {
+                        "id": "i-04e10959ecb1e9c44",
+                        "name": "wlmdb1-ec2",
+                        "ebsVolumeId": "ebs-volume1",
+                        "instanceType": "m5.xlarge",
+                        "availabilityZone": "availability-zone-4",
+                        "subnetId": "subnet-adda86fb"
+                    },
+                    {
+                        "id": "i-04deb6bbec539f844",
+                        "name": "wlmdb2-ec2",
+                        "ebsVolumeId": "ebs-volume2",
+                        "instanceType": "m5.xlarge",
+                        "availabilityZone": "availability-zone-4",
+                        "subnetId": "subnet-adda86fb"
+                    }
+                ],
+                "activeDirectoryDetails": {
+                    "name": "",
+                    "address": ""
+                }
+            },
+            "estimatedUsageCost": {
+                "compute": 700,
+                "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+                "connectivity": 100,
+                "others": 24,
+                "estimationType": "pricing"
+            },
+            "databaseInstances": [
+                {
+                    "databaseInstanceId": "41",                             
+                    "databaseInstanceName": "MSSQLSERVER",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "42",                             
+                    "databaseInstanceName": "MSSQLSERVER2",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "43",                             
+                    "databaseInstanceName": "MSSQLSERVER3",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "44",                             
+                    "databaseInstanceName": "MSSQLSERVER4",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                }
+            ]
+        },
+        {
+            "id": "2a6fe3f6ed15439147f19e68a903f0fc6a8e9fcde16d628f17e885c4bcc5555",
+            "name": "Database hostname 5",
+            "nodeStatus": "OFFLINE",                         
+            "ssmStatus": "OFFLINE",
+            "databaseInstanceDetails": [],
+            "nodeTopology": {
+                "awsAccount": "1234",
+                "region": "US East (N.Virginia)",
+                "vpcId": "vpc1",
+                "vpcName": "test1-vpc",
+                "vpcCidr": "10.20.30.0/24",
+                "keyPairName": "keypair",
+                "ec2Details": [
+                    {
+                        "id": "i-04e10959ecb1e9c55",
+                        "name": "wlmdb1-ec2",
+                        "ebsVolumeId": "ebs-volume1",
+                        "instanceType": "m5.xlarge",
+                        "availabilityZone": "availability-zone-4",
+                        "subnetId": "subnet-adda86fb"
+                    },
+                    {
+                        "id": "i-04deb6bbec539f855",
+                        "name": "wlmdb2-ec2",
+                        "ebsVolumeId": "ebs-volume2",
+                        "instanceType": "m5.xlarge",
+                        "availabilityZone": "availability-zone-4",
+                        "subnetId": "subnet-adda86fb"
+                    }
+                ],
+                "activeDirectoryDetails": {
+                    "name": "",
+                    "address": ""
+                }
+            },
+            "estimatedUsageCost": {
+                "compute": 700,
+                "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+                "connectivity": 100,
+                "others": 24,
+                "estimationType": "pricing"
+            },
+            "databaseInstances": [
+                {
+                    "databaseInstanceId": "51",                             
+                    "databaseInstanceName": "MSSQLSERVER",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "52",                             
+                    "databaseInstanceName": "MSSQLSERVER2",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "53",                             
+                    "databaseInstanceName": "MSSQLSERVER3",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "54",                             
+                    "databaseInstanceName": "MSSQLSERVER4",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                }
+            ]
+        },
+        {
+            "id": "2a6fe3f6ed15439147f19e68a903f0fc6a8e9fcde16d628f17e885c46666666",
+            "name": "Database hostname 6",
+            "nodeStatus": "OFFLINE",                         
+            "ssmStatus": "ONLINE",
+            "databaseInstanceDetails": [                
+                {
+                    "instanceName": "MSSQLSERVER",               
+                    "isManaged": true
+                },
+                {
+                    "instanceName": "MSSQLSERVER2",               
+                    "isManaged": false
+                },
+                {
+                    "instanceName": "MSSQLSERVER3",               
+                    "isManaged": false
+                },
+                {
+                    "instanceName": "MSSQLSERVER4",               
+                    "isManaged": false
+                }
+            ],
+            "nodeTopology": {
+                "awsAccount": "1234",
+                "region": "US East (N.Virginia)",
+                "vpcId": "vpc1",
+                "vpcName": "test1-vpc",
+                "vpcCidr": "10.20.30.0/24",
+                "keyPairName": "keypair",
+                "ec2Details": [
+                    {
+                        "id": "i-04e10959ecb1e9c66",
+                        "name": "wlmdb1-ec2",
+                        "ebsVolumeId": "ebs-volume1",
+                        "instanceType": "m5.xlarge",
+                        "availabilityZone": "availability-zone-4",
+                        "subnetId": "subnet-adda86fb"
+                    },
+                    {
+                        "id": "i-04deb6bbec539f866",
+                        "name": "wlmdb2-ec2",
+                        "ebsVolumeId": "ebs-volume2",
+                        "instanceType": "m5.xlarge",
+                        "availabilityZone": "availability-zone-4",
+                        "subnetId": "subnet-adda86fb"
+                    }
+                ],
+                "activeDirectoryDetails": {
+                    "name": "",
+                    "address": ""
+                }
+            },
+            "estimatedUsageCost": {
+                "compute": 700,
+                "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+                "connectivity": 100,
+                "others": 24,
+                "estimationType": "pricing"
+            },
+            "databaseInstances": [
+                {
+                    "databaseInstanceId": "61",                             
+                    "databaseInstanceName": "MSSQLSERVER",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "62",                             
+                    "databaseInstanceName": "MSSQLSERVER2",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "63",                             
+                    "databaseInstanceName": "MSSQLSERVER3",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                },
+                {
+                    "databaseInstanceId": "64",                             
+                    "databaseInstanceName": "MSSQLSERVER4",                           
+                    "status": "Up",
+                    "databaseCount": 0,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": [
+                            "SQLNODE1-65579",
+                            "SQLNODE2-65579"
+                        ],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": [
+                            "ap-southeast-1a",
+                            "ap-southeast-1b"
+                        ]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {"fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol" : ["SMB"],
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }  
+                    },
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseInstanceErrors": ""
+                }
+            ]
+        }
+    ],
+    "nextToken": null
+}

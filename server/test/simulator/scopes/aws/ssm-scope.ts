@@ -17,7 +17,8 @@ import {
 import { mockClient } from 'aws-sdk-client-mock';
 import {
     HOST_AND_SQL_INFO_PS1,
-    CLUSTER_NETWORK_IP_INFO_PS1
+    CLUSTER_NETWORK_IP_INFO_PS1,
+    GET_ACTIVE_DIRECTORY_DETAILS
 } from '../../../../src/operations/workloads/mssql/discover-consts';
 import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands-response.json';
 import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
@@ -50,7 +51,9 @@ import {
     addExtendedProperties,
     cleanUpOntapResources,
     mountPointQuery,
-    getStorageSavingsFromOntap
+    getStorageSavingsFromOntap,
+    detachDbAndRemoveAccessPath,
+    deleteExtendedPropertiesScript
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
 
@@ -293,7 +296,7 @@ const getCollationDetails = {
 };
 
 const getOntapSandboxVolumeSavingsParams = {
-    commands: [getStorageSavingsFromOntap('test-fsx', 'us-east-1')]
+    commands: [getStorageSavingsFromOntap('test-fsx', 'us-east-1', 'netapp_wf_test_account_test_cred')]
 };
 
 const getSandboxDetails = {
@@ -313,9 +316,10 @@ const cloneVolumeCommand = {
             'test-fsx',
             'us-east-1',
             'wlmdb_sqlsvm_1714090636810',
-            JSON.stringify({ name: '/vol/wlmdb_sqldata_1714098400/sqldata' }),
-            JSON.stringify({ name: '/vol/wlmdb_sqllog_1714098400/sqllog' }),
-            'test-res-id'
+            JSON.stringify({ name: 'wlmdb_sqldata_1714098400' }),
+            JSON.stringify({ name: 'wlmdb_sqllog_1714098400' }),
+            'test-res-id',
+            'netapp_wf_test_account_test_cred'
         )
     ]
 };
@@ -364,6 +368,49 @@ const cleanUpOntapResourcesCommand = {
 const mountPointQueryCommand = { commands: [mountPointQuery('.', 'test-database')] };
 
 const getInstanceGuidCommand = { commands: [`sqlcmd -S "." -Q "${INSTANCE_GUID}" -y 0`] };
+
+const detachDbAndRemoveAccessPathCommand = {
+    commands: [
+        detachDbAndRemoveAccessPath(
+            'test-db',
+            '["123456789", "987654321"]',
+            '["S:\\test-db-Data", "L:\\test-db-Log"]',
+            '.'
+        )
+    ]
+};
+
+const deleteExtendedPropertiesCommand = {
+    commands: [
+        deleteExtendedPropertiesScript('test-db', '.', [
+            'cloned_by',
+            'baseSnapshot',
+            'source',
+            'createdAt',
+            'updatedAt',
+            'tag',
+            'accountId'
+        ])
+    ]
+};
+
+const getSplitEstimateCommand = {
+    commands: [
+        restGetUtilForOntap(
+            'test-fsx',
+            'us-east-1',
+            '/storage/volumes',
+            'uuid=5c1075d2-03a0-11ef-a514-55070fbfcab1|5ace31ea-03a0-11ef-a514-55070fbfcab1',
+            'fields=clone.split_estimate'
+        )
+    ]
+};
+
+const getActiveDirectory = {
+    commands: [
+        '\n  $ErrorActionPreference = "Stop"\n  $responseObject = @{}\n  $scriptStartTime = Get-Date\n  $responseObject[\'activeDirectory\'] = ""\n\n  try {\n    $adDomainName = (Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction SilentlyContinue -WarningAction SilentlyContinue).Domain\n    If ($adDomainName -ne "WORKGROUP") {\n      $adIpList = ([System.Net.Dns]::GetHostEntry($adDomainName)).AddressList.IpAddressToString\n      if ($adIpList -IsNot [System.Array]) {\n        $adIpList = @($adIpList)\n      }\n\n      $adObject = New-Object PSObject -Property @{ "domainName" = $adDomainName }\n      $adObject | Add-Member -MemberType NoteProperty -Name "ipAddresses" -Value $adIpList\n      $responseObject[\'activeDirectory\'] = $adObject\n    }\n  } catch {\n    $responseObject[\'failureInfo\'] = $_.Exception.Message\n  } finally {\n    $scriptEndTime = Get-Date\n    $responseObject[\'scriptExecutionTime\'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)\n    Echo $responseObject | ConvertTo-Json -Compress\n  } \n'
+    ]
+};
 
 ssmMock
     .on(SendCommandCommand)
@@ -473,7 +520,15 @@ ssmMock
     .on(SendCommandCommand, { Parameters: mountPointQueryCommand })
     .resolves(listSendCommandCommandResponse.mountPointQuery)
     .on(SendCommandCommand, { Parameters: getInstanceGuidCommand })
-    .resolves(listSendCommandCommandResponse.getInstanceGuid);
+    .resolves(listSendCommandCommandResponse.getInstanceGuid)
+    .on(SendCommandCommand, { Parameters: detachDbAndRemoveAccessPathCommand })
+    .resolves(listSendCommandCommandResponse.mountPointQuery)
+    .on(SendCommandCommand, { Parameters: deleteExtendedPropertiesCommand })
+    .resolves(listSendCommandCommandResponse.deleteExtendedProperties)
+    .on(SendCommandCommand, { Parameters: getSplitEstimateCommand })
+    .resolves(listSendCommandCommandResponse.getSplitEstimateCommand)
+    .on(SendCommandCommand, { Parameters: getActiveDirectory })
+    .resolves(listSendCommandCommandResponse.getActiveDirectoryCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -583,7 +638,15 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-mountPointQueryCommand' })
     .resolves(getCommandInvocationResponse.mountPointQueryCommandResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getInstanceGuid' })
-    .resolves(getCommandInvocationResponse.getInstanceGuidResponse);
+    .resolves(getCommandInvocationResponse.getInstanceGuidResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-detachDbAndAcessPathQuery' })
+    .resolves(getCommandInvocationResponse.detachDbAndAccessPathResp)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-deleteExtendedProperties' })
+    .resolves(getCommandInvocationResponse.deleteExtendedPropertiesResp)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getSplitEstimateCommand' })
+    .resolves(getCommandInvocationResponse.getSplitEstimateResp)
+    .on(GetCommandInvocationCommand, { CommandId: 'f171a4a7-3693-41bb-8c31-getActiveDirectory' })
+    .resolves(getCommandInvocationResponse.getActiveDirectoryResp);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

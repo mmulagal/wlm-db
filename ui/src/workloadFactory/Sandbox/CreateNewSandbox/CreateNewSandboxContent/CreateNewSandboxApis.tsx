@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../../store/storeHooks';
 import {
-    useGetDatabaseHostsQuery,
+    useGetDatabaseHostsForSandboxQuery,
     useGetDatabaseListQuery,
     useGetDatabaseMountPointsQuery,
     useGetDriveInfoQuery
@@ -49,7 +49,7 @@ const CreateSandboxApis = () => {
         data: databaseHosts,
         isFetching: databaseHostsLoading,
         isError: databaseHostsError
-    } = useGetDatabaseHostsQuery(
+    } = useGetDatabaseHostsForSandboxQuery(
         {
             credentialId: credId,
             region: regionId,

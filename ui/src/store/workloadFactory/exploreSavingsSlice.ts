@@ -10,8 +10,11 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     loading: false,
     unmanagedExploreSavingsHost: [],
     selectedInstanceId: '',
+    selectedPartnerInstanceId: '',
     selectedServerName: '',
     selectedHostDetails: {},
+    selectedPartnerHostDetails: {},
+    getPartnerHostDetailsLoading: false,
     storageSavingsResponse: {},
     storageSavingsLoading: false,
     savingsCalculatorRefresh: false,
@@ -45,11 +48,20 @@ const exploreSavingsSlice = createSlice({
         setSelectedInstanceId(state, action: PayloadAction<any>) {
             state.selectedInstanceId = action.payload;
         },
+        setSelectedPartnerInstanceId(state, action: PayloadAction<any>) {
+            state.selectedPartnerInstanceId = action.payload;
+        },
         setSelectedServerName(state, action: PayloadAction<any>) {
             state.selectedServerName = action.payload;
         },
         setSelectedHostDetails(state, action: PayloadAction<any>) {
             state.selectedHostDetails = action.payload;
+        },
+        setSelectedPartnerHostDetails(state, action: PayloadAction<any>) {
+            state.selectedPartnerHostDetails = action.payload;
+        },
+        setGetPartnerHostDetailsLoading(state, action: PayloadAction<any>) {
+            state.getPartnerHostDetailsLoading = action.payload;
         },
         setStorageSavingsResponse(state, action: PayloadAction<any>) {
             state.storageSavingsResponse = action.payload;
@@ -66,8 +78,11 @@ const exploreSavingsSlice = createSlice({
             state.selectedCloneRefresh = null;
             state.monthlyChangeRate = 8;
             state.selectedInstanceId = '';
+            state.selectedPartnerInstanceId = '';
             state.selectedServerName = '';
             state.selectedHostDetails = {};
+            state.selectedPartnerHostDetails = {};
+            state.getPartnerHostDetailsLoading = false;
             state.storageSavingsResponse = {};
             state.storageSavingsLoading = false;
             state.savingsCalculatorRefresh = false;
@@ -95,8 +110,11 @@ export const {
     setSaveConfigName,
     setUnmanagedExploreSavingsHost,
     setSelectedInstanceId,
+    setSelectedPartnerInstanceId,
     setSelectedServerName,
     setSelectedHostDetails,
+    setSelectedPartnerHostDetails,
+    setGetPartnerHostDetailsLoading,
     setStorageSavingsResponse,
     setStorageSavingsLoading,
     setSavingsCalculatorRefresh,

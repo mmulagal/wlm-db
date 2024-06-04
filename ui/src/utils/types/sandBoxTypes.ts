@@ -42,6 +42,8 @@ export interface CreateSandboxEntities {
     isSourceSelected: boolean;
     isTargetSelected: boolean;
     showError: boolean;
+    dataFilePath: string;
+    logFilePath: string;
 }
 
 export interface CreateSandboxPayloadEntities {
@@ -103,4 +105,5 @@ export interface SandboxEntities {
         connectionString?: string | null;
         isLoading: boolean;
     };
+    splitEstimateLoading: boolean;
 }

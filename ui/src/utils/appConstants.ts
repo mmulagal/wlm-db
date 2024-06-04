@@ -596,6 +596,12 @@ export const GENERAL = {
         'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
         'Names should not be Transact-SQL reserved words.'
     ],
+    CREATE_SANDBOX_NAME_TOOLTIP: [
+        'SQL databases should have names that are no more than 27 characters long.',
+        'Names can only contain alphanumeric characters, including letters, numbers and underscrores.',
+        'Names should not be Transact-SQL reserved words.',
+        'Data file path and Log file path should not be more than 255 characters long.'
+    ],
     CREATE_DB_DATA_FILE_NAME_TOOLTIP: [
         'Data file name should have names that are no more than 128 characters long.',
         'Names can only contain alphanumeric characters, including letters, numbers and underscrores.'
@@ -625,8 +631,9 @@ export const GENERAL = {
     DB_CREATE_NOTIFICATION: ['Creation of ', ' in ', ' is in progress. Track progress in '],
     SANDBOX_ACTIONS_NOTIFICATIONS: {
         delete: ['Deletion of ', ' sandbox is in progress. Track progress in '],
-        rebaseline: ['Re-baselining of ', 'sandbox is in progress. Track progress in '],
-        refresh: ['Refreshing of ', 'sandbox is in progress. Track progress in ']
+        rebaseline: ['Re-baselining of ', ' sandbox is in progress. Track progress in '],
+        refresh: ['Refreshing of ', ' sandbox is in progress. Track progress in '],
+        split: ['Splitting of ', ' sandbox is in progress. Track progress in ']
     },
     DATABASE_INFORMATION: 'Database information',
     FILE_SETTINGS: 'File settings',
@@ -644,6 +651,7 @@ export const GENERAL = {
     DATA_FILE_PATH: 'Data file path:',
     LOG_FILE_PATH: 'Log file path:',
     SELECT_DRIVE_LETTER: 'Select drive letter',
+    CLONED_COPIES_MAX_LIMIT: 'Number of cloned copies should be less than or equals to 10',
     CHANGE_RATE_MAX_LIMIT: 'Monthly change rate should be less than or equals to 100',
     LOG_SIZE_MIN_ERROR: 'Log file size should be 1 GiB or more.',
     NO_DATA_SIZE_ERROR: 'Data file size should be 1 GiB or more.',
@@ -665,6 +673,9 @@ export const GENERAL = {
     CF_NOTICE: 'Notice: access to the YAML configuration file expires after 7 days.',
     SSM_NO_CONNECTION_MSG: 'Can’t connect to your instance. See',
     SSM_NO_CONNECTION_LINK: 'Troubleshooting SSM agent',
+    SEE_SSM_LINK: 'see troubleshooting ssm agent',
+    OFFLINE_COMPONENT_TEXT_1: 'Unable to display host data',
+    OFFLINE_COMPONENT_TEXT_2: 'Workload Factory cannot connect to this host.',
     SAME_NEW_DRIVE_ERROR: 'Data and log file drive letters should be different for new drives.',
     FSX_FOR_ONTAP: 'FSx for ONTAP',
     EBS: 'EBS',
@@ -883,16 +894,26 @@ export const GENERAL = {
     ROLLBACK_CHECKBOX: 'Select the snapshot you would like the database to Roll-back to',
     DELETING: 'Deleting',
     REBASELINE: 'Re-baseline',
+    SPLIT: 'Splitting',
     REBASELINE_DIALOG_TITLE: ['Are you sure you want to re-baseline ', ' sandbox for database '],
     REBASELINE_DIALOG_FIRST_BULLET:
         'This action will revert the sandbox to its original version at the time of creation.',
     REBASELINE_DIALOG_SECOND_BULLET: 'Any changes you made to the sandbox will be deleted.',
     REFRESH_DIALOG_TITLE: ['Are you sure you want to refresh ', ' sandbox for database'],
+    SPLIT_DIALOG_TITLE: ['Are you sure you want to split this sandbox ', ' from the source database '],
+    SPLIT_DIALOG_FIRST_BULLET: [
+        'The split will create a new database from this sandbox that will occupy ',
+        ' in storage.'
+    ],
+    SPLIT_DIALOG_SECOND_BULLET:
+        'Once the split is complete, the new database will appear in the inventory and this sandbox will be deleted.',
     REFRESH_DIALOG_FIRST_BULLET:
         'This action will update the selected sandbox so that it is equivalent to the source database at the current moment.',
     REFRESH_DIALOG_SECOND_BULLET: 'Any changes you made to the sandbox will be deleted.',
     REFRESH_CURRENT_RADIO: 'Refresh to current time',
-    REFRESH_SNAPSHOT_RADIO: 'Refresh to Snapshot'
+    REFRESH_SNAPSHOT_RADIO: 'Refresh to Snapshot',
+    VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
+        'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or consolidate files under existing drives with segregation at storage.'
 };
 
 export const CODE_VIEWER = {

@@ -60,11 +60,11 @@ const StorageCapacityTable = () => {
 
     const dataDriveColDefs: ColumnProps[] = [
         {
-            Header: 'Capacity requirements for Data drive size',
+            Header: 'Capacity requirements',
             accessor: 'type',
             id: '1',
             isSortable: false,
-            width: '320px',
+            width: '280px',
             renderCell: (cellData: any, rowData: any) => {
                 if (rowData?.size <= 1024 && cellData === GENERAL.TOTAL_VOLUME && isFsxnNew(fsxNType)) {
                     return (
@@ -84,7 +84,7 @@ const StorageCapacityTable = () => {
             Header: 'Size',
             accessor: 'size',
             id: '2',
-            width: '180px',
+            width: '200px',
             renderCell: (cellData: any) => {
                 if (selectedUnit?.label === 'TiB') {
                     return cellData
@@ -99,7 +99,7 @@ const StorageCapacityTable = () => {
             Header: 'Calculation',
             accessor: 'calculation',
             id: '3',
-            width: '380px'
+            width: '400px'
         }
     ];
 

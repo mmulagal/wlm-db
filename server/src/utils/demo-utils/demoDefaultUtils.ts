@@ -41,6 +41,7 @@ function createDemoResources(
         fsxFilSystemId,
         awsAccountId,
         serverName,
+        true,
         storageProtocol
     );
 }

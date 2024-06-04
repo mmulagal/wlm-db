@@ -8,6 +8,7 @@ import OntapCalculation from './OntapCalculation/OntapCalculation';
 import EBSCalculation from './EBSCalculation/EBSCalculation';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
+import { addExploreSavingsInitialData } from '../../../store/workloadFactory/exploreSavingsSlice';
 
 const ViewCalculations = () => {
     const dispatch = useDispatch();
@@ -22,6 +23,7 @@ const ViewCalculations = () => {
                             title: GENERAL.ES_SAVINGS,
                             onClick: () => {
                                 dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                                dispatch(addExploreSavingsInitialData(null));
                             }
                         },
                         {

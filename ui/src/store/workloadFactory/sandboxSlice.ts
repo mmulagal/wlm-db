@@ -24,7 +24,8 @@ export const initialSandboxState: SandboxEntities = {
         selectedSandboxName: null,
         connectionString: null,
         isLoading: false
-    }
+    },
+    splitEstimateLoading: false
 };
 
 const sandboxSlice = createSlice({
@@ -45,6 +46,9 @@ const sandboxSlice = createSlice({
         },
         updateConnectionInfo: (state, action: PayloadAction<any>) => {
             state.connectionInfo = action.payload;
+        },
+        updateSplitEstimateLoading: (state, action: PayloadAction<any>) => {
+            state.splitEstimateLoading = action.payload;
         }
     }
 });
@@ -54,7 +58,8 @@ export const {
     setAggregatedSandboxList,
     setSandboxSavingsState,
     setShowBanner,
-    updateConnectionInfo
+    updateConnectionInfo,
+    updateSplitEstimateLoading
 } = sandboxSlice.actions;
 
 export default sandboxSlice;

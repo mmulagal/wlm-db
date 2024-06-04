@@ -120,7 +120,7 @@ async function aoagStorageSavingsCalculations(
         accountId,
         credentialsId,
         region,
-        getMarketingApiRequestBody(allEbsVolumeIds, params)
+        getMarketingApiRequestBody(allEbsVolumeIds, params, SqlServerDeploymentModel.SQL_AOAG_SHORT)
     );
 
     // Consider only volumes associated with unique database in primary and secondary node for snapshot calculation and to draw a storage savings comparison with FSXn
@@ -133,7 +133,7 @@ async function aoagStorageSavingsCalculations(
         accountId,
         credentialsId,
         region,
-        getMarketingApiRequestBody(uniqueHostVolumeIds, params)
+        getMarketingApiRequestBody(uniqueHostVolumeIds, params, SqlServerDeploymentModel.SQL_AOAG_SHORT)
     );
 
     return {
@@ -187,7 +187,8 @@ async function aoagStorageSavingsMetrics(
         credentialsId,
         region,
         allEbsVolumeIds,
-        params
+        params,
+        SqlServerDeploymentModel.SQL_AOAG_SHORT
     );
 
     // Consider only volumes associated with unique database in primary and secondary node for snapshot calculation and to draw a storage savings comparison with FSXn
@@ -197,7 +198,14 @@ async function aoagStorageSavingsMetrics(
         fsxCloneCalculation,
         ebsCloneCalculation,
         ebsSnapshotCalculation
-    } = await formatStorageSavingsCalculationMetrics(accountId, credentialsId, region, uniqueHostVolumeIds, params);
+    } = await formatStorageSavingsCalculationMetrics(
+        accountId,
+        credentialsId,
+        region,
+        uniqueHostVolumeIds,
+        params,
+        SqlServerDeploymentModel.SQL_AOAG_SHORT
+    );
 
     return {
         ebsCalculation,
@@ -209,7 +217,11 @@ async function aoagStorageSavingsMetrics(
     };
 }
 
-function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavingsRequestBodyType) {
+function getMarketingApiRequestBody(
+    ebsVolumeIds: string[],
+    params: StorageSavingsRequestBodyType,
+    sqlServerDeploymentType: string
+) {
     const { snapshotFrequency, clonedCopiesCount, cloneRefreshFrequency, monthlyChangeRatePercentage } = params || {};
 
     const monthlyCloneCount = getMonthlyCloneCountFromFrequency(cloneRefreshFrequency);
@@ -217,7 +229,7 @@ function getMarketingApiRequestBody(ebsVolumeIds: string[], params: StorageSavin
         useCase: 'Low-latency',
         volumeIds: ebsVolumeIds,
         includeSnapshots: false,
-        deploymentType: 'Single',
+        deploymentType: sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT ? 'Multi' : 'Single',
         snapshots: {
             snapshotFreq: snapshotFrequency,
             snapshotPercentageChange: monthlyChangeRatePercentage
@@ -295,7 +307,12 @@ async function performStorageSavingsCalculations(
         ebs,
         fsx,
         fsx_calculation: fsxCalculationData
-    } = await getStorageSavings(accountId, credentialsId, region, getMarketingApiRequestBody(ebsVolumeIds, params));
+    } = await getStorageSavings(
+        accountId,
+        credentialsId,
+        region,
+        getMarketingApiRequestBody(ebsVolumeIds, params, sqlServerDeploymentType!)
+    );
 
     return {
         ebs,
@@ -309,7 +326,8 @@ async function formatStorageSavingsCalculationMetrics(
     credentialsId: string,
     region: string,
     ebsVolumeIds: string[],
-    params: StorageSavingsRequestBodyType
+    params: StorageSavingsRequestBodyType,
+    sqlServerDeploymentType: string
 ) {
     logger.debug('Formatting storage savings calculation metrics', {
         accountId,
@@ -441,7 +459,12 @@ async function formatStorageSavingsCalculationMetrics(
             SSDMonthlyCost,
             totalCloneMonthlyCost
         }
-    } = await getStorageSavings(accountId, credentialsId, region, getMarketingApiRequestBody(ebsVolumeIds, params));
+    } = await getStorageSavings(
+        accountId,
+        credentialsId,
+        region,
+        getMarketingApiRequestBody(ebsVolumeIds, params, sqlServerDeploymentType)
+    );
     return {
         fsxOntapCalculation: {
             numberOfVolumes,
@@ -626,7 +649,14 @@ async function getStorageSavingsCalculationMetrics(
             params
         );
     }
-    return formatStorageSavingsCalculationMetrics(accountId, credentialsId, region, ebsVolumeIds, params);
+    return formatStorageSavingsCalculationMetrics(
+        accountId,
+        credentialsId,
+        region,
+        ebsVolumeIds,
+        params,
+        sqlServerDeploymentType!
+    );
 }
 
 export { performStorageSavingsCalculations, getStorageSavingsCalculationMetrics, getMarketingApiRequestBody };

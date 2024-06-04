@@ -179,35 +179,43 @@ const validateSQLInstanceConnectivity = (ec2instanceId: string, sqlinstancename:
         $ec2instanceId = '${ec2instanceId}'
         $sqlinstancename = '${sqlinstancename}'
 
-        $sqlcmd = @"
+        # Check if sqlcmd is installed or not
+        $sqlcmdInstalled = (Get-Command -Type Application sqlcmd 2> $null) -ne $null
+
+        if (-not $sqlcmdInstalled) {
+            $responseObject.add('sqlerror', 'sqlcmd utility is not available. Install it by referring to https://learn.microsoft.com/en-us/sql/tools/sqlcmd/sqlcmd-utility. If the command is already installed, ensure the "Path" environment variable contains the path of the command and retry the operation')
+            $responseObject.add('sqlInstanceConnectivity', $False)
+        } else {
+            $sqlcmd = @"
             SET NOCOUNT ON;
-            SELECT 
-                SERVERPROPERTY('edition') AS sqlEdition,
-                (SELECT COUNT(*) FROM sys.databases) AS noOfDatabases
-            FOR JSON PATH
-"@
+                SELECT 
+                    SERVERPROPERTY('edition') AS sqlEdition,
+                    (SELECT COUNT(*) FROM sys.databases) AS noOfDatabases
+                FOR JSON PATH
+    "@
 
-        $SQLCredStore = "/netapp/wlmdb/$ec2instanceId"
-        $credobject =  (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
-        $sqlList = $credobject.sql
-        $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
-        if ($sqlCredentials -eq $null) {
-            $errorMessage = "No SQL instance found with the name $sqlinstancename"
-            throw $errorMessage
-        }
-        $username = $sqlCredentials.username
-        $password = $sqlCredentials.password
+            $SQLCredStore = "/netapp/wlmdb/$ec2instanceId"
+            $credobject =  (Get-SSMParameter -Name $SQLCredStore -WithDecryption $true).Value | Out-String | ConvertFrom-Json 
+            $sqlList = $credobject.sql
+            $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq $sqlinstancename.ToLower() }
+            if ($sqlCredentials -eq $null) {
+                $errorMessage = "No SQL instance found with the name $sqlinstancename"
+                throw $errorMessage
+            }
+            $username = $sqlCredentials.username
+            $password = $sqlCredentials.password
 
-        if ($username -eq $null -or $password -eq $null) {
-            $errorMessage = "SQL credentials not found for the instance $sqlinstancename"
-            throw $errorMessage
+            if ($username -eq $null -or $password -eq $null) {
+                $errorMessage = "SQL credentials not found for the instance $sqlinstancename"
+                throw $errorMessage
+            }
+            $sqlresult = Sqlcmd -U $username -P $password -Q $sqlcmd -y 0
+            $sqlresult | ConvertFrom-Json | ForEach-Object {
+                $responseObject.add('sqlEdition', $_.sqlEdition)
+                $responseObject.add('noOfDatabases', $_.noOfDatabases)
+            }
+            $responseObject.add('sqlInstanceConnectivity', $True)
         }
-        $sqlresult = Sqlcmd -U $username -P $password -Q $sqlcmd -y 0
-        $sqlresult | ConvertFrom-Json | ForEach-Object {
-            $responseObject.add('sqlEdition', $_.sqlEdition)
-            $responseObject.add('noOfDatabases', $_.noOfDatabases)
-        }
-        $responseObject.add('sqlInstanceConnectivity', $True)
     } catch {
         $responseObject.add('sqlerror', $_.Exception.Message)
         $responseObject.add('sqlInstanceConnectivity', $False)

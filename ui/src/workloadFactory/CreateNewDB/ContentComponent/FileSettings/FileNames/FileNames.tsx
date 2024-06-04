@@ -79,40 +79,42 @@ const FileNames = () => {
     }, [dbCreateDataNameAdded, dbCreateLogNameAdded, isDbCreateHit]);
 
     useEffect(() => {
+        const truncatedDbName = newUserDBName.substring(0, Math.min(newUserDBName.length, 25));
         if (driveLetter && newUserDBFileName) {
             setDataFilePath(
                 `${driveLetter?.value}:${
-                    isDataVirtualMountPoint ? `${newUserDBName}_data` : ''
+                    isDataVirtualMountPoint ? `\\${truncatedDbName}_data` : ''
                 }\\mssql\\data\\${newUserDBFileName}.mdf`
             );
         } else if (driveLetter) {
             setDataFilePath(
                 `${driveLetter?.value}:${
-                    isDataVirtualMountPoint ? `${newUserDBName}_data` : ''
+                    isDataVirtualMountPoint ? `\\${truncatedDbName}_data` : ''
                 }\\mssql\\data\\<db_data>.mdf`
             );
         } else {
             setDataFilePath('');
         }
-    }, [driveLetter, newUserDBFileName, newUserDBName]);
+    }, [driveLetter, newUserDBFileName, newUserDBName, isDataVirtualMountPoint]);
 
     useEffect(() => {
+        const truncatedDbName = newUserDBName.substring(0, Math.min(newUserDBName.length, 25));
         if (driveLetterLogFile && newUserLogFileName) {
             setLogFilePath(
                 `${driveLetterLogFile?.value}:${
-                    isLogVirtualMountPoint ? `${newUserDBName}_log` : ''
+                    isLogVirtualMountPoint ? `\\${truncatedDbName}_log` : ''
                 }\\mssql\\log\\${newUserLogFileName}.ldf`
             );
         } else if (driveLetterLogFile) {
             setLogFilePath(
                 `${driveLetterLogFile?.value}:${
-                    isLogVirtualMountPoint ? `${newUserDBName}_log` : ''
+                    isLogVirtualMountPoint ? `\\${truncatedDbName}_log` : ''
                 }\\mssql\\log\\<db_log>.ldf`
             );
         } else {
             setLogFilePath('');
         }
-    }, [driveLetterLogFile, newUserLogFileName]);
+    }, [driveLetterLogFile, newUserLogFileName, isLogVirtualMountPoint]);
 
     useEffect(() => {
         if (newUserDBName && !dataFileNameChange) {
@@ -189,6 +191,10 @@ const FileNames = () => {
     }, [driveInfoList, driveLetter]);
 
     const isVirtualMountPointDisabled = useMemo(() => {
+        if (driveLetter?.label2 === DRIVE_LETTER_TYPE.NEW || driveLetterLogFile?.label2 === DRIVE_LETTER_TYPE.NEW) {
+            dispatch(setIsDataVirtualMountPoint(false));
+            dispatch(setIsLogVirtualMountPoint(false));
+        }
         return driveLetter?.label2 === DRIVE_LETTER_TYPE.NEW || driveLetterLogFile?.label2 === DRIVE_LETTER_TYPE.NEW;
     }, [driveLetter, driveLetterLogFile]);
 
@@ -387,7 +393,9 @@ const FileNames = () => {
                                         }}
                                         isSelected={isDataVirtualMountPoint}
                                         isDisabled={isVirtualMountPointDisabled}
+                                        className={styles.checkboxContainer}
                                     />
+                                    <TooltipInfo>{GENERAL.VIRTUAL_MOUNT_POINT_INFO_TOOLTIP}</TooltipInfo>
                                 </div>
                             )}
                         </div>
@@ -466,7 +474,9 @@ const FileNames = () => {
                                         }}
                                         isSelected={isLogVirtualMountPoint}
                                         isDisabled={isVirtualMountPointDisabled}
+                                        className={styles.checkboxContainer}
                                     />
+                                    <TooltipInfo>{GENERAL.VIRTUAL_MOUNT_POINT_INFO_TOOLTIP}</TooltipInfo>
                                 </div>
                             )}
                         </div>
