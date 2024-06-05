@@ -269,26 +269,30 @@ async function updateUserDBIntoResourceData(
 ) {
     logger.info('updating user db into resource meta data', accountId, resourceId, databaseName);
 
-    // this is used to retreive the newly created user databases in database list for demo using meta data
-    const databaseDetails = {
-        name: databaseName,
-        size: 16777216,
-        type: MSSQL_DATABASE_TYPES.USER,
-        status: ONLINE,
-        protection: {
-            isAwsBackupEnabled: {
-                fsxn: false,
-                fsxw: false,
-                ebs: false
-            },
-            isFsxOntapSnapshotsEnabled: false,
-            isSqlNativeEnabled: false
-        },
-        collation: SQL_DEFAULT_COLLATION
-    };
-    metaData.userDatabase = [...(metaData.userDatabase || []), databaseDetails];
+    const existingDatabases = metaData.userDatabase || [];
+    const hasExistingDatabase = existingDatabases.some(db => db.name === databaseName);
 
-    await updateResourceMetaData(accountId, resourceId, metaData);
+    if (!hasExistingDatabase) {
+        const databaseDetails = {
+            name: databaseName,
+            size: 16777216,
+            type: MSSQL_DATABASE_TYPES.USER,
+            status: ONLINE,
+            protection: {
+                isAwsBackupEnabled: {
+                    fsxn: false,
+                    fsxw: false,
+                    ebs: false
+                },
+                isFsxOntapSnapshotsEnabled: false,
+                isSqlNativeEnabled: false
+            },
+            collation: SQL_DEFAULT_COLLATION
+        };
+        metaData.userDatabase = [...existingDatabases, databaseDetails];
+
+        await updateResourceMetaData(accountId, resourceId, metaData);
+    }
 }
 
 async function updateSandboxDBIntoResourceData(
