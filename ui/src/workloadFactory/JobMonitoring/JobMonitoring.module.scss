@@ -3,6 +3,9 @@
     width: 100vw;
     background-color: var(--main-background);
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 
     .jobMenuPopover {
         width: fit-content;
@@ -19,7 +22,7 @@
         width: 1612px;
         justify-content: space-between;
         margin-top: 24px;
-        margin-left: 120px;
+
         margin-right: 40px;
         .heading {
             line-height: unset;
@@ -32,10 +35,9 @@
     }
 
     .chartContainer {
-        margin-left: 120px;
         display: flex;
         gap: 27px;
-        width: 1612px;
+        // width: 1612px;
     }
 
     .overtimeJobs {
@@ -67,9 +69,9 @@
 
     .tableSection {
         margin-top: 40px;
-        margin-left: 120px;
+
         display: flex;
-        width: 1063px;
+        // width: 1063px;
     }
 }
 

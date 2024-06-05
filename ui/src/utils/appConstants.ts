@@ -913,7 +913,9 @@ export const GENERAL = {
     REFRESH_CURRENT_RADIO: 'Refresh to current time',
     REFRESH_SNAPSHOT_RADIO: 'Refresh to Snapshot',
     VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
-        'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.'
+        'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.',
+    EBS_TOOLTIP_MESSAGE:
+        'Management of SQL Server instances using EBS (Elastic Block Store) storage is currently not supported. Please select a supported storage option to proceed.'
 };
 
 export const CODE_VIEWER = {
