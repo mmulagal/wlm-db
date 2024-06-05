@@ -1,6 +1,6 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases } from '../operations/database-hosts-operations';
+import { getDatabaseHostsSummary, getDatabaseHostsSummaryV2, getDatabaseHostSummary, getDatabases } from '../operations/database-hosts-operations';
 import { deployDatabase, getCollationDetails, getDriveInfo } from '../operations/createdb-operations';
 import {
     DatabaseHostDetailsSchema,
@@ -19,7 +19,8 @@ import {
     DeleteSandboxSchema,
     GetSandboxSplitEstimateSchema,
     SandboxLifeCycleSchema,
-    SandboxSplitSchema
+    SandboxSplitSchema,
+    DatabaseHostsSummarySchemaV2
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -36,6 +37,7 @@ import {
 } from '../operations/sandbox-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
+const API_PREFIX_PATH_V2 = '/v2/credentials/:credentialsId/regions/:region';
 
 export default function databaseHostsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -277,6 +279,26 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     params: { accountId, credentialsId, region, databaseHostId, sandboxName }
                 } = request;
                 const response = await splitSandbox(accountId, credentialsId, region, databaseHostId, sandboxName);
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts`,
+            { schema: DatabaseHostsSummarySchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region },
+                    query: { fields, nextToken, vpcId, fsxId }
+                } = request;
+                const response = await getDatabaseHostsSummaryV2(
+                    accountId,
+                    fields,
+                    nextToken,
+                    region,
+                    credentialsId,
+                    vpcId,
+                    fsxId
+                );
                 return reply.send(response);
             }
         );
