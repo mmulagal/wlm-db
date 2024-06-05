@@ -170,7 +170,7 @@ interface DatabaseInstance {
     metadata: databaseInstanceMetadata;
     created_time: string;
     database_deployment_type: string;
-    fsxnId: string;
+    fsxn_ids: string;
     credentials_id: string;
     fsxwId: string;
     ebsVolumeIds: string[];

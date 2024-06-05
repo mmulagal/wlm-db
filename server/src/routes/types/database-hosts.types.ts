@@ -37,6 +37,7 @@ const EC2InstanceDetailsResponse = Type.Object({
     instanceType: Type.Optional(Type.String()),
     availabilityZone: Type.Optional(Type.String()),
     subnetId: Type.Optional(Type.String()),
+    privateIpAddress: Type.Optional(Type.String()),
     status: Type.Optional(Type.String())
 });
 type EC2InstanceDetailsResponseType = Static<typeof EC2InstanceDetailsResponse>;
@@ -415,9 +416,6 @@ const NodeTopologyResponse = Type.Object({
     awsAccount: Type.String({ minLength: 1 }),
     region: Type.String(),
     vpcId: Type.Optional(Type.String()),
-    // vpcName: Type.Optional(Type.String()),
-    // vpcCidr: Type.Optional(Type.String()),
-    // keyPairName: Type.Optional(Type.String()),
     ec2Details: Type.Optional(Type.Array(EC2InstanceDetailsResponse)),
     activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse)
 });
@@ -461,16 +459,6 @@ const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
     nodeStatus: Type.String({ enum: ['ONLINE', 'OFFLINE', 'N/A'] }),
     ssmStatus: Type.String({ enum: ['ONLINE', 'OFFLINE'] }),
     databaseInstanceDetails: Type.Optional(Type.Array(DatabaseHostInstanceDetailsResponse)),
-    clusterNodeDetails: Type.Optional(
-        Type.Array(
-            Type.Object({
-                ec2InstanceId: Type.String(),
-                ec2InstancePrivateIpAddress: Type.String(),
-                ec2InstanceType: Type.String(),
-                ec2InstanceName: Type.Optional(Type.String())
-            })
-        )
-    ),
     nodeTopology: Type.Optional(NodeTopologyResponse),
     ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),
     estimatedUsageCost: Type.Optional(UsageCostPerStorageTypeResponse),

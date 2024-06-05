@@ -61,7 +61,11 @@ import {
 } from './aws/fsx-operations';
 import { DatabaseInstance, Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
-import { findResourceNameFromTags, getCostAllocationTagEC2Resource, isEbsAwsBackupEnabled } from './aws/ec2-operations';
+import {
+    findResourceNameFromTags,
+    getCostAllocationTagEC2Resource,
+    isEbsAwsBackupEnabled
+} from './aws/ec2-operations';
 import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
@@ -357,7 +361,8 @@ async function getStorageData(
 
         if (version === VERSION_2_0 && databaseInstanceDetails) {
             ({
-                fsxnId,
+                region,
+                fsxn_ids: fsxnId,
                 credentials_id: credentialsId,
                 fsxwId,
                 ebsVolumeIds,
@@ -491,7 +496,7 @@ async function getProtectionStatus(
     if (version === VERSION_2_0 && databaseInstanceDetails) {
         ({
             database_instance_id: id,
-            fsxnId,
+            fsxn_ids: fsxnId,
             region,
             credentials_id: credentialsId,
             fsxwId,
@@ -1744,7 +1749,6 @@ async function getDatabaseHostSummaryV2(
     let nodeTopology: any;
     let usageEstimationData: any;
     let databaseInstancesDetail: any;
-    let clusterNodeDetails: any;
     try {
         if (credentialsId && region) {
             [databaseInstancesDetail, nodeTopology, usageEstimationData] = await Promise.all(
@@ -1786,11 +1790,24 @@ async function getDatabaseHostSummaryV2(
                 )
             );
 
-            if (resourceDetail?.clusterNodeDetails && resourceDetail?.clusterNodeDetails?.length > 0) {
-                clusterNodeDetails = resourceDetail?.clusterNodeDetails;
-                databaseHostDetails.clusterNodeDetails = clusterNodeDetails;
+            if (resourceDetail?.clusterNodeDetails && resourceDetail?.clusterNodeDetails?.length > 0 && nodeTopology) {
+                const clusterNodeDetails = resourceDetail?.clusterNodeDetails;
+
+                nodeTopology = clusterNodeDetails.map(
+                    (node: { ec2InstanceId: any; ec2InstancePrivateIpAddress: any }) => {
+                        const correspondingNodeTopology = nodeTopology.find(
+                            (topology: { id: string }) => topology.id === node.ec2InstanceId
+                        );
+
+                        if (correspondingNodeTopology) {
+                            correspondingNodeTopology.privateIpAddress = node.ec2InstancePrivateIpAddress;
+                        }
+
+                        return correspondingNodeTopology;
+                    }
+                );
             }
-            databaseHostDetails.nodeStatus = nodeTopology.ec2Details[0].status;
+            databaseHostDetails.nodeStatus = nodeTopology.ec2Details[0].status || 'N/A';
             databaseHostDetails.ssmStatus = 'ONLINE';
             databaseHostDetails.ebsResourceInfo = usageEstimationData?.storage?.ebsBreakdownByVolumeType || [];
 
