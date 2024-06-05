@@ -30,9 +30,9 @@ const DatabaseOverviewLayout = () => {
                             />
                         </div>
 
-                        <div className={styles.commonContainer}>
+                        {/* <div className={styles.commonContainer}>
                             <EstimatedCost hostData={getAggrCost([resourceDetails])} hostsLoading={resourceLoading} />
-                        </div>
+                        </div> */}
                     </div>
                 </div>
 

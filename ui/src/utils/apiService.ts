@@ -743,6 +743,25 @@ export const sandboxApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
+            getDatabaseHostsForSandbox: builder.query({
+                query: ({ credentialId, region, nextToken = null }) => {
+                    if (nextToken) {
+                        return `v1/credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,storage&nextToken=${nextToken}`;
+                    } else {
+                        return `v1/credentials/${credentialId}/regions/${region}/database-hosts?fields=topology,storage`;
+                    }
+                },
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialId,
+                            regionId: args?.region
+                        };
+                    }
+                    return response;
+                }
+            }),
             getSandboxList: builder.query({
                 query: ({ credentialId, region, nextToken = null }) => {
                     if (nextToken) {
@@ -928,7 +947,8 @@ export const {
     useGetDatabaseMountPointsQuery,
     useDeleteSandboxMutation,
     useUpdateSandboxMutation,
-    useSplitSandboxMutation
+    useSplitSandboxMutation,
+    useGetDatabaseHostsForSandboxQuery
 } = sandboxApi;
 
 export const { useGetStorageSavingsMutation, useGetViewCalculationsMutation } = exploreSavingsApi;

@@ -87,6 +87,7 @@ const MSSQLAccordion = ({ printState }: any) => {
         setTimeout(() => {
             const data = setRecommendedConfig(msSqlInstance, fsxData);
             LoadRecommendedConfig(dispatch, data, false);
+            dispatch(setIsLoadConfig(false));
         }, 1);
     };
 

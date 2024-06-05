@@ -37,10 +37,56 @@
 
     .mainSection {
         padding: 40px;
+        display: flex;
+    }
+    .largeContainer {
+        height: 116px;
+        width: 1064px;
+        display: flex;
+
+        .secondSegment {
+            padding: 36px 40px 20px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            .secondRow {
+                display: flex;
+                gap: 32px;
+
+                .bottomRow {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+
+                    .square {
+                        width: 12px;
+                        height: 12px;
+                    }
+                }
+            }
+        }
+    }
+    .firstSegment {
+        height: 116px;
+        padding-top: 24px;
+        padding-bottom: 24px;
+        padding-left: 40px;
+        display: flex;
+        gap: 20px;
+
+        .rightSection {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+
+    .loadingContainer {
+        height: 35px;
+        display: flex;
     }
 
     .progressBar {
-        width: 438px;
+        width: 655px;
         height: 16px;
         background-color: var(--content-background);
         display: flex;

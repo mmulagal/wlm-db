@@ -8,7 +8,10 @@ import {
     ManageMsSqlResponseBody,
     DiscoverCredentialsResponse,
     MsSqlInstancesRequestQuery,
-    PrepareResourceResponseBody
+    PrepareResourceResponseBody,
+    MultiInstanceManagementResponseBody,
+    UnmanageInstanceParams,
+    DatabaseInstanceQueryString
 } from '../types/discover.types';
 import { GenericHeaders, CredentialsIdParams } from '../types/generic.types';
 
@@ -65,6 +68,17 @@ const ManageMsSqlSchema = {
     }
 };
 
+const UnManageMsSqlSchema = {
+    ...DiscoveryBaseRequest,
+    params: UnmanageInstanceParams,
+    querystring: DatabaseInstanceQueryString,
+    summary: 'Unmanage SQL Server database instances.',
+    description: 'Unmanage SQL Server database instances managed by Workload Factory.',
+    response: {
+        200: MultiInstanceManagementResponseBody
+    }
+};
+
 const DiscoverCredentialsSchema = {
     Headers: GenericHeaders,
     tags: [RouteTags.DISCOVER],
@@ -93,5 +107,6 @@ export {
     DiscoverMsSqlSchema,
     ManageMsSqlSchema,
     MsSqlInstancesSchema,
-    PrepareForManageSchema
+    PrepareForManageSchema,
+    UnManageMsSqlSchema
 };

@@ -31,9 +31,24 @@ const StorageMetrics = Type.Object({
     total: Type.Number()
 });
 
+const StorageSavingsCompute = Type.Object({
+    instanceType: Type.String(),
+    computeMonthlyPrice: Type.Optional(Type.Number())
+});
+
+const StorageSavingsLicense = Type.Object({
+    licenseType: Type.String(),
+    licenseMonthlyPrice: Type.Optional(Type.Number())
+});
 const StorageSavingsResponse = Type.Object({
+    compute: Type.Object({ existing: StorageSavingsCompute, recommended: StorageSavingsCompute }),
+    license: Type.Object({ existing: StorageSavingsLicense, recommended: StorageSavingsLicense }),
     ebs: StorageMetrics,
     fsx: StorageMetrics,
+    totalSummary: Type.Object({
+        existing: Type.Number(),
+        recommended: Type.Number()
+    }),
     fsxCalculation: Type.Object({
         deploymentType: Type.String(),
         numberOfVolumes: Type.Number(),
@@ -57,7 +72,26 @@ const PriceUnitObject = Type.Object({
     unit: Type.String()
 });
 
+const ComputeCalculationObject = Type.Object({
+    instanceType: Type.String(),
+    computeHourlyPrice: Type.Optional(Type.Number()),
+    instanceHourlyPrice: Type.Optional(Type.Number()),
+    hoursInMonth: Type.Number(),
+    instanceMonthlyPrice: Type.Optional(Type.Number()),
+    computeMonthlyPrice: Type.Optional(Type.Number())
+});
+const LicenseCalculationObject = Type.Object({
+    sqlServerEdition: Type.String(),
+    licenseType: Type.String(),
+    licenseHourlyPrice: Type.Optional(Type.Number()),
+    licenseIncluded: Type.Optional(Type.Boolean()),
+    hoursInMonth: Type.Number()
+});
 const StorageSavingsCalculationsMetricsResponse = Type.Object({
+    recommendedComputeCalculation: Type.Array(ComputeCalculationObject),
+    recommendedLicenseCalculation: Type.Array(LicenseCalculationObject),
+    existingComputeCalculation: Type.Array(ComputeCalculationObject),
+    existingLicenseCalculation: Type.Array(LicenseCalculationObject),
     fsxOntapCalculation: Type.Object({
         numberOfVolumes: Type.Number(),
         percentageOfDataOnSSDStorage: Type.Number(),
@@ -177,6 +211,43 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
 type StorageSavingsResponseType = Static<typeof StorageSavingsResponse>;
 type StorageSavingsRequestBodyType = Static<typeof StorageSavingsRequestBody>;
 
+const ComputeDetails = Type.Object({
+    instanceType: Type.String(),
+    computeHourlyPrice: Type.Optional(Type.Number()),
+    instanceHourlyPrice: Type.Optional(Type.Number()),
+    computeMonthlyPrice: Type.Optional(Type.Number()),
+    instanceMonthlyPrice: Type.Optional(Type.Number()),
+    hoursInMonth: Type.Number()
+});
+
+const LicenseDetails = Type.Object({
+    sqlServerEdition: Type.String(),
+    licenseType: Type.String(),
+    licenseHourlyPrice: Type.Optional(Type.Number()),
+    licenseIncluded: Type.Optional(Type.Boolean()),
+    licenseMonthlyPrice: Type.Optional(Type.Number()),
+    hoursInMonth: Type.Number()
+});
+
+const Compute = Type.Object({
+    existing: ComputeDetails,
+    recommended: ComputeDetails
+});
+
+const License = Type.Object({
+    existing: LicenseDetails,
+    recommended: LicenseDetails
+});
+
+const ComputeLicenseCost = Type.Object({
+    ec2InstanceId: Type.String(),
+    ec2InstanceType: Type.String(),
+    compute: Compute,
+    license: License
+});
+
+type ComputeLicenseCostType = Static<typeof ComputeLicenseCost>;
+
 type StorageSavingsMetricsCalculationsResponseType = Static<typeof StorageSavingsCalculationsMetricsResponse>;
 export {
     StorageSavingsRequestParams,
@@ -185,5 +256,6 @@ export {
     StorageSavingsResponse,
     StorageSavingsResponseType,
     StorageSavingsCalculationsMetricsResponse,
-    StorageSavingsMetricsCalculationsResponseType
+    StorageSavingsMetricsCalculationsResponseType,
+    ComputeLicenseCostType
 };
