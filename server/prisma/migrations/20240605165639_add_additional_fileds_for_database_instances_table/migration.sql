@@ -10,6 +10,7 @@
   - Added the required column `database_instance_id` to the `database_instances` table without a default value. This is not possible if the table is not empty.
   - Added the required column `database_instance_name` to the `database_instances` table without a default value. This is not possible if the table is not empty.
   - Added the required column `database_type` to the `database_instances` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `fsx_svm_id` to the `database_instances` table without a default value. This is not possible if the table is not empty.
   - Added the required column `region` to the `database_instances` table without a default value. This is not possible if the table is not empty.
   - Added the required column `source` to the `database_instances` table without a default value. This is not possible if the table is not empty.
 
@@ -36,7 +37,7 @@ ALTER TABLE `database_instances` DROP COLUMN `sql_instance_id`,
     ADD COLUMN `database_instance_id` VARCHAR(36) NOT NULL,
     ADD COLUMN `database_instance_name` VARCHAR(16) NOT NULL,
     ADD COLUMN `database_type` VARCHAR(16) NOT NULL,
-    ADD COLUMN `fsx_svm_id` JSON NULL,
+    ADD COLUMN `fsx_svm_id` JSON NOT NULL,
     ADD COLUMN `metadata` JSON NULL,
     ADD COLUMN `number_of_user_dbs_created` INTEGER NULL DEFAULT 0,
     ADD COLUMN `region` VARCHAR(30) NOT NULL,

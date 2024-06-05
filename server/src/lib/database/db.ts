@@ -587,7 +587,7 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
             source: source as SOURCE, // Fix: Update the type of 'source' to 'SOURCE'
             database_type: databaseType,
             database_deployment_type: sqlDeploymentType as DATABASE_DEPLOYMENT_TYPE,
-            ...(fsxSvmId && { fsx_svm_id: fsxSvmId }),
+            fsx_svm_id: fsxSvmId,
             ...(storageProtocol && { storage_protocol: storageProtocol as STORAGEPROTOCOL }),
             ...(numberofUserDbsCreated && { number_of_user_dbs_created: numberofUserDbsCreated }),
             ...(sandboxCreated && { sandbox_created: sandboxCreated }),
