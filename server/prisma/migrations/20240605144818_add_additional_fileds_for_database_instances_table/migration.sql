@@ -32,7 +32,7 @@ DROP INDEX `uk_wlmdb_resource_resource_id_account_id_credentials_id` ON `resourc
 -- AlterTable
 ALTER TABLE `database_instances` DROP COLUMN `sql_instance_id`,
     DROP COLUMN `sql_instance_name`,
-    ADD COLUMN `database_deployment_type` VARCHAR(16) NOT NULL,
+    ADD COLUMN `database_deployment_type` ENUM('Standalone', 'FCI') NOT NULL,
     ADD COLUMN `database_instance_id` VARCHAR(36) NOT NULL,
     ADD COLUMN `database_instance_name` VARCHAR(16) NOT NULL,
     ADD COLUMN `database_type` VARCHAR(16) NOT NULL,
@@ -41,7 +41,7 @@ ALTER TABLE `database_instances` DROP COLUMN `sql_instance_id`,
     ADD COLUMN `number_of_user_dbs_created` INTEGER NULL DEFAULT 0,
     ADD COLUMN `region` VARCHAR(30) NOT NULL,
     ADD COLUMN `sandbox_created` BOOLEAN NULL DEFAULT false,
-    ADD COLUMN `source` VARCHAR(16) NOT NULL,
+    ADD COLUMN `source` ENUM('deployment', 'discovery') NOT NULL,
     ADD COLUMN `storage_protocol` ENUM('SMB', 'iSCSI') NULL DEFAULT 'iSCSI',
     MODIFY `account_id` VARCHAR(30) NOT NULL;
 
