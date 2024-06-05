@@ -908,7 +908,7 @@ export const GENERAL = {
     SPLIT_DIALOG_SECOND_BULLET:
         'Once the split is complete, the new database will appear in the inventory and this sandbox will be deleted.',
     REFRESH_DIALOG_FIRST_BULLET:
-        'This action will update the selected sandbox so that it is equivalent to the source database at the current moment.',
+        'This action will update the selected sandbox so that it is equivalent to the source database at the current moment or at a previous point in time.',
     REFRESH_DIALOG_SECOND_BULLET: 'Any changes you made to the sandbox will be deleted.',
     REFRESH_CURRENT_RADIO: 'Refresh to current time',
     REFRESH_SNAPSHOT_RADIO: 'Refresh to Snapshot',
