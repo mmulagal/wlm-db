@@ -61,11 +61,7 @@ import {
 } from './aws/fsx-operations';
 import { DatabaseInstance, Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
-import {
-    findResourceNameFromTags,
-    getCostAllocationTagEC2Resource,
-    isEbsAwsBackupEnabled
-} from './aws/ec2-operations';
+import { findResourceNameFromTags, getCostAllocationTagEC2Resource, isEbsAwsBackupEnabled } from './aws/ec2-operations';
 import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
@@ -1728,23 +1724,23 @@ async function getDatabaseHostSummaryV2(
 
     const instancesManaged = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
 
-    const databaseHostDetails: DatabaseHostSummaryForMultiInstanceResponseType = {
-        id: resourceId,
-        name: resourceName || '',
-        nodeStatus: 'N/A',
-        ssmStatus: 'OFFLINE'
-    };
-
     const errormessages: { [index: string]: string } = {};
 
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-    const { activeNodeInstanceId, standbyNodeInstanceId } = await getActiveSqlNode(
+    const { activeNodeInstanceId, standbyNodeInstanceId, ssmConnectionSatus } = await getActiveSqlNode(
         credentialsId,
         region!,
         node1InstanceId,
         node2InstanceId,
         resourceId
     );
+
+    const databaseHostDetails: DatabaseHostSummaryForMultiInstanceResponseType = {
+        id: resourceId,
+        name: resourceName || '',
+        nodeStatus: 'N/A',
+        ssmStatus: ssmConnectionSatus || 'N/A'
+    };
 
     let nodeTopology: any;
     let usageEstimationData: any;

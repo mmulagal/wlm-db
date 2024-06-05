@@ -780,7 +780,6 @@ async function getActiveSqlNode(
         const resourceError = `Resource ID ${resourceId}`;
         let errorMessage = '';
         // Connection to activenode is successful
-
         if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
             const instanceName = await getActiveSqlInstanceName(credentialsId, region, [node1InstanceId]);
             if (instanceName) {
@@ -788,7 +787,8 @@ async function getActiveSqlNode(
                     isSSMConnected: true,
                     activeNodeInstanceId: node1InstanceId,
                     standbyNodeInstanceId: node2InstanceId,
-                    instanceName
+                    instanceName,
+                    ssmConnectionSatus: connectionStatus.Status
                 };
             }
         } else {
@@ -807,7 +807,8 @@ async function getActiveSqlNode(
                         isSSMConnected: true,
                         activeNodeInstanceId: node2InstanceId,
                         standbyNodeInstanceId: node1InstanceId,
-                        instanceName
+                        instanceName,
+                        ssmConnectionSatus: connectionStatus.Status
                     };
                 }
             }
@@ -818,6 +819,8 @@ async function getActiveSqlNode(
         } has failed.`;
         errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
         logger.error(errorMessage, { connectionStatus });
+
+        return { isSSMConnected: false, ssmConnectionSatus: connectionStatus.Status };
     } catch (error) {
         logger.error(
             `Error while checking SSM connection or SQL server status for resource ID ${resourceId}`,
