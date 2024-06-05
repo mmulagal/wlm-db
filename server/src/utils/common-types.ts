@@ -66,12 +66,13 @@ interface ResourceDetails {
     cloud_provider_name: string | null;
     region: string | null;
     credentials_id: string;
-    storage_type: string;
+    storage_type?: string;
     metadata: unknown;
     ebsVolumeIds?: string[]; // internal field used to store the ebs volume id for the unmanaged MSSQL resource
     fsxwId?: string; // internal field used to store the windows fsx ID for the unmanaged MSSQL resource,
     sqlServerDeploymentType?: string;
     clusterNodeDetails?: NodeDetails[];
+    databaseInstanceDetails?: DatabaseInstance[];
 }
 
 interface DeploymentDetails {
@@ -162,6 +163,24 @@ interface MissingPermissionInterface {
     explicitlyDenied: MissingPermission[];
 }
 
+interface DatabaseInstance {
+    database_instance_name: string;
+    instanceState: string;
+    database_instance_id: string;
+    is_default: boolean;
+    metadata?: databaseInstanceMetadata;
+    created_time?: string;
+    database_deployment_type?: string;
+    fsxnId?: string;
+    credentials_id?: string;
+    fsxwId?: string;
+    ebsVolumeIds?: string[];
+    storage_protocol?: string;
+    region?: string;
+    database_type?: string;
+    storage_type?: string;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -177,5 +196,6 @@ export {
     MissingPermission,
     MissingPermissionInterface,
     databaseInstanceMetadata,
-    Sandbox
+    Sandbox,
+    DatabaseInstance
 };

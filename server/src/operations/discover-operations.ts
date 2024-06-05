@@ -7,7 +7,7 @@ import { attempt, compact, uniqBy, isEmpty } from 'lodash-es';
 import { DescribeInstancesCommandInput, InstanceStateName, Vpc } from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
-import { createResource } from '../lib/database/db';
+import { createResource, deleteDatabaseInstance, listDatabaseInstances } from '../lib/database/db';
 import { getResources } from './database/database-operations';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
 import { getResourceNameFromTags, sleep, getArtifactsRegionBucketName } from '../utils/utils';
@@ -62,7 +62,7 @@ import {
 import getLogger from '../utils/logger';
 import { describeFSxFileSystems, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { returnInventorydata } from '../utils/demo-utils/demoDefaultUtils';
-import { getDatabaseHostsSummaryV2, getDatabaseHostSummary } from './database-hosts-operations';
+import { getDatabaseHostSummary, getDatabaseHostSummaryV2 } from './database-hosts-operations';
 import {
     copyPowerShellModule,
     validateOntapConnectivity,
@@ -72,6 +72,7 @@ import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../u
 import { getMsSqlResourceId } from './workloads/mssql/mssql-operations';
 import { preSignedUrl } from '../lib/aws/s3';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
+import { DatabaseHostSummaryForMultiInstanceResponseType} from '../routes/types/database-hosts.types';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
@@ -839,14 +840,14 @@ async function fetchUnmanagedHostsInformationV2(
     );
     const resourceDetailsList: ResourceDetails[] = [];
 
-    const errorInstances: {
-        id: string;
-        name: string;
-        status: string;
-        errors: string;
-        sqlServerDeploymentType?: string;
-        clusterNodeDetails?: NodeDetails[];
-    }[] = [];
+    // const errorInstances: {
+    //     id: string;
+    //     name: string;
+    //     status: string;
+    //     errors: string;
+    //     sqlServerDeploymentType?: string;
+    //     clusterNodeDetails?: NodeDetails[];
+    // }[] = [];
 
     await Promise.all(
         ec2HostDetails?.map(async ec2Instance => {
@@ -859,11 +860,8 @@ async function fetchUnmanagedHostsInformationV2(
             ) {
                 clusterNodeDetails = (await getInstanceDetailsByPrivateIp(credentialsId, region, nodeIps)) || [];
             }
-            const sqlServerInstance = ec2Instance?.sqlServerInstances?.find(
-                sqlInstance => sqlInstance.sqlServerState === 'Running'
-            );
-            // ec2Instance?.sqlServerInstances?.forEach(sqlInstance => { // skipping this loop as we are only considering the first running sql instance in the ec2 instance. This needs to be enabled when we support multiple sql instances in an ec2 instance.
-            if (!isEmpty(sqlServerInstance)) {
+            
+            ec2Instance?.sqlServerInstances?.forEach(sqlServerInstance => { // skipping this loop as we are only considering the first running sql instance in the ec2 instance. This needs to be enabled when we support multiple sql instances in an ec2 instance.
                 const { storage } = sqlServerInstance;
                 let ebsVolumeIds: string[] | undefined = [];
                 let fsxwId: string | undefined;
@@ -895,42 +893,72 @@ async function fetchUnmanagedHostsInformationV2(
                     ebsVolumeIds,
                     fsxwId,
                     sqlServerDeploymentType,
-                    clusterNodeDetails
+                    clusterNodeDetails,
+                    databaseInstanceDetails: [{
+                        database_instance_id: sqlServerInstance.sqlServerInstance,
+                        database_instance_name: sqlServerInstance.sqlServerInstance,
+                        database_type: RESOURCESTYPE.MSSQL,
+                        is_default: sqlServerInstance.isDefaultInstance,
+                        instanceState: sqlServerInstance.sqlServerState,
+                        region,
+                        credentials_id: credentialsId,
+                        metadata: {userDatabase: []},
+                        fsxnId,
+                        fsxwId,
+                        ebsVolumeIds,
+                        database_deployment_type: sqlServerInstance.sqlServerDeploymentType
+                    }]
                 });
-            } else {
-                errorInstances.push({
-                    id: ec2Instance.ec2InstanceId,
-                    name: ec2Instance.ec2InstanceId,
-                    sqlServerDeploymentType,
-                    ...(clusterNodeDetails && { clusterNodeDetails }),
-                    status: 'Down',
-                    errors: 'No active SQL Server instances found'
-                });
-            }
+            });
+            // } else {
+            //     errorInstances.push({
+            //         id: ec2Instance.ec2InstanceId,
+            //         name: ec2Instance.ec2InstanceId,
+            //         sqlServerDeploymentType,
+            //         ...(clusterNodeDetails && { clusterNodeDetails }),
+            //         status: 'Down',
+            //         errors: 'No active SQL Server instances found'
+            //     });
+            // }
             // });
         })
     );
 
     let response = await Promise.all(
         resourceDetailsList.map(async resourceDetail =>
-            getDatabaseHostsSummaryV2(
+            getDatabaseHostSummaryV2(
                 accountId,
                 resourceDetail.resource_id,
-                'serverDetails,topology,performance,usageEstimation,storage,protection',
+                'serverDetails,nodeTopology,performance,usageEstimation,storage,protection,instanceDetails,databaseInstanceTopology',
                 resourceDetail,
                 false // unmanaged host
             )
         )
     );
-    if (errorInstances.length > 0) {
-        response = response.concat(errorInstances);
-    }
-    logger.info(response)
-    // return {
-    //     count: response.length,
-    //     items: response
-    // };
-    return { isActive: true}
+
+    let formattedResponse:DatabaseHostSummaryForMultiInstanceResponseType[] = [];
+    response.forEach(e  => {
+            const instanceDetail = formattedResponse.find(el => el.id === e!.id)
+            const instanceDetailIndex = formattedResponse.findIndex(el => el.id === e!.id)
+            if (!instanceDetail) {
+                formattedResponse.push(e!)
+            }
+            else {
+                instanceDetail.databaseInstancesSummary = instanceDetail.databaseInstancesSummary?.concat(e?.databaseInstancesSummary!)
+                formattedResponse[instanceDetailIndex] = instanceDetail
+
+            }
+        
+    })
+    logger.info(formattedResponse)
+    // if (errorInstances.length > 0) {
+    //     response = response.concat(errorInstances);
+    // }
+    return {
+        count: formattedResponse.length,
+        items: formattedResponse
+    };
+    // return { isActive: true}
 }
 
 
@@ -1573,11 +1601,58 @@ async function preparePsModulesForManage(
     return jobStatusRecord.status;
 }
 
+async function unmanageDatabaseInstance(
+    accountId: string,
+    credentialsId: string,
+    resourceId: string,
+    databaseInstanceList: string
+) {
+    logger.info('Unmanaging SQL Server instances', { accountId, credentialsId, resourceId, databaseInstanceList });
+
+    const databaseInstanceResponse: {
+        databaseInstanceId: string;
+        status: string;
+        errorMessage?: string;
+    }[] = [];
+
+    databaseInstanceList = databaseInstanceList.replace(/ /g, '');
+    if (databaseInstanceList.length > 0) {
+        const databaseInstanceIds = databaseInstanceList.split(',');
+
+        const preDeleteDatabaseInstances = await listDatabaseInstances(accountId, { credentialsId, resourceId });
+
+        await deleteDatabaseInstance(accountId, credentialsId, resourceId, databaseInstanceIds);
+
+        const postDeleteDatabaseInstances = await listDatabaseInstances(accountId, { credentialsId, resourceId });
+
+        databaseInstanceIds.forEach(databaseInstanceId => {
+            if (preDeleteDatabaseInstances.some(elem => elem.database_instance_id === databaseInstanceId)) {
+                if (postDeleteDatabaseInstances.some(elem => elem.database_instance_id === databaseInstanceId)) {
+                    databaseInstanceResponse.push({ databaseInstanceId, status: 'failed' });
+                } else {
+                    databaseInstanceResponse.push({ databaseInstanceId, status: 'success' });
+                }
+            } else {
+                databaseInstanceResponse.push({
+                    databaseInstanceId,
+                    status: 'failed',
+                    errorMessage: 'Instance does not exist.'
+                });
+            }
+        });
+    }
+
+    return {
+        resourceId,
+        items: databaseInstanceResponse
+    };
+}
 export {
     getHostAndSqlServerInfo,
     validateAndStoreDiscoveredParameters,
     fetchUnmanagedHostsInformation,
     manageSqlServer,
     prepareForManage,
-    fetchUnmanagedHostsInformationV2
+    fetchUnmanagedHostsInformationV2,
+    unmanageDatabaseInstance
 };

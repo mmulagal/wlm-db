@@ -1,5 +1,6 @@
 import { RouteTags } from '../../utils/consts';
 import {
+    DatabaseHostSummaryForMultiInstanceListResponse,
     DatabaseHostSummaryPerStorageTypeListResponse,
     // DatabaseHostSummaryForMultiInstanceListResponse
 } from '../types/database-hosts.types';
@@ -11,10 +12,12 @@ import {
     ManageMsSqlResponseBody,
     DiscoverCredentialsResponse,
     MsSqlInstancesRequestQuery,
-    PrepareResourceResponseBody
+    PrepareResourceResponseBody,
+    MultiInstanceManagementResponseBody,
+    UnmanageInstanceParams,
+    DatabaseInstanceQueryString
 } from '../types/discover.types';
 import { GenericHeaders, CredentialsIdParams } from '../types/generic.types';
-import { StatusResponse } from '../types/system.types';
 
 const DiscoveryBaseRequest = {
     Headers: GenericHeaders,
@@ -69,6 +72,17 @@ const ManageMsSqlSchema = {
     }
 };
 
+const UnManageMsSqlSchema = {
+    ...DiscoveryBaseRequest,
+    params: UnmanageInstanceParams,
+    querystring: DatabaseInstanceQueryString,
+    summary: 'Unmanage SQL Server database instances.',
+    description: 'Unmanage SQL Server database instances managed by Workload Factory.',
+    response: {
+        200: MultiInstanceManagementResponseBody
+    }
+};
+
 const DiscoverCredentialsSchema = {
     Headers: GenericHeaders,
     tags: [RouteTags.DISCOVER],
@@ -101,7 +115,7 @@ const MsSqlInstancesSchemaV2 = {
     summary: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
     description: 'Get details of instances with Microsoft Windows platform and hosting Microsoft SQL Server.',
     response: {
-        200: StatusResponse
+        200: DatabaseHostSummaryForMultiInstanceListResponse
     }
 };
 export {
@@ -110,5 +124,6 @@ export {
     ManageMsSqlSchema,
     MsSqlInstancesSchema,
     PrepareForManageSchema,
-    MsSqlInstancesSchemaV2
+    MsSqlInstancesSchemaV2,
+    UnManageMsSqlSchema
 };

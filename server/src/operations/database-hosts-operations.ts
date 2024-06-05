@@ -12,7 +12,6 @@ import {
     StoragePerStorageTypeResponseType,
     DatabaseHostSummaryPerStorageTypeResponseType,
     DatabaseHostSummaryPerStorageTypeListResponseType,
-    // DatabaseHostSummaryForMultiInstanceListResponseType,
     DatabaseHostSummaryForMultiInstanceResponseType,
     DatabaseHostInstanceSummaryResponseType
 } from '../routes/types/database-hosts.types';
@@ -60,7 +59,7 @@ import {
     getCostAllocationTagFsxResource,
     isFsxwAwsBackupEnabled
 } from './aws/fsx-operations';
-import { Metadata, ResourceDetails } from '../utils/common-types';
+import { DatabaseInstance, Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { findResourceNameFromTags, getCostAllocationTagEC2Resource, isEbsAwsBackupEnabled } from './aws/ec2-operations';
 import {
@@ -338,7 +337,7 @@ async function getTopology(
 
 async function getStorageData(
     resourceDetail?: ResourceDetails,
-    databaseInstanceDetails?: any,
+    databaseInstanceDetails?: DatabaseInstance,
     version?: string
 ): Promise<StoragePerStorageTypeResponseType | undefined> {
     logger.info('Getting storage data:', { resourceDetail, databaseInstanceDetails, version });
@@ -356,13 +355,14 @@ async function getStorageData(
         let totalSpaceSavingsPercentage;
         let storageProtocol;
 
-        if (version === '2.0' && databaseInstanceDetails) {
+        if (version === VERSION_2_0 && databaseInstanceDetails) {
             ({
-                fsxn_ids: fsxnId,
+                fsxnId,
                 credentials_id: credentialsId,
                 fsxwId,
                 ebsVolumeIds,
-                storage_protocol: storageProtocol
+                storage_protocol: storageProtocol,
+                region
             } = databaseInstanceDetails);
         } else if (resourceDetail) {
             ({
@@ -375,11 +375,10 @@ async function getStorageData(
             } = resourceDetail);
             ({ storageProtocol } = metadata as unknown as Metadata);
         }
-
-        region = 'eu-west-3';
+        ebsVolumeIds = ebsVolumeIds || [];
 
         const response = {} as StoragePerStorageTypeResponseType;
-        if (fsxnId && region) {
+        if (fsxnId && region && credentialsId) {
             ({ totalSize, totalUsed, totalSpaceSavings, totalSpaceSavingsPercentage } =
                 await calculateFsxnStorageEfficiencyUsingCloudwatch(region, credentialsId, fsxnId));
             response.fsxn = {
@@ -390,7 +389,7 @@ async function getStorageData(
                 protocol: storageProtocol ? storageProtocol.split(',') : []
             };
         }
-        if (fsxwId && region) {
+        if (fsxwId && region && credentialsId) {
             ({ totalSize, totalUsed, totalSpaceSavings, totalSpaceSavingsPercentage } =
                 await calculateFsxwStorageEfficiencyUsingCloudwatch(region, credentialsId, fsxwId));
             response.fsxw = {
@@ -400,7 +399,7 @@ async function getStorageData(
                 spaceSavingsPercentage: totalSpaceSavingsPercentage
             };
         }
-        if (ebsVolumeIds?.length && region) {
+        if (ebsVolumeIds?.length && region && credentialsId) {
             const storageData = await getEbsResourceInfo(credentialsId, region, ebsVolumeIds);
             totalSize = storageData.reduce((acc, { size }) => acc + size, 0);
             response.ebs = { size: numeral(`${totalSize}GiB`).value() || 0 };
@@ -477,7 +476,7 @@ async function getProtectionStatus(
     activeNodeInstanceId: string,
     instanceName: string,
     resourceDetail?: ResourceDetails,
-    databaseInstanceDetails?: any,
+    databaseInstanceDetails?: DatabaseInstance,
     version?: string,
     isInstanceRunning: boolean = true
 ): Promise<ProtectionPerStorageTypeResponseType | undefined> {
@@ -490,40 +489,51 @@ async function getProtectionStatus(
     let ebsVolumeIds;
     let id;
 
-    if (version === '2.0' && databaseInstanceDetails) {
-        ({ id, fsxn_ids: fsxnId, credentials_id: credentialsId, fsxwId, ebsVolumeIds } = databaseInstanceDetails);
+    if (version === VERSION_2_0 && databaseInstanceDetails) {
+        ({
+            database_instance_id: id,
+            fsxnId,
+            region,
+            credentials_id: credentialsId,
+            fsxwId,
+            ebsVolumeIds
+        } = databaseInstanceDetails);
     } else if (resourceDetail) {
         ({ id, region, co_relation_id: fsxnId, credentials_id: credentialsId, fsxwId, ebsVolumeIds } = resourceDetail);
     }
-    region = 'eu-west-3';
+
     if (!region) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Region not found for resource ${id}`);
     }
 
     try {
-        const [nativeSqlProtection, fsxnBackup, ontapProtection, fsxwBackup, ebsBackup] = await Promise.all([
-            ...(isInstanceRunning
-                ? [getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceName)]
-                : [Promise.resolve()]), // Fetch server metadata
+        if (credentialsId) {
+            const [nativeSqlProtection, fsxnBackup, ontapProtection, fsxwBackup, ebsBackup] = await Promise.all([
+                ...(isInstanceRunning
+                    ? [getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceName)]
+                    : [Promise.resolve()]), // Fetch server metadata
 
-            fsxnId ? isFsxnAwsBackupEnabled(credentialsId, region, fsxnId, activeNodeInstanceId) : Promise.resolve(),
-            fsxnId
-                ? getOntapVolumesSnapshotCount(credentialsId, region, fsxnId, activeNodeInstanceId)
-                : Promise.resolve(),
-            fsxwId ? isFsxwAwsBackupEnabled(credentialsId, region, fsxwId) : Promise.resolve(),
-            ebsVolumeIds ? isEbsAwsBackupEnabled(credentialsId, region, ebsVolumeIds) : Promise.resolve() // returns true if backup is enabled on any of the ebs ID associated with the resource; revisit this to return information for each ebs
-        ]);
+                fsxnId
+                    ? isFsxnAwsBackupEnabled(credentialsId, region, fsxnId, activeNodeInstanceId)
+                    : Promise.resolve(),
+                fsxnId
+                    ? getOntapVolumesSnapshotCount(credentialsId, region, fsxnId, activeNodeInstanceId)
+                    : Promise.resolve(),
+                fsxwId ? isFsxwAwsBackupEnabled(credentialsId, region, fsxwId) : Promise.resolve(),
+                ebsVolumeIds ? isEbsAwsBackupEnabled(credentialsId, region, ebsVolumeIds) : Promise.resolve() // returns true if backup is enabled on any of the ebs ID associated with the resource; revisit this to return information for each ebs
+            ]);
 
-        return {
-            isSqlNativeEnabled: Boolean(nativeSqlProtection),
-            isAwsBackupEnabled: {
-                fsxn: Boolean(fsxnBackup),
-                fsxw: Boolean(fsxwBackup),
-                ebs: Boolean(ebsBackup)
-            },
-            isFsxOntapSnapshotsEnabled: Boolean(ontapProtection),
-            protectedDatabases: Number.isNaN(Number(nativeSqlProtection)) ? 0 : Number(nativeSqlProtection)
-        };
+            return {
+                isSqlNativeEnabled: Boolean(nativeSqlProtection),
+                isAwsBackupEnabled: {
+                    fsxn: Boolean(fsxnBackup),
+                    fsxw: Boolean(fsxwBackup),
+                    ebs: Boolean(ebsBackup)
+                },
+                isFsxOntapSnapshotsEnabled: Boolean(ontapProtection),
+                protectedDatabases: Number.isNaN(Number(nativeSqlProtection)) ? 0 : Number(nativeSqlProtection)
+            };
+        }
     } catch (error) {
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
@@ -1169,12 +1179,7 @@ async function getNodeTopology(
         );
     }
 
-    const {
-        co_relation_id: fileSystemId,
-        credentials_id: credentialsId,
-        cloud_provider_account_id: awsAccountId,
-        metadata
-    } = resourceData;
+    const { credentials_id: credentialsId, cloud_provider_account_id: awsAccountId, metadata } = resourceData;
 
     const { node1InstanceId, node2InstanceId, activeDirectoryName, activeDirectoryAddress } =
         metadata as unknown as Metadata;
@@ -1187,14 +1192,22 @@ async function getNodeTopology(
     };
 
     if (node1InstanceId && shouldQueryFullTopology) {
-        let vpcId;
+        let vpcId: string | undefined;
         let vpcCidr: string | undefined;
+        let nodeStatus: string | undefined;
         try {
-            if (fileSystemId) {
-                const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
-                const [fileSystem = {}] = fsxInfo?.FileSystems || []; // first item in the list
-                ({ VpcId: vpcId } = fileSystem);
-
+            if (activeNodeInstanceId) {
+                const ec2InstanceDetails = await describeInstance(credentialsId, region, {
+                    InstanceIds: [activeNodeInstanceId]
+                });
+                const reservations = ec2InstanceDetails?.Reservations || []; // first item in the list
+                if (reservations.length > 0) {
+                    const instances = reservations[0].Instances || [];
+                    if (instances.length > 0) {
+                        vpcId = instances[0].VpcId;
+                        nodeStatus = instances[0].State?.Name;
+                    }
+                }
                 const vpcParams: DescribeVpcsCommandInput = {
                     VpcIds: [vpcId!]
                 };
@@ -1279,7 +1292,8 @@ async function getNodeTopology(
                         ebsVolumeId: activeVolumeId || '',
                         ...(activeInstanceType && { instanceType: activeInstanceType }),
                         ...(activeAvailabilityZone && { availabilityZone: activeAvailabilityZone }),
-                        ...(activeSubnetId && { subnetId: activeSubnetId })
+                        ...(activeSubnetId && { subnetId: activeSubnetId }),
+                        ...(nodeStatus && { status: nodeStatus })
                     }
                 ]
             }),
@@ -1390,11 +1404,12 @@ async function getDatabaseInstanceTopology(
         fsxn_ids: fileSystemId,
         storageType,
         database_instance_id: databaseInstanceDetails,
-        database_deployment_type: databaseDeploymentType
+        database_deployment_type: databaseDeploymentType,
+        database_type: databaseType
     } = databaseInstances;
 
     let topologyData = {
-        serverType: 'Microsoft SQL Server',
+        serverType: databaseType,
         serverInstallationMode: databaseDeploymentType !== undefined ? databaseDeploymentType : '',
         fileSystemId: fileSystemId!,
         fileSystemType:
@@ -1444,15 +1459,7 @@ async function getDatabaseInstanceTopology(
         }
 
         topologyData = {
-            serverType: 'Microsoft SQL Server',
-            serverInstallationMode: databaseDeploymentType !== undefined ? databaseDeploymentType : '',
-            fileSystemType:
-                storageType !== undefined
-                    ? storageType === STORAGE_TYPE.FSXN
-                        ? FileSystemTypes.FSXONTAP
-                        : storageType
-                    : STORAGE_TYPE.FSXN,
-            fileSystemId: fileSystemId!,
+            ...topologyData,
             ...(fileSystemName && { fileSystemName }),
             ...(fileSystemDeploymentMode && { fileSystemDeploymentMode }),
             ...(fileSystemStatus && { fileSystemStatus }),
@@ -1469,7 +1476,7 @@ async function getDatabseInstanceSummary(
     credentialsId: string,
     activeNodeInstanceId: string,
     region: string,
-    databaseInstances: any,
+    databaseInstances: DatabaseInstance,
     fields?: string
 ) {
     logger.info(
@@ -1714,7 +1721,6 @@ async function getDatabaseHostSummaryV2(
     const shouldQueryNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLocaleLowerCase());
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
     const getInstancesDetails = fieldsValues?.includes(DatabaseHostsQueryFields.INSTANCE_DETAILS.toLocaleLowerCase());
-
     const instancesManaged = await listDatabaseInstances(accountId, { resourceId, credentialsId, region });
 
     const databaseHostDetails: DatabaseHostSummaryForMultiInstanceResponseType = {
@@ -1784,7 +1790,7 @@ async function getDatabaseHostSummaryV2(
                 clusterNodeDetails = resourceDetail?.clusterNodeDetails;
                 databaseHostDetails.clusterNodeDetails = clusterNodeDetails;
             }
-            databaseHostDetails.nodeStatus = 'ONLINE';
+            databaseHostDetails.nodeStatus = nodeTopology.ec2Details[0].status;
             databaseHostDetails.ssmStatus = 'ONLINE';
             databaseHostDetails.ebsResourceInfo = usageEstimationData?.storage?.ebsBreakdownByVolumeType || [];
 
@@ -1802,7 +1808,10 @@ async function getDatabaseHostSummaryV2(
                 credentialsId &&
                 region
             ) {
-                const runningDatabaseInstances = instancesManaged
+                
+                let runningDatabaseInstances:DatabaseInstance[];
+                if(isManagedResource) {
+                runningDatabaseInstances = instancesManaged
                     .filter(instance => {
                         const matchingInstance = databaseInstancesDetail.find(
                             (dbInstance: { instanceName: string; instanceState: string }) =>
@@ -1814,12 +1823,15 @@ async function getDatabaseHostSummaryV2(
                         ...instance,
                         ...databaseInstancesDetail.find(
                             (dbInstance: { instanceName: string; instanceState: string }) =>
-                                dbInstance.instanceName === instance.database_instance_name &&
                                 dbInstance.instanceState === 'Running'
                         )
                     }));
+                }
+                else{
+                    runningDatabaseInstances = resourceDetail?.databaseInstanceDetails || []
+                }
                 if (runningDatabaseInstances.length > 0) {
-                    const instancePromises = runningDatabaseInstances.map(async (instance: any) => {
+                    const instancePromises = runningDatabaseInstances.map(async (instance: DatabaseInstance) => {
                         const instanceResult = await getDatabseInstanceSummary(
                             accountId,
                             credentialsId,
@@ -1847,4 +1859,4 @@ async function getDatabaseHostSummaryV2(
     }
 }
 
-export { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases, getDatabaseHostsSummaryV2 };
+export { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases, getDatabaseHostsSummaryV2, getDatabaseHostSummaryV2 };

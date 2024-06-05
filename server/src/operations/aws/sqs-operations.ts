@@ -43,15 +43,10 @@ import {
     listEvents,
     updateDeployment,
     upsertDeployment,
-    upsertDatabaseInstanceRecord,
-    DatabaseInstance
+    upsertDatabaseInstance
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
-import {
-    getActiveSqlInstanceName,
-    getMsSqlResourceId,
-    getMssqlInstanceGuid
-} from '../workloads/mssql/mssql-operations';
+import { getAllInstanceDetails, getMsSqlResourceId, getMssqlInstanceGuid } from '../workloads/mssql/mssql-operations';
 // import { handleNotification } from '../cloud-manager/notification-operations';
 import { lookupCredentials } from '../cloud-manager/credentials-operations';
 import { associateResource } from '../../lib/cloud-manager/credentials';
@@ -605,35 +600,47 @@ async function processCloudFormationMessages() {
                                                         nodeIds.push(node2InstanceId);
                                                     }
                                                     try {
-                                                        const deployedInstanceName = await getActiveSqlInstanceName(
+                                                        const deployedInstances = await getAllInstanceDetails(
                                                             credentialsId,
                                                             region,
                                                             nodeIds
                                                         );
-                                                        const instanceId = await getMssqlInstanceGuid(
-                                                            credentialsId,
-                                                            region,
-                                                            deployedInstanceName,
-                                                            nodeIds
+                                                        const instanceNames = deployedInstances.map(
+                                                            (instance: { instanceName: string }) =>
+                                                                instance.instanceName
                                                         );
+                                                        const instanceDetailsList: any = instanceNames.map(
+                                                            async (instanceName: string) => {
+                                                                const sqlInstanceGuid = await getMssqlInstanceGuid(
+                                                                    credentialsId,
+                                                                    region,
+                                                                    instanceName,
+                                                                    nodeIds
+                                                                );
 
-                                                        const instanceDetails: DatabaseInstance = {
-                                                            credentialsId,
-                                                            resourceId,
-                                                            instanceId,
-                                                            instanceName: DEFAULT_INSTANCE_NAME,
-                                                            fsxnId: fsxId,
-                                                            isDefault: true,
-                                                            source: RESOURCE_SOURCE.DEPLOY,
-                                                            fsxSvmId,
-                                                            sqlDeploymentType
-                                                        };
-
-                                                        await upsertDatabaseInstanceRecord(accountId, instanceDetails);
+                                                                return {
+                                                                    credentialsId,
+                                                                    resourceId,
+                                                                    region,
+                                                                    sqlInstanceId: sqlInstanceGuid,
+                                                                    sqlInstanceName: DEFAULT_INSTANCE_NAME,
+                                                                    fsxnIds: fsxId,
+                                                                    isDefault: true,
+                                                                    source: RESOURCE_SOURCE.DEPLOY,
+                                                                    fsxSvmId: { fsxId: fsxSvmId },
+                                                                    sqlDeploymentType,
+                                                                    databaseType: 'MSSQL'
+                                                                };
+                                                            }
+                                                        );
+                                                        await upsertDatabaseInstance(accountId, instanceDetailsList);
                                                     } catch (error) {
                                                         logger.error(
                                                             'Failed to add details to database instance table',
-                                                            error
+                                                            error,
+                                                            accountId,
+                                                            node1InstanceId,
+                                                            node2InstanceId
                                                         );
                                                     }
 

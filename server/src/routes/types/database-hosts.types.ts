@@ -38,7 +38,8 @@ const EC2InstanceDetailsResponse = Type.Object({
     ebsVolumeId: Type.String(),
     instanceType: Type.Optional(Type.String()),
     availabilityZone: Type.Optional(Type.String()),
-    subnetId: Type.Optional(Type.String())
+    subnetId: Type.Optional(Type.String()),
+    status: Type.Optional(Type.String())
 });
 type EC2InstanceDetailsResponseType = Static<typeof EC2InstanceDetailsResponse>;
 
@@ -471,14 +472,18 @@ const DatabaseInstanceTopology = Type.Object({
     serverType: Type.String({ enum: ['Microsoft SQL Server'] }),
     serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
     fileSystemType: Type.String({ enum: ['EBS', 'FSx for ONTAP', 'FSx for Windows'] }),
-    fileSystemId: Type.String(),
-    fileSystemName: Type.Optional(Type.String()),
+    fileSystemId: Type.Optional(Type.String()),
+    fileSystemName: Type.Optional(Type.Optional(Type.String())),
     fileSystemDeploymentMode: Type.Optional(Type.String()),
-    fileSystemStatus: Type.Optional(Type.String()),
+    fileSystemStatus: Type.Optional(
+        Type.String({ enum: ['CREATING', 'AVAILABLE', 'UPDATING', 'DELETING', 'DELETED', 'FAILED'] })
+    ),
     fileSystemStorageCapacity: Type.Optional(Type.Number()),
     fileSystemThroughputCapacity: Type.Optional(Type.Number()),
     availabilityZones: Type.Optional(Type.Array(Type.String()))
 });
+
+type DatabaseInstanceTopologyType = Static<typeof DatabaseInstanceTopology>;
 
 const DatabaseHostInstanceSummaryResponse = Type.Object({
     databaseInstanceId: Type.String(),
@@ -604,5 +609,6 @@ export {
     DatabaseHostSummaryForMultiInstanceListResponse,
     DatabaseHostSummaryForMultiInstanceResponseType,
     DatabaseHostSummaryForMultiInstanceListResponseType,
-    DatabaseHostInstanceSummaryResponseType
+    DatabaseHostInstanceSummaryResponseType,
+    DatabaseInstanceTopologyType
 };
