@@ -4,7 +4,7 @@ import {
     getEffectiveRecommendationPreferences,
     putRecommendationPreferences
 } from '../../lib/aws/compute-optimizer';
-import { getEc2Arn } from '../../utils/utils';
+import { derivePropertiesFromARN, getEc2Arn } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { getCredentialsDetails } from '../cloud-manager/credentials-operations';
 import { getInstanceTypesFromInstanceRequirements } from './ec2-operations';
@@ -65,7 +65,8 @@ async function getInstanceRecommendations(
     });
 
     const { metadata: { arn } = {} } = await getCredentialsDetails(credentialsId, accountId);
-    const awsAccountId = arn?.match(/\d+/)?.[0];
+
+    const { awsAccountId } = derivePropertiesFromARN(arn!) || {};
     if (awsAccountId) {
         try {
             const resourceArn = getEc2Arn(awsAccountId, region, instanceId);
@@ -77,12 +78,12 @@ async function getInstanceRecommendations(
                     resourceArn: getEc2Arn(awsAccountId, region, instanceId)
                 }
             );
-            const isRecommendationPreferenceExists = includeList && includeList?.length > 1 && includeList?.[0] !== '*';
+            const isRecommendationPreferenceExists = includeList && includeList?.length > 1 && includeList?.[0] !== '*'; // includeList includes a list of ec2 instance types ; by default it is * so the length is 1; if its more than 1, that means we have added recommendation preferences
             if (isRecommendationPreferenceExists) {
                 const coParams = {
                     instanceArns: [resourceArn],
                     recommendateionPreferences: {
-                        cpuVendorArchitectures: ['CURRENT']
+                        cpuVendorArchitectures: ['CURRENT'] // CURRENT to view recommendations that are based on the same CPU vendor and architecture as the current instance.
                     },
                     Filters: [
                         {

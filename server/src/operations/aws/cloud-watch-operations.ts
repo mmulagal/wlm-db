@@ -182,7 +182,7 @@ async function getEbsVolumeUtilization(region: string, credentialsId: string, eb
         Namespace: 'AWS/EBS',
         MetricName: 'VolumeReadBytes',
         Dimensions: ebsVolumeIds.map(ebsVolumeId => ({ Name: 'VolumeId', Value: ebsVolumeId })),
-        StartTime: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        StartTime: new Date(Date.now() - ms('14d')),
         EndTime: new Date(),
         Period: 6 * 60 * 60,
         Statistics: [Statistic.Sum]
@@ -191,7 +191,7 @@ async function getEbsVolumeUtilization(region: string, credentialsId: string, eb
         Namespace: 'AWS/EBS',
         MetricName: 'VolumeWriteBytes',
         Dimensions: ebsVolumeIds.map(ebsVolumeId => ({ Name: 'VolumeId', Value: ebsVolumeId })),
-        StartTime: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        StartTime: new Date(Date.now() - ms('14d')),
         EndTime: new Date(),
         Period: 6 * 60 * 60,
         Statistics: [Statistic.Sum]
@@ -212,7 +212,7 @@ async function getEbsVolumeUtilization(region: string, credentialsId: string, eb
         totalEbsWrite += dataPoint?.Sum || 0;
         return totalEbsWrite;
     });
-    const totalEbsThroughputGbps = totalEbsRead + totalEbsWrite / paramsEbsRead.Period / (1024 * 1024 * 1024); // These metrics are reported in bytes. Convert to Mib/sec
+    const totalEbsThroughputGbps = totalEbsRead + totalEbsWrite / paramsEbsRead.Period / (1024 * 1024 * 1024); // These metrics are reported in bytes. Convert to Gib/sec
 
     return totalEbsThroughputGbps;
 }
@@ -224,7 +224,7 @@ async function getInstanceUtilization(region: string, credentialsId: string, ins
         Namespace: 'AWS/EC2',
         MetricName: 'CPUUtilization',
         Dimensions: instanceIds.map(instanceId => ({ Name: 'InstanceId', Value: instanceId })),
-        StartTime: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        StartTime: new Date(Date.now() - ms('14d')), // Observing trend for last 14days as even compute optimizer uses 14 days data
         EndTime: new Date(),
         Period: 300,
         Statistics: [Statistic.Maximum]
@@ -233,7 +233,7 @@ async function getInstanceUtilization(region: string, credentialsId: string, ins
         Namespace: 'AWS/EC2',
         MetricName: 'NetworkIn',
         Dimensions: instanceIds.map(instanceId => ({ Name: 'InstanceId', Value: instanceId })),
-        StartTime: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        StartTime: new Date(Date.now() - ms('14d')),
         EndTime: new Date(),
         Period: 300,
         Statistics: [Statistic.Average]
@@ -243,7 +243,7 @@ async function getInstanceUtilization(region: string, credentialsId: string, ins
         Namespace: 'AWS/EC2',
         MetricName: 'NetworkOut',
         Dimensions: instanceIds.map(instanceId => ({ Name: 'InstanceId', Value: instanceId })),
-        StartTime: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        StartTime: new Date(Date.now() - ms('14d')),
         EndTime: new Date(),
         Period: 300,
         Statistics: [Statistic.Average]
