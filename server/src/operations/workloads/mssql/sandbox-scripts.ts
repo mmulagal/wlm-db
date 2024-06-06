@@ -1,6 +1,6 @@
 // instances input instances = ['"computername\\instanceName"', '"."']; "." represents the default instance
 // ('source', 'initialCreationDate', 'tag', 'baseSnapshot') are the extended properties saved during creation of sandbox
-const GET_SANDBOX_DETAILS = (instances: string[], accountId: string) => ` 
+const GET_SANDBOX_DETAILS = (instances: string[]) => ` 
 $instances = (${instances})
 
 $results = foreach ($instance in $instances) {
@@ -26,19 +26,13 @@ $results = foreach ($instance in $instances) {
             AND l.name IS NOT NULL
             AND l.value IS NOT NULL ';
         
-        SELECT database_name, JSON_QUERY(properties) AS sandbox_properties
-        FROM (
-            SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'createdAt', 'tag', 'baseSnapshot', 'updatedAt') FOR JSON PATH)) AS properties
-            FROM #properties AS p1
-            WHERE name = 'cloned_by' AND value = 'netapp_wf'
-        ) AS grouped_properties
-        WHERE database_name IN (
-            SELECT database_name
-            FROM #properties
-            WHERE name = 'accountId' AND value = '${accountId}'
-        )
-        GROUP BY database_name, properties
-        FOR JSON PATH; 
+            SELECT database_name, JSON_QUERY(properties) AS sandbox_properties
+            FROM (
+                SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'createdAt', 'tag', 'baseSnapshot', 'updatedAt', 'cloned_by', 'accountId') FOR JSON PATH)) AS properties
+                FROM #properties AS p1
+            ) AS grouped_properties
+            GROUP BY database_name, properties
+            FOR JSON PATH;
 "@
 
         $output = sqlcmd -S $instance -Q $query -y 0 2> $null

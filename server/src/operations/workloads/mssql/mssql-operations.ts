@@ -39,7 +39,7 @@ import {
     DATABASE_METRIC_TYPE
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
-import { createResource, deleteResource, listRelationshipsResources } from '../../../lib/database/db';
+import { createResource, deleteResource, listRelationshipsResources, listResources } from '../../../lib/database/db';
 import { generateHash, sqlResponseParsing } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
@@ -850,14 +850,14 @@ async function checkDatabaseExists(
         activeNodeInstanceId
     });
 
-    let command;
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        command = [
-            'sqlcmd -Q "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = \'tempdb18\' FOR JSON PATH" -y 0'
-        ];
-    } else {
-        command = [`sqlcmd -S "${instanceName}" -Q "${DATABASE_NAME_EXISTS(databaseName)}" -y 0`];
+        const { userDatabase } = ((await listResources(accountId, databaseHostId, credentialsId))[0]?.metadata || {
+            userDatabase: undefined
+        }) as { userDatabase: any[] };
+        return userDatabase?.some(db => db.name === databaseName) ?? false;
     }
+    const command = [`sqlcmd -S "${instanceName}" -Q "${DATABASE_NAME_EXISTS(databaseName)}" -y 0`];
+
     try {
         const checkDatabaseExistsResponse = await callSsmExecution(
             credentialsId,

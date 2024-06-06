@@ -286,6 +286,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 onClick={() => {
                                     handleClick(WLF_TABS.DASHBOARD);
                                 }}
+                                id="dashboard"
                             >
                                 {GENERAL.TAB_DASHBOARD}
                             </Typography>
@@ -299,6 +300,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 onClick={() => {
                                     handleClick(WLF_TABS.INVENTORY);
                                 }}
+                                id="inventory"
                             >
                                 {GENERAL.TAB_INVENTORY}
                             </Typography>
@@ -313,6 +315,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 onClick={() => {
                                     handleClick(WLF_TABS.SANDBOXES);
                                 }}
+                                id="sandboxes"
                             >
                                 Sandboxes
                             </Typography>
@@ -329,6 +332,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 onClick={() => {
                                     handleClick(WLF_TABS.EXPLORE_SAVINGS);
                                 }}
+                                id="explore-savings"
                             >
                                 Explore savings
                             </Typography>
@@ -343,6 +347,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 onClick={() => {
                                     handleClick(WLF_TABS.JOB_MONITORING);
                                 }}
+                                id="job-monitoring"
                             >
                                 {GENERAL.TAB_JOB_MONITORING}
                             </Typography>
