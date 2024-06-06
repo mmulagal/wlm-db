@@ -28,7 +28,8 @@ import {
     HttpErrorCodes,
     MAX_FSX_STORAGE_IN_GIB,
     FSX_VOL_THROUGHPUT,
-    FSX_STORAGE_MIN_CAPACITY_IN_GIB
+    FSX_STORAGE_MIN_CAPACITY_IN_GIB,
+    HOURS_IN_MONTH
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -244,6 +245,10 @@ function getSnsArn(accountId: string, region: string, snsName: string) {
 
 function getFsxArn(awsAccountId: string, region: string, fsxId: string) {
     return `arn:aws:fsx:${region}:${awsAccountId}:file-system/${fsxId}`;
+}
+
+function getEc2Arn(awsAccountId: string, region: string, instanceId: string) {
+    return `arn:aws:ec2:${region}:${awsAccountId}:instance/${instanceId}`;
 }
 
 function getQueueUrl(accountId: string, queueName: string) {
@@ -490,6 +495,10 @@ function convertToBytes(size: number, unit: string) {
     return numeral(`${size}${unit}`).value();
 }
 
+function getMonthlyPriceFromHourlyPrice(hourlyPrice: number) {
+    return hourlyPrice * HOURS_IN_MONTH;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -503,6 +512,7 @@ export {
     sleep,
     getSnsArn,
     getFsxArn,
+    getEc2Arn,
     generateHash,
     calculateFsxnStorageCapacity,
     sizeInGigaBytes,
@@ -521,5 +531,6 @@ export {
     splitDomainUsername,
     getCollationForMSSQLVersion,
     camelizeKeys,
-    convertToBytes
+    convertToBytes,
+    getMonthlyPriceFromHourlyPrice
 };

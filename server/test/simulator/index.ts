@@ -36,6 +36,7 @@ async function initiateSimulator() {
     await import('./scopes/aws/cost-explorer-scope');
     await import('./scopes/aws/tags-scope');
     await import('./scopes/aws/cloud-watch-scope');
+    await import('./scopes/aws/compute-optimizer-scope');
     // Load server
     await import('../../src/index');
 }
