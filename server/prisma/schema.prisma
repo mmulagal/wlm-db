@@ -129,7 +129,7 @@ model database_instances {
   number_of_user_dbs_created        Int?              @default(0)
   sandbox_created                   Boolean?          @default(value: false)
   storage_protocol                  STORAGEPROTOCOL?  @default(iSCSI)
-  fsx_svm_id                        Json?
+  fsx_svm_id                        Json              
   metadata                          Json?             @default("{}")
 
   resource resource @relation(fields: [account_id, credentials_id, region, resource_id], references: [account_id, credentials_id, region, resource_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_resource_account_id_credentials_id_region_resource_id")

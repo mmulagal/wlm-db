@@ -502,38 +502,37 @@ async function getProtectionStatus(
         ({ id, region, co_relation_id: fsxnId, credentials_id: credentialsId, fsxwId, ebsVolumeIds } = resourceDetail);
     }
 
-    if (!region) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Region not found for resource ${id}`);
+    if (!region || !credentialsId) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Region or credentials id not found for resource ${id}`
+        );
     }
 
     try {
-        if (credentialsId) {
-            const [nativeSqlProtection, fsxnBackup, ontapProtection, fsxwBackup, ebsBackup] = await Promise.all([
-                ...(isInstanceRunning
-                    ? [getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceName)]
-                    : [Promise.resolve()]), // Fetch server metadata
+        const [nativeSqlProtection, fsxnBackup, ontapProtection, fsxwBackup, ebsBackup] = await Promise.all([
+            ...(isInstanceRunning
+                ? [getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceName)]
+                : [Promise.resolve()]), // Fetch server metadata
 
-                fsxnId
-                    ? isFsxnAwsBackupEnabled(credentialsId, region, fsxnId, activeNodeInstanceId)
-                    : Promise.resolve(),
-                fsxnId
-                    ? getOntapVolumesSnapshotCount(credentialsId, region, fsxnId, activeNodeInstanceId)
-                    : Promise.resolve(),
-                fsxwId ? isFsxwAwsBackupEnabled(credentialsId, region, fsxwId) : Promise.resolve(),
-                ebsVolumeIds ? isEbsAwsBackupEnabled(credentialsId, region, ebsVolumeIds) : Promise.resolve() // returns true if backup is enabled on any of the ebs ID associated with the resource; revisit this to return information for each ebs
-            ]);
+            fsxnId ? isFsxnAwsBackupEnabled(credentialsId, region, fsxnId, activeNodeInstanceId) : Promise.resolve(),
+            fsxnId
+                ? getOntapVolumesSnapshotCount(credentialsId, region, fsxnId, activeNodeInstanceId)
+                : Promise.resolve(),
+            fsxwId ? isFsxwAwsBackupEnabled(credentialsId, region, fsxwId) : Promise.resolve(),
+            ebsVolumeIds ? isEbsAwsBackupEnabled(credentialsId, region, ebsVolumeIds) : Promise.resolve() // returns true if backup is enabled on any of the ebs ID associated with the resource; revisit this to return information for each ebs
+        ]);
 
-            return {
-                isSqlNativeEnabled: Boolean(nativeSqlProtection),
-                isAwsBackupEnabled: {
-                    fsxn: Boolean(fsxnBackup),
-                    fsxw: Boolean(fsxwBackup),
-                    ebs: Boolean(ebsBackup)
-                },
-                isFsxOntapSnapshotsEnabled: Boolean(ontapProtection),
-                protectedDatabases: Number.isNaN(Number(nativeSqlProtection)) ? 0 : Number(nativeSqlProtection)
-            };
-        }
+        return {
+            isSqlNativeEnabled: Boolean(nativeSqlProtection),
+            isAwsBackupEnabled: {
+                fsxn: Boolean(fsxnBackup),
+                fsxw: Boolean(fsxwBackup),
+                ebs: Boolean(ebsBackup)
+            },
+            isFsxOntapSnapshotsEnabled: Boolean(ontapProtection),
+            protectedDatabases: Number.isNaN(Number(nativeSqlProtection)) ? 0 : Number(nativeSqlProtection)
+        };
     } catch (error) {
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
