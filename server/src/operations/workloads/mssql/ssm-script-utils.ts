@@ -487,14 +487,17 @@ const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string, instanceN
 
         $cifsVolumes = GetSMBVolumes $sqlResponse
 
-        if ($volumes.count -gt 0) {
-            $volumes["records"]+=$cifsVolumes
-        }
-        else {
-            $volumes = @{"records" = $cifsVolumes} 
-            
-        }
+        if($cifsVolumes){
 
+            if ($null -ne $volumes.records) {
+                $volumes["records"]+=$cifsVolumes
+            }
+            else {
+                $volumes = @{"records" = $cifsVolumes} 
+                
+            }
+        } 
+    
         return ($volumes | ConvertTo-Json)
     } catch {
         Write-Error $_.Exception.Message
