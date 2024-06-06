@@ -215,6 +215,8 @@ const SERVER_DETAILS = `
         SERVERPROPERTY('Collation') AS ServerCollation
         ${FOR_JSON_PATH}`;
 
+const INSTANCE_GUID = `${SET_NOCOUNT} SELECT [service_broker_guid] as instance_guid FROM sys.databases WHERE [name] = N'msdb' ${FOR_JSON_PATH}`;
+
 export {
     DATABASES,
     DATABASES_COUNT,
@@ -239,5 +241,6 @@ export {
     DEFAULT_SQL_DATA_DRIVE,
     DEFAULT_SQL_LOG_DRIVE,
     DATABASE_NAME_EXISTS,
-    SERVER_DETAILS
+    SERVER_DETAILS,
+    INSTANCE_GUID
 };
