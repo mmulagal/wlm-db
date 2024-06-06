@@ -125,29 +125,29 @@ const SavingsCalculatorApi = () => {
     };
 
     const triggerRefreshApi = () => {
-        if (!isDemoMode) {
-            if (
-                selectedSnapshotFrequency &&
-                numberOfClonedCopies &&
-                selectedCloneRefresh &&
-                monthlyChangeRate &&
-                selectedInstanceId
-            ) {
-                dispatch(setStorageSavingsLoading(true));
-                dispatch(setViewCalculationsLoading(true));
-                getStorageSavingsData();
-                getViewCalculationsData();
-            }
-        } else {
-            // Demo mode code will be removed once actual demo API starts returning data
-            if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-                dispatch(setStorageSavingsResponse(storageSavingsJson['standalone']));
-                dispatch(setViewCalculationsResponse(viewCalculationJson['standalone']));
-            } else {
-                dispatch(setStorageSavingsResponse(storageSavingsJson['aoag']));
-                dispatch(setViewCalculationsResponse(viewCalculationJson['aoag']));
-            }
+        if (
+            selectedSnapshotFrequency &&
+            numberOfClonedCopies &&
+            selectedCloneRefresh &&
+            monthlyChangeRate &&
+            selectedInstanceId
+        ) {
+            dispatch(setStorageSavingsLoading(true));
+            dispatch(setViewCalculationsLoading(true));
+            getStorageSavingsData();
+            getViewCalculationsData();
         }
+
+        // else {
+        //     // Demo mode code will be removed once actual demo API starts returning data
+        //     if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+        //         dispatch(setStorageSavingsResponse(storageSavingsJson['standalone']));
+        //         dispatch(setViewCalculationsResponse(viewCalculationJson['standalone']));
+        //     } else {
+        //         dispatch(setStorageSavingsResponse(storageSavingsJson['aoag']));
+        //         dispatch(setViewCalculationsResponse(viewCalculationJson['aoag']));
+        //     }
+        // }
     };
 
     useEffect(() => {
