@@ -505,7 +505,7 @@ async function getProtectionStatus(
     if (!region || !credentialsId) {
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Region or credentials id not found for resource ${id}`
+            `Region or credentials id is not found for resource ${id}. region: ${region}, credentils Id:  ${credentialsId}`
         );
     }
 
