@@ -1943,6 +1943,13 @@ async function performLifecycleUpdate(
             resourceDetails
         )) as VolumeLunMapping;
 
+        if (!mappings.data.parentVolume || !mappings.log.parentVolume) {
+            throw createError(
+                HttpErrorCodes.VALIDATION_ERROR,
+                'The sandbox seems to be already split and hence cannot be altered!'
+            );
+        }
+
         clonedVolumes = (await createVolumeClone(
             accountId,
             credentialsId,
