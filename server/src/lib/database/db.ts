@@ -66,8 +66,8 @@ interface DatabaseInstance {
     credentialsId: string;
     resourceId: string;
     region: string;
-    sqlInstanceId: string;
-    sqlInstanceName: string;
+    databaseInstanceId: string;
+    databaseInstanceName: string;
     fsxnIds: string;
     isDefault: boolean;
     source: string;
@@ -558,8 +558,8 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
         resourceId,
         credentialsId,
         region,
-        sqlInstanceId,
-        sqlInstanceName,
+        databaseInstanceId,
+        databaseInstanceName,
         fsxnIds,
         isDefault,
         source,
@@ -580,8 +580,8 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
             credentials_id: credentialsId,
             region,
             resource_id: resourceId,
-            database_instance_id: sqlInstanceId,
-            database_instance_name: sqlInstanceName,
+            database_instance_id: databaseInstanceId,
+            database_instance_name: databaseInstanceName,
             fsxn_ids: fsxnIds,
             is_default: isDefault,
             source: source as SOURCE, // Fix: Update the type of 'source' to 'SOURCE'
@@ -594,7 +594,7 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
             ...(metaData && { metadata: metaData as {} })
         },
         update: {
-            ...(sqlInstanceName && { database_instance_name: sqlInstanceName }),
+            ...(databaseInstanceName && { database_instance_name: databaseInstanceName }),
             ...(fsxnIds && { fsxn_ids: fsxnIds }),
             ...(fsxSvmId && { fsx_svm_id: fsxSvmId }),
             ...(isDefault && { is_default: isDefault }),
@@ -606,7 +606,7 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
                 account_id: accountId,
                 credentials_id: credentialsId,
                 resource_id: resourceId,
-                database_instance_id: sqlInstanceId
+                database_instance_id: databaseInstanceId
             }
         }
     });

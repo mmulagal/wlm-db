@@ -869,7 +869,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\r\n    \"Name\":  \"MSSQLSERVER\",\r\n    \"State\":  \"Running\"\r\n}\r\n",
+        "StandardOutputContent": "{\r\n    \"instanceName\":  \"MSSQLSERVER\",\r\n    \"instanceState\":  \"Running\"\r\n}\r\n",
         "Status": "Success",
         "StatusDetails": "Success"
     },
