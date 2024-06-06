@@ -70,8 +70,8 @@ model resource {
 
   @@index([account_id], map: "k_wlmdb_resource_account_id")
   @@index([resource_id], map: "k_wlmdb_resource_resource_id")
-  @@index([account_id, credentials_id, resource_id], map: "k_wlmdb_resource_account_id_credentials_id_resource_id")
-  @@unique([resource_id, account_id, credentials_id], name: "uk_wlmdb_resource_resource_id_account_id_credentials_id", map: "uk_wlmdb_resource_resource_id_account_id_credentials_id")
+  @@index([account_id, credentials_id, region, resource_id], map: "k_wlmdb_resource_account_id_credentials_id_region_resource_id")
+  @@unique([resource_id, account_id, credentials_id, region], name: "uk_wlmdb_resource_resource_id_account_id_credentials_id_region", map: "uk_wlmdb_resource_resource_id_account_id_credentials_id_region")
 }
 
 model config {
@@ -112,30 +112,44 @@ model job {
 }
 
 model database_instances {
-  id                String   @id @default(uuid())
-  account_id        String   @db.VarChar(30)
-  credentials_id    String   @db.VarChar(80)
-  resource_id       String   @db.VarChar(255)
-  sql_instance_id   String   @db.VarChar(36)
-  sql_instance_name String   @db.VarChar(16)
-  fsxn_ids          String   @db.VarChar(255)
-  is_default        Boolean  @default(value: false)
-  created_time      DateTime @default(now()) @db.DateTime(3)
-  updated_time      DateTime @default(now()) @updatedAt @db.DateTime(3)
+  id                                String            @id @default(uuid())
+  account_id                        String            @db.VarChar(30)
+  credentials_id                    String            @db.VarChar(80)
+  region                            String            @db.VarChar(30)
+  resource_id                       String            @db.VarChar(255)
+  database_instance_id              String            @db.VarChar(36)
+  database_instance_name            String            @db.VarChar(16)
+  fsxn_ids                          String            @db.VarChar(255)
+  is_default                        Boolean           @default(value: false)
+  database_deployment_type          DATABASE_DEPLOYMENT_TYPE            
+  database_type                     String            @db.VarChar(16)
+  created_time                      DateTime          @default(now()) @db.DateTime(3)
+  updated_time                      DateTime          @default(now()) @updatedAt @db.DateTime(3)
+  source                            SOURCE            
+  number_of_user_dbs_created        Int?              @default(0)
+  sandbox_created                   Boolean?          @default(value: false)
+  storage_protocol                  STORAGEPROTOCOL?  @default(iSCSI)
+  fsx_svm_id                        Json     
+  metadata                          Json?             @default("{}")
 
-  resource resource @relation(fields: [account_id, credentials_id, resource_id], references: [account_id, credentials_id, resource_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_resource_account_id_credentials_id_resource_id")
+  resource resource @relation(fields: [account_id, credentials_id, region, resource_id], references: [account_id, credentials_id, region, resource_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_resource_account_id_credentials_id_region_resource_id")
 
-  @@unique([account_id, credentials_id, resource_id, sql_instance_id], name: "uk_wlmdb_database_instances", map: "uk_wlmdb_database_instances")
+  @@unique([account_id, credentials_id, resource_id, database_instance_id], name: "uk_wlmdb_database_instances", map: "uk_wlmdb_database_instances")
   @@index([account_id], map: "k_wlmdb_database_instances_account_id")
   @@index([credentials_id], map: "k_wlmdb_database_instances_credentials_id")
   @@index([resource_id], map: "k_wlmdb_database_instances_resource_id")
-  @@index([sql_instance_name], map: "k_wlmdb_database_instances_sql_instance_name")
+  @@index([database_instance_name], map: "k_wlmdb_database_instances_database_instance_name")
 }
 
 enum JOBSTATUS {
   IN_PROGRESS
   COMPLETED
   FAILED
+}
+
+enum STORAGEPROTOCOL {
+  SMB
+  iSCSI
 }
 
 enum JOBTYPE {
@@ -176,3 +190,13 @@ enum STORAGE_TYPE {
   FSXW
   EBS
 }
+
+enum SOURCE {
+  deployment
+  discovery
+}
+
+enum DATABASE_DEPLOYMENT_TYPE {
+  Standalone
+  FCI
+} 

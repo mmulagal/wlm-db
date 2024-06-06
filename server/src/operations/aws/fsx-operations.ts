@@ -26,7 +26,7 @@ import {
     HttpErrorCodes
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
-import { Metadata, ResourceDetails } from '../../utils/common-types';
+import { ResourceDetails } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { getFsxArn } from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
@@ -265,23 +265,15 @@ async function isFsxnAwsBackupEnabled(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    metadata: Metadata,
     activeNodeInstanceId?: string
 ) {
     logger.info('Check if FSX for NetApp ONTAP AWS backup is enabled', {
         credentialsId,
         region,
-        fileSystemId,
-        metadata
+        fileSystemId
     });
 
-    const volumeUuids = await getMappedOntapVolumes(
-        credentialsId,
-        region,
-        fileSystemId,
-        metadata,
-        activeNodeInstanceId
-    );
+    const volumeUuids = await getMappedOntapVolumes(credentialsId, region, fileSystemId, activeNodeInstanceId);
 
     if (!isEmpty(volumeUuids)) {
         const volumeIds = await getVolumeIdsFromUuids(credentialsId, region, fileSystemId, volumeUuids);
@@ -327,24 +319,16 @@ async function getOntapVolumesSnapshotCount(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    metadata: Metadata,
     activeNodeInstanceId?: string
 ) {
     logger.info('Fetching ontap snapshots count ', {
         credentialsId,
         region,
-        fileSystemId,
-        metadata
+        fileSystemId
     });
 
     try {
-        const volumeUuids = await getMappedOntapVolumes(
-            credentialsId,
-            region,
-            fileSystemId,
-            metadata,
-            activeNodeInstanceId
-        );
+        const volumeUuids = await getMappedOntapVolumes(credentialsId, region, fileSystemId, activeNodeInstanceId);
 
         if (!isEmpty(volumeUuids)) {
             const apiEndpoint = '/storage/volumes';
@@ -382,14 +366,12 @@ async function getMappedOntapVolumes(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    metadata: Metadata,
     activeNodeInstanceId?: string
 ) {
     logger.info('Get ontap volumes mapped to data drive of all databases in a server', {
         credentialsId,
         region,
         fileSystemId,
-        metadata,
         activeNodeInstanceId
     });
 

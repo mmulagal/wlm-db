@@ -956,7 +956,10 @@ enum DatabaseHostsQueryFields {
     USAGE_ESTIMATION = 'usageEstimation',
     RESOURCE_UTILIZATION = 'resourceUtilization',
     DB_COUNT = 'dbCount',
-    SERVER_DETAILS = 'serverDetails'
+    SERVER_DETAILS = 'serverDetails',
+    NODE_TOPOLOGY = 'nodeTopology',
+    INSTANCE_DETAILS = 'instanceDetails',
+    DATABASE_INSTANCE_TOPOLOGY = 'databaseInstanceTopology'
 }
 
 enum ServerState {
@@ -1156,12 +1159,13 @@ const CUSTOM_AMI_VALIDATION_INSTANCE_TYPE = 'm5.xlarge';
 
 const HOURS_IN_MONTH = 730;
 
+const VERSION_2_0 = '2.0';
+
 const SANDBOX_EXTENDED_PROPERTY_FLAG_NAME = 'cloned_by';
 
 const SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE = 'netapp_wf';
 
 const ACCOUNTID = 'accountId';
-
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1430,6 +1434,7 @@ export {
     EBS_VOLUME_SIZE,
     EBS_DEFAULT_VOLUME_SIZE,
     HOURS_IN_MONTH,
+    VERSION_2_0,
     SANDBOX_EXTENDED_PROPERTY_FLAG_NAME,
     SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE,
     ACCOUNTID

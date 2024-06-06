@@ -15,6 +15,11 @@ interface Metadata {
     updatedManually?: boolean;
     storageProtocol?: string;
 }
+interface databaseInstanceMetadata {
+    // this is used to retreive the newly created user databases in database list for demo
+    userDatabase?: Array<UserDatabase>;
+    sandboxes?: Array<Sandbox>;
+}
 
 interface CreateDbMetrics {
     numberofUserDbsCreated: number;
@@ -157,6 +162,23 @@ interface MissingPermissionInterface {
     explicitlyDenied: MissingPermission[];
 }
 
+interface DatabaseInstance {
+    database_instance_name: string;
+    instanceState: string;
+    database_instance_id: string;
+    is_default: boolean;
+    metadata: databaseInstanceMetadata;
+    created_time: string;
+    database_deployment_type: string;
+    fsxn_ids: string;
+    credentials_id: string;
+    fsxwId: string;
+    ebsVolumeIds: string[];
+    storage_protocol: string;
+    region: string;
+    databaseType: string;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -171,5 +193,7 @@ export {
     UserDatabase,
     MissingPermission,
     MissingPermissionInterface,
-    Sandbox
+    databaseInstanceMetadata,
+    Sandbox,
+    DatabaseInstance
 };

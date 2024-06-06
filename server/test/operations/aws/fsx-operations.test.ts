@@ -41,10 +41,6 @@ describe('Testcases for Amazon FSx resources operations', () => {
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID,
-            {
-                node1InstanceId: `i-${faker.string.alpha(17)}`,
-                node2InstanceId: `i-${faker.string.alpha(17)}`
-            },
             `i-${faker.string.alpha(17)}`
         );
         expect(response).toEqual(true);
@@ -54,25 +50,13 @@ describe('Testcases for Amazon FSx resources operations', () => {
         const response = await getOntapVolumesSnapshotCount(
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
-            FSX_FILESYSTEM_ID,
-            {
-                node1InstanceId: `i-${faker.string.alpha(17)}`,
-                node2InstanceId: `i-${faker.string.alpha(17)}`
-            }
+            FSX_FILESYSTEM_ID
         );
         expect(response).toBeTruthy();
     });
 
     it('Get Ontap mapped volumes', async () => {
-        const response = await getMappedOntapVolumes(
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            FSX_FILESYSTEM_ID,
-            {
-                node1InstanceId: `i-${faker.string.alpha(17)}`,
-                node2InstanceId: `i-${faker.string.alpha(17)}`
-            }
-        );
+        const response = await getMappedOntapVolumes(DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, FSX_FILESYSTEM_ID);
         const expectedResponse = ['939a4ec9-7c14-11ee-b185-8329e8fcbf44'];
         expect(response).toEqual(expectedResponse);
     });

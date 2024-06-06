@@ -20,7 +20,8 @@ import {
     DatabaseMountPointResponseBody,
     SandboxParams,
     SplitEstimatesResponse,
-    SandboxLifeCycleBody
+    SandboxLifeCycleBody,
+    DatabaseHostSummaryForMultiInstanceListResponse
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
@@ -216,6 +217,16 @@ const SandboxLifeCycleSchema = {
     }
 };
 
+const DatabaseHostsSummarySchemaV2 = {
+    ...databaseHostsRequest,
+    summary: 'Get database hosts details v2',
+    description: 'Get database hosts summary details v2',
+    querystring: DatabaseHostQueryString,
+    response: {
+        200: DatabaseHostSummaryForMultiInstanceListResponse
+    }
+};
+
 const SandboxSplitSchema = {
     params: SandboxParams,
     tags: [RouteTags.SANDBOX],
@@ -245,5 +256,6 @@ export {
     DeleteSandboxSchema,
     GetSandboxSplitEstimateSchema,
     SandboxLifeCycleSchema,
-    SandboxSplitSchema
+    SandboxSplitSchema,
+    DatabaseHostsSummarySchemaV2
 };
