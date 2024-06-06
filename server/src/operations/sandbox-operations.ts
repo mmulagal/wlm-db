@@ -6,12 +6,15 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../utils/logger';
 import { listResources, updateResourceMetaData } from '../lib/database/db';
 import {
+    ACCOUNTID,
     CUSTOM_SSM_EXECUTION_TIMEOUT,
     DEFAULT_INSTANCE_NAME,
     HttpErrorCodes,
     NO_SANDBOX_CREATED,
     RESOURCESTYPE,
     SANDBOX_API_SIZE,
+    SANDBOX_EXTENDED_PROPERTY_FLAG_NAME,
+    SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE,
     SSM_COMMAND_CACHE_TYPE,
     SSM_PARAM_PREFIX
 } from '../utils/consts';
@@ -102,8 +105,7 @@ async function getSandboxDetails(
         return errorResponse(errorMessage);
     }
 
-    accountId = process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator' ? 'test-account' : accountId;
-    const command = [GET_SANDBOX_DETAILS(['"."'], accountId)];
+    const command = [GET_SANDBOX_DETAILS(['"."'])];
     const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
     let sandboxInfo: SandboxInfoResponseType[] = [];
 
@@ -135,7 +137,16 @@ async function getSandboxDetails(
                 sandbox_properties: { name: string; value: string }[];
             }[] = sqlResponseParsing(finalSandboxDetails);
 
-            parsedSandboxDetails.forEach(item => {
+            const filteredSandboxItems = parsedSandboxDetails.filter(
+                item =>
+                    item.sandbox_properties.some(
+                        prop =>
+                            prop.name === SANDBOX_EXTENDED_PROPERTY_FLAG_NAME &&
+                            prop.value === SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE
+                    ) && item.sandbox_properties.some(prop => prop.name === ACCOUNTID && prop.value === accountId)
+            );
+
+            filteredSandboxItems.forEach(item => {
                 const sources = getSourceDetails(item);
 
                 const databaseObject = {

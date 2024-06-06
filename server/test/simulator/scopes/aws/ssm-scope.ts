@@ -300,7 +300,7 @@ const getOntapSandboxVolumeSavingsParams = {
 };
 
 const getSandboxDetails = {
-    commands: [GET_SANDBOX_DETAILS(['"."'], 'test-account')]
+    commands: [GET_SANDBOX_DETAILS(['"."'])]
 };
 
 const instanceDetails = {
