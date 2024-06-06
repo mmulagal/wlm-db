@@ -20,7 +20,8 @@ import {
     DescribeVolumesCommand,
     DescribeSnapshotsCommand,
     ImageState,
-    PlatformValues
+    PlatformValues,
+    GetInstanceTypesFromInstanceRequirementsCommand
 } from '@aws-sdk/client-ec2';
 import { mockClient } from 'aws-sdk-client-mock';
 import vpcsResponse from '../../responses/aws/list-vpcs.json';
@@ -39,6 +40,7 @@ import describeInstanceTypeOfferings from '../../responses/aws/describe-instance
 import modifyVpcAttributesResponse from '../../responses/aws/modify-vpc-attributes.json';
 // import describeVolumesResponse from '../../responses/aws/describe-volumes.json';
 import describeSnapshotsResponse from '../../responses/aws/describe-snapshots.json';
+import instanceTypesFromRequirements from '../../responses/aws/ec2-instance-types-from-requirements.json';
 import { inventoryDemoData } from '../../../../src/utils/demo-utils/demoInventoryData';
 
 const KeyPairId = `${faker.string.alphanumeric(20)}`;
@@ -214,3 +216,5 @@ ec2Mock.on(DescribeVolumesCommand).callsFake(async (command: DescribeVolumesComm
     } as DescribeVolumesResult;
 });
 ec2Mock.on(DescribeSnapshotsCommand).resolves(describeSnapshotsResponse);
+
+ec2Mock.on(GetInstanceTypesFromInstanceRequirementsCommand).resolves(instanceTypesFromRequirements);

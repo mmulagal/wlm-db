@@ -9,6 +9,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: 'i-1d9i5v18g5392mf1v',
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'notconnected',
                 ec2InstanceName: 'app-server-1',
                 vpc: {
@@ -21,6 +22,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: `i-${randomize('a0', 17)}`,
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'notconnected',
                 ec2InstanceName: 'app-server-2',
                 vpc: {
@@ -33,6 +35,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: 'i-57efw8txsh9rxvxe9',
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-3',
                 vpc: {
@@ -43,6 +46,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 sqlServerInstances: [
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
                         sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER',
                         isDefaultInstance: true,
@@ -58,6 +62,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: 'i-8ct4l5ecneb7jn2oz',
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-4',
                 vpc: {
@@ -68,6 +73,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 sqlServerInstances: [
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
                         sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER',
                         isDefaultInstance: true,
@@ -83,6 +89,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: 'i-7h2b6f4e8d1g5i3j',
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-5',
                 vpc: {
@@ -93,6 +100,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 sqlServerInstances: [
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
                         sqlServerProductYear: 2017,
                         sqlServerInstance: 'INST_D',
                         sqlServerState: 'Running',
@@ -118,6 +126,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                     },
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
                         sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER',
                         isDefaultInstance: true,
@@ -146,6 +155,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: 'i-p9o5n2m4l8k6j7h',
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-6',
                 vpc: {
@@ -156,6 +166,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 sqlServerInstances: [
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
                         sqlServerProductYear: 2017,
                         sqlServerInstance: 'MSSQLSERVER_NOSTORAGE',
                         sqlServerState: 'Running',
@@ -185,6 +196,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: 'i-2a4b7c5d3e1f6g',
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0102',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-7',
                 vpc: {
@@ -195,6 +207,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 sqlServerInstances: [
                     {
                         sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
                         sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER_1',
                         isDefaultInstance: false,
@@ -222,6 +235,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: 'i-x3y7z1a9b5c2d4e',
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0102',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-8',
                 vpc: {
@@ -232,6 +246,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 sqlServerInstances: [
                     {
                         sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
                         sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER_2',
                         isDefaultInstance: false,
@@ -259,6 +274,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: 'i-q5w3e7r9t1y2u4i',
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0102',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-9',
                 vpc: {
@@ -269,6 +285,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 sqlServerInstances: [
                     {
                         sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
                         sqlServerProductYear: 2017,
                         sqlServerInstance: 'MSSQLSERVER_3',
                         isDefaultInstance: false,
@@ -297,6 +314,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: 'i-041d3a8192609da40',
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-10',
                 vpc: {
@@ -307,6 +325,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 sqlServerInstances: [
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
                         sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER_4',
                         isDefaultInstance: false,
@@ -334,6 +353,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: 'i-l2k4j6h8g0f3d5s',
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-11',
                 vpc: {
@@ -344,6 +364,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 sqlServerInstances: [
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
                         sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER_5',
                         isDefaultInstance: false,
@@ -371,6 +392,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: 'i-9m8n7b6v5c4x3z',
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0102',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-12',
                 vpc: {
@@ -381,6 +403,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 sqlServerInstances: [
                     {
                         sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
                         sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER_6',
                         isDefaultInstance: false,
@@ -408,6 +431,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: 'i-r6t8y1u2i3o5p7a',
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-13',
                 vpc: {
@@ -418,6 +442,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 sqlServerInstances: [
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
                         sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER_7',
                         sqlServerState: 'Running',
@@ -445,6 +470,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: 'i-4s6d8f2g1h0j3k5',
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0102',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-14',
                 vpc: {
@@ -455,6 +481,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 sqlServerInstances: [
                     {
                         sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
                         sqlServerProductYear: 2017,
                         sqlServerInstance: 'MSSQLSERVER_8',
                         isDefaultInstance: false,
@@ -483,6 +510,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: 'i-c5x3z1a7s9d2f4g',
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-15',
                 vpc: {
@@ -493,6 +521,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 sqlServerInstances: [
                     {
                         sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
                         sqlServerProductYear: 2019,
                         sqlServerInstance: 'MSSQLSERVER_9',
                         isDefaultInstance: false,
@@ -520,6 +549,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: 'i-e7r9t1y2u4i6o8p',
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0102',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-16',
                 vpc: {
@@ -530,6 +560,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 sqlServerInstances: [
                     {
                         sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
                         sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER_10',
                         isDefaultInstance: false,
@@ -557,6 +588,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             {
                 ec2InstanceId: 'i-3q5w7e9r1t2y4u6i',
                 ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0102',
                 ssmState: 'connected',
                 ec2InstanceName: 'app-server-16',
                 vpc: {
@@ -567,6 +599,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 sqlServerInstances: [
                     {
                         sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
                         sqlServerProductYear: 2022,
                         sqlServerInstance: 'MSSQLSERVER_10',
                         isDefaultInstance: false,
