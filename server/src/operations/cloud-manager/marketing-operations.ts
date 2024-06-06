@@ -1,12 +1,9 @@
 import { SqlServerDeploymentModel, HOURS_IN_MONTH } from '../../utils/consts';
 import getLogger from '../../utils/logger';
-import {
-    getInstanceListFromStorage,
-    getStorageSavings,
-    getVolumesListFromStorage
-} from '../../lib/cloud-manager/marketing';
+import { getStorageSavings } from '../../lib/cloud-manager/marketing';
 import { StorageSavingsRequestBodyType } from '../../routes/types/storage-savings.types';
 import { camelizeKeys, convertToBytes } from '../../utils/utils';
+import { getVolumeIdsFromStorage } from '../demo-operations';
 
 const logger = getLogger();
 
@@ -83,30 +80,6 @@ async function invokeMarketingApi(
         getMarketingApiRequestBody(ebsVolumeIds, params, sqlServerDeploymentType)
     );
     return response;
-}
-
-async function getVolumeIdsFromStorage(accountId: string, credentialsId: string, region: string) {
-    logger.info('Getting Volume ids from the storage service', { accountId, credentialsId, region });
-
-    let demoInstanceId = '';
-    const volumeIds: string[] = [];
-
-    const {
-        ec2Instances: [firstInstance]
-    } = (await getInstanceListFromStorage(accountId, credentialsId, region)) || {};
-    demoInstanceId = firstInstance.instanceId;
-    if (demoInstanceId) {
-        const { volumeInstances } =
-            (await getVolumesListFromStorage(accountId, credentialsId, region, demoInstanceId)) || {};
-        if (volumeInstances && volumeInstances.length > 0) {
-            for (const volumeInstance of volumeInstances) {
-                volumeIds.push(volumeInstance.volumeId);
-            }
-        }
-        logger.debug(volumeIds);
-    }
-
-    return volumeIds;
 }
 
 async function formatStorageSavingsCalculationMetrics(
