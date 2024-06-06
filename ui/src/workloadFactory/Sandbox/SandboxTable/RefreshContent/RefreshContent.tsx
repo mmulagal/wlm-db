@@ -15,11 +15,15 @@ const RefreshContent = ({ databaseName, sandboxName }: any) => {
                 <div className={styles.list}>
                     <div className={styles.listItem}>
                         <Bullet />
-                        <div className={styles.textWidth}>{GENERAL.REFRESH_DIALOG_FIRST_BULLET}</div>
+                        <DsTypography variant="Regular_14" className={styles.textWidth}>
+                            {GENERAL.REFRESH_DIALOG_FIRST_BULLET}
+                        </DsTypography>
                     </div>
                     <div className={styles.listItem}>
                         <Bullet />
-                        <div className={styles.textWidth}>{GENERAL.REFRESH_DIALOG_SECOND_BULLET}</div>
+                        <DsTypography variant="Regular_14" className={styles.textWidth}>
+                            {GENERAL.REFRESH_DIALOG_SECOND_BULLET}
+                        </DsTypography>
                     </div>
                 </div>
             </DsTypography>

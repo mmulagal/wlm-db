@@ -24,7 +24,7 @@ type MenuPopoverType = {
     toggleMenu: (toggleType: string, menuId: string) => void;
     isDisabled?: boolean;
     CustomMenu?: JSX.Element;
-    disabledText?: string;
+    disabledText?: string | boolean | any;
     prefferedLocation?: Popover.PopoverPlace;
     isSubmenu?: boolean;
     isBlackLayout?: boolean;

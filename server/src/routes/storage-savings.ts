@@ -4,7 +4,7 @@ import { getStorageSavingsSchema, getStorageSavingsCalculationMetricsSchema } fr
 import {
     getStorageSavingsCalculationMetrics,
     performStorageSavingsCalculations
-} from '../operations/cloud-manager/marketing-operations';
+} from '../operations/storage-savings-operations';
 
 export default function storageSavingsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();

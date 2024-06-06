@@ -522,7 +522,8 @@ const AWS_REGIONS = new Map<string, string>([
     ['us-gov-east-1', 'AWS GovCloud (US-East)'],
     ['us-gov-west-1', 'AWS GovCloud (US-West)'],
     ['us-west-1', 'US West (N. California)'],
-    ['us-west-2', 'US West (Oregon)']
+    ['us-west-2', 'US West (Oregon)'],
+    ['ca-west1', 'Canada (Calgary)']
 ]);
 
 const WLMDB = 'wlmdb';
@@ -1155,6 +1156,13 @@ const SSM_PARAM_PREFIX = '/netapp/wlmdb/';
 const CUSTOM_AMI_VALIDATION_INSTANCE_TYPE = 'm5.xlarge';
 
 const HOURS_IN_MONTH = 730;
+
+const SANDBOX_EXTENDED_PROPERTY_FLAG_NAME = 'cloned_by';
+
+const SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE = 'netapp_wf';
+
+const ACCOUNTID = 'accountId';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1422,5 +1430,8 @@ export {
     PSMODULES_RELATIVE_PATH,
     EBS_VOLUME_SIZE,
     EBS_DEFAULT_VOLUME_SIZE,
-    HOURS_IN_MONTH
+    HOURS_IN_MONTH,
+    SANDBOX_EXTENDED_PROPERTY_FLAG_NAME,
+    SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE,
+    ACCOUNTID
 };

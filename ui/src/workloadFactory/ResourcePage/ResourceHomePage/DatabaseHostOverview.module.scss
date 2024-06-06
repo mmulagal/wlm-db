@@ -3,10 +3,13 @@
     width: 100vw;
     background-color: var(--main-background);
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 
     .breadCrumb {
         margin-top: 16px;
-        margin-left: 40px;
+
         width: 1687px;
         display: flex;
         justify-content: space-between;
@@ -23,7 +26,6 @@
 
     .hostTitle {
         margin-top: 40px;
-        margin-left: 120px;
     }
 
     .secondLevel {

@@ -7,6 +7,9 @@
         overflow-y: auto;
         height: 100%;
         width: 67.3vw;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
     .topContainer {
@@ -14,7 +17,7 @@
         width: 1066px;
         justify-content: space-between;
         margin-top: 38px;
-        margin-left: 120px;
+
         margin-right: 40px;
         .heading {
             line-height: unset;
@@ -22,13 +25,11 @@
     }
 
     .secondLevelContainer {
-        margin-left: 120px;
         display: flex;
         width: 1063px;
     }
 
     .buttonsContainer {
-        margin-left: 120px;
         margin-top: 24px;
     }
 
@@ -46,7 +47,6 @@
     }
 
     .ProtectionContainer {
-        margin-left: 120px;
         box-shadow: 2px 2px 6px var(--grey-15);
         height: 360px;
         width: 520px;
@@ -54,7 +54,6 @@
     }
 
     .fourthLevelContainer {
-        margin-left: 120px;
         margin-top: 24px;
         margin-bottom: 40px; //Temporary
         display: flex;
