@@ -42,6 +42,7 @@ import store from '../../../store/store';
 import RefreshContent from './RefreshContent/RefreshContent';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import ConnectToCiCdContent from './ConnectToCiCdContent/ConnectToCiCdContent';
+import { formatDateWithTime } from '../../../utils/utilityFunctions';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
@@ -857,10 +858,13 @@ const SandboxTable = () => {
         },
         {
             Header: GENERAL.SANDBOX_LAST_UPDATED,
-            accessor: 'updatedAt',
+            accessor: 'actualUpdated',
             id: '5',
             width: '220px',
-            isSortable: true
+            isSortable: true,
+            renderCell: (cellData: any) => {
+                return <DsTypography variant="Regular_14">{formatDateWithTime(cellData)}</DsTypography>;
+            }
         },
         {
             Header: GENERAL.AGE,
@@ -948,6 +952,7 @@ const SandboxTable = () => {
                             className={'continue-button'}
                             isThin={true}
                             onClick={() => navigate('../create-new-sandbox')}
+                            id="create-sandbox"
                         >
                             {GENERAL.CREATE_SANDBOX}
                         </Button>
