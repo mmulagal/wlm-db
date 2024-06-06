@@ -126,8 +126,8 @@ async function getInstanceRecommendations(
                 }));
             }
             const instanceTypes = await getInstanceTypesFromInstanceRequirements(
-                region,
                 credentialsId,
+                region,
                 [instanceId],
                 ebsVolumeIds,
                 sqlServerDeploymentType

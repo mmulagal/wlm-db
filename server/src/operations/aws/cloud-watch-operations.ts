@@ -184,8 +184,8 @@ async function getEbsVolumeUtilization(region: string, credentialsId: string, eb
         Dimensions: ebsVolumeIds.map(ebsVolumeId => ({ Name: 'VolumeId', Value: ebsVolumeId })),
         StartTime: new Date(Date.now() - ms('14d')),
         EndTime: new Date(),
-        Period: 6 * 60 * 60,
-        Statistics: [Statistic.Sum]
+        Period: 6 * 60 * 60, // 6 hours
+        Statistics: [Statistic.Sum] // For example, if the Period is 6 hours, the Sum is the sum of all sample values collected during the six-hour period
     };
     const paramsEbsWrite = {
         Namespace: 'AWS/EBS',
@@ -202,16 +202,18 @@ async function getEbsVolumeUtilization(region: string, credentialsId: string, eb
         getMetricStatistics(credentialsId, region, paramsEbsWrite)
     ]);
 
-    let totalEbsRead = 0;
-    let totalEbsWrite = 0;
-    dataEbsReadDatapoints?.forEach(dataPoint => {
-        totalEbsRead += dataPoint?.Sum || 0;
-        return totalEbsRead;
-    });
-    dataEbsWriteDatapoints?.forEach(dataPoint => {
-        totalEbsWrite += dataPoint?.Sum || 0;
-        return totalEbsWrite;
-    });
+    const totalEbsRead =
+        dataEbsReadDatapoints?.reduce((acc, curr) => {
+            acc += curr?.Sum ?? 0;
+            return acc;
+        }, 0) || 0; // data points obtained are aggregated over the periods of 6 hour each. So, sum them up to get the total read/write in the last 14 day
+
+    const totalEbsWrite =
+        dataEbsWriteDatapoints?.reduce((acc, curr) => {
+            acc += curr?.Sum ?? 0;
+            return acc;
+        }, 0) || 0;
+
     const totalEbsThroughputGbps = totalEbsRead + totalEbsWrite / paramsEbsRead.Period / (1024 * 1024 * 1024); // These metrics are reported in bytes. Convert to Gib/sec
 
     return totalEbsThroughputGbps;
@@ -226,7 +228,7 @@ async function getInstanceUtilization(region: string, credentialsId: string, ins
         Dimensions: instanceIds.map(instanceId => ({ Name: 'InstanceId', Value: instanceId })),
         StartTime: new Date(Date.now() - ms('14d')), // Observing trend for last 14days as even compute optimizer uses 14 days data
         EndTime: new Date(),
-        Period: 300,
+        Period: 6 * 60 * 60,
         Statistics: [Statistic.Maximum]
     };
     const paramsNetworkIn = {
@@ -235,7 +237,7 @@ async function getInstanceUtilization(region: string, credentialsId: string, ins
         Dimensions: instanceIds.map(instanceId => ({ Name: 'InstanceId', Value: instanceId })),
         StartTime: new Date(Date.now() - ms('14d')),
         EndTime: new Date(),
-        Period: 300,
+        Period: 6 * 60 * 60,
         Statistics: [Statistic.Average]
     };
 
@@ -245,7 +247,7 @@ async function getInstanceUtilization(region: string, credentialsId: string, ins
         Dimensions: instanceIds.map(instanceId => ({ Name: 'InstanceId', Value: instanceId })),
         StartTime: new Date(Date.now() - ms('14d')),
         EndTime: new Date(),
-        Period: 300,
+        Period: 6 * 60 * 60,
         Statistics: [Statistic.Average]
     };
 
@@ -255,7 +257,6 @@ async function getInstanceUtilization(region: string, credentialsId: string, ins
             getMetricStatistics(credentialsId, region, paramsNetworkIn),
             getMetricStatistics(credentialsId, region, paramsNetworkOut)
         ]);
-
     const peakCpuUtilizationPercentage =
         cpuDatapoints?.reduce((acc, curr) => (curr.Maximum && curr.Maximum > acc ? curr.Maximum : acc), 0) || 0;
     const maxAverageBytesIn =
@@ -263,8 +264,8 @@ async function getInstanceUtilization(region: string, credentialsId: string, ins
     const maxAverageBytesOut =
         networkOutDatapoints?.reduce((acc, curr) => (curr.Average && curr.Average > acc ? curr.Average : acc), 0) || 0;
 
-    const averageNetworkBandwidthGbps =
-        (maxAverageBytesIn + maxAverageBytesOut) / paramsNetworkIn.Period / (1024 * 1024 * 1024);
+    const averageNetworkBandwidthBytesPerSec = (maxAverageBytesIn + maxAverageBytesOut) / paramsNetworkIn.Period;
+    const averageNetworkBandwidthGbps = averageNetworkBandwidthBytesPerSec / (1024 * 1024 * 1024); // Convert to Gbps
 
     return { peakCpuUtilizationPercentage, averageNetworkBandwidthGbps };
 }

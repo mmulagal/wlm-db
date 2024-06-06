@@ -11,8 +11,7 @@ import {
     DescribeSnapshotsCommandInput,
     _InstanceType,
     ImageState,
-    PlatformValues,
-    Instance
+    PlatformValues
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
 import {
@@ -708,14 +707,13 @@ async function getInstanceTypesFromInstanceRequirements(
 ) {
     logger.info('Getting instance types from instance requirements', credentialsId, region, instanceIds, ebsVolumeIds);
 
-    const { Reservations } = await describeInstance(credentialsId, region!, {
+    const { Reservations = [] } = await describeInstance(credentialsId, region!, {
         InstanceIds: instanceIds
     });
-    const instances = Reservations?.map(reservation => reservation.Instances).flat();
-    const currentInstanceTypes = instances?.map(instance => instance?.InstanceType) as _InstanceType[];
+    const instances = Reservations.map(reservation => reservation.Instances || []).flat();
+    const currentInstanceTypes = compact(instances.map(instance => instance.InstanceType));
 
-    const [{ Architecture, VirtualizationType }] = instances as Instance[]; // assuming that both the nodes in AOAG/FCI have the same architecture and virtualization type.
-
+    const [{ Architecture, VirtualizationType }] = instances; // assuming that both the nodes in AOAG/FCI have the same architecture and virtualization type.
     if (
         !isEmpty(instances) &&
         Architecture &&
@@ -736,7 +734,7 @@ async function getInstanceTypesFromInstanceRequirements(
         );
 
         let requiredNetworkBandwidth = averageNetworkBandwidthGbps;
-        if (deploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
+        if (deploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
             /*
             This calculation is relevant only in case of Standard SQL host ( 1 ec2 instance).
             In case the Src env is AOAG SQL over EBS, can we assume that the future FCI SQL over FSXN suggested, remains with the same src instance type's network bandwidth,
@@ -756,16 +754,17 @@ async function getInstanceTypesFromInstanceRequirements(
         }
 
         const vcpuCountForPeakCpuUtilization = Math.round(
-            VCpuInfo?.DefaultVCpus || 0 * (peakCpuUtilizationPercentage / 100)
-        );
-        const headroom20 = vcpuCountForPeakCpuUtilization * 0.2; // 20% of peakCpuUtilization
-        const totalMinCpu20 = Math.round(
-            vcpuCountForPeakCpuUtilization - headroom20 > 0 ? vcpuCountForPeakCpuUtilization - headroom20 : 1
-        );
-        const totalMaxCpu20 = Math.round(
-            vcpuCountForPeakCpuUtilization + headroom20 <= totalMinCpu20
-                ? totalMinCpu20 + 1
-                : vcpuCountForPeakCpuUtilization + headroom20
+            (VCpuInfo?.DefaultVCpus || 0) * (peakCpuUtilizationPercentage / 100)
+        ); // calculates the vCPU count for peak CPU utilization; (default vCPU count * peak CPU utilization fraction) calculates the vCPU count required for peak CPU utilization. So, if VCpuInfo?.DefaultVCpus is 4 and peakCpuUtilizationPercentage is 50, vcpuCountForPeakCpuUtilization will be 2.
+
+        const headroom = SqlServerDeploymentModel.SQL_AOAG_SHORT
+            ? vcpuCountForPeakCpuUtilization * 0.1
+            : vcpuCountForPeakCpuUtilization * 0.2; // for Standard- headroom=20%, for AOAG, headroom = 10%
+        const totalMinCpu = 4; // As per req; min vcpus = 4
+        const totalMaxCpu = Math.round(
+            vcpuCountForPeakCpuUtilization + headroom <= totalMinCpu
+                ? totalMinCpu
+                : vcpuCountForPeakCpuUtilization + headroom
         );
 
         try {
@@ -773,7 +772,8 @@ async function getInstanceTypesFromInstanceRequirements(
                 ArchitectureTypes: [Architecture],
                 VirtualizationTypes: [VirtualizationType],
                 InstanceRequirements: {
-                    VCpuCount: { Min: totalMinCpu20, Max: totalMaxCpu20 }, // As per req, Reduced #vcpus - according to #vcpus in use.(for Standard- headroom=20%, for AOAG, headroom = 10%).
+                    AllowedInstanceTypes: ['m*', 'c*', 'r*'],
+                    VCpuCount: { Min: totalMinCpu, Max: totalMaxCpu }, // As per req, Reduced #vcpus - according to #vcpus in use.(for Standard- headroom=20%, for AOAG, headroom = 10%).
                     MemoryMiB: { Min: MemoryInfo?.SizeInMiB }, // As per req, Memory should be the same.
                     NetworkBandwidthGbps: { Min: requiredNetworkBandwidth } // As per req, New Instance's network throughput >= Old Instance's network throughput; in AOAG future network bandwidth = Max{ max (sum) EBS Bandwidth measured + current max network bandwidth measured, src instance type's network }
                 }
@@ -784,14 +784,7 @@ async function getInstanceTypesFromInstanceRequirements(
                 params
             );
             const requiredInstanceTypes = compact(
-                instanceTypes
-                    ?.map(requiredInstanceType => requiredInstanceType.InstanceType)
-                    .filter(
-                        requiredInstanceType =>
-                            requiredInstanceType?.startsWith('m') ||
-                            requiredInstanceType?.startsWith('c') ||
-                            requiredInstanceType?.startsWith('r')
-                    )
+                instanceTypes?.map(requiredInstanceType => requiredInstanceType.InstanceType)
             );
 
             return requiredInstanceTypes;

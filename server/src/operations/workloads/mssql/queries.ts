@@ -215,7 +215,7 @@ const SERVER_DETAILS = `
         SERVERPROPERTY('Collation') AS ServerCollation
         ${FOR_JSON_PATH}`;
 
-const ENTERPRISE_CHECK_QUERY = ` ${SET_NOCOUNT} IF(SELECT CASE WHEN CONVERT(sysname, SERVERPROPERTY('EDITION')) like 'Enterprise%' THEN 1 ELSE 0 END )=1
+const ENTERPRISE_CHECK_QUERY = ` ${SET_NOCOUNT} IF(SELECT CASE WHEN CONVERT(sysname, SELECT SERVERPROPERTY('EngineEdition'))= 3 THEN 1 ELSE 0 END )=1
     BEGIN
         -- SQL Server is Enterprise Edition
         IF OBJECT_ID('tempdb.dbo.#EnterpriseFeaturesDB') IS NOT NULL

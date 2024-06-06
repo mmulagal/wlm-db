@@ -132,48 +132,38 @@ async function aoagStorageSavingsCalculations(
             nodeInstanceId,
             nodeIps
         );
-        const partnerNodeComputeLicenseDetails = await retrieveComputeAndLicenseCost(
-            accountId,
-            credentialsId,
-            region,
-            partnerNodeDetails
-        );
+        const [partnerNodeComputeLicenseDetails, { allEbsVolumeIds, uniqueHostVolumeIds }] = await Promise.all([
+            retrieveComputeAndLicenseCost(accountId, credentialsId, region, partnerNodeDetails),
+            identifyAoagVolumes(
+                accountId,
+                credentialsId,
+                region,
+                nodeInstanceId,
+                nodeIps,
+                sqlServerInstances,
+                nodeEbsVolumeIds,
+                partnerNodeDetails
+            )
+        ]);
 
-        const { allEbsVolumeIds, uniqueHostVolumeIds } = await identifyAoagVolumes(
-            accountId,
-            credentialsId,
-            region,
-            nodeInstanceId,
-            nodeIps,
-            sqlServerInstances,
-            nodeEbsVolumeIds,
-            partnerNodeDetails
-        );
-
-        // Consider all EBS volumes for storage, iops and throughput calculation
-        const { ebs: allEbsDetails } = await invokeMarketingApi(
-            accountId,
-            credentialsId,
-            region,
-            SqlServerDeploymentModel.SQL_AOAG_SHORT,
-            allEbsVolumeIds,
-            params
-        );
-
-        // Consider only volumes associated with unique database in primary and partner node for snapshot calculation and to draw a storage savings comparison with FSXn
-
-        const {
-            ebs,
-            fsx,
-            fsx_calculation: fsxCalculationData
-        } = await invokeMarketingApi(
-            accountId,
-            credentialsId,
-            region,
-            SqlServerDeploymentModel.SQL_AOAG_SHORT,
-            uniqueHostVolumeIds,
-            params
-        );
+        const [{ ebs: allEbsDetails }, { ebs, fsx, fsx_calculation: fsxCalculationData }] = await Promise.all([
+            invokeMarketingApi(
+                accountId,
+                credentialsId,
+                region,
+                SqlServerDeploymentModel.SQL_AOAG_SHORT,
+                allEbsVolumeIds, // Consider all EBS volumes for storage, iops and throughput calculation
+                params
+            ),
+            invokeMarketingApi(
+                accountId,
+                credentialsId,
+                region,
+                SqlServerDeploymentModel.SQL_AOAG_SHORT,
+                uniqueHostVolumeIds, // Consider only volumes associated with unique database in primary and partner node for snapshot calculation and to draw a storage savings comparison with FSXn
+                params
+            )
+        ]);
 
         const allNodesComputeLicenseDetails = currentNodeComputeLicenseDetails.concat(partnerNodeComputeLicenseDetails);
         const instanceType = `${allNodesComputeLicenseDetails
@@ -536,15 +526,20 @@ async function performStorageSavingsCalculations(
         return aoagStorageSavingsCalculations(accountId, credentialsId, region, ebsVolumeIds, params, ec2HostDetails);
     }
 
-    const [{ compute, license }] = await retrieveComputeAndLicenseCost(accountId, credentialsId, region, [
-        ec2HostDetails
-    ]);
+    const recommendationPromise = retrieveComputeAndLicenseCost(accountId, credentialsId, region, [ec2HostDetails]);
+    const marketingPromise = invokeMarketingApi(
+        accountId,
+        credentialsId,
+        region,
+        sqlServerDeploymentType!,
+        ebsVolumeIds,
+        params
+    );
 
-    const {
-        ebs,
-        fsx,
-        fsx_calculation: fsxCalculationData
-    } = await invokeMarketingApi(accountId, credentialsId, region, sqlServerDeploymentType!, ebsVolumeIds, params);
+    const [[{ compute, license }], { ebs, fsx, fsx_calculation: fsxCalculationData }] = await Promise.all([
+        recommendationPromise,
+        marketingPromise
+    ]);
 
     const existingComputeLicensePrice = compute?.existing?.instanceMonthlyPrice || 0;
     const recommendedComputeLicensePrice = compute?.recommended?.instanceMonthlyPrice || 0;
