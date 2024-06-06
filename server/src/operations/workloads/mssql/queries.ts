@@ -216,6 +216,7 @@ const SERVER_DETAILS = `
         ${FOR_JSON_PATH}`;
 
 const INSTANCE_GUID = `${SET_NOCOUNT} SELECT [service_broker_guid] as instance_guid FROM sys.databases WHERE [name] = N'msdb' ${FOR_JSON_PATH}`;
+
 const ENTERPRISE_CHECK_QUERY = ` ${SET_NOCOUNT} IF(SELECT CASE WHEN CONVERT(sysname, SELECT SERVERPROPERTY('EngineEdition'))= 3 THEN 1 ELSE 0 END )=1
     BEGIN
         -- SQL Server is Enterprise Edition
