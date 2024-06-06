@@ -3,7 +3,11 @@ import { compact, isEmpty } from 'lodash-es';
 import { getHostAndSqlServerInfo } from '../discover-operations';
 import { FileSystemTypes, HttpErrorCodes, SqlServerDeploymentModel, HOURS_IN_MONTH } from '../../utils/consts';
 import getLogger from '../../utils/logger';
-import getStorageSavings from '../../lib/cloud-manager/marketing';
+import {
+    getStorageSavings,
+    getInstanceListFromStorage,
+    getVolumesListFromStorage
+} from '../../lib/cloud-manager/marketing';
 import {
     ComputeLicenseCostType,
     StorageSavingsMetricsCalculationsResponseType,
@@ -149,12 +153,20 @@ async function aoagStorageSavingsCalculations(
             nodeEbsVolumeIds
         );
 
+        // Here getting the instances and volume details from the storage service and using that to retrieve the correct calculations for demo
+        let allEbsVolumeIdsList = allEbsVolumeIds;
+        let uniqueHostVolumeIdsList = uniqueHostVolumeIds;
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            allEbsVolumeIdsList = await getVolumeIdsFromStorage(accountId, credentialsId, region);
+            uniqueHostVolumeIdsList = allEbsVolumeIdsList;
+        }
+
         // Consider all EBS volumes for storage, iops and throughput calculation
         const { ebs: allEbsDetails } = await getStorageSavings(
             accountId,
             credentialsId,
             region,
-            getMarketingApiRequestBody(allEbsVolumeIds, params, SqlServerDeploymentModel.SQL_AOAG_SHORT)
+            getMarketingApiRequestBody(allEbsVolumeIdsList, params, SqlServerDeploymentModel.SQL_AOAG_SHORT)
         );
 
         // Consider only volumes associated with unique database in primary and partner node for snapshot calculation and to draw a storage savings comparison with FSXn
@@ -167,7 +179,7 @@ async function aoagStorageSavingsCalculations(
             accountId,
             credentialsId,
             region,
-            getMarketingApiRequestBody(uniqueHostVolumeIds, params, SqlServerDeploymentModel.SQL_AOAG_SHORT)
+            getMarketingApiRequestBody(uniqueHostVolumeIdsList, params, SqlServerDeploymentModel.SQL_AOAG_SHORT)
         );
 
         const allNodesComputeLicenseDetails = currentNodeComputeLicenseDetails.concat(partnerNodeComputeLicenseDetails);
@@ -507,7 +519,7 @@ async function performStorageSavingsCalculations(
 
     const sqlServerInstances = ec2HostDetails?.sqlServerInstances || [];
 
-    const ebsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, sqlServerInstances);
+    let ebsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, sqlServerInstances);
 
     if (!ebsVolumeIds.length) {
         throw createError(HttpErrorCodes.NOT_FOUND, `No EBS volumes found for the provided instance: ${instanceId}`);
@@ -519,6 +531,11 @@ async function performStorageSavingsCalculations(
     }
 
     const [{ compute, license }] = await retrieveComputeAndLicenseCost(region, [ec2HostDetails]);
+
+    // Here getting the instances and volume details from the storage service and using that to retrieve the correct calculations  for demo
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        ebsVolumeIds = await getVolumeIdsFromStorage(accountId, credentialsId, region);
+    }
 
     const {
         ebs,
@@ -546,6 +563,30 @@ async function performStorageSavingsCalculations(
     };
 }
 
+async function getVolumeIdsFromStorage(accountId: string, credentialsId: string, region: string) {
+    logger.info('Getting Volume ids from the storage service', { accountId, credentialsId, region });
+
+    let demoInstanceId = '';
+    const volumeIds: string[] = [];
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        const {
+            ec2Instances: [firstInstance]
+        } = (await getInstanceListFromStorage(accountId, credentialsId, region)) || {};
+        demoInstanceId = firstInstance.instanceId;
+        if (demoInstanceId) {
+            const { volumeInstances } =
+                (await getVolumesListFromStorage(accountId, credentialsId, region, demoInstanceId)) || {};
+            if (volumeInstances && volumeInstances.length > 0) {
+                for (const volumeInstance of volumeInstances) {
+                    volumeIds.push(volumeInstance.volumeId);
+                }
+            }
+            logger.debug(volumeIds);
+        }
+    }
+    return volumeIds;
+}
+
 async function formatStorageSavingsCalculationMetrics(
     accountId: string,
     credentialsId: string,
@@ -564,6 +605,11 @@ async function formatStorageSavingsCalculationMetrics(
     });
     const totalMonthlyClonedCopiesCount =
         params.clonedCopiesCount > 0 ? getMonthlyCloneCountFromFrequency(params.cloneRefreshFrequency) : 0;
+
+    // Here getting the instances and volume details from the storage service and using that to retrieve the correct calculations for demo
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        ebsVolumeIds = await getVolumeIdsFromStorage(accountId, credentialsId, region);
+    }
 
     const {
         ebs: { capacity, iops, throughput },
