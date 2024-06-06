@@ -441,6 +441,7 @@ async function retrieveComputeAndLicenseCost(
                 existingCompute: { price: ePrice = undefined, baseInstancePrice: eBasePrice = undefined } = {},
                 existingLicense: { licenseType: eLicenseType = undefined, price: eLicensePrice = undefined } = {},
                 recommendedCompute: {
+                    instanceType: rInstanceType = '',
                     price: rPrice = undefined,
                     baseInstancePrice: rBasePrice = undefined,
                     message: computeMessage = undefined
@@ -466,7 +467,7 @@ async function retrieveComputeAndLicenseCost(
                         hoursInMonth: HOURS_IN_MONTH
                     },
                     recommended: {
-                        instanceType: existingInstanceType,
+                        instanceType: rInstanceType,
                         computeHourlyPrice: rBasePrice,
                         computeMonthlyPrice: rBasePrice ? getMonthlyPriceFromHourlyPrice(rBasePrice) : undefined,
                         instanceMonthlyPrice: rPrice // inclusive of license

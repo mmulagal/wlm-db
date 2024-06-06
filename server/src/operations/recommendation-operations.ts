@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { compact, isEmpty } from 'lodash-es';
+import { compact } from 'lodash-es';
 import { _InstanceType } from '@aws-sdk/client-ec2';
 import { STORAGE_TYPE } from '@prisma/client';
 import { HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
@@ -139,15 +139,6 @@ export default async function getSqlInstanceLicenseRecommendations(
             }
         }
 
-        const instanceRecommendations = await getInstanceRecommendations(
-            region,
-            credentialsId,
-            accountId,
-            instanceIdToUseForRecommendations,
-            ebsVolumeIds,
-            sqlServerDeploymentType
-        );
-
         const existingInstanceTypePricingDetails = await getSqlInstancePricingDetails(
             region,
             ec2HostDetails.ec2InstanceType as _InstanceType,
@@ -209,7 +200,7 @@ export default async function getSqlInstanceLicenseRecommendations(
             const recommendedSqlLicenseType =
                 sqlServerEngineEdition === 3
                     ? await getLicenseRecommendations(region, credentialsId, accountId, instanceId)
-                    : undefined;
+                    : existingLicenseType;
 
             // existing compute and license details
             existingCompute = {
@@ -228,44 +219,64 @@ export default async function getSqlInstanceLicenseRecommendations(
             };
 
             // instance recommendation logic
-            const [{ recommendations: [firstRecommendationOption] = [] }] = instanceRecommendations || [];
-            const { instanceType: recommendedInstanceType } = firstRecommendationOption;
-            if (recommendedInstanceType && ec2HostDetails.ec2InstanceType !== recommendedInstanceType) {
-                recommendedInstancePricingDetails = await getSqlInstancePricingDetails(
+            try {
+                const instanceRecommendation = await getInstanceRecommendations(
                     region,
-                    recommendedInstanceType as _InstanceType,
-                    'windows', // TODO: fetch operating system from existing instance when supporting other instance operating systems
-                    undefined // not using usage operation as a filter; usage operation is related to standard/enterprise but not for an operating system
+                    credentialsId,
+                    accountId,
+                    instanceIdToUseForRecommendations,
+                    ebsVolumeIds,
+                    sqlServerDeploymentType
                 );
-                recommendedInstanceHourlyPrice =
-                    recommendedSqlLicenseType &&
-                    recommendedInstancePricingDetails?.[recommendedSqlLicenseType]?.pricePerUnit
-                        ? recommendedInstancePricingDetails[recommendedSqlLicenseType].pricePerUnit
-                        : existingLicenseType && recommendedInstancePricingDetails?.[existingLicenseType]?.pricePerUnit
-                        ? recommendedInstancePricingDetails[existingLicenseType].pricePerUnit
+                const { instanceType: recommendedInstanceType } = instanceRecommendation;
+
+                if (recommendedInstanceType && ec2HostDetails.ec2InstanceType !== recommendedInstanceType) {
+                    recommendedInstancePricingDetails = await getSqlInstancePricingDetails(
+                        region,
+                        recommendedInstanceType as _InstanceType,
+                        'windows', // TODO: fetch operating system from existing instance when supporting other instance operating systems
+                        undefined // not using usage operation as a filter; usage operation is related to standard/enterprise but not for an operating system
+                    );
+                    recommendedInstanceHourlyPrice =
+                        recommendedSqlLicenseType &&
+                        recommendedInstancePricingDetails?.[recommendedSqlLicenseType]?.pricePerUnit
+                            ? recommendedInstancePricingDetails[recommendedSqlLicenseType].pricePerUnit
+                            : undefined;
+
+                    recommendedInstanceHourlyPriceWithoutLicense = recommendedInstancePricingDetails?.NA?.pricePerUnit
+                        ? recommendedInstancePricingDetails.NA.pricePerUnit
                         : undefined;
+                    recommendedCompute = {
+                        price: recommendedInstanceHourlyPrice,
+                        baseInstancePrice: recommendedInstanceHourlyPriceWithoutLicense,
+                        instanceType: recommendedInstanceType
+                    };
+                } else {
+                    const message =
+                        ec2HostDetails.ec2InstanceType === recommendedInstanceType
+                            ? 'No instance change recommended as per Compute Optimizer'
+                            : 'Instance Recommendations not available for the instance';
 
-                recommendedInstanceHourlyPriceWithoutLicense = recommendedInstancePricingDetails?.NA?.pricePerUnit
-                    ? recommendedInstancePricingDetails.NA.pricePerUnit
-                    : undefined;
-
-                recommendedCompute = {
-                    price: recommendedInstanceHourlyPrice,
-                    baseInstancePrice: recommendedInstanceHourlyPriceWithoutLicense,
-                    instanceType: recommendedInstanceType || ec2HostDetails.ec2InstanceType
-                };
-            } else {
-                const message = isEmpty(recommendedInstanceType)
-                    ? 'Instance Recommendation Preferences are not updated yet, please come back after a day for better recommendations'
-                    : ec2HostDetails.ec2InstanceType === recommendedInstanceType
-                    ? 'No instance change recommended as per Compute Optimizer'
-                    : 'Instance Recommendations not available for the instance';
+                    recommendedCompute = {
+                        price: existingInstanceHourlyPrice,
+                        baseInstancePrice: existingInstanceHourlyPriceWithoutLicense,
+                        instanceType: ec2HostDetails.ec2InstanceType,
+                        message
+                    };
+                }
+            } catch (error: any) {
+                logger.error('Error getting instance recommendations', {
+                    error: error.message,
+                    accountId,
+                    region,
+                    instanceId
+                });
 
                 recommendedCompute = {
                     price: existingInstanceHourlyPrice,
                     baseInstancePrice: existingInstanceHourlyPriceWithoutLicense,
                     instanceType: ec2HostDetails.ec2InstanceType,
-                    message
+                    message: error.message
                 };
             }
 
