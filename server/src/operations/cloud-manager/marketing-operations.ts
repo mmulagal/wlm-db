@@ -90,22 +90,22 @@ async function getVolumeIdsFromStorage(accountId: string, credentialsId: string,
 
     let demoInstanceId = '';
     const volumeIds: string[] = [];
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        const {
-            ec2Instances: [firstInstance]
-        } = (await getInstanceListFromStorage(accountId, credentialsId, region)) || {};
-        demoInstanceId = firstInstance.instanceId;
-        if (demoInstanceId) {
-            const { volumeInstances } =
-                (await getVolumesListFromStorage(accountId, credentialsId, region, demoInstanceId)) || {};
-            if (volumeInstances && volumeInstances.length > 0) {
-                for (const volumeInstance of volumeInstances) {
-                    volumeIds.push(volumeInstance.volumeId);
-                }
+
+    const {
+        ec2Instances: [firstInstance]
+    } = (await getInstanceListFromStorage(accountId, credentialsId, region)) || {};
+    demoInstanceId = firstInstance.instanceId;
+    if (demoInstanceId) {
+        const { volumeInstances } =
+            (await getVolumesListFromStorage(accountId, credentialsId, region, demoInstanceId)) || {};
+        if (volumeInstances && volumeInstances.length > 0) {
+            for (const volumeInstance of volumeInstances) {
+                volumeIds.push(volumeInstance.volumeId);
             }
-            logger.debug(volumeIds);
         }
+        logger.debug(volumeIds);
     }
+
     return volumeIds;
 }
 
