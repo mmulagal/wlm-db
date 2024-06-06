@@ -1,0 +1,93 @@
+{
+    "ec2Instances": [
+        {
+            "instanceName": "demo_env",
+            "instanceId": "i-demo1",
+            "instanceType": "c5n.large",
+            "state": "running",
+            "tags": [
+                {
+                    "Key": "Name",
+                    "Value": "demo_env"
+                }
+            ],
+            "numOfAttachedEBS": 3
+        },
+        {
+            "instanceName": "demo2_env",
+            "instanceId": "i-demo2",
+            "instanceType": "m4.xlarge",
+            "state": "running",
+            "tags": [
+                {
+                    "Key": "Name",
+                    "Value": "demo2_env"
+                },
+                {
+                    "Key": "key",
+                    "Value": "demo"
+                }
+            ],
+            "numOfAttachedEBS": 3
+        },
+        {
+            "instanceName": "TLS-FIS",
+            "instanceId": "i-demo3",
+            "instanceType": "m5.2xlarge",
+            "state": "running",
+            "tags": [
+                {
+                    "Key": "Name",
+                    "Value": "TLS-FIS"
+                },
+                {
+                    "Key": "env",
+                    "Value": "prod"
+                }
+            ],
+            "numOfAttachedEBS": 2
+        },
+        {
+            "instanceName": "TLS-FIS-01",
+            "instanceId": "i-demo4",
+            "instanceType": "m5.2xlarge",
+            "state": "running",
+            "tags": [
+                {
+                    "Key": "Name",
+                    "Value": "TLS-FIS-01"
+                },
+                {
+                    "Key": "classification",
+                    "Value": "sensitive"
+                }
+            ],
+            "numOfAttachedEBS": 2
+        },
+        {
+            "instanceName": "TLS-FIS-02",
+            "instanceId": "i-demo5",
+            "instanceType": "m5.xlarge",
+            "state": "running",
+            "tags": [
+                {
+                    "Key": "Name",
+                    "Value": "TLS-FIS-02"
+                },
+                {
+                    "Key": "classification",
+                    "Value": "general"
+                }
+            ],
+            "numOfAttachedEBS": 1
+        }
+    ],
+    "numberOfUnAttachedEBSVol": 0,
+    "storageData": {
+        "ebsVolumesNumber": 8,
+        "totalCapacity": 14.09,
+        "totalCapacityUnit": "TiB",
+        "executionTime": 1717658914166
+    },
+    "total": 5
+}
