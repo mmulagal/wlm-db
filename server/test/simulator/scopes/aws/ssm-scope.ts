@@ -41,7 +41,8 @@ import {
 import {
     SERVER_DETAILS,
     PERFORMANCE_METRICS_WITH_LATENCY,
-    INSTANCE_GUID
+    INSTANCE_GUID,
+    ENTERPRISE_CHECK_QUERY
 } from '../../../../src/operations/workloads/mssql/queries';
 import {
     GET_SANDBOX_DETAILS,
@@ -411,9 +412,15 @@ const getSplitEstimateCommand = {
 };
 
 const getActiveDirectory = {
-    commands: ["\n  $ErrorActionPreference = \"Stop\"\n  $responseObject = @{}\n  $scriptStartTime = Get-Date\n  $responseObject['activeDirectory'] = \"\"\n\n  try {\n    $adDomainName = (Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction SilentlyContinue -WarningAction SilentlyContinue).Domain\n    If ($adDomainName -ne \"WORKGROUP\") {\n      $adIpList = ([System.Net.Dns]::GetHostEntry($adDomainName)).AddressList.IpAddressToString\n      if ($adIpList -IsNot [System.Array]) {\n        $adIpList = @($adIpList)\n      }\n\n      $adObject = New-Object PSObject -Property @{ \"domainName\" = $adDomainName }\n      $adObject | Add-Member -MemberType NoteProperty -Name \"ipAddresses\" -Value $adIpList\n      $responseObject['activeDirectory'] = $adObject\n    }\n  } catch {\n    $responseObject['failureInfo'] = $_.Exception.Message\n  } finally {\n    $scriptEndTime = Get-Date\n    $responseObject['scriptExecutionTime'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)\n    Echo $responseObject | ConvertTo-Json -Compress\n  } \n"]
+    commands: [
+        '\n  $ErrorActionPreference = "Stop"\n  $responseObject = @{}\n  $scriptStartTime = Get-Date\n  $responseObject[\'activeDirectory\'] = ""\n\n  try {\n    $adDomainName = (Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction SilentlyContinue -WarningAction SilentlyContinue).Domain\n    If ($adDomainName -ne "WORKGROUP") {\n      $adIpList = ([System.Net.Dns]::GetHostEntry($adDomainName)).AddressList.IpAddressToString\n      if ($adIpList -IsNot [System.Array]) {\n        $adIpList = @($adIpList)\n      }\n\n      $adObject = New-Object PSObject -Property @{ "domainName" = $adDomainName }\n      $adObject | Add-Member -MemberType NoteProperty -Name "ipAddresses" -Value $adIpList\n      $responseObject[\'activeDirectory\'] = $adObject\n    }\n  } catch {\n    $responseObject[\'failureInfo\'] = $_.Exception.Message\n  } finally {\n    $scriptEndTime = Get-Date\n    $responseObject[\'scriptExecutionTime\'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)\n    Echo $responseObject | ConvertTo-Json -Compress\n  } \n'
+    ]
 };
 
+const enterpriseFeatureUsageCheck = {
+    // prettier-ignore
+    commands: [`sqlcmd -S "." -Q "${ENTERPRISE_CHECK_QUERY}" -y 0`]
+};
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -532,7 +539,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getSplitEstimateCommand })
     .resolves(listSendCommandCommandResponse.getSplitEstimateCommand)
     .on(SendCommandCommand, { Parameters: getActiveDirectory })
-    .resolves(listSendCommandCommandResponse.getActiveDirectoryCommand);
+    .resolves(listSendCommandCommandResponse.getActiveDirectoryCommand)
+    .on(SendCommandCommand, { Parameters: enterpriseFeatureUsageCheck })
+    .resolves(listSendCommandCommandResponse.enterpriseFeatureUsageCheckCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -650,7 +659,9 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getSplitEstimateCommand' })
     .resolves(getCommandInvocationResponse.getSplitEstimateResp)
     .on(GetCommandInvocationCommand, { CommandId: 'f171a4a7-3693-41bb-8c31-getActiveDirectory' })
-    .resolves(getCommandInvocationResponse.getActiveDirectoryResp);
+    .resolves(getCommandInvocationResponse.getActiveDirectoryResp)
+    .on(GetCommandInvocationCommand, { CommandId: 'k273a5y9-2143-82qe-6w13-enterpriseFeatureUsageCheckCommand' })
+    .resolves(getCommandInvocationResponse.enterpriseCheckResp);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

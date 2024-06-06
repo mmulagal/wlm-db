@@ -222,7 +222,12 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
             $responseObject = [ordered]@{}
             $winvolumes = $sqlresponse | foreach { $_ | ConvertFrom-Json }
             foreach ($winvolume in $winvolumes) {
-                $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber
+                $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype
+
+                if ($vol.bustype -ne 'iscsi') {
+                    throw "Protocol Error: The database should be using iscsi protocol"
+                }
+
                 $object = @{
                     "fileName" = $winvolume.filename
                     "lunSerialNumber" = $vol.serialnumber

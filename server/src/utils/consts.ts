@@ -522,7 +522,8 @@ const AWS_REGIONS = new Map<string, string>([
     ['us-gov-east-1', 'AWS GovCloud (US-East)'],
     ['us-gov-west-1', 'AWS GovCloud (US-West)'],
     ['us-west-1', 'US West (N. California)'],
-    ['us-west-2', 'US West (Oregon)']
+    ['us-west-2', 'US West (Oregon)'],
+    ['ca-west1', 'Canada (Calgary)']
 ]);
 
 const WLMDB = 'wlmdb';

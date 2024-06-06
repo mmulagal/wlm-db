@@ -41,7 +41,11 @@ import {
     DescribeVolumesCommandInput,
     DescribeVolumesCommand,
     DescribeSnapshotsCommandInput,
-    DescribeSnapshotsCommand
+    DescribeSnapshotsCommand,
+    DescribeInstanceTypesCommand,
+    _InstanceType,
+    GetInstanceTypesFromInstanceRequirementsCommandInput,
+    GetInstanceTypesFromInstanceRequirementsCommand
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -213,6 +217,20 @@ async function describeInstanceTypes(credentialsId: string, region: string) {
 
     return instanceTypes;
 }
+
+async function describeInstanceType(credentialsId: string, region: string, instanceTypes: _InstanceType[]) {
+    logger.info('Describe AWS instance type:', { credentialsId, region, instanceTypes });
+
+    const client = await getEC2Client(region, credentialsId);
+
+    const response = await client.send(
+        new DescribeInstanceTypesCommand({
+            InstanceTypes: instanceTypes
+        })
+    );
+
+    return response;
+}
 async function describeRouteTable(
     credentialsId: string,
     region: string,
@@ -350,6 +368,21 @@ async function describeSnapshots(credentialsId: string, region: string, params: 
     return resp;
 }
 
+async function getInstanceTypesFromInstanceRequirementsCommand(
+    credentialsId: string,
+    region: string,
+    params: GetInstanceTypesFromInstanceRequirementsCommandInput
+) {
+    logger.info('Get instance types from instance requirements', { region, params });
+
+    const ec2 = await getEC2Client(region, credentialsId);
+
+    const resp = await ec2.send(new GetInstanceTypesFromInstanceRequirementsCommand(params));
+    logger.debug('getInstanceTypesFromInstanceRequirementsCommand response:', resp);
+
+    return resp;
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -359,6 +392,7 @@ export {
     describeInstance,
     describeRegions,
     describeInstanceTypes,
+    describeInstanceType,
     describeRouteTable,
     describeKeyPairs,
     describeNetworkInterfaces,
@@ -370,5 +404,6 @@ export {
     describeVolumes,
     modifyVpcAttributes,
     describeInstanceTypeOfferings,
-    describeSnapshots
+    describeSnapshots,
+    getInstanceTypesFromInstanceRequirementsCommand
 };

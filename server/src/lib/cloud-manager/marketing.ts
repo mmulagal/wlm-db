@@ -268,7 +268,40 @@ interface MarketingRequestBody {
     };
 }
 
-export default async function getStorageSavings(
+interface StorageVolume {
+    volumeId: string;
+    volumeType: string;
+    volumeSize: {
+        size: number;
+        unit: string;
+    };
+    status: string;
+    tags?: {
+        key: string;
+        value: string;
+    };
+    iops: number;
+    snapshotId: string;
+}
+
+interface StorageVolumesResponse {
+    volumeInstances: StorageVolume[];
+}
+
+interface StorageInstance {
+    instanceName: string;
+    instanceId: string;
+    instanceType: string;
+    state: string;
+    iops: number;
+    numOfAttachedEBS: number;
+}
+
+interface StorageInstanceResponse {
+    ec2Instances: StorageInstance[];
+}
+
+async function getStorageSavings(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -280,10 +313,55 @@ export default async function getStorageSavings(
         .post(`accounts/${accountId}/marketing/v1/credentials/${credentialsId}/regions/${region}/ebs/auto/calculate`, {
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
             headers: {
-                [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN)
+                [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN),
+                ...((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && {
+                    [HEADERS.SIMULATOR]: 'true'
+                })
             },
             json: params
         })
         .json<CalculateEbsComparisonResponse>();
     return response;
 }
+
+async function getInstanceListFromStorage(accountId: string, credentialsId: string, region: string) {
+    logger.info('Get storage instance list from marketing APIs:', { accountId, credentialsId, region });
+
+    const response = await gotInstanceForInternalRequest
+        .get(
+            `accounts/${accountId}/marketing/v1/credentials/${credentialsId}/regions/${region}/instances?limit=50&offset=0&force=false`,
+            {
+                prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
+                headers: {
+                    [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN),
+                    ...((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && {
+                        [HEADERS.SIMULATOR]: 'true'
+                    })
+                }
+            }
+        )
+        .json<StorageInstanceResponse>();
+    return response;
+}
+
+async function getVolumesListFromStorage(accountId: string, credentialsId: string, region: string, instanceId: string) {
+    logger.info('Get storage volumes list from marketing APIs:', { accountId, credentialsId, region, instanceId });
+
+    const response = await gotInstanceForInternalRequest
+        .get(
+            `accounts/${accountId}/marketing/v1/credentials/${credentialsId}/regions/${region}/instances/${instanceId}/ebs-volumes`,
+            {
+                prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
+                headers: {
+                    [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN),
+                    ...((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && {
+                        [HEADERS.SIMULATOR]: 'true'
+                    })
+                }
+            }
+        )
+        .json<StorageVolumesResponse>();
+    return response;
+}
+
+export { getStorageSavings, getVolumesListFromStorage, getInstanceListFromStorage };

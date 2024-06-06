@@ -1,0 +1,204 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "876d4447-7264-400a-a1dd-039341fad2cf",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "errors": [],
+    "instanceRecommendations": [
+        {
+            "accountId": "464262061435",
+            "currentInstanceType": "m5.large",
+            "effectiveRecommendationPreferences": {
+                "cpuVendorArchitectures": [
+                    "CURRENT"
+                ],
+                "enhancedInfrastructureMetrics": "Inactive",
+                "inferredWorkloadTypes": "Active",
+                "lookBackPeriod": "DAYS_14",
+                "preferredResources": [
+                    {
+                        "includeList": [
+                            "*"
+                        ],
+                        "name": "Ec2InstanceTypes"
+                    }
+                ],
+                "savingsEstimationMode": {
+                    "source": "CostExplorerRightsizing"
+                },
+                "utilizationPreferences": [
+                    {
+                        "metricName": "CpuUtilization",
+                        "metricParameters": {
+                            "headroom": "PERCENT_30",
+                            "threshold": "P90"
+                        }
+                    },
+                    {
+                        "metricName": "MemoryUtilization",
+                        "metricParameters": {
+                            "headroom": "PERCENT_30"
+                        }
+                    }
+                ]
+            },
+            "externalMetricStatus": {
+                "statusCode": "NO_EXTERNAL_METRIC_SET",
+                "statusReason": "You haven't configured an external metrics provider in Compute Optimizer."
+            },
+            "finding": "OVER_PROVISIONED",
+            "findingReasonCodes": [
+                "CPUOverprovisioned",
+                "EBSIOPSOverprovisioned",
+                "EBSThroughputOverprovisioned",
+                "NetworkBandwidthOverprovisioned",
+                "NetworkPPSOverprovisioned"
+            ],
+            "idle": "False",
+            "inferredWorkloadTypes": [
+                "SQLServer"
+            ],
+            "instanceArn": "arn:aws:ec2:ap-southeast-1:464262061435:instance/i-07a29eb681ba37679",
+            "instanceName": "AD_WLM_COM",
+            "instanceState": "running",
+            "lastRefreshTimestamp": "2024-06-03T19:02:58.476Z",
+            "lookBackPeriodInDays": 14,
+            "recommendationOptions": [
+                {
+                    "instanceType": "m2.xlarge",
+                    "migrationEffort": "VeryLow",
+                    "performanceRisk": 3,
+                    "platformDifferences": [],
+                    "projectedUtilizationMetrics": [
+                        {
+                            "name": "CPU",
+                            "statistic": "MAXIMUM",
+                            "value": 58.04166666666667
+                        }
+                    ],
+                    "rank": 1,
+                    "savingsOpportunity": {
+                        "estimatedMonthlySavings": {
+                            "currency": "USD",
+                            "value": 57.524
+                        },
+                        "savingsOpportunityPercentage": 37.17
+                    },
+                    "savingsOpportunityAfterDiscounts": {
+                        "estimatedMonthlySavings": {
+                            "currency": "USD",
+                            "value": 30.558
+                        },
+                        "savingsOpportunityPercentage": 37.114
+                    }
+                },
+                {
+                    "instanceType": "m7i-flex.large",
+                    "migrationEffort": "VeryLow",
+                    "performanceRisk": 1,
+                    "platformDifferences": [],
+                    "projectedUtilizationMetrics": [
+                        {
+                            "name": "CPU",
+                            "statistic": "MAXIMUM",
+                            "value": 36.07995495495495
+                        }
+                    ],
+                    "rank": 2,
+                    "savingsOpportunity": {
+                        "estimatedMonthlySavings": {
+                            "currency": "USD",
+                            "value": 3.576
+                        },
+                        "savingsOpportunityPercentage": 2.311
+                    },
+                    "savingsOpportunityAfterDiscounts": {
+                        "estimatedMonthlySavings": {
+                            "currency": "USD",
+                            "value": 1.831
+                        },
+                        "savingsOpportunityPercentage": 2.224
+                    }
+                }
+            ],
+            "recommendationSources": [
+                {
+                    "recommendationSourceArn": "arn:aws:ec2:ap-southeast-1:464262061435:instance/i-07a29eb681ba37679",
+                    "recommendationSourceType": "Ec2Instance"
+                }
+            ],
+            "tags": [
+                {
+                    "key": "wlmdb-cost-resource",
+                    "value": "i-07a29eb681ba37679"
+                },
+                {
+                    "key": "KeepMe",
+                    "value": "99"
+                },
+                {
+                    "key": "KeepMeOn",
+                    "value": "5"
+                },
+                {
+                    "key": "Name",
+                    "value": "AD_WLM_COM"
+                }
+            ],
+            "utilizationMetrics": [
+                {
+                    "name": "CPU",
+                    "statistic": "MAXIMUM",
+                    "value": 58.04166666666667
+                },
+                {
+                    "name": "EBS_READ_OPS_PER_SECOND",
+                    "statistic": "MAXIMUM",
+                    "value": 1043.0833333333333
+                },
+                {
+                    "name": "EBS_WRITE_OPS_PER_SECOND",
+                    "statistic": "MAXIMUM",
+                    "value": 159.95
+                },
+                {
+                    "name": "EBS_READ_BYTES_PER_SECOND",
+                    "statistic": "MAXIMUM",
+                    "value": 50744645.182291664
+                },
+                {
+                    "name": "EBS_WRITE_BYTES_PER_SECOND",
+                    "statistic": "MAXIMUM",
+                    "value": 31291341.145833332
+                },
+                {
+                    "name": "NETWORK_IN_BYTES_PER_SECOND",
+                    "statistic": "MAXIMUM",
+                    "value": 1957104.5333333334
+                },
+                {
+                    "name": "NETWORK_OUT_BYTES_PER_SECOND",
+                    "statistic": "MAXIMUM",
+                    "value": 231294.31666666668
+                },
+                {
+                    "name": "NETWORK_PACKETS_IN_PER_SECOND",
+                    "statistic": "MAXIMUM",
+                    "value": 1319.5666666666666
+                },
+                {
+                    "name": "NETWORK_PACKETS_OUT_PER_SECOND",
+                    "statistic": "MAXIMUM",
+                    "value": 158.76666666666668
+                },
+                {
+                    "name": "NETWORK_THROUGHPUT_DAILY_BYTE",
+                    "statistic": "MAXIMUM",
+                    "value": 6050839790
+                }
+            ]
+        }
+    ]
+}
