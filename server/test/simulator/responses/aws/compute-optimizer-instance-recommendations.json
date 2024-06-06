@@ -67,7 +67,7 @@
             "lookBackPeriodInDays": 14,
             "recommendationOptions": [
                 {
-                    "instanceType": "m5.large",
+                    "instanceType": "m2.xlarge",
                     "migrationEffort": "VeryLow",
                     "performanceRisk": 3,
                     "platformDifferences": [],
