@@ -118,6 +118,10 @@ const SandboxTable = () => {
             {
                 id: 'delete',
                 displayName: 'Delete'
+            },
+            {
+                id: 'integrityCheck',
+                displayName: 'Integrity check'
             }
         ];
     };
@@ -758,6 +762,24 @@ const SandboxTable = () => {
         setConnectionInfoClicked(true);
     };
 
+    const handleIntegrityCheck = (rowData: any) => {
+        setDialog(
+            <DialogComponent
+                header={'Integrity check'}
+                content={`Do you want to perform integrity check for sandbox ${rowData.name}`}
+                primaryButton={'Integrity check'}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {
+                    console.log('action');
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass={styles.setWidth}
+            />
+        );
+    };
+
     const lastColDetails = () => {
         return {
             id: '8',
@@ -803,6 +825,10 @@ const SandboxTable = () => {
 
                                             case 'showConnectionInfo':
                                                 handleShowConnectionInfo(rowData);
+                                                break;
+
+                                            case 'integrityCheck':
+                                                handleIntegrityCheck(rowData);
                                                 break;
                                         }
                                     }
