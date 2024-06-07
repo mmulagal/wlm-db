@@ -214,8 +214,7 @@ async function getEbsVolumeUtilization(region: string, credentialsId: string, eb
             return acc;
         }, 0) || 0;
 
-    const totalEbsThroughputGbps = totalEbsRead + totalEbsWrite / paramsEbsRead.Period / (1024 * 1024 * 1024); // These metrics are reported in bytes. Convert to Gib/sec
-
+    const totalEbsThroughputGbps = (totalEbsRead + totalEbsWrite) / paramsEbsRead.Period / (1024 * 1024 * 1024); // These metrics are reported in bytes. Convert to Gib/sec
     return totalEbsThroughputGbps;
 }
 
