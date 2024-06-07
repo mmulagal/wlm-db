@@ -121,7 +121,7 @@ const SandboxTable = () => {
             },
             {
                 id: 'integrityCheck',
-                displayName: 'Check integrity'
+                displayName: 'Run Integrity check'
             }
         ];
     };
@@ -765,9 +765,9 @@ const SandboxTable = () => {
     const handleIntegrityCheck = (rowData: any) => {
         setDialog(
             <DialogComponent
-                header={'Check integrity'}
+                header={'Integrity check'}
                 content={`Do you want to perform integrity check for sandbox ${rowData.name}`}
-                primaryButton={'Check integrity'}
+                primaryButton={'Integrity check'}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
                     console.log('action');
