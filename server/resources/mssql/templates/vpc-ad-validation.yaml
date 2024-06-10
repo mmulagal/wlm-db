@@ -284,14 +284,20 @@ Resources:
                                     - '}'
                                 - ' { "IsEnabled" : false}'
                     commands:
-                        a-enableSSM:
+                        a-installssmscript:
+                            command: echo try{Start-Process ` -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe ` -ArgumentList "/S"}catch{Write-Host $_.exception} > C:/install-ssm.ps1
+                            waitAfterCompletion: '0'
+                        b-installssm:
+                            command: powershell.exe -Command C:/install-ssm.ps1
+                            waitAfterCompletion: '30'
+                        c-enableSSM:
                             command: powershell.exe -Command "Set-Service -Name AmazonSSMAgent -StartupType
                                 Automatic"
                             waitAfterCompletion: '30'
-                        b-restartSSMScript:
+                        d-restartSSMScript:
                             command: echo try{Restart-Service AmazonSSMAgent -Force -ErrorAction Continue}catch{Write-Host $_.exception} > C:/restart-ssm.ps1
                             waitAfterCompletion: '0'
-                        c-restartSSM:
+                        e-restartSSM:
                             command: powershell.exe -Command C:/restart-ssm.ps1
                             waitAfterCompletion: '30'
                 FetchResources:
@@ -426,7 +432,7 @@ Resources:
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
-            InstanceInitiatedShutdownBehavior: terminate
+            InstanceInitiatedShutdownBehavior: stop
             UserData: !Base64
                 Fn::Join:
                     - ''
@@ -482,8 +488,6 @@ Resources:
                       - '.s3.'
                       - !Ref 'AWS::Region'
                       - '.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe ` -OutFile $env:USERPROFILE\Desktop\SSMAgent_latest.exe'
-                      - "\n"
-                      - 'Start-Process ` -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe ` -ArgumentList "/S"'
                       - "\n"
                       - '}'
                       - "\n"
@@ -676,7 +680,7 @@ Resources:
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
-            InstanceInitiatedShutdownBehavior: terminate
+            InstanceInitiatedShutdownBehavior: stop
             UserData: !Base64
                 Fn::Join:
                     - ''
@@ -726,8 +730,6 @@ Resources:
                       - '.s3.'
                       - !Ref 'AWS::Region'
                       - '.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe ` -OutFile $env:USERPROFILE\Desktop\SSMAgent_latest.exe'
-                      - "\n"
-                      - 'Start-Process ` -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe ` -ArgumentList "/S"'
                       - "\n"
                       - '}'
                       - "\n"
