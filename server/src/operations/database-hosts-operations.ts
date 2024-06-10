@@ -68,6 +68,7 @@ import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
+import { getDatabsaeInstanceName } from '../utils/utils';
 
 const logger = getLogger();
 
@@ -1497,7 +1498,7 @@ async function getDatabseInstanceSummary(
         fields
     );
 
-    let {
+    const {
         database_instance_id: databaseInstanceId,
         database_instance_name: savedDatabaseInstanceName,
         is_default: isdefaultInstance,
@@ -1509,9 +1510,7 @@ async function getDatabseInstanceSummary(
 
     const { userDatabase = [] } = metadata as unknown as Metadata;
 
-    const databaseInstanceName = isdefaultInstance
-        ? `$env:computername`
-        : `$env:computername\\${savedDatabaseInstanceName.replace('MSSQL$', '')}`;
+    const databaseInstanceName = getDatabsaeInstanceName(savedDatabaseInstanceName, isdefaultInstance);
 
     let fieldsValues: Array<string> = [];
 
@@ -1536,7 +1535,7 @@ async function getDatabseInstanceSummary(
     const getDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLocaleLowerCase());
 
     const databaseInstanceDetails: DatabaseHostInstanceSummaryResponseType = {
-        databaseInstanceId: databaseInstanceId,
+        databaseInstanceId,
         databaseInstanceName: savedDatabaseInstanceName,
         status: '',
         databaseCount: 0
