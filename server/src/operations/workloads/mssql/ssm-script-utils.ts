@@ -84,7 +84,7 @@ $driveLettersObject | ConvertTo-Json
 }
 */
 
-const GET_DEFAULT_DRIVES = (instanceName: string) => `
+const GET_DEFAULT_DRIVES = (instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME) => `
 #Get default data drive of SQL server
 $defaultDataDrive =  sqlcmd -S "${instanceName}" -Q @"
     SET NOCOUNT ON;
@@ -156,7 +156,7 @@ $jsonString = $jsonObject | ConvertTo-Json
 $jsonString
 `;
 
-const GET_DEFAULT_COLLATION = (instanceName: string) => `
+const GET_DEFAULT_COLLATION = (instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME) => `
 #Get default collation of SQL server
 $defaultSqlCollation = sqlcmd -S "${instanceName}" -Q @"
     SET NOCOUNT ON;
@@ -172,7 +172,10 @@ $sqlVersion = sqlcmd -S "${instanceName}" -Q @"
 Write-Output $defaultSqlCollation $sqlVersion | ConvertTo-Json
 `;
 
-const validateSQLInstanceConnectivity = (ec2instanceId: string, sqlinstancename: string) => `
+const validateSQLInstanceConnectivity = (
+    ec2instanceId: string,
+    sqlinstancename: string = DEFAULT_MSSQL_INSTANCE_NAME
+) => `
     if ($responseObject -eq $null) {
         $responseObject = @{}
     }
