@@ -1,3 +1,5 @@
+import { DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
+
 const GET_ACTIVE_NODE_DRIVE_INFO = (
     deploymentType: string
 ) => ` $disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
@@ -279,7 +281,11 @@ const installPowerShellModule = (module: string) => `
     }
 `;
 
-const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string, instanceName: string) => `
+const getMappedOntapVolumesScript = (
+    fsxid: string,
+    fsxregion: string,
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
+) => `
     $WarningPreference = 'SilentlyContinue';
     if ($responseObject -eq $null) {
         $responseObject = @{}
