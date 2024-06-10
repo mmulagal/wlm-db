@@ -12,7 +12,10 @@ import {
     getSandboxSavings,
     getSandboxesInfo,
     getDatabaseMountPointInfo,
-    deleteSandbox
+    deleteSandbox,
+    updateSandboxLifeCycle,
+    splitSandbox,
+    checkDatabaseIntegrity
 } from '../../src/operations/sandbox-operations';
 import sandboxResponse from '../simulator/responses/workload/sandbox-response.json';
 
@@ -95,6 +98,52 @@ describe('sandbox operations ', () => {
 
     it('Deletes the sandbox', async () => {
         const resp = await deleteSandbox(
+            ACCOUNT_ID,
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
+            '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'testdb1'
+        );
+        expect(resp.jobId).toBeDefined();
+    });
+
+    it('Refreshes the sandbox', async () => {
+        const resp = await updateSandboxLifeCycle(
+            ACCOUNT_ID,
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
+            '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'testdb1',
+            'REFRESH'
+        );
+        expect(resp.jobId).toBeDefined();
+    });
+
+    it('Re-baselines the sandbox', async () => {
+        const resp = await updateSandboxLifeCycle(
+            ACCOUNT_ID,
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
+            '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'testdb1',
+            'RE-BASELINE'
+        );
+        expect(resp.jobId).toBeDefined();
+    });
+
+    it('Splits the sandbox', async () => {
+        const resp = await splitSandbox(
+            ACCOUNT_ID,
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
+            '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'testdb1'
+        );
+        expect(resp.jobId).toBeDefined();
+    });
+
+    it('Check the sandbox integrity', async () => {
+        const resp = await checkDatabaseIntegrity(
             ACCOUNT_ID,
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1',

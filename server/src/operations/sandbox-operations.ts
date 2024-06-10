@@ -589,8 +589,6 @@ async function startSandboxCreation(
             accountId
         });
 
-        await checkDataIntegrity(accountId, credentialsId, region, parentJobId, destDetails);
-
         status = JOBSTATUS.COMPLETED;
     } catch (e: any) {
         logger.error(e);
@@ -2599,41 +2597,84 @@ async function deleteExtendedProperties(
     }
 }
 
-async function checkDataIntegrity(
+async function checkDatabaseIntegrity(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseName: string
+) {
+    logger.info('Check database integrity', { accountId, credentialsId, region, databaseHostId, databaseName });
+
+    const [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
+
+    if (isEmpty(resourceDetails)) {
+        throw createError(HttpErrorCodes.NOT_FOUND, 'Could not find the database host');
+    }
+
+    const { node1InstanceId, node2InstanceId } = resourceDetails.metadata as unknown as Metadata;
+
+    const { isSSMConnected, instanceName, activeNodeInstanceId } = await getActiveSqlNode(
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId,
+        databaseHostId
+    );
+
+    if (!isSSMConnected) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'SSM connection could not be established with the host'
+        );
+    }
+
+    const checkDataIntegrityJob = await registerJob(accountId, credentialsId, region, {
+        description: `Check data integrity for ${databaseName} in ${resourceDetails.resource_name}`,
+        startTime: Date.now(),
+        name: `Check data integrity for ${databaseName}`,
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.SANDBOX,
+        resourceName: databaseName
+    });
+
+    performIntegrityCheck(
+        accountId,
+        credentialsId,
+        region,
+        checkDataIntegrityJob.id,
+        databaseName,
+        instanceName!,
+        activeNodeInstanceId!
+    );
+
+    return { jobId: checkDataIntegrityJob.id };
+}
+
+async function performIntegrityCheck(
     accountId: string,
     credentialsId: string,
     region: string,
     parentJobId: string,
-    resourceDetail: HostAndDbInfo
+    databaseName: string,
+    instanceName: string,
+    activeNodeInstanceId: string
 ) {
-    logger.info('Check data integrity', { accountId, credentialsId, region, parentJobId, resourceDetail });
-
     let status: string = JOBSTATUS.IN_PROGRESS;
     let errorMsg;
-
-    const checkDataIntegrityJob = await registerJob(accountId, credentialsId, region, {
-        description: `Check data integrity for ${resourceDetail.database}`,
-        startTime: Date.now(),
-        name: `Check data integrity for ${resourceDetail.database}`,
-        status,
-        type: JOBTYPE.SANDBOX,
-        resourceName: resourceDetail.database,
-        parentJobId
-    });
-
     try {
-        let command = [checkDatabaseIntegrityScript(resourceDetail.database, resourceDetail.instanceName)];
+        let command = [checkDatabaseIntegrityScript(databaseName, instanceName)];
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [checkDatabaseIntegrityScript('test-db', '.')];
         }
 
-        const resp = await callSsmExecution(credentialsId, region, command, resourceDetail.activeNodeInstanceId);
+        const resp = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
 
         if (resp) {
             throw createError(
                 HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                `Database integrity issues found, please run the command "DBCC CHECKDB(${resourceDetail.database}) WITH NO_INFOMSGS, ALL_ERRORMSGS;" to check the errors.`
+                `Database integrity issues found, please run the command "DBCC CHECKDB(${databaseName}) WITH NO_INFOMSGS, ALL_ERRORMSGS;" to check the errors.`
             );
         }
 
@@ -2644,7 +2685,7 @@ async function checkDataIntegrity(
         errorMsg = e.message || 'Internal Server Error';
         throw createError(e.statusCode, errorMsg);
     } finally {
-        await updateJobDetails(accountId, credentialsId, region, checkDataIntegrityJob.id, {
+        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
             status,
             error: errorMsg,
             endTime: Date.now()
@@ -2663,5 +2704,6 @@ export {
     deleteSandbox,
     getSandboxSplitEstimate,
     updateSandboxLifeCycle,
-    splitSandbox
+    splitSandbox,
+    checkDatabaseIntegrity
 };
