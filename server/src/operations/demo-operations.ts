@@ -28,6 +28,7 @@ import {
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
 import { SQL_DEFAULT_COLLATION } from '../lib/chatbot/consts';
+import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cloud-manager/marketing';
 
 const logger = getLogger();
 
@@ -269,26 +270,30 @@ async function updateUserDBIntoResourceData(
 ) {
     logger.info('updating user db into resource meta data', accountId, resourceId, databaseName);
 
-    // this is used to retreive the newly created user databases in database list for demo using meta data
-    const databaseDetails = {
-        name: databaseName,
-        size: 16777216,
-        type: MSSQL_DATABASE_TYPES.USER,
-        status: ONLINE,
-        protection: {
-            isAwsBackupEnabled: {
-                fsxn: false,
-                fsxw: false,
-                ebs: false
-            },
-            isFsxOntapSnapshotsEnabled: false,
-            isSqlNativeEnabled: false
-        },
-        collation: SQL_DEFAULT_COLLATION
-    };
-    metaData.userDatabase = [...(metaData.userDatabase || []), databaseDetails];
+    const existingDatabases = metaData.userDatabase || [];
+    const hasExistingDatabase = existingDatabases.some(db => db.name === databaseName);
 
-    await updateResourceMetaData(accountId, resourceId, metaData);
+    if (!hasExistingDatabase) {
+        const databaseDetails = {
+            name: databaseName,
+            size: 16777216,
+            type: MSSQL_DATABASE_TYPES.USER,
+            status: ONLINE,
+            protection: {
+                isAwsBackupEnabled: {
+                    fsxn: false,
+                    fsxw: false,
+                    ebs: false
+                },
+                isFsxOntapSnapshotsEnabled: false,
+                isSqlNativeEnabled: false
+            },
+            collation: SQL_DEFAULT_COLLATION
+        };
+        metaData.userDatabase = [...existingDatabases, databaseDetails];
+
+        await updateResourceMetaData(accountId, resourceId, metaData);
+    }
 }
 
 async function updateSandboxDBIntoResourceData(
@@ -325,10 +330,35 @@ async function createSandboxJobMockData(
     return sandboxJobData(accountId, region, srcHost, targetHost, srcDb, destDb, parentJobId, credentialsId);
 }
 
+async function getVolumeIdsFromStorage(accountId: string, credentialsId: string, region: string) {
+    logger.info('Getting Volume ids from the storage service', { accountId, credentialsId, region });
+
+    let demoInstanceId = '';
+    const volumeIds: string[] = [];
+
+    const {
+        ec2Instances: [firstInstance]
+    } = (await getInstanceListFromStorage(accountId, credentialsId, region)) || {};
+    demoInstanceId = firstInstance.instanceId;
+    if (demoInstanceId) {
+        const { volumeInstances } =
+            (await getVolumesListFromStorage(accountId, credentialsId, region, demoInstanceId)) || {};
+        if (volumeInstances && volumeInstances.length > 0) {
+            for (const volumeInstance of volumeInstances) {
+                volumeIds.push(volumeInstance.volumeId);
+            }
+        }
+        logger.debug(volumeIds);
+    }
+
+    return volumeIds;
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
     updateUserDBIntoResourceData,
     updateSandboxDBIntoResourceData,
-    createSandboxJobMockData
+    createSandboxJobMockData,
+    getVolumeIdsFromStorage
 };

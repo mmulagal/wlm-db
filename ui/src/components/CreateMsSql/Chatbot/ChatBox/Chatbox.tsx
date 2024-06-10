@@ -130,7 +130,7 @@ const ChatBox = ({
 
     useEffect(() => {
         if (expectingResponse?.default) {
-            setUserInput(expectingResponse.default);
+            setUserInput(`"${expectingResponse.default}"`);
         } else {
             setUserInput('');
         }

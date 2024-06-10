@@ -39,6 +39,7 @@ const EC2InstanceDetailsResponse = Type.Object({
     instanceType: Type.Optional(Type.String()),
     availabilityZone: Type.Optional(Type.String()),
     subnetId: Type.Optional(Type.String()),
+    privateIpAddress: Type.Optional(Type.String()),
     status: Type.Optional(Type.String())
 });
 type EC2InstanceDetailsResponseType = Static<typeof EC2InstanceDetailsResponse>;
@@ -461,9 +462,6 @@ const NodeTopologyResponse = Type.Object({
     awsAccount: Type.String({ description: 'Identifer for AWS account', minLength: 1 }),
     region: Type.String({description: 'Region for EC2 instance'}),
     vpcId: Type.Optional(Type.String({description: 'Identifier for EC2 instance'})),
-    // vpcName: Type.Optional(Type.String()),
-    // vpcCidr: Type.Optional(Type.String()),
-    // keyPairName: Type.Optional(Type.String()),
     ec2Details: Type.Optional(Type.Array(EC2InstanceDetailsResponse)),
     activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse)
 });
@@ -473,7 +471,7 @@ const DatabaseInstanceTopology = Type.Object({
     serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
     fileSystemType: Type.String({ enum: ['EBS', 'FSx for ONTAP', 'FSx for Windows'] }),
     fileSystemId: Type.Optional(Type.String()),
-    fileSystemName: Type.Optional(Type.Optional(Type.String())),
+    fileSystemName: Type.Optional(Type.String()),
     fileSystemDeploymentMode: Type.Optional(Type.String()),
     fileSystemStatus: Type.Optional(
         Type.String({ enum: ['CREATING', 'AVAILABLE', 'UPDATING', 'DELETING', 'DELETED', 'FAILED'] })

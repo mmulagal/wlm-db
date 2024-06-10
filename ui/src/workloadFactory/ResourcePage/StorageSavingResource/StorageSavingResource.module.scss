@@ -1,0 +1,139 @@
+.storageSaving {
+    .headSection {
+        display: flex;
+        // width: 656px;
+        height: 72px;
+        padding: 12px 40px;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+        border-bottom: 1px solid var(--border);
+
+        .storageSavingTooltipSection {
+            display: flex;
+            gap: 8px;
+
+            .list {
+                margin-top: 8px;
+                margin-bottom: 8px;
+                display: flex;
+                gap: 16px;
+                flex-direction: column;
+
+                .listItem {
+                    display: flex;
+                    gap: 4px;
+                }
+
+                .textWidth {
+                    width: 388px;
+                }
+            }
+        }
+    }
+    .title {
+        display: flex;
+    }
+
+    .mainSection {
+        padding: 40px;
+        display: flex;
+    }
+    .largeContainer {
+        height: 116px;
+        width: 1064px;
+        display: flex;
+
+        .secondSegment {
+            padding: 36px 40px 20px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            .secondRow {
+                display: flex;
+                gap: 32px;
+
+                .bottomRow {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+
+                    .square {
+                        width: 12px;
+                        height: 12px;
+                    }
+                }
+            }
+        }
+    }
+    .firstSegment {
+        height: 116px;
+        padding-top: 24px;
+        padding-bottom: 24px;
+        padding-left: 40px;
+        display: flex;
+        gap: 20px;
+
+        .rightSection {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+
+    .loadingContainer {
+        height: 35px;
+        display: flex;
+    }
+
+    .progressBar {
+        width: 655px;
+        height: 16px;
+        background-color: var(--content-background);
+        display: flex;
+        align-items: center;
+    }
+
+    .progress {
+        height: 100%;
+    }
+
+    .leftCurveBar {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+    }
+
+    .rightCurveBar {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+    .separator {
+        width: 1px;
+        height: 100%;
+        background-color: var(--content-background);
+    }
+
+    .bottomSection {
+        margin-top: 24px;
+        display: flex;
+        gap: 32px;
+
+        .storageSeparator {
+            width: 1px;
+            height: 48px;
+            background-color: var(--border);
+        }
+    }
+}
+
+// @media screen and (min-width: 1576px) and (max-width: 1720px) {
+//     .storageSaving {
+//         .headSection {
+//             padding: 12px 32px 12px 32px !important;
+//         }
+
+//         .mainSection {
+//             padding-left: 32px !important;
+//         }
+//     }
+// }

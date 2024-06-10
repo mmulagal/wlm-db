@@ -15,7 +15,6 @@ import { formatSizeTwoPrecision, isAwsBackupEnabled } from '../../../../utils/ut
 import { renderAllocatedCapacity } from '../../../Inventory/InventoryUtils';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
-import { useRunOnce } from '../../../../common/hooks/useRunOnce';
 
 const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollPosition: any }) => {
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
@@ -151,6 +150,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                         <MenuPopover
                             isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
                             menuItems={[...menu]}
+                            isDisabled={rowData.fileSystemType === 'EBS'}
                             toggleMenu={(toggleType: string, menuId: string) => {
                                 if (toggleType === 'close') {
                                     menuOpenedRowDetail.current = null;
@@ -183,7 +183,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                                 }
                             }}
                             CustomMenu={undefined}
-                            disabledText={undefined}
+                            disabledText={rowData.fileSystemType === 'EBS' && GENERAL.EBS_TOOLTIP_MESSAGE}
                         />
                     </div>
                 );
@@ -199,7 +199,8 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             accessor: 'name',
             id: '1',
             isSortable: true,
-            width: '212px'
+            width: '212px',
+            isSticky: true
         },
         {
             Header: 'Status',
@@ -299,7 +300,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             {/* <div className={styles.topDiv} /> */}
             <div className={styles.extraDiv2} />
 
-            <span style={{ position: 'relative', left: `${scrollPosition}px` }}>
+            <span className={styles.managedSubTable} style={{ position: 'relative', left: `${scrollPosition}px` }}>
                 <Table
                     //@ts-ignore
 

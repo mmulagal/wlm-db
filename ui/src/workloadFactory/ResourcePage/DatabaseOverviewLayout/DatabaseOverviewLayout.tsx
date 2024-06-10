@@ -5,6 +5,7 @@ import StorageSavings from '../../DatabaseHomePage/StorageSavings/StorageSavings
 import DBDistributionSection from '../DBDistributionSection/DBDistributionSection';
 import InformationSection from '../InformationSection/InformationSection';
 import StoragePerformance from '../StoragePerformance/StoragePerformance';
+import StorageSavingResource from '../StorageSavingResource/StorageSavingResource';
 import DBOverviewProtection from './DBOverviewProtection/DBOverviewProtection';
 
 import styles from './DatabaseOverviewLayout.module.scss';
@@ -24,15 +25,15 @@ const DatabaseOverviewLayout = () => {
                     {/* Bar lines */}
                     <div className={styles.barContainer}>
                         <div className={styles.commonContainer}>
-                            <StorageSavings
+                            <StorageSavingResource
                                 hostData={getAggrStorageSavings([resourceDetails])}
                                 hostsLoading={resourceLoading}
                             />
                         </div>
 
-                        <div className={styles.commonContainer}>
+                        {/* <div className={styles.commonContainer}>
                             <EstimatedCost hostData={getAggrCost([resourceDetails])} hostsLoading={resourceLoading} />
-                        </div>
+                        </div> */}
                     </div>
                 </div>
 

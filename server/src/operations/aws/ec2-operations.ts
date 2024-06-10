@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import {
     DescribeSubnetsRequest,
     DescribeSecurityGroupsRequest,
@@ -9,6 +9,7 @@ import {
     DescribeVpcEndpointsCommandInput,
     VpcEndpoint,
     DescribeSnapshotsCommandInput,
+    _InstanceType,
     ImageState,
     PlatformValues
 } from '@aws-sdk/client-ec2';
@@ -19,6 +20,7 @@ import {
     EBS_DEFAULT_VOLUME_SIZE,
     ENDPOINTS_DEPLOYMENT,
     HttpErrorCodes,
+    SqlServerDeploymentModel,
     VALIDATION_NODE_INSTANCETYPE,
     WLMDB_COST_ALLOCATION_TAG
 } from '../../utils/consts';
@@ -37,11 +39,14 @@ import {
     modifyVpcAttributes,
     describeInstanceTypeOfferings,
     describeSnapshots,
-    describeInstance
+    describeInstance,
+    describeInstanceType,
+    getInstanceTypesFromInstanceRequirementsCommand
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
+import { getEbsVolumeUtilization, getInstanceUtilization } from './cloud-watch-operations';
 import {
     ResourceDetails,
     SecurityGroup,
@@ -626,6 +631,169 @@ async function isEbsAwsBackupEnabled(credentialsId: string, region: string, ebsV
     return backups.Snapshots?.length !== 0;
 }
 
+async function determineSmallerInstance(credentialsId: string, region: string, instanceTypes: _InstanceType[]) {
+    const { InstanceTypes: instanceTypesListWithDetails } = await describeInstanceType(
+        credentialsId,
+        region,
+        instanceTypes
+    );
+    let [smallerInstanceType] = instanceTypesListWithDetails || [];
+
+    if (instanceTypesListWithDetails?.length && instanceTypesListWithDetails?.length > 1) {
+        instanceTypesListWithDetails?.forEach(instanceTypeDetails => {
+            const { VCpuInfo, MemoryInfo } = instanceTypeDetails;
+
+            if (
+                VCpuInfo?.DefaultVCpus &&
+                smallerInstanceType.VCpuInfo?.DefaultVCpus &&
+                MemoryInfo?.SizeInMiB &&
+                smallerInstanceType.MemoryInfo?.SizeInMiB
+            ) {
+                // Compare the number of vCPUs
+                if (VCpuInfo.DefaultVCpus < smallerInstanceType.VCpuInfo?.DefaultVCpus) {
+                    smallerInstanceType = instanceTypeDetails;
+                } else if (VCpuInfo.DefaultVCpus === smallerInstanceType.VCpuInfo?.DefaultVCpus) {
+                    // If the number of vCPUs is the same, compare the amount of memory
+                    if (MemoryInfo?.SizeInMiB < smallerInstanceType.MemoryInfo?.SizeInMiB) {
+                        smallerInstanceType = instanceTypeDetails;
+                    }
+                }
+            }
+        });
+    }
+
+    return smallerInstanceType;
+}
+async function determineBiggerInstance(credentialsId: string, region: string, instanceTypes: _InstanceType[]) {
+    const { InstanceTypes: instanceTypesListWithDetails } = await describeInstanceType(
+        credentialsId,
+        region,
+        instanceTypes
+    );
+    let [biggerInstanceType] = instanceTypesListWithDetails || [];
+
+    if (instanceTypesListWithDetails?.length && instanceTypesListWithDetails?.length > 1) {
+        instanceTypesListWithDetails?.forEach(instanceTypeDetails => {
+            const { VCpuInfo, MemoryInfo } = instanceTypeDetails;
+
+            if (
+                VCpuInfo?.DefaultVCpus &&
+                biggerInstanceType.VCpuInfo?.DefaultVCpus &&
+                MemoryInfo?.SizeInMiB &&
+                biggerInstanceType.MemoryInfo?.SizeInMiB
+            ) {
+                // Compare the number of vCPUs
+                if (VCpuInfo.DefaultVCpus > biggerInstanceType.VCpuInfo?.DefaultVCpus) {
+                    biggerInstanceType = instanceTypeDetails;
+                } else if (VCpuInfo.DefaultVCpus === biggerInstanceType.VCpuInfo?.DefaultVCpus) {
+                    // If the number of vCPUs is the same, compare the amount of memory
+                    if (MemoryInfo?.SizeInMiB > biggerInstanceType.MemoryInfo?.SizeInMiB) {
+                        biggerInstanceType = instanceTypeDetails;
+                    }
+                }
+            }
+        });
+    }
+
+    return biggerInstanceType;
+}
+
+async function getInstanceTypesFromInstanceRequirements(
+    credentialsId: string,
+    region: string,
+    instanceIds: string[],
+    ebsVolumeIds: string[],
+    deploymentType: string
+) {
+    logger.info('Getting instance types from instance requirements', credentialsId, region, instanceIds, ebsVolumeIds);
+
+    const { Reservations = [] } = await describeInstance(credentialsId, region!, {
+        InstanceIds: instanceIds
+    });
+    const instances = Reservations.map(reservation => reservation.Instances || []).flat();
+    const currentInstanceTypes = compact(instances.map(instance => instance.InstanceType));
+
+    const [{ Architecture, VirtualizationType }] = instances; // assuming that both the nodes in AOAG/FCI have the same architecture and virtualization type.
+    if (
+        !isEmpty(instances) &&
+        Architecture &&
+        VirtualizationType &&
+        currentInstanceTypes &&
+        currentInstanceTypes?.length > 0
+    ) {
+        const { peakCpuUtilizationPercentage, averageNetworkBandwidthGbps } = await getInstanceUtilization(
+            region,
+            credentialsId,
+            instanceIds
+        );
+
+        const { MemoryInfo, VCpuInfo, NetworkInfo } = await determineBiggerInstance(
+            credentialsId,
+            region,
+            currentInstanceTypes
+        );
+
+        let requiredNetworkBandwidth = averageNetworkBandwidthGbps;
+        if (deploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
+            /*
+            This calculation is relevant only in case of Standard SQL host ( 1 ec2 instance).
+            In case the Src env is AOAG SQL over EBS, can we assume that the future FCI SQL over FSXN suggested, remains with the same src instance type's network bandwidth,
+            since FCI do not need to handle the AOAG replication's network bandwidth.
+            */
+
+            const totalEbsBandwidthGbps = await getEbsVolumeUtilization(region, credentialsId, ebsVolumeIds);
+            const { BaselineBandwidthInGbps } =
+                NetworkInfo?.NetworkCards?.find(
+                    networkCard => networkCard.NetworkCardIndex === NetworkInfo?.DefaultNetworkCardIndex
+                ) || {};
+            requiredNetworkBandwidth = Math.max(
+                totalEbsBandwidthGbps + averageNetworkBandwidthGbps,
+                BaselineBandwidthInGbps || 0
+            );
+            // future network bandwidth = Max{ max (sum) EBS Bandwidth measured + current max network bandwidth measured, src instance type's network }
+        }
+
+        const vcpuCountForPeakCpuUtilization = Math.round(
+            (VCpuInfo?.DefaultVCpus || 0) * (peakCpuUtilizationPercentage / 100)
+        ); // calculates the vCPU count for peak CPU utilization; (default vCPU count * peak CPU utilization fraction) calculates the vCPU count required for peak CPU utilization. So, if VCpuInfo?.DefaultVCpus is 4 and peakCpuUtilizationPercentage is 50, vcpuCountForPeakCpuUtilization will be 2.
+
+        const headroom = SqlServerDeploymentModel.SQL_AOAG_SHORT
+            ? vcpuCountForPeakCpuUtilization * 0.1
+            : vcpuCountForPeakCpuUtilization * 0.2; // for Standard- headroom=20%, for AOAG, headroom = 10%
+        const totalMinCpu = 4; // As per req; min vcpus = 4
+        const totalMaxCpu = Math.round(
+            vcpuCountForPeakCpuUtilization + headroom <= totalMinCpu
+                ? totalMinCpu
+                : vcpuCountForPeakCpuUtilization + headroom
+        );
+
+        try {
+            const params = {
+                ArchitectureTypes: [Architecture],
+                VirtualizationTypes: [VirtualizationType],
+                InstanceRequirements: {
+                    AllowedInstanceTypes: ['m*', 'c*', 'r*'],
+                    VCpuCount: { Min: totalMinCpu, Max: totalMaxCpu }, // As per req, Reduced #vcpus - according to #vcpus in use.(for Standard- headroom=20%, for AOAG, headroom = 10%).
+                    MemoryMiB: { Min: MemoryInfo?.SizeInMiB }, // As per req, Memory should be the same.
+                    NetworkBandwidthGbps: { Min: requiredNetworkBandwidth } // As per req, New Instance's network throughput >= Old Instance's network throughput; in AOAG future network bandwidth = Max{ max (sum) EBS Bandwidth measured + current max network bandwidth measured, src instance type's network }
+                }
+            };
+            const { InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
+                credentialsId,
+                region,
+                params
+            );
+            const requiredInstanceTypes = compact(
+                instanceTypes?.map(requiredInstanceType => requiredInstanceType.InstanceType)
+            );
+
+            return requiredInstanceTypes;
+        } catch (err) {
+            logger.error('Failed to get instance types from instance requirements', err);
+        }
+    }
+}
+
 async function getInstanceDetailsByPrivateIp(credentialsId: string, region: string, privateIps: string[]) {
     logger.info('Get instance details by private ip', { credentialsId, region, privateIps });
 
@@ -673,5 +841,8 @@ export {
     enableVpcDnsAttributes,
     getValidationNodeInstanceType,
     isEbsAwsBackupEnabled,
-    getInstanceDetailsByPrivateIp
+    getInstanceTypesFromInstanceRequirements,
+    getInstanceDetailsByPrivateIp,
+    determineBiggerInstance,
+    determineSmallerInstance
 };

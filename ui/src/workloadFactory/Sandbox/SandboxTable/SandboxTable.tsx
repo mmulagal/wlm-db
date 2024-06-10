@@ -42,6 +42,7 @@ import store from '../../../store/store';
 import RefreshContent from './RefreshContent/RefreshContent';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import ConnectToCiCdContent from './ConnectToCiCdContent/ConnectToCiCdContent';
+import { formatDateWithTime } from '../../../utils/utilityFunctions';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
@@ -117,6 +118,10 @@ const SandboxTable = () => {
             {
                 id: 'delete',
                 displayName: 'Delete'
+            },
+            {
+                id: 'integrityCheck',
+                displayName: 'Run Integrity check'
             }
         ];
     };
@@ -757,6 +762,24 @@ const SandboxTable = () => {
         setConnectionInfoClicked(true);
     };
 
+    const handleIntegrityCheck = (rowData: any) => {
+        setDialog(
+            <DialogComponent
+                header={'Integrity check'}
+                content={`Do you want to perform integrity check for sandbox ${rowData.name}`}
+                primaryButton={'Integrity check'}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {
+                    console.log('action');
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass={styles.setWidth}
+            />
+        );
+    };
+
     const lastColDetails = () => {
         return {
             id: '8',
@@ -802,6 +825,10 @@ const SandboxTable = () => {
 
                                             case 'showConnectionInfo':
                                                 handleShowConnectionInfo(rowData);
+                                                break;
+
+                                            case 'integrityCheck':
+                                                handleIntegrityCheck(rowData);
                                                 break;
                                         }
                                     }
@@ -857,10 +884,13 @@ const SandboxTable = () => {
         },
         {
             Header: GENERAL.SANDBOX_LAST_UPDATED,
-            accessor: 'updatedAt',
+            accessor: 'actualUpdated',
             id: '5',
             width: '220px',
-            isSortable: true
+            isSortable: true,
+            renderCell: (cellData: any) => {
+                return <DsTypography variant="Regular_14">{formatDateWithTime(cellData)}</DsTypography>;
+            }
         },
         {
             Header: GENERAL.AGE,
@@ -948,6 +978,7 @@ const SandboxTable = () => {
                             className={'continue-button'}
                             isThin={true}
                             onClick={() => navigate('../create-new-sandbox')}
+                            id="create-sandbox"
                         >
                             {GENERAL.CREATE_SANDBOX}
                         </Button>

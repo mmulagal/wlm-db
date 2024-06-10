@@ -341,12 +341,13 @@ const HOST_AND_SQL_INFO_PS1 = [
         Get-Command -Type Application sqlcmd > $null 2> $null
         If ($? -eq $True) {
           $serverInstance = If ($isDefaultInstance) { "$Env:ComputerName" } Else { "$Env:ComputerName\\$instanceName" }
-          $editionDBCountMachineInfo = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName')" 2> $null
+          $editionDBCountMachineInfo = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName')" 2> $null
           $responseObject['windowsAuthentication'] = $?
   
           $responseObject['sqlServerEdition'] = $editionDBCountMachineInfo[0]
-          $responseObject['databaseCount'] = $editionDBCountMachineInfo[1]
-          $responseObject['sqlServerName'] = $editionDBCountMachineInfo[2]
+          $responseObject['sqlServerEngineEdition'] = $editionDBCountMachineInfo[1]
+          $responseObject['databaseCount'] = $editionDBCountMachineInfo[2]
+          $responseObject['sqlServerName'] = $editionDBCountMachineInfo[3]
   
           $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails($serverInstance)
           

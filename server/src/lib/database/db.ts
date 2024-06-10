@@ -1,4 +1,11 @@
-import { DEPLOYMENT_STATUS, DEPLOYMENT_MODEL, STORAGE_TYPE, STORAGEPROTOCOL } from '@prisma/client';
+import {
+    DEPLOYMENT_STATUS,
+    DEPLOYMENT_MODEL,
+    STORAGE_TYPE,
+    STORAGEPROTOCOL,
+    SOURCE,
+    DATABASE_DEPLOYMENT_TYPE
+} from '@prisma/client';
 import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
@@ -59,9 +66,9 @@ interface DatabaseInstance {
     credentialsId: string;
     resourceId: string;
     region: string;
-    sqlInstanceId: string;
-    sqlInstanceName: string;
-    fsxnIds: string;
+    databaseInstanceId: string;
+    databaseInstanceName: string;
+    fsxnIds?: string;
     isDefault: boolean;
     source: string;
     sqlDeploymentType: string;
@@ -70,7 +77,7 @@ interface DatabaseInstance {
     numberofUserDbsCreated?: number;
     sandboxCreated?: boolean;
     metaData?: databaseInstanceMetadata;
-    databaseType: string;
+    databaseType?: string;
 }
 
 async function listDeployments(
@@ -551,8 +558,8 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
         resourceId,
         credentialsId,
         region,
-        sqlInstanceId,
-        sqlInstanceName,
+        databaseInstanceId,
+        databaseInstanceName,
         fsxnIds,
         isDefault,
         source,
@@ -573,21 +580,21 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
             credentials_id: credentialsId,
             region,
             resource_id: resourceId,
-            database_instance_id: sqlInstanceId,
-            database_instance_name: sqlInstanceName,
-            fsxn_ids: fsxnIds,
+            database_instance_id: databaseInstanceId,
+            database_instance_name: databaseInstanceName,
+            fsxn_ids: fsxnIds || '',
             is_default: isDefault,
-            source,
-            database_type: databaseType,
-            database_deployment_type: sqlDeploymentType,
-            ...(fsxSvmId && { fsx_svm_id: fsxSvmId }),
+            source: source as SOURCE, // Fix: Update the type of 'source' to 'SOURCE'
+            database_type: databaseType || '',
+            database_deployment_type: sqlDeploymentType as DATABASE_DEPLOYMENT_TYPE,
+            fsx_svm_id: fsxSvmId,
             ...(storageProtocol && { storage_protocol: storageProtocol as STORAGEPROTOCOL }),
             ...(numberofUserDbsCreated && { number_of_user_dbs_created: numberofUserDbsCreated }),
             ...(sandboxCreated && { sandbox_created: sandboxCreated }),
             ...(metaData && { metadata: metaData as {} })
         },
         update: {
-            ...(sqlInstanceName && { database_instance_name: sqlInstanceName }),
+            ...(databaseInstanceName && { database_instance_name: databaseInstanceName }),
             ...(fsxnIds && { fsxn_ids: fsxnIds }),
             ...(fsxSvmId && { fsx_svm_id: fsxSvmId }),
             ...(isDefault && { is_default: isDefault }),
@@ -599,7 +606,7 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
                 account_id: accountId,
                 credentials_id: credentialsId,
                 resource_id: resourceId,
-                database_instance_id: sqlInstanceId
+                database_instance_id: databaseInstanceId
             }
         }
     });

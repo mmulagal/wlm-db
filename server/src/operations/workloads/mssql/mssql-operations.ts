@@ -39,7 +39,7 @@ import {
     DATABASE_METRIC_TYPE
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
-import { createResource, deleteResource, listRelationshipsResources } from '../../../lib/database/db';
+import { createResource, deleteResource, listRelationshipsResources, listResources } from '../../../lib/database/db';
 import { generateHash, sqlResponseParsing } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
@@ -780,7 +780,6 @@ async function getActiveSqlNode(
         const resourceError = `Resource ID ${resourceId}`;
         let errorMessage = '';
         // Connection to activenode is successful
-
         if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
             const instanceName = await getActiveSqlInstanceName(credentialsId, region, [node1InstanceId]);
             if (instanceName) {
@@ -788,7 +787,8 @@ async function getActiveSqlNode(
                     isSSMConnected: true,
                     activeNodeInstanceId: node1InstanceId,
                     standbyNodeInstanceId: node2InstanceId,
-                    instanceName
+                    instanceName,
+                    ssmConnectionSatus: connectionStatus.Status
                 };
             }
         } else {
@@ -807,7 +807,8 @@ async function getActiveSqlNode(
                         isSSMConnected: true,
                         activeNodeInstanceId: node2InstanceId,
                         standbyNodeInstanceId: node1InstanceId,
-                        instanceName
+                        instanceName,
+                        ssmConnectionSatus: connectionStatus.Status
                     };
                 }
             }
@@ -818,6 +819,8 @@ async function getActiveSqlNode(
         } has failed.`;
         errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
         logger.error(errorMessage, { connectionStatus });
+
+        return { isSSMConnected: false, ssmConnectionSatus: connectionStatus.Status };
     } catch (error) {
         logger.error(
             `Error while checking SSM connection or SQL server status for resource ID ${resourceId}`,
@@ -847,14 +850,14 @@ async function checkDatabaseExists(
         activeNodeInstanceId
     });
 
-    let command;
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        command = [
-            'sqlcmd -Q "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = \'tempdb18\' FOR JSON PATH" -y 0'
-        ];
-    } else {
-        command = [`sqlcmd -S "${instanceName}" -Q "${DATABASE_NAME_EXISTS(databaseName)}" -y 0`];
+        const { userDatabase } = ((await listResources(accountId, databaseHostId, credentialsId))[0]?.metadata || {
+            userDatabase: undefined
+        }) as { userDatabase: any[] };
+        return userDatabase?.some(db => db.name === databaseName) ?? false;
     }
+    const command = [`sqlcmd -S "${instanceName}" -Q "${DATABASE_NAME_EXISTS(databaseName)}" -y 0`];
+
     try {
         const checkDatabaseExistsResponse = await callSsmExecution(
             credentialsId,

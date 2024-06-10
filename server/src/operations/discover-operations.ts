@@ -81,6 +81,7 @@ interface SsmTargetsInfo {
     ec2InstanceId: string;
     ec2InstanceName: string;
     ec2InstanceType: string;
+    ec2UsageOperation: string;
     ssmState: string;
     ebsVolumeIDs: (string | undefined)[] | undefined;
     vpc?: {
@@ -161,6 +162,7 @@ async function getHostAndSqlServerInfo(
                 ec2InstanceId: ec2Instance?.InstanceId || '',
                 ec2InstanceType: ec2Instance?.InstanceType || '',
                 ec2InstanceName: name!,
+                ec2UsageOperation: ec2Instance?.UsageOperation || '',
                 ssmState: ssmStatus.Status!,
                 ebsVolumeIDs: ec2Instance?.BlockDeviceMappings?.map(bdm => bdm?.Ebs?.VolumeId),
                 vpc: {
@@ -311,6 +313,7 @@ async function getHostAndSqlServerInfo(
                             ec2InstanceId: target.ec2InstanceId,
                             ec2InstanceType: target.ec2InstanceType,
                             ec2InstanceName: target.ec2InstanceName,
+                            ec2UsageOperation: target.ec2UsageOperation,
                             ssmState: target.ssmState,
                             sqlServerInstances: dbInfo,
                             vpc: target.vpc
@@ -492,6 +495,7 @@ async function getHostAndSqlInfoFromPsOutput(
                     let {
                         sqlServerVersion,
                         sqlServerName,
+                        sqlServerEngineEdition,
                         sqlServerEdition,
                         sqlServerNodes,
                         nodeIps,
@@ -525,6 +529,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerInstance,
                         sqlServerState,
                         sqlServerProductYear,
+                        ...(sqlServerEngineEdition && { sqlServerEngineEdition: Number(sqlServerEngineEdition) }),
                         ...(sqlServerEdition && { sqlServerEdition }),
                         isDefaultInstance,
                         ...(failureInfo && { failureInfo }),
@@ -903,7 +908,7 @@ async function fetchUnmanagedHostsInformationV2(
                         region,
                         credentials_id: credentialsId,
                         metadata: {userDatabase: []},
-                        fsxnId,
+                        fsxn_ids: fsxnId || '',
                         fsxwId,
                         ebsVolumeIds,
                         database_deployment_type: sqlServerInstance.sqlServerDeploymentType

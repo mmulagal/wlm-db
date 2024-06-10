@@ -179,6 +179,7 @@ interface DatabaseInstance {
     region?: string;
     database_type?: string;
     storage_type?: string;
+    fsxn_ids?: string;
 }
 
 export {

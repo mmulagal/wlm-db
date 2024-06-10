@@ -27,18 +27,35 @@ const StorageMetrics = Type.Object({
     iops: Type.Number(),
     throughput: Type.Number(),
     snapshots: Type.Number(),
+    compute: Type.Optional(
+        Type.Object({
+            cost: Type.Optional(Type.Number()),
+            instanceType: Type.String(),
+            message: Type.Optional(Type.String())
+        })
+    ),
+    license: Type.Optional(
+        Type.Object({
+            sqlEdition: Type.String(),
+            sqlServerVersion: Type.String(),
+            licenseCost: Type.Optional(Type.Number()),
+            message: Type.Optional(Type.String())
+        })
+    ),
     clones: Type.Number(),
     total: Type.Number()
 });
 
 const StorageSavingsCompute = Type.Object({
     instanceType: Type.String(),
-    computeMonthlyPrice: Type.Optional(Type.Number())
+    computeMonthlyPrice: Type.Optional(Type.Number()),
+    message: Type.Optional(Type.String())
 });
 
 const StorageSavingsLicense = Type.Object({
-    licenseType: Type.String(),
-    licenseMonthlyPrice: Type.Optional(Type.Number())
+    licenseType: Type.Optional(Type.String()),
+    licenseMonthlyPrice: Type.Optional(Type.Number()),
+    message: Type.Optional(Type.String())
 });
 const StorageSavingsResponse = Type.Object({
     compute: Type.Object({ existing: StorageSavingsCompute, recommended: StorageSavingsCompute }),
@@ -81,8 +98,8 @@ const ComputeCalculationObject = Type.Object({
     computeMonthlyPrice: Type.Optional(Type.Number())
 });
 const LicenseCalculationObject = Type.Object({
-    sqlServerEdition: Type.String(),
-    licenseType: Type.String(),
+    sqlServerEdition: Type.Optional(Type.String()),
+    licenseType: Type.Optional(Type.String()),
     licenseHourlyPrice: Type.Optional(Type.Number()),
     licenseIncluded: Type.Optional(Type.Boolean()),
     hoursInMonth: Type.Number()
@@ -217,16 +234,18 @@ const ComputeDetails = Type.Object({
     instanceHourlyPrice: Type.Optional(Type.Number()),
     computeMonthlyPrice: Type.Optional(Type.Number()),
     instanceMonthlyPrice: Type.Optional(Type.Number()),
-    hoursInMonth: Type.Number()
+    hoursInMonth: Type.Number(),
+    message: Type.Optional(Type.String())
 });
 
 const LicenseDetails = Type.Object({
-    sqlServerEdition: Type.String(),
-    licenseType: Type.String(),
+    sqlServerEdition: Type.Optional(Type.String()),
+    licenseType: Type.Optional(Type.String()),
     licenseHourlyPrice: Type.Optional(Type.Number()),
     licenseIncluded: Type.Optional(Type.Boolean()),
     licenseMonthlyPrice: Type.Optional(Type.Number()),
-    hoursInMonth: Type.Number()
+    hoursInMonth: Type.Number(),
+    message: Type.Optional(Type.String())
 });
 
 const Compute = Type.Object({

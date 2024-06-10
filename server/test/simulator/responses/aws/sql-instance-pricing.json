@@ -1,0 +1,1742 @@
+{
+  "product": {
+    "productFamily": "Compute Instance",
+    "attributes": {
+      "enhancedNetworkingSupported": "Yes",
+      "intelTurboAvailable": "Yes",
+      "memory": "16 GiB",
+      "dedicatedEbsThroughput": "Up to 2120 Mbps",
+      "vcpu": "4",
+      "classicnetworkingsupport": "false",
+      "capacitystatus": "Used",
+      "locationType": "AWS Region",
+      "storage": "EBS only",
+      "instanceFamily": "General purpose",
+      "operatingSystem": "Windows",
+      "intelAvx2Available": "Yes",
+      "regionCode": "us-east-1",
+      "physicalProcessor": "Intel Xeon Platinum 8175",
+      "clockSpeed": "3.1 GHz",
+      "ecu": "16",
+      "networkPerformance": "Up to 10 Gigabit",
+      "servicename": "Amazon Elastic Compute Cloud",
+      "gpuMemory": "NA",
+      "vpcnetworkingsupport": "true",
+      "instanceType": "m5.xlarge",
+      "tenancy": "Shared",
+      "usagetype": "BoxUsage:m5.xlarge",
+      "normalizationSizeFactor": "8",
+      "intelAvxAvailable": "Yes",
+      "processorFeatures": "Intel AVX; Intel AVX2; Intel AVX512; Intel Turbo",
+      "servicecode": "AmazonEC2",
+      "licenseModel": "Bring your own license",
+      "currentGeneration": "Yes",
+      "preInstalledSw": "NA",
+      "location": "US East (N. Virginia)",
+      "processorArchitecture": "64-bit",
+      "marketoption": "OnDemand",
+      "operation": "RunInstances:0800",
+      "availabilityzone": "NA"
+    },
+    "sku": "8AW2DYRV3M9N5RRZ"
+  },
+  "serviceCode": "AmazonEC2",
+  "terms": {
+    "OnDemand": {
+      "8AW2DYRV3M9N5RRZ.JRTCKXETXF": {
+        "priceDimensions": {
+          "8AW2DYRV3M9N5RRZ.JRTCKXETXF.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "$0.192 per On Demand Windows BYOL m5.xlarge Instance Hour",
+            "appliesTo": [],
+            "rateCode": "8AW2DYRV3M9N5RRZ.JRTCKXETXF.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.1920000000"
+            }
+          }
+        },
+        "sku": "8AW2DYRV3M9N5RRZ",
+        "effectiveDate": "2024-05-01T00:00:00Z",
+        "offerTermCode": "JRTCKXETXF",
+        "termAttributes": {}
+      }
+    }
+  },
+  "version": "20240513221839",
+  "publicationDate": "2024-05-13T22:18:39Z"
+},
+{
+  "product": {
+    "productFamily": "Compute Instance",
+    "attributes": {
+      "enhancedNetworkingSupported": "Yes",
+      "intelTurboAvailable": "Yes",
+      "memory": "16 GiB",
+      "dedicatedEbsThroughput": "Up to 2120 Mbps",
+      "vcpu": "4",
+      "classicnetworkingsupport": "false",
+      "capacitystatus": "Used",
+      "locationType": "AWS Region",
+      "storage": "EBS only",
+      "instanceFamily": "General purpose",
+      "operatingSystem": "Windows",
+      "intelAvx2Available": "Yes",
+      "regionCode": "us-east-1",
+      "physicalProcessor": "Intel Xeon Platinum 8175",
+      "clockSpeed": "3.1 GHz",
+      "ecu": "16",
+      "networkPerformance": "Up to 10 Gigabit",
+      "servicename": "Amazon Elastic Compute Cloud",
+      "gpuMemory": "NA",
+      "vpcnetworkingsupport": "true",
+      "instanceType": "m5.xlarge",
+      "tenancy": "Shared",
+      "usagetype": "BoxUsage:m5.xlarge",
+      "normalizationSizeFactor": "8",
+      "intelAvxAvailable": "Yes",
+      "processorFeatures": "Intel AVX; Intel AVX2; Intel AVX512; Intel Turbo",
+      "servicecode": "AmazonEC2",
+      "licenseModel": "No License required",
+      "currentGeneration": "Yes",
+      "preInstalledSw": "NA",
+      "location": "US East (N. Virginia)",
+      "processorArchitecture": "64-bit",
+      "marketoption": "OnDemand",
+      "operation": "RunInstances:0002",
+      "availabilityzone": "NA"
+    },
+    "sku": "HXGQ45BFM9J2FJ3F"
+  },
+  "serviceCode": "AmazonEC2",
+  "terms": {
+    "OnDemand": {
+      "HXGQ45BFM9J2FJ3F.JRTCKXETXF": {
+        "priceDimensions": {
+          "HXGQ45BFM9J2FJ3F.JRTCKXETXF.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "$0.376 per On Demand Windows m5.xlarge Instance Hour",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.JRTCKXETXF.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.3760000000"
+            }
+          }
+        },
+        "sku": "HXGQ45BFM9J2FJ3F",
+        "effectiveDate": "2024-05-01T00:00:00Z",
+        "offerTermCode": "JRTCKXETXF",
+        "termAttributes": {}
+      }
+    },
+    "Reserved": {
+      "HXGQ45BFM9J2FJ3F.38NPMPTW36": {
+        "priceDimensions": {
+          "HXGQ45BFM9J2FJ3F.38NPMPTW36.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.38NPMPTW36.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "3427"
+            }
+          },
+          "HXGQ45BFM9J2FJ3F.38NPMPTW36.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.38NPMPTW36.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.1300000000"
+            }
+          }
+        },
+        "sku": "HXGQ45BFM9J2FJ3F",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "38NPMPTW36",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "Partial Upfront"
+        }
+      },
+      "HXGQ45BFM9J2FJ3F.4NA7Y494T4": {
+        "priceDimensions": {
+          "HXGQ45BFM9J2FJ3F.4NA7Y494T4.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.4NA7Y494T4.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.3050000000"
+            }
+          }
+        },
+        "sku": "HXGQ45BFM9J2FJ3F",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "4NA7Y494T4",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "No Upfront"
+        }
+      },
+      "HXGQ45BFM9J2FJ3F.Z2E3P23VKM": {
+        "priceDimensions": {
+          "HXGQ45BFM9J2FJ3F.Z2E3P23VKM.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.Z2E3P23VKM.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.2810000000"
+            }
+          }
+        },
+        "sku": "HXGQ45BFM9J2FJ3F",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "Z2E3P23VKM",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "No Upfront"
+        }
+      },
+      "HXGQ45BFM9J2FJ3F.NQ3QZPMQV9": {
+        "priceDimensions": {
+          "HXGQ45BFM9J2FJ3F.NQ3QZPMQV9.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.NQ3QZPMQV9.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "6733"
+            }
+          },
+          "HXGQ45BFM9J2FJ3F.NQ3QZPMQV9.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "USD 0.0 per Windows (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.NQ3QZPMQV9.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.0000000000"
+            }
+          }
+        },
+        "sku": "HXGQ45BFM9J2FJ3F",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "NQ3QZPMQV9",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "All Upfront"
+        }
+      },
+      "HXGQ45BFM9J2FJ3F.R5XV2EPZQZ": {
+        "priceDimensions": {
+          "HXGQ45BFM9J2FJ3F.R5XV2EPZQZ.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.R5XV2EPZQZ.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.1370000000"
+            }
+          },
+          "HXGQ45BFM9J2FJ3F.R5XV2EPZQZ.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.R5XV2EPZQZ.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "3602"
+            }
+          }
+        },
+        "sku": "HXGQ45BFM9J2FJ3F",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "R5XV2EPZQZ",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "Partial Upfront"
+        }
+      },
+      "HXGQ45BFM9J2FJ3F.6QCMYABX3D": {
+        "priceDimensions": {
+          "HXGQ45BFM9J2FJ3F.6QCMYABX3D.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "USD 0.0 per Windows (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.6QCMYABX3D.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.0000000000"
+            }
+          },
+          "HXGQ45BFM9J2FJ3F.6QCMYABX3D.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.6QCMYABX3D.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "2601"
+            }
+          }
+        },
+        "sku": "HXGQ45BFM9J2FJ3F",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "6QCMYABX3D",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "All Upfront"
+        }
+      },
+      "HXGQ45BFM9J2FJ3F.HU7G6KETJZ": {
+        "priceDimensions": {
+          "HXGQ45BFM9J2FJ3F.HU7G6KETJZ.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.HU7G6KETJZ.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.1500000000"
+            }
+          },
+          "HXGQ45BFM9J2FJ3F.HU7G6KETJZ.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.HU7G6KETJZ.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "1310"
+            }
+          }
+        },
+        "sku": "HXGQ45BFM9J2FJ3F",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "HU7G6KETJZ",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "Partial Upfront"
+        }
+      },
+      "HXGQ45BFM9J2FJ3F.BPH4J8HBKS": {
+        "priceDimensions": {
+          "HXGQ45BFM9J2FJ3F.BPH4J8HBKS.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.BPH4J8HBKS.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.2670000000"
+            }
+          }
+        },
+        "sku": "HXGQ45BFM9J2FJ3F",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "BPH4J8HBKS",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "No Upfront"
+        }
+      },
+      "HXGQ45BFM9J2FJ3F.VJWZNREJX2": {
+        "priceDimensions": {
+          "HXGQ45BFM9J2FJ3F.VJWZNREJX2.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.VJWZNREJX2.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.0000000000"
+            }
+          },
+          "HXGQ45BFM9J2FJ3F.VJWZNREJX2.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.VJWZNREJX2.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "2765"
+            }
+          }
+        },
+        "sku": "HXGQ45BFM9J2FJ3F",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "VJWZNREJX2",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "All Upfront"
+        }
+      },
+      "HXGQ45BFM9J2FJ3F.MZU6U2429S": {
+        "priceDimensions": {
+          "HXGQ45BFM9J2FJ3F.MZU6U2429S.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.MZU6U2429S.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.0000000000"
+            }
+          },
+          "HXGQ45BFM9J2FJ3F.MZU6U2429S.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.MZU6U2429S.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "7158"
+            }
+          }
+        },
+        "sku": "HXGQ45BFM9J2FJ3F",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "MZU6U2429S",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "All Upfront"
+        }
+      },
+      "HXGQ45BFM9J2FJ3F.7NE97W5U4E": {
+        "priceDimensions": {
+          "HXGQ45BFM9J2FJ3F.7NE97W5U4E.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.7NE97W5U4E.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.3250000000"
+            }
+          }
+        },
+        "sku": "HXGQ45BFM9J2FJ3F",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "7NE97W5U4E",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "No Upfront"
+        }
+      },
+      "HXGQ45BFM9J2FJ3F.CUZHX8X6JH": {
+        "priceDimensions": {
+          "HXGQ45BFM9J2FJ3F.CUZHX8X6JH.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.CUZHX8X6JH.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.1590000000"
+            }
+          },
+          "HXGQ45BFM9J2FJ3F.CUZHX8X6JH.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "HXGQ45BFM9J2FJ3F.CUZHX8X6JH.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "1394"
+            }
+          }
+        },
+        "sku": "HXGQ45BFM9J2FJ3F",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "CUZHX8X6JH",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "Partial Upfront"
+        }
+      }
+    }
+  },
+  "version": "20240513221839",
+  "publicationDate": "2024-05-13T22:18:39Z"
+},
+{
+  "product": {
+    "productFamily": "Compute Instance",
+    "attributes": {
+      "enhancedNetworkingSupported": "Yes",
+      "intelTurboAvailable": "Yes",
+      "memory": "16 GiB",
+      "dedicatedEbsThroughput": "Up to 2120 Mbps",
+      "vcpu": "4",
+      "classicnetworkingsupport": "false",
+      "capacitystatus": "Used",
+      "locationType": "AWS Region",
+      "storage": "EBS only",
+      "instanceFamily": "General purpose",
+      "operatingSystem": "Windows",
+      "intelAvx2Available": "Yes",
+      "regionCode": "us-east-1",
+      "physicalProcessor": "Intel Xeon Platinum 8175",
+      "clockSpeed": "3.1 GHz",
+      "ecu": "16",
+      "networkPerformance": "Up to 10 Gigabit",
+      "servicename": "Amazon Elastic Compute Cloud",
+      "gpuMemory": "NA",
+      "vpcnetworkingsupport": "true",
+      "instanceType": "m5.xlarge",
+      "tenancy": "Shared",
+      "usagetype": "BoxUsage:m5.xlarge",
+      "normalizationSizeFactor": "8",
+      "intelAvxAvailable": "Yes",
+      "processorFeatures": "Intel AVX; Intel AVX2; Intel AVX512; Intel Turbo",
+      "servicecode": "AmazonEC2",
+      "licenseModel": "No License required",
+      "currentGeneration": "Yes",
+      "preInstalledSw": "SQL Web",
+      "location": "US East (N. Virginia)",
+      "processorArchitecture": "64-bit",
+      "marketoption": "OnDemand",
+      "operation": "RunInstances:0202",
+      "availabilityzone": "NA"
+    },
+    "sku": "WKD8TSMZFHWPNUUQ"
+  },
+  "serviceCode": "AmazonEC2",
+  "terms": {
+    "OnDemand": {
+      "WKD8TSMZFHWPNUUQ.JRTCKXETXF": {
+        "priceDimensions": {
+          "WKD8TSMZFHWPNUUQ.JRTCKXETXF.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "$0.444 per On Demand Windows with SQL Web m5.xlarge Instance Hour",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.JRTCKXETXF.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.4440000000"
+            }
+          }
+        },
+        "sku": "WKD8TSMZFHWPNUUQ",
+        "effectiveDate": "2024-05-01T00:00:00Z",
+        "offerTermCode": "JRTCKXETXF",
+        "termAttributes": {}
+      }
+    },
+    "Reserved": {
+      "WKD8TSMZFHWPNUUQ.7NE97W5U4E": {
+        "priceDimensions": {
+          "WKD8TSMZFHWPNUUQ.7NE97W5U4E.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Web (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.7NE97W5U4E.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.3930000000"
+            }
+          }
+        },
+        "sku": "WKD8TSMZFHWPNUUQ",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "7NE97W5U4E",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "No Upfront"
+        }
+      },
+      "WKD8TSMZFHWPNUUQ.CUZHX8X6JH": {
+        "priceDimensions": {
+          "WKD8TSMZFHWPNUUQ.CUZHX8X6JH.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Web (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.CUZHX8X6JH.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.1930000000"
+            }
+          },
+          "WKD8TSMZFHWPNUUQ.CUZHX8X6JH.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.CUZHX8X6JH.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "1690"
+            }
+          }
+        },
+        "sku": "WKD8TSMZFHWPNUUQ",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "CUZHX8X6JH",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "Partial Upfront"
+        }
+      },
+      "WKD8TSMZFHWPNUUQ.4NA7Y494T4": {
+        "priceDimensions": {
+          "WKD8TSMZFHWPNUUQ.4NA7Y494T4.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Web (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.4NA7Y494T4.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.3730000000"
+            }
+          }
+        },
+        "sku": "WKD8TSMZFHWPNUUQ",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "4NA7Y494T4",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "No Upfront"
+        }
+      },
+      "WKD8TSMZFHWPNUUQ.VJWZNREJX2": {
+        "priceDimensions": {
+          "WKD8TSMZFHWPNUUQ.VJWZNREJX2.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.VJWZNREJX2.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "3357"
+            }
+          },
+          "WKD8TSMZFHWPNUUQ.VJWZNREJX2.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Web (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.VJWZNREJX2.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.0000000000"
+            }
+          }
+        },
+        "sku": "WKD8TSMZFHWPNUUQ",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "VJWZNREJX2",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "All Upfront"
+        }
+      },
+      "WKD8TSMZFHWPNUUQ.HU7G6KETJZ": {
+        "priceDimensions": {
+          "WKD8TSMZFHWPNUUQ.HU7G6KETJZ.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.HU7G6KETJZ.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "1607"
+            }
+          },
+          "WKD8TSMZFHWPNUUQ.HU7G6KETJZ.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Web (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.HU7G6KETJZ.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.1830000000"
+            }
+          }
+        },
+        "sku": "WKD8TSMZFHWPNUUQ",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "HU7G6KETJZ",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "Partial Upfront"
+        }
+      },
+      "WKD8TSMZFHWPNUUQ.MZU6U2429S": {
+        "priceDimensions": {
+          "WKD8TSMZFHWPNUUQ.MZU6U2429S.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Web (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.MZU6U2429S.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.0000000000"
+            }
+          },
+          "WKD8TSMZFHWPNUUQ.MZU6U2429S.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.MZU6U2429S.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "8934"
+            }
+          }
+        },
+        "sku": "WKD8TSMZFHWPNUUQ",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "MZU6U2429S",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "All Upfront"
+        }
+      },
+      "WKD8TSMZFHWPNUUQ.BPH4J8HBKS": {
+        "priceDimensions": {
+          "WKD8TSMZFHWPNUUQ.BPH4J8HBKS.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Web (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.BPH4J8HBKS.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.3350000000"
+            }
+          }
+        },
+        "sku": "WKD8TSMZFHWPNUUQ",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "BPH4J8HBKS",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "No Upfront"
+        }
+      },
+      "WKD8TSMZFHWPNUUQ.NQ3QZPMQV9": {
+        "priceDimensions": {
+          "WKD8TSMZFHWPNUUQ.NQ3QZPMQV9.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "USD 0.0 per Windows with SQL Server Web (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.NQ3QZPMQV9.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.0000000000"
+            }
+          },
+          "WKD8TSMZFHWPNUUQ.NQ3QZPMQV9.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.NQ3QZPMQV9.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "8509"
+            }
+          }
+        },
+        "sku": "WKD8TSMZFHWPNUUQ",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "NQ3QZPMQV9",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "All Upfront"
+        }
+      },
+      "WKD8TSMZFHWPNUUQ.Z2E3P23VKM": {
+        "priceDimensions": {
+          "WKD8TSMZFHWPNUUQ.Z2E3P23VKM.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Web (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.Z2E3P23VKM.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.3490000000"
+            }
+          }
+        },
+        "sku": "WKD8TSMZFHWPNUUQ",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "Z2E3P23VKM",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "No Upfront"
+        }
+      },
+      "WKD8TSMZFHWPNUUQ.6QCMYABX3D": {
+        "priceDimensions": {
+          "WKD8TSMZFHWPNUUQ.6QCMYABX3D.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.6QCMYABX3D.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "3193"
+            }
+          },
+          "WKD8TSMZFHWPNUUQ.6QCMYABX3D.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "USD 0.0 per Windows with SQL Server Web (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.6QCMYABX3D.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.0000000000"
+            }
+          }
+        },
+        "sku": "WKD8TSMZFHWPNUUQ",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "6QCMYABX3D",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "All Upfront"
+        }
+      },
+      "WKD8TSMZFHWPNUUQ.R5XV2EPZQZ": {
+        "priceDimensions": {
+          "WKD8TSMZFHWPNUUQ.R5XV2EPZQZ.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Web (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.R5XV2EPZQZ.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.1710000000"
+            }
+          },
+          "WKD8TSMZFHWPNUUQ.R5XV2EPZQZ.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.R5XV2EPZQZ.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "4491"
+            }
+          }
+        },
+        "sku": "WKD8TSMZFHWPNUUQ",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "R5XV2EPZQZ",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "Partial Upfront"
+        }
+      },
+      "WKD8TSMZFHWPNUUQ.38NPMPTW36": {
+        "priceDimensions": {
+          "WKD8TSMZFHWPNUUQ.38NPMPTW36.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Web (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.38NPMPTW36.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.1640000000"
+            }
+          },
+          "WKD8TSMZFHWPNUUQ.38NPMPTW36.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "WKD8TSMZFHWPNUUQ.38NPMPTW36.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "4315"
+            }
+          }
+        },
+        "sku": "WKD8TSMZFHWPNUUQ",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "38NPMPTW36",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "Partial Upfront"
+        }
+      }
+    }
+  },
+  "version": "20240513221839",
+  "publicationDate": "2024-05-13T22:18:39Z"
+},
+{
+  "product": {
+    "productFamily": "Compute Instance",
+    "attributes": {
+      "enhancedNetworkingSupported": "Yes",
+      "intelTurboAvailable": "Yes",
+      "memory": "16 GiB",
+      "dedicatedEbsThroughput": "Up to 2120 Mbps",
+      "vcpu": "4",
+      "classicnetworkingsupport": "false",
+      "capacitystatus": "Used",
+      "locationType": "AWS Region",
+      "storage": "EBS only",
+      "instanceFamily": "General purpose",
+      "operatingSystem": "Windows",
+      "intelAvx2Available": "Yes",
+      "regionCode": "us-east-1",
+      "physicalProcessor": "Intel Xeon Platinum 8175",
+      "clockSpeed": "3.1 GHz",
+      "ecu": "16",
+      "networkPerformance": "Up to 10 Gigabit",
+      "servicename": "Amazon Elastic Compute Cloud",
+      "gpuMemory": "NA",
+      "vpcnetworkingsupport": "true",
+      "instanceType": "m5.xlarge",
+      "tenancy": "Shared",
+      "usagetype": "BoxUsage:m5.xlarge",
+      "normalizationSizeFactor": "8",
+      "intelAvxAvailable": "Yes",
+      "processorFeatures": "Intel AVX; Intel AVX2; Intel AVX512; Intel Turbo",
+      "servicecode": "AmazonEC2",
+      "licenseModel": "No License required",
+      "currentGeneration": "Yes",
+      "preInstalledSw": "SQL Std",
+      "location": "US East (N. Virginia)",
+      "processorArchitecture": "64-bit",
+      "marketoption": "OnDemand",
+      "operation": "RunInstances:0006",
+      "availabilityzone": "NA"
+    },
+    "sku": "XX43P9XZN7A2HHHK"
+  },
+  "serviceCode": "AmazonEC2",
+  "terms": {
+    "OnDemand": {
+      "XX43P9XZN7A2HHHK.JRTCKXETXF": {
+        "priceDimensions": {
+          "XX43P9XZN7A2HHHK.JRTCKXETXF.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "$0.856 per On Demand Windows with SQL Std m5.xlarge Instance Hour",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.JRTCKXETXF.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.8560000000"
+            }
+          }
+        },
+        "sku": "XX43P9XZN7A2HHHK",
+        "effectiveDate": "2024-05-01T00:00:00Z",
+        "offerTermCode": "JRTCKXETXF",
+        "termAttributes": {}
+      }
+    },
+    "Reserved": {
+      "XX43P9XZN7A2HHHK.HU7G6KETJZ": {
+        "priceDimensions": {
+          "XX43P9XZN7A2HHHK.HU7G6KETJZ.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Standard (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.HU7G6KETJZ.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.3900000000"
+            }
+          },
+          "XX43P9XZN7A2HHHK.HU7G6KETJZ.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.HU7G6KETJZ.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "3413"
+            }
+          }
+        },
+        "sku": "XX43P9XZN7A2HHHK",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "HU7G6KETJZ",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "Partial Upfront"
+        }
+      },
+      "XX43P9XZN7A2HHHK.6QCMYABX3D": {
+        "priceDimensions": {
+          "XX43P9XZN7A2HHHK.6QCMYABX3D.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "USD 0.0 per Windows with SQL Server Standard (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.6QCMYABX3D.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.0000000000"
+            }
+          },
+          "XX43P9XZN7A2HHHK.6QCMYABX3D.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.6QCMYABX3D.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "6806"
+            }
+          }
+        },
+        "sku": "XX43P9XZN7A2HHHK",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "6QCMYABX3D",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "All Upfront"
+        }
+      },
+      "XX43P9XZN7A2HHHK.NQ3QZPMQV9": {
+        "priceDimensions": {
+          "XX43P9XZN7A2HHHK.NQ3QZPMQV9.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "USD 0.0 per Windows with SQL Server Standard (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.NQ3QZPMQV9.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.0000000000"
+            }
+          },
+          "XX43P9XZN7A2HHHK.NQ3QZPMQV9.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.NQ3QZPMQV9.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "19347"
+            }
+          }
+        },
+        "sku": "XX43P9XZN7A2HHHK",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "NQ3QZPMQV9",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "All Upfront"
+        }
+      },
+      "XX43P9XZN7A2HHHK.R5XV2EPZQZ": {
+        "priceDimensions": {
+          "XX43P9XZN7A2HHHK.R5XV2EPZQZ.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.R5XV2EPZQZ.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "9910"
+            }
+          },
+          "XX43P9XZN7A2HHHK.R5XV2EPZQZ.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Standard (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.R5XV2EPZQZ.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.3770000000"
+            }
+          }
+        },
+        "sku": "XX43P9XZN7A2HHHK",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "R5XV2EPZQZ",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "Partial Upfront"
+        }
+      },
+      "XX43P9XZN7A2HHHK.Z2E3P23VKM": {
+        "priceDimensions": {
+          "XX43P9XZN7A2HHHK.Z2E3P23VKM.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Standard (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.Z2E3P23VKM.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.7610000000"
+            }
+          }
+        },
+        "sku": "XX43P9XZN7A2HHHK",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "Z2E3P23VKM",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "No Upfront"
+        }
+      },
+      "XX43P9XZN7A2HHHK.38NPMPTW36": {
+        "priceDimensions": {
+          "XX43P9XZN7A2HHHK.38NPMPTW36.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Standard (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.38NPMPTW36.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.3700000000"
+            }
+          },
+          "XX43P9XZN7A2HHHK.38NPMPTW36.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.38NPMPTW36.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "9734"
+            }
+          }
+        },
+        "sku": "XX43P9XZN7A2HHHK",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "38NPMPTW36",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "Partial Upfront"
+        }
+      },
+      "XX43P9XZN7A2HHHK.4NA7Y494T4": {
+        "priceDimensions": {
+          "XX43P9XZN7A2HHHK.4NA7Y494T4.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Standard (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.4NA7Y494T4.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.7850000000"
+            }
+          }
+        },
+        "sku": "XX43P9XZN7A2HHHK",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "4NA7Y494T4",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "No Upfront"
+        }
+      },
+      "XX43P9XZN7A2HHHK.CUZHX8X6JH": {
+        "priceDimensions": {
+          "XX43P9XZN7A2HHHK.CUZHX8X6JH.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Standard (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.CUZHX8X6JH.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.3990000000"
+            }
+          },
+          "XX43P9XZN7A2HHHK.CUZHX8X6JH.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.CUZHX8X6JH.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "3497"
+            }
+          }
+        },
+        "sku": "XX43P9XZN7A2HHHK",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "CUZHX8X6JH",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "Partial Upfront"
+        }
+      },
+      "XX43P9XZN7A2HHHK.7NE97W5U4E": {
+        "priceDimensions": {
+          "XX43P9XZN7A2HHHK.7NE97W5U4E.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Standard (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.7NE97W5U4E.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.8050000000"
+            }
+          }
+        },
+        "sku": "XX43P9XZN7A2HHHK",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "7NE97W5U4E",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "No Upfront"
+        }
+      },
+      "XX43P9XZN7A2HHHK.BPH4J8HBKS": {
+        "priceDimensions": {
+          "XX43P9XZN7A2HHHK.BPH4J8HBKS.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Standard (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.BPH4J8HBKS.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.7470000000"
+            }
+          }
+        },
+        "sku": "XX43P9XZN7A2HHHK",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "BPH4J8HBKS",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "No Upfront"
+        }
+      },
+      "XX43P9XZN7A2HHHK.VJWZNREJX2": {
+        "priceDimensions": {
+          "XX43P9XZN7A2HHHK.VJWZNREJX2.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Standard (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.VJWZNREJX2.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.0000000000"
+            }
+          },
+          "XX43P9XZN7A2HHHK.VJWZNREJX2.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.VJWZNREJX2.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "6970"
+            }
+          }
+        },
+        "sku": "XX43P9XZN7A2HHHK",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "VJWZNREJX2",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "All Upfront"
+        }
+      },
+      "XX43P9XZN7A2HHHK.MZU6U2429S": {
+        "priceDimensions": {
+          "XX43P9XZN7A2HHHK.MZU6U2429S.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Standard (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.MZU6U2429S.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.0000000000"
+            }
+          },
+          "XX43P9XZN7A2HHHK.MZU6U2429S.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "XX43P9XZN7A2HHHK.MZU6U2429S.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "19772"
+            }
+          }
+        },
+        "sku": "XX43P9XZN7A2HHHK",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "MZU6U2429S",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "All Upfront"
+        }
+      }
+    }
+  },
+  "version": "20240513221839",
+  "publicationDate": "2024-05-13T22:18:39Z"
+},
+{
+  "product": {
+    "productFamily": "Compute Instance",
+    "attributes": {
+      "enhancedNetworkingSupported": "Yes",
+      "intelTurboAvailable": "Yes",
+      "memory": "16 GiB",
+      "dedicatedEbsThroughput": "Up to 2120 Mbps",
+      "vcpu": "4",
+      "classicnetworkingsupport": "false",
+      "capacitystatus": "Used",
+      "locationType": "AWS Region",
+      "storage": "EBS only",
+      "instanceFamily": "General purpose",
+      "operatingSystem": "Windows",
+      "intelAvx2Available": "Yes",
+      "regionCode": "us-east-1",
+      "physicalProcessor": "Intel Xeon Platinum 8175",
+      "clockSpeed": "3.1 GHz",
+      "ecu": "16",
+      "networkPerformance": "Up to 10 Gigabit",
+      "servicename": "Amazon Elastic Compute Cloud",
+      "gpuMemory": "NA",
+      "vpcnetworkingsupport": "true",
+      "instanceType": "m5.xlarge",
+      "tenancy": "Shared",
+      "usagetype": "BoxUsage:m5.xlarge",
+      "normalizationSizeFactor": "8",
+      "intelAvxAvailable": "Yes",
+      "processorFeatures": "Intel AVX; Intel AVX2; Intel AVX512; Intel Turbo",
+      "servicecode": "AmazonEC2",
+      "licenseModel": "No License required",
+      "currentGeneration": "Yes",
+      "preInstalledSw": "SQL Ent",
+      "location": "US East (N. Virginia)",
+      "processorArchitecture": "64-bit",
+      "marketoption": "OnDemand",
+      "operation": "RunInstances:0102",
+      "availabilityzone": "NA"
+    },
+    "sku": "YMSVZV4U9S2ZPC2A"
+  },
+  "serviceCode": "AmazonEC2",
+  "terms": {
+    "OnDemand": {
+      "YMSVZV4U9S2ZPC2A.JRTCKXETXF": {
+        "priceDimensions": {
+          "YMSVZV4U9S2ZPC2A.JRTCKXETXF.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "$1.876 per On Demand Windows with SQL Server Enterprise m5.xlarge Instance Hour",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.JRTCKXETXF.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "1.8760000000"
+            }
+          }
+        },
+        "sku": "YMSVZV4U9S2ZPC2A",
+        "effectiveDate": "2024-05-01T00:00:00Z",
+        "offerTermCode": "JRTCKXETXF",
+        "termAttributes": {}
+      }
+    },
+    "Reserved": {
+      "YMSVZV4U9S2ZPC2A.7NE97W5U4E": {
+        "priceDimensions": {
+          "YMSVZV4U9S2ZPC2A.7NE97W5U4E.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Enterprise (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.7NE97W5U4E.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "1.8250000000"
+            }
+          }
+        },
+        "sku": "YMSVZV4U9S2ZPC2A",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "7NE97W5U4E",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "No Upfront"
+        }
+      },
+      "YMSVZV4U9S2ZPC2A.4NA7Y494T4": {
+        "priceDimensions": {
+          "YMSVZV4U9S2ZPC2A.4NA7Y494T4.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Enterprise (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.4NA7Y494T4.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "1.8050000000"
+            }
+          }
+        },
+        "sku": "YMSVZV4U9S2ZPC2A",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "4NA7Y494T4",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "No Upfront"
+        }
+      },
+      "YMSVZV4U9S2ZPC2A.CUZHX8X6JH": {
+        "priceDimensions": {
+          "YMSVZV4U9S2ZPC2A.CUZHX8X6JH.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Enterprise (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.CUZHX8X6JH.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.9090000000"
+            }
+          },
+          "YMSVZV4U9S2ZPC2A.CUZHX8X6JH.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.CUZHX8X6JH.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "7964"
+            }
+          }
+        },
+        "sku": "YMSVZV4U9S2ZPC2A",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "CUZHX8X6JH",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "Partial Upfront"
+        }
+      },
+      "YMSVZV4U9S2ZPC2A.HU7G6KETJZ": {
+        "priceDimensions": {
+          "YMSVZV4U9S2ZPC2A.HU7G6KETJZ.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Enterprise (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.HU7G6KETJZ.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.9000000000"
+            }
+          },
+          "YMSVZV4U9S2ZPC2A.HU7G6KETJZ.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.HU7G6KETJZ.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "7880"
+            }
+          }
+        },
+        "sku": "YMSVZV4U9S2ZPC2A",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "HU7G6KETJZ",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "Partial Upfront"
+        }
+      },
+      "YMSVZV4U9S2ZPC2A.BPH4J8HBKS": {
+        "priceDimensions": {
+          "YMSVZV4U9S2ZPC2A.BPH4J8HBKS.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Enterprise (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.BPH4J8HBKS.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "1.7670000000"
+            }
+          }
+        },
+        "sku": "YMSVZV4U9S2ZPC2A",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "BPH4J8HBKS",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "No Upfront"
+        }
+      },
+      "YMSVZV4U9S2ZPC2A.MZU6U2429S": {
+        "priceDimensions": {
+          "YMSVZV4U9S2ZPC2A.MZU6U2429S.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Enterprise (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.MZU6U2429S.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.0000000000"
+            }
+          },
+          "YMSVZV4U9S2ZPC2A.MZU6U2429S.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.MZU6U2429S.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "46578"
+            }
+          }
+        },
+        "sku": "YMSVZV4U9S2ZPC2A",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "MZU6U2429S",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "All Upfront"
+        }
+      },
+      "YMSVZV4U9S2ZPC2A.VJWZNREJX2": {
+        "priceDimensions": {
+          "YMSVZV4U9S2ZPC2A.VJWZNREJX2.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.VJWZNREJX2.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "15905"
+            }
+          },
+          "YMSVZV4U9S2ZPC2A.VJWZNREJX2.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Enterprise (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.VJWZNREJX2.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.0000000000"
+            }
+          }
+        },
+        "sku": "YMSVZV4U9S2ZPC2A",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "VJWZNREJX2",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "All Upfront"
+        }
+      },
+      "YMSVZV4U9S2ZPC2A.Z2E3P23VKM": {
+        "priceDimensions": {
+          "YMSVZV4U9S2ZPC2A.Z2E3P23VKM.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Enterprise (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.Z2E3P23VKM.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "1.7810000000"
+            }
+          }
+        },
+        "sku": "YMSVZV4U9S2ZPC2A",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "Z2E3P23VKM",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "No Upfront"
+        }
+      },
+      "YMSVZV4U9S2ZPC2A.R5XV2EPZQZ": {
+        "priceDimensions": {
+          "YMSVZV4U9S2ZPC2A.R5XV2EPZQZ.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Enterprise (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.R5XV2EPZQZ.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.8870000000"
+            }
+          },
+          "YMSVZV4U9S2ZPC2A.R5XV2EPZQZ.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.R5XV2EPZQZ.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "23312"
+            }
+          }
+        },
+        "sku": "YMSVZV4U9S2ZPC2A",
+        "effectiveDate": "2017-10-31T23:59:59Z",
+        "offerTermCode": "R5XV2EPZQZ",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "convertible",
+          "PurchaseOption": "Partial Upfront"
+        }
+      },
+      "YMSVZV4U9S2ZPC2A.38NPMPTW36": {
+        "priceDimensions": {
+          "YMSVZV4U9S2ZPC2A.38NPMPTW36.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "Windows with SQL Server Enterprise (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.38NPMPTW36.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.8800000000"
+            }
+          },
+          "YMSVZV4U9S2ZPC2A.38NPMPTW36.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.38NPMPTW36.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "23137"
+            }
+          }
+        },
+        "sku": "YMSVZV4U9S2ZPC2A",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "38NPMPTW36",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "Partial Upfront"
+        }
+      },
+      "YMSVZV4U9S2ZPC2A.NQ3QZPMQV9": {
+        "priceDimensions": {
+          "YMSVZV4U9S2ZPC2A.NQ3QZPMQV9.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "USD 0.0 per Windows with SQL Server Enterprise (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.NQ3QZPMQV9.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.0000000000"
+            }
+          },
+          "YMSVZV4U9S2ZPC2A.NQ3QZPMQV9.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.NQ3QZPMQV9.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "46153"
+            }
+          }
+        },
+        "sku": "YMSVZV4U9S2ZPC2A",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "NQ3QZPMQV9",
+        "termAttributes": {
+          "LeaseContractLength": "3yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "All Upfront"
+        }
+      },
+      "YMSVZV4U9S2ZPC2A.6QCMYABX3D": {
+        "priceDimensions": {
+          "YMSVZV4U9S2ZPC2A.6QCMYABX3D.6YS6EN2CT7": {
+            "unit": "Hrs",
+            "endRange": "Inf",
+            "description": "USD 0.0 per Windows with SQL Server Enterprise (Amazon VPC), m5.xlarge reserved instance applied",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.6QCMYABX3D.6YS6EN2CT7",
+            "beginRange": "0",
+            "pricePerUnit": {
+              "USD": "0.0000000000"
+            }
+          },
+          "YMSVZV4U9S2ZPC2A.6QCMYABX3D.2TG2D8R56U": {
+            "unit": "Quantity",
+            "description": "Upfront Fee",
+            "appliesTo": [],
+            "rateCode": "YMSVZV4U9S2ZPC2A.6QCMYABX3D.2TG2D8R56U",
+            "pricePerUnit": {
+              "USD": "15741"
+            }
+          }
+        },
+        "sku": "YMSVZV4U9S2ZPC2A",
+        "effectiveDate": "2020-04-01T00:00:00Z",
+        "offerTermCode": "6QCMYABX3D",
+        "termAttributes": {
+          "LeaseContractLength": "1yr",
+          "OfferingClass": "standard",
+          "PurchaseOption": "All Upfront"
+        }
+      }
+    }
+  }
