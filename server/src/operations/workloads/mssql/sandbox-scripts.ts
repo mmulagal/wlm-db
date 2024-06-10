@@ -1197,6 +1197,20 @@ IF EXISTS (SELECT name, value FROM fn_listextendedproperty(default, default, def
 Sqlcmd -S $instanceName -Q $query -m 1
 `;
 
+const checkDatabaseIntegrityScript = (dbName: string, instanceName: string = '.') => `
+$dbname = '${dbName}'
+$instanceName = '${instanceName}'
+
+Start-Transcript -Path "C:\\cfn\\log\\check_integrity_for_$dbname.log.txt" -Append | Out-Null
+
+$query = @"
+USE $dbname;
+SET NOCOUNT ON;
+DBCC CHECKDB($dbname) WITH NO_INFOMSGS, ALL_ERRORMSGS;
+"@
+Sqlcmd -S $instanceName -Q $query -m 1
+`;
+
 export {
     GET_SANDBOX_DETAILS,
     checkDatabaseExists,
@@ -1210,5 +1224,6 @@ export {
     detachDbAndRemoveAccessPath,
     addAccessPathAndAttachDb,
     splitFlexCloneVolumes,
-    deleteExtendedPropertiesScript
+    deleteExtendedPropertiesScript,
+    checkDatabaseIntegrityScript
 };

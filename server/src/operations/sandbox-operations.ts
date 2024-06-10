@@ -30,7 +30,8 @@ import {
     detachDbAndRemoveAccessPath,
     addAccessPathAndAttachDb,
     splitFlexCloneVolumes,
-    deleteExtendedPropertiesScript
+    deleteExtendedPropertiesScript,
+    checkDatabaseIntegrityScript
 } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails, Sandbox } from '../utils/common-types';
 import { checkDatabaseExists, getActiveSqlNode, getSqlServerVersion } from './workloads/mssql/mssql-operations';
@@ -587,6 +588,8 @@ async function startSandboxCreation(
             baseSnapshot: clonedVolumes.data.parentSnapshot,
             accountId
         });
+
+        await checkDataIntegrity(accountId, credentialsId, region, parentJobId, destDetails);
 
         status = JOBSTATUS.COMPLETED;
     } catch (e: any) {
@@ -2589,6 +2592,59 @@ async function deleteExtendedProperties(
         throw createError(e.statusCode, errorMsg);
     } finally {
         await updateJobDetails(accountId, credentialsId, region, deleteJob.id, {
+            status,
+            error: errorMsg,
+            endTime: Date.now()
+        });
+    }
+}
+
+async function checkDataIntegrity(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    resourceDetail: HostAndDbInfo
+) {
+    logger.info('Check data integrity', { accountId, credentialsId, region, parentJobId, resourceDetail });
+
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+
+    const checkDataIntegrityJob = await registerJob(accountId, credentialsId, region, {
+        description: `Check data integrity for ${resourceDetail.database}`,
+        startTime: Date.now(),
+        name: `Check data integrity for ${resourceDetail.database}`,
+        status,
+        type: JOBTYPE.SANDBOX,
+        resourceName: resourceDetail.database,
+        parentJobId
+    });
+
+    try {
+        let command = [checkDatabaseIntegrityScript(resourceDetail.database, resourceDetail.instanceName)];
+
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            command = [checkDatabaseIntegrityScript('test-db', '.')];
+        }
+
+        const resp = await callSsmExecution(credentialsId, region, command, resourceDetail.activeNodeInstanceId);
+
+        if (resp) {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                `Database integrity issues found, please run the command "DBCC CHECKDB(${resourceDetail.database}) WITH NO_INFOMSGS, ALL_ERRORMSGS;" to check the errors.`
+            );
+        }
+
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error(`Failed to check data integrity: ${e}`);
+        status = JOBSTATUS.FAILED;
+        errorMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, checkDataIntegrityJob.id, {
             status,
             error: errorMsg,
             endTime: Date.now()

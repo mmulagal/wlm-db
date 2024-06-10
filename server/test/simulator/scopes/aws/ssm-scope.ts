@@ -54,7 +54,8 @@ import {
     mountPointQuery,
     getStorageSavingsFromOntap,
     detachDbAndRemoveAccessPath,
-    deleteExtendedPropertiesScript
+    deleteExtendedPropertiesScript,
+    checkDatabaseIntegrityScript
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { INVOKE_VIRTUAL_MOUNT } from '../../../../src/operations/workloads/mssql/const';
 
@@ -421,6 +422,11 @@ const enterpriseFeatureUsageCheck = {
     // prettier-ignore
     commands: [`sqlcmd -S "." -Q "${ENTERPRISE_CHECK_QUERY}" -y 0`]
 };
+
+const checkDatabaseIntegirty = {
+    commands: [checkDatabaseIntegrityScript('test-db', '.')]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -541,7 +547,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getActiveDirectory })
     .resolves(listSendCommandCommandResponse.getActiveDirectoryCommand)
     .on(SendCommandCommand, { Parameters: enterpriseFeatureUsageCheck })
-    .resolves(listSendCommandCommandResponse.enterpriseFeatureUsageCheckCommand);
+    .resolves(listSendCommandCommandResponse.enterpriseFeatureUsageCheckCommand)
+    .on(SendCommandCommand, { Parameters: checkDatabaseIntegirty })
+    .resolves(listSendCommandCommandResponse.checkDatabaseIntegrity);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -661,7 +669,9 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f171a4a7-3693-41bb-8c31-getActiveDirectory' })
     .resolves(getCommandInvocationResponse.getActiveDirectoryResp)
     .on(GetCommandInvocationCommand, { CommandId: 'k273a5y9-2143-82qe-6w13-enterpriseFeatureUsageCheckCommand' })
-    .resolves(getCommandInvocationResponse.enterpriseCheckResp);
+    .resolves(getCommandInvocationResponse.enterpriseCheckResp)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkDatabaseIntegrity' })
+    .resolves(getCommandInvocationResponse.checkDatabaseIntegrityResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
