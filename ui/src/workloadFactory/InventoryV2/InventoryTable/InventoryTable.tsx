@@ -1,4 +1,12 @@
-import { DsFlashingDotsLoader, Table, TableTopBar, Typography, useDialog, useTable } from '@netapp/design-system';
+import {
+    DsFlashingDotsLoader,
+    Popover,
+    Table,
+    TableTopBar,
+    Typography,
+    useDialog,
+    useTable
+} from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
@@ -177,9 +185,25 @@ const InventoryTable = () => {
             width: '184px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
+                const checkForAllManaged = rowData?.sqlServerInstances.every((item: any) => item.isManaged === true);
+
                 return (
                     <>
-                        {!rowData?.actionDisable && rowData.ssmState !== 'not connected' && (
+                        {checkForAllManaged && (
+                            <Popover
+                                popoverClass={styles['copy-popover']}
+                                children={GENERAL.ALL_MANAGED_TEXT}
+                                trigger="hover"
+                                container={
+                                    <div className={styles.detectManageDisable}>
+                                        <Typography variant="Regular_14" className={styles.textStyle}>
+                                            {rowData?.action}
+                                        </Typography>
+                                    </div>
+                                }
+                            />
+                        )}
+                        {!checkForAllManaged && !rowData?.actionDisable && rowData.ssmState !== 'not connected' && (
                             <div
                                 className={styles.detectManage}
                                 onClick={() => {
@@ -195,7 +219,7 @@ const InventoryTable = () => {
                                 </Typography>
                             </div>
                         )}
-                        {rowData?.actionDisable && rowData.ssmState !== 'not connected' && (
+                        {!checkForAllManaged && rowData?.actionDisable && rowData.ssmState !== 'not connected' && (
                             <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
                                 <Typography variant="Regular_14" className={styles.textStyle}>
                                     {rowData?.action}
@@ -258,6 +282,9 @@ const InventoryTable = () => {
                             )}
                             {rowData?.status === STATUS_CONST.FAILED && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['failed']}`}></div>
+                            )}
+                            {!rowData?.status && !rowData?.loading && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['disabled']}`}></div>
                             )}
                             <Typography variant="Regular_13">
                                 {rowData?.status}
