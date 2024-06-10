@@ -2629,6 +2629,23 @@ async function checkDatabaseIntegrity(
         );
     }
 
+    const databaseDetails = await checkDatabaseExists(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseName,
+        activeNodeInstanceId!,
+        instanceName
+    );
+
+    if (!databaseDetails) {
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            `Database ${databaseName} does not exists on source host ${resourceDetails.resource_name}`
+        );
+    }
+
     const checkDataIntegrityJob = await registerJob(accountId, credentialsId, region, {
         description: `Check data integrity for ${databaseName} in ${resourceDetails.resource_name}`,
         startTime: Date.now(),
