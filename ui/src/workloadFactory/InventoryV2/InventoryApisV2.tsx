@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
+    addDatabaseHostsDataV2,
     setInventoryChartData,
     setInventoryTableData,
     setIsDatabaseHostsLoading,
@@ -17,9 +18,11 @@ import {
     useLazyGetFsxCredentialStatusQuery,
     useLazyGetManagedHostDataQuery
 } from '../../utils/apiService';
+import { formatInventoryTableData } from './InventoryUtilsV2';
 
 const InventoryApisV2 = () => {
     const dispatch = useAppDispatch();
+    const {databaseHostsData, fullHostDataLoading} = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
@@ -259,9 +262,30 @@ const InventoryApisV2 = () => {
         }
     }, [headerSelectedCred, headerSelectedRegion]);
 
+    // This will combine fullHostData (getDatabaseHostsFullData) and topologyHostData (getDatabaseHostsList) data and store in single object.
+    useEffect(() => {
+        let databaseHostDataObj: any = {};
+        Object.keys(topologyHostData).map((key: string) => {
+            if (key in fullHostData) {
+                const perObj = { ...topologyHostData[key], ...fullHostData[key], loading: false };
+                databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
+            } else {
+                const perObj = { ...topologyHostData[key], loading: fullHostDataLoading ? true : false };
+                databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
+            }
+        });
+        dispatch(addDatabaseHostsDataV2(databaseHostDataObj));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fullHostData, topologyHostData]);
+
+    useEffect(() => {
+        const formattedInventoryTableData = formatInventoryTableData(databaseHostsData, {});
+        dispatch(setInventoryTableData(formattedInventoryTableData));
+    }, [databaseHostsData]);
+
     // ToDo - Currently stored data is from json. Will update once writting API logic
     useEffect(() => {
-        dispatch(setInventoryTableData(InventoryTableData));
+        // dispatch(setInventoryTableData(InventoryTableData));
         dispatch(
             setInventoryChartData({
                 detectedHost: 9,

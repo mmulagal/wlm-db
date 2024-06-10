@@ -5,8 +5,8 @@
         "ec2InstanceName": "sqlnode1-37211",
         "resourceId": "resource-id-1",
         "name": "Database hostname 1",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 0,
         "serverInstallationMode": "Failover Cluster Instances",
@@ -38,7 +38,10 @@
         "allocatedCapacity": 22122173950853,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -74,7 +77,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -110,7 +116,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -146,7 +155,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -189,8 +201,8 @@
         "ec2InstanceName": "sqlnode1-37212",
         "resourceId": "resource-id-2",
         "name": "Database hostname 2",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 2,
         "serverInstallationMode": "Standalone",
@@ -217,7 +229,10 @@
         "allocatedCapacity": 22122173950853,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": true,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -253,7 +268,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": true,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -289,7 +307,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -325,7 +346,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -368,8 +392,8 @@
         "ec2InstanceName": "sqlnode1-37213",
         "resourceId": "resource-id-3",
         "name": "Database hostname 3",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 4,
         "serverInstallationMode": "Failover Cluster Instances",
@@ -401,7 +425,10 @@
         "allocatedCapacity": 22122173950853,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": true,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -437,7 +464,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": true,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -473,7 +503,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": true,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -509,7 +542,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": true,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -552,8 +588,8 @@
         "ec2InstanceName": "sqlnode1-37214",
         "resourceId": "resource-id-4",
         "name": "Database hostname 4",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 0,
         "serverInstallationMode": "Standalone",
@@ -580,7 +616,10 @@
         "allocatedCapacity": 22122173950853,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": false,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -616,7 +655,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": false,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -652,7 +694,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": false,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -688,7 +733,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": false,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -731,7 +779,8 @@
         "ec2InstanceId": "i-02dbf20711b3c8315",
         "ec2InstanceName": "sqlnode1-37215",
         "name": "Database hostname 5",
-        "ssmState": "not connected",
+        "status": "Unknown",
+        "ssmState": "Offline",
         "action": "Manage",
         "actionDisable": true,
         "sqlServerInstances": []
@@ -742,8 +791,8 @@
         "ec2InstanceName": "sqlnode1-37216",
         "resourceId": "resource-id-6",
         "name": "Database hostname 6",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 0,
         "serverInstallationMode": "Always On Availability Group",
@@ -775,7 +824,10 @@
         "allocatedCapacity": 22122173950853,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -797,7 +849,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -819,7 +874,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -841,7 +899,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -870,8 +931,8 @@
         "ec2InstanceName": "sqlnode1-37217",
         "resourceId": "resource-id-7",
         "name": "Database hostname 7",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 0,
         "serverInstallationMode": "Standalone",
@@ -898,7 +959,10 @@
         "allocatedCapacity": 22122173950853,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -920,7 +984,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -942,7 +1009,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -964,7 +1034,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -993,8 +1066,8 @@
         "ec2InstanceName": "sqlnode1-37218",
         "resourceId": "resource-id-8",
         "name": "Database hostname 8",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 0,
         "serverInstallationMode": "Standalone",
@@ -1021,7 +1094,10 @@
         "allocatedCapacity": 22122173950853,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": false,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -1043,7 +1119,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": false,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -1065,7 +1144,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": false,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -1087,7 +1169,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": false,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -1116,8 +1201,8 @@
         "ec2InstanceName": "sqlnode1-37219",
         "resourceId": "resource-id-9",
         "name": "Database hostname 9",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 0,
         "serverInstallationMode": "Always On Availability Group",
@@ -1149,7 +1234,10 @@
         "allocatedCapacity": 22122173950853,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -1175,7 +1263,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -1198,7 +1289,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -1224,7 +1318,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Multi AZ",
@@ -1257,8 +1354,8 @@
         "ec2InstanceName": "sqlnode1-372110",
         "resourceId": "resource-id-10",
         "name": "Database hostname 10",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 0,
         "serverInstallationMode": "Standalone",
@@ -1285,7 +1382,10 @@
         "allocatedCapacity": 22122173950853,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -1311,7 +1411,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -1337,7 +1440,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -1363,7 +1469,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": true,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -1396,8 +1505,8 @@
         "ec2InstanceName": "sqlnode1-372111",
         "resourceId": "resource-id-11",
         "name": "Database hostname 11",
-        "status": "Up",
-        "ssmState": "connected",
+        "status": "Online",
+        "ssmState": "Online",
         "totalInstance": 4,
         "managedInstance": 0,
         "serverInstallationMode": "Standalone",
@@ -1424,7 +1533,10 @@
         "allocatedCapacity": 22122173950853,
         "sqlServerInstances": [
             {
-                "name": "MSSQLSERVER",
+                "databaseInstanceId": "11",                             
+                "databaseInstanceName": "MSSQLSERVER",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": false,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -1450,7 +1562,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER2",
+                "databaseInstanceId": "12",                             
+                "databaseInstanceName": "MSSQLSERVER2",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": false,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -1476,7 +1591,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER3",
+                "databaseInstanceId": "13",                             
+                "databaseInstanceName": "MSSQLSERVER3",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": false,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",
@@ -1502,7 +1620,10 @@
                 "allocatedCapacity": 5530543487713.25
             },
             {
-                "name": "MSSQLSERVER4",
+                "databaseInstanceId": "14",                             
+                "databaseInstanceName": "MSSQLSERVER4",                           
+                "status": "Up",
+                "databaseCount": 0,
                 "isDetected": false,
                 "isManaged": false,
                 "fileSystemDeploymentMode": "Single AZ",

@@ -148,7 +148,10 @@ export const STATUS_CONST = {
     INITIALIZING: 'Initializing',
     FAILED: 'Failed',
     IN_PROGRESS: 'In Progress',
-    COMPLETED: 'Completed'
+    COMPLETED: 'Completed',
+    ONLINE: 'Online',
+    OFFLINE: 'Offline',
+    UNKNOWN: 'Unknown'
 };
 
 export const JOB_MONITORING_STATUS = {

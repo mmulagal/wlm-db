@@ -4,24 +4,32 @@
         {
             "id": "d271cefe8dc4b400e2ba9aa7998c32e8d96d4a805253db6c9b10a5ab697c0d62",
             "name": "Database hostname 1",
-            "nodeStatus": "ONLINE",                         
-            "ssmStatus": "ONLINE",
-            "databaseInstanceDetails": [                
+            "nodeStatus": "running",                         
+            "ssmStatus": "Connected",
+            "databaseInstanceDetails": [   
                 {
-                    "instanceName": "MSSQLSERVER",               
-                    "isManaged": true
+                    "instanceName": "MSSQLSERVER",
+                    "isManaged": true,
+                    "instanceState": "UP",
+                    "isDefault": true
                 },
                 {
                     "instanceName": "MSSQLSERVER2",               
-                    "isManaged": false
+                    "isManaged": false,
+                    "instanceState": "UP",
+                    "isDefault": false
                 },
                 {
                     "instanceName": "MSSQLSERVER3",               
-                    "isManaged": false
+                    "isManaged": false,
+                    "instanceState": "UP",
+                    "isDefault": false
                 },
                 {
                     "instanceName": "MSSQLSERVER4",               
-                    "isManaged": false
+                    "isManaged": false,
+                    "instanceState": "UP",
+                    "isDefault": false
                 }
             ],
             "nodeTopology": {
@@ -61,7 +69,7 @@
                 "others": 24,
                 "estimationType": "pricing"
             },
-            "databaseInstances": [
+            "databaseInstancesSummary": [
                 {
                     "databaseInstanceId": "11",                             
                     "databaseInstanceName": "MSSQLSERVER",                           
@@ -121,7 +129,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -186,7 +194,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -251,7 +259,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -316,7 +324,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -327,24 +335,32 @@
         {
             "id": "2a6fe3f6ed15439147f19e68a903f0fc6a8e9fcde16d628f17e885c4bccb1642",
             "name": "Database hostname 2",
-            "nodeStatus": "ONLINE",                         
-            "ssmStatus": "ONLINE",
+            "nodeStatus": "running",                         
+            "ssmStatus": "Connected",
             "databaseInstanceDetails": [                
                 {
                     "instanceName": "MSSQLSERVER",               
-                    "isManaged": true
+                    "isManaged": true,
+                    "instanceState": "UP",
+                    "isDefault": true
                 },
                 {
                     "instanceName": "MSSQLSERVER2",               
-                    "isManaged": true
+                    "isManaged": true,
+                    "instanceState": "UP",
+                    "isDefault": false
                 },
                 {
                     "instanceName": "MSSQLSERVER3",               
-                    "isManaged": false
+                    "isManaged": false,
+                    "instanceState": "UP",
+                    "isDefault": false
                 },
                 {
                     "instanceName": "MSSQLSERVER4",               
-                    "isManaged": false
+                    "isManaged": false,
+                    "instanceState": "UP",
+                    "isDefault": false
                 }
             ],
             "nodeTopology": {
@@ -384,7 +400,7 @@
                 "others": 24,
                 "estimationType": "pricing"
             },
-            "databaseInstances": [
+            "databaseInstancesSummary": [
                 {
                     "databaseInstanceId": "21",                             
                     "databaseInstanceName": "MSSQLSERVER",                           
@@ -444,7 +460,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -509,7 +525,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -574,7 +590,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -639,7 +655,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -650,24 +666,32 @@
         {
             "id": "2a6fe3f6ed15439147f19e68a903f0fc6a8e9fcde16d628f17e885c4bcc32752",
             "name": "Database hostname 3",
-            "nodeStatus": "ONLINE",                         
-            "ssmStatus": "ONLINE",
+            "nodeStatus": "running",                         
+            "ssmStatus": "Connected",
             "databaseInstanceDetails": [                
                 {
                     "instanceName": "MSSQLSERVER",               
-                    "isManaged": true
+                    "isManaged": true,
+                    "instanceState": "UP",
+                    "isDefault": true
                 },
                 {
                     "instanceName": "MSSQLSERVER2",               
-                    "isManaged": true
+                    "isManaged": true,
+                    "instanceState": "UP",
+                    "isDefault": false
                 },
                 {
                     "instanceName": "MSSQLSERVER3",               
-                    "isManaged": true
+                    "isManaged": true,
+                    "instanceState": "UP",
+                    "isDefault": false
                 },
                 {
                     "instanceName": "MSSQLSERVER4",               
-                    "isManaged": false
+                    "isManaged": false,
+                    "instanceState": "UP",
+                    "isDefault": false
                 }
             ],
             "nodeTopology": {
@@ -707,7 +731,7 @@
                 "others": 24,
                 "estimationType": "pricing"
             },
-            "databaseInstances": [
+            "databaseInstancesSummary": [
                 {
                     "databaseInstanceId": "31",                             
                     "databaseInstanceName": "MSSQLSERVER",                           
@@ -767,7 +791,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -832,7 +856,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -897,7 +921,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -962,7 +986,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -973,24 +997,32 @@
         {
             "id": "2a6fe3f6ed15439147f19e68a903f0fc6a8e9fcde16d628f17e885577777642",
             "name": "Database hostname 4",
-            "nodeStatus": "ONLINE",                         
-            "ssmStatus": "ONLINE",
+            "nodeStatus": "running",                         
+            "ssmStatus": "Connected",
             "databaseInstanceDetails": [                
                 {
                     "instanceName": "MSSQLSERVER",               
-                    "isManaged": true
+                    "isManaged": true,
+                    "instanceState": "UP",
+                    "isDefault": true
                 },
                 {
                     "instanceName": "MSSQLSERVER2",               
-                    "isManaged": true
+                    "isManaged": true,
+                    "instanceState": "UP",
+                    "isDefault": false
                 },
                 {
                     "instanceName": "MSSQLSERVER3",               
-                    "isManaged": true
+                    "isManaged": true,
+                    "instanceState": "UP",
+                    "isDefault": false
                 },
                 {
                     "instanceName": "MSSQLSERVER4",               
-                    "isManaged": true
+                    "isManaged": true,
+                    "instanceState": "UP",
+                    "isDefault": false
                 }
             ],
             "nodeTopology": {
@@ -1030,7 +1062,7 @@
                 "others": 24,
                 "estimationType": "pricing"
             },
-            "databaseInstances": [
+            "databaseInstancesSummary": [
                 {
                     "databaseInstanceId": "41",                             
                     "databaseInstanceName": "MSSQLSERVER",                           
@@ -1090,7 +1122,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -1155,7 +1187,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -1220,7 +1252,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -1285,7 +1317,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -1296,8 +1328,8 @@
         {
             "id": "2a6fe3f6ed15439147f19e68a903f0fc6a8e9fcde16d628f17e885c4bcc5555",
             "name": "Database hostname 5",
-            "nodeStatus": "OFFLINE",                         
-            "ssmStatus": "OFFLINE",
+            "nodeStatus": "stopped",                         
+            "ssmStatus": "Connected",
             "databaseInstanceDetails": [],
             "nodeTopology": {
                 "awsAccount": "1234",
@@ -1336,7 +1368,7 @@
                 "others": 24,
                 "estimationType": "pricing"
             },
-            "databaseInstances": [
+            "databaseInstancesSummary": [
                 {
                     "databaseInstanceId": "51",                             
                     "databaseInstanceName": "MSSQLSERVER",                           
@@ -1396,7 +1428,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -1461,7 +1493,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -1526,7 +1558,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -1591,7 +1623,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -1601,25 +1633,32 @@
         },
         {
             "id": "2a6fe3f6ed15439147f19e68a903f0fc6a8e9fcde16d628f17e885c46666666",
-            "name": "Database hostname 6",
-            "nodeStatus": "OFFLINE",                         
-            "ssmStatus": "ONLINE",
+            "name": "Database hostname 6",                        
+            "ssmStatus": "NotConnected",
             "databaseInstanceDetails": [                
                 {
                     "instanceName": "MSSQLSERVER",               
-                    "isManaged": true
+                    "isManaged": true,
+                    "instanceState": "UP",
+                    "isDefault": true
                 },
                 {
                     "instanceName": "MSSQLSERVER2",               
-                    "isManaged": false
+                    "isManaged": false,
+                    "instanceState": "UP",
+                    "isDefault": false
                 },
                 {
                     "instanceName": "MSSQLSERVER3",               
-                    "isManaged": false
+                    "isManaged": false,
+                    "instanceState": "UP",
+                    "isDefault": false
                 },
                 {
                     "instanceName": "MSSQLSERVER4",               
-                    "isManaged": false
+                    "isManaged": false,
+                    "instanceState": "UP",
+                    "isDefault": false
                 }
             ],
             "nodeTopology": {
@@ -1659,7 +1698,7 @@
                 "others": 24,
                 "estimationType": "pricing"
             },
-            "databaseInstances": [
+            "databaseInstancesSummary": [
                 {
                     "databaseInstanceId": "61",                             
                     "databaseInstanceName": "MSSQLSERVER",                           
@@ -1719,7 +1758,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -1784,7 +1823,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -1849,7 +1888,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
@@ -1914,7 +1953,7 @@
                             "spaceSavingsPercentage": 0
                         },
                         "ebs": {
-                            "size": 0
+                            "size": 5530543487713.25
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",

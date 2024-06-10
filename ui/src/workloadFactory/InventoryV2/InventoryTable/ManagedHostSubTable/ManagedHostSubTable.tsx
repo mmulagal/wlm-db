@@ -196,7 +196,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
             Header: 'SQL Server instance',
-            accessor: 'name',
+            accessor: 'databaseInstanceName',
             id: '1',
             isSortable: true,
             width: '212px',

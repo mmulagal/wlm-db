@@ -245,19 +245,16 @@ const InventoryTable = () => {
                     <div>
                         <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
                         <div className={styles.firstColText}>
-                            {rowData?.status === STATUS_CONST.UP && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
+                            {rowData?.status === STATUS_CONST.ONLINE && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
                             )}
-                            {rowData?.status === STATUS_CONST.DOWN && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['down']}`}></div>
+                            {rowData?.status === STATUS_CONST.OFFLINE && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
                             )}
-                            {rowData?.status === STATUS_CONST.INITIALIZING && (
+                            {rowData?.status === STATUS_CONST.UNKNOWN && (
                                 <div
-                                    className={`${styles.statusIcon} ${styles['circle']} ${styles['initializing']}`}
+                                    className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}
                                 ></div>
-                            )}
-                            {rowData?.status === STATUS_CONST.FAILED && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['failed']}`}></div>
                             )}
                             <Typography variant="Regular_13">
                                 {rowData?.status}
@@ -285,13 +282,13 @@ const InventoryTable = () => {
             renderCell: (cellData: string, rowData: any) => {
                 return (
                     <div>
-                        {cellData && (
+                        {cellData && rowData?.sqlServerInstancesText && (
                             <>
                                 <Typography variant="Semibold_14">{cellData + ' instances'}</Typography>
                                 <Typography variant="Semibold_14">{rowData?.sqlServerInstancesText}</Typography>
                             </>
                         )}
-                        {!cellData && GENERAL.NOT_AVAILABLE}
+                        {(!cellData || !rowData?.sqlServerInstancesText) && GENERAL.NOT_AVAILABLE}
                     </div>
                 );
             }
@@ -320,12 +317,12 @@ const InventoryTable = () => {
                         {instanceList && (
                             <div>
                                 {instanceList?.[0] && (
-                                    <Typography variant="Regular_13" className={styles.colText}>
+                                    <Typography variant="Regular_13" className={`${styles.colText}`} title={instanceList[0]}>
                                         {instanceList[0]}
                                     </Typography>
                                 )}
                                 {instanceList?.[1] && (
-                                    <Typography variant="Regular_13" className={styles.colText}>
+                                    <Typography variant="Regular_13" className={`${styles.colText}`} title={instanceList[1]}>
                                         {instanceList[1]}
                                     </Typography>
                                 )}
@@ -356,14 +353,14 @@ const InventoryTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.firstColText}>
-                        {rowData?.ssmState === 'connected' && (
-                            <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
+                        {rowData?.ssmState === STATUS_CONST.ONLINE && (
+                            <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
                         )}
-                        {rowData?.ssmState !== 'connected' && (
-                            <div className={`${styles.statusIcon} ${styles['circle']} ${styles['down']}`}></div>
+                        {rowData?.ssmState === STATUS_CONST.OFFLINE && (
+                            <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
                         )}
                         <Typography variant="Regular_13">
-                            {rowData?.ssmState === 'connected' ? 'Online' : 'Offline'}
+                            {rowData?.ssmState}
                         </Typography>
                     </div>
                 );
