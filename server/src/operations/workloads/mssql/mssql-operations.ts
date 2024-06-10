@@ -6,7 +6,6 @@ import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import { PSSCRIPT, DB_ROWS_COUNT, SSM_QUERY_CONCURRENCY_LIMIT } from './const';
 import {
     DATABASES,
-    DATABASES_COUNT,
     SERVER_NAME,
     SERVER_GUID,
     SERVER_STATE,
@@ -22,7 +21,8 @@ import {
     DB_SIZE,
     DISK_UTILISATION,
     MEMORY_UTILISATION,
-    INSTANCE_GUID
+    INSTANCE_GUID,
+    DATABASES_COUNT_V2
 } from './queries';
 import { callSsmExecution, getSSMConnectionStatus } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -45,7 +45,7 @@ import { getDatabsaeInstanceName, generateHash, sqlResponseParsing } from '../..
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
-import { Metadata } from '../../../utils/common-types';
+import { DatabaseInstance, Metadata, ResourceDetails } from '../../../utils/common-types';
 import { INSTANCE_DETAILS, RESOURCE_UTILIZATION } from './ssm-script-utils';
 
 const logger = getLogger();
@@ -80,7 +80,7 @@ async function getDatabasesCount(
 ) {
     logger.info('Fetching databases total count ', credentialsId, region, activeNodeInstanceId);
 
-    const commands = [`sqlcmd -S "${instanceName}" -Q "${DATABASES_COUNT()}" -y 0`];
+    const commands = [`sqlcmd -S "${instanceName}" -Q "${DATABASES_COUNT_V2}" -y 0`];
     const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId);
     logger.debug('Fetching databases count response', response);
     return response ? sqlResponseParsing(response)[0] : undefined;
@@ -932,6 +932,70 @@ async function getMssqlInstanceGuid(credentialsId: string, region: string, insta
     }
 }
 
+async function getActiveSqlNodeV2(
+    credentialsId: string,
+    region: string,
+    nodeIds: string[],
+    databaseInstanceName: string,
+    resourceId?: string
+) {
+    try {
+        for (const nodeId of nodeIds) {
+            let connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId);
+            if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
+                const instanceDetails = await getAllInstanceDetails(credentialsId, region, [nodeId]);
+                if (instanceDetails) {
+                    const matchingInstance = instanceDetails.find(
+                        (instance: { instanceName: string }) => instance.instanceName === databaseInstanceName
+                    );
+                    if (matchingInstance) {
+                        return { nodeId, matchingInstance };
+                    } else {
+                        const errorMessage = `Instance ${databaseInstanceName} not found on node ${nodeId}`;
+                        logger.error(errorMessage);
+                        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+                    }
+                } else {
+                    const errorMessage = `SSM connection to node or SQL server status check for ${nodeId} has failed.`;
+                    logger.error(errorMessage, { connectionStatus });
+                }
+            }
+        }
+    } catch (err) {
+        logger.error(
+            `Error while checking SSM connection or SQL server status for resource ${resourceId}`,
+            { credentialsId, region, nodeIds },
+            err
+        );
+    }
+}
+
+async function getActiveNodeAndInstanceDetails(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    resourceDetails: ResourceDetails,
+    databaseInstanceDetails: DatabaseInstance
+) {
+    logger.info('Fetching instance details', { accountId, credentialsId, region });
+
+    const { resource_id: resourceId, metadata } = resourceDetails;
+    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+    const { database_instance_name: instanceName } = databaseInstanceDetails;
+
+    const activeNodeResponse = await getActiveSqlNodeV2(
+        credentialsId,
+        region,
+        [node1InstanceId, ...(node2InstanceId ? [node2InstanceId] : [])],
+        instanceName,
+        resourceId
+    );
+    if (!activeNodeResponse) {
+        throw createError(HttpErrorCodes.NOT_FOUND, 'Active node not found');
+    }
+    return activeNodeResponse;
+}
+
 export {
     getSqlServerDetails,
     getAllResourceUtilisation,
@@ -958,5 +1022,6 @@ export {
     getSqlServerVersion,
     getMssqlInstanceGuid,
     getActiveSqlInstanceName,
-    getAllInstanceDetails
+    getAllInstanceDetails,
+    getActiveNodeAndInstanceDetails
 };
