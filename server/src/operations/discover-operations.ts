@@ -15,7 +15,7 @@ import {
 } from '../lib/database/db';
 import { getResources } from './database/database-operations';
 import { describeInstance, paginatedDescribeSubnets, paginatedDescribeVpcs } from '../lib/aws/ec2';
-import { getResourceNameFromTags, sleep, getArtifactsRegionBucketName } from '../utils/utils';
+import { getResourceNameFromTags, sleep, getArtifactsRegionBucketName, derivePropertiesFromARN } from '../utils/utils';
 import {
     getEc2SqlParameters,
     callSsmExecution,
@@ -915,15 +915,20 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
     const clusterNetworkIpDetailsInJson: { clusterNetworkIps: string[] } = JSON.parse(clusterNetworkIpDetails!);
 
     const node1InstanceId = ec2InstanceId;
-    const node2InstanceId =
-        clusterNetworkIpDetailsInJson.clusterNetworkIps.length > 1 // FCI environment
-            ? await getPartnerNode(
-                  credentialsId,
-                  region,
-                  node1InstanceId,
-                  clusterNetworkIpDetailsInJson.clusterNetworkIps
-              )
-            : '';
+    let node2InstanceId;
+
+    if (clusterNetworkIpDetailsInJson.clusterNetworkIps.length > 1) {
+        // FCI environment
+        const clusterNodeDetails = await getInstanceDetailsByPrivateIp(
+            credentialsId,
+            region,
+            clusterNetworkIpDetailsInJson.clusterNetworkIps
+        );
+        const temp = clusterNodeDetails?.find(elem => elem.ec2InstanceId !== node1InstanceId);
+        if (!isEmpty(temp)) {
+            node2InstanceId = temp.ec2InstanceId;
+        }
+    }
 
     /* Resource ID is obtained either by one instanceID (in case of standalone
        deployment) or by combining instanceIDs of both node1 and node (in case
@@ -994,7 +999,7 @@ async function manageSqlServer(accountId: string, credentialsId: string, region:
                         ? SqlServerDeploymentModel.SQL_STANDALONE_SHORT
                         : SqlServerDeploymentModel.SQL_FCI_SHORT,
                 source: RESOURCE_SOURCE.DISCOVER,
-                fsxSvmId: storageInfo?.svmId,
+                fsxSvmId: { fsxId: storageInfo!.svmId! },
                 storageProtocol: storageProtocols ? storageProtocols.join() : '',
                 ...(activeDirectoryDomainName && { activeDirectoryName: activeDirectoryDomainName }),
                 ...(activeDirectoryIpAddresses && { activeDirectoryAddress: activeDirectoryIpAddresses.join() })
@@ -1514,7 +1519,9 @@ async function manageSqlServerV2(
             );
         }
 
-        const awsAccountId = ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn?.split(':')[4];
+        const { awsAccountId } =
+            derivePropertiesFromARN(ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn!) || {};
+
         if (isEmpty(awsAccountId)) {
             precheckErrorList.push('Failed to get AWS account ID');
         }
@@ -1530,35 +1537,37 @@ async function manageSqlServerV2(
         const { count, items } = discoverDetails;
         if (count <= 0) {
             precheckErrorList.push(
-                'Only existing instances in running state, have Microsoft Windows as host operating system, architecture is x86_64, and hosting SQL Server 2016 above can be managed. Ensure valid instance ID is provided'
+                'Only existing instances in running state, have Microsoft Windows as host operating system, architecture is x86_64, and hosting SQL Server 2016 above can be managed.'
             );
-        }
-
-        const { sqlServerInstances } = items[0];
-        if (isEmpty(sqlServerInstances)) {
-            precheckErrorList.push('No SQL Server instances found');
         }
 
         if (!isEmpty(precheckErrorList)) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, precheckErrorList.join('\n'));
         }
 
+        const { sqlServerInstances } = items[0];
+
         const clusterNetworkIpDetailsJson: { clusterNetworkIps: string[] } = JSON.parse(clusterNetworkIpDetails!);
         const node1InstanceId = ec2InstanceId;
-        const node2InstanceId =
-            clusterNetworkIpDetailsJson.clusterNetworkIps.length > 1 // FCI/AOAG environment
-                ? await getPartnerNode(
-                      credentialsId,
-                      region,
-                      node1InstanceId,
-                      clusterNetworkIpDetailsJson.clusterNetworkIps
-                  )
-                : '';
+        let node2InstanceId;
+
+        if (clusterNetworkIpDetailsJson.clusterNetworkIps.length > 1) {
+            // FCI/AOAG environment
+            const clusterNodeDetails = await getInstanceDetailsByPrivateIp(
+                credentialsId,
+                region,
+                clusterNetworkIpDetailsJson.clusterNetworkIps
+            );
+            const temp = clusterNodeDetails?.find(elem => elem.ec2InstanceId !== node1InstanceId);
+            if (!isEmpty(temp)) {
+                node2InstanceId = temp.ec2InstanceId;
+            }
+        }
 
         // A resource ID is a hash generated using available EC2 instance IDs.
         const [resourceId1, resourceId2] = [
             getMsSqlResourceId(node1InstanceId, node2InstanceId),
-            getMsSqlResourceId(node2InstanceId, node1InstanceId)
+            getMsSqlResourceId(node2InstanceId || '', node1InstanceId)
         ];
 
         const [
@@ -1573,13 +1582,12 @@ async function manageSqlServerV2(
             getResources(accountId, resourceId2, credentialsId, region)
         ]);
 
-        let isResourceTobeCreated: boolean = isEmpty(resourceDetails1) && isEmpty(resourceDetails2) ? true : false;
+        let isResourceTobeCreated: boolean = isEmpty(resourceDetails1) && isEmpty(resourceDetails2);
         const resourceId = !isEmpty(resourceDetails1) ? resourceId1 : resourceId2;
 
         const alreadyManagedDatabaseInstances = await listDatabaseInstances(accountId, {
             credentialsId,
-            resourceId,
-            ec2InstanceId
+            resourceId
         });
 
         const itemsStatus: { databaseInstanceName: string; status: string; errorMessage?: string }[] = [];
@@ -1597,7 +1605,7 @@ async function manageSqlServerV2(
                 itemsStatus.push({
                     databaseInstanceName: dbInst,
                     status: 'failed',
-                    errorMessage: `SQL Server instance not found`
+                    errorMessage: 'SQL Server instance not found'
                 });
             } else {
                 try {
@@ -1665,7 +1673,7 @@ async function manageSqlServerV2(
                         isDefault: sqlInstanceInfo.isDefaultInstance,
                         source: RESOURCE_SOURCE.DISCOVER,
                         sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType!,
-                        fsxSvmId: storageInfo.svmId!,
+                        fsxSvmId: { fsxId: storageInfo!.svmId! },
                         storageProtocol: storageProtocols ? storageProtocols.join() : '',
                         databaseType: DatabaseTypes.MS_SQL_SERVER
                     });
@@ -1692,27 +1700,6 @@ async function manageSqlServerV2(
         error.message = `Unable to manage instance '${ec2InstanceId}'. Reason: ${error.message}.`;
         throw error;
     }
-}
-
-async function getPartnerNode(
-    credentialsId: string,
-    region: string,
-    nodeInstanceId: string,
-    clusterNetworkIps: string[]
-) {
-    const describeInstanceParams: DescribeInstancesCommandInput = {
-        Filters: [{ Name: 'private-ip-address', Values: clusterNetworkIps }]
-    };
-
-    const { Reservations } = await describeInstance(credentialsId, region, describeInstanceParams);
-    const instances = Reservations?.flatMap(elem => elem.Instances);
-    instances?.forEach(elem => {
-        if (elem?.InstanceId !== nodeInstanceId) {
-            return elem?.InstanceId;
-        }
-    });
-
-    return '';
 }
 
 async function unmanageDatabaseInstance(

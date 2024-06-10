@@ -137,12 +137,10 @@ const MultiInstanceUnmanageResponseBody = Type.Object({
     )
 });
 
-const MultiInstanceManageMsSqlRequestBody = Type.Composite([
-    Type.Object({
-        ec2InstanceId: Type.String({ description: 'EC2 instance Id' }),
-        databaseInstanceNames: Type.Array(Type.String({ description: 'List of MS SQL database instances' }))
-    })
-]);
+const MultiInstanceManageMsSqlRequestBody = Type.Object({
+    ec2InstanceId: Type.String({ description: 'EC2 instance Id' }),
+    databaseInstanceNames: Type.Array(Type.String({ description: 'List of MS SQL database instances' }))
+});
 
 const MultiInstanceManageResponseBody = Type.Object({
     resourceId: Type.String({ description: 'Workload Factory resource ID.' }),
