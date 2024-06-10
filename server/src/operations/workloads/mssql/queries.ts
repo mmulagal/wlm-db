@@ -296,6 +296,8 @@ const ENTERPRISE_CHECK_QUERY = ` ${SET_NOCOUNT} IF(SELECT CASE WHEN CONVERT(sysn
         PRINT 'SQL Server is not running Enterprise Edition.'
     END`;
 
+const DATABASES_COUNT_V2 = `${SET_NOCOUNT} SELECT COUNT(*) AS totalCount FROM sys.databases ${FOR_JSON_PATH}`;
+
 export {
     DATABASES,
     DATABASES_COUNT,
@@ -322,5 +324,6 @@ export {
     DATABASE_NAME_EXISTS,
     SERVER_DETAILS,
     INSTANCE_GUID,
-    ENTERPRISE_CHECK_QUERY
+    ENTERPRISE_CHECK_QUERY,
+    DATABASES_COUNT_V2
 };

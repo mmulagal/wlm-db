@@ -21,7 +21,10 @@ import {
     SandboxParams,
     SplitEstimatesResponse,
     SandboxLifeCycleBody,
-    DatabaseHostSummaryForMultiInstanceListResponse
+    DatabaseHostSummaryForMultiInstanceListResponse,
+    DatabaseHostSummaryForMultiInstanceResponse,
+    DatabaseHostInstanceSummaryParams,
+    DatabaseHostInstanceSummaryResponse
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
@@ -227,6 +230,30 @@ const DatabaseHostsSummarySchemaV2 = {
     }
 };
 
+const DatabaseHostDetailsSchemaV2 = {
+    ...databaseHostsRequest,
+    summary: 'Fetch database server details V2',
+    description:
+        'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server v2. ',
+    params: DatabaseHostSummaryParams,
+    querystring: DatabaseHostQueryString,
+    response: {
+        200: DatabaseHostSummaryForMultiInstanceResponse
+    }
+};
+
+const DatabaseHostInstanceDetailsSchema = {
+    ...databaseHostsRequest,
+    summary: 'Fetch database server instance details',
+    description:
+        'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server. ',
+    params: DatabaseHostInstanceSummaryParams,
+    querystring: DatabaseHostQueryString,
+    response: {
+        200: DatabaseHostInstanceSummaryResponse
+    }
+};
+
 const SandboxSplitSchema = {
     params: SandboxParams,
     tags: [RouteTags.SANDBOX],
@@ -257,5 +284,7 @@ export {
     GetSandboxSplitEstimateSchema,
     SandboxLifeCycleSchema,
     SandboxSplitSchema,
-    DatabaseHostsSummarySchemaV2
+    DatabaseHostsSummarySchemaV2,
+    DatabaseHostDetailsSchemaV2,
+    DatabaseHostInstanceDetailsSchema
 };

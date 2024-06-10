@@ -1,6 +1,13 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import { getDatabaseHostsSummary, getDatabaseHostsSummaryV2, getDatabaseHostSummary, getDatabases } from '../operations/database-hosts-operations';
+import {
+    getDatabaseHostInstanceSummary,
+    getDatabaseHostsSummary,
+    getDatabaseHostsSummaryV2,
+    getDatabaseHostSummary,
+    getDatabaseHostSummaryV2,
+    getDatabases
+} from '../operations/database-hosts-operations';
 import { deployDatabase, getCollationDetails, getDriveInfo } from '../operations/createdb-operations';
 import {
     DatabaseHostDetailsSchema,
@@ -20,7 +27,9 @@ import {
     GetSandboxSplitEstimateSchema,
     SandboxLifeCycleSchema,
     SandboxSplitSchema,
-    DatabaseHostsSummarySchemaV2
+    DatabaseHostsSummarySchemaV2,
+    DatabaseHostDetailsSchemaV2,
+    DatabaseHostInstanceDetailsSchema
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -298,6 +307,43 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     credentialsId,
                     vpcId,
                     fsxId
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId`,
+            { schema: DatabaseHostDetailsSchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId },
+                    query: { fields }
+                } = request;
+                const response = await getDatabaseHostSummaryV2(
+                    accountId,
+                    databaseHostId,
+                    credentialsId,
+                    region,
+                    fields
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instance/:databaseInstanceId`,
+            { schema: DatabaseHostInstanceDetailsSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                    query: { fields }
+                } = request;
+                const response = await getDatabaseHostInstanceSummary(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    fields
                 );
                 return reply.send(response);
             }
