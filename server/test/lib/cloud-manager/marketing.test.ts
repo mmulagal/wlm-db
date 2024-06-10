@@ -1,4 +1,8 @@
-import getStorageSavings from '../../../src/lib/cloud-manager/marketing';
+import {
+    getStorageSavings,
+    getInstanceListFromStorage,
+    getVolumesListFromStorage
+} from '../../../src/lib/cloud-manager/marketing';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -26,5 +30,13 @@ describe('Marketing lib', () => {
         expect(response.ebs).toBeDefined();
         expect(response.fsx).toBeDefined();
         expect(response.fsx_calculation).toBeDefined();
+    });
+    it('Getting storage instances', async () => {
+        const response = await getInstanceListFromStorage(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION);
+        expect(response.ec2Instances).toBeDefined();
+    });
+    it('Getting storage volumes', async () => {
+        const response = await getVolumesListFromStorage(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 'i-demo1');
+        expect(response.volumeInstances).toBeDefined();
     });
 });

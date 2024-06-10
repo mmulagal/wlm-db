@@ -36,7 +36,7 @@ const SandboxApis = () => {
             region: regionId,
             nextToken: sandboxCursor
         },
-        { skip: !credId || !regionId }
+        { skip: !credId || !regionId || (aggregatedSandboxList.length && !sandboxCursor) }
     );
 
     const {

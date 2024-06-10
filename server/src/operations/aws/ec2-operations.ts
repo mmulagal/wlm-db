@@ -734,7 +734,7 @@ async function getInstanceTypesFromInstanceRequirements(
         );
 
         let requiredNetworkBandwidth = averageNetworkBandwidthGbps;
-        if (deploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
+        if (deploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
             /*
             This calculation is relevant only in case of Standard SQL host ( 1 ec2 instance).
             In case the Src env is AOAG SQL over EBS, can we assume that the future FCI SQL over FSXN suggested, remains with the same src instance type's network bandwidth,
@@ -742,13 +742,13 @@ async function getInstanceTypesFromInstanceRequirements(
             */
 
             const totalEbsBandwidthGbps = await getEbsVolumeUtilization(region, credentialsId, ebsVolumeIds);
-            const { PeakBandwidthInGbps } =
+            const { BaselineBandwidthInGbps } =
                 NetworkInfo?.NetworkCards?.find(
                     networkCard => networkCard.NetworkCardIndex === NetworkInfo?.DefaultNetworkCardIndex
                 ) || {};
             requiredNetworkBandwidth = Math.max(
                 totalEbsBandwidthGbps + averageNetworkBandwidthGbps,
-                PeakBandwidthInGbps || 0
+                BaselineBandwidthInGbps || 0
             );
             // future network bandwidth = Max{ max (sum) EBS Bandwidth measured + current max network bandwidth measured, src instance type's network }
         }

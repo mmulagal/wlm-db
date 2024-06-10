@@ -487,14 +487,17 @@ const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string, instanceN
 
         $cifsVolumes = GetSMBVolumes $sqlResponse
 
-        if ($volumes.count -gt 0) {
-            $volumes["records"]+=$cifsVolumes
-        }
-        else {
-            $volumes = @{"records" = $cifsVolumes} 
-            
-        }
+        if($cifsVolumes){
 
+            if ($null -ne $volumes.records) {
+                $volumes["records"]+=$cifsVolumes
+            }
+            else {
+                $volumes = @{"records" = $cifsVolumes} 
+                
+            }
+        } 
+    
         return ($volumes | ConvertTo-Json)
     } catch {
         Write-Error $_.Exception.Message
@@ -573,7 +576,7 @@ const restGetUtilForOntap = (
 `;
 
 const INSTANCE_DETAILS =
-    'Get-WmiObject win32_service | Where-Object {$_.DisplayName -like "sql server (*"} | Select-Object Name, State | ConvertTo-Json';
+    'Get-WmiObject win32_service | Where-Object {$_.DisplayName -like "sql server (*"} | Select-Object @{Name=\'instanceName\'; Expression={$_.Name}}, @{Name=\'instanceState\'; Expression={$_.State}} | ConvertTo-Json';
 
 const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
     $s3SignedUrl = '${s3SignedURL}'

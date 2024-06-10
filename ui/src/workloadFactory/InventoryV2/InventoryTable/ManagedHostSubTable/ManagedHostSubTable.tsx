@@ -199,7 +199,8 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             accessor: 'name',
             id: '1',
             isSortable: true,
-            width: '212px'
+            width: '212px',
+            isSticky: true
         },
         {
             Header: 'Status',
@@ -299,7 +300,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             {/* <div className={styles.topDiv} /> */}
             <div className={styles.extraDiv2} />
 
-            <span style={{ position: 'relative', left: `${scrollPosition}px` }}>
+            <span className={styles.managedSubTable} style={{ position: 'relative', left: `${scrollPosition}px` }}>
                 <Table
                     //@ts-ignore
 

@@ -34,8 +34,8 @@
         border-right: 1px solid var(--border);
     }
 
-    [class*='Table-module_table-wrapper'] {
-        width: 1500px !important;
+    .managedSubTable {
+        width: 1500px;
         padding: 48px 12px 48px 0;
     }
 
@@ -84,4 +84,15 @@
 .setWidth {
     z-index: 5;
     position: relative;
+}
+
+@media screen and (max-width: 1500px) {
+    .managedSubTable {
+        width: 980px !important;
+
+        [class*='Table-module_horizontal-scroll'] {
+            visibility: visible;
+            height: 16px !important;
+        }
+    }
 }

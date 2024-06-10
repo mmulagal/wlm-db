@@ -1,8 +1,9 @@
 import { SqlServerDeploymentModel, HOURS_IN_MONTH } from '../../utils/consts';
 import getLogger from '../../utils/logger';
-import getStorageSavings from '../../lib/cloud-manager/marketing';
+import { getStorageSavings } from '../../lib/cloud-manager/marketing';
 import { StorageSavingsRequestBodyType } from '../../routes/types/storage-savings.types';
 import { camelizeKeys, convertToBytes } from '../../utils/utils';
+import { getVolumeIdsFromStorage } from '../demo-operations';
 
 const logger = getLogger();
 
@@ -68,6 +69,10 @@ async function invokeMarketingApi(
     ebsVolumeIds: string[],
     params: StorageSavingsRequestBodyType
 ) {
+    // Here getting the instances and volume details from the storage service and using that to retrieve the correct calculations for demo
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        ebsVolumeIds = await getVolumeIdsFromStorage(accountId, credentialsId, region);
+    }
     const response = await getStorageSavings(
         accountId,
         credentialsId,

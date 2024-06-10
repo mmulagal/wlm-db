@@ -1481,19 +1481,15 @@ async function unmanageDatabaseInstance(
     if (databaseInstanceList.length > 0) {
         const databaseInstanceIds = databaseInstanceList.split(',');
 
-        const preDeleteDatabaseInstances = await listDatabaseInstances(accountId, credentialsId, {
-            resourceId
-        });
+        const preDeleteDatabaseInstances = await listDatabaseInstances(accountId, { credentialsId, resourceId });
 
         await deleteDatabaseInstance(accountId, credentialsId, resourceId, databaseInstanceIds);
 
-        const postDeleteDatabaseInstances = await listDatabaseInstances(accountId, credentialsId, {
-            resourceId
-        });
+        const postDeleteDatabaseInstances = await listDatabaseInstances(accountId, { credentialsId, resourceId });
 
         databaseInstanceIds.forEach(databaseInstanceId => {
-            if (preDeleteDatabaseInstances.some(elem => elem.sql_instance_id === databaseInstanceId)) {
-                if (postDeleteDatabaseInstances.some(elem => elem.sql_instance_id === databaseInstanceId)) {
+            if (preDeleteDatabaseInstances.some(elem => elem.database_instance_id === databaseInstanceId)) {
+                if (postDeleteDatabaseInstances.some(elem => elem.database_instance_id === databaseInstanceId)) {
                     databaseInstanceResponse.push({ databaseInstanceId, status: 'failed' });
                 } else {
                     databaseInstanceResponse.push({ databaseInstanceId, status: 'success' });
