@@ -72,7 +72,7 @@
                     "sqlServerAuthentication": true,
                     "sqlServerName": "SQL Server 1",
                     "databaseCount": 4,
-                    "sqlServerDeploymentType": "Standalone",
+                    "sqlServerDeploymentType": "AOAG",
                     "storage": [
                         {
                             "type": "EBS",
