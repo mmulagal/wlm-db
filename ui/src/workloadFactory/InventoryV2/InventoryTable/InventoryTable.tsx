@@ -185,10 +185,12 @@ const InventoryTable = () => {
             width: '184px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
-                const checkForAllManaged = rowData?.sqlServerInstances.every((item: any) => item?.statusColText === 'Managed');
+                const checkForAllManaged = rowData?.sqlServerInstances.every(
+                    (item: any) => item?.statusColText === 'Managed'
+                );
 
                 return (
-                    <>  
+                    <>
                         {rowData?.action && checkForAllManaged && (
                             <Popover
                                 popoverClass={styles['copy-popover']}
@@ -203,29 +205,35 @@ const InventoryTable = () => {
                                 }
                             />
                         )}
-                        {rowData?.action && !checkForAllManaged && !rowData?.actionDisable && rowData.ssmState !== 'Offline' && (
-                            <div
-                                className={styles.detectManage}
-                                onClick={() => {
-                                    if (rowData?.action === 'Explore savings') {
-                                        onClickESHost(dispatch, rowData, isDemoMode);
-                                    } else {
-                                        handleDialog();
-                                    }
-                                }}
-                            >
-                                <Typography variant="Regular_14" className={styles.textStyle}>
-                                    {rowData?.action}
-                                </Typography>
-                            </div>
-                        )}
-                        {rowData?.action && !checkForAllManaged && rowData?.actionDisable && rowData.ssmState !== 'Offline' && (
-                            <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
-                                <Typography variant="Regular_14" className={styles.textStyle}>
-                                    {rowData?.action}
-                                </Typography>
-                            </div>
-                        )}
+                        {rowData?.action &&
+                            !checkForAllManaged &&
+                            !rowData?.actionDisable &&
+                            rowData.ssmState !== 'Offline' && (
+                                <div
+                                    className={styles.detectManage}
+                                    onClick={() => {
+                                        if (rowData?.action === 'Explore savings') {
+                                            onClickESHost(dispatch, rowData, isDemoMode);
+                                        } else {
+                                            handleDialog();
+                                        }
+                                    }}
+                                >
+                                    <Typography variant="Regular_14" className={styles.textStyle}>
+                                        {rowData?.action}
+                                    </Typography>
+                                </div>
+                            )}
+                        {rowData?.action &&
+                            !checkForAllManaged &&
+                            rowData?.actionDisable &&
+                            rowData.ssmState !== 'Offline' && (
+                                <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
+                                    <Typography variant="Regular_14" className={styles.textStyle}>
+                                        {rowData?.action}
+                                    </Typography>
+                                </div>
+                            )}
                     </>
                 );
             }
@@ -276,9 +284,7 @@ const InventoryTable = () => {
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
                             )}
                             {rowData?.status === STATUS_CONST.UNKNOWN && (
-                                <div
-                                    className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}
-                                ></div>
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
                             )}
                             <Typography variant="Regular_13">
                                 {rowData?.status}
@@ -341,12 +347,20 @@ const InventoryTable = () => {
                         {instanceList && (
                             <div>
                                 {instanceList?.[0] && (
-                                    <Typography variant="Regular_13" className={`${styles.colText}`} title={instanceList[0]}>
+                                    <Typography
+                                        variant="Regular_13"
+                                        className={`${styles.colText}`}
+                                        title={instanceList[0]}
+                                    >
                                         {instanceList[0]}
                                     </Typography>
                                 )}
                                 {instanceList?.[1] && (
-                                    <Typography variant="Regular_13" className={`${styles.colText}`} title={instanceList[1]}>
+                                    <Typography
+                                        variant="Regular_13"
+                                        className={`${styles.colText}`}
+                                        title={instanceList[1]}
+                                    >
                                         {instanceList[1]}
                                     </Typography>
                                 )}
@@ -383,9 +397,7 @@ const InventoryTable = () => {
                         {rowData?.ssmState === STATUS_CONST.OFFLINE && (
                             <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
                         )}
-                        <Typography variant="Regular_13">
-                            {rowData?.ssmState}
-                        </Typography>
+                        <Typography variant="Regular_13">{rowData?.ssmState}</Typography>
                     </div>
                 );
             }

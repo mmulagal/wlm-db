@@ -35,8 +35,8 @@ export interface InventoryTableData {
     estimatedUsageCost?: EstimatedUsageCostInterface;
     allocatedCapacity?: number;
     sqlServerInstances?: Array<{
-        databaseInstanceId?: string;                            
-        databaseInstanceName?: string;                        
+        databaseInstanceId?: string;
+        databaseInstanceName?: string;
         status?: string;
         databaseCount?: number;
         isDetected?: boolean;
@@ -72,14 +72,14 @@ export interface InventoryTableData {
         };
         allocatedCapacity?: number;
     }>;
-};
+}
 
 export interface InventoryChartData {
     detectedHost?: number;
     undetectedHost?: number;
     managedInstance?: number;
     unmanagedInstance?: number;
-};
+}
 
 export interface EstimatedUsageCostInterface {
     compute?: number;
@@ -87,11 +87,11 @@ export interface EstimatedUsageCostInterface {
     connectivity?: number;
     others?: number;
     estimationType?: string;
-};
+}
 
 export interface DatabaseInstancesSummaryInterface {
-    databaseInstanceId?: string;                         
-    databaseInstanceName?: string;                         
+    databaseInstanceId?: string;
+    databaseInstanceName?: string;
     status?: string;
     databaseCount?: number;
     databaseServer?: {
@@ -115,7 +115,7 @@ export interface DatabaseInstancesSummaryInterface {
         fileSystemStatus?: string;
         fileSystemStorageCapacity?: number;
         fileSystemThroughputCapacity?: number;
-        availabilityZones?: Array<string>
+        availabilityZones?: Array<string>;
     };
     protection?: {
         isSqlNativeEnabled?: boolean;
@@ -144,7 +144,7 @@ export interface DatabaseInstancesSummaryInterface {
                 read?: number;
                 write?: number;
             };
-        }
+        };
     };
     storage?: {
         [key: string]: StorageInterface;
@@ -156,7 +156,7 @@ export interface DatabaseInstancesSummaryInterface {
     };
     sqlServerDeploymentType?: string;
     databaseInstanceErrors?: string;
-};
+}
 
 export interface ResourceUtilizationInterface {
     percentUsed?: string;
@@ -164,7 +164,7 @@ export interface ResourceUtilizationInterface {
     total?: string;
     remaining?: string;
     error?: string;
-};
+}
 
 export interface StorageInterface {
     size?: number;
@@ -172,24 +172,24 @@ export interface StorageInterface {
     spaceSavings?: number;
     spaceSavingsPercentage?: number;
     protocol?: Array<string>;
-};
+}
 
 export interface ManagedHostsRowInterface {
-    id?: string;                                   
-    name?: string;                                       
+    id?: string;
+    name?: string;
     nodeStatus?: string; // running,terminated,pending,shutting-down,stopping,stopped,N\A
     ssmStatus?: string; //Connected,NotConnected,Connecting,Disconnected, N\A
     databaseInstanceDetails?: Array<{
-        instanceName?: string;               
+        instanceName?: string;
         isManaged?: boolean;
-        databaseInstanceStatus?: string // up, down
+        databaseInstanceStatus?: string; // up, down
     }>;
     clusterNodeDetails?: Array<{
         ec2InstanceId?: string;
         ec2InstancePrivateIpAddress?: string;
         ec2InstanceType?: string;
         ec2InstanceName?: string;
-    }>,
+    }>;
     nodeTopology?: {
         awsAccount?: string;
         region?: string;
@@ -209,7 +209,7 @@ export interface ManagedHostsRowInterface {
             name?: string;
             address?: string;
         };
-    },
+    };
     ebsResourceInfo?: Array<{
         id?: string;
         size?: number;
@@ -217,8 +217,8 @@ export interface ManagedHostsRowInterface {
         throughput?: number;
         iops?: number;
         volumeType?: string;
-    }>,
+    }>;
     estimatedUsageCost?: EstimatedUsageCostInterface;
     databaseInstancesSummary?: Array<DatabaseInstancesSummaryInterface>;
     nodeInstanceError?: string;
-};
+}

@@ -149,7 +149,10 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                         <MenuPopover
                             isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
                             menuItems={[...menu]}
-                            isDisabled={rowData?.statusColText === 'Unmanaged' && (rowData.fileSystemType === 'EBS' || rowData.fileSystemType === 'FSx for Windows')}
+                            isDisabled={
+                                rowData?.statusColText === 'Unmanaged' &&
+                                (rowData.fileSystemType === 'EBS' || rowData.fileSystemType === 'FSx for Windows')
+                            }
                             toggleMenu={(toggleType: string, menuId: string) => {
                                 if (toggleType === 'close') {
                                     menuOpenedRowDetail.current = null;
@@ -182,7 +185,11 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                                 }
                             }}
                             CustomMenu={undefined}
-                            disabledText={rowData?.statusColText === 'Unmanaged' && (rowData.fileSystemType === 'EBS' || rowData.fileSystemType === 'FSx for Windows') && GENERAL.EBS_TOOLTIP_MESSAGE}
+                            disabledText={
+                                rowData?.statusColText === 'Unmanaged' &&
+                                (rowData.fileSystemType === 'EBS' || rowData.fileSystemType === 'FSx for Windows') &&
+                                GENERAL.EBS_TOOLTIP_MESSAGE
+                            }
                         />
                     </div>
                 );

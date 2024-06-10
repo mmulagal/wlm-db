@@ -22,7 +22,7 @@ import { formatInventoryTableData, getInventoryDataCount } from './InventoryUtil
 
 const InventoryApisV2 = () => {
     const dispatch = useAppDispatch();
-    const {databaseHostsData, fullHostDataLoading} = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
+    const { databaseHostsData, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
