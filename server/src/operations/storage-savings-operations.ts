@@ -398,12 +398,12 @@ async function aoagStorageSavingsMetrics(
             recommendedLicenseCalculation,
             existingComputeCalculation,
             existingLicenseCalculation,
-            //ebsCalculation,
+            ebsCalculation: allEbsVolumesBreakdown[0].ebsCalculation, // TODO :CHANGE THIS
             fsxOntapCalculation,
             fsxOntapSnapshotCalculation,
             fsxCloneCalculation,
-            //ebsCloneCalculation,
-           // ebsSnapshotCalculation
+            ebsCloneCalculation: uniqueEbsVolumeBreakdown[0].ebsCloneCalculation,
+            ebsSnapshotCalculation: uniqueEbsVolumeBreakdown[0].ebsSnapshotCalculation
         };
     }
     throw createError(
@@ -548,7 +548,7 @@ async function performStorageSavingsCalculations(
         ebs,
         fsx,
         totalSummary: {
-            existing: ebs.total + existingComputeLicensePrice,
+            existing: ebs['gp3']?.ebs.total || 0 + existingComputeLicensePrice,
             recommended: fsx.total + recommendedComputeLicensePrice
         },
         fsxCalculation: handleMarketingApiFsxCalculationObject(fsxCalculationData)
