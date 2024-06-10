@@ -237,7 +237,7 @@ export const formatViewCalcInstance = (
                         selectedHostDetails?.databaseServer?.serverEdition ||
                         GENERAL.NOT_AVAILABLE,
                     sqlLicense: licenseDetails?.[0]?.licenseIncluded ? 'Yes' : 'No',
-                    hoursInAMonth: formatNumbers(computeDetails?.[0]?.hoursInAMonth)
+                    hoursInAMonth: formatNumbers(computeDetails?.[0]?.hoursInMonth)
                 }
             ];
         } else {
@@ -251,7 +251,7 @@ export const formatViewCalcInstance = (
                         selectedHostDetails?.databaseServer?.serverEdition ||
                         GENERAL.NOT_AVAILABLE,
                     sqlLicense: licenseDetails?.[0]?.licenseIncluded ? 'Yes' : 'No',
-                    hoursInAMonth: formatNumbers(computeDetails?.[0]?.hoursInAMonth)
+                    hoursInAMonth: formatNumbers(computeDetails?.[0]?.hoursInMonth)
                 },
                 {
                     instanceType: computeDetails?.[1]?.instanceType || instanceTypelist?.[1] || GENERAL.NOT_AVAILABLE,
@@ -262,7 +262,7 @@ export const formatViewCalcInstance = (
                         selectedHostDetails?.databaseServer?.serverEdition ||
                         GENERAL.NOT_AVAILABLE,
                     sqlLicense: licenseDetails?.[1]?.licenseIncluded ? 'Yes' : 'No',
-                    hoursInAMonth: formatNumbers(computeDetails?.[1]?.hoursInAMonth)
+                    hoursInAMonth: formatNumbers(computeDetails?.[1]?.hoursInMonth)
                 }
             ];
         }
