@@ -2,7 +2,8 @@ import { faker } from '@faker-js/faker';
 import {
     getHostAndSqlServerInfo,
     validateAndStoreDiscoveredParameters,
-    manageSqlServer
+    manageSqlServer,
+    manageSqlServerV2
 } from '../../src/operations/discover-operations';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 import '../simulator/scopes/aws/ec2-scope';
@@ -31,6 +32,18 @@ describe('Discover operations', () => {
             expect(error.message).toEqual(
                 // eslint-disable-next-line quotes
                 "Unable to manage instance 'i-1d9i5v18g5392mf1v'. Reason: no SSM connectivity."
+            );
+        }
+    });
+
+    it('Manage EC2 hosting SQL Server V2: No SSM connectivity)', async () => {
+        try {
+            await manageSqlServerV2(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 'i-1d9i5v18g5392mf1v', [
+                'MSSQLSERVER'
+            ]);
+        } catch (error: any) {
+            expect(error.message).toEqual(
+                "Unable to manage instance 'i-1d9i5v18g5392mf1v'. Reason: No SQL Server instances found."
             );
         }
     });

@@ -6,12 +6,14 @@ import {
     MsSqlInstancesSchema,
     ManageMsSqlSchema,
     PrepareForManageSchema,
-    UnManageMsSqlSchema
+    UnManageMsSqlSchema,
+    ManageMsSqlSchemaV2
 } from './schemas/discover-schemas';
 import {
     fetchUnmanagedHostsInformation,
     getHostAndSqlServerInfo,
     manageSqlServer,
+    manageSqlServerV2,
     validateAndStoreDiscoveredParameters,
     prepareForManage,
     unmanageDatabaseInstance
@@ -22,6 +24,7 @@ import getLogger from '../utils/logger';
 const logger = getLogger();
 
 const DISCOVER_MSSQL_API_PATH: string = '/v1/credentials/:credentialsId/regions/:region';
+const DISCOVER_MSSQL_API_PATH_V2: string = '/v2/credentials/:credentialsId/regions/:region';
 
 export default function discoverRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -53,6 +56,15 @@ export default function discoverRoutes(fastify: FastifyInstance) {
             return apiInfo;
         }
     );
+
+    server.post(`${DISCOVER_MSSQL_API_PATH_V2}/mssql`, { schema: ManageMsSqlSchemaV2 }, async request => {
+        const {
+            params: { accountId, credentialsId, region },
+            body: { ec2InstanceId, databaseInstanceNames }
+        } = request;
+        const apiInfo = await manageSqlServerV2(accountId, credentialsId, region, ec2InstanceId, databaseInstanceNames);
+        return apiInfo;
+    });
 
     server.post(
         `${DISCOVER_MSSQL_API_PATH}/instances/:instanceId/mssql/discover/resource-credentials`,
