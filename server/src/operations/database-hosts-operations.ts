@@ -1488,7 +1488,7 @@ async function getDatabseInstanceSummary(
         fields
     );
 
-    let {
+    const {
         database_instance_id: databaseInstanceId,
         database_instance_name: savedDatabaseInstanceName,
         is_default: isdefaultInstance,
@@ -1501,7 +1501,7 @@ async function getDatabseInstanceSummary(
     const { userDatabase = [] } = metadata as unknown as Metadata;
 
     const databaseInstanceName = isdefaultInstance
-        ? `$env:computername`
+        ? '$env:computername'
         : `$env:computername\\${savedDatabaseInstanceName.replace('MSSQL$', '')}`;
 
     let fieldsValues: Array<string> = [];
@@ -1526,7 +1526,7 @@ async function getDatabseInstanceSummary(
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
 
     const databaseInstanceDetails: DatabaseHostInstanceSummaryResponseType = {
-        databaseInstanceId: databaseInstanceId,
+        databaseInstanceId,
         databaseInstanceName: savedDatabaseInstanceName,
         status: '',
         databaseCount: 0

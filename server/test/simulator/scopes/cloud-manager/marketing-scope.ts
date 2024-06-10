@@ -6,7 +6,7 @@ import storageVolumesList from '../../responses/cloud-manager/storage-service-vo
 
 nock(`${WORKLOAD_FACTORY_ENDPOINT}`)
     .persist(true)
-    .post(/^\/accounts\/(.+)\/marketing\/v1\/credentials\/(.+)\/regions\/(.+)\/ebs\/auto\/calculate$/)
+    .post(/^\/accounts\/(.+)\/marketing\/v2\/credentials\/(.+)\/regions\/(.+)\/ebs\/auto\/calculate$/)
     .reply(() => [200, ebsStorageCalulationsResponse])
     .get(
         /^\/accounts\/(.+)\/marketing\/v1\/credentials\/(.+)\/regions\/(.+)\/instances\?limit=50&offset=0&force=false$/

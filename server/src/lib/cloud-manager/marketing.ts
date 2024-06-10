@@ -5,14 +5,66 @@ import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 
 const logger = getLogger();
 
+interface EbsSummary {
+    capacity: number;
+    iops: number;
+    throughput: number;
+    snapshots: number;
+    total: number;
+    clones: number;
+}
+interface EbsCostCalculation {
+    storageVolumeType: string;
+    storageAmountPerVol: {
+        size: number;
+        unit: string;
+    };
+    totalInstanceHours: number;
+    numberOfVolumes: number;
+    instanceAvgDuration: number;
+    EBSInstanceMonth: number;
+    EBSStorageCost: number;
+    EBSCapacityPrice: {
+        price: number;
+        unit: string;
+    };
+    billableIops: number;
+    totalBillableIops: number;
+    EBSIopsCost: number;
+    billableMBps: number;
+    billableThroughputMBps: number;
+    billableThroughputGBps: number;
+    EBSThroughputCost: number;
+    totalSnapshot: number;
+    initialSnapshotCost: number;
+    monthlyCostPerSnapshot: number;
+    discountForPartialStorageMonth: number;
+    incrementalSnapshotCost: number;
+    totalSnapshotCost: number;
+    totalEBSSnapshotCost: number;
+    ebsSnapshotCost: number;
+    AWSEBSTotalCostMonthly: number;
+}
 interface CalculateEbsComparisonResponse {
-    ebs: {
-        capacity: number;
-        iops: number;
-        throughput: number;
-        snapshots: number;
-        total: number;
-        clones: number;
+    gp2?: {
+        ebs: EbsSummary;
+        ebs_cost_calculation: EbsCostCalculation;
+    };
+    gp3?: {
+        ebs: EbsSummary;
+        ebs_cost_calculation: EbsCostCalculation;
+    };
+    io1?: {
+        ebs: EbsSummary;
+        ebs_cost_calculation: EbsCostCalculation;
+    };
+    io2?: {
+        ebs: EbsSummary;
+        ebs_cost_calculation: EbsCostCalculation;
+    };
+    st1?: {
+        ebs: EbsSummary;
+        ebs_cost_calculation: EbsCostCalculation;
     };
     fsx: {
         capacity: number;
@@ -169,38 +221,6 @@ interface CalculateEbsComparisonResponse {
         totalMonthlyCostForCapacity: number;
         totalSnapshotMonthlyCost: number;
     };
-    ebs_cost_calculation: {
-        storageVolumeType: string;
-        storageAmountPerVol: {
-            size: number;
-            unit: string;
-        };
-        totalInstanceHours: number;
-        numberOfVolumes: number;
-        instanceAvgDuration: number;
-        EBSInstanceMonth: number;
-        EBSStorageCost: number;
-        EBSCapacityPrice: {
-            price: number;
-            unit: string;
-        };
-        billableIops: number;
-        totalBillableIops: number;
-        EBSIopsCost: number;
-        billableMBps: number;
-        billableThroughputMBps: number;
-        billableThroughputGBps: number;
-        EBSThroughputCost: number;
-        totalSnapshot: number;
-        initialSnapshotCost: number;
-        monthlyCostPerSnapshot: number;
-        discountForPartialStorageMonth: number;
-        incrementalSnapshotCost: number;
-        totalSnapshotCost: number;
-        totalEBSSnapshotCost: number;
-        ebsSnapshotCost: number;
-        AWSEBSTotalCostMonthly: number;
-    };
     fsx_clone_cost_calculation: {
         desiredStorageCapacityGB: {
             size: number;
@@ -247,6 +267,7 @@ interface CalculateEbsComparisonResponse {
         };
         totalMonthlyCostForCapacity: number;
         totalCloneMonthlyCost: number;
+        changeRateBetweenClones: number;
     };
 }
 
@@ -310,7 +331,7 @@ async function getStorageSavings(
     logger.info('Get storage savings from marketing APIs:', { accountId, credentialsId, region, params });
 
     const response = await gotInstanceForInternalRequest
-        .post(`accounts/${accountId}/marketing/v1/credentials/${credentialsId}/regions/${region}/ebs/auto/calculate`, {
+        .post(`accounts/${accountId}/marketing/v2/credentials/${credentialsId}/regions/${region}/ebs/auto/calculate`, {
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
             headers: {
                 [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN),
@@ -364,4 +385,4 @@ async function getVolumesListFromStorage(accountId: string, credentialsId: strin
     return response;
 }
 
-export { getStorageSavings, getVolumesListFromStorage, getInstanceListFromStorage };
+export { EbsSummary, EbsCostCalculation, getStorageSavings, getVolumesListFromStorage, getInstanceListFromStorage };

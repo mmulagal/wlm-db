@@ -371,7 +371,7 @@ async function aoagStorageSavingsMetrics(
         );
 
         // Consider all EBS volumes for storage, iops and throughput calculation
-        const { ebsCalculation } = await formatStorageSavingsCalculationMetrics(
+        const { ebsCalculationBreakdown: allEbsVolumesBreakdown } = await formatStorageSavingsCalculationMetrics(
             accountId,
             credentialsId,
             region,
@@ -379,14 +379,12 @@ async function aoagStorageSavingsMetrics(
             params,
             SqlServerDeploymentModel.SQL_AOAG_SHORT
         );
-
         // Consider only volumes associated with unique database in primary and partner nodes for snapshot calculation and to draw a storage savings comparison with FSXn
         const {
             fsxOntapCalculation,
             fsxOntapSnapshotCalculation,
             fsxCloneCalculation,
-            ebsCloneCalculation,
-            ebsSnapshotCalculation
+            ebsCalculationBreakdown: uniqueEbsVolumeBreakdown
         } = await formatStorageSavingsCalculationMetrics(
             accountId,
             credentialsId,
@@ -400,12 +398,12 @@ async function aoagStorageSavingsMetrics(
             recommendedLicenseCalculation,
             existingComputeCalculation,
             existingLicenseCalculation,
-            ebsCalculation,
+            //ebsCalculation,
             fsxOntapCalculation,
             fsxOntapSnapshotCalculation,
             fsxCloneCalculation,
-            ebsCloneCalculation,
-            ebsSnapshotCalculation
+            //ebsCloneCalculation,
+           // ebsSnapshotCalculation
         };
     }
     throw createError(
