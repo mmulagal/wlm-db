@@ -915,7 +915,9 @@ export const GENERAL = {
     VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
         'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.',
     EBS_TOOLTIP_MESSAGE:
-        'Management of SQL Server instances using EBS (Elastic Block Store) storage is currently not supported. Please select a supported storage option to proceed.'
+        'Management of SQL Server instances using EBS (Elastic Block Store) storage is currently not supported. Please select a supported storage option to proceed.',
+    ALL_MANAGED_TEXT:
+        'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.'
 };
 
 export const CODE_VIEWER = {
