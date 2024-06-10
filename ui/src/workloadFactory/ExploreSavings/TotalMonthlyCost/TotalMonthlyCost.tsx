@@ -63,8 +63,8 @@ const TotalMonthlyCost = () => {
                     <>
                         <ComparisonChart
                             data={[
-                                storageSavingsResponse?.fsx?.total ? Number(storageSavingsResponse?.fsx?.total) : 0,
-                                storageSavingsResponse?.ebs?.total ? Number(storageSavingsResponse?.ebs?.total) : 0
+                                storageSavingsResponse?.totalSummary?.recommended ? Number(storageSavingsResponse?.totalSummary?.recommended) : 0,
+                                storageSavingsResponse?.totalSummary?.existing ? Number(storageSavingsResponse?.totalSummary?.existing) : 0
                             ]}
                             yTickFormatter={yValue => '$' + Number(yValue).toLocaleString()}
                             height={370}
