@@ -29,7 +29,8 @@ import {
     MAX_FSX_STORAGE_IN_GIB,
     FSX_VOL_THROUGHPUT,
     FSX_STORAGE_MIN_CAPACITY_IN_GIB,
-    HOURS_IN_MONTH
+    HOURS_IN_MONTH,
+    DEFAULT_MSSQL_INSTANCE_NAME
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -499,6 +500,15 @@ function getMonthlyPriceFromHourlyPrice(hourlyPrice: number) {
     return hourlyPrice * HOURS_IN_MONTH;
 }
 
+function generateDatabaseInstanceName(instanceName: string, isDefault: boolean = true) {
+    logger.info('Generate database instance name', { instanceName, isDefault });
+
+    if (isDefault) {
+        return DEFAULT_MSSQL_INSTANCE_NAME;
+    }
+    return `DEFAULT_MSSQL_INSTANCE_NAME\\${instanceName.replace(/^.+\$/, '')}`;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -532,5 +542,6 @@ export {
     getCollationForMSSQLVersion,
     camelizeKeys,
     convertToBytes,
-    getMonthlyPriceFromHourlyPrice
+    getMonthlyPriceFromHourlyPrice,
+    generateDatabaseInstanceName
 };

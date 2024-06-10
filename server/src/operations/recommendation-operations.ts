@@ -2,7 +2,7 @@ import createError from 'http-errors';
 import { compact } from 'lodash-es';
 import { _InstanceType } from '@aws-sdk/client-ec2';
 import { STORAGE_TYPE } from '@prisma/client';
-import { HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
+import { DEFAULT_MSSQL_INSTANCE_NAME, HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
 import { getInstanceRecommendations } from './aws/compute-optimizer-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { ENTERPRISE_CHECK_QUERY } from './workloads/mssql/queries';
@@ -27,7 +27,7 @@ async function isUsingEnterpriseConfiguration(
         instanceId
     });
 
-    const command = [`sqlcmd -S "." -Q "${ENTERPRISE_CHECK_QUERY}" -y 0`];
+    const command = [`sqlcmd -S "${DEFAULT_MSSQL_INSTANCE_NAME}" -Q "${ENTERPRISE_CHECK_QUERY}" -y 0`];
 
     const checkEnterpriseConfigurationList = await callSsmExecution(
         credentialsId,
