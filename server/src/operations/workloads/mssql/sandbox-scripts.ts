@@ -1,4 +1,7 @@
-// instances input instances = ['"computername\\instanceName"', '"."']; "." represents the default instance
+// instances input instances = ['"computername\\instanceName"', '"DEFAULT_MSSQL_INSTANCE_NAME"']; "DEFAULT_MSSQL_INSTANCE_NAME" represents the default instance
+
+import { DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
+
 // ('source', 'initialCreationDate', 'tag', 'baseSnapshot') are the extended properties saved during creation of sandbox
 const GET_SANDBOX_DETAILS = (instances: string[]) => ` 
 $instances = (${instances})
@@ -61,7 +64,7 @@ $results = foreach ($instance in $instances) {
 $results
 `;
 
-const checkDatabaseExists = (dbCloneName: string, instanceName: string = '.') => `
+const checkDatabaseExists = (dbCloneName: string, instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME) => `
     $WarningPreference = 'SilentlyContinue';
 
     $dbCloneName = '${dbCloneName}'
@@ -191,7 +194,12 @@ const ontapJobStatusTemplate = `
         }
 `;
 
-const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: string, instanceName: string = '.') => `
+const getDbMappedOntapVolumes = (
+    fsxid: string,
+    fsxregion: string,
+    dbName: string,
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
+) => `
     $WarningPreference = 'SilentlyContinue';
     $FSxID = '${fsxid}'
     $FSxRegion = '${fsxregion}'
@@ -695,7 +703,11 @@ const createVolumeClone = (
     $responseObject | ConvertTo-Json -Depth 5
 `;
 
-const createClonedDb = (dbName: string, instanceName: string = '.', fileList: string[] = []) => `
+const createClonedDb = (
+    dbName: string,
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    fileList: string[] = []
+) => `
     $WarningPreference = 'SilentlyContinue';
     $dbname = '${dbName}'
 
@@ -726,7 +738,7 @@ const createClonedDb = (dbName: string, instanceName: string = '.', fileList: st
 
 const addExtendedProperties = (
     dbName: string,
-    instanceName: string = '.',
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
     propObj: { [x: string]: string | number | boolean }
 ) => `
 $dbname = '${dbName}'
@@ -762,7 +774,7 @@ const cleanUpOntapResources = (
     volumeIds: string,
     filePaths: string,
     dbName: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) => `
     $fsxid = '${fsxid}'
     $fsxregion = '${fsxregion}'
@@ -857,7 +869,7 @@ const cleanUpOntapResources = (
     $responseObject | ConvertTo-Json
 `;
 
-const mountPointQuery = (instanceName: string = '.', databaseName: string) =>
+const mountPointQuery = (instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME, databaseName: string) =>
     ` sqlcmd -S "${instanceName}" -Q "SET NOCOUNT ON;
     SELECT 
         CASE WHEN mf.type != 0 THEN 'Log' ELSE 'Data' END AS filetype,
@@ -949,7 +961,7 @@ const detachDbAndRemoveAccessPath = (
     dbName: string,
     serialNumbers: string,
     filePaths: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) => `
     $dbname = '${dbName}'
     $serialNumbers = '${serialNumbers}' | ConvertFrom-Json
@@ -1028,7 +1040,7 @@ const addAccessPathAndAttachDb = (
     dbName: string,
     datafile: { serial: string; path: string },
     logfile: { serial: string; path: string },
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) => `
     $dbname = '${dbName}'
     $serialNumbers = '${JSON.stringify(datafile)}' | ConvertFrom-Json
@@ -1106,7 +1118,12 @@ const addAccessPathAndAttachDb = (
     }
 `;
 
-const splitFlexCloneVolumes = (fsxId: string, fsxRegion: string, volumeIds: string, instance = '.') => `
+const splitFlexCloneVolumes = (
+    fsxId: string,
+    fsxRegion: string,
+    volumeIds: string,
+    instance = DEFAULT_MSSQL_INSTANCE_NAME
+) => `
     $fsxid = '${fsxId}'
     $fsxregion = '${fsxRegion}'
     $volumeIds = '${volumeIds}' | ConvertFrom-Json
@@ -1175,7 +1192,11 @@ const splitFlexCloneVolumes = (fsxId: string, fsxRegion: string, volumeIds: stri
     $responseObject | ConvertTo-Json
 `;
 
-const deleteExtendedPropertiesScript = (dbName: string, instanceName: string = '.', props: Array<string>) => `
+const deleteExtendedPropertiesScript = (
+    dbName: string,
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    props: Array<string>
+) => `
 $dbname = '${dbName}'
 $instanceName = '${instanceName}'
 

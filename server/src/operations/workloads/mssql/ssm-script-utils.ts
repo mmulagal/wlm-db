@@ -82,7 +82,7 @@ $driveLettersObject | ConvertTo-Json
 }
 */
 
-const GET_DEFAULT_DRIVES = (instanceName: string = '.') => `
+const GET_DEFAULT_DRIVES = (instanceName: string) => `
 #Get default data drive of SQL server
 $defaultDataDrive =  sqlcmd -S "${instanceName}" -Q @"
     SET NOCOUNT ON;
@@ -103,7 +103,7 @@ Write-Output $defaultDataDrive $defaultLogDrive | ConvertTo-Json
 `;
 
 const RESOURCE_UTILIZATION = (
-    instanceName: string = '.'
+    instanceName: string
 ) => `$cpu =  sqlcmd -S "${instanceName}" -Q "SET NOCOUNT ON; set quoted_identifier ON;DECLARE @ts BIGINT;
 DECLARE @lastNmin TINYINT;
 SET @lastNmin = 1;
@@ -154,7 +154,7 @@ $jsonString = $jsonObject | ConvertTo-Json
 $jsonString
 `;
 
-const GET_DEFAULT_COLLATION = (instanceName: string = '.') => `
+const GET_DEFAULT_COLLATION = (instanceName: string) => `
 #Get default collation of SQL server
 $defaultSqlCollation = sqlcmd -S "${instanceName}" -Q @"
     SET NOCOUNT ON;
@@ -279,7 +279,7 @@ const installPowerShellModule = (module: string) => `
     }
 `;
 
-const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string, instanceName: string = '.') => `
+const getMappedOntapVolumesScript = (fsxid: string, fsxregion: string, instanceName: string) => `
     $WarningPreference = 'SilentlyContinue';
     if ($responseObject -eq $null) {
         $responseObject = @{}
@@ -574,9 +574,8 @@ const restGetUtilForOntap = (
     $responseObject | ConvertTo-Json -Depth 5
     
 `;
-
-const INSTANCE_DETAILS =
-    'Get-WmiObject win32_service | Where-Object {$_.DisplayName -like "sql server (*"} | Select-Object @{Name=\'instanceName\'; Expression={$_.Name}}, @{Name=\'instanceState\'; Expression={$_.State}} | ConvertTo-Json';
+// prettier-ignore
+const INSTANCE_DETAILS = 'Get-WmiObject win32_service | Where-Object {$_.DisplayName -like "sql server (*)"} | Select-Object @{Name=\'instanceName\'; Expression={$_.Name}}, @{Name=\'instanceState\'; Expression={$_.State}} | ConvertTo-Json';
 
 const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
     $s3SignedUrl = '${s3SignedURL}'

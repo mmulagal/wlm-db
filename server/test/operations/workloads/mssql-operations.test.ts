@@ -31,7 +31,7 @@ import {
     getMssqlInstanceGuid
 } from '../../../src/operations/workloads/mssql/mssql-operations';
 import { createResource, deleteResource, listResources } from '../../../src/lib/database/db';
-import { DATABASE_METRIC_TYPE } from '../../../src/utils/consts';
+import { DATABASE_METRIC_TYPE, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../src/utils/consts';
 
 beforeAll(async () => {
     await createResource(ACCOUNT_ID, {
@@ -83,7 +83,7 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get databases count', async () => {
-        const resp = await getDatabasesCount(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID, '.');
+        const resp = await getDatabasesCount(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID, DEFAULT_MSSQL_INSTANCE_NAME);
         expect(resp.totalCount).toEqual(8);
     });
 
@@ -113,7 +113,7 @@ describe('MSSQL Resource methods', () => {
     });
 
     it('Get MSSQL native backups count ', async () => {
-        const resp = await getNativeSQLProtection(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID, '.');
+        const resp = await getNativeSQLProtection(CREDENTIALS_ID, DEFAULT_AWS_REGION, ACTIVE_INSTANCE_ID, DEFAULT_MSSQL_INSTANCE_NAME);
         expect(resp).toEqual(4);
     });
 
@@ -150,13 +150,13 @@ describe('MSSQL Resource methods', () => {
             'd749b6e689352eeaadf7b3d3c08dbda25763a62c7a75b7159d5e96080b7433b3',
             'tempdb18',
             'i-0ac64c292872877c7',
-            '.'
+            DEFAULT_MSSQL_INSTANCE_NAME
         );
         expect(resp).toEqual(false);
     });
 
     it('Get MSSQL instance id ', async () => {
-        const resp = await getMssqlInstanceGuid(CREDENTIALS_ID, DEFAULT_AWS_REGION, '.', [
+        const resp = await getMssqlInstanceGuid(CREDENTIALS_ID, DEFAULT_AWS_REGION, DEFAULT_MSSQL_INSTANCE_NAME, [
             ACTIVE_INSTANCE_ID,
             STANDBY_INSTANCE_ID
         ]);
