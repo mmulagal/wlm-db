@@ -42,8 +42,7 @@
                 "databaseInstanceName": "MSSQLSERVER",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Managed",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -81,8 +80,7 @@
                 "databaseInstanceName": "MSSQLSERVER2",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -120,8 +118,7 @@
                 "databaseInstanceName": "MSSQLSERVER3",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -159,8 +156,7 @@
                 "databaseInstanceName": "MSSQLSERVER4",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -233,8 +229,7 @@
                 "databaseInstanceName": "MSSQLSERVER",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": true,
+                "statusColText": "Managed",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -272,8 +267,7 @@
                 "databaseInstanceName": "MSSQLSERVER2",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": true,
+                "statusColText": "Managed",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -311,8 +305,7 @@
                 "databaseInstanceName": "MSSQLSERVER3",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -350,8 +343,7 @@
                 "databaseInstanceName": "MSSQLSERVER4",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -429,8 +421,7 @@
                 "databaseInstanceName": "MSSQLSERVER",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": true,
+                "statusColText": "Managed",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -468,8 +459,7 @@
                 "databaseInstanceName": "MSSQLSERVER2",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": true,
+                "statusColText": "Managed",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -507,8 +497,7 @@
                 "databaseInstanceName": "MSSQLSERVER3",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": true,
+                "statusColText": "Managed",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -546,8 +535,7 @@
                 "databaseInstanceName": "MSSQLSERVER4",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": true,
+                "statusColText": "Managed",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -596,7 +584,7 @@
         "vpcId": "vpc1",
         "vpcName": "wlmdb-vpc1",
         "vpcCidr": "10.20.30.0/24",
-        "action": "Manage",
+        "action": "",
         "actionDisable": false,
         "ec2Details": [
             {
@@ -620,8 +608,7 @@
                 "databaseInstanceName": "MSSQLSERVER",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": false,
-                "isManaged": false,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -659,8 +646,7 @@
                 "databaseInstanceName": "MSSQLSERVER2",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": false,
-                "isManaged": false,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -698,8 +684,7 @@
                 "databaseInstanceName": "MSSQLSERVER3",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": false,
-                "isManaged": false,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -737,8 +722,7 @@
                 "databaseInstanceName": "MSSQLSERVER4",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": false,
-                "isManaged": false,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for ONTAP",
                 "protection": {
@@ -781,7 +765,7 @@
         "name": "Database hostname 5",
         "status": "Unknown",
         "ssmState": "Offline",
-        "action": "Manage",
+        "action": "",
         "actionDisable": true,
         "sqlServerInstances": []
     },
@@ -828,8 +812,7 @@
                 "databaseInstanceName": "MSSQLSERVER",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -853,8 +836,7 @@
                 "databaseInstanceName": "MSSQLSERVER2",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -878,8 +860,7 @@
                 "databaseInstanceName": "MSSQLSERVER3",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -903,8 +884,7 @@
                 "databaseInstanceName": "MSSQLSERVER4",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -963,8 +943,7 @@
                 "databaseInstanceName": "MSSQLSERVER",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -988,8 +967,7 @@
                 "databaseInstanceName": "MSSQLSERVER2",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -1013,8 +991,7 @@
                 "databaseInstanceName": "MSSQLSERVER3",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -1038,8 +1015,7 @@
                 "databaseInstanceName": "MSSQLSERVER4",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -1098,8 +1074,7 @@
                 "databaseInstanceName": "MSSQLSERVER",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": false,
-                "isManaged": false,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -1123,8 +1098,7 @@
                 "databaseInstanceName": "MSSQLSERVER2",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": false,
-                "isManaged": false,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -1148,8 +1122,7 @@
                 "databaseInstanceName": "MSSQLSERVER3",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": false,
-                "isManaged": false,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -1173,8 +1146,7 @@
                 "databaseInstanceName": "MSSQLSERVER4",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": false,
-                "isManaged": false,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "EBS",
                 "protection": {
@@ -1238,8 +1210,7 @@
                 "databaseInstanceName": "MSSQLSERVER",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1267,8 +1238,7 @@
                 "databaseInstanceName": "MSSQLSERVER2",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1293,8 +1263,7 @@
                 "databaseInstanceName": "MSSQLSERVER3",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1322,8 +1291,7 @@
                 "databaseInstanceName": "MSSQLSERVER4",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Multi AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1386,8 +1354,7 @@
                 "databaseInstanceName": "MSSQLSERVER",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1415,8 +1382,7 @@
                 "databaseInstanceName": "MSSQLSERVER2",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1444,8 +1410,7 @@
                 "databaseInstanceName": "MSSQLSERVER3",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1473,8 +1438,7 @@
                 "databaseInstanceName": "MSSQLSERVER4",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": true,
-                "isManaged": false,
+                "statusColText": "Unmanaged",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1537,8 +1501,7 @@
                 "databaseInstanceName": "MSSQLSERVER",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": false,
-                "isManaged": false,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1566,8 +1529,7 @@
                 "databaseInstanceName": "MSSQLSERVER2",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": false,
-                "isManaged": false,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1595,8 +1557,7 @@
                 "databaseInstanceName": "MSSQLSERVER3",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": false,
-                "isManaged": false,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {
@@ -1624,8 +1585,7 @@
                 "databaseInstanceName": "MSSQLSERVER4",                           
                 "status": "Up",
                 "databaseCount": 0,
-                "isDetected": false,
-                "isManaged": false,
+                "statusColText": "Undetected",
                 "fileSystemDeploymentMode": "Single AZ",
                 "fileSystemType": "FSx for Windows",
                 "protection": {

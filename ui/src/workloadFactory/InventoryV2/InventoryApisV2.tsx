@@ -18,7 +18,7 @@ import {
     useLazyGetFsxCredentialStatusQuery,
     useLazyGetManagedHostDataQuery
 } from '../../utils/apiService';
-import { formatInventoryTableData } from './InventoryUtilsV2';
+import { formatInventoryTableData, getInventoryDataCount } from './InventoryUtilsV2';
 
 const InventoryApisV2 = () => {
     const dispatch = useAppDispatch();
@@ -280,20 +280,17 @@ const InventoryApisV2 = () => {
 
     useEffect(() => {
         const formattedInventoryTableData = formatInventoryTableData(databaseHostsData, {});
-        dispatch(setInventoryTableData(formattedInventoryTableData));
+        const inventoryDataCount = getInventoryDataCount(formattedInventoryTableData);
+
+        // dispatch(setInventoryTableData(formattedInventoryTableData));
+        // dispatch(setInventoryChartData(inventoryDataCount));
     }, [databaseHostsData]);
 
     // ToDo - Currently stored data is from json. Will update once writting API logic
     useEffect(() => {
-        // dispatch(setInventoryTableData(InventoryTableData));
-        dispatch(
-            setInventoryChartData({
-                detectedHost: 9,
-                undetectedHost: 2,
-                managedInstance: 6,
-                unmanagedInstance: 24
-            })
-        );
+        dispatch(setInventoryTableData(InventoryTableData));
+        const inventoryDataCount = getInventoryDataCount(InventoryTableData);
+        dispatch(setInventoryChartData(inventoryDataCount));
     }, []);
 };
 

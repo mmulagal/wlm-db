@@ -185,11 +185,11 @@ const InventoryTable = () => {
             width: '184px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
-                const checkForAllManaged = rowData?.sqlServerInstances.every((item: any) => item.isManaged === true);
+                const checkForAllManaged = rowData?.sqlServerInstances.every((item: any) => item?.statusColText === 'Managed');
 
                 return (
-                    <>
-                        {checkForAllManaged && (
+                    <>  
+                        {rowData?.action && checkForAllManaged && (
                             <Popover
                                 popoverClass={styles['copy-popover']}
                                 children={GENERAL.ALL_MANAGED_TEXT}
@@ -203,7 +203,7 @@ const InventoryTable = () => {
                                 }
                             />
                         )}
-                        {!checkForAllManaged && !rowData?.actionDisable && rowData.ssmState !== 'not connected' && (
+                        {rowData?.action && !checkForAllManaged && !rowData?.actionDisable && rowData.ssmState !== 'Offline' && (
                             <div
                                 className={styles.detectManage}
                                 onClick={() => {
@@ -219,7 +219,7 @@ const InventoryTable = () => {
                                 </Typography>
                             </div>
                         )}
-                        {!checkForAllManaged && rowData?.actionDisable && rowData.ssmState !== 'not connected' && (
+                        {rowData?.action && !checkForAllManaged && rowData?.actionDisable && rowData.ssmState !== 'Offline' && (
                             <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
                                 <Typography variant="Regular_14" className={styles.textStyle}>
                                     {rowData?.action}

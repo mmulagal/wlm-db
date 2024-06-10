@@ -1,7 +1,9 @@
 import { GENERAL } from "../../utils/appConstants";
+import { FSX_DEPLOYMENT_MODE } from "../../utils/consts";
+import { DatabaseInstancesSummaryInterface, EstimatedUsageCostInterface, InventoryTableData, ManagedHostsRowInterface } from "../../utils/types/inventoryV2Types";
 import { formatFractionalNumber, formatSizeOnePrecision } from "../../utils/utilityFunctions";
 
-export const formatInventoryTableData = (managedData: any, discoverData: any) => {
+export const formatInventoryTableData = (managedData: { [key: string]: ManagedHostsRowInterface } | null, discoverData: any) => {
     let result = {};
     if (!managedData) {
         return result;
@@ -12,7 +14,35 @@ export const formatInventoryTableData = (managedData: any, discoverData: any) =>
     return result;
 };
 
-export const formatManagedRows = (managedRow: any) => {
+export const getInventoryDataCount = (data: { [key: string]: InventoryTableData } | null) => {
+    let result;
+    if (!data) {
+        return result;
+    };
+
+    let detectedHostCount = 0;
+    let undetectedHostCount = 0;
+    let managedInst = 0;
+    let totalInstance = 0;
+    Object.keys(data).map((key: string) => {
+        if (data[key]?.action === 'Manage') {
+            detectedHostCount += 1;
+        } else if (data[key]?.action === 'Detect') {
+            undetectedHostCount += 1;
+        }
+        managedInst += data[key]?.managedInstance || 0;
+        totalInstance += data[key]?.totalInstance || 0;
+    });
+    result = {
+        detectedHost: detectedHostCount,
+        undetectedHost: undetectedHostCount,
+        managedInstance: managedInst,
+        unmanagedInstance: totalInstance - managedInst
+    }
+    return result;
+};
+
+export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
     let managedInstanceCount = managedInstancesCount(managedRow);
     let totalInstanceCount = managedRow?.databaseInstanceDetails?.length;
     let ssmState = getSsmState(managedRow);
@@ -34,14 +64,14 @@ export const formatManagedRows = (managedRow: any) => {
         actionDisable: totalInstanceCount === managedInstanceCount,
         ec2Details: managedRow?.nodeTopology?.ec2Details,
         estimatedUsageCost: managedRow?.estimatedUsageCost,
-        totalCost: getTotalCost(managedRow?.estimatedUsageCost),
+        totalCost: getTotalCost(managedRow?.estimatedUsageCost || {}),
         allocatedCapacity: getAllocatedCapacity(managedRow),
         sqlServerInstances: formatInstanceData(managedRow)
     };
     return result;
 };
 
-export const getNodeStatus = (row: any) => {
+export const getNodeStatus = (row: ManagedHostsRowInterface) => {
     if (row?.nodeStatus && row?.nodeStatus !== 'N/A') {
         if (row?.nodeStatus === 'running') {
             return 'Online';
@@ -53,7 +83,7 @@ export const getNodeStatus = (row: any) => {
     }
 };
 
-export const getSsmState = (row: any) => {
+export const getSsmState = (row: ManagedHostsRowInterface) => {
     if (row?.ssmStatus && row?.ssmStatus !== 'N/A') {
         if (row?.ssmStatus === 'Connected') {
             return 'Online';
@@ -65,16 +95,16 @@ export const getSsmState = (row: any) => {
     }
 };
 
-export const managedInstancesCount = (row: any) => {
+export const managedInstancesCount = (row: ManagedHostsRowInterface) => {
     if (row?.databaseInstanceDetails && row?.databaseInstanceDetails?.length > 0) {
-        let managedRows = row?.databaseInstanceDetails?.filter((per:any) => per?.isManaged);
+        let managedRows = row?.databaseInstanceDetails?.filter(per => per?.isManaged);
         return managedRows?.length;
     } else {
         return '';
     }
 };
 
-export const getInstallationMode = (row: any) => {
+export const getInstallationMode = (row: ManagedHostsRowInterface) => {
     let installationMode = '';
     if (row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
         for (let i = 0; i < row?.databaseInstancesSummary?.length; i++) {
@@ -90,7 +120,7 @@ export const getInstallationMode = (row: any) => {
     }
 };
 
-export const getTotalCost = (estimatedUsageCost: any) => {
+export const getTotalCost = (estimatedUsageCost: EstimatedUsageCostInterface) => {
     if (estimatedUsageCost) {
         return (
             (estimatedUsageCost?.compute || 0) +
@@ -105,10 +135,10 @@ export const getTotalCost = (estimatedUsageCost: any) => {
     }
 };
 
-export const getAllocatedCapacity = (row: any) => {
+export const getAllocatedCapacity = (row: ManagedHostsRowInterface) => {
     let allocatedCapacity = 0;
     if (row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
-        row?.databaseInstancesSummary?.map((perRow:any) => {
+        row?.databaseInstancesSummary?.map((perRow) => {
             allocatedCapacity += ((perRow?.storage?.fsxn?.size || 0) + (perRow?.storage?.fsxw?.size || 0) + (perRow?.storage?.ebs?.size || 0))
         });
         return allocatedCapacity;
@@ -117,11 +147,19 @@ export const getAllocatedCapacity = (row: any) => {
     }
 };
 
-export const getStorageSavingsText = (val: any) => {
+export const getFileSystemDeploymentMode = (val: string | undefined) => {
+    return val === FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 
+    ? GENERAL.SINGLE_AZ
+    : val === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+    ? GENERAL.MULTI_AZ
+    : val;
+};
+
+export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) => {
     let storagePercent = 0;
-    let storageSavingsText = '';
-    let fsxType = '';
-    let fileSystemType = val?.databseInstanceTopology?.fileSystemType;
+    let storageSavingsText: string = '';
+    let fsxType: string = '';
+    let fileSystemType = val?.databseInstanceTopology?.fileSystemType || '';
     if (fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
         fsxType = 'fsxn';
     } else if (fileSystemType.includes(GENERAL.FSX_FOR_WINDOWS)) {
@@ -131,28 +169,28 @@ export const getStorageSavingsText = (val: any) => {
     }
 
     if (fsxType) {
-        storagePercent = val?.storage?.[fsxType]
-            ? (val.storage?.[fsxType]?.spaceSavings / val.storage?.[fsxType]?.used) * 100
+        let fsxTypeValue = val?.storage?.[fsxType] || {};
+        storagePercent = fsxTypeValue
+            ? (Number(fsxTypeValue?.spaceSavings) / Number(fsxTypeValue?.used)) * 100
             : 0;
         storageSavingsText =
-            val?.storage?.[fsxType]?.spaceSavings &&
+            (val?.storage?.[fsxType]?.spaceSavings &&
             val?.storage?.[fsxType]?.used &&
             formatFractionalNumber(storagePercent, 2) +
                 '% (' +
-                formatSizeOnePrecision(val.storage?.[fsxType]?.spaceSavings) +
-                ')';
+                formatSizeOnePrecision(Number(fsxTypeValue?.spaceSavings)) +
+                ')') || '';
     }
     return storageSavingsText;
 };
 
-export const formatInstanceData = (row: any) => {
-    let instanceRows = row?.databaseInstancesSummary?.map((perRow: any) => {
-        const isManagedRow = row?.databaseInstancesSummary?.filter((per:any) => per?.instanceName === perRow?.databaseInstanceName);
+export const formatInstanceData = (row: ManagedHostsRowInterface) => {
+    let instanceRows = row?.databaseInstancesSummary?.map((perRow) => {
+        const isManagedRow = row?.databaseInstanceDetails?.filter((per) => per?.instanceName === perRow?.databaseInstanceName);
         return {
             ...perRow,
-            isDetected: true, // for managed rows 
-            isManaged: isManagedRow?.[0]?.isManaged || false,
-            fileSystemDeploymentMode: perRow?.databseInstanceTopology?.fileSystemDeploymentMode,
+            statusColText: isManagedRow?.[0]?.isManaged ? 'Managed' : 'Unmanaged',
+            fileSystemDeploymentMode: getFileSystemDeploymentMode(perRow?.databseInstanceTopology?.fileSystemDeploymentMode),
             fileSystemType: perRow?.databseInstanceTopology?.fileSystemType,
             storageSavingsText: getStorageSavingsText(perRow),
             allocatedCapacity: (perRow?.storage?.fsxn?.size || 0) + (perRow?.storage?.fsxw?.size || 0) + (perRow?.storage?.ebs?.size || 0)
