@@ -57,6 +57,10 @@ export interface StorageSavingsInterface {
         regionName?: string;
         monthlySnapshotCapacity?: number | string;
     };
+    totalSummary?: {
+        existing?: number | string;
+        recommended?: number | string;
+    }
 }
 
 export interface RecommendedIntanceInterface {
