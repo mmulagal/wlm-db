@@ -506,7 +506,7 @@ function generateDatabaseInstanceName(instanceName: string, isDefault: boolean =
     if (isDefault) {
         return DEFAULT_MSSQL_INSTANCE_NAME;
     }
-    return `DEFAULT_MSSQL_INSTANCE_NAME\\${instanceName.replace(/^.+\$/, '')}`;
+    return `${DEFAULT_MSSQL_INSTANCE_NAME}\\${instanceName.replace(/^.+\$/, '')}`;
 }
 
 export {

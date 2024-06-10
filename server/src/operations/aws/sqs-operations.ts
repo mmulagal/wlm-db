@@ -612,48 +612,41 @@ async function processCloudFormationMessages() {
                                                                 instance.instanceName
                                                         );
 
-                                                        const instanceDetailsList: DatabaseInstance[] =
-                                                            await Promise.all(
-                                                                instanceNames.map(async (instanceName: string) => {
-                                                                    const defaultInstance = !instanceName.includes('$');
-                                                                    const modifiedInstanceName =
-                                                                        generateDatabaseInstanceName(
-                                                                            instanceName,
-                                                                            defaultInstance
-                                                                        );
-
-                                                                    const sqlInstanceGuid = await getMssqlInstanceGuid(
-                                                                        credentialsId,
-                                                                        region,
-                                                                        modifiedInstanceName,
-                                                                        nodeIds
+                                                        await Promise.all(
+                                                            instanceNames.map(async (instanceName: string) => {
+                                                                const defaultInstance = !instanceName.includes('$');
+                                                                const modifiedInstanceName =
+                                                                    generateDatabaseInstanceName(
+                                                                        instanceName,
+                                                                        defaultInstance
                                                                     );
 
-                                                                    return {
-                                                                        credentialsId,
-                                                                        resourceId,
-                                                                        region,
-                                                                        databaseInstanceId: sqlInstanceGuid,
-                                                                        databaseInstanceName: instanceName,
-                                                                        fsxnIds: fsxId,
-                                                                        isDefault: defaultInstance,
-                                                                        source: RESOURCE_SOURCE.DEPLOY,
-                                                                        fsxSvmId: { fsxId: fsxSvmId },
-                                                                        sqlDeploymentType,
-                                                                        databaseType: DatabaseTypes.MS_SQL_SERVER
-                                                                    };
-                                                                })
-                                                            );
-                                                        logger.info(
-                                                            'Instance details list to insert in database instance table:',
-                                                            instanceDetailsList,
-                                                            accountId,
-                                                            nodeIds
-                                                        );
-                                                        await Promise.all(
-                                                            instanceDetailsList.map(instanceDetails =>
-                                                                upsertDatabaseInstance(accountId, instanceDetails)
-                                                            )
+                                                                const sqlInstanceGuid = await getMssqlInstanceGuid(
+                                                                    credentialsId,
+                                                                    region,
+                                                                    modifiedInstanceName,
+                                                                    nodeIds
+                                                                );
+
+                                                                const instanceDetails: DatabaseInstance = {
+                                                                    credentialsId,
+                                                                    resourceId,
+                                                                    region,
+                                                                    databaseInstanceId: sqlInstanceGuid,
+                                                                    databaseInstanceName: instanceName,
+                                                                    fsxnIds: fsxId,
+                                                                    isDefault: defaultInstance,
+                                                                    source: RESOURCE_SOURCE.DEPLOY,
+                                                                    fsxSvmId: { fsxId: fsxSvmId },
+                                                                    sqlDeploymentType,
+                                                                    databaseType: DatabaseTypes.MS_SQL_SERVER
+                                                                };
+
+                                                                await upsertDatabaseInstance(
+                                                                    accountId,
+                                                                    instanceDetails
+                                                                );
+                                                            })
                                                         );
                                                     } catch (error) {
                                                         logger.error(
