@@ -66,6 +66,7 @@ import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
+import { generateDatabaseInstanceName } from '../utils/utils';
 
 const logger = getLogger();
 
@@ -1500,9 +1501,7 @@ async function getDatabseInstanceSummary(
 
     const { userDatabase = [] } = metadata as unknown as Metadata;
 
-    const databaseInstanceName = isdefaultInstance
-        ? '$env:computername'
-        : `$env:computername\\${savedDatabaseInstanceName.replace(/^.+\$/, '')}`;
+    const databaseInstanceName = generateDatabaseInstanceName(savedDatabaseInstanceName, isdefaultInstance);
 
     let fieldsValues: Array<string> = [];
 
