@@ -31,7 +31,7 @@ import {
     convertMetricsIntoJson,
     deployedStackUrl,
     derivePropertiesFromARN,
-    generateDatabaseInstanceName,
+    getDatabsaeInstanceName,
     getDescriptionForMatchingName,
     getQueueUrl
 } from '../../utils/utils';
@@ -615,11 +615,10 @@ async function processCloudFormationMessages() {
                                                         await Promise.all(
                                                             instanceNames.map(async (instanceName: string) => {
                                                                 const defaultInstance = !instanceName.includes('$');
-                                                                const modifiedInstanceName =
-                                                                    generateDatabaseInstanceName(
-                                                                        instanceName,
-                                                                        defaultInstance
-                                                                    );
+                                                                const modifiedInstanceName = getDatabsaeInstanceName(
+                                                                    instanceName,
+                                                                    defaultInstance
+                                                                );
 
                                                                 const sqlInstanceGuid = await getMssqlInstanceGuid(
                                                                     credentialsId,
