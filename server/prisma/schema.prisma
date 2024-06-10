@@ -118,7 +118,7 @@ model database_instances {
   region                            String            @db.VarChar(30)
   resource_id                       String            @db.VarChar(255)
   database_instance_id              String            @db.VarChar(36)
-  database_instance_name            String            @db.VarChar(16)
+  database_instance_name            String            @db.VarChar(36)
   fsxn_ids                          String            @db.VarChar(255)
   is_default                        Boolean           @default(value: false)
   database_deployment_type          DATABASE_DEPLOYMENT_TYPE            

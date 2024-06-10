@@ -619,7 +619,7 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                 if (selectedInstance !== undefined) {
                     const instanceName = defaultInstance
                         ? '.'
-                        : `$env:computername\\${selectedInstance.replace('MSSQL$', '')}`;
+                        : `$env:computername\\${selectedInstance.replace(/^.+\$/, '')}`;
                     return instanceName;
                 }
 

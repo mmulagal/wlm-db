@@ -23,8 +23,8 @@ import {
     WLMDB_COST_ALLOCATION_TAG,
     CF_STACK_RESOURCE_TYPE,
     RESOURCE_SOURCE,
-    DEFAULT_INSTANCE_NAME,
-    STORAGE_PROTOCOLS
+    STORAGE_PROTOCOLS,
+    DatabaseTypes
 } from '../../utils/consts';
 import {
     checkAndRetrieveJsonObject,
@@ -609,12 +609,25 @@ async function processCloudFormationMessages() {
                                                             (instance: { instanceName: string }) =>
                                                                 instance.instanceName
                                                         );
-                                                        const instanceDetailsList: any = instanceNames.map(
-                                                            async (instanceName: string) => {
+                                                        const instanceDetailsList: any[] = await Promise.all(
+                                                            instanceNames.map(async (instanceName: string) => {
+                                                                let modifiedInstanceName: string;
+                                                                let defaultInstance;
+                                                                if (instanceName.includes('$')) {
+                                                                    modifiedInstanceName = `$env:computername\\${instanceName.replace(
+                                                                        /^.+\$/,
+                                                                        ''
+                                                                    )}`;
+                                                                    defaultInstance = false;
+                                                                } else {
+                                                                    modifiedInstanceName = '$env:computername';
+                                                                    defaultInstance = true;
+                                                                }
+
                                                                 const sqlInstanceGuid = await getMssqlInstanceGuid(
                                                                     credentialsId,
                                                                     region,
-                                                                    instanceName,
+                                                                    modifiedInstanceName,
                                                                     nodeIds
                                                                 );
 
@@ -623,17 +636,27 @@ async function processCloudFormationMessages() {
                                                                     resourceId,
                                                                     region,
                                                                     databaseInstanceId: sqlInstanceGuid,
-                                                                    databaseInstanceName: DEFAULT_INSTANCE_NAME,
+                                                                    databaseInstanceName: instanceName,
                                                                     fsxnIds: fsxId,
-                                                                    isDefault: true,
+                                                                    isDefault: defaultInstance,
                                                                     source: RESOURCE_SOURCE.DEPLOY,
                                                                     fsxSvmId: { fsxId: fsxSvmId },
                                                                     sqlDeploymentType,
-                                                                    databaseType: 'MSSQL'
+                                                                    databaseType: DatabaseTypes.MS_SQL_SERVER
                                                                 };
-                                                            }
+                                                            })
                                                         );
-                                                        await upsertDatabaseInstance(accountId, instanceDetailsList);
+                                                        logger.info(
+                                                            'Instance details list to insert in database instance table:',
+                                                            instanceDetailsList,
+                                                            accountId,
+                                                            nodeIds
+                                                        );
+                                                        await Promise.all(
+                                                            instanceDetailsList.map(instanceDetails =>
+                                                                upsertDatabaseInstance(accountId, instanceDetails)
+                                                            )
+                                                        );
                                                     } catch (error) {
                                                         logger.error(
                                                             'Failed to add details to database instance table',
