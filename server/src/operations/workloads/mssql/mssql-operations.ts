@@ -597,7 +597,7 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
     const commands = [INSTANCE_DETAILS];
     try {
         for (const nodeId of nodeIds) {
-            const response = await callSsmExecution(credentialsId, region, commands, nodeId);
+            const response = await callSsmExecution(credentialsId, region, commands, nodeId, undefined, false);
             if (response) {
                 const parsedResponse = sqlResponseParsing(response);
 
