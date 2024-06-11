@@ -645,7 +645,7 @@ export const GENERAL = {
             ],
             refresh: ['Sandbox of database ', ' refreshed successfully.'],
             split: ['Sandbox database ', ' split successfully.'],
-            integrityCheck: ['Integrity check of ', ' is completed successfully']
+            integrityCheck: ['Integrity check of ', ' completed successfully']
         },
         FAILED: {
             delete: ['Sandbox database ', ' failed to delete.'],
