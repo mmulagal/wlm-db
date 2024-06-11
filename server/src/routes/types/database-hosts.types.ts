@@ -407,6 +407,19 @@ const SplitEstimatesResponse = Type.Object({
     )
 });
 
+const SandboxSnapshotsResponse = Type.Object({
+    snapshots: Type.Array(
+        Type.Object({
+            name: Type.String(),
+            createTime: Type.Number()
+        })
+    )
+});
+
+const SandboxSnapshotsQueryParams = Type.Object({
+    historical: Type.Optional(Type.Boolean())
+});
+
 const SandboxLifeCycleBody = Type.Object({
     snapshot: Type.Optional(Type.String()),
     action: Type.String({ enum: ['REFRESH', 'RE-BASELINE'] })
@@ -554,6 +567,8 @@ export {
     SandboxParams,
     SplitEstimatesResponse,
     SandboxLifeCycleBody,
+    SandboxSnapshotsResponse,
+    SandboxSnapshotsQueryParams,
     DatabaseHostSummaryForMultiInstanceResponse,
     DatabaseHostSummaryForMultiInstanceListResponse,
     DatabaseHostSummaryForMultiInstanceResponseType,
