@@ -55,6 +55,15 @@ const InventoryTable = () => {
     const [isManageButtonDisable, setIsManageButtonDisable] = useState(false);
     const [scrollPos, setScrollPos] = useState(0);
 
+    const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
+    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
+    const { isManagedHostListLoading } = useAppSelector(state => state.inventoryV2);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        setLoading(databaseHostsLoading || isDiscoverInProgress || fullHostDataLoading || isManagedHostListLoading);
+    }, [databaseHostsLoading, isDiscoverInProgress, fullHostDataLoading, isManagedHostListLoading]);
+
     //For scroll sync
     useRunOnce(() => {
         const handleOuterScroll = () => {
@@ -518,7 +527,7 @@ const InventoryTable = () => {
                 );
             }
         },
-        isLazyLoading: false
+        isLazyLoading: loading
     });
 
     useEffect(() => {
