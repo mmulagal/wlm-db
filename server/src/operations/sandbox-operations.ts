@@ -9,6 +9,7 @@ import {
     ACCOUNTID,
     CUSTOM_SSM_EXECUTION_TIMEOUT,
     DEFAULT_INSTANCE_NAME,
+    DEFAULT_MSSQL_INSTANCE_NAME,
     HttpErrorCodes,
     NO_SANDBOX_CREATED,
     RESOURCESTYPE,
@@ -506,7 +507,7 @@ async function createSandbox(
             fsxId: srcResourceDetail.co_relation_id!,
             activeNodeInstanceId: srcStatus.activeNodeInstanceId!,
             metadata: srcResourceDetail.metadata as unknown as Metadata,
-            instanceName: srcStatus.instanceName || '.'
+            instanceName: srcStatus.instanceName || DEFAULT_MSSQL_INSTANCE_NAME
         },
         {
             ...dest,
@@ -515,7 +516,7 @@ async function createSandbox(
             fsxId: destResourceDetail.co_relation_id!,
             activeNodeInstanceId: destStatus.activeNodeInstanceId!,
             metadata: destResourceDetail.metadata as unknown as Metadata,
-            instanceName: destStatus.instanceName || '.'
+            instanceName: destStatus.instanceName || DEFAULT_MSSQL_INSTANCE_NAME
         },
         tag,
         mountPoints
@@ -1095,7 +1096,7 @@ async function createCloneDb(
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [
-                createCloneDbScript('testdb', '.', [
+                createCloneDbScript('testdb', DEFAULT_MSSQL_INSTANCE_NAME, [
                     'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
                     'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
                 ])
@@ -1174,7 +1175,7 @@ async function createExtendedProperties(
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [
-                addExtendedProperties('testdb', '.', {
+                addExtendedProperties('testdb', DEFAULT_MSSQL_INSTANCE_NAME, {
                     tag: 'demo',
                     cloned_by: 'netapp_wf',
                     source: 'resource|instance|testdb',
@@ -1490,7 +1491,7 @@ async function getSandboxConnectionString(
 
         return {
             server:
-                instanceName === '.'
+                instanceName === DEFAULT_MSSQL_INSTANCE_NAME
                     ? `${resourceName}.${activeDirectoryName}`
                     : `${instanceName}.${activeDirectoryName}`,
             database: sandboxName,
@@ -2190,7 +2191,7 @@ async function detachSandboxAndAccessPath(
                     'test-db',
                     '["123456789", "987654321"]',
                     '["S:\\test-db-Data", "L:\\test-db-Log"]',
-                    '.'
+                    DEFAULT_MSSQL_INSTANCE_NAME
                 )
             ];
         }
@@ -2552,7 +2553,7 @@ async function deleteExtendedProperties(
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [
-                deleteExtendedPropertiesScript('test-db', '.', [
+                deleteExtendedPropertiesScript('test-db', DEFAULT_MSSQL_INSTANCE_NAME, [
                     'cloned_by',
                     'baseSnapshot',
                     'source',

@@ -88,7 +88,7 @@
         align-self: center;
         &.circle {
             border-radius: 50%;
-            margin-top: 2px;
+            // margin-top: 2px;
         }
         &.up {
             background-color: var(--green-60);
@@ -101,6 +101,9 @@
         }
         &.failed {
             background-color: var(--red-30);
+        }
+        &.disabled {
+            background-color: var(--toggle-off-bg);
         }
     }
 

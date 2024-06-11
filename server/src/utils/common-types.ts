@@ -168,18 +168,17 @@ interface DatabaseInstance {
     instanceState: string;
     database_instance_id: string;
     is_default: boolean;
-    metadata?: databaseInstanceMetadata;
+    metadata: databaseInstanceMetadata;
     created_time?: string;
     database_deployment_type?: string;
-    fsxnId?: string;
-    credentials_id?: string;
+    fsxn_ids: string;
+    credentials_id: string;
     fsxwId?: string;
-    ebsVolumeIds?: string[];
+    ebsVolumeIds: string[];
     storage_protocol?: string;
-    region?: string;
+    region: string;
+    databaseType?: string;
     database_type?: string;
-    storage_type?: string;
-    fsxn_ids?: string;
 }
 
 export {

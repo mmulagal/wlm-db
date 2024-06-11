@@ -36,11 +36,12 @@ import {
     RESOURCE_RETRIVAL_ERROR,
     WF,
     ServerState,
-    DATABASE_METRIC_TYPE
+    DATABASE_METRIC_TYPE,
+    DEFAULT_MSSQL_INSTANCE_NAME
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import { createResource, deleteResource, listRelationshipsResources, listResources } from '../../../lib/database/db';
-import { generateHash, sqlResponseParsing } from '../../../utils/utils';
+import { getDatabsaeInstanceName, generateHash, sqlResponseParsing } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
@@ -75,7 +76,7 @@ async function getDatabasesCount(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Fetching databases total count ', credentialsId, region, activeNodeInstanceId);
 
@@ -236,7 +237,7 @@ async function getResourceUtilisationDetails(
     region: string,
     metricType: string,
     activeNodeInstanceId: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info(`Get ${metricType} resource utilization for resource: `, {
         credentialsId,
@@ -386,7 +387,7 @@ async function getServerDetails(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Get details of SQL Server database:', { credentialsId, region, activeNodeInstanceId });
 
@@ -597,7 +598,7 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
     const commands = [INSTANCE_DETAILS];
     try {
         for (const nodeId of nodeIds) {
-            const response = await callSsmExecution(credentialsId, region, commands, nodeId);
+            const response = await callSsmExecution(credentialsId, region, commands, nodeId, undefined, false);
             if (response) {
                 const parsedResponse = sqlResponseParsing(response);
 
@@ -617,9 +618,7 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
                     defaultInstance = false;
                 }
                 if (selectedInstance !== undefined) {
-                    const instanceName = defaultInstance
-                        ? '.'
-                        : `$env:computername\\${selectedInstance.replace('MSSQL$', '')}`;
+                    const instanceName = getDatabsaeInstanceName(selectedInstance, defaultInstance);
                     return instanceName;
                 }
 
@@ -672,7 +671,7 @@ async function getNativeSQLProtection(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Fetch SQL native protection status', { credentialsId, region, activeNodeInstanceId });
 
@@ -701,7 +700,7 @@ async function getPerformanceMetrics(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Fetch SQL server performance metrics (assessment, latency, IOPS, throughput) for resource', {
         credentialsId,
@@ -839,7 +838,7 @@ async function checkDatabaseExists(
     databaseHostId: string,
     databaseName: string,
     activeNodeInstanceId: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Checking Database name exists', {
         accountId,
@@ -889,7 +888,7 @@ async function getSqlServerVersion(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Get SQL server version:', { credentialsId, region, activeNodeInstanceId, instanceName });
     const command = [`sqlcmd -S "${instanceName}"-Q "SELECT @@VERSION" -y 0`];

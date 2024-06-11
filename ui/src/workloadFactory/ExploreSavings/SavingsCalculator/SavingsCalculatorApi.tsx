@@ -16,12 +16,9 @@ import {
     setViewCalculationsLoading,
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
-import storageSavingsJson from '../storageSavings.json';
-import viewCalculationJson from '../viewCalculations.json';
 import store from '../../../store/store';
 import { setMssqlInstancesData } from '../../../store/workloadFactory/inventorySlice';
 import { formatViewCalcData, setESInstanceData } from '../ExploreSavingsUtils';
-import { SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
 import { GENERAL } from '../../../utils/appConstants';
 
 const SavingsCalculatorApi = () => {
@@ -137,17 +134,6 @@ const SavingsCalculatorApi = () => {
             getStorageSavingsData();
             getViewCalculationsData();
         }
-
-        // else {
-        //     // Demo mode code will be removed once actual demo API starts returning data
-        //     if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-        //         dispatch(setStorageSavingsResponse(storageSavingsJson['standalone']));
-        //         dispatch(setViewCalculationsResponse(viewCalculationJson['standalone']));
-        //     } else {
-        //         dispatch(setStorageSavingsResponse(storageSavingsJson['aoag']));
-        //         dispatch(setViewCalculationsResponse(viewCalculationJson['aoag']));
-        //     }
-        // }
     };
 
     useEffect(() => {

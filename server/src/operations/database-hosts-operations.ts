@@ -66,6 +66,7 @@ import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
+import { getDatabsaeInstanceName } from '../utils/utils';
 
 const logger = getLogger();
 
@@ -523,18 +524,17 @@ async function getProtectionStatus(
             ebsVolumeIds ? isEbsAwsBackupEnabled(credentialsId, region, ebsVolumeIds) : Promise.resolve() // returns true if backup is enabled on any of the ebs ID associated with the resource; revisit this to return information for each ebs
         ]);
 
-            return {
-                isSqlNativeEnabled: Boolean(nativeSqlProtection),
-                isAwsBackupEnabled: {
-                    fsxn: Boolean(fsxnBackup),
-                    fsxw: Boolean(fsxwBackup),
-                    ebs: Boolean(ebsBackup)
-                },
-                isFsxOntapSnapshotsEnabled: Boolean(ontapProtection),
-                protectedDatabases: Number.isNaN(Number(nativeSqlProtection)) ? 0 : Number(nativeSqlProtection)
-            };
-        }
-    catch (error) {
+        return {
+            isSqlNativeEnabled: Boolean(nativeSqlProtection),
+            isAwsBackupEnabled: {
+                fsxn: Boolean(fsxnBackup),
+                fsxw: Boolean(fsxwBackup),
+                ebs: Boolean(ebsBackup)
+            },
+            isFsxOntapSnapshotsEnabled: Boolean(ontapProtection),
+            protectedDatabases: Number.isNaN(Number(nativeSqlProtection)) ? 0 : Number(nativeSqlProtection)
+        };
+    } catch (error) {
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             `Error while getting protection status: ${resourceDetail} ${error}`
@@ -1489,7 +1489,7 @@ async function getDatabseInstanceSummary(
         fields
     );
 
-    let {
+    const {
         database_instance_id: databaseInstanceId,
         database_instance_name: savedDatabaseInstanceName,
         is_default: isdefaultInstance,
@@ -1501,9 +1501,7 @@ async function getDatabseInstanceSummary(
 
     const { userDatabase = [] } = metadata as unknown as Metadata;
 
-    const databaseInstanceName = isdefaultInstance
-        ? `$env:computername`
-        : `$env:computername\\${savedDatabaseInstanceName.replace('MSSQL$', '')}`;
+    const databaseInstanceName = getDatabsaeInstanceName(savedDatabaseInstanceName, isdefaultInstance);
 
     let fieldsValues: Array<string> = [];
 
@@ -1527,7 +1525,7 @@ async function getDatabseInstanceSummary(
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
 
     const databaseInstanceDetails: DatabaseHostInstanceSummaryResponseType = {
-        databaseInstanceId: databaseInstanceId,
+        databaseInstanceId,
         databaseInstanceName: savedDatabaseInstanceName,
         status: '',
         databaseCount: 0

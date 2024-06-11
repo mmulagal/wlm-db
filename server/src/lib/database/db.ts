@@ -68,11 +68,11 @@ interface DatabaseInstance {
     region: string;
     databaseInstanceId: string;
     databaseInstanceName: string;
-    fsxnIds?: string;
+    fsxnIds: string;
     isDefault: boolean;
     source: string;
     sqlDeploymentType: string;
-    fsxSvmId: string;
+    fsxSvmId: object;
     storageProtocol?: string;
     numberofUserDbsCreated?: number;
     sandboxCreated?: boolean;
@@ -591,7 +591,7 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
             ...(storageProtocol && { storage_protocol: storageProtocol as STORAGEPROTOCOL }),
             ...(numberofUserDbsCreated && { number_of_user_dbs_created: numberofUserDbsCreated }),
             ...(sandboxCreated && { sandbox_created: sandboxCreated }),
-            ...(metaData && { metadata: metaData as {} })
+            ...(metaData && { metadata: metaData as { string: string } })
         },
         update: {
             ...(databaseInstanceName && { database_instance_name: databaseInstanceName }),

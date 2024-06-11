@@ -505,16 +505,6 @@ const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
     nodeStatus: Type.String({ description: 'Status of EC2 instance hosting the database server. In the case of cluster (like FCI or AOAG), running status will reflect the availabilty of either of the instances.',  InstanceStateName }),
     ssmStatus: Type.String({description: 'SSM connectivity status to the active EC2 instance hosting the database server.', ConnectionStatus}),
     databaseInstanceDetails: Type.Optional(Type.Array(DatabaseHostInstanceDetailsResponse)),
-    clusterNodeDetails: Type.Optional(
-        Type.Array(
-            Type.Object({
-                ec2InstanceId: Type.String({description: 'Identifier for EC2 instance.'}),
-                ec2InstancePrivateIpAddress: Type.String({description: 'Private IP address for EC2 instance.'}),
-                ec2InstanceType: Type.String({description: 'Type of EC2 instance'}),
-                ec2InstanceName: Type.Optional(Type.String({description:'Name for EC2 instance'}))
-            })
-        )
-    ),
     nodeTopology: Type.Optional(NodeTopologyResponse),
     ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),
     estimatedUsageCost: Type.Optional(UsageCostPerStorageTypeResponse),

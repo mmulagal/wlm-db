@@ -170,7 +170,7 @@ describe('Database instance operations', () => {
             isDefault: true,
             source: 'deployment',
             sqlDeploymentType: 'FCI',
-            fsxSvmId: 'svm-0123456789abcdef0',
+            fsxSvmId: { 'fs-0f53fbecdd3d85fb2': 'svm-0123456789abcdef0' },
             fsxnIds: 'fs-0f53fbecdd3d85fb2',
             databaseType: '' // Add the missing property 'databaseType'
         };
@@ -190,7 +190,7 @@ describe('Database instance operations', () => {
             isDefault: true,
             source: 'deployment',
             sqlDeploymentType: 'FCI',
-            fsxSvmId: 'fs',
+            fsxSvmId: { 'fs-0f53fbecdd3d85fb2': 'svm-0123456789abcdef0' },
             fsxnIds: 'fs-00001111',
             databaseType: ''
         });
