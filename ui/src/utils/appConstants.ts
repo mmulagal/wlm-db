@@ -917,7 +917,9 @@ export const GENERAL = {
     EBS_TOOLTIP_MESSAGE:
         'Management of SQL Server instances using EBS (Elastic Block Store) storage is currently not supported. Please select a supported storage option to proceed.',
     ALL_MANAGED_TEXT:
-        'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.'
+        'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
+    ALL_UNDETECT_TEXT:
+        'All SQL Server instances on this host are currently undetected. To manege the instance, expand the database host name, and then select "detect" from the menu.'
 };
 
 export const CODE_VIEWER = {

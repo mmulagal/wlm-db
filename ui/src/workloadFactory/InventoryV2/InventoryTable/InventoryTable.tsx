@@ -177,6 +177,76 @@ const InventoryTable = () => {
         );
     };
 
+    const lastColJSX = (
+        rowData: any,
+        checkForAllManaged: boolean,
+        checkForAllUnDetectInstance: boolean,
+        checkForAllFileSystemNA: boolean
+    ) => {
+        //Condition for if all managed then showing disable managed button with tooltip
+        if (rowData?.action && checkForAllManaged) {
+            return (
+                <Popover
+                    popoverClass={styles['copy-popover']}
+                    children={GENERAL.ALL_UNDETECT_TEXT}
+                    trigger="hover"
+                    container={
+                        <div className={styles.detectManageDisable}>
+                            <Typography variant="Regular_14" className={styles.textStyle}>
+                                {rowData?.action}
+                            </Typography>
+                        </div>
+                    }
+                />
+            );
+        }
+        //Check for all un-detect instances and storage type is N/A
+        if (rowData?.action && checkForAllUnDetectInstance && checkForAllFileSystemNA) {
+            return (
+                <Popover
+                    popoverClass={styles['copy-popover']}
+                    children={GENERAL.ALL_MANAGED_TEXT}
+                    trigger="hover"
+                    container={
+                        <div className={styles.detectManageDisable}>
+                            <Typography variant="Regular_14" className={styles.textStyle}>
+                                {rowData?.action}
+                            </Typography>
+                        </div>
+                    }
+                />
+            );
+        }
+        //Normal use case to show dialog or move to explore savings
+        if (rowData?.action && !checkForAllManaged && !rowData?.actionDisable && rowData.ssmState !== 'Offline') {
+            return (
+                <div
+                    className={styles.detectManage}
+                    onClick={() => {
+                        if (rowData?.action === 'Explore savings') {
+                            onClickESHost(dispatch, rowData, isDemoMode);
+                        } else {
+                            handleDialog();
+                        }
+                    }}
+                >
+                    <Typography variant="Regular_14" className={styles.textStyle}>
+                        {rowData?.action}
+                    </Typography>
+                </div>
+            );
+        }
+        if (rowData?.action && !checkForAllManaged && rowData?.actionDisable && rowData.ssmState !== 'Offline') {
+            return (
+                <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
+                    <Typography variant="Regular_14" className={styles.textStyle}>
+                        {rowData?.action}
+                    </Typography>
+                </div>
+            );
+        }
+    };
+
     const lastColDetails = () => {
         return {
             id: '9',
@@ -188,54 +258,14 @@ const InventoryTable = () => {
                 const checkForAllManaged = rowData?.sqlServerInstances.every(
                     (item: any) => item?.statusColText === 'Managed'
                 );
-
-                return (
-                    <>
-                        {rowData?.action && checkForAllManaged && (
-                            <Popover
-                                popoverClass={styles['copy-popover']}
-                                children={GENERAL.ALL_MANAGED_TEXT}
-                                trigger="hover"
-                                container={
-                                    <div className={styles.detectManageDisable}>
-                                        <Typography variant="Regular_14" className={styles.textStyle}>
-                                            {rowData?.action}
-                                        </Typography>
-                                    </div>
-                                }
-                            />
-                        )}
-                        {rowData?.action &&
-                            !checkForAllManaged &&
-                            !rowData?.actionDisable &&
-                            rowData.ssmState !== 'Offline' && (
-                                <div
-                                    className={styles.detectManage}
-                                    onClick={() => {
-                                        if (rowData?.action === 'Explore savings') {
-                                            onClickESHost(dispatch, rowData, isDemoMode);
-                                        } else {
-                                            handleDialog();
-                                        }
-                                    }}
-                                >
-                                    <Typography variant="Regular_14" className={styles.textStyle}>
-                                        {rowData?.action}
-                                    </Typography>
-                                </div>
-                            )}
-                        {rowData?.action &&
-                            !checkForAllManaged &&
-                            rowData?.actionDisable &&
-                            rowData.ssmState !== 'Offline' && (
-                                <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
-                                    <Typography variant="Regular_14" className={styles.textStyle}>
-                                        {rowData?.action}
-                                    </Typography>
-                                </div>
-                            )}
-                    </>
+                const checkForAllUnDetectInstance = rowData?.sqlServerInstances.every(
+                    (item: any) => item?.statusColText === 'Undetected'
                 );
+                const checkForAllFileSystemNA = rowData?.sqlServerInstances.every(
+                    (item: any) => item?.fileSystemType === 'N/A'
+                );
+
+                return lastColJSX(rowData, checkForAllManaged, checkForAllUnDetectInstance, checkForAllFileSystemNA);
             }
         };
     };
