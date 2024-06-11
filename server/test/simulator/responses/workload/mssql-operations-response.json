@@ -188,11 +188,5 @@
     "mssqlServerInstanceDetails": {
         "instanceName": "MSSQLSERVER",
         "instanceState": "Running"
-    },
-    "activeInstanceResponse": {
-        "matchingInstance": {
-            "instanceName": "MSSQLSERVER",
-            "instanceState": "Running"
-        }
     }
 }

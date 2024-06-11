@@ -180,7 +180,7 @@ describe('MSSQL Resource methods', () => {
             ACTIVE_INSTANCE_ID,
             STANDBY_INSTANCE_ID
         ]);
-        expect(resp).toEqual(mssqlResponse.mssqlServerInstanceDetails);
+        expect(resp[0]).toEqual(mssqlResponse.mssqlServerInstanceDetails);
     });
 
     it('Get active instance', async () => {
@@ -190,6 +190,6 @@ describe('MSSQL Resource methods', () => {
             [ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID],
             DEFAULT_INSTANCE_NAME
         );
-        expect(resp).toMatchObject(mssqlResponse.activeInstanceResponse);
+        expect(resp?.matchingInstance).toMatchObject(mssqlResponse.mssqlServerInstanceDetails);
     });
 });
