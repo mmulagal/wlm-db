@@ -508,7 +508,11 @@ const SandboxTable = () => {
         setDialog(
             <DialogComponent
                 header={'Integrity check'}
-                content={`Do you want to perform integrity check for sandbox ${rowData.name}`}
+                content={
+                    <DsTypography variant="Regular_14">
+                        `Do you want to perform integrity check for sandbox ${rowData.name}`
+                    </DsTypography>
+                }
                 primaryButton={'Integrity check'}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
