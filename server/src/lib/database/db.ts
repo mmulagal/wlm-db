@@ -77,7 +77,7 @@ interface DatabaseInstance {
     numberofUserDbsCreated?: number;
     sandboxCreated?: boolean;
     metaData?: databaseInstanceMetadata;
-    databaseType?: string;
+    databaseType: string;
 }
 
 async function listDeployments(
@@ -582,10 +582,10 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
             resource_id: resourceId,
             database_instance_id: databaseInstanceId,
             database_instance_name: databaseInstanceName,
-            fsxn_ids: fsxnIds || '',
+            fsxn_ids: fsxnIds,
             is_default: isDefault,
             source: source as SOURCE, // Fix: Update the type of 'source' to 'SOURCE'
-            database_type: databaseType || '',
+            database_type: databaseType,
             database_deployment_type: sqlDeploymentType as DATABASE_DEPLOYMENT_TYPE,
             fsx_svm_id: fsxSvmId,
             ...(storageProtocol && { storage_protocol: storageProtocol as STORAGEPROTOCOL }),
