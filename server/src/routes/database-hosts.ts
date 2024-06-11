@@ -4,7 +4,9 @@ import {
     getDatabaseHostsSummary,
     getDatabaseHostsSummaryV2,
     getDatabaseHostSummary,
-    getDatabases
+    getDatabases,
+    getDatabaseHostSummaryV2,
+    getDatabaseHostInstanceSummary
 } from '../operations/database-hosts-operations';
 import { deployDatabase, getCollationDetails, getDriveInfo } from '../operations/createdb-operations';
 import {
@@ -26,7 +28,9 @@ import {
     SandboxLifeCycleSchema,
     SandboxSplitSchema,
     DatabaseHostsSummarySchemaV2,
-    CheckSandboxIntegritySchema
+    CheckSandboxIntegritySchema,
+    DatabaseHostDetailsSchemaV2,
+    DatabaseHostInstanceDetailsSchema
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -305,6 +309,43 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     credentialsId,
                     vpcId,
                     fsxId
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId`,
+            { schema: DatabaseHostDetailsSchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId },
+                    query: { fields }
+                } = request;
+                const response = await getDatabaseHostSummaryV2(
+                    accountId,
+                    databaseHostId,
+                    credentialsId,
+                    region,
+                    fields
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instance/:databaseInstanceId`,
+            { schema: DatabaseHostInstanceDetailsSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                    query: { fields }
+                } = request;
+                const response = await getDatabaseHostInstanceSummary(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    fields
                 );
                 return reply.send(response);
             }
