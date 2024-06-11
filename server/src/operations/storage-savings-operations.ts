@@ -169,6 +169,7 @@ async function aoagStorageSavingsCalculations(
         const instanceType = `${allNodesComputeLicenseDetails
             .map((node: { ec2InstanceType: any }) => node.ec2InstanceType)
             .join(',')}`;
+
         const allNodesExistingComputePrice = allNodesComputeLicenseDetails.reduce(
             (
                 acc,
@@ -183,6 +184,19 @@ async function aoagStorageSavingsCalculations(
             },
             0
         );
+
+        const existingComputeMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingComputePrice);
+
+        const existingSqlServerLicenseEdition = `${allNodesComputeLicenseDetails
+            .map(
+                ({
+                    license: {
+                        existing: { sqlServerEdition: eSqlServerEdition }
+                    }
+                }) => eSqlServerEdition
+            )
+            .join(',')}`;
+
         const allNodesExistingLicensePrice = allNodesComputeLicenseDetails.reduce(
             (
                 acc,
@@ -197,18 +211,8 @@ async function aoagStorageSavingsCalculations(
             },
             0
         );
-
-        const existingComputeMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingComputePrice);
-        const licenseType = `${allNodesComputeLicenseDetails
-            .map(
-                ({
-                    license: {
-                        existing: { licenseType: eLicenseType }
-                    }
-                }) => eLicenseType
-            )
-            .join(',')}`;
         const existingLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingLicensePrice);
+
         const allNodesRecommendedComputePrice = allNodesComputeLicenseDetails.reduce(
             (
                 acc,
@@ -223,6 +227,17 @@ async function aoagStorageSavingsCalculations(
             },
             0
         );
+        const recommendedComputeMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesRecommendedComputePrice);
+
+        const recommendedSqlServerLicenseEdition = `${allNodesComputeLicenseDetails
+            .map(
+                ({
+                    license: {
+                        recommended: { sqlServerEdition: rSqlServerEdition }
+                    }
+                }) => rSqlServerEdition
+            )
+            .join(',')}`;
         const allNodesRecommendedLicensePrice = allNodesComputeLicenseDetails.reduce(
             (
                 acc,
@@ -237,16 +252,6 @@ async function aoagStorageSavingsCalculations(
             },
             0
         );
-        const recommendedComputeMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesRecommendedComputePrice);
-        const recommendedLicenseType = `${allNodesComputeLicenseDetails
-            .map(
-                ({
-                    license: {
-                        existing: { licenseType: eLicenseType }
-                    }
-                }) => eLicenseType
-            )
-            .join(',')}`;
         const recommendedLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesRecommendedLicensePrice);
 
         const [
@@ -254,9 +259,7 @@ async function aoagStorageSavingsCalculations(
                 compute: {
                     recommended: { message: recommendedComputeMessage }
                 }
-            }
-        ] = allNodesComputeLicenseDetails;
-        const [
+            },
             {
                 license: {
                     recommended: { message: recommendedLicenseMessage }
@@ -277,11 +280,11 @@ async function aoagStorageSavingsCalculations(
             },
             license: {
                 existing: {
-                    licenseType,
+                    sqlServerEdition: existingSqlServerLicenseEdition,
                     licenseMonthlyPrice: existingLicenseMonthlyPrice
                 },
                 recommended: {
-                    licenseType: recommendedLicenseType,
+                    sqlServerEdition: recommendedSqlServerLicenseEdition,
                     licenseMonthlyPrice: recommendedLicenseMonthlyPrice,
                     message: recommendedLicenseMessage
                 }
@@ -439,7 +442,7 @@ async function retrieveComputeAndLicenseCost(
         ec2HostDetailsList.map(async ec2HostDetails => {
             const {
                 existingCompute: { price: ePrice = undefined, baseInstancePrice: eBasePrice = undefined } = {},
-                existingLicense: { licenseType: eLicenseType = undefined, price: eLicensePrice = undefined } = {},
+                existingLicense: { price: eLicensePrice = undefined } = {},
                 recommendedCompute: {
                     instanceType: rInstanceType = '',
                     price: rPrice = undefined,
@@ -447,7 +450,7 @@ async function retrieveComputeAndLicenseCost(
                     message: computeMessage = undefined
                 } = {},
                 recommendedLicense: {
-                    licenseType: rLicenseType = undefined,
+                    sqlServerEdition: rSqlServerEdition = undefined,
                     price: rLicensePrice = undefined,
                     message: licenseMessage = undefined
                 } = {}
@@ -480,15 +483,13 @@ async function retrieveComputeAndLicenseCost(
                 license: {
                     existing: {
                         sqlServerEdition,
-                        licenseType: eLicenseType,
                         licenseHourlyPrice: eLicensePrice,
                         licenseIncluded: !!(eLicensePrice && eLicensePrice > 0),
                         licenseMonthlyPrice: eLicensePrice ? getMonthlyPriceFromHourlyPrice(eLicensePrice) : undefined,
                         hoursInMonth: HOURS_IN_MONTH
                     },
                     recommended: {
-                        sqlServerEdition,
-                        licenseType: rLicenseType,
+                        sqlServerEdition: rSqlServerEdition,
                         licenseHourlyPrice: rLicensePrice,
                         licenseIncluded: !!(rLicensePrice && rLicensePrice > 0),
                         licenseMonthlyPrice: rLicensePrice ? getMonthlyPriceFromHourlyPrice(rLicensePrice) : undefined,

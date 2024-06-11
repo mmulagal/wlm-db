@@ -14,6 +14,10 @@ import { DiscoverResponseInfoType } from '../routes/types/discover.types';
 
 const logger = getLogger();
 
+const SQL_ENT = 'SQL Ent';
+const SQL_STD = 'SQL Std';
+const SQL_WEB = 'SQL Web';
+
 async function isUsingEnterpriseConfiguration(
     accountId: string,
     credentialsId: string,
@@ -71,9 +75,9 @@ async function getLicenseRecommendations(accountId: string, credentialsId: strin
     );
 
     if (!usingEnterpriseConfiguration) {
-        return 'SQL Std';
+        return SQL_STD;
     }
-    return 'SQL Ent';
+    return SQL_ENT;
 }
 
 export default async function getSqlInstanceLicenseRecommendations(
@@ -170,6 +174,12 @@ export default async function getSqlInstanceLicenseRecommendations(
         let recommendedCompute;
         let recommendedLicense;
         const existingSqlServerEditionLowerCase = sqlServerEdition.toLowerCase();
+
+        const existingInstanceHourlyPriceWithoutLicense = existingInstanceTypePricingDetails?.NA?.pricePerUnit
+            ? existingInstanceTypePricingDetails.NA.pricePerUnit
+            : undefined;
+
+        const processorArchitecture = sqlServerEdition.match(/\((?<architecture>.*?)\)/)?.groups?.architecture || '';
         if (
             existingSqlServerEditionLowerCase.includes('enterprise') ||
             existingSqlServerEditionLowerCase.includes('web') ||
@@ -182,15 +192,12 @@ export default async function getSqlInstanceLicenseRecommendations(
         ) {
             // pricing infor is only available for SQL Ent, SQL Std, SQL Web
             const existingLicenseType = existingSqlServerEditionLowerCase.includes('enterprise')
-                ? 'SQL Ent'
+                ? SQL_ENT
                 : existingSqlServerEditionLowerCase.includes('web')
-                ? 'SQL Web'
-                : 'SQL Std';
+                ? SQL_WEB
+                : SQL_STD;
             const existingInstanceHourlyPrice = existingInstanceTypePricingDetails?.[existingLicenseType]?.pricePerUnit
                 ? existingInstanceTypePricingDetails[existingLicenseType].pricePerUnit
-                : undefined;
-            const existingInstanceHourlyPriceWithoutLicense = existingInstanceTypePricingDetails?.NA?.pricePerUnit
-                ? existingInstanceTypePricingDetails.NA.pricePerUnit
                 : undefined;
 
             let recommendedInstancePricingDetails = existingInstanceTypePricingDetails; // assuming no instance change; gets updated when a diff instance is recommended
@@ -199,7 +206,7 @@ export default async function getSqlInstanceLicenseRecommendations(
 
             const recommendedSqlLicenseType =
                 sqlServerEngineEdition === 3
-                    ? await getLicenseRecommendations(region, credentialsId, accountId, instanceId)
+                    ? await getLicenseRecommendations(accountId, credentialsId, region, instanceId) // returns SQL Ent or SQL Std
                     : existingLicenseType;
 
             // existing compute and license details
@@ -210,7 +217,7 @@ export default async function getSqlInstanceLicenseRecommendations(
             };
 
             existingLicense = {
-                licenseType: existingLicenseType, // SQL Ent or SQL Std or SQL Web
+                sqlServerEdition,
                 sqlServerVersion,
                 price:
                     existingInstanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
@@ -281,13 +288,14 @@ export default async function getSqlInstanceLicenseRecommendations(
             }
 
             // sql license recommendation logic; applicable only if the current instance is enterprise edition(sqlServerEngineEdition === 3)
+            // it either returns SQL Ent or SQL Std
             if (
                 sqlServerEngineEdition === 3 &&
-                recommendedSqlLicenseType &&
+                recommendedSqlLicenseType === SQL_STD &&
                 recommendedSqlLicenseType !== existingLicenseType
             ) {
                 recommendedLicense = {
-                    licenseType: recommendedSqlLicenseType, // SQL Ent or SQL Std
+                    sqlServerEdition: `Standard Edition ${processorArchitecture}`,
                     sqlServerVersion,
                     price:
                         recommendedInstanceHourlyPrice && recommendedInstanceHourlyPriceWithoutLicense
@@ -303,7 +311,7 @@ export default async function getSqlInstanceLicenseRecommendations(
                         : 'License Recommendations not available for the instance';
 
                 recommendedLicense = {
-                    licenseType: existingLicenseType, // SQL Ent or SQL Std or SQL Web
+                    sqlServerEdition,
                     sqlServerVersion,
                     price:
                         existingInstanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
@@ -312,6 +320,20 @@ export default async function getSqlInstanceLicenseRecommendations(
                     message
                 };
             }
+        } else {
+            // for express, developer, business intelligence, azure sql, azure sql edge, azure sql edge developer editions
+            existingCompute = {
+                price: existingInstanceHourlyPriceWithoutLicense, // could be undefined if the pricing information is not available for a certain instance type
+                baseInstancePrice: existingInstanceHourlyPriceWithoutLicense,
+                instanceType: ec2HostDetails.ec2InstanceType
+            };
+            existingLicense = {
+                sqlServerEdition,
+                sqlServerVersion,
+                price: 0
+            };
+            recommendedCompute = existingCompute;
+            recommendedLicense = existingLicense;
         }
 
         return {
