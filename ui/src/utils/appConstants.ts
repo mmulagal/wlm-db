@@ -919,7 +919,7 @@ export const GENERAL = {
     ALL_MANAGED_TEXT:
         'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
     ALL_UNDETECT_TEXT:
-        'All SQL Server instances on this host are currently undetected. To manege the instance, expand the database host name, and then select "detect" from the menu.'
+        'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.'
 };
 
 export const CODE_VIEWER = {
