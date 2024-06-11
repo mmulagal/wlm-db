@@ -481,3 +481,5 @@ export const OS_VERSIONS_LIST = [
         value: GENERAL.WIN_SERVER_2022_VERSION
     }
 ];
+
+export const SANDBOX_ACTIONS_POLLING_INTERVAL = 5000;

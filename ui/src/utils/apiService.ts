@@ -826,6 +826,12 @@ export const sandboxApi = createApi({
                     url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/split`,
                     method: 'POST'
                 })
+            }),
+            checkIntegrity: builder.mutation({
+                query: ({ credentialsId, regionId, databaseHostId, sandboxName, payload }) => ({
+                    url: `v1/credentials/${credentialsId}/regions/${regionId}/database-hosts/${databaseHostId}/sandboxes/${sandboxName}/check-integrity`,
+                    method: 'POST'
+                })
             })
         };
     }
@@ -948,6 +954,7 @@ export const {
     useDeleteSandboxMutation,
     useUpdateSandboxMutation,
     useSplitSandboxMutation,
+    useCheckIntegrityMutation,
     useGetDatabaseHostsForSandboxQuery
 } = sandboxApi;
 
