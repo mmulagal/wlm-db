@@ -1,6 +1,9 @@
-// instances input instances = ['"computername\\instanceName"', '"."']; "." represents the default instance
+// instances input instances = ['"computername\\instanceName"', '"DEFAULT_MSSQL_INSTANCE_NAME"']; "DEFAULT_MSSQL_INSTANCE_NAME" represents the default instance
+
+import { DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
+
 // ('source', 'initialCreationDate', 'tag', 'baseSnapshot') are the extended properties saved during creation of sandbox
-const GET_SANDBOX_DETAILS = (instances: string[], accountId: string) => ` 
+const GET_SANDBOX_DETAILS = (instances: string[]) => ` 
 $instances = (${instances})
 
 $results = foreach ($instance in $instances) {
@@ -26,19 +29,13 @@ $results = foreach ($instance in $instances) {
             AND l.name IS NOT NULL
             AND l.value IS NOT NULL ';
         
-        SELECT database_name, JSON_QUERY(properties) AS sandbox_properties
-        FROM (
-            SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'createdAt', 'tag', 'baseSnapshot', 'updatedAt') FOR JSON PATH)) AS properties
-            FROM #properties AS p1
-            WHERE name = 'cloned_by' AND value = 'netapp_wf'
-        ) AS grouped_properties
-        WHERE database_name IN (
-            SELECT database_name
-            FROM #properties
-            WHERE name = 'accountId' AND value = '${accountId}'
-        )
-        GROUP BY database_name, properties
-        FOR JSON PATH; 
+            SELECT database_name, JSON_QUERY(properties) AS sandbox_properties
+            FROM (
+                SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'createdAt', 'tag', 'baseSnapshot', 'updatedAt', 'cloned_by', 'accountId') FOR JSON PATH)) AS properties
+                FROM #properties AS p1
+            ) AS grouped_properties
+            GROUP BY database_name, properties
+            FOR JSON PATH;
 "@
 
         $output = sqlcmd -S $instance -Q $query -y 0 2> $null
@@ -67,7 +64,7 @@ $results = foreach ($instance in $instances) {
 $results
 `;
 
-const checkDatabaseExists = (dbCloneName: string, instanceName: string = '.') => `
+const checkDatabaseExists = (dbCloneName: string, instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME) => `
     $WarningPreference = 'SilentlyContinue';
 
     $dbCloneName = '${dbCloneName}'
@@ -197,12 +194,17 @@ const ontapJobStatusTemplate = `
         }
 `;
 
-const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: string, instanceName: string = '.') => `
+const getDbMappedOntapVolumes = (
+    fsxid: string,
+    fsxregion: string,
+    dbName: string,
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
+) => `
     $WarningPreference = 'SilentlyContinue';
     $FSxID = '${fsxid}'
     $FSxRegion = '${fsxregion}'
     $dbname = '${dbName}'
-    $instanceName = '${instanceName}'
+    $instanceName = "${instanceName}"
 
     Start-Transcript -Path "C:\\cfn\\log\\map_ontap_volumes_$dbname.log.txt" -Append | Out-Null
 
@@ -228,7 +230,12 @@ const getDbMappedOntapVolumes = (fsxid: string, fsxregion: string, dbName: strin
             $responseObject = [ordered]@{}
             $winvolumes = $sqlresponse | foreach { $_ | ConvertFrom-Json }
             foreach ($winvolume in $winvolumes) {
-                $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber
+                $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype
+
+                if ($vol.bustype -ne 'iscsi') {
+                    throw "Protocol Error: The database should be using iscsi protocol"
+                }
+
                 $object = @{
                     "fileName" = $winvolume.filename
                     "lunSerialNumber" = $vol.serialnumber
@@ -696,7 +703,11 @@ const createVolumeClone = (
     $responseObject | ConvertTo-Json -Depth 5
 `;
 
-const createClonedDb = (dbName: string, instanceName: string = '.', fileList: string[] = []) => `
+const createClonedDb = (
+    dbName: string,
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    fileList: string[] = []
+) => `
     $WarningPreference = 'SilentlyContinue';
     $dbname = '${dbName}'
 
@@ -727,7 +738,7 @@ const createClonedDb = (dbName: string, instanceName: string = '.', fileList: st
 
 const addExtendedProperties = (
     dbName: string,
-    instanceName: string = '.',
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
     propObj: { [x: string]: string | number | boolean }
 ) => `
 $dbname = '${dbName}'
@@ -763,14 +774,14 @@ const cleanUpOntapResources = (
     volumeIds: string,
     filePaths: string,
     dbName: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) => `
     $fsxid = '${fsxid}'
     $fsxregion = '${fsxregion}'
     $volumeIds = '${volumeIds}' | ConvertFrom-Json
     $filePaths = '${filePaths}' | ConvertFrom-Json
     $DBName = '${dbName}'
-    $instanceName = '${instanceName}'
+    $instanceName = "${instanceName}"
 
     Start-Transcript -Path "C:\\cfn\\log\\cleanup_ontap_resources_$DBName.log.txt" -Append | Out-Null
 
@@ -858,7 +869,7 @@ const cleanUpOntapResources = (
     $responseObject | ConvertTo-Json
 `;
 
-const mountPointQuery = (instanceName: string = '.', databaseName: string) =>
+const mountPointQuery = (instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME, databaseName: string) =>
     ` sqlcmd -S "${instanceName}" -Q "SET NOCOUNT ON;
     SELECT 
         CASE WHEN mf.type != 0 THEN 'Log' ELSE 'Data' END AS filetype,
@@ -950,12 +961,12 @@ const detachDbAndRemoveAccessPath = (
     dbName: string,
     serialNumbers: string,
     filePaths: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) => `
     $dbname = '${dbName}'
     $serialNumbers = '${serialNumbers}' | ConvertFrom-Json
     $filePaths = '${filePaths}' | ConvertFrom-Json
-    $instanceName = '${instanceName}'
+    $instanceName = "${instanceName}"
 
     Start-Transcript -Path "C:\\cfn\\log\\detachdb_remove_accesspath_$dbname.log.txt" -Append | Out-Null
 
@@ -1029,12 +1040,12 @@ const addAccessPathAndAttachDb = (
     dbName: string,
     datafile: { serial: string; path: string },
     logfile: { serial: string; path: string },
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) => `
     $dbname = '${dbName}'
     $serialNumbers = '${JSON.stringify(datafile)}' | ConvertFrom-Json
     $filePaths = '${JSON.stringify(logfile)}' | ConvertFrom-Json
-    $instanceName = '${instanceName}'
+    $instanceName = "${instanceName}"
 
     Start-Transcript -Path "C:\\cfn\\log\\add_accesspath_attachdb_$dbname.log.txt" -Append | Out-Null
 
@@ -1107,7 +1118,12 @@ const addAccessPathAndAttachDb = (
     }
 `;
 
-const splitFlexCloneVolumes = (fsxId: string, fsxRegion: string, volumeIds: string, instance = '.') => `
+const splitFlexCloneVolumes = (
+    fsxId: string,
+    fsxRegion: string,
+    volumeIds: string,
+    instance = DEFAULT_MSSQL_INSTANCE_NAME
+) => `
     $fsxid = '${fsxId}'
     $fsxregion = '${fsxRegion}'
     $volumeIds = '${volumeIds}' | ConvertFrom-Json
@@ -1176,9 +1192,13 @@ const splitFlexCloneVolumes = (fsxId: string, fsxRegion: string, volumeIds: stri
     $responseObject | ConvertTo-Json
 `;
 
-const deleteExtendedPropertiesScript = (dbName: string, instanceName: string = '.', props: Array<string>) => `
+const deleteExtendedPropertiesScript = (
+    dbName: string,
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
+    props: Array<string>
+) => `
 $dbname = '${dbName}'
-$instanceName = '${instanceName}'
+$instanceName = "${instanceName}"
 
 Start-Transcript -Path "C:\\cfn\\log\\delete_extended_properties_$dbname.log.txt" -Append | Out-Null
 
@@ -1198,6 +1218,20 @@ IF EXISTS (SELECT name, value FROM fn_listextendedproperty(default, default, def
 Sqlcmd -S $instanceName -Q $query -m 1
 `;
 
+const checkDatabaseIntegrityScript = (dbName: string, instanceName: string = '.') => `
+$dbname = '${dbName}'
+$instanceName = "${instanceName}"
+
+Start-Transcript -Path "C:\\cfn\\log\\check_integrity_for_$dbname.log.txt" -Append | Out-Null
+
+$query = @"
+USE $dbname;
+SET NOCOUNT ON;
+DBCC CHECKDB($dbname) WITH NO_INFOMSGS, ALL_ERRORMSGS;
+"@
+Sqlcmd -S $instanceName -Q $query -m 1
+`;
+
 export {
     GET_SANDBOX_DETAILS,
     checkDatabaseExists,
@@ -1211,5 +1245,6 @@ export {
     detachDbAndRemoveAccessPath,
     addAccessPathAndAttachDb,
     splitFlexCloneVolumes,
-    deleteExtendedPropertiesScript
+    deleteExtendedPropertiesScript,
+    checkDatabaseIntegrityScript
 };

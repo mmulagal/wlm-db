@@ -43,7 +43,6 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                 }
                 return {
                     ...perRow,
-                    status: perRow?.isManaged ? 'Managed' : 'Unmanaged',
                     protectionText: protectionText,
                     allocatedCapacityText: perRow?.allocatedCapacity
                         ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
@@ -88,7 +87,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
     const handleManage = (rowData: any) => {
         let output = data.map((obj: any) => {
             if (obj.name === rowData.name) {
-                return { ...obj, cellProps: { isDisabled: true }, status: 'In progress' };
+                return { ...obj, cellProps: { isDisabled: true }, statusColText: 'In progress' };
             }
             return obj;
         });
@@ -97,7 +96,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
         setTimeout(() => {
             let output = data.map((obj: any) => {
                 if (obj.name === rowData.name) {
-                    return { ...obj, cellProps: { isDisabled: false }, status: 'Managed' };
+                    return { ...obj, cellProps: { isDisabled: false }, statusColText: 'Managed' };
                 }
                 return obj;
             });
@@ -112,12 +111,12 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             accessor: 'name',
             renderCell: (cellData: any, rowData: any) => {
                 const menu = [];
-                if (!rowData.isDetected) {
+                if (rowData.statusColText === 'Undetected') {
                     menu.push({
                         id: 'detect',
                         displayName: 'Detect'
                     });
-                } else if (rowData.status === 'Unmanaged') {
+                } else if (rowData.statusColText === 'Unmanaged') {
                     menu.push({
                         id: 'manage',
                         displayName: 'Manage'
@@ -150,7 +149,10 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                         <MenuPopover
                             isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
                             menuItems={[...menu]}
-                            isDisabled={rowData.fileSystemType === 'EBS'}
+                            isDisabled={
+                                rowData?.statusColText === 'Unmanaged' &&
+                                (rowData.fileSystemType === 'EBS' || rowData.fileSystemType === 'FSx for Windows')
+                            }
                             toggleMenu={(toggleType: string, menuId: string) => {
                                 if (toggleType === 'close') {
                                     menuOpenedRowDetail.current = null;
@@ -183,7 +185,11 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
                                 }
                             }}
                             CustomMenu={undefined}
-                            disabledText={rowData.fileSystemType === 'EBS' && GENERAL.EBS_TOOLTIP_MESSAGE}
+                            disabledText={
+                                rowData?.statusColText === 'Unmanaged' &&
+                                (rowData.fileSystemType === 'EBS' || rowData.fileSystemType === 'FSx for Windows') &&
+                                GENERAL.EBS_TOOLTIP_MESSAGE
+                            }
                         />
                     </div>
                 );
@@ -196,14 +202,15 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
             Header: 'SQL Server instance',
-            accessor: 'name',
+            accessor: 'databaseInstanceName',
             id: '1',
             isSortable: true,
-            width: '212px'
+            width: '212px',
+            isSticky: true
         },
         {
             Header: 'Status',
-            accessor: 'status',
+            accessor: 'statusColText',
             id: '2',
             isSortable: false,
             width: '180px',
@@ -211,6 +218,9 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             renderCell: (cellData: string, rowData: any) => {
                 if (cellData === 'Unmanaged') {
                     return <DotComponent color={'var(--toggle-off-bg)'} value="Unmanaged" />;
+                }
+                if (cellData === 'Undetected') {
+                    return <DotComponent color={'var(--toggle-off-bg)'} value="Undetected" />;
                 }
                 if (cellData === 'In progress') {
                     return (
@@ -299,7 +309,7 @@ const ManagedHostSubTable = ({ rowId, scrollPosition }: { rowId: string; scrollP
             {/* <div className={styles.topDiv} /> */}
             <div className={styles.extraDiv2} />
 
-            <span style={{ position: 'relative', left: `${scrollPosition}px` }}>
+            <span className={styles.managedSubTable} style={{ position: 'relative', left: `${scrollPosition}px` }}>
                 <Table
                     //@ts-ignore
 

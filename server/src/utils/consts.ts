@@ -957,7 +957,10 @@ enum DatabaseHostsQueryFields {
     USAGE_ESTIMATION = 'usageEstimation',
     RESOURCE_UTILIZATION = 'resourceUtilization',
     DB_COUNT = 'dbCount',
-    SERVER_DETAILS = 'serverDetails'
+    SERVER_DETAILS = 'serverDetails',
+    NODE_TOPOLOGY = 'nodeTopology',
+    INSTANCE_DETAILS = 'instanceDetails',
+    DATABASE_INSTANCE_TOPOLOGY = 'databaseInstanceTopology'
 }
 
 enum ServerState {
@@ -1137,6 +1140,7 @@ const FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL = '1h';
 const DBCREATE_RELATIVE_PATH = `${WLMDB}/scripts/dbcreate.zip`;
 const PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/aws_ssm.zip`;
 const DEFAULT_INSTANCE_NAME = 'MSSQLSERVER';
+const DEFAULT_MSSQL_INSTANCE_NAME = '$env:computername';
 
 const PERMISSION_DENIAL_POSSIBLE_REASONS = {
     MISSING: 'permission statement is missing',
@@ -1156,6 +1160,14 @@ const SSM_PARAM_PREFIX = '/netapp/wlmdb/';
 const CUSTOM_AMI_VALIDATION_INSTANCE_TYPE = 'm5.xlarge';
 
 const HOURS_IN_MONTH = 730;
+
+const VERSION_2_0 = '2.0';
+
+const SANDBOX_EXTENDED_PROPERTY_FLAG_NAME = 'cloned_by';
+
+const SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE = 'netapp_wf';
+
+const ACCOUNTID = 'accountId';
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1423,5 +1435,10 @@ export {
     PSMODULES_RELATIVE_PATH,
     EBS_VOLUME_SIZE,
     EBS_DEFAULT_VOLUME_SIZE,
-    HOURS_IN_MONTH
+    HOURS_IN_MONTH,
+    VERSION_2_0,
+    SANDBOX_EXTENDED_PROPERTY_FLAG_NAME,
+    SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE,
+    ACCOUNTID,
+    DEFAULT_MSSQL_INSTANCE_NAME
 };

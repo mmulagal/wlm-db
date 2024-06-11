@@ -1,12 +1,11 @@
 import React from 'react';
 import styles from './StorageSavings.module.scss';
-import { DsTypography, FlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-system';
+import { FlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-system';
 import SquareComponent from '../SquareComponent/SquareComponent';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
-import { formatFractionalNumber, formatSize } from '../../../utils/utilityFunctions';
+import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 import { ReactComponent as Bullet } from '../../../assets/ic_bullet.svg';
-import { ReactComponent as Savings } from '../../../assets/Savings.svg';
 
 type StorageSavingsProps = {
     hostData: any;
@@ -14,14 +13,17 @@ type StorageSavingsProps = {
 };
 
 const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
+    const hostDataToShow = hostsLoading
+        ? { storageSavingsPercent: 0, storageConsumes: '0 B', storageSavings: '0 B' }
+        : hostData;
     const handleProgressBar = () => {
         if (
-            hostData?.storageSavingsPercent !== 0 &&
+            hostDataToShow?.storageSavingsPercent !== 0 &&
             //@ts-ignore
-            hostData?.storageSavingsPercent <= 1
+            hostDataToShow?.storageSavingsPercent <= 1
         ) {
             return (
-                <div className={styles.progressBar}>
+                <>
                     <div
                         className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
                         style={{
@@ -29,38 +31,38 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                             backgroundColor: 'var(--chart-9)'
                         }}
                     ></div>
-                </div>
+                </>
             );
         }
         if (
-            hostData?.storageSavingsPercent !== 0 &&
+            hostDataToShow?.storageSavingsPercent !== 0 &&
             //@ts-ignore
-            hostData?.storageSavingsPercent >= 1
+            hostDataToShow?.storageSavingsPercent >= 1
         ) {
             return (
-                <div className={styles.progressBar}>
+                <>
                     <div
                         className={`${styles.progress} ${styles.leftCurveBar}`}
                         style={{
-                            width: `${hostData?.storageSavingsPercent}%`,
-                            backgroundColor: 'var(--chart-4)'
+                            width: `${100 - (hostDataToShow?.storageSavingsPercent || 0)}%`,
+                            backgroundColor: 'var(--chart-9)'
                         }}
                     ></div>
                     <div className={styles.separator}></div>
                     <div
                         className={`${styles.progress} ${styles.rightCurveBar}`}
                         style={{
-                            width: `${100 - (hostData?.storageSavingsPercent || 0)}%`,
-                            backgroundColor: 'var(--chart-9)'
+                            width: `${hostDataToShow?.storageSavingsPercent}%`,
+                            backgroundColor: 'var(--chart-4)'
                         }}
                     ></div>
-                </div>
+                </>
             );
         }
 
-        if (hostData?.storageSavingsPercent === 0) {
+        if (hostDataToShow?.storageSavingsPercent === 0) {
             return (
-                <div className={styles.progressBar}>
+                <>
                     <div
                         className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
                         style={{
@@ -68,7 +70,7 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                             backgroundColor: 'var(--chart-disabled)'
                         }}
                     ></div>
-                </div>
+                </>
             );
         }
     };
@@ -98,58 +100,32 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                     </TooltipInfo>
                 </div>
 
-                {hostsLoading && <FlashingDotsLoader />}
+                {hostsLoading ? (
+                    <FlashingDotsLoader />
+                ) : (
+                    <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
+                        {formatFractionalNumber(hostDataToShow?.storageSavingsPercent, 2)}%
+                    </Typography>
+                )}
             </div>
 
-            <div className={styles.largeContainer}>
-                <div className={styles.firstSegment} style={{ paddingRight: '0', width: '334px' }}>
-                    <div className={styles.leftSection}>
-                        <Savings />
-                    </div>
-                    <div className={styles.rightSection}>
-                        <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                            {hostsLoading && (
-                                <div className={styles.loadingContainer}>
-                                    <FlashingDotsLoader />
-                                </div>
-                            )}
-                            {!hostsLoading && <>{formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%</>}
-                        </DsTypography>
+            <div className={styles.mainSection}>
+                {/* Progress Bar */}
+                <div className={styles.progressBar}>{handleProgressBar()}</div>
+                {/* Ends here */}
 
-                        <DsTypography variant="Regular_14" className={''}>
-                            {GENERAL.SANDBOX_STORAGE_SAVINGS}
-                        </DsTypography>
-                    </div>
-                </div>
-
-                <div className={styles.secondSegment}>
-                    {handleProgressBar()}
-
-                    <div className={styles.secondRow}>
-                        <div className={styles.bottomRow}>
-                            <div className={styles.square} style={{ backgroundColor: '#68C6B3' }} />
-
-                            <DsTypography variant="Semibold_14" style={{ lineHeight: 'unset' }}>
-                                {formatSize(hostData?.storageSavings)}
-                            </DsTypography>
-
-                            <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
-                                {GENERAL.SANDBOX_STORAGE_SAVINGS}
-                            </DsTypography>
-                        </div>
-
-                        <div className={styles.bottomRow}>
-                            <div className={styles.square} style={{ backgroundColor: '#A815F3' }} />
-
-                            <DsTypography variant="Semibold_14" style={{ lineHeight: 'unset' }}>
-                                {formatSize(hostData?.storageConsumes)}
-                            </DsTypography>
-
-                            <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
-                                {GENERAL.SANDBOX_CONSUMED_STORAGE}
-                            </DsTypography>
-                        </div>
-                    </div>
+                <div className={styles.bottomSection}>
+                    <SquareComponent
+                        value={hostDataToShow?.storageConsumes || GENERAL.NOT_AVAILABLE}
+                        color="var(--chart-9)"
+                        text={'Storage Consumed'}
+                    />
+                    <div className={styles.storageSeparator} />
+                    <SquareComponent
+                        value={hostDataToShow?.storageSavings || GENERAL.NOT_AVAILABLE}
+                        color="var(--chart-4)"
+                        text={'Storage Savings'}
+                    />
                 </div>
             </div>
         </div>

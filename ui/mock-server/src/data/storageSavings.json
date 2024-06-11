@@ -1,38 +1,58 @@
 {
+    "compute": { 
+      "existing": { 
+        "instanceType": "m5.large", 
+        "computeMonthlyPrice": 1097.92
+      }, 
+      "recommended": { 
+        "instanceType": "m5.large", 
+        "computeMonthlyPrice": 1097.92
+      } 
+    }, 
+    "license": { 
+      "existing": { 
+        "licenseType": "SQL Std", 
+        "licenseMonthlyPrice": 4380 
+      }, 
+      "recommended": { 
+        "licenseType": "SQL Std", 
+        "licenseMonthlyPrice": 1402 
+      } 
+    },
+    "totalSummary": {
+      "existing": 14994.92,
+      "recommended": 4895.28
+    },
     "fsx": {
-      "capacity": 1000,
-      "iops": 1000,
-      "throughput": 1000,
-      "snapshots": 1000,
-      "clones": 1000,
-      "compute": 1000,
-      "license": 1000,
-      "total": 7000
+      "capacity": 1280,
+      "iops": 837.76,
+      "throughput": 153.60,
+      "snapshots": 26,
+      "clones": 98,
+      "total": 4895.28
     },
     "ebs": {
-      "capacity": 2000,
-      "iops": 2000,
-      "throughput": 2000,
-      "snapshots": 2000,
-      "clones": 2000,
-      "compute": 2000,
-      "license": 1000,
-      "total": 13000
+      "capacity": 1280,
+      "iops": 4888,
+      "throughput": 0,
+      "snapshots": 265,
+      "clones": 3084,
+      "total": 14994.92
     },
     "fsxCalculation": {
-      "deploymentType": "Single",
-      "numberOfVolumes": 20,
-      "throughput": 10,
-      "totalStorageCapacity": 109951162777600,
-      "percentageSsd": 20,
-      "savings": 65,
-      "effectiveCapacity": 38482906972160,
-      "ssdTierReqCapacity": 7696581394432,
-      "capacityPoolTier": 30786325577728,
-      "ssdIop": 60000,
-      "throughputCapacity": 1024,
-      "useCase": "Online archive",
+      "deploymentType": "Multi",
+      "numberOfVolumes": 2,
+      "throughput": 0,
+      "totalStorageCapacity": 5497558138880,
+      "percentageSsd": 100,
+      "savings": 0,
+      "effectiveCapacity": 5497558138880,
+      "ssdTierReqCapacity": 5497558138880,
+      "capacityPoolTier": 0,
+      "ssdIop": 40000,
+      "throughputCapacity": 128,
+      "useCase": "Low latency",
       "regionName": "US East (Ohio) | us-east-2",
-      "monthlySnapshotCapacity": 966367641600
+      "monthlySnapshotCapacity": 418759311360
     }
-  }
+}

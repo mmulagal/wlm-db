@@ -1,4 +1,12 @@
-import { DsFlashingDotsLoader, Table, TableTopBar, Typography, useDialog, useTable } from '@netapp/design-system';
+import {
+    DsFlashingDotsLoader,
+    Popover,
+    Table,
+    TableTopBar,
+    Typography,
+    useDialog,
+    useTable
+} from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
@@ -144,7 +152,7 @@ const InventoryTable = () => {
     };
 
     const ExpandedRow = ({ rowData }: any) => {
-        if (rowData.hasOwnProperty('status')) {
+        if (rowData?.ssmState === 'Online') {
             return <ManagedHostSubTable rowId={rowData?.id} scrollPosition={scrollPos} />;
         }
         return <OfflineComponent />;
@@ -169,6 +177,76 @@ const InventoryTable = () => {
         );
     };
 
+    const lastColJSX = (
+        rowData: any,
+        checkForAllManaged: boolean,
+        checkForAllUnDetectInstance: boolean,
+        checkForAllFileSystemNA: boolean
+    ) => {
+        //Condition for if all managed then showing disable managed button with tooltip
+        if (rowData?.action && checkForAllManaged) {
+            return (
+                <Popover
+                    popoverClass={styles['copy-popover']}
+                    children={GENERAL.ALL_UNDETECT_TEXT}
+                    trigger="hover"
+                    container={
+                        <div className={styles.detectManageDisable}>
+                            <Typography variant="Regular_14" className={styles.textStyle}>
+                                {rowData?.action}
+                            </Typography>
+                        </div>
+                    }
+                />
+            );
+        }
+        //Check for all un-detect instances and storage type is N/A
+        if (rowData?.action && checkForAllUnDetectInstance && checkForAllFileSystemNA) {
+            return (
+                <Popover
+                    popoverClass={styles['copy-popover']}
+                    children={GENERAL.ALL_MANAGED_TEXT}
+                    trigger="hover"
+                    container={
+                        <div className={styles.detectManageDisable}>
+                            <Typography variant="Regular_14" className={styles.textStyle}>
+                                {rowData?.action}
+                            </Typography>
+                        </div>
+                    }
+                />
+            );
+        }
+        //Normal use case to show dialog or move to explore savings
+        if (rowData?.action && !checkForAllManaged && !rowData?.actionDisable && rowData.ssmState !== 'Offline') {
+            return (
+                <div
+                    className={styles.detectManage}
+                    onClick={() => {
+                        if (rowData?.action === 'Explore savings') {
+                            onClickESHost(dispatch, rowData, isDemoMode);
+                        } else {
+                            handleDialog();
+                        }
+                    }}
+                >
+                    <Typography variant="Regular_14" className={styles.textStyle}>
+                        {rowData?.action}
+                    </Typography>
+                </div>
+            );
+        }
+        if (rowData?.action && !checkForAllManaged && rowData?.actionDisable && rowData.ssmState !== 'Offline') {
+            return (
+                <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
+                    <Typography variant="Regular_14" className={styles.textStyle}>
+                        {rowData?.action}
+                    </Typography>
+                </div>
+            );
+        }
+    };
+
     const lastColDetails = () => {
         return {
             id: '9',
@@ -177,33 +255,17 @@ const InventoryTable = () => {
             width: '184px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <>
-                        {!rowData?.actionDisable && rowData.ssmState !== 'not connected' && (
-                            <div
-                                className={styles.detectManage}
-                                onClick={() => {
-                                    if (rowData?.action === 'Explore savings') {
-                                        onClickESHost(dispatch, rowData, isDemoMode);
-                                    } else {
-                                        handleDialog();
-                                    }
-                                }}
-                            >
-                                <Typography variant="Regular_14" className={styles.textStyle}>
-                                    {rowData?.action}
-                                </Typography>
-                            </div>
-                        )}
-                        {rowData?.actionDisable && rowData.ssmState !== 'not connected' && (
-                            <div className={styles.detectManageDisable} title={rowData?.detectOptionDisableMsg}>
-                                <Typography variant="Regular_14" className={styles.textStyle}>
-                                    {rowData?.action}
-                                </Typography>
-                            </div>
-                        )}
-                    </>
+                const checkForAllManaged = rowData?.sqlServerInstances.every(
+                    (item: any) => item?.statusColText === 'Managed'
                 );
+                const checkForAllUnDetectInstance = rowData?.sqlServerInstances.every(
+                    (item: any) => item?.statusColText === 'Undetected'
+                );
+                const checkForAllFileSystemNA = rowData?.sqlServerInstances.every(
+                    (item: any) => item?.fileSystemType === 'N/A'
+                );
+
+                return lastColJSX(rowData, checkForAllManaged, checkForAllUnDetectInstance, checkForAllFileSystemNA);
             }
         };
     };
@@ -245,19 +307,14 @@ const InventoryTable = () => {
                     <div>
                         <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
                         <div className={styles.firstColText}>
-                            {rowData?.status === STATUS_CONST.UP && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
+                            {rowData?.status === STATUS_CONST.ONLINE && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
                             )}
-                            {rowData?.status === STATUS_CONST.DOWN && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['down']}`}></div>
+                            {rowData?.status === STATUS_CONST.OFFLINE && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
                             )}
-                            {rowData?.status === STATUS_CONST.INITIALIZING && (
-                                <div
-                                    className={`${styles.statusIcon} ${styles['circle']} ${styles['initializing']}`}
-                                ></div>
-                            )}
-                            {rowData?.status === STATUS_CONST.FAILED && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['failed']}`}></div>
+                            {rowData?.status === STATUS_CONST.UNKNOWN && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
                             )}
                             <Typography variant="Regular_13">
                                 {rowData?.status}
@@ -285,13 +342,13 @@ const InventoryTable = () => {
             renderCell: (cellData: string, rowData: any) => {
                 return (
                     <div>
-                        {cellData && (
+                        {cellData && rowData?.sqlServerInstancesText && (
                             <>
                                 <Typography variant="Semibold_14">{cellData + ' instances'}</Typography>
                                 <Typography variant="Semibold_14">{rowData?.sqlServerInstancesText}</Typography>
                             </>
                         )}
-                        {!cellData && GENERAL.NOT_AVAILABLE}
+                        {(!cellData || !rowData?.sqlServerInstancesText) && GENERAL.NOT_AVAILABLE}
                     </div>
                 );
             }
@@ -320,12 +377,20 @@ const InventoryTable = () => {
                         {instanceList && (
                             <div>
                                 {instanceList?.[0] && (
-                                    <Typography variant="Regular_13" className={styles.colText}>
+                                    <Typography
+                                        variant="Regular_13"
+                                        className={`${styles.colText}`}
+                                        title={instanceList[0]}
+                                    >
                                         {instanceList[0]}
                                     </Typography>
                                 )}
                                 {instanceList?.[1] && (
-                                    <Typography variant="Regular_13" className={styles.colText}>
+                                    <Typography
+                                        variant="Regular_13"
+                                        className={`${styles.colText}`}
+                                        title={instanceList[1]}
+                                    >
                                         {instanceList[1]}
                                     </Typography>
                                 )}
@@ -356,15 +421,13 @@ const InventoryTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.firstColText}>
-                        {rowData?.ssmState === 'connected' && (
-                            <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
+                        {rowData?.ssmState === STATUS_CONST.ONLINE && (
+                            <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
                         )}
-                        {rowData?.ssmState !== 'connected' && (
-                            <div className={`${styles.statusIcon} ${styles['circle']} ${styles['down']}`}></div>
+                        {rowData?.ssmState === STATUS_CONST.OFFLINE && (
+                            <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
                         )}
-                        <Typography variant="Regular_13">
-                            {rowData?.ssmState === 'connected' ? 'Online' : 'Offline'}
-                        </Typography>
+                        <Typography variant="Regular_13">{rowData?.ssmState}</Typography>
                     </div>
                 );
             }

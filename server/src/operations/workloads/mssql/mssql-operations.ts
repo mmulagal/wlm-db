@@ -21,7 +21,8 @@ import {
     CPU_UTILISATION,
     DB_SIZE,
     DISK_UTILISATION,
-    MEMORY_UTILISATION
+    MEMORY_UTILISATION,
+    INSTANCE_GUID
 } from './queries';
 import { callSsmExecution, getSSMConnectionStatus } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -35,11 +36,12 @@ import {
     RESOURCE_RETRIVAL_ERROR,
     WF,
     ServerState,
-    DATABASE_METRIC_TYPE
+    DATABASE_METRIC_TYPE,
+    DEFAULT_MSSQL_INSTANCE_NAME
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
-import { createResource, deleteResource, listRelationshipsResources } from '../../../lib/database/db';
-import { generateHash, sqlResponseParsing } from '../../../utils/utils';
+import { createResource, deleteResource, listRelationshipsResources, listResources } from '../../../lib/database/db';
+import { getDatabsaeInstanceName, generateHash, sqlResponseParsing } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
@@ -74,7 +76,7 @@ async function getDatabasesCount(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Fetching databases total count ', credentialsId, region, activeNodeInstanceId);
 
@@ -235,7 +237,7 @@ async function getResourceUtilisationDetails(
     region: string,
     metricType: string,
     activeNodeInstanceId: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info(`Get ${metricType} resource utilization for resource: `, {
         credentialsId,
@@ -385,7 +387,7 @@ async function getServerDetails(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Get details of SQL Server database:', { credentialsId, region, activeNodeInstanceId });
 
@@ -590,40 +592,58 @@ async function getServerIOLatency(resourceId: string, activeNodeInstanceId: stri
     }
 }
 
-async function isActiveSqlNode(credentialsId: string, region: string, instanceId: string) {
-    logger.info('Check SQL node is active', { credentialsId, region, instanceId });
+async function getActiveSqlInstanceName(credentialsId: string, region: string, nodeIds: string[]) {
+    logger.info('Fetch active MSSQL instance Name', { credentialsId, region });
 
     const commands = [INSTANCE_DETAILS];
     try {
-        const response = await callSsmExecution(credentialsId, region, commands, instanceId);
-        if (response) {
-            const parsedResponse = sqlResponseParsing(response);
+        for (const nodeId of nodeIds) {
+            const response = await callSsmExecution(credentialsId, region, commands, nodeId, undefined, false);
+            if (response) {
+                const parsedResponse = sqlResponseParsing(response);
 
-            const InstanceDetails = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
-            let defaultInstance = true;
-            let selectedInstance = InstanceDetails.find(
-                (instance: { State: string; Name: string | string[] }) =>
-                    instance.State.toLocaleLowerCase() === 'running' && !instance.Name.includes('$') // there is a $ present in named instances
-            )?.Name;
+                const instanceDetails = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
+                let defaultInstance = true;
+                let selectedInstance = instanceDetails.find(
+                    (instance: { instanceState: string; instanceName: string | string[] }) =>
+                        instance.instanceState.toLocaleLowerCase() === 'running' && !instance.instanceName.includes('$') // there is a $ present in named instances
+                )?.instanceName;
 
-            if (!selectedInstance) {
-                const runningServices = InstanceDetails.filter(
-                    (instance: { State: string }) => instance.State.toLocaleLowerCase() === 'running'
-                );
-                selectedInstance = runningServices.length > 0 ? runningServices[0].Name : undefined;
-                defaultInstance = false;
+                if (!selectedInstance) {
+                    const runningServices = instanceDetails.filter(
+                        (instance: { instanceState: string }) =>
+                            instance.instanceState.toLocaleLowerCase() === 'running'
+                    );
+                    selectedInstance = runningServices.length > 0 ? runningServices[0].Name : undefined;
+                    defaultInstance = false;
+                }
+                if (selectedInstance !== undefined) {
+                    const instanceName = getDatabsaeInstanceName(selectedInstance, defaultInstance);
+                    return instanceName;
+                }
+
+                return selectedInstance;
             }
-            if (selectedInstance !== undefined) {
-                const instanceName = defaultInstance
-                    ? '.'
-                    : `$env:computername\\${selectedInstance.replace('MSSQL$', '')}`;
-                return instanceName;
-            }
-
-            return selectedInstance;
         }
     } catch (error) {
-        logger.error(`Error while fetching SQL node status for node ${instanceId}`, { error });
+        logger.error(`Error while fetching SQL node status for node ${nodeIds}`, { error });
+    }
+}
+
+async function getAllInstanceDetails(credentialsId: string, region: string, nodeIds: string[]) {
+    logger.info('Fetch all MSSQL instance details', { credentialsId, region });
+    const commands = [INSTANCE_DETAILS];
+    try {
+        for (const nodeId of nodeIds) {
+            const response = await callSsmExecution(credentialsId, region, commands, nodeId);
+            if (response) {
+                let parsedResponse = sqlResponseParsing(response);
+                parsedResponse = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
+                return parsedResponse;
+            }
+        }
+    } catch (error) {
+        logger.error(`Error while fetching SQL node status for node ${nodeIds}`, { error });
     }
 }
 
@@ -652,7 +672,7 @@ async function getNativeSQLProtection(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Fetch SQL native protection status', { credentialsId, region, activeNodeInstanceId });
 
@@ -681,7 +701,7 @@ async function getPerformanceMetrics(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Fetch SQL server performance metrics (assessment, latency, IOPS, throughput) for resource', {
         credentialsId,
@@ -760,15 +780,15 @@ async function getActiveSqlNode(
         const resourceError = `Resource ID ${resourceId}`;
         let errorMessage = '';
         // Connection to activenode is successful
-
         if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-            const instanceName = await isActiveSqlNode(credentialsId, region, node1InstanceId);
+            const instanceName = await getActiveSqlInstanceName(credentialsId, region, [node1InstanceId]);
             if (instanceName) {
                 return {
                     isSSMConnected: true,
                     activeNodeInstanceId: node1InstanceId,
                     standbyNodeInstanceId: node2InstanceId,
-                    instanceName
+                    instanceName,
+                    ssmConnectionSatus: connectionStatus.Status
                 };
             }
         } else {
@@ -781,13 +801,14 @@ async function getActiveSqlNode(
         if (node2InstanceId) {
             connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-                const instanceName = await isActiveSqlNode(credentialsId, region, node2InstanceId);
+                const instanceName = await getActiveSqlInstanceName(credentialsId, region, [node2InstanceId]);
                 if (instanceName) {
                     return {
                         isSSMConnected: true,
                         activeNodeInstanceId: node2InstanceId,
                         standbyNodeInstanceId: node1InstanceId,
-                        instanceName
+                        instanceName,
+                        ssmConnectionSatus: connectionStatus.Status
                     };
                 }
             }
@@ -798,6 +819,8 @@ async function getActiveSqlNode(
         } has failed.`;
         errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
         logger.error(errorMessage, { connectionStatus });
+
+        return { isSSMConnected: false, ssmConnectionSatus: connectionStatus.Status };
     } catch (error) {
         logger.error(
             `Error while checking SSM connection or SQL server status for resource ID ${resourceId}`,
@@ -816,7 +839,7 @@ async function checkDatabaseExists(
     databaseHostId: string,
     databaseName: string,
     activeNodeInstanceId: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Checking Database name exists', {
         accountId,
@@ -827,14 +850,14 @@ async function checkDatabaseExists(
         activeNodeInstanceId
     });
 
-    let command;
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        command = [
-            'sqlcmd -Q "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE name = \'tempdb18\' FOR JSON PATH" -y 0'
-        ];
-    } else {
-        command = [`sqlcmd -S "${instanceName}" -Q "${DATABASE_NAME_EXISTS(databaseName)}" -y 0`];
+        const { userDatabase } = ((await listResources(accountId, databaseHostId, credentialsId))[0]?.metadata || {
+            userDatabase: undefined
+        }) as { userDatabase: any[] };
+        return userDatabase?.some(db => db.name === databaseName) ?? false;
     }
+    const command = [`sqlcmd -S "${instanceName}" -Q "${DATABASE_NAME_EXISTS(databaseName)}" -y 0`];
+
     try {
         const checkDatabaseExistsResponse = await callSsmExecution(
             credentialsId,
@@ -866,7 +889,7 @@ async function getSqlServerVersion(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    instanceName: string = '.'
+    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) {
     logger.info('Get SQL server version:', { credentialsId, region, activeNodeInstanceId, instanceName });
     const command = [`sqlcmd -S "${instanceName}"-Q "SELECT @@VERSION" -y 0`];
@@ -875,6 +898,39 @@ async function getSqlServerVersion(
     const sqlServerVersion = serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim();
 
     return sqlServerVersion;
+}
+
+async function getMssqlInstanceGuid(credentialsId: string, region: string, instanceName: string, nodeIds: string[]) {
+    logger.info('Fetching mssql instance id', nodeIds, instanceName);
+    const commands = [`sqlcmd -S "${instanceName}" -Q "${INSTANCE_GUID}" -y 0`];
+    let response;
+    try {
+        let sqlInstanceGuid;
+
+        for (const nodeId of nodeIds) {
+            logger.info('Fetching MSSQL instance GUID', nodeId);
+            response = await callSsmExecution(credentialsId, region, commands, nodeId);
+            if (response) {
+                [{ instance_guid: sqlInstanceGuid }] = sqlResponseParsing(response);
+
+                return sqlInstanceGuid;
+            }
+        }
+
+        if (!sqlInstanceGuid) {
+            const errorMessage = `Error fetching instance id from nodes: ${nodeIds.join(', ')}`;
+            logger.error(errorMessage);
+            throw createError(errorMessage);
+        }
+    } catch (err) {
+        const errorMessage = `Error fetching mssql instance id:,
+            ${err},
+            ${credentialsId},
+            ${region},
+            ${instanceName},`;
+        logger.error(errorMessage);
+        throw createError(errorMessage);
+    }
 }
 
 export {
@@ -900,5 +956,8 @@ export {
     getNativeSQLBackedupDatabases,
     getActiveSqlNode,
     checkDatabaseExists,
-    getSqlServerVersion
+    getSqlServerVersion,
+    getMssqlInstanceGuid,
+    getActiveSqlInstanceName,
+    getAllInstanceDetails
 };

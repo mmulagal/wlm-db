@@ -166,7 +166,9 @@ async function aoagStorageSavingsCalculations(
         ]);
 
         const allNodesComputeLicenseDetails = currentNodeComputeLicenseDetails.concat(partnerNodeComputeLicenseDetails);
-        const instanceType = `${allNodesComputeLicenseDetails
+
+        // existing compute and license details
+        const existingInstanceType = `${allNodesComputeLicenseDetails
             .map((node: { ec2InstanceType: any }) => node.ec2InstanceType)
             .join(',')}`;
 
@@ -213,6 +215,16 @@ async function aoagStorageSavingsCalculations(
         );
         const existingLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingLicensePrice);
 
+        // recommended compute and license details
+        const recommendedInstanceType = `${allNodesComputeLicenseDetails
+            .map(
+                ({
+                    compute: {
+                        recommended: { instanceType: rInstanceType }
+                    }
+                }) => rInstanceType
+            )
+            .join(',')}`;
         const allNodesRecommendedComputePrice = allNodesComputeLicenseDetails.reduce(
             (
                 acc,
@@ -269,11 +281,11 @@ async function aoagStorageSavingsCalculations(
         return {
             compute: {
                 existing: {
-                    instanceType,
+                    instanceType: existingInstanceType,
                     computeMonthlyPrice: existingComputeMonthlyPrice
                 },
                 recommended: {
-                    instanceType,
+                    instanceType: recommendedInstanceType,
                     computeMonthlyPrice: recommendedComputeMonthlyPrice,
                     message: recommendedComputeMessage
                 }

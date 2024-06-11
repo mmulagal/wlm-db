@@ -6,12 +6,16 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../utils/logger';
 import { listResources, updateResourceMetaData } from '../lib/database/db';
 import {
+    ACCOUNTID,
     CUSTOM_SSM_EXECUTION_TIMEOUT,
     DEFAULT_INSTANCE_NAME,
+    DEFAULT_MSSQL_INSTANCE_NAME,
     HttpErrorCodes,
     NO_SANDBOX_CREATED,
     RESOURCESTYPE,
     SANDBOX_API_SIZE,
+    SANDBOX_EXTENDED_PROPERTY_FLAG_NAME,
+    SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE,
     SSM_COMMAND_CACHE_TYPE,
     SSM_PARAM_PREFIX
 } from '../utils/consts';
@@ -27,7 +31,8 @@ import {
     detachDbAndRemoveAccessPath,
     addAccessPathAndAttachDb,
     splitFlexCloneVolumes,
-    deleteExtendedPropertiesScript
+    deleteExtendedPropertiesScript,
+    checkDatabaseIntegrityScript
 } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails, Sandbox } from '../utils/common-types';
 import { checkDatabaseExists, getActiveSqlNode, getSqlServerVersion } from './workloads/mssql/mssql-operations';
@@ -102,8 +107,7 @@ async function getSandboxDetails(
         return errorResponse(errorMessage);
     }
 
-    accountId = process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator' ? 'test-account' : accountId;
-    const command = [GET_SANDBOX_DETAILS(['"."'], accountId)];
+    const command = [GET_SANDBOX_DETAILS(['"."'])];
     const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
     let sandboxInfo: SandboxInfoResponseType[] = [];
 
@@ -135,7 +139,16 @@ async function getSandboxDetails(
                 sandbox_properties: { name: string; value: string }[];
             }[] = sqlResponseParsing(finalSandboxDetails);
 
-            parsedSandboxDetails.forEach(item => {
+            const filteredSandboxItems = parsedSandboxDetails.filter(
+                item =>
+                    item.sandbox_properties.some(
+                        prop =>
+                            prop.name === SANDBOX_EXTENDED_PROPERTY_FLAG_NAME &&
+                            prop.value === SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE
+                    ) && item.sandbox_properties.some(prop => prop.name === ACCOUNTID && prop.value === accountId)
+            );
+
+            filteredSandboxItems.forEach(item => {
                 const sources = getSourceDetails(item);
 
                 const databaseObject = {
@@ -495,7 +508,7 @@ async function createSandbox(
             fsxId: srcResourceDetail.co_relation_id!,
             activeNodeInstanceId: srcStatus.activeNodeInstanceId!,
             metadata: srcResourceDetail.metadata as unknown as Metadata,
-            instanceName: srcStatus.instanceName || '.'
+            instanceName: srcStatus.instanceName || DEFAULT_MSSQL_INSTANCE_NAME
         },
         {
             ...dest,
@@ -504,7 +517,7 @@ async function createSandbox(
             fsxId: destResourceDetail.co_relation_id!,
             activeNodeInstanceId: destStatus.activeNodeInstanceId!,
             metadata: destResourceDetail.metadata as unknown as Metadata,
-            instanceName: destStatus.instanceName || '.'
+            instanceName: destStatus.instanceName || DEFAULT_MSSQL_INSTANCE_NAME
         },
         tag,
         mountPoints
@@ -1084,7 +1097,7 @@ async function createCloneDb(
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [
-                createCloneDbScript('testdb', '.', [
+                createCloneDbScript('testdb', DEFAULT_MSSQL_INSTANCE_NAME, [
                     'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
                     'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
                 ])
@@ -1163,7 +1176,7 @@ async function createExtendedProperties(
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [
-                addExtendedProperties('testdb', '.', {
+                addExtendedProperties('testdb', DEFAULT_MSSQL_INSTANCE_NAME, {
                     tag: 'demo',
                     cloned_by: 'netapp_wf',
                     source: 'resource|instance|testdb',
@@ -1479,7 +1492,7 @@ async function getSandboxConnectionString(
 
         return {
             server:
-                instanceName === '.'
+                instanceName === DEFAULT_MSSQL_INSTANCE_NAME
                     ? `${resourceName}.${activeDirectoryName}`
                     : `${instanceName}.${activeDirectoryName}`,
             database: sandboxName,
@@ -1949,6 +1962,13 @@ async function performLifecycleUpdate(
             resourceDetails
         )) as VolumeLunMapping;
 
+        if (!mappings.data.parentVolume || !mappings.log.parentVolume) {
+            throw createError(
+                HttpErrorCodes.VALIDATION_ERROR,
+                'The sandbox seems to be already split and hence cannot be altered!'
+            );
+        }
+
         clonedVolumes = (await createVolumeClone(
             accountId,
             credentialsId,
@@ -2172,7 +2192,7 @@ async function detachSandboxAndAccessPath(
                     'test-db',
                     '["123456789", "987654321"]',
                     '["S:\\test-db-Data", "L:\\test-db-Log"]',
-                    '.'
+                    DEFAULT_MSSQL_INSTANCE_NAME
                 )
             ];
         }
@@ -2534,7 +2554,7 @@ async function deleteExtendedProperties(
 
         if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
             command = [
-                deleteExtendedPropertiesScript('test-db', '.', [
+                deleteExtendedPropertiesScript('test-db', DEFAULT_MSSQL_INSTANCE_NAME, [
                     'cloned_by',
                     'baseSnapshot',
                     'source',
@@ -2578,6 +2598,119 @@ async function deleteExtendedProperties(
     }
 }
 
+async function checkDatabaseIntegrity(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseName: string
+) {
+    logger.info('Check database integrity', { accountId, credentialsId, region, databaseHostId, databaseName });
+
+    const [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
+
+    if (isEmpty(resourceDetails)) {
+        throw createError(HttpErrorCodes.NOT_FOUND, 'Could not find the database host');
+    }
+
+    const { node1InstanceId, node2InstanceId } = resourceDetails.metadata as unknown as Metadata;
+
+    const { isSSMConnected, instanceName, activeNodeInstanceId } = await getActiveSqlNode(
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId,
+        databaseHostId
+    );
+
+    if (!isSSMConnected) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'SSM connection could not be established with the host'
+        );
+    }
+
+    const databaseDetails = await checkDatabaseExists(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseName,
+        activeNodeInstanceId!,
+        instanceName
+    );
+
+    if (!databaseDetails) {
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            `Database ${databaseName} does not exists on source host ${resourceDetails.resource_name}`
+        );
+    }
+
+    const checkDataIntegrityJob = await registerJob(accountId, credentialsId, region, {
+        description: `Check data integrity for ${databaseName} in ${resourceDetails.resource_name}`,
+        startTime: Date.now(),
+        name: `Check data integrity for ${databaseName}`,
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.SANDBOX,
+        resourceName: databaseName
+    });
+
+    performIntegrityCheck(
+        accountId,
+        credentialsId,
+        region,
+        checkDataIntegrityJob.id,
+        databaseName,
+        instanceName!,
+        activeNodeInstanceId!
+    );
+
+    return { jobId: checkDataIntegrityJob.id };
+}
+
+async function performIntegrityCheck(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    databaseName: string,
+    instanceName: string,
+    activeNodeInstanceId: string
+) {
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+    try {
+        let command = [checkDatabaseIntegrityScript(databaseName, instanceName)];
+
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            command = [checkDatabaseIntegrityScript('test-db', '.')];
+        }
+
+        const resp = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
+
+        if (resp) {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                `Database integrity issues found, please run the command "DBCC CHECKDB(${databaseName}) WITH NO_INFOMSGS, ALL_ERRORMSGS;" to check the errors.`
+            );
+        }
+
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error(`Failed to check data integrity: ${e}`);
+        status = JOBSTATUS.FAILED;
+        errorMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+            status,
+            error: errorMsg,
+            endTime: Date.now()
+        });
+    }
+}
+
 export {
     getSandboxesInfo,
     getSandboxSavings,
@@ -2589,5 +2722,6 @@ export {
     deleteSandbox,
     getSandboxSplitEstimate,
     updateSandboxLifeCycle,
-    splitSandbox
+    splitSandbox,
+    checkDatabaseIntegrity
 };
