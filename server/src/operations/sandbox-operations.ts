@@ -31,7 +31,8 @@ import {
     detachDbAndRemoveAccessPath,
     addAccessPathAndAttachDb,
     splitFlexCloneVolumes,
-    deleteExtendedPropertiesScript
+    deleteExtendedPropertiesScript,
+    checkDatabaseIntegrityScript
 } from './workloads/mssql/sandbox-scripts';
 import { Metadata, ResourceDetails, Sandbox } from '../utils/common-types';
 import { checkDatabaseExists, getActiveSqlNode, getSqlServerVersion } from './workloads/mssql/mssql-operations';
@@ -2597,6 +2598,119 @@ async function deleteExtendedProperties(
     }
 }
 
+async function checkDatabaseIntegrity(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseName: string
+) {
+    logger.info('Check database integrity', { accountId, credentialsId, region, databaseHostId, databaseName });
+
+    const [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
+
+    if (isEmpty(resourceDetails)) {
+        throw createError(HttpErrorCodes.NOT_FOUND, 'Could not find the database host');
+    }
+
+    const { node1InstanceId, node2InstanceId } = resourceDetails.metadata as unknown as Metadata;
+
+    const { isSSMConnected, instanceName, activeNodeInstanceId } = await getActiveSqlNode(
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId,
+        databaseHostId
+    );
+
+    if (!isSSMConnected) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'SSM connection could not be established with the host'
+        );
+    }
+
+    const databaseDetails = await checkDatabaseExists(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseName,
+        activeNodeInstanceId!,
+        instanceName
+    );
+
+    if (!databaseDetails) {
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            `Database ${databaseName} does not exists on source host ${resourceDetails.resource_name}`
+        );
+    }
+
+    const checkDataIntegrityJob = await registerJob(accountId, credentialsId, region, {
+        description: `Check data integrity for ${databaseName} in ${resourceDetails.resource_name}`,
+        startTime: Date.now(),
+        name: `Check data integrity for ${databaseName}`,
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.SANDBOX,
+        resourceName: databaseName
+    });
+
+    performIntegrityCheck(
+        accountId,
+        credentialsId,
+        region,
+        checkDataIntegrityJob.id,
+        databaseName,
+        instanceName!,
+        activeNodeInstanceId!
+    );
+
+    return { jobId: checkDataIntegrityJob.id };
+}
+
+async function performIntegrityCheck(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    databaseName: string,
+    instanceName: string,
+    activeNodeInstanceId: string
+) {
+    let status: string = JOBSTATUS.IN_PROGRESS;
+    let errorMsg;
+    try {
+        let command = [checkDatabaseIntegrityScript(databaseName, instanceName)];
+
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            command = [checkDatabaseIntegrityScript('test-db', '.')];
+        }
+
+        const resp = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
+
+        if (resp) {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                `Database integrity issues found, please run the command "DBCC CHECKDB(${databaseName}) WITH NO_INFOMSGS, ALL_ERRORMSGS;" to check the errors.`
+            );
+        }
+
+        status = JOBSTATUS.COMPLETED;
+    } catch (e: any) {
+        logger.error(`Failed to check data integrity: ${e}`);
+        status = JOBSTATUS.FAILED;
+        errorMsg = e.message || 'Internal Server Error';
+        throw createError(e.statusCode, errorMsg);
+    } finally {
+        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+            status,
+            error: errorMsg,
+            endTime: Date.now()
+        });
+    }
+}
+
 export {
     getSandboxesInfo,
     getSandboxSavings,
@@ -2608,5 +2722,6 @@ export {
     deleteSandbox,
     getSandboxSplitEstimate,
     updateSandboxLifeCycle,
-    splitSandbox
+    splitSandbox,
+    checkDatabaseIntegrity
 };

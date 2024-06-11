@@ -25,7 +25,8 @@ import {
     GetSandboxSplitEstimateSchema,
     SandboxLifeCycleSchema,
     SandboxSplitSchema,
-    DatabaseHostsSummarySchemaV2
+    DatabaseHostsSummarySchemaV2,
+    CheckSandboxIntegritySchema
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -38,7 +39,8 @@ import {
     deleteSandbox,
     getSandboxSplitEstimate,
     updateSandboxLifeCycle,
-    splitSandbox
+    splitSandbox,
+    checkDatabaseIntegrity
 } from '../operations/sandbox-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
@@ -303,6 +305,23 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                     credentialsId,
                     vpcId,
                     fsxId
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/sandboxes/:sandboxName/check-integrity`,
+            { schema: CheckSandboxIntegritySchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, sandboxName }
+                } = request;
+                const response = await checkDatabaseIntegrity(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    sandboxName
                 );
                 return reply.send(response);
             }

@@ -22,7 +22,6 @@ const SqlServerInstanceInfo = Type.Object({
         Type.Number({ description: 'Database Engine edition of the instance of SQL Server installed on the server.' })
     ),
     sqlServerInstance: Type.String({ description: 'MS SQL Server instance name' }),
-    sqlServerGuid: Type.Optional(Type.String({ description: 'MS SQL Server instance indentifier' })),
     sqlServerState: Type.String({
         // Reference: https://learn.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicecontrollerstatus?view=dotnet-plat-ext-8.0
         description: `State of MS SQL Server instance.<br>
@@ -45,6 +44,7 @@ const SqlServerInstanceInfo = Type.Object({
             description: 'Name of SQL Server. For a clustered instance, this is the name of the virtual server.'
         })
     ),
+    serverGuid: Type.Optional(Type.String({ description: 'SQL Server service broker ID' })),
     isDefaultInstance: Type.Boolean({ description: 'Is this default SQL Server instance' }),
     failureInfo: Type.Optional(Type.String({ description: 'Instance specific failure details, if any.' })),
     sqlServerNodes: Type.Optional(
@@ -126,13 +126,31 @@ const DiscoverMsSqlResponseBody = Type.Object({
     )
 });
 
-const MultiInstanceManagementResponseBody = Type.Object({
+const MultiInstanceUnmanageResponseBody = Type.Object({
     resourceId: Type.String({ description: 'Workload Factory resource ID.' }),
     items: Type.Array(
         Type.Object({
             databaseInstanceId: Type.String({ description: 'SQL Server database instance ID.' }),
             status: Type.String({ description: 'Status of database instance unmanage operation.' }),
             errorMessage: Type.Optional(Type.String({ description: 'Error details, if any, of a failed unmanage.' }))
+        })
+    )
+});
+
+const MultiInstanceManageMsSqlRequestBody = Type.Object({
+    ec2InstanceId: Type.String({ description: 'EC2 instance Id' }),
+    databaseInstanceNames: Type.Array(Type.String({ description: 'List of MS SQL database instances' }))
+});
+
+const MultiInstanceManageResponseBody = Type.Object({
+    resourceId: Type.String({ description: 'Workload Factory resource ID.' }),
+    items: Type.Array(
+        Type.Object({
+            databaseInstanceName: Type.String({ description: 'SQL Server database instance name.' }),
+            status: Type.String({ description: 'Status of database instance unmanage operation.' }),
+            errorMessage: Type.Optional(
+                Type.String({ description: 'Error details, if any, of a failed database instance management.' })
+            )
         })
     )
 });
@@ -209,6 +227,8 @@ export {
     DiscoverCredentialsResponse,
     PrepareResourceResponseBody,
     UnmanageInstanceParams,
-    MultiInstanceManagementResponseBody,
-    DatabaseInstanceQueryString
+    MultiInstanceUnmanageResponseBody,
+    MultiInstanceManageResponseBody,
+    DatabaseInstanceQueryString,
+    MultiInstanceManageMsSqlRequestBody
 };
