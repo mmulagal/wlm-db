@@ -1505,33 +1505,33 @@ async function manageSqlServerV2(
 
         if (missingResourceJson[IS_PS7_AVAILABLE] === false) {
             precheckErrorList.push(
-                'PowerShell 7 is required for managing the resource. Install it manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4'
+                'PowerShell 7 is required for managing the resource. Install it manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4.'
             );
         }
         if (missingResourceJson[UNAVAILABLE_PS_MODULES]) {
             precheckErrorList.push(
-                `PowerShell modules ${missingResourceJson[UNAVAILABLE_PS_MODULES]} are required for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare"`
+                `PowerShell modules ${missingResourceJson[UNAVAILABLE_PS_MODULES]} are required for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".`
             );
         }
         if (missingResourceJson[IS_DATABASE_CREATE_POSSIBLE] === false) {
             precheckErrorList.push(
-                'Files required for database operations are not available. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare"'
+                'Files required for database operations are not available. Install them using the API "/accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/mssql/prepare".'
             );
         }
 
         const { awsAccountId } =
-            derivePropertiesFromARN(ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn!) || {};
+            derivePropertiesFromARN(ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn || '') || {};
 
         if (isEmpty(awsAccountId)) {
-            precheckErrorList.push('Failed to get AWS account ID');
+            precheckErrorList.push('Failed to get AWS account ID.');
         }
 
         if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
-            precheckErrorList.push('Failed to get network interface details');
+            precheckErrorList.push('Failed to get network interface details.');
         }
 
         if (isEmpty(adDetails) || adDetails?.includes(FAILURE_INFO)) {
-            precheckErrorList.push('Failed to get Active Directory details');
+            precheckErrorList.push('Failed to get Active Directory details.');
         }
 
         const { count, items } = discoverDetails;
@@ -1605,7 +1605,7 @@ async function manageSqlServerV2(
                 itemsStatus.push({
                     databaseInstanceName: dbInst,
                     status: 'failed',
-                    errorMessage: 'SQL Server instance not found'
+                    errorMessage: 'SQL Server instance not found.'
                 });
             } else {
                 try {
@@ -1616,15 +1616,17 @@ async function manageSqlServerV2(
                         .map(elem => elem.protocol);
 
                     if (windowsAuthentication === false && sqlServerAuthentication === false) {
-                        throw `Authentication to SQL Server instance isn't possible. Check if the SQL Server service is running, stored credentials are valid, or windows authentication is enabled.`;
+                        throw Error(
+                            'Authentication to SQL Server instance is not possible. Check if the SQL Server service is running, stored credentials are valid, or windows authentication is enabled.'
+                        );
                     }
 
                     if (isEmpty(storageInfo)) {
-                        throw 'SQL Server instance is not hosted on storage of type FSx for NetApp.';
+                        throw Error('SQL Server instance is not hosted on storage of type FSx for NetApp.');
                     }
 
                     if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
-                        throw 'Always On availability group environments are not supported.';
+                        throw Error('Always On availability group environments are not supported.');
                     }
 
                     if (isResourceTobeCreated) {
@@ -1697,7 +1699,7 @@ async function manageSqlServerV2(
             items: itemsStatus
         };
     } catch (error: any) {
-        error.message = `Unable to manage instance '${ec2InstanceId}'. Reason: ${error.message}.`;
+        error.message = `Unable to manage instance '${ec2InstanceId}'. Reason: ${error.message}`;
         throw error;
     }
 }
