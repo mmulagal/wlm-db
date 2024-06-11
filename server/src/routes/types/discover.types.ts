@@ -22,6 +22,7 @@ const SqlServerInstanceInfo = Type.Object({
         Type.Number({ description: 'Database Engine edition of the instance of SQL Server installed on the server.' })
     ),
     sqlServerInstance: Type.String({ description: 'MS SQL Server instance name' }),
+    sqlServerGuid: Type.Optional(Type.String({ description: 'MS SQL Server instance indentifier' })),
     sqlServerState: Type.String({
         // Reference: https://learn.microsoft.com/en-us/dotnet/api/system.serviceprocess.servicecontrollerstatus?view=dotnet-plat-ext-8.0
         description: `State of MS SQL Server instance.<br>

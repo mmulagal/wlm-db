@@ -452,16 +452,20 @@ const SandboxLifeCycleBody = Type.Object({
 });
 
 const DatabaseHostInstanceDetailsResponse = Type.Object({
-    instanceName: Type.String({description:'Name of SQL server instance.'}),
-    isManaged: Type.Optional(Type.Boolean({description: 'Boolean to indicate if SQL server instance is managed by WFDB.', default: false})),
+    instanceName: Type.String({ description: 'Name of SQL server instance.' }),
+    isManaged: Type.Optional(
+        Type.Boolean({ description: 'Boolean to indicate if SQL server instance is managed by WFDB.', default: false })
+    ),
     instanceState: Type.Optional(Type.String({ description: 'State of SQL server instance.', enum: ['UP', 'DOWN'] })), // Fix the syntax error
-    isDefault: Type.Optional(Type.Boolean({description: 'Boolean to indicate if SQL server instance is default or not.', default: true}))
+    isDefault: Type.Optional(
+        Type.Boolean({ description: 'Boolean to indicate if SQL server instance is default or not.', default: true })
+    )
 });
 
 const NodeTopologyResponse = Type.Object({
     awsAccount: Type.String({ description: 'Identifer for AWS account', minLength: 1 }),
-    region: Type.String({description: 'Region for EC2 instance'}),
-    vpcId: Type.Optional(Type.String({description: 'Identifier for EC2 instance'})),
+    region: Type.String({ description: 'Region for EC2 instance' }),
+    vpcId: Type.Optional(Type.String({ description: 'Identifier for EC2 instance' })),
     ec2Details: Type.Optional(Type.Array(EC2InstanceDetailsResponse)),
     activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse)
 });
@@ -500,15 +504,33 @@ const DatabaseHostInstanceSummaryResponse = Type.Object({
 type DatabaseHostInstanceSummaryResponseType = Static<typeof DatabaseHostInstanceSummaryResponse>;
 
 const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
-    id: Type.String({description: 'Identifier for the database resource'}),
-    name: Type.String({description: 'Name for the database resource'}),
-    nodeStatus: Type.String({ description: 'Status of EC2 instance hosting the database server. In the case of cluster (like FCI or AOAG), running status will reflect the availabilty of either of the instances.',  InstanceStateName }),
-    ssmStatus: Type.String({description: 'SSM connectivity status to the active EC2 instance hosting the database server.', ConnectionStatus}),
+    id: Type.String({ description: 'Identifier for the database resource' }),
+    name: Type.String({ description: 'Name for the database resource' }),
+    nodeStatus: Type.String({
+        description:
+            'Status of EC2 instance hosting the database server. In the case of cluster (like FCI or AOAG), running status will reflect the availabilty of either of the instances.',
+        InstanceStateName
+    }),
+    ssmStatus: Type.String({
+        description: 'SSM connectivity status to the active EC2 instance hosting the database server.',
+        ConnectionStatus
+    }),
     databaseInstanceDetails: Type.Optional(Type.Array(DatabaseHostInstanceDetailsResponse)),
     nodeTopology: Type.Optional(NodeTopologyResponse),
     ebsResourceInfo: Type.Optional(EbsResourceInfoResponse),
     estimatedUsageCost: Type.Optional(UsageCostPerStorageTypeResponse),
-    databaseInstancesSummary: Type.Optional(Type.Array(DatabaseHostInstanceSummaryResponse))
+    databaseInstancesSummary: Type.Optional(Type.Array(DatabaseHostInstanceSummaryResponse)),
+    clusterNodeDetails: Type.Optional(
+        Type.Array(
+            Type.Object({
+                ec2InstanceId: Type.String(),
+                ec2InstancePrivateIpAddress: Type.String(),
+                ec2InstanceType: Type.String(),
+                ec2InstanceName: Type.Optional(Type.String())
+            })
+        )
+    ),
+    errors: Type.Optional(Type.String())
 });
 
 const DatabaseHostSummaryForMultiInstanceListResponse = Type.Object({

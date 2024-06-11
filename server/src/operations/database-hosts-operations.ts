@@ -1784,22 +1784,8 @@ async function getDatabaseHostSummaryV2(
                 )
             );
 
-            if (resourceDetail?.clusterNodeDetails && resourceDetail?.clusterNodeDetails?.length > 0 && nodeTopology) {
-                const clusterNodeDetails = resourceDetail?.clusterNodeDetails;
-
-                nodeTopology = clusterNodeDetails.map(
-                    (node: { ec2InstanceId: any; ec2InstancePrivateIpAddress: any }) => {
-                        const correspondingNodeTopology = nodeTopology.find(
-                            (topology: { id: string }) => topology.id === node.ec2InstanceId
-                        );
-
-                        if (correspondingNodeTopology) {
-                            correspondingNodeTopology.privateIpAddress = node.ec2InstancePrivateIpAddress;
-                        }
-
-                        return correspondingNodeTopology;
-                    }
-                );
+            if (resourceDetail?.clusterNodeDetails && resourceDetail?.clusterNodeDetails?.length > 0) {
+                databaseHostDetails.clusterNodeDetails = resourceDetail.clusterNodeDetails;
             }
             databaseHostDetails.nodeStatus = nodeTopology.ec2Details[0].status || 'N/A';
             databaseHostDetails.ssmStatus = 'ONLINE';
@@ -1819,40 +1805,58 @@ async function getDatabaseHostSummaryV2(
                 credentialsId &&
                 region
             ) {
-                const runningDatabaseInstances = instancesManaged
-                    .filter(instance => {
-                        const matchingInstance = databaseInstancesDetail.find(
-                            (dbInstance: { instanceName: string; instanceState: string }) =>
-                                dbInstance.instanceName === instance.database_instance_name
-                        );
-                        return matchingInstance !== undefined;
-                    })
-                    .map(instance => ({
-                        ...instance,
-                        ...databaseInstancesDetail.find(
-                            (dbInstance: { instanceName: string; instanceState: string }) =>
-                                dbInstance.instanceState === 'Running'
-                        )
-                    }));
-                if (runningDatabaseInstances.length > 0) {
-                    const instancePromises = runningDatabaseInstances.map(async (instance: DatabaseInstance) => {
-                        const instanceResult = await getDatabseInstanceSummary(
-                            accountId,
-                            credentialsId,
-                            activeNodeInstanceId,
-                            region,
-                            instance,
-                            fields
-                        );
-                        return instanceResult;
-                    });
+                if (isManagedResource) {
+                    const runningDatabaseInstances = instancesManaged
+                        .filter(instance => {
+                            const matchingInstance = databaseInstancesDetail.find(
+                                (dbInstance: { instanceName: string; instanceState: string }) =>
+                                    dbInstance.instanceName === instance.database_instance_name
+                            );
+                            return matchingInstance !== undefined;
+                        })
+                        .map(instance => ({
+                            ...instance,
+                            ...databaseInstancesDetail.find(
+                                (dbInstance: { instanceName: string; instanceState: string }) =>
+                                    dbInstance.instanceState === 'Running'
+                            )
+                        }));
+                    if (runningDatabaseInstances.length > 0) {
+                        const instancePromises = runningDatabaseInstances.map(async (instance: DatabaseInstance) => {
+                            const instanceResult = await getDatabseInstanceSummary(
+                                accountId,
+                                credentialsId,
+                                activeNodeInstanceId,
+                                region,
+                                instance,
+                                fields
+                            );
+                            return instanceResult;
+                        });
 
-                    instanceResults = await Promise.all(instancePromises);
+                        instanceResults = await Promise.all(instancePromises);
+                    }
+                } else {
+                    const runningDatabaseInstances = resourceDetail.databaseInstanceDetails || [];
+                    if (runningDatabaseInstances.length > 0) {
+                        const instancePromises = runningDatabaseInstances.map(async (instance: DatabaseInstance) => {
+                            const instanceResult = await getDatabseInstanceSummary(
+                                accountId,
+                                credentialsId,
+                                activeNodeInstanceId,
+                                region,
+                                instance,
+                                fields
+                            );
+                            return instanceResult;
+                        });
+
+                        instanceResults = await Promise.all(instancePromises);
+                    }
                 }
             }
 
             databaseHostDetails.databaseInstancesSummary = instanceResults;
-            return databaseHostDetails;
         }
     } catch (error) {
         logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
@@ -1861,6 +1865,13 @@ async function getDatabaseHostSummaryV2(
             `Error while fetching database hosts details ${accountId}, ${error}`
         );
     }
+    return databaseHostDetails;
 }
 
-export { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases, getDatabaseHostsSummaryV2, getDatabaseHostSummaryV2 };
+export {
+    getDatabaseHostsSummary,
+    getDatabaseHostSummary,
+    getDatabases,
+    getDatabaseHostsSummaryV2,
+    getDatabaseHostSummaryV2
+};

@@ -1,7 +1,7 @@
 import { RouteTags } from '../../utils/consts';
 import {
     DatabaseHostSummaryForMultiInstanceListResponse,
-    DatabaseHostSummaryPerStorageTypeListResponse,
+    DatabaseHostSummaryPerStorageTypeListResponse
     // DatabaseHostSummaryForMultiInstanceListResponse
 } from '../types/database-hosts.types';
 import {

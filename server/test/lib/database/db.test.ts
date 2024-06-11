@@ -63,7 +63,7 @@ describe('List deployments', () => {
             region: DEFAULT_AWS_REGION
         });
         const resp = await listResources(ACCOUNT_ID);
-        const createdResource = resp.find((res: { resource_id: string; }) => res.resource_id === 'i-1a2b3c4d5e');
+        const createdResource = resp.find((res: { resource_id: string }) => res.resource_id === 'i-1a2b3c4d5e');
         expect(createdResource).toBeDefined();
 
         await deleteResource(ACCOUNT_ID, resource.resource_id);

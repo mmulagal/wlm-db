@@ -401,7 +401,7 @@ async function deployDatabase(
         dataFileConfig,
         logFileConfig,
         collation,
-        fileSystemId,
+        fileSystemId || '',
         isClustered,
         sqlServerName,
         node1InstanceId,
